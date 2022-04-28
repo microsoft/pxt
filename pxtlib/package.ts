@@ -52,21 +52,19 @@ namespace pxt {
                 && json;
         }
 
-        static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
-            return Promise.resolve().then(() => {
-                if (pxt.github.isGithubId(fullVers)) {
-                    const repoInfo = pxt.github.parseRepoId(fullVers);
-                    return pxt.packagesConfigAsync()
-                        .then(config => pxt.github.repoAsync(repoInfo.fullName, config))    // Make sure repo exists and is whitelisted
-                        .then(gitRepo => gitRepo ? pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag) : null);
-                } else {
-                    // If it's not from GH, assume it's a bundled package
-                    // TODO: Add logic for shared packages if we enable that
-                    const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
-                    const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
-                    return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
-                }
-            });
+        static async getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
+            if (pxt.github.isGithubId(fullVers)) {
+                const repoInfo = pxt.github.parseRepoId(fullVers);
+                const packagesConfig = await pxt.packagesConfigAsync()
+                const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is whitelisted
+                return gitRepo ? await pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag, packagesConfig) : null
+            } else {
+                // If it's not from GH, assume it's a bundled package
+                // TODO: Add logic for shared packages if we enable that
+                const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
+                const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
+                return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
+            }
         }
 
         static corePackages(): pxt.PackageConfig[] {
@@ -137,7 +135,8 @@ namespace pxt {
                 return Promise.resolve(resp)
             } else if (proto == "pkg") {
                 // the package source is serialized in a file in the package itself
-                const pkgFilesSrc = this.readFile(this.verArgument());
+                const src = this.parent || this; // fall back to current package if no parent
+                const pkgFilesSrc = src.readFile(this.verArgument());
                 const pkgFilesJson = ts.pxtc.Util.jsonTryParse(pkgFilesSrc) as Map<string>;
                 if (!pkgFilesJson)
                     pxt.log(`unable to find ${this.verArgument()}`)
@@ -184,15 +183,15 @@ namespace pxt {
                 // note that the preferredEditor field will be set automatically on the first save
 
                 // 1. no main.blocks in project, open javascript
-                const hasMainBlocks = this.getFiles().indexOf("main.blocks") >= 0;
+                const hasMainBlocks = this.getFiles().indexOf(pxt.MAIN_BLOCKS) >= 0;
                 if (!hasMainBlocks)
                     return pxt.JAVASCRIPT_PROJECT_NAME;
 
                 // 2. if main.blocks is empty and main.ts is non-empty
                 //    open typescript
                 // https://github.com/microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
-                const mainBlocks = this.readFile("main.blocks");
-                const mainTs = this.readFile("main.ts");
+                const mainBlocks = this.readFile(pxt.MAIN_BLOCKS);
+                const mainTs = this.readFile(pxt.MAIN_TS);
                 if (!mainBlocks && mainTs)
                     return pxt.JAVASCRIPT_PROJECT_NAME;
 
@@ -205,35 +204,7 @@ namespace pxt {
         parseJRes(allres: Map<JRes> = {}) {
             for (const f of this.getFiles()) {
                 if (U.endsWith(f, ".jres")) {
-                    let js: Map<JRes> = JSON.parse(this.readFile(f))
-                    let base: JRes = js["*"] || {} as any
-                    for (let k of Object.keys(js)) {
-                        if (k == "*") continue
-                        let v = js[k]
-                        if (typeof v == "string") {
-                            // short form
-                            v = { data: v } as any
-                        }
-                        let ns = v.namespace || base.namespace || ""
-                        if (ns) ns += "."
-                        let id = v.id || ns + k
-                        let icon = v.icon
-                        let mimeType = v.mimeType || base.mimeType
-                        let dataEncoding = v.dataEncoding || base.dataEncoding || "base64"
-                        if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
-                            icon = "data:" + mimeType + ";base64," + v.data
-                        }
-                        allres[id] = {
-                            id,
-                            data: v.data,
-                            dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
-                            icon,
-                            namespace: ns,
-                            mimeType,
-                            tilemapTile: v.tilemapTile,
-                            tileset: v.tileset
-                        }
-                    }
+                    inflateJRes(JSON.parse(this.readFile(f)), allres)
                 }
             }
             return allres
@@ -249,6 +220,25 @@ namespace pxt {
                 // U.userError(lf("version not specified for {0}", this.id))
                 this.configureAsInvalidPackage(lf("version not specified for {0}", this.id));
                 v = this._verspec;
+            }
+            // patch github version numbers
+            else if (this.verProtocol() == "github") {
+                const ghid = pxt.github.parseRepoId(this._verspec);
+                if (ghid && !ghid.tag && this.parent) {
+                    // we have a valid repo but no tag
+                    pxt.debug(`dep: unbound github extensions, trying to resolve tag`)
+                    // check if we've already loaded this slug in the project, in which case we use that version number
+                    const others = pxt.semver.sortLatestTags(Util.values(this.parent?.deps || {})
+                        .map(dep => pxt.github.parseRepoId(dep.version()))
+                        .filter(v => v?.slug === ghid.slug)
+                        .map(v => v.tag));
+                    const best = others[0];
+                    if (best) {
+                        ghid.tag = best;
+                        this.resolvedVersion = v = pxt.github.stringifyRepo(ghid);
+                        pxt.debug(`dep: github patched ${this._verspec} to ${v}`)
+                    }
+                }
             }
             return Promise.resolve(v)
         }
@@ -296,12 +286,14 @@ namespace pxt {
             // handle invalid names downstream
             if (this.config.targetVersions
                 && this.config.targetVersions.target
+                && this.config.targetVersions.targetId === pxt.appTarget.id // make sure it's the same target
+                && appTarget.versions
                 && semver.majorCmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
                 U.userError(lf("{0} requires target version {1} (you are running {2})",
                     this.config.name, this.config.targetVersions.target, appTarget.versions.target))
         }
 
-        isPackageInUse(pkgId: string, ts: string = this.readFile("main.ts")): boolean {
+        isPackageInUse(pkgId: string, ts: string = this.readFile(pxt.MAIN_TS)): boolean {
             // Build the RegExp that will determine whether the dependency is in use. Try to use upgrade rules,
             // otherwise fallback to the package's name
             let regex: RegExp = null;
@@ -412,11 +404,30 @@ namespace pxt {
                                     }
                                 }
                             }
-                            if (!foundYottaConflict && pkgCfg.name === depPkg.id && depPkg._verspec != version && !/^file:/.test(depPkg._verspec) && !/^file:/.test(version)) {
-                                const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})", depPkg, depPkg._verspec, version));
-                                conflict.pkg0 = depPkg;
-                                conflict.isVersionConflict = true;
-                                conflicts.push(conflict);
+                            if (!foundYottaConflict
+                                && pkgCfg.name === depPkg.id
+                                && depPkg._verspec !== version
+                                && !/^file:/.test(depPkg._verspec)
+                                && !/^file:/.test(version)) {
+                                // we have a potential version mistmatch here
+                                // check if versions are semver compatible for github refs
+                                const ghCurrent = /^github:/.test(depPkg._verspec)
+                                    && pxt.github.parseRepoId(depPkg._verspec);
+                                const ghNew = /^github:/.test(version)
+                                    && pxt.github.parseRepoId(version);
+                                if (!ghCurrent || !ghNew // only for github refs
+                                    || ghCurrent.fullName !== ghNew.fullName // must be same extension
+                                    // if newversion does not have tag, it's ok
+                                    // note: we are upgrade major versions as well
+                                    || (ghNew.tag && pxt.semver.strcmp(ghCurrent.tag, ghNew.tag) < 0)) {
+                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})",
+                                        depPkg.id,
+                                        depPkg._verspec,
+                                        version));
+                                    conflict.pkg0 = depPkg;
+                                    conflict.isVersionConflict = true;
+                                    conflicts.push(conflict);
+                                }
                             }
                         });
                     }
@@ -484,6 +495,7 @@ namespace pxt {
                 this.config = cfg;
             } catch (e) {
                 this.configureAsInvalidPackage(lf("Syntax error in pxt.json"));
+                pxt.tickEvent("package.invalidConfigEncountered")
             }
 
             const currentConfig = JSON.stringify(this.config);
@@ -520,10 +532,10 @@ namespace pxt {
             // no core package? add the first one
             if (corePackages.length == 0) {
                 const allCorePkgs = pxt.Package.corePackages();
-                /* tslint:disable:no-unused-expression TODO(tslint): */
+                /* eslint-disable @typescript-eslint/no-unused-expressions */
                 if (allCorePkgs.length)
                     this.config.dependencies[allCorePkgs[0].name];
-                /* tslint:enable:no-unused-expression */
+                /* eslint-enable @typescript-eslint/no-unused-expressions */
             } else if (corePackages.length > 1) {
                 // keep last package
                 corePackages.pop();
@@ -629,15 +641,65 @@ namespace pxt {
                 })
             }
 
+            const handleVerMismatch = (mod: Package, ver: string) => {
+                pxt.debug(`version spec mismatch: ${mod._verspec} != ${ver}`)
+
+                // if both are github, try to pick the higher semver
+                if (/^github:/.test(mod._verspec) && /^github:/.test(ver)) {
+                    const modid = pxt.github.parseRepoId(mod._verspec);
+                    const verid = pxt.github.parseRepoId(ver);
+                    // same repo
+                    if (modid?.slug && modid?.slug === verid?.slug) {
+                        // if modid does not have a tag, try sniffing it from config
+                        // this may be an issue if the user does not create releases
+                        // and pulls from master
+                        const modtag = modid?.tag || mod.config?.version;
+                        const c = pxt.semver.strcmp(modtag, verid.tag);
+                        if (c == 0) {
+                            // turns out to be the same versions
+                            pxt.debug(`resolved version are ${modtag}`)
+                            return;
+                        }
+                        else if (c < 0) {
+                            // already loaded version of dependencies is greater
+                            // than current version, use it instead
+                            pxt.debug(`auto-upgraded ${ver} to ${modtag}`)
+                            return;
+                        }
+                    }
+                }
+
+                // ignore, file: protocol
+                if (/^file:/.test(mod._verspec) || /^file:/.test(ver)) {
+                    pxt.debug(`ignore file: mismatch issues`)
+                    return;
+                }
+
+                // crashing if really really not good
+                // so instead we just ignore and continute
+                mod.configureAsInvalidPackage(lf("version mismatch"))
+            }
 
             const loadDepsRecursive = async (deps: pxt.Map<string>, from: Package, isCpp = false) => {
-                if (!deps) deps = from.dependencies(isCpp)
+                if (!deps) deps = from.dependencies(isCpp);
+
+                pxt.debug(`deps: ${from.id}->${Object.keys(deps).join(", ")}`);
+                deps = pxt.github.resolveMonoRepoVersions(deps);
+                pxt.debug(`deps: resolved ${from.id}->${Object.keys(deps).join(", ")}`);
+
                 for (let id of Object.keys(deps)) {
-                    const ver = deps[id] || "*"
+                    let ver = deps[id] || "*"
+                    pxt.debug(`dep: load ${from.id}.${id}${isCpp ? "++" : ""}: ${ver}`)
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
                     let mod = from.resolveDep(id)
                     if (mod) {
+                        // check if the current dependecy matches the ones
+                        // loaded in parent
+                        if (!mod.invalid() && mod._verspec !== ver)
+                            handleVerMismatch(mod, ver);
+
+                        // bail out if invalid
                         if (mod.invalid()) {
                             // failed to resolve dependency, ignore
                             mod.level = Math.min(mod.level, from.level + 1)
@@ -645,8 +707,6 @@ namespace pxt {
                             continue
                         }
 
-                        if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
-                            U.userError("Version spec mismatch on " + id)
                         if (!isCpp) {
                             mod.level = Math.min(mod.level, from.level + 1)
                             mod.addedBy.push(from)
@@ -677,7 +737,7 @@ namespace pxt {
 
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
-                        const mainTs = this.readFile("main.ts");
+                        const mainTs = this.readFile(pxt.MAIN_TS);
                         if (!mainTs) return Promise.resolve(null);
 
                         const missingPackages = this.getMissingPackages(this.config, mainTs);
@@ -732,21 +792,30 @@ namespace pxt {
             const fd = this.config.fileDependencies
             if (this.config.fileDependencies)
                 res = res.filter(fn => {
-                    let cond = U.lookup(fd, fn)
-                    if (!cond) return true
-                    cond = cond.trim()
-                    if (!cond) return true
-                    if (/^[\w-]+$/.test(cond)) {
-                        const dep = this.parent.resolveDep(cond)
-                        if (dep && !dep.cppOnly)
-                            return true
+                    const evalCond = (cond: string): boolean => {
+                        cond = cond.trim()
+                        if (cond[0] == '!')
+                            return !evalCond(cond.slice(1))
+                        if (/^[\w-]+$/.test(cond)) {
+                            const dep = this.parent.resolveDep(cond)
+                            if (dep && !dep.cppOnly)
+                                return true
+                            return false
+                        }
+                        const m = /^target:(\w+)$/.exec(cond)
+                        if (m)
+                            return m[1] == pxt.appTarget.id || m[1] == pxt.appTarget.platformid
+
+                        if (!Package.depWarnings[cond]) {
+                            Package.depWarnings[cond] = true
+                            pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
+                        }
                         return false
                     }
-                    if (!Package.depWarnings[cond]) {
-                        Package.depWarnings[cond] = true
-                        pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
-                    }
-                    return false
+
+                    const cond = U.lookup(fd, fn)
+                    if (!cond || !cond.trim()) return true
+                    return cond.split('||').some(c => c.split('&&').every(evalCond))
                 })
             return res
         }
@@ -773,7 +842,7 @@ namespace pxt {
                 return Promise.resolve(r);
 
             // live loc of bundled packages
-            if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
+            if (pxt.Util.liveLocalizationEnabled() && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.debug(`loading live translations for ${this.id}`)
                 return Promise.all(filenames.map(
                     fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
@@ -993,7 +1062,7 @@ namespace pxt {
 
                 try {
                     let einfo = cpp.getExtensionInfo(this)
-                    if (!shimsGenerated) {
+                    if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
@@ -1193,7 +1262,9 @@ namespace pxt {
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
                                     let f = d.readFile(part.visual.image);
                                     if (!f) pxt.reportError("parts", "invalid part definition", { "error": `missing visual ${part.visual.image}` })
-                                    part.visual.image = `data:image/svg+xml,` + encodeURIComponent(f);
+                                    if (!/^data:image\/svg\+xml/.test(f)) // encode svg if not encoded yet
+                                        f = `data:image/svg+xml,` + encodeURIComponent(f);
+                                    part.visual.image = f;
                                 }
                             }
                         });
@@ -1204,6 +1275,40 @@ namespace pxt {
             })
             return res;
         }
+    }
+
+    export function inflateJRes(js: Map<JRes>, allres: Map<JRes> = {}) {
+        let base: JRes = js["*"] || {} as any
+        for (let k of Object.keys(js)) {
+            if (k == "*") continue
+            let v = js[k]
+            if (typeof v == "string") {
+                // short form
+                v = { data: v } as any
+            }
+            let ns = v.namespace || base.namespace || ""
+            if (ns) ns += "."
+            let id = v.id || ns + k
+            let icon = v.icon
+            let mimeType = v.mimeType || base.mimeType
+            let dataEncoding = v.dataEncoding || base.dataEncoding || "base64"
+            if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
+                icon = "data:" + mimeType + ";base64," + v.data
+            }
+            allres[id] = {
+                id,
+                data: v.data,
+                dataEncoding,
+                icon,
+                namespace: ns,
+                mimeType,
+                tilemapTile: v.tilemapTile,
+                displayName: v.displayName,
+                tileset: v.tileset
+            }
+        }
+
+        return allres;
     }
 
     export function allPkgFiles(cfg: PackageConfig) {

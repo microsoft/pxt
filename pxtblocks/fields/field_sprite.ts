@@ -1,9 +1,8 @@
 /// <reference path="../../built/pxtlib.d.ts" />
+/// <reference path="./field_asset.ts" />
 
 
 namespace pxtblockly {
-    import svg = pxt.svgUtil;
-
     export interface FieldSpriteEditorOptions {
         // Deprecated
         sizes: string;
@@ -17,6 +16,7 @@ namespace pxtblockly {
         disableResize: string;
 
         filter?: string;
+        lightMode: boolean;
     }
 
     interface ParsedSpriteEditorOptions {
@@ -25,145 +25,58 @@ namespace pxtblockly {
         initHeight: number;
         disableResize: boolean;
         filter?: string;
+        lightMode: boolean;
     }
 
-    // 32 is specifically chosen so that we can scale the images for the default
-    // sprite sizes without getting browser anti-aliasing
-    const PREVIEW_WIDTH = 32;
-    const X_PADDING = 5;
-    const Y_PADDING = 1;
-    const BG_PADDING = 4;
-    const BG_WIDTH = BG_PADDING * 2 + PREVIEW_WIDTH;
-    const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
-    const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
-
-    export class FieldSpriteEditor extends Blockly.Field implements Blockly.FieldCustom {
-        public isFieldCustom_ = true;
-        public SERIALIZABLE = true;
-
-        private params: ParsedSpriteEditorOptions;
-        private blocksInfo: pxtc.BlocksInfo;
-        private state: pxt.sprite.Bitmap;
-        private lightMode: boolean;
-        private undoRedoState: any;
-
-        constructor(text: string, params: any, validator?: Function) {
-            super(text, validator);
-
-            this.lightMode = params.lightMode;
-            this.params = parseFieldOptions(params);
-            this.blocksInfo = params.blocksInfo;
-
-            if (!this.state) {
-                this.state = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
-            }
+    export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions, ParsedSpriteEditorOptions> {
+        protected getAssetType(): pxt.AssetType {
+            return pxt.AssetType.Image;
         }
 
-        init() {
-            if (this.fieldGroup_) {
-                // Field has already been initialized once.
-                return;
-            }
-            // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
-            if (!this.visible_) {
-                (this.fieldGroup_ as any).style.display = 'none';
+        protected createNewAsset(text?: string): pxt.Asset {
+            const project = pxt.react.getTilemapProject();
+            if (text) {
+                const asset = pxt.lookupProjectAssetByTSReference(text, project);
+
+                if (asset) return asset;
             }
 
-            if (!this.state) {
-                this.state = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
+            if (this.getBlockData()) {
+                return project.lookupAsset(pxt.AssetType.Image, this.getBlockData());
             }
 
-            this.redrawPreview();
+            const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
 
-            this.updateEditable();
-            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
+            if (!bmp) {
+                this.isGreyBlock = true;
+                this.valueText = text;
+                return undefined;
+            }
 
-            // Force a render.
-            this.render_();
-            (this as any).mouseDownWrapper_ = Blockly.bindEventWithChecks_((this as any).getClickTarget_(), "mousedown", this, (this as any).onMouseDown_)
+            const data = bmp.data();
+
+            const newAsset: pxt.ProjectImage = {
+                internalID: -1,
+                id: this.sourceBlock_.id,
+                type: pxt.AssetType.Image,
+                jresData: pxt.sprite.base64EncodeBitmap(data),
+                meta: {
+                },
+                bitmap: data
+            };
+
+            return newAsset;
         }
 
-        showEditor_() {
-            (this.params as any).blocksInfo = this.blocksInfo;
-            const fv = pxt.react.getFieldEditorView("image-editor", this.state, this.params);
-
-            if (this.undoRedoState) {
-                fv.restorePersistentData(this.undoRedoState);
+        protected getValueText(): string {
+            if (this.asset && !this.isTemporaryAsset()) {
+                return pxt.getTSReferenceForAsset(this.asset);
             }
-
-            fv.onHide(() => {
-                const result = fv.getResult();
-
-                if (result) {
-                    const old = this.getValue();
-
-                    this.state = result;
-                    this.redrawPreview();
-
-                    this.undoRedoState = fv.getPersistentData();
-
-                    if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                        Blockly.Events.fire(new Blockly.Events.BlockChange(
-                            this.sourceBlock_, 'field', this.name, old, this.getValue()));
-                    }
-                }
-            });
-
-            fv.show();
+            return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
         }
 
-        render_() {
-            super.render_();
-            this.size_.height = TOTAL_HEIGHT;
-            this.size_.width = TOTAL_WIDTH;
-        }
-
-        getValue() {
-            return pxt.sprite.bitmapToImageLiteral(this.state, pxt.editor.FileType.TypeScript);
-        }
-
-        doValueUpdate_(newValue: string) {
-            if (newValue == null) {
-                return;
-            }
-            this.value_ = newValue;
-            this.parseBitmap(newValue);
-            this.redrawPreview();
-
-            super.doValueUpdate_(newValue);
-        }
-
-        private redrawPreview() {
-            if (!this.fieldGroup_) return;
-            pxsim.U.clear(this.fieldGroup_);
-
-            const bg = new svg.Rect()
-                .at(X_PADDING, Y_PADDING)
-                .size(BG_WIDTH, BG_WIDTH)
-                .setClass("blocklySpriteField")
-                .stroke("#898989", 1)
-                .corner(4);
-
-            this.fieldGroup_.appendChild(bg.el);
-
-            if (this.state) {
-                const data = bitmapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode);
-                const img = new svg.Image()
-                    .src(data)
-                    .at(X_PADDING + BG_PADDING, Y_PADDING + BG_PADDING)
-                    .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
-                this.fieldGroup_.appendChild(img.el);
-            }
-        }
-
-        private parseBitmap(newText: string) {
-            const bmp = pxt.sprite.imageLiteralToBitmap(newText);
-
-            // Ignore invalid bitmaps
-            if (bmp && bmp.width && bmp.height) {
-                this.state = bmp;
-            }
+        protected parseFieldOptions(opts: FieldSpriteEditorOptions): ParsedSpriteEditorOptions {
+            return parseFieldOptions(opts);
         }
     }
 
@@ -175,11 +88,14 @@ namespace pxtblockly {
             initWidth: 16,
             initHeight: 16,
             disableResize: false,
+            lightMode: false,
         };
 
         if (!opts) {
             return parsed;
         }
+
+        parsed.lightMode = opts.lightMode;
 
         if (opts.sizes) {
             const pairs = opts.sizes.split(";");

@@ -59,3 +59,49 @@ The easiest way to share your blocks is to share the entire project using the [s
 ## Taking it to GitHub
 
 If you plan to reuse those blocks further, you might consider turning them into an [extension](/extensions).
+
+## Default custom.ts
+
+When ``custom.ts`` is created, it contains some default code for blocks as a placeholders for you to start with.
+Depending on your language the default ``custom.ts`` looks something like this:
+
+```typescript
+
+/**
+* Use this file to define custom functions and blocks.
+* Read more at https://makecode.microbit.org/blocks/custom
+*/
+
+enum MyEnum {
+        //% block="one"
+        One,
+        //% block="two"
+        Two
+}
+
+/**
+* Custom blocks
+*/
+//% weight=100 color=#0fbc11 icon=""
+namespace custom {
+    /**
+    * TODO: describe your function here
+    * @param n describe parameter here, eg: 5
+    * @param s describe parameter here, eg: "Hello"
+    * @param e describe parameter here
+    */
+    //% block
+    export function foo(n: number, s: string, e: MyEnum): void {
+        // Add code here
+    }
+
+    /**
+    * TODO: describe your function here
+    * @param value describe value here, eg: 5
+    */
+    //% block
+    export function fib(value: number): number {
+	return value <= 1 ? value : fib(value - 1) + fib(value - 2);
+    }
+}
+```

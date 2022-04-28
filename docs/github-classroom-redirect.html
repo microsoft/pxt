@@ -37,7 +37,8 @@
                 }
 
                 const assignment = localStorage["core/ghclassroomassigment"];
-                localStorage["core/githubtoken"] = keys["access_token"];
+                // do not store access token as the user has not explicitely allow storage 
+                // localStorage["core/githubtoken"] = keys["access_token"];
                 delete localStorage["core/oauthState"];
                 delete localStorage["core/ghclassroomassigment"];
                 var url = "https://classroom.github.com/" + assignment;
@@ -100,7 +101,7 @@
             <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
             <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>
             <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>
-            <div class="item">© 2020 Microsoft</div>
+            <div class="item">© 2022 Microsoft</div>
         </footer>
     </div>
     <script type="text/javascript"

@@ -35,7 +35,7 @@ class AlertImpl extends React.Component<AlertProps, {}> {
                 </div>
                 <div className="text">{text}</div>
                 {options && <div className="options">
-                    { options.map(opt => <div className="button" role="button" onClick={opt.onClick}>{opt.label}</div>) }
+                    { options.map((opt, index) => <div key={index} className="button" role="button" onClick={opt.onClick}>{opt.label}</div>) }
                 </div>}
             </div>
         </div>

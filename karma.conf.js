@@ -17,7 +17,6 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'built/web/bluebird.min.js',
       'built/web/jquery.js',
       'built/web/typescript.js',
       'webapp/public/blockly/**/*.js',

@@ -1,12 +1,12 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "module": "commonjs",
-        "outDir": "../built/webapp",
-        "rootDir": ".",
+        "outDir": "../built/",
+        "rootDir": "..",
         "newLine": "LF",
         "sourceMap": false,
         "moduleResolution": "node",
@@ -20,12 +20,13 @@
             "dom",
             "dom.iterable",
             "scripthost",
-            "es6"
+            "es2017",
+            "ES2018.Promise"
         ],
         "types": [
             "react",
             "react-dom",
-            "bluebird"
+            "resize-observer-browser"
         ],
         "incremental": false
     },

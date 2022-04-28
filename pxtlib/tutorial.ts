@@ -10,7 +10,14 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
-        const { code, templateCode, editor, language } = computeBodyMetadata(body);
+        const { code, templateCode, editor, language, jres, assetJson, customTs, tutorialValidationRulesStr } = computeBodyMetadata(body);
+
+        // parses tutorial rules string into a map of rules and enablement flag
+        let tutorialValidationRules: pxt.Map<boolean>;
+        if (metadata.tutorialCodeValidation) {
+            tutorialValidationRules = pxt.Util.jsonTryParse(tutorialValidationRulesStr);
+            categorizingValidationRules(tutorialValidationRules, title);
+        }
 
         // noDiffs legacy
         if (metadata.diffs === true // enabled in tutorial
@@ -23,11 +30,14 @@ namespace pxt.tutorial {
             diffify(steps, activities);
         }
 
+        const assetFiles = parseAssetJson(assetJson);
+
         // strip hidden snippets
         steps.forEach(step => {
             step.contentMd = stripHiddenSnippets(step.contentMd)
             step.headerContentMd = stripHiddenSnippets(step.headerContentMd)
             step.hintContentMd = stripHiddenSnippets(step.hintContentMd);
+            step.requiredBlockMd = stripHiddenSnippets(step.requiredBlockMd);
         });
 
         return {
@@ -38,18 +48,31 @@ namespace pxt.tutorial {
             code,
             templateCode,
             metadata,
-            language
+            language,
+            jres,
+            assetFiles,
+            customTs,
+            tutorialValidationRules
         };
+    }
+
+    export function getMetadataRegex(): RegExp {
+        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|tutorialValidationRules|requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi;
     }
 
     function computeBodyMetadata(body: string) {
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
-        let code = '';
+        const regex = getMetadataRegex();
+
+        let jres: string;
+        let code: string[] = [];
         let templateCode: string;
         let language: string;
         let idx = 0;
+        let assetJson: string;
+        let customTs: string;
+        let tutorialValidationRulesStr: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         body
             .replace(/((?!.)\s)+/g, "\n")
@@ -57,6 +80,7 @@ namespace pxt.tutorial {
                 switch (m1) {
                     case "block":
                     case "blocks":
+                    case "requiredTutorialBlock":
                     case "filterblocks":
                         if (!checkTutorialEditor(pxt.BLOCKS_PROJECT_NAME))
                             return undefined;
@@ -78,16 +102,27 @@ namespace pxt.tutorial {
                     case "template":
                         templateCode = m2;
                         break;
+                    case "jres":
+                        jres = m2;
+                        break;
+                    case "assetjson":
+                        assetJson = m2;
+                        break;
+                    case "customts":
+                        customTs = m2;
+                        m2 = "";
+                        break;
+                    case "tutorialValidationRules":
+                        tutorialValidationRulesStr = m2;
+                        break;
                 }
-                code += `\n${m1 == "python"
-                    ? "def __wrapper_" + idx + "():\n" + m2.replace(/^/gm, "    ")
-                    : "{\n" + m2 + "\n}"}\n`;
+                code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
                 idx++
                 return "";
             });
         // default to blocks
         editor = editor || pxt.BLOCKS_PROJECT_NAME
-        return { code, templateCode, editor, language }
+        return { code, templateCode, editor, language, jres, assetJson, customTs, tutorialValidationRulesStr }
 
         function checkTutorialEditor(expected: string) {
             if (editor && editor != expected) {
@@ -159,7 +194,7 @@ ${code}
 
     function parseTutorialTitle(tutorialmd: string): string {
         let title = tutorialmd.match(/^#[^#](.*)$/mi);
-        return title && title.length > 1 ? title[1] : null;
+        return title && title.length > 1 ? title[1].trim() : null;
     }
 
     function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): { steps: TutorialStepInfo[], activities: TutorialActivityInfo[] } {
@@ -208,21 +243,30 @@ ${code}
         let stepInfo: TutorialStepInfo[] = [];
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
-            let { header, hint } = parseTutorialHint(step, metadata && metadata.explicitHints);
+            let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
+
+            // if title is not hidden ("{TITLE HERE}"), strip flags
+            const title = !flags.match(/^\{.*\}$/)
+                ? flags.replace(/@(fullscreen|unplugged|showdialog|showhint|tutorialCompleted|resetDiff)/gi, "").trim()
+                : undefined;
+
             let info: TutorialStepInfo = {
+                title,
                 contentMd: step,
                 headerContentMd: header
             }
-            if (/@(fullscreen|unplugged)/.test(flags))
-                info.fullscreen = true;
-            if (/@unplugged/.test(flags))
-                info.unplugged = true;
+            if (/@(fullscreen|unplugged|showdialog|showhint)/i.test(flags))
+                info.showHint = true;
+            if (/@(unplugged|showdialog)/i.test(flags))
+                info.showDialog = true;
             if (/@tutorialCompleted/.test(flags))
                 info.tutorialCompleted = true;
             if (/@resetDiff/.test(flags))
                 info.resetDiff = true;
             if (hint)
                 info.hintContentMd = hint;
+            if (metadata.tutorialCodeValidation && requiredBlocks)
+                info.requiredBlockMd = requiredBlocks;
             stepInfo.push(info);
             return "";
         });
@@ -235,11 +279,12 @@ ${code}
         return stepInfo;
     }
 
-    function parseTutorialHint(step: string, explicitHints?: boolean): { header: string, hint: string } {
+    function parseTutorialHint(step: string, explicitHints?: boolean, tutorialCodeValidationEnabled?: boolean): { header: string, hint: string, requiredBlocks: string } {
         // remove hidden code sections
         step = stripHiddenSnippets(step);
 
         let header = step, hint;
+        let requiredBlocks: string;
 
         if (explicitHints) {
             // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
@@ -250,21 +295,40 @@ ${code}
             });
         } else {
             // everything after the first ``` section OR the first image is treated as a "hint"
-            const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
+            const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\[?\!\[[\s\S]+?\]\(\S+?\)\]?)[\s\S]*)/mi;
             let hintText = step.match(hintTextRegex);
             if (hintText && hintText.length > 2) {
                 header = hintText[1].trim();
                 hint = hintText[2].trim();
+                if (tutorialCodeValidationEnabled) {
+                    let hintSnippet = hintText[2].trim();
+                    hintSnippet = hintSnippet.replace(/``` *(requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
+                        requiredBlocks = `{\n${m2}\n}`;
+                        return "";
+                    });
+                    hint = hintSnippet;
+                }
             }
         }
+        return { header, hint, requiredBlocks };
+    }
 
-        return { header, hint };
+    function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {
+        const ruleNames = Object.keys(listOfRules);
+        for (let i = 0; i < ruleNames.length; i++) {
+            const setValidationRule: pxt.Map<string> = {
+                ruleName: ruleNames[i],
+                enabled: listOfRules[ruleNames[i]] ? 'true' : 'false',
+                tutorial: title,
+            };
+            pxt.tickEvent('tutorial.validation.setValidationRules', setValidationRule);
+        }
     }
 
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
         if (!str) return str;
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|customts)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
 
@@ -298,8 +362,8 @@ ${code}
         let text = pre.textContent;
 
         // collapse image python/js literales
-        text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `img(""" """)`);
-        text = text.replace(/img\s*\s*`(.|\n)*`\s*/g, "img` `");
+        text = text.replace(/img\s*\(\s*"{3}[\s\da-f.#tngrpoyw]*"{3}\s*\)/g, `img(""" """)`);
+        text = text.replace(/img\s*`[\s\da-f.#tngrpoyw]*`\s*/g, "img` `");
 
         if (!/@highlight/.test(text)) { // shortcut, nothing to do
             pre.textContent = text;
@@ -346,12 +410,68 @@ ${code}
             tutorialCode: tutorialInfo.code,
             tutorialRecipe: !!recipe,
             templateCode: tutorialInfo.templateCode,
-            autoexpandStep: true,
+            autoexpandStep: tutorialInfo.metadata?.autoexpandOff ? false : true,
             metadata: tutorialInfo.metadata,
-            language: tutorialInfo.language
+            language: tutorialInfo.language,
+            jres: tutorialInfo.jres,
+            assetFiles: tutorialInfo.assetFiles,
+            customTs: tutorialInfo.customTs,
+            tutorialValidationRules: tutorialInfo.tutorialValidationRules
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };
     }
 
+
+    export function parseCachedTutorialInfo(json: string, id?: string) {
+        let cachedInfo = pxt.Util.jsonTryParse(json) as pxt.Map<pxt.BuiltTutorialInfo>;
+        if (!cachedInfo) return Promise.resolve();
+
+        return pxt.BrowserUtils.tutorialInfoDbAsync()
+            .then(db => {
+                if (id && cachedInfo[id]) {
+                    const info = cachedInfo[id];
+                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.snippetBlocks, info.hash);
+                } else {
+                    for (let key of Object.keys(cachedInfo)) {
+                        const info = cachedInfo[key];
+                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.snippetBlocks, info.hash);
+                    }
+                }
+            }).catch((err) => { })
+    }
+
+    export function resolveLocalizedMarkdown(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {
+        // if non-default language, find localized file if any
+        const mfn = (fileName || ghid.fileName || "README") + ".md";
+
+        let md: string = undefined;
+        const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+        if (initialLang && baseLang && initialLangLowerCase) {
+            //We need to first search base lang and then intial Lang
+            //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en", "en-in"] and nb will be returned as ["nb"]
+            md = files[`_locales/${initialLang}/${mfn}`]
+                || files[`_locales/${initialLangLowerCase}/${mfn}`]
+                || files[`_locales/${baseLang}/${mfn}`]
+
+        } else {
+            md = files[`_locales/${initialLang}/${mfn}`];
+        }
+        md = md || files[mfn];
+        return md;
+    }
+
+
+    export function parseAssetJson(json: string): pxt.Map<string> {
+        if (!json) return undefined;
+
+        const files: pxt.Map<string> = JSON.parse(json);
+
+        return {
+            [pxt.TILEMAP_JRES]: files[pxt.TILEMAP_JRES],
+            [pxt.TILEMAP_CODE]: files[pxt.TILEMAP_CODE],
+            [pxt.IMAGES_JRES]: files[pxt.IMAGES_JRES],
+            [pxt.IMAGES_CODE]: files[pxt.IMAGES_CODE]
+        }
+    }
 }

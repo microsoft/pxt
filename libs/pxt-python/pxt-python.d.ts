@@ -14,8 +14,8 @@ declare namespace _py {
         //% py2tsOverride="removeElement($0)"
         remove(value: any): void;
 
-        //% py2tsOverride="sort()"
-        sort(): void;
+        //% py2tsOverride="sort($0?)"
+        sort(sorter?: (a: any, b: any) => number): void;
 
         //% py2tsOverride="reverse()"
         reverse(): void;
@@ -106,8 +106,8 @@ declare namespace _py {
         //% pyHelper="py_string_lstrip"
         lstrip(chars?: string): string;
 
-        //% pyHelper="py_string_replace"
-        replace(oldString: string, newString: string, count?: number): string;
+        //% py2tsOverride="replace($0, $1)"
+        replace(oldString: string, newString: string): string;
 
         //% pyHelper="py_string_rfind"
         rfind(sub: string, start?: number, end?: number): number;

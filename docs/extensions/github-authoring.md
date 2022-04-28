@@ -40,6 +40,14 @@ You can view a history of changes by following the version number link on the **
 
 There's also another button next to the GitHub sync - you can use it to add new files to the project. This is mostly to help keep the project organized. For the TypeScript compiler it doesn't matter if you use one big file or a bunch of smaller ones.
 
+## Releases
+
+After committing your changes, you will have the option to create a release of your extension. A release clears the cache and ensures that the latest version of your extension will be loaded (this feature is still rolling out to some targets, so double check that it is supported in your editor).
+
+### Optimize for Tutorials
+
+When creating a release for tutorials hosted on Github, you may also choose to optimize your repository. This will precompute some information about the markdown files, and save the data in a `tutorial-info-cache.json` file. Your tutorial will then load faster when the user opens it. This checkbox has no effect on non-tutorial extensions.
+
 ### Conflicts
 
 It's possible that multiple people are editing the same extension at the same time causing edit conflicts. This is similar to the situation where the same person edits the extension using several computers, browsers, or web sites. In the conflict description below, for simplicity, we'll just concentrate on the case of multiple people working on the same extension.
@@ -59,6 +67,10 @@ For testing TypeScript APIs you don't need a separate project, and instead can
 use the `test.ts` file in the extension itself. It is only used when you run the extenssion
 directly, not when you add it to a project. You can put TypeScript test code in there.
 
+## Documenting your extension
+
+MakeCode displays a **Help** option when the user right-clicks on a block. By default, clicking this for extension blocks will open the extension README in a new window. To disable the option (if the README is being used for other purposes), add `//% help=none`. To specify a custom help file, loaded in the editor (instead of in a new window), use `//% help=github:repository-name/path-to-file`, for example `//% help=pxt-mypkg/on-message-received`.
+
 ## Non-extensions
 
 The GitHub feature is not limited to extensions. You can also use it to store other MakeCode projects. You can even use it to collaborate on a project with multiple people.
@@ -72,7 +84,5 @@ The web app will not let you create extensions with C++. This you still need to 
 ## Additional notes
 
 * You can use a non-`master` branch by going to **Import URL** and saying something like `https://github.com/jrandomhacker/pxt-mypkg#mybranch`. User note, this hasn't been extensively tested yet.
-
 * MakeCode will generally only download files listed in `pxt.json`. Files in GitHub but not in `pxt.json` will be ignored and left alone.
-
 * The GitHub authoring feature is now available in all MakeCode editors.

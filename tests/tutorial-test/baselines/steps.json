@@ -3,24 +3,29 @@
     "title": "Getting started",
     "steps": [
         {
+            "title": "Introduction",
             "contentMd": "Let's get started!",
             "headerContentMd": "Let's get started!",
-            "fullscreen": true,
-            "unplugged": true
+            "showHint": true,
+            "showDialog": true
         },
         {
+            "title": "Step 1",
             "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
             "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
-            "fullscreen": true,
+            "showHint": true,
             "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```"
         },
         {
+            "title": "Step 2",
             "contentMd": "Click ``|Download|`` to transfer your code in your unknown macro!",
             "headerContentMd": "Click ``|Download|`` to transfer your code in your unknown macro!"
         }
     ],
     "activities": null,
-    "code": "\n{\nbasic.showString(\"Micro!\")\n}\n",
+    "code": [
+        "{\nbasic.showString(\"Micro!\")\n}"
+    ],
     "metadata": {
         "diffs": false
     }

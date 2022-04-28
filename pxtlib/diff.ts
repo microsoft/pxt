@@ -637,12 +637,16 @@ namespace pxt.diff {
         return content && /^(<<<<<<<[^<]|>>>>>>>[^>])/m.test(content);
     }
 
-    export function reconstructConfig(files: pxt.Map<string>, commit: pxt.github.Commit, tp: pxt.ProjectTemplate) {
+    export function reconstructConfig(parsed: pxt.github.ParsedRepo, files: pxt.Map<string>, commit: pxt.github.Commit, tp: pxt.ProjectTemplate) {
         let dependencies: pxt.Map<string> = {};
         // grab files from commit
         let commitFiles = commit.tree.tree.map(f => f.path)
             .filter(f => /\.(ts|blocks|md|jres|asm|json)$/.test(f))
             .filter(f => f != pxt.CONFIG_NAME);
+        if (parsed.fileName)
+            commitFiles = commitFiles
+                .filter(f => f.indexOf(parsed.fileName) === 0)
+                .map(f => f.slice(parsed.fileName.length + 1));
         // if no available files, include the files from the template
         if (!commitFiles.find(f => /\.ts$/.test(f))) {
             tp.config.files.filter(f => commitFiles.indexOf(f) < 0)

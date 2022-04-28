@@ -5,14 +5,14 @@
 
 ## Introduction
 
-### Introduction step @unplugged
+### Introduction step @showdialog
 
 Introduction text
 ![Image text](/image/url.gif)
 
 ## Activity 1
 
-### Step 1 @fullscreen
+### Step 1 @showhint
 
 Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.
 

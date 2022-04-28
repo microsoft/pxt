@@ -117,6 +117,8 @@
             $(backButton).remove(); backButton = undefined;
             $('#sidedocs-back-button-divider').remove();
         }
+
+        if (/pxtElectron=true/.test(window.location)) window.pxtElectron = true;
         var loading = document.getElementById('loading');
         var content = document.getElementById('content');
         ksRunnerReady(function() {
@@ -135,19 +137,19 @@
             if (markdown) {
                 console.log('rendering code:')
                 console.log(markdown);
-                pxt.runner.renderMarkdownAsync(content, markdown).done(function() {
+                pxt.runner.renderMarkdownAsync(content, markdown).then(function() {
                     $(loading).hide();
                     $(content).show();
                 });
             } else if (projectid) {
-                pxt.runner.renderProjectAsync(content, projectid[1]).done(function() {
+                pxt.runner.renderProjectAsync(content, projectid[1]).then(function() {
                     $(loading).hide();
                     $(content).show();
                 });
             }
             else if (project) {
                 const files = JSON.parse(project[1]);
-                pxt.runner.renderProjectFilesAsync(content, files).done(function() {
+                pxt.runner.renderProjectFilesAsync(content, files).then(function() {
                     $(loading).hide();
                     $(content).show();
                 });

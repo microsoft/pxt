@@ -2,7 +2,7 @@
     "name": "test-package",
     "description": "Project that defines a variety of APIs for testing the TypeScript and Python language service",
     "files": [
-        "namespaces.ts"
+        "basic.ts"
     ],
     "public": true,
     "dependencies": {},

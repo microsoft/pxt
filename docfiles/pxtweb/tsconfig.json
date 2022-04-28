@@ -1,13 +1,13 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2018",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
         "out": "../../built/web/pxtweb.js",
         "newLine": "LF",
         "sourceMap": false,
-        "lib": ["dom", "dom.iterable", "scripthost", "es6"],
+        "lib": ["dom", "dom.iterable", "scripthost", "es2018"],
         "types": []
     }
 }

@@ -14,6 +14,9 @@
 /* Menu bar */
 @menuBarZIndex: 101; /* From semantic */
 
+/* Dropdown menu */
+@dropdownMenuZIndex: 11; /* From semantic */
+
 /* Editor */
 @aboveEditorZIndex: 90;
 
@@ -51,6 +54,8 @@
 @editorToolsZIndex: @blocklyToolboxZIndex+1; /* Above the blockly toolbox but under the drag surface */
 @simulatorZIndex: @editorToolsZIndex+1; /* Needs to be on top of @editorToolsZIndex for mobile/tablet view */
 @editorLogoZIndex: ((@blocklyFlyoutZIndex)-1); /* Should be below the flyouts blocklyFlyout and @monacoFlyoutZIndex */
+
+@filelistZIndex: @simulatorZIndex;
 
 /* Tutorial */
 @tutorialCardZIndex: @simulatorZIndex+2;

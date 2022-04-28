@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as sui from "./sui";
 import * as data from "./data";
+import { fireClickOnEnter } from "./util";
 
 export interface SerialIndicatorProps {
     isSim: boolean,
@@ -57,7 +58,7 @@ export class SerialIndicator extends data.Component<SerialIndicatorProps, Serial
     renderCore() {
         if (!this.active()) return <div />;
         return (
-            <div role="button" title={lf("Open console")} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={sui.fireClickOnEnter}>
+            <div role="button" title={lf("Open console")} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={fireClickOnEnter}>
                 <div className="detail">
                     <img alt={lf("Animated bar chart")} className="barcharticon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/Bars_black.gif`)}></img>
                 </div>

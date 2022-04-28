@@ -81,8 +81,13 @@ div.blocks-svg-list > svg {
 code {
     white-space: pre-wrap;
 }
-code.lang-ghost, code.lang-config, code.lang-package
-{ display: none;}
+code.lang-ghost,
+code.lang-config,
+code.lang-package,
+code.lang-jres,
+code.lang-assetsjson {
+    display: none;
+}
 
 code.lang-block::before,
 code.lang-blocks::before,
@@ -123,6 +128,10 @@ code.lang-apis
 {
     background-color: rgba(0,0,0,0.04);
     color:transparent;
+}
+code.lang-codecard > ul,
+code.lang-codecard > hr {
+    display: none
 }
 
 /* wrap cards header */

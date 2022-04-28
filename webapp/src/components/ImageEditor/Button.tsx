@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { fireClickOnlyOnEnter } from './util';
 
 export interface ButtonProps {
     title: string;
@@ -7,18 +8,21 @@ export interface ButtonProps {
 
     toggle?: boolean;
     disabled?: boolean;
+    noTab?: boolean;
 }
 
 export class IconButton extends React.Component<ButtonProps, {}> {
     render() {
-        const { title, iconClass, onClick, toggle, disabled } = this.props;
+        const { title, iconClass, onClick, toggle, disabled, noTab } = this.props;
 
         return (
             <div
                 role="button"
                 className={`image-editor-button ${toggle ? "toggle" : ""} ${disabled ? "disabled" : ""}`}
                 title={title}
-                onClick={onClick}>
+                tabIndex={(noTab || disabled) ? -1 : 0}
+                onClick={onClick}
+                onKeyDown={fireClickOnlyOnEnter}>
                     <span className={iconClass} />
             </div>
         );

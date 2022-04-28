@@ -1,54 +1,31 @@
+// eslint-disable-next-line no-var
 declare var require: any;
-import * as Promise from "bluebird";
-(window as any).Promise = Promise;
 
 const PouchDB = require("pouchdb")
     .plugin(require('pouchdb-adapter-memory'));
 
-(Promise as any).config({
-    // Enables all warnings except forgotten return statements.
-    warnings: {
-        wForgottenReturn: false
-    }
-});
-
-let _db: any = undefined;
-let inMemory = false;
-
-function memoryDb(): Promise<any> {
-    pxt.debug('db: in memory...')
-    inMemory = true;
-    _db = new PouchDB("pxt-" + pxt.storage.storageId(), {
-        adapter: 'memory'
-    })
-    return Promise.resolve(_db);
-}
-
+let _db: Promise<any> = undefined;
 export function getDbAsync(): Promise<any> {
-    if (_db) return Promise.resolve(_db);
+    if (_db) return _db;
 
-    if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly())
-        return memoryDb();
+    return _db = Promise.resolve()
+        .then(() => {
+            const opts: any = {
+                revs_limit: 2
+            };
 
-    const opts: any = {
-        revs_limit: 2
-    };
+            const db = new PouchDB("pxt-" + pxt.storage.storageId(), opts);
+            pxt.log(`PouchDB adapter: ${db.adapter}`);
 
-    let temp = new PouchDB("pxt-" + pxt.storage.storageId(), opts);
-    return temp.get('pouchdbsupportabletest')
-        .catch(function (error: any) {
-            if (error && error.error && error.name == 'indexed_db_went_bad') {
-                return memoryDb();
-            } else {
-                _db = temp;
-                return Promise.resolve(_db);
-            }
-        })
-        .finally(() => { pxt.log(`PouchDB adapter: ${_db.adapter}`) });
+            return db;
+        });
 }
 
 export function destroyAsync(): Promise<void> {
-    return !_db ? Promise.resolve() : _db.destroy();
+    return !_db ? Promise.resolve() : _db.then((db: any) => {
+        db.destroy();
+        _db = undefined;
+    });
 }
 
 export class Table {
@@ -97,11 +74,11 @@ export class Table {
                 pxt.log(`table: set failed, cleaning translation db`)
                 // clean up translation and try again
                 return pxt.BrowserUtils.clearTranslationDbAsync()
+                    .then(() => pxt.BrowserUtils.clearTutorialInfoDbAsync())
                     .then(() => this.setAsyncNoRetry(obj))
                     .catch(e => {
-                        pxt.reportException(e);
                         pxt.log(`table: we are out of space...`)
-                        return undefined;
+                        throw e;
                     })
             })
     }
@@ -117,6 +94,10 @@ class GithubDb implements pxt.github.IGithubDb {
     // in memory cache
     private mem = new pxt.github.MemoryGithubDb();
     private table = new Table("github");
+
+    latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
+        return this.mem.latestVersionAsync(repopath, config)
+    }
 
     loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
         // don't cache master
@@ -142,7 +123,10 @@ class GithubDb implements pxt.github.IGithubDb {
         );
     }
     loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
-        tag = tag || "master";
+        if (!tag) {
+          pxt.debug(`dep: default to master`)
+          tag = "master"
+        }
         // don't cache master
         if (tag == "master")
             return this.mem.loadPackageAsync(repopath, tag);

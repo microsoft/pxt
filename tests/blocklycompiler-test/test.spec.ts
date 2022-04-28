@@ -39,6 +39,7 @@ pxt.webConfig = {
     monacoworkerjs: undefined,
     gifworkerjs: undefined,
     serviceworkerjs: undefined,
+    typeScriptWorkerJs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,
     pxtCdnUrl: undefined,
@@ -114,14 +115,14 @@ class BlocklyCompilerTestHost implements pxt.Host {
                     },
                     "description": "",
                     "files": [
-                        "main.blocks",
-                        "main.ts",
+                        pxt.MAIN_BLOCKS,
+                        pxt.MAIN_TS,
                         "pxt-core.d.ts",
                         "pxt-helpers.ts"
                     ]
                 });
             }
-            else if (filename == "main.blocks") {
+            else if (filename == pxt.MAIN_BLOCKS) {
                 return "";
             }
             else if (filename == "pxt-core.d.ts" || filename == "pxt-helpers.ts") {
@@ -163,7 +164,8 @@ class BlocklyCompilerTestHost implements pxt.Host {
     }
 }
 
-function fail(msg: string) {
+// @ts-ignore
+function fail(msg: string): never {
     chai.assert(false, msg);
 }
 
@@ -320,6 +322,10 @@ describe("blockly compiler", function () {
         it("should handle non-number inputs in logic operators", (done: () => void) => {
             blockTestAsync("logic_non_numeric").then(done, done);
         });
+
+        it("should handle literals being compared", (done: () => void) => {
+            blockTestAsync("compare_literals").then(done, done);
+        });
     });
 
     describe("compiling math", () => {
@@ -379,6 +385,10 @@ describe("blockly compiler", function () {
 
         it("should change reserved names", (done: () => void) => {
             blockTestAsync("variables_reserved_names").then(done, done);
+        });
+
+        it("should change variable names when escaped name matches", (done: () => void) => {
+            blockTestAsync("escaped_name_equal").then(done, done);
         });
 
         it("should handle collisions with variables declared by the destructuring mutator", (done: () => void) => {
@@ -446,6 +456,38 @@ describe("blockly compiler", function () {
         it("should bail out of type checking when a recursive function calls itself", (done: () => void) => {
             blockTestAsync("function_bad_recursion").then(done, done);
         });
+
+        it("should handle an array of arrays as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_arrays").then(done, done);
+        })
+
+        it("should handle an array of strings as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_strings").then(done, done);
+        })
+
+        it("should handle a variable as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_variable").then(done, done);
+        })
+
+        it("should handle an array of variables as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_variables").then(done, done);
+        })
+
+        it("should handle an empty array as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_empty").then(done, done);
+        })
+
+        it("should handle an array of booleans as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_booleans").then(done, done);
+        })
+
+        it("should handle an array of empty arrays as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_empty_arrays").then(done, done);
+        })
+
+        it("should perform type inference on array arguments", (done: () => void) => {
+            blockTestAsync("array_parameter_type_inference").then(done, done);
+        })
     });
 
     describe("compiling special blocks", () => {
@@ -511,6 +553,12 @@ describe("blockly compiler", function () {
     describe("compiling events blocks", () => {
         it("should handle APIs where the handler's type uses the Action alias", done => {
             blockTestAsync("action_event").then(done, done);
+        });
+    })
+
+    describe("compiling variable set", () => {
+        it("should attempt narrow types to the most specific type when set", done => {
+            blockTestAsync("inheritance").then(done, done);
         });
     })
 });

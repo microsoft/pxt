@@ -3,6 +3,7 @@ import * as React from "react";
 import * as sui from "../sui";
 
 export interface SearchInputProps extends React.HTMLProps<HTMLDivElement> {
+    defaultValue?: string;
     searchHandler: (inputValue: string) => void;
     ariaMessage?: string;
     placeholder?: string;
@@ -21,7 +22,7 @@ export class SearchInput extends React.Component<SearchInputProps, SearchInputSt
     constructor(props: SearchInputProps) {
         super(props);
         this.state = {
-            inputValue: ""
+            inputValue: props?.defaultValue || ""
         }
 
         this.handleSearchKeyUpdate = this.handleSearchKeyUpdate.bind(this);

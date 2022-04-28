@@ -247,7 +247,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9282
+    // next free error 9283
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -874,10 +874,19 @@ namespace ts.pxtc {
         }
     }
 
-    export function getDeclName(node: Declaration) {
+    export function getDeclName(node: Declaration): string {
         let text = isNamedDeclaration(node) ? (<Identifier>node.name).text : null
-        if (!text)
-            text = node.kind == SK.Constructor ? "constructor" : "inline"
+        if (!text) {
+            if (node.kind == SK.Constructor) {
+                text = "constructor"
+            } else {
+                for (let parent = node.parent as Declaration; parent; parent = parent.parent as Declaration) {
+                    if (isNamedDeclaration(parent))
+                        return getDeclName(parent) + ".inline"
+                }
+                return "inline"
+            }
+        }
         return parentPrefix(node.parent) + text;
     }
 
@@ -971,7 +980,19 @@ namespace ts.pxtc {
                 };
             }
 
-            hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo());
+            let extinfo = opts.extinfo
+            let optstarget = opts.target
+            // if current (main) extinfo is disabled use another one
+            if (extinfo && extinfo.disabledDeps) {
+                const enabled = (opts.otherMultiVariants || []).find(e => e.extinfo && !e.extinfo.disabledDeps)
+                if (enabled) {
+                    pxt.debug(`using alternative extinfo (due to ${extinfo.disabledDeps})`)
+                    extinfo = enabled.extinfo
+                    optstarget = enabled.target
+                }
+            }
+
+            hexfile.setupFor(optstarget, extinfo || emptyExtInfo());
             hexfile.setupInlineAssembly(opts);
         }
 
@@ -1005,11 +1026,17 @@ namespace ts.pxtc {
         if (!opts.forceEmit || res.diagnostics.length == 0) {
             let files = program.getSourceFiles().slice();
 
-            const main = files.find(sf => sf.fileName === "main.ts");
-
+            const main = files.find(sf => sf.fileName === pxt.MAIN_TS);
             if (main) {
-                files = files.filter(sf => sf.fileName !== "main.ts");
+                files = files.filter(sf => sf.fileName !== pxt.MAIN_TS);
                 files.push(main);
+            }
+
+            // run post-processing code last, if present
+            const postProcessing = files.find(sf => sf.fileName === pxt.TUTORIAL_CODE_STOP);
+            if (postProcessing) {
+                files = files.filter(sf => sf.fileName !== pxt.TUTORIAL_CODE_STOP);
+                files.push(postProcessing);
             }
 
             files.forEach(f => {
@@ -1333,7 +1360,7 @@ namespace ts.pxtc {
                             if (!h.types || h.types.length != 1)
                                 throw userError(9228, lf("invalid extends clause"))
                             let superType = typeOf(h.types[0])
-                            if (superType && isClassType(superType) && !isGenericType(superType)) {
+                            if (superType && isClassType(superType)) {
                                 // check if user defined
                                 // let filename = getSourceFileOfNode(tp.symbol.valueDeclaration).fileName
                                 // if (program.getRootFileNames().indexOf(filename) == -1) {
@@ -1435,9 +1462,12 @@ namespace ts.pxtc {
             inf.vtable = tbl
             inf.itable = []
 
+            const fieldNames: pxt.Map<boolean> = {}
+
             for (let fld of inf.allfields) {
                 let fname = getName(fld)
                 let finfo = fieldIndexCore(inf, fld, false)
+                fieldNames[fname] = true
                 inf.itable.push({
                     name: fname,
                     info: (finfo.idx + 1) * (isStackMachine() ? 1 : 4),
@@ -1461,6 +1491,7 @@ namespace ts.pxtc {
                             ex.setProc = proc
                         else if (isGet && !ex.proc)
                             ex.proc = proc
+                        ex.info = 0
                     } else {
                         inf.itable.push({
                             name: n,
@@ -2488,10 +2519,11 @@ ${lbl}: .short 0xffff
             let currOff = numReservedGlobals * 4
             let firstPointer = 0
             for (let g of globals) {
-                let sz = sizeOfBitSize(g.bitSize)
+                const bitSize = isStackMachine() ? BitSize.None : g.bitSize
+                let sz = sizeOfBitSize(bitSize)
                 while (currOff & (sz - 1))
                     currOff++ // align
-                if (!firstPointer && g.bitSize == BitSize.None)
+                if (!firstPointer && bitSize == BitSize.None)
                     firstPointer = currOff
                 g.index = currOff
                 currOff += sz
@@ -3858,17 +3890,40 @@ ${lbl}: .short 0xffff
 
         function emitBrk(node: Node) {
             bin.numStmts++
-            if (!opts.breakpoints)
+            const needsComment = assembler.debug || target.switches.size || target.sourceMap
+            let needsBreak = !!opts.breakpoints
+            if (!needsComment && !needsBreak)
                 return
-            let src = getSourceFileOfNode(node)
+            const src = getSourceFileOfNode(node)
             if (opts.justMyCode && isInPxtModules(src))
-                return;
+                needsBreak = false
+            if (!needsComment && !needsBreak)
+                return
             let pos = node.pos
             while (/^\s$/.exec(src.text[pos]))
                 pos++;
-            let p = ts.getLineAndCharacterOfPosition(src, pos)
-            let e = ts.getLineAndCharacterOfPosition(src, node.end);
-            let brk: Breakpoint = {
+
+            // a leading comment gets attached to statement
+            while (src.text[pos] == '/' && src.text[pos + 1] == '/') {
+                while (src.text[pos] && src.text[pos] != '\n') pos++
+                pos++
+            }
+
+            const p = ts.getLineAndCharacterOfPosition(src, pos)
+
+            if (needsComment) {
+                let endpos = node.end
+                if (endpos - pos > 80)
+                    endpos = pos + 80
+                const srctext = src.text.slice(pos, endpos).trim().replace(/\n[^]*/, "...")
+                proc.emit(ir.comment(`${src.fileName.replace(/pxt_modules\//, "")}(${p.line + 1},${p.character + 1}): ${srctext}`))
+            }
+
+            if (!needsBreak)
+                return
+
+            const e = ts.getLineAndCharacterOfPosition(src, node.end);
+            const brk: Breakpoint = {
                 id: res.breakpoints.length,
                 isDebuggerStmt: node.kind == SK.DebuggerStatement,
                 fileName: src.fileName,
@@ -3880,7 +3935,7 @@ ${lbl}: .short 0xffff
                 endColumn: e.character,
             }
             res.breakpoints.push(brk)
-            let st = ir.stmt(ir.SK.Breakpoint, null)
+            const st = ir.stmt(ir.SK.Breakpoint, null)
             st.breakpointInfo = brk
             proc.emit(st)
         }
@@ -4215,8 +4270,10 @@ ${lbl}: .short 0xffff
             }
 
             // c = a[i]
-            if (iterVar)
+            if (iterVar) {
                 proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
+                emitBrk(node.initializer);
+            }
 
             flushHoistedFunctionDefinitions()
 
@@ -4239,6 +4296,7 @@ ${lbl}: .short 0xffff
             emitBrk(node)
             let label = node.label ? node.label.text : null
             let isBreak = node.kind == SK.BreakStatement
+            let numTry = 0
             function findOuter(parent: Node): Statement {
                 if (!parent) return null;
                 if (label && parent.kind == SK.LabeledStatement &&
@@ -4248,6 +4306,7 @@ ${lbl}: .short 0xffff
                     return parent as Statement
                 if (!label && isIterationStatement(parent, false))
                     return parent as Statement
+                numTry += numBeginTry(parent)
                 return findOuter(parent.parent);
             }
             let stmt = findOuter(node)
@@ -4255,6 +4314,7 @@ ${lbl}: .short 0xffff
                 error(node, 9230, lf("cannot find outer loop"))
             else {
                 let l = getLabels(stmt)
+                emitEndTry(numTry)
                 if (node.kind == SK.ContinueStatement) {
                     if (!isIterationStatement(stmt, false))
                         error(node, 9231, lf("continue on non-loop"));
@@ -4275,6 +4335,13 @@ ${lbl}: .short 0xffff
             } else if (funcHasReturn(proc.action)) {
                 v = emitLit(undefined) // == return undefined
             }
+            let numTry = 0
+            for (let p: Node = node; p; p = p.parent) {
+                if (p == proc.action)
+                    break
+                numTry += numBeginTry(p)
+            }
+            emitEndTry(numTry)
             proc.emitJmp(getLabels(proc.action).ret, v, ir.JmpMode.Always)
         }
 
@@ -4337,6 +4404,44 @@ ${lbl}: .short 0xffff
             proc.emitExpr(rtcallMaskDirect("pxt::throwValue", [emitExpr(node.expression)]))
         }
 
+        function emitEndTry(num = 1) {
+            while (num--) {
+                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+            }
+        }
+
+        function jumpXFinally() {
+            userError(9282, lf("jumps (return, break, continue) through finally blocks not supported yet"))
+        }
+
+        function numBeginTry(node: Node) {
+            let r = 0
+            if (node.kind == SyntaxKind.Block && node.parent) {
+                if (node.parent.kind == SyntaxKind.CatchClause) {
+                    // from inside of catch there's at most the finally block to close
+                    const t = node.parent.parent as TryStatement
+                    if (t.finallyBlock) {
+                        r++
+                        jumpXFinally()
+                    }
+                } else if (node.parent.kind == SyntaxKind.TryStatement) {
+                    // from inside of the body of try{} there possibly the catch and finally blocks to close
+                    const t = node.parent as TryStatement
+                    if (t.tryBlock == node) {
+                        if (t.catchClause) r++
+                        if (t.finallyBlock) {
+                            r++
+                            jumpXFinally()
+                        }
+                    }
+                } else {
+                    // if we're inside of finally there's nothing to close already
+                    // (or more common this block has nothing to do with try{})
+                }
+            }
+            return r
+        }
+
         function emitTryStatement(node: TryStatement) {
             const beginTry = (lbl: ir.Stmt) =>
                 rtcallMaskDirect("pxt::beginTry", [ir.ptrlit(lbl.lblName, lbl as any)])
@@ -4359,7 +4464,7 @@ ${lbl}: .short 0xffff
 
             if (node.catchClause) {
                 const skip = proc.mkLabel("catchend")
-                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+                emitEndTry()
                 proc.emitJmp(skip)
 
                 proc.emitLbl(lcatch)
@@ -4375,7 +4480,7 @@ ${lbl}: .short 0xffff
             }
 
             if (node.finallyBlock) {
-                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+                emitEndTry()
                 proc.emitLbl(lfinally)
                 emitBlock(node.finallyBlock)
                 proc.emitExpr(rtcallMaskDirect("pxt::endFinally", []))
@@ -4458,9 +4563,9 @@ ${lbl}: .short 0xffff
                             jrname = getNodeFullName(checker, node)
                         }
                         let jr = U.lookup(opts.jres || {}, jrname)
-                        if (!jr)
+                        if (!jr) {
                             userError(9270, lf("resource '{0}' not found in any .jres file", jrname))
-                        else {
+                        } else {
                             currJres = jr
                         }
                     }

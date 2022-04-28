@@ -69,7 +69,7 @@ namespace pxtblockly {
         return canvas.toDataURL();
     }
 
-    export function tilemapToImageURI(data: pxt.sprite.TilemapData, sideLength: number, lightMode: boolean, blocksInfo: pxtc.BlocksInfo) {
+    export function tilemapToImageURI(data: pxt.sprite.TilemapData, sideLength: number, lightMode: boolean) {
         const colors = pxt.appTarget.runtime.palette.slice();
         const canvas = document.createElement("canvas");
         canvas.width = sideLength;
@@ -153,58 +153,59 @@ namespace pxtblockly {
         const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
         if (!allTiles.length) return;
 
-        Blockly.Events.disable();
+        try {
+            Blockly.Events.disable();
+            let customMapping: pxt.Tile[] = [];
 
-        let customMapping: pxt.Tile[] = [];
-
-        for (const tile of allTiles) {
-            if (tile.qualifiedName) {
-                customMapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
+            for (const tile of allTiles) {
+                if (tile.qualifiedName) {
+                    customMapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
+                }
+                else if (tile.data) {
+                    customMapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
+                }
+                deleteTilesetTileIfExists(ws, tile);
             }
-            else if (tile.data) {
-                customMapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
+
+            const tilemaps = getAllBlocksWithTilemaps(ws);
+
+            for (const tilemap of tilemaps) {
+                const legacy = pxt.sprite.legacy.decodeTilemap(tilemap.ref.getInitText(), "typescript");
+
+                const mapping: pxt.Tile[] = [];
+
+                const newData = new pxt.sprite.TilemapData(
+                    legacy.tilemap, {
+                        tileWidth: legacy.tileset.tileWidth,
+                        tiles: legacy.tileset.tiles.map((t, index) => {
+                            if (t.projectId != null) {
+                                return customMapping[t.projectId];
+                            }
+                            if (!mapping[index]) {
+                                mapping[index] = proj.resolveTile(t.qualifiedName)
+                            }
+
+                            return mapping[index];
+                        })
+                    },
+                    legacy.layers
+                );
+
+                tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
             }
-            deleteTilesetTileIfExists(ws, tile);
-        }
 
-        const tilemaps = getAllBlocksWithTilemaps(ws);
+            const tilesets = getAllBlocksWithTilesets(ws);
 
-        for (const tilemap of tilemaps) {
-            const legacy = pxt.sprite.legacy.decodeTilemap(tilemap.ref.getInitText(), "typescript");
-
-            const mapping: pxt.Tile[] = [];
-
-            const newData = new pxt.sprite.TilemapData(
-                legacy.tilemap, {
-                    tileWidth: legacy.tileset.tileWidth,
-                    tiles: legacy.tileset.tiles.map((t, index) => {
-                        if (t.projectId != null) {
-                            return customMapping[t.projectId];
-                        }
-                        if (!mapping[index]) {
-                            mapping[index] = proj.resolveTile(t.qualifiedName)
-                        }
-
-                        return mapping[index];
-                    })
-                },
-                legacy.layers
-            );
-
-            tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
-        }
-
-        const tilesets = getAllBlocksWithTilesets(ws);
-
-        for (const tileset of tilesets) {
-            // Force a re-render
-            tileset.ref.doValueUpdate_(tileset.ref.getValue());
-            if (tileset.ref.isDirty_) {
-                tileset.ref.forceRerender();
+            for (const tileset of tilesets) {
+                // Force a re-render
+                tileset.ref.doValueUpdate_(tileset.ref.getValue());
+                if (tileset.ref.isDirty_) {
+                    tileset.ref.forceRerender();
+                }
             }
+        } finally {
+            Blockly.Events.enable();
         }
-
-        Blockly.Events.enable();
     }
 
     function getAllFieldsCore<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {
@@ -238,33 +239,80 @@ namespace pxtblockly {
         let all: pxt.Map<pxt.Tile> = {};
 
         const allMaps = getAllBlocksWithTilemaps(workspace);
+        const project = pxt.react.getTilemapProject();
 
         for (const map of allMaps) {
             if (map.block.id === excludeBlockID) continue;
 
-            for (const tile of map.ref.getTileset().tiles) {
-                all[tile.id] = tile;
+            for (const tile of map.ref.getTileset()?.tiles || []) {
+                all[tile.id] = project.lookupAsset(pxt.AssetType.Tile, tile.id);
             }
         }
 
-        const project = pxt.react.getTilemapProject();
-        const projectMaps = project.getAllTilemaps();
+        const projectMaps = project.getAssets(pxt.AssetType.Tilemap);
 
         for (const projectMap of projectMaps) {
             for (const tile of projectMap.data.tileset.tiles) {
-                all[tile.id] = tile;
+                all[tile.id] = project.lookupAsset(pxt.AssetType.Tile, tile.id);
             }
         }
 
         const allTiles = getAllBlocksWithTilesets(workspace);
         for (const tilesetField of allTiles) {
-            const id = tilesetField.ref.getValue();
+            const value = tilesetField.ref.getValue();
+            const match = /^\s*assets\s*\.\s*tile\s*`([^`]*)`\s*$/.exec(value);
 
-            if (!all[id]) {
-                all[id] = project.resolveTile(id);
+            if (match) {
+                const tile = project.lookupAssetByName(pxt.AssetType.Tile, match[1]);
+
+                if (tile && !all[tile.id]) {
+                    all[tile.id] = tile;
+                }
+            }
+            else if (!all[value]) {
+                all[value] = project.resolveTile(value);
             }
         }
 
-        return Object.keys(all).map(key => all[key]);
+        return Object.keys(all).map(key => all[key]).filter(t => !!t);
+    }
+
+    export function getTemporaryAssets(workspace: Blockly.Workspace, type: pxt.AssetType) {
+        switch (type) {
+            case pxt.AssetType.Image:
+                return getAllFieldsCore(workspace, field => field instanceof FieldSpriteEditor && field.isTemporaryAsset())
+                    .map(f => (f.ref as unknown as FieldSpriteEditor).getAsset());
+            case pxt.AssetType.Animation:
+                return getAllFieldsCore(workspace, field => field instanceof FieldAnimationEditor && field.isTemporaryAsset())
+                    .map(f => (f.ref as unknown as FieldAnimationEditor).getAsset());
+
+            default: return [];
+        }
+    }
+
+
+    export function workspaceToScreenCoordinates(ws: Blockly.WorkspaceSvg, wsCoordinates: Blockly.utils.Coordinate) {
+        // The position in pixels relative to the origin of the
+        // main workspace.
+        const scaledWS = wsCoordinates.scale(ws.scale);
+
+        // The offset in pixels between the main workspace's origin and the upper
+        // left corner of the injection div.
+        const mainOffsetPixels = ws.getOriginOffsetInPixels();
+
+        // The client coordinates offset by the injection div's upper left corner.
+        const clientOffsetPixels = Blockly.utils.Coordinate.sum(
+            scaledWS, mainOffsetPixels);
+
+
+        const injectionDiv = ws.getInjectionDiv();
+
+        // Bounding rect coordinates are in client coordinates, meaning that they
+        // are in pixels relative to the upper left corner of the visible browser
+        // window.  These coordinates change when you scroll the browser window.
+        const boundingRect = injectionDiv.getBoundingClientRect();
+
+        return new Blockly.utils.Coordinate(clientOffsetPixels.x + boundingRect.left,
+            clientOffsetPixels.y + boundingRect.top)
     }
 }

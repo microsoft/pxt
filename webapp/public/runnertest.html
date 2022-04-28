@@ -16,7 +16,7 @@
     <style type="text/css">
         @import "./semantic.css";
         @import "./blockly.css";
-        
+
         svg {
             margin: 1rem;
         }
@@ -26,7 +26,7 @@
 .ui[class*="5:3"].embed {
     padding-bottom: 83%;
     background: none;
-}        
+}
     </style>
     <script>
         // This line gets patched up by the cloud
@@ -41,9 +41,9 @@
     <script type="text/javascript" src="/blb/semantic.js"></script>
     <script type="text/javascript" src="/embed.js"></script>
     <script type="text/javascript">
-        var ps = [ 
+        var ps = [
             "0"
-/*            
+/*
             ,"true"
             ,"false"
             ,"'hello'"
@@ -53,14 +53,14 @@
             ,"while(true) {}"
             ,"if (false) { }",
             ,"if (false) { basic.showNumber(0) } else { basic.clearScreen() }"
-            ,"if (false) { basic.showNumber(0) } else if (false) { basic.showNumber(1) } else { basic.clearScreen() }"            
+            ,"if (false) { basic.showNumber(0) } else if (false) { basic.showNumber(1) } else { basic.clearScreen() }"
             , "basic.forever(() => { basic.clearScreen(); })"
             , "basic.forever(() => { basic.clearScreen(); basic.showNumber(1); })"
-            , "let x = 0;"         
-            , "var x = 42\nvar y = 'hello'"   
+            , "let x = 0;"
+            , "var x = 42\nvar y = 'hello'"
             , "for(let i = 0;i<5;++i) { basic.clearScreen() }"
             , "radio.onDataReceived(() => {});radio.onDataReceived(() => {});"
-            , "var x = 42\nvar y = x"   
+            , "var x = 42\nvar y = x"
             , "input.onButtonPressed(Button.AB, () => {})"
             , "input.onButtonPressed(Button.A, () => {})"
             , "input.onButtonPressed(Button.B, () => {})"
@@ -102,22 +102,22 @@
             ,'basic.forever(() => { let degrees = input.compassHeading(); if (degrees < 45) basic.showString("N"); else if (degrees < 135) basic.showString("E"); else if (degrees < 225) basic.showString("S"); else basic.showString("W"); })'
             ,"let x = 3; x += 3; ++x;"
             ,"-5"
-            ,"let roll = 0; if (roll==5) { basic.showNumber(0) } else if (roll==4) { basic.showNumber(1) }"       
-            ,"let count = 0; while (count < 10) { basic.pause(100); basic.showNumber(count) }"     
+            ,"let roll = 0; if (roll==5) { basic.showNumber(0) } else if (roll==4) { basic.showNumber(1) }"
+            ,"let count = 0; while (count < 10) { basic.pause(100); basic.showNumber(count) }"
             ,"Math.abs(1)"
-            ,"Math.random()"            
+            ,"Math.random()"
             ,"input.onGesture(Gesture.Shake, () => { basic.clearScreen(); })"
             , "Math.min(0,1)"
             , "Math.max(0,1)"
-            , "input.onButtonPressed(Button.A, () => {}); input.onButtonPressed(Button.B, () => {});" 
+            , "input.onButtonPressed(Button.A, () => {}); input.onButtonPressed(Button.B, () => {});"
             */
            ];
-            
+
         ksRunnerReady(function() {
             pxt.docs.requireMarked = function() { return marked; }
-            pxt.runner.renderAsync(pxt.runner.defaultClientRenderOptions()).done(function() {
-               // next()                
-            });                        
+            pxt.runner.renderAsync(pxt.runner.defaultClientRenderOptions()).then(function() {
+               // next()
+            });
         })
     </script>
   <pre>
@@ -134,7 +134,7 @@ let y = 0;
 d;
 </code>
   </pre>
-<!--       
+<!--
         <pre>
                 <code id="diffblocks" class='lang-diffblocksxml'>
                     &lt;xml xmlns="http://www.w3.org/1999/xhtml"&gt;
@@ -143,10 +143,10 @@ d;
                         &lt;statement name="HANDLER"&gt;
                           &lt;block type="device_show_leds" id="kq`o^}4kwzWl44Kmc*3%"&gt;
                             &lt;field name="LEDS"&gt;`
-                            # . . . . 
-                            . # . . . 
-                            . . # . . 
-                            . . . # . 
+                            # . . . .
+                            . # . . .
+                            . . # . .
+                            . . . # .
                             . . . . #
                             `
                             &lt;/field&gt;
@@ -190,10 +190,10 @@ d;
                         &lt;statement name="HANDLER"&gt;
                           &lt;block type="device_show_leds" id="+NPyk{X1l%4t0)7LDiLS"&gt;
                             &lt;field name="LEDS"&gt;`
-                            . . . . # 
-                            . . . # . 
-                            . . # . . 
-                            . # . . . 
+                            . . . . #
+                            . . . # .
+                            . . # . .
+                            . # . . .
                             # . . . .
                             `
                             &lt;/field&gt;
@@ -233,10 +233,10 @@ d;
     &lt;statement name="HANDLER"&gt;
       &lt;block type="device_show_leds" id="kq`o^}4kwzWl44Kmc*3%"&gt;
         &lt;field name="LEDS"&gt;`
-        # . . . . 
-        . # . . . 
-        . . # . . 
-        . . . # . 
+        # . . . .
+        . # . . .
+        . . # . .
+        . . . # .
         . . . . #
         `
         &lt;/field&gt;
@@ -280,10 +280,10 @@ d;
     &lt;statement name="HANDLER"&gt;
       &lt;block type="device_show_leds" id="+NPyk{X1l%4t0)7LDiLS"&gt;
         &lt;field name="LEDS"&gt;`
-        . . . . # 
-        . . . # . 
-        . . . # . 
-        . # . . . 
+        . . . . #
+        . . . # .
+        . . . # .
+        . # . . .
         # . . . .
         `
         &lt;/field&gt;
@@ -321,17 +321,17 @@ d;
   &lt;/block&gt;
 &lt;/xml&gt;
                 <code>
-                </pre>    
-                
+                </pre>
+
 <code class='lang-project'>
 tqnxfpkndd
 </code>
-</pre>    
+</pre>
 <pre>
 <code class='lang-project'>
 https://makecode.microbit.org/tqnxfpkndd
 <code>
-</pre>    
+</pre>
 <pre class='lang-sig'>
 images.createImage(`
 . . # . .
@@ -340,7 +340,7 @@ images.createImage(`
 . # # # .
 . . # . .
 `)
-</pre> -->  <!--     
+</pre> -->  <!--
     <pre class='lang-codecard'> {
         "name": "name",
 
@@ -382,7 +382,7 @@ images.createImage(`
     <pre class='lang-blocks'>
         basic.showString("hello")
     </pre>-->
-<!--    
+<!--
     <pre class='lang-blocks'>
         basic.showNumber(2)
     </pre>

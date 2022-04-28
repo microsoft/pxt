@@ -10,6 +10,8 @@ export interface SimulatorProps extends ISettingsProps {
     collapsed?: boolean;
     simSerialActive?: boolean;
     devSerialActive?: boolean;
+
+    showSimulatorSidebar?: () => void;
 }
 
 export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
@@ -84,11 +86,11 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     takeScreenshot() {
         pxt.tickEvent("simulator.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        this.props.parent.downloadScreenshotAsync().done();
+        this.props.parent.downloadScreenshotAsync();
     }
 
     renderCore() {
-        const { collapsed, devSerialActive, parent, simSerialActive } = this.props;
+        const { collapsed, devSerialActive, parent, simSerialActive, showSimulatorSidebar } = this.props;
 
         const parentState = parent.state;
         if (!parentState.currFile || parentState.home) return <div />
@@ -105,6 +107,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isFullscreen = parentState.fullscreen;
         const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
+        const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
+        const inCodeEditor = parent.isBlocksActive() || parent.isJavaScriptActive() || parent.isPythonActive();
 
         const run = true;
         const restart = run && !simOpts.hideRestart;
@@ -117,7 +121,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isHeadless = simOpts.headless;
         const screenshot = !!targetTheme.simScreenshot;
         const screenshotClass = !!parentState.screenshoting ? "loading" : "";
-        const debugBtnEnabled = !isStarting && !isSimulatorPending;
+        const debugBtnEnabled = !isStarting && !isSimulatorPending && inCodeEditor;
         const runControlsEnabled = !debugging && !isStarting && !isSimulatorPending;
         const collapse = !targetTheme.bigRunButton;
 
@@ -125,6 +129,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const restartTooltip = lf("Restart the simulator");
         const debugTooltip = lf("Toggle debug mode");
         const keymapTooltip = lf("View simulator keyboard shortcuts");
+        const sidebarTooltip = lf("Show simulator in sidebar");
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
@@ -136,6 +141,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
+                {isTabTutorial && <sui.Button key='simsidebarbtn' className="sidebar-button tablet only" icon="external flipped" title={sidebarTooltip} onClick={showSimulatorSidebar} />}
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
                 {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}

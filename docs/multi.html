@@ -1,4 +1,5 @@
 <html>
+
 <head>
     <title>MakeCode Multi Editor</title>
     <style>
@@ -54,17 +55,17 @@
 <body>
     <select id="selectleft">
         <option value="https://makecode.microbit.org/">micro:bit</option>
+        <option value="https://arcade.makecode.com/">Arcade</option>
+        <option value="https://maker.makecode.com/">Maker (beta)</option>
         <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
-        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
         <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
-        <option value="https://maker.makecode.com/beta">Maker (beta)</option>
     </select>
     <select id="selectright">
         <option value="https://makecode.microbit.org/">micro:bit</option>
+        <option value="https://arcade.makecode.com/">Arcade</option>
+        <option value="https://maker.makecode.com/">Maker</option>
         <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
-        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
         <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
-        <option value="https://maker.makecode.com/beta">Maker (beta)</option>
     </select>
     <iframe id="left" allow="usb;camera"></iframe>
     <div id="divider"></div>
@@ -76,9 +77,53 @@
             var frames = [left, right]
             var selectLeft = document.getElementById("selectleft");
             var selectRight = document.getElementById("selectright");
-            var divider = document.getElementById("divider");
             var localhost = /localhost=1/.test(window.location.href)
-            var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
+            var beta = /beta=1/.test(window.location.href)
+            if (beta) {
+                const betaEditors = [
+                    { name: "Arcade (beta)", url: "https://arcade.makecode.com/beta" },
+                    { name: "micro:bit (beta)", url: "https://makecode.microbit.org/beta"}
+                ];
+                [selectLeft, selectRight].forEach(function (sel) {
+                    betaEditors.forEach(function (betaEditor) {
+                        var opt = document.createElement("option")
+                        opt.value = betaEditor.url;
+                        opt.innerText = betaEditor.name
+                        sel.appendChild(opt)
+                    })
+                })
+            }
+            if (localhost) {
+                [selectLeft, selectRight].forEach(function (sel) {
+                    var opt = document.createElement("option")
+                    opt.value = "http://localhost:3232/index.html"
+                    opt.innerText = "localhost:3232"
+                    sel.appendChild(opt);
+                })
+            }
+            var jacdac = /jacdac=1/.test(window.location.href)
+            if (jacdac) {
+                const jacdacUrl = "https://microsoft.github.io/jacdac-docs";
+                [selectLeft, selectRight].forEach(function (sel) {
+                    var opt = document.createElement("option")
+                    opt.value = jacdacUrl;
+                    opt.innerText = "JACDAC (beta)"
+                    sel.appendChild(opt)
+                })
+                selectLeft.value = jacdacUrl;
+                if (localhost) {
+                    const jacdacUrl = "http://localhost:8000";
+                    [selectLeft, selectRight].forEach(function (sel) {
+                        var opt = document.createElement("option")
+                        opt.value = jacdacUrl;
+                        opt.innerText = "JACDAC localhost:8000"
+                        sel.appendChild(opt)
+                    })
+                    selectLeft.value = jacdacUrl;
+                }
+            }
+            var divider = document.getElementById("divider");
+            var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1&parentOrigin=" + encodeURIComponent(window.location.origin);
             var ratio = .5;
             var dividerWidth = 14;
 
@@ -88,8 +133,8 @@
                 if (!!data.broadcast) {
                     data.outer = true;
                     frames.filter(function (ifrm) {
-                            return ifrm.contentWindow !== source;
-                        })
+                        return ifrm.contentWindow !== source;
+                    })
                         .forEach(function (ifrm) {
                             ifrm.contentWindow.postMessage(data, "*")
                         });
@@ -98,15 +143,9 @@
 
             function updateSrc(ifrm, select, hash) {
                 var h = hash ? "#" + hash : "";
-                if (localhost) {
-                    ifrm.src = "/index.html" + flags + h;
-                } else {
-                    ifrm.src = select.value + flags + h;
-                }
+                ifrm.src = select.value + flags + h;
             }
             function handleHash() {
-                var hashLeft = ""
-                var hashRight = ""
                 var route = (window.location.hash || "#");
                 var parts = route.replace(/^#/, '').split(':|:', 2);
                 updateSrc(left, selectLeft, parts[0]);
@@ -167,7 +206,7 @@
 
             setWidths();
             handleHash();
-        })();        
+        })();
     </script>
     <!-- @include tracking.html -->
 </body>

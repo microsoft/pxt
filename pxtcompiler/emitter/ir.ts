@@ -49,6 +49,7 @@ namespace ts.pxtc.ir {
 
     export class Expr extends Node {
         public jsInfo: {};
+        public prevTotalUses: number;
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
         public irCurrUses: number;
@@ -76,6 +77,12 @@ namespace ts.pxtc.ir {
             copy.mask = e.mask
             copy.isStringLiteral = e.isStringLiteral
             return copy
+        }
+
+        reset() {
+            this.currUses = 0
+            if (this.prevTotalUses)
+                this.totalUses = this.prevTotalUses
         }
 
         ptrlabel() {
@@ -167,6 +174,7 @@ namespace ts.pxtc.ir {
         Jmp,
         StackEmpty,
         Breakpoint,
+        Comment,
     }
 
     export enum JmpMode {
@@ -226,7 +234,7 @@ namespace ts.pxtc.ir {
                         return `SHARED_REF(#${a0.getId()})`
 
                     case EK.SharedDef:
-                        return `SHARED_DEF(#${a0.getId()}: ${str(a0)})`
+                        return `SHARED_DEF(#${a0.getId()} u(${a0.totalUses}): ${str(a0)})`
 
                     case EK.FieldAccess:
                         return `${str(a0)}.${(e.data as FieldAccessInfo).name}`
@@ -276,6 +284,8 @@ namespace ts.pxtc.ir {
                         return "    ;\n"
                     case ir.SK.Breakpoint:
                         return "    // brk " + (stmt.breakpointInfo.id) + "\n"
+                    case ir.SK.Comment:
+                        return "    // " + stmt.expr.data + "\n"
                     case ir.SK.Label:
                         return stmt.lblName + ":\n"
                     default: throw oops();
@@ -343,7 +353,7 @@ namespace ts.pxtc.ir {
         load() {
             let r = this.loadCore()
 
-            if (target.isNative && this.bitSize != BitSize.None) {
+            if (target.isNative && !isStackMachine() && this.bitSize != BitSize.None) {
                 if (this.bitSize == BitSize.UInt32)
                     return rtcall("pxt::fromUInt", [r])
                 return rtcall("pxt::fromInt", [r])
@@ -367,7 +377,7 @@ namespace ts.pxtc.ir {
             if (this.isByRefLocal()) {
                 return rtcall("pxtrt::stlocRef", [this.loadCore(), src])
             } else {
-                if (target.isNative && this.bitSize != BitSize.None) {
+                if (target.isNative && !isStackMachine() && this.bitSize != BitSize.None) {
                     let cnv = this.bitSize == BitSize.UInt32 ? "pxt::toUInt" : "pxt::toInt"
                     return this.storeDirect(rtcall(cnv, [src], 1))
                 }
@@ -573,10 +583,10 @@ namespace ts.pxtc.ir {
         }
 
         getFullName() {
-            let name = this.getName()
+            let name = getDeclName(this.action)
             if (this.action) {
                 let info = ts.pxtc.nodeLocationInfo(this.action)
-                name += " " + info.fileName.replace("pxt_modules/", "") + ":" + (info.line + 1)
+                name = info.fileName.replace("pxt_modules/", "") + "(" + (info.line + 1) + "," + (info.column + 1) + "): " + name
             }
             return name
         }
@@ -631,7 +641,7 @@ namespace ts.pxtc.ir {
         }
 
         inlineSelf(args: ir.Expr[]) {
-            const { precomp, flattened } = flattenArgs(args)
+            const { precomp, flattened } = flattenArgs(args, false, true)
             U.assert(flattened.length == this.args.length)
             this.args.map((a, i) => {
                 a.repl = flattened[i]
@@ -640,6 +650,8 @@ namespace ts.pxtc.ir {
             const r = inlineSubst(this.inlineBody)
             this.args.forEach((a, i) => {
                 if (a.repl.exprKind == EK.SharedRef) {
+                    if (!a.repl.args[0].prevTotalUses)
+                        a.repl.args[0].prevTotalUses = a.repl.args[0].totalUses
                     a.repl.args[0].totalUses += a.replUses - 1
                 }
                 a.repl = null
@@ -794,6 +806,7 @@ namespace ts.pxtc.ir {
                     case ir.SK.StackEmpty:
                     case ir.SK.Label:
                     case ir.SK.Breakpoint:
+                    case ir.SK.Comment:
                         break;
                     default: oops();
                 }
@@ -878,6 +891,10 @@ namespace ts.pxtc.ir {
         return new Stmt(kind, expr)
     }
 
+    export function comment(msg: string): Stmt {
+        return stmt(SK.Comment, ptrlit(msg, msg))
+    }
+
     export function op(kind: EK, args: Expr[], data?: any): Expr {
         return new Expr(kind, args, data)
     }
@@ -925,7 +942,7 @@ namespace ts.pxtc.ir {
         return r
     }
 
-    export function flattenArgs(args: ir.Expr[], reorder = false) {
+    export function flattenArgs(args: ir.Expr[], reorder = false, keepcomplex = false) {
         let didStateUpdate = reorder ? args.some(a => a.canUpdateCells()) : false
         let complexArgs: ir.Expr[] = []
         for (let a of U.reversed(args)) {
@@ -936,7 +953,7 @@ namespace ts.pxtc.ir {
         }
         complexArgs.reverse()
 
-        if (isStackMachine())
+        if (isStackMachine() && !keepcomplex)
             complexArgs = []
 
         let precomp: ir.Expr[] = []

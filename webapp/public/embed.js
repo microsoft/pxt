@@ -6,7 +6,6 @@
 
     var scripts = [
         "/blb/highlight.js/highlight.pack.js",
-        "/blb/bluebird.min.js",
         "/blb/marked/marked.min.js",
     ]
 

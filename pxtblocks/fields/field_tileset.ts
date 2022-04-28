@@ -8,11 +8,14 @@ namespace pxtblockly {
         height: number;
     }
 
-    export type TilesetDropdownOption = [ImageJSON, string];
+    export type TilesetDropdownOption = [ImageJSON, string, pxt.Tile];
 
     const PREVIEW_SIDE_LENGTH = 32;
 
     export class FieldTileset extends FieldImages implements Blockly.FieldCustom {
+        // private member of FieldDropdown
+        protected selectedOption_: TilesetDropdownOption;
+
         protected static referencedTiles: TilesetDropdownOption[];
         protected static cachedRevision: number;
         protected static cachedWorkspaceId: string;
@@ -25,13 +28,19 @@ namespace pxtblockly {
                 FieldTileset.cachedWorkspaceId = workspace.id;
                 const references = getAllReferencedTiles(workspace);
 
-                const projectTiles = project.getProjectTiles(16)
+                const supportedTileWidths = [16, 8, 32];
 
-                for (const tile of projectTiles.tiles) {
-                    if (!references.find(t => t.id === tile.id)) {
-                        references.push(tile);
+                for (const width of supportedTileWidths) {
+                    const projectTiles = project.getProjectTiles(width, width === 16);
+                    if (!projectTiles) continue;
+
+                    for (const tile of projectTiles.tiles) {
+                        if (!references.find(t => t.id === tile.id)) {
+                            references.push(tile);
+                        }
                     }
                 }
+
 
                 let weights: pxt.Map<number> = {};
                 references.sort((a, b) => {
@@ -51,15 +60,15 @@ namespace pxtblockly {
                 });
 
                 const getTileImage = (t: pxt.Tile) => tileWeight(t.id) <= 2 ?
-                    mkTransparentTileImage(16) :
+                    mkTransparentTileImage(t.bitmap.width) :
                     bitmapToImageURI(pxt.sprite.Bitmap.fromData(t.bitmap), PREVIEW_SIDE_LENGTH, false);
 
                 FieldTileset.referencedTiles = references.map(tile => [{
                     src: getTileImage(tile),
                     width: PREVIEW_SIDE_LENGTH,
                     height: PREVIEW_SIDE_LENGTH,
-                    alt: tile.id
-                }, tile.id])
+                    alt: displayName(tile)
+                }, tile.id, tile])
             }
             return FieldTileset.referencedTiles;
         }
@@ -72,18 +81,22 @@ namespace pxtblockly {
         constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
             super(text, options, validator);
             this.blocksInfo = options.blocksInfo;
-
         }
 
-        init() {
-            super.init();
-
+        initView() {
+            super.initView();
             if (this.sourceBlock_ && this.sourceBlock_.isInFlyout) {
                 this.setValue(this.getOptions()[0][1]);
             }
         }
 
         getValue() {
+            if (this.selectedOption_) {
+                let tile = this.selectedOption_[2];
+                tile = pxt.react.getTilemapProject().lookupAsset(tile.type, tile.id);
+
+                return pxt.getTSReferenceForAsset(tile);
+            }
             const v = super.getValue();
 
             // If the user decompiled from JavaScript, then they might have passed an image literal
@@ -104,7 +117,60 @@ namespace pxtblockly {
             return super.getText();
         }
 
-        getOptions(): any[] {
+        render_() {
+            if (this.value_ && this.selectedOption_) {
+                if (this.selectedOption_[1] !== this.value_) {
+                    const tile = pxt.react.getTilemapProject().resolveTile(this.value_);
+                    FieldTileset.cachedRevision = -1;
+
+                    if (tile) {
+                        this.selectedOption_ = [{
+                            src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(tile.bitmap), PREVIEW_SIDE_LENGTH, false),
+                            width: PREVIEW_SIDE_LENGTH,
+                            height: PREVIEW_SIDE_LENGTH,
+                            alt: displayName(tile)
+                        }, this.value_, tile]
+                    }
+                }
+
+            }
+            super.render_();
+        }
+
+        doValueUpdate_(newValue: string) {
+            super.doValueUpdate_(newValue);
+            const options: TilesetDropdownOption[] = this.getOptions(true);
+
+            // This text can be one of four things:
+            // 1. The JavaScript expression (assets.tile`name`)
+            // 2. The tile id (qualified name)
+            // 3. The tile display name
+            // 4. Something invalid (like an image literal or undefined)
+
+            if (newValue) {
+                // If it's an expression, pull out the id
+                const match = pxt.parseAssetTSReference(newValue);
+                if (match) {
+                    newValue = match.name;
+                }
+
+                newValue = newValue.trim();
+
+                for (const option of options) {
+                    if (newValue === option[2].id || newValue === option[2].meta.displayName || newValue === pxt.getShortIDForAsset(option[2])) {
+                        this.selectedOption_ = option;
+                        this.value_ = this.getValue();
+                        this.updateAssetListener();
+                        return;
+                    }
+                }
+
+                this.selectedOption_ = null;
+                this.updateAssetListener();
+            }
+        }
+
+        getOptions(opt_useCache?: boolean): any[] {
             if (typeof this.menuGenerator_ !== 'function') {
                 this.transparent = constructTransparentTile();
                 return [this.transparent];
@@ -115,14 +181,27 @@ namespace pxtblockly {
 
         menuGenerator_ = () => {
             if (this.sourceBlock_?.workspace && needsTilemapUpgrade(this.sourceBlock_?.workspace)) {
-                return [[{
-                    src: mkTransparentTileImage(16),
-                    width: PREVIEW_SIDE_LENGTH,
-                    height: PREVIEW_SIDE_LENGTH,
-                    alt: this.getValue()
-                }, this.getValue()]]
+                return [constructTransparentTile()]
             }
             return FieldTileset.getReferencedTiles(this.sourceBlock_.workspace);
+        }
+
+        dispose() {
+            super.dispose();
+            pxt.react.getTilemapProject().removeChangeListener(pxt.AssetType.Tile, this.assetChangeListener);
+        }
+
+        protected updateAssetListener() {
+            const project = pxt.react.getTilemapProject();
+            project.removeChangeListener(pxt.AssetType.Tile, this.assetChangeListener);
+            if (this.selectedOption_) {
+                project.addChangeListener(this.selectedOption_[2], this.assetChangeListener);
+            }
+        }
+
+        protected assetChangeListener = () => {
+           this.doValueUpdate_(this.getValue());
+           this.forceRerender();
         }
     }
 
@@ -133,7 +212,7 @@ namespace pxtblockly {
             width: PREVIEW_SIDE_LENGTH,
             height: PREVIEW_SIDE_LENGTH,
             alt: pxt.U.lf("transparency")
-        }, tile.id];
+        }, tile.id, tile];
     }
 
     function mkTransparentTileImage(sideLength: number) {
@@ -158,10 +237,11 @@ namespace pxtblockly {
 
     function tileWeight(id: string) {
         switch (id) {
-            case "myTiles.transparency8":
             case "myTiles.transparency16":
-            case "myTiles.transparency32":
                 return 1;
+            case "myTiles.transparency8":
+            case "myTiles.transparency32":
+                return 2;
             default:
                 if (id.startsWith("myTiles.tile")) {
                     const num = parseInt(id.slice(12));
@@ -170,5 +250,9 @@ namespace pxtblockly {
                 }
                 return 9999999999;
         }
+    }
+
+    function displayName(tile: pxt.Tile) {
+        return tile.meta.displayName || pxt.getShortIDForAsset(tile);
     }
 }

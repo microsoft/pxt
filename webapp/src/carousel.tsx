@@ -1,11 +1,13 @@
 import * as React from "react";
 import * as sui from "./sui";
 import * as data from "./data";
+import { fireClickOnEnter } from "./util";
 
 export interface ICarouselProps extends React.Props<Carousel> {
     // Percentage of child width to bleed over either edge of the page
     bleedPercent: number;
     selectedIndex?: number;
+    tickId?: string; // if set, collect usage analytics
 }
 
 export interface ICarouselState {
@@ -59,7 +61,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         this.onRightArrowClick = this.onRightArrowClick.bind(this);
     }
 
-    componentWillReceiveProps(nextProps: ICarouselProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: ICarouselProps) {
         if (nextProps.selectedIndex != undefined) {
             this.setIndex(nextProps.selectedIndex);
         }
@@ -86,8 +88,8 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         const isRTL = pxt.Util.isUserLanguageRtl();
 
         return <div className="ui carouselouter">
-            {!leftDisabled && <span role="button" className={"carouselarrow left aligned"} tabIndex={0}
-                aria-label={lf("See previous")} onClick={this.onLeftArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
+            {!leftDisabled && <span role="button" className={"carouselarrow left aligned"} tabIndex={0} title={lf("See previous")}
+                aria-label={lf("See previous")} onClick={this.onLeftArrowClick} onKeyDown={fireClickOnEnter} ref={this.handleArrowRefs}>
                 <sui.Icon icon={"circle angle " + (!isRTL ? "left" : "right")} />
             </span>}
             <div className="carouselcontainer" ref={this.handleContainerRef}>
@@ -100,8 +102,8 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
                     }
                 </div>
             </div>
-            {!rightDisabled && <span role="button" className={"carouselarrow right aligned"} tabIndex={0}
-                aria-label={lf("See more")} onClick={this.onRightArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
+            {!rightDisabled && <span role="button" className={"carouselarrow right aligned"} tabIndex={0} title={lf("See more")}
+                aria-label={lf("See more")} onClick={this.onRightArrowClick} onKeyDown={fireClickOnEnter} ref={this.handleArrowRefs}>
                 <sui.Icon icon={"circle angle " + (!pxt.Util.isUserLanguageRtl() ? "right" : "left")} />
             </span>}
         </div>
@@ -119,6 +121,15 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         const prevIndex = this.index;
         const prevScroll = this.container.scrollLeft;
         this.setIndex(left ? this.index - this.actualPageLength : this.index + this.actualPageLength);
+
+        const { tickId } = this.props;
+        if (tickId)
+            pxt.tickEvent("carousel.arrow.click", {
+                tickId,
+                index: this.index,
+                left: left ? -1 : 1
+            }, { interactiveConsent: true })
+
         if (left) {
             // Focus right most
             const prevElement = this.index + this.actualPageLength < prevIndex ? this.index + this.actualPageLength : prevIndex - 1;

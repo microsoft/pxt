@@ -50,6 +50,24 @@ Some menu items are cascading (a hierarchical view is shown with an arrow on the
 
 Use the ``Left`` or ``Right`` arrow keys to expand or collapse menu items.
 
+## Immersive reader
+
+Some MakeCode editors will have an option to use the [Microsoft Immersive Reader](https://education.microsoft.com/en-us/resource/9b010288) when certain text is displayed. The Immersive Reader is a tool to help with reading comprehension. It adds the ability to change colors, themes, font size, spacing, and highlight parts of speech. Along with its other capabilities, it will also read the text aloud. When available, the **Immersive Reader** icon appears near instructions or other information it will read.
+
+![Immersive reader button](/static/images/accessibility/immersive-reader-button.jpg)
+
+The Immersive Reader opens in a separate window to show and read the text.
+
+![Immersive reader window](/static/images/accessibility/immersive-reader.jpg)
+
+### ~reminder
+
+#### MakeCode Arcade and the Immersive Reader
+
+The [MakeCode Arcade](https://arcade.makecode.com) editor has the Immersive Reader available when displaying tutorial instructions.
+
+### ~ 
+
 ## Assistive technologies
 
 Several screen readers are available to help to use MakeCode.

@@ -1,6 +1,6 @@
 declare namespace pxt {
 
-    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample";
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample" | "link";
     type CodeCardEditorType = "blocks" | "js" | "py";
 
     interface Map<T> {
@@ -63,6 +63,7 @@ declare namespace pxt {
         paletteNames?: string[];
         screenSize?: Size;
         yotta?: YottaConfig;
+        codal?: CodalConfig;
         npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
@@ -72,6 +73,7 @@ declare namespace pxt {
         weight?: number;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
+        isExtension?: boolean; // is this package an extension
         dalDTS?: {
             corePackage?: string;
             includeDirs?: string[];
@@ -79,6 +81,7 @@ declare namespace pxt {
         };
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
+        searchOnly?: boolean; // do not show by default, only as search result
         skipLocalization?: boolean;
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;
@@ -87,14 +90,24 @@ declare namespace pxt {
         firmwareUrl?: string; // link to documentation page about upgrading firmware
         disablesVariants?: string[]; // don't build these variants, when this extension is enabled
         utf8?: boolean; // force compilation with UTF8 enabled
+        disableTargetTemplateFiles?: boolean; // do not override target template files when commiting to github
     }
 
     interface PackageExtension {
-        namespace?: string; // Namespace to add the button under, defaults to package name
-        label?: string; // Label for the flyout button, defaults to `Editor`
-        color?: string; // for new category, category color
-        advanced?: boolean; // for new category, is category advanced
-        localUrl?: string; // local debugging URL used when served through pxt serve and debugExtensions=1 mode
+        // Namespace to add the button under, defaults to package name
+        namespace?: string;
+        // Group to place button in
+        group?: string;
+        // Label for the flyout button, defaults to `Editor`
+        label?: string;
+        // for new category, category color
+        color?: string;
+        // for new category, is category advanced
+        advanced?: boolean;
+        // trusted custom editor url, must be register in targetconfig.json under approvedEditorExtensionUrls
+        url?: string;
+        // local debugging URL used when served through pxt serve and debugExtensions=1 mode
+        localUrl?: string;
     }
 
     interface PlatformIOConfig {
@@ -104,6 +117,10 @@ declare namespace pxt {
     interface CompilationConfig {
         description: string;
         config: any;
+    }
+
+    interface CodalConfig {
+        libraries?: string[];
     }
 
     interface YottaConfig {
@@ -153,6 +170,8 @@ declare namespace pxt {
         cardType?: CodeCardType;
         editor?: CodeCardEditorType;
         otherActions?: CodeCardAction[];
+        directOpen?: boolean; // skip the details view, directly do the card action
+        projectId?: string; // the project's header ID
 
         header?: string;
 
@@ -178,6 +197,7 @@ declare namespace pxt {
         icon?: string; // URL (usually data-URI) for the icon
         namespace?: string; // used to construct id
         mimeType: string;
+        displayName?: string;
         tilemapTile?: boolean;
         tileset?: string[];
     }

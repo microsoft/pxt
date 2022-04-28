@@ -38,6 +38,32 @@ namespace pxt.gallery {
         return features.length ? features : undefined;
     }
 
+    export function parseJResFromMarkdown(md: string): { jres: string, ts: string } {
+        const pm = /```jres\s+((.|\s)+?)\s*```/i.exec(md);
+
+        if (pm) {
+            const jres = pm[1];
+            const parsed = JSON.parse(jres);
+
+            return {
+                jres,
+                ts: pxt.emitTilemapsFromJRes(parsed)
+            };
+        }
+
+        return undefined;
+    }
+
+    export function parseTemplateProjectJSON(md: string): pxt.Map<string> {
+        const pm = /```assetjson\s+((.|\s)+?)\s*```/i.exec(md);
+
+        if (pm) {
+            return pxt.tutorial.parseAssetJson(pm[1]);
+        }
+
+        return {};
+    }
+
     export function parseExampleMarkdown(name: string, md: string): GalleryProject {
         if (!md) return undefined;
 
@@ -48,18 +74,110 @@ namespace pxt.gallery {
         const snippetType = m[1];
         const source = m[2];
         const features = parseFeaturesFromMarkdown(md);
-        const prj = {
+        const jres = parseJResFromMarkdown(md);
+
+        const prj: GalleryProject = {
             name,
             filesOverride: {
-                "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`,
-                [m[1] === "python" ? "main.py" : "main.ts"]: source
+                [pxt.MAIN_BLOCKS]: `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`,
+                [m[1] === "python" ? pxt.MAIN_PY : pxt.MAIN_TS]: source
             },
             dependencies,
             features,
             snippetType,
             source
         };
+
+        prj.filesOverride = {
+            ...prj.filesOverride,
+            ...parseTemplateProjectJSON(md)
+        }
+
+        if (jres) {
+            prj.filesOverride[pxt.TILEMAP_JRES] = jres.jres;
+            prj.filesOverride[pxt.TILEMAP_CODE] = jres.ts;
+        }
         return prj;
+    }
+
+    export function parseCodeCards(md: string): pxt.CodeCard[] {
+        // try to parse code cards as JSON
+        let cards = Util.jsonTryParse(md) as pxt.CodeCard[];
+        if (cards && !Array.isArray(cards))
+            cards = [cards];
+        if (cards?.length)
+            return cards;
+
+        // not json, try parsing as sequence of key,value pairs, with line splits
+        cards = md.split(/^---$/gm)
+            .filter(cmd => !!cmd)
+            .map(cmd => {
+                let cc: any = {};
+                cmd.replace(/^\s*(?:-|\*)\s+(\w+)\s*:\s*(.*)$/gm, (m, n, v) => {
+                    if (n == "flags")
+                        cc[n] = v.split(',')
+                    else if (n === "otherAction") {
+                        const parts: string[] = v.split(',').map((p: string) => p?.trim())
+                        const oas = (cc["otherActions"] || (cc["otherActions"] = []));
+                        oas.push({
+                            url: parts[0],
+                            editor: parts[1],
+                            cardType: parts[2]
+                        })
+                    }
+                    else
+                        cc[n] = v
+                    return ''
+                })
+                return !!Object.keys(cc).length && cc as pxt.CodeCard;
+            })
+            .filter(cc => !!cc);
+        if (cards?.length)
+            return cards;
+
+        return undefined;
+    }
+
+    export function parseCodeCardsHtml(el: HTMLElement) {
+        let cards: pxt.CodeCard[] = []
+
+        // if there are UL/OL elements under el, it's the new format
+        let card: any;
+        Array.from(el.children)
+            .forEach(child => {
+                if (child.tagName === "UL" || child.tagName === "OL") {
+                    if (!card)
+                        card = {};
+                    // read fields into card
+                    Array.from(child.querySelectorAll("li"))
+                        .forEach(field => {
+                            const text = field.innerText;
+                            const m = /^\s*(\w+)\s*:\s*(.*)$/.exec(text);
+                            if (m) {
+                                const k = m[1]
+                                card[k] = m[2].trim();
+                                if (k === "flags")
+                                    card[k] = card[k].split(/,\s*/);
+                            }
+                        });
+                } else if (child.tagName == "HR") {
+                    // flush current card
+                    if (card)
+                        cards.push(card)
+                    card = undefined;
+                }
+            })
+        // flush last card
+        if (card)
+            cards.push(card);
+
+        // try older format
+        if (cards.length === 0 && el.tagName === "CODE") {
+            // legacy JSON format
+            cards = pxt.Util.jsonTryParse(el.textContent);
+        }
+
+        return !!cards?.length && cards;
     }
 
     export function parseGalleryMardown(md: string): Gallery[] {
@@ -71,28 +189,26 @@ namespace pxt.gallery {
         const galleries: { name: string; cards: pxt.CodeCard[] }[] = [];
         let incard = false;
         let name: string = undefined;
-        let cards: string = "";
+        let cardsSource: string = "";
         md.split(/\r?\n/).forEach(line => {
             // new category
-            if (/^##/.test(line)) {
+            if (/^## /.test(line)) {
                 name = line.substr(2).trim();
-            } else if (/^```codecard$/.test(line)) {
+            } else if (/^(### ~ |```)codecard$/.test(line)) {
                 incard = true;
-            } else if (/^```$/.test(line)) {
+            } else if (/^(### ~|```)$/.test(line)) {
                 incard = false;
-                if (name && cards) {
-                    try {
-                        const cardsJSON = JSON.parse(cards) as pxt.CodeCard[];
-                        if (cardsJSON && cardsJSON.length > 0)
-                            galleries.push({ name, cards: cardsJSON });
-                    } catch (e) {
-                        pxt.log('invalid card format in gallery');
-                    }
+                if (name && cardsSource) {
+                    const cards = parseCodeCards(cardsSource);
+                    if (cards?.length)
+                        galleries.push({ name, cards });
+                    else
+                        pxt.log(`invalid gallery format`)
                 }
-                cards = "";
+                cardsSource = "";
                 name = undefined;
             } else if (incard)
-                cards += line + '\n';
+                cardsSource += line + '\n';
         })
         // apply transformations
         galleries.forEach(gallery => gallery.cards.forEach(card => {
@@ -114,5 +230,33 @@ namespace pxt.gallery {
     export function loadGalleryAsync(name: string): Promise<Gallery[]> {
         return pxt.Cloud.markdownAsync(name)
             .then(md => parseGalleryMardown(md))
+    }
+
+    export function codeCardsToMarkdown(cards: pxt.CodeCard[]) {
+        const md = `### ~ codecard
+
+${(cards || []).map(
+            card => Object.keys(card)
+                .filter(k => !!(<any>card)[k])
+                .map(k => k === "otherActions"
+                    ? otherActionsToMd((<any>card)[k])
+                    : `* ${k}: ${(<any>card)[k]}`
+                ).join('\n')
+        )
+                .join(
+                    `
+
+---
+
+`)}
+
+### ~
+`
+        return md;
+
+        function otherActionsToMd(oas: pxt.CodeCardAction[]): string {
+            return oas.map(oa => `* otherAction: ${oa.url}, ${oa.editor || ""}, ${oa.cardType || ""}`)
+                .join('\n');
+        }
     }
 }

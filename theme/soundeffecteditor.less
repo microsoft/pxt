@@ -1,0 +1,255 @@
+/****************************************************
+ *                    Variables                      *
+ ****************************************************/
+
+@soundEffectHeaderColor: #E63022;
+
+@soundPlayButtonBackground: #333333;
+@soundPlayButtonForeground: #ffffff;
+
+@soundPreviewBackgroundColor: #fbe2d6;
+@soundPreviewBaselineColor: #888888;
+@soundPreviewStaticWaveColor: @soundPreviewBaselineColor;
+@soundPreviewAnimatedWaveColor: @soundEffectHeaderColor;
+
+@soundGalleryBackgroundColor: #481041;
+@soundGalleryWaveColor: @soundEffectHeaderColor;
+
+
+/****************************************************
+ *                    Container                      *
+ ****************************************************/
+
+.sound-effect-editor-widget {
+    box-shadow: 0 0 3px ~"rgb(0 0 0 / 30%)";
+    border-radius: 0.25rem;
+    overflow-y: auto;
+    background-color: @white;
+}
+
+.sound-effect-editor {
+    width: 100%;
+    background-color: @white;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none;
+
+    .link-button {
+        margin-left: 2rem;
+    }
+}
+
+.sound-effect-editor-content {
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.sound-controls {
+    padding: 0.5rem 2rem;
+}
+
+.sound-effect-header {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    height: 3.5rem;
+    position: relative;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: @soundEffectHeaderColor;
+
+    & > .common-button {
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+}
+
+/****************************************************
+ *                      Graphs                      *
+ ****************************************************/
+
+.sound-graph-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+
+    & > span {
+        flex-grow: 1;
+    }
+}
+
+.frequency-graph {
+    padding-top: 0.5rem;
+    border-bottom: 1px solid #dedede;
+}
+
+.dropdown-and-label {
+    display: flex;
+    flex-direction: row;
+    margin-right: 0.5rem;
+    align-items: center;
+}
+
+.sound-graph-container {
+    margin-top: 0.5rem;
+    border: 1px solid #dedede;
+}
+
+.sound-label {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 2rem;
+    margin-right: 0.5rem;
+    user-select: none;
+}
+
+.sound-label.waveform-name {
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.waveform-and-duration-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .duration-controls {
+        display: flex;
+        flex-direction: row;
+        flex-grow: 1;
+        justify-content: right;
+
+        input {
+            width: 4rem;
+        }
+    }
+}
+
+/****************************************************
+ *                     Preview                      *
+ ****************************************************/
+
+ .sound-preview {
+    height: 8rem;
+    padding: 0 2.5rem;
+    background: @soundPreviewBackgroundColor;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    svg {
+        height: 100%;
+    }
+}
+
+.common-button.sound-effect-play-button {
+    width: 3rem;
+    height: 3rem;
+    overflow: hidden;
+    padding: 0;
+    border-radius: 2rem;
+    background: @soundPlayButtonBackground;
+    position: absolute;
+    right: 0;
+    margin-top: -1.5rem;
+
+    .fas.fa-play, .fas.fa-stop {
+        margin: 0 0 0 0.25rem;
+        color: @soundPlayButtonForeground;
+    }
+
+    .fas.fa-stop {
+        margin: 0;
+    }
+}
+
+.common-button.sound-effect-play-button:focus::after {
+    border-radius: 2rem;
+}
+
+.sound-preview-baseline {
+    stroke: @soundPreviewBaselineColor;
+}
+
+.sound-preview-static-wave {
+    stroke: @soundPreviewStaticWaveColor;
+}
+
+.sound-preview-animated-wave {
+    stroke: @soundPreviewAnimatedWaveColor;
+}
+
+
+/****************************************************
+ *                      Gallery                     *
+ ****************************************************/
+
+.sound-gallery {
+    position: absolute;
+    height: 100%;
+    top: -100%;
+    width: 100%;
+    transition: top 0.25s ease;
+    background: @soundGalleryBackgroundColor;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.sound-gallery.visible {
+    top: 0px;
+}
+
+.sound-gallery-scroller {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.sound-gallery-scroller > .common-button {
+    margin-bottom: 0.5rem;
+    padding: 0.6rem 1rem 0.6rem;
+}
+
+.sound-gallery-item-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .common-button.sound-effect-play-button {
+        position: relative;
+        margin-top: 0;
+        z-index: 2;
+    }
+
+    .sound-effect-name {
+        font-size: 22px;
+        width: 8rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: left;
+        height: 2rem;
+        align-items: center;
+        display: flex;
+    }
+
+    svg {
+        width: 10rem;
+    }
+
+    .sound-gallery-preview {
+        flex-grow: 1;
+    }
+}
+
+
+.sound-gallery-preview-wave {
+    stroke: @soundGalleryWaveColor;
+}

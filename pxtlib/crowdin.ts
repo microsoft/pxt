@@ -86,7 +86,7 @@ namespace pxt.crowdin {
                         pxt.log(exportFileUri + ' ' + e)
                     }
                     return nextFile();
-                }).delay(1000); // throttling otherwise crowdin fails
+                }).then(() => Util.delay(1000)); // throttling otherwise crowdin fails
             };
 
             return nextFile();
@@ -179,7 +179,7 @@ namespace pxt.crowdin {
             } else if (!errorData.success && errorData.error && errorData.error.code == 53) {
                 // file is being updated
                 pxt.log(`${filename} being updated, waiting 5s and retry...`)
-                return Promise.delay(5000) // wait 5s and try again
+                return U.delay(5000) // wait 5s and try again
                     .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
             } else if (code == 200 || errorData.success) {
                 // something crowdin reports 500 with success=true

@@ -1,12 +1,21 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "ES2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
         "out": "../../built/tests/blocksrunner.js",
         "newLine": "LF",
-        "types": ["chai", "mocha", "bluebird"],
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "es2017",
+            "ES2018.Promise"
+        ],
+        "types": [
+            "chai",
+            "mocha"
+        ],
         "sourceMap": false
     },
     "files": [

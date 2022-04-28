@@ -1,0 +1,37 @@
+name: pxt-buildmain
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'main'
+  create:
+
+jobs:
+  build:
+    name: buildmain
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - name: npm install
+        run: |
+          sudo apt-get install xvfb
+          sudo npm install -g pxt
+          npm install
+      - name: npm test
+        run: |
+          npm test
+        env:
+          CROWDIN_KEY: ${{ secrets.CROWDIN_KEY }}
+          PXT_ACCESS_TOKEN: ${{ secrets.PXT_ACCESS_TOKEN }}
+          NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+          PXT_ENV: production
+          CHROME_BIN: chromium-browser
+          DISPLAY: :99.0
+          CI: true

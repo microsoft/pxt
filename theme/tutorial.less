@@ -17,7 +17,10 @@
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
 @mobileAvatarMargin: 2rem;
-@workspaceHeaderHeight: 2rem;
+
+@workspaceHeaderHeight: 4rem;
+@sidebarPadding: 1.6rem;
+@sidebarTutorialHeaderSize: 1.5rem;
 
 /*******************************
       Tutorial mode
@@ -28,6 +31,10 @@
 
 .tutorial.flyoutOnly #maineditor > .full-abs {
     top: calc(@tutorialCardHeight + @workspaceHeaderHeight);
+}
+
+.tutorial.flyoutOnly.sidebarTutorial #maineditor > .full-abs {
+    top: @workspaceHeaderHeight;
 }
 
 /* Tutorial Mode */
@@ -52,6 +59,19 @@
     padding-right: 1.3rem !important;
 }
 
+#mainmenu .tutorial-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#mainmenu .ui.item.tutorialname {
+    cursor: unset;
+    &:hover, &:focus {
+        background: none;
+    }
+}
+
 .tutorial #tutorialcard {
     position: relative;
     z-index: @tutorialCardZIndex;
@@ -62,8 +82,8 @@
     font-family: @docsPageFont;
 }
 
-.tutorial #tutotialcard > code,
-.tutorial #tutotialcard > pre {
+.tutorial #tutorialcard > code,
+.tutorial #tutorialcard > pre {
     font-family: @pageFont;
 }
 
@@ -138,11 +158,9 @@ body#docs.tutorial {
     width: 100%;
     font-size: 12pt;
     padding-left: 1rem;
-    height: calc(@tutorialCardHeight - 1rem);
+    height: 100%;
     margin-bottom: 0.4rem;
-    overflow-y: hidden;
     overflow-x: auto;
-    cursor:pointer;
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage .content {
@@ -151,8 +169,9 @@ body#docs.tutorial {
 }
 
 #tutorialcard .tutorialmessage .content p,
-.tutorialhint p {
-    line-height: 1.7em !important;
+.tutorialhint p,
+.tutorial-callout p {
+    line-height: 1.4em !important;
     color: @tutorialSegmentColor;
 }
 
@@ -204,13 +223,15 @@ body#docs.tutorial {
 
 @media only screen and (min-height: 400px) {
     .hintdialog .ui.segment .blocklyPreview,
-    .tutorialhint .ui.segment .blocklyPreview {
+    .tutorialhint .ui.segment .blocklyPreview,
+    .tutorial-callout .ui.segment .blocklyPreview {
         max-height: 45vh;
     }
 }
 
 @media only screen and (max-height: 800px) {
-    .tutorialhint img {
+    .tutorialhint img,
+    .tutorial-callout img {
         max-height: 30vh;
     }
 }
@@ -258,6 +279,16 @@ code.lang-filterblocks {
         > i, > span, > i.orange {
             color: @black !important;
         }
+    }
+}
+
+#tutorialcard .isValidated {
+    background: @tutorialCodeValidationCorrectBackground;
+    > i, > span, > i.nextbutton {
+        color: @tutorialCodeValidationCorrectTextColor !important;
+    }
+    i.large.icon, i.large.icons{
+        font-size: 1.7em;
     }
 }
 
@@ -330,7 +361,8 @@ code.lang-filterblocks {
     }
 }
 
-.tutorialhint {
+.tutorialhint,
+.tutorial-callout {
     position: absolute;
     max-width: 100%;
     min-width: 300px;
@@ -344,7 +376,8 @@ code.lang-filterblocks {
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
 }
 
-.tutorialhint:before {
+.tutorialhint:before,
+.tutorial-callout:before {
     content: ' ';
     position: absolute;
     width: 0;
@@ -357,16 +390,19 @@ code.lang-filterblocks {
     transform: rotateZ(-135deg);
 }
 
-.tutorialhint > div {
+.tutorialhint > div,
+.tutorial-callout > div {
     max-height: 60vh;
     overflow: auto;
 }
 
-.tutorialhint.hidden {
+.tutorialhint.hidden,
+.tutorial-callout.hidden {
     display: none;
 }
 
-.tutorialhint .lang-blocks .segment.raised {
+.tutorialhint .lang-blocks .segment.raised,
+.tutorial-callout .lang-blocks .segment.raised {
     border: none;
     background: none;
     box-shadow: none;
@@ -464,6 +500,66 @@ code.lang-filterblocks {
     margin: 0.5em;
 }
 
+
+/******************************
+    Immersive Reader button
+******************************/
+// TODO (shakao) remove #mainmenu items when cleaning up
+// old tutorial code
+#editorSidebar .immersive-reader-button.ui.item,
+#editorSidebar .immersive-reader-button.ui.item:focus,
+#mainmenu .immersive-reader-button.ui.item,
+#mainmenu .immersive-reader-button.ui.item:focus {
+    width: 2rem;
+    height: 2rem;
+    background-repeat: no-repeat;
+    background-size: 80%;
+    background-position: center;
+    border-radius: .2em!important;
+}
+#mainmenu .immersive-reader-button.ui.item,
+#mainmenu .immersive-reader-button.ui.item:focus {
+    background-image: @immersiveReaderLightIcon;
+}
+#editorSidebar .immersive-reader-button.ui.item,
+#editorSidebar .immersive-reader-button.ui.item:focus{
+    background-image: @immersiveReaderIcon;
+}
+
+#mainmenu .immersive-reader-button:focus,
+#mainmenu .immersive-reader-button:hover {
+    background-color: #00000059!important;
+    filter: brightness(0.8);
+}
+
+.modals .ui.button.immersive-reader-button {
+    background-image: @immersiveReaderIcon;
+    width: 2rem;
+    height: 2.8rem;
+    background-repeat: no-repeat;
+    background-size: 60%;
+    background-color: #f9fafb;
+    background-position: center;
+    box-shadow: none;
+    transition: none;
+    float: left;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-left: 0!important;
+}
+
+.modals .ui.button.immersive-reader-button:hover,
+.modals .ui.button.immersive-reader-button:focus {
+    box-shadow: none;
+    background-image: @immersiveReaderIcon;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-color: #f9fafb;
+    background-position: center;
+    background-size: 60%;
+    filter: brightness(0.8);
+}
+
 /*******************************
         Progress Circle
 *******************************/
@@ -491,22 +587,139 @@ code.lang-filterblocks {
     color: @white;
     z-index: @simulatorZIndex;
 
-    #workspaceHeader {
-        flex: 1;
+    #headerToolbar {
+        position: absolute;
+        right: 0;
     }
 
     #flyoutHeader {
-        box-sizing: content-box;
+        box-sizing: border-box;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+
+        #flyoutHeaderTitle{
+            padding-left: 1.2rem;
+            padding-top: .8rem;
+        }
     }
 
     div {
         display: inline-block;
         text-align: center;
         line-height: 2rem;
-        font-weight: 800;
+    }
+}
+
+.flyoutOnly {
+    #headers {
+        height: @workspaceHeaderHeight;
+
+        div {
+            display: inline-flex;
+        }
+    }
+}
+
+/*******************************
+        Sidebar Tutorial
+*******************************/
+.flyoutOnly.sidebarTutorial.tutorial {
+    #maineditor{
+        left: 33.3%;
+    }
+
+    #maineditor > .full-abs {
+        top: 0;
+    }
+
+    #maineditor > #blocksArea {
+        top: 3rem;
+    }
+
+    #sidebar {
+        width: 33.3%;
+        height: 100%;
+        background-color: @sidebarTutorialColor;
+        color: #3c3c3c;
+        font-family: @docsPageFont;
+        padding: @sidebarPadding / 2 @sidebarPadding;
+        overflow-y: auto;
+
+        .tutorialTitle {
+            font-size: @sidebarTutorialHeaderSize;
+            padding-bottom: 1.6rem;
+            word-wrap: break-word;
+        }
+
+        .tutorialMessage {
+            font-size: 1.2rem;
+            padding-bottom: 2rem;
+        }
+
+        #callout {
+            padding: @sidebarTutorialHeaderSize 0 4rem;
+            position: relative;
+
+            .callout-hint-header {
+                font-size: @sidebarTutorialHeaderSize;
+            }
+
+            .callout-hint {
+                width: 5rem;
+                height: 5rem;
+                position: absolute;
+                bottom: -1rem;
+                left: 1rem;
+                z-index: 2;
+            }
+
+            .callout-wrapper {
+                padding: 0 1.5rem;
+            }
+        }
+    }
+}
+
+/**
+ * CSS for embedded tutorial used in the skills map
+ */
+.tutorial.tutorial-embed {
+    #editorSidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+        top: @tutorialEmbedMenuHeight;
+    }
+    .simView #boardview {
+        padding-top: @tutorialEmbedMenuHeight;
+    }
+    .menubar .ui.menu {
+        height: @tutorialEmbedMenuHeight !important;
+        min-height: @tutorialEmbedMenuHeight !important;
+    }
+    #mainmenu {
+        .left.menu, .right.menu {
+            display: none;
+        }
+        .menu {
+            position: absolute;
+            height: @tutorialEmbedMenuHeight;
+            width: 100%;
+        }
+        .ui.item.tutorial-menuitem {
+            background: none !important;
+        }
+
+        .immersive-reader-button.ui.item {
+            background-size: 1.7rem;
+        }
+
+        // In the embedded view, always show the navigation dots even in mobile
+        // (instead of progress circle)
+        .ui.item.mobile.hide {
+            display: flex !important;
+        }
+        .ui.item.mobile.only {
+            display: none !important;
+        }
     }
 }
 
@@ -517,6 +730,20 @@ code.lang-filterblocks {
 
 /* > Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) {
+    .thin {
+        .landscape.only {
+            display: none;
+        }
+
+        .portrait.hide {
+            display: none;
+        }
+
+        .portrait.only {
+            display: block!important;
+            height: auto!important;
+        }
+    }
 }
 
 /* Large Monitor */
@@ -594,6 +821,15 @@ code.lang-filterblocks {
 
     #tutorialdropdown {
         width: auto;
+    }
+
+    /**
+    * CSS for embedded tutorial used in the skills map
+    */
+    .tutorial.tutorial-embed {
+        #editorSidebar {
+            top: unset;
+        }
     }
 }
 

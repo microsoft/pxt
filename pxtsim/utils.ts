@@ -242,6 +242,19 @@ namespace pxsim.util {
                 configurable: true
             });
         }
+
+        // https://stackoverflow.com/a/53327815
+        if (!Promise.prototype.finally) {
+            Promise.prototype.finally = Promise.prototype.finally || {
+                finally (fn: () => void): Promise<any> {
+                    const onFinally = (callback: () => Promise<any>) => Promise.resolve(fn()).then(callback);
+                    return (this as Promise<any>).then(
+                        result => onFinally(() => result),
+                        reason => onFinally(() => Promise.reject(reason))
+                    );
+                }
+            }.finally;
+        }
     }
 
     export class Lazy<T> {

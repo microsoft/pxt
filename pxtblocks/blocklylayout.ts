@@ -68,13 +68,14 @@ namespace pxt.blocks.layout {
             otherClass: string,
             blocki: number,
             size: { height: number, width: number },
-            translate: { x: number, y: number }
+            translate: { x: number, y: number },
+            itemClass?: string
         ) {
             const svgclone = svg.cloneNode(true) as SVGSVGElement;
             // collect all blocks
             const parentSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${parentClass}`) as SVGGElement;
             const otherSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${otherClass}`) as SVGGElement;
-            const blocksSvg = Util.toArray(parentSvg.querySelectorAll(`g.blocklyWorkspace > g.${parentClass} > g[data-id]`));
+            const blocksSvg = Util.toArray(parentSvg.querySelectorAll(`g.blocklyWorkspace > g.${parentClass} > ${itemClass ? ("." + itemClass) : "g[transform]"}`));
             const blockSvg = blocksSvg.splice(blocki, 1)[0];
             if (!blockSvg) {
                 // seems like no blocks were generated
@@ -102,7 +103,7 @@ namespace pxt.blocks.layout {
         }
 
         comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
-            commenti, comment.getHeightWidth(), { x: 0, y: 0 }));
+            commenti, comment.getHeightWidth(), { x: 0, y: 0 }, "blocklyComment"));
         blocks.forEach((block, blocki) => {
             const size = block.getHeightWidth();
             const translate = { x: 0, y: 0 };
@@ -147,7 +148,7 @@ namespace pxt.blocks.layout {
     export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
-                const metrics = ws.getMetrics() as Blockly.Metrics;
+                const metrics = ws.getMetrics();
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
@@ -183,63 +184,27 @@ namespace pxt.blocks.layout {
             };
         }
 
-        return toSvgAsync(ws)
+        const density = (pixelDensity | 0) || 4
+        return toSvgAsync(ws, density)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
-                return toPngAsyncInternal(
-                    sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml,
-                    encodeBlocks ? JSON.stringify(blockSnippet, null, 2) : null);
+                return pxt.BrowserUtils.encodeToPngAsync(sg.xml,
+                    {
+                        width: sg.width,
+                        height: sg.height,
+                        pixelDensity: density,
+                        text: encodeBlocks ? JSON.stringify(blockSnippet, null, 2) : null
+                    });
             }).catch(e => {
                 pxt.reportException(e);
                 return undefined;
             })
     }
 
-    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
-    function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string, text?: string): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
-            const cvs = document.createElement("canvas") as HTMLCanvasElement;
-            const ctx = cvs.getContext("2d");
-            const img = new Image;
-
-            cvs.width = width * pixelDensity;
-            cvs.height = height * pixelDensity;
-            img.onload = function () {
-                if (text) {
-                    ctx.fillStyle = "#fff";
-                    ctx.fillRect(0, 0, cvs.width, cvs.height);
-                }
-                ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
-                let canvasdata = cvs.toDataURL("image/png");
-                // if the generated image is too big, shrink image
-                while (canvasdata.length > MAX_SCREENSHOT_SIZE) {
-                    cvs.width = (cvs.width / 2) >> 0;
-                    cvs.height = (cvs.height / 2) >> 0;
-                    pxt.log(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
-                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
-                    canvasdata = cvs.toDataURL("image/png");
-                }
-                if (text) {
-                    let p = pxt.lzmaCompressAsync(text).then(blob => {
-                        const datacvs = pxt.Util.encodeBlobAsync(cvs, blob);
-                        resolve(datacvs.toDataURL("image/png"));
-                    });
-                    p.done();
-                } else {
-                    resolve(canvasdata);
-                }
-            };
-            img.onerror = ev => {
-                pxt.reportError("blocks", "blocks screenshot failed");
-                resolve(undefined)
-            }
-            img.src = data;
-        })
-    }
-
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
+    const MAX_AREA = 120000000; // https://github.com/jhildenbiddle/canvas-size
 
-    export function toSvgAsync(ws: Blockly.WorkspaceSvg): Promise<{
+    export function toSvgAsync(ws: Blockly.WorkspaceSvg, pixelDensity: number): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!ws)
@@ -251,7 +216,14 @@ namespace pxt.blocks.layout {
 
         let width = metrics.right - metrics.left;
         let height = metrics.bottom - metrics.top;
-        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height);
+        let scale = 1;
+
+        const area = width * height * Math.pow(pixelDensity, 2);
+        if (area > MAX_AREA) {
+            scale = Math.sqrt(MAX_AREA / area);
+        }
+
+        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height, scale);
     }
 
     export function serializeNode(sg: Node): string {
@@ -269,7 +241,7 @@ namespace pxt.blocks.layout {
 
     export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
         pxt.BrowserUtils.removeClass(svg, "blocklySvg");
-        pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer");
+        pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer classic-theme");
 
         // Remove background elements
         pxt.U.toArray(svg.querySelectorAll('.blocklyMainBackground,.blocklyScrollbarBackground'))
@@ -298,7 +270,7 @@ namespace pxt.blocks.layout {
         return svg;
     }
 
-    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<BlockSvg> {
+    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, scale?: number): Promise<BlockSvg> {
         if (!sg.childNodes[0])
             return Promise.resolve<BlockSvg>(undefined);
 
@@ -306,10 +278,13 @@ namespace pxt.blocks.layout {
         sg.removeAttribute("height");
         sg.removeAttribute("transform");
 
+        let renderWidth = Math.round(width * (scale || 1));
+        let renderHeight = Math.round(height * (scale || 1));
+
         const xmlString = serializeNode(sg)
             .replace(/^\s*<svg[^>]+>/i, '')
             .replace(/<\/svg>\s*$/i, '') // strip out svg tag
-        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
+        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${renderWidth}" height="${renderHeight}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
         const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
 
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
@@ -333,8 +308,8 @@ namespace pxt.blocks.layout {
                     .then(() => convertIconsToPngAsync(xsg))
                     .then(() => {
                         return <BlockSvg>{
-                            width: width,
-                            height: height,
+                            width: renderWidth,
+                            height: renderHeight,
                             svg: serializeNode(xsg).replace('<style xmlns="http://www.w3.org/1999/xhtml">', '<style>'),
                             xml: documentToSvg(xsg),
                             css: cssString
@@ -377,7 +352,8 @@ namespace pxt.blocks.layout {
                             return dataUri;
                         }).catch(e => {
                             // ignore load error
-                            pxt.debug(`svg render: failed to load ${href}`)
+                            pxt.debug(`svg render: failed to load ${href}`);
+                            return "";
                         }))
                     .then(href => { image.setAttributeNS(XLINK_NAMESPACE, "href", href); })
             });
@@ -401,7 +377,7 @@ namespace pxt.blocks.layout {
                 let pngUri = imageIconCache[svgUri];
 
                 return (pngUri ? Promise.resolve(pngUri)
-                    : toPngAsyncInternal(width, height, 4, svgUri))
+                    : pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 }))
                     .then(href => {
                         imageIconCache[svgUri] = href;
                         image.setAttributeNS(XLINK_NAMESPACE, "href", href);
@@ -436,17 +412,27 @@ namespace pxt.blocks.layout {
             if (ref != undefined) {
                 commentMap[ref] = comment;
             }
-            else {
-                groups.push(formattable(comment));
-            }
         });
 
         let onStart: Formattable;
 
+        // Sort so that on-start is first, events are second, functions are third, and disabled blocks are last
+        blocks.sort((a, b) => {
+            if (a.isEnabled() === b.isEnabled()) {
+                if (a.type === b.type) return 0;
+                else if (a.type === "function_definition") return 1
+                else if (b.type === "function_definition") return -1;
+                else return a.type.localeCompare(b.type);
+            }
+            else if (a.isEnabled())
+                return -1;
+            else
+                return 1
+        });
+
         blocks.forEach(block => {
-            const commentRefs = (block as any).data;
-            if (commentRefs) {
-                const refs = commentRefs.split(";");
+            const refs = getBlockData(block).commentRefs;
+            if (refs.length) {
                 const children: Formattable[] = [];
                 for (let i = 0; i < refs.length; i++) {
                     const comment = commentMap[refs[i]];
@@ -476,7 +462,6 @@ namespace pxt.blocks.layout {
         }
 
         // Collect the comments that were not linked to a top-level block
-        // and puth them in on start (if it exists)
         Object.keys(commentMap).sort((a, b) => {
             // These are strings of integers (eg "0", "17", etc.) with no duplicates
             if (a.length === b.length) {
@@ -487,16 +472,15 @@ namespace pxt.blocks.layout {
             }
         }).forEach(key => {
             if (commentMap[key]) {
-                if (onStart) {
-                    if (!onStart.children) {
-                        onStart.children = [];
-                    }
-                    onStart.children.push(formattable(commentMap[key]));
-                }
-                else {
-                    // Stick the comments in the front so that they show up in the top left
-                    groups.unshift(formattable(commentMap[key]));
-                }
+                // Comments go at the end after disabled blocks
+                groups.push(formattable(commentMap[key]));
+            }
+        });
+
+        comments.forEach(comment => {
+            const ref: string = (comment as any).data;
+            if (ref == undefined) {
+                groups.push(formattable(comment));
             }
         });
 

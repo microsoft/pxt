@@ -1,3 +1,5 @@
+import { EditState } from "./toolDefinitions";
+
 export const DRAG_RADIUS = 3;
 
 export function hasPointerEvents(): boolean {
@@ -93,6 +95,18 @@ export function clientCoord(ev: PointerEvent | MouseEvent | TouchEvent): ClientC
         return te.changedTouches[0];
     }
     return (ev as PointerEvent | MouseEvent);
+}
+
+/**
+ * Similar to fireClickOnEnter, but interactions limited to enter key / ignores
+ * space bar.
+ */
+export function fireClickOnlyOnEnter(e: React.KeyboardEvent<HTMLElement>): void {
+    const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+    if (charCode === 13 /** enter key **/) {
+        e.preventDefault();
+        (e.currentTarget as HTMLElement).click();
+    }
 }
 
 export interface GestureTarget {
@@ -321,4 +335,43 @@ export function applyBitmapData(bitmap: pxt.sprite.BitmapData, data: pxt.sprite.
     layer.y0 = y0;
     base.apply(layer, true);
     return base.data();
+}
+
+
+export interface TilemapPatch {
+    map: string;
+    layers: string[];
+    tiles: string[];
+}
+
+export function createTilemapPatchFromFloatingLayer(editState: EditState, tileset: pxt.TileSet): TilemapPatch {
+    if (!editState.floating) return undefined;
+
+    const tilemap = pxt.sprite.Tilemap.fromData(editState.floating.image.data());
+    const copyTilemap = new pxt.sprite.Tilemap(tilemap.width, tilemap.height);
+    const layers = editState.floating.overlayLayers ?
+        editState.floating.overlayLayers.map(bitmap => pxt.sprite.base64EncodeBitmap(bitmap.data())) : [];
+
+    let referencedTiles: pxt.Tile[] = [];
+    for (let x = 0; x < tilemap.width; x++) {
+        for (let y = 0; y < tilemap.height; y++) {
+            const tile = tileset.tiles[tilemap.get(x, y)]
+            const index = referencedTiles.indexOf(tile);
+
+            if (index === -1) {
+                copyTilemap.set(x, y, referencedTiles.length);
+                referencedTiles.push(tile);
+            }
+            else {
+                copyTilemap.set(x, y, index);
+            }
+        }
+    }
+
+
+    return {
+        map: pxt.sprite.hexEncodeTilemap(copyTilemap),
+        layers,
+        tiles: referencedTiles.map(t => pxt.sprite.base64EncodeBitmap(t.bitmap))
+    };
 }

@@ -105,6 +105,7 @@
 .tile-canvas-controls {
     width: 100%;
     text-align: center;
+    margin-top: -0.5rem;
 }
 
 .tile-palette-pages {
@@ -148,7 +149,6 @@
 .tile-canvas {
     width: 100%;
     padding: 0.25rem;
-    margin-top: 0.25rem;
     position: relative;
 }
 
@@ -171,4 +171,19 @@
 
 .tile-palette-controls-outer {
     height: 2rem;
+}
+
+
+@media screen and (max-height: 720px) {
+    .image-editor-tilemap-minimap {
+        height: 7rem;
+    }
+
+    .tile-canvas {
+        padding-bottom: 0;
+    }
+
+    .tile-palette-fg-bg {
+        margin-bottom: 0;
+    }
 }

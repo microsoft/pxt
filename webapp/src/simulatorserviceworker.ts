@@ -22,7 +22,6 @@ function initSimulatorServiceWorker() {
         // This is the URL loaded in the simulator iframe (includes ref)
         `@simUrl@`,
 
-        `/cdn/bluebird.min.js`,
         `/cdn/pxtsim.js`,
         `/sim/sim.js`,
     ];

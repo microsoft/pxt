@@ -2,6 +2,8 @@ templater.sh
 web/_temp
 webapp/public/blockly
 webapp/public/closure-library
+webapp/public/skillmap.html
+webapp/public/authcode.html
 localtypings/blockly.d.ts
 node_modules
 *.sw?
@@ -25,9 +27,9 @@ paper.fls
 paper.fdb_latexmk
 paper.aux
 tests/**/*.local.*
-package-lock.json
+/package-lock.json
 tests/ui-test/node_modules
-tests/ui-test/.vs 
+tests/ui-test/.vs
 tests/ui-test/package-lock.json
 tests/ui-test/debug.log
 tests/ui-test/chromedriver.exe

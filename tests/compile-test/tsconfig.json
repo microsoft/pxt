@@ -1,13 +1,23 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
         "outDir": "../../built/tests",
         "newLine": "LF",
         "module": "commonjs",
-        "types": ["chai", "mocha", "node", "bluebird"],
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "es2017",
+            "ES2018.Promise"
+        ],
+        "types": [
+            "chai",
+            "mocha",
+            "node"
+        ],
         "sourceMap": false
     },
     "files": [

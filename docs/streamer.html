@@ -151,7 +151,7 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         .opaque {
@@ -333,8 +333,25 @@ Use https://uifabricicons.azurewebsites.net/
             cursor: cursor;
         }
 
-        body.loading {
-            filter: blur(0.2vw);
+        /** add site **/
+        #addsite {
+            display: none;
+            position: absolute;
+            left: 5%;
+            right: 5%;
+            bottom: 18rem;
+            z-index: 1000;
+            background-color: #ccc;
+            padding: 1vw; 
+            padding-top: 3vw;
+            padding-bottom: 3vw;  
+        }
+        #addsite input {
+            font-size: 2.5rem;
+            width: 100%;
+        }
+        .addsite #addsite {
+            display: block;
         }
 
         /** intro **/
@@ -354,7 +371,7 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         .pip video {
-            max-height: 50vh;
+            max-height: 10vh;
             max-width: 65vw;
             display: block;
         }
@@ -363,21 +380,6 @@ Use https://uifabricicons.azurewebsites.net/
             position: absolute;
             top: 1%;
             right: 1%;
-        }
-
-        #takethetour {
-            position: absolute;
-            left: 15vw;
-            top: 50%;
-            text-align: center;
-            font-size: 3vh;
-            color: red;
-            font-weight: bold;
-            text-shadow: -3px 3px 0 #fff,
-                3px 3px 0 #fff,
-                3px -3px 0 #fff,
-                -3px -3px 0 #fff;
-            transform: rotateZ(-30deg);
         }
 
         /**
@@ -394,6 +396,10 @@ title, countdown
             vertical-align: middle;
             color: white;
             opacity: 0;
+        }
+
+        #title:empty {
+            display: none;
         }
 
         #countdown {
@@ -688,6 +694,10 @@ Settings
         /*
     Face camera            
 */
+        body.hideFacecam .facecam {
+            display: none !important;
+        }
+
         .facecam,
         .hardwarecam {
             position: absolute;
@@ -695,6 +705,12 @@ Settings
             bottom: 1.5%;
             right: 1%;
             overflow: hidden;
+        }
+
+        .loading .facecam, 
+        .loading .hardwarecam {
+            filter: blur(0.2vw);
+            opacity: 0.5;
         }
 
         .facecam video,
@@ -1092,7 +1108,7 @@ Settings
             width: var(--video-width);
         }
 
-        body.leftscene .hardwarecam {
+        body.leftscene.hardwarecam .hardwarecam {
             bottom: 10%;
             width: var(--video-small-width);
             right: 1%;
@@ -1249,8 +1265,8 @@ Settings
         /* chatscene: facecam and stream chat */
         body.chatscene .facecam {
             bottom: 10%;
-            right: 20%;
-            width: 64%;
+            right: 10%;
+            width: 80%;
             max-height: 74%;
         }
 
@@ -1414,6 +1430,7 @@ Settings
         body.rightscene.thumbnail #editor {
             right: 20%;
         }
+
     </style>
     <style id="editorstyle"></style>
 </head>
@@ -1422,9 +1439,9 @@ Settings
     <video id="backgroundvideo" class="full background" playsinline autoplay muted loop></video>
     <iframe id="backgroundyoutube" class="full background" type="text/html"></iframe>
     <div id="container" class="container">
-        <iframe class="box animated" id="editor" allow="usb;camera"
+        <iframe class="box animated site" id="editor" allow="usb;camera;serial;microphone"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
-        <iframe class="box animated" id="editor2" allow="usb;camera"
+        <iframe class="box animated site" id="editor2" allow="usb;camera;serial;microphone"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
         <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
         <div role="button" class="box animated clickeable cam facecam" id="facecam">
@@ -1507,6 +1524,7 @@ Settings
                 <h2>MakeCode Streamer
                 <span class="screensize"></span>
                 <span class="icons">
+                    <button id="settingsreset" title="Reset settings"><i class="ms-Icon ms-Icon--Reset"></i></button>
                     <button id="exportsettings" title="Export settings to file"><i class="ms-Icon ms-Icon--Save"></i></button>
                     <input id="importsettingsinput" type="file" accept="application/json" style="display:none"></input>
                     <button id="importsettings" title="Import settings from file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>
@@ -1515,6 +1533,17 @@ Settings
                 </h2>
             </div>
             <div class="contents">
+                <div class="section expanded">
+                    <p>Use this page to produce live or recorded MakeCode videos!
+                        Got a question or a comment ? Try the <a
+                            href="https://forum.makecode.com/t/introducing-makecode-streamer/2437"
+                            target="_blank">forum</a>!
+                    </p>
+                    <button class="pip" id="playpip" title="Watch the introduction video!">
+                        <video id="introvideo" title="Take the tour!" preload="metadata" poster="/static/streamer/intro.png"
+                            src="/static/streamer/intro.mp4"></video>
+                    </button>
+                </div>    
                 <div class="section expanded">
                     <h3>Editor</h3>
                     <div class="field">
@@ -1538,7 +1567,7 @@ Settings
                         <textarea id="powerpointarea" rows="3" placeholder="Paste HTML embed code here to extract web site url."></textarea>
                     </div>
                     <div class="field">
-                        <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
+                        <label for="extrasitesarea">Extra web sites (one per line)</label>
                         <textarea id="extrasitesarea" rows="3"></textarea>
                     </div>
                 </div>
@@ -1798,7 +1827,7 @@ Settings
                         Use</a>|
                     <a class="item" href="https://makecode.com/trademarks" target="_blank"
                         rel="noopener">Trademarks</a>|
-                    <span class="item">© 2020 Microsoft</span>
+                    <span class="item">© 2022 Microsoft</span>
                 </div>
             </div>
         </div>
@@ -1818,24 +1847,9 @@ Settings
         <div class="tools" id="menucontainer">
             <div class="animated icons" id="toolbox"></div>
         </div>
-        <div class="box" id="intro">
-            <div class="header">
-                <h1>Welcome to Streamer!</h1>
-            </div>
+        <div class="box" id="addsite">
             <div class="contents">
-                <p>Use this page to produce live or recorded MakeCode videos!
-                    Got a question or a comment ? Try the <a
-                        href="https://forum.makecode.com/t/introducing-makecode-streamer/2437"
-                        target="_blank">forum</a>!
-                </p>
-                <button class="pip" id="playpip" title="Watch the introduction video!">
-                    <video id="introvideo" title="Take the tour!" preload="metadata" poster="/static/streamer/intro.png"
-                        src="/static/streamer/intro.mp4"></video>
-                    <span id="takethetour">TAKE THE TOUR</span>
-                </button>
-                <button class="pip" id="skippip" title="I'm a pro already...">
-                    Skip
-                </button>
+                <input id="addsiteinput" type="url" placeholder="Enter url or emojis and press Enter" id="idsiteinput" />
             </div>
         </div>
     </div>

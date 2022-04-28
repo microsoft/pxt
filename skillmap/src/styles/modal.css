@@ -1,0 +1,224 @@
+/* SHARE MODAL */
+.share-disclaimer {
+    box-shadow: inset 0 0 0 1px #a9d5de, 0 0 0 0 transparent;
+    background-color: #f8ffff;
+    color: #276f86;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin: 1rem 0 1.5rem;
+}
+
+.share-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.share-loader .common-spinner {
+    margin-right: 0.5rem;
+}
+
+.share-loader span {
+    height: 20px;
+}
+
+.share-input {
+    margin: 1rem 0rem;
+}
+
+/* DELETE PROFILE MODAL */
+.delete .checkbox {
+    padding-top: 1rem;
+}
+
+/* LOGIN MODAL */
+.sign-in .container {
+    display: flex;
+    align-items: center;
+}
+
+.sign-in .container a {
+    padding-left: .5rem;
+}
+
+.sign-in .remember {
+    user-select: none;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.sign-in .modal-actions {
+    grid-template-columns: 1fr;
+    margin-top: .5rem;
+}
+
+.common-modal .icon.cloud-user {
+    width: 7rem;
+    margin-right: 2rem;
+}
+
+/* PROFILE DIALOG */
+/* Most of this CSS is copied from the webapp in commons.less */
+.profiledialog .ui.card {
+    margin: 0;
+    margin-right: 14px;
+    margin-bottom: 14px;
+    border-radius: 0;
+    color: black;
+    border: 1px solid black !important;
+    background-color: white;
+}
+
+.profiledialog button {
+    margin: 0;
+}
+
+.profiledialog label.title {
+    font-weight: bold;
+}
+
+.profiledialog p.value {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.profiledialog p.description {
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.profiledialog div.header-text {
+    font-size: 20px;
+    white-space: nowrap;
+    grid-row-start: 1;
+    grid-row-end: 1;
+    grid-column-start: 1;
+    grid-column-end: 2;
+    justify-self: start;
+}
+
+.profiledialog div.profile-pic {
+    grid-row-start: 1;
+    grid-row-end: 1;
+    grid-column-start: 2;
+    grid-column-end: 2;
+    justify-self: end;
+}
+.profiledialog .ui.card.panel {
+    width: fit-content;
+    min-width: 350px;
+    max-width: 500px;
+    padding: 14px;
+    display: inline-grid;
+    row-gap: 20px;
+    grid-template-rows: auto;
+    grid-template-columns: auto;
+}
+
+.profiledialog .ui.card.panel div.row {
+    grid-row-start: auto;
+    grid-row-end: auto;
+    grid-column-start: 1;
+    grid-column-end: 2;
+    justify-self: start;
+    max-width: 100%;
+}
+
+.profiledialog .ui.card.panel div.row-span-two {
+    grid-row-start: auto;
+    grid-row-end: auto;
+    grid-column-start: 1;
+    grid-column-end: 3;
+    justify-self: start;
+    max-width: 100%;
+}
+
+/* CERTIFICATE MODAL */
+.certificate-reward {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1rem
+}
+
+.certificate-reward img {
+    max-width: 50%;
+}
+
+/* BADGE MODAL */
+.badge-modal-image {
+    margin-top: 1rem;
+}
+
+/* COMPLETION MODAL */
+.completion-reward {
+    margin: 1rem 0;
+    width: 100%;
+}
+
+/* COMPLETION CONFETTI */
+.confetti-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 100;
+}
+
+.confetti {
+    width: 10px;
+    height: 10px;
+    background-color: #249ca3;
+    position: absolute;
+    left: 50%;
+    top: -15px;
+    animation: confetti 2.5s linear -2s infinite;
+    transform-origin: left top;
+    z-index: 110;
+}
+
+.confetti.reverse {
+    animation: confetti-reverse 2.5s linear -2s infinite;
+}
+
+.color-0 { background-color: #ff2121; }
+.color-1 { background-color: #ff93c4; }
+.color-2 { background-color: #ff8135; }
+.color-3 { background-color: #fff609; }
+.color-4 { background-color: #249ca3; }
+.color-5 { background-color: #78dc52; }
+.color-6 { background-color: #003fad; }
+.color-7 { background-color: #87f2ff; }
+.color-8 { background-color: #8e2ec4; }
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .confetti {
+    display: none;
+}
+
+.high-contrast .common-modal-container.sign-in .icon.cloud-user {
+    filter: invert();
+}
+
+@keyframes confetti {
+    0% { transform: rotateZ(15deg) rotateY(0deg) translate(0,0); }
+    25% { transform: rotateZ(5deg) rotateY(360deg) translate(-1vw,20vh); }
+    50% { transform: rotateZ(15deg) rotateY(720deg) translate(1vw,50vh); }
+    75% { transform: rotateZ(5deg) rotateY(1080deg) translate(-1vw,80vh); }
+    100% { transform: rotateZ(15deg) rotateY(1440deg) translate(1vw,110vh); }
+}
+
+@keyframes confetti-reverse {
+    0% { transform: rotateZ(5deg) rotateY(0deg) translate(0,0); }
+    25% { transform: rotateZ(15deg) rotateY(360deg) translate(1vw,20vh); }
+    50% { transform: rotateZ(5deg) rotateY(720deg) translate(-1vw,50vh); }
+    75% { transform: rotateZ(15deg) rotateY(1080deg) translate(1vw,80vh); }
+    100% { transform: rotateZ(5deg) rotateY(1440deg) translate(-1vw,110vh); }
+}

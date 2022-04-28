@@ -10,6 +10,7 @@ import { Dropdown, DropdownOption } from '../Dropdown';
 import { Pivot, PivotOption } from '../Pivot';
 import { IconButton } from '../Button';
 import { AlertOption } from '../Alert';
+import { createTile } from '../../../assets';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -32,7 +33,7 @@ export interface TilePaletteProps {
     dispatchChangeTilePalettePage: (index: number) => void;
     dispatchChangeTilePaletteCategory: (category: TileCategory) => void;
     dispatchChangeDrawingMode: (drawingMode: TileDrawingMode) => void;
-    dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
+    dispatchCreateNewTile: (tile: pxt.Tile, foreground: number, background: number, qualifiedName?: string) => void;
     dispatchSetGalleryOpen: (open: boolean) => void;
     dispatchOpenTileEditor: (editIndex?: number, editID?: string) => void;
     dispatchDeleteTile: (index: number, id: string) => void;
@@ -100,31 +101,31 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     constructor(props: TilePaletteProps) {
         super(props);
 
-        const { gallery, tileset } = props;
-        options.forEach(opt => {
-            if (opt.tiles.length == 0) {
-                opt.tiles.push.apply(opt.tiles,
-                    gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth));
-                }
-        })
+        const { gallery } = props;
 
-        const extraCategories: pxt.Map<Category> = {};
-        for (const tile of gallery) {
-            const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
-            if (categoryName) {
-                if (!extraCategories[categoryName]) {
-                    extraCategories[categoryName] = {
-                        id: categoryName,
-                        text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
-                        tiles: []
-                    };
-                }
+        this.refreshGallery(props);
 
-                extraCategories[categoryName].tiles.push(tile);
+        if (gallery) {
+            const extraCategories: pxt.Map<Category> = {};
+            for (const tile of gallery) {
+                const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
+                if (categoryName) {
+                    if (!extraCategories[categoryName]) {
+                        extraCategories[categoryName] = {
+                            id: categoryName,
+                            text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
+                            tiles: []
+                        };
+                    }
+
+                    extraCategories[categoryName].tiles.push(tile);
+                }
             }
-        }
 
-        this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
+            this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
+        } else {
+            this.categories = [];
+        }
     }
 
     componentDidMount() {
@@ -133,12 +134,13 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         this.redrawCanvas();
     }
 
-    componentWillReceiveProps(nextProps: TilePaletteProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: TilePaletteProps) {
         if (this.props.selected != nextProps.selected) {
             this.jumpToPageContaining(nextProps.selected);
         } else if (this.props.backgroundColor != nextProps.backgroundColor) {
             this.jumpToPageContaining(nextProps.backgroundColor);
         }
+        this.refreshGallery(nextProps);
     }
 
     componentDidUpdate() {
@@ -189,7 +191,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
             <div className="tile-palette-controls-outer">
-                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={this.categories} selected={category} /> }
+                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={this.categories.filter(c => !!c.tiles.length)} selected={category} /> }
 
                 { !galleryOpen &&
                     <div className="tile-palette-controls">
@@ -366,7 +368,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         if (!tileset.tiles[selected] || !tileset.tiles[selected].isProjectTile || selected === 0) return;
 
-        dispatchCreateNewTile(tileset.tiles[selected].bitmap, tileset.tiles.length, backgroundColor);
+        const tile = tileset.tiles[selected];
+        dispatchCreateNewTile(createTile(tile.bitmap, null, tile.meta?.displayName), tileset.tiles.length, backgroundColor);
     }
 
     protected tileDeleteAlertHandler = () => {
@@ -433,7 +436,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 const newIndex = tileset.tiles.length || 1; // transparent is index 0, so default to 1
 
                 this.props.dispatchCreateNewTile(
-                    tile.bitmap,
+                    null,
                     isRightClick ? selected : newIndex,
                     isRightClick ? newIndex : backgroundColor,
                     qname
@@ -441,6 +444,15 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             }
             // automatically switch into tile drawing mode
             this.props.dispatchChangeDrawingMode(TileDrawingMode.Default);
+        }
+    }
+
+    protected refreshGallery(props: TilePaletteProps) {
+        const { gallery, tileset } = props;
+        if (gallery) {
+            options.forEach(opt => {
+                opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
+            });
         }
     }
 
@@ -466,7 +478,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected wallClickHandler = () => {
-        this.props.dispatchChangeDrawingMode(TileDrawingMode.Wall);
+        if (this.props.drawingMode === TileDrawingMode.Wall) {
+            this.props.dispatchChangeDrawingMode(TileDrawingMode.Default);
+        }
+        else {
+            this.props.dispatchChangeDrawingMode(TileDrawingMode.Wall);
+        }
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
@@ -476,7 +493,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         return this.props.tileset.tiles
             .map((t, i) => ([t, i] as [pxt.Tile, number]))
             .filter(([t]) => t.isProjectTile)
-            .sort(([a], [b]) => a.weight - b.weight);
+            .sort(([a], [b]) => {
+                const transparency = "myTiles.transparency" + this.props.tileset.tileWidth;
+                if (a.id == transparency) return -1
+                else if (b.id == transparency) return 1
+                else return a.internalID - b.internalID;
+            });
     }
 
     protected getTileIndex(g: GalleryTile) {

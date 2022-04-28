@@ -9,8 +9,6 @@ import * as crypto from 'crypto';
 import * as path from 'path';
 import * as os from 'os';
 
-Promise = require("bluebird");
-
 import Util = pxt.Util;
 
 export interface SpawnOptions {
@@ -38,7 +36,7 @@ export function addCliFinalizer(f: () => Promise<void>) {
 export function runCliFinalizersAsync() {
     let fins = cliFinalizers
     cliFinalizers = []
-    return Promise.mapSeries(fins, f => f())
+    return pxt.Util.promiseMapAllSeries(fins, f => f())
         .then(() => { })
 }
 
@@ -180,9 +178,7 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
     let u = <http.RequestOptions><any>url.parse(options.url)
 
     if (u.protocol == "https:") isHttps = true
-    /* tslint:disable:no-http-string */
     else if (u.protocol == "http:") isHttps = false
-    /* tslint:enable:no-http-string */
     else return Promise.reject("bad protocol: " + u.protocol)
 
     u.headers = Util.clone(options.headers) || {}
@@ -260,10 +256,14 @@ function sha256(hashData: string): string {
 
 
 function init() {
-    // no, please, I want to handle my errors myself
-    let async = (<any>Promise)._async
-    async.fatalError = (e: any) => async.throwLater(e);
-
+    require("promise.prototype.finally").shim();
+    // Make unhandled async rejections throw
+    process.on(
+        'unhandledRejection',
+        e => {
+            throw e
+        }
+    );
     Util.isNodeJS = true;
     Util.httpRequestCoreAsync = nodeHttpRequestAsync;
     Util.sha256 = sha256;
@@ -359,9 +359,9 @@ export function cpR(src: string, dst: string, maxDepth = 8) {
     }
 }
 
-export function cp(srcFile: string, destDirectory: string) {
+export function cp(srcFile: string, destDirectory: string, destName?: string) {
     mkdirP(destDirectory);
-    let dest = path.resolve(destDirectory, path.basename(srcFile));
+    let dest = path.resolve(destDirectory, destName || path.basename(srcFile));
     let buf = fs.readFileSync(path.resolve(srcFile));
     fs.writeFileSync(dest, buf);
 }
@@ -584,7 +584,6 @@ export function lazyDependencies(): pxt.Map<string> {
 }
 
 export function lazyRequire(name: string, install = false): any {
-    /* tslint:disable:non-literal-require */
     let r: any;
     try {
         r = require(name);
@@ -596,7 +595,6 @@ export function lazyRequire(name: string, install = false): any {
     if (!r && install)
         pxt.log(`package "${name}" failed to load, run "pxt npminstallnative" to install native depencencies`)
     return r;
-    /* tslint:enable:non-literal-require */
 }
 
 export function stringify(content: any) {

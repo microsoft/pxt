@@ -1,4 +1,3 @@
-/* tslint:disable:no-conditional-assignment */
 // TODO: add a macro facility to make 8-bit assembly easier?
 
 namespace ts.pxtc.assembler {
@@ -25,7 +24,7 @@ namespace ts.pxtc.assembler {
         labelName?: string;
     }
 
-    export function lf(fmt: string, ...args: any[]) {
+    export function lf(fmt: string, ...args: any[]) { // @ignorelf@
         return fmt.replace(/{(\d+)}/g, (match, index) => args[+index]);
     }
 
@@ -100,7 +99,7 @@ namespace ts.pxtc.assembler {
                                 stack = (v / this.ei.wordSize());
                         }
                     } else if (enc.isRegList) {
-                        // register lists are ARM-specific - this code not used in AVR 
+                        // register lists are ARM-specific - this code not used in AVR
                         if (actual != "{") return emitErr("expecting {", actual);
                         v = 0;
                         while (tokens[j] != "}") {
@@ -133,7 +132,7 @@ namespace ts.pxtc.assembler {
                                 if (ln.bin.finalEmit)
                                     return emitErr("unknown label", actual)
                                 else
-                                    // just need some value when we are 
+                                    // just need some value when we are
                                     // doing some pass other than finalEmit
                                     v = 8; // needs to be divisible by 4 etc
                             }
@@ -187,7 +186,7 @@ namespace ts.pxtc.assembler {
     export class Line {
         public type: string;
         public lineNo: number;
-        public words: string[]; // the tokens in this line 
+        public words: string[]; // the tokens in this line
         public scope: string;
         public location: number;
         public instruction: Instruction;
@@ -285,7 +284,7 @@ namespace ts.pxtc.assembler {
             return this.location() + this.baseOffset;
         }
 
-        // parsing of an "integer", well actually much more than 
+        // parsing of an "integer", well actually much more than
         // just that
         public parseOneInt(s: string): number {
             if (!s)
@@ -304,7 +303,7 @@ namespace ts.pxtc.assembler {
             // recursive-descent parsing of multiplication
             if (s.indexOf("*") >= 0) {
                 let m: RegExpExecArray = null;
-                while (m = /^([^\*]*)\*(.*)$/.exec(s)) {
+                while (null != (m = /^([^\*]*)\*(.*)$/.exec(s))) {
                     let tmp = this.parseOneInt(m[1])
                     if (tmp == null) return null;
                     mul *= tmp;
@@ -949,6 +948,40 @@ namespace ts.pxtc.assembler {
             })
         }
 
+        public getSourceMap() {
+            const sourceMap: pxt.Map<number[]> = {}
+
+            let locFile = ""
+            let locLn = 0
+            let locPos = 0
+            let locEnd = 0
+            this.lines.forEach((ln, i) => {
+                const m = /^; ([\w\/\.-]+)\(([\d]+),\d+\):/.exec(ln.text)
+                if (m) {
+                    flush()
+                    locFile = m[1]
+                    locLn = parseInt(m[2])
+                }
+                if (ln.type == "instruction") {
+                    if (!locPos) locPos = ln.location
+                    locEnd = ln.location
+                }
+            })
+            flush()
+
+            function flush() {
+                if (locFile && locPos) {
+                    if (!sourceMap[locFile])
+                        sourceMap[locFile] = []
+                    sourceMap[locFile].push(locLn, locPos, locEnd - locPos)
+                }
+                locPos = 0
+                locEnd = 0
+            }
+
+            return sourceMap
+        }
+
 
         public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
             let lenPrev = 0
@@ -1113,7 +1146,7 @@ namespace ts.pxtc.assembler {
     export interface Encoder {
         name: string;
         pretty: string;
-        // given a value, check it is the right number of bits and 
+        // given a value, check it is the right number of bits and
         // translate the value to the proper set of bits
         encode: (v: number) => number;
         isRegister: boolean;
@@ -1288,7 +1321,7 @@ namespace ts.pxtc.assembler {
     function parseString(s: string) {
         s = s.replace(/\\\\/g, "\\B")           // don't get confused by double backslash
             .replace(/\\(['\?])/g, (f, q) => q) // these are not valid in JSON yet valid in C
-            .replace(/\\[z0]/g, "\u0000")      // \0 is valid in C 
+            .replace(/\\[z0]/g, "\u0000")      // \0 is valid in C
             .replace(/\\x([0-9a-f][0-9a-f])/gi, (f, h) => "\\u00" + h)
             .replace(/\\B/g, "\\\\") // undo anti-confusion above
         try {

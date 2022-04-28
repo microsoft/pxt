@@ -31,7 +31,6 @@ interface NewsList {
 const newslist: NewsList = {
     "title": "New live streams!",
     "items": [
-        
     ]
 };
 
@@ -98,6 +97,15 @@ const lessons: Lesson[] = [
         "time": 15,
         "startDay": 21,
         "days": [Day.Tuesday]
+    },
+    {
+        "title": "MAKE'ayla with Mikayla Buford",
+        "description": "Join Mikayla Buford as she builds MakeCode project each week!",
+        "url": "https://www.youtube.com/playlist?list=PLMMBk9hE-Seoq3GYYmHH93FE_-yhw1C1P",
+        "img": "/static/online-learning/img/maykala.png",
+        "time": 12,
+        "startDay": 1,
+        "days": [Day.Friday]
     },
     {
         "title": "DreamSpace HomeSpace",

@@ -1,0 +1,236 @@
+.asset-editor-outer {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.asset-editor-sidebar {
+    width: @blocklyRowWidthWide;
+    height: 100%;
+    border-right: 1px solid @assetSidebarBorder;
+    overflow-y: auto;
+    z-index: 1;
+}
+
+.asset-editor-sidebar-info {
+    margin: 1rem;
+}
+
+.asset-editor-sidebar-name,
+.asset-editor-sidebar-temp {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.asset-editor-sidebar-temp {
+    display: flex;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: @assetUnselected;
+
+    i {
+        width: 1.5rem;
+        height: 1.5rem;
+        margin-right: 0.3rem;
+    }
+}
+
+.asset-editor-sidebar-preview {
+    width: ~"calc(@{blocklyRowWidthWide} - 2rem)";
+    height: ~"calc(@{blocklyRowWidthWide} - 2rem)";
+    margin: 0.5rem 0;
+    background-color: @assetUnselected;
+
+    .asset-editor-preview {
+        border: 2px solid @black;
+    }
+}
+
+.asset-editor-sidebar-copy {
+    position: absolute;
+    top: -9999px;
+}
+
+.asset-editor-gallery {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.asset-editor-topbar {
+    height: 3rem;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid @assetTopbarBorder;
+}
+
+.asset-editor-gallery-tab {
+    height: 3rem;
+    background-color: @assetUnselected;
+    color: @grey;
+    padding: .7em 2em .85em;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-color: @assetTopbarBorder;
+    border-style: solid;
+    border-width: 0 1px 1px 0;
+}
+
+.asset-editor-gallery-tab.selected {
+    background-color: transparent;
+    border-bottom-color: @blocklySvgColor;
+    color: @black;
+}
+.asset-editor-card-list {
+    width: 100%;
+    overflow: auto;
+    flex: 1;
+}
+
+.asset-editor-card-list > div {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
+
+.asset-editor-card,
+.create-new {
+    width: 8rem;
+    height: 8rem;
+    margin: 1rem 0 0 1rem;
+    cursor: pointer;
+
+    border: solid 1px @black;
+    background: @white;
+}
+
+.asset-editor-card.selected {
+    border-width: 2px;
+}
+
+.asset-editor-card.empty-card {
+    background-color: #000000;
+    opacity: 0.05;
+    border: none;
+}
+
+.asset-editor-card-label {
+    display: flex;
+    position: relative;
+    margin-top: -2rem;
+    z-index: 2;
+}
+
+.asset-editor-card-icon {
+    height: 2rem;
+    width: 2rem;
+    line-height: 2rem;
+    text-align: center;
+    background: @white;
+    margin-right: 0.25rem;
+
+    i { margin: 0; }
+}
+
+.asset-editor-preview {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    background-image: @assetPreviewBackground;
+
+    img {
+        max-width: 100%;
+        max-height: 100%;
+        height: auto;
+        width: 100%;
+        image-rendering: optimizeSpeed;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: optimize-contrast;
+        image-rendering: pixelated;
+        -ms-interpolation-mode: nearest-neighbor;
+        object-fit: contain;
+    }
+}
+
+.asset-editor-sidebar-controls > .common-list-item {
+    display: flex;
+}
+
+.asset-editor-button {
+    flex: 1;
+    box-shadow: inset 0 0 0 1px rgba(34,36,38,.15), inset 0 -0.3em 0 0 rgba(34,36,38,.15);
+}
+
+.delete-asset.common-button {
+    flex: 1;
+    background: none transparent;
+    border: none;
+}
+
+.create-new.common-button {
+    color: @white;
+    background-color: @green;
+    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0 0 1rem;
+
+    i.icon {
+        margin: 0;
+    }
+}
+.create-new:hover {
+    background-color: darken(@green, 10%);
+}
+
+.create-new.disabled,
+.create-new.disabled:hover {
+    cursor: not-allowed;
+    background-color: @assetUnselected;
+}
+
+.asset-editor-create-options {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 1rem 0;
+    justify-content: space-around;
+}
+
+.asset-editor-create-button.common-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 10rem;
+    width: 10rem;
+    margin-bottom: 1rem;
+    color: @white;
+    font-weight: 700;
+    background-color: @assetTypeButton;
+    cursor: pointer;
+
+    &:hover {
+        background-color: darken(@assetTypeButton, 5%);
+    }
+
+    i.icon {
+        font-size: 4rem;
+        line-height: 4rem;
+        margin: 1rem;
+    }
+
+}
+
+.image-editor-open #tutorialcard {
+    z-index: @blocklyDropdownDivZIndex + 1
+}

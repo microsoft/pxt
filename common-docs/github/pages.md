@@ -15,3 +15,11 @@ https://youtu.be/vkOWnBfBqak
 It may take up to 10 minutes for updates to be reflected on the GitHub pages web site.
 
 ### ~
+
+## Custom pages
+
+By default, MakeCode overrides the supporting files to render the pages project in each release. You can disable this behavior by adding this code in ``pxt.json``:
+
+```
+disableTargetTemplateFiles: true
+```

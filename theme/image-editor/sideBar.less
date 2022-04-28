@@ -15,6 +15,11 @@
     line-height: calc(~'1.75rem - 2px');
     border-radius: 0;
     border: 1px solid var(--sidebar-icon-active-color);
+
+    &:not(.toggle):focus {
+        // already has selected border
+        outline: none;
+    }
 }
 
 .image-editor-tool-buttons .image-editor-button.toggle {
@@ -48,4 +53,57 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+@media only screen and (max-height: 600px) {
+    .image-editor-sidebar {
+        width: 10rem;
+    }
+
+    .image-editor-tilemap-minimap {
+        display: none;
+    }
+
+    .image-editor-colors {
+        height: 2rem;
+        width: 100%;
+    }
+
+    .image-editor-color-buttons {
+        padding-left: .5rem;
+        padding-top: 0;
+
+        .image-editor-button {
+            width: 2rem;
+            height: 2rem;
+        }
+    }
+}
+
+/* Asset editor tutorial is the max height of the tutorial header */
+@media only screen and (max-height: 900px) {
+    .asset-editor-tutorial {
+        .image-editor-sidebar {
+            width: 10rem;
+        }
+
+        .image-editor-tilemap-minimap {
+            display: none;
+        }
+
+        .image-editor-colors {
+            height: 2rem;
+            width: 100%;
+        }
+
+        .image-editor-color-buttons {
+            padding-left: .5rem;
+            padding-top: 0;
+
+            .image-editor-button {
+                width: 2rem;
+                height: 2rem;
+            }
+        }
+    }
 }

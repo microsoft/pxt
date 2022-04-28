@@ -6,6 +6,10 @@ import * as data from "./data";
 import * as sui from "./sui";
 
 import * as coretsx from "./coretsx";
+import * as auth from "./auth";
+
+
+import { pushNotificationMessage } from "../../react-common/components/Notification";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
@@ -108,7 +112,7 @@ export function cancelAsyncLoading(id: string) {
 ///////////////////////////////////////////////////////////
 
 function showNotificationMsg(kind: string, msg: string) {
-    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: highContrast });
+    pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrastOnce() });
 }
 
 export function errorNotification(msg: string) {
@@ -155,17 +159,23 @@ export interface DialogOptions {
     logos?: string[];
     className?: string;
     header: string;
+    headerIcon?: string;
     body?: string;
     jsx?: JSX.Element;
     jsxd?: () => JSX.Element; // dynamic-er version of jsx
     copyable?: string;
-    size?: string; // defaults to "small"
+    size?: "" | "small" | "fullscreen" | "large" | "mini" | "tiny"; // defaults to "small"
     onLoaded?: (_: HTMLElement) => void;
     buttons?: sui.ModalButton[];
     timeout?: number;
     modalContext?: string;
     hasCloseIcon?: boolean;
     helpUrl?: string;
+    bigHelpButton?: boolean;
+    confirmationText?: string;      // Display a text input the user must type to confirm.
+    confirmationCheckbox?: string;  // Display a checkbox the user must check to confirm.
+    confirmationGranted?: boolean;
+    onClose?: () => void;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -182,12 +192,23 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         })
     }
     if (options.helpUrl) {
-        options.buttons.unshift({
-            className: "circular help",
-            title: lf("Help"),
-            icon: "help",
-            url: options.helpUrl
-        })
+        if (options.bigHelpButton) {
+            options.buttons.unshift({
+                className: "dialog-help-large help",
+                urlButton: true,
+                label: lf("Help"),
+                title: lf("Help"),
+                url: options.helpUrl
+            });
+        }
+        else {
+            options.buttons.unshift({
+                className: "circular help",
+                title: lf("Help"),
+                icon: "help",
+                url: options.helpUrl
+            });
+        }
     }
     return coretsx.renderConfirmDialogAsync(options as PromptOptions);
 }
@@ -244,9 +265,9 @@ export function confirmDelete(what: string, cb: () => Promise<void>, multiDelete
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
-            cb().done()
+            cb()
         }
-    }).done()
+    })
 }
 
 export function promptAsync(options: PromptOptions): Promise<string> {
@@ -276,14 +297,24 @@ export function promptAsync(options: PromptOptions): Promise<string> {
 ////////////         Accessibility            /////////////
 ///////////////////////////////////////////////////////////
 
-export let highContrast: boolean;
 export const TAB_KEY = 9;
 export const ESC_KEY = 27;
 export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
-export function setHighContrast(on: boolean) {
-    highContrast = on;
+export function getHighContrastOnce(): boolean {
+    return data.getData<boolean>(auth.HIGHCONTRAST) || false
+}
+export function toggleHighContrast() {
+    setHighContrast(!getHighContrastOnce())
+}
+export async function setHighContrast(on: boolean) {
+    await auth.setHighContrastPrefAsync(on);
+}
+
+export async function setLanguage(lang: string) {
+    pxt.BrowserUtils.setCookieLang(lang);
+    await auth.setLangaugePrefAsync(lang);
 }
 
 export function resetFocus() {
@@ -310,28 +341,6 @@ export function findChild(c: React.Component<any, any>, selector: string): Eleme
     let self = ReactDOM.findDOMNode(c);
     if (!selector) return [self]
     return pxt.Util.toArray(self.querySelectorAll(selector));
-}
-
-export function parseQueryString(qs: string) {
-    let r: pxt.Map<string> = {}
-
-    qs.replace(/\+/g, " ").replace(/([^#?&=]+)=([^#?&=]*)/g, (f: string, k: string, v: string) => {
-        r[decodeURIComponent(k)] = decodeURIComponent(v)
-        return ""
-    })
-    return r
-}
-
-export function stringifyQueryString(url: string, qs: any) {
-    for (let k of Object.keys(qs)) {
-        if (url.indexOf("?") >= 0) {
-            url += "&"
-        } else {
-            url += "?"
-        }
-        url += encodeURIComponent(k) + "=" + encodeURIComponent(qs[k])
-    }
-    return url
 }
 
 export function handleNetworkError(e: any, ignoredCodes?: number[]) {

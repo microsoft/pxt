@@ -232,6 +232,23 @@ Here are some cool tutorials to get you started with your Gizmo Board!
 ```
 ````
 
+## Hero Gallery
+
+You can specify a gallery in ``pxtarget.json`` that will populate a carousel
+in place of the hero image.
+
+```json
+{
+    "homeScreenHeroGallery": "/hero"
+}
+```
+
+where ``hero`` is a gallery. Each card will rotate through the hero location on the home screen (only the first 5 cards are displayed). When rendering the cards,
+
+* ``largeImageUrl`` and ``imageUrl`` are used if present,
+* ``label`` is used in the button if present; otherwise ``name`` is used
+* (future) ``name`` and ``description`` shown above button
+
 ## Testing
 
 Before pushing documentation changes, you can run the [checkdocs](/cli/checkdocs) command to validate

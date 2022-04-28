@@ -1,3 +1,4 @@
+import { lookupAsset } from '../../../assets';
 import * as actions from '../actions/types'
 import { AlertInfo } from '../Alert';
 
@@ -38,7 +39,8 @@ export enum TileDrawingMode {
 
 // State that goes on the undo/redo stack
 export interface AnimationState {
-    kind: "Animation",
+    kind: "Animation";
+    asset?: pxt.Asset;
     visible: boolean;
     colors: string[];
 
@@ -50,7 +52,8 @@ export interface AnimationState {
 }
 
 export interface TilemapState {
-    kind: "Tilemap"
+    kind: "Tilemap";
+    asset?: pxt.Asset;
     tileset: pxt.TileSet;
     aspectRatioLocked: boolean;
     tilemap: pxt.sprite.ImageState;
@@ -84,6 +87,7 @@ export interface EditorState {
     overlayEnabled?: boolean;
     alert?: AlertInfo;
     resizeDisabled?: boolean;
+    tilesetRevision: number; // used to track changes to the tileset and invalidate the tile cache in ImageCanvas
 }
 
 export interface GalleryTile {
@@ -167,6 +171,7 @@ const initialStore: ImageEditorStore = {
         previewAnimating: false,
         onionSkinEnabled: false,
         overlayEnabled: true,
+        tilesetRevision: 0,
         isTilemap: false
     }
 }
@@ -193,7 +198,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.DISABLE_RESIZE:
             return {
                 ...state,
-                editor: editorReducer(state.editor, action)
+                editor: editorReducer(state.editor, action, state.store)
             };
         case actions.SET_INITIAL_STATE:
             const restored: EditorState = action.state;
@@ -215,6 +220,90 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     future: action.past ? [] : state.store.future
                 }
             };
+        case actions.OPEN_ASSET:
+            const toOpen: pxt.Asset = action.asset;
+            const gallery = action.gallery || (action.keepPast ? state.editor.tileGallery : [])
+
+            let selectedColor = -1;
+            if (toOpen.type === pxt.AssetType.Tilemap) {
+                // Add the first gallery tile to the tileset so the editor will have a default
+                // selected color. If unused, this will be trimmed when the editor is closed.
+                const tilemapData = action.asset.data as pxt.sprite.TilemapData;
+                if (pxt.sprite.isEmptyTilemap(tilemapData)) {
+                    const tiles = tilemapData.tileset.tiles as pxt.Tile[] || [];
+                    const firstTileName = (gallery as GalleryTile[]).find(t => t.tags.indexOf("forest") !== -1)?.qualifiedName;
+                    const firstTile = lookupAsset(pxt.AssetType.Tile, firstTileName) as pxt.Tile;
+                    if (firstTile && !tiles.find(t => t.id === firstTileName)) {
+                        tiles.push(firstTile);
+                    }
+                    selectedColor = tiles.indexOf(firstTile);
+                }
+            }
+
+            return {
+                ...state,
+                editor: toOpen.type === pxt.AssetType.Tilemap ? {
+                    selectedColor,
+                    backgroundColor: -1,
+                    isTilemap: true,
+                    tilemapPalette: {
+                        category: TileCategory.Forest,
+                        page: 0
+                    },
+                    drawingMode: TileDrawingMode.Default,
+                    overlayEnabled: true,
+                    tileGallery: gallery,
+                    tileGalleryOpen: !!gallery,
+                    referencedTiles: toOpen.data.projectReferences,
+                    previewAnimating: false,
+                    onionSkinEnabled: false,
+                    tilesetRevision: 0,
+                    // Properties below this comment carry over if keep past is true
+                    tool: action.keepPast ? state.editor.tool : initialStore.editor.tool,
+                    cursorSize: action.keepPast ? state.editor.cursorSize : initialStore.editor.cursorSize,
+                    editedTiles: action.keepPast ? state.editor.editedTiles : undefined,
+                    deletedTiles: action.keepPast ? state.editor.deletedTiles : undefined
+
+                } : {
+                    isTilemap: false,
+                    tilesetRevision: 0,
+
+                    // Properties below this comment carry over if keep past is true
+                    selectedColor: action.keepPast ? state.editor.selectedColor : initialStore.editor.selectedColor,
+                    backgroundColor: action.keepPast ? state.editor.backgroundColor : initialStore.editor.backgroundColor,
+                    previewAnimating: action.keepPast ? state.editor.previewAnimating : initialStore.editor.previewAnimating,
+                    tool: action.keepPast ? state.editor.tool : initialStore.editor.tool,
+                    onionSkinEnabled: action.keepPast ? state.editor.onionSkinEnabled : initialStore.editor.onionSkinEnabled,
+                    cursorSize: action.keepPast ? state.editor.cursorSize : initialStore.editor.cursorSize,
+                    resizeDisabled: action.keepPast ? state.editor.resizeDisabled : initialStore.editor.resizeDisabled
+                },
+                store: {
+                    ...state.store,
+                    past: action.keepPast ? state.store.past : [],
+                    present: initialStateForAsset(action.asset, gallery),
+                    future: []
+                }
+            };
+
+        case actions.CHANGE_ASSET_NAME:
+            tickEvent("change-asset-name");
+            return {
+                ...state,
+                store: {
+                    past: [...state.store.past, state.store.present],
+                    present: {
+                        ...state.store.present,
+                        asset: {
+                            ...state.store.present.asset,
+                            meta: {
+                                ...(state.store.present.asset.meta || {}),
+                                displayName: action.name
+                            }
+                        }
+                    },
+                    future: []
+                }
+            };
         case actions.UNDO_IMAGE_EDIT:
             if (!state.store.past.length) return state;
 
@@ -226,6 +315,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     past: state.store.past.slice(0, state.store.past.length - 1),
                     present: state.store.past[state.store.past.length - 1],
                     future: [...state.store.future, state.store.present]
+                },
+                editor: {
+                    ...state.editor,
+                    tilesetRevision: state.editor.tilesetRevision + 1
                 }
             };
         case actions.REDO_IMAGE_EDIT:
@@ -239,71 +332,16 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     past: [...state.store.past, state.store.present],
                     present: state.store.future[state.store.future.length - 1],
                     future: state.store.future.slice(0, state.store.future.length - 1),
-                }
-            };
-        case actions.SET_INITIAL_FRAMES:
-            return {
-                ...state,
-                editor: {
-                    ...initialStore.editor,
-                    isTilemap: false,
                 },
-                store: {
-                    ...state.store,
-                    past: [],
-                    present: {
-                        kind: "Animation",
-                        visible: true,
-                        colors: pxt.appTarget.runtime.palette.slice(),
-
-                        aspectRatioLocked: false,
-
-                        currentFrame: 0,
-                        frames: action.frames,
-                        interval: action.interval
-                    },
-                    future: []
-                }
-            }
-        case actions.SET_INITIAL_TILEMAP:
-            return {
-                ...state,
                 editor: {
                     ...state.editor,
-                    selectedColor: -1,
-                    backgroundColor: -1,
-                    isTilemap: true,
-                    tilemapPalette: {
-                        category: TileCategory.Forest,
-                        page: 0
-                    },
-                    drawingMode: TileDrawingMode.Default,
-                    overlayEnabled: true,
-                    tileGallery: action.gallery,
-                    tileGalleryOpen: true,
-                    referencedTiles: action.referencedTiles
-                },
-                store: {
-                    ...state.store,
-                    past: [],
-                    present: {
-                        kind: "Tilemap",
-                        colors: pxt.appTarget.runtime.palette.slice(),
-                        aspectRatioLocked: false,
-                        tilemap: {
-                            bitmap: action.tilemap,
-                            overlayLayers: action.layers
-                        },
-                        tileset: restoreSprites(action.tileset, action.gallery),
-                        nextId: action.nextId
-                    },
-                    future: []
+                    tilesetRevision: state.editor.tilesetRevision + 1
                 }
             };
         default:
             return {
                 ...state,
-                editor: editorReducer(state.editor, action),
+                editor: editorReducer(state.editor, action, state.store),
                 store: {
                     ...state.store,
                     past: [...state.store.past, state.store.present],
@@ -389,12 +427,20 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
                 frames: movedFrames,
                 currentFrame: action.oldIndex === state.currentFrame ? action.newIndex : state.currentFrame
             }
+        case actions.SET_FRAMES:
+            tickEvent(`set-frames`);
+            return {
+                ...state,
+                frames: action.frames,
+                currentFrame: 0
+            };
         default:
             return state;
     }
 }
 
-const editorReducer = (state: EditorState, action: any): EditorState => {
+const editorReducer = (state: EditorState, action: any, store: EditorStore): EditorState => {
+    let editedTiles: string[];
     switch (action.type) {
         case actions.CHANGE_PREVIEW_ANIMATING:
             tickEvent(`preview-animate-${action.animating ? "on" : "off"}`)
@@ -444,7 +490,16 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             return { ...state, overlayEnabled: action.enabled };
         case actions.CREATE_NEW_TILE:
             // tick event covered elsewhere
-            return { ...state, selectedColor: action.foreground, backgroundColor: action.background };
+            editedTiles = state.editedTiles;
+            if (action.tile && (!editedTiles || editedTiles.indexOf(action.tile.id) === -1)) {
+                editedTiles = (editedTiles || []).concat([action.tile.id]);
+            }
+            return {
+                ...state,
+                editedTiles,
+                selectedColor: action.foreground,
+                backgroundColor: action.background
+            };
         case actions.SET_GALLERY_OPEN:
             tickEvent(`set-gallery-open-${action.open}`);
             return { ...state, tileGalleryOpen: action.open, tilemapPalette: { ...state.tilemapPalette, page: 0 } };
@@ -453,29 +508,31 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
                 ...state,
                 deletedTiles: (state.deletedTiles || []).concat([action.id]),
                 selectedColor: action.index === state.selectedColor ? 0 : state.selectedColor,
-                backgroundColor: action.index === state.backgroundColor ? 0 : state.backgroundColor
+                backgroundColor: action.index === state.backgroundColor ? 0 : state.backgroundColor,
+                tilesetRevision: state.tilesetRevision + 1
             };
         case actions.OPEN_TILE_EDITOR:
             const editType = action.index ? "edit" : "new";
             tickEvent(`open-tile-editor-${editType}`);
 
-            let editedTiles = state.editedTiles;
-            if (action.id && (!editedTiles || editedTiles.indexOf(action.id) === -1)) {
-                editedTiles = (editedTiles || []).concat([action.id])
-            }
-
             return {
                 ...state,
-                editedTiles: editedTiles,
                 editingTile: {
                     type: editType,
                     tilesetIndex: action.index
                 }
             };
         case actions.CLOSE_TILE_EDITOR:
+            editedTiles = state.editedTiles;
+            if (action.result && (!editedTiles || editedTiles.indexOf(action.result.id) === -1)) {
+                editedTiles = (editedTiles || []).concat([action.result.id])
+            }
             return {
                 ...state,
-                editingTile: undefined
+                editedTiles,
+                selectedColor: action.index || (store.present as TilemapState).tileset.tiles.length,
+                editingTile: undefined,
+                tilesetRevision: state.tilesetRevision + 1
             };
         case actions.SHOW_ALERT:
             tickEvent("show-alert");
@@ -523,9 +580,21 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
             const isCustomTile = !action.qualifiedName;
             tickEvent(!isCustomTile ? `used-tile-${action.qualifiedName}` : `new-tile`);
 
+            let newTile: pxt.Tile;
+            if (isCustomTile) {
+                newTile = action.tile;
+                newTile.isProjectTile = true;
+            }
+            else {
+                newTile = lookupAsset(pxt.AssetType.Tile, action.qualifiedName) as pxt.Tile;
+            }
+
             return {
                 ...state,
-                tileset: addNewTile(state.tileset, action.bitmap, isCustomTile ? state.nextId : undefined, action.qualifiedName),
+                tileset: {
+                    ...state.tileset,
+                    tiles: state.tileset.tiles.concat([newTile])
+                },
                 nextId: isCustomTile ? state.nextId + 1 : state.nextId
             }
         case actions.CLOSE_TILE_EDITOR:
@@ -540,7 +609,10 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
             else {
                 return {
                     ...state,
-                    tileset: addNewTile(state.tileset, action.result, state.nextId),
+                    tileset: {
+                        ...state.tileset,
+                        tiles: state.tileset.tiles.concat([action.result])
+                    },
                     nextId: state.nextId + 1
                 }
             }
@@ -571,59 +643,10 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
     }
 }
 
-function addNewTile(t: pxt.TileSet, data: pxt.sprite.BitmapData, id?: number, qname?: string): pxt.TileSet {
-    const tiles = t.tiles.slice();
-
-    const fakeId = "*" + (id || tiles.length);
-
-    if (tiles.length === 0) {
-        // Transparency is always index 0
-        tiles.push({
-            id: fakeId,
-            isProjectTile: true,
-            bitmap: new pxt.sprite.Bitmap(t.tileWidth, t.tileWidth).data(),
-            data: null,
-            weight: t.tiles.length
-        })
-    }
-
-    if (id) {
-        tiles.push({
-            id: fakeId,
-            bitmap: data,
-            isProjectTile: true,
-            data: null,
-            weight: t.tiles.length
-        });
-    }
-    else if (qname) {
-        tiles.push({
-            id: qname,
-            bitmap: data,
-            data: null,
-            weight: t.tiles.length
-         });
-    }
-    else {
-        tiles.push({
-            id: fakeId,
-            isProjectTile: true,
-            bitmap: data,
-            data: null,
-            weight: t.tiles.length
-         });
-    }
-
+function editTile(t: pxt.TileSet, index: number, newTile: pxt.Tile): pxt.TileSet {
     return {
         ...t,
-        tiles
-    };
-}
-
-function editTile(t: pxt.TileSet, index: number, newImage: pxt.sprite.BitmapData): pxt.TileSet {
-    return {
-        ...t,
-        tiles: t.tiles.map((tile, i) => i === index ? { ...tile, bitmap: newImage } : tile)
+        tiles: t.tiles.map((tile, i) => i === index ? newTile : tile)
     }
 }
 
@@ -658,7 +681,7 @@ function tickEvent(event: string) {
 
 function restoreSprites(tileset: pxt.TileSet, gallery: GalleryTile[]) {
     for (const t of tileset.tiles) {
-        if (!t.data && !t.isProjectTile) {
+        if (!t.jresData && !t.isProjectTile) {
             for (const g of gallery) {
                 if (g.qualifiedName === t.id) {
                     t.bitmap = g.bitmap;
@@ -695,6 +718,47 @@ function resizeBitmap(data: pxt.sprite.BitmapData, newWidth: number, newHeight: 
 function resizeTilemap(data: pxt.sprite.BitmapData, newWidth: number, newHeight: number) {
     return pxt.sprite.Tilemap.fromData(data).resize(newWidth, newHeight).data();
 }
+
+
+function initialStateForAsset(asset: pxt.Asset, gallery: GalleryTile[]) {
+    if (asset.type === pxt.AssetType.Tilemap) {
+        return initialTilemapStateForAsset(asset, gallery);
+    }
+    else {
+        return initialAnimationStateForAsset(asset);
+    }
+}
+
+function initialAnimationStateForAsset(asset: pxt.ProjectImage | pxt.Animation | pxt.Tile): AnimationState {
+    return {
+        kind: "Animation",
+        asset,
+        visible: true,
+        colors: pxt.appTarget.runtime.palette.slice(),
+
+        aspectRatioLocked: asset.type === pxt.AssetType.Tile,
+
+        currentFrame: 0,
+        frames: asset.type === pxt.AssetType.Animation ? asset.frames.map(bitmap => ({ bitmap })) : [{ bitmap: asset.bitmap }],
+        interval: asset.type === pxt.AssetType.Animation ? asset.interval : 100
+    }
+}
+
+function initialTilemapStateForAsset(asset: pxt.ProjectTilemap, gallery: GalleryTile[]): TilemapState {
+    return {
+        kind: "Tilemap",
+        asset,
+        colors: pxt.appTarget.runtime.palette.slice(),
+        aspectRatioLocked: false,
+        tilemap: {
+            bitmap: asset.data.tilemap.data(),
+            overlayLayers: [asset.data.layers]
+        },
+        tileset: restoreSprites(asset.data.tileset, gallery),
+        nextId: asset.data.nextId
+    }
+}
+
 
 export function setTelemetryFunction(cb: (event: string) => void) {
     tickCallback = cb;

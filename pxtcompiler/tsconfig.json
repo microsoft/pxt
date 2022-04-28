@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
@@ -12,11 +12,11 @@
             "dom",
             "dom.iterable",
             "scripthost",
-            "es6"
+            "es2017",
+            "ES2018.Promise"
         ],
         "types": [
-            "fuse",
-            "bluebird"
+            "fuse"
         ],
         "incremental": true
     },

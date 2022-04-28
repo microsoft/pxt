@@ -84,20 +84,20 @@
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/fc2f56f46189a2e8be3743a1a5abed3b676f9318/doccdn/semantic.js"></script>
     <script>
-(async function () {        
+(async function () {
         const api = "https://api.github.com";
 
         const targets = await fetchJSON("/editors.json");
+        let token = localStorage["core/githubtoken"];
 
         async function fetchJSON(url) {
-            const resp = await fetch(url)
+            const resp = await fetch(url);
             const json = await resp.json();
             return json;
         }
 
         function trackClick(id) {
-            if (typeof mscc !== "undefined" && !mscc.hasConsent())
-                mscc.setConsent();
+            pxt.setInteractiveConsent(true);
             if (typeof pxt !== "undefined")
                 pxt.aiTrackEvent(id);
         }
@@ -107,7 +107,7 @@
                 method: 'POST', // *GET, POST, PUT, DELETE, etc.
                 mode: 'cors', // no-cors, *cors, same-origin
                 headers: {
-                    "Authorization": "bearer " + token()
+                    "Authorization": "bearer " + token
                 },
                 body: JSON.stringify({ query: query })
             });
@@ -116,7 +116,7 @@
                 navigateSignout();
             }
             return response;
-        }        
+        }
 
         function sniffTarget(repo) {
             try {
@@ -151,7 +151,7 @@
             const response = await fetchGraphQL(query);
             const responseJSON = await response.json();
             const items = responseJSON.data.user.repositories.nodes
-                .filter(node => node.object)
+                .filter(node => node.object);
             for (let i = 0; i < items.length; ++i) {
                 const target = sniffTarget(items[i]);
                 if (!target)
@@ -163,7 +163,7 @@
         }
 
         async function fetchUser(user) {
-            if (!token()) return undefined;
+            if (!token) return undefined;
             const response = await fetchGraphQL(`{
   user(login:"${user}") {
     name
@@ -178,7 +178,7 @@
         }
 
         async function fetchCurrentUser() {
-            if (!token()) return undefined;
+            if (!token) return undefined;
             const response = await fetchGraphQL(`{
   viewer {
       login
@@ -199,7 +199,7 @@
                 if (!user) {
                     $('#repoes').append(`<div class="ui item">
                         user not found
-                    </div>`)
+                    </div>`);
                     return;
                 }
                 const userEl = $(`
@@ -211,11 +211,11 @@
         <div class="header"></div>
         <div class="description"></div>
     </div>
-</a>`)
-                userEl.attr("href", `https://github.com/${user.login}`)
-                userEl.find("img").attr('src', user.avatarUrl)
-                userEl.find(".header").text(user.name)
-                userEl.find(".description").text(user.login)
+</a>`);
+                userEl.attr("href", `https://github.com/${user.login}`);
+                userEl.find("img").attr('src', user.avatarUrl);
+                userEl.find(".header").text(user.name);
+                userEl.find(".description").text(user.login);
                 $('#repoes')
                     .append(userEl)
                 const repoes = await fetchUserRepos(userName);
@@ -233,16 +233,16 @@
     <div class="content">
         <div class="header"></div>
         <div class="description"></a></div>
-        <div class="extra"><button class="ui right floated button icon" title="Open repository in GitHub.com"><i class="icon external"></i></button></div>        
+        <div class="extra"><button class="ui right floated button icon" title="Open repository in GitHub.com"><i class="icon external"></i></button></div>
     </div>
 </div>`);
-                            item.find("img").attr("src", icon)
-                            item.find(".header").text(repo.name)
-                            item.find(".description").text(repo.owner.login)
+                            item.find("img").attr("src", icon);
+                            item.find(".header").text(repo.name);
+                            item.find(".description").text(repo.owner.login);
                             item.find(".extra>button").click(event => {
                                 event.stopPropagation();
                                 window.open(targets[repo.target].url, "_blank")
-                            })
+                            });
                             item.click(event => {
                                 trackClick("github.explorer.open")
                                 $('#repoes').children().removeClass('active');
@@ -253,17 +253,13 @@
                                     `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:github:`
                                     + repo.nameWithOwner + "#master";
                                 $("#makecodecolumn").attr("src", url);
-                            })
+                            });
 
                             return item;
                         }))
             } finally {
                 $('#userparent').removeClass('loading');
             }
-        }
-
-        function token() {
-            return localStorage["core/githubtoken"];
         }
 
         function checkToken() {
@@ -275,14 +271,17 @@
 
             if (keys["access_token"]) {
                 if (keys["state"] == localStorage["core/oauthState"]) {
-                    localStorage["core/githubtoken"] = keys["access_token"];
+                    token = keys["access_token"]
+                    if (keys["state"] == localStorage["core/oauthRememberState"])
+                        localStorage["core/githubtoken"] = token;
                 }
                 delete localStorage["core/oauthState"];
+                delete localStorage["core/oauthRememberState"]
                 window.location.hash = "";
             }
 
             // force sign...
-            if (!token()) {
+            if (!token) {
                 $("#signin").show();
                 $('#signout').hide();
                 $('#userparent').hide();
@@ -301,6 +300,8 @@
             trackClick("github.explorer.signin")
             const state = Math.random().toString();
             localStorage["core/oauthState"] = state;
+            if (document.getElementById('remembermeinput').checked)
+                localStorage["core/oauthRememberState"] = state;
             const login = "https://makecode.com/oauth/login?state=" + state +
                 "&response_type=token&client_id=gh-token&redirect_uri=" +
                 encodeURIComponent(window.location.href.split('#', 1)[0])
@@ -317,7 +318,7 @@
         $(function () {
             console.log(`loaded...`);
             checkToken();
-            $('#signinbtn').click(navigateSignin)
+            $('#signinbtn').click(navigateSignin);
             $('#signout').click(navigateSignout);
             $("#user").on("keydown", function search(e) {
                 if (e.keyCode == 13) {
@@ -342,8 +343,7 @@
                         $("#user").val(user);
                         update(user);
                     }
-                })
-
+                });
         });
 })();
     </script>
@@ -391,12 +391,14 @@
             <i class="ui github icon"></i>
             Sign in
         </button>
+        <input type="checkbox" id="remembermeinput" />
+        <label for="remembermeinput">Remember me</label>
     </div>
     <footer id="footer" class="hideprint">
         <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
         <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>
         <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>
-        <div class="item">© 2020 Microsoft</div>
+        <div class="item">© 2022 Microsoft</div>
     </footer>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>

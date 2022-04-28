@@ -36,7 +36,6 @@ namespace pxt.blocks {
         let actuallyVisible = 0;
 
         let i = b.appendDummyInput();
-
         let updateShape = () => {
             if (currentlyVisible === actuallyVisible) {
                 return;
@@ -46,7 +45,9 @@ namespace pxt.blocks {
                 const diff = currentlyVisible - actuallyVisible;
                 for (let j = 0; j < diff; j++) {
                     const arg = handlerArgs[actuallyVisible + j];
-                    i.insertFieldAt(i.fieldRow.length - 1, new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                    i.insertFieldAt(i.fieldRow.length - 1, new pxtblockly.FieldArgumentVariable(arg.name), "HANDLER_" + arg.name);
+                    const blockSvg = b as Blockly.BlockSvg;
+                    if (blockSvg?.initSvg) blockSvg.initSvg(); // call initSvg on block to initialize new fields
                 }
             }
             else {
@@ -112,12 +113,15 @@ namespace pxt.blocks {
         // by BlocklyLoader. The number makes it an invalid JS identifier
         const buttonAddName = "0_add_button";
         const buttonRemName = "0_rem_button";
+        const buttonAddRemName = "0_add_rem_button";
         const numVisibleAttr = "_expanded";
         const inputInitAttr = "_input_init";
 
         const optionNames = def.parameters.map(p => p.name);
         const totalOptions = def.parameters.length;
         const buttonDelta = toggle ? totalOptions : 1;
+        const variableInlineInputs = info.blocksById[b.type].attributes.inlineInputMode === "variable";
+        const compileHiddenArguments = info.blocksById[b.type].attributes.compileHiddenArguments;
 
         const state = new MutationState(b as MutatingBlock);
         state.setEventsEnabled(false);
@@ -125,12 +129,10 @@ namespace pxt.blocks {
         state.setValue(inputInitAttr, false);
         state.setEventsEnabled(true);
 
-        let addShown = false;
-        let remShown = false;
-
         Blockly.Extensions.apply('inline-svgs', b, false);
 
-        addPlusButton();
+        let updatingInputs = false;
+        let firstRender = true;
 
         appendMutation(b, {
             mutationToDom: (el: Element) => {
@@ -146,8 +148,8 @@ namespace pxt.blocks {
                 state.setEventsEnabled(false);
                 if (saved.hasAttribute(inputInitAttr) && saved.getAttribute(inputInitAttr) == "true" && !state.getBoolean(inputInitAttr)) {
                     state.setValue(inputInitAttr, true)
-                    initOptionalInputs();
                 }
+                initOptionalInputs();
 
                 if (saved.hasAttribute(numVisibleAttr)) {
                     const val = parseInt(saved.getAttribute(numVisibleAttr));
@@ -159,6 +161,7 @@ namespace pxt.blocks {
                             }
                             else {
                                 state.setValue(numVisibleAttr, addDelta(delta));
+                                updateButtons();
                             }
                         }
                         else {
@@ -170,15 +173,32 @@ namespace pxt.blocks {
             }
         });
 
-        // Blockly only lets you hide an input once it is rendered, so we can't
-        // hide the inputs in init() or domToMutation(). This will get executed after
-        // the block is rendered
-        setTimeout(() => {
-            if ((b as Blockly.BlockSvg).rendered && !(b.workspace as Blockly.WorkspaceSvg).isDragging()) {
-                updateShape(0, undefined, true);
-                updateButtons();
+        initOptionalInputs();
+        if (compileHiddenArguments) {
+            // Make sure all inputs have shadow blocks attached
+            let optIndex = 0
+            for (let i = 0; i < b.inputList.length; i++) {
+                const input = b.inputList[i];
+                if (Util.startsWith(input.name, optionalInputWithFieldPrefix) || optionNames.indexOf(input.name) !== -1) {
+                    if (input.connection && !(input.connection as any).isConnected() && !b.isInsertionMarker()) {
+                        const param = comp.definitionNameToParam[def.parameters[optIndex].name];
+                        attachShadowBlock(input, param);
+                    }
+                    ++optIndex;
+                }
             }
-        }, 1);
+        }
+
+        (b as Blockly.BlockSvg).render = (opt_bubble) => {
+            if (updatingInputs) return;
+            if (firstRender) {
+                firstRender = false;
+                updatingInputs = true;
+                updateShape(0, undefined, true);
+                updatingInputs = false;
+            }
+            Blockly.BlockSvg.prototype.render.call(b, opt_bubble);
+        }
 
         // Set skipRender to true if the block is still initializing. Otherwise
         // the inputs will render before their shadow blocks are created and
@@ -211,27 +231,14 @@ namespace pxt.blocks {
                     setInputVisible(input, visible);
                     if (visible && input.connection && !(input.connection as any).isConnected() && !b.isInsertionMarker()) {
                         const param = comp.definitionNameToParam[def.parameters[optIndex].name];
-                        let shadow = createShadowValue(info, param);
-
-                        if (shadow.tagName.toLowerCase() === "value") {
-                            // Unwrap the block
-                            shadow = shadow.firstElementChild;
-                        }
-
-                        Blockly.Events.disable();
-
-                        const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
-                        if (nb) {
-                            input.connection.connect(nb.outputConnection);
-                        }
-
-                        Blockly.Events.enable();
+                        attachShadowBlock(input, param);
                     }
                     ++optIndex;
                 }
             }
 
             updateButtons();
+            if (variableInlineInputs) b.setInputsInline(visibleOptions < 4);
             if (!skipRender) (b as Blockly.BlockSvg).render();
         }
 
@@ -241,42 +248,37 @@ namespace pxt.blocks {
         }
 
         function updateButtons() {
+            if (updatingInputs) return;
             const visibleOptions = state.getNumber(numVisibleAttr);
-            const showAdd = visibleOptions !== totalOptions;
-            const showRemove = visibleOptions !== 0;
+            const showPlus = visibleOptions !== totalOptions;
+            const showMinus = visibleOptions !== 0;
 
-            if (!showAdd) {
-                addShown = false;
-                b.removeInput(buttonAddName, true);
-            }
-            if (!showRemove) {
-                remShown = false;
-                b.removeInput(buttonRemName, true);
-            }
+            if (b.inputList.some(i => i.name === buttonAddName)) b.removeInput(buttonAddName, true);
+            if (b.inputList.some(i => i.name === buttonRemName)) b.removeInput(buttonRemName, true);
+            if (b.inputList.some(i => i.name === buttonAddRemName)) b.removeInput(buttonAddRemName, true);
 
-            if (showRemove && !remShown) {
-                if (addShown) {
-                    b.removeInput(buttonAddName, true);
-                    addMinusButton();
-                    addPlusButton();
-                }
-                else {
-                    addMinusButton();
-                }
+            if (showPlus && showMinus) {
+                addPlusAndMinusButtons();
             }
-
-            if (showAdd && !addShown) {
+            else if (showPlus) {
                 addPlusButton();
+            }
+            else if (showMinus) {
+                addMinusButton();
             }
         }
 
+        function addPlusAndMinusButtons() {
+            b.appendDummyInput(buttonAddRemName)
+                .appendField(new Blockly.FieldImage((b as any).REMOVE_IMAGE_DATAURI, 24, 24, lf("Hide optional arguments"), () => updateShape(-1 * buttonDelta), false))
+                .appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Reveal optional arguments"), () => updateShape(buttonDelta), false))
+        }
+
         function addPlusButton() {
-            addShown = true;
             addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), buttonDelta);
         }
 
         function addMinusButton() {
-            remShown = true;
             addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1 * buttonDelta);
         }
 
@@ -292,12 +294,27 @@ namespace pxt.blocks {
 
         function setInputVisible(input: Blockly.Input, visible: boolean) {
             // If the block isn't rendered, Blockly will crash
-            if ((b as Blockly.BlockSvg).rendered) {
-                let renderList = input.setVisible(visible);
-                renderList.forEach((block: Blockly.BlockSvg) => {
-                    block.render();
-                });
+            input.setVisible(visible);
+        }
+
+        function attachShadowBlock(input: Blockly.Input, param: BlockParameter) {
+            let shadow = createShadowValue(info, param);
+
+            if (shadow.tagName.toLowerCase() === "value") {
+                // Unwrap the block
+                shadow = shadow.firstElementChild;
             }
+
+            Blockly.Events.disable();
+
+            try {
+                const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
+                if (nb) {
+                    input.connection.connect(nb.outputConnection);
+                }
+            } catch (e) { }
+
+            Blockly.Events.enable();
         }
     }
 
@@ -310,11 +327,12 @@ namespace pxt.blocks {
         Blockly.Extensions.apply('inline-svgs', b, false);
 
         let returnValueVisible = true;
-        updateShape();
 
         // When the value input is removed, we disconnect the block that was connected to it. This
         // is the id of whatever block was last connected
         let lastConnectedId: string;
+
+        updateShape();
 
         b.domToMutation = saved => {
             if (saved.hasAttribute("last_connected_id")) {

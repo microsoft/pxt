@@ -48,6 +48,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
         "youTubePlaylistId": id,
         "imageUrl": `${assets}/playlist.png`
     });
+    const cardsMd = pxt.gallery.codeCardsToMarkdown(cards);
     const md =
         `# ${playlist.snippet.title}
 
@@ -55,9 +56,7 @@ ${playlist.snippet.description || ""}
 
 ## Videos
 
-\`\`\`codecard
-${JSON.stringify(cards, null, 4)}
-\`\`\`
+${cardsMd}
 
 ## See Also
 

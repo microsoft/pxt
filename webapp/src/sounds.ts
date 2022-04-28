@@ -26,7 +26,7 @@ function playSound(id: string) {
     if (pxt.options.light) return;
 
     loadSoundAsync(id)
-        .done(buf => buf ? audio.play(buf, volume) : undefined);
+        .then(buf => buf ? audio.play(buf, volume) : undefined);
 }
 
 export function tutorialStep() { playSound('tutorialStep'); }
@@ -39,5 +39,5 @@ export function initTutorial() {
         loadSoundAsync('tutorialStep'),
         loadSoundAsync('tutorialNext'),
         loadSoundAsync('click')
-    ]).done();
+    ]);
 }

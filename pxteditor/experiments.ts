@@ -3,11 +3,13 @@ namespace pxt.editor.experiments {
         id: string; // == field in apptheme also assumes image at /static/experiments/ID.png
         name: string;
         description: string;
-        feedbackUrl: string; // allows user to put feedback
+        feedbackUrl?: string; // allows user to put feedback
+        enableOnline?: boolean; // requires internet connection, disable in offline app
     }
 
-    function key(experiment: Experiment): string {
-        return `experiments-${experiment.id}`
+    function key(experiment: Experiment | string): string {
+        const id = (typeof experiment === "object") ? experiment.id : experiment;
+        return `experiments-${id}`
     }
 
     export function syncTheme() {
@@ -24,12 +26,13 @@ namespace pxt.editor.experiments {
             pxt.tickEvent("experiments.loaded", r);
             pxt.reloadAppTargetVariant();
         }
+        return pxt.appTarget.appTheme;
     }
 
     export function all(): Experiment[] {
         const ids = pxt.appTarget.appTheme.experiments;
         if (!ids) return [];
-        return <Experiment[]>[
+        return [
             {
                 id: "print",
                 name: lf("Print Code"),
@@ -125,12 +128,14 @@ namespace pxt.editor.experiments {
                 id: "githubEditor",
                 name: lf("GitHub editor"),
                 description: lf("Review, commit and push to GitHub."),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/6419"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6419",
+                enableOnline: true,
             },
             {
                 id: "githubCompiledJs",
                 name: lf("GitHub Pages JavaScript"),
-                description: lf("Commit compiled javascript when creating a release")
+                description: lf("Commit compiled javascript when creating a release"),
+                enableOnline: true,
             },
             {
                 id: "blocksCollapsing",
@@ -162,8 +167,13 @@ namespace pxt.editor.experiments {
                 id: "errorList",
                 name: lf("Error List"),
                 description: lf("Show an error list panel for JavaScript and Python.")
-            }
-        ].filter(experiment => ids.indexOf(experiment.id) > -1);
+            },
+            {
+                id: "blocksErrorList",
+                name: lf("Blocks Error List"),
+                description: lf("Show an error list panel for Blocks")
+            },
+        ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
     }
 
     export function clear() {
@@ -175,7 +185,7 @@ namespace pxt.editor.experiments {
         return all().some(experiment => isEnabled(experiment));
     }
 
-    export function isEnabled(experiment: Experiment): boolean {
+    export function isEnabled(experiment: Experiment | string): boolean {
         return !!pxt.storage.getLocal(key(experiment));
     }
 

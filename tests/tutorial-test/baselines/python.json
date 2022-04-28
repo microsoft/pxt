@@ -3,19 +3,22 @@
     "title": "Native python",
     "steps": [
         {
-            "contentMd": "Tutorials can be written with code in Python.\n```python\nbasic.show_string(\"Hello\")\n```",
+            "contentMd": "Tutorials can be written with code in Python.\n```python\ndef on_chat():\n    # @highlight\n    player.teleport(pos(0, 100, 0))\nplayer.on_chat(\"jump\", on_chat)\n```",
             "headerContentMd": "Tutorials can be written with code in Python.",
-            "fullscreen": true,
-            "hintContentMd": "```python\nbasic.show_string(\"Hello\")\n```"
+            "showHint": true,
+            "hintContentMd": "```python\ndef on_chat():\n    # @highlight\n    player.teleport(pos(0, 100, 0))\nplayer.on_chat(\"jump\", on_chat)\n```"
         },
         {
-            "contentMd": "Show some LEDs\n\n```python\nbasic.forever(function() {\n    basic.show_leds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n\n```",
+            "contentMd": "Show some LEDs\n\n```python\nbuilder.teleport_to(pos(0, 0, 0))\nfor i in range(25):\n    builder.move(FORWARD, 1)\n    builder.move(UP, 1)\n```",
             "headerContentMd": "Show some LEDs",
-            "hintContentMd": "```python\nbasic.forever(function() {\n    basic.show_leds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n\n```"
+            "hintContentMd": "```python\nbuilder.teleport_to(pos(0, 0, 0))\nfor i in range(25):\n    builder.move(FORWARD, 1)\n    builder.move(UP, 1)\n```"
         }
     ],
     "activities": null,
-    "code": "\ndef __wrapper_0():\n    basic.show_string(\"Hello\")\n\ndef __wrapper_1():\n    basic.forever(function() {\n        basic.show_leds(`\n            . # . # .\n            # # # # #\n            # # # # #\n            . # # # .\n            . . # . .`);\n    })\n",
+    "code": [
+        "\ndef on_chat():\n    # @highlight\n    player.teleport(pos(0, 100, 0))\nplayer.on_chat(\"jump\", on_chat)\n",
+        "\nbuilder.teleport_to(pos(0, 0, 0))\nfor i in range(25):\n    builder.move(FORWARD, 1)\n    builder.move(UP, 1)\n"
+    ],
     "metadata": {
         "diffs": false
     },

@@ -84,7 +84,7 @@ namespace ts.pxtc {
 
     export function plainTscCompileFiles(fileNames: string[], compilerOpts: ts.CompilerOptions): Program {
         const compilerHost = createCompilerHost(compilerOpts);
-        compilerHost.getDefaultLibFileName = () => "node_modules/typescript/lib/lib.d.ts"
+        compilerHost.getDefaultLibFileName = () => "node_modules/pxt-core/pxtcompiler/ext-typescript/lib/lib.d.ts";
         let prog = createProgram(fileNames, compilerOpts, compilerHost);
         return prog
 

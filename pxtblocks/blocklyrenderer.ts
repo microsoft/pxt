@@ -25,6 +25,7 @@ namespace pxt.blocks {
         splitSvg?: boolean;
         forceCompilation?: boolean;
         generateSourceMap?: boolean;
+        assets?: pxt.Map<string>;
     }
 
     export function initRenderingWorkspace() {
@@ -53,7 +54,7 @@ namespace pxt.blocks {
     }
 
     export function cleanRenderingWorkspace() {
-        // We re-use the workspace across renders, catch any errors so we know to 
+        // We re-use the workspace across renders, catch any errors so we know to
         // create a new workspace if there was an error
         if (workspace) workspace.dispose();
         workspace = undefined;
@@ -74,7 +75,7 @@ namespace pxt.blocks {
                 break;
         }
 
-        let metrics = workspace.getMetrics() as Blockly.Metrics;
+        let metrics = workspace.getMetrics();
 
         const svg = blocklyDiv.querySelectorAll('svg')[0].cloneNode(true) as SVGSVGElement;
         pxt.blocks.layout.cleanUpBlocklySvg(svg);
@@ -104,8 +105,10 @@ namespace pxt.blocks {
             return renderWorkspace(options);
         } catch (e) {
             pxt.reportException(e);
-            cleanRenderingWorkspace();
             return undefined;
+        }
+        finally {
+            cleanRenderingWorkspace();
         }
     }
 

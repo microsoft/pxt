@@ -97,7 +97,7 @@ namespace pxt.github {
 
     export let handleGithubNetworkError: (opts: U.HttpRequestOptions, e: any) => boolean;
 
-    let isPrivateRepoCache: pxt.Map<boolean> = {};
+    const isPrivateRepoCache: pxt.Map<boolean> = {};
 
     export interface CachedPackage {
         files: Map<string>;
@@ -105,6 +105,7 @@ namespace pxt.github {
 
     // caching
     export interface IGithubDb {
+        latestVersionAsync(repopath: string, config: PackagesConfig): Promise<string>;
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig>;
         loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage>;
     }
@@ -158,11 +159,12 @@ namespace pxt.github {
     }
 
     export function isOrgAsync(owner: string): Promise<boolean> {
-        return ghGetJsonAsync(`https://api.github.com/orgs/${owner}`)
+        return ghRequestAsync({ url: `https://api.github.com/orgs/${owner}`, method: "GET", allowHttpErrors: true })
             .then(resp => resp.statusCode == 200);
     }
 
     export class MemoryGithubDb implements IGithubDb {
+        private latestVersions: pxt.Map<string> = {};
         private configs: pxt.Map<pxt.PackageConfig> = {};
         private packages: pxt.Map<CachedPackage> = {};
 
@@ -176,7 +178,8 @@ namespace pxt.github {
             }
 
             // load and cache
-            return ghProxyWithCdnJsonAsync(`${repopath}/${tag}/text`)
+            const parsed = parseRepoId(repopath)
+            return ghProxyWithCdnJsonAsync(join(parsed.slug, tag, parsed.fileName, "text"))
                 .then(v => this.packages[key] = { files: v });
         }
 
@@ -187,7 +190,10 @@ namespace pxt.github {
         }
 
         async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
-            if (!tag) tag = "master";
+            if (!tag) {
+                pxt.debug(`dep: default to master branch`)
+                tag = "master";
+            }
 
             // cache lookup
             const key = `${repopath}/${tag}`;
@@ -212,8 +218,20 @@ namespace pxt.github {
             return this.cacheConfig(key, cfg);
         }
 
+        async latestVersionAsync(repopath: string, config: PackagesConfig): Promise<string> {
+            let resolved = this.latestVersions[repopath]
+            if (!resolved) {
+                pxt.debug(`dep: resolve latest version of ${repopath}`)
+                this.latestVersions[repopath] = resolved = await pxt.github.latestVersionAsync(repopath, config, true, false)
+            }
+            return resolved
+        }
+
         async loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
-            if (!tag) tag = "master";
+            if (!tag) {
+                pxt.debug(`load pkg: default to master branch`)
+                tag = "master";
+            }
 
             // try using github proxy first
             if (hasProxy()) {
@@ -248,7 +266,7 @@ namespace pxt.github {
                             }
                             current.files[pxt.CONFIG_NAME] = pkg
                             const cfg: pxt.PackageConfig = JSON.parse(pkg)
-                            return Promise.map(pxt.allPkgFiles(cfg).slice(1),
+                            return U.promiseMapAll(pxt.allPkgFiles(cfg).slice(1),
                                 fn => downloadTextAsync(repopath, sha, fn)
                                     .then(text => {
                                         current.files[fn] = text
@@ -263,13 +281,13 @@ namespace pxt.github {
         }
     }
 
-    function fallbackDownloadTextAsync(repopath: string, commitid: string, filepath: string) {
+    function fallbackDownloadTextAsync(parsed: ParsedRepo, commitid: string, filepath: string) {
         return ghRequestAsync({
-            url: "https://api.github.com/repos/" + repopath + "/contents/" + filepath + "?ref=" + commitid,
+            url: "https://api.github.com/repos/" + join(parsed.slug, "contents", parsed.fileName, filepath + "?ref=" + commitid),
             method: "GET"
         }).then(resp => {
             const f = resp.json as FileContent
-            isPrivateRepoCache[repopath] = true
+            isPrivateRepoCache[parsed.slug] = true
             // if they give us content, just return it
             if (f && f.encoding == "base64" && f.content != null)
                 return atob(f.content)
@@ -279,19 +297,20 @@ namespace pxt.github {
     }
 
     export function downloadTextAsync(repopath: string, commitid: string, filepath: string) {
+        const parsed = parseRepoId(repopath);
         // raw.githubusercontent.com doesn't accept ?access_token=... and has wrong CORS settings
         // for Authorization: header; so try anonymous access first, and otherwise fetch using API
 
-        if (isPrivateRepoCache[repopath])
-            return fallbackDownloadTextAsync(repopath, commitid, filepath)
+        if (isPrivateRepoCache[parsed.slug])
+            return fallbackDownloadTextAsync(parsed, commitid, filepath)
 
         return U.requestAsync({
-            url: "https://raw.githubusercontent.com/" + repopath + "/" + commitid + "/" + filepath,
+            url: "https://raw.githubusercontent.com/" + join(parsed.slug, commitid, parsed.fileName, filepath),
             allowHttpErrors: true
         }).then(resp => {
             if (resp.statusCode == 200)
                 return resp.text
-            return fallbackDownloadTextAsync(repopath, commitid, filepath)
+            return fallbackDownloadTextAsync(parsed, commitid, filepath)
         })
     }
 
@@ -304,7 +323,8 @@ namespace pxt.github {
     }
 
     export function getCommitsAsync(repopath: string, sha: string): Promise<CommitInfo[]> {
-        return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/commits?sha=" + sha)
+        const parsed = parseRepoId(repopath);
+        return ghGetJsonAsync("https://api.github.com/repos/" + parsed.slug + "/commits?sha=" + sha)
             .then(objs => objs.map((obj: any) => {
                 const c = obj.commit;
                 c.url = obj.url;
@@ -314,7 +334,8 @@ namespace pxt.github {
     }
 
     export function getCommitAsync(repopath: string, sha: string) {
-        return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/commits/" + sha)
+        const parsed = parseRepoId(repopath);
+        return ghGetJsonAsync("https://api.github.com/repos/" + parsed.slug + "/git/commits/" + sha)
             .then((commit: Commit) => ghGetJsonAsync(commit.tree.url + "?recursive=1")
                 .then((tree: Tree) => {
                     commit.tree = tree
@@ -353,20 +374,23 @@ namespace pxt.github {
     }
 
     export function createObjectAsync(repopath: string, type: string, data: any) {
-        return ghPostAsync(repopath + "/git/" + type + "s", data)
+        const parsed = parseRepoId(repopath);
+        return ghPostAsync(parsed.slug + "/git/" + type + "s", data)
             .then((resp: SHAObject) => resp.sha)
     }
 
     export function postCommitComment(repopath: string, commitSha: string, body: string, path?: string, position?: number) {
-        return ghPostAsync(`${repopath}/commits/${commitSha}/comments`, {
+        const parsed = parseRepoId(repopath);
+        return ghPostAsync(`${parsed.slug}/commits/${commitSha}/comments`, {
             body, path, position
         })
             .then((resp: CommitComment) => resp.id);
     }
 
     export async function fastForwardAsync(repopath: string, branch: string, commitid: string) {
+        const parsed = parseRepoId(repopath);
         const resp = await ghRequestAsync({
-            url: "https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch,
+            url: `https://api.github.com/repos/${parsed.slug}/git/refs/heads/${branch}`,
             method: "PATCH",
             allowHttpErrors: true,
             data: {
@@ -378,8 +402,9 @@ namespace pxt.github {
     }
 
     export async function putFileAsync(repopath: string, path: string, content: string) {
+        const parsed = parseRepoId(repopath);
         await ghRequestAsync({
-            url: "https://api.github.com/repos/" + repopath + "/contents/" + path,
+            url: `https://api.github.com/repos/${pxt.github.join(parsed.slug, "contents", parsed.fileName, path)}`,
             method: "PUT",
             allowHttpErrors: true,
             data: {
@@ -421,8 +446,9 @@ namespace pxt.github {
     }
 
     export function mergeAsync(repopath: string, base: string, head: string, message?: string) {
+        const parsed = parseRepoId(repopath);
         return ghRequestAsync({
-            url: "https://api.github.com/repos/" + repopath + "/merges",
+            url: `https://api.github.com/repos/${parsed.slug}/merges`,
             method: "POST",
             successCodes: [201, 204, 409],
             data: {
@@ -472,14 +498,15 @@ namespace pxt.github {
     }
 
     export async function forkRepoAsync(repopath: string, commitid: string, pref = "pr-") {
-        const res = await ghPostAsync(repopath + "/forks", {})
-        const repoInfo = mkRepo(res, null)
+        const parsed = parseRepoId(repopath);
+        const res = await ghPostAsync(`${parsed.slug}/forks`, {})
+        const repoInfo = mkRepo(res, { fullName: parsed.fullName, fileName: parsed.fileName })
         const endTm = Date.now() + 5 * 60 * 1000
         let refs: RefsResult = null
         while (!refs && Date.now() < endTm) {
-            await Promise.delay(1000)
+            await U.delay(1000)
             try {
-                refs = await listRefsExtAsync(repoInfo.fullName, "heads");
+                refs = await listRefsExtAsync(repoInfo.slug, "heads");
             } catch (err) {
                 // not created
             }
@@ -488,7 +515,7 @@ namespace pxt.github {
             throw new Error(lf("Timeout waiting for fork"))
 
         const branchName = generateNextRefName(refs, pref);
-        await createNewBranchAsync(repoInfo.fullName, branchName, commitid)
+        await createNewBranchAsync(repoInfo.slug, branchName, commitid)
         return repoInfo.fullName + "#" + branchName
     }
 
@@ -498,12 +525,13 @@ namespace pxt.github {
     }
 
     export function listRefsExtAsync(repopath: string, namespace = "tags", useProxy?: boolean, noCache?: boolean): Promise<RefsResult> {
+        const parsed = parseRepoId(repopath);
         const proxy = shouldUseProxy(useProxy);
         let head: string = null
         const fetch = !proxy ?
-            ghGetJsonAsync(`https://api.github.com/repos/${repopath}/git/refs/${namespace}/?per_page=100`) :
+            ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/${namespace}/?per_page=100`) :
             // no CDN caching here, bust browser cace
-            U.httpGetJsonAsync(pxt.BrowserUtils.cacheBustingUrl(`${pxt.Cloud.apiRoot}gh/${repopath}/refs${noCache ? "?nocache=1" : ""}`))
+            U.httpGetJsonAsync(pxt.BrowserUtils.cacheBustingUrl(`${pxt.Cloud.apiRoot}gh/${parsed.slug}/refs${noCache ? "?nocache=1" : ""}`))
                 .then(r => {
                     let res = Object.keys(r.refs)
                         .filter(k => U.startsWith(k, "refs/" + namespace + "/"))
@@ -522,8 +550,10 @@ namespace pxt.github {
             }
             return { refs: r, head }
         }, err => {
-            if (err.statusCode == 404) return { refs: {} }
-            else return Promise.reject(err)
+            if (err.statusCode == 404)
+                return { refs: {} } as any
+            else
+                return Promise.reject(err)
         })
     }
 
@@ -543,42 +573,82 @@ namespace pxt.github {
         // TODO  support fetching a tag
         if (/^[a-f0-9]{40}$/.test(tag))
             return Promise.resolve(tag)
-        return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/tags/" + tag)
+        const parsed = parseRepoId(repopath)
+        return ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/tags/${tag}`)
             .then(resolveRefAsync, e =>
-                ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + tag)
+                ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/heads/${tag}`)
                     .then(resolveRefAsync))
     }
 
-    export function pkgConfigAsync(repopath: string, tag = "master") {
-        return db.loadConfigAsync(repopath, tag)
+    export async function pkgConfigAsync(repopath: string, tag: string, config: pxt.PackagesConfig) {
+        if (!tag)
+            tag = await db.latestVersionAsync(repopath, config)
+        return await db.loadConfigAsync(repopath, tag)
     }
 
-    export function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig): Promise<CachedPackage> {
-        let p = parseRepoId(repoWithTag)
+    export async function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig): Promise<CachedPackage> {
+        const p = parseRepoId(repoWithTag)
         if (!p) {
             pxt.log('Unknown GitHub syntax');
-            return Promise.resolve<CachedPackage>(undefined);
+            return undefined
         }
 
         if (isRepoBanned(p, config)) {
             pxt.tickEvent("github.download.banned");
             pxt.log('Github repo is banned');
-            return Promise.resolve<CachedPackage>(undefined);
+            return undefined;
         }
 
-        return db.loadPackageAsync(p.fullName, p.tag)
-            .then(cached => {
-                const dv = upgradedDisablesVariants(config, repoWithTag)
-                if (dv) {
-                    const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
-                    if (cfg) {
-                        pxt.log(`auto-disable ${dv.join(",")} due to targetconfig entry for ${repoWithTag}`)
-                        cfg.disablesVariants = dv
-                        cached.files[pxt.CONFIG_NAME] = Package.stringifyConfig(cfg)
+        // always try to upgrade unbound versions
+        if (!p.tag) {
+            p.tag = await db.latestVersionAsync(p.slug, config)
+        }
+        const cached = await db.loadPackageAsync(p.fullName, p.tag)
+        const dv = upgradedDisablesVariants(config, repoWithTag)
+        if (dv) {
+            const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
+            if (cfg) {
+                pxt.log(`auto-disable ${dv.join(",")} due to targetconfig entry for ${repoWithTag}`)
+                cfg.disablesVariants = dv
+                cached.files[pxt.CONFIG_NAME] = Package.stringifyConfig(cfg)
+            }
+        }
+        return cached
+    }
+
+    export async function downloadLatestPackageAsync(repo: ParsedRepo, useProxy?: boolean, noCache?: boolean): Promise<{ version: string, config: pxt.PackageConfig }> {
+        const packageConfig = await pxt.packagesConfigAsync()
+        const tag = await pxt.github.latestVersionAsync(repo.slug, packageConfig, useProxy, noCache)
+        // download package into cache
+        const repoWithTag = `${repo.fullName}#${tag}`;
+        await pxt.github.downloadPackageAsync(repoWithTag, packageConfig)
+
+        // return config
+        const config = await pkgConfigAsync(repo.fullName, tag, packageConfig)
+        const version = `github:${repoWithTag}`
+
+        return { version, config };
+    }
+
+    export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig): Promise<void> {
+        const ghExtensions = Object.keys(cfg.dependencies)
+            ?.filter(dep => isGithubId(cfg.dependencies[dep]));
+
+        if (ghExtensions.length) {
+            const pkgConfig = await pxt.packagesConfigAsync();
+            // Make sure external packages load before installing header.
+            await Promise.all(
+                ghExtensions.map(
+                    async ext => {
+                        const extSrc = cfg.dependencies[ext];
+                        const ghPkg = await downloadPackageAsync(extSrc, pkgConfig);
+                        if (!ghPkg) {
+                            throw new Error(lf("Cannot load extension {0} from {1}", ext, extSrc));
+                        }
                     }
-                }
-                return cached
-            })
+                )
+            );
+        }
     }
 
     export interface User {
@@ -629,7 +699,8 @@ namespace pxt.github {
     export interface ParsedRepo {
         owner?: string;
         project?: string;
-        // owner/name
+        // owner/project (aka slug)
+        slug: string;
         fullName: string;
         tag?: string;
         fileName?: string;
@@ -697,7 +768,7 @@ namespace pxt.github {
                     // legacy readme.md annotations
                     return readme && readme.indexOf("PXT/" + pxt.appTarget.id) > -1;
                 })
-                .map((node: any) => mkRepo(node, null))
+                .map((node: any) => mkRepo(node, { fullName: node.full_name }))
             );
     }
 
@@ -712,15 +783,16 @@ namespace pxt.github {
             allow_rebase_merge: false,
             allow_merge_commit: true,
             delete_branch_on_merge: false // keep branches for naming purposes
-        }).then(v => mkRepo(v, null))
+        }).then(v => mkRepo(v))
     }
 
     export async function enablePagesAsync(repo: string) {
         // https://developer.github.com/v3/repos/pages/#enable-a-pages-site
         // try read status
+        const parsed = parseRepoId(repo);
         let url: string = undefined;
         try {
-            const status = await ghGetJsonAsync(`https://api.github.com/repos/${repo}/pages`) // try to get the pages
+            const status = await ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/pages`) // try to get the pages
             if (status)
                 url = status.html_url;
         } catch (e) { }
@@ -728,15 +800,21 @@ namespace pxt.github {
         // status failed, try enabling pages
         if (!url) {
             // enable pages
-            const r = await ghPostAsync(`https://api.github.com/repos/${repo}/pages`, {
-                source: {
-                    branch: "master",
-                    path: ""
-                }
-            }, {
-                "Accept": "application/vnd.github.switcheroo-preview+json"
-            });
-            url = r.html_url;
+            try {
+                const r = await ghPostAsync(`https://api.github.com/repos/${parsed.slug}/pages`, {
+                    source: {
+                        branch: "master",
+                        path: "/"
+                    }
+                }, {
+                    "Accept": "application/vnd.github.switcheroo-preview+json"
+                });
+                url = r.html_url;
+            }
+            catch (e) {// this is still an experimental api subject to changes
+                pxt.tickEvent("github.pages.error");
+                pxt.reportException(e);
+            }
         }
 
         // we have a URL, update project
@@ -764,24 +842,32 @@ namespace pxt.github {
         return Cloud.cdnApiUrl(`gh/${repo.fullName}/icon`)
     }
 
-    function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
+    function mkRepo(r: Repo, options?: {
+        config?: pxt.PackagesConfig,
+        fullName?: string,
+        fileName?: string,
+        tag?: string
+    }): GitRepo {
         if (!r) return undefined;
         const rr: GitRepo = {
             owner: r.owner.login.toLowerCase(),
-            fullName: r.full_name.toLowerCase(),
+            slug: r.full_name.toLowerCase(),
+            fullName: (options?.fullName || r.full_name).toLowerCase(),
+            fileName: options?.fileName?.toLocaleLowerCase(),
             name: r.name,
             description: r.description,
             defaultBranch: r.default_branch,
-            tag: tag,
+            tag: options?.tag,
             updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000),
             fork: r.fork,
             private: r.private,
         }
-        rr.status = repoStatus(rr, config);
+        rr.status = repoStatus(rr, options?.config);
         return rr;
     }
 
     export function repoStatus(rr: ParsedRepo, config: pxt.PackagesConfig): GitRepoStatus {
+        if (!rr) return GitRepoStatus.Unknown;
         return isRepoBanned(rr, config) ? GitRepoStatus.Banned
             : isRepoApproved(rr, config) ? GitRepoStatus.Approved
                 : GitRepoStatus.Unknown;
@@ -828,8 +914,8 @@ namespace pxt.github {
         return false;
     }
 
-    export async function repoAsync(id: string, config: pxt.PackagesConfig): Promise<GitRepo> {
-        const rid = parseRepoId(id);
+    export async function repoAsync(repopath: string, config: pxt.PackagesConfig): Promise<GitRepo> {
+        const rid = parseRepoId(repopath);
         if (!rid)
             return undefined;
         const status = repoStatus(rid, config);
@@ -845,22 +931,24 @@ namespace pxt.github {
             }
         }
         // try github apis
-        const r = await ghGetJsonAsync("https://api.github.com/repos/" + rid.fullName)
-        return mkRepo(r, config, rid.tag);
+        const r = await ghGetJsonAsync("https://api.github.com/repos/" + rid.slug)
+        return mkRepo(r, { config, fullName: rid.fullName, fileName: rid.fileName, tag: rid.tag });
     }
 
     function proxyRepoAsync(rid: ParsedRepo, status: GitRepoStatus): Promise<GitRepo> {
         // always use proxy
-        return ghProxyWithCdnJsonAsync(`${rid.fullName}`)
+        return ghProxyWithCdnJsonAsync(rid.slug)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
                     github: true,
                     owner: rid.owner,
                     fullName: rid.fullName,
-                    name: meta.name,
+                    fileName: rid.fileName,
+                    slug: rid.slug,
+                    name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
                     description: meta.description,
-                    defaultBranch: "master",
+                    defaultBranch: meta.defaultBranch || "master",
                     tag: rid.tag,
                     status
                 };
@@ -873,15 +961,16 @@ namespace pxt.github {
     export function searchAsync(query: string, config: pxt.PackagesConfig): Promise<GitRepo[]> {
         if (!config) return Promise.resolve([]);
 
-        let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
+        let repos = query.split('|').map(parseRepoId).filter(repo => !!repo);
         if (repos.length > 0)
-            return Promise.all(repos.map(id => repoAsync(id.path, config)))
+            return Promise.all(repos.map(id => repoAsync(id.fullName, config)))
                 .then(rs => rs.filter(r => r && r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
+        // todo fix search
         const fetch = () => U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=${encodeURIComponent(query)}`)
         return fetch()
             .then((rs: SearchResults) =>
-                rs.items.map(item => mkRepo(item, config))
+                rs.items.map(item => mkRepo(item, { config, fullName: item.full_name }))
                     .filter(r => r.status == GitRepoStatus.Approved || (config.allowUnapproved && r.status == GitRepoStatus.Unknown))
                     // don't return the target itself!
                     .filter(r => !pxt.appTarget.appTheme.githubUrl || `https://github.com/${r.fullName}` != pxt.appTarget.appTheme.githubUrl.toLowerCase())
@@ -889,26 +978,13 @@ namespace pxt.github {
             .catch(err => []); // offline
     }
 
-    function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
-        if (!url) return undefined;
-        url = url.trim()
-        // match github.com urls
-        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)\/?(#(\w+))?$/i.exec(url);
-        if (m) {
-            const r: { repo: string; tag?: string; path?: string; } = {
-                repo: m ? m[3].toLowerCase() : null,
-                tag: m ? m[5] : null
-            }
-            r.path = r.repo + (r.tag ? '#' + r.tag : '');
-            return r;
-        }
-        return undefined;
-    }
-
     // parse https://github.com/[company]/[project](/filepath)(#tag)
     export function parseRepoId(repo: string): ParsedRepo {
         if (!repo) return undefined;
+        // clean out whitespaces
         repo = repo.trim();
+        // trim trailing /
+        repo = repo.replace(/\/$/, '')
 
         // convert github pages into github repo
         const mgh = /^https:\/\/([^./#]+)\.github\.io\/([^/#]+)\/?$/i.exec(repo);
@@ -924,20 +1000,29 @@ namespace pxt.github {
             return undefined;
         const owner = m[1];
         const project = m[2];
-        const fileName = m[4];
+        let fileName = m[4];
         const tag = m[6];
+
+        const treeM = fileName && /^tree\/([^\/]+\/)/.exec(fileName)
+        if (treeM) {
+            // https://github.com/pelikhan/mono-demo/tree/master/demo2
+            fileName = fileName.slice(treeM[0].length);
+            // branch info?
+        }
+
         return {
             owner,
             project,
-            fullName: `${owner}/${project}`,
+            slug: join(owner, project),
+            fullName: join(owner, project, fileName),
             tag,
             fileName
         }
     }
 
-    export function toGithubDependencyPath(id: ParsedRepo): string {
-        let r = "github:" + id.fullName;
-        if (id.tag) r += "#" + id.tag;
+    export function toGithubDependencyPath(path: string, tag?: string): string {
+        let r = "github:" + path;
+        if (tag) r += "#" + tag;
         return r;
     }
 
@@ -948,14 +1033,19 @@ namespace pxt.github {
     }
 
     export function stringifyRepo(p: ParsedRepo) {
-        return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "master") : undefined;
+        return p ? "github:" + p.fullName.toLowerCase() + (p.tag ? `#${p.tag}` : '') : undefined;
     }
 
-    export function normalizeRepoId(id: string) {
+    export function normalizeRepoId(id: string, defaultTag?: string) {
         const gid = parseRepoId(id);
         if (!gid) return undefined;
-        gid.tag = gid.tag || "master";
+        if (!gid.tag && defaultTag)
+            gid.tag = defaultTag
         return stringifyRepo(gid);
+    }
+
+    export function join(...parts: string[]) {
+        return parts.filter(p => !!p).join('/');
     }
 
     function upgradeRule(cfg: PackagesConfig, id: string) {
@@ -984,10 +1074,10 @@ namespace pxt.github {
             return null
 
         const m = /^min:(.*)/.exec(upgr)
-        if (m && pxt.semver.parse(m[1])) {
+        const minV = m && pxt.semver.tryParse(m[1]);
+        if (minV) {
             const parsed = parseRepoId(id)
-            const minV = pxt.semver.parse(m[1])
-            const currV = pxt.semver.parse(parsed.tag)
+            const currV = pxt.semver.tryParse(parsed.tag)
             if (currV && pxt.semver.cmp(currV, minV) < 0) {
                 parsed.tag = m[1]
                 pxt.debug(`upgrading ${id} to ${m[1]}`)
@@ -1013,15 +1103,15 @@ namespace pxt.github {
         return id
     }
 
-    export function latestVersionAsync(path: string, config: PackagesConfig, useProxy?: boolean, noCache?: boolean): Promise<string> {
-        let parsed = parseRepoId(path)
+    export function latestVersionAsync(repopath: string, config: PackagesConfig, useProxy?: boolean, noCache?: boolean): Promise<string> {
+        const parsed = parseRepoId(repopath)
 
         if (!parsed) return Promise.resolve<string>(null);
 
-        return repoAsync(parsed.fullName, config)
+        return repoAsync(parsed.slug, config)
             .then(scr => {
                 if (!scr) return undefined;
-                return listRefsExtAsync(scr.fullName, "tags", useProxy, noCache)
+                return listRefsExtAsync(scr.slug, "tags", useProxy, noCache)
                     .then(refsRes => {
                         let tags = Object.keys(refsRes.refs)
                         // only look for semver tags
@@ -1050,9 +1140,50 @@ namespace pxt.github {
                         if (tags[0])
                             return Promise.resolve(tags[0])
                         else
-                            return refsRes.head || tagToShaAsync(scr.fullName, scr.defaultBranch)
+                            return refsRes.head || tagToShaAsync(scr.slug, scr.defaultBranch)
                     })
             });
+    }
+
+    export function resolveMonoRepoVersions(deps: pxt.Map<string>): pxt.Map<string> {
+        deps = Util.clone(deps);
+        // before loading dependencies, ensure that all mono-repo are in sync
+        const slugVersions: pxt.Map<{
+            tag: string;
+            deps: { id: string; ghid: ParsedRepo; }[];
+        }> = {};
+        // group and collect versions
+        Object.keys(deps)
+            .map(id => ({ id, ghid: github.parseRepoId(deps[id]) }))
+            .filter(v => v.ghid?.tag)
+            .forEach(v => {
+                const { id, ghid } = v;
+                // check version
+                let version = slugVersions[ghid.slug];
+                if (!version) {
+                    version = slugVersions[ghid.slug] = {
+                        tag: ghid.tag,
+                        deps: []
+                    }
+                }
+                version.deps.push(v);
+                if (pxt.semver.strcmp(version.tag, ghid.tag) < 0) {
+                    pxt.debug(`dep: resolve later monorepo tag to ${pxt.github.stringifyRepo(ghid)}`)
+                    version.tag = ghid.tag;
+                }
+            });
+        // patch depdencies
+        U.values(slugVersions)
+            .forEach(v => v.deps
+                .forEach(dep => {
+                    if (dep.ghid.tag !== v.tag) {
+                        pxt.debug(`dep: ${pxt.github.stringifyRepo(dep.ghid)} -> ${v.tag}`);
+                        dep.ghid.tag = v.tag;
+                        deps[dep.id] = pxt.github.stringifyRepo(dep.ghid);
+                    }
+                }))
+
+        return deps;
     }
 
     export interface GitJson {
@@ -1065,10 +1196,11 @@ namespace pxt.github {
     export const GIT_JSON = ".git.json"
     const GRAPHQL_URL = "https://api.github.com/graphql";
 
-    export function lookupFile(commit: pxt.github.Commit, path: string) {
+    export function lookupFile(parsed: ParsedRepo, commit: pxt.github.Commit, path: string) {
         if (!commit)
             return null
-        return commit.tree.tree.find(e => e.path == path)
+        const fpath = join(parsed.fileName, path);
+        return commit.tree.tree.find(e => e.path == fpath)
     }
 
     /**

@@ -1,0 +1,30 @@
+.dropdown:focus {
+    outline: none;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.header-dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    background-color: var(--body-background-color);
+    z-index: var(--above-frame-zindex);
+    border: 1px solid var(--dropdown-hover-color);
+    border-top: 0px;
+    right: 0em;
+}
+
+.dropdown-item {
+    width: 10rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--black);
+    font-size: 1rem;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background-color: var(--dropdown-hover-color);
+}

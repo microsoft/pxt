@@ -103,9 +103,81 @@ namespace pxsim {
             return perf() * 1000;
         }
 
+        const _nextTickResolvedPromise = Promise.resolve();
         export function nextTick(f: () => void) {
-            (<any>Promise)._async._schedule(f)
+            // .then should run as a microtask / at end of loop
+            _nextTickResolvedPromise.then(f);
         }
+
+        export async function delay<T>(duration: number, value: T): Promise<T>;
+        export async function delay(duration: number): Promise<void>
+        export async function delay<T>(duration: number, value?: T): Promise<T> {
+            // eslint-disable-next-line
+            const output = await value;
+            await new Promise<void>(resolve => setTimeout(() => resolve(), duration));
+            return output;
+        }
+
+        export function promiseMapAll<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+            return Promise.all(values.map(v => mapper(v)));
+        }
+
+        export  function promiseMapAllSeries<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+            return promisePoolAsync(1, values, mapper);
+        }
+
+        export async function promisePoolAsync<T, V>(maxConcurrent: number, inputValues: T[], handler: (input: T) => Promise<V>): Promise<V[]> {
+            let curr = 0;
+            const promises = [];
+            const output: V[] = [];
+
+            for (let i = 0; i < maxConcurrent; i++) {
+                const thread = (async () => {
+                    while (curr < inputValues.length) {
+                        const id = curr++;
+                        const input = inputValues[id];
+                        output[id] = await handler(input);
+                    }
+                })();
+
+                promises.push(thread);
+            }
+
+            try {
+                await Promise.all(promises);
+            } catch (e) {
+                // do not spawn any more promises after pool failed.
+                curr = inputValues.length;
+                throw e;
+            }
+
+            return output;
+        }
+
+        export async function promiseTimeout<T>(ms: number, promise: T | Promise<T>, msg?: string): Promise<T> {
+            let timeoutId: any;
+            let res: (v?: T | PromiseLike<T>) => void;
+
+            const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
+                res = resolve;
+                timeoutId = setTimeout(() => {
+                    res = undefined;
+                    clearTimeout(timeoutId);
+                    reject(msg || `Promise timed out after ${ms}ms`);
+                }, ms);
+            });
+
+            return Promise.race([ promise, timeoutPromise ])
+                .then(output => {
+                    // clear any dangling timeout
+                    if (res) {
+                        clearTimeout(timeoutId);
+                        res();
+                    }
+                    return <T>output;
+                });
+        }
+
 
         // this will take lower 8 bits from each character
         export function stringToUint8Array(input: string) {
@@ -167,12 +239,49 @@ namespace pxsim {
             return res;
         }
 
+        export function toUTF8Array(s: string) {
+            return (new TextEncoder()).encode(s);
+        }
+
+        export function fromUTF8Array(s: Uint8Array) {
+            return (new TextDecoder()).decode(s);
+        }
+
+        export function isPxtElectron(): boolean {
+            return typeof window != "undefined" && !!(window as any).pxtElectron;
+        }
+
+        export function isIpcRenderer(): boolean {
+            return typeof window != "undefined" && !!(window as any).ipcRenderer;
+        }
+
+        export function isElectron() {
+            return isPxtElectron() || isIpcRenderer();
+        }
+
         export function isLocalHost(): boolean {
             try {
                 return typeof window !== "undefined"
                     && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
                     && !/nolocalhost=1/.test(window.location.href);
             } catch (e) { return false; }
+        }
+
+        export function isLocalHostDev(): boolean {
+            return isLocalHost() && !isElectron();
+        }
+
+        export function unique<T>(arr: T[], f: (t: T) => string): T[] {
+            let v: T[] = [];
+            let r: { [index: string]: any; } = {}
+            arr.forEach(e => {
+                let k = f(e)
+                if (!r.hasOwnProperty(k)) {
+                    r[k] = null;
+                    v.push(e);
+                }
+            })
+            return v;
         }
     }
 
@@ -276,17 +385,19 @@ namespace pxsim {
     const SERIAL_BUFFER_LENGTH = 16;
     export class BaseBoard {
         id: string;
-        bus: pxsim.EventBus;
+        readonly bus: pxsim.EventBus;
         runOptions: SimulatorRunMessage;
-        messageListeners: MessageListener[] = [];
+        private readonly messageListeners: MessageListener[] = [];
 
         constructor() {
-            this.id = "b" + Math.round(Math.random() * 2147483647);
-            this.bus = new pxsim.EventBus(runtime);
+            // use a stable board id
+            this.id = Embed.frameid || ("b" + Math.round(Math.random() * 2147483647));
+            this.bus = new pxsim.EventBus(runtime, this);
         }
 
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
+            if (!runtime || runtime.dead) return;
             this.dispatchMessage(msg);
         }
         private dispatchMessage(msg: SimulatorMessage) {
@@ -327,7 +438,7 @@ namespace pxsim {
 
         protected serialOutBuffer: string = '';
         private messages: SerialMessage[] = [];
-        private serialTimeout: number;
+        private serialTimeout: any;
         private lastSerialTime = 0;
 
         public writeSerial(s: string) {
@@ -420,6 +531,7 @@ namespace pxsim {
             inBackground: thread.runInBackground,
             createBuffer: BufferMethods.createBuffer,
             dmesg: (s: string) => console.log("DMESG: " + s),
+            deviceDalVersion: () => "sim",
             __log: (pri: number, s: string) => console.log("LOG: " + s.trim()),
         }
     }
@@ -471,8 +583,8 @@ namespace pxsim {
             // all events will be processed by concurrent promisified code below, so start afresh
             this.events = []
             // in order semantics for events and handlers
-            return Promise.each(events, (value) => {
-                return Promise.each(this.handlers, (handler) => {
+            return U.promiseMapAllSeries(events, (value) => {
+                return U.promiseMapAllSeries(this.handlers, (handler) => {
                     return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 })
             }).then(() => {
@@ -564,7 +676,7 @@ namespace pxsim {
     }
 
     export class TimeoutScheduled {
-        constructor(public id: number, public fn: Function, public totalRuntime: number, public timestampCall: number) { }
+        constructor(public id: any, public fn: Function, public totalRuntime: number, public timestampCall: number) { }
     }
 
     export class PausedTimeout {
@@ -623,9 +735,9 @@ namespace pxsim {
 
         dead = false;
         running = false;
-        idleTimer: number = undefined;
+        idleTimer: any = undefined;
         recording = false;
-        recordingTimer = 0;
+        recordingTimer: any = 0;
         recordingLastImageData: ImageData = undefined;
         recordingWidth: number = undefined;
         startTime = 0;
@@ -645,6 +757,7 @@ namespace pxsim {
         timeoutsScheduled: TimeoutScheduled[] = []
         timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
         pausedOnBreakpoint: boolean = false;
+        traceDisabled = false;
 
         perfCounters: PerfCounter[]
         perfOffset = 0
@@ -1025,6 +1138,7 @@ namespace pxsim {
             let lastYield = Date.now()
             let userGlobals: string[];
             let __this = this // ex
+            this.traceDisabled = !!msg.traceDisabled;
 
             // this is passed to generated code
             const evalIface = {
@@ -1103,7 +1217,6 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    /* tslint:disable:no-string-based-set-timeout */
                     setTimeout(loopForSchedule(s), 5)
                     return true
                 }
@@ -1182,9 +1295,11 @@ namespace pxsim {
             function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
                 setupResume(s, retPc);
                 if (info.functionName === "<main>" || info.fileName === "main.ts") {
-                    const { msg } = getBreakpointMsg(s, brkId, userGlobals);
-                    msg.subtype = "trace";
-                    Runtime.postMessage(msg)
+                    if (!runtime.traceDisabled) {
+                        const { msg } = getBreakpointMsg(s, brkId, userGlobals);
+                        msg.subtype = "trace";
+                        Runtime.postMessage(msg)
+                    }
                     thread.pause(tracePauseMs || 1)
                 }
                 else {
@@ -1441,7 +1556,7 @@ namespace pxsim {
                 return fn
             }
 
-            // tslint:disable-next-line
+            // eslint-disable-next-line
             const entryPoint = msg.code && eval(msg.code)(evalIface);
 
             this.run = (cb) => topCall(entryPoint, cb)

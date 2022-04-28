@@ -1,6 +1,7 @@
 var STORAGE_KEY = "SAVED_TUTORIAL";
 var ENDPOINT_KEY = "SAVED_ENDPOINT";
 var existing = localStorage.getItem(STORAGE_KEY);
+// @ts-ignore
 var editor = monaco.editor.create(document.getElementById("container"), {
     value: existing ||
         "# My Tutorial\n\n## Step 1\n\nHere is some text.\n\n## Step 2\n\nCongratulations, you did it!\n    ",
@@ -60,6 +61,16 @@ var targets = [
             }
         ]
     }, {
+        name: "Calliope MINI",
+        id: "calliopemini",
+        shareUrl: "https://makecode.calliope.cc/",
+        endpoints: [
+            {
+                name: "",
+                url: "https://makecode.calliope.cc/?controller=1"
+            }
+        ]
+    }, {
         name: "Maker",
         id: "maker",
         shareUrl: "https://maker.makecode.com/",
@@ -69,7 +80,8 @@ var targets = [
                 url: "https://maker.makecode.com/?controller=1"
             }
         ]
-    }/* not supported
+    }
+    /* not supported
     , {
         name: "LEGO EV3",
         id: "ev3",
@@ -85,49 +97,48 @@ var targets = [
         ]
     } */
 ];
-
 function shareScript(md, done) {
     function request(url, data) {
         var client = new XMLHttpRequest();
         var resolved = false;
-        client.onreadystatechange = () => {
-            if (resolved) return // Safari/iOS likes to call this thing more than once
+        client.onreadystatechange = function () {
+            if (resolved)
+                return; // Safari/iOS likes to call this thing more than once
             if (client.readyState == 4) {
                 resolved = true;
-                var resp = {
+                var resp_1 = {
                     statusCode: client.status,
                     headers: {},
                     buffer: client.responseBody || client.response,
-                    text: client.responseText,
-                }
-                const allHeaders = client.getAllResponseHeaders();
-                allHeaders.split(/\r?\n/).forEach(l => {
-                    var m = /^\s*([^:]+): (.*)/.exec(l)
-                    if (m) resp.headers[m[1].toLowerCase()] = m[2]
-                })
-
+                    text: client.responseText
+                };
+                var allHeaders = client.getAllResponseHeaders();
+                allHeaders.split(/\r?\n/).forEach(function (l) {
+                    var m = /^\s*([^:]+): (.*)/.exec(l);
+                    if (m)
+                        resp_1.headers[m[1].toLowerCase()] = m[2];
+                });
                 // resolve
-                if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
-                    var msg = `Bad HTTP status code: ${resp.statusCode} at ${options.url}; message: ${(resp.text || "").slice(0, 500)}`;
-                    var err = new Error(msg)
-                    err.statusCode = resp.statusCode
+                if ((resp_1.statusCode != 200 && resp_1.statusCode != 304)) {
+                    var msg = "Bad HTTP status code: " + resp_1.statusCode + " at " + url + "; message: " + (resp_1.text || "").slice(0, 500);
+                    var err = new Error(msg);
                     done(undefined, err);
-                } else {
-                    if (resp.text && /application\/json/.test(resp.headers["content-type"]))
-                    resp.json = JSON.parse(resp.text)
+                }
+                else {
+                    if (resp_1.text && /application\/json/.test(resp_1.headers["content-type"]))
+                        resp_1.json = JSON.parse(resp_1.text);
                     // show dialog
-                    done(resp);
+                    done(resp_1);
                 }
             }
-        }
-        var buf = JSON.stringify(data)
+        };
+        var buf = JSON.stringify(data);
         client.open("POST", url);
-        client.setRequestHeader("content-type", "application/json; charset=utf8")
+        client.setRequestHeader("content-type", "application/json; charset=utf8");
         client.send(buf);
     }
-
-    const title = /^#\s([\s\w]*)$/m.exec(md);
-    const name = title ? title[1] : "Tutorial";
+    var title = /^#\s([\s\w]*)$/m.exec(md);
+    var name = title ? title[1] : "Tutorial";
     request("https://makecode.com/api/scripts", {
         name: name,
         target: selectedTarget.id,
@@ -138,23 +149,21 @@ function shareScript(md, done) {
             "main.blocks": "",
             "main.ts": "",
             "pxt.json": JSON.stringify({
-                    name: name,
-                    dependencies: {
-                        "core": "*"
-                    },
-                    description: "",
-                    files: [
-                        "main.blocks",
-                        "main.ts",
-                        "README.md"
-                    ]
-                })
+                name: name,
+                dependencies: {
+                    "core": "*"
+                },
+                description: "",
+                files: [
+                    "main.blocks",
+                    "main.ts",
+                    "README.md"
+                ]
+            })
         },
-        meta: { }
+        meta: {}
     });
 }
-
-
 var selectedEndpoint;
 var selectedId;
 var selectedTarget;
@@ -174,13 +183,14 @@ document.getElementById("share-button").addEventListener("click", function () {
     var out = document.getElementById("share-output");
     btn.className += " loading";
     var md = editor.getValue();
-    shareScript(md, function(resp, err) {
+    shareScript(md, function (resp, err) {
         btn.className = btn.className.replace("loading", "");
         if (resp && resp.json) {
-            out.value = selectedTarget.shareUrl +  "#tutorial:" + resp.json.id;
+            out.value = selectedTarget.shareUrl + "#tutorial:" + resp.json.id;
             out.focus();
             out.select();
-        } else if (err)
+        }
+        else if (err)
             out.value = err.message;
         else
             out.value = "Oops, something went wrong.";

@@ -1,11 +1,7 @@
-/* tslint:disable:no-jquery-raw-elements TODO(tslint): get rid of jquery html() calls */
-
 namespace pxt.runner {
     const JS_ICON = "icon xicon js";
     const PY_ICON = "icon xicon python";
     const BLOCKS_ICON = "icon xicon blocks";
-    const PY_FILE = "main.py";
-    const BLOCKS_FILE = "main.blocks";
 
     export interface ClientRenderOptions {
         snippetClass?: string;
@@ -32,6 +28,9 @@ namespace pxt.runner {
         pxtUrl?: string;
         packageClass?: string;
         package?: string;
+        jresClass?: string;
+        assetJSONClass?: string;
+        assetJSON?: Map<string>;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         split?: boolean; // split in multiple divs if too big
@@ -55,6 +54,8 @@ namespace pxt.runner {
             apisClass: 'lang-apis',
             codeCardClass: 'lang-codecard',
             packageClass: 'lang-package',
+            jresClass: 'lang-jres',
+            assetJSONClass: 'lang-assetsjson',
             projectClass: 'lang-project',
             snippetReplaceParent: true,
             simulator: true,
@@ -206,18 +207,27 @@ namespace pxt.runner {
 
             if ($svg && compileBlocks) {
                 pkg.setPreferredEditor(pxt.BLOCKS_PROJECT_NAME);
-                host.writeFile(pkg, BLOCKS_FILE, compileBlocks.outfiles[BLOCKS_FILE]);
+                host.writeFile(pkg, pxt.MAIN_BLOCKS, compileBlocks.outfiles[pxt.MAIN_BLOCKS]);
             } else if ($py && compilePython) {
                 pkg.setPreferredEditor(pxt.PYTHON_PROJECT_NAME);
-                host.writeFile(pkg, PY_FILE, compileBlocks.outfiles[PY_FILE]);
+                host.writeFile(pkg, pxt.MAIN_PY, compileBlocks.outfiles[pxt.MAIN_PY]);
             } else {
                 pkg.setPreferredEditor(pxt.JAVASCRIPT_PROJECT_NAME);
+            }
+
+            if (options.assetJSON) {
+                for (const key of Object.keys(options.assetJSON)) {
+                    if (pkg.config.files.indexOf(key) < 0) {
+                        pkg.config.files.push(key);
+                    }
+                    host.writeFile(pkg, key, options.assetJSON[key]);
+                }
             }
 
             const compressed = pkg.compressToFileAsync();
             $editBtn.click(() => {
                 pxt.tickEvent("docs.btn", { button: "edit" });
-                compressed.done(buf => {
+                compressed.then(buf => {
                     window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt');
                 });
             });
@@ -252,8 +262,9 @@ namespace pxt.runner {
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                     const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
                     const url = getRunUrl(options) + "#nofooter=1" + deps;
+                    const assets = options.assetJSON ? `data-assets="${encodeURIComponent(JSON.stringify(options.assetJSON))}"` : "";
                     const data = encodeURIComponent($js.text());
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" ${assets} allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
 
                     scrollJQueryIntoView($embed);
@@ -265,7 +276,7 @@ namespace pxt.runner {
         if (woptions.hexname && woptions.hex) {
             let $hexBtn = snippetBtn(lf("Download"), "download icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "hex" });
-                BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
+                BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, { contentType: pxt.appTarget.compile.hexMimeType });
             })
             $menu.append($hexBtn);
         }
@@ -417,13 +428,13 @@ namespace pxt.runner {
                 if (options.snippetReplaceParent) c = c.parent();
                 const segment = $('<div class="ui segment codewidget"/>').append(s);
                 c.replaceWith(segment);
-            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio });
+            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON });
         }
 
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg as HTMLElement) : undefined;
-            const p = r.compilePython && r.compilePython.success && r.compilePython.outfiles["main.py"];
+            const p = r.compilePython && r.compilePython.success && r.compilePython.outfiles[pxt.MAIN_PY];
             const js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             const py = p ? $('<code class="lang-python highlight"/>').text(p.trim()) : undefined;
             if (options.snippetReplaceParent) c = c.parent();
@@ -438,7 +449,7 @@ namespace pxt.runner {
                 hexname: hexname,
                 hex: hex,
             });
-        }, { package: options.package, aspectRatio: options.blocksAspectRatio });
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON });
     }
 
     function decompileCallInfo(stmt: ts.Statement): pxtc.CallInfo {
@@ -459,7 +470,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.signatureClass, (c, r) => {
             let cjs = r.compileProgram;
             if (!cjs) return;
-            let file = cjs.getSourceFile("main.ts");
+            let file = cjs.getSourceFile(pxt.MAIN_TS);
             let info = decompileCallInfo(file.statements[0]);
             if (!info || !r.apiInfo) return;
             const symbolInfo = r.apiInfo.byQName[info.qName];
@@ -487,7 +498,7 @@ namespace pxt.runner {
                 trs.insertAfter(c);
             }
             fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
-        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
@@ -496,7 +507,7 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON });
     }
 
     function renderStaticPythonAsync(options: ClientRenderOptions): Promise<void> {
@@ -509,12 +520,12 @@ namespace pxt.runner {
             const s = r.compilePython;
             if (s && s.success) {
                 const $js = c.clone().removeClass('lang-shadow').addClass('highlight');
-                const $py = $js.clone().addClass('lang-python').text(s.outfiles["main.py"]);
+                const $py = $js.clone().addClass('lang-python').text(s.outfiles[pxt.MAIN_PY]);
                 $js.addClass('lang-typescript');
                 highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
             }
-        }, { package: options.package, snippetMode: true });
+        }, { package: options.package, snippetMode: true, assets: options.assetJSON });
     }
 
     function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
@@ -537,7 +548,7 @@ namespace pxt.runner {
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
                     $el.removeClass(cls);
-                    return Promise.delay(1, renderNextXmlAsync(cls, render, options));
+                    return U.delay(1, renderNextXmlAsync(cls, render, options));
                 })
         }
 
@@ -546,7 +557,7 @@ namespace pxt.runner {
             if (opts.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio, assets: opts.assetJSON });
     }
 
     function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
@@ -580,7 +591,7 @@ namespace pxt.runner {
                         pxt.reportException(e)
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
-                    return Promise.delay(1, renderNextXmlAsync(cls, render, options));
+                    return U.delay(1, renderNextXmlAsync(cls, render, options));
                 })
         }
 
@@ -589,7 +600,7 @@ namespace pxt.runner {
             if (opts.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio, assets: opts.assetJSON });
     }
 
 
@@ -619,7 +630,7 @@ namespace pxt.runner {
                 pxt.reportException(e)
                 $el.append($('<div/>').addClass("ui segment warning").text(e.message));
             }
-            return Promise.delay(1, renderNextDiffAsync(cls));
+            return U.delay(1, renderNextDiffAsync(cls));
         }
 
         return renderNextDiffAsync(cls);
@@ -635,7 +646,7 @@ namespace pxt.runner {
             const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text(), {
                 removeTrailingSemiColumns: true
             });
-            return Promise.mapSeries([oldSrc, newSrc], src => pxt.runner.decompileSnippetAsync(src, {
+            return U.promiseMapAllSeries([oldSrc, newSrc], src => pxt.runner.decompileSnippetAsync(src, {
                 generateSourceMap: true
             }))
                 .then(resps => {
@@ -657,7 +668,7 @@ namespace pxt.runner {
                         const [oldPy, newPy] = resps.map(resp =>
                             resp.compilePython
                             && resp.compilePython.outfiles
-                            && resp.compilePython.outfiles["main.py"]);
+                            && resp.compilePython.outfiles[pxt.MAIN_PY]);
                         if (oldPy && newPy) {
                             diffPy = pxt.diff.render(oldPy, newPy, {
                                 hideLineNumbers: true,
@@ -678,7 +689,7 @@ namespace pxt.runner {
                         pxt.reportException(e)
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
-                    return Promise.delay(1, renderNextDiffAsync(cls));
+                    return U.delay(1, renderNextDiffAsync(cls));
                 })
         }
 
@@ -763,7 +774,7 @@ namespace pxt.runner {
                 return renderNextAsync();
             }
 
-            const m = /^\[([^\]]+)\]$/.exec(text);
+            const m = /^\[(.+)\]$/.exec(text);
             if (!m) return renderNextAsync();
 
             const code = m[1];
@@ -771,7 +782,7 @@ namespace pxt.runner {
                 .then(r => {
                     if (r.blocksSvg) {
                         let $newel = $('<span class="block"/>').append(r.blocksSvg);
-                        const file = r.compileProgram.getSourceFile("main.ts");
+                        const file = r.compileProgram.getSourceFile(pxt.MAIN_TS);
                         const stmt = file.statements[0];
                         const info = decompileCallInfo(stmt);
                         if (info && r.apiInfo) {
@@ -782,7 +793,7 @@ namespace pxt.runner {
                         }
                         $el.replaceWith($newel);
                     }
-                    return Promise.delay(1, renderNextAsync());
+                    return U.delay(1, renderNextAsync());
                 });
         }
 
@@ -830,14 +841,21 @@ namespace pxt.runner {
             .then((r) => {
                 const info = r.compileBlocks.blocksInfo;
                 const symbols = pxt.Util.values(info.apis.byQName)
-                    .filter(symbol => !symbol.attributes.hidden && !!symbol.attributes.jsDoc && !/^__/.test(symbol.name));
+                    .filter(symbol => !symbol.attributes.hidden
+                        && !symbol.attributes.deprecated
+                        && !symbol.attributes.blockAliasFor
+                        && !!symbol.attributes.jsDoc
+                        && !!symbol.attributes.block
+                        && !/^__/.test(symbol.name)
+                    );
                 apisEl.each((i, e) => {
                     let c = $(e);
                     const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
-                    const csymbols = symbols.filter(symbol => !!namespaces[symbol.namespace])
+
+                    const csymbols = symbols.filter(symbol => !!namespaces[symbol.attributes.blockNamespace || symbol.namespace])
                     if (!csymbols.length) return;
 
-                    csymbols.sort((l,r) => {
+                    csymbols.sort((l, r) => {
                         // render cards first
                         const lcard = !l.attributes.blockHidden && Blockly.Blocks[l.attributes.blockId];
                         const rcard = !r.attributes.blockHidden && Blockly.Blocks[r.attributes.blockId]
@@ -890,7 +908,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(cls, (c, r) => {
             const cjs = r.compileProgram;
             if (!cjs) return;
-            const file = cjs.getSourceFile("main.ts");
+            const file = cjs.getSourceFile(pxt.MAIN_TS);
             const stmts = file.statements.slice(0);
             const ul = $('<div />').addClass('ui cards');
             ul.attr("role", "listbox");
@@ -1018,7 +1036,7 @@ namespace pxt.runner {
 
             if (replaceParent) c = c.parent();
             c.replaceWith(ul)
-        }, { package: options.package, aspectRatio: options.blocksAspectRatio })
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON })
     }
 
     function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
@@ -1079,19 +1097,15 @@ namespace pxt.runner {
         if (!$el[0]) return Promise.resolve();
 
         $el.removeClass(cls);
-        let cards: pxt.CodeCard[];
-        try {
-            let js: any = JSON.parse($el.text());
-            if (!Array.isArray(js)) js = [js];
-            cards = js as pxt.CodeCard[];
-        } catch (e) {
-            pxt.reportException(e);
-            $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
+        // try parsing the card as json
+        const cards = pxt.gallery.parseCodeCardsHtml($el[0]);
+        if (!cards) {
+            $el.append($('<div/>').addClass("ui segment warning").text("invalid codecard format"));
         }
 
         if (options.snippetReplaceParent) $el = $el.parent();
         return fillCodeCardAsync($el, cards, { hideHeader: true })
-            .then(() => Promise.delay(1, renderNextCodeCardAsync(cls, options)));
+            .then(() => U.delay(1, renderNextCodeCardAsync(cls, options)));
     }
 
     function getRunUrl(options: ClientRenderOptions): string {
@@ -1118,6 +1132,38 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.remove();
         })
+    }
+
+    function readAssetJson(options: ClientRenderOptions) {
+        let assetJson: string;
+        let tilemapJres: string;
+        if (options.jresClass) {
+            $(`.${options.jresClass}`).each((i, c) => {
+                const $c = $(c);
+                tilemapJres = $c.text();
+                c.parentElement.remove();
+            });
+        }
+        if (options.assetJSONClass) {
+            $(`.${options.assetJSONClass}`).each((i, c) => {
+                const $c = $(c);
+                assetJson = $c.text();
+                c.parentElement.remove();
+            });
+        }
+
+        options.assetJSON = mergeAssetJson(assetJson, tilemapJres);
+
+        function mergeAssetJson(assetJSON: string, tilemapJres: string) {
+            if (!assetJSON && !tilemapJres) return undefined;
+            const mergedJson = pxt.tutorial.parseAssetJson(assetJSON) || {};
+            if (tilemapJres) {
+                const parsedTmapJres = JSON.parse(tilemapJres);
+                mergedJson[pxt.TILEMAP_JRES] = JSON.stringify(parsedTmapJres);
+                mergedJson[pxt.TILEMAP_CODE] = pxt.emitTilemapsFromJRes(parsedTmapJres);
+            }
+            return mergedJson;
+        }
     }
 
     function renderDirectPython(options?: ClientRenderOptions) {
@@ -1218,10 +1264,15 @@ namespace pxt.runner {
                     </div>
                     </div></div>`)
             const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
+
             const url = getRunUrl(options) + "#nofooter=1" + deps;
             const data = encodeURIComponent($c.text().trim());
-            $sim.find("iframe").attr("src", url);
-            $sim.find("iframe").attr("data-code", data);
+            const $simIFrame = $sim.find("iframe");
+            $simIFrame.attr("src", url);
+            $simIFrame.attr("data-code", data);
+            if (options.assetJSON) {
+                $simIFrame.attr("data-assets", JSON.stringify(options.assetJSON));
+            }
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.replaceWith($sim);
         });
@@ -1234,6 +1285,7 @@ namespace pxt.runner {
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
+        readAssetJson(options);
 
         renderQueue = [];
         renderGhost(options);

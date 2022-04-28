@@ -64,7 +64,7 @@ namespace ts.pxtc {
                     length: d.length,
                     line: 0,
                     column: 0,
-                    messageText: d.messageText,
+                    messageText: ts.flattenDiagnosticMessageText(d.messageText, "\n"),
                     category: d.category,
                     fileName: "?",
                 }
@@ -78,7 +78,7 @@ namespace ts.pxtc {
                 length: d.length,
                 line: pos.line,
                 column: pos.character,
-                messageText: d.messageText,
+                messageText: ts.flattenDiagnosticMessageText(d.messageText, "\n"),
                 category: d.category,
                 fileName: d.file.fileName,
             }
@@ -126,17 +126,17 @@ namespace ts.pxtc {
         if (!opts.sourceFiles)
             opts.sourceFiles = Object.keys(opts.fileSystem)
         // ensure that main.ts is last of TS files
-        const idx = opts.sourceFiles.indexOf("main.ts")
+        const idx = opts.sourceFiles.indexOf(pxt.MAIN_TS)
         if (idx >= 0) {
             opts.sourceFiles.splice(idx, 1)
-            opts.sourceFiles.push("main.ts")
+            opts.sourceFiles.push(pxt.MAIN_TS)
         }
 
         // run post-processing code last, if present
-        const postIdx = opts.sourceFiles.indexOf("_onCodeStop.ts")
+        const postIdx = opts.sourceFiles.indexOf(pxt.TUTORIAL_CODE_STOP)
         if (postIdx >= 0) {
             opts.sourceFiles.splice(postIdx, 1)
-            opts.sourceFiles.push("_onCodeStop.ts")
+            opts.sourceFiles.push(pxt.TUTORIAL_CODE_STOP)
         }
 
         res.times["conversions"] = U.cpuUs() - startTime
@@ -216,7 +216,7 @@ namespace ts.pxtc {
 
             // The extension JavaScript code comes from target.json. It is generated from compiler/*.ts in target by 'pxt buildtarget'
             if (opts.target.compilerExtension)
-                // tslint:disable-next-line
+                // eslint-disable-next-line
                 eval(opts.target.compilerExtension)
         }
 
@@ -298,11 +298,45 @@ namespace ts.pxtc {
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
             generateSourceMap: !!opts.ast,
-            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
+            errorOnGreyBlocks: !!opts.errorOnGreyBlocks
         };
-        const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
+        const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file, { declarations: "variables", takenNames: {} })
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
         return bresp;
+    }
+
+    // Decompile an array of code snippets (sourceTexts) to XML strings (blocks)
+    export function decompileSnippets(program: Program, opts: CompileOptions, includeGreyBlockMessages = false) {
+        const apis = getApiInfo(program, opts.jres);
+        const blocksInfo = pxtc.getBlocksInfo(apis, opts.bannedCategories);
+        const renameMap = new pxtc.decompiler.RenameMap([]); // Don't rename for snippets
+
+        const decompileOpts: decompiler.DecompileBlocksOptions = {
+            snippetMode: opts.snippetMode || false,
+            alwaysEmitOnStart: opts.alwaysDecompileOnStart,
+            includeGreyBlockMessages,
+            generateSourceMap: !!opts.ast,
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
+            errorOnGreyBlocks: !!opts.errorOnGreyBlocks
+        };
+
+        let programCache: Program; // Initialize to undefined, using the input program will incorrectly mark it as stale
+        const xml: string[] = [];
+        if (opts.sourceTexts) {
+            for (let i = 0; i < opts.sourceTexts.length; i++) {
+                opts.fileSystem[pxt.MAIN_TS] = opts.sourceTexts[i];
+                opts.fileSystem[pxt.MAIN_BLOCKS] = "";
+
+                let newProgram = getTSProgram(opts, programCache);
+                const file = newProgram.getSourceFile(pxt.MAIN_TS);
+                const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
+                xml.push(bresp.outfiles[pxt.MAIN_BLOCKS]);
+                programCache = newProgram;
+            }
+        }
+
+        return xml;
     }
 
     export function getTSProgram(opts: CompileOptions, old?: ts.Program) {
@@ -356,24 +390,24 @@ namespace ts.pxtc {
 
         let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
         // ensure that main.ts is last of TS files
-        let tsFilesNoMain = tsFiles.filter(f => f != "main.ts")
+        let tsFilesNoMain = tsFiles.filter(f => f != pxt.MAIN_TS)
         let hasMain = false;
         if (tsFiles.length > tsFilesNoMain.length) {
             tsFiles = tsFilesNoMain
-            tsFiles.push("main.ts")
+            tsFiles.push(pxt.MAIN_TS)
             hasMain = true;
         }
 
         // run post-processing code last, if present
-        const post_idx = tsFiles.indexOf("_onCodeStop.ts")
+        const post_idx = tsFiles.indexOf(pxt.TUTORIAL_CODE_STOP);
         if (post_idx >= 0) {
             tsFiles.splice(post_idx, 1)
-            tsFiles.push("_onCodeStop.ts")
+            tsFiles.push(pxt.TUTORIAL_CODE_STOP);
         }
 
         // TODO: ensure that main.ts is last???
         const program = createProgram(tsFiles, options, host, old);
-        annotate(program, "main.ts", target || (pxt.appTarget && pxt.appTarget.compile));
+        annotate(program, pxt.MAIN_TS, target || (pxt.appTarget && pxt.appTarget.compile));
         return program;
     }
 

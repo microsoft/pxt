@@ -112,20 +112,25 @@
         var light = !!/light(?:[:=])1/i.exec(window.location.href);
         var fullScreen = !!/fullscreen(?:[:=])1/i.exec(window.location.href);
         var deps = /deps(?:[:=])([^&?]+)/i.exec(window.location.href);
+        var prebuiltSimJs = /prebuilt(?:[:=])1/i.test(window.location.href);
+        var single = !!/single(?:[:=])1/i.test(window.location.href);
+        var server = !!/server(?:[:=])1/i.test(window.location.href);
 
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
         var codeFromData = undefined;
+        var assetJsonFromData = undefined;
         try {
             codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
+            assetJsonFromData = window.frameElement ? window.frameElement.getAttribute('data-assets') : undefined;
         } catch (e) {
             /**
-             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking 
+             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking
              *  if the frame element exists when the iframe is on a different origin
              */
         }
         var code = codeFromData || (codeFromSrc ? codeFromSrc[1] : undefined);
 
-        if (!id && !code && !debugSim) {
+        if (!id && !code && !debugSim && !server) {
             console.error("missing id or code");
             loading.textContent = 'Oops, wrong arguments...';
             return;
@@ -154,16 +159,63 @@
         }
         initAppCache();
 
+        window.addEventListener('message', msg => {
+            var data = msg.data;
+            if (typeof window !== 'undefined' && window.parent !== window && data) {
+                if (data.type == "messagepacket") {
+                    // propagate message packets to parent frames
+                    window.parent.postMessage(msg.data, "*");
+                }
+                else if (server && data.type === "simulateproject") {
+                    var files = typeof data.project === "string" ? JSON.parse(data.project) : data.project;
+                    ksRunnerReady(() => {
+                        const deps = JSON.parse(files["pxt.json"]).dependencies
+                        prebuiltCodePromise.then(builtSimJs => {
+                            var options = {
+                                code: files["main.ts"],
+                                assets: JSON.stringify(files),
+                                dependencies: Object.keys(deps).map(v => v + "=" + deps[v]),
+                                highContrast: highContrast,
+                                light: light,
+                                fullScreen: fullScreen,
+                                builtJsInfo: builtSimJs,
+                                single: single
+                            };
+                            console.log('simulating project')
+                            pxt.runner.simulateAsync(sims, options).then(function() {
+                                console.log('simulator started for project...')
+                                $(loading).remove();
+                            })
+                        });
+                    })
+                }
+            }
+        });
+
+        var prebuiltCodePromise = Promise.resolve(undefined);
+        if (prebuiltSimJs) {
+            var versionsuff = /localhost:/.test(window.location.href) ? "" : "@versionsuff@";
+            var builtSimJsUrl = "/static/builtjs/" + id[1] + versionsuff + ".json"
+            // kick off fetch immediately, no need to wait for ksrunnerready
+            prebuiltCodePromise = fetch(builtSimJsUrl)
+                .then(resp => resp.json())
+                .catch(e => {
+                    // TODO: send tick that something broke :(
+                    console.error("Failed to get prebuilt code")
+                });
+        }
+
         ksRunnerReady(function() {
             var theme = pxt.appTarget.appTheme;
             document.title = theme.title;
             if (footer) pxt.runner.initFooter(document.getElementById('footer'), id);
+            if (server) return;
             if (hex) {
                 console.log('compiling script to hex')
-                pxt.runner.generateHexFileAsync(options).done(function(hex) {
+                pxt.runner.generateHexFileAsync(options).then(function(hex) {
                     $(loading).remove();
                     var name = pxt.appTarget.id + '-' + ts.pxt.BINARY_HEX;
-                    var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name)
+                    var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name, { maintainObjectURL: true });
                     var a = document.createElement("a");
                     a.href = uri;
                     a.download = name;
@@ -172,19 +224,24 @@
                 })
             }
             else if (!debugSim) {
-                var options = {
-                    id: id ? id[1] : undefined,
-                    code: code ? decodeURIComponent(code) : undefined,
-                    highContrast: highContrast,
-                    light: light,
-                    fullScreen: fullScreen,
-                    dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined
-                };
-                console.log('simulating script')
-                pxt.runner.simulateAsync(sims, options).done(function() {
-                    console.log('simulator started...')
-                    $(loading).remove();
-                })
+                prebuiltCodePromise.then(builtSimJs => {
+                    var options = {
+                        id: id ? id[1] : undefined,
+                        code: code ? decodeURIComponent(code) : undefined,
+                        assets: assetJsonFromData ? decodeURIComponent(assetJsonFromData) : undefined,
+                        highContrast: highContrast,
+                        light: light,
+                        fullScreen: fullScreen,
+                        dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined,
+                        builtJsInfo: builtSimJs,
+                        single: single
+                    };
+                    console.log('simulating script')
+                    pxt.runner.simulateAsync(sims, options).then(function() {
+                        console.log('simulator started...')
+                        $(loading).remove();
+                    })
+                });
             }
             else {
                 $(loading).remove();

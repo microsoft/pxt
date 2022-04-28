@@ -64,7 +64,7 @@ export function dmesgAsync() {
     return initAsync()
         .then(d => d.talkAsync(pxt.HF2.HF2_CMD_DMESG)
             .then(resp => {
-                console.log(U.fromUTF8(U.uint8ArrayToString(resp)))
+                console.log(U.fromUTF8Array(resp))
                 return d.disconnectAsync()
             }))
 }
@@ -166,7 +166,7 @@ export function initAsync(path: string = null): Promise<HF2.Wrapper> {
 
 export function connectSerial(w: HF2.Wrapper) {
     process.stdin.on("data", (buf: Buffer) => {
-        w.sendSerialAsync(new Uint8Array(buf)).done()
+        w.sendSerialAsync(new Uint8Array(buf))
     })
     w.onSerial = (arr, iserr) => {
         let buf = Buffer.from(arr)
@@ -266,7 +266,7 @@ export class HidIO implements pxt.packetio.PacketIO {
         this.dev.removeAllListeners("error");
         const pkt = new Uint8Array([0x48])
         this.sendPacketAsync(pkt).catch(e => { })
-        return Promise.delay(100)
+        return U.delay(100)
             .then(() => {
                 if (this.dev) {
                     const d = this.dev;

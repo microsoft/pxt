@@ -2,6 +2,9 @@
 import * as srceditor from "./srceditor";
 import * as toolbox from "./toolbox";
 import * as compiler from "./compiler";
+import * as pkg from "./package";
+import * as data from "./data";
+import { getBlocksEditor } from "./app";
 
 export abstract class ToolboxEditor extends srceditor.Editor {
 
@@ -151,6 +154,29 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             }).filter(subns => !!subns);
         }
 
+        function isExtension(ns: string, md: pxtc.CommentAttrs) {
+            const nsAttr = getBlocksEditor().getNamespaceAttrs(ns);
+
+            const foundExtension = pkg.mainEditorPkg().pkgAndDeps().find(p => {
+                const ext = p.getKsPkg()
+                if (!ext) return false
+                const namespaces = pkg.getNsForPkg(ext.id)
+                if (!namespaces) return false
+                return namespaces.indexOf(ns) >= 0
+            })
+            const extensionPkg = foundExtension?.getKsPkg();
+
+            let trgConfigFetch = data.getDataWithStatus("target-config:");
+            let trgConfig = trgConfigFetch.data as pxt.TargetConfig;
+            let isHidden = false;
+            if (trgConfig && trgConfig.packages && trgConfig.packages.extensionsToIgnore && extensionPkg) {
+                isHidden = trgConfig.packages.extensionsToIgnore.includes(extensionPkg.id)
+            }
+
+            const hasDel = (nsAttr?._def?.parts?.length > 0) || (foundExtension && extensionPkg.id != "core" && !isHidden)
+            return hasDel;
+        }
+
         function createCategories(names: [string, pxtc.CommentAttrs][], isAdvanced?: boolean): toolbox.ToolboxCategory[] {
             return names
                 .sort(([, md1], [, md2]) => {
@@ -204,11 +230,15 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                             || md.icon : pxt.toolbox.getNamespaceIcon(ns);
                         category.groups = builtInCategory.groups || md.groups;
                         category.customClick = builtInCategory.customClick;
+                    } else if (isExtension(ns, md)) {
+                        category.isExtension = true;
                     }
                     return category;
                 }).filter(cat => !!cat);
         }
-        return createCategories(namespaces, isAdvanced);
+
+        const cat = createCategories(namespaces, isAdvanced);
+        return cat;
     }
 
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;

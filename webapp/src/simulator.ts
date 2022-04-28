@@ -44,7 +44,22 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     debuggerDiv.className = 'ui item landscape only';
     root.appendChild(debuggerDiv);
 
-    const nestedEditorSim = true;///nestededitorsim=1/i.test(window.location.href);
+    const nestedEditorSim = /nestededitorsim=1/i.test(window.location.href);
+    let parentOrigin: string = null;
+    if (window.parent !== window) {
+        const searchParams = new URLSearchParams(window.location.search);
+        const origin = searchParams.get("parentOrigin")
+
+        // validate the URI
+        if (!!origin) {
+            try {
+                const originUrl = new URL(origin);
+                parentOrigin = originUrl.origin
+            } catch (e) {
+                console.error(`Invalid parent origin: ${origin}`)
+            }
+        }
+    }
 
     let options: pxsim.SimulatorDriverOptions = {
         restart: () => cfg.restartSimulator(),
@@ -56,7 +71,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             const animationClasses = `${animation} visible transition animating`;
             pxsim.U.addClass(el, animationClasses);
 
-            Promise.resolve().delay(500).then(() => {
+            pxt.Util.delay(500).then(() => {
                 pxsim.U.removeClass(el, animationClasses);
                 el.style.animationDuration = '';
 
@@ -88,7 +103,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 el.style.animationDuration = '500ms';
                 const animationClasses = `${animation} visible transition animating`;
                 pxsim.U.addClass(el, animationClasses);
-                Promise.resolve().delay(500).then(() => {
+                pxt.Util.delay(500).then(() => {
                     pxsim.U.removeClass(el, `animating`);
                     el.style.animationDuration = '';
 
@@ -208,8 +223,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                                 if (hasTrustedLink && selection == 1) {
                                     window.open(msg.linkButtonHref, '_blank');
                                 }
-                            })
-                            .done();
+                            });
                     }
                     break;
             }
@@ -219,14 +233,16 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
-        nestedEditorSim: nestedEditorSim
+        nestedEditorSim: nestedEditorSim,
+        parentOrigin: parentOrigin,
+        messageSimulators: pxt.appTarget?.simulator?.messageSimulators
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
-    if (pxt.appTarget.appTheme.allowParentController && pxt.BrowserUtils.isIFrame()) {
+    if (pxt.editor.shouldPostHostMessages()) {
         pxt.editor.postHostMessageAsync({
             type: "pxthost",
             action: "simevent",
@@ -265,17 +281,25 @@ export interface RunOptions {
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
     res: pxtc.CompileResult, options: RunOptions, trace: boolean) {
-    const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
-    const parts = pxtc.computeUsedParts(res, true);
-    const fnArgs = res.usedArguments;
+    const {
+        js,
+        fnArgs,
+        parts,
+        usedBuiltinParts,
+    } = pxtc.buildSimJsInfo(res);
     lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
+    const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;
+    const dependencies: pxt.Map<string> = {}
+    for(const dep of pkg.sortedDeps())
+        dependencies[dep.id] = dep.version()
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
         mute,
         parts,
+        builtinParts: usedBuiltinParts,
         debug,
         trace,
         fnArgs,
@@ -290,7 +314,9 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         clickTrigger: clickTrigger,
         breakOnStart: debug,
         storedState: storedState,
-        autoRun
+        autoRun,
+        ipc: isIpcRenderer,
+        dependencies
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))

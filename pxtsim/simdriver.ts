@@ -18,6 +18,13 @@ namespace pxsim {
         // instead of spanning multiple simulators,
         // dispatch messages to parent window
         nestedEditorSim?: boolean;
+        parentOrigin?: string
+        messageSimulators?: pxt.Map<{
+            url: string;
+            localHostUrl?: string;
+            aspectRatio?: number;
+            permanent?: boolean;
+        }>;
     }
 
     export enum SimulatorState {
@@ -43,6 +50,7 @@ namespace pxsim {
         trace?: boolean;
         boardDefinition?: pxsim.BoardDefinition;
         parts?: string[];
+        builtinParts?: string[];
         fnArgs?: any;
         aspectRatio?: number;
         partDefinitions?: pxsim.Map<PartDefinition>;
@@ -57,11 +65,20 @@ namespace pxsim {
         breakOnStart?: boolean;
         storedState?: Map<any>;
         autoRun?: boolean;
+        ipc?: boolean;
+        dependencies?: Map<string>;
+        // single iframe, no message simulators
+        single?: boolean;
     }
 
     export interface HwDebugger {
         postMessage: (msg: pxsim.SimulatorMessage) => void;
     }
+
+    const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
+    const FRAME_ASPECT_RATIO = "aspectratio"
+    const MESSAGE_SOURCE = "pxtdriver"
+    const PERMANENT = "permanent"
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
@@ -76,12 +93,34 @@ namespace pxsim {
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
         private _dependentEditors: Window[];
+        private _allowedOrigins: string[] = [];
+        private debuggingFrame: string;
 
         // we might "loan" a simulator when the user is recording
         // screenshots for sharing
         private loanedSimulator: HTMLDivElement;
 
-        constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
+        constructor(public container: HTMLElement,
+            public options: SimulatorDriverOptions = {}) {
+
+            this._allowedOrigins.push(window.location.origin);
+            if (options.parentOrigin) {
+                this._allowedOrigins.push(options.parentOrigin)
+            }
+
+            this._allowedOrigins.push(this.getSimUrl().origin);
+
+            const messageSimulators = options?.messageSimulators
+            if (messageSimulators) {
+                Object.keys(messageSimulators)
+                    .map(channel => messageSimulators[channel])
+                    .forEach(messageSimulator => {
+                        this._allowedOrigins.push(new URL(messageSimulator.url).origin);
+                        if (messageSimulator.localHostUrl)
+                            this._allowedOrigins.push(new URL(messageSimulator.localHostUrl).origin);
+                    });
+            }
+            this._allowedOrigins = U.unique(this._allowedOrigins, f => f);
         }
 
         isDebug() {
@@ -166,12 +205,13 @@ namespace pxsim {
             this.postMessage(<SimulatorRecorderMessage>{
                 type: 'recorder',
                 action: 'start',
+                source: MESSAGE_SOURCE,
                 width
             });
         }
 
         public stopRecording() {
-            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', action: 'stop' })
+            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', source: MESSAGE_SOURCE, action: 'stop' })
         }
 
         private setFrameState(frame: HTMLIFrameElement) {
@@ -246,40 +286,92 @@ namespace pxsim {
             return frames;
         }
 
-        public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
+        private getSimUrl(): URL {
+            const simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || `${location.origin}/sim/simulator.html`;
+            try {
+                return new URL(simUrl);
+            } catch {
+                // Failed to parse set url; try based off origin in case path defined as relative (e.g. /simulator.html)
+                return new URL(simUrl, location.origin);
+            }
+        }
+
+        public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
                 return
             }
 
-            const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
-            if (source && broadcastmsg && !!broadcastmsg.broadcast) {
-                // the editor is hosted in a multi-editor setting
+
+            if (frameID) frames = frames.filter(f => f.id === frameID);
+
+            const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
+            if (source && broadcastmsg?.broadcast) {
+                // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
+                const single = !!this._currentRuntime?.single;
                 const parentWindow = window.parent && window.parent !== window.window
                     ? window.parent : window.opener;
                 if (parentWindow) { //Hack: always pipe it through - this.options.nestedEditorSim &&
                     // if message comes from parent already, don't echo
-                    if (source !== parentWindow)
-                        parentWindow.postMessage(msg, "*");
+                    if (source !== parentWindow) {
+                        const parentOrigin = this.options.parentOrigin || window.location.origin
+                        parentWindow.postMessage(msg, parentOrigin);
+                    }
+                    // send message to other editors
                 } else if (depEditors) {
                     depEditors.forEach(w => {
                         if (source !== w)
-                            w.postMessage(msg, "*")
-                    });
-                } else {
-                    // start secondary frame if needed
-                    if (frames.length < 2) {
-                        this.container.appendChild(this.createFrame());
-                        frames = this.simFrames();
-                    } else if (frames[1].dataset['runid'] != this.runId) {
-                        this.startFrame(frames[1]);
+                            // dependant editors should be in the same origin
+                            w.postMessage(msg, window.location.origin)
+                    })
+                    // start second simulator
+                } else if (!single) {
+                    const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
+                    const messageSimulator = messageChannel &&
+                        this.options.messageSimulators &&
+                        this.options.messageSimulators[messageChannel];
+                    // should we start an extension editor?
+                    if (messageSimulator) {
+                        // find a frame already running that simulator
+                        let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
+                        // not found, spin a new one
+                        if (!messageFrame) {
+                            const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
+                            const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
+                                .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
+                            let wrapper = this.createFrame(url);
+                            this.container.appendChild(wrapper);
+                            messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
+                            messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
+                            pxsim.U.addClass(wrapper, "simmsg")
+                            pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
+                            if (messageSimulator.permanent)
+                                messageFrame.dataset[PERMANENT] = "true";
+                            this.startFrame(messageFrame);
+                            frames = this.simFrames(); // refresh
+                        }
+                        // not running the curren run, restart
+                        else if (messageFrame.dataset['runid'] != this.runId) {
+                            this.startFrame(messageFrame);
+                        }
+                    } else {
+                        // start secondary frame if needed
+                        const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
+                        if (mkcdFrames.length < 2) {
+                            this.container.appendChild(this.createFrame());
+                            frames = this.simFrames();
+                            // there might be an old frame
+                        } else if (mkcdFrames[1].dataset['runid'] != this.runId) {
+                            this.startFrame(mkcdFrames[1]);
+                        }
                     }
                 }
             }
 
+            // now that we have iframe starts,
             // dispatch message to other frames
             for (let i = 0; i < frames.length; ++i) {
                 const frame = frames[i] as HTMLIFrameElement
@@ -288,7 +380,8 @@ namespace pxsim {
                 // frame not in DOM
                 if (!frame.contentWindow) continue;
 
-                frame.contentWindow.postMessage(msg, "*");
+                // finally, send the message
+                this.postMessageCore(frame, msg);
 
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
@@ -297,7 +390,22 @@ namespace pxsim {
             }
         }
 
-        private createFrame(light?: boolean): HTMLDivElement {
+        private postMessageCore(frame: HTMLIFrameElement, msg: SimulatorMessage) {
+            frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+
+            if (U.isLocalHostDev() && (pxt as any)?.appTarget?.id) {
+                // If using the production simulator on local serve, the domain might have been
+                // redirected by the CLI server. Also send to the production domain just in case
+                try {
+                    frame.contentWindow.postMessage(msg, `https://trg-${(pxt as any)?.appTarget?.id}.userpxt.io/---simulator`);
+                }
+                catch (e) {
+                    // Ignore exceptions if the target origin doesn't match
+                }
+            }
+        }
+
+        private createFrame(url?: string): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = `simframe ui embed`;
 
@@ -305,13 +413,14 @@ namespace pxsim {
             frame.id = 'sim-frame-' + this.nextId()
             frame.title = pxsim.localization.lf("Simulator")
             frame.allowFullscreen = true;
-            frame.setAttribute('allow', 'autoplay');
+            frame.setAttribute('allow', 'autoplay;microphone');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             frame.className = 'no-select'
-            frame.src = simUrl + '#' + frame.id;
+            const furl = (url || this.getSimUrl()) + '#' + frame.id;
+            frame.src = furl;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
+            frame.dataset['origin'] = new URL(furl).origin || "*";
 
             wrapper.appendChild(frame);
 
@@ -354,14 +463,14 @@ namespace pxsim {
 
         public stop(unload = false, starting = false) {
             this.clearDebugger();
-            this.postMessage({ type: 'stop' });
+            this.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
             this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
             if (unload)
                 this.unload();
         }
 
         public suspend() {
-            this.postMessage({ type: 'stop' });
+            this.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
             this.setState(SimulatorState.Suspended);
         }
 
@@ -377,11 +486,11 @@ namespace pxsim {
         public mute(mute: boolean) {
             if (this._currentRuntime)
                 this._currentRuntime.mute = mute;
-            this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
+            this.postMessage({ type: 'mute', source: MESSAGE_SOURCE, mute: mute } as pxsim.SimulatorMuteMessage);
         }
 
         public stopSound() {
-            this.postMessage({ type: 'stopsound' } as pxsim.SimulatorStopSoundMessage)
+            this.postMessage({ type: 'stopsound', source: MESSAGE_SOURCE } as pxsim.SimulatorStopSoundMessage)
         }
 
         public isLoanedSimulator(el: HTMLElement) {
@@ -415,17 +524,17 @@ namespace pxsim {
                 && this.loanedSimulator.querySelector("iframe");
         }
 
-        private frameCleanupTimeout = 0;
+        private frameCleanupTimeout: any = undefined;
         private cancelFrameCleanup() {
             if (this.frameCleanupTimeout) {
                 clearTimeout(this.frameCleanupTimeout);
-                this.frameCleanupTimeout = 0;
+                this.frameCleanupTimeout = undefined;
             }
         }
         private scheduleFrameCleanup() {
             this.cancelFrameCleanup();
             this.frameCleanupTimeout = setTimeout(() => {
-                this.frameCleanupTimeout = 0;
+                this.frameCleanupTimeout = undefined;
                 this.cleanupFrames();
             }, 5000);
         }
@@ -437,7 +546,31 @@ namespace pxsim {
         }
 
         private applyAspectRatioToFrame(frame: HTMLIFrameElement, ratio?: number) {
-            const r = ratio || this._runOptions.aspectRatio;
+            let r = ratio;
+
+            // no ratio? try stored ratio
+            if (r === undefined) {
+                const rt = parseFloat(frame.dataset[FRAME_ASPECT_RATIO])
+                if (!isNaN(rt))
+                    r = rt;
+            }
+
+            // no ratio?, try messagesims
+            if (r === undefined) {
+                const messageChannel = frame.dataset[FRAME_DATA_MESSAGE_CHANNEL];
+                if (messageChannel) {
+                    const messageSimulatorAspectRatio = this.options?.messageSimulators?.[messageChannel]?.aspectRatio;
+                    if (messageSimulatorAspectRatio) {
+                        r = messageSimulatorAspectRatio;
+                    }
+                }
+            }
+
+            // try default from options
+            if (r === undefined)
+                r = this._runOptions?.aspectRatio || 1.22;
+
+            // apply to css
             frame.parentElement.style.paddingBottom =
                 (100 / r) + "%";
         }
@@ -446,13 +579,14 @@ namespace pxsim {
             // drop unused extras frames after 5 seconds
             const frames = this.simFrames(true);
             frames.shift(); // drop first frame
-            frames.forEach(frame => {
-                if (this.state == SimulatorState.Stopped
-                    || frame.dataset['runid'] != this.runId) {
-                    if (this.options.removeElement) this.options.removeElement(frame.parentElement);
-                    else frame.parentElement.remove();
-                }
-            });
+            frames.filter(frame => !frame.dataset[PERMANENT])
+                .forEach(frame => {
+                    if (this.state == SimulatorState.Stopped
+                        || frame.dataset['runid'] != this.runId) {
+                        if (this.options.removeElement) this.options.removeElement(frame.parentElement);
+                        else frame.parentElement.remove();
+                    }
+                });
         }
 
         public hide(completeHandler?: () => void) {
@@ -484,8 +618,10 @@ namespace pxsim {
             // store information
             this._currentRuntime = {
                 type: "run",
+                source: MESSAGE_SOURCE,
                 boardDefinition: opts.boardDefinition,
                 parts: opts.parts,
+                builtinParts: opts.builtinParts,
                 fnArgs: opts.fnArgs,
                 code: js,
                 partDefinitions: opts.partDefinitions,
@@ -498,13 +634,17 @@ namespace pxsim {
                 version: opts.version,
                 clickTrigger: opts.clickTrigger,
                 breakOnStart: opts.breakOnStart,
-                storedState: opts.storedState
+                storedState: opts.storedState,
+                ipc: opts.ipc,
+                single: opts.single,
+                dependencies: opts.dependencies
             }
             this.start();
         }
 
         public restart() {
             this.stop();
+            this.cleanupFrames();
             this.start();
         }
 
@@ -525,11 +665,13 @@ namespace pxsim {
             // first frame
             let frame = this.simFrames()[0];
             if (!frame) {
-                let wrapper = this.createFrame(this._runOptions && this._runOptions.light);
+                let wrapper = this.createFrame();
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else // reuse simulator
                 this.startFrame(frame);
+
+            this.debuggingFrame = frame.id;
 
             this.setState(SimulatorState.Running);
             this.setTraceInterval(this.traceInterval);
@@ -538,20 +680,24 @@ namespace pxsim {
         // ensure _currentRuntime is ready
         private startFrame(frame: HTMLIFrameElement): boolean {
             if (!this._currentRuntime || !frame.contentWindow) return false;
-            let msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
-            let mc = '';
-            let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
+            const msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
             msg.frameCounter = ++this.frameCounter;
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
-                player: mc,
+                //player: mc, // TODO: What was this for?
                 clientOrServer: /(server|client)=1/.exec(window.location.href)?.[1]
             };
 
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
-            frame.contentWindow.postMessage(msg, "*");
+            if (frame.id !== this.debuggingFrame) {
+                msg.traceDisabled = true;
+                msg.breakOnStart = false;
+            }
+            this.postMessageCore(frame, msg);
+            if (this.traceInterval) this.setTraceInterval(this.traceInterval);
+            this.applyAspectRatioToFrame(frame);
             this.setFrameState(frame);
             return true;
         }
@@ -575,22 +721,38 @@ namespace pxsim {
                     const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
                         const stmsg = msg as SimulatorStateMessage;
-                        switch (stmsg.state) {
-                            case "killed":
-                                if (stmsg.runtimeid == frame.dataset['runtimeid'])
+                        if (stmsg.runtimeid == frame.dataset['runtimeid']) {
+                            switch (stmsg.state) {
+                                case "running":
+                                    this.setState(SimulatorState.Running);
+                                    break;
+                                case "killed":
                                     this.setState(SimulatorState.Stopped);
-                                break;
+                                    break;
+                            }
                         }
                     }
                     break;
                 }
-                case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
+                case 'simulator':
+                    this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial':
                 case 'pxteditor':
                 case 'screenshot':
                 case 'custom':
                 case 'recorder':
+                case 'addextensions':
                     break; //handled elsewhere
+                case 'aspectratio': {
+                    const asmsg = msg as SimulatorAspectRatioMessage;
+                    const frameid = asmsg.frameid;
+                    const frame = document.getElementById(frameid) as HTMLIFrameElement;
+                    if (frame) {
+                        frame.dataset[FRAME_ASPECT_RATIO] = asmsg.value + "";
+                        this.applyAspectRatioToFrame(frame);
+                    }
+                    break;
+                }
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 default:
@@ -603,6 +765,13 @@ namespace pxsim {
             if (!this.listener) {
                 this.listener = (ev: MessageEvent) => {
                     if (this.hwdbg) return
+
+                    if (U.isLocalHost()) {
+                        // no-op
+                    } else {
+                        if (this._allowedOrigins.indexOf(ev.origin) < 0)
+                            return
+                    }
                     this.handleMessage(ev.data, ev.source as Window)
                 }
                 window.addEventListener('message', this.listener, false);
@@ -643,21 +812,23 @@ namespace pxsim {
                     return;
             }
 
-            this.postMessage({ type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
+            this.postMessage({ type: 'debugger', subtype: msg, source: MESSAGE_SOURCE } as pxsim.DebuggerMessage);
         }
 
         public setBreakpoints(breakPoints: number[]) {
             this.breakpointsSet = true;
-            this.postDebuggerMessage("config", { setBreakpoints: breakPoints })
+            this.postDebuggerMessage("config", { setBreakpoints: breakPoints }, undefined, this.debuggingFrame);
         }
 
         public setTraceInterval(intervalMs: number) {
             this.traceInterval = intervalMs;
+            // Send to all frames so that they all run at the same speed, even though only the debugging sim
+            // will actually send events
             this.postDebuggerMessage("traceConfig", { interval: intervalMs });
         }
 
         public variablesAsync(id: number, fields?: string[]): Promise<VariablesMessage> {
-            return this.postDebuggerMessageAsync("variables", { variablesReference: id, fields: fields } as DebugProtocol.VariablesArguments)
+            return this.postDebuggerMessageAsync("variables", { variablesReference: id, fields: fields } as DebugProtocol.VariablesArguments, this.debuggingFrame)
                 .then(msg => msg as VariablesMessage, e => undefined)
         }
 
@@ -699,10 +870,18 @@ namespace pxsim {
                 case "breakpoint": {
                     const brk = msg as pxsim.DebuggerBreakpointMessage
                     if (this.state == SimulatorState.Running) {
-                        if (brk.exceptionMessage)
+                        if (brk.exceptionMessage) {
                             this.suspend();
-                        else
+                        }
+                        else {
                             this.setState(SimulatorState.Paused);
+                            const frames = this.simFrames(true);
+                            if (frames.length > 1) {
+                                // Make sure all frames pause
+                                this.resume(SimulatorDebuggerCommand.Pause);
+                            }
+                        }
+
                         if (this.options.onDebuggerBreakpoint)
                             this.options.onDebuggerBreakpoint(brk);
                         let stackTrace = brk.exceptionMessage + "\n"
@@ -736,21 +915,22 @@ namespace pxsim {
             }
         }
 
-        private postDebuggerMessageAsync(subtype: string, data: any = {}): Promise<DebuggerMessage> {
+        private postDebuggerMessageAsync(subtype: string, data: any = {}, frameID: string): Promise<DebuggerMessage> {
             return new Promise((resolve, reject) => {
                 const seq = this.debuggerSeq++;
                 this.debuggerResolvers[seq.toString()] = { resolve, reject };
-                this.postDebuggerMessage(subtype, data, seq);
+                this.postDebuggerMessage(subtype, data, seq, frameID);
             })
         }
 
-        private postDebuggerMessage(subtype: string, data: any = {}, seq?: number) {
+        private postDebuggerMessage(subtype: string, data: any = {}, seq?: number, frameID?: string) {
             const msg: pxsim.DebuggerMessage = JSON.parse(JSON.stringify(data))
             msg.type = "debugger"
             msg.subtype = subtype;
+            msg.source = MESSAGE_SOURCE;
             if (seq)
                 msg.seq = seq;
-            this.postMessage(msg);
+            this.postMessage(msg, undefined, frameID);
         }
 
         private nextId(): string {

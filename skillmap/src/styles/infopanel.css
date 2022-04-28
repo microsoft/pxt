@@ -1,0 +1,269 @@
+.info-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 20rem;
+    margin: 1rem;
+    z-index: var(--above-graph-zindex);
+    background-color: var(--body-background-color);
+}
+
+/* Preview Image */
+.info-panel > .info-panel-image {
+    width: 100%;
+    height: 12rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    text-align: center;
+    background-color: var(--primary-color);
+    border: 1px solid #000;
+}
+
+.info-panel-image img {
+    width: 100%;
+}
+
+.info-panel-image i {
+    color: var(--white);
+    font-size: 5rem;
+    line-height: 5rem;
+    vertical-align: top;
+}
+
+.info-panel-content {
+    padding: 1rem;
+    flex-grow: 100;
+    border: 1px solid #000;
+    overflow-y: auto;
+}
+
+/* Vertical Padding */
+.info-panel-content > div {
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+}
+
+.info-panel-content > .tablet-spacer,
+.info-panel-content> .info-panel-tags {
+    margin: 0;
+}
+
+.info-panel-content > .info-panel-title,
+.info-panel-content > .info-panel-label,
+.info-panel-content > .info-panel-link {
+    margin-bottom: 1rem;
+}
+
+/* Component Styles */
+.info-panel-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info-panel-subtitle {
+    font-size: 0.8rem;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.info-panel-label {
+    padding: 0.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    background-color: var(--inactive-color);
+}
+
+.info-panel-link {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.info-panel-detail {
+    display: flex;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    justify-content: space-between;
+}
+
+.info-panel-tags {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.info-panel-tags > div {
+    color: var(--active-color);
+    border: 1px solid var(--active-color);
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+    margin: 0 0.5rem 0.5rem 0;
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* Buttons */
+
+.info-panel .sign-in-button.inverted {
+    width: 100%;
+    background-color: var(--body-background-color);
+}
+
+.info-panel .actions {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-panel .actions .common-button {
+    margin-bottom: 0.5rem;
+}
+
+.info-panel .actions .common-button.inverted {
+    background-color: var(--body-background-color);
+}
+
+.locked.action-button,
+.locked.action-button:hover {
+    color: var(--inactive-color);
+    background-color: transparent;
+    border-color: var(--inactive-color);
+    cursor: default;
+}
+
+/* Cloud Button */
+/* VVN TODO COLORS */
+.cloud-action {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.cloud-indicator {
+    display: flex;
+    color: #2EA9B0;
+}
+
+.cloud-indicator > .xicon {
+    margin-right: .5rem;
+}
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .info-panel-image,
+.high-contrast .info-panel-content,
+.high-contrast .info-panel-label,
+.high-contrast .info-panel-tags > div {
+    color: var(--high-contrast-text);
+    border: 1px solid var(--high-contrast-text);
+    background-color: var(--high-contrast-background);
+}
+
+.high-contrast .cloud-indicator {
+    color: var(--high-contrast-text);
+}
+
+.high-contrast .info-panel .actions .common-button {
+    background-color: var(--high-contrast-background);
+}
+
+/*******************************/
+/*****     TABLET VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 991px) {
+    .info-panel {
+        flex-direction: row;
+        width: unset;
+        height: 18rem;
+    }
+
+    .info-panel > .info-panel-image {
+        height: 100%;
+        width: 16rem;
+        flex-direction: column;
+    }
+
+    .info-panel-image img {
+        height: 100%;
+        width: unset;
+    }
+
+    .info-panel-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .info-panel-content > .info-panel-title {
+        margin-bottom: 0.5rem;
+    }
+
+    .info-panel-content > .info-panel-subtitle {
+        margin: 0;
+    }
+
+    .info-panel-content > .info-panel-label {
+        margin: 1rem;
+    }
+
+    .info-panel-title, .info-panel-subtitle {
+        text-align: left;
+    }
+
+    .info-panel-label {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 12rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .info-panel-link {
+        text-align: left;
+    }
+
+    .info-panel .actions {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+        margin-bottom: 0;
+    }
+
+    .info-panel .actions.grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        row-gap: 0.5rem;
+    }
+
+    .info-panel .common-button {
+        flex: 0.5;
+        margin-right: 1rem;
+        margin-bottom: 0;
+    }
+
+    .info-panel .common-button:last-child,
+    .info-panel .grid .common-button:nth-child(2) {
+        margin-right: 0;
+    }
+
+    .info-panel .sign-in-button {
+        min-height: 3rem;
+    }
+}
+
+@media only screen and (max-width: 762px) {
+    .info-panel > .info-panel-image {
+        display: none;
+    }
+
+    .info-panel-label {
+        width: unset;
+    }
+}

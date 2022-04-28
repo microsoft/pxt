@@ -49,6 +49,17 @@ namespace ts.pxtc.Util {
         return "\"" + jsStringQuote(s) + "\"";
     }
 
+    export function initials(username: string): string {
+        if (/^\w+@/.test(username)) {
+            // Looks like an email address. Return first two characters.
+            const initials = username.match(/^\w\w/);
+            return initials.shift().toUpperCase();
+        } else {
+            // Parse the user name for user initials
+            const initials = username.match(/\b\w/g) || [];
+            return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+        }
+    }
 
     // Localization functions. Please port any modifications over to pxtsim/localization.ts
     let _localizeLang: string = "en";
@@ -56,7 +67,15 @@ namespace ts.pxtc.Util {
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     //let _didSetlocalizations = false;
     //let _didReportLocalizationsNotSet = false;
-    export let localizeLive = false;
+    let localizeLive = false;
+
+    export function enableLiveLocalizationUpdates() {
+        localizeLive = true;
+    }
+
+    export function liveLocalizationEnabled() {
+        return localizeLive;
+    }
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
@@ -182,7 +201,7 @@ namespace ts.pxtc.Util {
     }
 
     let sForPlural = true;
-    export function lf_va(format: string, args: any[]): string {
+    export function lf_va(format: string, args: any[]): string { // @ignorelf@
         if (!format) return format;
 
         locStats[format] = (locStats[format] || 0) + 1;
@@ -197,14 +216,14 @@ namespace ts.pxtc.Util {
         return fmt_va(lfmt, args);
     }
 
-    export function lf(format: string, ...args: any[]): string {
-        return lf_va(format, args);
+    export function lf(format: string, ...args: any[]): string { // @ignorelf@
+        return lf_va(format, args); // @ignorelf@
     }
     /**
      * Similar to lf but the string do not get extracted into the loc file.
      */
     export function rlf(format: string, ...args: any[]): string {
-        return lf_va(format, args);
+        return lf_va(format, args); // @ignorelf@
     }
 
     export function lookup<T>(m: pxt.Map<T>, key: string): T {
@@ -223,27 +242,6 @@ namespace ts.pxtc.Util {
         let e = new Error(msg);
         (<any>e).isUserError = true;
         throw e
-    }
-
-    export function isPyLangPref(): boolean {
-        return localStorage.getItem("editorlangpref") == "py";
-    }
-
-    export function getEditorLanguagePref(): string {
-        return localStorage.getItem("editorlangpref");
-    }
-
-    export function setEditorLanguagePref(lang: string): void {
-        if (lang.match(/prj$/)) lang = lang.replace(/prj$/, "")
-        localStorage.setItem("editorlangpref", lang);
-    }
-
-    export function getToolboxAnimation(): string {
-        return localStorage.getItem("toolboxanimation");
-    }
-
-    export function setToolboxAnimation(): void {
-        localStorage.setItem("toolboxanimation", "1");
     }
 
     // small deep equals for primitives, objects, arrays. returns error message

@@ -16,27 +16,30 @@ namespace pxt.blocks {
      */
     export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace): string[] {
         pxt.tickEvent(`blocks.domtow`)
+        let newBlockIds: string[] = [];
         try {
             Blockly.Events.disable();
-            const newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
+            newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
             applyMetaComments(workspace);
-            return newBlockIds;
+        } catch (e) {
+            pxt.reportException(e);
         } finally {
             Blockly.Events.enable();
         }
+        return newBlockIds;
     }
 
     function applyMetaComments(workspace: Blockly.Workspace) {
         // process meta comments
         // @highlight -> highlight block
-        workspace.getAllBlocks()
-            .filter(b => !!b.comment && b.comment instanceof Blockly.Comment)
+        workspace.getAllBlocks(false)
+            .filter(b => !!b.getCommentText())
             .forEach(b => {
-                const c = (<Blockly.Comment>b.comment).getText();
+                const c = b.getCommentText();
                 if (/@highlight/.test(c)) {
                     const cc = c.replace(/@highlight/g, '').trim();
                     b.setCommentText(cc || null);
-                    (workspace as Blockly.WorkspaceSvg).highlightBlock(b.id)
+                    (workspace as Blockly.WorkspaceSvg).highlightBlock?.(b.id)
                 }
             });
     }
@@ -96,7 +99,7 @@ namespace pxt.blocks {
         let xmlBlock = Blockly.Xml.textToDom(text);
         let block = Blockly.Xml.domToBlock(xmlBlock, ws) as Blockly.BlockSvg;
         if (ws.getMetrics) {
-            let metrics = ws.getMetrics() as Blockly.Metrics;
+            let metrics = ws.getMetrics();
             let blockDimensions = block.getHeightWidth();
             block.moveBy(
               metrics.viewLeft + (metrics.viewWidth / 2) - (blockDimensions.width / 2),
@@ -241,6 +244,18 @@ namespace pxt.blocks {
                             pxt.debug(`patched enum variable type ${k} -> ${up.map[k]}`);
                         })
                     }));
+            }
+
+            // Blockly doesn't allow top-level shadow blocks. We've had bugs in the past where shadow blocks
+            // have ended up as top-level blocks, so promote them to regular blocks just in case
+            const shadows = getDirectChildren(doc.children.item(0), "shadow");
+            for (const shadow of shadows) {
+                const block = doc.createElement("block");
+                shadow.getAttributeNames().forEach(attr => block.setAttribute(attr, shadow.getAttribute(attr)));
+                for (let j = 0; j < shadow.childNodes.length; j++) {
+                    block.appendChild(shadow.childNodes.item(j));
+                }
+                shadow.replaceWith(block);
             }
 
             // build upgrade map

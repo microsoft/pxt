@@ -1,5 +1,68 @@
 
 namespace pxt {
+    export interface SimpleDriverCallbacks {
+        cacheGet: (key: string) => Promise<string>
+        cacheSet: (key: string, val: string) => Promise<void>
+        httpRequestAsync?: (options: Util.HttpRequestOptions) => Promise<Util.HttpResponse>
+        pkgOverrideAsync?: (id: string) => Promise<Map<string>>
+    }
+
+    let callbacks: SimpleDriverCallbacks
+    let ghSetup = false
+
+    class CachedGithubDb implements pxt.github.IGithubDb {
+        constructor(public readonly db: pxt.github.IGithubDb) { }
+
+        private loadAsync<T>(repopath: string, tag: string, suffix: string,
+            loader: (r: string, t: string) => Promise<T>): Promise<T> {
+            // only cache releases
+            if (!/^v\d+\.\d+\.\d+$/.test(tag))
+                return loader(repopath, tag);
+
+            const key = `gh-${suffix}-${repopath}#${tag}`
+            return callbacks.cacheGet(key)
+                .then(json => {
+                    if (json) {
+                        const p = pxt.Util.jsonTryParse(json) as T;
+                        if (p) {
+                            pxt.debug(`cache hit ${key}`)
+                            return Promise.resolve(p);
+                        }
+                    }
+
+                    // download and cache
+                    return loader(repopath, tag)
+                        .then(p => {
+                            if (p) {
+                                pxt.debug(`cached ${key}`)
+                                return callbacks.cacheSet(key, JSON.stringify(p))
+                                    .then(() => p)
+                            }
+                            return p;
+                        })
+
+                })
+        }
+
+        latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
+            return this.db.latestVersionAsync(repopath, config)
+        }
+
+        loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+            return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
+        }
+
+        loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+            return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t));
+        }
+    }
+
+    function pkgOverrideAsync(pkg: pxt.Package) {
+        const f = callbacks?.pkgOverrideAsync
+        const v = f ? f(pkg.id) : Promise.resolve(undefined as Map<string>)
+        return v.then(r => r ? r : pkg.commonDownloadAsync())
+    }
+
     export class SimpleHost implements pxt.Host {
         constructor(public packageFiles: pxt.Map<string>) { }
 
@@ -15,16 +78,14 @@ namespace pxt {
             } else if (pxt.appTarget.bundledpkgs[module.id]) {
                 return pxt.appTarget.bundledpkgs[module.id][filename];
             } else {
-                console.log("file missing: " + module.id + " / " + filename)
                 return null;
             }
         }
 
         writeFile(module: pxt.Package, filename: string, contents: string) {
-            if (module.id == "this" && filename == pxt.CONFIG_NAME)
-                this.packageFiles[pxt.CONFIG_NAME] = contents
-            else
-                console.log("write file? " + module.id + " / " + filename)
+            const pref = module.id == "this" ? "" : "pxt_modules/" + module.id + "/"
+            pxt.debug(`write file ${pref + filename}`)
+            this.packageFiles[pref + filename] = contents
         }
 
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
@@ -34,15 +95,28 @@ namespace pxt {
 
         cacheStoreAsync(id: string, val: string): Promise<void> {
             //console.log(`cacheStoreAsync(${id}, ${val})`)
+            if (callbacks?.cacheSet)
+                return callbacks.cacheSet(id, val)
             return Promise.resolve()
         }
 
         cacheGetAsync(id: string): Promise<string> {
             //console.log(`cacheGetAsync(${id})`)
+            if (callbacks?.cacheGet)
+                return callbacks.cacheGet(id)
             return Promise.resolve("")
         }
 
         downloadPackageAsync(pkg: pxt.Package): Promise<void> {
+            if (ghSetup)
+                return pkgOverrideAsync(pkg)
+                    .then(resp => {
+                        if (resp) {
+                            U.iterMap(resp, (fn: string, cont: string) => {
+                                this.writeFile(pkg, fn, cont)
+                            })
+                        }
+                    })
             //console.log(`downloadPackageAsync(${pkg.id})`)
             return Promise.resolve()
         }
@@ -76,6 +150,12 @@ namespace pxt {
 
     export interface SimpleCompileOptions {
         native?: boolean;
+    }
+
+    export function simpleInstallPackagesAsync(files: pxt.Map<string>) {
+        const host = new SimpleHost(files)
+        const mainPkg = new MainPackage(host)
+        return mainPkg.loadAsync(true)
     }
 
     export function simpleGetCompileOptionsAsync(
@@ -129,11 +209,14 @@ namespace pxt {
         }
     }
 
+    // eslint-disable-next-line no-var
     declare var global: any;
+    // eslint-disable-next-line no-var
     declare var Buffer: any;
+    // eslint-disable-next-line no-var
     declare var pxtTargetBundle: TargetBundle;
 
-    export function setupSimpleCompile() {
+    export function setupSimpleCompile(cfg?: SimpleDriverCallbacks) {
         if (typeof global != "undefined" && !global.btoa) {
             global.btoa = function (str: string) { return Buffer.from(str, "binary").toString("base64"); }
             global.atob = function (str: string) { return Buffer.from(str, "base64").toString("binary"); }
@@ -142,6 +225,16 @@ namespace pxt {
             pxt.debug("setup app bundle")
             pxt.setAppTarget(pxtTargetBundle)
         }
+
+        if (cfg) {
+            callbacks = cfg
+            ghSetup = true
+            if (cfg.httpRequestAsync)
+                Util.httpRequestCoreAsync = cfg.httpRequestAsync
+            pxt.github.forceProxy = true
+            pxt.github.db = new CachedGithubDb(new pxt.github.MemoryGithubDb())
+        }
+
         pxt.debug("simple setup done")
     }
 }

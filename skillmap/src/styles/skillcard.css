@@ -1,0 +1,279 @@
+/* CAROUSEL ITEM CUSTOMIZATION */
+.carousel-item {
+    perspective: 2500px;
+}
+
+.carousel-item.linked {
+    margin-right: 2rem;
+}
+.carousel-item.linked:after {
+    content: '';
+    position: absolute;
+    right: -2rem;
+    width: 2rem;
+    height: 0.75rem;
+    background-color: var(--primary-color);
+    z-index: 1;
+}
+.carousel-item.linked:last-child:after {
+    display: none;
+}
+
+/* SKILL CARD OVERLAY */
+.skill-card-overlay {
+    position: absolute;
+    display: flex;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    align-items: center;
+    justify-content: center;
+    font-size: 6rem;
+    line-height: 6rem;
+}
+
+.skill-card-overlay i {
+    margin-bottom: 4.35rem;
+}
+
+.selected .skill-card-overlay {
+    pointer-events: none;
+}
+
+/* SKILL CARD */
+.skill-card-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.1s;
+    z-index: 5;
+}
+
+.skill-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border: 2px solid transparent;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+}
+
+.selected .skill-card {
+    border-color: var(--active-color);
+    transform: rotateX(180deg);
+}
+
+.skill-card-title {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.skill-card-display, .skill-card-info {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+/* SKILL CARD HOVER */
+.skill-card-container:not(.locked):hover {
+    transform: scale(1.05);
+}
+
+.selected .skill-card:not(.locked):hover {
+    transform: rotateX(180deg);
+}
+
+.skill-card:not(.locked):hover .skill-card-display {
+    background-color: var(--active-color);
+}
+
+.skill-card:not(.locked):hover .skill-card-image {
+    background-color: var(--card-hover-color);
+}
+
+
+/* SKILL CARD DISPLAY (FRONT) */
+.skill-card-display {
+    color: var(--inverted-text-color);
+    background-color: var(--primary-color);
+    justify-content: flex-end;
+}
+
+.skill-card-image {
+    background-color: var(--default-card-color);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+}
+
+.skill-card-image i {
+    font-size: 6rem;
+    line-height: 6rem;
+}
+
+.skill-card-image img {
+    width: 100%;
+}
+
+.locked .skill-card-image img {
+    filter: opacity(50%) grayscale(100%);
+    opacity: 0.5;
+}
+
+.skill-card-label {
+    margin: 0.5rem;
+    flex-shrink: 0;
+}
+
+.skill-card-tags {
+    display: flex;
+    flex-shrink: 0;
+    height: 1.5rem;
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+
+.skill-card-tags div {
+    margin-right: 0.25rem;
+    padding: 0 0.25rem;
+    border: 1px solid var(--inverted-text-color);
+}
+
+/* SKILL CARD INFO (BACK) */
+.skill-card-info {
+    background-color: var(--white);
+    padding: 0.5rem;
+    transform: rotateX(180deg);
+}
+
+.skill-card-description {
+    overflow-y: auto;
+}
+
+.skill-card-action {
+    display: flex;
+    flex-shrink: 0;
+    align-items: flex-end;
+}
+
+/* SKILL CARD ACTION BUTTON (BACK) */
+.skill-card-button,
+.skill-card-button-icon {
+    height: 2.5rem;
+}
+
+.skill-card-button {
+    color: var(--active-color);
+    border: 1px solid var(--active-color);
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 1.2rem;
+    text-align: center;
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+}
+
+.skill-card-button:hover,
+.skill-card-button-icon:hover {
+    background-color: var(--hover-color);
+}
+
+.skill-card-button-icon {
+    color: var(--active-color);
+    border: 1px solid var(--active-color);
+    border-right: none;
+    padding: 0.5rem;
+}
+
+.locked .skill-card-button,
+.locked .skill-card-button:hover {
+    color: var(--inactive-color);
+    background-color: transparent;
+    border-color: var(--inactive-color);
+    cursor: default;
+}
+
+.completed i.xicon.redo {
+    font-size: 1.5rem;
+}
+
+.completed i.xicon.redo:before {
+    vertical-align: bottom;
+}
+
+.circular-label {
+    background: var(--active-color);
+    padding: 0.2rem 0.3rem;
+    font-size: 0.75rem;
+    color: var(--inverted-text-color);
+    border-radius: 1.5rem;
+    vertical-align: middle;
+    margin-right: 0.25rem;
+}
+
+/* END CARD DISPLAY (TROPHY) */
+.end-card {
+    position: relative;
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 1.5rem;
+}
+
+.end-card-placeholder {
+    width: 3rem;
+    height: 3rem;
+}
+
+.end-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 3rem;
+    border-radius: 50%;
+
+    color: var(--inverted-text-color);
+    background-color: var(--primary-color);
+}
+
+.end-card i {
+    opacity: 0;
+    font-size: 4rem;
+    line-height: 4rem;
+    margin: 0.35rem 0;
+    transition-delay: 0.5s;
+    transition: all 1.5s ease;
+}
+
+.end-card:before {
+    content: '';
+    position: absolute;
+    left: -1.5rem;
+    width: 2.5rem;
+    height: 0.75rem;
+    background-color: var(--primary-color);
+}
+
+.end-card.spin i {
+    opacity: 1;
+    cursor: pointer;
+    transform: rotateZ(720deg);
+    margin: 1rem 0.7rem;
+}

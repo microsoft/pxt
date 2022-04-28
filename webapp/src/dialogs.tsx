@@ -1,4 +1,4 @@
-// tslint:disable: react-a11y-anchors
+/* eslint-disable  jsx-a11y/anchor-is-valid */
 
 import * as React from "react";
 import * as sui from "./sui";
@@ -9,14 +9,15 @@ import * as cloudsync from "./cloudsync";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { fireClickOnEnter } from "./util";
+
+let dontShowDownloadFlag = false;
 
 export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     const compileService = pxt.appTarget.compileService;
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
     const targetTheme = pxt.appTarget.appTheme;
     const versions: pxt.TargetVersions = pxt.appTarget.versions;
-    const showCompile = compileService && compileService.githubCorePackage && compileService.gittag && compileService.serviceId;
-
     const buttons: sui.ModalButton[] = [];
     if (targetTheme.experiments)
         buttons.push({
@@ -28,6 +29,20 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                 projectView.showExperimentsDialog();
             }
         })
+
+    const compileVariantInfos = (pxt.appTarget.multiVariants?.map(
+        variantName => {
+            const compileService = pxt.U.clone(pxt.appTarget.compileService);
+            const variant = pxt.appTarget.variants[variantName];
+            if (variant?.compileService)
+                pxt.U.jsonCopyFrom(compileService, variant.compileService);
+            return { variantName, compileService };
+        }
+    ) || [{
+        variantName: "",
+        compileService: pxt.appTarget.compileService
+    }])
+        .filter(info => info.compileService && info.compileService.githubCorePackage && info.compileService.gittag && info.compileService.serviceId);
 
     pxt.targetConfigAsync()
         .then(config => {
@@ -47,15 +62,9 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                                 ? <a target="_blank" rel="noopener noreferrer" href="/offline-app">{lf("An update {0} for {1} is available", latestElectronRelease, pxt.appTarget.title)}</a>
                                 : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
                         : undefined}
-                    {githubUrl && versions ?
-                        renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)
-                        : undefined}
-                    {versions ?
-                        renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)
-                        : undefined}
-                    {showCompile ?
-                        renderCompileLink(compileService)
-                        : undefined}
+                    {githubUrl && versions && renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)}
+                    {versions && renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)}
+                    {compileVariantInfos?.length ? compileVariantInfos.map(info => <div key={info.variantName}>{renderCompileLink(info.variantName, info.compileService)}</div>) : undefined}
                     <p><br /></p>
                     <p>
                         {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
@@ -64,11 +73,11 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                     {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
                 </div>
             })
-        }).done();
+        });
 }
 
 
-function renderCompileLink(cs: pxt.TargetCompileService) {
+function renderCompileLink(variantName: string, cs: pxt.TargetCompileService) {
     let url: string;
     let version: string;
     let name: string;
@@ -89,8 +98,9 @@ function renderCompileLink(cs: pxt.TargetCompileService) {
 
 function renderVersionLink(name: string, version: string, url: string) {
     return <p>{lf("{0} version:", name)} &nbsp;
-            <a href={encodeURI(url)}
+        <a href={encodeURI(url)}
             title={`${lf("{0} version: {1}", name, version)}`}
+            aria-label={`${lf("{0} version{1}", name, version)}`}
             target="_blank" rel="noopener noreferrer">{version}</a>
     </p>;
 }
@@ -469,13 +479,17 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
                 </p>
                 <div className="ui field">
-                    <sui.Input type="url" autoFocus value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+                    <sui.Input type="url" autoFocus value={repoName} onChange={onNameChanged}
+                        label={lf("Repository name")} id="githubRepoNameInput"
+                        placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
                 </div>
                 <div className="ui field">
-                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
+                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged}
+                        label={lf("Repository description")} id="githubRepoDescriptionInput"
+                        placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
                 </div>
                 <div className="ui field">
-                    <select className={`ui dropdown`} onChange={onPublicChanged}>
+                    <select className={`ui dropdown`} onChange={onPublicChanged} aria-label={lf("Repository visibility setting")}>
                         <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
                         <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
                     </select>
@@ -493,7 +507,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         pxt.tickEvent("github.create.ok");
-                        return pxt.github.normalizeRepoId("https://github.com/" + r.fullName);
+                        return pxt.github.normalizeRepoId("https://github.com/" + r.fullName, "master");
                     }, err => {
                         if (!showGithubTokenError(err)) {
                             if (err.statusCode == 422)
@@ -531,7 +545,7 @@ export function showImportGithubDialogAsync() {
                 description: r.description,
                 updatedAt: r.updatedAt,
                 onClick: () => {
-                    res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName)
+                    res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName, "master")
                     core.hideDialog()
                 },
             }));
@@ -539,13 +553,13 @@ export function showImportGithubDialogAsync() {
                 header: lf("Clone or create your own GitHub repo"),
                 hideAgree: true,
                 hasCloseIcon: true,
-                /* tslint:disable:react-a11y-anchors */
                 jsx: <div className="ui form">
-                    <div className="ui relaxed divided list" role="menu">
+                    <div className="ui relaxed divided list">
                         <div key={"create new"} className="item">
                             <i className="large plus circle middle aligned icon"></i>
                             <div className="content">
-                                <a onClick={createNew} role="menuitem" className="header"
+                                <a onClick={createNew} role="button" className="header"
+                                    tabIndex={0} onKeyDown={fireClickOnEnter}
                                     title={lf("Create new GitHub repository")}>
                                     <b>{lf("Create new...")}</b>
                                 </a>
@@ -558,7 +572,9 @@ export function showImportGithubDialogAsync() {
                             <div key={r.name} className="item">
                                 <i className="large github middle aligned icon"></i>
                                 <div className="content">
-                                    <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>
+                                    <a onClick={r.onClick} role="button" className="header"
+                                        tabIndex={0} onKeyDown={fireClickOnEnter}
+                                    >{r.name}</a>
                                     <div className="description">
                                         {pxt.Util.timeSince(r.updatedAt)}
                                         {". "}
@@ -621,7 +637,25 @@ export function showReportAbuseAsync(pubId?: string) {
     const ghid = pxt.github.parseRepoId(pubId);
     if (ghid) {
         pxt.tickEvent("reportabuse.github");
-        window.open("https://github.com/contact/report-content", "_blank");
+        core.confirmAsync({
+            header: lf("Is this content inappropriate?"),
+            hasCloseIcon: true,
+            agreeLbl: lf("Report"),
+            disagreeLbl: lf("Cancel"),
+            jsx: <div className="ui form">
+                <div className="ui field">
+                    <p>{lf("This content was written by an independent user and may be inappropriate or abusive. Help us block or filter that content by reporting it to Github.")}</p>
+                </div>
+                <div className="ui field">
+                    <label id="githubContentUrlLabel">{lf("Content URL")}</label>
+                    <sui.Input type="url" aria-labelledby="githubContentUrlLabel" readOnly lines={1} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} value={pubId}></sui.Input>
+                </div>
+            </div>,
+        }).then(res => {
+            if (res) {
+                window.open("https://github.com/contact/report-content", "_blank");
+            }
+        });
         return;
     }
 
@@ -649,7 +683,7 @@ export function showReportAbuseAsync(pubId?: string) {
                 <textarea aria-labelledby="abuseDescriptionLabel"></textarea>
             </div>
         </div>,
-    }).done(res => {
+    }).then(res => {
         if (res) {
             pxt.tickEvent("app.reportabuse.send");
             const id = pxt.Cloud.parseScriptId(urlInput.value as string);
@@ -671,6 +705,23 @@ export function showReportAbuseAsync(pubId?: string) {
                     });
             }
         }
+    })
+}
+
+export function showWinAppDeprecateAsync() {
+    pxt.tickEvent("winApp.dialog", undefined)
+    return core.confirmAsync({
+        header: lf("You can't get there from here!"),
+        hideAgree: true,
+        hasCloseIcon: true,
+        helpUrl: "/windows-app",
+        jsx: <div>
+            <img className="ui medium centered image" src={pxt.appTarget.appTheme.winAppDeprImage} alt={lf("An image of a shrugging board")} />
+            <div>
+                {lf("This app is being deprecated. Text editing is only available on the MakeCode website ")}
+                {`(https://${pxt.appTarget.name}).`}
+            </div>
+        </div>
     })
 }
 
@@ -699,5 +750,123 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
             </div>
             {blockTranslationIds.map(trid => <div key={`ictr${trid}`} className="ui basic segment">{trid}</div>)}
         </div>
-    }).done();
+    });
+}
+
+export function renderBrowserDownloadInstructions(saveonly?: boolean) {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
+    const fileExtension = pxt.appTarget.compile?.useUF2 ? ".uf2" : ".hex";
+    const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
+
+    const onPairClicked = () => {
+        core.hideDialog();
+        pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync);
+    }
+
+    const onCheckboxClicked = (value: boolean) => {
+        const valueString = "" + value;
+        pxt.tickEvent("downloaddialog.dontshowagain", { checked: valueString });
+
+        dontShowDownloadFlag = value;
+    }
+
+    const image = pxt.appTarget.appTheme.downloadDialogTheme?.dragFileImage;
+    const columns = image ? "two" : "one";
+
+    return <div className="ui grid stackable upload">
+        <div className="column sixteen wide instructions">
+            <div className="ui grid">
+                <div className="row">
+                    <div className="column">
+                        <div className={`ui ${columns} column grid padded`}>
+                            <div className="column">
+                                <div className="ui">
+                                    <div className="content">
+                                        <div className="description">
+                                            {lf("Your code is being downloaded as a {1} file. You can drag this file to your {0} using your computer's file explorer.", boardName, fileExtension)}
+                                        </div>
+                                        {webUSBSupported &&
+                                            <div className="download-callout">
+                                                <label className="ui purple ribbon large label">{lf("New!")}</label>
+                                                <div className="ui two column grid">
+                                                    <div className="icon-align three wide column">
+                                                        <div />
+                                                        <i className="icon big usb" />
+                                                        <div />
+                                                    </div>
+                                                    <div className="thirteen wide column">
+                                                        {lf("Download your code faster by pairing with web usb!")}
+                                                        <br />
+                                                        <strong><a onClick={onPairClicked}>{lf("Pair now")}</a></strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            {image &&
+                                <div className="column">
+                                    <div className="ui">
+                                        <div className="image">
+                                            <img alt={lf("Comic moving {1} file to {0}", boardDriveName, fileExtension)} className="ui medium rounded image" src={image} />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                {!saveonly &&
+                    <sui.Checkbox
+                        inputLabel={lf("Don't show this again")}
+                        onChange={onCheckboxClicked}
+                    />
+                }
+            </div>
+        </div>
+    </div>;
+}
+
+export function renderIncompatibleHardwareDialog() {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const bodyText = lf("Oops! Looks like your project has code that won't run on the hardware you have connected. Would you like to download anyway?");
+    const helpText = lf("Learn more about what's supported by your hardware…")
+    const helpURL = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpURL;
+    const imageURL = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareImage;
+    const columns = imageURL ? "two" : "one";
+
+    return <div className={`ui ${columns} column grid padded download-dialog`}>
+        <div className="column">
+            <div className="ui">
+                <div className="content">
+                    <div className="description">
+                        {bodyText}
+                        <br />
+                        {helpURL && <a target="_blank" rel="noopener noreferrer" href={helpURL}>{helpText}</a>}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {imageURL &&
+            <div className="column">
+                <div className="ui">
+                    <div className="image download-dialog-image">
+                        <img alt={lf("Image of {0}", boardName)} className="ui medium rounded image" src={imageURL} />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+export function clearDontShowDownloadDialogFlag() {
+    dontShowDownloadFlag = false;
+}
+
+export function isDontShowDownloadDialogFlagSet() {
+    return dontShowDownloadFlag;
 }

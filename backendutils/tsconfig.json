@@ -1,11 +1,12 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
         "out": "../built/backendutils.js",
         "newLine": "LF",
-        "sourceMap": false
+        "sourceMap": false,
+        "moduleResolution": "node"
     }
 }

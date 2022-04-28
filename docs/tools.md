@@ -32,10 +32,17 @@ Code with any two MakeCode editors.
 
 Control scenes, webcams and editors to take your online coding to the next level.
 
+## [Screenshot tool](/screenshot-tool)
+
+![A screenshot of the Screenshot tool](/static/tools/screenshot-tool.png)
+
+Create a SVG image of the blocks shown for selected lines of code. Copy the screenshot and use it in your own documents, messages, blogs, etc.
+
 ## See Also
 
 [GitHub Explorer](/github-explorer),
 [Playground](/playground),
 [Tutorial tool](/tutorial-tool),
 [Multi](/multi),
-[Streamer](/streamer)
+[Streamer](/streamer),
+[Screenshot tool](/screenshot-tool)

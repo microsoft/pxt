@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as sui from "./sui";
+import { fireClickOnEnter } from "./util";
 
 type GroupedError = {
     error: pxtc.KsDiagnostic,
@@ -10,17 +11,20 @@ type GroupedError = {
 };
 
 export interface ErrorListProps {
-    onSizeChange: (state: pxt.editor.ErrorListState) => void;
-    listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
-    listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
-    goToError: (errorLocation: pxtc.LocationInfo) => void;
-    startDebugger: () => void;
+    isInBlocksEditor: boolean;
+    onSizeChange?: (state: pxt.editor.ErrorListState) => void;
+    listenToErrorChanges?: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
+    listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: pxt.blocks.BlockDiagnostic[]) => void) => void;
+    listenToExceptionChanges?: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
+    goToError?: (errorLocation: pxtc.LocationInfo) => void;
+    startDebugger?: () => void;
 }
 export interface ErrorListState {
     isCollapsed: boolean,
-    errors: pxtc.KsDiagnostic[],
+    errors?: pxtc.KsDiagnostic[],
     exception?: pxsim.DebuggerBreakpointMessage,
-    callLocations?: pxtc.LocationInfo[]
+    callLocations?: pxtc.LocationInfo[],
+    blockErrors?: pxt.blocks.BlockDiagnostic[]
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -31,37 +35,47 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.state = {
             isCollapsed: true,
             errors: [],
-            exception: null
+            exception: null,
+            blockErrors: []
         }
 
         this.onCollapseClick = this.onCollapseClick.bind(this)
         this.onErrorsChanged = this.onErrorsChanged.bind(this)
+        this.onBlockErrorsChanged = this.onBlockErrorsChanged.bind(this)
         this.onExceptionDetected = this.onExceptionDetected.bind(this)
         this.onErrorMessageClick = this.onErrorMessageClick.bind(this)
         this.onDisplayStateChange = this.onDisplayStateChange.bind(this)
         this.getCompilerErrors = this.getCompilerErrors.bind(this)
         this.generateStackTraces = this.generateStackTraces.bind(this)
+        this.listBlockErrors = this.listBlockErrors.bind(this)
 
-        props.listenToErrorChanges("errorList", this.onErrorsChanged);
-        props.listenToExceptionChanges("errorList", this.onExceptionDetected)
+        if (props.isInBlocksEditor) {
+            props.listenToBlockErrorChanges("errorList", this.onBlockErrorsChanged)
+        } else {
+            props.listenToErrorChanges("errorList", this.onErrorsChanged);
+            props.listenToExceptionChanges("errorList", this.onExceptionDetected);
+        }
     }
 
     render() {
-        const { isCollapsed, errors, exception } = this.state;
-        const errorsAvailable = !!errors?.length || !!exception;
+        const { isCollapsed, errors, exception, blockErrors } = this.state;
+        const errorsAvailable = !!errors?.length || !!exception || !!blockErrors?.length;
         const collapseTooltip = lf("Collapse Error List");
 
-        const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
+        const errorListContent = !isCollapsed ? (this.props.isInBlocksEditor ? this.listBlockErrors(blockErrors)
+            : (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors))) : undefined;
+
+        const errorCount = this.props.isInBlocksEditor ? blockErrors.length : exception ? 1 : errors.length;
 
         return (
-            <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
-                <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
+            <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''} ${this.props.isInBlocksEditor ? 'errorListBlocks' : ''}`} hidden={!errorsAvailable}>
+                <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
-                    <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
+                    <div className="ui red circular label countBubble">{errorCount}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} /></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
-                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
+                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={fireClickOnEnter} tabIndex={0}>
                         {lf("Debug this project")}
                         <sui.Icon className="debug-icon" icon="icon bug" />
                     </div>}
@@ -77,13 +91,16 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         // can resize if needed
 
         const noValueToDisplay = !(errors?.length || exception);
-        this.props.onSizeChange(
-            noValueToDisplay ?
-                undefined
-                : isCollapsed ?
-                    pxt.editor.ErrorListState.HeaderOnly
-                    : pxt.editor.ErrorListState.Expanded
-        );
+
+        if (this.props.onSizeChange) {
+            this.props.onSizeChange(
+                noValueToDisplay ?
+                    undefined
+                    : isCollapsed ?
+                        pxt.editor.ErrorListState.HeaderOnly
+                        : pxt.editor.ErrorListState.Expanded
+            );
+        }
     }
 
     onCollapseClick() {
@@ -102,6 +119,14 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.setState({
             errors,
             isCollapsed: errors?.length == 0 || this.state.isCollapsed,
+            exception: null
+        }, this.onDisplayStateChange);
+    }
+
+    onBlockErrorsChanged(blockErrors: pxt.blocks.BlockDiagnostic[]) {
+        this.setState({
+            blockErrors,
+            isCollapsed: blockErrors?.length == 0 || this.state.isCollapsed,
             exception: null
         }, this.onDisplayStateChange);
     }
@@ -141,14 +166,21 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             </div>
         </div>;
     }
+
+    listBlockErrors(blockErrors: pxt.blocks.BlockDiagnostic[]) {
+        return <div className="ui selection list">
+            {(blockErrors || []).map((e, i) => <ErrorListItem index={i} key={`${i}-${e}`} blockError={e} />)}
+        </div>
+    }
 }
 
 interface ErrorListItemProps {
     index: number;
-    revealError: (location: pxtc.LocationInfo, index: number) => void;
+    revealError?: (location: pxtc.LocationInfo, index: number) => void;
     error?: GroupedError;
     stackframe?: pxsim.StackFrameInfo;
     location?: pxtc.LocationInfo;
+    blockError?: pxt.blocks.BlockDiagnostic;
 }
 
 interface ErrorListItemState {
@@ -163,16 +195,16 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     }
 
     render() {
-        const { error, stackframe, location } = this.props
+        const { error, stackframe, location, blockError } = this.props
 
-        const message = stackframe ?
-            stackFrameMessageStringWithLineNumber(stackframe, location) :
-            errorMessageStringWithLineNumber(error.error);
-        const errorCount = stackframe ? 1 : error.count;
+        const message = blockError ? lf("{0}", blockError.message)
+            : stackframe ? stackFrameMessageStringWithLineNumber(stackframe, location) :
+                errorMessageStringWithLineNumber(error.error);
+        const errorCount = (stackframe || blockError) ? 1 : error.count;
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
-            onClick={this.onErrorListItemClick}
-            onKeyDown={sui.fireClickOnEnter}
+            onClick={!blockError ? this.onErrorListItemClick : undefined}
+            onKeyDown={fireClickOnEnter}
             aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
             tabIndex={0}>
             {message} {(errorCount <= 1) ? null : <div className="ui gray circular label countBubble">{errorCount}</div>}

@@ -7,6 +7,9 @@ import * as nodeutil from './nodeutil';
 import * as hid from './hid';
 import * as net from 'net';
 import * as crowdin from './crowdin';
+import * as storage from './storage';
+
+import { promisify } from "util";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -35,12 +38,14 @@ function setupRootDir() {
     console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
     dirs = [
         "built/web",
+        path.join(nodeutil.targetDir, "docs"),
         path.join(nodeutil.targetDir, "built"),
         path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
         path.join(nodeutil.pxtCoreDir, "webapp/public"),
-        path.join(nodeutil.pxtCoreDir, "common-docs")
+        path.join(nodeutil.pxtCoreDir, "common-docs"),
+        path.join(nodeutil.pxtCoreDir, "docs"),
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
@@ -57,11 +62,11 @@ function setupProjectsDir() {
     nodeutil.mkdirP(userProjectsDir);
 }
 
-const statAsync = Promise.promisify(fs.stat)
-const readdirAsync = Promise.promisify(fs.readdir)
-const readFileAsync = Promise.promisify(fs.readFile)
-const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const unlinkAsync: any = Promise.promisify(fs.unlink)
+const statAsync = promisify(fs.stat)
+const readdirAsync = promisify(fs.readdir)
+const readFileAsync = promisify(fs.readFile)
+const writeFileAsync: any = promisify(fs.writeFile)
+const unlinkAsync: any = promisify(fs.unlink)
 
 function existsAsync(fn: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -85,12 +90,10 @@ type FsPkg = pxt.FsPkg;
 
 function readAssetsAsync(logicalDirname: string): Promise<any> {
     let dirname = path.join(userProjectsDir, logicalDirname, "assets")
-    /* tslint:disable:no-http-string */
     let pref = "http://" + serveOptions.hostname + ":" + serveOptions.port + "/assets/" + logicalDirname + "/"
-    /* tslint:enable:no-http-string */
     return readdirAsync(dirname)
         .catch(err => [])
-        .then(res => Promise.map(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
+        .then(res => U.promiseMapAll(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
             name: fn,
             size: res.size,
             url: pref + fn
@@ -190,7 +193,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 
     nodeutil.mkdirP(dirname)
 
-    return Promise.map(data.files, f =>
+    return U.promiseMapAll(data.files, f =>
         readFileAsync(path.join(dirname, f.name))
             .then(buf => {
                 if (f.name == pxt.CONFIG_NAME) {
@@ -213,7 +216,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
                 }
             }, err => { }))
         // no conflict, proceed with writing
-        .then(() => Promise.map(data.files, f => {
+        .then(() => U.promiseMapAll(data.files, f => {
             let d = f.name.replace(/\/[^\/]*$/, "")
             if (d != f.name)
                 nodeutil.mkdirP(path.join(dirname, d))
@@ -229,21 +232,26 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 
 function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]> {
     logicalDirname = logicalDirname.replace(/^\//, "")
-    let dirname = path.join(userProjectsDir, logicalDirname)
+    const dirname = path.join(userProjectsDir, logicalDirname)
+    // load packages under /projects, 3 level deep
     return existsAsync(path.join(dirname, pxt.CONFIG_NAME))
-        .then(ispkg =>
-            ispkg ? readPkgAsync(logicalDirname).then(r => [r], err => []) :
-                depth <= 1 ? [] :
-                    readdirAsync(dirname)
-                        .then(files =>
-                            Promise.map(files, fn =>
-                                statAsync(path.join(dirname, fn))
-                                    .then<FsPkg[]>(st => {
-                                        if (fn[0] != "." && st.isDirectory())
-                                            return returnDirAsync(logicalDirname + "/" + fn, depth - 1)
-                                        else return []
-                                    })))
-                        .then(U.concat))
+        // read package if pxt.json exists
+        .then(ispkg => Promise.all<FsPkg[]>([
+            // current folder
+            ispkg ? readPkgAsync(logicalDirname).then<FsPkg[]>(r => [r], err => undefined) : Promise.resolve<FsPkg[]>(undefined),
+            // nested packets
+            depth <= 1 ? Promise.resolve<FsPkg[]>(undefined)
+                : readdirAsync(dirname).then(files => U.promiseMapAll(files, fn =>
+                    statAsync(path.join(dirname, fn)).then<FsPkg[]>(st => {
+                        if (fn[0] != "." && st.isDirectory())
+                            return returnDirAsync(logicalDirname + "/" + fn, depth - 1)
+                        else return undefined
+                    })).then(U.concat)
+                )
+        ]))
+        // drop empty arrays
+        .then(rs => rs.filter(r => !!r))
+        .then(U.concat);
 }
 
 function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
@@ -276,6 +284,49 @@ function getCachedHexAsync(sha: string): Promise<any> {
                     };
                 });
         });
+}
+
+async function handleApiStoreRequestAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<void> {
+    const meth = req.method.toUpperCase();
+    const container = decodeURIComponent(elts[0]);
+    const key = decodeURIComponent(elts[1]);
+    if (!container || !key) { throw throwError(400, "malformed api/store request: " + req.url); }
+    const origin = req.headers['origin'] || '*';
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    if (meth === "GET") {
+        const val = await storage.getAsync(container, key);
+        if (val) {
+            if (typeof val === "object") {
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' });
+                res.end(JSON.stringify(val));
+            } else {
+                res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf8' });
+                res.end(val.toString());
+            }
+        } else {
+            res.writeHead(404);
+            res.end();
+        }
+    } else if (meth === "POST") {
+        const srec = (await nodeutil.readResAsync(req)).toString("utf8");
+        const rec = JSON.parse(srec) as storage.Record;
+        await storage.setAsync(container, key, rec);
+        res.writeHead(200);
+        res.end();
+    } else if (meth === "DELETE") {
+        await storage.delAsync(container, key);
+        res.writeHead(200);
+        res.end();
+    } else if (meth === "OPTIONS") {
+        const allowedHeaders = req.headers['access-control-request-headers'] || 'Content-Type';
+        const allowedMethods = req.headers['access-control-request-method'] || 'GET, POST, DELETE';
+        res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
+        res.setHeader('Access-Control-Allow-Methods', allowedMethods);
+        res.writeHead(200);
+        res.end();
+    } else {
+        throw res.writeHead(400, "Unsupported HTTP method: " + meth);
+    }
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
@@ -511,7 +562,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return hio.io.sendPacketAsync(U.fromHex(msg.arg.data))
                                     .then(() => ({}))
                             case "talk":
-                                return Promise.mapSeries(msg.arg.cmds, (obj: any) => {
+                                return U.promiseMapAllSeries(msg.arg.cmds, (obj: any) => {
                                     pxt.debug(`hid talk ${obj.cmd}`)
                                     return hio.talkAsync(obj.cmd, U.fromHex(obj.data))
                                         .then(res => ({ data: U.toHex(res) }))
@@ -526,7 +577,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return null;
                         }
                     })
-                    .done(resp => {
+                    .then(resp => {
                         if (!ws) return;
                         pxt.debug(`hid: resp ${objToString(resp)}`)
                         ws.send(JSON.stringify({
@@ -613,7 +664,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return null;
                         }
                     })
-                    .done(resp => {
+                    .then(resp => {
                         if (!ws) return;
                         pxt.debug(`hid: resp ${objToString(resp)}`)
                         ws.send(JSON.stringify({
@@ -896,7 +947,7 @@ export function serveAsync(options: ServeOptions) {
     if (serveOptions.serial)
         initSerialMonitor();
 
-    const server = http.createServer((req, res) => {
+    const server = http.createServer(async (req, res) => {
         const error = (code: number, msg: string = null) => {
             res.writeHead(code, { "Content-Type": "text/plain" })
             res.end(msg || "Error " + code)
@@ -914,7 +965,10 @@ export function serveAsync(options: ServeOptions) {
 
         const sendHtml = (s: string, code = 200) => {
             res.writeHead(code, { 'Content-Type': 'text/html; charset=utf8' })
-            res.end(s)
+            res.end(s.replace(
+                /(<img [^>]* src=")(?:\/docs|\.)\/static\/([^">]+)"/g,
+                function (f, pref, addr) { return pref + '/static/' + addr + '"'; }
+            ))
         }
 
         const sendFile = (filename: string) => {
@@ -961,6 +1015,17 @@ export function serveAsync(options: ServeOptions) {
                 res.setHeader("Location", trg)
                 error(302, "Redir: " + trg)
                 return
+            }
+
+            if (elts[1] == "immreader") {
+                let trg = Cloud.apiRoot + elts[1];
+                res.setHeader("Location", trg)
+                error(302, "Redir: " + trg)
+                return
+            }
+
+            if (elts[1] == "store") {
+                return await handleApiStoreRequestAsync(req, res, elts.slice(2));
             }
 
             if (/^\d\d\d[\d\-]*$/.test(elts[1]) && elts[2] == "js") {
@@ -1048,6 +1113,16 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--skillmap") {
+            sendFile(path.join(publicDir, 'skillmap.html'));
+            return
+        }
+
+        if (pathname == "/--authcode") {
+            sendFile(path.join(publicDir, 'authcode.html'));
+            return
+        }
+
         if (/\/-[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return
@@ -1068,6 +1143,7 @@ export function serveAsync(options: ServeOptions) {
         if (/^\/(pkg|package)\/.*$/.test(pathname)) {
             pkgPageTestAsync(pathname.replace(/^\/[^\/]+\//, ""))
                 .then(sendHtml)
+                .catch(() => error(404, "Packaged file not found"));
             return
         }
 
@@ -1084,6 +1160,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (/\.js\.map$/.test(pathname)) {
             error(404, "map files disabled")
+            return;
         }
 
         let dd = dirs
@@ -1172,9 +1249,7 @@ export function serveAsync(options: ServeOptions) {
     const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
     if (nodeutil.fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
-        /* tslint:disable:non-literal-require */
         require(serverjs);
-        /* tslint:disable:non-literal-require */
     }
 
     const serverPromise = new Promise<void>((resolve, reject) => {
@@ -1184,9 +1259,7 @@ export function serveAsync(options: ServeOptions) {
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
-            /* tslint:disable:no-http-string */
             const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
-            /* tslint:enable:no-http-string */
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);

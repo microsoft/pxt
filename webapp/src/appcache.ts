@@ -1,4 +1,5 @@
 import * as core from "./core";
+import * as cmds from "./cmds";
 
 export function init(updated: () => void) {
     if ("serviceWorker" in navigator
@@ -14,8 +15,12 @@ export function init(updated: () => void) {
                     // We need to check the ref of the activated service worker so that we don't reload if you have
                     // index.html and beta open at the same time. Otherwise we'd end up in an infinite reload loop as
                     // both tabs continually overwrite the service worker and refresh
-                    if (message && message.type === "serviceworker" && message.state === "activated" && message.ref === ref) {
+                    if (message?.type === "serviceworker" && message.state === "activated" && message.ref === ref) {
                         scheduleUpdate();
+                    }
+
+                    if (message) {
+                        cmds.handleServiceWorkerMessageAsync(message as any);
                     }
                 });
             }

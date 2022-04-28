@@ -48,7 +48,7 @@ code.hljs {
     opacity: 1;
     width: @sideBarWidth;
     top: calc(@mainMenuHeight + 1rem);
-    padding-bottom: calc(@mainMenuHeight + @editorToolsCollapsedHeight + 2rem);
+    height: ~"calc(100% - @{mainMenuHeight} - @{editorToolsCollapsedHeight} - 2rem)";
 }
 
 .sideDocs #sidedocsframe-wrapper {
@@ -147,10 +147,10 @@ code.hljs {
 @media only screen and (max-width: @largestTabletScreen) {
     .sideDocs #sidedocs {
         top: calc(@mobileMenuHeight + 1rem);
-        padding-bottom: calc(@mobileMenuHeight + @editorToolsHeight + 2rem);
+        height: ~"calc(100% - @{mobileMenuHeight} - @{editorToolsHeight} - 2rem)";
     }
     .sideDocs.collapsedEditorTools #sidedocs, .sideDocs.hideEditorFloats #sidedocs {
-        padding-bottom: calc(@mobileMenuHeight + @editorToolsCollapsedHeight + 2rem);
+        height: ~"calc(100% - @{mobileMenuHeight} - @{editorToolsCollapsedHeight} - 2rem)";
     }
 }
 
@@ -167,9 +167,9 @@ code.hljs {
 @media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .sideDocs #sidedocs {
         top: calc(@thinMenuHeight + 1rem);
-        padding-bottom: calc(@thinMenuHeight + @editorToolsHeight + 2rem);
+        height: ~"calc(100% - @{thinMenuHeight} - @{editorToolsHeight} - 2rem)";
     }
     .sideDocs.collapsedEditorTools #sidedocs, .sideDocs.hideEditorFloats #sidedocs {
-        padding-bottom: calc(@thinMenuHeight + @editorToolsCollapsedHeight + 2rem);
+        height: ~"calc(100% - @{thinMenuHeight} - @{editorToolsCollapsedHeight} - 2rem)";
     }
 }

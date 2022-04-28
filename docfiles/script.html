@@ -7,6 +7,8 @@
 
     <!-- @include meta.html -->
     <!-- @include scripthead.html -->
+    <!-- @include targetconfig.html -->
+    <!-- @include tickevent.html -->
 
     <link rel="alternate" type="application/json+oembed" href="@oembedurl@&format=json" />
     <link rel="alternate" type="text/xml+oembed" href="@oembedurl@&format=xml" />
@@ -17,21 +19,19 @@
     <div class="showDesktop page-header">
         <div class="ui container">
             <div id="page-header-wrapper">
-                <div class="page-header-item page-header-content no-grow">
-                    <h2 class="ui item header">@title@</h2>
-                </div>
-                <div class="page-header-item show-code-toggle">
-                    <a href="/@versionsuff@#pub:@id@" class="ui tiny button">Edit Code</a>
-                </div>
                 <div class="page-header-item no-grow">
                     <a href="https://makecode.com/" title="Go to Microsoft MakeCode"
                         aria-label="Microsoft MakeCode Logo" role="menuitem" target="blank" rel="noopener"
                         class="ui item logo organization">
-                        <img class="ui logo portrait hide" src="./static/Microsoft-logo_rgb_c-gray.png"
-                            alt="Microsoft MakeCode Logo">
-                        <img class="ui mini image portrait only" src="./static/Microsoft-logo_rgb_c-gray-square.png"
+                        <img class="ui logo" src="./static/Microsoft-logo_rgb_c-gray.png"
                             alt="Microsoft MakeCode Logo">
                     </a>
+                    <div class="page-header-product">MakeCode</div>
+                </div>
+                <div class="page-header-item page-header-spacer"></div>
+                <div class="page-header-item page-header-content no-grow">
+                    <h2 class="ui item header">@title@</h2>
+                    <a href="/@versionsuff@#pub:@id@" class="ui tiny button">Edit Code</a>
                 </div>
             </div>
         </div>
@@ -122,6 +122,45 @@
                             .modal("show");
                     })
                 })
+
+                var shareLinkIsApproved = false;
+
+                window.pxtTargetConfigPromise
+                    .then(function(targetConfig) {
+                        var approvedShareLinks = targetConfig && targetConfig.shareLinks && targetConfig.shareLinks.approved;
+                        if (approvedShareLinks && approvedShareLinks.indexOf("@id@") >= 0) {
+                            // This share link has been allow listed; remove cookie banner and allow sending of tick events
+                            shareLinkIsApproved = true;
+                            var abuseMessage = document.querySelector("#abuse-message");
+                            if (abuseMessage)
+                                abuseMessage.remove();
+
+                            window.pxtTickEvent(
+                                'approved.shareurl.loaded',
+                                { shareurl: "@id@" },
+                            );
+                        }
+                    });
+
+                window.addEventListener('message', function (ev) {
+                    if (!shareLinkIsApproved)
+                        return;
+                    var d = ev.data;
+                    if (d.type == "messagepacket" && d.channel == "tick-event" && d.data) {
+                        var unpackedData = "";
+                        for (var i = 0; i < d.data.length; ++i)
+                            unpackedData += String.fromCharCode(d.data[i]);
+
+                        try {
+                            const data = JSON.parse(unpackedData);
+                            data["shareurl"] = "@id@";
+                            window.pxtTickEvent(
+                                'simulator.user.tick',
+                                data,
+                            );
+                        } catch (e) { /** failed to parse tick from game **/ }
+                    }
+                });
             </script>
         </div>
         <div class="script-bookend">
@@ -135,7 +174,7 @@
                         Of Use</a>
                     <a class="ui item " href="https://makecode.com/trademarks " target="_blank "
                         rel="noopener ">Trademarks</a>
-                    <div class="ui item ">© 2020 Microsoft</div>
+                    <div class="ui item ">© 2022 Microsoft</div>
                 </div>
             </div>
         </div>

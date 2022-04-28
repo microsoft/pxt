@@ -211,9 +211,9 @@ namespace pxsim.visuals {
         let removeAll = <T>(arr: T[], e: T): number => {
             let res = 0;
             let idx: number;
-            /* tslint:disable:no-conditional-assignment */
+            /* eslint-disable no-cond-assign */
             while (0 <= (idx = arr.indexOf(e))) {
-                /* tslint:enable:no-conditional-assignment */
+                /* eslint-enable no-cond-assign */
                 arr.splice(idx, 1);
                 res += 1;
             }

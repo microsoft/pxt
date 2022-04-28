@@ -26,7 +26,7 @@ const lessons: Lesson[] = [
         "title": "Beginner micro:bit",
         "description": "Learn the basics of physical computing with the micro:bit!  Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
         "url": "https://aka.ms/makecodemicrobitstream",
-        "img": "/static/online-learning/img/microbit-stream.jpg",
+        "img": "/static/online-learning/img/microbit-stream.png",
         "time": 9,
         "startDay": 25,
         "days": [Day.All]
@@ -35,7 +35,7 @@ const lessons: Lesson[] = [
         "title": "Beginner Minecraft",
         "description": "If you have access to Minecraft: Education Edition at home, learn how to programmatically spawn mobs, control robots, and build structures! Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
         "url": "https://aka.ms/makecodeminecraftstream",
-        "img": "/static/online-learning/img/minecraft-stream.jpg",
+        "img": "/static/online-learning/img/minecraft-stream.png",
         "time": 10,
         "startDay": 25,
         "days": [Day.All]
@@ -50,10 +50,19 @@ const lessons: Lesson[] = [
         "days": [Day.All]
     },
     {
+        "title": "Digital All-Stars",
+        "description": "Join your favorite all-star athletes as they use MakeCode Arcade to code games with you at home!",
+        "url": "https://aka.ms/makecodeDASstream",
+        "img": "/static/online-learning/img/all-stars.png",
+        "time": 12,
+        "startDay": 2,
+        "days": [Day.Thursday]
+    },
+    {
         "title": "Advanced Arcade",
         "description": "Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey",
         "url": "https://aka.ms/makecodearcadestream",
-        "img": "/static/online-learning/img/arcade-stream.jpg",
+        "img": "/static/online-learning/img/arcade-stream.png",
         "time": 13,
         "startDay": 25,
         "days": [Day.All]
@@ -68,19 +77,28 @@ const lessons: Lesson[] = [
         "days": [Day.Friday]
     },
     {
-        "title": "Arcade with Steve Isaacs",
-        "description": "Learn MakeCode Arcade game development with Mr. Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.",
-        "url": "https://www.twitch.tv/mr_isaacs/",
-        "img": "/static/online-learning/img/arcade-2-stream.png",
-        "time": 6,
-        "startDay": 30,
-        "days": [Day.Monday]
+        "title": "MakeCode Live with Adafruit's John Park",
+        "description": "Join Adafruit’s John Park as he builds a MakeCode project each week covering fundamental concepts and techniques using real-world projects in his studio.",
+        "url": "https://aka.ms/makecodejpstream",
+        "img": "/static/online-learning/img/john-park-live.png",
+        "time": 15,
+        "startDay": 21,
+        "days": [Day.Tuesday]
+    },
+    {
+        "title": "MAKE'ayla with Mikayla Buford",
+        "description": "Join Mikayla Buford as she builds MakeCode project each week!",
+        "url": "https://www.youtube.com/playlist?list=PLMMBk9hE-Seoq3GYYmHH93FE_-yhw1C1P",
+        "img": "/static/online-learning/img/maykala.png",
+        "time": 12,
+        "startDay": 1,
+        "days": [Day.Friday]
     },
     {
         "title": "DreamSpace HomeSpace",
         "description": "Join Microsoft Ireland in their HomeSpace tutorial series on your favourite MakeCode platforms: micro:bit, Arcade and Minecraft.",
         "url": "https://aka.ms/dshomespace",
-        "img": "/static/online-learning/img/dreamspace-homespace.jpg",
+        "img": "/static/online-learning/img/dreamspace-homespace.png",
         "time": 6,
         "startDay": 30,
         "days": [Day.Monday, Day.Wednesday, Day.Friday]

@@ -1,0 +1,352 @@
+.user-profile {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+
+    --header-text-color: #000000;
+    --profile-portrait-border-color: #ffffff;
+    --profile-username-color: #999999;
+    --background-color: #fef3e0;
+    --avatar-initials-background-color: #028B9B;
+    --avatar-initials-text-color: #ffffff;
+    --user-pane-border-color: #e4dbca;
+    --notification-background-color: #ffffff;
+    --notification-icon-background-color: #ffffff;
+    --notification-icon-color: #000000;
+    --badge-list-subtitle-color: #aba9a5;
+    --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+}
+
+.profile-user-pane {
+    display: flex;
+    flex-direction: column;
+    width: 25%;
+    padding: 1rem;
+    border-right: solid 1px var(--user-pane-border-color);
+    height: 100%;
+    min-width: 20rem;
+}
+
+.profile-portrait {
+    border-radius: 50%;
+    overflow: hidden;
+    height: 12rem;
+    width: 12rem;
+    position: relative;
+    border: solid var(--profile-portrait-border-color) 2px;
+    align-self: center;
+    margin-bottom: 1.5rem;
+}
+
+.profile-portrait img {
+    width: 110%;
+    height: 110%;
+    position: absolute;
+    left: -5%;
+    top: -5%;
+}
+
+.profile-user-details {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.profile-display-name {
+    font-size: 1.5rem;
+    color: var(--header-text-color);
+    text-transform: uppercase;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+}
+
+.profile-username {
+    font-size: 1rem;
+    color: var(--profile-username-color);
+}
+
+.profile-spacer {
+    flex-grow: 1;
+}
+
+.profile-email {
+    display: flex;
+    padding-bottom: 1rem;
+}
+
+.profile-email .checkbox {
+    cursor: pointer;
+    padding-right: 1rem;
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.profile-actions a {
+    flex-grow: 1;
+    font-size: 14px;
+}
+
+.profile-actions .ui.button  {
+    width: 50%;
+}
+
+.profile-actions .ui.button i.icon  {
+    margin-right: 1.5rem !important;
+}
+
+.profile-notification {
+    width: 100%;
+    border: solid 1px black;
+    position: relative;
+    border-radius: 1rem;
+    padding: 1rem;
+    padding-top: 2rem;
+    background: var(--notification-background-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-notification .profile-notification-title {
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.profile-notification .profile-notification-message {
+    margin-bottom: 1rem;
+}
+
+
+.profile-notification .profile-notification-icon {
+    width: 3.25rem;
+    height: 3.25rem;
+    border: solid 1px black;
+    border-radius: 50%;
+    position: absolute;
+    top: -1.625rem;
+    left: calc(50% - 1.625rem);
+    color: var(--notification-icon-color);
+    background: var(--notification-icon-background-color);
+}
+
+.profile-notification .profile-notification-icon     i.circular.icon {
+    box-shadow: none;
+}
+
+.profile-badge-subtitle {
+    font-style: italic;
+    color: var(--badge-list-subtitle-color);
+}
+
+.profile-badge-list {
+    flex-grow: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+
+.profile-badges-scroller {
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.profile-badges, .profile-badges-background {
+    background-repeat: repeat;
+    min-height: 100%;
+    background-size: 20%;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 12rem;
+    align-items: center;
+}
+
+.profile-badges-background {
+    z-index: -1;
+}
+
+.profile-badges .profile-badge, .profile-badges-background .profile-badge {
+    position: relative;
+    aspect-ratio: 1;
+    background-color: var(--background-color);
+}
+
+
+.profile-badges .profile-badge img, .profile-badges-background .profile-badge img {
+    height: 100%;
+    width: 100%;
+    display: inline;
+    position: absolute;
+    object-fit: contain;
+}
+
+
+.profile-badge.disabled i.ui.icon {
+    line-height: 1;
+    vertical-align: middle;
+    font-size: 4em;
+    width: 100%;
+    z-index: 1;
+    position: absolute;
+}
+
+.placeholder-badge {
+    background-image: url("data:image/svg+xml, %3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Ccircle cx='5' cy='5' fill='black' r='3' opacity='0.1' /%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.3;
+    aspect-ratio: 1;
+}
+
+.profile-badges-background-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.profile-badge-title {
+    text-transform: uppercase;
+    font-weight: 900;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    color: var(--header-text-color);
+}
+
+.profile-badge-header {
+    margin-left: 1rem;
+    margin-bottom: 1rem;
+}
+
+.profile-badge-info-item {
+    margin-top: 1rem;
+    display: flex;
+}
+
+.profile-badge-info-header {
+    text-transform: uppercase;
+    font-weight: 900;
+    width: 20%;
+    color: var(--header-text-color);
+}
+
+.profile-badge-info-image .profile-badge {
+    text-align: center;
+}
+
+.profile-badge-info-image .profile-badge img {
+    display: inline;
+    height: 15rem;
+    object-fit: contain;
+}
+
+.profile-badge {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+    position: relative;
+    height: 100%;
+}
+
+.profile-badge.clickable {
+    cursor: pointer;
+}
+
+.profile-badge-and-title {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    height: 100%;
+    background-color: var(--background-color);
+    z-index: 2;
+    overflow: hidden;
+}
+
+.profile-badge-and-title .profile-badge {
+    margin-bottom: 1rem;
+    flex-shrink: 1000;
+}
+
+.profile-badge-name {
+    font-size: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    margin-right: 0;
+    text-align: center;
+    color: var(--header-text-color);
+    overflow: hidden;
+}
+
+.profile-initials-portrait {
+    font-size: 8rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--avatar-initials-text-color);
+    background-color: var(--avatar-initials-background-color);
+}
+
+.ui.icon.button.sign-out {
+    font-family: var(--body-font-family);
+}
+
+.common-checkbox.loading {
+    input {
+        opacity: 0;
+    }
+
+    .common-spinner {
+        display: inline-block;
+        position: absolute;
+        left: 0px;
+    }
+}
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast {
+    .profile-badges .profile-badge,
+    .profile-badges-background .profile-badge,
+    .profile-badge-and-title,
+    .profile-initials-portrait,
+    .profile-badge-subtitle,
+    .profile-username {
+        color: @highContrastTextColor;
+        background-color: @highContrastBackgroundColor;
+    }
+
+    .profile-badge.clickable:hover {
+        outline: @highContrastFocusOutline;
+    }
+}
+
+@media @computerAndBelow {
+    .profile-badges, .profile-badges-background {
+        background-size: 25%;
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: 12rem;
+    }
+}
+
+@media @tabletAndBelow {
+    .profile-badges, .profile-badges-background {
+        background-size: 33%;
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: 12rem;
+    }
+}

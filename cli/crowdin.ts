@@ -79,9 +79,7 @@ export function internalUploadTargetTranslationsAsync(uploadApiStrings: boolean,
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     pxt.log(`uploading from ${srcDir} to ${crowdinDir} under project ${prj}/${branch || ""}`)
 
-    let ignoredDirectories: Map<boolean> = {};
-    nodeutil.allFiles(srcDir).filter(d => nodeutil.fileExistsSync(path.join(path.dirname(d), ".crowdinignore"))).forEach(f => ignoredDirectories[path.dirname(f)] = true);
-    const ignoredDirectoriesList = Object.keys(ignoredDirectories);
+    const ignoredDirectoriesList = getIgnoredDirectories(srcDir);
     const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f)).reverse();
     const knownFolders: Map<boolean> = {};
     const ensureFolderAsync = (crowdd: string) => {
@@ -98,7 +96,7 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
         const crowdd = path.dirname(crowdf);
         // check if file should be ignored
         if (ignoredDirectoriesList.filter(d => path.dirname(f).indexOf(d) == 0).length > 0) {
-            pxt.log(`skpping ${f} because of .crowdinignore file`)
+            pxt.log(`skipping ${f} because of .crowdinignore file`)
             return nextFileAsync(todo.pop());
         }
 
@@ -112,6 +110,21 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
         .then(() => nextFileAsync(todo.pop()));
 }
 
+function getIgnoredDirectories(srcDir: string) {
+    const ignoredDirectories: Map<boolean> = {};
+    ignoredDirectories[srcDir] = nodeutil.fileExistsSync(path.join(srcDir, ".crowdinignore"));
+    nodeutil.allFiles(srcDir)
+        .forEach(d => {
+            let p = path.dirname(d)
+            // walk back up to srcDir or a path that has been checked
+            while (ignoredDirectories[p] === undefined) {
+                ignoredDirectories[p] = nodeutil.fileExistsSync(path.join(p, ".crowdinignore"));
+                p = path.dirname(p);
+            }
+        });
+    return Object.keys(ignoredDirectories).filter(d => ignoredDirectories[d]);
+}
+
 function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     const todo: string[] = [];
     pxt.appTarget.bundleddirs.forEach(dir => {
@@ -119,7 +132,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
                 .filter(f => /strings\.json$/i.test(f))
-                .forEach(f => todo.push(path.join(locdir, f)))
+                .forEach(f => todo.push(path.join(locdir, f)));
     });
 
     pxt.log(`uploading bundled translations to Crowdin (${todo.length} files)`);
@@ -135,95 +148,71 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
     return nextFileAsync();
 }
 
-export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
-    const name = (parsed && parsed.args[0]) || "";
-    const crowdinDir = pxt.appTarget.id;
-    return crowdinCredentialsAsync()
-        .then(cred => {
-            if (!cred) return Promise.resolve();
+export async function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
+    const name = parsed?.args[0];
+    const cred = await crowdinCredentialsAsync();
 
-            return downloadFilesAsync(cred, ["sim-strings.json"], "sim")
-                .then(() => downloadFilesAsync(cred, ["target-strings.json"], "target"))
-                .then(() => {
-                    const files: string[] = [];
-                    pxt.appTarget.bundleddirs
-                        .filter(dir => !name || dir == "libs/" + name)
-                        .forEach(dir => {
-                            const locdir = path.join(dir, "_locales");
-                            if (fs.existsSync(locdir))
-                                fs.readdirSync(locdir)
-                                    .filter(f => /\.json$/i.test(f))
-                                    .forEach(f => files.push(path.join(locdir, f)))
-                        });
-                    return downloadFilesAsync(cred, files, "bundled");
-                });
+    if (!cred)
+        return;
+
+    await buildAllTranslationsAsync(async (fileName: string) => {
+        pxt.log(`downloading ${fileName}`);
+        return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, fileName, { translatedOnly: true, validatedOnly: true });
+    }, name);
+}
+
+export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (fileName: string) => Promise<Map<Map<string>>>, singleDir?: string) {
+    await buildTranslationFilesAsync(["sim-strings.json"], "sim-strings.json");
+    await buildTranslationFilesAsync(["target-strings.json"], "target-strings.json");
+    await buildTranslationFilesAsync(["strings.json"], "strings.json", true);
+    await buildTranslationFilesAsync(["skillmap-strings.json"], "skillmap-strings.json", true);
+    await buildTranslationFilesAsync(["webstrings.json"], "webstrings.json", true);
+
+    const files: string[] = [];
+    pxt.appTarget.bundleddirs
+        .filter(dir => !singleDir || dir == "libs/" + singleDir)
+        .forEach(dir => {
+            const locdir = path.join(dir, "_locales");
+            if (fs.existsSync(locdir))
+                fs.readdirSync(locdir)
+                    .filter(f => /\.json$/i.test(f))
+                    .forEach(f => files.push(path.join(locdir, f)))
         });
 
-    function downloadFilesAsync(cred: CrowdinCredentials, todo: string[], outputName: string) {
+    await buildTranslationFilesAsync(files, "bundled-strings.json");
+
+    async function buildTranslationFilesAsync(files: string[], outputName: string, topLevel?: boolean) {
+        const crowdinDir = pxt.appTarget.id;
         const locs: pxt.Map<pxt.Map<string>> = {};
-        const nextFileAsync = (): Promise<void> => {
-            const f = todo.pop();
-            if (!f) {
-                return Promise.resolve();
-            }
-
-            const errors: pxt.Map<number> = {};
-            const fn = path.basename(f);
-            const crowdf = path.join(crowdinDir, fn);
-            const locdir = path.dirname(f);
+        for (const filePath of files) {
+            const fn = path.basename(filePath);
+            const crowdf = topLevel ? fn : path.join(crowdinDir, fn);
+            const locdir = path.dirname(filePath);
             const projectdir = path.dirname(locdir);
-            pxt.log(`downloading ${crowdf}`);
-            pxt.debug(`projectdir: ${projectdir}`)
-            return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, crowdf, { translatedOnly: true, validatedOnly: true })
-                .then(data => {
-                    Object.keys(data)
-                        .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
-                        .forEach(lang => {
-                            const dataLang = data[lang];
-                            const langTranslations = stringifyTranslations(dataLang);
-                            if (!langTranslations) return;
+            pxt.debug(`projectdir: ${projectdir}`);
+            const data = await langToStringsHandlerAsync(crowdf);
 
-                            // validate translations
-                            if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
-                                // block definitions
-                                Object.keys(dataLang).forEach(id => {
-                                    const tr = dataLang[id];
-                                    pxt.blocks.normalizeBlock(tr, err => {
-                                        const errid = `${fn}.${lang}`;
-                                        errors[`${fn}.${lang}`] = 1
-                                        pxt.log(`error ${errid}: ${err}`)
-                                    });
-                                });
-                            }
+            for (const lang of Object.keys(data)) {
+                const dataLang = data[lang];
+                if (!dataLang || !stringifyTranslations(dataLang))
+                    continue;
 
-                            // merge translations
-                            let strings = locs[lang];
-                            if (!strings) strings = locs[lang] = {};
-                            Object.keys(dataLang)
-                                .filter(k => !!dataLang[k] && !strings[k])
-                                .forEach(k => strings[k] = dataLang[k]);
-                        })
-
-                    const errorIds = Object.keys(errors);
-                    if (errorIds.length) {
-                        pxt.log(`${errorIds.length} errors`);
-                        errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
-                        pxt.reportError("loc.errors", "invalid translation", errors);
-                    }
-
-                    return nextFileAsync()
-                });
+                // merge translations
+                let strings = locs[lang];
+                if (!strings) strings = locs[lang] = {};
+                Object.keys(dataLang)
+                    .filter(k => !!dataLang[k] && !strings[k])
+                    .forEach(k => strings[k] = dataLang[k]);
+            }
         }
-        return nextFileAsync()
-            .then(() => {
-                Object.keys(locs).forEach(lang => {
-                    const tf = path.join(`sim/public/locales/${lang}/${outputName}-strings.json`);
-                    pxt.log(`writing ${tf}`);
-                    const dataLang = locs[lang];
-                    const langTranslations = stringifyTranslations(dataLang);
-                    nodeutil.writeFileSync(tf, langTranslations, { encoding: "utf8" });
-                })
-            })
+
+        for (const lang of Object.keys(locs)) {
+            const tf = path.join(`sim/public/locales/${lang}/${outputName}`);
+            pxt.log(`writing ${tf}`);
+            const dataLang = locs[lang];
+            const langTranslations = stringifyTranslations(dataLang);
+            nodeutil.writeFileSync(tf, langTranslations, { encoding: "utf8" });
+        }
     }
 }
 

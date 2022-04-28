@@ -1,15 +1,40 @@
 <!doctype html>
 <html lang="en"  data-manifest="" data-framework="typescript">
 
-<head> 
+<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
     <title>MakeCode Asset Editor</title>
+    <style>
+        #asset-editor-field-div {
+            height: 100%;
+        }
+        .image-editor-wrapper {
+            border-radius: 0;
+        }
+        .gallery-editor-header, .image-editor-pivot-outer {
+            display: none;
+        }
+        .image-editor-confirm {
+            background-color: darkgreen;
+        }
+    </style>
 </head>
 
 <body>
+    <script>
+        // This line gets patched up by the cloud
+        var pxtConfig = null;
+    </script>
+    <script type="text/javascript" src="/blb/target.js"></script>
+    <!-- <script type="text/javascript" src="https://pxt.azureedge.net/blob/ec765d3ba50a09c8c8819ec80390b6ffa72e945a/target.js"></script> -->
     <script type="text/javascript" src="/blb/pxtapp.js"></script>
+    <script>
+        pxt.setAppTarget(pxtTargetBundle);
+        // TO DO: get palette info from message from vs code extension
+        pxt.appTarget.runtime.palette = ["#000000","#ffffff","#ff2121","#ff93c4","#ff8135","#fff609","#249ca3","#78dc52","#003fad","#87f2ff","#8e2ec4","#a4839f","#5c406c","#e5cdc4","#91463d","#000000"];
+    </script>
     <script type="text/javascript" src="/blb/pxtasseteditor.js"></script>
     <div id="asset-editor-field-div">
     </div>

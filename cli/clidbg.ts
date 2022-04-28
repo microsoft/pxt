@@ -30,7 +30,7 @@ export function startAsync(compileRes: pxtc.CompileResult) {
                 let lines = fs.readFileSync(brkMatch.fileName, "utf8").split(/\n/)
 
                 console.log(">>>", lines.slice(brkMatch.line, brkMatch.endLine + 1).join(" ;; "))
-                Promise.delay(500)
+                U.delay(500)
                     .then(() => D.resumeAsync(false))
             }
 

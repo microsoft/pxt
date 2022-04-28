@@ -22,6 +22,7 @@
 @lightGrey: #d9d9d9;
 
 @greenTextColor: darken(@green, 5);
+@yellowTextColor: #8e6505;
 
 @lightTextColor              : darken(@secondaryColor, 15%);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
@@ -38,8 +39,12 @@
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 @docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
+@segoeUIFont: "Segoe UI", Tahoma, Geneva, Verdana;
+
 @emSize      : 14px;
 @fontSize    : 12pt;
+
+@smallFontSize    : 0.875rem;
 
 /*-------------------
    Links
@@ -83,7 +88,7 @@
 --------------------*/
 
 @useCustomScrollbars: false;
-@customScrollbarWidth: 7px;
+@customScrollbarWidth: 10px;
 
 @thumbBackground: rgba(0, 0, 0, 0.25);
 @thumbInvertedBackground: rgba(255, 255, 255, 0.25);
@@ -130,6 +135,10 @@
 @pyIcon: data-uri(@pyIconUrl);
 @jsIconUrl: "../docs/static/icons/js.svg";
 @jsIcon: data-uri(@jsIconUrl);
+@immersiveReaderUrl: "../docs/static/icons/immersive-reader.svg";
+@immersiveReaderIcon: data-uri(@immersiveReaderUrl);
+@immersiveReaderLightUrl: "../docs/static/icons/immersive-reader-light.svg";
+@immersiveReaderLightIcon: data-uri(@immersiveReaderLightUrl);
 
 @logoFilter: invert(23%) sepia(91%) saturate(1957%) hue-rotate(290deg) brightness(83%) contrast(94%);
 
@@ -146,6 +155,7 @@
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
 @thinMenuHeight: 3rem;
+@tutorialEmbedMenuHeight: 2.25rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 @editorToggleColor: white;
@@ -167,8 +177,10 @@
 @simulatorBackground: #fff;
 @editorToolsBackground: @simulatorBackground;
 @blocklySvgColor: #fff;
+@sidebarTutorialColor: @lightGrey;
 
 @homeScreenBackground: #ecf0f1;
+@cloudCardBackground: #58AFBA;
 
 /*-------------------
    Full screen
@@ -212,6 +224,12 @@
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: @blocklyFont;
 @serialConsoleBackground: @simulatorBackground;
+
+/*-------------------
+   Filelist
+--------------------*/
+@filelistBackgroundColor: @simulatorBackground;
+@filelistHeaderBackground:  rgba(0,0,0,0.05);
 
 /*-------------------
    Github Diff editor
@@ -285,7 +303,7 @@
 @homeCardBorderSize: 5px;
 @homeCardBorderColor: #e9eef2;
 @homeCardHoverBorderColor: white;
-@homeCardFocusBorderColor: yellow;
+@homeCardFocusBorderColor: @primaryColor;
 @homeCardColor: @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
@@ -305,7 +323,8 @@
 @homeDetailCardActionBackground: @homeScreenBackground;
 @homeDetailCardActionText: white;
 @homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
-
+@homeHeaderBorderSize: 3px;
+@homeHeaderSelectedBorderColor: white;
 /*-------------------
    Tutorial
 --------------------*/
@@ -358,6 +377,31 @@
 @errorListInnerHeight: (@errorListHeight - @errorListHeaderHeight);
 @errorListMessageHoverColor: rgba(0, 0, 0, 0.1);
 @errorListBorderColor: #e5e5e5;
-@errorListOdd: @homeScreenBackground;
-@errorListEven: darken(@errorListOdd, 3%);
-@errorListDebugSuggestionColor:rgb(52, 84, 209); // TODO: maybe change to display color based on editor
+@errorListEven: rgba(0, 0, 0, 0.03);
+@errorListDebugSuggestionColor: rgb(52, 84, 209); // TODO: maybe change to display color based on editor
+@errorListInvertedEven: rgba(255, 255, 255, 0.03);
+@errorListInvertedTextColor: white;
+@errorListInvertedMessageHoverColor: rgba(255, 255, 255, 0.1);
+
+/*-------------------
+   Asset Editor
+-------------------*/
+@assetSidebarBorder: #c6c6c6;
+@assetSidebarButton: #f8f8f8;
+@assetSidebarButtonHover: #dedede;
+@assetTopbarBorder: #c6c6c6;
+@assetPreviewBackground: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10px' height='10px'%3E%3Crect x='0' y='0' width='10px' height='10px' fill='white'%3E%3C/rect%3E%3Crect x='0' y='0' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3Crect x='5' y='5' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3C/svg%3E");
+@assetUnselected: #e3ddd0;
+@assetTypeButton: @teal;
+
+/*---------------------------
+   Tutorial Code Validation
+----------------------------*/
+@tutorialCodeValidationCorrectBackground: @green;
+@tutorialCodeValidationCorrectTextColor: @white;
+
+/*---------------------------
+   Extensions
+----------------------------*/
+@extensionTagBackgroundColor: #AAAAAA;
+@extensionTagColor: #444444;

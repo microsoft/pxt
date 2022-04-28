@@ -1,7 +1,7 @@
 namespace pxt.template {
     export const TS_CONFIG = `{
     "compilerOptions": {
-        "target": "es5",
+        "target": "ES5",
         "noImplicitAny": true,
         "outDir": "built",
         "rootDir": "."
@@ -121,7 +121,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [8.x]
+        node-version: [14.x]
 
     steps:
       - uses: actions/checkout@v1
@@ -139,6 +139,44 @@ jobs:
           pxt build --cloud
         env:
           CI: true
+`,
+            ".github/workflows/cfg-check.yml": `name: Check pxt.json
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'main'
+
+jobs:
+  check-cfg:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js $\{{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: $\{{ matrix.node-version }}
+      - name: npm install
+        run: |
+          npm install -g pxt
+          pxt target @TARGET@
+      - name: Checkout current state
+        run: |
+          git checkout -- .
+          git clean -fd
+      - name: Fix files listed in config if necessary
+        run: pxt checkpkgcfg
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        continue-on-error: true
+        with:
+          title: 'Removing missing files from pxt.json'
+          commit-message: 'Removing missing files from pxt.json'
+          delete-branch: true
 `,
             ".vscode/tasks.json":
                 `

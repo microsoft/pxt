@@ -19,7 +19,7 @@ export class HintTooltip extends data.Component<HintTooltipProps, HintTooltipSta
         super(props);
     }
 
-    componentWillReceiveProps(nextProps: HintTooltipProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: HintTooltipProps) {
         if (nextProps.pokeUser != this.state.show) {
             this.setState({ show: nextProps.pokeUser });
         }
@@ -40,6 +40,16 @@ export class HintManager {
     private defaultDuration: number = 10000;
     private defaultDisplayCount: number = 3;
     private hints: { [key: string]: any } = {};
+    private seenHints: { [key: number]: boolean} = {};
+
+    public viewedHint(step: number) {
+        // Mark this hint as seen, don't wiggle the hint button
+        this.seenHints[step] = true;
+    }
+
+    public clearViewedHints() {
+        this.seenHints = {};
+    }
 
     public addHint(id: string, callback: any, duration?: number) {
         this.hints[id] = pxt.Util.debounce(() => {
@@ -50,8 +60,9 @@ export class HintManager {
 
     // starts a timer, overwriting current timer
     // TODO: if/when we add more hints, should discuss whether this count is across all hints or per-hint
-    public pokeUserActivity(id: string, displayCount?: number) {
-        if (displayCount == undefined || displayCount < this.defaultDisplayCount) {
+    public pokeUserActivity(id: string, step: number, displayCount?: number) {
+        if ((displayCount == undefined || displayCount < this.defaultDisplayCount) &&
+             !this.seenHints[step]) {
             this.stopPokeUserActivity();
             this.timer = this.hints[id]();
         }

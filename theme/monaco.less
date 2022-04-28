@@ -8,6 +8,26 @@
 @import (reference) "semantic.less";
 
 /*******************************
+    Windows App Deprecation
+*******************************/
+#winAppError {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    #winAppErrorMsg {
+        width: 30%;
+        margin-top: 1rem;
+    }
+
+    a {
+        font-weight: 700;
+    }
+}
+
+/*******************************
         Monaco Area Layout
 *******************************/
 .monacoEditorArea {
@@ -93,6 +113,36 @@
 // Hover elements
 .monaco-editor-hover {
     z-index: @menuBarZIndex+1 !important;
+}
+
+/*
+ * Monaco drops this in the bottom right by default,
+ * but we end up using that position for simulator / toolbar depending on view.
+ */
+.monaco-editor .iPadShowKeyboard {
+    top: 0 !important;
+}
+
+@keyframes bobbing {
+    0% {
+        transform: translateY(0px);
+    }
+
+    25% {
+        transform: translateY(3px);
+    }
+
+    75% {
+        transform: translateY(-3px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.pxt-monaco-glyph-highlight {
+    animation: bobbing 1s linear infinite;
 }
 
 

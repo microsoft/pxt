@@ -3,6 +3,7 @@ import * as sui from "./sui";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
 import * as workspace from "./workspace";
+import { fireClickOnEnter } from "./util";
 
 interface GithubButtonProps extends pxt.editor.ISettingsProps {
     className?: string;
@@ -27,7 +28,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
 
     private createRepository(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.button.create", undefined, { interactiveConsent: true });
-        this.props.parent.createGitHubRepositoryAsync().done();
+        this.props.parent.createGitHubRepositoryAsync();
     }
 
     private handleClick(e: React.MouseEvent<HTMLElement>) {
@@ -78,7 +79,10 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
 
         return <div key="githubeditorbtn" role="button" className={`${defaultCls}
             ${this.props.className || ""}`}
-            title={title} onClick={this.handleClick}>
+            title={title}
+            onClick={this.handleClick} onKeyDown={fireClickOnEnter}
+            tabIndex={0}
+        >
             <i className="github icon" />
             <span className="ui mobile hide">{displayName}</span>
             <i className={`ui long ${

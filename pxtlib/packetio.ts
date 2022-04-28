@@ -11,15 +11,21 @@ namespace pxt.packetio {
         familyID: number;
 
         onSerial: (buf: Uint8Array, isStderr: boolean) => void;
-
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
         // flash the device, does **not** reconnect
         reflashAsync(resp: pxtc.CompileResult): Promise<void>;
+
+        onCustomEvent: (type: string, payload: Uint8Array) => void;
+        sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void>;
+        // returns a list of part ids that are not supported by the connected hardware. currently
+        // only used by pxt-microbit to warn users about v2 blocks on v1 hardware
+        unsupportedParts?(): string[];
     }
 
     export interface PacketIO {
         sendPacketAsync(pkt: Uint8Array): Promise<void>;
+        recvPacketAsync?: () => Promise<Uint8Array>;
         onDeviceConnectionChanged: (connect: boolean) => void;
         onConnectionChanged: () => void;
         onData: (v: Uint8Array) => void;
@@ -48,6 +54,7 @@ namespace pxt.packetio {
     let initPromise: Promise<PacketIOWrapper>;
     let onConnectionChangedHandler: () => void = () => { };
     let onSerialHandler: (buf: Uint8Array, isStderr: boolean) => void;
+    let onCustomEventHandler: (type: string, buf: Uint8Array) => void;
 
     /**
      * A DAP wrapper is active
@@ -68,7 +75,11 @@ namespace pxt.packetio {
     }
 
     export function icon() {
-        return !!wrapper && (wrapper.icon || "usb");
+        return !!wrapper && (wrapper.icon || pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb");
+    }
+
+    export function unsupportedParts() {
+        return wrapper?.unsupportedParts ? wrapper.unsupportedParts() : [];
     }
 
     let disconnectPromise: Promise<void>
@@ -99,14 +110,24 @@ namespace pxt.packetio {
 
     export function configureEvents(
         onConnectionChanged: () => void,
-        onSerial: (buf: Uint8Array, isStderr: boolean) => void
+        onSerial: (buf: Uint8Array, isStderr: boolean) => void,
+        onCustomEvent: (type: string, buf: Uint8Array) => void
     ): void {
         onConnectionChangedHandler = onConnectionChanged;
         onSerialHandler = onSerial;
+        onCustomEventHandler = onCustomEvent;
         if (wrapper) {
             wrapper.io.onConnectionChanged = onConnectionChangedHandler;
             wrapper.onSerial = onSerialHandler;
+            wrapper.onCustomEvent = onCustomEvent;
         }
+    }
+
+    export function sendCustomEventAsync(type: string, payload: Uint8Array) {
+        if (wrapper)
+            return wrapper.sendCustomEventAsync(type, payload)
+        else
+            return Promise.resolve()
     }
 
     function wrapperAsync(): Promise<PacketIOWrapper> {
@@ -125,6 +146,8 @@ namespace pxt.packetio {
                 wrapper = mkPacketIOWrapper(io);
                 if (onSerialHandler)
                     wrapper.onSerial = onSerialHandler;
+                if (onCustomEventHandler)
+                    wrapper.onCustomEvent = onCustomEventHandler;
                 // trigger ui update
                 if (onConnectionChangedHandler)
                     onConnectionChangedHandler();

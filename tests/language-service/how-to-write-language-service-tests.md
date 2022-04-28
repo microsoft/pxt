@@ -1,7 +1,7 @@
 
 # Auto-complete tests
-Add test cases to: **tests/language-service/cases**s.
-Test cases are .ts files (TODO: add support for .py files).
+Add test cases to: **tests/language-service/completion_cases**.
+Test cases are .ts or .py files.
 
 A simple test case looks like:
 ```
@@ -23,3 +23,12 @@ This sample code can be used in test cases.
 Use the "TODO_" filename prefix to add a disabled test case.
 
 Use the "ONLY_" filename prefix to run only that test case (do not commit this change).
+
+# Snippet tests
+Add test cases to: **tests/language-service/snippet_cases**.
+Test cases are .ts or .py files.
+
+A simple test case looks like:
+```
+
+```

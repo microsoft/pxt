@@ -14,7 +14,6 @@ const casesDir = path.join(process.cwd(), "tests", "compile-test", "lang-test0")
 const bareDir = path.relative(process.cwd(), path.join("tests", "compile-test", "bare"));
 
 function initGlobals() {
-    Promise = require("bluebird");
     let g = global as any
     g.pxt = pxt;
     g.ts = ts;
@@ -35,7 +34,7 @@ class CompileHost extends TestHost {
     static langTestText: string;
 
     constructor(public filename: string) {
-        super("compile-test", { "main.ts": "" }, [], true);
+        super("compile-test", { [pxt.MAIN_TS]: "" }, [], true);
         this.basename = path.basename(filename);
         this.fileText = fs.readFileSync(filename, "utf8");
 
@@ -53,11 +52,11 @@ class CompileHost extends TestHost {
                     "description": "",
                     "files": [
                         "lang-test0.ts",
-                        "main.ts",
+                        pxt.MAIN_TS,
                     ]
                 })
             }
-            else if (filename === "main.ts") {
+            else if (filename === pxt.MAIN_TS) {
                 return this.fileText;
             }
             else if (filename === "lang-test0.ts") {

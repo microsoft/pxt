@@ -13,10 +13,12 @@
         "logo": "./static/logo.svg",
         "docsLogo": "./static/logo.svg",
         "portraitLogo": "./static/logo.svg",
+        "organizationLogo": "./static/orglogo.png",
+        "organizationWideLogo": "./static/orglogowide.png",
         "homeUrl": "https://makecode.com/",
         "cardLogo": "./static/logo.svg",
         "appLogo": "./static/logo.svg",
-        "crowdinProject": "kindscript",        
+        "crowdinProject": "makecode",
         "docMenu": [
             {
                 "name": "About",
