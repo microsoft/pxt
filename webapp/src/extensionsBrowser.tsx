@@ -383,6 +383,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         })
 
         if (reposToFetch && reposToFetch.length > 0) {
+            // Set the installed extensions before waiting for the dependencies
+            setInstalledExtensions([...installed])
             const exts = await fetchGithubDataAndAddAsync(reposToFetch)
             setInstalledExtensions([...installed, ...exts])
         }
