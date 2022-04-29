@@ -189,14 +189,14 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         return data.getAsync<pxt.github.GitRepo[]>(`gh-search:${preferredRepos.join("|")}`);
     }
 
-    async function fetchGithubDataAndAddAsync(repos: string[], cb: (exts: ExtensionMeta[]) => void): Promise<void> {
-        // TODO: aznhassan: Change this to not use a callback
+    async function fetchGithubDataAndAddAsync(repos: string[]): Promise<ExtensionMeta[]> {
         const fetched = await fetchGithubDataAsync(repos)
-        if (fetched) {
-            const parsed = fetched.map(r => parseGithubRepo(r))
-            addExtensionsToPool(parsed)
-            cb(parsed);
+        if (!fetched) {
+            return []
         }
+        const parsed = fetched.map(r => parseGithubRepo(r))
+        addExtensionsToPool(parsed)
+        return parsed;
     }
 
     function fetchLocalRepositories(): pxt.workspace.Header[] {
@@ -282,7 +282,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         })
 
         if (toBeFetched.length > 0) {
-            fetchGithubDataAndAddAsync(toBeFetched, (ext) => setExtensionsToShow([...extensionsWeHave, ...ext]))
+            const exts = await fetchGithubDataAndAddAsync(toBeFetched)
+            setExtensionsToShow([...extensionsWeHave, ...exts])
         }
         const loadingCards = []
         for (let i = 0; i < toBeFetched.length; i++) {
@@ -319,7 +320,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         return extensionsMap
     }
 
-    function updatePreferredExts() {
+    async function updatePreferredExts() {
         const bundled = fetchBundled();
         const repos: ExtensionMeta[] = [];
         bundled.forEach(e => {
@@ -345,7 +346,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         }
         setPreferredExts([...repos, ...loadingCards])
 
-        fetchGithubDataAndAddAsync(toBeFetched, (exts) => setPreferredExts([...repos, ...exts]));
+        const exts = await fetchGithubDataAndAddAsync(toBeFetched);
+        setPreferredExts([...repos, ...exts])
     }
 
     /**
@@ -381,17 +383,18 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         })
 
         if (reposToFetch && reposToFetch.length > 0) {
-            fetchGithubDataAndAddAsync(reposToFetch, (ext) => setInstalledExtensions([...installed, ...ext]))
+            const exts = await fetchGithubDataAndAddAsync(reposToFetch)
+            setInstalledExtensions([...installed, ...exts])
         }
-        setInstalledExtensions(installed)
     }
 
-    function handleImportUrl(url: string) {
+    async function handleImportUrl(url: string) {
         setShowImportExtensionDialog(false)
         props.hideExtensions()
         const ext = getExtensionFromFetched(url)
         if (!ext) {
-            fetchGithubDataAndAddAsync([url], (exts) => addExtensionsToPool(exts))
+            const exts = await fetchGithubDataAndAddAsync([url])
+            addExtensionsToPool(exts)
         } else {
             addGithubPackage(ext)
         }
