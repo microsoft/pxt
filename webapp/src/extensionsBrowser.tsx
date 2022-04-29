@@ -182,10 +182,15 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     async function fetchGithubDataAsync(preferredRepos: string[]): Promise<pxt.github.GitRepo[]> {
+        // TODO: aznhassan: Use `extension-search` instead when grabbing categories and preferred
+        // extensions to use a much longer cache time. We don't expected preferred or approved
+        // category extensions to change all that often. The 6 minute expiration of gh-search does
+        // not make sense here.
         return data.getAsync<pxt.github.GitRepo[]>(`gh-search:${preferredRepos.join("|")}`);
     }
 
     async function fetchGithubDataAndAddAsync(repos: string[], cb: (exts: ExtensionMeta[]) => void): Promise<void> {
+        // TODO: aznhassan: Change this to not use a callback
         const fetched = await fetchGithubDataAsync(repos)
         if (fetched) {
             const parsed = fetched.map(r => parseGithubRepo(r))
