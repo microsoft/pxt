@@ -18,5 +18,7 @@ There are 3 free online workshops available this summer for Teachers interested 
 
 These professional development workshops will focus on the AP Computer Science Principles course’s Big Ideas, Learning Objectives and Essential Knowledge skills. Additionally, you will learn how Microsoft MakeCode’s curriculum meets the course’s learning objectives and prepares students for the AP Exam and Create Performance Task. By attending the training and using Microsoft MakeCode’s curriculum, you will be prepared with a syllabus, pacing plan, and lesson plans, PowerPoints, student handouts, and resources for every day of the course.
 
+For educators who would like to receive graduate credits that can be used for their local school clock hour reimbursement, or recertification credits, this option is also available for a fee. Please let the instructor know at the beginning of the course if you want to use this option.
+
 If you can’t make it to one of our online workshops, you can learn more about the curriculum through a [1-hour online course](https://docs.microsoft.com/en-us/learn/modules/teach-ap-computer-science-principles-makecode) or by watching this [30-minute video](https://youtu.be/SZtBqDp18Qo).
 
