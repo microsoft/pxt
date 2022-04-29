@@ -21,4 +21,3 @@ These professional development workshops will focus on the AP Computer Science P
 For educators who would like to receive graduate credits that can be used for their local school clock hour reimbursement, or recertification credits, this option is also available for a fee. Please let the instructor know at the beginning of the course if you want to use this option.
 
 If you can’t make it to one of our online workshops, you can learn more about the curriculum through a [1-hour online course](https://docs.microsoft.com/en-us/learn/modules/teach-ap-computer-science-principles-makecode) or by watching this [30-minute video](https://youtu.be/SZtBqDp18Qo).
-
