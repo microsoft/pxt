@@ -452,8 +452,17 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         </div>
                         <div className="ui cards centered">
                             {extensionsToShow?.map(scr =>
-                                <ExtensionCard scr={scr} onCardClick={installExtension} learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
-                                    name={scr.name} imageUrl={scr.imageUrl} description={scr.description} loading={scr.loading} />)}
+                                <ExtensionCard
+                                    key={'searched:' + scr.name}
+                                    name={scr.name}
+                                    description={scr.description}
+                                    imageUrl={scr.imageUrl}
+                                    scr={scr}
+                                    onCardClick={installExtension}
+                                    learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                    loading={scr.loading}
+                                    role="button"
+                                />)}
                         </div>
                     </div>}
                 {displayMode == ExtensionView.Tags &&
@@ -465,8 +474,17 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         </div>
                         <div className="ui cards centered">
                             {extensionsToShow?.map(scr =>
-                                <ExtensionCard scr={scr} onCardClick={installExtension} learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
-                                    name={scr.name} imageUrl={scr.imageUrl} description={scr.description} loading={scr.loading} />)}
+                                <ExtensionCard
+                                    key={'tagged:' + scr.name}
+                                    name={scr.name}
+                                    description={scr.description}
+                                    imageUrl={scr.imageUrl}
+                                    scr={scr}
+                                    onCardClick={installExtension}
+                                    learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                    loading={scr.loading}
+                                    role="button"
+                                />)}
                         </div>
                     </div>}
                 {displayMode == ExtensionView.Tabbed &&
@@ -477,8 +495,20 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <Button title={lf("In Development")} label={lf("In Development")} onClick={() => { setCurrentTab(TabState.InDevelopment) }} className={currentTab == TabState.InDevelopment ? "selected" : ""} />
                         </div>
                         <div className="ui cards centered">
-                            {currentTab == TabState.Recommended && preferredExts.map(e => <ExtensionCard scr={e} name={e.name} onCardClick={installExtension} imageUrl={e.imageUrl} description={e.description}
-                                learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined} loading={e.loading} />)}
+                            {currentTab == TabState.Recommended && preferredExts.map(e =>
+                                <ExtensionCard
+                                    key={'preferred:' + e.name}
+                                    scr={e}
+                                    name={e.name}
+                                    onCardClick={installExtension}
+                                    imageUrl={e.imageUrl}
+                                    description={e.description}
+                                    learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}
+                                    loading={e.loading}
+                                    role="button"
+                                />
+                            )
+                            }
                             {currentTab == TabState.Installed && installedExtensions.map(e =>
                                 <ExtensionCard
                                     key={'url:' + e.name}
