@@ -453,7 +453,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="ui cards centered">
                             {extensionsToShow?.map(scr =>
                                 <ExtensionCard
-                                    key={'searched:' + scr.name}
+                                    key={scr.loading ? undefined: 'searched:' + scr.name}
                                     name={scr.name}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
@@ -475,7 +475,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="ui cards centered">
                             {extensionsToShow?.map(scr =>
                                 <ExtensionCard
-                                    key={'tagged:' + scr.name}
+                                    key={scr.loading ? undefined: 'tagged:' + scr.name}
                                     name={scr.name}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
@@ -497,7 +497,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="ui cards centered">
                             {currentTab == TabState.Recommended && preferredExts.map(e =>
                                 <ExtensionCard
-                                    key={'preferred:' + e.name}
+                                    key={e.loading ? undefined: 'preferred:' + e.name}
                                     scr={e}
                                     name={e.name}
                                     onCardClick={installExtension}
