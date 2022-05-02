@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [AP CSP with MakeCode Professional Development](/blog/csp/csp-prodev-2022)
     * [MakeCode Arcade Valentine’s Update](/blog/arcade/valentine-update-2022)
     * [Sing 2 Skillmap](/blog/arcade/sing-2-skillmap)
     * [Computer Science Education Week 2021](/blog/csed-week/csed-week-2021)

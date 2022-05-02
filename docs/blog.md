@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [AP Computer Science Principles with MakeCode Professional Development](/blog/csp/csp-prodev-2022)
+
+April 29th, 2022 by [Jaqster](https://github.com/jaqster)
+
+It's hard to believe the academic year is almost over and Summer is on the horizon! Even so, this is a great time to start planning some professional development between those camping and road trips.
+
+**[Continue reading this blog post](/blog/csp/csp-prodev-2022)**
+
 ## [MakeCode Arcade Valentine’s Update](/blog/arcade/valentine-update-2022)
 
 February 9th, 2022 by [Jaqster](https://github.com/jaqster)

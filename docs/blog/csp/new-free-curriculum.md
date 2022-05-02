@@ -2,7 +2,7 @@
 
 **Posted on May 4th, 2021 by [Jaqster](https://github.com/jaqster)**
 
-![AP Computer Science Principles with MS MakeCode](/static/blog/csp/apscp-banner.png)
+![AP Computer Science Principles with MS MakeCode](/static/blog/csp/apcsp-banner.png)
 
 It’s May – the sun’s out, the flowers are blooming, and pollen is in the air here in Seattle! For most educators, many are looking forward to the end of a really crazy academic year. Summer is a great time to relax, recharge, do some professional development and plan for next year.
 
