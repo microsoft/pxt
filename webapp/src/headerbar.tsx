@@ -24,6 +24,10 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
+    toggleCodeBuddy = () => {
+        this.props.parent.toggleCodeBuddy();
+    }
+
     goHome = () => {
         pxt.tickEvent("menu.home", undefined, { interactiveConsent: true });
         if (this.getView() !== "home") this.props.parent.showExitAndSaveDialog();
@@ -215,6 +219,9 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const showHomeButton = (view === "editor" || view === "tutorial-tab") && !targetTheme.lockedEditor && !isController;
         const showShareButton = view === "editor" && header && pxt.appTarget.cloud?.sharing && !isController;
         const showHelpButton = view === "editor" && targetTheme.docMenu?.length;
+        const showCodeBuddyButton = view === "editor" && this.props.parent.editor.getId() === "blocksArea";
+                // WHY IS THIS INVERTED????
+        const codeBuddyExpanded = this.props.parent.state.codeBuddyCollapsed;
 
         // Approximate each tutorial step to be 22 px
         const manyTutorialSteps = view == "tutorial" && (tutorialOptions.tutorialStepInfo.length * 22 > window.innerWidth / 3);
@@ -234,6 +241,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             </div>}
             <div className="right menu">
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
+                {showCodeBuddyButton && <sui.Item className={`icon codebuddy-btn ${(codeBuddyExpanded ? "expanded" : "collapsed")}`} role="menuitem" title={lf("Code Buddy")} ignoreIcon={true} icon="fas fa-robot large" ariaLabel={lf("Code Buddy")} onClick={this.toggleCodeBuddy} />}
                 {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobile hide" : ""}`} role="menuitem" title={lf("Home")} icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
                 {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" title={lf("Publish your game to create a shareable link")} icon="share alternate large" ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
                 {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}

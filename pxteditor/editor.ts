@@ -7,6 +7,7 @@ namespace pxt.editor {
         Running
     }
     export interface IEditor {
+        getId(): string;
         undo(): void;
         redo(): void;
         hasUndo(): boolean;
@@ -52,6 +53,7 @@ namespace pxt.editor {
         showFiles?: boolean;
         sideDocsLoadUrl?: string; // set once to load the side docs frame
         sideDocsCollapsed?: boolean;
+        codeBuddyCollapsed?: boolean;
         projectName?: string;
         suppressPackageWarning?: boolean;
 
@@ -253,6 +255,7 @@ namespace pxt.editor {
         setSideDoc(path: string, blocksEditor?: boolean): void;
         setSideMarkdown(md: string): void;
         setSideDocCollapsed(shouldCollapse?: boolean): void;
+        setCodeBuddyCollapsed(shouldCollapse?: boolean): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
@@ -350,6 +353,8 @@ namespace pxt.editor {
         showLanguagePicker(): void;
         showShareDialog(title?: string): void;
         showAboutDialog(): void;
+
+        toggleCodeBuddy(): void;
 
         showLoginDialog(continuationHash?: string): void;
         showProfileDialog(location?: string): void;

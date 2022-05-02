@@ -72,6 +72,47 @@ pre {
     top: 0 !important;
 }
 
+#codebuddy {
+    position: absolute;
+    top: 10px;
+    height: 90%;
+    z-index: 1000;
+    right: 20px;
+    width: 24rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.04)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
+}
+
+#codebuddy.expanded {
+    display: inherit;
+}
+
+#codebuddy.collapsed {
+    display: none;
+}
+
+.codebuddy-btn {
+    overflow: hidden;
+}
+
+.codebuddy-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.codebuddy-btn:hover i {
+    transform: scale(1.2);
+}
+
+.codebuddy-btn.expanded {
+    background-color: rgba(255, 255, 255, 0.39) !important;
+}
+
+.codebuddy-btn.collapsed {
+    background-color: transparent;
+}
+
 .full-abs {
     position: absolute !important;
     left: 0;

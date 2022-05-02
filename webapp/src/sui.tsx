@@ -13,6 +13,7 @@ export const appElement = document.getElementById('content');
 export interface UiProps {
     icon?: string;
     iconClass?: string;
+    ignoreIcon?: boolean; // If true, don't add "icon" class to the Icon element
     text?: string;
     textClass?: string;
     children?: any;
@@ -36,13 +37,13 @@ export function cx(classes: string[]): string {
     return classes.filter((c) => !!c && c.trim() != '').join(' ');
 }
 
-function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = false): string {
-    return `${cls} ${ignoreIcon ? '' : props.icon && props.text ? 'icon icon-and-text' : props.icon ? 'icon' : ""} ${props.inverted ? 'inverted' : ''} ${props.className || ""}`;
+function genericClassName(cls: string, props: UiProps): string {
+    return `${cls} ${props.ignoreIcon ? '' : props.icon && props.text ? 'icon icon-and-text' : props.icon ? 'icon' : ""} ${props.inverted ? 'inverted' : ''} ${props.className || ""}`;
 }
 
 export function genericContent(props: UiProps) {
     let retVal = [
-        props.icon ? (<Icon key='iconkey' icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')} />) : null,
+        props.icon ? (<Icon key='iconkey' ignoreIcon={props.ignoreIcon} icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')} />) : null,
         props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '')}>{props.text}</span>) : null,
     ]
     if (props.icon && props.rightIcon) retVal = retVal.reverse();
@@ -488,15 +489,15 @@ export interface ItemProps extends UiProps {
 
 export class Item extends data.Component<ItemProps, {}> {
     renderCore() {
-        const {
+        let {
             text,
             title,
             ariaLabel,
-            ariaHidden
+            ariaHidden,
         } = this.props;
 
         return (
-            <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
+            <div className={genericClassName("ui item link", this.props) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
                 aria-label={ariaLabel || title || text}
                 aria-selected={this.props.active}
@@ -520,8 +521,12 @@ export class Item extends data.Component<ItemProps, {}> {
 
 export class ButtonMenuItem extends UIElement<ItemProps, {}> {
     renderCore() {
+        const props = {
+            ignoreIcon: true,
+            ...this.props
+        };
         return (
-            <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
+            <div className={genericClassName("ui item link", props) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
                 title={this.props.title || this.props.text}
                 tabIndex={this.props.tabIndex || 0}
@@ -529,8 +534,8 @@ export class ButtonMenuItem extends UIElement<ItemProps, {}> {
                 data-value={this.props.value}
                 onClick={this.props.onClick}
                 onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
-                <div className={genericClassName("ui button", this.props)}>
-                    {genericContent(this.props)}
+                <div className={genericClassName("ui button", props)}>
+                    {genericContent(props)}
                     {this.props.children}
                 </div>
             </div>);
@@ -874,8 +879,8 @@ export interface IconProps extends UiProps {
 }
 
 export const Icon: React.StatelessComponent<IconProps> = (props: IconProps) => {
-    const { icon, className, onClick, onKeyDown, children, ...rest } = props;
-    return <i className={`icon ${icon} ${className ? className : ''}`}
+    const { icon, className, onClick, onKeyDown, children, ignoreIcon, ...rest } = props;
+    return <i className={`${ignoreIcon ? '' : 'icon'} ${icon} ${className ? className : ''}`}
         onClick={onClick}
         onKeyDown={onKeyDown || fireClickOnEnter}
         aria-hidden={true} role="presentation" {...rest}>

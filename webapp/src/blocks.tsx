@@ -14,6 +14,7 @@ import * as dialogs from "./dialogs";
 import * as blocklyFieldView from "./blocklyFieldView";
 import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
+import { CodeBuddy } from "./components/codeBuddy/codeBuddy";
 
 
 import Util = pxt.Util;
@@ -47,6 +48,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected workspaceSearch: WorkspaceSearch;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
+
+    private codeBuddy: CodeBuddy;
 
     constructor(parent: pxt.editor.IProjectView) {
         super(parent);
@@ -766,6 +769,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 </div>
                 {showErrorList && <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
                     onSizeChange={this.onErrorListResize} />}
+                <CodeBuddy ref={current => this.codeBuddy = current} parent={this.parent} collapsed={this.parent.state.codeBuddyCollapsed} />
             </div>
         )
     }

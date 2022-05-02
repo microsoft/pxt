@@ -1310,6 +1310,15 @@ export class ProjectView
         }
     }
 
+    isCodeBuddyExpanded(): boolean {
+        return this.state.codeBuddyCollapsed;
+    }
+
+    setCodeBuddyCollapsed(shouldCollapse: boolean = true) {
+        const codeBuddyCollapsed = !this.state.codeBuddyCollapsed
+        this.setState({ codeBuddyCollapsed });
+    }
+
     setTutorialInstructionsExpanded(value: boolean): void {
         const tutorialOptions = this.state.tutorialOptions;
         tutorialOptions.tutorialStepExpanded = value;
@@ -3816,6 +3825,10 @@ export class ProjectView
 
     showShareDialog(title?: string) {
         this.shareEditor.show(title);
+    }
+
+    toggleCodeBuddy() {
+        this.setCodeBuddyCollapsed(this.isCodeBuddyExpanded());
     }
 
     showLanguagePicker() {
