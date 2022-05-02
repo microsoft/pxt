@@ -886,15 +886,8 @@ Field editors
     display: none;
 }
 
-.extensions-browser {
-    position: absolute;
-    background-color: @white;
-    width: 100%;
-    min-height: 100%;
-    z-index: 200;
-    font-size: 1.2rem;
-
-    .extensionsHeader {
+.fullscreen.extensions-browser> {
+    .common-modal> .common-modal-header {
         height: 4rem;
         background-color: @blue;
         z-index: 202;
@@ -917,6 +910,15 @@ Field editors
             justify-content: center;
         }
     }
+}
+
+.extensions-browser {
+    position: absolute;
+    background-color: @white;
+    width: 100%;
+    min-height: 100%;
+    z-index: 200;
+    font-size: 1.2rem;
 
     .extensionSearchHeader {
         display: flex;
