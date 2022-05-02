@@ -14,13 +14,13 @@ import { useState, useEffect } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
 import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal";
 // import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
+import { Modal } from "../../react-common/components/controls/Modal";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta;
 type EmptyCard = { name: string, loading?: boolean }
 const emptyCard: EmptyCard = { name: "", loading: true }
 
 interface ExtensionsProps {
-    isVisible: boolean;
     hideExtensions: () => void;
     header: pxt.workspace.Header;
     reloadHeaderAsync: () => Promise<void>;
@@ -41,26 +41,15 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const [currentTab, setCurrentTab] = useState(TabState.Recommended);
     const [showImportExtensionDialog, setShowImportExtensionDialog] = useState(false);
     const [installedExtensions, setInstalledExtensions] = useState(new Array<ExtensionMeta & EmptyCard>())
-    const [lastVisibleState, setLastVisibleState] = useState(props.isVisible)
+    // const [lastVisibleState, setLastVisibleState] = useState(props.isVisible)
     const [deletionCandidate, setDeletionCandidate] = useState(undefined)
     const [preferredExts, setPreferredExts] = useState(new Array<ExtensionMeta & EmptyCard>())
     const [extensionTags, setExtensionTags] = useState(new Map<string, pxt.RepoData[]>())
 
-    if (lastVisibleState != props.isVisible) {
-        updateInstalledExts();
-        updateExtensionTags();
-        setLastVisibleState(props.isVisible)
-        updatePreferredExts();
-        if (!props.isVisible) {
-            setCurrentTab(TabState.Recommended)
-            setSearchFor("")
-            setSelectedTag("")
-        }
-    }
-
-
     useEffect(() => {
         updateInstalledExts();
+        updateExtensionTags();
+        updatePreferredExts();
     }, [])
 
     useEffect(() => {
@@ -419,16 +408,21 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const categoryNames = getCategoryNames();
     const local = currentTab == TabState.InDevelopment ? fetchLocalRepositories() : undefined
     // const classes = this.props.parent.createModalClasses("searchdialog");
+    // TODO: aznhassan: Vivian's loading card looked good, figure out how to add something like it back
+    // TODO: aznhassan: Figure out what to do about bad results getting cached when hitting 429s
     return (
-        <sui.Modal isOpen={props.isVisible} dimmer={true}
-            className={"extensionsBrowser"}
-            size={"fullscreen"}
+        <Modal
+            title={lf("Extensions")}
+            fullscreen={true}
+            className={"extensions-browser"}
+            // size={"fullscreen"}
             onClose={props.hideExtensions}
-            closeIcon={true}
-            header={lf("Extensions")}
-            helpUrl={"/extensions"}
-            closeOnDimmerClick closeOnEscape
-            description={lf("Add an extension to the project")}>
+            // closeIcon={true}
+            // header={lf("Extensions")}
+            // helpUrl={"/extensions"}
+            // closeOnDimmerClick closeOnEscape
+            // description={lf("Add an extension to the project")}
+            >
             <div className="ui">
                 {showImportExtensionDialog ? <ImportModal onCancelClick={() => setShowImportExtensionDialog(false)} onImportClick={handleImportUrl} /> : undefined}
                 {deletionCandidate ? <DeleteConfirmationModal ns={deletionCandidate.name} onCancelClick={() => { setDeletionCandidate(undefined) }} onDeleteClick={() => { removeDepAsync(deletionCandidate) }} /> : undefined}
@@ -542,7 +536,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     </div>
                 }
             </div>
-        </sui.Modal>
+        </Modal>
     )
 }
 

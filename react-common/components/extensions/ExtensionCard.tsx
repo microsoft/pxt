@@ -17,7 +17,7 @@ export const ExtensionCard = (props: ExtensionCardProps) => {
         window.open(props.learnMoreUrl, "_blank")
     }
 
-    return <div className={(props.loading ? "loading ": "") + "ui card extensionCard"} onClick={handleClick}>
+    return <div className={(props.loading ? "loading ": "") + "ui card extension-card"} onClick={handleClick}>
         <img src={props.imageUrl}/>
         <div className="content">
             <div className="name">{props.name}</div>

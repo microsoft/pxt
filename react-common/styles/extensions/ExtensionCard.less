@@ -10,13 +10,17 @@
     }
 }
 
-.extensionCard.loading {
+.extension-card.loading {
     background: @loadingAnimation;
     background-size: 400% 400%;
     animation: gradient 3s infinite alternate;
 }
 
-.ui.extensionsBrowser {
+.extensions-browser {
+    .common-modal>.common-modal-body {
+        overflow-y: auto;
+        padding: 0rem;
+    }
     .extension-grid {
         overflow-y: auto;
         overflow-x: hidden;
@@ -68,7 +72,7 @@
 
 // reduce all card sizes
 @media only screen and (max-width: @largestMobileScreen) {
-    .ui.extensionsBrowser {
+    .extensions-browser {
         .ui.card, .ui.cards>.card {
             width: 9rem;
             height: 9rem;
