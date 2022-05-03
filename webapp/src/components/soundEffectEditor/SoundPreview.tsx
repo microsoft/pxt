@@ -34,7 +34,7 @@ export const SoundPreview = (props: SoundPreviewProps) => {
 
             handleSynthListenerRef((freq, vol, sound, token) => {
                 frequency = freq;
-                volume = vol * 1023;
+                volume = vol * pxt.assets.MAX_VOLUME;
                 toDraw = sound;
                 cancelToken = token;
             })

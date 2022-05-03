@@ -364,8 +364,8 @@ namespace pxtblockly {
                 sound = {
                     duration: 1000,
                     startFrequency: 100,
-                    endFrequency: 1800,
-                    startVolume: 1023,
+                    endFrequency: 4800,
+                    startVolume: 100,
                     endVolume: 0,
                     wave: "sine",
                     interpolation: "linear",

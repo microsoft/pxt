@@ -115,10 +115,10 @@ export const SoundControls = (props: SoundControlsProps) => {
     const onDurationChange = (newValue: string) => {
         const val = parseInt(newValue);
 
-        if (!isNaN(val) && val > 0) {
+        if (!isNaN(val)) {
             onSoundChange({
                 ...sound,
-                duration: val
+                duration: Math.max(Math.min(val | 0, 9999), 1)
             });
         }
     }
@@ -206,7 +206,7 @@ export const SoundControls = (props: SoundControlsProps) => {
             <div className="frequency-graph">
                 <div className="sound-graph-header">
                     <span className="sound-label">
-                        {pxt.U.lf("Frequency (Hz)")}
+                        {pxt.U.lf("Frequency")}
                     </span>
                     <div className="dropdown-and-label">
                         <span className="sound-label">
@@ -236,8 +236,9 @@ export const SoundControls = (props: SoundControlsProps) => {
                 </div>
                 <DraggableGraph
                     min={1}
-                    max={2000}
+                    max={pxt.assets.MAX_FREQUENCY}
                     aspectRatio={3}
+                    valueUnits={pxt.U.lf("Hz")}
                     points={[sound.startFrequency, sound.endFrequency]}
                     interpolation={sound.interpolation}
                     onPointChange={onFrequencyChange}
@@ -253,7 +254,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                 </div>
                 <DraggableGraph
                     min={0}
-                    max={1023}
+                    max={pxt.assets.MAX_VOLUME}
                     aspectRatio={5}
                     points={[sound.startVolume, sound.endVolume]}
                     interpolation="linear"

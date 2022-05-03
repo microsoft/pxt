@@ -14,6 +14,9 @@ namespace pxt.assets {
         duration: number;
     }
 
+    export const MAX_FREQUENCY = 5000;
+    export const MAX_VOLUME = 255;
+
     export function renderSoundPath(sound: pxt.assets.Sound, width: number, height: number) {
         const {
             startFrequency,
@@ -23,10 +26,6 @@ namespace pxt.assets {
             wave,
             interpolation
         } = sound;
-
-        const scale = (start: number, end: number, percent: number) => {
-            return Math.pow(start, 1 - percent) * Math.pow(end, percent)
-        }
 
         // To make the graph appear consistent with the implementation, use a seeded random for the noise waveform.
         // The numbers are still nonsense but at least this reflects that it's deterministic.
@@ -48,14 +47,17 @@ namespace pxt.assets {
         }
 
         if (wave === "noise") {
-            getFrequencyAt = () => random.randomRange(500, 1000)
+            getFrequencyAt = () => random.randomRange(500, 5000)
         }
 
         const getVolumeAt = (x: number) =>
-            ((endVolume - startVolume) / width) * x + startVolume;
+            Math.max(Math.min(((endVolume - startVolume) / width) * x + startVolume, MAX_VOLUME), 0);
 
-        const volumeToAmplitude = (volume: number) => (volume / 1023) * (height - 2) / 2;
-        const frequencyToWidth = (frequency: number) => Math.min(width, Math.max(10, (1 / scale(1, 4000, frequency / 4000)) * width / 2));
+        const minWaveWidth = 10;
+        const maxWaveWidth = width / 2;
+
+        const volumeToAmplitude = (volume: number) => (volume / MAX_VOLUME) * (height - 2) / 2;
+        const frequencyToWidth = (frequency: number) => (1 - frequency / MAX_FREQUENCY) * (maxWaveWidth - minWaveWidth) + minWaveWidth;
 
         const parts: string[] = [`M ${2} ${height / 2}`];
 
@@ -87,10 +89,10 @@ namespace pxt.assets {
         // To make the graph appear consistent with the implementation, use a seeded random for the noise waveform.
         // The numbers are still nonsense but at least this reflects that it's deterministic.
         const random = new SeededRandom(frequency);
-        if (wave === "noise") frequency = random.randomRange(500, 1000);
+        if (wave === "noise") frequency = random.randomRange(500, 5000);
 
 
-        const amplitude = (volume / 1023) * (height - 2) / 2;
+        const amplitude = (volume / MAX_VOLUME) * (height - 2) / 2;
         const waveHalfWidth =  (width / (frequency * timeBase / 1000)) / 2;
 
         let numSegments = Math.ceil(width / (waveHalfWidth * 2));

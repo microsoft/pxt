@@ -204,33 +204,33 @@ function generateSimilarSound(sound: pxt.assets.Sound) {
         newFrequencyDifference *= -1;
     }
 
-    newFrequencyDifference = clamp(newFrequencyDifference, -2000, 2000);
+    newFrequencyDifference = clamp(newFrequencyDifference, -pxt.assets.MAX_FREQUENCY, pxt.assets.MAX_FREQUENCY);
 
     res.startFrequency = clamp(
-        Math.random() * 2000,
+        Math.random() * pxt.assets.MAX_FREQUENCY,
         Math.max(-newFrequencyDifference, 1),
-        clamp(2000 - newFrequencyDifference, 1, 2000)
+        clamp(5000 - newFrequencyDifference, 1, pxt.assets.MAX_FREQUENCY)
     );
 
-    res.endFrequency = clamp(res.startFrequency + newFrequencyDifference, 1, 2000);
+    res.endFrequency = clamp(res.startFrequency + newFrequencyDifference, 1, pxt.assets.MAX_FREQUENCY);
 
     // Same strategy for volume
     const oldVolumeDifference = res.endVolume - res.startVolume;
     let newVolumeDifference = oldVolumeDifference + oldVolumeDifference * (Math.random() - 0.5);
 
-    newVolumeDifference = clamp(newVolumeDifference, -1023, 1023);
+    newVolumeDifference = clamp(newVolumeDifference, -pxt.assets.MAX_VOLUME, pxt.assets.MAX_VOLUME);
 
     if (Math.sign(oldVolumeDifference) !== Math.sign(newVolumeDifference)) {
         newVolumeDifference *= -1;
     }
 
     res.startVolume = clamp(
-        Math.random() * 1023,
+        Math.random() * pxt.assets.MAX_VOLUME,
         Math.max(-newVolumeDifference, 0),
-        clamp(1023 - newVolumeDifference, 0, 1023)
+        clamp(pxt.assets.MAX_VOLUME - newVolumeDifference, 0, pxt.assets.MAX_VOLUME)
     );
 
-    res.endVolume = clamp(res.startVolume + newVolumeDifference, 0, 1023);
+    res.endVolume = clamp(res.startVolume + newVolumeDifference, 0, pxt.assets.MAX_VOLUME);
 
     return res;
 }
