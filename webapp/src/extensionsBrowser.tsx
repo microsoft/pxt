@@ -11,7 +11,6 @@ import { SearchInput } from "./components/searchInput";
 import { useState, useEffect } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
 import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal";
-// import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
 import { Modal } from "../../react-common/components/controls/Modal";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta;
@@ -39,7 +38,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const [currentTab, setCurrentTab] = useState(TabState.Recommended);
     const [showImportExtensionDialog, setShowImportExtensionDialog] = useState(false);
     const [installedExtensions, setInstalledExtensions] = useState(new Array<ExtensionMeta & EmptyCard>())
-    // const [lastVisibleState, setLastVisibleState] = useState(props.isVisible)
     const [deletionCandidate, setDeletionCandidate] = useState(undefined)
     const [preferredExts, setPreferredExts] = useState(new Array<ExtensionMeta & EmptyCard>())
     const [extensionTags, setExtensionTags] = useState(new Map<string, pxt.RepoData[]>())
@@ -405,7 +403,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const categoryNames = getCategoryNames();
     const local = currentTab == TabState.InDevelopment ? fetchLocalRepositories() : undefined
-    // const classes = this.props.parent.createModalClasses("searchdialog");
     return (
         <Modal
             title={lf("Extensions")}
@@ -413,7 +410,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             className={"extensions-browser"}
             onClose={props.hideExtensions}
             helpUrl={"/extensions"}
-            >
+        >
             <div className="ui">
                 {showImportExtensionDialog ? <ImportModal onCancelClick={() => setShowImportExtensionDialog(false)} onImportClick={handleImportUrl} /> : undefined}
                 {deletionCandidate ? <DeleteConfirmationModal ns={deletionCandidate.name} onCancelClick={() => { setDeletionCandidate(undefined) }} onDeleteClick={() => { removeDepAsync(deletionCandidate) }} /> : undefined}
