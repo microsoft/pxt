@@ -1004,7 +1004,7 @@ Field editors
         border: @blue .15rem solid;
     }
 
-    .extensionTags {
+    .extension-tags {
         display: flex;
         padding: 2rem;
         column-gap: 2rem;
@@ -1014,7 +1014,7 @@ Field editors
         flex-wrap: wrap;
     }
 
-    .extensionTag {
+    .extension-tag {
         border: .1rem solid @extensionTagBackgroundColor;
         padding: .6rem 1.25rem;
         border-radius: 1.6rem;
@@ -1022,10 +1022,16 @@ Field editors
         color: @extensionTagColor;
     }
 
-    .extensionTag.selected {
+    .extension-tag.selected {
         background-color: @blue;
         border-color: @blue;
         color: @white
+    }
+
+    .extension-tag:focus::after  {
+        border: .05rem;
+        border-color: @blue;
+        border-radius: 1.6rem;
     }
 
     .tab-header {

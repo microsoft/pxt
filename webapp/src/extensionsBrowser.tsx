@@ -424,9 +424,14 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 <div className="extension-search-header">
                     <div className="header">{(lf("Do more with your micro:bit"))}</div>
                     <SearchInput searchHandler={setSearchFor} />
-                    <div className="extensionTags">
+                    <div className="extension-tags">
                         {categoryNames.map(c =>
-                            <div className={"extensionTag " + (selectedTag == c ? "selected" : "")} onClick={() => handleCategoryClick(c)}>{c}</div>
+                            <Button title={lf(c)}
+                                label={lf(c)}
+                                onClick={() => handleCategoryClick(c)}
+                                onKeydown={() => handleCategoryClick}
+                                className={"extension-tag " + (selectedTag == c ? "selected" : "")}
+                            />
                         )}
                     </div>
                     {/* TODO bring in the import modal in later! <div className="importButton">
