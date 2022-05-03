@@ -321,52 +321,55 @@ namespace pxsim {
                         const parentOrigin = this.options.parentOrigin || window.location.origin
                         parentWindow.postMessage(msg, parentOrigin);
                     }
+                }
+                if (!this.options.nestedEditorSim && !broadcastmsg?.toParentIFrameOnly) {
                     // send message to other editors
-                } else if (depEditors) {
-                    depEditors.forEach(w => {
-                        if (source !== w)
-                            // dependant editors should be in the same origin
-                            w.postMessage(msg, window.location.origin)
-                    })
-                    // start second simulator
-                } else if (!single) {
-                    const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
-                    const messageSimulator = messageChannel &&
-                        this.options.messageSimulators &&
-                        this.options.messageSimulators[messageChannel];
-                    // should we start an extension editor?
-                    if (messageSimulator) {
-                        // find a frame already running that simulator
-                        let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
-                        // not found, spin a new one
-                        if (!messageFrame) {
-                            const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
-                            const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
-                                .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
-                            let wrapper = this.createFrame(url);
-                            this.container.appendChild(wrapper);
-                            messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
-                            messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
-                            pxsim.U.addClass(wrapper, "simmsg")
-                            pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
-                            if (messageSimulator.permanent)
-                                messageFrame.dataset[PERMANENT] = "true";
-                            this.startFrame(messageFrame);
-                            frames = this.simFrames(); // refresh
-                        }
-                        // not running the curren run, restart
-                        else if (messageFrame.dataset['runid'] != this.runId) {
-                            this.startFrame(messageFrame);
-                        }
-                    } else {
-                        // start secondary frame if needed
-                        const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
-                        if (mkcdFrames.length < 2) {
-                            this.container.appendChild(this.createFrame());
-                            frames = this.simFrames();
-                            // there might be an old frame
-                        } else if (mkcdFrames[1].dataset['runid'] != this.runId) {
-                            this.startFrame(mkcdFrames[1]);
+                    if (depEditors) {
+                        depEditors.forEach(w => {
+                            if (source !== w)
+                                // dependant editors should be in the same origin
+                                w.postMessage(msg, window.location.origin)
+                        })
+                        // start second simulator
+                    } else if (!single) {
+                        const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
+                        const messageSimulator = messageChannel &&
+                            this.options.messageSimulators &&
+                            this.options.messageSimulators[messageChannel];
+                        // should we start an extension editor?
+                        if (messageSimulator) {
+                            // find a frame already running that simulator
+                            let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
+                            // not found, spin a new one
+                            if (!messageFrame) {
+                                const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
+                                const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
+                                    .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
+                                let wrapper = this.createFrame(url);
+                                this.container.appendChild(wrapper);
+                                messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
+                                messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
+                                pxsim.U.addClass(wrapper, "simmsg")
+                                pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
+                                if (messageSimulator.permanent)
+                                    messageFrame.dataset[PERMANENT] = "true";
+                                this.startFrame(messageFrame);
+                                frames = this.simFrames(); // refresh
+                            }
+                            // not running the curren run, restart
+                            else if (messageFrame.dataset['runid'] != this.runId) {
+                                this.startFrame(messageFrame);
+                            }
+                        } else {
+                            // start secondary frame if needed
+                            const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
+                            if (mkcdFrames.length < 2) {
+                                this.container.appendChild(this.createFrame());
+                                frames = this.simFrames();
+                                // there might be an old frame
+                            } else if (mkcdFrames[1].dataset['runid'] != this.runId) {
+                                this.startFrame(mkcdFrames[1]);
+                            }
                         }
                     }
                 }
