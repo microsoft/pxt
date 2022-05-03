@@ -20,6 +20,7 @@ export interface ModalAction {
 
 export interface ModalProps extends ContainerProps {
     title: string;
+    helpUrl?: string
     ariaDescribedBy?: string;
     actions?: ModalAction[];
     onClose?: () => void;
@@ -37,6 +38,7 @@ export const Modal = (props: ModalProps) => {
         ariaDescribedBy,
         role,
         title,
+        helpUrl,
         actions,
         onClose,
         parentElement,
@@ -76,6 +78,16 @@ export const Modal = (props: ModalProps) => {
                 <div id="modal-title" className="common-modal-title">
                     {title}
                 </div>
+                {fullscreen && helpUrl &&
+                    <div className="common-modal-help">
+                        <Button
+                            className={"menu-button"}
+                            title={lf("Help on {0} dialog", title)}
+                            onClick={() => { window.open(props.helpUrl, "_blank") }}
+                            rightIcon={"icon help"}
+                        />
+                    </div>
+                }
                 {!fullscreen &&
                     <div className="common-modal-close">
                         <Button
