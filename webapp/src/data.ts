@@ -130,8 +130,6 @@ function queueNotify(ce: CacheEntry, path: string) {
     ce.queued = true
 
     let final = (res: any) => {
-        // TODO: aznhassan: Create another function to validate the result for virtual API.
-        // We'll return an empty array
         ce.data = res
         ce.lastRefresh = pxt.Util.now()
         ce.queued = false

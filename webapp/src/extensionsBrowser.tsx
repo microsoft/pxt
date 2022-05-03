@@ -406,8 +406,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const categoryNames = getCategoryNames();
     const local = currentTab == TabState.InDevelopment ? fetchLocalRepositories() : undefined
     // const classes = this.props.parent.createModalClasses("searchdialog");
-    // TODO: aznhassan: Vivian's loading card looked good, figure out how to add something like it back
-    // TODO: aznhassan: Figure out what to do about bad results getting cached when hitting 429s
     return (
         <Modal
             title={lf("Extensions")}
