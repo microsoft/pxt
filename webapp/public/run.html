@@ -115,6 +115,7 @@
         var prebuiltSimJs = /prebuilt(?:[:=])1/i.test(window.location.href);
         var single = !!/single(?:[:=])1/i.test(window.location.href);
         var server = !!/server(?:[:=])1/i.test(window.location.href);
+        var mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
 
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
         var codeFromData = undefined;
@@ -163,6 +164,10 @@
             var data = msg.data;
             if (typeof window !== 'undefined' && window.parent !== window && data) {
                 if (data.type == "messagepacket") {
+                    // propagate message packets to parent frames
+                    window.parent.postMessage(msg.data, "*");
+                }
+                else if (mpRole && data.type === "multiplayer") {
                     // propagate message packets to parent frames
                     window.parent.postMessage(msg.data, "*");
                 }
