@@ -1373,17 +1373,48 @@ namespace pxt.py {
                 unifyTypeOf(n.target, tpNumber)
                 let start = r.args.length == 1 ? B.mkText("0") : expr(r.args[0])
                 let stop = expr(r.args[r.args.length == 1 ? 0 : 1])
-                return B.mkStmt(
-                    B.mkText("for ("),
-                    B.mkInfix(def, "=", start),
-                    B.mkText("; "),
-                    B.mkInfix(ref, "<", stop),
-                    B.mkText("; "),
-                    r.args.length >= 3 ?
-                        B.mkInfix(ref, "+=", expr(r.args[2])) :
+
+                if (r.args.length <= 2) {
+                    return B.mkStmt(
+                        B.mkText("for ("),
+                        B.mkInfix(def, "=", start),
+                        B.mkText("; "),
+                        B.mkInfix(ref, "<", stop),
+                        B.mkText("; "),
                         B.mkPostfix([ref], "++"),
-                    B.mkText(")"),
-                    stmts(n.body))
+                        B.mkText(")"),
+                        stmts(n.body)
+                    );
+                }
+
+                // If there are three range arguments, the comparator we need to use
+                // will either be > or < depending on the sign of the third argument.
+                let numValue = r.args[2].kind === "Num" ? (r.args[2] as Num).n : undefined;
+
+                if (numValue == undefined && r.args[2].kind === "UnaryOp") {
+                    const uOp = r.args[2] as UnaryOp;
+
+                    if (uOp.operand.kind === "Num") {
+                        if (uOp.op === "UAdd") numValue = (uOp.operand as Num).n;
+                        else if (uOp.op === "USub") numValue = -(uOp.operand as Num).n
+                    }
+                }
+
+                // If the third argument is not a number, we can't know the sign so we
+                // have to emit a for-of loop instead
+                if (numValue !== undefined) {
+                    const comparator = numValue > 0 ? "<" : ">";
+                    return B.mkStmt(
+                        B.mkText("for ("),
+                        B.mkInfix(def, "=", start),
+                        B.mkText("; "),
+                        B.mkInfix(ref, comparator, stop),
+                        B.mkText("; "),
+                        B.mkInfix(ref, "+=", expr(r.args[2])),
+                        B.mkText(")"),
+                        stmts(n.body)
+                    );
+                }
             }
 
             if (currIteration > 1) {
