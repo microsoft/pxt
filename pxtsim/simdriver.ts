@@ -18,7 +18,8 @@ namespace pxsim {
         // instead of spanning multiple simulators,
         // dispatch messages to parent window
         nestedEditorSim?: boolean;
-        parentOrigin?: string
+        parentOrigin?: string;
+        mpRole?: string;    // multiplayer role: "client", "server", or undefined
         messageSimulators?: pxt.Map<{
             url: string;
             localHostUrl?: string;
@@ -314,7 +315,7 @@ namespace pxsim {
                 const single = !!this._currentRuntime?.single;
                 const parentWindow = window.parent && window.parent !== window.window
                     ? window.parent : window.opener;
-                if (parentWindow) { //Hack: always pipe it through - this.options.nestedEditorSim &&
+                if (parentWindow) {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow) {
                         const parentOrigin = this.options.parentOrigin || window.location.origin
@@ -684,8 +685,7 @@ namespace pxsim {
             msg.frameCounter = ++this.frameCounter;
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
-                //player: mc, // TODO: What was this for?
-                clientOrServer: /(server|client)=1/.exec(window.location.href)?.[1]
+                mpRole: /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase()
             };
 
             msg.id = `${msg.options.theme}-${this.nextId()}`;
