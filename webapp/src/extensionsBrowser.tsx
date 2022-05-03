@@ -415,18 +415,13 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             title={lf("Extensions")}
             fullscreen={true}
             className={"extensions-browser"}
-            // size={"fullscreen"}
             onClose={props.hideExtensions}
-            // closeIcon={true}
-            // header={lf("Extensions")}
-            // helpUrl={"/extensions"}
-            // closeOnDimmerClick closeOnEscape
-            // description={lf("Add an extension to the project")}
+            helpUrl={"/extensions"}
             >
             <div className="ui">
                 {showImportExtensionDialog ? <ImportModal onCancelClick={() => setShowImportExtensionDialog(false)} onImportClick={handleImportUrl} /> : undefined}
                 {deletionCandidate ? <DeleteConfirmationModal ns={deletionCandidate.name} onCancelClick={() => { setDeletionCandidate(undefined) }} onDeleteClick={() => { removeDepAsync(deletionCandidate) }} /> : undefined}
-                <div className="extensionSearchHeader">
+                <div className="extension-search-header">
                     <div className="header">{(lf("Do more with your micro:bit"))}</div>
                     <SearchInput searchHandler={setSearchFor} />
                     <div className="extensionTags">
