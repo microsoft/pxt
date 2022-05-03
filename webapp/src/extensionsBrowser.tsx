@@ -3,10 +3,8 @@ import * as React from "react";
 import * as core from "./core";
 import * as workspace from "./workspace";
 import * as pkg from "./package";
-import * as sui from "./sui";
 import * as codecard from "./codecard";
 
-import { MenuBar } from "../../react-common/components/controls/MenuBar";
 import { Button } from "../../react-common/components/controls/Button";
 import { workerOpAsync } from "./compiler";
 import { SearchInput } from "./components/searchInput";
@@ -546,19 +544,10 @@ interface ExtensionCardProps extends pxt.CodeCard {
     loading?: boolean;
 }
 
-class ExtensionCard extends sui.StatelessUIElement<ExtensionCardProps> {
-    constructor(props: ExtensionCardProps) {
-        super(props);
-        this.handleClick = this.handleClick.bind(this);
+const ExtensionCard = (props: ExtensionCardProps) => {
+    const handleClick = () => {
+        props.onCardClick(props.scr);
     }
 
-    handleClick() {
-        const { scr, onCardClick } = this.props;
-        onCardClick(scr);
-    }
-
-    renderCore() {
-        const { onCardClick, onClick, scr, ...rest } = this.props;
-        return <codecard.CodeCardView {...rest} onClick={this.handleClick} />
-    }
+    return <codecard.CodeCardView {...props} onClick={handleClick}/>
 }
