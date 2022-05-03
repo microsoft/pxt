@@ -437,7 +437,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="breadcrumbs">
                             <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
                         </div>
-                        <div className="ui cards centered">
+                        <div className="ui cards left">
                             {extensionsToShow?.map(scr =>
                                 <ExtensionCard
                                     key={scr.loading ? undefined: 'searched:' + scr.name}
@@ -459,7 +459,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <span>/</span>
                             <span>{selectedTag}</span>
                         </div>
-                        <div className="ui cards centered">
+                        <div className="ui cards left">
                             {extensionsToShow?.map(scr =>
                                 <ExtensionCard
                                     key={scr.loading ? undefined: 'tagged:' + scr.name}
@@ -481,7 +481,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <Button title={lf("Installed")} label={lf("Installed")} onClick={() => { setCurrentTab(TabState.Installed) }} className={currentTab == TabState.Installed ? "selected" : ""} />
                             <Button title={lf("In Development")} label={lf("In Development")} onClick={() => { setCurrentTab(TabState.InDevelopment) }} className={currentTab == TabState.InDevelopment ? "selected" : ""} />
                         </div>
-                        <div className="ui cards centered">
+                        <div className="ui cards left">
                             {currentTab == TabState.Recommended && preferredExts.map(e =>
                                 <ExtensionCard
                                     key={e.loading ? undefined: 'preferred:' + e.name}
