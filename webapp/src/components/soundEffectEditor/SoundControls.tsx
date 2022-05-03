@@ -115,10 +115,10 @@ export const SoundControls = (props: SoundControlsProps) => {
     const onDurationChange = (newValue: string) => {
         const val = parseInt(newValue);
 
-        if (!isNaN(val) && val > 0) {
+        if (!isNaN(val)) {
             onSoundChange({
                 ...sound,
-                duration: val
+                duration: Math.max(Math.min(val | 0, 9999), 1)
             });
         }
     }
@@ -206,7 +206,7 @@ export const SoundControls = (props: SoundControlsProps) => {
             <div className="frequency-graph">
                 <div className="sound-graph-header">
                     <span className="sound-label">
-                        {pxt.U.lf("Frequency (Hz)")}
+                        {pxt.U.lf("Frequency")}
                     </span>
                     <div className="dropdown-and-label">
                         <span className="sound-label">
@@ -256,7 +256,6 @@ export const SoundControls = (props: SoundControlsProps) => {
                     min={0}
                     max={pxt.assets.MAX_VOLUME}
                     aspectRatio={5}
-                    valueUnits="%"
                     points={[sound.startVolume, sound.endVolume]}
                     interpolation="linear"
                     onPointChange={onVolumeChange}

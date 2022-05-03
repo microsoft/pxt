@@ -3,9 +3,9 @@ import { SoundGalleryItem } from "./SoundGallery";
 export function soundToCodalSound(sound: pxt.assets.Sound): pxsim.codal.music.Sound {
     const codalSound = new pxsim.codal.music.Sound();
     codalSound.frequency = sound.startFrequency;
-    codalSound.volume = (sound.startVolume / pxt.assets.MAX_VOLUME) * 1023;
+    codalSound.volume = (sound.startVolume / pxt.assets.MAX_VOLUME) * 1023 | 0;
     codalSound.endFrequency = sound.endFrequency;
-    codalSound.endVolume = (sound.endVolume / pxt.assets.MAX_VOLUME) * 1023;
+    codalSound.endVolume = (sound.endVolume / pxt.assets.MAX_VOLUME) * 1023 | 0;
 
     switch (sound.wave) {
         case "sine": codalSound.wave = pxsim.codal.music.WaveShape.Sine; break;
@@ -41,7 +41,7 @@ export function soundToCodalSound(sound: pxt.assets.Sound): pxsim.codal.music.So
             break;
     }
 
-    codalSound.duration = sound.duration
+    codalSound.duration = Math.max(Math.min(sound.duration | 0, 9999), 1)
     codalSound.steps = 90;
 
     return codalSound;
