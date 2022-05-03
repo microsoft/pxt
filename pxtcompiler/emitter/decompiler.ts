@@ -2269,7 +2269,14 @@ ${output}</xml>`;
 
             if (optionalCount) {
                 if (!r.mutation) r.mutation = {};
-                r.mutation["_expanded"] = optionalCount.toString();
+
+                if (attributes.compileHiddenArguments) {
+                    r.mutation["_expanded"] =  "0";
+                }
+                else {
+                    r.mutation["_expanded"] = optionalCount.toString();
+                }
+
             }
 
             return r;
