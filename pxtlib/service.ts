@@ -1638,6 +1638,7 @@ namespace ts.pxtc.service {
         search?: SearchOptions;
         format?: FormatOptions;
         blocks?: BlocksOptions;
+        extensions?: ExtensionsOptions;
         projectSearch?: ProjectSearchOptions;
         snippet?: SnippetOptions;
         runtime?: pxt.RuntimeOptions;
@@ -1660,6 +1661,24 @@ namespace ts.pxtc.service {
         input: string;
         pos: number;
     }
+
+
+    export enum ExtensionType {
+        Bundled,
+        Github
+    }
+
+    export interface ExtensionMeta {
+        name: string,
+        fullName?: string,
+        description?: string,
+        imageUrl?: string,
+        type?: ExtensionType
+
+        pkgConfig?: pxt.PackageConfig; // Added if the type is Bundled
+        repo?: pxt.github.GitRepo; //Added if the type is Github VVN TODO ADD THIS
+    }
+
 
     export interface SearchInfo {
         id: string;
@@ -1686,5 +1705,8 @@ namespace ts.pxtc.service {
 
     export interface BlocksOptions {
         bannedCategories?: string[];
+    }
+    export interface ExtensionsOptions {
+        srcs: ExtensionMeta[];
     }
 }

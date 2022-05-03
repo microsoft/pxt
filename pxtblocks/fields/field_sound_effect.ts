@@ -83,6 +83,7 @@ namespace pxtblockly {
                 .size(TOTAL_WIDTH, TOTAL_HEIGHT)
                 .setClass("blocklySpriteField")
                 .stroke("#fff", 1)
+                .fill("#dedede")
                 .corner(TOTAL_HEIGHT / 2);
 
             const clipPathId = "preview-clip-" + pxt.U.guidGen();

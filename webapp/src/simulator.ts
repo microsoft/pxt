@@ -45,6 +45,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     root.appendChild(debuggerDiv);
 
     const nestedEditorSim = /nestededitorsim=1/i.test(window.location.href);
+    const mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
     let parentOrigin: string = null;
     if (window.parent !== window) {
         const searchParams = new URLSearchParams(window.location.search);
@@ -233,8 +234,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
-        nestedEditorSim: nestedEditorSim,
-        parentOrigin: parentOrigin,
+        nestedEditorSim,
+        parentOrigin,
+        mpRole,
         messageSimulators: pxt.appTarget?.simulator?.messageSimulators
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);

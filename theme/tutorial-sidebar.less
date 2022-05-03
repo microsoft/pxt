@@ -2,8 +2,11 @@
 @tutorialFontSize: 1.125rem;
 @tutorialTitleFontSize: 1.5rem;
 
-@tutorialPrimaryColor: @teal;
-@tutorialSecondaryColor: @blue;
+@tutorialPrimaryColor: @sidebarPrimaryColor;
+@tutorialSecondaryColor: @sidebarSecondaryColor;
+@tutorialBarForegroundColor: @tutorialPrimaryColor;
+@tutorialBarBackgroundColor: @tutorialSecondaryColor;
+
 @tutorialLinkColor: #0064BF;
 @tutorialLinkHoverColor: #003C94;
 
@@ -142,12 +145,12 @@
     height: 1rem;
     overflow: hidden;
     border-radius: 1rem;
-    background-color: @tutorialSecondaryColor;
+    background-color: @tutorialBarBackgroundColor;
     cursor: pointer;
 }
 
 .tutorial-step-bar-fill {
-    background-color: @tutorialPrimaryColor;
+    background-color: @tutorialBarForegroundColor;
     height: 100%;
     transition: width 0.5s ease-out;
     pointer-events: none;
@@ -530,7 +533,7 @@
     }
 
     .tutorial-step-bar-fill {
-        background-color: @tutorialSecondaryColor;
+        background-color: @tutorialBarBackgroundColor;
     }
 
     /*******************************
@@ -722,11 +725,11 @@
         }
 
         .tutorial-step-bar {
-            background-color: @tutorialSecondaryColor;
+            background-color: @tutorialBarBackgroundColor;
         }
 
         .tutorial-step-bar-fill {
-            background-color: @tutorialPrimaryColor;
+            background-color: @tutorialBarForegroundColor;
         }
 
         .tutorial-hint .tutorial-callout-button.ui.button {

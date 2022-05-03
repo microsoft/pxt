@@ -73,6 +73,7 @@ declare namespace pxt {
         weight?: number;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
+        isExtension?: boolean; // is this package an extension
         dalDTS?: {
             corePackage?: string;
             includeDirs?: string[];

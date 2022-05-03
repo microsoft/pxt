@@ -29,6 +29,7 @@ import * as dialogs from "./dialogs";
 import * as identity from "./identity";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
+import * as extensionsBrowser from "./extensionsBrowser";
 import * as projects from "./projects";
 import * as scriptmanager from "./scriptmanager";
 import * as extensions from "./extensions";
@@ -184,6 +185,7 @@ export class ProjectView
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
         if (shouldShowHomeScreen) this.homeLoaded();
 
+        this.hidePackageDialog = this.hidePackageDialog.bind(this);
         this.hwDebug = this.hwDebug.bind(this);
         this.hideLightbox = this.hideLightbox.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
@@ -3891,8 +3893,18 @@ export class ProjectView
         return this.newProjectDialog.promptUserAsync();
     }
 
+    hidePackageDialog() {
+        this.setState({
+            ...this.state,
+            extensionsVisible: false
+        })
+    }
+
     showPackageDialog() {
-        this.scriptSearch.showExtensions();
+        this.setState({
+            ...this.state,
+            extensionsVisible: true
+        })
     }
 
     showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void> {
@@ -4556,6 +4568,7 @@ export class ProjectView
         const hasIdentity = pxt.auth.hasIdentity();
         return (
             <div id='root' className={rootClasses}>
+                <extensionsBrowser.ExtensionsBrowser isVisible={this.state.extensionsVisible} hideExtensions={this.hidePackageDialog} header={this.state.header} reloadHeaderAsync={()=>{ return this.reloadHeaderAsync()}}/>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
                 {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
                 {hideMenuBar || inHome ? undefined :

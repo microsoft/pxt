@@ -40,6 +40,8 @@ declare namespace pxt {
         bannedRepos?: string[];
         allowUnapproved?: boolean;
         preferredRepos?: string[]; // list of company/project(#tag) of packages to show by default in search
+        preferredRepoLib?: RepoData[];
+        approvedRepoLib?: RepoData[];
         // format:
         // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
         // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
@@ -47,6 +49,18 @@ declare namespace pxt {
         // list of trusted custom editor extension urls
         // that can bypass consent and send/receive messages
         approvedEditorExtensionUrls?: string[];
+        extensionsToIgnore?: string[]; // List of extensions to ignore when allowing for deletion
+        categories?: ExtensionCategory[];
+    }
+
+    interface RepoData {
+        slug: string;
+        tags?: string[]
+    }
+
+    interface ExtensionCategory {
+        name: string;
+        extensions: string[];
     }
 
     interface ShareConfig {
@@ -137,6 +151,7 @@ declare namespace pxt {
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
+        onStartGroup?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
@@ -395,6 +410,7 @@ declare namespace pxt {
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
         disableAPICache?: boolean; // Disables the api cache in target.js
         sidebarTutorial?: boolean; // Move the tutorial pane to be on the left side of the screen
+        legacyTutorial?: boolean; // Use the legacy tutorial format without tabs
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
@@ -801,6 +817,9 @@ declare namespace ts.pxtc {
         topblock?: boolean;
         topblockWeight?: number;
         locs?: pxt.Map<string>;
+        toolboxParent?: string; // The ID of a block that will wrap this block in the toolbox. Useful for having multiple instances of the same parent block with different child shadows
+        toolboxParentArgument?: string; // Used with toolboxParent. The name of the arg that this block should be inserted into as a shadow
+
         // On namepspace
         subcategories?: string[];
         groups?: string[];

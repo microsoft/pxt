@@ -47,7 +47,7 @@ export const SocialButton = (props: SocialButtonProps) => {
 
     return <Button className={className}
         ariaLabel={type}
-        title={type}
+        title={heading}
         leftIcon={`icon ${type}`}
         onClick={handleClick} />
 }

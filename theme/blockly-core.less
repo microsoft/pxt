@@ -115,6 +115,19 @@ body.blocklyMinimalBody {
     visibility: visible;
 }
 
+i.icon.blocklyTreeButton {
+    float: right;
+    line-height: 40px;
+    color: grey;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: .5s;
+}
+
+.blocklyTreeRow:hover i.icon.blocklyTreeButton {
+    opacity: 1;
+}
+
 /*******************************
         Blockly Flyout
 *******************************/

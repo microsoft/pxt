@@ -1392,6 +1392,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
+        if (!blocks) return [];
         return blocks.filter((block => !(block.attributes.blockHidden)
             && !(block.attributes.deprecated && !this.parent.isTutorial())
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
@@ -1421,7 +1422,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 name: ts.pxtc.ON_START_TYPE,
                 attributes: {
                     blockId: ts.pxtc.ON_START_TYPE,
-                    weight: pxt.appTarget.runtime.onStartWeight || 10
+                    weight: pxt.appTarget.runtime.onStartWeight || 10,
+                    group: pxt.appTarget.runtime.onStartGroup || undefined
                 },
                 blockXml: `<block type="pxt-on-start"></block>`
             });
@@ -1826,8 +1828,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .filter(shadow => !shadow.innerHTML)
                 .forEach((shadow, i) => {
                     let type = shadow.getAttribute('type');
+                    if (type === block.type) return;
                     const builtin = snippets.allBuiltinBlocks()[type];
-                    let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, ignoregap, true);
+                    let b = this.getBlockXml(builtin ? builtin : { name: type, type: type, attributes: { blockId: type } }, ignoregap, true);
                     // Note: we're setting one innerHTML to another
                     // eslint-disable-next-line @microsoft/sdl/no-inner-html
                     if (b && b.length > 0 && b[0]) shadow.innerHTML = b[0].innerHTML;
