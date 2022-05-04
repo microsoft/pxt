@@ -363,7 +363,7 @@ namespace pxt.runner {
             })
     }
 
-    export async function simulateAsync(container: HTMLElement, simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
+    export async function simulateAsync(container: HTMLElement, simOptions: SimulateOptions): Promise<pxsim.SimulatorDriver> {
         const builtSimJS = simOptions.builtJsInfo || await buildSimJsInfo(simOptions);
         const {
             js,
@@ -411,7 +411,7 @@ namespace pxt.runner {
                 ? pxt.appTarget.simulator.partsAspectRatio
                 : pxt.appTarget.simulator.aspectRatio;
         driver.run(js, runOptions);
-        return builtSimJS;
+        return driver;
     }
 
     export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {

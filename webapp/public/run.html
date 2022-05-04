@@ -116,6 +116,7 @@
         var single = !!/single(?:[:=])1/i.test(window.location.href);
         var server = !!/server(?:[:=])1/i.test(window.location.href);
         var mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
+        var simdriver = null; /*pxsim.SimulatorDriver;*/
 
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
         var codeFromData = undefined;
@@ -168,8 +169,14 @@
                     window.parent.postMessage(msg.data, "*");
                 }
                 else if (mpRole && data.type === "multiplayer") {
-                    // propagate message packets to parent frames
-                    window.parent.postMessage(msg.data, "*");
+                    // Multiplayer messages are bi-directional
+                    if (mpRole === msg.data.origin) {
+                        // propagate to parent frame
+                        window.parent.postMessage(msg.data, "*");
+                    } else {
+                        // propagate to child frames
+                        if (simdriver) simdriver.postMessage(msg.data);
+                    }
                 }
                 else if (server && data.type === "simulateproject") {
                     var files = typeof data.project === "string" ? JSON.parse(data.project) : data.project;
@@ -187,8 +194,9 @@
                                 single: single
                             };
                             console.log('simulating project')
-                            pxt.runner.simulateAsync(sims, options).then(function() {
+                            pxt.runner.simulateAsync(sims, options).then(function(driver) {
                                 console.log('simulator started for project...')
+                                simdriver = driver;
                                 $(loading).remove();
                             })
                         });
@@ -242,8 +250,9 @@
                         single: single
                     };
                     console.log('simulating script')
-                    pxt.runner.simulateAsync(sims, options).then(function() {
+                    pxt.runner.simulateAsync(sims, options).then(function(driver) {
                         console.log('simulator started...')
+                        simdriver = driver;
                         $(loading).remove();
                     })
                 });
