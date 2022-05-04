@@ -403,6 +403,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const categoryNames = getCategoryNames();
     const local = currentTab == TabState.InDevelopment ? fetchLocalRepositories() : undefined
+    let loadingCardId = 0
     return (
         <Modal
             title={lf("Extensions")}
@@ -416,10 +417,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 {deletionCandidate ? <DeleteConfirmationModal ns={deletionCandidate.name} onCancelClick={() => { setDeletionCandidate(undefined) }} onDeleteClick={() => { removeDepAsync(deletionCandidate) }} /> : undefined}
                 <div className="extension-search-header">
                     <div className="header">{(lf("Do more with your micro:bit"))}</div>
-                    <SearchInput searchHandler={setSearchFor} />
+                    <SearchInput searchHandler={setSearchFor} key={"search-input"}/>
                     <div className="extension-tags">
                         {categoryNames.map(c =>
                             <Button title={lf(c)}
+                                key={c}
                                 label={lf(c)}
                                 onClick={() => handleCategoryClick(c)}
                                 onKeydown={() => handleCategoryClick}
@@ -440,8 +442,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="ui cards left">
                             {extensionsToShow?.map(scr =>
                                 <ExtensionCard
-                                    key={scr.loading ? undefined: 'searched:' + scr.name}
-                                    name={scr.name}
+                                    key={scr.loading ? `loading ${loadingCardId++}`: 'searched:' + scr.name}
+                                    name={scr.name ?? `loading ${loadingCardId++}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
                                     scr={scr}
@@ -462,8 +464,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="ui cards left">
                             {extensionsToShow?.map(scr =>
                                 <ExtensionCard
-                                    key={scr.loading ? undefined: 'tagged:' + scr.name}
-                                    name={scr.name}
+                                    key={scr.loading ? `loading ${loadingCardId++}`: 'tagged:' + scr.name}
+                                    name={scr.name ?? `loading ${loadingCardId++}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
                                     scr={scr}
@@ -477,16 +479,16 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 {displayMode == ExtensionView.Tabbed &&
                     <div className="extension-display">
                         <div className="tab-header">
-                            <Button title={lf("Recommended")} label={lf("Recommended")} onClick={() => { setCurrentTab(TabState.Recommended) }} className={currentTab == TabState.Recommended ? "selected" : ""} />
-                            <Button title={lf("Installed")} label={lf("Installed")} onClick={() => { setCurrentTab(TabState.Installed) }} className={currentTab == TabState.Installed ? "selected" : ""} />
-                            <Button title={lf("In Development")} label={lf("In Development")} onClick={() => { setCurrentTab(TabState.InDevelopment) }} className={currentTab == TabState.InDevelopment ? "selected" : ""} />
+                            <Button key={"Recommended"} title={lf("Recommended")} label={lf("Recommended")} onClick={() => { setCurrentTab(TabState.Recommended) }} className={currentTab == TabState.Recommended ? "selected" : ""} />
+                            <Button key={"Installed"} title={lf("Installed")} label={lf("Installed")} onClick={() => { setCurrentTab(TabState.Installed) }} className={currentTab == TabState.Installed ? "selected" : ""} />
+                            <Button key={"In Development"} title={lf("In Development")} label={lf("In Development")} onClick={() => { setCurrentTab(TabState.InDevelopment) }} className={currentTab == TabState.InDevelopment ? "selected" : ""} />
                         </div>
                         <div className="ui cards left">
                             {currentTab == TabState.Recommended && preferredExts.map(e =>
                                 <ExtensionCard
-                                    key={e.loading ? undefined: 'preferred:' + e.name}
+                                    key={e.loading ? `loading ${loadingCardId++}`: 'preferred:' + e.name}
                                     scr={e}
-                                    name={e.name}
+                                    name={e.name ?? `loading ${loadingCardId++}`}
                                     onCardClick={installExtension}
                                     imageUrl={e.imageUrl}
                                     description={e.description}
@@ -544,5 +546,5 @@ const ExtensionCard = (props: ExtensionCardProps) => {
         props.onCardClick(props.scr);
     }
 
-    return <codecard.CodeCardView {...props} onClick={handleClick}/>
+    return <codecard.CodeCardView {...props} onClick={handleClick} key={props.name}/>
 }

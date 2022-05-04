@@ -67,6 +67,7 @@ export const Modal = (props: ModalProps) => {
                 {fullscreen &&
                     <div className="common-modal-back">
                         <Button
+                            key={"back-button"}
                             className="menu-button"
                             onClick={closeClickHandler}
                             title={lf("Go Back")}
@@ -81,6 +82,7 @@ export const Modal = (props: ModalProps) => {
                 {fullscreen && helpUrl &&
                     <div className="common-modal-help">
                         <Button
+                            key={"help-button"}
                             className={"menu-button"}
                             title={lf("Help on {0} dialog", title)}
                             onClick={() => { window.open(props.helpUrl, "_blank") }}
@@ -91,6 +93,7 @@ export const Modal = (props: ModalProps) => {
                 {!fullscreen &&
                     <div className="common-modal-close">
                         <Button
+                            key={"close-button"}
                             className="menu-button inverted"
                             onClick={closeClickHandler}
                             title={lf("Close")}
