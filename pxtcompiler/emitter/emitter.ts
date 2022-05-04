@@ -1306,6 +1306,8 @@ namespace ts.pxtc {
             if (opts.target.isNative) {
                 if (opts.extinfo.yotta)
                     bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
+                if (opts.extinfo.codal)
+                    bin.writeFile("codal.json", JSON.stringify(opts.extinfo.codal, null, 2));
                 if (opts.extinfo.platformio)
                     bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
                 if (opts.target.nativeType == NATIVE_TYPE_VM)

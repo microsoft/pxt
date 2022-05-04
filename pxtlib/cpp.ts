@@ -1055,6 +1055,7 @@ namespace pxt.cpp {
             })
             res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
             pxt.debug(`codal.json: ${res.generatedFiles["/codal.json"]}`);
+            res.codal = codalJson
         } else if (isPlatformio) {
             const iniLines = compileService.platformioIni.slice()
             // TODO merge configjson
