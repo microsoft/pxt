@@ -265,15 +265,15 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             }
         })
 
-        if (toBeFetched.length > 0) {
-            const exts = await fetchGithubDataAndAddAsync(toBeFetched)
-            setExtensionsToShow([...extensionsWeHave, ...exts])
-        }
         const loadingCards = []
         for (let i = 0; i < toBeFetched.length; i++) {
             loadingCards.push(emptyCard)
         }
         setExtensionsToShow([...extensionsWeHave, ...loadingCards]);
+        if (toBeFetched.length > 0) {
+            const exts = await fetchGithubDataAndAddAsync(toBeFetched)
+            setExtensionsToShow([...extensionsWeHave, ...exts])
+        }
     }
 
     function packageConfigToExtensionMeta(p: pxt.PackageConfig): ExtensionMeta {
