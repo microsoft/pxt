@@ -343,20 +343,19 @@ namespace ts.pxtc {
         if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
             return [];
 
+        const parseParts = (partsRaw: string, ps: string[]) => {
+            if (partsRaw) {
+                const partsSplit = partsRaw.split(/[ ,]+/g);
+                ps.push(...partsSplit.filter(p => !!p && ps.indexOf(p) < 0))
+             }
+        }
+
         let parts: string[] = [];
+        let hiddenParts: string[] = [];
         Object.keys(resp.usedSymbols).forEach(symbol => {
-            let info = resp.usedSymbols[symbol]
-            if (info && info.attributes.parts) {
-                let partsRaw = info.attributes.parts;
-                if (partsRaw) {
-                    let partsSplit = partsRaw.split(/[ ,]+/);
-                    partsSplit.forEach(p => {
-                        if (0 < p.length && parts.indexOf(p) < 0) {
-                            parts.push(p);
-                        }
-                    });
-                }
-            }
+            const info = resp.usedSymbols[symbol]
+            parseParts(info?.attributes.parts, parts)
+            parseParts(info?.attributes.hiddenParts, hiddenParts)
         });
 
         if (filter) {
@@ -369,6 +368,9 @@ namespace ts.pxtc {
                 }
             }
         }
+
+        // apply hidden parts filter
+        parts = parts.filter(p => hiddenParts.indexOf(p) < 0)
 
         //sort parts (so breadboarding layout is stable w.r.t. code ordering)
         parts.sort();

@@ -790,6 +790,7 @@ declare namespace ts.pxtc {
         imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
         weight?: number;
         parts?: string;
+        hiddenParts?: string; // allows an extesion to declaratively hide a part
         trackArgs?: number[];
         advanced?: boolean;
         deprecated?: boolean;
