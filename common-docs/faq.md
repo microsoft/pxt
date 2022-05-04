@@ -18,7 +18,7 @@ To enable some additional features for extension developers, the following domai
 * https://github.com
 * https://raw.githubusercontent.com/
 
-## ~button /domains.html
+## ~button /domains
 
 Test Domains
 
