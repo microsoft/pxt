@@ -1044,6 +1044,7 @@ declare namespace ts.pxtc {
         extensionFiles: pxt.Map<string>;
         yotta?: pxt.YottaConfig;
         platformio?: pxt.PlatformIOConfig;
+        codal?: pxt.CodalJson;
         npmDependencies?: pxt.Map<string>;
         sha: string;
         compileData: string;

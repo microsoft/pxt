@@ -123,6 +123,10 @@ declare namespace pxt {
         libraries?: string[];
     }
 
+    interface CodalJson {
+        
+    }
+
     interface YottaConfig {
         dependencies?: Map<string>;
         config?: any;

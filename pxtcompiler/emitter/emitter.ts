@@ -1304,10 +1304,15 @@ namespace ts.pxtc {
                 bin.procs = bin.procs.filter(p => p.inlineBody && !p.info.usedAsIface && !p.info.usedAsValue ? false : true)
 
             if (opts.target.isNative) {
-                if (opts.extinfo.yotta)
-                    bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
-                if (opts.extinfo.platformio)
-                    bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
+                // collect various output files from all variants
+                [...(opts.otherMultiVariants || []), opts].forEach(({ extinfo }) => {
+                    if (extinfo.yotta)
+                        bin.writeFile("yotta.json", JSON.stringify(extinfo.yotta, null, 2));
+                    if (extinfo.codal)
+                        bin.writeFile("codal.json", JSON.stringify(extinfo.codal, null, 2));
+                    if (extinfo.platformio)
+                        bin.writeFile("platformio.json", JSON.stringify(extinfo.platformio, null, 2));
+                })
                 if (opts.target.nativeType == NATIVE_TYPE_VM)
                     vmEmit(bin, opts)
                 else
