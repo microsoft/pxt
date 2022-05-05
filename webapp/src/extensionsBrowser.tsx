@@ -489,9 +489,27 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 {displayMode == ExtensionView.Tabbed &&
                     <div className="extension-display">
                         <div className="tab-header">
-                            <Button key={"Recommended"} title={lf("Recommended")} label={lf("Recommended")} onClick={() => { setCurrentTab(TabState.Recommended) }} className={currentTab == TabState.Recommended ? "selected" : ""} />
-                            <Button key={"Installed"} title={lf("Installed")} label={lf("Installed")} onClick={() => { setCurrentTab(TabState.Installed) }} className={currentTab == TabState.Installed ? "selected" : ""} />
-                            <Button key={"In Development"} title={lf("In Development")} label={lf("In Development")} onClick={() => { setCurrentTab(TabState.InDevelopment) }} className={currentTab == TabState.InDevelopment ? "selected" : ""} />
+                            <Button
+                                key={"Recommended"}
+                                title={lf("Recommended")}
+                                label={lf("Recommended")}
+                                onClick={() => { setCurrentTab(TabState.Recommended) }}
+                                className={currentTab == TabState.Recommended ? "selected" : ""}
+                            />
+                            <Button
+                                key={"Installed"}
+                                title={lf("Installed")}
+                                label={lf("Installed")}
+                                onClick={() => { setCurrentTab(TabState.Installed) }}
+                                className={currentTab == TabState.Installed ? "selected" : ""}
+                            />
+                            <Button
+                                key={"In Development"}
+                                title={lf("In Development")}
+                                label={lf("In Development")}
+                                onClick={() => { setCurrentTab(TabState.InDevelopment) }}
+                                className={currentTab == TabState.InDevelopment ? "selected" : ""}
+                            />
                         </div>
                         <div className="ui cards left">
                             {currentTab == TabState.Recommended && preferredExts.map((e, index) =>
