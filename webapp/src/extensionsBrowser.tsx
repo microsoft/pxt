@@ -283,7 +283,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         setExtensionsToShow([...extensionsWeHave, ...loadingCards]);
     }
 
-        function packageConfigToExtensionMeta(p: pxt.PackageConfig): ExtensionMeta {
+    function packageConfigToExtensionMeta(p: pxt.PackageConfig): ExtensionMeta {
         return {
             name: p.name,
             imageUrl: p.icon,
