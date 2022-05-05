@@ -430,9 +430,9 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     <SearchInput searchHandler={setSearchFor}/>
                     <div className="extension-tags">
                         {categoryNames.map(c =>
-                            <Button title={lf(c)}
+                            <Button title={pxt.Util.rlf(c)}
                                 key={c}
-                                label={lf(c)}
+                                label={pxt.Util.rlf(c)}
                                 onClick={() => handleCategoryClick(c)}
                                 onKeydown={() => handleCategoryClick}
                                 className={"extension-tag " + (selectedTag == c ? "selected" : "")}
