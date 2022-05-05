@@ -33,13 +33,13 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const [searchFor, setSearchFor] = useState("");
     const [allExtensions, setAllExtensions] = useState(fetchBundled());
-    const [extensionsToShow, setExtensionsToShow] = useState(new Array<ExtensionMeta & EmptyCard>());
+    const [extensionsToShow, setExtensionsToShow] = useState<(ExtensionMeta & EmptyCard)[]>([]);
     const [selectedTag, setSelectedTag] = useState("");
     const [currentTab, setCurrentTab] = useState(TabState.Recommended);
     const [showImportExtensionDialog, setShowImportExtensionDialog] = useState(false);
-    const [installedExtensions, setInstalledExtensions] = useState(new Array<ExtensionMeta & EmptyCard>())
+    const [installedExtensions, setInstalledExtensions] = useState<(ExtensionMeta & EmptyCard)[]>([])
     const [deletionCandidate, setDeletionCandidate] = useState(undefined)
-    const [preferredExts, setPreferredExts] = useState(new Array<ExtensionMeta & EmptyCard>())
+    const [preferredExts, setPreferredExts] = useState<(ExtensionMeta & EmptyCard)[]>([])
     const [extensionTags, setExtensionTags] = useState(new Map<string, pxt.RepoData[]>())
 
     useEffect(() => {
