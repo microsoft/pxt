@@ -426,7 +426,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     />
                 }
                 <div className="extension-search-header">
-                    <div className="header">{(lf("Do more with your micro:bit"))}</div>
+                    <div className="header">{(lf(`Do more with ${pxt.appTarget.appTheme.boardName}`))}</div>
                     <SearchInput searchHandler={setSearchFor}/>
                     <div className="extension-tags">
                         {categoryNames.map(c =>
