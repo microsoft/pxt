@@ -4820,16 +4820,20 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
             return true;
         case "newproject": // shortcut to create a new blocks proj
             pxt.tickEvent("hash.newproject")
-            editor.newEmptyProject();
+            editor.newProject();
             pxt.BrowserUtils.changeHash("");
             return true;
         case "newjavascript": // shortcut to create a new JS proj
             pxt.tickEvent("hash.newjavascript");
             editor.newProject({
-                prj: pxt.appTarget.blocksprj,
-                filesOverride: {
-                    [pxt.MAIN_BLOCKS]: ""
-                }
+                preferredEditor: pxt.JAVASCRIPT_PROJECT_NAME
+            });
+            pxt.BrowserUtils.changeHash("");
+            return true;
+        case "newpython": // shortcut to create a new python proj
+            pxt.tickEvent("hash.newpython");
+            editor.newProject({
+                preferredEditor: pxt.PYTHON_PROJECT_NAME
             });
             pxt.BrowserUtils.changeHash("");
             return true;
