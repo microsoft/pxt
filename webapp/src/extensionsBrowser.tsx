@@ -403,7 +403,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const categoryNames = getCategoryNames();
     const local = currentTab == TabState.InDevelopment ? fetchLocalRepositories() : undefined
-    let loadingCardId = 0
     return (
         <Modal
             title={lf("Extensions")}
@@ -440,10 +439,10 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
                         </div>
                         <div className="ui cards left">
-                            {extensionsToShow?.map(scr =>
+                            {extensionsToShow?.map((scr, index) =>
                                 <ExtensionCard
-                                    key={scr.loading ? `loading ${loadingCardId++}`: 'searched:' + scr.name}
-                                    name={scr.name ?? `loading ${loadingCardId++}`}
+                                    key={scr.loading ? `${index}`: 'searched:' + scr.name}
+                                    name={scr.name ?? `${index}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
                                     scr={scr}
@@ -462,10 +461,10 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <span>{selectedTag}</span>
                         </div>
                         <div className="ui cards left">
-                            {extensionsToShow?.map(scr =>
+                            {extensionsToShow?.map((scr, index) =>
                                 <ExtensionCard
-                                    key={scr.loading ? `loading ${loadingCardId++}`: 'tagged:' + scr.name}
-                                    name={scr.name ?? `loading ${loadingCardId++}`}
+                                    key={scr.loading ? `${index}`: 'tagged:' + scr.name}
+                                    name={scr.name ?? `${index}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
                                     scr={scr}
@@ -484,11 +483,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <Button key={"In Development"} title={lf("In Development")} label={lf("In Development")} onClick={() => { setCurrentTab(TabState.InDevelopment) }} className={currentTab == TabState.InDevelopment ? "selected" : ""} />
                         </div>
                         <div className="ui cards left">
-                            {currentTab == TabState.Recommended && preferredExts.map(e =>
+                            {currentTab == TabState.Recommended && preferredExts.map((e, index) =>
                                 <ExtensionCard
-                                    key={e.loading ? `loading ${loadingCardId++}`: 'preferred:' + e.name}
+                                    key={e.loading ? `${index}`: 'preferred:' + e.name}
                                     scr={e}
-                                    name={e.name ?? `loading ${loadingCardId++}`}
+                                    name={e.name ?? `${index}`}
                                     onCardClick={installExtension}
                                     imageUrl={e.imageUrl}
                                     description={e.description}
