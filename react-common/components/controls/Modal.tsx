@@ -67,7 +67,6 @@ export const Modal = (props: ModalProps) => {
                 {fullscreen &&
                     <div className="common-modal-back">
                         <Button
-                            key={"back-button"}
                             className="menu-button"
                             onClick={closeClickHandler}
                             title={lf("Go Back")}
