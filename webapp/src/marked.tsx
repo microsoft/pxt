@@ -76,15 +76,16 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     private cachedRenderLangSnippetAsync(langBlock: HTMLElement, renderer: (code: string) => Promise<string | HTMLElement>): Promise<void> {
         const code = langBlock.textContent;
+        const lang = langBlock.className;
         const wrapperDiv = this.startRenderLangSnippet(langBlock);
-        if (MarkedContent.blockSnippetCache[code]) {
-            this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+        if (MarkedContent.blockSnippetCache[lang+code]) {
+            this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[lang+code]);
             return undefined;
         } else {
             return renderer(code)
                 .then(renderedCode => {
-                    MarkedContent.blockSnippetCache[code] = renderedCode;
-                    this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+                    MarkedContent.blockSnippetCache[lang+code] = renderedCode;
+                    this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[lang+code]);
                 }).catch(e => {
                     pxt.reportException(e);
                     this.finishRenderLangSnippet(wrapperDiv, lf("Something changed."))
