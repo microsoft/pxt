@@ -412,8 +412,19 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             helpUrl={"/extensions"}
         >
             <div className="ui">
-                {showImportExtensionDialog ? <ImportModal onCancelClick={() => setShowImportExtensionDialog(false)} onImportClick={handleImportUrl} /> : undefined}
-                {deletionCandidate ? <DeleteConfirmationModal ns={deletionCandidate.name} onCancelClick={() => { setDeletionCandidate(undefined) }} onDeleteClick={() => { removeDepAsync(deletionCandidate) }} /> : undefined}
+                {showImportExtensionDialog &&
+                    <ImportModal
+                        onCancelClick={() => setShowImportExtensionDialog(false)}
+                        onImportClick={handleImportUrl}
+                    />
+                }
+                {deletionCandidate &&
+                    <DeleteConfirmationModal
+                        ns={deletionCandidate.name}
+                        onCancelClick={() => { setDeletionCandidate(undefined) }}
+                        onDeleteClick={() => { removeDepAsync(deletionCandidate) }}
+                    />
+                }
                 <div className="extension-search-header">
                     <div className="header">{(lf("Do more with your micro:bit"))}</div>
                     <SearchInput searchHandler={setSearchFor}/>
