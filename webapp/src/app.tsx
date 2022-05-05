@@ -2618,6 +2618,57 @@ export class ProjectView
         pxt.perf.measureEnd("createProjectAsync");
     }
 
+    async backupProjectsAsync() {
+        const headers = workspace.getHeaders();
+        headers.sort((a, b) => a.recentUse - b.recentUse);
+
+        let done = 0;
+
+        for (const header of headers) {
+            const text = await workspace.getTextAsync(header.id);
+
+            const project: pxt.cpp.HexFile = {
+                meta: {
+                    cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
+                    targetVersions: pxt.appTarget.versions,
+                    editor: this.getPreferredEditor(),
+                    name: header.name
+                },
+                source: JSON.stringify(text, null, 2)
+            };
+
+            const compressed = await pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
+
+            /* eslint-disable no-control-regex */
+            let sanitizedName = header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '');
+            sanitizedName = sanitizedName.trim().replace(/\s+/g, '-');
+            /* eslint-enable no-control-regex */
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
+                const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
+                sanitizedName = sanitizedName.replace(rx, '');
+            }
+            if (!sanitizedName)
+                sanitizedName = "Untitled"; // do not translate to avoid unicode issues
+
+            const format = (val: number, len = 2) => {
+                let out = val + "";
+                while (out.length < len) {
+                    out = "0" + out
+                }
+
+                return out.substring(0, len);
+            }
+
+            const date = new Date(header.recentUse * 1000);
+            const dateSnippet = `${date.getFullYear()}-${format(date.getMonth())}-${format(date.getDate())}`
+            const fn = `${pxt.appTarget.nickname || pxt.appTarget.id}-${dateSnippet}-${sanitizedName}.mkcd`;
+
+            pxt.BrowserUtils.browserDownloadUInt8Array(compressed, fn, { contentType: 'application/octet-stream' });
+            done++;
+            console.log(`PROGRESS: ${done}/${headers.length}`);
+        }
+    }
+
     // in multiboard targets, allow use to pick a different board
     // after the project is loaded
     // this could be done prior to the project creation too
@@ -4821,6 +4872,10 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
         case "newproject": // shortcut to create a new blocks proj
             pxt.tickEvent("hash.newproject")
             editor.newEmptyProject();
+            pxt.BrowserUtils.changeHash("");
+            return true;
+        case "backup":
+            editor.backupProjectsAsync();
             pxt.BrowserUtils.changeHash("");
             return true;
         case "newjavascript": // shortcut to create a new JS proj
