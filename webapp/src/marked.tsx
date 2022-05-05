@@ -78,14 +78,14 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         const code = langBlock.textContent;
         const lang = langBlock.className;
         const wrapperDiv = this.startRenderLangSnippet(langBlock);
-        if (MarkedContent.blockSnippetCache[lang+code]) {
-            this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[lang+code]);
+        if (MarkedContent.blockSnippetCache[lang + code]) {
+            this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[lang + code]);
             return undefined;
         } else {
             return renderer(code)
                 .then(renderedCode => {
-                    MarkedContent.blockSnippetCache[lang+code] = renderedCode;
-                    this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[lang+code]);
+                    MarkedContent.blockSnippetCache[lang + code] = renderedCode;
+                    this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[lang + code]);
                 }).catch(e => {
                     pxt.reportException(e);
                     this.finishRenderLangSnippet(wrapperDiv, lf("Something changed."))
