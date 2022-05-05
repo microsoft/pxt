@@ -417,7 +417,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 {deletionCandidate ? <DeleteConfirmationModal ns={deletionCandidate.name} onCancelClick={() => { setDeletionCandidate(undefined) }} onDeleteClick={() => { removeDepAsync(deletionCandidate) }} /> : undefined}
                 <div className="extension-search-header">
                     <div className="header">{(lf("Do more with your micro:bit"))}</div>
-                    <SearchInput searchHandler={setSearchFor} key={"search-input"}/>
+                    <SearchInput searchHandler={setSearchFor}/>
                     <div className="extension-tags">
                         {categoryNames.map(c =>
                             <Button title={lf(c)}
