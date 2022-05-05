@@ -92,7 +92,6 @@ export const Modal = (props: ModalProps) => {
                 {!fullscreen &&
                     <div className="common-modal-close">
                         <Button
-                            key={"close-button"}
                             className="menu-button inverted"
                             onClick={closeClickHandler}
                             title={lf("Close")}
