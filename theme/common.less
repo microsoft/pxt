@@ -906,28 +906,34 @@ Field editors
 
 
 .fullscreen.extensions-browser > {
-    .common-modal > .common-modal-header {
-        height: 3rem;
-        background-color: @blue;
-        z-index: 202;
-        display: flex;
-        padding-left: 0rem;
+    .common-modal > {
+        .common-modal-header {
+            height: 3rem;
+            background-color: @blue;
+            z-index: 202;
+            display: flex;
+            padding-left: 0rem;
 
-        .header-left, .header-right, .header-center {
-            flex: 1
+            .header-left, .header-right, .header-center {
+                flex: 1
+            }
+
+            .header-left {
+                display: flex;
+                height: 100%;
+            }
+
+            .header-center {
+                color: @white;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
         }
 
-        .header-left {
-            display: flex;
-            height: 100%;
-        }
-
-        .header-center {
-            color: @white;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .common-modal-body {
+            padding: 0rem;
         }
     }
 }
