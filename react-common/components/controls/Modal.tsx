@@ -82,7 +82,6 @@ export const Modal = (props: ModalProps) => {
                 {fullscreen && helpUrl &&
                     <div className="common-modal-help">
                         <Button
-                            key={"help-button"}
                             className={"menu-button"}
                             title={lf("Help on {0} dialog", title)}
                             onClick={() => { window.open(props.helpUrl, "_blank") }}
