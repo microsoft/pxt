@@ -62,31 +62,24 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     useEffect(() => {
         if (searchFor && searchFor != "") {
-            if (searchFor.indexOf("/") >= 0) {
-                searchForGithubAsync();
-            } else {
-                workerOpAsync("extensionSearch", {
-                    search: {
-                        term: searchFor
-                    },
-                    extensions: {
-                        srcs: Array.from(allExtensions.values())
-                    }
-                }).then(e => {
-                    setExtensionsToShow(e)
-                    setSelectedTag("")
-                })
-            }
+            searchForBundledAndGithubAsync();
         }
     }, [searchFor])
 
     /**
      * Github search
      */
-    async function searchForGithubAsync() {
+    async function searchForBundledAndGithubAsync() {
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
         const exts = await fetchGithubDataAsync([searchFor])
         const parsedExt = exts.map(repo => parseGithubRepo(repo))
+        //Search bundled extensions as well
+        fetchBundled().forEach(e => {
+            if (e.name.toLowerCase().indexOf(searchFor.toLowerCase()) > -1) {
+                //Fuzzy search here?
+                parsedExt.unshift(e)
+            }
+        })
         addExtensionsToPool(parsedExt)
         setExtensionsToShow(parsedExt)
     }
@@ -231,9 +224,14 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         updateInstalledExts()
     }
 
+    function ghName(scr: pxt.github.GitRepo) {
+        let n = scr.name.replace(/^pxt-/, "");
+        return n;
+    }
+
     function parseGithubRepo(r: pxt.github.GitRepo): ExtensionMeta {
         return {
-            name: r.name,
+            name: ghName(r),
             type: pxtc.service.ExtensionType.Github,
             imageUrl: pxt.github.repoIconUrl(r),
             repo: r,
