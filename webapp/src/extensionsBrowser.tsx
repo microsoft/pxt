@@ -452,7 +452,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="ui cards left">
                             {extensionsToShow?.map((scr, index) =>
                                 <ExtensionCard
-                                    key={scr.loading ? `${index}`: 'searched:' + scr.name}
+                                    key={`searched:${index}`}
                                     name={scr.name ?? `${index}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
@@ -474,7 +474,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="ui cards left">
                             {extensionsToShow?.map((scr, index) =>
                                 <ExtensionCard
-                                    key={scr.loading ? `${index}`: 'tagged:' + scr.name}
+                                    key={`tagged:${index}`}
                                     name={scr.name ?? `${index}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
@@ -514,7 +514,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="ui cards left">
                             {currentTab == TabState.Recommended && preferredExts.map((e, index) =>
                                 <ExtensionCard
-                                    key={e.loading ? `${index}`: 'preferred:' + e.name}
+                                    key={`preferred:${index}`}
                                     scr={e}
                                     name={e.name ?? `${index}`}
                                     onCardClick={installExtension}
@@ -526,9 +526,9 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                 />
                             )
                             }
-                            {currentTab == TabState.Installed && installedExtensions.map(e =>
+                            {currentTab == TabState.Installed && installedExtensions.map((e, index) =>
                                 <ExtensionCard
-                                    key={'url:' + e.name}
+                                    key={`installed:${index}`}
                                     scr={e}
                                     name={e.name}
                                     onCardClick={() => handleInstalledCardClick(e)}
@@ -539,9 +539,9 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                 />
                             )
                             }
-                            {currentTab == TabState.InDevelopment && local.forEach(p =>
+                            {currentTab == TabState.InDevelopment && local.forEach((p, index) =>
                                 <ExtensionCard
-                                    key={'local:' + p.id}
+                                    key={`local:${index}`}
                                     name={p.name}
                                     description={lf("Local copy of {0} hosted on github.com", p.githubId)}
                                     url={"https://github.com/" + p.githubId}
