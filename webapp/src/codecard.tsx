@@ -160,6 +160,7 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
                         </a> : undefined}
                     {card.learnMoreUrl ?
                         <a className="learnmore right floated" href={card.learnMoreUrl}
+                            tabIndex={0}
                             aria-label={lf("Learn more")} target="_blank" rel="noopener noreferrer">
                             {lf("Learn more")}
                         </a> : undefined}

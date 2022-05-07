@@ -882,11 +882,72 @@ Field editors
 /*******************************
         Extensions
 *******************************/
-.extensionsBrowser.hide {
+.extensions-browser.hide {
     display: none;
 }
 
-.extensionsBrowser {
+@keyframes cardGradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.extension-card.loading {
+    background: @loadingAnimation;
+    background-size: 400% 400%;
+    animation: cardGradient 3s infinite alternate;
+}
+
+
+.fullscreen.extensions-browser > {
+    .common-modal > {
+        .common-modal-header {
+            height: 3rem;
+            background-color: @blue;
+            z-index: 202;
+            display: flex;
+            padding-left: 0rem;
+
+            .header-left, .header-right, .header-center {
+                flex: 1
+            }
+
+            .header-left {
+                display: flex;
+                height: 100%;
+            }
+
+            .header-center {
+                color: @white;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .common-modal-body {
+            padding: 0rem;
+        }
+    }
+}
+@media @mobileAndBelow {
+    .extensions-browser {
+        .common-modal > .common-modal-header > .common-modal-back {
+            .common-button-label {
+                display: none;
+            }
+        }
+    }
+}
+
+.extensions-browser {
     position: absolute;
     background-color: @white;
     width: 100%;
@@ -894,31 +955,7 @@ Field editors
     z-index: 200;
     font-size: 1.2rem;
 
-    .extensionsHeader {
-        height: 4rem;
-        background-color: @blue;
-        z-index: 202;
-        display: flex;
-
-        .header-left, .header-right, .header-center {
-            flex: 1
-        }
-
-        .header-left {
-            display: flex;
-            height: 100%;
-        }
-
-        .header-center {
-            color: @white;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    }
-
-    .extensionSearchHeader {
+    .extension-search-header {
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
@@ -988,11 +1025,11 @@ Field editors
         gap: .8rem;
     }
 
-    .extensionCard:hover {
+    .extension-card:hover {
         border: @blue .15rem solid;
     }
 
-    .extensionTags {
+    .extension-tags {
         display: flex;
         padding: 2rem;
         column-gap: 2rem;
@@ -1002,7 +1039,7 @@ Field editors
         flex-wrap: wrap;
     }
 
-    .extensionTag {
+    .extension-tag {
         border: .1rem solid @extensionTagBackgroundColor;
         padding: .6rem 1.25rem;
         border-radius: 1.6rem;
@@ -1010,10 +1047,16 @@ Field editors
         color: @extensionTagColor;
     }
 
-    .extensionTag.selected {
+    .extension-tag.selected {
         background-color: @blue;
         border-color: @blue;
         color: @white
+    }
+
+    .extension-tag:focus::after  {
+        border: .05rem;
+        border-color: @blue;
+        border-radius: 1.6rem;
     }
 
     .tab-header {
@@ -1025,11 +1068,78 @@ Field editors
         }
     }
 
+    .common-modal > .common-modal-body {
+        overflow-y: auto;
+        padding: 0rem;
+    }
+    .extension-grid {
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-top: 0.5rem;
+    }
+    .ui.card {
+        height: 20rem;
+        .ui.cardimage {
+            background-color: transparent;
+            height: 11rem;
+            &.upload {
+                margin: 3em auto;
+            }
+        }
+        .content:not(.extra) {
+            .header {
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .description {
+                height: 2.8em;
+                overflow: hidden;
+            }
+            .description.long  {
+                height: 14em;
+            }
+        }
+    }
+    .ui.card.loading {
+        background: @loadingAnimation;
+        background-size: 400% 400%;
+        animation: gradient 3s infinite alternate;
+    }
+    /* Search input */
+    .ui.search {
+        margin: auto;
+    }
+
+    .ui.inline.loader {
+        margin-top: 4em;
+        :after, :before {
+            width: 4rem;
+            height: 4rem;
+        }
+    }
 }
 .import-extension-modal {
     .common-modal-body {
         display: flex;
         flex-direction: column;
+    }
+}
+
+// reduce all card sizes
+@media @mobileAndBelow {
+    .extensions-browser {
+        .ui.card, .ui.cards > .card {
+            width: 9rem;
+            height: 9rem;
+
+            .ui.cardimage {
+                height: 5rem;
+                &.upload {
+                    margin: auto;
+                }
+            }
+        }
     }
 }
 /*******************************

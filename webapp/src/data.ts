@@ -269,6 +269,14 @@ mountVirtualApi("cloud-search", {
     isOffline: () => !Cloud.isOnline(),
 })
 
+mountVirtualApi("extension-search", {
+    getAsync: query => pxt.targetConfigAsync()
+        .then(config => pxt.github.searchAsync(stripProtocol(query), config?.packages))
+        .catch(core.handleNetworkError),
+    expirationTime: p => 3600 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
 mountVirtualApi("gallery", {
     getAsync: p => pxt.gallery.loadGalleryAsync(stripProtocol(decodeURIComponent(p))).catch((e) => {
         return Promise.resolve(e);
@@ -278,7 +286,7 @@ mountVirtualApi("gallery", {
 
 mountVirtualApi("gh-search", {
     getAsync: query => pxt.targetConfigAsync()
-        .then(config => pxt.github.searchAsync(stripProtocol(query), config ? config.packages : undefined))
+        .then(config => pxt.github.searchAsync(stripProtocol(query), config?.packages))
         .catch(core.handleNetworkError),
     expirationTime: p => 360 * 1000,
     isOffline: () => !Cloud.isOnline(),
