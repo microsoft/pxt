@@ -430,7 +430,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 }
                 <div className="extension-search-header">
                     <div className="header">{(lf(`Do more with ${pxt.appTarget.appTheme.boardName}`))}</div>
-                    <SearchInput searchHandler={setSearchFor}/>
+                    <SearchInput
+                        ariaMessage={searchComplete && pxt.U.rlf(`${extensionsToShow.length} results matching '${searchFor}'`)}
+                        placeholder={lf("Search or enter project URL...")}
+                        aria-label={lf("Search or enter project URL...")}
+                        searchHandler={setSearchFor}/>
                     <div className="extension-tags">
                         {categoryNames.map(c =>
                             <Button title={pxt.Util.rlf(c)}
