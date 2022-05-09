@@ -32,6 +32,7 @@ enum TabState {
 export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const [searchFor, setSearchFor] = useState("");
+    const [searchComplete, setSearchComplete] = useState(true)
     const [allExtensions, setAllExtensions] = useState(fetchBundled());
     const [extensionsToShow, setExtensionsToShow] = useState<(ExtensionMeta & EmptyCard)[]>([]);
     const [selectedTag, setSelectedTag] = useState("");
@@ -58,6 +59,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
      * Github search
      */
     async function searchForBundledAndGithubAsync() {
+        setSearchComplete(false)
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
         const exts = await fetchGithubDataAsync([searchFor])
         const parsedExt = exts.map(repo => parseGithubRepo(repo))
@@ -70,6 +72,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         })
         addExtensionsToPool(parsedExt)
         setExtensionsToShow(parsedExt)
+        setSearchComplete(true)
     }
 
     function addExtensionsToPool(newExtension: ExtensionMeta[]) {
@@ -463,6 +466,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     role="button"
                                 />)}
                         </div>
+                        {searchComplete && extensionsToShow.length == 0 &&
+                            <div aria-label="Extension search results">
+                                <p>{lf("We couldn't find any extensions matching ")}{pxt.Util.rlf(`'${searchFor}'`)}</p>
+                            </div>
+                        }
                     </div>}
                 {displayMode == ExtensionView.Tags &&
                     <div className="extension-display">
