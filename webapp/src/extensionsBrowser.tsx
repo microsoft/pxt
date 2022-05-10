@@ -430,7 +430,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 }
                 <div className="extension-search-header">
                     <SearchInput
-                        ariaMessage={searchComplete && pxt.U.rlf(`${extensionsToShow.length} results matching '${searchFor}'`)}
+                        ariaMessage={searchComplete && lf("{0} results matching '{1}'", extensionsToShow.length, searchFor)}
                         placeholder={lf("Search or enter project URL...")}
                         aria-label={lf("Search or enter project URL...")}
                         searchHandler={setSearchFor}/>
@@ -471,7 +471,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         </div>
                         {searchComplete && extensionsToShow.length == 0 &&
                             <div aria-label="Extension search results">
-                                <p>{lf("We couldn't find any extensions matching ")}{pxt.Util.rlf(`'${searchFor}'`)}</p>
+                                <p>{lf("We couldn't find any extensions matching '{0}'", searchFor)}</p>
                             </div>
                         }
                     </div>}
