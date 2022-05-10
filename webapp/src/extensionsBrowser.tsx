@@ -6,11 +6,9 @@ import * as pkg from "./package";
 import * as codecard from "./codecard";
 
 import { Button } from "../../react-common/components/controls/Button";
-import { workerOpAsync } from "./compiler";
 import { SearchInput } from "./components/searchInput";
 import { useState, useEffect } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
-import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal";
 import { Modal } from "../../react-common/components/controls/Modal";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta;
@@ -25,7 +23,6 @@ interface ExtensionsProps {
 
 enum TabState {
     Recommended,
-    Installed,
     InDevelopment
 }
 
@@ -38,13 +35,10 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const [selectedTag, setSelectedTag] = useState("");
     const [currentTab, setCurrentTab] = useState(TabState.Recommended);
     const [showImportExtensionDialog, setShowImportExtensionDialog] = useState(false);
-    const [installedExtensions, setInstalledExtensions] = useState<(ExtensionMeta & EmptyCard)[]>([])
-    const [deletionCandidate, setDeletionCandidate] = useState(undefined)
     const [preferredExts, setPreferredExts] = useState<(ExtensionMeta & EmptyCard)[]>([])
     const [extensionTags, setExtensionTags] = useState(new Map<string, pxt.RepoData[]>())
 
     useEffect(() => {
-        updateInstalledExts();
         updateExtensionTags();
         updatePreferredExts();
     }, [])
@@ -96,14 +90,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         const parsedGithubRepo = pxt.github.parseRepoId(extensionUrl)
         if (!parsedGithubRepo) return undefined;
         return allExtensions.get(parsedGithubRepo.slug.toLowerCase())
-    }
-
-    async function removeDepAsync(dep: ExtensionMeta) {
-        setDeletionCandidate(undefined)
-        props.hideExtensions()
-        await pkg.mainEditorPkg().removeDepAsync(dep.name)
-        await pxt.Util.delay(1000) // TODO VVN: Without a delay the reload still tries to load the extension
-        await props.reloadHeaderAsync()
     }
 
     async function addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
@@ -215,8 +201,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 addGithubPackage(scr);
                 break;
         }
-
-        updateInstalledExts()
     }
 
     function ghName(scr: pxt.github.GitRepo) {
@@ -239,10 +223,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     function getCategoryNames(): string[] {
         if (!extensionTags) return [];
         return Array.from(extensionTags.keys())
-    }
-
-    function handleInstalledCardClick(src: ExtensionMeta) {
-        setDeletionCandidate(src)
     }
 
     async function handleCategoryClick(category: string) {
@@ -337,46 +317,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         setPreferredExts([...repos, ...exts])
     }
 
-    /**
-     * Loads installed extensions' info from Github
-     *
-     */
-    async function updateInstalledExts() {
-        const installed: ExtensionMeta[] = []
-        const reposToFetch: string[] = [];
-        Object.keys(pkg.mainPkg?.deps as Object).forEach((k) => {
-            if (k == "this" || k == "core") {
-                return;
-            }
-            const ext = pkg.mainPkg.deps[k];
-            if (ext?.installedVersion?.includes("github")) {
-                const match = /github:(\S*)#?/.exec(ext.installedVersion);
-                const repoName = match[1]
-
-                let fetchedRepo = getExtensionFromFetched(k);
-
-                if (fetchedRepo) {
-                    installed.push(fetchedRepo)
-                } else {
-                    reposToFetch.push(repoName)
-                }
-            } else {
-                installed.push({
-                    name: ext?.config?.name,
-                    imageUrl: ext?.config?.icon,
-                    description: ext?.config?.description
-                })
-            }
-        })
-
-        if (reposToFetch && reposToFetch.length > 0) {
-            // Set the installed extensions before waiting for the dependencies
-            setInstalledExtensions([...installed])
-            const exts = await fetchGithubDataAndAddAsync(reposToFetch)
-            setInstalledExtensions([...installed, ...exts])
-        }
-    }
-
     async function handleImportUrl(url: string) {
         setShowImportExtensionDialog(false)
         props.hideExtensions()
@@ -419,13 +359,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     <ImportModal
                         onCancelClick={() => setShowImportExtensionDialog(false)}
                         onImportClick={handleImportUrl}
-                    />
-                }
-                {deletionCandidate &&
-                    <DeleteConfirmationModal
-                        ns={deletionCandidate.name}
-                        onCancelClick={() => { setDeletionCandidate(undefined) }}
-                        onDeleteClick={() => { removeDepAsync(deletionCandidate) }}
                     />
                 }
                 <div className="extension-search-header">
@@ -508,13 +441,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                 className={currentTab == TabState.Recommended ? "selected" : ""}
                             />
                             <Button
-                                key={"Installed"}
-                                title={lf("Installed")}
-                                label={lf("Installed")}
-                                onClick={() => { setCurrentTab(TabState.Installed) }}
-                                className={currentTab == TabState.Installed ? "selected" : ""}
-                            />
-                            <Button
                                 key={"In Development"}
                                 title={lf("In Development")}
                                 label={lf("In Development")}
@@ -533,19 +459,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     description={e.description}
                                     learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}
                                     loading={e.loading}
-                                    role="button"
-                                />
-                            )
-                            }
-                            {currentTab == TabState.Installed && installedExtensions.map((e, index) =>
-                                <ExtensionCard
-                                    key={`installed:${index}`}
-                                    scr={e}
-                                    name={e.name}
-                                    onCardClick={() => handleInstalledCardClick(e)}
-                                    imageUrl={e.imageUrl}
-                                    description={e.description}
-                                    learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}
                                     role="button"
                                 />
                             )
