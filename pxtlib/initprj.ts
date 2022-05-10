@@ -110,38 +110,6 @@ _site
         "**/pxt_modules": true
     }
 }`,
-            ".vscode/tasks.json":
-                `
-// A task runner that calls the MakeCode (PXT) compiler
-{
-    "version": "2.0.0",
-    "tasks": [{
-        "label": "pxt deploy",
-        "type": "shell",
-        "command": "pxt deploy --local",
-        "group": "build",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt build",
-        "type": "shell",
-        "command": "pxt build --local",
-        "group": "build",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt install",
-        "type": "shell",
-        "command": "pxt install",
-        "group": "build",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt clean",
-        "type": "shell",
-        "command": "pxt clean",
-        "group": "test",
-        "problemMatcher": [ "$tsc" ]
-    }]
-}
-`
         };
 
         // override files from target
