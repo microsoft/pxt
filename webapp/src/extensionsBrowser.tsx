@@ -32,6 +32,7 @@ enum TabState {
 export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const [searchFor, setSearchFor] = useState("");
+    const [searchComplete, setSearchComplete] = useState(true)
     const [allExtensions, setAllExtensions] = useState(fetchBundled());
     const [extensionsToShow, setExtensionsToShow] = useState<(ExtensionMeta & EmptyCard)[]>([]);
     const [selectedTag, setSelectedTag] = useState("");
@@ -58,6 +59,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
      * Github search
      */
     async function searchForBundledAndGithubAsync() {
+        setSearchComplete(false)
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
         const exts = await fetchGithubDataAsync([searchFor])
         const parsedExt = exts.map(repo => parseGithubRepo(repo))
@@ -70,6 +72,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         })
         addExtensionsToPool(parsedExt)
         setExtensionsToShow(parsedExt)
+        setSearchComplete(true)
     }
 
     function addExtensionsToPool(newExtension: ExtensionMeta[]) {
@@ -426,8 +429,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     />
                 }
                 <div className="extension-search-header">
-                    <div className="header">{(lf(`Do more with ${pxt.appTarget.appTheme.boardName}`))}</div>
-                    <SearchInput searchHandler={setSearchFor}/>
+                    <SearchInput
+                        ariaMessage={searchComplete && lf("{0} results matching '{1}'", extensionsToShow.length, searchFor)}
+                        placeholder={lf("Search or enter project URL...")}
+                        aria-label={lf("Search or enter project URL...")}
+                        searchHandler={setSearchFor}/>
                     <div className="extension-tags">
                         {categoryNames.map(c =>
                             <Button title={pxt.Util.rlf(c)}
@@ -463,6 +469,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     role="button"
                                 />)}
                         </div>
+                        {searchComplete && extensionsToShow.length == 0 &&
+                            <div aria-label="Extension search results">
+                                <p>{lf("We couldn't find any extensions matching '{0}'", searchFor)}</p>
+                            </div>
+                        }
                     </div>}
                 {displayMode == ExtensionView.Tags &&
                     <div className="extension-display">
