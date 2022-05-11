@@ -49,7 +49,7 @@ declare namespace pxt {
         // list of trusted custom editor extension urls
         // that can bypass consent and send/receive messages
         approvedEditorExtensionUrls?: string[];
-        extensionsToolboxNoDelete?: string[]; // List of extensions to ignore when allowing for deletion in toolbox
+        extensionsToolboxDisallowDelete?: string[]; // List of extensions to ignore when allowing for deletion in toolbox
     }
 
     interface RepoData {
