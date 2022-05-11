@@ -399,6 +399,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     onCardClick={installExtension}
                                     learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
                                     loading={scr.loading}
+                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                     role="button"
                                 />)}
                         </div>
@@ -426,6 +427,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     onCardClick={installExtension}
                                     learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
                                     loading={scr.loading}
+                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                     role="button"
                                 />)}
                         </div>
@@ -459,6 +461,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     description={e.description}
                                     learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}
                                     loading={e.loading}
+                                    label={pxt.isPkgBeta(e) ? lf("Beta") : undefined}
                                     role="button"
                                 />
                             )
