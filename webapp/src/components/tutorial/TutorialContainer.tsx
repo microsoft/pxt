@@ -83,6 +83,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
         if (showNext) setHideModal(false);
     }, [currentStep])
 
+    React.useEffect(() => {
+        return () => MarkedContent.clearBlockSnippetCache();
+    }, [hideModal])
+
     const currentStepInfo = steps[currentStep];
     if (!steps[currentStep]) return <div />;
 
