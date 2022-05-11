@@ -154,27 +154,11 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             }).filter(subns => !!subns);
         }
 
-        function isExtension(ns: string, md: pxtc.CommentAttrs) {
-            const nsAttr = getBlocksEditor().getNamespaceAttrs(ns);
-
-            const foundExtension = pkg.mainEditorPkg().pkgAndDeps().find(p => {
-                const ext = p.getKsPkg()
-                if (!ext) return false
-                const namespaces = pkg.getNsForPkg(ext.id)
-                if (!namespaces) return false
-                return namespaces.indexOf(ns) >= 0
-            })
-            const extensionPkg = foundExtension?.getKsPkg();
-
-            let trgConfigFetch = data.getDataWithStatus("target-config:");
-            let trgConfig = trgConfigFetch.data as pxt.TargetConfig;
-            let isHidden = false;
-            if (trgConfig && trgConfig.packages && trgConfig.packages.extensionsToIgnore && extensionPkg) {
-                isHidden = trgConfig.packages.extensionsToIgnore.includes(extensionPkg.id)
-            }
-
-            const hasDel = (nsAttr?._def?.parts?.length > 0) || (foundExtension && extensionPkg.id != "core" && !isHidden)
-            return hasDel;
+        function isTopLevelExtension(ns: string, md: pxtc.CommentAttrs) {
+            //TODO check if this extension is top level and allow delete for the same.
+            return false;
+            //const nsAttr = getBlocksEditor().extensionsMap[ns];
+            //return nsAttr.isExtension;
         }
 
         function createCategories(names: [string, pxtc.CommentAttrs][], isAdvanced?: boolean): toolbox.ToolboxCategory[] {
@@ -230,8 +214,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                             || md.icon : pxt.toolbox.getNamespaceIcon(ns);
                         category.groups = builtInCategory.groups || md.groups;
                         category.customClick = builtInCategory.customClick;
-                    } else if (isExtension(ns, md)) {
-                        category.isExtension = true;
+                    } else if (isTopLevelExtension(ns, md)) {
+                        category.delete = true;
                     }
                     return category;
                 }).filter(cat => !!cat);

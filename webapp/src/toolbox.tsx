@@ -380,15 +380,9 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.setState({
             tryToDeleteNamespace: undefined
         })
-        const extensionsToDelete = [];
-        const extension = pkg.findExtForNs(ns);
-        extensionsToDelete.push(extension.id)
-        while (extensionsToDelete.length > 0) {
-            const id = extensionsToDelete.pop()
-            await pkg.mainEditorPkg().removeDepAsync(id)
-            extensionsToDelete.push(...pkg.getDependents(id))
-        }
-        await Util.delay(1000) // TODO VVN: Without a delay the reload still tries to load the extension
+        // TODO: Not implemented yet.
+        // Remove the top level extension, only if there are no blocks in the workspace
+        // Associated with that extension.
         await this.props.parent.parent.reloadHeaderAsync()
     }
 
@@ -505,7 +499,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     {hasSearch ? <CategoryItem key={"search"} toolbox={this} index={index++} selected={selectedItem == "search"} treeRow={searchTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {hasTopBlocks ? <CategoryItem key={"topblocks"} toolbox={this} selected={selectedItem == "topblocks"} treeRow={topBlocksTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection} topRowIndex={topRowIndex++} shouldAnimate={this.state.shouldAnimate} hasDeleteButton={treeRow.isExtension} onDeleteClick={this.handleRemoveExtension}>
+                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection} topRowIndex={topRowIndex++} shouldAnimate={this.state.shouldAnimate} hasDeleteButton={treeRow.delete} onDeleteClick={this.handleRemoveExtension}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
                                 <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
                             )) : undefined}
@@ -685,7 +679,7 @@ export interface ToolboxCategory {
 
     customClick?: (theEditor: editor.ToolboxEditor) => boolean;
     advanced?: boolean; /*@internal*/
-    isExtension?: boolean;
+    delete?: boolean;
 }
 
 export interface TreeRowProps {
