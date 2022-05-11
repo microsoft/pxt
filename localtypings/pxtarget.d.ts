@@ -50,17 +50,11 @@ declare namespace pxt {
         // that can bypass consent and send/receive messages
         approvedEditorExtensionUrls?: string[];
         extensionsToolboxNoDelete?: string[]; // List of extensions to ignore when allowing for deletion in toolbox
-        categories?: ExtensionCategory[];
     }
 
     interface RepoData {
         slug: string;
         tags?: string[]
-    }
-
-    interface ExtensionCategory {
-        name: string;
-        extensions: string[];
     }
 
     interface ShareConfig {
