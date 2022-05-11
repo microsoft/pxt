@@ -215,7 +215,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                         category.groups = builtInCategory.groups || md.groups;
                         category.customClick = builtInCategory.customClick;
                     } else if (isTopLevelExtension(ns, md)) {
-                        category.delete = true;
+                        category.allowDelete = true;
                     }
                     return category;
                 }).filter(cat => !!cat);
