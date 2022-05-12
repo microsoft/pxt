@@ -281,6 +281,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
             .filter(pk => !pk.hidden)
             .filter(pk => !/---/.test(pk.name))
+            .filter(pk => !pk.searchOnly || searchFor?.length != 0)
             .filter(pk => pk.name != "core")
             .filter(pk => false == !!pk.core) // show core in "boards" mode
             .forEach(e => extensionsMap.set(e.name, packageConfigToExtensionMeta(e)))
@@ -366,7 +367,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         ariaMessage={searchComplete && lf("{0} results matching '{1}'", extensionsToShow.length, searchFor)}
                         placeholder={lf("Search or enter project URL...")}
                         aria-label={lf("Search or enter project URL...")}
-                        searchHandler={setSearchFor}/>
+                        searchHandler={setSearchFor} />
                     <div className="extension-tags">
                         {categoryNames.map(c =>
                             <Button title={pxt.Util.rlf(c)}
@@ -501,5 +502,5 @@ const ExtensionCard = (props: ExtensionCardProps) => {
         props.onCardClick(props.scr);
     }
 
-    return <codecard.CodeCardView {...props} onClick={handleClick} key={props.name}/>
+    return <codecard.CodeCardView {...props} onClick={handleClick} key={props.name} />
 }
