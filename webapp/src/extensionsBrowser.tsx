@@ -285,6 +285,26 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             .filter(pk => pk.name != "core")
             .filter(pk => false == !!pk.core) // show core in "boards" mode
             .filter(pk => !pkg.mainPkg.deps[pk.name] || pkg.mainPkg.deps[pk.name].cppOnly) // don't show package already referenced in extensions
+            .sort((a, b) => {
+                // core first
+                if (a.core != b.core)
+                    return a.core ? -1 : 1;
+
+                // non-beta first
+                const abeta = pxt.isPkgBeta(a);
+                const bbeta = pxt.isPkgBeta(b);
+                if (abeta != bbeta)
+                    return abeta ? 1 : -1;
+
+                // use weight if core packages
+                const aweight = a.weight === undefined ? 50 : a.weight;
+                const bweight = b.weight === undefined ? 50 : b.weight;
+                if (aweight != bweight)
+                    return -aweight + bweight;
+
+                // alphabetical sort
+                return pxt.Util.strcmp(a.name, b.name)
+            })
             .forEach(e => extensionsMap.set(e.name, packageConfigToExtensionMeta(e)))
         return extensionsMap
     }
