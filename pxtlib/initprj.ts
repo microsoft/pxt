@@ -25,17 +25,6 @@ include:
   - assets
   - README.md
 `,
-            "Makefile": `all: deploy
-
-build:
-\tpxt build
-
-deploy:
-\tpxt deploy
-
-test:
-\tpxt test
-`,
             "Gemfile": `source 'https://rubygems.org'
 gem 'github-pages', group: :jekyll_plugins`,
             "README.md": `
