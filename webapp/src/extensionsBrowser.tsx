@@ -281,8 +281,30 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
             .filter(pk => !pk.hidden)
             .filter(pk => !/---/.test(pk.name))
+            .filter(pk => !pk.searchOnly || searchFor?.length != 0)
             .filter(pk => pk.name != "core")
             .filter(pk => false == !!pk.core) // show core in "boards" mode
+            .filter(pk => !pkg.mainPkg.deps[pk.name] || pkg.mainPkg.deps[pk.name].cppOnly) // don't show package already referenced in extensions
+            .sort((a, b) => {
+                // core first
+                if (a.core != b.core)
+                    return a.core ? -1 : 1;
+
+                // non-beta first
+                const abeta = pxt.isPkgBeta(a);
+                const bbeta = pxt.isPkgBeta(b);
+                if (abeta != bbeta)
+                    return abeta ? 1 : -1;
+
+                // use weight if core packages
+                const aweight = a.weight === undefined ? 50 : a.weight;
+                const bweight = b.weight === undefined ? 50 : b.weight;
+                if (aweight != bweight)
+                    return -aweight + bweight;
+
+                // alphabetical sort
+                return pxt.Util.strcmp(a.name, b.name)
+            })
             .forEach(e => extensionsMap.set(e.name, packageConfigToExtensionMeta(e)))
         return extensionsMap
     }
@@ -366,7 +388,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         ariaMessage={searchComplete && lf("{0} results matching '{1}'", extensionsToShow.length, searchFor)}
                         placeholder={lf("Search or enter project URL...")}
                         aria-label={lf("Search or enter project URL...")}
-                        searchHandler={setSearchFor}/>
+                        searchHandler={setSearchFor} />
                     <div className="extension-tags">
                         {categoryNames.map(c =>
                             <Button title={pxt.Util.rlf(c)}
@@ -501,5 +523,5 @@ const ExtensionCard = (props: ExtensionCardProps) => {
         props.onCardClick(props.scr);
     }
 
-    return <codecard.CodeCardView {...props} onClick={handleClick} key={props.name}/>
+    return <codecard.CodeCardView {...props} onClick={handleClick} key={props.name} />
 }
