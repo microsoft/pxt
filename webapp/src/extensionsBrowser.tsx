@@ -284,6 +284,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             .filter(pk => !pk.searchOnly || searchFor?.length != 0)
             .filter(pk => pk.name != "core")
             .filter(pk => false == !!pk.core) // show core in "boards" mode
+            .filter(pk => !pkg.mainPkg.deps[pk.name] || pkg.mainPkg.deps[pk.name].cppOnly) // don't show package already referenced in extensions
             .forEach(e => extensionsMap.set(e.name, packageConfigToExtensionMeta(e)))
         return extensionsMap
     }
