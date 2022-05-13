@@ -383,6 +383,7 @@ declare namespace pxt {
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
         saveInMenu?: boolean; // move save icon under gearwheel menu
         lockedEditor?: boolean; // remove default home navigation links from the editor
+        hideReplaceMyCode?: boolean; // hides the "replace my code" button for tutorials with templates in their markdown
         fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
         appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
