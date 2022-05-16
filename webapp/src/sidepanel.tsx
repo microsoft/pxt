@@ -139,6 +139,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const nextButton = <Button icon="arrow circle right" text={lf("Next")} onClick={this.showTutorialTab} />;
 
         return <div id="simulator" className="simulator">
+            {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
             <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
                 {hasSimulator && <TabContent name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.showSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
                     {isTabTutorial && !isLockedEditor && this.tutorialExitButton()}

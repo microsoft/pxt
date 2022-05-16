@@ -147,7 +147,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
-        {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" &&
+        {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode &&
             <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}
         <div className="tutorial-controls">
