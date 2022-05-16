@@ -79,6 +79,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
         refs.forEach((ref, index) => {
             ref.onpointerdown = ev => {
                 if (dragIndex !== -1) return;
+                ev.preventDefault();
                 const coord = clientCoord(ev);
                 const svg = screenToSVGCoord(ref.ownerSVGElement, coord);
                 setDragIndex(index);
@@ -87,6 +88,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
 
             ref.onpointermove = ev => {
                 if (dragIndex !== index) return;
+                ev.preventDefault();
                 const coord = clientCoord(ev);
                 const svg = screenToSVGCoord(ref.ownerSVGElement, coord);
                 throttledSetDragValue(index, svgCoordToValue(svg));
@@ -111,7 +113,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
     }, [dragIndex, onPointChange])
 
     const getValue = (index: number) => {
-        return points[index];
+        return Math.min(Math.max(points[index], min), max);
     }
 
     const handleRectAnimateRef = (ref: SVGAnimateElement) => {
@@ -131,7 +133,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
         aria-hidden={ariaHidden}
         aria-describedby={ariaDescribedBy}
         role={role}>
-        <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
+        <svg className="draggable-graph-svg" viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <filter id="dropshadow">
                     <feGaussianBlur in="SourceAlpha" stdDeviation="3" />

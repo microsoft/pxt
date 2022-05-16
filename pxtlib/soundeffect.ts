@@ -18,7 +18,7 @@ namespace pxt.assets {
     export const MAX_VOLUME = 255;
 
     export function renderSoundPath(sound: pxt.assets.Sound, width: number, height: number) {
-        const {
+        let {
             startFrequency,
             endFrequency,
             startVolume,
@@ -26,6 +26,12 @@ namespace pxt.assets {
             wave,
             interpolation
         } = sound;
+
+        startFrequency = Math.max(Math.min(startFrequency, MAX_FREQUENCY), 1);
+        endFrequency = Math.max(Math.min(endFrequency, MAX_FREQUENCY), 1);
+
+        startVolume = Math.max(Math.min(startVolume, MAX_VOLUME), 0);
+        endVolume = Math.max(Math.min(endVolume, MAX_VOLUME), 0);
 
         // To make the graph appear consistent with the implementation, use a seeded random for the noise waveform.
         // The numbers are still nonsense but at least this reflects that it's deterministic.
@@ -91,6 +97,7 @@ namespace pxt.assets {
         const random = new SeededRandom(frequency);
         if (wave === "noise") frequency = random.randomRange(500, 5000);
 
+        frequency = Math.max(Math.min(frequency, MAX_FREQUENCY), 1);
 
         const amplitude = (volume / MAX_VOLUME) * (height - 2) / 2;
         const waveHalfWidth =  (width / (frequency * timeBase / 1000)) / 2;
