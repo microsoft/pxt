@@ -111,7 +111,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
     }, [dragIndex, onPointChange])
 
     const getValue = (index: number) => {
-        return points[index];
+        return Math.min(Math.max(points[index], min), max);
     }
 
     const handleRectAnimateRef = (ref: SVGAnimateElement) => {
