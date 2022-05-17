@@ -88,9 +88,9 @@ Click on the ``lab`` icon in the **Explorer** view to open any markdown file (``
 
 #### Cloud caching
 
-To increase performance, the MakeCode websites may "cloud cache" the release version of a previously used extension and tutorials hosted in a user GitHub repository. This means that if you commit changes to a tutorial you have in a repostory, those updates might not appear when you try to test the tutorial in MakeCode. The MakeCode cloud cache will not reflect your changes until you **create a new release version** for your repository. Makng a new release will force the cache to clear the prior version and refresh to the new version the next time it's requested. See [GitHub releases](https://arcade.makecode.com/github/release) for more about creating a versioned release.
+To increase performance, the MakeCode websites may "cloud cache" the release version of a previously used extension and tutorials hosted in a user GitHub repository. This means that if you commit changes to a tutorial you have in a repostory, those updates might not appear when you try to test the tutorial in MakeCode. The MakeCode cloud cache will not reflect your changes until you **create a new release version** for your repository. Making a new release will force the cache to clear the prior version and refresh to the new version the next time it's requested. See [GitHub releases](https://arcade.makecode.com/github/release) for more about creating a versioned release.
 
-To be clear, you need to make the release on the MakeCode website in the Github integration. Making a release on github.com does _not_ force the cache to clear.
+Again, to be clear, you need to make the release through the [Github integration](https://makecode.com/extensions/github-authoring) on the MakeCode website. Making a release directly on github.com does _not_ force the cache to clear.
 
 ### ~
 
