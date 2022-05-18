@@ -158,7 +158,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     async function fetchGithubDataAsync(preferredRepos: string[]): Promise<pxt.github.GitRepo[]> {
         // When searching multiple repos at the same time, use 'extension-search' which caches results
         // for much longer than 'gh-search'
-        const virtualApi = preferredRepos.length == 1 ? 'gh-search' : 'extension-search';
+        const virtualApi = preferredRepos.length <= 1 ? 'gh-search' : 'extension-search';
         return data.getAsync<pxt.github.GitRepo[]>(`${virtualApi}:${preferredRepos.join("|")}`);
     }
 
