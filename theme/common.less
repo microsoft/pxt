@@ -971,13 +971,27 @@ Field editors
         padding-bottom: 2rem;
         background-color: #E5E5E5;
 
-        .search {
-            width: 100%;
-            display: flex;
-            justify-content: center;
+        .common-input-wrapper {
+            width: 70%;
 
-            .input {
-                width: 70%;
+            .common-input-group {
+                height: 3rem;
+                border-radius: 500rem;
+                padding: 0.7rem 1rem;
+
+                & > i.fas.fa-search {
+                    position: relative;
+                    margin-top: 0.1rem;
+                    right: 0;
+                    bottom: 0;
+
+                    opacity: .5;
+                    transition: opacity 0.3s ease;
+                }
+            }
+
+            &:focus-within .common-input-group > i.fas.fa-search {
+                opacity: 1;
             }
         }
     }

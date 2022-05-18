@@ -101,7 +101,7 @@ export const Input = (props: InputProps) => {
                     aria-hidden={ariaHidden}
                     type={type || "text"}
                     placeholder={placeholder}
-                    value={value || initialValue || ""}
+                    value={value !== undefined ? value : (initialValue || "")}
                     readOnly={!!readOnly}
                     onClick={clickHandler}
                     onChange={changeHandler}
