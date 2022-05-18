@@ -27,6 +27,9 @@ namespace pxt.blocks {
         // gets used for the input/field in the Blockly block
         definitionName: string;
 
+        // The index of this parameter in the block string
+        definitionIndex?: number;
+
         // Shadow block ID specified in the block string (if present)
         shadowBlockId?: string;
 
@@ -147,6 +150,7 @@ namespace pxt.blocks {
                 shadowBlockId: def.shadowBlockId,
                 type: fn.namespace,
                 defaultValue: defaultValue,
+                definitionIndex: defParameters.indexOf(def),
 
                 // Normally we pass ths actual parameter name, but the "this" parameter doesn't have one
                 fieldEditor: fieldEditor(defName, THIS_NAME),
@@ -182,6 +186,7 @@ namespace pxt.blocks {
                         type: p.type,
                         defaultValue: isVarOrArray ? (def.varName || p.default) : p.default,
                         definitionName: defName,
+                        definitionIndex: def ? defParameters.indexOf(def) : i,
                         shadowBlockId: def && def.shadowBlockId,
                         isOptional: defParameters ? defParameters.indexOf(def) >= optionalStart : false,
                         fieldEditor: fieldEditor(defName, p.name),

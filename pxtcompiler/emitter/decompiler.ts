@@ -748,31 +748,7 @@ ${output}</xml>`;
         function emitValueNode(n: ValueNode) {
             write(`<value name="${n.name}">`)
 
-            let emitShadowOnly = false;
-
-            if (n.value.kind === "expr") {
-                const value = n.value as ExpressionNode;
-                if (value.type === numberType && n.shadowType === minmaxNumberType) {
-                    value.type = minmaxNumberType;
-                    value.fields[0].name = 'SLIDER';
-                    value.mutation = n.shadowMutation;
-                }
-                emitShadowOnly = value.type === n.shadowType;
-                if (!emitShadowOnly) {
-                    switch (value.type) {
-                        case "math_number":
-                        case "math_number_minmax":
-                        case "math_integer":
-                        case "math_whole_number":
-                        case "logic_boolean":
-                        case "text":
-                            emitShadowOnly = !n.shadowType;
-                            break
-                    }
-                }
-            }
-
-            if (emitShadowOnly) {
+            if (shouldEmitShadowOnly(n)) {
                 emitOutputNode(n.value, true);
             }
             else {
@@ -2138,7 +2114,6 @@ ${output}</xml>`;
                 switch (e.kind) {
                     case SK.FunctionExpression:
                     case SK.ArrowFunction:
-                        let expBody = (e as ArrowFunction | FunctionExpression).body;
                         const m = getDestructuringMutation(e as ArrowFunction);
                         let mustPopLocalScope = false;
                         if (m) {
@@ -2271,7 +2246,23 @@ ${output}</xml>`;
                 if (!r.mutation) r.mutation = {};
 
                 if (attributes.compileHiddenArguments) {
-                    r.mutation["_expanded"] =  "0";
+                    // Only expand the optional arguments that do not map to shadow blocks
+                    let nonOptional = 0;
+                    let expandCount = 0;
+
+                    for (const arg of args) {
+                        const aName = U.htmlEscape(arg.param.definitionName);
+                        const input = r.inputs.find(i => i.name === aName);
+
+                        if (!arg.param.isOptional) {
+                            nonOptional++;
+                        }
+                        else if (input && !shouldEmitShadowOnly(input)) {
+                            expandCount = Math.max(arg.param.definitionIndex - nonOptional + 1, expandCount)
+                        }
+                    }
+
+                    r.mutation["_expanded"] =  expandCount.toString();
                 }
                 else {
                     r.mutation["_expanded"] = optionalCount.toString();
@@ -3876,5 +3867,33 @@ ${output}</xml>`;
                 current.owner = node;
             }
         }
+    }
+
+    function shouldEmitShadowOnly(n: ValueNode) {
+        let emitShadowOnly = false;
+
+        if (n.value.kind === "expr") {
+            const value = n.value as ExpressionNode;
+            if (value.type === numberType && n.shadowType === minmaxNumberType) {
+                value.type = minmaxNumberType;
+                value.fields[0].name = 'SLIDER';
+                value.mutation = n.shadowMutation;
+            }
+            emitShadowOnly = value.type === n.shadowType;
+            if (!emitShadowOnly) {
+                switch (value.type) {
+                    case "math_number":
+                    case "math_number_minmax":
+                    case "math_integer":
+                    case "math_whole_number":
+                    case "logic_boolean":
+                    case "text":
+                        emitShadowOnly = !n.shadowType;
+                        break
+                }
+            }
+        }
+
+        return emitShadowOnly;
     }
 }
