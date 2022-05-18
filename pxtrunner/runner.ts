@@ -11,6 +11,7 @@ namespace pxt.runner {
         id?: string;
         code?: string;
         assets?: string;
+        hideSimButtons?: boolean;
         highContrast?: boolean;
         light?: boolean;
         fullScreen?: boolean;
@@ -405,6 +406,7 @@ namespace pxt.runner {
             storedState: storedState,
             light: simOptions.light,
             single: simOptions.single,
+            hideSimButtons: simOptions.hideSimButtons
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
