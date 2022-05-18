@@ -370,11 +370,10 @@ namespace pxt.blocks {
             block.appendChild(createShadowValue(info, t, t.shadowBlockId || "variables_get", t.defaultValue || t.definitionName));
         }
         if (fn.parameters) {
-            comp.parameters.filter(pr => !pr.isOptional &&
-                (primitiveTypeRegex.test(pr.type)
+            comp.parameters.filter(pr => primitiveTypeRegex.test(pr.type)
                     || primitiveTypeRegex.test(isArrayType(pr.type))
                     || pr.shadowBlockId
-                    || pr.defaultValue))
+                    || pr.defaultValue)
                 .forEach(pr => {
                     block.appendChild(createShadowValue(info, pr));
                 })
