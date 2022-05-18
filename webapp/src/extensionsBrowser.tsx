@@ -109,11 +109,10 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
 
-    function updateExtensionTags() {
+    async function updateExtensionTags() {
         if (extensionTags.size > 0)
             return
-        let trgConfigFetch = data.getDataWithStatus("target-config:");
-        let trgConfig = trgConfigFetch.data as pxt.TargetConfig;
+        let trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
         if (!trgConfig || !trgConfig.packages || !trgConfig.packages.preferredRepoLib)
             return;
         const allRepos = [...trgConfig.packages.preferredRepoLib, ...trgConfig.packages.approvedRepoLib]
@@ -315,8 +314,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         bundled.forEach(e => {
             repos.push(e)
         })
-        let trgConfigFetch = data.getDataWithStatus("target-config:");
-        let trgConfig = trgConfigFetch.data as pxt.TargetConfig;
+        let trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
 
         const toBeFetched: string[] = [];
         if (trgConfig && trgConfig.packages && trgConfig.packages.preferredRepoLib) {

@@ -205,7 +205,7 @@ export function invalidate(path: string) {
     })
 }
 
-export function getAsync<T = any>(path: string) {
+export function getAsync<T = any>(path: string): Promise<T> {
     let ce = lookup(path)
 
     if (ce.api.isSync)
