@@ -1,0 +1,16 @@
+.common-card {
+    width: 18rem;
+    height: 20rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid @inputBorderColor;
+    transition: border 0.1s ease;
+}
+
+.common-card[role="button"] {
+    cursor: pointer;
+
+    &:hover {
+        border: 1px solid @inputBorderColorFocus;
+    }
+}
