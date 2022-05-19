@@ -1144,11 +1144,10 @@ Field editors
 }
 
 .extension-cards {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 18rem);
     gap: 1rem;
-    padding: 1rem;
+    width: 100%;
 }
 
 .import-extension-modal {
