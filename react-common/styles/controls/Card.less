@@ -2,10 +2,14 @@
     width: 18rem;
     height: 20rem;
     border-radius: 0.5rem;
-    overflow: hidden;
     border: 1px solid @inputBorderColor;
     transition: border 0.1s ease;
     position: relative;
+
+    .common-card-body {
+        overflow: hidden;
+        border-radius: 0.5rem;
+    }
 }
 
 .common-card[role="button"] {
@@ -14,4 +18,36 @@
     &:hover {
         border: 1px solid @inputBorderColorFocus;
     }
+}
+
+.common-card-label {
+    color: @white;
+    background-color: @orange;
+    
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+    
+    position: absolute;
+    top: 1rem;
+    right: -1rem;
+    
+    padding: 0.5rem 0.5rem 0.25rem 0.5rem;
+    min-width: 5rem;
+    font-size: 16px;
+    border-color: darken(@orange, 10%);
+}
+
+.common-card-label::after {
+    position: absolute;
+    content: "";
+    top: 100%;
+    left: auto;
+    right: 0;
+    background-color: transparent;
+    border-color: transparent;
+    border-style: solid;
+    border-width: 1.2em 1.2em 0 0;
+    border-top-color: inherit;
+    width: 0;
+    height: 0;
 }

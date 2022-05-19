@@ -39,7 +39,8 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
             onClick={onCardClick}
             ariaLabelledBy={id + "-title"}
             ariaDescribedBy={id + "-description"}
-            tabIndex={onClick && 0}>
+            tabIndex={onClick && 0}
+            label={label}>
             <div className="common-extension-card-contents">
                 <LazyImage src={imageUrl} alt={title} />
                 <div className="common-extension-card-title" id={id + "-title"}>

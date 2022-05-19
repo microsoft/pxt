@@ -5,6 +5,8 @@ export interface CardProps extends ContainerProps {
     onClick?: () => void;
     tabIndex?: number;
     ariaLabelledBy?: string;
+    label?: string;
+    labelClass?: string;
 }
 
 export const Card = (props: CardProps) => {
@@ -18,6 +20,8 @@ export const Card = (props: CardProps) => {
         ariaHidden,
         ariaLabel,
         onClick,
+        label,
+        labelClass,
         tabIndex
     } = props;
 
@@ -34,5 +38,10 @@ export const Card = (props: CardProps) => {
             <div className="common-card-body">
                 {children}
             </div>
+            {label &&
+                <label className={classList("common-card-label", labelClass)}>
+                    {label}
+                </label>
+            }
     </div>
 }

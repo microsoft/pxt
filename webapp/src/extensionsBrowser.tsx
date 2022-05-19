@@ -490,24 +490,17 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     loading={scr.loading}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                 />
-                            )
-                            }
-                            {/* {currentTab == TabState.InDevelopment && local.forEach((p, index) =>
+                            )}
+                            {currentTab == TabState.InDevelopment && local.forEach((p, index) =>
                                 <ExtensionCard
                                     key={`local:${index}`}
                                     title={p.name}
                                     description={lf("Local copy of {0} hosted on github.com", p.githubId)}
-                                    url={"https://github.com/" + p.githubId}
                                     imageUrl={p.icon}
-                                    scr={p}
-                                    onCardClick={addLocal}
-                                    label={lf("Local")}
-                                    title={lf("Local GitHub extension")}
-                                    labelClass="blue right ribbon"
-                                    role="button"
+                                    extension={p}
+                                    onClick={addLocal}
                                 />
-                            )
-                            } */}
+                            )}
                         </div>
                     </div>
                 }
