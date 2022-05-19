@@ -106,7 +106,6 @@
         var localToken = /local_token(?:[:=])([^&?]+)/i.exec(window.location.href);
         var hex = !!/hex(?:[:=])1/i.exec(window.location.href);
         var footer = !/nofooter(?:[:=])1/i.exec(window.location.href);
-        var hideSimButtons = !!/hidesimbuttons(?:[:=])1/i.exec(window.location.href);
         var debugSim = !!/debugSim(?:[:=])1/i.exec(window.location.href);
         var sims = document.getElementById('simulators');
         var highContrast = !!/hc(?:[:=])1/i.exec(window.location.href);
@@ -181,7 +180,6 @@
                                 code: files["main.ts"],
                                 assets: JSON.stringify(files),
                                 dependencies: Object.keys(deps).map(v => v + "=" + deps[v]),
-                                hideSimButtons: hideSimButtons,
                                 highContrast: highContrast,
                                 light: light,
                                 fullScreen: fullScreen,
@@ -241,8 +239,7 @@
                         fullScreen: fullScreen,
                         dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined,
                         builtJsInfo: builtSimJs,
-                        single: single,
-                        hideSimButtons: hideSimButtons
+                        single: single
                     };
                     console.log('simulating script')
                     pxt.runner.simulateAsync(sims, options).then(function() {
