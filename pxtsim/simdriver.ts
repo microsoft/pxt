@@ -426,7 +426,7 @@ namespace pxsim {
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
             frame.dataset['origin'] = new URL(furl).origin || "*";
-            frame.dataset['hidesimbuttons'] = this._runOptions.hideSimButtons ? "true" : "false";
+            frame.dataset['hidesimbuttons'] = this._runOptions?.hideSimButtons ? "true" : "false";
 
             wrapper.appendChild(frame);
 
