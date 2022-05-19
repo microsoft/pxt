@@ -114,25 +114,6 @@ In the final unit of the course, students will prepare for the AP CS Principles 
 
 In the Service Learning unit, students will explore the [United Nations Sustainable Development Goals](https://www.undp.org/content/undp/en/home/sustainable-development-goals.html), see examples of how games can be used for good, and then using the design thinking process, create their own games for social good.
 
-## Educator Materials
-
-The curriculum materials include:
-
-* Daily Lesson plans in the form of a OneNote notebook.
-* PowerPoint decks for classroom lectures with talking points in the Notes section.
-* Textbook Blown to Bits: Your Life, Liberty, and Pursuit of Happiness After the Digital Explosion.
-* Student projects, labs and activities (with solutions where appropriate).
-
-### ~ reminder
-
-#### Download Educator Materials
-
-All of the materials for the **AP Computer Science Principles with Microsoft MakeCode** curriculum are available to download here:
-
-* **[Curriculum Materials Downloads](https://aka.ms/MSMakeCodeAPCSP)**
-
-### ~
-
 ## Stay Connected 
 
 If you decide to use the AP Computer Science Principles with Microsoft MakeCode curriculum or materials, please keep in touch. Join the [Microsoft MakeCode AP CSP Forum](https://forum.makecode.com/c/ap-cs-principles/23) to connect with other Educators teaching the curriculum, ask questions, or give feedback on curriculum materials. Please also follow [@MSMakeCode](https://twitter.com/MSMakeCode) on Twitter for the latest news and announcements.
