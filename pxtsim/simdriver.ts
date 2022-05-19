@@ -70,7 +70,6 @@ namespace pxsim {
         dependencies?: Map<string>;
         // single iframe, no message simulators
         single?: boolean;
-        hideSimButtons?: boolean;
     }
 
     export interface HwDebugger {
@@ -426,7 +425,6 @@ namespace pxsim {
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
             frame.dataset['origin'] = new URL(furl).origin || "*";
-            frame.dataset['hidesimbuttons'] = this._runOptions?.hideSimButtons ? "true" : "false";
 
             wrapper.appendChild(frame);
 
@@ -690,7 +688,8 @@ namespace pxsim {
             msg.frameCounter = ++this.frameCounter;
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
-                mpRole: /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase()
+                mpRole: /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase(),
+                hideSimButtons: !!/hidesimbuttons(?:[:=])1/i.exec(window.location.href)
             };
 
             msg.id = `${msg.options.theme}-${this.nextId()}`;
