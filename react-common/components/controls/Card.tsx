@@ -1,5 +1,5 @@
 import * as React from "react";
-import { classList, ContainerProps } from "../util";
+import { classList, ContainerProps, fireClickOnEnter } from "../util";
 
 export interface CardProps extends ContainerProps {
     onClick?: () => void;
@@ -34,7 +34,8 @@ export const Card = (props: CardProps) => {
         aria-hidden={ariaHidden}
         aria-label={ariaLabel}
         onClick={onClick}
-        tabIndex={tabIndex}>
+        tabIndex={tabIndex}
+        onKeyDown={fireClickOnEnter}>
             <div className="common-card-body">
                 {children}
             </div>

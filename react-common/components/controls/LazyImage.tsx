@@ -50,7 +50,7 @@ export const LazyImage = (props: LazyImageProps) => {
             aria-describedby={ariaDescribedBy}
         />
         <div className="common-spinner" />
-        </div>
+    </div>
 }
 
 function initObserver() {
