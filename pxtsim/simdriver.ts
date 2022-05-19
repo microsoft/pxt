@@ -689,7 +689,7 @@ namespace pxsim {
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
                 mpRole: /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase(),
-                hideSimButtons: !!/hidesimbuttons(?:[:=])1/i.exec(window.location.href)
+                hideSimButtons: /hidesimbuttons(?:[:=])1/i.test(window.location.href)
             };
 
             msg.id = `${msg.options.theme}-${this.nextId()}`;
