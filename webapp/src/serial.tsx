@@ -421,13 +421,13 @@ export class Editor extends srceditor.Editor {
         const csvText = csv.join('\r\n');
 
         core.infoNotification(lf("Exporting data...."));
-        const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
+        const time = currentIsoDateString();
         pxt.commands.browserDownloadAsync(Util.toUTF8(csvText), pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
     }
 
     downloadRaw() {
         core.infoNotification(lf("Exporting text...."));
-        const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
+        const time = currentIsoDateString();
         let buf = this.rawDataBuffer;
         // ensure \r\n newlines for windows <10
         if (pxt.BrowserUtils.isWindows())
@@ -486,6 +486,10 @@ export class Editor extends srceditor.Editor {
 
     domUpdate() {
     }
+}
+
+function currentIsoDateString() {
+    return new Date().toISOString().replace(/[^\d\w]/gi,'-')
 }
 
 export interface StartPauseButtonProps {
