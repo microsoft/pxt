@@ -5,6 +5,8 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        align-items: center;
+        justify-content: center;
     }
 
     .common-extension-card-title {
@@ -47,5 +49,33 @@
         border-radius: 0;
         border-top: solid 1px @inputBorderColor;
         flex-shrink: 0;
+    }
+
+    .common-extension-card-contents {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+
+    .common-spinner {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+
+        position: absolute;
+        width: 60px;
+        height: 60px;
+    }
+}
+
+.common-extension-card.loading {
+    .common-extension-card-contents {
+        opacity: 0;
+    }
+
+    .common-spinner {
+        opacity: 1;
     }
 }

@@ -3,6 +3,8 @@ import { classList, ContainerProps } from "../util";
 
 export interface CardProps extends ContainerProps {
     onClick?: () => void;
+    tabIndex?: number;
+    ariaLabelledBy?: string;
 }
 
 export const Card = (props: CardProps) => {
@@ -12,9 +14,11 @@ export const Card = (props: CardProps) => {
         role,
         children,
         ariaDescribedBy,
+        ariaLabelledBy,
         ariaHidden,
         ariaLabel,
-        onClick
+        onClick,
+        tabIndex
     } = props;
 
     return <div
@@ -22,9 +26,11 @@ export const Card = (props: CardProps) => {
         className={classList("common-card", className)}
         role={role || (onClick ? "button" : undefined)}
         aria-describedby={ariaDescribedBy}
+        aria-labelledby={ariaLabelledBy}
         aria-hidden={ariaHidden}
         aria-label={ariaLabel}
-        onClick={onClick}>
+        onClick={onClick}
+        tabIndex={tabIndex}>
             <div className="common-card-body">
                 {children}
             </div>

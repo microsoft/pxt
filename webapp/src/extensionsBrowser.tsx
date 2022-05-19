@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
 import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
 import { Modal } from "../../react-common/components/controls/Modal";
+import { classList } from "../../react-common/components/util";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta;
 type EmptyCard = { name: string, loading?: boolean }
@@ -419,7 +420,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="extension-cards">
                             {extensionsToShow?.map((scr, index) =>
                                 <ExtensionCard
-                                    key={`searched:${index}`}
+                                    key={classList("searched", index + "", scr.loading && "loading")}
                                     title={scr.name ?? `${index}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
@@ -446,7 +447,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="extension-cards">
                             {extensionsToShow?.map((scr, index) =>
                                 <ExtensionCard
-                                    key={`tagged:${index}`}
+                                    key={classList("tagged", index + "", scr.loading && "loading")}
                                     title={scr.name ?? `${index}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
@@ -477,17 +478,17 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             />
                         </div>
                         <div className="extension-cards">
-                            {currentTab == TabState.Recommended && preferredExts.map((e, index) =>
+                            {currentTab == TabState.Recommended && preferredExts.map((scr, index) =>
                                 <ExtensionCard
-                                    key={`preferred:${index}`}
-                                    extension={e}
-                                    title={e.name ?? `${index}`}
+                                    key={classList("preferred", index + "", scr.loading && "loading")}
+                                    extension={scr}
+                                    title={scr.name ?? `${index}`}
                                     onClick={installExtension}
-                                    imageUrl={e.imageUrl}
-                                    description={e.description}
-                                    learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}
-                                    loading={e.loading}
-                                    label={pxt.isPkgBeta(e) ? lf("Beta") : undefined}
+                                    imageUrl={scr.imageUrl}
+                                    description={scr.description}
+                                    learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                    loading={scr.loading}
+                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                 />
                             )
                             }
