@@ -397,11 +397,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         onBlur={onSearchBarChange}
                         icon="fas fa-search"
                     />
-                    {/* <SearchInput
-                        ariaMessage={searchComplete && lf("{0} results matching '{1}'", extensionsToShow.length, searchFor)}
-                        placeholder={lf("Search or enter project URL...")}
-                        aria-label={lf("Search or enter project URL...")}
-                        searchHandler={setSearchFor} /> */}
                     <div className="extension-tags">
                         {categoryNames.map(c =>
                             <Button title={pxt.Util.rlf(c)}
