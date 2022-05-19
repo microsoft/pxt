@@ -1,0 +1,29 @@
+.common-lazy-image-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .common-spinner {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+
+    img {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+}
+
+.common-lazy-image-wrapper.loaded {
+    .common-spinner {
+        opacity: 0;
+    }
+
+    img {
+        opacity: 1;
+    }
+}

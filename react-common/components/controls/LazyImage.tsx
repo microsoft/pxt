@@ -34,18 +34,23 @@ export const LazyImage = (props: LazyImageProps) => {
         observer.observe(ref);
     }
 
-    return <img
-        id={id}
-        ref={handleImageRef}
-        className={className}
-        data-src={src}
-        alt={alt}
-        title={title}
-        role={role}
-        aria-label={ariaLabel}
-        aria-hidden={ariaHidden}
-        aria-describedby={ariaDescribedBy}
+
+
+    return <div className="common-lazy-image-wrapper">
+        <img
+            id={id}
+            ref={handleImageRef}
+            className={className}
+            data-src={src}
+            alt={alt}
+            title={title}
+            role={role}
+            aria-label={ariaLabel}
+            aria-hidden={ariaHidden}
+            aria-describedby={ariaDescribedBy}
         />
+        <div className="common-spinner" />
+        </div>
 }
 
 function initObserver() {
@@ -64,7 +69,12 @@ function initObserver() {
                 observer.unobserve(entry.target);
                 const url = entry.target.getAttribute("data-src");
                 (entry.target as HTMLImageElement).src = url;
-                
+
+                const image = entry.target as HTMLImageElement;
+                image.src = url;
+                image.onload = () => {
+                    image.parentElement.classList.add("loaded");
+                }
             }
         })
     }
