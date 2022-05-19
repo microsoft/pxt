@@ -2,7 +2,7 @@
 
 To access certain curriculum resources, you must have a verified [GitHub Teacher](https://education.github.com/teachers) account. This helps ensure that curriculum solutions and answer keys are protected. The process of obtaining a GitHub Teacher account is free and includes other benefits. Learn more at https://education.github.com/teachers.
 
-## Create a GitHub Account
+## Create a GitHub Teacher Account
 
 ### 1. Sign up for a GitHub account
 
