@@ -908,7 +908,7 @@ Field editors
 .fullscreen.extensions-browser > {
     .common-modal > {
         .common-modal-header {
-            height: 3rem;
+            height: @mainMenuHeight;
             background-color: @blue;
             z-index: 202;
             display: flex;
@@ -937,6 +937,13 @@ Field editors
         }
     }
 }
+
+@media @tabletAndBelow {
+    .fullscreen.extensions-browser > .common-modal > .common-modal-header {
+        height: @mobileMenuHeight;
+    }
+}
+
 @media @mobileAndBelow {
     .extensions-browser {
         .common-modal > .common-modal-header > .common-modal-back {
@@ -959,17 +966,32 @@ Field editors
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
-        gap: 1.5rem;
+        gap: 1rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
         background-color: #E5E5E5;
-        padding-top: 1rem;
 
-        .search {
-            width: 100%;
-            display: flex;
-            justify-content: center;
+        .common-input-wrapper {
+            width: 70%;
 
-            .input {
-                width: 70%;
+            .common-input-group {
+                height: 3rem;
+                border-radius: 500rem;
+                padding: 0.7rem 1rem;
+
+                & > i.fas.fa-search {
+                    position: relative;
+                    margin-top: 0.1rem;
+                    right: 0;
+                    bottom: 0;
+
+                    opacity: .5;
+                    transition: opacity 0.3s ease;
+                }
+            }
+
+            &:focus-within .common-input-group > i.fas.fa-search {
+                opacity: 1;
             }
         }
     }
@@ -1025,9 +1047,7 @@ Field editors
 
     .extension-tags {
         display: flex;
-        padding: 2rem;
-        column-gap: 2rem;
-        row-gap: 1rem;
+        gap: 1rem;
         width: 80%;
         justify-content: center;
         flex-wrap: wrap;
@@ -1061,9 +1081,13 @@ Field editors
     .tab-header {
         width: 100%;
 
+        .common-button {
+            border: 2px solid @white;
+        }
+
         .common-button.selected {
-            font-weight: bold;
-            border-bottom: 0.3rem solid @blue;
+            border-bottom: 2px solid @blue;
+            font-weight: 600;
         }
     }
 

@@ -6,7 +6,7 @@ import * as pkg from "./package";
 import * as codecard from "./codecard";
 
 import { Button } from "../../react-common/components/controls/Button";
-import { SearchInput } from "./components/searchInput";
+import { Input } from "../../react-common/components/controls/Input";
 import { useState, useEffect } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
 import { Modal } from "../../react-common/components/controls/Modal";
@@ -368,6 +368,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const categoryNames = getCategoryNames();
     const local = currentTab == TabState.InDevelopment ? fetchLocalRepositories() : undefined
+
+    const onSearchBarChange = (newValue: string) => {
+        setSearchFor(newValue || "");
+    }
+
     return (
         <Modal
             title={lf("Extensions")}
@@ -384,11 +389,14 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     />
                 }
                 <div className="extension-search-header">
-                    <SearchInput
-                        ariaMessage={searchComplete && lf("{0} results matching '{1}'", extensionsToShow.length, searchFor)}
+                    <Input
                         placeholder={lf("Search or enter project URL...")}
-                        aria-label={lf("Search or enter project URL...")}
-                        searchHandler={setSearchFor} />
+                        ariaLabel={lf("Search or enter project URL...")}
+                        initialValue={searchFor}
+                        onEnterKey={onSearchBarChange}
+                        onBlur={onSearchBarChange}
+                        icon="fas fa-search"
+                    />
                     <div className="extension-tags">
                         {categoryNames.map(c =>
                             <Button title={pxt.Util.rlf(c)}

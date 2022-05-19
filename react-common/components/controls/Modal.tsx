@@ -81,10 +81,11 @@ export const Modal = (props: ModalProps) => {
                 {fullscreen && helpUrl &&
                     <div className="common-modal-help">
                         <Button
-                            className={"menu-button"}
+                            className="menu-button"
                             title={lf("Help on {0} dialog", title)}
-                            onClick={() => { window.open(props.helpUrl, "_blank") }}
-                            rightIcon={"icon help"}
+                            href={props.helpUrl}
+                            onClick={() => {}}
+                            rightIcon="fas fa-question"
                         />
                     </div>
                 }
