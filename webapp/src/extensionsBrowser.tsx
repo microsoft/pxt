@@ -3,13 +3,14 @@ import * as React from "react";
 import * as core from "./core";
 import * as workspace from "./workspace";
 import * as pkg from "./package";
-import * as codecard from "./codecard";
 
 import { Button } from "../../react-common/components/controls/Button";
 import { Input } from "../../react-common/components/controls/Input";
 import { useState, useEffect } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
+import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
 import { Modal } from "../../react-common/components/controls/Modal";
+import { classList } from "../../react-common/components/util";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta;
 type EmptyCard = { name: string, loading?: boolean }
@@ -416,19 +417,18 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="breadcrumbs">
                             <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
                         </div>
-                        <div className="ui cards left">
+                        <div className="extension-cards">
                             {extensionsToShow?.map((scr, index) =>
                                 <ExtensionCard
-                                    key={`searched:${index}`}
-                                    name={scr.name ?? `${index}`}
+                                    key={classList("searched", index + "", scr.loading && "loading")}
+                                    title={scr.name ?? `${index}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
-                                    scr={scr}
-                                    onCardClick={installExtension}
+                                    extension={scr}
+                                    onClick={installExtension}
                                     learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
                                     loading={scr.loading}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                    role="button"
                                 />)}
                         </div>
                         {searchComplete && extensionsToShow.length == 0 &&
@@ -444,19 +444,18 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <span>/</span>
                             <span>{selectedTag}</span>
                         </div>
-                        <div className="ui cards left">
+                        <div className="extension-cards">
                             {extensionsToShow?.map((scr, index) =>
                                 <ExtensionCard
-                                    key={`tagged:${index}`}
-                                    name={scr.name ?? `${index}`}
+                                    key={classList("tagged", index + "", scr.loading && "loading")}
+                                    title={scr.name ?? `${index}`}
                                     description={scr.description}
                                     imageUrl={scr.imageUrl}
-                                    scr={scr}
-                                    onCardClick={installExtension}
+                                    extension={scr}
+                                    onClick={installExtension}
                                     learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
                                     loading={scr.loading}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                    role="button"
                                 />)}
                         </div>
                     </div>}
@@ -478,56 +477,34 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                 className={currentTab == TabState.InDevelopment ? "selected" : ""}
                             />
                         </div>
-                        <div className="ui cards left">
-                            {currentTab == TabState.Recommended && preferredExts.map((e, index) =>
+                        <div className="extension-cards">
+                            {currentTab == TabState.Recommended && preferredExts.map((scr, index) =>
                                 <ExtensionCard
-                                    key={`preferred:${index}`}
-                                    scr={e}
-                                    name={e.name ?? `${index}`}
-                                    onCardClick={installExtension}
-                                    imageUrl={e.imageUrl}
-                                    description={e.description}
-                                    learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}
-                                    loading={e.loading}
-                                    label={pxt.isPkgBeta(e) ? lf("Beta") : undefined}
-                                    role="button"
+                                    key={classList("preferred", index + "", scr.loading && "loading")}
+                                    extension={scr}
+                                    title={scr.name ?? `${index}`}
+                                    onClick={installExtension}
+                                    imageUrl={scr.imageUrl}
+                                    description={scr.description}
+                                    learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                    loading={scr.loading}
+                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                 />
-                            )
-                            }
+                            )}
                             {currentTab == TabState.InDevelopment && local.forEach((p, index) =>
                                 <ExtensionCard
                                     key={`local:${index}`}
-                                    name={p.name}
+                                    title={p.name}
                                     description={lf("Local copy of {0} hosted on github.com", p.githubId)}
-                                    url={"https://github.com/" + p.githubId}
                                     imageUrl={p.icon}
-                                    scr={p}
-                                    onCardClick={addLocal}
-                                    label={lf("Local")}
-                                    title={lf("Local GitHub extension")}
-                                    labelClass="blue right ribbon"
-                                    role="button"
+                                    extension={p}
+                                    onClick={addLocal}
                                 />
-                            )
-                            }
+                            )}
                         </div>
                     </div>
                 }
             </div>
         </Modal>
     )
-}
-
-interface ExtensionCardProps extends pxt.CodeCard {
-    scr: pxtc.service.ExtensionMeta;
-    onCardClick: (scr: any) => void;
-    loading?: boolean;
-}
-
-const ExtensionCard = (props: ExtensionCardProps) => {
-    const handleClick = () => {
-        props.onCardClick(props.scr);
-    }
-
-    return <codecard.CodeCardView {...props} onClick={handleClick} key={props.name} />
 }

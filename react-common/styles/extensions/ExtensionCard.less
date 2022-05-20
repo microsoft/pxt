@@ -1,0 +1,82 @@
+.common-extension-card {
+    background-color: @white;
+    
+    .common-card-body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .common-extension-card-title {
+        font-weight: 600;
+        font-size: 18px;
+        padding: 0.5rem 1rem 0.25rem 1rem;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .common-extension-card-description {
+        flex-grow: 1;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        font-size: 16px;
+        overflow: hidden;
+
+        div {
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            overflow: hidden;
+        }
+    }
+
+    img {
+        width: 100%;
+        height: 11rem;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .common-button.link-button {
+        text-align: right;
+        padding: 0.5rem 1rem;
+        background: @white;
+        margin: 0;
+        border-radius: 0;
+        border-top: solid 1px @inputBorderColor;
+        flex-shrink: 0;
+    }
+
+    .common-extension-card-contents {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+
+    .common-spinner {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+
+        position: absolute;
+        width: 60px;
+        height: 60px;
+    }
+}
+
+.common-extension-card.loading {
+    .common-extension-card-contents {
+        opacity: 0;
+    }
+
+    .common-spinner {
+        opacity: 1;
+    }
+}
