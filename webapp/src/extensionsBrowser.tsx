@@ -124,7 +124,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     newMap.set(tag, [])
                 }
                 const tagRepos = newMap.get(tag)
-                if (!tagRepos.indexOf(repoSlug)) {
+                if (tagRepos.indexOf(repoSlug) === -1) {
                     tagRepos.push(repoSlug);
                 }
             })
@@ -321,14 +321,14 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         const toBeFetched: string[] = [];
         if (trgConfig?.packages?.approvedRepoLib) {
             Object.keys(trgConfig.packages.approvedRepoLib).forEach(repoSlug => {
-                const repoData = trgConfig.packages.approvedRepoLib;
+                const repoData = trgConfig.packages.approvedRepoLib[repoSlug];
                 if (!repoData.preferred)
                     return;
-                const fetched = getExtensionFromFetched(repoSlug)
+                const fetched = getExtensionFromFetched(repoSlug);
                 if (fetched) {
-                    repos.push(fetched)
+                    repos.push(fetched);
                 } else {
-                    toBeFetched.push(repoSlug)
+                    toBeFetched.push(repoSlug);
                 }
             })
         }
