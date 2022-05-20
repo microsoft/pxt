@@ -833,7 +833,7 @@ declare namespace ts.pxtc {
         mutatePrefix?: string;
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
-        inlineInputMode?: string; // can be inline, external, or auto
+        inlineInputMode?: string; // can be inline (horizontal), external (vertical), auto (default), or variable (based off currently expanded number of params)
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
         compileHiddenArguments?: boolean; // if true, compiles the values in expandable arguments even when collapsed
         draggableParameters?: string; // can be reporter or variable; defaults to variable
