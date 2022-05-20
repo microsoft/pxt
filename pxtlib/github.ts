@@ -1053,7 +1053,9 @@ namespace pxt.github {
             return null
         const parsed = parseRepoId(id)
         if (!parsed) return null
-        return U.lookup(cfg.upgrades, parsed.fullName.toLowerCase())
+        // lookup base repo for upgrade rules 
+        // (since nested repoes share the same version number)
+        return U.lookup(cfg.upgrades, parsed.slug.toLowerCase())
     }
 
     function upgradedDisablesVariants(cfg: PackagesConfig, id: string) {
