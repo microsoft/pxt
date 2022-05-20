@@ -489,7 +489,7 @@ export class Editor extends srceditor.Editor {
 }
 
 function currentIsoDateString() {
-    return new Date().toISOString().replace(/[^\d\w]/gi,'-')
+    return new Date().toISOString().replace(/[^\d\w]/gi,'-');
 }
 
 export interface StartPauseButtonProps {
