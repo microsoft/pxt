@@ -525,7 +525,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                 />
                             )}
-                            {currentTab == TabState.InDevelopment && local.forEach((p, index) =>
+                            {currentTab == TabState.InDevelopment && local.map((p, index) =>
                                 <ExtensionCard
                                     key={`local:${index}`}
                                     title={p.name}
