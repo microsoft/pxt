@@ -6402,7 +6402,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
-            .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
+            .map(ghrepo => ghrepo.fullName).concat(Object.keys(packages.approvedRepoLib || {})))
         .then(fullnames => {
             // remove dups
             fullnames = U.unique(fullnames, f => f.toLowerCase());

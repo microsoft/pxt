@@ -37,7 +37,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const [currentTab, setCurrentTab] = useState(TabState.Recommended);
     const [showImportExtensionDialog, setShowImportExtensionDialog] = useState(false);
     const [preferredExts, setPreferredExts] = useState<(ExtensionMeta & EmptyCard)[]>([])
-    const [extensionTags, setExtensionTags] = useState(new Map<string, pxt.RepoData[]>())
+    const [extensionTags, setExtensionTags] = useState(new Map<string, string[]>())
 
     useEffect(() => {
         updateExtensionTags();
@@ -114,18 +114,19 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         if (extensionTags.size > 0)
             return
         let trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
-        if (!trgConfig || !trgConfig.packages || !trgConfig.packages.preferredRepoLib)
+        if (!trgConfig?.packages?.approvedRepoLib)
             return;
-        const allRepos = [...trgConfig.packages.preferredRepoLib, ...trgConfig.packages.approvedRepoLib]
-        const newMap = extensionTags
-        allRepos.forEach(repo => {
-            repo.tags?.forEach(tag => {
+        const newMap = extensionTags;
+        Object.keys(trgConfig.packages.approvedRepoLib).forEach(repoSlug => {
+            const repoData = trgConfig.packages.approvedRepoLib[repoSlug];
+            repoData.tags?.forEach(tag => {
                 if (!newMap.has(tag)) {
                     newMap.set(tag, [])
                 }
-                const repos = newMap.get(tag)
-                if (!repos.find(r => r.slug.toLowerCase() == repo.slug.toLowerCase()))
-                    newMap.set(tag, [...newMap.get(tag), repo])
+                const tagRepos = newMap.get(tag)
+                if (!tagRepos.indexOf(repoSlug)) {
+                    tagRepos.push(repoSlug);
+                }
             })
         })
         setExtensionTags(newMap)
@@ -239,10 +240,10 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         const toBeFetched: string[] = []
         const extensionsWeHave: ExtensionMeta[] = []
 
-        categoryExtensions.forEach(e => {
-            const fetched = getExtensionFromFetched(e.slug);
+        categoryExtensions.forEach(repoSlug => {
+            const fetched = getExtensionFromFetched(repoSlug);
             if (!fetched) {
-                toBeFetched.push(e.slug)
+                toBeFetched.push(repoSlug)
             } else {
                 extensionsWeHave.push(fetched)
             }
@@ -318,13 +319,16 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         let trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
 
         const toBeFetched: string[] = [];
-        if (trgConfig && trgConfig.packages && trgConfig.packages.preferredRepoLib) {
-            trgConfig.packages.preferredRepoLib.forEach(r => {
-                const fetched = getExtensionFromFetched(r.slug)
+        if (trgConfig?.packages?.approvedRepoLib) {
+            Object.keys(trgConfig.packages.approvedRepoLib).forEach(repoSlug => {
+                const repoData = trgConfig.packages.approvedRepoLib;
+                if (!repoData.preferred)
+                    return;
+                const fetched = getExtensionFromFetched(repoSlug)
                 if (fetched) {
                     repos.push(fetched)
                 } else {
-                    toBeFetched.push(r.slug)
+                    toBeFetched.push(repoSlug)
                 }
             })
         }

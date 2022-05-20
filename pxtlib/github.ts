@@ -908,8 +908,7 @@ namespace pxt.github {
 
         if (!repo || !config) return false;
         if (repo.fullName
-            && config.approvedRepos
-            && config.approvedRepos.some(fn => fn.toLowerCase() == repo.fullName.toLowerCase()))
+            && config.approvedRepoLib[repo.fullName.toLowerCase()])
             return true;
         return false;
     }
@@ -1048,51 +1047,59 @@ namespace pxt.github {
         return parts.filter(p => !!p).join('/');
     }
 
-    function upgradeRule(cfg: PackagesConfig, id: string) {
-        if (!cfg || !cfg.upgrades)
+    function upgradeRules(cfg: PackagesConfig, id: string) {
+        if (!cfg)
             return null
         const parsed = parseRepoId(id)
         if (!parsed) return null
-        // lookup base repo for upgrade rules 
+        const repoData = cfg.approvedRepoLib
+        // lookup base repo for upgrade rules
         // (since nested repoes share the same version number)
-        return U.lookup(cfg.upgrades, parsed.slug.toLowerCase())
+        return cfg.approvedRepoLib && U.lookup(cfg.approvedRepoLib, parsed.slug.toLowerCase()).upgrades;
     }
 
     function upgradedDisablesVariants(cfg: PackagesConfig, id: string) {
-        const upgr = upgradeRule(cfg, id)
-        const m = /^dv:(.*)/.exec(upgr)
-        if (m) {
-            const disabled = m[1].split(/,/)
-            if (disabled.some(d => !/^\w+$/.test(d)))
-                return null
-            return disabled
+        const rules = upgradeRules(cfg, id) || [];
+        if (!rules)
+            return null;
+
+        for (const upgr of rules) {
+            const m = /^dv:(.*)/.exec(upgr)
+            if (m) {
+                const disabled = m[1].split(/,/)
+                if (disabled.some(d => !/^\w+$/.test(d)))
+                    return null
+                return disabled
+            }
         }
         return null
     }
 
     export function upgradedPackageReference(cfg: PackagesConfig, id: string) {
-        const upgr = upgradeRule(cfg, id)
-        if (!upgr)
+        const rules = upgradeRules(cfg, id)
+        if (!rules)
             return null
 
-        const m = /^min:(.*)/.exec(upgr)
-        const minV = m && pxt.semver.tryParse(m[1]);
-        if (minV) {
-            const parsed = parseRepoId(id)
-            const currV = pxt.semver.tryParse(parsed.tag)
-            if (currV && pxt.semver.cmp(currV, minV) < 0) {
-                parsed.tag = m[1]
-                pxt.debug(`upgrading ${id} to ${m[1]}`)
-                return stringifyRepo(parsed)
+        for (const upgr of rules) {
+            const m = /^min:(.*)/.exec(upgr)
+            const minV = m && pxt.semver.tryParse(m[1]);
+            if (minV) {
+                const parsed = parseRepoId(id)
+                const currV = pxt.semver.tryParse(parsed.tag)
+                if (currV && pxt.semver.cmp(currV, minV) < 0) {
+                    parsed.tag = m[1]
+                    pxt.debug(`upgrading ${id} to ${m[1]}`)
+                    return stringifyRepo(parsed)
+                } else {
+                    if (!currV)
+                        pxt.log(`not upgrading ${id} - cannot parse version`)
+                    return null
+                }
             } else {
-                if (!currV)
-                    pxt.log(`not upgrading ${id} - cannot parse version`)
-                return null
+                // check if the rule looks valid at all
+                if (!upgradedDisablesVariants(cfg, id))
+                    pxt.log(`invalid upgrade rule: ${id} -> ${upgr}`)
             }
-        } else {
-            // check if the rule looks valid at all
-            if (!upgradedDisablesVariants(cfg, id))
-                pxt.log(`invalid upgrade rule: ${id} -> ${upgr}`)
         }
 
         return id

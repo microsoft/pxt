@@ -34,14 +34,11 @@ declare namespace pxt {
 
     interface PackagesConfig {
         approvedOrgs?: string[];
-        approvedRepos?: string[]; // list of company/project
         releases?: pxt.Map<string[]>;  // per major version list of approved company/project#tag
         bannedOrgs?: string[];
         bannedRepos?: string[];
         allowUnapproved?: boolean;
-        preferredRepos?: string[]; // list of company/project(#tag) of packages to show by default in search
-        preferredRepoLib?: RepoData[];
-        approvedRepoLib?: RepoData[];
+        approvedRepoLib?: pxt.Map<RepoData>;
         // format:
         // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
         // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
@@ -53,8 +50,9 @@ declare namespace pxt {
     }
 
     interface RepoData {
-        slug: string;
-        tags?: string[]
+        preferred?: boolean;
+        tags?: string[];
+        upgrades?: string[];
     }
 
     interface ShareConfig {
@@ -835,7 +833,7 @@ declare namespace ts.pxtc {
         mutatePrefix?: string;
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
-        inlineInputMode?: string; // can be inline (horizontal), external (vertical), auto (default), or variable (based off currently expanded number of params)
+        inlineInputMode?: string; // can be inline, external, or auto
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
         compileHiddenArguments?: boolean; // if true, compiles the values in expandable arguments even when collapsed
         draggableParameters?: string; // can be reporter or variable; defaults to variable
