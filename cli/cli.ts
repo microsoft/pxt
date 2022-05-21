@@ -5834,6 +5834,13 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     // test targetconfig
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+        if (targetConfig?.packages?.approvedRepoLib) {
+            for (const repoSlug of Object.keys(targetConfig.packages.approvedRepoLib)) {
+                if (repoSlug !== repoSlug.toLocaleLowerCase()) {
+                    U.userError(`targetconfig.json: repo slugs in approvedRepoLib must be lowercased.\n\tError: ${repoSlug}`);
+                }
+            }
+        }
         if (targetConfig && targetConfig.galleries) {
             Object.keys(targetConfig.galleries).forEach(k => {
                 pxt.log(`gallery ${k}`);
