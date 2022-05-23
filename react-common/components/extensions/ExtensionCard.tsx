@@ -42,8 +42,8 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
             tabIndex={onClick && 0}
             label={label}>
             <div className="common-extension-card-contents">
-                {!loading && <>                
-                    <LazyImage src={imageUrl} alt={title} />
+                {!loading && <>
+                    {imageUrl && <LazyImage src={imageUrl} alt={title} />}
                     <div className="common-extension-card-title" id={id + "-title"}>
                         {title}
                     </div>
@@ -57,14 +57,14 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
                             className="link-button"
                             label={lf("Learn More")}
                             title={lf("Learn More")}
-                            onClick={() => {}}
+                            onClick={() => { }}
                             href={learnMoreUrl}
                         />
                     }
                 </>
                 }
             </div>
-            <div className="common-spinner"/>
+            <div className="common-spinner" />
         </Card>
     </>
 }
