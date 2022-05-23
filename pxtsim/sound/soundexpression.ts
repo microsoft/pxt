@@ -227,7 +227,7 @@ namespace pxsim.codal.music {
             soundQueue.push({
                 notes,
                 onFinished: resolve,
-                onCancelled: reject
+                onCancelled: resolve
             });
         })
 
