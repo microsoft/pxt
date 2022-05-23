@@ -296,7 +296,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     async addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
         try {
             this.hide(null, this.backOnHide());
-            core.showLoading("installingextension", lf("installing extension..."))
+            core.showLoading("installingextension", lf("Adding extension..."))
             const added = await pkg.mainEditorPkg()
                 .addDependencyAsync(config, version, this.state.mode == ScriptSearchMode.Boards)
             if (added)  //async

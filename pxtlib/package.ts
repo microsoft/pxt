@@ -420,7 +420,7 @@ namespace pxt {
                                     // if newversion does not have tag, it's ok
                                     // note: we are upgrade major versions as well
                                     || (ghNew.tag && pxt.semver.strcmp(ghCurrent.tag, ghNew.tag) < 0)) {
-                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})",
+                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (added: {1}, adding: {2})",
                                         depPkg.id,
                                         depPkg._verspec,
                                         version));
@@ -456,7 +456,7 @@ namespace pxt {
                     conflicts.forEach((c) => {
                         additionalConflicts.push.apply(additionalConflicts, allAncestors(c.pkg0).map((anc) => {
                             const confl = new cpp.PkgConflictError(c.isVersionConflict ?
-                                lf("a dependency of {0} has a version mismatch with extension {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
+                                lf("a dependency of {0} has a version mismatch with extension {1} (added: {1}, adding: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
                                 lf("conflict on yotta setting {0} between extensions {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
                             confl.pkg0 = anc;
                             return confl;

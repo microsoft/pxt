@@ -96,7 +96,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     async function addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
         try {
             props.hideExtensions();
-            core.showLoading("installingextension", lf("Installing extension..."))
+            core.showLoading("installingextension", lf("Adding extension..."))
             const added = await pkg.mainEditorPkg()
                 .addDependencyAsync({ ...config, isExtension: true }, version, false)
             if (added) {
