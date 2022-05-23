@@ -412,98 +412,99 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <div className="importButtonLink" onClick={() => setShowImportExtensionDialog(true)}>{lf("import extension")}</div>
                         </div> */}
                 </div>
-                {displayMode == ExtensionView.Search &&
-                    <div className="extension-display">
-                        <div className="breadcrumbs">
-                            <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
-                        </div>
-                        <div className="extension-cards">
-                            {extensionsToShow?.map((scr, index) =>
-                                <ExtensionCard
-                                    key={classList("searched", index + "", scr.loading && "loading")}
-                                    title={scr.name ?? `${index}`}
-                                    description={scr.description}
-                                    imageUrl={scr.imageUrl}
-                                    extension={scr}
-                                    onClick={installExtension}
-                                    learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
-                                    loading={scr.loading}
-                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                />)}
-                        </div>
-                        {searchComplete && extensionsToShow.length == 0 &&
-                            <div aria-label="Extension search results">
-                                <p>{lf("We couldn't find any extensions matching '{0}'", searchFor)}</p>
+                <div className="extension-display">
+                    {displayMode == ExtensionView.Search &&
+                        <>
+                            <div className="breadcrumbs">
+                                <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
                             </div>
-                        }
-                    </div>}
-                {displayMode == ExtensionView.Tags &&
-                    <div className="extension-display">
-                        <div className="breadcrumbs">
-                            <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
-                            <span>/</span>
-                            <span>{selectedTag}</span>
-                        </div>
-                        <div className="extension-cards">
-                            {extensionsToShow?.map((scr, index) =>
-                                <ExtensionCard
-                                    key={classList("tagged", index + "", scr.loading && "loading")}
-                                    title={scr.name ?? `${index}`}
-                                    description={scr.description}
-                                    imageUrl={scr.imageUrl}
-                                    extension={scr}
-                                    onClick={installExtension}
-                                    learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
-                                    loading={scr.loading}
-                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                />)}
-                        </div>
-                    </div>}
-                {displayMode == ExtensionView.Tabbed &&
-                    <div className="extension-display">
-                        <div className="tab-header">
-                            <Button
-                                key={"Recommended"}
-                                title={lf("Recommended")}
-                                label={lf("Recommended")}
-                                onClick={() => { setCurrentTab(TabState.Recommended) }}
-                                className={currentTab == TabState.Recommended ? "selected" : ""}
-                            />
-                            <Button
-                                key={"In Development"}
-                                title={lf("In Development")}
-                                label={lf("In Development")}
-                                onClick={() => { setCurrentTab(TabState.InDevelopment) }}
-                                className={currentTab == TabState.InDevelopment ? "selected" : ""}
-                            />
-                        </div>
-                        <div className="extension-cards">
-                            {currentTab == TabState.Recommended && preferredExts.map((scr, index) =>
-                                <ExtensionCard
-                                    key={classList("preferred", index + "", scr.loading && "loading")}
-                                    extension={scr}
-                                    title={scr.name ?? `${index}`}
-                                    onClick={installExtension}
-                                    imageUrl={scr.imageUrl}
-                                    description={scr.description}
-                                    learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
-                                    loading={scr.loading}
-                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
+                            <div className="extension-cards">
+                                {extensionsToShow?.map((scr, index) =>
+                                    <ExtensionCard
+                                        key={classList("searched", index + "", scr.loading && "loading")}
+                                        title={scr.name ?? `${index}`}
+                                        description={scr.description}
+                                        imageUrl={scr.imageUrl}
+                                        extension={scr}
+                                        onClick={installExtension}
+                                        learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                        loading={scr.loading}
+                                        label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
+                                    />)}
+                            </div>
+                            {searchComplete && extensionsToShow.length == 0 &&
+                                <div aria-label="Extension search results">
+                                    <p>{lf("We couldn't find any extensions matching '{0}'", searchFor)}</p>
+                                </div>
+                            }
+                        </>}
+                    {displayMode == ExtensionView.Tags &&
+                        <>
+                            <div className="breadcrumbs">
+                                <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
+                                <span>/</span>
+                                <span>{selectedTag}</span>
+                            </div>
+                            <div className="extension-cards">
+                                {extensionsToShow?.map((scr, index) =>
+                                    <ExtensionCard
+                                        key={classList("tagged", index + "", scr.loading && "loading")}
+                                        title={scr.name ?? `${index}`}
+                                        description={scr.description}
+                                        imageUrl={scr.imageUrl}
+                                        extension={scr}
+                                        onClick={installExtension}
+                                        learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                        loading={scr.loading}
+                                        label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
+                                    />)}
+                            </div>
+                        </>}
+                    {displayMode == ExtensionView.Tabbed &&
+                        <>
+                            <div className="tab-header">
+                                <Button
+                                    key={"Recommended"}
+                                    title={lf("Recommended")}
+                                    label={lf("Recommended")}
+                                    onClick={() => { setCurrentTab(TabState.Recommended) }}
+                                    className={currentTab == TabState.Recommended ? "selected" : ""}
                                 />
-                            )}
-                            {currentTab == TabState.InDevelopment && local.forEach((p, index) =>
-                                <ExtensionCard
-                                    key={`local:${index}`}
-                                    title={p.name}
-                                    description={lf("Local copy of {0} hosted on github.com", p.githubId)}
-                                    imageUrl={p.icon}
-                                    extension={p}
-                                    onClick={addLocal}
+                                <Button
+                                    key={"In Development"}
+                                    title={lf("In Development")}
+                                    label={lf("In Development")}
+                                    onClick={() => { setCurrentTab(TabState.InDevelopment) }}
+                                    className={currentTab == TabState.InDevelopment ? "selected" : ""}
                                 />
-                            )}
-                        </div>
-                    </div>
-                }
+                            </div>
+                            <div className="extension-cards">
+                                {currentTab == TabState.Recommended && preferredExts.map((scr, index) =>
+                                    <ExtensionCard
+                                        key={classList("preferred", index + "", scr.loading && "loading")}
+                                        extension={scr}
+                                        title={scr.name ?? `${index}`}
+                                        onClick={installExtension}
+                                        imageUrl={scr.imageUrl}
+                                        description={scr.description}
+                                        learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                        loading={scr.loading}
+                                        label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
+                                    />
+                                )}
+                                {currentTab == TabState.InDevelopment && local.forEach((p, index) =>
+                                    <ExtensionCard
+                                        key={`local:${index}`}
+                                        title={p.name}
+                                        description={lf("Local copy of {0} hosted on github.com", p.githubId)}
+                                        imageUrl={p.icon}
+                                        extension={p}
+                                        onClick={addLocal}
+                                    />
+                                )}
+                            </div>
+                        </>}
+                </div>
             </div>
         </Modal>
     )
