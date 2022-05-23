@@ -457,7 +457,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                 leftIcon="fas fa-upload"
                                 className="gray"
                                 onClick={importExtension}
-                                onKeydown={importExtension}
                             />
                         </div>
                     </div>
