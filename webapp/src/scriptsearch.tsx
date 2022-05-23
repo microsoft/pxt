@@ -148,8 +148,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             const trgConfigFetch = this.getDataWithStatus("target-config:");
             const trgConfig = trgConfigFetch.data as pxt.TargetConfig;
 
-            if (trgConfigFetch.status === data.FetchStatus.Complete && trgConfig && trgConfig.packages && trgConfig.packages.preferredRepos) {
-                searchFor = trgConfig.packages.preferredRepos.join("|");
+            if (trgConfigFetch.status === data.FetchStatus.Complete && trgConfig?.packages?.approvedRepoLib) {
+                const approvedRepoLib = trgConfig?.packages?.approvedRepoLib;
+                const preferredRepos = approvedRepoLib && Object.keys(approvedRepoLib).filter(el => !!approvedRepoLib[el].preferred);
+                if (preferredRepos)
+                    searchFor = preferredRepos.join("|");
             }
         }
 
