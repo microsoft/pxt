@@ -908,7 +908,7 @@ namespace pxt.github {
 
         if (!repo || !config) return false;
         if (repo.fullName
-            && config.approvedRepoLib[repo.fullName.toLowerCase()])
+            && config.approvedRepoLib?.[repo.fullName.toLowerCase()])
             return true;
         return false;
     }
