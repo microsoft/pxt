@@ -429,14 +429,12 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         {displayMode == ExtensionView.Tabbed &&
                             <div className="tab-header">
                                 <Button
-                                    key={"Recommended"}
                                     title={lf("Recommended")}
                                     label={lf("Recommended")}
                                     onClick={() => { setCurrentTab(TabState.Recommended) }}
                                     className={currentTab == TabState.Recommended ? "selected" : ""}
                                 />
                                 <Button
-                                    key={"In Development"}
                                     title={lf("In Development")}
                                     label={lf("In Development")}
                                     onClick={() => { setCurrentTab(TabState.InDevelopment) }}
