@@ -422,13 +422,22 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 <div className="extension-display">
                     <div className="extension-header">
                         {displayMode == ExtensionView.Search &&
-                            <div className="breadcrumbs">
-                                <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
-                            </div>
+                            <Button
+                                title={lf("Home")}
+                                label={lf("Home")}
+                                onClick={handleHomeButtonClick}
+                                className="link-button"
+                            />
                         }
                         {displayMode == ExtensionView.Tags &&
+
                             <div className="breadcrumbs">
-                                <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
+                                <Button
+                                    title={lf("Home")}
+                                    label={lf("Home")}
+                                    onClick={handleHomeButtonClick}
+                                    className="link-button"
+                                />
                                 <span>/</span>
                                 <span>{selectedTag}</span>
                             </div>
