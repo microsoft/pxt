@@ -18,6 +18,7 @@ const emptyCard: EmptyCard = { name: "", loading: true }
 
 interface ExtensionsProps {
     hideExtensions: () => void;
+    importExtensionCallback: () => void;
     header: pxt.workspace.Header;
     reloadHeaderAsync: () => Promise<void>;
 }
@@ -201,6 +202,12 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 addGithubPackage(scr);
                 break;
         }
+    }
+
+    function importExtension() {
+        pxt.tickEvent("extensions.import", undefined, { interactiveConsent: true });
+        props.hideExtensions()
+        props.importExtensionCallback()
     }
 
     function ghName(scr: pxt.github.GitRepo) {
@@ -442,6 +449,17 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                 />
                             </div>
                         }
+                        <div className="import-button">
+                            <Button
+                                ariaLabel={(lf("Open file from your computer"))}
+                                title={(lf("Import Fle"))}
+                                label={(lf("Import File"))}
+                                leftIcon="fas fa-upload"
+                                className="gray"
+                                onClick={importExtension}
+                                onKeydown={importExtension}
+                            />
+                        </div>
                     </div>
                     {displayMode == ExtensionView.Search &&
                         <>

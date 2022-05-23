@@ -942,6 +942,14 @@ Field editors
     .fullscreen.extensions-browser > .common-modal > .common-modal-header {
         height: @mobileMenuHeight;
     }
+
+    .extensions-browser {
+        .extension-header > .import-button>.common-button {
+            .common-button-label {
+                display: none;
+            }
+        }
+    }
 }
 
 @media @mobileAndBelow {
@@ -1033,6 +1041,18 @@ Field editors
                 padding-right: .5rem;
             }
         }
+    }
+
+    .extension-header {
+        font-family: @segoeUIFont;
+        width: 95%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+
+    .import-button>.common-button {
+        padding: .8rem 1rem .95rem;
     }
 
     .extension-grid {
