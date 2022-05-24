@@ -137,11 +137,11 @@ namespace pxtblockly {
     }
 
     export function getAllBlocksWithTilemaps(ws: Blockly.Workspace): FieldEditorReference<FieldTilemap>[] {
-        return getAllFieldsCore(ws, f => f instanceof FieldTilemap && !f.isGreyBlock);
+        return getAllFields(ws, f => f instanceof FieldTilemap && !f.isGreyBlock);
     }
 
     export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorReference<FieldTileset>[] {
-        return getAllFieldsCore(ws, f => f instanceof FieldTileset);
+        return getAllFields(ws, f => f instanceof FieldTileset);
     }
 
     export function needsTilemapUpgrade(ws: Blockly.Workspace) {
@@ -208,7 +208,7 @@ namespace pxtblockly {
         }
     }
 
-    function getAllFieldsCore<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {
+    export function getAllFields<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {
         const result: FieldEditorReference<U>[] = [];
 
         const top = ws.getTopBlocks(false);
@@ -280,10 +280,10 @@ namespace pxtblockly {
     export function getTemporaryAssets(workspace: Blockly.Workspace, type: pxt.AssetType) {
         switch (type) {
             case pxt.AssetType.Image:
-                return getAllFieldsCore(workspace, field => field instanceof FieldSpriteEditor && field.isTemporaryAsset())
+                return getAllFields(workspace, field => field instanceof FieldSpriteEditor && field.isTemporaryAsset())
                     .map(f => (f.ref as unknown as FieldSpriteEditor).getAsset());
             case pxt.AssetType.Animation:
-                return getAllFieldsCore(workspace, field => field instanceof FieldAnimationEditor && field.isTemporaryAsset())
+                return getAllFields(workspace, field => field instanceof FieldAnimationEditor && field.isTemporaryAsset())
                     .map(f => (f.ref as unknown as FieldAnimationEditor).getAsset());
 
             default: return [];
