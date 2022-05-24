@@ -10,6 +10,9 @@ namespace Blockly {
 namespace pxtblockly {
 
     export interface FieldAutoCompleteOptions extends Blockly.FieldCustomOptions {
+        // This is a unique key that should be specified by the parent block. The dropdown
+        // will only be populated by other blocks with this same key. If not specified, the parent's
+        // block type will be used
         key: string;
     }
 
@@ -86,7 +89,10 @@ namespace pxtblockly {
         }
 
         getKey() {
-            return this.key
+            if (this.key) return this.key;
+            if (this.sourceBlock_) return this.sourceBlock_.type;
+
+            return undefined;
         }
 
         // Copied from field_string in pxt-blockly
