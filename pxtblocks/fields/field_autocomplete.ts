@@ -4,6 +4,7 @@
 namespace Blockly {
     export interface FieldTextDropdown {
         showDropdown_(): void
+        isTextValid_: boolean;
     }
 }
 
@@ -32,6 +33,7 @@ namespace pxtblockly {
         constructor(text: string, options: FieldAutoCompleteOptions, opt_validator?: Function) {
             super(text, () => [] as any, opt_validator);
             this.key = options.key;
+            this.isTextValid_ = true;
         }
 
         isOptionListDynamic() {
@@ -109,7 +111,6 @@ namespace pxtblockly {
                 'font-size': this.quoteSize_ + 'px',
                 'class': 'field-text-quote'
             }, this.fieldGroup_);
-
 
             super.initView();
 
