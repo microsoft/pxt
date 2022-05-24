@@ -461,7 +461,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="import-button">
                             <Button
                                 ariaLabel={(lf("Open file from your computer"))}
-                                title={(lf("Import Fle"))}
+                                title={(lf("Import File"))}
                                 label={(lf("Import File"))}
                                 leftIcon="fas fa-upload"
                                 className="gray"
