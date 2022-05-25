@@ -582,7 +582,7 @@ namespace pxt.HF2 {
                 .then(() => {
                     this.reconnectTries = 0
                     this.initialized = true
-                    this.onConnectionChanged()
+                    this.io.onConnectionChanged()
                 })
         }
 
