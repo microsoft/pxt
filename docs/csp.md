@@ -16,7 +16,15 @@ There are three free professional development opportunities available this summe
 
 ### ~
 
+## AP CS Principles Curriculum
+
 The **[AP CS Principles with Microsoft MakeCode](https://microsoft.github.io/makecode-csp)** curriculum is free and uses web-based technology and tools that can be accessed across platforms and devices. The curriculum is also endorsed and approved by the College Board as aligning with the [CS Principles curriculum framework](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/course?course=ap-computer-science-principles) and [AP CS Principles exam](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/exam).
+
+### ~ tip
+
+#### **Access and explore the curriculum - [AP CS Principles with Microsoft MakeCode](https://microsoft.github.io/makecode-csp)**
+
+### ~
 
 Some additional features of the Microsoft MakeCode curriculum include: 
 
@@ -105,25 +113,6 @@ In the final unit of the course, students will prepare for the AP CS Principles 
 ### Service Learning Unit
 
 In the Service Learning unit, students will explore the [United Nations Sustainable Development Goals](https://www.undp.org/content/undp/en/home/sustainable-development-goals.html), see examples of how games can be used for good, and then using the design thinking process, create their own games for social good.
-
-## Educator Materials
-
-The curriculum materials include:
-
-* Daily Lesson plans in the form of a OneNote notebook.
-* PowerPoint decks for classroom lectures with talking points in the Notes section.
-* Textbook Blown to Bits: Your Life, Liberty, and Pursuit of Happiness After the Digital Explosion.
-* Student projects, labs and activities (with solutions where appropriate).
-
-### ~ reminder
-
-#### Download Educator Materials
-
-All of the materials for the **AP Computer Science Principles with Microsoft MakeCode** curriculum are available to download here:
-
-* **[Curriculum Materials Downloads](https://aka.ms/MSMakeCodeAPCSP)**
-
-### ~
 
 ## Stay Connected 
 
