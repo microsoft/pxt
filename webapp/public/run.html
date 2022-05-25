@@ -167,6 +167,10 @@
                     // propagate message packets to parent frames
                     window.parent.postMessage(msg.data, "*");
                 }
+                else if (data.type == "simulator" && data.command == "setstate") {
+                    // propagate message packets to parent frames
+                    window.parent.postMessage(msg.data, "*");
+                }
                 else if (mpRole && data.type === "multiplayer") {
                     // propagate message packets to parent frames
                     window.parent.postMessage(msg.data, "*");
