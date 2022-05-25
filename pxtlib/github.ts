@@ -1055,7 +1055,7 @@ namespace pxt.github {
         const repoData = cfg.approvedRepoLib
         // lookup base repo for upgrade rules
         // (since nested repoes share the same version number)
-        return cfg.approvedRepoLib && U.lookup(cfg.approvedRepoLib, parsed.slug.toLowerCase()).upgrades;
+        return cfg.approvedRepoLib && U.lookup(cfg.approvedRepoLib, parsed.slug.toLowerCase())?.upgrades;
     }
 
     function upgradedDisablesVariants(cfg: PackagesConfig, id: string) {
