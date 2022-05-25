@@ -454,7 +454,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                         />
                                         <Button
                                             title={lf("Local GitHub Projects")}
-                                            label={lf("In Development")}
+                                            label={lf("Local")}
                                             onClick={() => { setCurrentTab(TabState.InDevelopment) }}
                                             className={currentTab == TabState.InDevelopment ? "selected" : ""}
                                         />
