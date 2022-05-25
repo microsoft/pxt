@@ -19,6 +19,7 @@ namespace pxt.packetio {
         reflashAsync(resp: pxtc.CompileResult): Promise<void>;
 
         onCustomEvent: (type: string, payload: Uint8Array) => void;
+        onConnectionChanged: () => void;
         sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void>;
         // returns a list of part ids that are not supported by the connected hardware. currently
         // only used by pxt-microbit to warn users about v2 blocks on v1 hardware

@@ -270,6 +270,7 @@ namespace pxt.HF2 {
 
         onSerial = (buf: Uint8Array, isStderr: boolean) => { };
         onCustomEvent = (type: string, payload: Uint8Array) => { };
+        onConnectionChanged = () => { };
 
         private resetState() {
             this.initialized = false
@@ -581,6 +582,7 @@ namespace pxt.HF2 {
                 .then(() => {
                     this.reconnectTries = 0
                     this.initialized = true
+                    this.onConnectionChanged()
                 })
         }
 
