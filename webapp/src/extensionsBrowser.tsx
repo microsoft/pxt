@@ -56,6 +56,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
      * Github search
      */
     async function searchForBundledAndGithubAsync() {
+        setSelectedTag("")
         setSearchComplete(false)
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
         const exts = await fetchGithubDataAsync([searchFor])
@@ -425,16 +426,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 </div>
                 <div className="extension-display">
                     <div className="extension-header">
-                        {displayMode == ExtensionView.Search &&
-                            <Button
-                                title={lf("Home")}
-                                label={lf("Home")}
-                                onClick={handleHomeButtonClick}
-                                className="link-button"
-                            />
-                        }
-                        {displayMode == ExtensionView.Tags &&
-
+                        {(displayMode == ExtensionView.Search || displayMode == ExtensionView.Tags) &&
                             <div className="breadcrumbs">
                                 <Button
                                     title={lf("Home")}
@@ -442,8 +434,12 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     onClick={handleHomeButtonClick}
                                     className="link-button"
                                 />
-                                <span>/</span>
-                                <span>{selectedTag}</span>
+                                {displayMode == ExtensionView.Tags &&
+                                    <>
+                                        <span>/</span>
+                                        <span>{selectedTag}</span>
+                                    </>
+                                }
                             </div>
                         }
                         {displayMode == ExtensionView.Tabbed &&
