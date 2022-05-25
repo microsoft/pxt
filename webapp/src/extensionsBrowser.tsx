@@ -6,7 +6,7 @@ import * as pkg from "./package";
 
 import { Button } from "../../react-common/components/controls/Button";
 import { Input } from "../../react-common/components/controls/Input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
 import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
 import { Modal } from "../../react-common/components/controls/Modal";
@@ -33,6 +33,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const [searchFor, setSearchFor] = useState("");
     const [searchComplete, setSearchComplete] = useState(true)
     const [allExtensions, setAllExtensions] = useState(fetchBundled());
+    const extensionsInDevelopment = useMemo(() => fetchLocalRepositories(), []);
     const [extensionsToShow, setExtensionsToShow] = useState<(ExtensionMeta & EmptyCard)[]>([]);
     const [selectedTag, setSelectedTag] = useState("");
     const [currentTab, setCurrentTab] = useState(TabState.Recommended);
@@ -377,7 +378,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     const categoryNames = getCategoryNames();
-    const local = currentTab == TabState.InDevelopment ? fetchLocalRepositories() : undefined
 
     const onSearchBarChange = (newValue: string) => {
         setSearchFor(newValue || "");
@@ -448,18 +448,24 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         }
                         {displayMode == ExtensionView.Tabbed &&
                             <div className="tab-header">
-                                <Button
-                                    title={lf("Recommended")}
-                                    label={lf("Recommended")}
-                                    onClick={() => { setCurrentTab(TabState.Recommended) }}
-                                    className={currentTab == TabState.Recommended ? "selected" : ""}
-                                />
-                                <Button
-                                    title={lf("In Development")}
-                                    label={lf("In Development")}
-                                    onClick={() => { setCurrentTab(TabState.InDevelopment) }}
-                                    className={currentTab == TabState.InDevelopment ? "selected" : ""}
-                                />
+                                {!!extensionsInDevelopment.length &&
+                                    <>
+                                        <Button
+                                            title={lf("Recommended Extensions")}
+                                            label={lf("Recommended")}
+                                            onClick={() => { setCurrentTab(TabState.Recommended) }}
+                                            className={currentTab == TabState.Recommended ? "selected" : ""}
+                                        />
+                                        <Button
+                                            title={lf("Local GitHub Projects")}
+                                            label={lf("In Development")}
+                                            onClick={() => { setCurrentTab(TabState.InDevelopment) }}
+                                            className={currentTab == TabState.InDevelopment ? "selected" : ""}
+                                        />
+                                    </>}
+                                {!extensionsInDevelopment.length &&
+                                    <h2>{lf("Recommended")}</h2>
+                                }
                             </div>
                         }
                         <div className="import-button">
@@ -525,7 +531,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                 />
                             )}
-                            {currentTab == TabState.InDevelopment && local.forEach((p, index) =>
+                            {currentTab == TabState.InDevelopment && extensionsInDevelopment.map((p, index) =>
                                 <ExtensionCard
                                     key={`local:${index}`}
                                     title={p.name}
