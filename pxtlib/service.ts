@@ -818,7 +818,7 @@ namespace ts.pxtc {
         return r;
     }
 
-    const numberAttributes = ["weight", "imageLiteral", "topblockWeight"]
+    const numberAttributes = ["weight", "imageLiteral", "topblockWeight", "inlineInputModeLimit"]
     const booleanAttributes = [
         "advanced",
         "handlerStatement",
