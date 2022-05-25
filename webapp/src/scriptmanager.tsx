@@ -489,7 +489,7 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
     }
 
     handleClick(e: any) {
-        this.props.onRowClicked(e, this.props.scr, this.props.index);
+        this.props.onRowClicked(e, this.props.scr, this.props.index, this.props.id);
     }
 
     handleCheckboxClick(e: any) {
