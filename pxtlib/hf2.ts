@@ -574,11 +574,12 @@ namespace pxt.HF2 {
                         }
                     log(`Board-ID: ${this.info.BoardID} v${this.info.Parsed.Version} f${this.info.Parsed.Features}`)
                 })
-                .then(() => this.talkAsync(HF2_CMD_JDS_CONFIG, new Uint8Array([1])).then(() => {
-                    this.jacdacAvailable = true
-                }, _err => {
-                    this.jacdacAvailable = false
-                }))
+                .then(() => this.talkAsync(HF2_CMD_JDS_CONFIG, new Uint8Array([1]))
+                    .then(() => {
+                        this.jacdacAvailable = true
+                    }, _err => {
+                        this.jacdacAvailable = false
+                    }))
                 .then(() => {
                     this.reconnectTries = 0
                     this.initialized = true
