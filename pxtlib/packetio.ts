@@ -13,6 +13,8 @@ namespace pxt.packetio {
         onSerial: (buf: Uint8Array, isStderr: boolean) => void;
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        isConnected(): boolean
+        isConnecting(): boolean
         // flash the device, does **not** reconnect
         reflashAsync(resp: pxtc.CompileResult): Promise<void>;
 
@@ -67,11 +69,11 @@ namespace pxt.packetio {
      * The DAP wrapper is active and the device is connected
      */
     export function isConnected() {
-        return !!wrapper && wrapper.io.isConnected();
+        return !!wrapper?.isConnected();
     }
 
     export function isConnecting() {
-        return !!wrapper && wrapper.io.isConnecting();
+        return !!wrapper?.isConnecting();
     }
 
     export function icon() {
