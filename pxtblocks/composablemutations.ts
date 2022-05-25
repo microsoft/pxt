@@ -121,7 +121,14 @@ namespace pxt.blocks {
         const totalOptions = def.parameters.length;
         const buttonDelta = toggle ? totalOptions : 1;
         const variableInlineInputs = info.blocksById[b.type].attributes.inlineInputMode === "variable";
+        const inlineInputModeLimit = info.blocksById[b.type].attributes.inlineInputModeLimit || 4;
         const compileHiddenArguments = info.blocksById[b.type].attributes.compileHiddenArguments;
+        const breakString = info.blocksById[b.type].attributes.expandableArgumentBreaks;
+
+        let breaks: number[];
+        if (breakString) {
+            breaks = breakString.split(/[;,]/).map(s => parseInt(s));
+        }
 
         const state = new MutationState(b as MutatingBlock);
         state.setEventsEnabled(false);
@@ -238,7 +245,7 @@ namespace pxt.blocks {
             }
 
             updateButtons();
-            if (variableInlineInputs) b.setInputsInline(visibleOptions < 4);
+            if (variableInlineInputs) b.setInputsInline(visibleOptions < inlineInputModeLimit);
             if (!skipRender) (b as Blockly.BlockSvg).render();
         }
 
@@ -289,7 +296,30 @@ namespace pxt.blocks {
         }
 
         function addDelta(delta: number) {
-            return Math.min(Math.max(state.getNumber(numVisibleAttr) + delta, 0), totalOptions);
+            const newValue = Math.min(Math.max(state.getNumber(numVisibleAttr) + delta, 0), totalOptions);
+
+            if (breaks) {
+                if (delta >= 0) {
+                    if (newValue === 0) return 0;
+                    for (const breakpoint of breaks) {
+                        if (breakpoint >= newValue) {
+                            return breakpoint;
+                        }
+                    }
+                    return totalOptions;
+                }
+                else {
+                    for (let i = 0; i < breaks.length; i++) {
+                        if (breaks[i] >= newValue) {
+                            return i > 0 ? breaks[i - 1] : 0;
+                        }
+                    }
+                    return breaks[breaks.length - 1];
+                }
+
+            }
+
+            return newValue;
         }
 
         function setInputVisible(input: Blockly.Input, visible: boolean) {
