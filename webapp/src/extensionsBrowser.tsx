@@ -6,7 +6,7 @@ import * as pkg from "./package";
 
 import { Button } from "../../react-common/components/controls/Button";
 import { Input } from "../../react-common/components/controls/Input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
 import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
 import { Modal } from "../../react-common/components/controls/Modal";
@@ -33,7 +33,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const [searchFor, setSearchFor] = useState("");
     const [searchComplete, setSearchComplete] = useState(true)
     const [allExtensions, setAllExtensions] = useState(fetchBundled());
-    const [extensionsInDevelopment, _] = useState(fetchLocalRepositories());
+    const extensionsInDevelopment = useMemo(() => fetchLocalRepositories(), []);
     const [extensionsToShow, setExtensionsToShow] = useState<(ExtensionMeta & EmptyCard)[]>([]);
     const [selectedTag, setSelectedTag] = useState("");
     const [currentTab, setCurrentTab] = useState(TabState.Recommended);
@@ -448,24 +448,22 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         }
                         {displayMode == ExtensionView.Tabbed &&
                             <div className="tab-header">
-                                {extensionsInDevelopment.length > 0 &&
+                                {!!extensionsInDevelopment.length &&
                                     <>
                                         <Button
-                                            key={"Recommended"}
-                                            title={lf("Recommended")}
+                                            title={lf("Recommended Extensions")}
                                             label={lf("Recommended")}
                                             onClick={() => { setCurrentTab(TabState.Recommended) }}
                                             className={currentTab == TabState.Recommended ? "selected" : ""}
                                         />
                                         <Button
-                                            key={"In Development"}
-                                            title={lf("In Development")}
+                                            title={lf("Local GitHub Projects")}
                                             label={lf("In Development")}
                                             onClick={() => { setCurrentTab(TabState.InDevelopment) }}
                                             className={currentTab == TabState.InDevelopment ? "selected" : ""}
                                         />
                                     </>}
-                                {extensionsInDevelopment.length == 0 &&
+                                {!extensionsInDevelopment.length &&
                                     <h2>{lf("Recommended")}</h2>
                                 }
                             </div>
