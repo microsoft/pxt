@@ -56,6 +56,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
      * Github search
      */
     async function searchForBundledAndGithubAsync() {
+        setSelectedTag("")
         setSearchComplete(false)
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
         const exts = await fetchGithubDataAsync([searchFor])
