@@ -414,7 +414,7 @@ function ciAsync() {
     const defaultBranch = pxt.github.isDefaultBranch(branch)
     const latest = defaultBranch ? "latest" : "git-" + branch
     // upload locs on build on default or releases
-    const apiStringBranchRx: (t: string) => boolean = ((t:string) => new RegExp(pxt.appTarget.uploadApiStringsBranchRx).test(t))
+    const apiStringBranchRx: (t: string) => boolean = ((t: string) => new RegExp(pxt.appTarget.uploadApiStringsBranchRx).test(t))
         ? ((t: string) => new RegExp(pxt.appTarget.uploadApiStringsBranchRx).test(t))
         : ((t: string) => pxt.github.isDefaultOrReleaseBranch(t));
     const uploadDocs = !pullRequest
