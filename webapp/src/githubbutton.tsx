@@ -85,10 +85,13 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         >
             <i className="github icon" />
             <span className="ui mobile hide">{displayName}</span>
-            <i className={`ui long ${hasissue ? "exclamation circle"
-                : haspull ? "arrow alternate down"
-                    : modified ? "arrow alternate up"
-                        : "check"} icon mobile hide`} />
+            <span className="ui long mobile hide">
+                <i className={`${
+                    hasissue ? "exclamation circle"
+                        : haspull ? "arrow alternate down"
+                            : modified ? "arrow alternate up"
+                                : "check"} icon`} />
+            </span>
         </div>;
     }
 }
