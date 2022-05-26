@@ -13,7 +13,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 {
                     name: "loops_while",
                     snippetName: "while",
-                    snippet: `while (true) {\n\n}`,
+                    snippet: `while (true) {\n    \n}`,
                     pySnippet: `while True:\n    pass`,
                     attributes: {
                         blockId: 'device_while',
@@ -24,7 +24,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 {
                     name: "loops_for",
                     snippetName: "for",
-                    snippet: `for (let i = 0; i < 5; i++) {\n\n}`,
+                    snippet: `for (let i = 0; i < 5; i++) {\n    \n}`,
                     pySnippet: `for i in range(4):\n    pass`,
                     attributes: {
                         blockId: 'pxt_controls_for',
@@ -47,7 +47,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 {
                     name: "logic_if",
                     snippetName: "if",
-                    snippet: `if (true) {\n\n}`,
+                    snippet: `if (true) {\n    \n}`,
                     pySnippet: `if True:\n    pass`,
                     attributes: {
                         blockId: 'controls_if',
@@ -58,7 +58,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 {
                     name: "logic_if_else",
                     snippetName: "if else",
-                    snippet: `if (true) {\n\n} else {\n\n}`,
+                    snippet: `if (true) {\n    \n} else {\n    \n}`,
                     pySnippet: `if True:\n    pass\nelse:\n    pass`,
                     attributes: {
                         blockId: 'controls_if',
@@ -277,7 +277,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 {
                     name: "functionDef",
                     snippetName: "function doSomething",
-                    snippet: `function doSomething() {\n\n}`,
+                    snippet: `function doSomething() {\n    \n}`,
                     pySnippetName: "def do_something",
                     pySnippet: `def do_something():\n    pass`,
                     attributes: {
@@ -563,7 +563,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 return true;
             },
             attributes: {
-                advanced: true,
+                advanced: false,
                 weight: -1,
                 icon: "addpackage",
                 callingConvention: ts.pxtc.ir.CallingConvention.Plain,

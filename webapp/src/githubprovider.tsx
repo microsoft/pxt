@@ -36,10 +36,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
         window.location.href = "https://github.com/logout";
     }
 
-    hasSync(): boolean {
-        return false;
-    }
-
     hasToken(): boolean {
         this.loginCheck();
         return !!this.token();

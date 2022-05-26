@@ -52,21 +52,19 @@ namespace pxt {
                 && json;
         }
 
-        static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
-            return Promise.resolve().then(() => {
-                if (pxt.github.isGithubId(fullVers)) {
-                    const repoInfo = pxt.github.parseRepoId(fullVers);
-                    return pxt.packagesConfigAsync()
-                        .then(config => pxt.github.repoAsync(repoInfo.fullName, config))    // Make sure repo exists and is whitelisted
-                        .then(gitRepo => gitRepo ? pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag) : null);
-                } else {
-                    // If it's not from GH, assume it's a bundled package
-                    // TODO: Add logic for shared packages if we enable that
-                    const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
-                    const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
-                    return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
-                }
-            });
+        static async getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
+            if (pxt.github.isGithubId(fullVers)) {
+                const repoInfo = pxt.github.parseRepoId(fullVers);
+                const packagesConfig = await pxt.packagesConfigAsync()
+                const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is whitelisted
+                return gitRepo ? await pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag, packagesConfig) : null
+            } else {
+                // If it's not from GH, assume it's a bundled package
+                // TODO: Add logic for shared packages if we enable that
+                const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
+                const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
+                return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
+            }
         }
 
         static corePackages(): pxt.PackageConfig[] {
@@ -185,15 +183,15 @@ namespace pxt {
                 // note that the preferredEditor field will be set automatically on the first save
 
                 // 1. no main.blocks in project, open javascript
-                const hasMainBlocks = this.getFiles().indexOf("main.blocks") >= 0;
+                const hasMainBlocks = this.getFiles().indexOf(pxt.MAIN_BLOCKS) >= 0;
                 if (!hasMainBlocks)
                     return pxt.JAVASCRIPT_PROJECT_NAME;
 
                 // 2. if main.blocks is empty and main.ts is non-empty
                 //    open typescript
                 // https://github.com/microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
-                const mainBlocks = this.readFile("main.blocks");
-                const mainTs = this.readFile("main.ts");
+                const mainBlocks = this.readFile(pxt.MAIN_BLOCKS);
+                const mainTs = this.readFile(pxt.MAIN_TS);
                 if (!mainBlocks && mainTs)
                     return pxt.JAVASCRIPT_PROJECT_NAME;
 
@@ -295,7 +293,7 @@ namespace pxt {
                     this.config.name, this.config.targetVersions.target, appTarget.versions.target))
         }
 
-        isPackageInUse(pkgId: string, ts: string = this.readFile("main.ts")): boolean {
+        isPackageInUse(pkgId: string, ts: string = this.readFile(pxt.MAIN_TS)): boolean {
             // Build the RegExp that will determine whether the dependency is in use. Try to use upgrade rules,
             // otherwise fallback to the package's name
             let regex: RegExp = null;
@@ -422,7 +420,7 @@ namespace pxt {
                                     // if newversion does not have tag, it's ok
                                     // note: we are upgrade major versions as well
                                     || (ghNew.tag && pxt.semver.strcmp(ghCurrent.tag, ghNew.tag) < 0)) {
-                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})",
+                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (added: {1}, adding: {2})",
                                         depPkg.id,
                                         depPkg._verspec,
                                         version));
@@ -458,7 +456,7 @@ namespace pxt {
                     conflicts.forEach((c) => {
                         additionalConflicts.push.apply(additionalConflicts, allAncestors(c.pkg0).map((anc) => {
                             const confl = new cpp.PkgConflictError(c.isVersionConflict ?
-                                lf("a dependency of {0} has a version mismatch with extension {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
+                                lf("a dependency of {0} has a version mismatch with extension {1} (added: {1}, adding: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
                                 lf("conflict on yotta setting {0} between extensions {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
                             confl.pkg0 = anc;
                             return confl;
@@ -739,7 +737,7 @@ namespace pxt {
 
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
-                        const mainTs = this.readFile("main.ts");
+                        const mainTs = this.readFile(pxt.MAIN_TS);
                         if (!mainTs) return Promise.resolve(null);
 
                         const missingPackages = this.getMissingPackages(this.config, mainTs);
@@ -1064,7 +1062,7 @@ namespace pxt {
 
                 try {
                     let einfo = cpp.getExtensionInfo(this)
-                    if (!shimsGenerated) {
+                    if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)

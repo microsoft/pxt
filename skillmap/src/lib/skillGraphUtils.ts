@@ -1,17 +1,140 @@
+////////////////////////////////////////////
+////////                            ////////
+////////        SVG RENDERING       ////////
+////////                            ////////
+////////////////////////////////////////////
+
 export interface SvgCoord {
     x: number;
     y: number;
 }
 
-interface GraphCoord {
-    depth: number; // The depth of this node (distance from root)
-    offset: number; // The offset of the node within the layer
+export interface SvgGraphItem {
+    activity: MapActivity;
+    position: SvgCoord;
 }
 
-interface GraphNode extends BaseNode, GraphCoord {
-    width?: number; // The maximum subtree width from this node
-    edges?: GraphCoord[][]; // Each edge is an array of (depth, offset) pairs
-    parents?: GraphNode[];
+export interface SvgGraphPath {
+    points: SvgCoord[];
+}
+
+export interface SvgGraph {
+    map: SkillMap;
+    items: SvgGraphItem[];
+    paths: SvgGraphPath[];
+    width: number;
+    height: number
+}
+
+export const UNIT = 10;
+export const PADDING = 4;
+export const MIN_HEIGHT = 40 * UNIT;
+export const MIN_WIDTH = 60 * UNIT;
+
+export function getGraph(map: SkillMap): SvgGraph {
+    let nodes: GraphNode[] = [];
+    switch (map.layout) {
+        case "manual":
+            nodes = nodes.concat(manualGraph(map.root));
+            break;
+        case "ortho":
+        default:
+            nodes = nodes.concat(orthogonalGraph(map.root));
+    }
+
+    let maxDepth = 0, maxOffset = 0;
+
+    // Convert into renderable items
+    const items: SvgGraphItem[] = [];
+    const paths: SvgGraphPath[] = [];
+    for (let current of nodes) {
+        const { depth, offset } = current;
+        items.push({
+            activity: current,
+            position: getPosition(depth, offset)
+        } as any);
+
+        if (current.edges) {
+            current.edges.forEach(edge => {
+                const points: SvgCoord[] = [];
+                edge.forEach(n => points.push(getPosition(n.depth, n.offset)));
+                paths.push({ points });
+            });
+        }
+
+        maxDepth = Math.max(maxDepth, current.depth);
+        maxOffset = Math.max(maxOffset, current.offset);
+    }
+
+    const width = getX(maxDepth) + UNIT * PADDING;
+    const height = getY(maxOffset) + UNIT * PADDING;
+
+    return { map, items, paths, width, height };
+}
+
+// This function converts graph position (no units) to x/y (SVG units)
+function getPosition(depth: number, offset: number): SvgCoord {
+    return { x: getX(depth), y: getY(offset) }
+}
+
+function getX(position: number) {
+    return ((position * 12) + PADDING) * UNIT;
+}
+
+function getY(position: number) {
+    return ((position * 9) + PADDING) * UNIT;
+}
+
+
+
+////////////////////////////////////////////
+////////                            ////////
+////////        GRAPH LAYOUT        ////////
+////////                            ////////
+////////////////////////////////////////////
+
+export function manualGraph(root: MapNode): GraphNode[] {
+    const visited: string[] = [];
+    const graphNode = cloneGraph(root);
+    const nodes = dfsArray(graphNode).filter(node => node.kind !== "layout");
+    nodes.forEach(n => {
+        if (visited.indexOf(n.activityId) < 0) {
+            visited.push(n.activityId);
+            n.depth = n.position?.depth || 0;
+            n.offset = n.position?.offset || 0;
+
+            // Generate straight-line edges between nodes
+            const edges: GraphCoord[][] = []
+            n.next.forEach((next, i) => {
+                const nextDepth = next.position?.depth || 0;
+                const nextOffset = next.position?.offset || 0;
+
+                // Edge starts from current node
+                const edge = [{depth: n.depth, offset: n.offset }];
+                // If manual edge is specified for this node, push edge points
+                if (n.edges?.[i]) {
+                    n.edges[i].forEach(el => {
+                        const prev = edge[edge.length - 1];
+                        // Ensure that there are only horizontal and vertical segments
+                        if (el.depth !== prev.depth && el.offset !== prev.offset) {
+                            edge.push({ depth: prev.depth, offset: el.offset });
+                        }
+                        edge.push(el);
+                    })
+                }
+                // Edge ends at "next" node, ensure only horizontal/vertical
+                const prev = edge[edge.length - 1];
+                if (nextDepth !== prev.depth && nextOffset !== prev.offset) {
+                    edge.push({ depth: prev.depth, offset: nextOffset });
+                }
+                edge.push({ depth: nextDepth, offset: nextOffset });
+
+                edges.push(edge);
+            });
+            n.edges = edges;
+        }
+    })
+    return nodes;
 }
 
 export function orthogonalGraph(root: MapNode): GraphNode[] {
@@ -117,12 +240,12 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
                     const spaceBelow = n.offset > p.offset && !((offsets[nodeIndex + 1] - offsets[nodeIndex]) < (n.offset - p.offset));
                     const spaceAbove = n.offset < p.offset && !((offsets[nodeIndex] - offsets[nodeIndex - 1]) < (p.offset - n.offset));
                     if (spaceBelow || spaceAbove) {
-                        edge.push({ depth: p.depth, offset: n.offset });
-                    } else {
                         edge.push({ depth: n.depth, offset: p.offset });
+                    } else {
+                        edge.push({ depth: p.depth, offset: n.offset });
                     }
                 } else {
-                    edge.push({ depth: n.depth, offset: p.offset });
+                    edge.push({ depth: p.depth, offset: n.offset });
                 }
                 edge.push({ depth: n.depth, offset: n.offset });
                 n.edges?.push(edge);
@@ -248,7 +371,12 @@ function cloneGraph(root: BaseNode): GraphNode {
     const clones: { [key: string]: GraphNode} = {};
 
     // Clone all nodes, assign children to cloned nodes
-    nodes.forEach(n => clones[n.activityId] = Object.assign({}, n));
+    nodes.forEach(n => {
+        let nextCopy = n.next.slice();
+        n.next.length = 0;
+        clones[n.activityId] = JSON.parse(JSON.stringify(n));
+        n.next = nextCopy;
+    });
     Object.keys(clones).forEach(cloneId => clones[cloneId].next = clones[cloneId].nextIds.map(id => clones[id] as any));
 
     return clones[root.activityId];

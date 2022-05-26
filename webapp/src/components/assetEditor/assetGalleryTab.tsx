@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, GalleryView } from './store/assetEditorReducer';
+import { AssetEditorState, GalleryView } from './store/assetEditorReducerState';
 import { dispatchChangeGalleryView } from './actions/dispatch';
 
 interface AssetGalleryTabProps {

@@ -37,7 +37,7 @@ namespace pxtblockly {
         public dropdownCreate() {
             let functionList: string[] = [];
             if (this.sourceBlock_ && this.sourceBlock_.workspace) {
-                let blocks = this.sourceBlock_.workspace.getAllBlocks();
+                let blocks = this.sourceBlock_.workspace.getAllBlocks(false);
                 // Iterate through every block and check the name.
                 for (let i = 0; i < blocks.length; i++) {
                     if ((blocks[i] as any).getProcedureDef) {
@@ -70,10 +70,6 @@ namespace pxtblockly {
 
         onItemSelected(menu: any, menuItem: any) {
             let itemText = menuItem.getValue();
-            if (this.sourceBlock_) {
-                // Call any validation function, and allow it to override.
-                itemText = this.callValidator(itemText);
-            }
             if (itemText !== null) {
                 this.setValue(itemText);
             }

@@ -333,9 +333,6 @@ Use https://uifabricicons.azurewebsites.net/
             cursor: cursor;
         }
 
-        body.loading {
-            filter: blur(0.2vw);
-        }
         /** add site **/
         #addsite {
             display: none;
@@ -374,7 +371,7 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         .pip video {
-            max-height: 50vh;
+            max-height: 10vh;
             max-width: 65vw;
             display: block;
         }
@@ -383,21 +380,6 @@ Use https://uifabricicons.azurewebsites.net/
             position: absolute;
             top: 1%;
             right: 1%;
-        }
-
-        #takethetour {
-            position: absolute;
-            left: 15vw;
-            top: 50%;
-            text-align: center;
-            font-size: 3vh;
-            color: red;
-            font-weight: bold;
-            text-shadow: -3px 3px 0 #fff,
-                3px 3px 0 #fff,
-                3px -3px 0 #fff,
-                -3px -3px 0 #fff;
-            transform: rotateZ(-30deg);
         }
 
         /**
@@ -712,6 +694,10 @@ Settings
         /*
     Face camera            
 */
+        body.hideFacecam .facecam {
+            display: none !important;
+        }
+
         .facecam,
         .hardwarecam {
             position: absolute;
@@ -719,6 +705,12 @@ Settings
             bottom: 1.5%;
             right: 1%;
             overflow: hidden;
+        }
+
+        .loading .facecam, 
+        .loading .hardwarecam {
+            filter: blur(0.2vw);
+            opacity: 0.5;
         }
 
         .facecam video,
@@ -1447,9 +1439,9 @@ Settings
     <video id="backgroundvideo" class="full background" playsinline autoplay muted loop></video>
     <iframe id="backgroundyoutube" class="full background" type="text/html"></iframe>
     <div id="container" class="container">
-        <iframe class="box animated site" id="editor" allow="usb;camera"
+        <iframe class="box animated site" id="editor" allow="usb;camera;serial;microphone"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
-        <iframe class="box animated site" id="editor2" allow="usb;camera"
+        <iframe class="box animated site" id="editor2" allow="usb;camera;serial;microphone"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
         <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
         <div role="button" class="box animated clickeable cam facecam" id="facecam">
@@ -1541,6 +1533,17 @@ Settings
                 </h2>
             </div>
             <div class="contents">
+                <div class="section expanded">
+                    <p>Use this page to produce live or recorded MakeCode videos!
+                        Got a question or a comment ? Try the <a
+                            href="https://forum.makecode.com/t/introducing-makecode-streamer/2437"
+                            target="_blank">forum</a>!
+                    </p>
+                    <button class="pip" id="playpip" title="Watch the introduction video!">
+                        <video id="introvideo" title="Take the tour!" preload="metadata" poster="/static/streamer/intro.png"
+                            src="/static/streamer/intro.mp4"></video>
+                    </button>
+                </div>    
                 <div class="section expanded">
                     <h3>Editor</h3>
                     <div class="field">
@@ -1824,7 +1827,7 @@ Settings
                         Use</a>|
                     <a class="item" href="https://makecode.com/trademarks" target="_blank"
                         rel="noopener">Trademarks</a>|
-                    <span class="item">© 2021 Microsoft</span>
+                    <span class="item">© 2022 Microsoft</span>
                 </div>
             </div>
         </div>
@@ -1843,26 +1846,6 @@ Settings
         </div>
         <div class="tools" id="menucontainer">
             <div class="animated icons" id="toolbox"></div>
-        </div>
-        <div class="box" id="intro">
-            <div class="header">
-                <h1>Welcome to Streamer!</h1>
-            </div>
-            <div class="contents">
-                <p>Use this page to produce live or recorded MakeCode videos!
-                    Got a question or a comment ? Try the <a
-                        href="https://forum.makecode.com/t/introducing-makecode-streamer/2437"
-                        target="_blank">forum</a>!
-                </p>
-                <button class="pip" id="playpip" title="Watch the introduction video!">
-                    <video id="introvideo" title="Take the tour!" preload="metadata" poster="/static/streamer/intro.png"
-                        src="/static/streamer/intro.mp4"></video>
-                    <span id="takethetour">TAKE THE TOUR</span>
-                </button>
-                <button class="pip" id="skippip" title="I'm a pro already...">
-                    Skip
-                </button>
-            </div>
         </div>
         <div class="box" id="addsite">
             <div class="contents">

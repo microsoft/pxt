@@ -248,6 +248,11 @@ namespace pxt.vs {
             noSemanticValidation: true
          });
 
+        // Register our worker
+        monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
+            customWorkerPath: pxt.webConfig.typeScriptWorkerJs
+        });
+
         // compiler options
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
             allowUnreachableCode: true,

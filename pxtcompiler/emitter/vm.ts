@@ -45,8 +45,9 @@ namespace ts.pxtc.vm {
 
                     numArgs.push(v)
 
+                    const v0 = v
                     v = enc.encode(v)
-                    if (v == null) return emitErr("argument out of range or mis-aligned", actual);
+                    if (v == null) return emitErr(`argument (${v0}) out of range or mis-aligned`, actual);
 
                     if (formal == "$i3") {
                         v = i2 | (v << 6)
@@ -101,6 +102,7 @@ namespace ts.pxtc.vm {
         "ldfld     $i4, $i5",
         "newobj    $i1",
         "ldcap     $i1",
+        "bitconv   $i1",
         "stglb     $i1",
         "ldglb     $i1",
         "ldint     $i1",

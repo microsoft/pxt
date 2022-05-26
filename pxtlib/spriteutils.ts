@@ -327,6 +327,20 @@ namespace pxt.sprite {
         return;
     }
 
+    export function isEmptyTilemap(t: TilemapData) {
+        const tiles = t.tileset.tiles;
+        const tilemap = t.tilemap;
+        const transparency =  tiles[0].id;
+
+        for (let x = 0; x < tilemap.width; x++) {
+            for (let y = 0; y < tilemap.height; y++) {
+                if (tiles[tilemap.get(x, y)].id !== transparency) return false;
+            }
+        }
+        return true;
+    }
+
+
     export function computeAverageColor(bitmap: Bitmap, colors: string[]): string {
         const parsedColors = colors.map(colorStringToRGB);
         const averageColor = [0, 0, 0];
@@ -824,7 +838,7 @@ namespace pxt.sprite {
         buf[offset + 1] = (value >> 8) & 0xff;
     }
 
-    function colorStringToRGB(color: string) {
+    export function colorStringToRGB(color: string) {
         const parsed = parseColorString(color);
         return [_r(parsed), _g(parsed), _b(parsed)]
     }

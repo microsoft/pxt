@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { GalleryView } from './store/assetEditorReducer';
+import { GalleryView } from './store/assetEditorReducerState';
 import { AssetGalleryTab } from './assetGalleryTab'
 
 export class AssetTopbar extends React.Component<{}> {

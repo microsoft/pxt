@@ -47,8 +47,21 @@ ${vtName(info)}_start:
         .short ${info.classNo} ; class-id
         .short 0 ; reserved
         .word ${ifaceInfo.mult} ; hash-mult
-        .word 0,0, 0,0, 0,0, 0,0 ; space for 4 (VM_NUM_CPP_METHODS) native methods
 `;
+
+        if (embedVTs()) {
+            s += `
+            .word pxt::RefRecord_destroy
+            .word pxt::RefRecord_print
+            .word pxt::RefRecord_scan
+            .word pxt::RefRecord_gcsize
+            .word 0,0,0,0 ; keep in sync with VM_NUM_CPP_METHODS
+`
+        } else {
+            s += `
+            .word 0,0, 0,0, 0,0, 0,0 ; space for 4 (VM_NUM_CPP_METHODS) native methods
+`
+        }
 
         s += `
         .balign 4
@@ -100,6 +113,7 @@ ${info.id}_IfaceVT:
         NumberLiterals = 0x03,   // array of boxed doubles and ints
         ConfigData = 0x04,       // sorted array of pairs of int32s; zero-terminated
         IfaceMemberNames = 0x05, // array of 32 bit offsets, that point to string literals
+        NumberBoxes = 0x06,      // numbers from NumberLiteral that need to be boxed on 32 bit hosts
 
         // repetitive sections
         Function = 0x20,
@@ -120,15 +134,77 @@ ${info.id}_IfaceVT:
         return info.id + "_VT"
     }
 
+    function embedVTs() {
+        return target.useESP
+    }
+
+    function vtRef(vt: string) {
+        if (embedVTs())
+            return `0xffffffff, ${vt}`
+        else
+            return `0xffffffff, 0xffffffff ; -> ${vt}`
+    }
+
+    function encodeSourceMap(srcmap: pxt.Map<number[]>) {
+        // magic: 0x4d435253 0x2d4e1588 0x719986aa ('SRCM' ... )
+        const res: number[] = [0x53, 0x52, 0x43, 0x4d, 0x88, 0x15, 0x4e, 0x2d, 0xaa, 0x86, 0x99, 0x71, 0x00, 0x00, 0x00, 0x00]
+        for (const fn of Object.keys(srcmap)) {
+            for (const c of U.stringToUint8Array(fn))
+                res.push(c)
+            res.push(0)
+            const arr = srcmap[fn]
+
+            let prevLn = 0
+            let prevOff = 0
+            for (let i = 0; i < arr.length; i += 3) {
+                encodeNumber(arr[i] - prevLn)
+                encodeNumber((arr[i + 1] - prevOff) >> 1)
+                encodeNumber(arr[i + 2] >> 1)
+                prevLn = arr[i]
+                prevOff = arr[i + 1]
+            }
+            res.push(0xff) // end-marker
+        }
+        res.push(0)
+        if (res.length & 1) res.push(0)
+        const res2: number[] = []
+        for (let i = 0; i < res.length; i += 2)
+            res2.push(res[i] | (res[i + 1] << 8))
+        return res2
+
+        function encodeNumber(k: number) {
+            if (0 <= k && k < 0xf0)
+                res.push(k)
+            else {
+                let mark = 0xf0
+                if (k < 0) {
+                    k = -k
+                    mark |= 0x08
+                }
+                const idx = res.length
+                res.push(null) // placeholder
+                let len = 0
+                while (k != 0) {
+                    res.push(k & 0xff)
+                    k >>>= 8
+                    len++
+                }
+                res[idx] = mark | len
+            }
+        }
+    }
+
     /* eslint-disable no-trailing-spaces */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
+_img_start:
 ${hexfile.hexPrelude()}
 `
 
         additionalClassInfos = {}
         const ctx: EmitCtx = {
             dblText: [],
+            dblBoxText: [],
             dbls: {},
             opcodeMap: {},
             opcodes: vm.opcodes.map(o => "pxt::op_" + o.replace(/ .*/, "")),
@@ -159,7 +235,7 @@ _start_${name}:
             address++
         }
 
-        const now = new Date()
+        const now = new Date(0) // new Date()
         let encodedName = U.toUTF8(opts.name, true)
         if (encodedName.length > 100) encodedName = encodedName.slice(0, 100)
         let encodedLength = encodedName.length + 1
@@ -177,7 +253,8 @@ _start_${name}:
                 .word 0, 0 ; last usage time
                 .word ${encodeTime(now)} ; installation time
                 .word ${encodeTime(now)} ; publication time - TODO
-                .space 64 ; reserved
+                .word _img_end-_img_start ; total image size
+                .space 60 ; reserved
                 .string ${JSON.stringify(encodedName)}
                 .space ${paddingSize} ; pad to 128 bytes
 `
@@ -202,14 +279,15 @@ _start_${name}:
 
         let idx = 0
         section("ifaceMemberNames", SectionType.IfaceMemberNames, () =>
-            `    .word ${bin.ifaceMembers.length}, 0 ; num. entries\n` + bin.ifaceMembers.map(d =>
-                `    .word ${bin.emitString(d)}, 0  ; ${idx++} .${d}`
+            `    .word ${bin.ifaceMembers.length} ; num. entries\n` + bin.ifaceMembers.map(d =>
+                `    .word ${bin.emitString(d)}  ; ${idx++} .${d}`
             ).join("\n"))
 
         vmsource += "_vtables_end:\n\n"
 
         U.iterMap(bin.hexlits, (k, v) => {
             section(v, SectionType.Literal, () =>
+                `.word ${vtRef("pxt::buffer_vt")}\n` +
                 hexLiteralAsm(k), [], pxt.BuiltInType.BoxedBuffer)
         })
 
@@ -218,13 +296,28 @@ _start_${name}:
         // by emitting them in order and before everything else
         const keys = U.unique(bin.ifaceMembers.concat(Object.keys(bin.strings)), s => s)
         keys.forEach(k => {
-            let ku = U.toUTF8(k, true)
-            section(bin.strings[k], SectionType.Literal, () =>
-                `.word ${ku.length}\n.string ${JSON.stringify(ku)}`,
-                [], pxt.BuiltInType.BoxedString)
+            const info = utf8AsmStringLiteral(k)
+            let tp = pxt.BuiltInType.BoxedString
+            if (info.vt == "pxt::string_inline_ascii_vt")
+                tp = pxt.BuiltInType.BoxedString_ASCII
+            else if (info.vt == "pxt::string_skiplist16_packed_vt")
+                tp = pxt.BuiltInType.BoxedString_SkipList
+            else if (info.vt == "pxt::string_inline_utf8_vt")
+                tp = pxt.BuiltInType.BoxedString
+            else oops("invalid vt")
+
+            const text =
+                `.word ${vtRef(info.vt)}\n` +
+                info.asm
+
+            section(bin.strings[k], SectionType.Literal, () => text, [], tp)
         })
 
-        section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n"))
+        section("numberBoxes", SectionType.NumberBoxes, () => ctx.dblBoxText.join("\n")
+            + "\n.word 0, 0, 0 ; dummy entry to make sure not empty")
+
+        section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n")
+            + "\n.word 0, 0 ; dummy entry to make sure not empty")
 
         const cfg = bin.res.configData || []
         section("configData", SectionType.ConfigData, () => cfg.map(d =>
@@ -243,12 +336,34 @@ _start_${name}:
         section("opcodeMap", SectionType.OpCodeMap, () => opcm)
         vmsource += "_literals_end:\n"
 
+        vmsource += "_img_end:\n"
         vmsource += "\n; The end.\n"
         bin.writeFile(BINARY_ASM, vmsource)
 
         let res = assemble(opts.target, bin, vmsource)
+
+        const srcmap = res.thumbFile.getSourceMap()
+        const encodedSrcMap = encodeSourceMap(srcmap)
+
         if (res.src)
-            bin.writeFile(pxtc.BINARY_ASM, res.src)
+            bin.writeFile(pxtc.BINARY_ASM, `; srcmap size: ${encodedSrcMap.length << 1} bytes\n` + res.src)
+
+        {
+            let binstring = ""
+            for (let v of res.buf)
+                binstring += String.fromCharCode(v & 0xff, v >> 8)
+            const hash = U.sha256(binstring)
+            for (let i = 0; i < 4; ++i) {
+                res.buf[16 + i] = parseInt(hash.slice(i * 4, i * 4 + 4), 16)
+            }
+            srcmap["__meta"] = {
+                name: opts.name,
+                programHash: res.buf[16] | (res.buf[16 + 1] << 16),
+                // TODO would be nice to include version number of editor...
+            } as any
+        }
+
+        bin.writeFile(pxtc.BINARY_SRCMAP, JSON.stringify(srcmap))
 
         if (pxt.options.debug) {
             let pc = res.thumbFile.peepCounts
@@ -261,16 +376,28 @@ _start_${name}:
 
         if (res.buf) {
             let binstring = ""
-            for (let v of res.buf)
+            const buf = res.buf
+            while (buf.length & 0xf) buf.push(0)
+            U.pushRange(buf, encodedSrcMap)
+            for (let v of buf)
                 binstring += String.fromCharCode(v & 0xff, v >> 8)
-            const myhex = ts.pxtc.encodeBase64(binstring)
-            bin.writeFile(pxt.outputName(target), myhex)
+            binstring = ts.pxtc.encodeBase64(binstring)
+
+            if (embedVTs()) {
+                bin.writeFile(pxtc.BINARY_PXT64, binstring)
+                const patched = hexfile.patchHex(bin, buf, false, !!target.useUF2)[0]
+                bin.writeFile(pxt.outputName(target), ts.pxtc.encodeBase64(patched))
+            } else {
+                bin.writeFile(pxt.outputName(target), binstring)
+            }
+
         }
     }
     /* eslint-enable */
 
     interface EmitCtx {
         dblText: string[]
+        dblBoxText: string[]
         dbls: pxt.Map<number>
         opcodeMap: pxt.Map<number>;
         opcodes: string[];
@@ -303,17 +430,20 @@ _start_${name}:
         return resText
 
         function emitAll() {
-            writeRaw(`;\n; Proc: ${proc.getFullName()}\n;`)
+            writeRaw(`;\n; ${proc.getFullName()}\n;`)
             write(".section code")
             if (bin.procs[0] == proc) {
                 writeRaw(`; main`)
             }
 
+            write(`.word ${vtRef("pxt::RefAction_vtable")}`)
+
             write(`.short 0, ${proc.args.length} ; #args`)
             write(`.short ${proc.captured.length}, 0 ; #cap`)
-            write(`.word 0, 0`) // space for fn pointer (64 bit)
+            write(`.word .fnstart-_img_start, 0  ; func+possible padding`)
 
             numLoc = proc.locals.length + currTmps.length
+            write(`.fnstart:`)
             write(`pushmany ${numLoc} ; incl. ${currTmps.length} tmps`)
 
             for (let s of proc.body) {
@@ -335,6 +465,9 @@ _start_${name}:
                     case ir.SK.Label:
                         writeRaw(`${s.lblName}:`)
                         break;
+                    case ir.SK.Comment:
+                        writeRaw(`; ${s.expr.data}`)
+                        break
                     case ir.SK.Breakpoint:
                         break;
                     default: oops();
@@ -415,6 +548,7 @@ _start_${name}:
                     else {
                         let n = e.data as number
                         let n0 = 0, n1 = 0
+                        const needsBox = ((n << 1) >> 1) != n // boxing needed on PXT32?
                         if ((n | 0) == n) {
                             if (Math.abs(n) <= immMax) {
                                 if (n < 0)
@@ -439,6 +573,14 @@ _start_${name}:
                         if (id == null) {
                             id = ctx.dblText.length
                             ctx.dblText.push(`.word ${n0}, ${n1}  ; ${id}: ${e.data}`)
+                            if (needsBox) {
+                                const vt = "pxt::number_vt"
+                                ctx.dblBoxText.push(`.word ${embedVTs() ? vt : `0xffffffff ; ${vt}`}\n`)
+                                let a = new Float64Array(1)
+                                a[0] = n
+                                let u = new Uint32Array(a.buffer)
+                                ctx.dblBoxText.push(`.word ${u[0]}, ${u[1]} ; ${n}\n`)
+                            }
                             ctx.dbls[key] = id
                         }
                         write(`ldnumber ${id} ; ${e.data}`)
@@ -464,15 +606,6 @@ _start_${name}:
                     return
                 case EK.CellRef:
                     write("ld" + cellref(e.data))
-                    let cell = e.data as ir.Cell
-                    if (cell.isGlobal()) {
-                        // TODO
-                        if (cell.bitSize == BitSize.Int8) {
-                            write(`sgnext`)
-                        } else if (cell.bitSize == BitSize.UInt8) {
-                            write(`clrhi`)
-                        }
-                    }
                     return
                 case EK.InstanceOf:
                     emitExpr(e.args[0])
@@ -660,9 +793,10 @@ _start_${name}:
                     emitExpr(src)
                     let cell = trg.data as ir.Cell
                     let instr = "st" + cellref(cell)
-                    if (cell.isGlobal() &&
-                        (cell.bitSize == BitSize.Int8 || cell.bitSize == BitSize.UInt8)) {
-                        instr = instr.replace("stglb", "stglb1")
+                    if (cell.isGlobal() && (cell.bitSize != BitSize.None)) {
+                        const enc = sizeOfBitSize(cell.bitSize) |
+                            (isBitSizeSigned(cell.bitSize) ? 0x10 : 0x00)
+                        write("bitconv " + enc)
                     }
                     write(instr)
                     break;

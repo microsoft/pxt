@@ -106,7 +106,7 @@ function getSnippetTestCasesInFile(fileName: string): SnippetTestCase[] {
     // testNamespace.someFunction
     testNamespace.someFunction("")
 
-    Each line that starts in a comment begins a new test case. 
+    Each line that starts in a comment begins a new test case.
     The case ends when the next line with a comment starts or the end of file is reached.
     The content on the comment line is read as the qualified symbol name (qName) of the symbol we want to create a snippet for.
     The non-comment content is the expected snippet result.
@@ -174,10 +174,10 @@ function getCompletionTestCases(): CompletionTestCase[] {
         example:
         foo.ba // foo.bar; foo.baz
 
-        Each line that ends in a comment is a test cases. 
+        Each line that ends in a comment is a test cases.
         The comment is a ";" seperated list of expected symbols.
-        Symbols that start with "!" must not be present in the completion list. 
-        The completions are triggered as if  the user's cursor was at the end of 
+        Symbols that start with "!" must not be present in the completion list.
+        The completions are triggered as if  the user's cursor was at the end of
         the line right after the last non-whitespace character.
         */
         for (const line of lines) {
@@ -239,7 +239,7 @@ function getCompletionTestCases(): CompletionTestCase[] {
     return testCases;
 }
 
-const fileName = (isPython: boolean) => isPython ? "main.py" : "main.ts"
+const fileName = (isPython: boolean) => isPython ? pxt.MAIN_PY : pxt.MAIN_TS
 
 function runCompletionTestCaseAsync(testCase: CompletionTestCase): Promise<void> {
     return getOptionsAsync(testCase.fileText, testCase.isPython)

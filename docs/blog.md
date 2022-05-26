@@ -1,5 +1,69 @@
 # Microsoft MakeCode Blog
 
+## [AP Computer Science Principles with MakeCode Professional Development](/blog/csp/csp-prodev-2022)
+
+April 29th, 2022 by [Jaqster](https://github.com/jaqster)
+
+It's hard to believe the academic year is almost over and Summer is on the horizon! Even so, this is a great time to start planning some professional development between those camping and road trips.
+
+**[Continue reading this blog post](/blog/csp/csp-prodev-2022)**
+
+## [MakeCode Arcade Valentine’s Update](/blog/arcade/valentine-update-2022)
+
+February 9th, 2022 by [Jaqster](https://github.com/jaqster)
+
+Love is in the air! But instead of a box of chocolates, we’ve got something better for you... updates for MakeCode Arcade and a Valentine’s Day tutorial! 💖
+
+**[Continue reading this blog post](/blog/arcade/valentine-update-2022)**
+
+## [Sing 2 Skillmap](/blog/arcade/sing-2-skillmap)
+
+December 27th, 2021 by [ElizabethRiffle](https://github.com/ElizabethRiffle)
+
+This December, Microsoft MakeCode is collaborating with Universal Studios to bring you a Sing 2 inspired skillmap in Makecode Arcade!
+
+**[Continue reading this blog post](/blog/arcade/sing-2-skillmap)**
+
+## [Computer Science Education Week 2021](/blog/csed-week/csed-week-2021)
+
+November 8th, 2021 by [Jaqster](https://github.com/jaqster)
+
+Computer Science Education Week is coming up December 6th - 12th. This is an annual event to raise the visibility of computer science in education, and to inspire teachers and students to complete an "Hour of Code" during this week.
+
+**[Continue reading this blog post](/blog/csed-week/csed-week-2021)**
+
+## [MakeCode Arcade Tutorial Update](/blog/arcade/tutorial-update)
+
+September 24th, 2021 by [Jaqster](https://github.com/jaqster)
+
+In an effort to help optimize screen layout for everyone, we’ve updated our tutorial interface...
+
+**[Continue reading this blog post](/blog/arcade/tutorial-update)**
+
+## [Introducing Cloud Sync for MakeCode Arcade](/blog/arcade/intro-cloud-sync)
+
+August 12th, 2021 by [eanders-ms](https://github.com/eanders-ms)
+
+Over the past year we've been working hard to bring you the ability to sign into MakeCode with a [Microsoft Account](https://aka.ms/AAdd6f8). When you sign into MakeCode, you make it possible for us to remember who you, and this unlocks a bunch of exciting new possibilities.
+
+**[Continue reading this blog post](/blog/arcade/intro-cloud-sync)**
+
+## [MakeCode for the micro:bit - 2021 Release is here!](/blog/microbit/2021-release)
+
+July 12th, 2021 by [Jaqster](https://github.com/jaqster)
+
+Phew! We made it through a crazy remote/hybrid school year! Now, with summer weather + the 2021 updates to MakeCode for the micro:bit, things are starting to look up!
+
+**[Continue reading this blog post](/blog/microbit/2021-release)**
+
+## [Beginner Skillmap Sneak Peek](/blog/arcade/beginner-skillmap)
+
+Updated on May 19th by [kiki-lee](https://github.com/kiki-lee)
+
+Next month, Microsoft MakeCode will release a sneak peek of our newest adventure, the Arcade Beginner Skillmap!
+
+**[Continue reading this blog post](/blog/arcade/beginner-skillmap)**
+
 ## [New Free Curriculum! AP Computer Science Principles with MakeCode](/blog/csp/new-free-curriculum)
 
 May 4th, 2021 by [Jaqster](https://github.com/jaqster)
@@ -7,14 +71,6 @@ May 4th, 2021 by [Jaqster](https://github.com/jaqster)
 Are you do planning to teach the [AP Computer Science Principles](https://apcentral.collegeboard.org/courses/ap-computer-science-principles) course next year? If so, you may want to take a look at some new curriculum we’ve published...
 
 **[Continue reading this blog post](/blog/csp/new-free-curriculum)**
-
-## [Beginner Skillmap Sneak Peek](/blog/arcade/beginner-skillmap)
-
-March 30th, 2021 by [kiki-lee](https://github.com/kiki-lee)
-
-Next month, Microsoft MakeCode will release a sneak peek of our newest adventure, the Arcade Beginner Skillmap!
-
-**[Continue reading this blog post](/blog/arcade/beginner-skillmap)**
 
 ## [MakeCode Arcade Spring Update!](/blog/arcade/update-spring-2021)
 

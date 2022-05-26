@@ -2,9 +2,11 @@ import * as React from "react";
 import * as data from "./data";
 import * as core from "./core";
 import * as sui from "./sui";
+import * as auth from "./auth";
 import * as ImmersiveReader from '@microsoft/immersive-reader-sdk';
 
 import Cloud = pxt.Cloud;
+import { fireClickOnEnter } from "./util";
 
 export type ImmersiveReaderToken = {
     token: string;
@@ -184,37 +186,38 @@ function beautifyText(content: string): string {
 }
 
 function getTokenAsync(): Promise<ImmersiveReaderToken> {
-    if (Cloud.isOnline()) {
-        const IMMERSIVE_READER_ID = "immReader";
-        const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
-        const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
+    const IMMERSIVE_READER_ID = "immReader";
+    const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
+    const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
-        if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
-            return pxt.Util.requestAsync({ url: "/api/immreader", method: "GET" }).then(
-                res => {
-                    pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res.json));
-                    return res.json;
-                },
-                e => {
-                    pxt.storage.removeLocal(IMMERSIVE_READER_ID);
-                    pxt.reportException(e)
-                    pxt.tickEvent("immersiveReader.error", {error: e.statusCode, message: e.message});
-                    return Promise.reject(new Error("token"));
+    if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
+        return pxt.Cloud.privateGetAsync("immreader").then(
+            res => {
+                pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res));
+                return res;
+            },
+            e => {
+                pxt.storage.removeLocal(IMMERSIVE_READER_ID);
+                pxt.reportException(e)
+                pxt.tickEvent("immersiveReader.error", {error: e.statusCode, message: e.message});
+                if (e.isOffline) {
+                    return Promise.reject(new Error("offline"))
                 }
-            );
-        } else {
-            pxt.tickEvent("immersiveReader.cachedToken");
-            return Promise.resolve(cachedToken);
-        }
+                return Promise.reject(new Error("token"));
+            }
+        );
     } else {
-        return Promise.reject(new Error("offline"));
+        pxt.tickEvent("immersiveReader.cachedToken");
+        return Promise.resolve(cachedToken);
     }
 }
 
 export function launchImmersiveReader(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
     pxt.tickEvent("immersiveReader.launch", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep});
 
-    const data = {
+    const userReaderPref = data.getData<string>(auth.READER) || ""
+    const langPref = data.getData<string>(auth.LANGUAGE) || "";
+    const tutorialData = {
         chunks: [{
             content: beautifyText(content),
             mimeType: "text/html"
@@ -222,37 +225,56 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
     }
 
     const options = {
-        onExit: () => {pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})}
+        uiLang: langPref,
+        onExit: () => {
+            pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})
+        },
+        onPreferencesChanged: (pref: string) => {
+            auth.setImmersiveReaderPrefAsync(pref)
+        },
+        preferences: userReaderPref
     }
 
-    getTokenAsync().then(res => {
+    getTokenAsync().then(res =>{
+        return testConnectionAsync(res);
+    }).then(res => {
         if (Cloud.isOnline()) {
-            return ImmersiveReader.launchAsync(res.token, res.subdomain, data, options)
+            const launchStart = pxt.Util.now();
+            return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options).then(res => {
+                const elapsed = pxt.Util.now() - launchStart;
+                pxt.tickEvent("immersiveReader.launch.finished", {elapsed: elapsed})
+            })
         } else {
             return Promise.reject(new Error("offline"));
         }
     }).catch(e => {
-        switch (e.message) {
-            case "offline": {
-                core.warningNotification(lf("Immersive Reader cannot be used offline"));
-                break;
-            }
-            case "token": {
-                break;
-            }
-            default: {
-                core.warningNotification(lf("Immersive Reader could not be launched"));
-                if (typeof e == "string") {
-                    pxt.tickEvent("immersiveReader.error", {message: e});
-                } else {
-                    pxt.tickEvent("immersiveReader.error", {message: e.message, statusCode: e.statusCode})
+        if (e.isOffline) {
+            core.warningNotification(lf("Immersive Reader cannot be used offline"));
+        } else {
+            switch (e.message) {
+                case "offline": {
+                    core.warningNotification(lf("Immersive Reader cannot be used offline"));
+                    break;
                 }
+                case "token":
+                default: {
+                    core.warningNotification(lf("Immersive Reader could not be launched"));
+                    if (typeof e == "string") {
+                        pxt.tickEvent("immersiveReader.error", {message: e});
+                    } else {
+                        pxt.tickEvent("immersiveReader.error", {message: e.message, statusCode: e.statusCode})
+                    }
 
+                }
             }
         }
         pxt.reportException(e);
         ImmersiveReader.close();
     });
+
+    function testConnectionAsync(token: ImmersiveReaderToken): Promise<ImmersiveReaderToken> {
+        return pxt.Cloud.privateGetAsync("ping").then(() => {return token});
+    }
 }
 
 
@@ -268,7 +290,7 @@ export class ImmersiveReaderButton extends data.Component<ImmersiveReaderProps, 
 
     render() {
         return <div className='immersive-reader-button ui item' onClick={this.buttonClickHandler}
-            aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={sui.fireClickOnEnter} tabIndex={0}
+            aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={fireClickOnEnter} tabIndex={0}
             title={lf("Launch Immersive Reader")}/>
     }
 }

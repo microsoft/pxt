@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as sui from "../sui";
+import { fireClickOnEnter } from "../util";
 
 interface FilterTagProps {
     tag: string;
@@ -15,10 +15,10 @@ export class FilterTag extends React.Component<FilterTagProps> {
 
     render() {
         return <div className="filter-tag">
-            <div className="filter-tag-box" role="checkbox" onClick={this.clickHandler} onKeyDown={sui.fireClickOnEnter} aria-checked={this.props.selected}>
+            <div className="filter-tag-box" role="checkbox" onClick={this.clickHandler} onKeyDown={fireClickOnEnter} aria-checked={this.props.selected}>
                 <i className={`icon square outline ${this.props.selected ? "check" : ""}`}></i>
             </div>
-            <div className="filter-tag-name" role="button" onClick={this.clickHandler} onKeyDown={sui.fireClickOnEnter}>{pxtc.U.rlf(this.props.tag)}</div>
+            <div className="filter-tag-name" role="button" onClick={this.clickHandler} onKeyDown={fireClickOnEnter}>{pxtc.U.rlf(this.props.tag)}</div>
         </div>
     }
 
@@ -40,7 +40,7 @@ export class FilterPanelSubheading extends React.Component<FilterPanelSubheading
     render() {
         return <div className="filter-subheading-row">
             <div className="filter-subheading-title">{`${this.props.subheading}:`}</div>
-            {this.props.buttonText && <div className="filter-subheading-button" role="button" style={this.props.buttonStyle} onClick={this.props.buttonAction} onKeyDown={sui.fireClickOnEnter}>{this.props.buttonText}</div>}
+            {this.props.buttonText && <div className="filter-subheading-button" role="button" style={this.props.buttonStyle} onClick={this.props.buttonAction} onKeyDown={fireClickOnEnter}>{this.props.buttonText}</div>}
         </div>
     }
 }

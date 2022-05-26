@@ -2,6 +2,9 @@
 import * as srceditor from "./srceditor";
 import * as toolbox from "./toolbox";
 import * as compiler from "./compiler";
+import * as pkg from "./package";
+import * as data from "./data";
+import { getBlocksEditor } from "./app";
 
 export abstract class ToolboxEditor extends srceditor.Editor {
 
@@ -151,6 +154,13 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             }).filter(subns => !!subns);
         }
 
+        function isTopLevelExtension(ns: string, md: pxtc.CommentAttrs) {
+            //TODO check if this extension is top level and allow delete for the same.
+            return false;
+            //const nsAttr = getBlocksEditor().extensionsMap[ns];
+            //return nsAttr.isExtension;
+        }
+
         function createCategories(names: [string, pxtc.CommentAttrs][], isAdvanced?: boolean): toolbox.ToolboxCategory[] {
             return names
                 .sort(([, md1], [, md2]) => {
@@ -204,11 +214,15 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                             || md.icon : pxt.toolbox.getNamespaceIcon(ns);
                         category.groups = builtInCategory.groups || md.groups;
                         category.customClick = builtInCategory.customClick;
+                    } else if (isTopLevelExtension(ns, md)) {
+                        category.allowDelete = true;
                     }
                     return category;
                 }).filter(cat => !!cat);
         }
-        return createCategories(namespaces, isAdvanced);
+
+        const cat = createCategories(namespaces, isAdvanced);
+        return cat;
     }
 
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;

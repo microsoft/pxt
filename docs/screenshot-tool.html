@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <link rel="stylesheet" href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css" type="text/css">
+    <link data-name="vs/editor/editor.main" rel="stylesheet"
+        href="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.css">
+    <link rel="stylesheet" href="/static/shared/iframeeditor.css">
+    <link rel="stylesheet" href="/static/screenshot-tool/screenshot.css">
+</head>
+
+<body>
+    <nav class="ui menu inverted fixed borderless">
+        <div class="ui item">
+            MakeCode Block Screenshot Tool
+        </div>
+    </nav>
+
+    <div class="content">
+        <div class="input-row">
+            <div id="endpoint-container" class="ui labeled input">
+                <span class="ui label">Editor</span>
+                <select id="endpoint-select" class="ui dropdown"></select>
+                <button class="ui primary button input large" id="run-button">
+                    <i class="play icon"></i>
+                    Run
+                </button>
+            </div>
+        </div>
+        <div class="editor-row">
+            <div class="monaco-col">
+                <div id="monaco-editor">
+                    <div id="container" style="border:1px solid grey"></div>
+                </div>
+                <div id="render-result">
+
+                </div>
+            </div>
+            <div id="makecode-editor" style="border:1px solid grey"></div>
+        </div>
+    </div>
+
+    <!-- @include tracking.html -->
+    <!-- @include thin-footer.html -->
+
+    <script>var require = { paths: { 'vs': 'https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs' } };</script>
+    <script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script
+        src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script
+        src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+    <script src="/static/screenshot-tool/screenshot.js"></script>
+
+</body>
+
+</html>

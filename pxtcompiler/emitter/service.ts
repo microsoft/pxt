@@ -35,55 +35,6 @@ namespace ts.pxtc {
         "_py.range": { n: "range", t: ts.SyntaxKind.Unknown, snippet: 'range(4)' }
     }
 
-    export function snakify(s: string) {
-        const up = s.toUpperCase()
-        const lo = s.toLowerCase()
-
-        // if the name is all lowercase or all upper case don't do anything
-        if (s == up || s == lo)
-            return s
-
-        // if the name already has underscores (not as first character), leave it alone
-        if (s.lastIndexOf("_") > 0)
-            return s
-
-        const isUpper = (i: number) => s[i] != lo[i]
-        const isLower = (i: number) => s[i] != up[i]
-        //const isDigit = (i: number) => /\d/.test(s[i])
-
-        let r = ""
-        let i = 0
-        while (i < s.length) {
-            let upperMode = isUpper(i)
-            let j = i
-            while (j < s.length) {
-                if (upperMode && isLower(j)) {
-                    // ABCd -> AB_Cd
-                    if (j - i > 2) {
-                        j--
-                        break
-                    } else {
-                        // ABdefQ -> ABdef_Q
-                        upperMode = false
-                    }
-                }
-                // abcdE -> abcd_E
-                if (!upperMode && isUpper(j)) {
-                    break
-                }
-                j++
-            }
-            if (r) r += "_"
-            r += s.slice(i, j)
-            i = j
-        }
-
-        // If the name is is all caps (like a constant), preserve it
-        if (r.toUpperCase() === r) {
-            return r;
-        }
-        return r.toLowerCase();
-    }
 
     export function emitPyTypeFromTypeNode(s: ts.TypeNode): string {
         if (!s || !s.kind) return null;
@@ -324,13 +275,13 @@ namespace ts.pxtc {
 
             switch (r.kind) {
                 case SymbolKind.EnumMember:
-                    r.pyName = snakify(r.name).toUpperCase()
+                    r.pyName = U.snakify(r.name).toUpperCase()
                     break
                 case SymbolKind.Variable:
                 case SymbolKind.Method:
                 case SymbolKind.Property:
                 case SymbolKind.Function:
-                    r.pyName = snakify(r.name)
+                    r.pyName = U.snakify(r.name)
                     break
                 case SymbolKind.Enum:
                 case SymbolKind.Class:

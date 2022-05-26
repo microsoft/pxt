@@ -38,7 +38,7 @@ namespace exceptions {
         }
     }
 
-    function lambda(k:number) {
+    function lambda(k: number) {
         function inner() {
             try {
                 throwVal(k)
@@ -85,7 +85,7 @@ namespace exceptions {
         }
     }
 
-    function test3(fn:(k:number)=>void) {
+    function test3(fn: (k: number) => void) {
         glb1 = x = 0
         fn(1)
         assert(glb1 == 10 && x == 10)
@@ -93,6 +93,33 @@ namespace exceptions {
         assert(glb1 == 11 && x == 21)
         fn(3)
         assert(glb1 == 21 && x == 42)
+    }
+
+    function test4(fn: () => void) {
+        try {
+            fn()
+            return 10
+        } catch {
+            return 20
+        }
+    }
+
+    function test5() {
+        let n = 0
+        for (let k of [0, 1, 2]) {
+            try {
+                n++
+                try {
+                    if (k == 1)
+                        break
+                } catch {
+                    n += 1000
+                }
+            } catch {
+                n += 100
+            }
+        }
+        assert(n == 2)
     }
 
     export function run() {
@@ -113,6 +140,12 @@ namespace exceptions {
         glb1 = x = 0
         nested()
         assert(glb1 == 11)
+
+        assert(test4(() => { }) == 10)
+        assert(test4(() => { throw "foo" }) == 20)
+
+        test5()
+
         msg("test exn done")
     }
 }

@@ -1,0 +1,36 @@
+#endpoint-container {
+    width: 23rem;
+}
+
+#share-container {
+    margin-left: calc(800px - 23rem);
+    width: calc(100% - 800px - 12rem);
+}
+
+#share-output {
+    width: 100%;
+}
+
+.monaco-col {
+    position: relative;
+    width: 50%;
+    overflow-x: auto;
+}
+
+#monaco-editor {
+    height: 50%;
+    border: 1px solid black;
+}
+
+#render-result {
+    height: 50%;
+    width: 100%;
+    display: flex;
+}
+
+#render-result img {
+    height: 90%;
+    width: 90%;
+    object-fit: contain;
+    margin: auto;
+}

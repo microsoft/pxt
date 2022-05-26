@@ -380,6 +380,13 @@ declare interface String {
     trim(): string;
 
     /**
+     * Converts the string to upper case characters.
+     */
+    //% helper=stringToUpperCase
+    //% help=text/to-upper-case
+    toUpperCase(): string;
+
+    /**
      * Converts the string to lower case characters.
      */
     //% helper=stringToLowerCase

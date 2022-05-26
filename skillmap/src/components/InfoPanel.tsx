@@ -4,13 +4,18 @@ import { connect } from 'react-redux';
 import { SkillMapState } from '../store/reducer';
 import { ActivityActions } from './ActivityActions';
 import { RewardActions } from './RewardActions';
-import { MapActions } from './MapActions';
+import { CloudStatus } from "./CloudStatus";
+import { dispatchShowLoginModal } from '../actions/dispatch';
 
-import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress,
-    isActivityCompleted, getActivityStatus, isRewardNode } from '../lib/skillMapUtils';
+
+import { FocusTrap } from "react-common/controls/FocusTrap";
+
+
+import { ActivityStatus, isActivityCompleted, getActivityStatus, isRewardNode } from '../lib/skillMapUtils';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/infopanel.css'
+import { Button } from "react-common/controls/Button";
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface InfoPanelProps {
@@ -18,14 +23,20 @@ interface InfoPanelProps {
     title: string;
     subtitle?: string;
     description: string;
+    infoUrl?: string;
     imageUrl?: string;
     details?: string[];
     node?: MapNode;
     status?: ActivityStatus;
     completedHeaderId?: string;
+    onFocusEscape: () => void;
+    dispatchShowLoginModal: () => void;
+    signedIn: boolean;
 }
 
 export class InfoPanelImpl extends React.Component<InfoPanelProps> {
+    protected container: HTMLDivElement | undefined;
+
     protected getStatusLabel(status?: ActivityStatus) {
         switch (status) {
             case "locked":
@@ -40,33 +51,55 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
     protected getStatusIcon(status?: ActivityStatus) {
         switch (status) {
             case "locked":
-                return "lock";
+                return "fas fa-lock";
             case "completed":
-                return "check circle";
+                return "fas fa-check-circle";
             default:
-                return null;
+                return "";
+        }
+    }
+
+    protected handleRef = (ref: HTMLDivElement) => {
+        if (!ref) return;
+        this.container = ref;
+    }
+
+    componentDidUpdate(prevProps: InfoPanelProps) {
+        if (this.container && this.props.node?.activityId && prevProps.node?.activityId !== this.props.node?.activityId) {
+            if (!this.container.contains(document.activeElement)) {
+                const buttons = this.container.querySelectorAll(`button[tabindex]`);
+
+                if (buttons.length) {
+                    (buttons.item(0) as HTMLElement).focus();
+                }
+            }
         }
     }
 
     render() {
-        const  { mapId, title, subtitle, description, imageUrl, details, node, status, completedHeaderId  } = this.props;
+        const  { mapId, title, subtitle, description, infoUrl, imageUrl, details, node, status,
+            completedHeaderId, onFocusEscape, dispatchShowLoginModal, signedIn } = this.props;
         const statusLabel = this.getStatusLabel(status);
+        const isMap = !node;
         const isActivity = node && !isRewardNode(node);
         const tags = isActivity && (node as MapActivity).tags || undefined;
-        return <div className="info-panel">
+
+        const hasCloudSync = pxt.auth.hasIdentity();
+        return <div className="info-panel" ref={this.handleRef}>
             <div className="info-panel-image">
                 {imageUrl
                 ? <img src={imageUrl} alt={lf("Preview of activity content")} />
-                : <i className={`icon image`} />}
+                : <i className={`fas fa-image`} />}
             </div>
             <div className="info-panel-content">
                 {subtitle && <div className="info-panel-subtitle">{subtitle}</div>}
                 <div className="info-panel-title">{title}</div>
                 {statusLabel && <div className="info-panel-label">
-                    <i className={`ui icon ${this.getStatusIcon(status)}`} />
+                    <i className={this.getStatusIcon(status)} />
                     <span>{statusLabel}</span>
                 </div>}
                 <div className="info-panel-description">{description}</div>
+                {isMap && infoUrl && <a className="info-panel-link" href={infoUrl} target="_blank" rel="noopener noreferrer">{lf("Learning Outcomes")}</a>}
                 {tags && tags.length > 0 && <div className="info-panel-tags">
                     {tags.map((el, i) => <div key={i}>{el}</div>)}
                 </div>}
@@ -74,9 +107,20 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                     {details?.map((el, i) => <div key={`detail_${i}`}>{el}</div>)}
                 </div>
                 <div className="tablet-spacer" />
-                {node && (isActivity
-                    ? <ActivityActions mapId={mapId} activityId={node.activityId} status={status} completedHeaderId={completedHeaderId} />
-                    : <RewardActions mapId={mapId} activityId={node.activityId} status={status} type={(node as MapReward).type} />)
+                <FocusTrap id="info-panel-actions" onEscape={onFocusEscape} dontStealFocus={true} arrowKeyNavigation={true} includeOutsideTabOrder={true}>
+                    {!isMap && (isActivity
+                        ? <ActivityActions mapId={mapId} activityId={node!.activityId} status={status} completedHeaderId={completedHeaderId} />
+                        : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} />)
+                    }
+                    {hasCloudSync && <CloudStatus />}
+                </FocusTrap>
+                {hasCloudSync && isMap && !signedIn &&
+                    <Button
+                        className="primary inverted sign-in-button"
+                        onClick={dispatchShowLoginModal}
+                        label={lf("Sign in to Save")}
+                        title={lf("Sign in to Save")}
+                    />
                 }
             </div>
         </div>
@@ -84,7 +128,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
-    const { user, pageSourceUrl, maps, selectedItem } = state;
+    const { user, pageSourceUrl, maps, selectedItem, infoUrl } = state;
     const node = selectedItem && state.maps[selectedItem.mapId]?.activities[selectedItem.activityId];
     const isActivity = node?.kind === "activity";
 
@@ -130,12 +174,18 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         title: node?.displayName || state.title,
         subtitle,
         description: isActivity ? (node as MapActivity).description : state.description,
+        infoUrl,
         imageUrl: node ? node?.imageUrl : state.bannerImageUrl,
         node,
         status,
         details,
-        completedHeaderId
+        completedHeaderId,
+        signedIn: state.auth.signedIn
     };
 }
 
-export const InfoPanel = connect(mapStateToProps)(InfoPanelImpl);
+const mapDispatchToProps = {
+    dispatchShowLoginModal
+}
+
+export const InfoPanel = connect(mapStateToProps, mapDispatchToProps)(InfoPanelImpl);

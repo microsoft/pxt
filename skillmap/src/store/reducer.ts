@@ -1,9 +1,10 @@
 import * as actions from '../actions/types'
-import { guidGen } from '../lib/browserUtils';
+import { guidGen, cloudLocalStoreKey } from '../lib/browserUtils';
+import { ReadyResources } from '../lib/readyResources';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
     isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "login-prompt" | "delete-account" | "reward";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -19,10 +20,14 @@ export interface SkillMapState {
     alternateSourceUrls?: string[];
     maps: { [key: string]: SkillMap };
     selectedItem?: { mapId: string, activityId: string };
-
+    shareState?: ShareState;
+    cloudState?: CloudState;
     editorView?: EditorViewState;
-    modal?: ModalState;
+    modalQueue?: ModalState[];
+    showProfile?: boolean;
     theme: SkillGraphTheme;
+    auth: AuthState;
+    readyResources?: ReadyResources;
 }
 
 export interface EditorViewState {
@@ -30,13 +35,31 @@ export interface EditorViewState {
     currentMapId: string;
     currentActivityId: string;
     allowCodeCarryover: boolean;
-    state: "active" | "saving" | "reload" | "reloading";
+    previousHeaderId?: string;
+    state: "active" | "saving";
 }
 
-interface ModalState {
+export interface ModalState {
     type: ModalType;
     currentMapId?: string;
     currentActivityId?: string;
+    currentReward?: MapReward;
+}
+
+export interface ShareState {
+    headerId: string;
+    url?: string;
+    rewardsShare?: boolean;
+}
+
+interface CloudState {
+    [headerId: string]: pxt.cloud.CloudStatus;
+}
+
+interface AuthState {
+    signedIn: boolean;
+    profile?: pxt.auth.UserProfile;
+    preferences?: pxt.auth.UserPreferences;
 }
 
 const initialState: SkillMapState = {
@@ -61,10 +84,16 @@ const initialState: SkillMapState = {
         unlockedNodeForeground: "#000000",
         lockedNodeColor: "#BFBFBF",
         lockedNodeForeground: "#000000",
+        completedNodeColor: "var(--secondary-color)",
+        completedNodeForeground: "#000000",
         selectedStrokeColor: "var(--hover-color)",
         pathOpacity: 0.5,
     },
-    maps: {}
+    maps: {},
+    auth: {
+        signedIn: false
+    },
+    cloudState: {}
 }
 
 const topReducer = (state: SkillMapState = initialState, action: any): SkillMapState => {
@@ -127,7 +156,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     currentMapId: action.mapId,
                     currentActivityId: action.activityId,
                     state: "active",
-                    allowCodeCarryover: shouldAllowCodeCarryover(state, action.mapId, action.activityId),
+                    allowCodeCarryover: !!action.carryoverCode,
+                    previousHeaderId: action.previousHeaderId,
                     currentHeaderId: lookupActivityProgress(
                         state.user,
                         state.pageSourceUrl,
@@ -168,12 +198,13 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.RESTART_ACTIVITY:
             return {
                 ...state,
-                modal: undefined,
+                modalQueue: [],
                 editorView: {
                     state: "active",
                     currentMapId: action.mapId,
                     currentActivityId: action.activityId,
-                    allowCodeCarryover: shouldAllowCodeCarryover(state, action.mapId, action.activityId),
+                    allowCodeCarryover: !!action.carryoverCode,
+                    previousHeaderId: action.previousHeaderId
                 },
                 user: setHeaderIdForActivity(
                     state.user,
@@ -197,16 +228,9 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     action.activityId,
                     action.id,
                     action.currentStep,
-                    action.maxSteps
+                    action.maxSteps,
+                    action.isCompleted
                 )
-            };
-        case actions.SET_RELOAD_HEADER_STATE:
-            return {
-                ...state,
-                editorView: state.editorView ? {
-                    ...state.editorView,
-                    state: action.state
-                } : undefined
             };
         case actions.SET_USER:
             const pageSourceUrl = state.pageSourceUrl;
@@ -232,12 +256,20 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 user
             };
         case actions.RESET_USER:
+            pxt.storage.removeLocal(state.pageSourceUrl +  cloudLocalStoreKey)
+
             return {
                 ...state,
                 user: {
                     ...state.user,
-                    completedTags: {},
-                    mapProgress: {}
+                    completedTags: {
+                        ...state.user.completedTags,
+                        [state.pageSourceUrl]: {}
+                    },
+                    mapProgress: {
+                        ...state.user.mapProgress,
+                        [state.pageSourceUrl]: {}
+                    }
                 }
             };
         case actions.UPDATE_USER_COMPLETED_TAGS:
@@ -250,6 +282,23 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                         ...state.user.completedTags,
                         [state.pageSourceUrl]: getCompletedTags(state.user, state.pageSourceUrl, Object.keys(state.maps).map(key => state.maps[key]))
                     }
+                }
+            }
+        case actions.SET_SHARE_STATUS:
+            return {
+                ...state,
+                shareState: action.headerId || action.url ? {
+                    headerId: action.headerId,
+                    url: action.url,
+                    rewardsShare: state.shareState?.rewardsShare
+                } : undefined
+            }
+        case actions.SET_CLOUD_STATUS:
+            return {
+                ...state,
+                cloudState: {
+                    ...state.cloudState,
+                    [action.headerId]: action.status
                 }
             }
         case actions.SET_PAGE_TITLE:
@@ -293,41 +342,80 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 alternateSourceUrls: action.urls
             }
-        case actions.SHOW_COMPLETION_MODAL:
+        case actions.SET_MODAL:
             return {
                 ...state,
-                modal: { type: "completion", currentMapId: action.mapId, currentActivityId: action.activityId }
+                shareState: action.rewardsShare !== undefined ? {
+                    headerId: state.shareState?.headerId || "",
+                    url: state.shareState?.url,
+                    rewardsShare: action.rewardsShare
+                } : state.shareState,
+                modalQueue: [action.modal]
+            }
+        case actions.ENQUEUE_MODALS:
+            return {
+                ...state,
+                modalQueue: action.modals
             };
-        case actions.SHOW_CARRYOVER_MODAL:
+        case actions.NEXT_MODAL:
             return {
                 ...state,
-                modal: { type: "carryover", currentMapId: action.mapId, currentActivityId: action.activityId }
-            };
-        case actions.SHOW_RESTART_ACTIVITY_MODAL:
-            return {
-                ...state,
-                modal: { type: "restart-warning", currentMapId: action.mapId, currentActivityId: action.activityId }
-            };
-        case actions.SHOW_REPORT_ABUSE_MODAL:
-            return {
-                ...state,
-                modal: { type: "report-abuse", currentMapId: action.mapId, currentActivityId: action.activityId }
-            };
-        case actions.SHOW_RESET_USER_MODAL:
-            return {
-                ...state,
-                modal: { type: "reset" }
-            };
-        case actions.SHOW_SHARE_MODAL:
-            return {
-                ...state,
-                modal: { type: "share", currentMapId: action.mapId, currentActivityId: action.activityId }
+                modalQueue: state.modalQueue?.slice(1)
             };
         case actions.HIDE_MODAL:
             return {
                 ...state,
-                modal: undefined
+                modalQueue: []
             };
+        case actions.SHOW_COMPLETION_MODAL:
+            return {
+                ...state,
+                modalQueue: getCompletionModals(state.maps[action.mapId], action.activityId)
+            }
+        case actions.SHOW_USER_PROFILE:
+            return {
+                ...state,
+                showProfile: true
+            };
+        case actions.HIDE_USER_PROFILE:
+            return {
+                ...state,
+                showProfile: false
+            };
+        case actions.SET_USER_PROFILE:
+            return {
+                ...state,
+                auth: {
+                    ...state.auth,
+                    profile: action.profile,
+                    signedIn: !!action.profile?.id
+                }
+            };
+        case actions.SET_USER_PREFERENCES:
+            return {
+                ...state,
+                auth: {
+                    ...state.auth,
+                    preferences: action.preferences,
+                }
+            };
+        case actions.USER_LOG_OUT:
+            return {
+                ...state,
+                auth: {
+                    ...state.auth,
+                    signedIn: false
+                }
+            }
+        case actions.SET_READY_RESOURCES:
+            return {
+                ...state,
+                readyResources: action.resources
+            }
+        case actions.GRANT_SKILLMAP_BADGE:
+            return {
+                ...state
+            }
         default:
             return state
     }
@@ -425,6 +513,36 @@ function getFinishedNodes(map: SkillMap, activityId: string) {
     // Reward and completion nodes are automatically marked finished
     const autoComplete = map.activities[activityId].next.filter(el => isRewardNode(el));
     return completedNodes.concat(autoComplete);
+}
+
+function getCompletionModals(map: SkillMap, activityId: string) {
+    const result: ModalState[] = [
+        {
+            type: "completion",
+            currentMapId: map.mapId,
+            currentActivityId: activityId,
+        }
+    ];
+
+    const activity = map.activities[activityId] as MapRewardNode;
+
+    // If we only have a certificate, don't bother showing multiple reward modals. This is mostly legacy for
+    // old skillmaps
+    if (activity.rewards.length === 1 && activity.rewards[0].type === "certificate") {
+        result[0].currentReward = activity.rewards[0];
+        return result;
+    }
+
+    for (const reward of activity.rewards) {
+        result.push({
+            type: "reward",
+            currentMapId: map.mapId,
+            currentActivityId: activityId,
+            currentReward: reward
+        })
+    }
+
+    return result;
 }
 
 export default topReducer;

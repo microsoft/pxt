@@ -103,6 +103,14 @@
     flex: 1;
 }
 
+.image-editor-header-center {
+    flex: 1.5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
 .image-editor-header-right {
     display: flex;
     justify-content: flex-end;
@@ -146,10 +154,6 @@
         flex: 3!important;
     }
 
-    .image-editor-header-left {
-        display: none;
-    }
-
     .gallery-editor-toggle {
         margin-left: .25rem!important;
         flex-shrink: 1;
@@ -184,110 +188,6 @@
         margin-left: 10px!important;
     }
 
-}
-
-.gallery-editor-toggle {
-    display: flex;
-    flex-direction: row;
-    position: relative;
-
-    height: 2.25rem;
-    line-height: 2.25rem;
-
-    background-color: #4572cf;
-    border: 2px solid #4067b3;
-    border-radius: 5px;
-    width: 24rem;
-    margin-top: 0.25rem;
-
-    margin-left: auto;
-    margin-right: auto;
-    cursor: pointer;
-}
-
-.gallery-editor-toggle.right {
-    .gallery-editor-toggle-handle {
-        /* Subtract small margin for rightmost element */
-        transform: translateX(calc(16rem - 0.2rem));
-    }
-    .gallery-editor-toggle-right {
-        color: #4B7BEC;
-    }
-}
-
-.gallery-editor-toggle.center {
-    .gallery-editor-toggle-handle {
-        transform: translateX(8rem);
-    }
-    .gallery-editor-toggle-center {
-        color: #4B7BEC;
-    }
-}
-
-.gallery-editor-toggle.left {
-    .gallery-editor-toggle-left {
-        color: #4B7BEC;
-    }
-}
-
-.gallery-editor-toggle.no-gallery {
-    width: 16rem;
-
-    .gallery-editor-toggle-handle {
-        width: 50%;
-    }
-    .gallery-editor-toggle-label {
-        flex-basis: 50%;
-    }
-}
-
-.gallery-editor-toggle.no-gallery.right {
-    .gallery-editor-toggle-handle {
-        transform: translateX(8rem);
-    }
-}
-
-// Microsoft Edge has a bug related to relative z-indices that prevents the handle
-// from appearing below the text, so instead we make the handle transparent and have the text
-// show through
-.gallery-editor-toggle.edge {
-    .gallery-editor-toggle-label, .gallery-editor-toggle-label-right, .gallery-editor-toggle-label-left, .gallery-editor-toggle-label-center {
-        color: #ffffff;
-        z-index: auto;
-    }
-    .gallery-editor-toggle-handle {
-        opacity: 0.3;
-    }
-}
-
-.gallery-editor-toggle-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-basis: 33%;
-    text-align: center;
-    color: #ffffff;
-    z-index: 1;
-    transition: color 0.3s;
-    user-select: none;
-
-    & > i {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-}
-
-.gallery-editor-toggle-handle {
-    width: 33%;
-    height: 2rem;
-    background-color: white;
-    border-radius: 5px;
-    position: absolute;
-    left: 0;
-
-    transform: translateX(0);
-    transition: transform 0.3s;
 }
 
 .gallery-editor-show-tiles {

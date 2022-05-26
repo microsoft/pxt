@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
+import { fireClickOnEnter } from "./util";
 
 export interface WebCamProps {
     close: () => void;
@@ -176,7 +177,7 @@ class WebCamCard extends data.Component<WebCamCardProps, {}> {
 
     renderCore() {
         const { header, icon } = this.props;
-        return <div role="button" className="ui card link" tabIndex={0} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
+        return <div role="button" className="ui card link" tabIndex={0} onClick={this.handleClick} onKeyDown={fireClickOnEnter}>
             <div className="imageicon">
                 <sui.Icon icon={`${icon} massive`} />
             </div>

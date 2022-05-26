@@ -40,7 +40,7 @@ namespace ts.pxtc {
                         break;
                     case SyntaxKind.Identifier:
                         const decl: Declaration = getDecl(child);
-                        if (decl && decl.getSourceFile().fileName !== "main.ts" && decl.kind == SyntaxKind.VariableDeclaration) {
+                        if (decl && decl.getSourceFile().fileName !== pxt.MAIN_TS && decl.kind == SyntaxKind.VariableDeclaration) {
                             const info = pxtInfo(child);
                             info.flags |= PxtNodeFlags.IsGlobalIdentifier;
                             if (!info.commentAttrs) {

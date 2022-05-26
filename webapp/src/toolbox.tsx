@@ -6,8 +6,11 @@ import * as editor from "./toolboxeditor"
 import * as sui from "./sui"
 import * as core from "./core"
 import * as coretsx from "./coretsx";
+import * as pkg from "./package";
 
 import Util = pxt.Util;
+import { fireClickOnEnter } from "./util"
+import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal"
 
 export const enum CategoryNameID {
     Loops = "loops",
@@ -109,6 +112,8 @@ export interface ToolboxState {
     hasError?: boolean;
 
     shouldAnimate?: boolean;
+
+    tryToDeleteNamespace?: string;
 }
 
 const MONACO_EDITOR_NAME: string = "monaco";
@@ -134,6 +139,9 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.setSelection = this.setSelection.bind(this);
         this.advancedClicked = this.advancedClicked.bind(this);
         this.recoverToolbox = this.recoverToolbox.bind(this);
+        this.handleRemoveExtension = this.handleRemoveExtension.bind(this);
+        this.deleteExtension = this.deleteExtension.bind(this);
+        this.cancelDeleteExtension= this.cancelDeleteExtension.bind(this);
     }
 
     getElement() {
@@ -200,6 +208,13 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.setState({ hasSearch: false, searchBlocks: undefined, focusSearch: false });
     }
 
+
+    async handleRemoveExtension(ns: string) {
+        this.setState({
+            tryToDeleteNamespace: ns
+        })
+    }
+
     setSelection(treeRow: ToolboxCategory, index: number, force?: boolean) {
         const { editorname, parent } = this.props;
         const { nameid, subns, customClick } = treeRow;
@@ -213,14 +228,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
             // Hide flyout
             this.closeFlyout();
-            if (parent.parent.state?.accessibleBlocks) {
-                Blockly.navigation.setState(Blockly.navigation.STATE_WS);
-            }
         } else {
             let handled = false;
-            if (parent.parent.state?.accessibleBlocks) {
-                Blockly.navigation.setState(Blockly.navigation.STATE_TOOLBOX);
-            }
             if (customClick) {
                 handled = customClick(parent);
                 if (handled) return;
@@ -367,6 +376,22 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         // pxt.debug("perf: call to showFlyout took " + (t1 - t0) + " milliseconds.");
     }
 
+    private async deleteExtension(ns: string) {
+        this.setState({
+            tryToDeleteNamespace: undefined
+        })
+        // TODO: Not implemented yet.
+        // Remove the top level extension, only if there are no blocks in the workspace
+        // Associated with that extension.
+        await this.props.parent.parent.reloadHeaderAsync()
+    }
+
+    private cancelDeleteExtension() {
+        this.setState({
+            tryToDeleteNamespace: undefined
+        })
+    }
+
     closeFlyout() {
         const { parent } = this.props;
         parent.closeFlyout();
@@ -419,7 +444,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     renderCore() {
         const { editorname, parent } = this.props;
-        const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError } = this.state;
+        const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError, tryToDeleteNamespace } = this.state;
         if (!visible) return <div style={{ display: 'none' }} />
 
         const theme = pxt.appTarget.appTheme;
@@ -470,10 +495,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             {showSearchBox ? <ToolboxSearch ref="searchbox" parent={parent} toolbox={this} editorname={editorname} /> : undefined}
             <div className="blocklyTreeRoot">
                 <div role="tree">
+                    {tryToDeleteNamespace ? <DeleteConfirmationModal ns={tryToDeleteNamespace} onCancelClick={this.cancelDeleteExtension} onDeleteClick={this.deleteExtension}/>:undefined}
                     {hasSearch ? <CategoryItem key={"search"} toolbox={this} index={index++} selected={selectedItem == "search"} treeRow={searchTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {hasTopBlocks ? <CategoryItem key={"topblocks"} toolbox={this} selected={selectedItem == "topblocks"} treeRow={topBlocksTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection} topRowIndex={topRowIndex++} shouldAnimate={this.state.shouldAnimate}>
+                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection} topRowIndex={topRowIndex++} shouldAnimate={this.state.shouldAnimate} hasDeleteButton={treeRow.allowDelete} onDeleteClick={this.handleRemoveExtension}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
                                 <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
                             )) : undefined}
@@ -500,6 +526,8 @@ export interface CategoryItemProps extends TreeRowProps {
     onCategoryClick?: (treeRow: ToolboxCategory, index: number) => void;
     index?: number;
     topRowIndex?: number;
+    hasDeleteButton?: boolean;
+    onDeleteClick?: (ns: string) => void;
 }
 
 export interface CategoryItemState {
@@ -555,8 +583,10 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const { toolbox } = this.props;
         const isRtl = Util.isUserLanguageRtl();
 
-        const accessibleBlocksEnabled = (Blockly.getMainWorkspace() as any).keyboardAccessibilityMode;
-        const blocklyNavigationState = (Blockly.navigation as any).currentState_ as number;
+        const mainWorkspace = Blockly.getMainWorkspace() as any;
+        const accessibleBlocksEnabled = mainWorkspace.keyboardAccessibilityMode;
+        const accessibleBlocksState = accessibleBlocksEnabled
+            && (toolbox.props.parent as any).navigationController?.navigation?.getState(mainWorkspace);
         const keyMap: { [key: string]: number } = {
             "DOWN": accessibleBlocksEnabled ? 83 : 40, // 'S' || down arrow
             "UP": accessibleBlocksEnabled ? 87 : 38, // 'W' || up arrow
@@ -565,7 +595,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         }
 
         const charCode = core.keyCodeFromEvent(e);
-        if (!accessibleBlocksEnabled || blocklyNavigationState != 1) {
+        if (!accessibleBlocksEnabled || accessibleBlocksState == "toolbox") {
             if (charCode == keyMap["DOWN"]) {
                 this.nextItem();
             } else if (charCode == keyMap["UP"]) {
@@ -578,7 +608,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
                 // Close the flyout
                 toolbox.closeFlyout();
             } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
-                sui.fireClickOnEnter.call(this, e);
+                fireClickOnEnter.call(this, e);
             } else if (charCode == core.TAB_KEY
                 || charCode == 37 /* Left arrow key */
                 || charCode == 39 /* Left arrow key */
@@ -589,7 +619,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             } else if (!accessibleBlocksEnabled) {
                 toolbox.setSearch();
             }
-        } else if (accessibleBlocksEnabled && blocklyNavigationState == 1
+        } else if (accessibleBlocksEnabled && accessibleBlocksState == "flyout"
             && ((charCode == keyMap["LEFT"] && !isRtl)
             || (charCode == keyMap["RIGHT"] && isRtl))) {
             this.focusElement();
@@ -618,12 +648,12 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     renderCore() {
-        const { toolbox, childrenVisible } = this.props;
+        const { toolbox, childrenVisible, hasDeleteButton } = this.props;
         const { selected } = this.state;
 
         return <TreeItem>
             <TreeRow ref={this.handleTreeRowRef} isRtl={toolbox.isRtl()} {...this.props} selected={selected}
-                onClick={this.handleClick} onKeyDown={this.handleKeyDown} />
+                onClick={this.handleClick} onKeyDown={this.handleKeyDown} hasDeleteButton={hasDeleteButton}/>
             <TreeGroup visible={childrenVisible}>
                 {this.props.children}
             </TreeGroup>
@@ -649,6 +679,7 @@ export interface ToolboxCategory {
 
     customClick?: (theEditor: editor.ToolboxEditor) => boolean;
     advanced?: boolean; /*@internal*/
+    allowDelete?: boolean;
 }
 
 export interface TreeRowProps {
@@ -659,6 +690,8 @@ export interface TreeRowProps {
     isRtl?: boolean;
     topRowIndex?: number;
     shouldAnimate?: boolean;
+    hasDeleteButton?: boolean;
+    onDeleteClick?: (ns: string) => void;
 }
 
 export class TreeRow extends data.Component<TreeRowProps, {}> {
@@ -674,6 +707,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
 
         this.onmouseenter = this.onmouseenter.bind(this);
         this.onmouseleave = this.onmouseleave.bind(this);
+        this.handleDeleteClick = this.handleDeleteClick.bind(this);
     }
 
     focus() {
@@ -714,8 +748,13 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         this.treeRow = c;
     }
 
+    handleDeleteClick (e: React.MouseEvent) {
+        e.stopPropagation();
+        this.props.onDeleteClick(this.props.treeRow.nameid)
+    }
+
     renderCore() {
-        const { selected, onClick, onKeyDown, isRtl, topRowIndex } = this.props;
+        const { selected, onClick, onKeyDown, isRtl, topRowIndex, hasDeleteButton, onDeleteClick } = this.props;
         const { nameid, subns, name, icon } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         const metaColor = this.getMetaColor();
@@ -784,11 +823,12 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             style={treeRowStyle} tabIndex={0}
             aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
-            onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
+            onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
             <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>
             <span className="blocklyTreeLabel">{rowTitle}</span>
+            {hasDeleteButton ? <i className="blocklyTreeButton icon times circle" onClick={this.handleDeleteClick}/>: undefined}
         </div>
     }
 }

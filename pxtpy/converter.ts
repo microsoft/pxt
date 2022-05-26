@@ -466,7 +466,7 @@ namespace pxt.py {
         else if (t.moduleType && t.moduleType.pyQName)
             return applyTypeMap(t.moduleType.pyQName) + suff("/M")
         else
-            return "?" + t.tid
+            return "any"
     }
 
     function mkDiag(astNode: py.AST | undefined | null, category: pxtc.DiagnosticCategory, code: number, messageText: string): pxtc.KsDiagnostic {
@@ -1055,6 +1055,15 @@ namespace pxt.py {
         Mult: 1, // this can be also used on strings and arrays, but let's ignore that for now
     }
 
+    const arithmeticCompareOps: Map<number> = {
+        Eq: 1,
+        NotEq: 1,
+        Lt: 1,
+        LtE: 1,
+        Gt: 1,
+        GtE: 1
+    }
+
     const opMapping: Map<string> = {
         Add: "+",
         Sub: "-",
@@ -1119,7 +1128,7 @@ namespace pxt.py {
 
     function typeAnnot(t: Type, defaultToAny = false) {
         let s = t2s(t)
-        if (s[0] == "?") {
+        if (s === "any") {
             // TODO:
             // example from minecraft doc snippet:
             // player.onChat("while",function(num1){while(num1<10){}})
@@ -1364,17 +1373,48 @@ namespace pxt.py {
                 unifyTypeOf(n.target, tpNumber)
                 let start = r.args.length == 1 ? B.mkText("0") : expr(r.args[0])
                 let stop = expr(r.args[r.args.length == 1 ? 0 : 1])
-                return B.mkStmt(
-                    B.mkText("for ("),
-                    B.mkInfix(def, "=", start),
-                    B.mkText("; "),
-                    B.mkInfix(ref, "<", stop),
-                    B.mkText("; "),
-                    r.args.length >= 3 ?
-                        B.mkInfix(ref, "+=", expr(r.args[2])) :
+
+                if (r.args.length <= 2) {
+                    return B.mkStmt(
+                        B.mkText("for ("),
+                        B.mkInfix(def, "=", start),
+                        B.mkText("; "),
+                        B.mkInfix(ref, "<", stop),
+                        B.mkText("; "),
                         B.mkPostfix([ref], "++"),
-                    B.mkText(")"),
-                    stmts(n.body))
+                        B.mkText(")"),
+                        stmts(n.body)
+                    );
+                }
+
+                // If there are three range arguments, the comparator we need to use
+                // will either be > or < depending on the sign of the third argument.
+                let numValue = r.args[2].kind === "Num" ? (r.args[2] as Num).n : undefined;
+
+                if (numValue == undefined && r.args[2].kind === "UnaryOp") {
+                    const uOp = r.args[2] as UnaryOp;
+
+                    if (uOp.operand.kind === "Num") {
+                        if (uOp.op === "UAdd") numValue = (uOp.operand as Num).n;
+                        else if (uOp.op === "USub") numValue = -(uOp.operand as Num).n
+                    }
+                }
+
+                // If the third argument is not a number, we can't know the sign so we
+                // have to emit a for-of loop instead
+                if (numValue !== undefined) {
+                    const comparator = numValue > 0 ? "<" : ">";
+                    return B.mkStmt(
+                        B.mkText("for ("),
+                        B.mkInfix(def, "=", start),
+                        B.mkText("; "),
+                        B.mkInfix(ref, comparator, stop),
+                        B.mkText("; "),
+                        B.mkInfix(ref, "+=", expr(r.args[2])),
+                        B.mkText(")"),
+                        stmts(n.body)
+                    );
+                }
             }
 
             if (currIteration > 1) {
@@ -2032,9 +2072,32 @@ namespace pxt.py {
                 let idx = B.mkInfix(expr(n.comparators[0]), ".", B.H.mkCall("indexOf", [expr(n.left)]))
                 return B.mkInfix(idx, n.ops[0] == "In" ? ">=" : "<", B.mkText("0"))
             }
-            let r = binop(expr(n.left), n.ops[0], expr(n.comparators[0]))
+            let left = expr(n.left);
+            let right = expr(n.comparators[0]);
+
+            // Special handling for comparisons of literal types, e.g. 0 === 5
+            const castIfLiteralComparison = (op: string, leftExpr: Expr, rightExpr: Expr) => {
+                if (arithmeticCompareOps[op]) {
+                    if (isNumStringOrBool(leftExpr) && isNumStringOrBool(rightExpr) && B.flattenNode([left]) !== B.flattenNode([right])) {
+                        left = B.H.mkParenthesizedExpression(
+                            B.mkGroup([left, B.mkText(" as any")])
+                        );
+
+                        right = B.H.mkParenthesizedExpression(
+                            B.mkGroup([right, B.mkText(" as any")])
+                        );
+                    }
+                }
+            }
+
+            castIfLiteralComparison(n.ops[0], n.left, n.comparators[0]);
+
+            let r = binop(left, n.ops[0], right)
             for (let i = 1; i < n.ops.length; ++i) {
-                r = binop(r, "And", binop(expr(n.comparators[i - 1]), n.ops[i], expr(n.comparators[i])))
+                left = expr(n.comparators[i - 1]);
+                right = expr(n.comparators[i]);
+                castIfLiteralComparison(n.ops[i], n.comparators[i - 1], n.comparators[i]);
+                r = binop(r, "And", binop(left, n.ops[i], right))
             }
             return r
         },
@@ -2048,7 +2111,7 @@ namespace pxt.py {
 
             let fun = namedSymbol
 
-            let recvTp: Type
+            let recvTp: Type | undefined = undefined;
             let recv: py.Expr | undefined = undefined
             let methName: string = ""
 
@@ -2139,7 +2202,7 @@ namespace pxt.py {
             }
 
             if (!fun) {
-                error(n, 9508, U.lf(`can't find called function "${nm}"`))
+                error(n, 9508, U.lf("can't find called function '{0}'", nm))
             }
 
             let formals = fun ? fun.parameters : null
@@ -2222,7 +2285,13 @@ namespace pxt.py {
             if (fun) {
                 if (!fun.pyRetType)
                     error(n, 9549, lf("function missing pyRetType"));
-                unifyTypeOf(n, fun.pyRetType!)
+
+                if (recv && isArrayType(recv) && recvTp) {
+                    unifyArrayType(n, fun, recvTp);
+                }
+                else {
+                    unifyTypeOf(n, fun.pyRetType!)
+                }
                 n.symbolInfo = fun
 
                 if (fun.attributes.py2tsOverride) {
@@ -2900,6 +2969,18 @@ namespace pxt.py {
         return t && t.primType === "@array";
     }
 
+    function isNumStringOrBool(expr: py.Expr) {
+        switch (expr.kind) {
+            case "Num":
+            case "Str":
+                return true;
+            case "NameConstant":
+                return (expr as NameConstant).value !== null;
+        }
+
+        return false;
+    }
+
     function buildOverride(override: TypeScriptOverride, args: B.JsNode[], recv?: B.JsNode) {
         const result: B.JsNode[] = [];
 
@@ -2930,5 +3011,38 @@ namespace pxt.py {
         }
 
         return B.mkGroup(result);
+    }
+
+    function unifyArrayType(e: Expr, fun: SymbolInfo, arrayType: Type) {
+        // Do our best to unify the generic types by special casing everything
+        switch (fun.qName!) {
+            case "Array.pop":
+            case "Array.removeAt":
+            case "Array.shift":
+            case "Array.find":
+            case "Array.get":
+            case "Array._pickRandom":
+                unifyTypeOf(e, arrayType.typeArgs![0]);
+                break;
+            case "Array.concat":
+            case "Array.slice":
+            case "Array.filter":
+            case "Array.fill":
+                unifyTypeOf(e, arrayType);
+                break;
+            case "Array.reduce":
+                if (e.kind === "Call" && (e as Call).args.length > 1) {
+                    const accumulatorType = typeOf((e as Call).args[1]);
+                    if (accumulatorType) unifyTypeOf(e, accumulatorType)
+                }
+                break;
+            case "Array.map":
+                // TODO: infer type properly from function instead of bailing out here
+                unifyTypeOf(e, mkArrayType(tpAny));
+                break;
+            default:
+                unifyTypeOf(e, fun.pyRetType!);
+                break;
+        }
     }
 }

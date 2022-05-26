@@ -39,8 +39,12 @@
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 @docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
+@segoeUIFont: "Segoe UI", Tahoma, Geneva, Verdana;
+
 @emSize      : 14px;
 @fontSize    : 12pt;
+
+@smallFontSize    : 0.875rem;
 
 /*-------------------
    Links
@@ -176,6 +180,7 @@
 @sidebarTutorialColor: @lightGrey;
 
 @homeScreenBackground: #ecf0f1;
+@cloudCardBackground: #58AFBA;
 
 /*-------------------
    Full screen
@@ -389,3 +394,14 @@
 @assetUnselected: #e3ddd0;
 @assetTypeButton: @teal;
 
+/*---------------------------
+   Tutorial Code Validation
+----------------------------*/
+@tutorialCodeValidationCorrectBackground: @green;
+@tutorialCodeValidationCorrectTextColor: @white;
+
+/*---------------------------
+   Extensions
+----------------------------*/
+@extensionTagBackgroundColor: #AAAAAA;
+@extensionTagColor: #444444;

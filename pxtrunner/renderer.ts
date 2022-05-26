@@ -2,8 +2,6 @@ namespace pxt.runner {
     const JS_ICON = "icon xicon js";
     const PY_ICON = "icon xicon python";
     const BLOCKS_ICON = "icon xicon blocks";
-    const PY_FILE = "main.py";
-    const BLOCKS_FILE = "main.blocks";
 
     export interface ClientRenderOptions {
         snippetClass?: string;
@@ -209,10 +207,10 @@ namespace pxt.runner {
 
             if ($svg && compileBlocks) {
                 pkg.setPreferredEditor(pxt.BLOCKS_PROJECT_NAME);
-                host.writeFile(pkg, BLOCKS_FILE, compileBlocks.outfiles[BLOCKS_FILE]);
+                host.writeFile(pkg, pxt.MAIN_BLOCKS, compileBlocks.outfiles[pxt.MAIN_BLOCKS]);
             } else if ($py && compilePython) {
                 pkg.setPreferredEditor(pxt.PYTHON_PROJECT_NAME);
-                host.writeFile(pkg, PY_FILE, compileBlocks.outfiles[PY_FILE]);
+                host.writeFile(pkg, pxt.MAIN_PY, compileBlocks.outfiles[pxt.MAIN_PY]);
             } else {
                 pkg.setPreferredEditor(pxt.JAVASCRIPT_PROJECT_NAME);
             }
@@ -436,7 +434,7 @@ namespace pxt.runner {
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg as HTMLElement) : undefined;
-            const p = r.compilePython && r.compilePython.success && r.compilePython.outfiles["main.py"];
+            const p = r.compilePython && r.compilePython.success && r.compilePython.outfiles[pxt.MAIN_PY];
             const js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             const py = p ? $('<code class="lang-python highlight"/>').text(p.trim()) : undefined;
             if (options.snippetReplaceParent) c = c.parent();
@@ -472,7 +470,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.signatureClass, (c, r) => {
             let cjs = r.compileProgram;
             if (!cjs) return;
-            let file = cjs.getSourceFile("main.ts");
+            let file = cjs.getSourceFile(pxt.MAIN_TS);
             let info = decompileCallInfo(file.statements[0]);
             if (!info || !r.apiInfo) return;
             const symbolInfo = r.apiInfo.byQName[info.qName];
@@ -522,7 +520,7 @@ namespace pxt.runner {
             const s = r.compilePython;
             if (s && s.success) {
                 const $js = c.clone().removeClass('lang-shadow').addClass('highlight');
-                const $py = $js.clone().addClass('lang-python').text(s.outfiles["main.py"]);
+                const $py = $js.clone().addClass('lang-python').text(s.outfiles[pxt.MAIN_PY]);
                 $js.addClass('lang-typescript');
                 highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
@@ -670,7 +668,7 @@ namespace pxt.runner {
                         const [oldPy, newPy] = resps.map(resp =>
                             resp.compilePython
                             && resp.compilePython.outfiles
-                            && resp.compilePython.outfiles["main.py"]);
+                            && resp.compilePython.outfiles[pxt.MAIN_PY]);
                         if (oldPy && newPy) {
                             diffPy = pxt.diff.render(oldPy, newPy, {
                                 hideLineNumbers: true,
@@ -776,7 +774,7 @@ namespace pxt.runner {
                 return renderNextAsync();
             }
 
-            const m = /^\[([^\]]+)\]$/.exec(text);
+            const m = /^\[(.+)\]$/.exec(text);
             if (!m) return renderNextAsync();
 
             const code = m[1];
@@ -784,7 +782,7 @@ namespace pxt.runner {
                 .then(r => {
                     if (r.blocksSvg) {
                         let $newel = $('<span class="block"/>').append(r.blocksSvg);
-                        const file = r.compileProgram.getSourceFile("main.ts");
+                        const file = r.compileProgram.getSourceFile(pxt.MAIN_TS);
                         const stmt = file.statements[0];
                         const info = decompileCallInfo(stmt);
                         if (info && r.apiInfo) {
@@ -910,7 +908,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(cls, (c, r) => {
             const cjs = r.compileProgram;
             if (!cjs) return;
-            const file = cjs.getSourceFile("main.ts");
+            const file = cjs.getSourceFile(pxt.MAIN_TS);
             const stmts = file.statements.slice(0);
             const ul = $('<div />').addClass('ui cards');
             ul.attr("role", "listbox");

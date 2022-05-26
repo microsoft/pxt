@@ -111,11 +111,25 @@ export function lookupActivityProgress(user: UserState, pageSource: string, mapI
     return lookupMapProgress(user, pageSource, mapId)?.activityState[activityId]
 }
 
+export function hasUrlBeenStarted(user: UserState, pageSource: string): boolean {
+    // The user has no progress on the given page if:
+    // 1. They've never visited any skillmaps before
+    // 2. They've never visited this skillmap page before
+    // 3. They've visited this page, but have reset the skillmap state.
+    if (!user.mapProgress
+        || !user.mapProgress[pageSource]
+        || Object.keys(user.mapProgress[pageSource]).length == 0
+        || !Object.keys(user.mapProgress[pageSource]).some(mapId => Object.keys(user.mapProgress[pageSource][mapId].activityState).length != 0)) {
+        return false
+    }
+    return true;
+}
+
 export function lookupPreviousActivities(map: SkillMap, activityId: string) {
     return Object.keys(map.activities)
         .filter(key => !isRewardNode(map.activities[key]))
         .filter(key => {
-            return flattenRewardNodeChildren(map.activities[key])
+            return getNextActivityChildren(map.activities[key], isRewardNode(map.activities[activityId]))
                 .map(el => el.activityId)
                 .some(id => id === activityId);
         }).map(key => map.activities[key])
@@ -135,18 +149,69 @@ export function lookupPreviousCompletedActivityState(user: UserState, pageSource
     return previous?.[0]
 }
 
-export function flattenRewardNodeChildren(node: MapNode): MapNode[] {
-    if (!isRewardNode(node)) {
-        return node.next;
-    } else {
-        let next: MapNode[] = [];
-        node.next.forEach(el => next = next.concat(flattenRewardNodeChildren(el)))
-        return next;
-    }
+// Code carryover is enabled for unlocked activities (non-rewards) that haven't been started
+export function isCodeCarryoverEnabled(user: UserState, pageSource: string, map: SkillMap, activity: MapNode) {
+    if (!user || !map || !activity || activity.kind !== "activity") return false;
+
+    const previous = lookupPreviousActivityStates(user, pageSource, map, activity.activityId);
+    const previousActivityCompleted = previous?.some(state => state?.isCompleted &&
+        state.maxSteps === state.currentStep);
+    return activity.allowCodeCarryover && previous.length > 0 && previousActivityCompleted
+        && isActivityUnlocked(user, pageSource, map, activity.activityId);
+}
+
+// Get the "next" activities from this node (skipping reward/certificate nodes)
+export function getNextActivityChildren(node: MapNode, includeRewards = false): MapNode[] {
+    let next: MapNode[] = []
+    node.next.forEach(el => {
+        if (includeRewards || !isRewardNode(el)) {
+            next.push(el);
+        } else {
+            next = next.concat(getNextActivityChildren(el));
+        }
+    })
+    return next;
 }
 
 export function isRewardNode(node: MapNode) {
     return node.kind === "reward" || node.kind === "completion";
+}
+
+export function getCompletedBadges(user: UserState, pageSource: string, map: SkillMap) {
+    const result: pxt.auth.Badge[] = [];
+
+    for (const activityId of Object.keys(map.activities)) {
+        if (isRewardNode(map.activities[activityId]) && isActivityUnlocked(user, pageSource, map, activityId)) {
+            const act = map.activities[activityId] as MapRewardNode;
+            for (const reward of act.rewards) {
+                if (reward.type === "completion-badge") {
+                    result.push(getCompletionBadge(pageSource, map, act));
+                }
+            }
+        }
+    }
+    return result;
+}
+
+export function getCompletionBadge(pageSource: string, map: SkillMap, node: MapRewardNode): pxt.auth.Badge {
+    const badge = node.rewards.filter(b => b.type === "completion-badge")[0] as MapCompletionBadge;
+    return {
+        id: `skillmap-completion-${map.mapId}`,
+        image: badge?.imageUrl,
+        sourceURL: pageSource,
+        type: "skillmap-completion",
+        title: badge?.displayName || map.displayName
+    };
+}
+
+export function getFlattenedHeaderIds(user: UserState, pageSource: string, ignoreStartedMaps?: UserState): string[] {
+    return Object
+        .values(user.mapProgress[pageSource] ?? [])
+        .filter(map => !ignoreStartedMaps || !ignoreStartedMaps.mapProgress[pageSource]?.[map.mapId] || Object.keys(ignoreStartedMaps.mapProgress[pageSource][map.mapId].activityState).length === 0)
+        .map(map => Object.values(map.activityState))
+        .reduce((a, b) => a.concat(b, []), [])
+        .map(act => act.headerId)
+        .filter(id => !!id) as string[];
 }
 
 export function applyUserUpgrades(user: UserState, currentVersion: string, pageSource: string, maps: { [key: string]: SkillMap }) {

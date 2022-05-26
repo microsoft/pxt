@@ -13,11 +13,16 @@ namespace pxt.packetio {
         onSerial: (buf: Uint8Array, isStderr: boolean) => void;
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        isConnected(): boolean
+        isConnecting(): boolean
         // flash the device, does **not** reconnect
         reflashAsync(resp: pxtc.CompileResult): Promise<void>;
 
         onCustomEvent: (type: string, payload: Uint8Array) => void;
         sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void>;
+        // returns a list of part ids that are not supported by the connected hardware. currently
+        // only used by pxt-microbit to warn users about v2 blocks on v1 hardware
+        unsupportedParts?(): string[];
     }
 
     export interface PacketIO {
@@ -64,15 +69,19 @@ namespace pxt.packetio {
      * The DAP wrapper is active and the device is connected
      */
     export function isConnected() {
-        return !!wrapper && wrapper.io.isConnected();
+        return !!wrapper?.isConnected();
     }
 
     export function isConnecting() {
-        return !!wrapper && wrapper.io.isConnecting();
+        return !!wrapper?.isConnecting();
     }
 
     export function icon() {
-        return !!wrapper && (wrapper.icon || "usb");
+        return !!wrapper && (wrapper.icon || pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb");
+    }
+
+    export function unsupportedParts() {
+        return wrapper?.unsupportedParts ? wrapper.unsupportedParts() : [];
     }
 
     let disconnectPromise: Promise<void>

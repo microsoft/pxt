@@ -4,8 +4,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
-import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
-import * as pkg from "./package";
+import { SoundEffectEditor } from "./components/soundEffectEditor/SoundEffectEditor";
 
 export interface EditorBounds {
     top: number;
@@ -42,7 +41,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     protected hideCallback: () => void;
     protected containerClass: string;
 
-    constructor(protected contentDiv: HTMLDivElement) {
+    constructor(protected contentDiv: HTMLDivElement, protected inContainer: boolean) {
     }
 
     injectElement(element: JSX.Element) {
@@ -63,14 +62,15 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
 
         this.visible = true;
         this.resize(this.editorBounds);
-        this.contentDiv.style.display = "";
+        this.contentDiv.style.display = "block";
 
-        this.overlayDiv = document.createElement("div");
-        pxt.BrowserUtils.addClass(this.overlayDiv, "blocks-editor-field-overlay")
-        this.contentDiv.parentElement.appendChild(this.overlayDiv);
-
-        this.overlayDiv.addEventListener("mousedown", this.handleOutsideClick);
-        document.addEventListener("mousedown", this.handleOutsideClick);
+        if (!this.inContainer) {
+            this.overlayDiv = document.createElement("div");
+            pxt.BrowserUtils.addClass(this.overlayDiv, "blocks-editor-field-overlay")
+            this.contentDiv.parentElement.appendChild(this.overlayDiv);
+            this.overlayDiv.addEventListener("mousedown", this.handleOutsideClick);
+            document.addEventListener("mousedown", this.handleOutsideClick);
+        }
     }
 
     hide() {
@@ -83,8 +83,11 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
         this.clearContents();
         this.contentDiv.style.display = "none";
 
-        this.overlayDiv.parentElement.removeChild(this.overlayDiv);
-        document.removeEventListener("mousedown", this.handleOutsideClick);
+        if (!this.inContainer) {
+            this.overlayDiv.parentElement.removeChild(this.overlayDiv);
+            document.removeEventListener("mousedown", this.handleOutsideClick);
+        }
+
 
         if (this.hideCallback) this.hideCallback();
     }
@@ -135,6 +138,13 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     }
 
     protected resizeContentCore = () => {
+        if (this.inContainer) {
+            if (this.componentRef && this.visible && this.componentRef.onResize) {
+                this.componentRef.onResize();
+            }
+            return;
+        }
+
         this.resizeFrameRef = undefined;
         const bounds = this.editorBounds;
 
@@ -210,7 +220,7 @@ export function setContainerClass(className: string) {
 }
 
 export function init() {
-    pxt.react.getFieldEditorView = function<U>(fieldEditorId: string, value: U, options: any) {
+    pxt.react.getFieldEditorView = function<U>(fieldEditorId: string, value: U, options: any, container?: HTMLDivElement) {
         if (current) current.dispose();
 
         const refHandler = (e: FieldEditorComponent<any>) => {
@@ -222,7 +232,7 @@ export function init() {
             }
         }
 
-        current = new FieldEditorView(document.getElementById("blocks-editor-field-div") as HTMLDivElement);
+        current = new FieldEditorView(container || document.getElementById("blocks-editor-field-div") as HTMLDivElement, !!container);
 
         switch (fieldEditorId) {
             case "image-editor":
@@ -235,6 +245,10 @@ export function init() {
             case "tilemap-editor":
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
                 break;
+            case "soundeffect-editor":
+                current.injectElement(<SoundEffectEditor onClose={options.onClose} onSoundChange={options.onSoundChange} initialSound={options.initialSound} />)
+                break;
+
         }
 
         if (cachedBounds) current.resize(cachedBounds);
@@ -242,15 +256,11 @@ export function init() {
         return current;
     }
 
+    let project = new pxt.TilemapProject();
+
+    // This is overriden in app.tsx
     pxt.react.getTilemapProject = () => {
-        const epkg = pkg.mainEditorPkg();
-
-        if (!epkg.tilemapProject) {
-            epkg.tilemapProject = new pxt.TilemapProject();
-            epkg.tilemapProject.loadPackage(pkg.mainPkg);
-        }
-
-        return epkg.tilemapProject;
+        return project;
     }
 }
 

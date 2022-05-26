@@ -39,7 +39,7 @@ export class AssetEditor extends Editor {
             .then(() => {
                 this.parent.forceUpdate()
                 // Do Not Remove: This is used by the skillmap
-                if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
+                if (this.parent.isTutorial()) this.parent.onTutorialLoaded();
             });
     }
 
@@ -61,7 +61,7 @@ export class AssetEditor extends Editor {
     resize(e?: Event) {
         const container = this.getAssetEditorDiv();
         // In tutorial view, the image editor is smaller and has no padding
-        if (container && this.parent.isTutorial()) {
+        if (container && this.parent.isTutorial() && !pxt.BrowserUtils.isTabletSize()) {
             const containerRect = container.getBoundingClientRect();
             const editorTools = document.getElementById("editortools");
             blocklyFieldView.setEditorBounds({
@@ -83,10 +83,12 @@ export class AssetEditor extends Editor {
     }
 
     display(): JSX.Element {
+        // TODO: re-enable the create asset button in tutorials when we add
+        // the ability to switch editors inside a tutorial
         return <Provider store={store}>
             <div className="asset-editor-outer">
                 <AssetSidebar showAssetFieldView={this.showAssetFieldView} />
-                <AssetGallery showAssetFieldView={this.showAssetFieldView} />
+                <AssetGallery showAssetFieldView={this.showAssetFieldView} disableCreateButton={this.parent.isTutorial()} />
             </div>
         </Provider>
     }
@@ -184,9 +186,9 @@ export class AssetEditor extends Editor {
 
             Promise.resolve(cb(result)).then(() => {
                 // for temporary (unnamed) assets, update the underlying typescript image literal
-                if (!result.meta?.displayName) {
+                if (!asset.meta?.displayName) {
                     this.parent.saveBlocksToTypeScriptAsync().then((src) => {
-                        if (src) pkg.mainEditorPkg().setContentAsync("main.ts", src)
+                        if (src) pkg.mainEditorPkg().setContentAsync(pxt.MAIN_TS, src)
                     })
                 }
             });

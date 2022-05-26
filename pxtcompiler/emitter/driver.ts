@@ -64,7 +64,7 @@ namespace ts.pxtc {
                     length: d.length,
                     line: 0,
                     column: 0,
-                    messageText: d.messageText,
+                    messageText: ts.flattenDiagnosticMessageText(d.messageText, "\n"),
                     category: d.category,
                     fileName: "?",
                 }
@@ -78,7 +78,7 @@ namespace ts.pxtc {
                 length: d.length,
                 line: pos.line,
                 column: pos.character,
-                messageText: d.messageText,
+                messageText: ts.flattenDiagnosticMessageText(d.messageText, "\n"),
                 category: d.category,
                 fileName: d.file.fileName,
             }
@@ -126,10 +126,10 @@ namespace ts.pxtc {
         if (!opts.sourceFiles)
             opts.sourceFiles = Object.keys(opts.fileSystem)
         // ensure that main.ts is last of TS files
-        const idx = opts.sourceFiles.indexOf("main.ts")
+        const idx = opts.sourceFiles.indexOf(pxt.MAIN_TS)
         if (idx >= 0) {
             opts.sourceFiles.splice(idx, 1)
-            opts.sourceFiles.push("main.ts")
+            opts.sourceFiles.push(pxt.MAIN_TS)
         }
 
         // run post-processing code last, if present
@@ -390,11 +390,11 @@ namespace ts.pxtc {
 
         let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
         // ensure that main.ts is last of TS files
-        let tsFilesNoMain = tsFiles.filter(f => f != "main.ts")
+        let tsFilesNoMain = tsFiles.filter(f => f != pxt.MAIN_TS)
         let hasMain = false;
         if (tsFiles.length > tsFilesNoMain.length) {
             tsFiles = tsFilesNoMain
-            tsFiles.push("main.ts")
+            tsFiles.push(pxt.MAIN_TS)
             hasMain = true;
         }
 
@@ -407,7 +407,7 @@ namespace ts.pxtc {
 
         // TODO: ensure that main.ts is last???
         const program = createProgram(tsFiles, options, host, old);
-        annotate(program, "main.ts", target || (pxt.appTarget && pxt.appTarget.compile));
+        annotate(program, pxt.MAIN_TS, target || (pxt.appTarget && pxt.appTarget.compile));
         return program;
     }
 

@@ -2,32 +2,63 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal } from '../actions/dispatch';
+import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal,
+    dispatchShowUserProfile, dispatchSetUserPreferences } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
-import { Dropdown, DropdownItem } from "./Dropdown";
 import { isActivityCompleted } from "../lib/skillMapUtils";
+import * as authClient from '../lib/authClient';
+import { Dropdown } from "./Dropdown";
+import { Button } from "react-common/controls/Button";
+import { MenuBar } from "react-common/controls/MenuBar";
+import { MenuDropdown, MenuItem } from "react-common/controls/MenuDropdown";
+
 
 interface HeaderBarProps {
     currentMapId?: string;
     currentActivityId?: string;
     activityOpen: boolean;
     showReportAbuse?: boolean;
-    currentActivityDisplayName?: string;
+    signedIn: boolean;
+    profile: pxt.auth.UserProfile;
+    preferences: pxt.auth.UserPreferences;
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
+    dispatchShowLoginModal: () => void;
+    dispatchShowUserProfile: () => void;
+    dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     protected reportAbuseUrl = "https://github.com/contact/report-content";
-    protected getSettingItems(): DropdownItem[] {
-        const items: DropdownItem[] = [];
+    protected getSettingItems(): MenuItem[] {
+        const items: MenuItem[] = [];
+
+        if (this.props.preferences) {
+            const highContrast = this.props.preferences?.highContrast;
+            items.push({
+                id: "highcontrast",
+                title: highContrast ? lf("High Contrast Off") : lf("High Contrast On"),
+                label: highContrast ? lf("High Contrast Off") : lf("High Contrast On"),
+                onClick: () => {
+                    const newHighContrastPref = !this.props.preferences.highContrast;
+                    tickEvent("skillmap.highcontrast", { on: newHighContrastPref ? 1 : 0});
+                    authClient.setHighContrastPrefAsync(newHighContrastPref);
+                    this.props.dispatchSetUserPreferences({
+                        ...this.props.preferences,
+                        highContrast: newHighContrastPref
+                    })
+                }
+            })
+        }
+
         if (this.props.showReportAbuse) {
             items.push({
                 id: "report",
+                title: lf("Report Abuse"),
                 label: lf("Report Abuse"),
-                onClick: (id: string) => {
+                onClick: () => {
                     tickEvent("skillmap.reportabuse");
                     window.open(this.reportAbuseUrl);
                 }
@@ -37,6 +68,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         if (!this.props.activityOpen) {
             items.push({
                 id: "reset",
+                title: lf("Reset All"),
                 label: lf("Reset All"),
                 onClick: () => {
                     tickEvent("skillmap.reset.warning");
@@ -48,11 +80,34 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return items;
     }
 
-    protected getHelpItems(): DropdownItem[] {
-        const items: DropdownItem[] = [];
+    protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
+        const logoUrl = targetTheme.organizationWideLogo;
+        return <div className="header-logo">
+            {logoUrl
+                ? <img src={isLocal() ? `./assets/${logoUrl}`: logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
+                : <span className="name">{targetTheme.organization}</span>}
+        </div>
+    }
+
+    protected getTargetLogo(targetTheme: pxt.AppTheme) {
+        const { activityOpen } = this.props;
+        return <div className={`ui item logo brand ${!activityOpen ? "noclick" : ""}`}>
+            {targetTheme.useTextLogo
+                ? [<span className="name" key="org-name" onClick={this.onBackClicked}>{targetTheme.organizationText}</span>,
+                   <span className="name-short" key="org-name-short" onClick={this.onBackClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>]
+                : (targetTheme.logo || targetTheme.portraitLogo
+                    ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
+                    : <span className="name"> {targetTheme.boardName}</span>)
+            }
+        </div>
+    }
+
+    protected getHelpItems(): MenuItem[] {
+        const items: MenuItem[] = [];
         if (this.props.activityOpen) {
             items.push({
                 id: "feedback",
+                title: lf("Feedback"),
                 label: lf("Feedback"),
                 onClick: this.onBugClicked
             });
@@ -60,40 +115,69 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return items;
     }
 
-    render() {
-        const { activityOpen, currentActivityDisplayName } = this.props;
-        const logoAlt = "MakeCode Logo";
-        const organizationLogoAlt = "Microsoft Logo";
-        const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
+    avatarPicUrl = (): string | undefined => {
+        const { profile } = this.props;
+        return profile?.idp?.pictureUrl ?? profile?.idp?.picture?.dataUrl;
+    }
 
+    protected getUserMenu() {
+        const { signedIn, profile } = this.props;
+        const items: MenuItem[] = [];
+
+        if (signedIn) {
+            items.push({
+                id: "profile",
+                title: lf("My Profile"),
+                label: lf("My Profile"),
+                onClick: this.onProfileClicked
+            });
+            items.push({
+                id: "signout",
+                title: lf("Sign Out"),
+                label: lf("Sign Out"),
+                onClick: this.onLogoutClicked
+            });
+        }
+
+        const avatarElem = this.avatarPicUrl()
+            ? <div className="avatar"><img src={this.avatarPicUrl()} aria-hidden="true" alt={lf("Profile Image")}/></div>
+            : undefined;
+
+        const initialsElem = <span><div className="avatar-initials" aria-hidden="true">{pxt.auth.userInitials(profile)}</div></span>
+
+        return <div className="user-menu">
+            {signedIn
+            ?  <MenuDropdown id="profile-dropdown" items={items} label={avatarElem || initialsElem} title={lf("Profile Settings")}/>
+             : <Button className="menu-button inverted" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+                pxt.tickEvent(`skillmap.usermenu.signin`);
+                this.props.dispatchShowLoginModal();
+            }}/>}
+        </div>;
+    }
+
+    render() {
+        const { activityOpen } = this.props;
+        const hasIdentity = pxt.auth.hasIdentity();
+
+        const appTheme = pxt.appTarget?.appTheme;
         const settingItems = this.getSettingItems();
         const helpItems = this.getHelpItems();
 
-        return <div className="header">
+        return <MenuBar className="header" ariaLabel={lf("Header")}>
             <div className="header-left">
-                <div className="header-logo">
-                    <img src={logoSrc} alt={logoAlt} />
-                </div>
-                { activityOpen ?
-                    <HeaderBarButton icon="icon arrow left" label={lf("Back")} title={lf("Return to activity selection")} onClick={this.onBackClicked}/> :
-                    <HeaderBarButton icon="icon home" label={lf("Home")} title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
-                }
+                {this.getOrganizationLogo(appTheme)}
+                {this.getTargetLogo(appTheme)}
             </div>
-            { currentActivityDisplayName &&
-                <div className="header-activity-display-name" title={currentActivityDisplayName}>
-                    {currentActivityDisplayName}
-                </div>
-            }
+
             <div className="spacer" />
             <div className="header-right">
-                { helpItems?.length > 0 && <Dropdown icon="help circle" className="header-dropdown" items={helpItems} /> }
-                { settingItems?.length > 0 && <Dropdown icon="setting" className="header-dropdown" items={settingItems} /> }
-                <div className="header-org-logo">
-                    <img className="header-org-logo-large" src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
-                    <img className="header-org-logo-small" src={resolvePath("assets/microsoft-square.png")} alt={organizationLogoAlt} />
-                </div>
+                { activityOpen && <Button className="menu-button" leftIcon="fas fa-arrow-left large" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
+                <Button className="menu-button" leftIcon="fas fa-home large" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
+                { helpItems?.length > 0 && <MenuDropdown id="skillmap-help" title={lf("Help menu")} icon="fas fa-question-circle large" items={helpItems}  />}
+                { settingItems?.length > 0 && <MenuDropdown id="settings-help" title={lf("Settings menu")} icon="fas fa-cog large" items={settingItems}  />}
+                { hasIdentity && this.getUserMenu() }
             </div>
-        </div>
+        </MenuBar>
     }
 
     onBackClicked = () => {
@@ -104,29 +188,35 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     onHomeClicked = () => {
         tickEvent("skillmap.home");
-        window.open(pxt.appTarget.appTheme.homeUrl);
+
+        // relprefix looks like "/beta---", need to chop off the hyphens and slash
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        if (pxt.appTarget.appTheme.homeUrl && rel) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+                rel = rel.substr(1);
+            }
+            window.open(pxt.appTarget.appTheme.homeUrl + rel);
+        }
+        else {
+            window.open(pxt.appTarget.appTheme.homeUrl);
+        }
+
     }
 
     onBugClicked = () => {
         tickEvent("skillmap.bugreport");
         (window as any).usabilla_live?.("click");
     }
-}
 
-interface HeaderBarButtonProps {
-    icon: string;
-    label?: string;
-    title: string;
-    onClick: () => void;
-}
+    onLogoutClicked = async () => {
+        pxt.tickEvent(`skillmap.usermenu.signout`);
+        await authClient.logoutAsync(location.hash);
+    }
 
-const HeaderBarButton = (props: HeaderBarButtonProps) => {
-    const { icon, label, title, onClick } = props;
-
-    return <div className={`header-button ${!label ? "icon-only" : ""}`} title={title} role="button" onClick={onClick}>
-        <i className={icon} />
-        {label && <span className="header-button-label">{label}</span>}
-    </div>
+    onProfileClicked = () => {
+        pxt.tickEvent(`skillmap.profile`)
+        this.props.dispatchShowUserProfile();
+    }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
@@ -140,13 +230,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     }
 
     const activityOpen = !!state.editorView;
-    let currentActivityDisplayName: string | undefined;
 
     if (state.editorView?.currentActivityId) {
-        const activity = state.maps[state.editorView.currentMapId].activities[state.editorView.currentActivityId];
-        if (activity) {
-            currentActivityDisplayName = activity.displayName;
-        }
+        const activity = state.maps[state.editorView.currentMapId]?.activities[state.editorView.currentActivityId];
     }
 
     return {
@@ -154,14 +240,19 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         currentMapId: activityOpen && state.editorView?.currentMapId,
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
-        currentActivityDisplayName
+        signedIn: state.auth.signedIn,
+        profile: state.auth.profile,
+        preferences: state.auth.preferences
     }
 }
 
 
 const mapDispatchToProps = {
     dispatchSaveAndCloseActivity,
-    dispatchShowResetUserModal
+    dispatchShowResetUserModal,
+    dispatchShowLoginModal,
+    dispatchShowUserProfile,
+    dispatchSetUserPreferences
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

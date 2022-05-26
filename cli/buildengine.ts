@@ -136,6 +136,19 @@ export const buildEngines: Map<BuildEngine> = {
         appPath: "pxtapp"
     },
 
+    dockerespidf: {
+        id: "dockerespidf",
+        updateEngineAsync: noopAsync,
+        buildAsync: () => runDockerAsync(["make"]),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchDockerEspIdfHexInfo,
+        prepBuildDirAsync: noopAsync,
+        buildPath: "built/dockerespidf",
+        moduleConfig: "sdkconfig.defaults",
+        deployAsync: noopAsync,
+        appPath: "main"
+    },
+
     cs: {
         id: "cs",
         updateEngineAsync: noopAsync,
@@ -166,7 +179,7 @@ export function setThisBuild(b: BuildEngine) {
 
 function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
     let buildEngine = thisBuild
-    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget
+    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget.split("@")[0]
         + "/source/" + pxt.appTarget.compileService.yottaBinary;
 
     return {
@@ -191,6 +204,13 @@ function patchDockermakeHexInfo(extInfo: pxtc.ExtensionInfo) {
 
 function patchDockerCrossHexInfo(extInfo: pxtc.ExtensionInfo) {
     let hexPath = thisBuild.buildPath + "/bld/all.tgz.b64"
+    return {
+        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
+
+function patchDockerEspIdfHexInfo(extInfo: pxtc.ExtensionInfo) {
+    let hexPath = thisBuild.buildPath + "/build/pxtapp.b64"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
     }
@@ -610,15 +630,15 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
         return getBoardDrivesAsync()
             .then(drives => filterDrives(drives))
             .then(drives => {
-                if (drives.length == 0) {
-                    pxt.log("cannot find any drives to deploy to");
-                    return Promise.resolve(0);
-                }
+                if (drives.length == 0)
+                    throw new Error("cannot find any drives to deploy to");
                 pxt.log(`copying ${firmwareName} to ` + drives.join(", "));
                 const writeHexFile = (drivename: string) => {
                     return writeFileAsync(path.join(drivename, firmwareName), firmware, encoding)
                         .then(() => pxt.debug("   wrote to " + drivename))
-                        .catch(() => pxt.log(`   failed writing to ${drivename}`));
+                        .catch((e: Error) => {
+                            throw new Error(`failed writing to ${drivename}; ${e.message}`);
+                        })
                 };
                 return U.promiseMapAll(drives, d => writeHexFile(d))
                     .then(() => drives.length);

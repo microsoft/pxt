@@ -15,6 +15,7 @@ namespace pxtblockly {
         initWidth: number;
         initHeight: number;
         disableResize: boolean;
+        lightMode: boolean;
     }
 
     // 32 is specifically chosen so that we can scale the images for the default
@@ -108,7 +109,14 @@ namespace pxtblockly {
                     if (pxt.assetEquals(this.asset, result)) return;
 
                     const oldId = isTemporaryAsset(this.asset) ? null : this.asset.id;
-                    const newId = isTemporaryAsset(result) ? null : result.id;
+                    let newId = isTemporaryAsset(result) ? null : result.id;
+
+                    if (!oldId && newId === this.sourceBlock_.id) {
+                        // The temporary assets we create just use the block id as the id; give it something
+                        // a little nicer
+                        result.id = project.generateNewID(result.type);
+                        newId = result.id;
+                    }
 
                     this.pendingEdit = true;
 
@@ -155,8 +163,11 @@ namespace pxtblockly {
 
         getDisplayText_() {
             // This is only used when isGreyBlock is true
-            const text = pxt.Util.htmlUnescape(this.valueText);
-            return text.substr(0, text.indexOf("(")) + "(...)";;
+            if (this.isGreyBlock) {
+                const text = pxt.Util.htmlUnescape(this.valueText);
+                return text.substr(0, text.indexOf("(")) + "(...)";
+            }
+            return "";
         }
 
         updateEditable() {
@@ -287,12 +298,11 @@ namespace pxtblockly {
         }
 
         protected parseFieldOptions(opts: U): V {
-            // NOTE: This implementation is duplicated in pxtcompiler/emitter/service.ts
-            // TODO: Refactor to share implementation.
             const parsed: ParsedFieldAssetEditorOptions = {
                 initWidth: 16,
                 initHeight: 16,
                 disableResize: false,
+                lightMode: false
             };
 
             if (!opts) {
@@ -305,6 +315,7 @@ namespace pxtblockly {
 
             parsed.initWidth = withDefault(opts.initWidth, parsed.initWidth);
             parsed.initHeight = withDefault(opts.initHeight, parsed.initHeight);
+            parsed.lightMode = (opts as any).lightMode;
 
             return parsed as V;
 

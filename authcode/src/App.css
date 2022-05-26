@@ -1,0 +1,130 @@
+.App {
+  text-align: center;
+  color: white;
+  background-color: #fef3e0;
+  width: 100%;
+  min-height: 100vh;
+  font-family: Segoe UI,Tahoma,Geneva,Verdana;
+}
+
+.app-header {
+  width: 100%;
+  height: 4rem;
+  background-color: #CD4A00;
+  font-size: 1.7rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-header .app-name {
+  font-weight: bolder;
+}
+
+input {
+  border-radius: 2px;
+  border-style: solid;
+  border-color: #ccc;
+}
+
+.app-content {
+  margin-top: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: black;
+}
+
+.app-content .user {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.app-content .code {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.app-content .code .code-input {
+  text-align: center;
+  min-height: 40px;
+  font-size: 1rem;
+  width: 10rem;
+}
+
+.token-status {
+  margin-top: 2rem;
+  background-color: red;
+  padding: 0.5rem;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.token-status.pending {
+  background-color: #55acee;
+  border-color: #4992ca;
+  color: white;
+}
+
+.token-status.invalid {
+  background-color: #f04124;
+  border-color: #cf2a0e;
+  color: white;
+}
+
+.token-status.authorized {
+  background-color: #43AC6A;
+  border-color: #368a55;
+  color: white;
+}
+
+.button {
+  min-width: 160px;
+  min-height: 40px;
+  border-radius: 2px;
+  transition: all 0.05s;
+  background-color: #eee;
+  border-color: #ccc;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.button:hover {
+  background-color: #ccc;
+  border-color: #aaa;
+}
+
+.button:active {
+  transform: scale(0.97);
+}
+
+button {
+  font-family: Share Tech Mono,Monaco,Menlo,Ubuntu Mono,Consolas,source-code-pro,monospace;
+}
+
+.button.primary-button {
+  background-color: #cd4a00;
+  border-color: #ff7b31;
+  color: white;
+}
+
+.button.primary-button:hover {
+  background-color: #9B2E00;
+  border-color: #CD4A00;
+}
+
+.button.primary-button.disabled {
+  background-color: #F4D3BF;
+  border-color: #F4D3BF;
+}
+
+.button.primary-button.disabled:active {
+  transform: scale(1);
+}

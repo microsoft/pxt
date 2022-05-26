@@ -15,11 +15,11 @@ function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagno
     //  TS errors to PY
     let tsErrToPyLoc: (err: pxtc.LocationInfo) => pxtc.LocationInfo = undefined;
     if (diagnostics.length > 0
-        && mainPkg.files["main.ts"]
-        && mainPkg.files["main.py"]
+        && mainPkg.files[pxt.MAIN_TS]
+        && mainPkg.files[pxt.MAIN_PY]
         && sourceMap) {
-        const tsFile = mainPkg.files["main.ts"].content
-        const pyFile = mainPkg.files["main.py"].content
+        const tsFile = mainPkg.files[pxt.MAIN_TS].content
+        const pyFile = mainPkg.files[pxt.MAIN_PY].content
         const helpers = pxtc.BuildSourceMapHelpers(sourceMap, tsFile, pyFile)
         tsErrToPyLoc = helpers.ts.locToLoc
     }
@@ -31,11 +31,11 @@ function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagno
             if (f) {
                 f.diagnostics.push(diagnostic)
 
-                if (tsErrToPyLoc && diagnostic.fileName === "main.ts") {
+                if (tsErrToPyLoc && diagnostic.fileName === pxt.MAIN_TS) {
                     let pyLoc = tsErrToPyLoc(diagnostic)
                     if (pyLoc) {
                         let pyError = { ...diagnostic, ...pyLoc }
-                        let pyFile = mainPkg.files["main.py"]
+                        let pyFile = mainPkg.files[pxt.MAIN_PY]
                         pyFile.diagnostics.push(pyError)
                     }
                 }
@@ -293,48 +293,43 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
 
 // TS -> blocks, load blocs before calling this api
 export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
-    const snippetTs = "main.ts";
-    const snippetBlocks = "main.blocks";
     const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
-            opts.fileSystem[snippetTs] = code;
-            opts.fileSystem[snippetBlocks] = "";
+            opts.fileSystem[pxt.MAIN_TS] = code;
+            opts.fileSystem[pxt.MAIN_BLOCKS] = "";
             opts.snippetMode = (dopts && dopts.snippetMode) || false;
 
-            if (opts.sourceFiles.indexOf(snippetTs) === -1) {
-                opts.sourceFiles.push(snippetTs);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_TS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_TS);
             }
-            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
-                opts.sourceFiles.push(snippetBlocks);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_BLOCKS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_BLOCKS);
             }
             opts.ast = true;
-            return decompileCoreAsync(opts, snippetTs)
+            return decompileCoreAsync(opts, pxt.MAIN_TS)
         });
 }
 
 // Py -> blocks
 export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
-    const snippetPy = "main.py";
-    const snippetTs = "main.ts";
-    const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
-            opts.fileSystem[snippetPy] = code;
-            opts.fileSystem[snippetBlocks] = "";
+            opts.fileSystem[pxt.MAIN_PY] = code;
+            opts.fileSystem[pxt.MAIN_BLOCKS] = "";
 
-            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
-                opts.sourceFiles.push(snippetPy);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_PY) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_PY);
             }
-            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
-                opts.sourceFiles.push(snippetBlocks);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_BLOCKS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_BLOCKS);
             }
             return workerOpAsync("py2ts", { options: opts });
         })
         .then(res => {
-            return decompileBlocksSnippetAsync(res.outfiles[snippetTs], blockInfo)
+            return decompileBlocksSnippetAsync(res.outfiles[pxt.MAIN_TS], blockInfo)
         });
 }
 
@@ -362,24 +357,22 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
 
 // TS -> Py
 export function decompilePythonSnippetAsync(code: string): Promise<string> {
-    const snippetTs = "main.ts";
-    const snippetPy = "main.py";
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
-            opts.fileSystem[snippetTs] = code;
-            opts.fileSystem[snippetPy] = "";
+            opts.fileSystem[pxt.MAIN_TS] = code;
+            opts.fileSystem[pxt.MAIN_PY] = "";
 
-            if (opts.sourceFiles.indexOf(snippetTs) === -1) {
-                opts.sourceFiles.push(snippetTs);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_TS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_TS);
             }
-            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
-                opts.sourceFiles.push(snippetPy);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_PY) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_PY);
             }
             opts.ast = true;
-            return pyDecompileCoreAsync(opts, snippetTs)
+            return pyDecompileCoreAsync(opts, pxt.MAIN_TS)
         }).then(resp => {
-            return resp.outfiles[snippetPy]
+            return resp.outfiles[pxt.MAIN_PY]
         })
 }
 
@@ -613,7 +606,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     // If the project has a TypeScript file beside one of the generated files, it could export blocks so we can't use the cache
     const files = project.getAllFiles();
     const generatedFiles = [
-        "main.ts",
+        pxt.MAIN_TS,
         pxt.TUTORIAL_CODE_START,
         pxt.TUTORIAL_CODE_STOP,
         pxt.TILEMAP_CODE,
@@ -666,7 +659,15 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     }
 
     if (externalPackages.length) {
-        const db = await ApiInfoIndexedDb.createAsync();
+        let db: ApiInfoIndexedDb;
+        try {
+            db = await ApiInfoIndexedDb.createAsync();
+        }
+        catch (e) {
+            // Don't fail if the indexeddb fails, but log it
+            console.log("Unable to open API info cache DB");
+            return null;
+        }
 
         for (const dep of externalPackages) {
             const entry = await db.getAsync(dep);
@@ -691,14 +692,20 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     for (const used of usedPackageInfo) {
         if (!used) continue;
-        const { info, dirname } = used;
+        let { info, dirname } = used;
+
+        const byQName = U.cloneApis(info.apis.byQName);
 
         // reinclude the pkg the api originates from, which is trimmed during compression
-        for (const api of Object.keys(info.apis.byQName)) {
-            info.apis.byQName[api].pkg = dirname;
-        }
+        for (const api of Object.keys(byQName)) {
+            byQName[api].pkg = dirname;
 
-        pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
+            // We had a bug where we were caching the translated language code and it broke translations.
+            // make sure we clear it on any old cached entries from before the bug was fixed
+            delete byQName[api].attributes._translatedLanguageCode;
+
+            result.byQName[api] = byQName[api];
+        }
     }
 
     result.jres = pkg.mainPkg.getJRes() || {};
@@ -731,7 +738,16 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
 
     if (externalPackages.length) {
         const apiList = Object.keys(info.byQName);
-        const db = await ApiInfoIndexedDb.createAsync();
+        let db: ApiInfoIndexedDb;
+
+        try {
+            db = await ApiInfoIndexedDb.createAsync();
+        }
+        catch (e) {
+            // Don't fail if the indexeddb fails, but log it
+            pxt.log("Unable to create DB to cache API info");
+            return;
+        }
 
         for (const dep of externalPackages) {
             const pkgId = dep.getPkgId();
@@ -768,6 +784,8 @@ function cleanApiForCache(apiInfo: pxtc.SymbolInfo) {
 
     // clear translations on blocks before caching
     const cachedAttrs = U.clone(cachedEntry.attributes)
+    delete cachedAttrs._translatedLanguageCode;
+
     let defChanged = false;
     if (cachedAttrs._untranslatedBlock) {
         cachedAttrs.block = cachedAttrs._untranslatedBlock;
@@ -846,7 +864,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
     const project = pkg.getEditorPkg(mainPkg);
     const targetVersion = project.header.targetVersion;
 
-    const fileText = project.files["main.blocks"] ? project.files["main.blocks"].content : `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
+    const fileText = project.files[pxt.MAIN_BLOCKS] ? project.files[pxt.MAIN_BLOCKS].content : `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
     let ws: Blockly.Workspace;
     let patchedFiles: pxt.Map<string> = {};
 
@@ -862,12 +880,12 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
             pxt.blocks.domToWorkspaceNoEvents(xml, ws);
             pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
             const upgradedXml = Blockly.Xml.workspaceToDom(ws);
-            patchedFiles["main.blocks"] = Blockly.Xml.domToText(upgradedXml);
+            patchedFiles[pxt.MAIN_BLOCKS] = Blockly.Xml.domToText(upgradedXml);
 
             return pxt.blocks.compileAsync(ws, info)
         })
         .then(res => {
-            patchedFiles["main.ts"] = res.source;
+            patchedFiles[pxt.MAIN_TS] = res.source;
             return project.buildAssetsAsync();
         })
         .then(() => {

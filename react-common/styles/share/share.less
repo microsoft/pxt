@@ -1,0 +1,179 @@
+.sharedialog.fullscreen.common-modal-container > .common-modal > .common-modal-body {
+    padding: 0;
+}
+
+.project-share {
+    display: flex;
+    height: 100%;
+}
+
+.project-share-simulator {
+    flex: 1;
+    height: 100%;
+    background-color: @simulatorBackground;
+
+    #shareLoanedSimulator {
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .simframe {
+        padding-bottom: 56.25%!important;
+    }
+}
+
+.project-share-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+
+    > div {
+        margin-bottom: 1rem;
+        flex-shrink: 0;
+    }
+}
+
+.project-share-title {
+    display: flex;
+
+    h2 {
+        flex: 1;
+        margin: 0;
+    }
+}
+
+#project-share-dropdown {
+    color: @primaryColor;
+}
+
+.project-share-thumbnail {
+    display: flex;
+    flex-direction: column;
+
+    .project-thumbnail-placeholder,
+    img {
+        margin: 0.3rem 0;
+        width: 15rem;
+        height: 11.25rem;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+}
+
+.fullscreen {
+    .project-share > div {
+        padding: 2rem;
+    }
+
+    .project-share-info {
+        flex: unset;
+        width: 28rem;
+    }
+}
+
+.share-publish-button {
+    height: 3rem;
+
+    .common-spinner {
+        display: inline-block;
+    }
+}
+
+/////////////////////////////////////////
+//           Embed                     //
+/////////////////////////////////////////
+
+.project-share-actions {
+    display: flex;
+    margin-top: 1rem;
+    position: relative;
+    margin-bottom: 2rem;
+
+    .common-button {
+        margin-right: 1rem;
+    }
+}
+
+.project-share-text {
+    margin-bottom: 1rem;
+}
+
+.common-button.menu-button.project-qrcode {
+    position: absolute;
+    right: 0;
+    height: 6rem;
+    padding: 0.5rem;
+    top: -0.5rem;
+
+    img {
+        height: 5rem;
+    }
+}
+
+.common-button.menu-button.project-qrcode:focus::after {
+    outline: @buttonFocusOutlineLightBackground;
+}
+
+.project-share-data .common-input-attached-button .common-button {
+    width: 10rem;
+    padding: .8rem 1rem .95rem;
+}
+
+.qrcode-image {
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+
+.qrcode-modal-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .qrcode-image {
+        height: 20rem;
+    }
+}
+
+/////////////////////////////////////////
+//           Gif Recorder              //
+/////////////////////////////////////////
+
+.gif-recorder {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    bottom: 0;
+    left: calc(~'(100vw - 25rem)/2');
+    padding: 1rem;
+    transform: translateX(-50%);
+    background: @white;
+    border: @teal;
+    border-radius: 0.2rem;
+    font-family: @segoeUIFont;
+}
+
+.gif-recorder-label,
+.thumbnail-label {
+    margin-bottom: 0.5rem;
+    font-family: @segoeUIFont;
+}
+
+.gif-recorder-actions {
+    display: flex;
+}
+
+.thumbnail-image,
+.thumbnail-placeholder {
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.05);
+    width: 24.5rem;
+    height: 18.375rem;
+}

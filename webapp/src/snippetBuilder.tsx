@@ -70,7 +70,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     /**
-     * Creates a hashmap with answerToken keys and the default value pair as 
+     * Creates a hashmap with answerToken keys and the default value pair as
      * provided by our config file.
      */
     buildDefaults() {
@@ -170,7 +170,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     /**
-     * Takes in ts output and highlights the currently edited block 
+     * Takes in ts output and highlights the currently edited block
      */
     highlightEditedBlocks(tsOutput: string[]) {
         const highlightString = '// @highlight';
@@ -206,7 +206,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     /**
-     * 
+     *
      * This attaches three backticks to the front followed by an output type (blocks, lang)
      * The current output is then tokenized and three backticks are appended to the end of the string.
      */
@@ -257,7 +257,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 
     /**
      * Takes the output from state, runs replace tokens, decompiles the resulting typescript
-     * and outputs the result as a Blockly xmlDOM. This then uses appendDomToWorkspace to attach 
+     * and outputs the result as a Blockly xmlDOM. This then uses appendDomToWorkspace to attach
      * our xmlDOM to the mainWorkspaces passed to the component.
      */
     injectBlocksToWorkspace() {
@@ -269,7 +269,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
             .then(resp => {
                 // get the root blocks (e.g. on_start) from the new code
-                const newXml = Blockly.Xml.textToDom(resp.outfiles["main.blocks"]);
+                const newXml = Blockly.Xml.textToDom(resp.outfiles[pxt.MAIN_BLOCKS]);
                 const newBlocksDom = pxt.blocks.findRootBlocks(newXml)
 
                 // get the existing root blocks

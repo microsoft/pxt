@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, isGalleryAsset } from './store/assetEditorReducer';
+import { AssetEditorState, isGalleryAsset } from './store/assetEditorReducerState';
 import { dispatchChangeSelectedAsset } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";

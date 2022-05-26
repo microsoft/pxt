@@ -148,7 +148,7 @@ namespace pxt.blocks.layout {
     export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
-                const metrics = ws.getMetrics() as Blockly.Metrics;
+                const metrics = ws.getMetrics();
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
@@ -184,14 +184,15 @@ namespace pxt.blocks.layout {
             };
         }
 
-        return toSvgAsync(ws)
+        const density = (pixelDensity | 0) || 4
+        return toSvgAsync(ws, density)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
                 return pxt.BrowserUtils.encodeToPngAsync(sg.xml,
                     {
                         width: sg.width,
                         height: sg.height,
-                        pixelDensity: (pixelDensity | 0) || 4,
+                        pixelDensity: density,
                         text: encodeBlocks ? JSON.stringify(blockSnippet, null, 2) : null
                     });
             }).catch(e => {
@@ -201,8 +202,9 @@ namespace pxt.blocks.layout {
     }
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
+    const MAX_AREA = 120000000; // https://github.com/jhildenbiddle/canvas-size
 
-    export function toSvgAsync(ws: Blockly.WorkspaceSvg): Promise<{
+    export function toSvgAsync(ws: Blockly.WorkspaceSvg, pixelDensity: number): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!ws)
@@ -214,7 +216,14 @@ namespace pxt.blocks.layout {
 
         let width = metrics.right - metrics.left;
         let height = metrics.bottom - metrics.top;
-        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height);
+        let scale = 1;
+
+        const area = width * height * Math.pow(pixelDensity, 2);
+        if (area > MAX_AREA) {
+            scale = Math.sqrt(MAX_AREA / area);
+        }
+
+        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height, scale);
     }
 
     export function serializeNode(sg: Node): string {
@@ -232,7 +241,7 @@ namespace pxt.blocks.layout {
 
     export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
         pxt.BrowserUtils.removeClass(svg, "blocklySvg");
-        pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer");
+        pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer classic-theme");
 
         // Remove background elements
         pxt.U.toArray(svg.querySelectorAll('.blocklyMainBackground,.blocklyScrollbarBackground'))
@@ -261,7 +270,7 @@ namespace pxt.blocks.layout {
         return svg;
     }
 
-    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<BlockSvg> {
+    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, scale?: number): Promise<BlockSvg> {
         if (!sg.childNodes[0])
             return Promise.resolve<BlockSvg>(undefined);
 
@@ -269,10 +278,13 @@ namespace pxt.blocks.layout {
         sg.removeAttribute("height");
         sg.removeAttribute("transform");
 
+        let renderWidth = Math.round(width * (scale || 1));
+        let renderHeight = Math.round(height * (scale || 1));
+
         const xmlString = serializeNode(sg)
             .replace(/^\s*<svg[^>]+>/i, '')
             .replace(/<\/svg>\s*$/i, '') // strip out svg tag
-        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
+        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${renderWidth}" height="${renderHeight}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
         const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
 
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
@@ -296,8 +308,8 @@ namespace pxt.blocks.layout {
                     .then(() => convertIconsToPngAsync(xsg))
                     .then(() => {
                         return <BlockSvg>{
-                            width: width,
-                            height: height,
+                            width: renderWidth,
+                            height: renderHeight,
                             svg: serializeNode(xsg).replace('<style xmlns="http://www.w3.org/1999/xhtml">', '<style>'),
                             xml: documentToSvg(xsg),
                             css: cssString

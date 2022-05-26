@@ -12,6 +12,7 @@ import * as compiler from "./compiler";
 import * as cloudsync from "./cloudsync";
 import * as tutorial from "./tutorial";
 import * as _package from "./package";
+import { fireClickOnEnter } from "./util"
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 
@@ -263,7 +264,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                             <i className="large github middle aligned icon"></i>
                             <div className="content">
                                 <a onClick={r.onClick} role="menuitem" className="header"
-                                    tabIndex={0} onKeyDown={sui.fireClickOnEnter}>{r.name}</a>
+                                    tabIndex={0} onKeyDown={fireClickOnEnter}>{r.name}</a>
                                 <div className="description">
                                     {r.description}
                                 </div>
@@ -313,7 +314,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 org = <div className="ui small">
                     {lf("If you already have write permissions to this repository, you may have to authorize the MakeCode App in the {0} organization.", parsed.owner)}
                     <sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMeChanged} />
-                    <sui.Link className="ui link" text={lf("Authorize MakeCode")} onClick={handleAutorize} onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Link className="ui link" text={lf("Authorize MakeCode")} onClick={handleAutorize} onKeyDown={fireClickOnEnter} />
                 </div>
             }
         }
@@ -606,7 +607,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             message: this.state.description,
             blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1, pxt.appTarget.appTheme?.embedBlocksInSnapshot),
             blocksDiffScreenshotAsync: () => {
-                const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
+                const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == pxt.MAIN_BLOCKS);
                 const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
                 if (diff && diff.ws)
                     return pxt.blocks.layout.toPngAsync(diff.ws, 1);
@@ -775,16 +776,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 <div className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter} />
+                            <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={fireClickOnEnter} />
                         </div>
                     </div>
                     <div className="rightHeader">
                         <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
                             className={haspull === true ? "positive" : ""}
-                            text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
+                            text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={fireClickOnEnter} />
                         {!isBlocksMode && isOwner &&
                             <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.slug}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
-                        <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                        <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
                     </div>
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} isDefaultBranch={isDefaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
@@ -798,7 +799,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
+                        <span onClick={this.handleBranchClick} onKeyDown={fireClickOnEnter} tabIndex={0} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} isDefaultBranch={isDefaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} isDefaultBranch={isDefaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
@@ -891,7 +892,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             }
             return <div key={`difffile${cacheKey}${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
-                    {(!blocksMode || f.name != "main.blocks") && <span>{f.name}</span>}
+                    {(!blocksMode || f.name != pxt.MAIN_BLOCKS) && <span>{f.name}</span>}
                     {!!cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />}
@@ -1180,7 +1181,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <div className="content">
                     {closed && lf("This Pull Request is closed!")}
                     {merged && lf("This pull request has been merged.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch to master branch")}</span>
+                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={fireClickOnEnter}>{lf("Switch to master branch")}</span>
                 </div>
             </div>;
 
@@ -1198,7 +1199,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <i className="exclamation circle icon"></i>
                 <div className="content">
                     {lf("This branch was not found, please pull again or switch to a different branch.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch to master branch")}</span>
+                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={fireClickOnEnter}>{lf("Switch to master branch")}</span>
                 </div>
             </div>
 
@@ -1255,7 +1256,7 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     error={descrError} />
             </div>
             <div className="ui field">
-                <sui.Button className="green" text={lf("Commit and push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button className="green" text={lf("Commit and push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={fireClickOnEnter} />
                 <span className="inline-help">{lf("Save your changes in GitHub.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
                 </span>
@@ -1326,7 +1327,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         /*
                     {!mergeableUnknown && <div className="ui field">
                         <sui.Button text={lf("Sync branch")}
-                            onClick={this.handleMergeUpstreamClick} onKeyDown={sui.fireClickOnEnter} />
+                            onClick={this.handleMergeUpstreamClick} onKeyDown={fireClickOnEnter} />
                         <span className="inline-help">{lf("Merge changes from master into this branch.")}</span>
                     </div>}
         */
@@ -1348,7 +1349,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
             </div>}
             {mergeable && <div className="ui field">
                 <sui.Button className={color} text={lf("Squash and merge")}
-                    onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
+                    onClick={this.handleMergeClick} onKeyDown={fireClickOnEnter} />
                 <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
                     {sui.helpIconLink("/github/pull-requests", lf("Learn about merging pull requests in GitHub."))}
                 </span>
@@ -1427,7 +1428,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                     text={lf("Create release")}
                     inverted={inverted}
                     onClick={this.handleBumpClick}
-                    onKeyDown={sui.fireClickOnEnter} />
+                    onKeyDown={fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Snapshot and publish your code.")}
                     {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
@@ -1503,7 +1504,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 <sui.Button className="basic" text={lf("Fork repository")}
                     onClick={this.handleForkClick}
                     inverted={inverted}
-                    onKeyDown={sui.fireClickOnEnter} />
+                    onKeyDown={fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Fork your own copy of {0} to your account.", githubId.slug)}
                     {sui.helpIconLink("/github/fork", lf("Learn more about forking repositories."))}
@@ -1524,7 +1525,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 <sui.Button className="basic" text={lf("Save for offline")}
                     onClick={this.handleSaveClick}
                     inverted={inverted}
-                    onKeyDown={sui.fireClickOnEnter} />
+                    onKeyDown={fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Export this extension to a file that can be imported without Internet.")}
                     {sui.helpIconLink("/github/offline", lf("Learn more about offline support for extensions."))}
@@ -1632,9 +1633,9 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         if (expanded && !diffFiles && !loading)
             this.loadDiffFilesAsync();
 
-        return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
+        return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={fireClickOnEnter}>
             <div className="content">
-                {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
+                {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={fireClickOnEnter} />}
                 <div className="meta">
                     <span>{date.toLocaleTimeString()}</span>
                 </div>
@@ -1688,7 +1689,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                 <sui.Button loading={loading} className="basic" text={lf("View commits")}
                     onClick={this.handleLoadClick}
                     inverted={inverted}
-                    onKeyDown={sui.fireClickOnEnter} />
+                    onKeyDown={fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Restore your project to a previous commit.")}
                     {sui.helpIconLink("/github/history", lf("Learn more about history of commits."))}
@@ -1703,7 +1704,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                             pxt.tickEvent("github.history.selectday");
                             this.setState({ selectedDay: selectedDay === day ? undefined : day, selectedCommit: undefined });
                         }}
-                        onKeyDown={sui.fireClickOnEnter}>
+                        onKeyDown={fireClickOnEnter}>
                         <div className="content">
                             <div className="ui header">{day}
                                 <div className="ui label button">

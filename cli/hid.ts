@@ -64,7 +64,7 @@ export function dmesgAsync() {
     return initAsync()
         .then(d => d.talkAsync(pxt.HF2.HF2_CMD_DMESG)
             .then(resp => {
-                console.log(U.fromUTF8(U.uint8ArrayToString(resp)))
+                console.log(U.fromUTF8Array(resp))
                 return d.disconnectAsync()
             }))
 }

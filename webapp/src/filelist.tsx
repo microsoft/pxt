@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -193,7 +194,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && !files.some(f => f.name == localized);
             const hasDelete = deleteFiles
                 && file.name != pxt.CONFIG_NAME
-                && (usesGitHub || file.name != "main.ts")
+                && (usesGitHub || file.name != pxt.MAIN_TS)
                 && !file.isReadonly();
             const nameStart = folder.length ? folder.length + 1 : 0;
             return (
@@ -230,9 +231,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             && pkgid != pxt.appTarget.corepkg
             && p.getKsPkg().config && !p.getKsPkg().config.core
             && p.getKsPkg().level <= 1;
-        const upd = del && p.getKsPkg()?.verProtocol() == "github";
+        const gh = p.getKsPkg()?.verProtocol() == "github"
+        const upd = del && gh;
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
-        let version = upd ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
+        let version = gh ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
         if (version && version.length > 20) version = version.substring(0, 7);
         return [<PackgeTreeItem key={"hd-" + pkgid}
             pkg={p} isActive={expandedPkg == pkgid} onItemClick={this.togglePkg}
@@ -332,6 +334,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                         ext = "json"
                         comment = undefined;
                         break;
+                    case "jres":
+                        ext = "jres"
+                        comment = undefined;
+                        break;
                     default:
                         // not a valid extension; leave it as it was and append def extension
                         name = str;
@@ -384,7 +390,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const plus = showFiles && !pxt.shell.isReadOnly() && (!mainPkg.files[customFile] || pxt.appTarget.appTheme.addNewTypeScriptFile);
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
-            <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
+            <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${showFiles ? "up" : "down"} icon`} />
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
@@ -508,7 +514,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             role="treeitem"
             aria-selected={isActive}
             aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
-            onKeyDown={sui.fireClickOnEnter}
+            onKeyDown={fireClickOnEnter}
             className={className}>
             {this.props.children}
             {hasDelete && <sui.Button className="primary label" icon="trash"
@@ -516,8 +522,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
-            {shareUrl && <sui.Button className="button primary label" icon="share alternate" title={lf("Share")} onClick={this.handleShare} onKeyDown={sui.fireClickOnEnter} />}
-            {previewUrl && <sui.Button className="button primary label" icon="flask" title={lf("Preview")} onClick={this.handlePreview} onKeyDown={sui.fireClickOnEnter} />}
+            {shareUrl && <sui.Button className="button primary label" icon="share alternate" title={lf("Share")} onClick={this.handleShare} onKeyDown={fireClickOnEnter} />}
+            {previewUrl && <sui.Button className="button primary label" icon="flask" title={lf("Preview")} onClick={this.handlePreview} onKeyDown={fireClickOnEnter} />}
             {!!addLocalizedFile && <sui.Button className="primary label" icon="xicon globe"
                 title={lf("Add localized file")}
                 onClick={this.handleAddLocale}
@@ -572,13 +578,13 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
         return <div className="header link item" role="treeitem"
             aria-selected={isActive} aria-expanded={isActive}
             aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
-            onClick={this.handleClick} tabIndex={0} onKeyDown={sui.fireClickOnEnter} {...rest}>
+            onClick={this.handleClick} tabIndex={0} onKeyDown={fireClickOnEnter} {...rest}>
             <sui.Icon icon={`chevron ${isActive ? "up" : "down"} icon`} />
             {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
-                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button> : undefined}
+                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button>
+                : version ? <span className="label" style={{background: 'transparent'}}>{version}</span> : undefined}
             {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete extension {0}", p.getPkgId())}
                 onClick={this.handleRemove} onKeyDown={this.handleButtonKeydown} /> : undefined}
-
             {this.props.children}
         </div>
     }

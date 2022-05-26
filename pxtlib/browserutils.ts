@@ -12,6 +12,10 @@ namespace pxt.BrowserUtils {
         return typeof navigator !== "undefined";
     }
 
+    export function hasWindow(): boolean {
+        return typeof window !== "undefined";
+    }
+
     export function isWindows(): boolean {
         return hasNavigator() && /(Win32|Win64|WOW64)/i.test(navigator.platform);
     }
@@ -59,20 +63,26 @@ namespace pxt.BrowserUtils {
     Notes on browser detection
 
     Actually:             Claims to be:
-                          IE  MicrosoftEdge    Chrome  Safari  Firefox
+                          IE  MicrosoftEdge   Chrome  Safari  Firefox  NewEdge
               IE          X                           X?
     Microsoft Edge                    X       X       X
               Chrome                          X       X
               Safari                                  X       X
               Firefox                                         X
+              New Edge                        X       X                X
 
-    I allow Opera to go about claiming to be Chrome because it might as well be
+    I allow Opera to go about claiming to be Chrome because it might as well be. Same for Chromium-based Edge.
     */
 
     //Microsoft Edge lies about its user agent and claims to be Chrome, but Microsoft Edge/Version
     //is always at the end
     export function isEdge(): boolean {
         return hasNavigator() && /Edge/i.test(navigator.userAgent);
+    }
+
+    //Chromium-based Edge. Note that `isChrome()` also detects this browser, and that's ok. In most cases Chromium-Edge can be treated like Chrome. Use this method if you need to differentiate them.
+    export function isChromiumEdge(): boolean {
+        return hasNavigator() && /Edg\//i.test(navigator.userAgent);
     }
 
     //IE11 also lies about its user agent, but has Trident appear somewhere in
@@ -82,7 +92,7 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /Trident/i.test(navigator.userAgent);
     }
 
-    //Microsoft Edge and IE11 lie about being Chrome
+    //Microsoft Edge and IE11 lie about being Chrome. Chromium-based Edge ("Edgeium") will be detected as Chrome, that is ok. If you're looking for Edgeium, use `isChromiumEdge()`.
     export function isChrome(): boolean {
         return !isEdge() && !isIE() && !!navigator && (/Chrome/i.test(navigator.userAgent) || /Chromium/i.test(navigator.userAgent));
     }
@@ -148,6 +158,33 @@ namespace pxt.BrowserUtils {
         return isLocalHost() && !isElectron();
     }
 
+    export function isSkillmapEditor(): boolean {
+        try {
+            return /skill(?:s?)Map=1/.test(window.location.href);
+        } catch (e) { return false; }
+    }
+
+    export function isTabletSize(): boolean {
+        return window?.innerWidth < pxt.BREAKPOINT_TABLET;
+    }
+
+    export function isComputerSize(): boolean {
+        return window?.innerWidth >= pxt.BREAKPOINT_TABLET;
+    }
+
+    export function noSharedLocalStorage(): boolean {
+        try {
+            return /nosharedlocalstorage/i.test(window.location.href);
+        } catch (e) { return false; }
+    }
+
+    export function useOldTutorialLayout(): boolean {
+        if (pxt.appTarget?.appTheme?.legacyTutorial) return true;
+        try {
+            return (/tutorialview=old/.test(window.location.href));
+        } catch (e) { return false; }
+    }
+
     export function hasPointerEvents(): boolean {
         return typeof window != "undefined" && !!(window as any).PointerEvent;
     }
@@ -194,9 +231,11 @@ namespace pxt.BrowserUtils {
             // pinned web sites and WKWebview for embedded browsers have a different user agent
             // Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Mobile/14D27
             // Mozilla/5.0 (iPad; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60
+            // Mozilla/5.0 (iPod; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60
+            // Mozilla/5.0 (iPod touch; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;
             // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/605.1.15 (KHTML, like Gecko)
             if (!matches)
-                matches = /(Macintosh|iPod|iPhone|iPad); (CPU|Intel).*?OS (X )?(\d+)/i.exec(navigator.userAgent);
+                matches = /(Macintosh|iPod( touch)?|iPhone|iPad); (CPU|Intel).*?OS (X )?(\d+)/i.exec(navigator.userAgent);
         }
         else if (isChrome()) {
             matches = /(Chrome|Chromium)\/([0-9\.]+)/i.exec(navigator.userAgent);
@@ -1036,6 +1075,7 @@ namespace pxt.BrowserUtils {
 
     interface TutorialInfoIndexedDbEntry {
         id: string;
+        time: number;
         hash: string;
         blocks: Map<number>;
         snippets: Map<Map<number>>;
@@ -1084,7 +1124,7 @@ namespace pxt.BrowserUtils {
 
             return this.db.getAsync<TutorialInfoIndexedDbEntry>(TutorialInfoIndexedDb.TABLE, key)
                 .then((res) => {
-                    if (res && res.hash == hash) {
+                    if (res && res.hash == hash && (Util.now() - (res.time || 0)) < 86400000) {
                         return res;
                     }
 
@@ -1113,6 +1153,7 @@ namespace pxt.BrowserUtils {
 
             const entry: TutorialInfoIndexedDbEntry = {
                 id: key,
+                time: Util.now(),
                 hash,
                 snippets,
                 blocks

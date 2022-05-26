@@ -1,4 +1,5 @@
 import * as db from "./db";
+import * as workspace from "./workspace";
 
 let headerDb: db.Table;
 let textDb: db.Table;
@@ -65,9 +66,23 @@ function migratePrefixesAsync(): Promise<void> {
         });
 }
 
-function listAsync(): Promise<pxt.workspace.Header[]> {
-    return migratePrefixesAsync()
-        .then(() => headerDb.getAllAsync() as Promise<Header[]>)
+async function migrateSkillmapProjectsAsync() {
+    const skillmapWorkspace = new pxt.skillmap.IndexedDBWorkspace();
+    await skillmapWorkspace.initAsync()
+
+    const projects = await skillmapWorkspace.getAllProjectsAsync();
+
+    for (const project of projects) {
+        project.header.isSkillmapProject = true;
+        await workspace.installAsync(project.header, project.text, true);
+        await skillmapWorkspace.deleteProjectAsync(project.header.id);
+    }
+}
+
+async function listAsync(): Promise<pxt.workspace.Header[]> {
+    await migratePrefixesAsync()
+    await migrateSkillmapProjectsAsync();
+    return headerDb.getAllAsync() as Promise<Header[]>;
 }
 
 async function getAsync(h: Header): Promise<pxt.workspace.File> {
@@ -131,10 +146,16 @@ function resetAsync() {
     // workspace.resetAsync already clears all tables
     return Promise.resolve();
 }
+
+function loadedAsync(): Promise<void> {
+    return pxt.commands.workspaceLoadedAsync?.();
+}
+
 export const provider: WorkspaceProvider = {
     getAsync,
     setAsync,
     deleteAsync,
     listAsync,
     resetAsync,
+    loadedAsync
 }

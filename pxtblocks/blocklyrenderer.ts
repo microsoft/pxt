@@ -75,7 +75,7 @@ namespace pxt.blocks {
                 break;
         }
 
-        let metrics = workspace.getMetrics() as Blockly.Metrics;
+        let metrics = workspace.getMetrics();
 
         const svg = blocklyDiv.querySelectorAll('svg')[0].cloneNode(true) as SVGSVGElement;
         pxt.blocks.layout.cleanUpBlocklySvg(svg);

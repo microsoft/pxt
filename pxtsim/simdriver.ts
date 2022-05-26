@@ -18,7 +18,8 @@ namespace pxsim {
         // instead of spanning multiple simulators,
         // dispatch messages to parent window
         nestedEditorSim?: boolean;
-        parentOrigin?: string
+        parentOrigin?: string;
+        mpRole?: string;    // multiplayer role: "client", "server", or undefined
         messageSimulators?: pxt.Map<{
             url: string;
             localHostUrl?: string;
@@ -314,58 +315,61 @@ namespace pxsim {
                 const single = !!this._currentRuntime?.single;
                 const parentWindow = window.parent && window.parent !== window.window
                     ? window.parent : window.opener;
-                if (this.options.nestedEditorSim && parentWindow) {
+                if (parentWindow) {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow) {
                         const parentOrigin = this.options.parentOrigin || window.location.origin
                         parentWindow.postMessage(msg, parentOrigin);
                     }
+                }
+                if (!this.options.nestedEditorSim && !broadcastmsg?.toParentIFrameOnly) {
                     // send message to other editors
-                } else if (depEditors) {
-                    depEditors.forEach(w => {
-                        if (source !== w)
-                            // dependant editors should be in the same origin
-                            w.postMessage(msg, window.location.origin)
-                    })
-                    // start second simulator
-                } else if (!single) {
-                    const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
-                    const messageSimulator = messageChannel &&
-                        this.options.messageSimulators &&
-                        this.options.messageSimulators[messageChannel];
-                    // should we start an extension editor?
-                    if (messageSimulator) {
-                        // find a frame already running that simulator
-                        let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
-                        // not found, spin a new one
-                        if (!messageFrame) {
-                            const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
-                            const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
-                                .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
-                            let wrapper = this.createFrame(url);
-                            this.container.appendChild(wrapper);
-                            messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
-                            messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
-                            pxsim.U.addClass(wrapper, "simmsg")
-                            pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
-                            if (messageSimulator.permanent)
-                                messageFrame.dataset[PERMANENT] = "true";
-                            this.startFrame(messageFrame);
-                            frames = this.simFrames(); // refresh
-                        }
-                        // not running the curren run, restart
-                        else if (messageFrame.dataset['runid'] != this.runId) {
-                            this.startFrame(messageFrame);
-                        }
-                    } else {
-                        // start secondary frame if needed
-                        const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
-                        if (mkcdFrames.length < 2) {
-                            this.container.appendChild(this.createFrame());
-                            frames = this.simFrames();
-                            // there might be an old frame
-                        } else if (mkcdFrames[1].dataset['runid'] != this.runId) {
-                            this.startFrame(mkcdFrames[1]);
+                    if (depEditors) {
+                        depEditors.forEach(w => {
+                            if (source !== w)
+                                // dependant editors should be in the same origin
+                                w.postMessage(msg, window.location.origin)
+                        })
+                        // start second simulator
+                    } else if (!single) {
+                        const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
+                        const messageSimulator = messageChannel &&
+                            this.options.messageSimulators &&
+                            this.options.messageSimulators[messageChannel];
+                        // should we start an extension editor?
+                        if (messageSimulator) {
+                            // find a frame already running that simulator
+                            let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
+                            // not found, spin a new one
+                            if (!messageFrame) {
+                                const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
+                                const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
+                                    .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
+                                let wrapper = this.createFrame(url);
+                                this.container.appendChild(wrapper);
+                                messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
+                                messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
+                                pxsim.U.addClass(wrapper, "simmsg")
+                                pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
+                                if (messageSimulator.permanent)
+                                    messageFrame.dataset[PERMANENT] = "true";
+                                this.startFrame(messageFrame);
+                                frames = this.simFrames(); // refresh
+                            }
+                            // not running the curren run, restart
+                            else if (messageFrame.dataset['runid'] != this.runId) {
+                                this.startFrame(messageFrame);
+                            }
+                        } else {
+                            // start secondary frame if needed
+                            const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
+                            if (mkcdFrames.length < 2) {
+                                this.container.appendChild(this.createFrame());
+                                frames = this.simFrames();
+                                // there might be an old frame
+                            } else if (mkcdFrames[1].dataset['runid'] != this.runId) {
+                                this.startFrame(mkcdFrames[1]);
+                            }
                         }
                     }
                 }
@@ -381,12 +385,27 @@ namespace pxsim {
                 if (!frame.contentWindow) continue;
 
                 // finally, send the message
-                frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+                this.postMessageCore(frame, msg);
 
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
                     && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
                     break;
+            }
+        }
+
+        private postMessageCore(frame: HTMLIFrameElement, msg: SimulatorMessage) {
+            frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+
+            if (U.isLocalHostDev() && (pxt as any)?.appTarget?.id) {
+                // If using the production simulator on local serve, the domain might have been
+                // redirected by the CLI server. Also send to the production domain just in case
+                try {
+                    frame.contentWindow.postMessage(msg, `https://trg-${(pxt as any)?.appTarget?.id}.userpxt.io/---simulator`);
+                }
+                catch (e) {
+                    // Ignore exceptions if the target origin doesn't match
+                }
             }
         }
 
@@ -398,7 +417,7 @@ namespace pxsim {
             frame.id = 'sim-frame-' + this.nextId()
             frame.title = pxsim.localization.lf("Simulator")
             frame.allowFullscreen = true;
-            frame.setAttribute('allow', 'autoplay');
+            frame.setAttribute('allow', 'autoplay;microphone');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             frame.className = 'no-select'
             const furl = (url || this.getSimUrl()) + '#' + frame.id;
@@ -629,6 +648,7 @@ namespace pxsim {
 
         public restart() {
             this.stop();
+            this.cleanupFrames();
             this.start();
         }
 
@@ -668,7 +688,10 @@ namespace pxsim {
             msg.frameCounter = ++this.frameCounter;
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
+                mpRole: /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase(),
+                hideSimButtons: /hidesimbuttons(?:[:=])1/i.test(window.location.href)
             };
+
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
@@ -676,7 +699,7 @@ namespace pxsim {
                 msg.traceDisabled = true;
                 msg.breakOnStart = false;
             }
-            frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+            this.postMessageCore(frame, msg);
             if (this.traceInterval) this.setTraceInterval(this.traceInterval);
             this.applyAspectRatioToFrame(frame);
             this.setFrameState(frame);
@@ -702,11 +725,15 @@ namespace pxsim {
                     const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
                         const stmsg = msg as SimulatorStateMessage;
-                        switch (stmsg.state) {
-                            case "killed":
-                                if (stmsg.runtimeid == frame.dataset['runtimeid'])
+                        if (stmsg.runtimeid == frame.dataset['runtimeid']) {
+                            switch (stmsg.state) {
+                                case "running":
+                                    this.setState(SimulatorState.Running);
+                                    break;
+                                case "killed":
                                     this.setState(SimulatorState.Stopped);
-                                break;
+                                    break;
+                            }
                         }
                     }
                     break;

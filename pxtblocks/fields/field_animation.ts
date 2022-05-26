@@ -10,6 +10,7 @@ namespace pxtblockly {
         disableResize: string;
 
         filter?: string;
+        lightMode: boolean;
     }
 
     export interface ParsedFieldAnimationOptions {
@@ -17,6 +18,7 @@ namespace pxtblockly {
         initHeight: number;
         disableResize: boolean;
         filter?: string;
+        lightMode: boolean;
     }
 
     // 32 is specifically chosen so that we can scale the images for the default
@@ -37,14 +39,7 @@ namespace pxtblockly {
         protected asset: pxt.Animation;
         protected initInterval: number;
 
-        init() {
-            if (this.fieldGroup_) {
-                // Field has already been initialized once.
-                return;
-            }
-
-            super.init();
-
+        initView() {
             // Register mouseover events for animating preview
             (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().addEventListener("mouseenter", this.onMouseEnter);
             (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().addEventListener("mouseleave", this.onMouseLeave);
@@ -226,12 +221,15 @@ namespace pxtblockly {
         const parsed: ParsedFieldAnimationOptions = {
             initWidth: 16,
             initHeight: 16,
-            disableResize: false
+            disableResize: false,
+            lightMode: false
         };
 
         if (!opts) {
             return parsed;
         }
+
+        parsed.lightMode = opts.lightMode;
 
         if (opts.filter) {
             parsed.filter = opts.filter;
