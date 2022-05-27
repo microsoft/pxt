@@ -733,9 +733,9 @@ namespace pxt.py {
     }
 
     // TODO optimize ?
-    function listClassFields(cd: ClassDef) {
+    function listClassFields(cd: ClassDef, excludeVariables = true) {
         let qn = cd.symInfo.qName
-        return U.values(internalApis).filter(e => e.namespace == qn && e.kind == SK.Property)
+        return U.values(internalApis).filter(e => e.namespace == qn && ((e.kind == SK.Variable && !excludeVariables) || e.kind == SK.Property))
     }
 
     function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false): SymbolInfo | null {
@@ -985,9 +985,10 @@ namespace pxt.py {
             error(n, 9517, U.lf("keyword-only arguments not supported yet"))
         let nargs = args.args.slice()
         if (isMethod) {
-            if (nargs[0].arg != "self")
-                error(n, 9518, U.lf("first argument of method has to be called 'self'"))
-            nargs.shift()
+            if (nargs[0]?.arg !== "self") n.symInfo.isStatic = true;
+            else {
+                nargs.shift();
+            }
         } else {
             if (nargs.some(a => a.arg == "self"))
                 error(n, 9519, U.lf("non-methods cannot have an argument called 'self'"))
@@ -1231,7 +1232,11 @@ namespace pxt.py {
                     }
                     if (!prefix) {
                         prefix = funname[0] == "_" ? (sym.isProtected ? "protected" : "private") : "public"
+                        if (n.symInfo.isStatic) {
+                            prefix += " static";
+                        }
                     }
+
                     nodes.push(B.mkText(prefix + " "), quote(funname))
                 }
             } else {
@@ -1241,7 +1246,7 @@ namespace pxt.py {
                 else
                     nodes.push(B.mkText("export function "), quote(funname))
             }
-            let retType = n.returns ? compileType(n.returns) : sym.pyRetType;
+            let retType = n.name == "__init__" ? undefined : (n.returns ? compileType(n.returns) : sym.pyRetType);
             nodes.push(
                 doArgs(n, isMethod),
                 retType && canonicalize(retType) != tpVoid ? typeAnnot(retType) : B.mkText(""))
@@ -1312,18 +1317,52 @@ namespace pxt.py {
                     }
                 }
             }
-            let body = stmts(n.body)
+
+            const classDefs = n.body.filter(s => s.kind === "FunctionDef");
+            const staticStmts = n.body.filter(s => classDefs.indexOf(s) === -1);
+
+            let body = stmts(classDefs)
             nodes.push(body)
 
-            let fieldDefs = listClassFields(n)
-                .filter(f => f.kind == SK.Property && f.isInstance)
+            // Python classes allow arbitrary statements in their bodies, sort of like namespaces.
+            // Take all of these statements and put them in a static method that we can call when
+            // the class is defined.
+            let generatedInitFunction = false;
+            if (staticStmts.length) {
+                generatedInitFunction = true;
+
+                const staticBody = stmts(staticStmts);
+                
+                const initFun = B.mkStmt(B.mkGroup([
+                    B.mkText(`public static __init${n.name}() `),
+                    staticBody
+                ]))
+
+                body.children.unshift(initFun);
+            }
+
+            let isStatic = (f: SymbolInfo) => f.kind === SK.Property && !f.isInstance || f.kind === SK.Variable;
+
+            const fieldDefs = listClassFields(n, false)
+                .filter(f => f.kind == SK.Property || isStatic(f))
                 .map(f => {
                     if (!f.pyName || !f.pyRetType)
                         error(n, 9535, lf("field definition missing py name or ret type", f.qName));
                     return f
-                })
-                .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)))
-            body.children = fieldDefs.concat(body.children)
+                });
+            const instanceFields = fieldDefs.filter(f => !isStatic(f))
+                .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)));
+            const staticFields = fieldDefs.filter(f => isStatic(f))
+                .map((f) => B.mkStmt(accessAnnot(f), B.mkText("static "), quote(f.pyName!), typeAnnot(f.pyRetType!)));
+            
+            body.children = staticFields.concat(instanceFields).concat(body.children)
+
+            if (generatedInitFunction) {
+                nodes = [
+                    B.mkStmt(B.mkGroup(nodes)),
+                    B.mkStmt(B.mkText(`${n.name}.__init${n.name}()`))
+                ]
+            }
 
             return B.mkStmt(B.mkGroup(nodes))
         }),
@@ -1727,7 +1766,10 @@ namespace pxt.py {
                 error(n, 9539, lf("function '{0}' missing return type", fd!.pyQName));
             unifyTypeOf(target, fd!.pyRetType!)
             fd!.isInstance = false
-            pref = ctx.currClass.isNamespace ? `export ${isConstCall ? "const" : "let"} ` : "static "
+
+            if (ctx.currClass.isNamespace) {
+                pref = `export ${isConstCall ? "const" : "let"} `;
+            }
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
@@ -1835,6 +1877,9 @@ namespace pxt.py {
         if (n.isdef && !excludeLet) {
             return B.mkGroup([B.mkText("let "), quote(id)])
         }
+        else if (curr?.namespace && curr?.qName) {
+            return quote(curr.qName);
+        }
         else
             return quote(id)
     }
@@ -1854,8 +1899,11 @@ namespace pxt.py {
             let s = (e as py.Name).id
             let scopeV = lookupVar(s)
             let v = scopeV?.symbol
-            if (v && v.expandsTo) return v.expandsTo
-            else return s
+            if (v) {
+                if (v.expandsTo) return v.expandsTo
+                else if (ctx.currClass && !ctx.currFun && !scopeV?.modifier && v.qName) return v.qName
+            }
+            return s
         }
         if (e.kind == "Attribute") {
             let pref = tryGetName((e as py.Attribute).value)
