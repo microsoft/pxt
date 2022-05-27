@@ -64,7 +64,8 @@ export class Keymap extends data.Component<ISettingsProps, KeymapState> {
                             [lf("left")]: ["←", "A"],
                             [lf("right")]: ["→", "D"],
                             "a": ["Z", lf("{id:keyboard symbol}space")],
-                            "b": ["X", lf("{id:keyboard symbol}enter")]
+                            "b": ["X", lf("{id:keyboard symbol}enter")],
+                            [lf("Menu")]: ["1"]
                         }
                     },
                     {
@@ -75,7 +76,8 @@ export class Keymap extends data.Component<ISettingsProps, KeymapState> {
                             [lf("left")]: ["J"],
                             [lf("right")]: ["L"],
                             [lf("a")]: ["U"],
-                            [lf("b")]: ["O"]
+                            [lf("b")]: ["O"],
+                            [lf("Reset")]: ["2"]
                         }
                     } ]
                 }
