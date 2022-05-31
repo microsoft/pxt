@@ -497,7 +497,7 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9575
+    // next free error 9576
     function error(astNode: py.AST | null | undefined, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
@@ -739,7 +739,15 @@ namespace pxt.py {
     }
 
     function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false): SymbolInfo | null {
-        let qid = ct.pyQName + "." + n
+        let qid: string;
+
+        if (n === "__init__") {
+            qid= ct.pyQName + ".__constructor"
+        }
+        else {
+            qid = ct.pyQName + "." + n;
+        }
+
         let f = lookupGlobalSymbol(qid)
         if (f)
             return f
@@ -1259,6 +1267,16 @@ namespace pxt.py {
                 if (!ctx.currClass)
                     error(n, 9533, lf("__init__ method '{0}' is missing current class context", sym.pyQName));
 
+                if (ctx.currClass?.baseClass) {
+                    const firstStatement = n.body[0]
+
+                    const superConstructor = ctx.currClass.baseClass.symInfo.pyQName + ".__constructor"
+
+                    if (((firstStatement as ExprStmt).value as Call)?.func?.symbolInfo?.pyQName !== superConstructor) {
+                        error(n, 9575, lf("Sub classes must call 'super().__init__' as the first statment inside an __init__ method"));
+                    }
+                }
+
                 for (let f of listClassFields(ctx.currClass!)) {
                     let p = f.pyAST as Assign
                     if (p && p.value) {
@@ -1332,7 +1350,7 @@ namespace pxt.py {
                 generatedInitFunction = true;
 
                 const staticBody = stmts(staticStmts);
-                
+
                 const initFun = B.mkStmt(B.mkGroup([
                     B.mkText(`public static __init${n.name}() `),
                     staticBody
@@ -1354,7 +1372,7 @@ namespace pxt.py {
                 .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)));
             const staticFields = fieldDefs.filter(f => isStatic(f))
                 .map((f) => B.mkStmt(accessAnnot(f), B.mkText("static "), quote(f.pyName!), typeAnnot(f.pyRetType!)));
-            
+
             body.children = staticFields.concat(instanceFields).concat(body.children)
 
             if (generatedInitFunction) {
@@ -2249,6 +2267,16 @@ namespace pxt.py {
                 return B.mkInfix(B.mkText(`""`), "+", expr(n.args[0]))
             }
 
+            const isSuperCall = ctx.currFun?.name === "__init__" &&
+                fun?.name === "__constructor" &&
+                ctx.currClass?.baseClass?.symInfo.pyQName === fun?.namespace &&
+                n.func.kind === "Attribute" &&
+                isSuper((n.func as Attribute).value);
+
+            if (isSuperCall) {
+                fun = lookupSymbol(ctx.currClass?.baseClass?.symInfo.pyQName + ".__constructor");
+            }
+
             if (!fun) {
                 error(n, 9508, U.lf("can't find called function '{0}'", nm))
             }
@@ -2364,7 +2392,16 @@ namespace pxt.py {
                 }
             }
 
-            let fn = methName ? B.mkInfix(expr(recv!), ".", B.mkText(methName)) : expr(n.func)
+            // TODO (riknoll): Make sure __init__ isn't being added as a symbol by the super call in the subclass. Should be converted to .__constructor
+
+            let fn: B.JsNode;
+
+            if (isSuperCall) {
+                fn = B.mkText("super");
+            }
+            else {
+                fn = methName ? B.mkInfix(expr(recv!), ".", B.mkText(methName)) : expr(n.func)
+            }
 
             let nodes = [
                 fn,
