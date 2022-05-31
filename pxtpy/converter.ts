@@ -1336,8 +1336,8 @@ namespace pxt.py {
                 }
             }
 
-            const classDefs = n.body.filter(s => s.kind === "FunctionDef");
-            const staticStmts = n.body.filter(s => classDefs.indexOf(s) === -1);
+            const classDefs = n.body.filter(s => n.isNamespace || s.kind === "FunctionDef");
+            const staticStmts = n.isNamespace ? [] : n.body.filter(s => classDefs.indexOf(s) === -1);
 
             let body = stmts(classDefs)
             nodes.push(body)
@@ -1359,21 +1359,23 @@ namespace pxt.py {
                 body.children.unshift(initFun);
             }
 
-            let isStatic = (f: SymbolInfo) => f.kind === SK.Property && !f.isInstance || f.kind === SK.Variable;
+            if (!n.isNamespace) {
+                let isStatic = (f: SymbolInfo) => f.kind === SK.Property && !f.isInstance || f.kind === SK.Variable;
 
-            const fieldDefs = listClassFields(n, false)
-                .filter(f => f.kind == SK.Property || isStatic(f))
-                .map(f => {
-                    if (!f.pyName || !f.pyRetType)
-                        error(n, 9535, lf("field definition missing py name or ret type", f.qName));
-                    return f
-                });
-            const instanceFields = fieldDefs.filter(f => !isStatic(f))
-                .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)));
-            const staticFields = fieldDefs.filter(f => isStatic(f))
-                .map((f) => B.mkStmt(accessAnnot(f), B.mkText("static "), quote(f.pyName!), typeAnnot(f.pyRetType!)));
+                const fieldDefs = listClassFields(n, false)
+                    .filter(f => f.kind == SK.Property || isStatic(f))
+                    .map(f => {
+                        if (!f.pyName || !f.pyRetType)
+                            error(n, 9535, lf("field definition missing py name or ret type", f.qName));
+                        return f
+                    });
+                const instanceFields = fieldDefs.filter(f => !isStatic(f))
+                    .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)));
+                const staticFields = fieldDefs.filter(f => isStatic(f))
+                    .map((f) => B.mkStmt(accessAnnot(f), B.mkText("static "), quote(f.pyName!), typeAnnot(f.pyRetType!)));
 
-            body.children = staticFields.concat(instanceFields).concat(body.children)
+                body.children = staticFields.concat(instanceFields).concat(body.children)
+            }
 
             if (generatedInitFunction) {
                 nodes = [
@@ -1895,7 +1897,8 @@ namespace pxt.py {
         if (n.isdef && !excludeLet) {
             return B.mkGroup([B.mkText("let "), quote(id)])
         }
-        else if (curr?.namespace && curr?.qName) {
+        else if (curr?.namespace && curr?.qName && !(ctx.currClass?.isNamespace && ctx.currClass?.name === curr?.namespace)) {
+            // If this is a static variable in a class, we want the full qname
             return quote(curr.qName);
         }
         else
