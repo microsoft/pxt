@@ -503,7 +503,8 @@ namespace pxt.runner {
 
     export enum LanguageMode {
         Blocks,
-        TypeScript
+        TypeScript,
+        Python
     }
 
     export let editorLanguageMode = LanguageMode.Blocks;
@@ -536,7 +537,15 @@ namespace pxt.runner {
             case "fileloaded":
                 let fm = m as pxsim.SimulatorFileLoadedMessage;
                 let name = fm.name;
-                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale);
+                let mode = LanguageMode.Blocks;
+                if (/\.ts$/i.test(name)) {
+                    mode = LanguageMode.TypeScript;
+                }
+                else if (/\.py$/i.test(name)) {
+                    mode = LanguageMode.Python;
+                }
+
+                setEditorContextAsync(mode, fm.locale);
                 break;
             case "popout":
                 let mp = /((\/v[0-9+])\/)?[^\/]*#(doc|md):([^&?:]+)/i.exec(window.location.href);
@@ -744,28 +753,37 @@ namespace pxt.runner {
             }
         }
 
-        function renderHash() {
+        async function renderHashAsync() {
             let m = /^#(doc|md|tutorial|book|project|projectid|print):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 pushHistory();
+
+                if (m[4]) {
+                    let mode = LanguageMode.TypeScript;
+                    if (/^blocks$/i.test(m[4])) {
+                        mode = LanguageMode.Blocks;
+                    }
+                    else if (/^python$/i.test(m[4])) {
+                        mode = LanguageMode.Python;
+                    }
+                    await setEditorContextAsync(mode, m[5]);
+                }
+
                 // navigation occured
-                const p = m[4] ? setEditorContextAsync(
-                    /^blocks$/.test(m[4]) ? LanguageMode.Blocks : LanguageMode.TypeScript,
-                    m[5]) : Promise.resolve();
-                p.then(() => render(m[1], decodeURIComponent(m[2])));
+                render(m[1], decodeURIComponent(m[2]));
             }
         }
         let promise = pxt.editor.initEditorExtensionsAsync();
         promise.then(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
-                renderHash();
+                renderHashAsync();
             }, false);
 
             parent.postMessage({ type: "sidedocready" }, "*");
 
             // delay load doc page to allow simulator to load first
-            setTimeout(() => renderHash(), 1);
+            setTimeout(() => renderHashAsync(), 1);
         })
     }
 
@@ -786,7 +804,7 @@ namespace pxt.runner {
             md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
 
         cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
-            .filter(f => (editorLanguageMode == LanguageMode.Blocks) == /\.blocks?$/.test(f))
+            .filter(f => matchesLanguageMode(f, editorLanguageMode))
             .forEach(f => {
                 if (!/^main\.(ts|blocks)$/.test(f))
                     md += `
@@ -839,6 +857,17 @@ ${linkString}
             print: true
         }
         return renderMarkdownAsync(content, md, options);
+    }
+
+    function matchesLanguageMode(filename: string, mode: LanguageMode) {
+        switch (mode) {
+            case LanguageMode.Blocks:
+                return /\.blocks?$/.test(filename)
+            case LanguageMode.TypeScript:
+                return /\.ts?$/.test(filename)
+            case LanguageMode.Python:
+                return /\.py?$/.test(filename)
+        }
     }
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
