@@ -507,7 +507,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         pxt.tickEvent("github.create.ok");
-                        return pxt.github.normalizeRepoId("https://github.com/" + r.fullName, "master");
+                        return pxt.github.normalizeRepoId("https://github.com/" + r.fullName, "main");
                     }, err => {
                         if (!showGithubTokenError(err)) {
                             if (err.statusCode == 422)
@@ -545,7 +545,7 @@ export function showImportGithubDialogAsync() {
                 description: r.description,
                 updatedAt: r.updatedAt,
                 onClick: () => {
-                    res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName, "master")
+                    res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName)
                     core.hideDialog()
                 },
             }));

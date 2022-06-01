@@ -191,8 +191,8 @@ namespace pxt.github {
 
         async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
             if (!tag) {
-                pxt.debug(`dep: default to master branch`)
-                tag = "master";
+                pxt.debug(`dep: default to main branch`)
+                tag = "main";
             }
 
             // cache lookup
@@ -229,8 +229,8 @@ namespace pxt.github {
 
         async loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
             if (!tag) {
-                pxt.debug(`load pkg: default to master branch`)
-                tag = "master";
+                pxt.debug(`load pkg: default to main branch`)
+                tag = "main";
             }
 
             // try using github proxy first
@@ -401,7 +401,7 @@ namespace pxt.github {
         return (resp.statusCode == 200)
     }
 
-    export async function putFileAsync(repopath: string, path: string, content: string) {
+    export async function putFileAsync(repopath: string, tag: string, path: string, content: string) {
         const parsed = parseRepoId(repopath);
         await ghRequestAsync({
             url: `https://api.github.com/repos/${pxt.github.join(parsed.slug, "contents", parsed.fileName, path)}`,
@@ -410,7 +410,7 @@ namespace pxt.github {
             data: {
                 message: lf("Initialize empty repo"),
                 content: btoa(U.toUTF8(content)),
-                branch: "master"
+                branch: tag ?? "main"
             },
             successCodes: [201]
         })
@@ -468,7 +468,7 @@ namespace pxt.github {
     }
 
     export function getRefAsync(repopath: string, branch: string) {
-        branch = branch || "master";
+        branch = branch || "main";
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
             .catch(err => {
@@ -683,7 +683,7 @@ namespace pxt.github {
         forks: number;
         open_issues: number;
         watchers: number;
-        default_branch: string; // "master",
+        default_branch: string; // "main", "master", etc.
         score: number; // 6.7371006
 
         // non-github, added to track search request
@@ -722,6 +722,10 @@ namespace pxt.github {
         fork?: boolean;
     }
 
+    export function looksLikeDefaultBranch(tag: string): boolean {
+        return tag === "master" || tag === "main";
+    }
+
     export function listUserReposAsync(): Promise<GitRepo[]> {
         const q = `{
   viewer {
@@ -739,12 +743,12 @@ namespace pxt.github {
         defaultBranchRef {
           name
         }
-        pxtjson: object(expression: "master:pxt.json") {
+        pxtjson: object(expression: "HEAD:pxt.json") {
           ... on Blob {
             text
           }
         }
-        readme: object(expression: "master:README.md") {
+        readme: object(expression: "HEAD:README.md") {
           ... on Blob {
             text
           }
@@ -786,7 +790,7 @@ namespace pxt.github {
         }).then(v => mkRepo(v))
     }
 
-    export async function enablePagesAsync(repo: string) {
+    export async function enablePagesAsync(repo: string, defaultBranch?: string) {
         // https://developer.github.com/v3/repos/pages/#enable-a-pages-site
         // try read status
         const parsed = parseRepoId(repo);
@@ -803,7 +807,7 @@ namespace pxt.github {
             try {
                 const r = await ghPostAsync(`https://api.github.com/repos/${parsed.slug}/pages`, {
                     source: {
-                        branch: "master",
+                        branch: defaultBranch ?? "main",
                         path: "/"
                     }
                 }, {
@@ -947,7 +951,7 @@ namespace pxt.github {
                     slug: rid.slug,
                     name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
                     description: meta.description,
-                    defaultBranch: meta.defaultBranch || "master",
+                    defaultBranch: meta.defaultBranch || "main",
                     tag: rid.tag,
                     status
                 };

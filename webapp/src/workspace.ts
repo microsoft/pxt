@@ -946,7 +946,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add compiled javascript to be run in github pages
     if (pxt.appTarget.appTheme.githubCompiledJs
         && options.binaryJs
-        && (!parsed.tag || parsed.tag == "master")) {
+        && (!parsed.tag || pxt.github.looksLikeDefaultBranch(parsed.tag))) {
         const v = cfg.version || "0.0.0";
         const opts: compiler.CompileOptions = {
             jsMetaVersion: v
@@ -1004,7 +1004,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         if (options.createRelease) {
             await pxt.github.createReleaseAsync(parsed.slug, options.createRelease, newCommit)
             // ensure pages are on
-            await pxt.github.enablePagesAsync(parsed.slug);
+            await pxt.github.enablePagesAsync(parsed.slug, pxt.github.looksLikeDefaultBranch(parsed.tag) ? parsed.tag : undefined);
             // clear the cloud cache
             await pxt.github.listRefsAsync(parsed.slug, "tags", true, true);
         }
@@ -1263,7 +1263,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 export async function exportToGithubAsync(hd: Header, repoid: string) {
     const parsed = pxt.github.parseRepoId(repoid);
     const pfiles = pxt.template.packageFiles(hd.name);
-    await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
+    await pxt.github.putFileAsync(parsed.fullName, parsed.tag, ".gitignore", pfiles[".gitignore"]);
     const sha = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
     const commit = await pxt.github.getCommitAsync(parsed.slug, sha)
     const files = await getTextAsync(hd.id)
@@ -1479,7 +1479,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     // try enable github pages
     try {
-        await pxt.github.enablePagesAsync(parsed.slug);
+        await pxt.github.enablePagesAsync(parsed.slug, pxt.github.looksLikeDefaultBranch(parsed.tag) ? parsed.tag : undefined);
     } catch (e) {
         pxt.reportException(e);
     }
@@ -1488,8 +1488,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 }
 
 export async function importGithubAsync(id: string): Promise<Header> {
-    // if tag is not specified, asssume master
-    const repoid = pxt.github.normalizeRepoId(id, "master").replace(/^github:/, "")
+    // if tag is not specified, asssume main
+    const repoid = pxt.github.normalizeRepoId(id, "main").replace(/^github:/, "")
     const parsed = pxt.github.parseRepoId(repoid)
 
     let sha = ""
@@ -1529,7 +1529,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
             if (pxt.shell.isReadOnly())
                 U.userError(lf("This repository looks empty."));
             await cloudsync.ensureGitHubTokenAsync();
-            await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
+            await pxt.github.putFileAsync(parsed.fullName, parsed.tag, ".gitignore", "# Initial\n");
             isEmpty = true;
             forceTemplateFiles = true;
             sha = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
