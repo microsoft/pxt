@@ -19,6 +19,7 @@ namespace pxt.py {
         pyAST?: AST;
         isProtected?: boolean;
         moduleTypeMarker?: {};
+        isStatic?: boolean;
 
         declared?: number; // A reference to the current iteration; used for detecting duplicate functions
     }
@@ -198,7 +199,7 @@ namespace pxt.py {
         keywords: Keyword[];
         body: Stmt[];
         decorator_list: Expr[];
-        baseClass?: ClassDef;
+        baseClass?: SymbolInfo;
         isEnum?: boolean;
         isNamespace?: boolean;
     }
