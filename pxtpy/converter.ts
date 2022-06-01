@@ -279,6 +279,14 @@ namespace pxt.py {
         let sym = lookupApi(name)
         if (sym)
             getOrSetSymbolType(sym)
+        else if (name.indexOf(".")) {
+            const base = name.substring(0, name.lastIndexOf("."));
+            const baseSymbol = lookupGlobalSymbol(base);
+
+            if (baseSymbol?.kind === SK.Class && baseSymbol.extendsTypes?.length) {
+                return lookupGlobalSymbol(baseSymbol.extendsTypes[0] + name.substring(base.length));
+            }
+        }
         return sym
     }
 
@@ -1270,7 +1278,7 @@ namespace pxt.py {
                 if (ctx.currClass?.baseClass) {
                     const firstStatement = n.body[0]
 
-                    const superConstructor = ctx.currClass.baseClass.symInfo.pyQName + ".__constructor"
+                    const superConstructor = ctx.currClass.baseClass.pyQName + ".__constructor"
 
                     if (((firstStatement as ExprStmt).value as Call)?.func?.symbolInfo?.pyQName !== superConstructor) {
                         error(n, 9575, lf("Sub classes must call 'super().__init__' as the first statment inside an __init__ method"));
@@ -1330,8 +1338,20 @@ namespace pxt.py {
                     nodes.push(B.mkCommaSep(n.bases.map(expr)))
                     let b = getClassDef(n.bases[0])
                     if (b) {
-                        n.baseClass = b
+                        n.baseClass = b.symInfo
                         sym.extendsTypes = [b.symInfo.pyQName!]
+                    }
+                    else {
+                        const nm = tryGetName(n.bases[0]);
+
+                        if (nm) {
+                            const localSym = lookupSymbol(nm);
+                            const globalSym = lookupGlobalSymbol(nm);
+
+                            n.baseClass = localSym || globalSym;
+
+                            if (n.baseClass) sym.extendsTypes = [n.baseClass.pyQName!]
+                        }
                     }
                 }
             }
@@ -1931,6 +1951,9 @@ namespace pxt.py {
             if (pref)
                 return pref + "." + (e as py.Attribute).attr
         }
+        if (isSuper(e) && ctx.currClass?.baseClass) {
+            return ctx.currClass.baseClass.qName
+        }
         return undefined!
     }
     function getName(e: py.Expr): string {
@@ -2205,7 +2228,7 @@ namespace pxt.py {
                 if (ctx.currClass && ctx.currClass.baseClass) {
                     if (!n.tsType)
                         error(n, 9543, lf("call expr missing ts type"));
-                    unifyClass(n, n.tsType!, ctx.currClass.baseClass.symInfo)
+                    unifyClass(n, n.tsType!, ctx.currClass.baseClass)
                 }
                 return B.mkText("super")
             }
@@ -2270,14 +2293,19 @@ namespace pxt.py {
                 return B.mkInfix(B.mkText(`""`), "+", expr(n.args[0]))
             }
 
-            const isSuperCall = ctx.currFun?.name === "__init__" &&
-                fun?.name === "__constructor" &&
-                ctx.currClass?.baseClass?.symInfo.pyQName === fun?.namespace &&
-                n.func.kind === "Attribute" &&
-                isSuper((n.func as Attribute).value);
+            const isSuperAttribute = n.func.kind === "Attribute" && isSuper((n.func as Attribute).value);
 
-            if (isSuperCall) {
-                fun = lookupSymbol(ctx.currClass?.baseClass?.symInfo.pyQName + ".__constructor");
+            if (!fun && isSuperAttribute) {
+                fun = lookupGlobalSymbol(nm!);
+            }
+
+            const isSuperConstructor = ctx.currFun?.name === "__init__" &&
+                fun?.name === "__constructor" &&
+                ctx.currClass?.baseClass?.pyQName === fun?.namespace &&
+                isSuperAttribute;
+
+            if (isSuperConstructor) {
+                fun = lookupSymbol(ctx.currClass?.baseClass?.pyQName + ".__constructor");
             }
 
             if (!fun) {
@@ -2399,7 +2427,7 @@ namespace pxt.py {
 
             let fn: B.JsNode;
 
-            if (isSuperCall) {
+            if (isSuperConstructor) {
                 fn = B.mkText("super");
             }
             else {

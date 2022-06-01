@@ -199,7 +199,7 @@ namespace pxt.py {
         keywords: Keyword[];
         body: Stmt[];
         decorator_list: Expr[];
-        baseClass?: ClassDef;
+        baseClass?: SymbolInfo;
         isEnum?: boolean;
         isNamespace?: boolean;
     }
