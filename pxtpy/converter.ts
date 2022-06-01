@@ -750,7 +750,7 @@ namespace pxt.py {
         let qid: string;
 
         if (n === "__init__") {
-            qid= ct.pyQName + ".__constructor"
+            qid = ct.pyQName + ".__constructor"
         }
         else {
             qid = ct.pyQName + "." + n;
@@ -1281,7 +1281,7 @@ namespace pxt.py {
                     const superConstructor = ctx.currClass.baseClass.pyQName + ".__constructor"
 
                     if (((firstStatement as ExprStmt).value as Call)?.func?.symbolInfo?.pyQName !== superConstructor) {
-                        error(n, 9575, lf("Sub classes must call 'super().__init__' as the first statment inside an __init__ method"));
+                        error(n, 9575, lf("Sub classes must call 'super().__init__' as the first statement inside an __init__ method"));
                     }
                 }
 
@@ -1386,7 +1386,7 @@ namespace pxt.py {
                     .filter(f => f.kind == SK.Property || isStatic(f))
                     .map(f => {
                         if (!f.pyName || !f.pyRetType)
-                            error(n, 9535, lf("field definition missing py name or ret type", f.qName));
+                            error(n, 9535, lf("field definition missing py name or return type", f.qName));
                         return f
                     });
                 const instanceFields = fieldDefs.filter(f => !isStatic(f))
