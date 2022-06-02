@@ -1402,18 +1402,14 @@ namespace pxt.py {
                     });
                 const staticFieldSymbols = fieldDefs.filter(f => isStatic(f));
 
-                const instanceFields = fieldDefs.filter(f => !isStatic(f))
-                    .map((f) => {
-                        const quotedName = quoteStr(f.pyName!);
-
-                        if (staticFieldSymbols.some(s => quoteStr(s.pyName!) === quotedName)) {
-                            return declareLocalStatic(quoteStr(n.name), quotedName, t2s(f.pyRetType!))
-                        }
-
-                        return B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!));
-                    });
+                const instanceFields = fieldDefs.filter(f => !isStatic(f) && !staticFieldSymbols.some(s => quoteStr(s.pyName!) === quoteStr(f.pyName!)))
+                    .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)));
                 const staticFields = staticFieldSymbols
-                    .map((f) => B.mkStmt(accessAnnot(f), B.mkText("static "), quote(f.pyName!), typeAnnot(f.pyRetType!)));
+                    .map((f) =>
+                    B.mkGroup([
+                        B.mkStmt(accessAnnot(f), B.mkText("static "), quote(f.pyName!), typeAnnot(f.pyRetType!)),
+                        declareLocalStatic(quoteStr(n.name), quoteStr(f.pyName!), t2s(f.pyRetType!))
+                    ]));
 
                 body.children = staticFields.concat(instanceFields).concat(body.children)
             }
