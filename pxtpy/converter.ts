@@ -389,7 +389,7 @@ namespace pxt.py {
             let qualifiedName = pref + name
 
             if (scope.kind === "ClassDef") {
-                varSym = addSymbol(SK.Property, staticQname(qualifiedName))
+                varSym = addSymbol(SK.Property, qualifiedName)
             }
             else if (isLocalScope(scope)
                 && (modifier === VarModifier.Global
@@ -745,9 +745,9 @@ namespace pxt.py {
     }
 
     // TODO optimize ?
-    function listClassFields(cd: ClassDef, excludeVariables = true) {
+    function listClassFields(cd: ClassDef) {
         let qn = cd.symInfo.qName
-        return U.values(internalApis).filter(e => e.namespace == qn && ((e.kind == SK.Variable && !excludeVariables) || e.kind == SK.Property))
+        return U.values(internalApis).filter(e => e.namespace == qn && e.kind == SK.Property)
     }
 
     function getClassField(ct: SymbolInfo, n: string, isStatic: boolean, checkOnly = false, skipBases = false): SymbolInfo | null {
@@ -763,8 +763,6 @@ namespace pxt.py {
             else {
                 qid = ct.pyQName + "." + n;
             }
-
-            if (isStatic) qid = staticQname(qid);
         }
 
         let f = lookupGlobalSymbol(qid)
@@ -813,8 +811,6 @@ namespace pxt.py {
                     if (f.isInstance)
                         error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
                 } else {
-                    if (!f.isInstance)
-                        error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
                     if (isSuper(recv))
                         f.isProtected = true
                     else if (isThis(recv)) {
@@ -1391,18 +1387,16 @@ namespace pxt.py {
             }
 
             if (!n.isNamespace) {
-                let isStatic = (f: SymbolInfo) => f.kind === SK.Property && !f.isInstance || f.kind === SK.Variable;
 
-                const fieldDefs = listClassFields(n, false)
-                    .filter(f => f.kind == SK.Property || isStatic(f))
+                const fieldDefs = listClassFields(n)
                     .map(f => {
                         if (!f.pyName || !f.pyRetType)
                             error(n, 9535, lf("field definition missing py name or return type", f.qName));
                         return f
                     });
-                const staticFieldSymbols = fieldDefs.filter(f => isStatic(f));
+                const staticFieldSymbols = fieldDefs.filter(f => !f.isInstance);
 
-                const instanceFields = fieldDefs.filter(f => !isStatic(f) && !staticFieldSymbols.some(s => quoteStr(s.pyName!) === quoteStr(f.pyName!)))
+                const instanceFields = fieldDefs.filter(f => f.isInstance)
                     .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)));
                 const staticFields = staticFieldSymbols
                     .map((f) =>
@@ -1943,7 +1937,6 @@ namespace pxt.py {
     }
 
     function quoteStr(id: string) {
-        if (id) id = id.replace("@static", "");
         if (B.isReservedWord(id))
             return id + "_"
         else if (!id)
@@ -3178,11 +3171,6 @@ namespace pxt.py {
                 unifyTypeOf(e, fun.pyRetType!);
                 break;
         }
-    }
-
-    function staticQname(qname: string) {
-        if (qname.endsWith("@static")) return qname;
-        else return qname + "@static";
     }
 
     function declareLocalStatic(className: string, name: string, type: string) {
