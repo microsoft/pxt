@@ -836,10 +836,10 @@ export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean>
 export async function prAsync(hd: Header, commitId: string, msg: string) {
     let parsed = pxt.github.parseRepoId(hd.githubId)
     // merge conflict - create a Pull Request
-    const branchName = await pxt.github.getNewBranchNameAsync(parsed.slug, "merge-")
-    await pxt.github.createNewBranchAsync(parsed.slug, branchName, commitId)
-    const url = await pxt.github.createPRFromBranchAsync(parsed.slug, parsed.tag, branchName, msg)
-    // force user back to master - we will instruct them to merge PR in github.com website
+    const branchName = await pxt.github.getNewBranchNameAsync(parsed.fullName, "merge-")
+    await pxt.github.createNewBranchAsync(parsed.fullName, branchName, commitId)
+    const url = await pxt.github.createPRFromBranchAsync(parsed.fullName, parsed.tag, branchName, msg)
+    // force user back to default branch - we will instruct them to merge PR in github.com website
     // and sync here to get the changes
     let headCommit = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
     await githubUpdateToAsync(hd, {
@@ -946,7 +946,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add compiled javascript to be run in github pages
     if (pxt.appTarget.appTheme.githubCompiledJs
         && options.binaryJs
-        && (!parsed.tag || pxt.github.looksLikeDefaultBranch(parsed.tag))) {
+        && (!parsed.tag || pxt.github.isDefaultBranch(parsed.tag))) {
         const v = cfg.version || "0.0.0";
         const opts: compiler.CompileOptions = {
             jsMetaVersion: v
@@ -1001,10 +1001,10 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             files,
             saveTag: options.createRelease
         })
-        if (options.createRelease) {
+        if (options.createRelease && pxt.github.isDefaultBranch(parsed.tag)) {
             await pxt.github.createReleaseAsync(parsed.slug, options.createRelease, newCommit)
             // ensure pages are on
-            await pxt.github.enablePagesAsync(parsed.slug, pxt.github.looksLikeDefaultBranch(parsed.tag) ? parsed.tag : undefined);
+            await pxt.github.enablePagesAsync(parsed.slug, parsed.tag);
             // clear the cloud cache
             await pxt.github.listRefsAsync(parsed.slug, "tags", true, true);
         }
@@ -1263,6 +1263,10 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 export async function exportToGithubAsync(hd: Header, repoid: string) {
     const parsed = pxt.github.parseRepoId(repoid);
     const pfiles = pxt.template.packageFiles(hd.name);
+    if (!parsed.tag) {
+        const repo = await pxt.github.repoAsync(parsed.slug, await pxt.packagesConfigAsync());
+        parsed.tag = repo?.defaultBranch ?? "main";
+    }
     await pxt.github.putFileAsync(parsed.fullName, parsed.tag, ".gitignore", pfiles[".gitignore"]);
     const sha = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
     const commit = await pxt.github.getCommitAsync(parsed.slug, sha)
@@ -1479,7 +1483,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     // try enable github pages
     try {
-        await pxt.github.enablePagesAsync(parsed.slug, pxt.github.looksLikeDefaultBranch(parsed.tag) ? parsed.tag : undefined);
+        await pxt.github.enablePagesAsync(parsed.slug, parsed.tag);
     } catch (e) {
         pxt.reportException(e);
     }

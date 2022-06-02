@@ -240,7 +240,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }))
 
         // only branch from default branch...
-        if (pxt.github.looksLikeDefaultBranch(gid.tag)) {
+        if (pxt.github.isDefaultBranch(gid.tag)) {
             branchList.unshift({
                 name: lf("Create new branch"),
                 description: lf("Based on {0}", gid.tag),
@@ -757,15 +757,15 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const hasissue = pullStatus == workspace.PullStatus.BranchNotFound || pullStatus == workspace.PullStatus.NoSourceControl;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
-        const defaultBranch = pxt.github.looksLikeDefaultBranch(githubId.tag);
+        const isDefaultBranch = pxt.github.isDefaultBranch(githubId.tag);
         const user = this.getData("github:user") as pxt.editor.UserInfo;
 
         // don't use gs.prUrl, as it gets cleared often
-        const url = `https://github.com/${githubId.slug}/${defaultBranch && !githubId.fileName ? "" : pxt.github.join("tree", githubId.tag || "main", githubId.fileName)}`;
+        const url = `https://github.com/${githubId.slug}/${isDefaultBranch && !githubId.fileName ? "" : pxt.github.join("tree", githubId.tag || "main", githubId.fileName)}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
         const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
-        const showPr = pr !== null && (gs.isFork || !defaultBranch);
+        const showPr = pr !== null && (gs.isFork || !isDefaultBranch);
         const showPrResolved = showPr && pr && pr.number > 0;
         const showPrCreate = showPr && pr && pr.number <= 0;
         const isOwner = user && user.id === githubId.owner;
@@ -786,7 +786,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} defaultBranch={defaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} isDefaultBranch={isDefaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                 <div className="ui form">
                     {showPrResolved &&
                         <sui.Link href={pr.url} role="button" className="ui tiny basic button create-pr"
@@ -799,12 +799,12 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <span className="repo-name">{githubId.fullName}</span>
                         <span onClick={this.handleBranchClick} onKeyDown={fireClickOnEnter} tabIndex={0} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
-                    {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} defaultBranch={defaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} defaultBranch={defaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} isDefaultBranch={isDefaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} isDefaultBranch={isDefaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
-                    <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} defaultBranch={defaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
-                    {defaultBranch && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} defaultBranch={defaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} defaultBranch={defaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} isDefaultBranch={isDefaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
+                    {isDefaultBranch && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} isDefaultBranch={isDefaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} isDefaultBranch={isDefaultBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     <div></div>
                 </div>
             </div>
@@ -1215,7 +1215,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 interface GitHubViewProps {
     githubId: pxt.github.ParsedRepo;
     needsToken: boolean;
-    defaultBranch: boolean;
+    isDefaultBranch: boolean;
     parent: GithubComponent;
     gs: pxt.github.GitJson;
     isBlocks: boolean;
@@ -1365,7 +1365,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.releasezone.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
-        const { needsCommit, defaultBranch } = this.props;
+        const { needsCommit, isDefaultBranch } = this.props;
         const header = this.props.parent.props.parent.state.header;
         if (needsCommit)
             core.confirmAsync({
@@ -1374,7 +1374,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 agreeLbl: lf("Ok"),
                 hideAgree: true
             });
-        else if (!defaultBranch)
+        else if (!isDefaultBranch)
             core.confirmAsync({
                 header: lf("Checkout the default branch..."),
                 body: lf("You need to checkout the default branch to create a release."),

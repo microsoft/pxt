@@ -100,8 +100,13 @@ class GithubDb implements pxt.github.IGithubDb {
     }
 
     loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+        if (!tag) {
+            pxt.debug(`dep: default to main`)
+            tag = "main"
+          }
+
         // don't cache master
-        if (pxt.github.looksLikeDefaultBranch(tag))
+        if (pxt.github.isDefaultBranch(tag))
             return this.mem.loadConfigAsync(repopath, tag);
 
         const id = `config-${repopath}-${tag}`;
@@ -124,11 +129,12 @@ class GithubDb implements pxt.github.IGithubDb {
     }
     loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
         if (!tag) {
-          pxt.debug(`dep: default to main`)
-          tag = "main"
-        }
-        // don't cache master
-        if (pxt.github.looksLikeDefaultBranch(tag))
+            pxt.debug(`dep: default to main`)
+            tag = "main"
+          }
+
+          // don't cache master
+        if (pxt.github.isDefaultBranch(tag))
             return this.mem.loadPackageAsync(repopath, tag);
 
         const id = `pkg-${repopath}-${tag}`;

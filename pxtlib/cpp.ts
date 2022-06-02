@@ -1043,7 +1043,7 @@ namespace pxt.cpp {
                 "libraries": U.values(codalLibraries).map(r => ({
                     "name": r.project,
                     "url": "https://github.com/" + r.fullName,
-                    "branch": r.tag || "master",
+                    "branch": r.tag || "master", // Keep as "master" (no need to support "main" branch here)
                     "type": "git"
                 }))
             }
