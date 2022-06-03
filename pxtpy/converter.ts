@@ -279,7 +279,7 @@ namespace pxt.py {
         let sym = lookupApi(name)
         if (sym)
             getOrSetSymbolType(sym)
-        else if (name.indexOf(".")) {
+        else if (name.indexOf(".") && !name.endsWith(".__constructor")) {
             const base = name.substring(0, name.lastIndexOf("."));
             const baseSymbol = lookupGlobalSymbol(base);
 
@@ -1364,7 +1364,7 @@ namespace pxt.py {
             }
 
             const classDefs = n.body.filter(s => n.isNamespace || s.kind === "FunctionDef");
-            const staticStmts = n.isNamespace ? [] : n.body.filter(s => classDefs.indexOf(s) === -1);
+            const staticStmts = n.isNamespace ? [] : n.body.filter(s => classDefs.indexOf(s) === -1 && s.kind !== "Pass");
 
             let body = stmts(classDefs)
             nodes.push(body)
@@ -2220,6 +2220,10 @@ namespace pxt.py {
 
             if (isClass) {
                 fun = lookupSymbol(namedSymbol!.pyQName + ".__constructor")
+
+                if (!fun) {
+                    fun = addSymbolFor(SK.Function, createDummyConstructorSymbol(namedSymbol?.pyAST as ClassDef))
+                }
             } else {
                 if (n.func.kind == "Attribute") {
                     let attr = n.func as py.Attribute
@@ -2433,8 +2437,6 @@ namespace pxt.py {
                     ]);
                 }
             }
-
-            // TODO (riknoll): Make sure __init__ isn't being added as a symbol by the super call in the subclass. Should be converted to .__constructor
 
             let fn: B.JsNode;
 
@@ -3171,6 +3173,68 @@ namespace pxt.py {
                 unifyTypeOf(e, fun.pyRetType!);
                 break;
         }
+    }
+
+    function createDummyConstructorSymbol(def: py.ClassDef, sym = def.symInfo): py.Symbol {
+        const existing = lookupApi(sym.pyQName + ".__constructor");
+
+        if (!existing && sym.extendsTypes?.length) {
+            const parentSymbol = lookupSymbol(sym.extendsTypes[0]) || lookupGlobalSymbol(sym.extendsTypes[0]);
+
+            if (parentSymbol) {
+                return createDummyConstructorSymbol(def, parentSymbol);
+            }
+        }
+
+        const result = {
+            kind: "FunctionDef",
+            name: "__init__",
+            startPos: def.startPos,
+            endPos: def.endPos,
+            parent: def,
+            body: [],
+            args: {
+                kind: "Arguments",
+                startPos: 0,
+                endPos: 0,
+                args: [{
+                    startPos: 0,
+                    endPos: 0,
+                    kind: "Arg",
+                    arg: "self"
+                }],
+                kw_defaults: [],
+                kwonlyargs: [],
+                defaults: []
+            },
+            decorator_list: [],
+            vars: {},
+            symInfo: mkSymbol(SK.Function, def.symInfo.qName + ".__constructor")
+        } as any as py.FunctionDef;
+
+
+        result.symInfo.parameters = [];
+        result.symInfo.pyRetType = mkType({ classType: def.symInfo });
+
+        if (existing) {
+            result.args.args.push(...existing.parameters.map(p => ({
+                startPos: 0,
+                endPos: 0,
+                kind: "Arg",
+                arg: p.name,
+            } as Arg)))
+            result.symInfo.parameters.push(...existing.parameters.map(p => {
+                if (p.pyType) return p;
+
+                const res = {
+                    ...p,
+                    pyType: mapTsType(p.type)
+                }
+                return res;
+            }))
+        }
+
+        return result;
     }
 
     function declareLocalStatic(className: string, name: string, type: string) {
