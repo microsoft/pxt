@@ -1726,12 +1726,14 @@ export class ProjectView
 
         const t = header.tutorial;
 
+        const skipTutorialInfoCache = /notutorialinfocache=1/i.test(window?.location.href);
+
         if (typeof t.tutorialCode === "string") {
             t.tutorialCode = [t.tutorialCode];
         }
 
         return this.loadBlocklyAsync()
-            .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language))
+            .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language, skipTutorialInfoCache))
             .then((tutorialBlocks) => {
                 let editorState: pxt.editor.EditorState = {
                     searchBar: false
