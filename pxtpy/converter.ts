@@ -387,7 +387,11 @@ namespace pxt.py {
                 pref += "."
             }
             let qualifiedName = pref + name
-            if (isLocalScope(scope)
+
+            if (scope.kind === "ClassDef") {
+                varSym = addSymbol(SK.Property, qualifiedName)
+            }
+            else if (isLocalScope(scope)
                 && (modifier === VarModifier.Global
                     || modifier === VarModifier.NonLocal)) {
                 varSym = addSymbol(SK.Variable, name)
@@ -741,19 +745,24 @@ namespace pxt.py {
     }
 
     // TODO optimize ?
-    function listClassFields(cd: ClassDef, excludeVariables = true) {
+    function listClassFields(cd: ClassDef) {
         let qn = cd.symInfo.qName
-        return U.values(internalApis).filter(e => e.namespace == qn && ((e.kind == SK.Variable && !excludeVariables) || e.kind == SK.Property))
+        return U.values(internalApis).filter(e => e.namespace == qn && e.kind == SK.Property)
     }
 
-    function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false): SymbolInfo | null {
+    function getClassField(ct: SymbolInfo, n: string, isStatic: boolean, checkOnly = false, skipBases = false): SymbolInfo | null {
         let qid: string;
 
         if (n === "__init__") {
             qid = ct.pyQName + ".__constructor"
         }
         else {
-            qid = ct.pyQName + "." + n;
+            if (n.startsWith(ct.pyQName + ".")) {
+                qid = n;
+            }
+            else {
+                qid = ct.pyQName + "." + n;
+            }
         }
 
         let f = lookupGlobalSymbol(qid)
@@ -766,7 +775,7 @@ namespace pxt.py {
                 if (sym) {
                     if (sym == ct)
                         U.userError("field lookup loop on: " + sym.qName + " / " + n)
-                    let classF = getClassField(sym, n, true)
+                    let classF = getClassField(sym, n, isStatic, true)
                     if (classF)
                         return classF
                 }
@@ -775,7 +784,7 @@ namespace pxt.py {
 
         if (!checkOnly && ct.pyAST && ct.pyAST.kind == "ClassDef") {
             let sym = addSymbol(SK.Property, qid)
-            sym.isInstance = true
+            sym.isInstance = !isStatic;
             return sym
         }
         return null
@@ -795,15 +804,13 @@ namespace pxt.py {
         const constructorTypes = getTypesForFieldLookup(recvType)
 
         for (let ct of constructorTypes) {
-            let f = getClassField(ct, n, checkOnly)
+            let isModule = !!recvType.moduleType
+            let f = getClassField(ct, n, isModule, checkOnly)
             if (f) {
-                let isModule = !!recvType.moduleType
                 if (isModule) {
                     if (f.isInstance)
                         error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
                 } else {
-                    if (!f.isInstance)
-                        error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
                     if (isSuper(recv))
                         f.isProtected = true
                     else if (isThis(recv)) {
@@ -1240,7 +1247,7 @@ namespace pxt.py {
                         let scopeValueVar = n.vars["value"]
                         let valueVar = scopeValueVar?.symbol
                         if (funname == "__set__" && valueVar) {
-                            let cf = getClassField(ctx.currClass!.symInfo, "__get__")
+                            let cf = getClassField(ctx.currClass!.symInfo, "__get__", false)
                             if (cf && cf.pyAST && cf.pyAST.kind == "FunctionDef")
                                 unify(n, valueVar.pyRetType!, cf.pyRetType!)
                         }
@@ -1380,19 +1387,23 @@ namespace pxt.py {
             }
 
             if (!n.isNamespace) {
-                let isStatic = (f: SymbolInfo) => f.kind === SK.Property && !f.isInstance || f.kind === SK.Variable;
 
-                const fieldDefs = listClassFields(n, false)
-                    .filter(f => f.kind == SK.Property || isStatic(f))
+                const fieldDefs = listClassFields(n)
                     .map(f => {
                         if (!f.pyName || !f.pyRetType)
                             error(n, 9535, lf("field definition missing py name or return type", f.qName));
                         return f
                     });
-                const instanceFields = fieldDefs.filter(f => !isStatic(f))
+                const staticFieldSymbols = fieldDefs.filter(f => !f.isInstance);
+
+                const instanceFields = fieldDefs.filter(f => f.isInstance)
                     .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)));
-                const staticFields = fieldDefs.filter(f => isStatic(f))
-                    .map((f) => B.mkStmt(accessAnnot(f), B.mkText("static "), quote(f.pyName!), typeAnnot(f.pyRetType!)));
+                const staticFields = staticFieldSymbols
+                    .map((f) =>
+                    B.mkGroup([
+                        B.mkStmt(accessAnnot(f), B.mkText("static "), quote(f.pyName!), typeAnnot(f.pyRetType!)),
+                        declareLocalStatic(quoteStr(n.name), quoteStr(f.pyName!), t2s(f.pyRetType!))
+                    ]));
 
                 body.children = staticFields.concat(instanceFields).concat(body.children)
             }
@@ -1764,7 +1775,7 @@ namespace pxt.py {
             // class fields can't be const
             // hack: value in @namespace should always be const
             isConstCall = !!(value && ctx.currClass.isNamespace);
-            let fd = getClassField(ctx.currClass.symInfo, nm)
+            let fd = getClassField(ctx.currClass.symInfo, nm, true)
             if (!fd)
                 error(n, 9544, lf("cannot get class field"));
             // TODO: use or remove this code
@@ -3160,5 +3171,28 @@ namespace pxt.py {
                 unifyTypeOf(e, fun.pyRetType!);
                 break;
         }
+    }
+
+    function declareLocalStatic(className: string, name: string, type: string) {
+        const isSetVar = `___${name}_is_set`;
+        const localVar = `___${name}`;
+
+        return B.mkStmt(
+            B.mkStmt(B.mkText(`private ${isSetVar}: boolean`)),
+            B.mkStmt(B.mkText(`private ${localVar}: ${type}`)),
+            B.mkStmt(
+                B.mkText(`get ${name}(): ${type}`),
+                B.mkBlock([
+                    B.mkText(`return this.${isSetVar} ? this.${localVar} : ${className}.${name}`)
+                ])
+            ),
+            B.mkStmt(
+                B.mkText(`set ${name}(value: ${type})`),
+                B.mkBlock([
+                    B.mkStmt(B.mkText(`this.${isSetVar} = true`)),
+                    B.mkStmt(B.mkText(`this.${localVar} = value`)),
+                ])
+            )
+        );
     }
 }
