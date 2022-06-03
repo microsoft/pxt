@@ -1726,7 +1726,7 @@ export class ProjectView
 
         const t = header.tutorial;
 
-        const skipTutorialInfoCache = /notutorialinfocache=1/i.test(window?.location.href);
+        const skipTutorialInfoCache = /notutorialinfocache=1/i.test(window.location.href);
 
         if (typeof t.tutorialCode === "string") {
             t.tutorialCode = [t.tutorialCode];
