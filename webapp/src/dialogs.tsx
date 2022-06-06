@@ -545,7 +545,7 @@ export function showImportGithubDialogAsync() {
                 description: r.description,
                 updatedAt: r.updatedAt,
                 onClick: () => {
-                    res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName, "master")
+                    res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName, r.defaultBranch)
                     core.hideDialog()
                 },
             }));
