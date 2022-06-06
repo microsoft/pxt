@@ -6,7 +6,7 @@ To learn how to become one and access curriculum, please visit our [GitHub Teach
 
 ### ~button /github-teacher-verification
 
-Learn how to become an GitHub Educator
+Learn how to become a GitHub Educator
 
 ### ~
 
