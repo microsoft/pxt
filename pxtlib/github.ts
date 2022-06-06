@@ -683,7 +683,7 @@ namespace pxt.github {
         forks: number;
         open_issues: number;
         watchers: number;
-        default_branch: string; // "master",
+        default_branch: string; // "main", "master",
         score: number; // 6.7371006
 
         // non-github, added to track search request
@@ -722,6 +722,12 @@ namespace pxt.github {
         fork?: boolean;
     }
 
+    export function isDefaultBranch(branch: string, repo?: GitRepo) {
+        if (repo && repo.defaultBranch)
+            return branch === repo.defaultBranch;
+        return /^(main|master)$/.test(branch);
+    }
+
     export function listUserReposAsync(): Promise<GitRepo[]> {
         const q = `{
   viewer {
@@ -739,12 +745,12 @@ namespace pxt.github {
         defaultBranchRef {
           name
         }
-        pxtjson: object(expression: "master:pxt.json") {
+        pxtjson: object(expression: "HEAD:pxt.json") {
           ... on Blob {
             text
           }
         }
-        readme: object(expression: "master:README.md") {
+        readme: object(expression: "HEAD:README.md") {
           ... on Blob {
             text
           }

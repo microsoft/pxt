@@ -5004,9 +5004,11 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
 
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
+        const config = await pxt.packagesConfigAsync();
+        const parsedRepoId = pxt.github.parseRepoId(repoid);
+        const repo = await pxt.github.repoAsync(parsedRepoId.slug, config);
         // normalize for precise matching
-        // if the branch is not specified, assume "master"
-        repoid = pxt.github.normalizeRepoId(repoid, "master");
+        repoid = pxt.github.normalizeRepoId(repoid, repo?.defaultBranch);
         // try to find project with same id
         let hd = workspace.getHeaders().find(h => h.githubId &&
             pxt.github.normalizeRepoId(h.githubId) == repoid
