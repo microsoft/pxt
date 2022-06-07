@@ -236,8 +236,25 @@ namespace pxt.py {
             if (isModule(sym)) {
                 sym.pyRetType = mkType({ moduleType: sym })
             } else {
-                if (sym.retType)
-                    sym.pyRetType = mapTsType(sym.retType)
+                if (sym.retType) {
+                    if (sym.qName?.endsWith(".__constructor") && sym.retType === "void") {
+                        // This must be a TS class. Because python treats constructors as functions,
+                        // set the return type to be the class instead of void
+                        const classSym = lookupGlobalSymbol(sym.qName.substring(0, sym.qName.lastIndexOf(".")));
+
+                        if (classSym) {
+                            sym.pyRetType = mkType({
+                                classType: classSym
+                            });
+                        }
+                        else {
+                            sym.pyRetType = mapTsType(sym.retType)
+                        }
+                    }
+                    else {
+                        sym.pyRetType = mapTsType(sym.retType)
+                    }
+                }
                 else if (sym.pyRetType) {
                     // nothing to do
                 } else {

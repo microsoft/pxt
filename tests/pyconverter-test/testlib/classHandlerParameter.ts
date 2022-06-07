@@ -13,6 +13,10 @@ namespace game {
         //% afterOnStart=true
         onOverlap(handler: (other: Sprite) => void) {
         }
+
+        setPosition(x: number, y: number) {
+
+        }
     }
 }
 
