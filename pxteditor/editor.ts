@@ -96,6 +96,7 @@ namespace pxt.editor {
 
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;
+        csvSerialActive?: boolean;
 
         errorListState?: ErrorListState;
 
@@ -209,6 +210,7 @@ namespace pxt.editor {
         openSimView(): void;
         openSimSerial(): void;
         openDeviceSerial(): void;
+        openCsvSerial(): void;
         openPreviousEditor(): void;
 
         switchTypeScript(): void;
@@ -402,6 +404,7 @@ namespace pxt.editor {
         collapsed?: boolean;
         simSerialActive?: boolean;
         devSerialActive?: boolean;
+        csvSerialActive?: boolean;
     }
 
     export interface IFieldCustomOptions {

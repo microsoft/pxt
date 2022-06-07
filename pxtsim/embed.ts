@@ -101,6 +101,7 @@ namespace pxsim {
         id: string;
         data: string;
         sim?: boolean;
+        csvType?: undefined | "headers" | "row"; // if non-nullish pass to csv view instead
         receivedTime?: number;
     }
     export interface SimulatorBulkSerialMessage extends SimulatorMessage {

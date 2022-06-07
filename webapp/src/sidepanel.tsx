@@ -30,6 +30,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     collapseEditorTools?: boolean;
     simSerialActive?: boolean;
     deviceSerialActive?: boolean;
+    csvSerialActive?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions;
 
@@ -38,7 +39,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     setEditorOffset?: () => void;
 
     showMiniSim: (visible?: boolean) => void;
-    openSerial: (isSim: boolean) => void;
+    openSerial: (isSim: boolean, isCsv?: boolean) => void;
     handleHardwareDebugClick: () => void;
     handleFullscreenButtonClick: () => void;
 }
@@ -90,6 +91,10 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.props.openSerial(false);
     }
 
+    protected handleCsvSerialClick = () => {
+        this.props.openSerial(true, true);
+    }
+
     protected handleSimOverlayClick = () => {
         const { tutorialOptions, handleFullscreenButtonClick } = this.props;
         if (!tutorialOptions || pxt.BrowserUtils.useOldTutorialLayout()) {
@@ -126,7 +131,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     renderCore() {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton,
-            collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
+            collapseEditorTools, simSerialActive, deviceSerialActive, csvSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
         const { activeTab, height } = this.state;
 
@@ -145,14 +150,15 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     {isTabTutorial && !isLockedEditor && this.tutorialExitButton()}
                     <div className="ui items simPanel" ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
-                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.showSimulatorTab} />
+                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} csvSerialActive={csvSerialActive} showSimulatorSidebar={this.showSimulatorTab} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
                         </div>
                         {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                            <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
-                            <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
+                            <serialindicator.SerialIndicator ref="csvIndicator" isSim={true} isCsv={true} onClick={this.handleCsvSerialClick} parent={parent} />
+                            <serialindicator.SerialIndicator ref="simIndicator" isSim={true} isCsv={false} onClick={this.handleSimSerialClick} parent={parent} />
+                            <serialindicator.SerialIndicator ref="devIndicator" isSim={false} isCsv={false} onClick={this.handleDeviceSerialClick} parent={parent} />
                         </div>}
                         {showFileList && <filelist.FileList parent={parent} />}
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}

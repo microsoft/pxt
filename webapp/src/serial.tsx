@@ -20,7 +20,8 @@ export class Editor extends srceditor.Editor {
     sourceMap: pxt.Map<string> = {}
     serialInputDataBuffer: string = ""
     maxSerialInputDataLength: number = 255;
-    isSim: boolean = true
+    isSim: boolean = true;
+    isCsv: boolean = false;
     maxConsoleEntries: number = 500;
     active: boolean = true
     rawDataBuffer: string = ""
@@ -88,6 +89,13 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    setCsv(b: boolean) {
+        if (this.isCsv != b) {
+            this.isCsv = !!b
+            this.clear()
+        }
+    }
+
     simStateChanged() {
         this.charts.forEach((chart) => chart.setRealtimeData(this.wantRealtimeData()));
     }
@@ -125,6 +133,7 @@ export class Editor extends srceditor.Editor {
 
     processEvent(ev: MessageEvent) {
         let msg = ev.data
+
         if (msg.type === "serial") {
             this.processEventCore(msg);
         }
@@ -160,7 +169,8 @@ export class Editor extends srceditor.Editor {
 
     processMessage(smsg: pxsim.SimulatorSerialMessage) {
         const sim = !!smsg.sim
-        if (sim != this.isSim) return;
+        const isCsv = !!smsg.csvType
+        if (sim != this.isSim || isCsv != this.isCsv) return;
 
         // clean up input
         const data = smsg.data || ""
@@ -358,7 +368,7 @@ export class Editor extends srceditor.Editor {
         this.csvHeaders = [];
     }
 
-    isCSV(nl: number, datas: number[][][]): boolean {
+    dataIsCsv(nl: number, datas: number[][][]): boolean {
         if (datas.length < 2) return false;
         for (let i = 0; i < datas.length; ++i)
             if (datas[i].length != nl) return false;
@@ -398,7 +408,7 @@ export class Editor extends srceditor.Editor {
             const datas = lines.map(line => line.line);
             const nl = datas.length > 0 ? datas.map(data => data.length).reduce((l, c) => Math.max(l, c)) : 0;
             // if all lines have same timestamp, condense output
-            let isCSV = this.isCSV(nl, datas);
+            let isCSV = this.dataIsCsv(nl, datas);
             if (isCSV) {
                 let h = `time (${chart.source})${sep}` + lines.map(line => line.name).join(sep) + sep;
                 csv[0] = csv[0] ? csv[0] + sep + h : h;
