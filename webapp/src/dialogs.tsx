@@ -6,6 +6,7 @@ import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
+import { EmbedVideo } from "../../react-common/components/controls/EmbedVideo";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
@@ -62,6 +63,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                                 ? <a target="_blank" rel="noopener noreferrer" href="/offline-app">{lf("An update {0} for {1} is available", latestElectronRelease, pxt.appTarget.title)}</a>
                                 : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
                         : undefined}
+                    <EmbedVideo src="youtube" id="vHiFxhPs2TQ" allowFullScreen autoplay={true}></EmbedVideo>
                     {githubUrl && versions && renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)}
                     {versions && renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)}
                     {compileVariantInfos?.length ? compileVariantInfos.map(info => <div key={info.variantName}>{renderCompileLink(info.variantName, info.compileService)}</div>) : undefined}
