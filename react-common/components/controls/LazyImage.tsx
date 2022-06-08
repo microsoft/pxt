@@ -50,6 +50,7 @@ export const LazyImage = (props: LazyImageProps) => {
             aria-describedby={ariaDescribedBy}
         />
         <div className="common-spinner" />
+        <i className="fas fa-image" aria-hidden={true} />
     </div>
 }
 
@@ -74,6 +75,11 @@ function initObserver() {
                 image.src = url;
                 image.onload = () => {
                     image.parentElement.classList.add("loaded");
+                    image.parentElement.classList.remove("error");
+                }
+                image.onerror = () => {
+                    image.parentElement.classList.add("error")
+                    image.parentElement.classList.remove("loaded")
                 }
             }
         })
