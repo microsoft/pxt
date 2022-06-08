@@ -5,7 +5,6 @@ import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
 import * as data from "./data";
-import * as auth from "./auth";
 
 import Util = pxt.Util
 import { fireClickOnEnter } from "./util"
@@ -25,7 +24,7 @@ export class Editor extends srceditor.Editor {
     maxConsoleEntries: number = 500;
     active: boolean = true
     rawDataBuffer: string = ""
-    maxBufferLength: number = 10000;
+    maxBufferLength: number = 100000;
     csvHeaders: string[] = [];
 
     lineColors: string[];
@@ -116,7 +115,8 @@ export class Editor extends srceditor.Editor {
         this.goBack = this.goBack.bind(this);
         this.toggleRecording = this.toggleRecording.bind(this);
         this.downloadRaw = this.downloadRaw.bind(this);
-        this.downloadCSV = this.downloadCSV.bind(this);
+        this.downloadRawText = this.downloadRawText.bind(this);
+        this.downloadConsoleCSV = this.downloadConsoleCSV.bind(this);
     }
 
     saveMessageForLater(m: pxsim.SimulatorSerialMessage) {
@@ -177,17 +177,33 @@ export class Editor extends srceditor.Editor {
         const source = smsg.id || "?"
         const receivedTime = smsg.receivedTime || Util.now()
 
-        this.appendRawData(data);
         const niceSource = this.mapSource(source);
 
+        if (isCsv) {
+            this.appendRawData(`${data}\n`);
+            if (smsg.csvType === "headers") {
+                this.processCsvHeaders(data, receivedTime);
+            } else {
+                this.processCsvRows(data, receivedTime);
+            }
+        } else {
+            this.appendRawData(data);
+            // chunk into lines
+            const lines = this.chunkDataIntoLines(data)
 
-        // chunk into lines
-        const lines = this.chunkDataIntoLines(data)
-
-        // process each line
-        for (const line of lines) {
-            this.processMessageLine(line, niceSource, receivedTime);
+            // process each line
+            for (const line of lines) {
+                this.processMessageLine(line, niceSource, receivedTime);
+            }
         }
+    }
+
+    processCsvHeaders(line: string, receivedTime: number) {
+
+    }
+
+    processCsvRows(line: string, receivedTime: number) {
+
     }
 
     processMessageLine(line: string, niceSource: string, receivedTime: number) {
@@ -384,7 +400,12 @@ export class Editor extends srceditor.Editor {
         return true;
     }
 
-    downloadCSV() {
+    downloadConsoleCSV() {
+        if (this.isCsv) {
+            this.downloadRaw("csv", "text/csv");
+            return;
+        }
+        // if not in csv mode, download inferred csv content.
         const sep = lf("{id:csvseparator}\t");
         let csv: string[] = [];
 
@@ -435,14 +456,22 @@ export class Editor extends srceditor.Editor {
         pxt.commands.browserDownloadAsync(Util.toUTF8(csvText), pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
     }
 
-    downloadRaw() {
+    downloadRaw(fileExtension = "txt", mimeType = "text/plain") {
         core.infoNotification(lf("Exporting text...."));
         const time = currentIsoDateString();
         let buf = this.rawDataBuffer;
         // ensure \r\n newlines for windows <10
         if (pxt.BrowserUtils.isWindows())
             buf = buf.replace(/[^\r]\n/g, '\r\n');
-        pxt.commands.browserDownloadAsync(Util.toUTF8(buf), pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
+        pxt.commands.browserDownloadAsync(
+            Util.toUTF8(buf),
+            pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + `.${fileExtension}`,
+            mimeType
+        )
+    }
+
+    downloadRawText() {
+        this.downloadRaw();
     }
 
     goBack() {
@@ -475,10 +504,10 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={this.downloadRaw}>
+                        {!this.isCsv && <sui.Button title={lf("Save raw text")} className="ui icon button editorExport" ariaLabel={lf("Save raw text")} onClick={this.downloadRawText}>
                             <sui.Icon icon="copy" />
-                        </sui.Button>
-                        <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={this.downloadCSV}>
+                        </sui.Button>}
+                        <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={this.downloadConsoleCSV}>
                             <sui.Icon icon="download" />
                         </sui.Button>
                         <StartPauseButton ref={this.handleStartPauseRef} active={this.active} toggle={this.toggleRecording} />
