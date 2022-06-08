@@ -118,18 +118,19 @@
 
 
 /****************************************************
- *                    Desktop                       *
+ *            Desktop and Portrait                  *
  ****************************************************/
 
 // Desktop is computer + large monitor + widescreen
+// Portrait is the inverse of that
 @media only screen and (min-width: @computerBreakpoint) {
-    .desktop-hidden {
+    .desktop-hidden, .portrait-only {
         display: none !important;
     }
 }
 
 @media @tabletAndBelow {
-    .desktop-only {
+    .desktop-only, .portrait-hidden {
         display: none !important;
     }
 }
