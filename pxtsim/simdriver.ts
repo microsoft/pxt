@@ -70,6 +70,7 @@ namespace pxsim {
         dependencies?: Map<string>;
         // single iframe, no message simulators
         single?: boolean;
+        hideSimButtons?: boolean;
     }
 
     export interface HwDebugger {
@@ -419,8 +420,16 @@ namespace pxsim {
             frame.allowFullscreen = true;
             frame.setAttribute('allow', 'autoplay;microphone');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            frame.className = 'no-select'
-            const furl = (url || this.getSimUrl()) + '#' + frame.id;
+            frame.className = 'no-select';
+
+            let furl = url || this.getSimUrl().toString();
+            if (this._runOptions.hideSimButtons) {
+                const urlObject = new URL(furl);
+                urlObject.searchParams.append("hideSimButtons", "1");
+                furl = urlObject.toString();
+            }
+            furl += '#' + frame.id;
+            
             frame.src = furl;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
@@ -688,8 +697,7 @@ namespace pxsim {
             msg.frameCounter = ++this.frameCounter;
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
-                mpRole: /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase(),
-                hideSimButtons: /hidesimbuttons(?:[:=])1/i.test(window.location.href)
+                mpRole: /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase()
             };
 
             msg.id = `${msg.options.theme}-${this.nextId()}`;

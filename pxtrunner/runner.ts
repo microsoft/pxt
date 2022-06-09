@@ -18,6 +18,7 @@ namespace pxt.runner {
         builtJsInfo?: pxtc.BuiltSimJsInfo;
         // single simulator frame, no message simulators
         single?: boolean;
+        hideSimButtons?: boolean;
     }
 
     class EditorPackage {
@@ -404,7 +405,8 @@ namespace pxt.runner {
             highContrast: simOptions.highContrast,
             storedState: storedState,
             light: simOptions.light,
-            single: simOptions.single
+            single: simOptions.single,
+            hideSimButtons: simOptions.hideSimButtons
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
