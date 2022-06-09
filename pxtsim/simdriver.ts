@@ -429,7 +429,7 @@ namespace pxsim {
                 furl = urlObject.toString();
             }
             furl += '#' + frame.id;
-            
+
             frame.src = furl;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
