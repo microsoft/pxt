@@ -231,9 +231,7 @@ export class Editor extends srceditor.Editor {
             headerElement.appendChild(document.createTextNode(header));
             tr.appendChild(headerElement);
         }
-        csvTable.firstChild.appendChild(tr)
-        this.checkCsvLineCount();
-        tr.scrollIntoView();
+        this.addCsvRow(tr, csvTable.firstChild as HTMLTableSectionElement);
     }
 
     processCsvRows(line: string, receivedTime: number) {
@@ -246,9 +244,15 @@ export class Editor extends srceditor.Editor {
             dataElement.appendChild(document.createTextNode(data));
             tr.appendChild(dataElement);
         }
-        csvTable.lastChild.appendChild(tr);
+        this.addCsvRow(tr, csvTable.lastChild as HTMLTableSectionElement);
+    }
+
+    addCsvRow(row: HTMLTableRowElement, target: HTMLTableSectionElement) {
+        const currentlyAtBottom = target.getBoundingClientRect().bottom <= window.innerHeight;
+        target.appendChild(row);
         this.checkCsvLineCount();
-        tr.scrollIntoView();
+        if (currentlyAtBottom)
+            row.scrollIntoView();
     }
 
     checkCsvLineCount() {
