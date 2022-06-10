@@ -335,8 +335,12 @@ export class ProjectView
         data.invalidate('pkg-git-pages')
 
         // disconnect devices to avoid locking between tabs
-        if (!active && !navigator?.serviceWorker?.controller)
-            cmds.disconnectAsync(); // turn off any kind of logging
+        if (!active && !navigator?.serviceWorker?.controller) {
+            if (this._deploying) {
+                pxt.debug(`disconnect cancelled because deploy in progress`)
+            } else
+                cmds.disconnectAsync(); // turn off any kind of logging
+        }
 
         if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {
@@ -2880,6 +2884,7 @@ export class ProjectView
 
     beforeCompile() { }
 
+    _deploying = false
     async compile(saveOnly = false): Promise<void> {
         pxt.tickEvent("compile", { editor: this.getPreferredEditor() });
         pxt.debug('compiling...');
@@ -2982,6 +2987,7 @@ export class ProjectView
                 pxt.tickEvent("deploy.start")
 
                 try {
+                    this._deploying = true
                     await pxt.commands.deployAsync(resp, {
                         reportError: (e) => {
                             pxt.tickEvent("deploy.reporterror");
@@ -3009,6 +3015,9 @@ export class ProjectView
                         } catch (e) {
                         }
                     }
+                }
+                finally {
+                    this._deploying = false
                 }
             }
             catch (e) {
