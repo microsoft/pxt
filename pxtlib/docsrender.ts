@@ -423,7 +423,7 @@ namespace pxt.docs {
 
                 // <iframe width="1358" height="773" src="https://www.youtube.com/embed/0Gl2QnHNpkA?list=RDMM8H1iMq0g31g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-                let out = '<iframe width="500" height="350" src="' + href + '" title="' + title + '" frameborder="0" ' + 'allow="autoplay; picture-in-picture"></iframe>';
+                let out = '<iframe width="500" height="350" src="' + href + '" title="' + title + '" frameborder="0" ' +'allowFullScreen '+ 'allow="autoplay; picture-in-picture"></iframe>';
 
                 return out;
 
