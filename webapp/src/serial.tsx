@@ -21,7 +21,7 @@ export class Editor extends srceditor.Editor {
     maxSerialInputDataLength: number = 255;
     isSim: boolean = true;
     isCsv: boolean = false;
-    maxConsoleEntries: number = 500;
+    maxConsoleEntries: number = 1000;
     active: boolean = true
     rawDataBuffer: string = ""
     maxBufferLength: number = 100000;
@@ -32,10 +32,15 @@ export class Editor extends srceditor.Editor {
     currentLineColors: string[];
     highContrast?: boolean = false;
 
+    // CSV
+    csvLineCount: 0;
+
     //refs
-    startPauseButton: StartPauseButton
-    consoleRoot: HTMLElement
-    chartRoot: HTMLElement
+    startPauseButton: StartPauseButton;
+    consoleRoot: HTMLDivElement;
+    chartRoot: HTMLDivElement;
+    csvRoot: HTMLDivElement;
+    serialRoot: HTMLDivElement;
 
     getId() {
         return "serialEditor"
@@ -55,6 +60,12 @@ export class Editor extends srceditor.Editor {
             this.setHighContrast(highContrast)
         }
         this.isVisible = b
+
+        if (this.isCsv) {
+            pxt.BrowserUtils.addClass(this.serialRoot, "csv-view");
+        } else {
+            pxt.BrowserUtils.removeClass(this.serialRoot, "csv-view");
+        }
         if (this.isVisible) {
             this.processQueuedMessages()
             this.startRecording()
@@ -90,8 +101,14 @@ export class Editor extends srceditor.Editor {
 
     setCsv(b: boolean) {
         if (this.isCsv != b) {
-            this.isCsv = !!b
-            this.clear()
+            this.isCsv = !!b;
+            if (this.serialRoot) {
+                if (this.isCsv) {
+                    pxt.BrowserUtils.addClass(this.serialRoot, "csv-view");
+                } else {
+                    pxt.BrowserUtils.removeClass(this.serialRoot, "csv-view");
+                }
+            }
         }
     }
 
@@ -170,7 +187,7 @@ export class Editor extends srceditor.Editor {
     processMessage(smsg: pxsim.SimulatorSerialMessage) {
         const sim = !!smsg.sim
         const isCsv = !!smsg.csvType
-        if (sim != this.isSim || isCsv != this.isCsv) return;
+        if (sim != this.isSim) return;
 
         // clean up input
         const data = smsg.data || ""
@@ -179,15 +196,14 @@ export class Editor extends srceditor.Editor {
 
         const niceSource = this.mapSource(source);
 
+        this.appendRawData(data);
         if (isCsv) {
-            this.appendRawData(`${data}\n`);
             if (smsg.csvType === "headers") {
                 this.processCsvHeaders(data, receivedTime);
             } else {
                 this.processCsvRows(data, receivedTime);
             }
         } else {
-            this.appendRawData(data);
             // chunk into lines
             const lines = this.chunkDataIntoLines(data)
 
@@ -198,12 +214,63 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    processCsvHeaders(line: string, receivedTime: number) {
+    createTable() {
+        const table = document.createElement("table");
+        table.appendChild(document.createElement("thead"));
+        table.appendChild(document.createElement("tbody"));
+        this.csvRoot.appendChild(table);
+        return table;
+    }
 
+    processCsvHeaders(line: string, receivedTime: number) {
+        const csvTable = this.createTable();
+        const tr = document.createElement("tr");
+        tr.title = lf("Received: {0}", new Date(receivedTime).toTimeString());
+        for (const header of line.trim().split(",")) {
+            const headerElement = document.createElement("th");
+            headerElement.appendChild(document.createTextNode(header));
+            tr.appendChild(headerElement);
+        }
+        csvTable.firstChild.appendChild(tr)
+        this.checkCsvLineCount();
+        tr.scrollIntoView();
     }
 
     processCsvRows(line: string, receivedTime: number) {
+        let csvTable = this.csvRoot.lastChild || this.createTable();
 
+        const tr = document.createElement("tr");
+        tr.title = lf("Received: {0}", new Date(receivedTime).toTimeString());
+        for (const data of line.trim().split(",")) {
+            const dataElement = document.createElement("td");
+            dataElement.appendChild(document.createTextNode(data));
+            tr.appendChild(dataElement);
+        }
+        csvTable.lastChild.appendChild(tr);
+        this.checkCsvLineCount();
+        tr.scrollIntoView();
+    }
+
+    checkCsvLineCount() {
+        this.csvLineCount++;
+        if (this.csvLineCount > this.maxConsoleEntries) {
+            const firstTable = this.csvRoot.firstChild;
+            const thead = firstTable.firstChild;
+            const tbody = firstTable.lastChild;
+            if (thead.hasChildNodes()) {
+                // remove header
+                thead.firstChild.remove();
+            } else {
+                // else remove first data row in table
+                tbody.firstChild.remove();
+            }
+
+            if (!tbody.hasChildNodes()) {
+                // table is now empty, clear it.
+                firstTable.remove();
+            }
+            this.csvLineCount--;
+        }
     }
 
     processMessageLine(line: string, niceSource: string, receivedTime: number) {
@@ -382,6 +449,13 @@ export class Editor extends srceditor.Editor {
         this.savedMessageQueue = []
         this.sourceMap = {}
         this.csvHeaders = [];
+
+        this.savedMessageQueue = []
+
+        if (this.csvRoot) {
+            this.clearNode(this.csvRoot);
+        }
+        this.csvLineCount = 0;
     }
 
     dataIsCsv(nl: number, datas: number[][][]): boolean {
@@ -479,21 +553,29 @@ export class Editor extends srceditor.Editor {
         this.parent.openPreviousEditor()
     }
 
-    handleStartPauseRef = (c: any) => {
+    handleStartPauseRef = (c: StartPauseButton) => {
         this.startPauseButton = c;
     }
 
-    handleChartRootRef = (c: any) => {
+    handleChartRootRef = (c: HTMLDivElement) => {
         this.chartRoot = c;
     }
 
-    handleConsoleRootRef = (c: any) => {
+    handleConsoleRootRef = (c: HTMLDivElement) => {
         this.consoleRoot = c;
+    }
+
+    handleCsvRootRef = (c: HTMLDivElement) => {
+        this.csvRoot = c;
+    }
+
+    handleSerialRoot = (c: HTMLDivElement) => {
+        this.serialRoot = c;
     }
 
     display() {
         return (
-            <div id="serialArea">
+            <div id="serialArea" ref={this.handleSerialRoot}>
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
@@ -504,9 +586,9 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        {!this.isCsv && <sui.Button title={lf("Save raw text")} className="ui icon button editorExport" ariaLabel={lf("Save raw text")} onClick={this.downloadRawText}>
+                        <sui.Button title={lf("Save raw text")} className="ui icon button editorExport csv-hide" ariaLabel={lf("Save raw text")} onClick={this.downloadRawText}>
                             <sui.Icon icon="copy" />
-                        </sui.Button>}
+                        </sui.Button>
                         <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={this.downloadConsoleCSV}>
                             <sui.Icon icon="download" />
                         </sui.Button>
@@ -514,11 +596,12 @@ export class Editor extends srceditor.Editor {
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
-                {this.charts?.length == 0 && <div id="serialPlaceholder" className="ui segment">
+                <div id="serialPlaceholder" className="ui segment">
                     <div className="ui bottom left attached no-select label seriallabel">{lf("Values will be logged when the {0} sends data", this.isSim ? lf("simulator") : lf("device"))}</div>
-                </div>}
+                </div>
                 <div id="serialCharts" ref={this.handleChartRootRef}></div>
                 <div id="serialConsole" ref={this.handleConsoleRootRef}></div>
+                <div id="serialCsv" ref={this.handleCsvRootRef}></div>
             </div>
         )
     }
@@ -552,7 +635,7 @@ export class StartPauseButton extends data.PureComponent<StartPauseButtonProps, 
         const { toggle } = this.props;
         const { active } = this.state;
 
-        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} className={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord`} onClick={toggle}>
+        return <sui.Button title={active ? lf("Pause recording") : lf("Start recording")} className={`ui left floated icon button ${active ? "green" : "red circular"} toggleRecord csv-hide`} onClick={toggle}>
             <sui.Icon icon={active ? "pause icon" : "circle icon"} />
         </sui.Button>
     }

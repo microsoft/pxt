@@ -60,7 +60,7 @@ export class SerialIndicator extends data.Component<SerialIndicatorProps, Serial
 
     renderCore() {
         if (!this.active()) return <div />;
-        const description = this.props.isCsv ? lf("CSV") : this.props.isSim ? lf("Simulator") : lf("Device");
+        const description = this.props.isCsv ? lf("Data") : this.props.isSim ? lf("Simulator") : lf("Device");
         return (
             <div role="button" title={lf("Open {0} console", description)} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={fireClickOnEnter}>
                 <div className="detail">
