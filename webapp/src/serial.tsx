@@ -548,7 +548,7 @@ export class Editor extends srceditor.Editor {
         const time = currentIsoDateString();
         // ensure \r\n newlines for windows <10
         if (pxt.BrowserUtils.isWindows())
-            buf = buf.replace(/[^\r]\n/g, '\r\n');
+            buf = buf.replace(/([^\r])\n/g, '$1\r\n');
         pxt.commands.browserDownloadAsync(
             Util.toUTF8(buf),
             pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + `.${fileExtension}`,
