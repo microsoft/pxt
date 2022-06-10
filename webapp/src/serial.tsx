@@ -615,7 +615,8 @@ export class Editor extends srceditor.Editor {
             focusable: true,
             icon: "fas fa-terminal",
             onClick: () => {
-                this.setCsv(false)
+                this.setCsv(false);
+                this.parent.forceUpdate();
             },
             view: "console"
         }, {
@@ -625,6 +626,7 @@ export class Editor extends srceditor.Editor {
             icon: "fas fa-table",
             onClick: () => {
                 this.setCsv(true);
+                this.parent.forceUpdate();
             },
             view: "datalog"
         }];
@@ -664,9 +666,9 @@ export class Editor extends srceditor.Editor {
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
-                <div id="serialPlaceholder" className="ui segment">
+                {this.charts?.length == 0 &&<div id="serialPlaceholder" className="ui segment">
                     <div className="ui bottom left attached no-select label seriallabel">{lf("Values will be logged when the {0} sends data", this.isSim ? lf("simulator") : lf("device"))}</div>
-                </div>
+                </div>}
                 <div id="serialCharts" ref={this.handleChartRootRef}></div>
                 <div id="serialConsole" ref={this.handleConsoleRootRef}></div>
                 <div id="serialCsv" ref={this.handleCsvRootRef}></div>
