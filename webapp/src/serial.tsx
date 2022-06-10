@@ -20,7 +20,7 @@ export class Editor extends srceditor.Editor {
     serialInputDataBuffer: string = ""
     maxSerialInputDataLength: number = 255;
     isSim: boolean = true;
-    isCsv: boolean = false;
+    isCsvView: boolean = false;
     maxConsoleEntries: number = 1000;
     active: boolean = true
     rawDataBuffer: string = ""
@@ -34,6 +34,7 @@ export class Editor extends srceditor.Editor {
 
     // CSV
     csvLineCount: 0;
+    rawCsvBuf = ""
 
     //refs
     startPauseButton: StartPauseButton;
@@ -61,7 +62,7 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b
 
-        if (this.isCsv) {
+        if (this.isCsvView) {
             pxt.BrowserUtils.addClass(this.serialRoot, "csv-view");
         } else {
             pxt.BrowserUtils.removeClass(this.serialRoot, "csv-view");
@@ -100,10 +101,10 @@ export class Editor extends srceditor.Editor {
     }
 
     setCsv(b: boolean) {
-        if (this.isCsv != b) {
-            this.isCsv = !!b;
+        if (this.isCsvView != b) {
+            this.isCsvView = !!b;
             if (this.serialRoot) {
-                if (this.isCsv) {
+                if (this.isCsvView) {
                     pxt.BrowserUtils.addClass(this.serialRoot, "csv-view");
                 } else {
                     pxt.BrowserUtils.removeClass(this.serialRoot, "csv-view");
@@ -196,14 +197,15 @@ export class Editor extends srceditor.Editor {
 
         const niceSource = this.mapSource(source);
 
-        this.appendRawData(data);
         if (isCsv) {
+            this.appendRawCsvData(data);
             if (smsg.csvType === "headers") {
                 this.processCsvHeaders(data, receivedTime);
             } else {
                 this.processCsvRows(data, receivedTime);
             }
         } else {
+            this.appendRawData(data);
             // chunk into lines
             const lines = this.chunkDataIntoLines(data)
 
@@ -322,6 +324,12 @@ export class Editor extends srceditor.Editor {
         this.rawDataBuffer += data;
         if (this.rawDataBuffer.length > this.maxBufferLength) {
             this.rawDataBuffer.slice(this.rawDataBuffer.length / 4);
+        }
+    }
+    appendRawCsvData(data: string) {
+        this.rawCsvBuf += data;
+        if (this.rawCsvBuf.length > this.maxBufferLength) {
+            this.rawCsvBuf.slice(this.rawCsvBuf.length / 4);
         }
     }
 
@@ -450,6 +458,7 @@ export class Editor extends srceditor.Editor {
         this.charts = []
         this.serialInputDataBuffer = ""
         this.rawDataBuffer = ""
+        this.rawCsvBuf = ""
         this.savedMessageQueue = []
         this.sourceMap = {}
         this.csvHeaders = [];
@@ -479,8 +488,8 @@ export class Editor extends srceditor.Editor {
     }
 
     downloadConsoleCSV() {
-        if (this.isCsv) {
-            this.downloadRaw("csv", "text/csv");
+        if (this.isCsvView) {
+            this.downloadRaw(this.rawCsvBuf, "csv", "text/csv");
             return;
         }
         // if not in csv mode, download inferred csv content.
@@ -534,10 +543,9 @@ export class Editor extends srceditor.Editor {
         pxt.commands.browserDownloadAsync(Util.toUTF8(csvText), pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
     }
 
-    downloadRaw(fileExtension = "txt", mimeType = "text/plain") {
+    downloadRaw(buf: string, fileExtension = "txt", mimeType = "text/plain") {
         core.infoNotification(lf("Exporting text...."));
         const time = currentIsoDateString();
-        let buf = this.rawDataBuffer;
         // ensure \r\n newlines for windows <10
         if (pxt.BrowserUtils.isWindows())
             buf = buf.replace(/[^\r]\n/g, '\r\n');
@@ -549,7 +557,7 @@ export class Editor extends srceditor.Editor {
     }
 
     downloadRawText() {
-        this.downloadRaw();
+        this.downloadRaw(this.rawDataBuffer);
     }
 
     goBack() {

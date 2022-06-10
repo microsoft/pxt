@@ -683,7 +683,7 @@ export class ProjectView
         if (!pxt.appTarget.serial || !pxt.appTarget.serial.useEditor)
             return; // not supported in this editor
         if (this.editor == this.serialEditor && this.serialEditor.isSim == isSim
-            && !!this.serialEditor.isCsv == !!isCsv )
+            && !!this.serialEditor.isCsvView == !!isCsv )
             return; // already showing
 
         const mainEditorPkg = pkg.mainEditorPkg()
