@@ -327,7 +327,7 @@ export class ProjectView
             // Don't suspend when inside apps
             return;
         }
-        let active = document.visibilityState == 'visible';
+        const active = pxt.BrowserUtils.isDocumentVisible()
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active });
         data.invalidate('pkg-git-pull-status');
@@ -335,8 +335,12 @@ export class ProjectView
         data.invalidate('pkg-git-pages')
 
         // disconnect devices to avoid locking between tabs
-        if (!active && !navigator?.serviceWorker?.controller)
-            cmds.disconnectAsync(); // turn off any kind of logging
+        if (!active && !navigator?.serviceWorker?.controller) {
+            if (this._deploying) {
+                pxt.debug(`visibility: disconnect cancelled because deploy in progress`)
+            } else
+                cmds.disconnectAsync(); // turn off any kind of logging
+        }
 
         if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {
@@ -2880,6 +2884,7 @@ export class ProjectView
 
     beforeCompile() { }
 
+    _deploying = false
     async compile(saveOnly = false): Promise<void> {
         pxt.tickEvent("compile", { editor: this.getPreferredEditor() });
         pxt.debug('compiling...');
@@ -2982,6 +2987,7 @@ export class ProjectView
                 pxt.tickEvent("deploy.start")
 
                 try {
+                    this._deploying = true
                     await pxt.commands.deployAsync(resp, {
                         reportError: (e) => {
                             pxt.tickEvent("deploy.reporterror");
@@ -3008,6 +3014,16 @@ export class ProjectView
                             userContextWindow.close()
                         } catch (e) {
                         }
+                    }
+                }
+                finally {
+                    this._deploying = false
+                    // the tab may have gone hidden while deploying, in which case
+                    // we skipped the disconnect path, checking again here
+                    // to disconnect if needed
+                    if (!pxt.BrowserUtils.isDocumentVisible()) {
+                        pxt.debug(`visibility: updated after deploy`)
+                        await this.updateVisibilityAsync()
                     }
                 }
             }
