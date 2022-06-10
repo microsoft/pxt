@@ -327,7 +327,7 @@ export class ProjectView
             // Don't suspend when inside apps
             return;
         }
-        let active = document.visibilityState == 'visible';
+        const active = pxt.BrowserUtils.isDocumentVisible()
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active });
         data.invalidate('pkg-git-pull-status');
@@ -337,7 +337,7 @@ export class ProjectView
         // disconnect devices to avoid locking between tabs
         if (!active && !navigator?.serviceWorker?.controller) {
             if (this._deploying) {
-                pxt.debug(`disconnect cancelled because deploy in progress`)
+                pxt.debug(`visibility: disconnect cancelled because deploy in progress`)
             } else
                 cmds.disconnectAsync(); // turn off any kind of logging
         }
@@ -3018,6 +3018,13 @@ export class ProjectView
                 }
                 finally {
                     this._deploying = false
+                    // the tab may have gone hidden while deploying, in which case
+                    // we skipped the disconnect path, checking again here
+                    // to disconnect if needed
+                    if (!pxt.BrowserUtils.isDocumentVisible()) {
+                        pxt.debug(`visibility: updated after deploy`)
+                        await this.updateVisibilityAsync()
+                    }
                 }
             }
             catch (e) {
