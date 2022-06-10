@@ -6,7 +6,6 @@ import { fireClickOnEnter } from "./util";
 
 export interface SerialIndicatorProps {
     isSim: boolean;
-    isCsv: boolean;
     onClick: () => any;
     parent: pxt.editor.IProjectView;
 }
@@ -34,14 +33,11 @@ export class SerialIndicator extends data.Component<SerialIndicatorProps, Serial
         let msg = ev.data
         if (!this.state.active && (msg.type === "serial" || msg.type === "bulkserial")) {
             const sim = !!msg.sim
-            const csv = !!msg.csvType
-            if (sim === this.props.isSim && csv == this.props.isCsv) {
+            if (sim === this.props.isSim) {
                 this.setState({ active: true })
 
                 const parent = this.props.parent;
-                if (this.props.isCsv) {
-                    parent.setState({ csvSerialActive: true });
-                } else if (this.props.isSim) {
+                if (this.props.isSim) {
                     parent.setState({ simSerialActive: true });
                 } else {
                     parent.setState({ deviceSerialActive: true });
@@ -60,7 +56,7 @@ export class SerialIndicator extends data.Component<SerialIndicatorProps, Serial
 
     renderCore() {
         if (!this.active()) return <div />;
-        const description = this.props.isCsv ? lf("Data") : this.props.isSim ? lf("Simulator") : lf("Device");
+        const description = this.props.isSim ? lf("Simulator") : lf("Device");
         return (
             <div role="button" title={lf("Open {0} console", description)} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={fireClickOnEnter}>
                 <div className="detail">

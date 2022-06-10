@@ -5,6 +5,7 @@ import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
 import * as data from "./data";
+import { EditorToggle } from "../../react-common/components/controls/EditorToggle";
 
 import Util = pxt.Util
 import { fireClickOnEnter } from "./util"
@@ -20,7 +21,7 @@ export class Editor extends srceditor.Editor {
     serialInputDataBuffer: string = ""
     maxSerialInputDataLength: number = 255;
     isSim: boolean = true;
-    isCsvView: boolean = false;
+    isCsvView: boolean = undefined;
     maxConsoleEntries: number = 1000;
     active: boolean = true
     rawDataBuffer: string = ""
@@ -34,7 +35,9 @@ export class Editor extends srceditor.Editor {
 
     // CSV
     csvLineCount: 0;
-    rawCsvBuf = ""
+    rawCsvBuf = "";
+    receivedCsv: boolean;
+    receivedLog: boolean;
 
     //refs
     startPauseButton: StartPauseButton;
@@ -60,7 +63,14 @@ export class Editor extends srceditor.Editor {
         if (highContrast !== this.highContrast) {
             this.setHighContrast(highContrast)
         }
-        this.isVisible = b
+        this.isVisible = b;
+
+        if (this.isCsvView === undefined) {
+            // If only csv received, default to csv.
+            this.setCsv(!this.receivedLog);
+        } else if (this.isCsvView && !this.receivedCsv) {
+            this.setCsv(false);
+        }
 
         if (this.isCsvView) {
             pxt.BrowserUtils.addClass(this.serialRoot, "csv-view");
@@ -135,6 +145,7 @@ export class Editor extends srceditor.Editor {
         this.downloadRaw = this.downloadRaw.bind(this);
         this.downloadRawText = this.downloadRawText.bind(this);
         this.downloadConsoleCSV = this.downloadConsoleCSV.bind(this);
+        this.setCsv = this.setCsv.bind(this);
     }
 
     saveMessageForLater(m: pxsim.SimulatorSerialMessage) {
@@ -151,7 +162,6 @@ export class Editor extends srceditor.Editor {
 
     processEvent(ev: MessageEvent) {
         let msg = ev.data
-
         if (msg.type === "serial") {
             this.processEventCore(msg);
         }
@@ -170,6 +180,11 @@ export class Editor extends srceditor.Editor {
 
     processEventCore(smsg: pxsim.SimulatorSerialMessage) {
         smsg.receivedTime = smsg.receivedTime || Util.now();
+        if (!!smsg.csvType) {
+            this.receivedCsv = true;
+        } else {
+            this.receivedLog = true;
+        }
         if (!this.active) {
             this.saveMessageForLater(smsg);
             return;
@@ -197,6 +212,9 @@ export class Editor extends srceditor.Editor {
 
         const niceSource = this.mapSource(source);
 
+        if (this.receivedCsv && this.receivedLog) {
+            pxt.BrowserUtils.removeClass(this.serialRoot, "no-toggle")
+        }
         if (isCsv) {
             this.appendRawCsvData(data);
             if (smsg.csvType === "headers") {
@@ -455,6 +473,9 @@ export class Editor extends srceditor.Editor {
             pxt.BrowserUtils.addClass(this.consoleRoot, "noconsole");
             pxt.BrowserUtils.addClass(this.consoleRoot, "nochart");
         }
+        if (this.serialRoot) {
+            pxt.BrowserUtils.addClass(this.serialRoot, "no-toggle")
+        }
         this.charts = []
         this.serialInputDataBuffer = ""
         this.rawDataBuffer = ""
@@ -469,6 +490,8 @@ export class Editor extends srceditor.Editor {
             this.clearNode(this.csvRoot);
         }
         this.csvLineCount = 0;
+        this.receivedCsv = false;
+        this.receivedLog = false;
     }
 
     dataIsCsv(nl: number, datas: number[][][]): boolean {
@@ -581,13 +604,45 @@ export class Editor extends srceditor.Editor {
         this.csvRoot = c;
     }
 
-    handleSerialRoot = (c: HTMLDivElement) => {
+    handleSerialRootRef = (c: HTMLDivElement) => {
         this.serialRoot = c;
+    }
+
+    toggleOptions = () => {
+        return [{
+            label: lf("Console"),
+            title: lf("Console"),
+            focusable: true,
+            icon: "fas fa-terminal",
+            onClick: () => {
+                this.setCsv(false)
+            },
+            view: "console"
+        }, {
+            label: lf("Data Log"),
+            title: lf("Data Log"),
+            focusable: true,
+            icon: "fas fa-table",
+            onClick: () => {
+                this.setCsv(true);
+            },
+            view: "datalog"
+        }];
+    }
+
+    getToggle = () => {
+        const toggleOptions = this.toggleOptions();
+        return <EditorToggle
+            id="serial-editor-toggle"
+            className="slim tablet-compact"
+            items={toggleOptions}
+            selected={toggleOptions.findIndex(i => i.view === (this.isCsvView ? "datalog" : "console"))}
+        />
     }
 
     display() {
         return (
-            <div id="serialArea" ref={this.handleSerialRoot}>
+            <div id="serialArea" className="no-toggle" ref={this.handleSerialRootRef}>
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
@@ -595,6 +650,7 @@ export class Editor extends srceditor.Editor {
                                 <sui.Icon icon="arrow left" />
                                 <span className="ui text landscape only">{lf("Go back")}</span>
                             </sui.Button>
+                            {this.getToggle()}
                         </div>
                     </div>
                     <div className="rightHeader">

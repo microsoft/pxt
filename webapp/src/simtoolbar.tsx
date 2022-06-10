@@ -10,7 +10,6 @@ export interface SimulatorProps extends ISettingsProps {
     collapsed?: boolean;
     simSerialActive?: boolean;
     devSerialActive?: boolean;
-    csvSerialActive?: boolean;
 
     showSimulatorSidebar?: () => void;
 }
@@ -33,7 +32,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.openDeviceSimulator = this.openDeviceSimulator.bind(this);
-        this.openCsvSerial = this.openCsvSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.takeScreenshot = this.takeScreenshot.bind(this);
         this.toggleDebug = this.toggleDebug.bind(this);
@@ -86,19 +84,13 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.props.parent.openSimSerial();
     }
 
-    openCsvSerial() {
-        pxt.tickEvent("simulator.fullscreen.serial.csv", { }, { interactiveConsent: true });
-        this.props.parent.toggleSimulatorFullscreen();
-        this.props.parent.openCsvSerial();
-    }
-
     takeScreenshot() {
         pxt.tickEvent("simulator.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
         this.props.parent.downloadScreenshotAsync();
     }
 
     renderCore() {
-        const { collapsed, devSerialActive, parent, simSerialActive, csvSerialActive, showSimulatorSidebar } = this.props;
+        const { collapsed, devSerialActive, parent, simSerialActive, showSimulatorSidebar } = this.props;
 
         const parentState = parent.state;
         if (!parentState.currFile || parentState.home) return <div />
@@ -144,9 +136,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const collapseIconTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const simSerialTooltip = lf("Open simulator console");
         const devSerialTooltip = lf("Open device console");
-        const csvSerialTooltip = lf("Open CSV simulator");
 
-        const showSerialEditorSection = isFullscreen && (simSerialActive || devSerialActive || csvSerialActive);
+        const showSerialEditorSection = isFullscreen && (simSerialActive || devSerialActive);
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
@@ -178,12 +169,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                     className="purple"
                     title={devSerialTooltip}
                     onClick={this.openDeviceSerial}
-                />}
-                {csvSerialActive && <sui.Button
-                    icon="table"
-                    className="purple"
-                    title={csvSerialTooltip}
-                    onClick={this.openCsvSerial}
                 />}
             </div>}
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>

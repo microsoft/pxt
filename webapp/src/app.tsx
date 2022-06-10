@@ -190,7 +190,6 @@ export class ProjectView
         this.hideLightbox = this.hideLightbox.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
-        this.openCsvSerial = this.openCsvSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
@@ -671,19 +670,14 @@ export class ProjectView
         this.openSerial(true);
     }
 
-    openCsvSerial() {
-        this.openSerial(true, true);
-    }
-
     openDeviceSerial() {
         this.openSerial(false);
     }
 
-    openSerial(isSim: boolean, isCsv?: boolean) {
+    openSerial(isSim: boolean) {
         if (!pxt.appTarget.serial || !pxt.appTarget.serial.useEditor)
             return; // not supported in this editor
-        if (this.editor == this.serialEditor && this.serialEditor.isSim == isSim
-            && !!this.serialEditor.isCsvView == !!isCsv )
+        if (this.editor == this.serialEditor && this.serialEditor.isSim == isSim)
             return; // already showing
 
         const mainEditorPkg = pkg.mainEditorPkg()
@@ -693,8 +687,7 @@ export class ProjectView
             mainEditorPkg.setFile(pxt.SERIAL_EDITOR_FILE, "serial\n", true)
         }
         this.serialEditor.setSim(isSim)
-        this.serialEditor.setCsv(isCsv)
-        let event = "serial." + (isCsv ? "csv" : isSim ? "simulator" : "device") + "EditorOpened"
+        let event = "serial." + (isSim ? "simulator" : "device") + "EditorOpened"
         pxt.tickEvent(event)
         this.setFile(mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))
     }
@@ -3278,7 +3271,6 @@ export class ProjectView
         this.setState({
             simSerialActive: false,
             deviceSerialActive: false,
-            csvSerialActive: false,
         })
     }
 
@@ -3288,10 +3280,6 @@ export class ProjectView
 
     deviceSerialIndicator() {
         return this.refs["devIndicator"] as serialindicator.SerialIndicator;
-    }
-
-    csvSerialIndicator() {
-        return this.refs["csvIndicator"] as serialindicator.SerialIndicator;
     }
 
     shouldStartSimulator(): boolean {
@@ -4603,7 +4591,6 @@ export class ProjectView
                     collapseEditorTools={this.state.collapseEditorTools}
                     simSerialActive={this.state.simSerialActive}
                     devSerialActive={this.state.deviceSerialActive}
-                    csvSerialActive={this.state.csvSerialActive}
 
                     showMiniSim={this.showMiniSim}
                     openSerial={this.openSerial}
