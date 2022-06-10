@@ -12,6 +12,15 @@
         transition: opacity 0.3s ease;
     }
 
+    i.fa-image {
+        position: absolute;
+        width: auto;
+        height: auto;
+        font-size: 5rem;
+
+        opacity: 0;
+    }
+
     img {
         opacity: 0;
         transition: opacity 0.3s ease;
@@ -23,7 +32,25 @@
         opacity: 0;
     }
 
+    i.fa-image {
+        opacity: 0;
+    }
+
     img {
         opacity: 1;
+    }
+}
+
+.common-lazy-image-wrapper.error {
+    .common-spinner {
+        opacity: 0;
+    }
+
+    i.fa-image {
+        opacity: 1;
+    }
+
+    img {
+        opacity: 0;
     }
 }

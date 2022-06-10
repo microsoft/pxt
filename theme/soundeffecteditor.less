@@ -21,14 +21,14 @@
  ****************************************************/
 
 .sound-effect-editor-widget {
-    box-shadow: 0 0 3px ~"rgb(0 0 0 / 30%)";
-    border-radius: 0.25rem;
     overflow-y: auto;
-    background-color: @white;
 }
 
 .sound-effect-editor {
     width: 100%;
+    box-shadow: 0 0 3px ~"rgb(0 0 0 / 30%)";
+    overflow: hidden;
+    border-radius: 0.25rem;
     background-color: @white;
     display: flex;
     flex-direction: column;
@@ -67,6 +67,10 @@
         right: 0;
         top: 0;
     }
+}
+
+.common-button.link-button.generate-similar {
+    margin-bottom: 0.5rem;
 }
 
 /****************************************************

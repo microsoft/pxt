@@ -24,7 +24,8 @@ On the home screen, you can tell a project is saved to cloud if it has a visible
 
 ## The Future
 
-The addition of identity to MakeCode represents a new foundation upon which a wide range of user-aware features can be built. We're excited by all the possiblities! But we're going to build on this new foundation carefully and thoughtfully, with your privacy and safety always our first priority.
+The addition of identity to MakeCode represents a new foundation upon which a wide range of user-aware features can be built. We're excited by all the possiblities!
+But we're going to build on this new foundation carefully and thoughtfully, with your privacy and safety always our first priority.
 
 ## Feedback?
 
@@ -32,8 +33,8 @@ Love it? Hate it? Have a suggestion? We'd love to hear from you! Drop us a note 
 
 ## Additional Resources
 
-* Learn more about Cloud Sync [here](/identity/cloud-sync).
-* More on identity in MakeCode [here](/identity/sign-in).
+* Learn more about Cloud Sync [here](https://arcade.makecode.com/identity/cloud-sync).
+* More on identity in MakeCode [here](https://arcade.makecode.com/identity/sign-in).
 * [What are Microsoft Accounts?](https://account.microsoft.com/account)
 * [Create a Microsoft Account](https://signup.live.com/signup)
 * [MSA Terms of Service](https://www.microsoft.com/servicesagreement)

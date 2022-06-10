@@ -281,7 +281,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     pySnippetName: "def do_something",
                     pySnippet: `def do_something():\n    pass`,
                     attributes: {
-                        blockId: 'procedures_defnoreturn',
+                        blockId: 'function_definition',
                         jsDoc: lf("Define a function")
                     }
                 },
@@ -292,7 +292,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     pySnippetName: "do_something",
                     pySnippet: `do_something()`,
                     attributes: {
-                        blockId: 'procedures_callnoreturn',
+                        blockId: 'function_call',
                         jsDoc: lf("Call a function")
                     }
                 },
