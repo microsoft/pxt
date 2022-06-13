@@ -132,9 +132,9 @@
 .common-button.disabled.green.inverted
  {
     cursor: default;
-    background-color: @buttonBackgroundColorDisabled;
-    color: @buttonTextColorLightBackground;
-    border: @buttonBackgroundColorDisabled;
+    opacity: 0.8;
+    // color: @buttonTextColorLightBackground;
+    // border: @buttonBackgroundColorDisabled;
 }
 
 /****************************************************
@@ -247,6 +247,48 @@
 
 .common-button.circle-button:focus::after {
     border-radius: 2rem;
+}
+
+/****************************************************
+ *                   Square Buttons                 *
+ ****************************************************/
+
+.common-button.square-button {
+    padding: .8em .8em .95em;
+
+    .common-button-flex {
+        i.fas, i.far, i.xicon {
+            width: unset;
+            font-size: 18px;
+            margin: 0;
+        }
+    }
+}
+
+
+/****************************************************
+ *                   Attached Buttons               *
+ ****************************************************/
+
+.common-attached-buttons {
+    display: flex;
+    flex-direction: row;
+
+    .common-button {
+        margin-right: 0;
+        border-radius: 0;
+    }
+
+    .common-button:first-child {
+        border-top-left-radius: 0.2rem;
+        border-bottom-left-radius: 0.2rem;
+    }
+
+    .common-button:last-child {
+        border-top-right-radius: 0.2rem;
+        border-bottom-right-radius: 0.2rem;
+        margin-right: 0.25rem;
+    }
 }
 
 /****************************************************

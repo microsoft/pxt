@@ -5,11 +5,10 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
-import * as cloud from "./cloud";
-import * as auth from "./auth";
 import * as identity from "./identity";
 import { ProjectView } from "./app";
-import { clearDontShowDownloadDialogFlag } from "./dialogs";
+import { Button } from "../../react-common/components/controls/Button";
+import { Input } from "../../react-common/components/controls/Input";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -132,7 +131,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         return pxt.appTarget.simulator.headless ? "true" : "false";
     }
 
-    private getSaveInput(showSave: boolean, id?: string, projectName?: string, projectNameReadOnly?: boolean): JSX.Element[] {
+    private getSaveInput(showSave: boolean, id?: string, projectName?: string, projectNameReadOnly?: boolean): JSX.Element {
         let saveButtonClasses = "";
         if (this.props.parent.state.isSaving) {
             saveButtonClasses = "loading disabled";
@@ -140,36 +139,62 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             saveButtonClasses = "disabled";
         }
 
-        let saveInput = [];
-        saveInput.push(<label htmlFor={id} className="accessible-hidden phone hide" key="label">{lf("Type a name for your project")}</label>);
-        saveInput.push(<EditorToolbarSaveInput id={id} view={this.getViewString(View.Computer)} key="input"
-            type="text"
-            aria-labelledby={id}
-            placeholder={lf("Pick a name...")}
-            value={projectName || ''}
-            onChangeValue={this.saveProjectName}
-            disabled={projectNameReadOnly}
-            readOnly={projectNameReadOnly}
-        />)
-        if (showSave) {
-            saveInput.push(<EditorToolbarButton icon='save' className={`right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(View.Computer)} key={`save${View.Computer}`} />)
-        }
-
-        return saveInput;
+        return <div className="common-input-attached-button">
+            <label htmlFor={id} className="accessible-hidden mobile-hidden">{lf("Type a name for your project")}</label>
+            <Input
+                id={id}
+                className="mobile-hidden"
+                aria-labelledby={id}
+                placeholder={lf("Pick a name...")}
+                initialValue={projectName || ''}
+                onChange={newValue => this.saveProjectName(newValue, this.getViewString(View.Computer))}
+                disabled={projectNameReadOnly}
+                readOnly={projectNameReadOnly}
+            />
+            { showSave &&
+                <Button
+                    leftIcon="fas fa-save"
+                    className={`editortools-btn square-button save-editortools-btn ${saveButtonClasses}`}
+                    title={lf("Save")}
+                    ariaLabel={lf("Save the project")}
+                    onClick={() => this.saveFile(this.getViewString(View.Computer))} />
+            }
+        </div>
     }
 
-    private getZoomControl(view: View): JSX.Element[] {
-        return [<EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.getViewString(view)} key="minus" />,
-        <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
+    private getZoomControl(view: View): JSX.Element {
+        return <>
+            <Button
+                leftIcon="fas fa-minus-circle"
+                className="editortools-btn square-button"
+                title={lf("Zoom Out")}
+                onClick={() => this.zoomOut(this.getViewString(view))} />
+            <Button
+                leftIcon="fas fa-plus-circle"
+                className="editortools-btn square-button"
+                title={lf("Zoom In")}
+                onClick={() => this.zoomIn(this.getViewString(view))} />
+        </>;
     }
 
-    protected getUndoRedo(view: View): JSX.Element[] {
+    protected getUndoRedo(view: View): JSX.Element {
         const hasUndo = this.props.parent.editor.hasUndo();
         const hasRedo = this.props.parent.editor.hasRedo();
-        return [
-            <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} onButtonClick={this.undo} view={this.getViewString(view)} key="undo" />,
-            <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} onButtonClick={this.redo} view={this.getViewString(view)} key="redo" />
-        ];
+        return <>
+            <Button
+                leftIcon="xicon undo"
+                className={`editortools-btn square-button ${!hasUndo ? 'disabled' : ''}`}
+                title={lf("Undo")}
+                ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")}
+                onClick={() => this.undo(this.getViewString(view))} />
+            <Button
+                leftIcon="xicon redo"
+                className={`editortools-btn square-button ${!hasRedo ? 'disabled' : ''}`}
+                title={lf("Redo")}
+                ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")}
+                onClick={() => this.redo(this.getViewString(view))}
+                />
+        </>;
     }
 
     protected getViewString(view: View): string {
@@ -210,8 +235,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         window.open(pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL);
     }
 
-    protected getCompileButton(view: View): JSX.Element[] {
-        const collapsed = true; // TODO: Cleanup this
+    protected getCompileButton(view: View): JSX.Element {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
         const { compileState } = this.state;
@@ -240,7 +264,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             || targetTheme.downloadIcon
             || "xicon file-download";
 
-        let downloadButtonClasses = "left attached ";
+        let downloadButtonClasses = "";
         const downloadButtonIcon = "ellipsis";
         let hwIconClasses = "";
         let displayRight = false;
@@ -255,22 +279,15 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             downloadButtonClasses += "connecting ";
         switch (view) {
             case View.Mobile:
-                downloadButtonClasses += "download-button-full ";
-                displayRight = collapsed;
-                break;
             case View.Tablet:
-                downloadButtonClasses += `download-button-full ${!collapsed ? 'large fluid' : ''} `;
-                hwIconClasses = !collapsed ? "large" : "";
-                displayRight = collapsed;
+                displayRight = true;
+                downloadButtonClasses += "download-button-full ";
                 break;
             case View.Computer:
             default:
                 downloadButtonClasses += "large fluid ";
                 hwIconClasses = "large";
         }
-
-        let el = [];
-        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.onDownloadButtonClick} view='computer' />)
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
         const tooltip = pxt.hwName
@@ -284,7 +301,14 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         // Add the ... menu
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
-        el.push(
+
+        return <>
+            <Button
+                leftIcon={downloadIcon}
+                className={`primary download-button ${downloadButtonClasses}`}
+                label={view != View.Mobile ? downloadText : undefined}
+                title={compileTooltip}
+                onClick={() => this.onDownloadButtonClick()} />
             <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
                 {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} tabIndex={-1} onClick={this.onPairClick} />}
                 {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
@@ -292,9 +316,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />}
             </sui.DropdownMenu>
-        )
-
-        return el;
+        </>
     }
 
     renderCore() {
@@ -365,15 +387,19 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
-                    <div className="ui icon large buttons">
-                        {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary large download-button mobile tablet hide ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
+                    <div className="common-attached-buttons">
+                        {compileBtn &&
+                            <Button leftIcon={downloadIcon}
+                                className={`primary download-button mobile-hidden tablet-hidden ${downloadButtonClasses}`}
+                                title={compileTooltip}
+                                onClick={() => this.compile("computer")} />}
                     </div>
                 </div>}
                 {/* TODO clean this; make it just getCompileButton, and set the buttons fontsize to 0 / the icon itself back to normal to just hide text */}
-                {!headless && <div className="ui item portrait hide">
+                {!headless && <div className="common-attached-buttons desktop-only">
                     {compileBtn && this.getCompileButton(computer)}
                 </div>}
-                {!headless && <div className="ui portrait only">
+                {!headless && <div className="common-attached-buttons desktop-hidden">
                     {compileBtn && this.getCompileButton(mobile)}
                 </div>}
             </div>
@@ -386,17 +412,16 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     </div>
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
-                {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
-                {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
+                {showUndoRedo && <div className="common-attached-buttons">{this.getUndoRedo(computer)}</div>}
+                {showZoomControls && <div className="common-attached-buttons mobile-hidden">{this.getZoomControl(computer)}</div>}
                 {targetTheme.bigRunButton &&
                     <div className="big-play-button-wrapper">
-                        <EditorToolbarButton
+                        <Button
                             className={`big-play-button play-button ${running ? "stop" : "play"}`}
-                            key='runmenubtn' disabled={starting}
-                            icon={running ? "stop" : "play"}
-                            title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator}
-                            view='computer'
-                        />
+                            disabled={starting}
+                            leftIcon={running ? "stop" : "play"}
+                            title={bigRunButtonTooltip}
+                            onClick={() => this.startStopSimulator("computer")} />
                     </div>}
             </div>
         </div>;
@@ -489,12 +514,20 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
 
     renderCore() {
         return <div className="zoom">
-            <EditorToolbarButton icon="minus circle" className="editortools-btn zoomout-editortools-btn borderless" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.props.view} key="minus"/>
+            <Button
+                leftIcon="fas fa-minus-circle"
+                className="editortools-btn zoomout-editortools-btn borderless"
+                title={lf("Zoom Out")}
+                onClick={this.zoomOut}/>
             <div id="zoomSlider">
                 <input className="zoomSliderBar" type="range" min={this.zoomMin} max={this.zoomMax} step="1" value={this.state.zoomValue.toString()} onChange={this.zoomUpdate}
                 aria-valuemax={this.zoomMax} aria-valuemin={this.zoomMin} aria-valuenow={this.state.zoomValue}></input>
             </div>
-            <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn borderless" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.props.view} key="plus" />
+            <Button
+                leftIcon="fas fa-plus-circle"
+                className="editortools-btn zoomin-editortools-btn borderless"
+                title={lf("Zoom In")}
+                onClick={this.zoomIn}/>
         </div>
     }
 }
@@ -509,32 +542,6 @@ export class SmallEditorToolbar extends EditorToolbar {
             <ZoomSlider parent={this.props.parent} view={super.getViewString(View.Computer)} zoomMin={0} zoomMax={5}></ZoomSlider>
             <div className="ui icon undo-redo-buttons">{super.getUndoRedo(View.Computer)}</div>
         </div>
-    }
-}
-
-
-interface EditorToolbarButtonProps extends sui.ButtonProps {
-    view: string;
-    onButtonClick: (view: string) => void;
-}
-
-class EditorToolbarButton extends sui.StatelessUIElement<EditorToolbarButtonProps> {
-    constructor(props: EditorToolbarButtonProps) {
-        super(props);
-        this.state = {
-        }
-
-        this.handleClick = this.handleClick.bind(this);
-    }
-
-    handleClick() {
-        const { onButtonClick, view } = this.props;
-        onButtonClick(view);
-    }
-
-    renderCore() {
-        const { onClick, onButtonClick, role, ...rest } = this.props;
-        return <sui.Button role={role || "menuitem"} {...rest} onClick={this.handleClick} />;
     }
 }
 
