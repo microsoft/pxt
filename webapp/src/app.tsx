@@ -3288,7 +3288,7 @@ export class ProjectView
         this.deviceSerialIndicator()?.clear();
         this.setState({
             simSerialActive: false,
-            deviceSerialActive: false
+            deviceSerialActive: false,
         })
     }
 

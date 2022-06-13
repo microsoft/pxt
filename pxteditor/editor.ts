@@ -402,6 +402,7 @@ namespace pxt.editor {
         collapsed?: boolean;
         simSerialActive?: boolean;
         devSerialActive?: boolean;
+        csvSerialActive?: boolean;
     }
 
     export interface IFieldCustomOptions {
