@@ -197,6 +197,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                         initialValue={sound.duration + ""}
                         className="sound-duration-input"
                         onEnterKey={onDurationChange}
+                        treatSpaceAsEnter={true}
                         onBlur={onDurationChange}
                     />
                 </div>
@@ -269,7 +270,7 @@ export const SoundControls = (props: SoundControlsProps) => {
 
 
 function getWaveformLabel(waveform: pxt.assets.SoundWaveForm) {
-    switch(waveform) {
+    switch (waveform) {
         case "sine": return pxt.U.lf("Sine");
         case "square": return pxt.U.lf("Square");
         case "triangle": return pxt.U.lf("Triangle");
