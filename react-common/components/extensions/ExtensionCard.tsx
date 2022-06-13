@@ -13,6 +13,7 @@ export interface ExtensionCardProps<U> {
     onClick?: (value: U) => void;
     extension?: U;
     loading?: boolean;
+    showDisclaimer?: boolean
 }
 
 export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
@@ -24,7 +25,8 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
         label,
         onClick,
         extension,
-        loading
+        loading,
+        showDisclaimer
     } = props;
 
     const onCardClick = () => {
@@ -52,15 +54,18 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
                             {description}
                         </div>
                     </div>
-                    {learnMoreUrl &&
-                        <Button
-                            className="link-button"
-                            label={lf("Learn More")}
-                            title={lf("Learn More")}
-                            onClick={() => { }}
-                            href={learnMoreUrl}
-                        />
-                    }
+                    <>
+                        {showDisclaimer && lf("User-provided extension, not endorsed by Microsoft.")}
+                        {learnMoreUrl &&
+                            <Button
+                                className="link-button"
+                                label={lf("Learn More")}
+                                title={lf("Learn More")}
+                                onClick={() => { }}
+                                href={learnMoreUrl}
+                            />
+                        }
+                    </>
                 </>
                 }
             </div>
