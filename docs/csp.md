@@ -126,7 +126,7 @@ If you decide to use the AP Computer Science Principles with Microsoft MakeCode 
 
 * What is included in the curriculum?
 
->The Microsoft MakeCode AP CS Principles curriculum includes daily PowerPoints with guided notes for the teacher, Word documents for student handouts, and a OneNote notebook that teachers can use to create a Class Notebook where they distribute files directly to students. The curriculum also has vocabulary quizzes, short answer quizzes, and answer keys and solutions for all materials. You can download the Educator Materials from https://microsoft.github.io/makecode-csp. To access these materials, teachers must have a verified teacher GitHub account. Consult the GitHub Teacher Verification Instructions for how to obtain a verified teacher GitHub account.
+>The **Microsoft MakeCode AP CS Principles** curriculum includes daily PowerPoints with guided notes for the teacher, Word documents for student handouts, and a OneNote notebook that teachers can use to create a Class Notebook where they distribute files directly to students. The curriculum also has vocabulary quizzes, short answer quizzes, and answer keys with solutions for all materials. You can download the Educator Materials from https://microsoft.github.io/makecode-csp. To access these materials, teachers must have a verified teacher GitHub account. Consult the [GitHub Teacher Verification Instructions](/github-teacher-verification) for how to obtain a verified teacher GitHub account.
 
 * How is the curriculum graded/assessed?
 
