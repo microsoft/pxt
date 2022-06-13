@@ -122,7 +122,7 @@ If you decide to use the AP Computer Science Principles with Microsoft MakeCode 
 
 * Are there professional development opportunities or other training available for this curriculum?
 
->The professional development workshops for the 2021-2022 academic year have concluded. However, we will publish the schedule for Summer 2022 workshops in the Spring. Join the [Microsoft MakeCode AP CSP Forum](https://forum.makecode.com/c/ap-cs-principles/23) to be notified of the upcoming workshops.
+>Free, online 4-day professional development workshops are held every summer to support this curriculum. The dates for the Summer workshops are published in the Spring. Join the [Microsoft MakeCode AP CSP Forum](https://forum.makecode.com/c/ap-cs-principles/23) to be notified of the upcoming workshops.
 
 * What is included in the curriculum?
 
