@@ -124,6 +124,10 @@ If you decide to use the AP Computer Science Principles with Microsoft MakeCode 
 
 >The professional development workshops for the 2021-2022 academic year have concluded. However, we will publish the schedule for Summer 2022 workshops in the Spring. Join the [Microsoft MakeCode AP CSP Forum](https://forum.makecode.com/c/ap-cs-principles/23) to be notified of the upcoming workshops.
 
+* What is included in the curriculum?
+
+>The Microsoft MakeCode AP CS Principles curriculum includes daily PowerPoints with guided notes for the teacher, Word documents for student handouts, and a OneNote notebook that teachers can use to create a Class Notebook where they distribute files directly to students. The curriculum also has vocabulary quizzes, short answer quizzes, and answer keys and solutions for all materials. You can download the Educator Materials from https://microsoft.github.io/makecode-csp. To access these materials, teachers must have a verified teacher GitHub account. Consult the GitHub Teacher Verification Instructions for how to obtain a verified teacher GitHub account.
+
 * How is the curriculum graded/assessed?
 
 >Aside from the College Board’s AP Computer Science Principles exam that is administered at the conclusion of the course, educators can use a variety of formative assessment methods throughout to track student progress. Some student activities and assignments are open-ended projects or journaling responses, in which case a rubric is provided as a grading criterion. Some assignments are coding activities or responses to questions/prompts, in which case an example solution is provided to the educator for grading. In general, this curriculum tends to be more open and flexible in its approach to encourage risk-taking and to inspire student creativity and self-confidence.
@@ -146,5 +150,5 @@ If you decide to use the AP Computer Science Principles with Microsoft MakeCode 
 
 * Who wrote this curriculum?
 
->The MakeCode curriculum was written by [Kelli Etheredge](https://www.linkedin.com/in/ketheredge), a Director of Teaching & Learning and an AP Computer Science Principles teacher herself.  Follow her on Twitter [@ketheredge](https://twitter.com/ketheredge).
+>The MakeCode curriculum was written by [Kelli Etheredge](https://www.linkedin.com/in/ketheredge), a Director of Teaching & Learning and an AP Computer Science Principles teacher herself. Follow her on Twitter [@ketheredge](https://twitter.com/ketheredge).
 
