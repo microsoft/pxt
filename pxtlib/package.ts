@@ -654,15 +654,24 @@ namespace pxt {
                         // this may be an issue if the user does not create releases
                         // and pulls from master
                         const modtag = modid?.tag || mod.config?.version;
+                        const vertag = verid.tag
+
+                        // if there is no tag on the current dependency, 
+                        // assume same as existing module version if any
+                        if (modtag && !vertag) {
+                            pxt.debug(`unversioned ${ver}, using ${modtag}`)
+                            return
+                        }
+
                         const c = pxt.semver.strcmp(modtag, verid.tag);
                         if (c == 0) {
                             // turns out to be the same versions
                             pxt.debug(`resolved version are ${modtag}`)
                             return;
                         }
-                        else if (c < 0) {
-                            // already loaded version of dependencies is greater
-                            // than current version, use it instead
+                        else if (c > 0) {
+                            // already loaded version of dependencies (modtag) is greater
+                            // than current version (ver), use it instead
                             pxt.debug(`auto-upgraded ${ver} to ${modtag}`)
                             return;
                         }
