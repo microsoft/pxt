@@ -54,18 +54,20 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
                             {description}
                         </div>
                     </div>
-                    <div className="common-extension-card-extra-content">
-                        {showDisclaimer && lf("User-provided extension, not endorsed by Microsoft.")}
-                        {learnMoreUrl &&
-                            <Button
-                                className="link-button"
-                                label={lf("Learn More")}
-                                title={lf("Learn More")}
-                                onClick={() => { }}
-                                href={learnMoreUrl}
-                            />
-                        }
-                    </div>
+                    {(showDisclaimer || learnMoreUrl) &&
+                        <div className="common-extension-card-extra-content">
+                            {showDisclaimer && lf("User-provided extension, not endorsed by Microsoft.")}
+                            {learnMoreUrl &&
+                                <Button
+                                    className="link-button"
+                                    label={lf("Learn More")}
+                                    title={lf("Learn More")}
+                                    onClick={() => { }}
+                                    href={learnMoreUrl}
+                                />
+                            }
+                        </div>
+                    }
                 </>
                 }
             </div>
