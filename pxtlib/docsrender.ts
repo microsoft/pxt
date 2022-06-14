@@ -419,13 +419,15 @@ namespace pxt.docs {
     export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
 
-            if (href.includes("youtube"||"streams")){
+            if (href.startsWith("https://www.youtube.com/embed/")){
 
                 // <iframe width="1358" height="773" src="https://www.youtube.com/embed/0Gl2QnHNpkA?list=RDMM8H1iMq0g31g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                if (/^[a-zA-Z0-9]+(?:\?list=[a-zA-Z0-9]+)?$/.test(href.substring("https://www.youtube.com/embed/".length))){
+                    let out = '<div class="tutorial-video-embed"><iframe src="' + href + '" title="' + title + '" frameborder="0" ' +'allowFullScreen '+ 'allow="autoplay; picture-in-picture"></iframe></div>';
+                    return out;
 
-                let out = '<iframe width="500" height="350" src="' + href + '" title="' + title + '" frameborder="0" ' +'allowFullScreen '+ 'allow="autoplay; picture-in-picture"></iframe>';
-
-                return out;
+                }
+                return lf("Video Removed");
 
             }else{
 
