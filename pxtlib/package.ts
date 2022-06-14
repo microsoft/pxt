@@ -713,7 +713,7 @@ namespace pxt {
                             .filter(v => v?.slug === ghver.slug)
                             .map(v => v.tag)
                         const repoVersion = repoVersions
-                            .reduce((v1, v2) => semver.strcmp(v1,v2) > 0 ? v1 : v2, "0.0.0")
+                            .reduce((v1, v2) => semver.strcmp(v1, v2) > 0 ? v1 : v2, "0.0.0")
                         pxt.debug(`dep: common repo ${ghver.slug} version found ${repoVersion}`)
                         if (semver.strcmp(repoVersion, "0.0.0") > 0) {
                             // now let's check if we have a higher version to use
