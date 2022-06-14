@@ -670,8 +670,8 @@ namespace pxt {
                             return;
                         }
                         else if (c > 0) {
-                            // already loaded version of dependencies is greater
-                            // than current version, use it instead
+                            // already loaded version of dependencies (modtag) is greater
+                            // than current version (ver), use it instead
                             pxt.debug(`auto-upgraded ${ver} to ${modtag}`)
                             return;
                         }
