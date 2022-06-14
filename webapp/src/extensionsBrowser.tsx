@@ -489,6 +489,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                         learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
                                         loading={scr.loading}
                                         label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
+                                        showDisclaimer={scr.type != pxtc.service.ExtensionType.Bundled && scr.repo?.status != pxt.github.GitRepoStatus.Approved}
                                     />)}
                             </div>
                             {searchComplete && extensionsToShow.length == 0 &&
