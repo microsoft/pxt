@@ -103,7 +103,8 @@ namespace pxt.semver {
 
     /**
      * Compares two semver version strings and returns -1 if a < b, 1 if a > b and 0
-     * if versions are equivalent
+     * if versions are equivalent. If a and b are invalid versions, classic strcmp is called.
+     * If a (or b) is an invalid version, it is considered greater than any version (strmp(undefined, "0.0.0") = 1)
      */
     export function strcmp(a: string, b: string) {
         let aa = tryParse(a)
