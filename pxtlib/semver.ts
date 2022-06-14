@@ -101,6 +101,10 @@ namespace pxt.semver {
         return aa.major - bb.major;
     }
 
+    /**
+     * Compares two semver version strings and returns -1 if a < b, 1 if a > b and 0
+     * if versions are equivalent
+     */
     export function strcmp(a: string, b: string) {
         let aa = tryParse(a)
         let bb = tryParse(b)
