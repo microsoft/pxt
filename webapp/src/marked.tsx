@@ -284,6 +284,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         }
     }
 
+    // Renders inline blocks, such as "||controller: Controller||"
     private renderInlineBlocks(content: HTMLElement) {
         pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .forEach((inlineBlock: HTMLElement) => {
@@ -306,6 +307,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
+    // Renders icon bullets, such as ":mouse pointer:" and ":paint brush:"
     private renderBullets(content: HTMLElement) {
         const bulletRegex = /^:([^:]+):/i;
         pxt.Util.toArray(content.querySelectorAll("li"))
@@ -350,6 +352,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
+    // Will eventually render expandable hints
+    private renderHints(content: HTMLElement) {
+        
+    }
+
     private renderOthers(content: HTMLElement) {
         // remove package blocks
         pxt.Util.toArray(content.querySelectorAll(`.lang-package,.lang-config,.lang-apis`))
@@ -385,7 +392,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // Set markdown options
         marked.setOptions({
             renderer: renderer,
-            sanitize: true,
+            sanitize: false,
             sanitizer: pxt.docs.requireDOMSanitizer()
         })
 
@@ -404,10 +411,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         /* eslint-enable @microsoft/sdl/no-inner-html */
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
-        this.renderInlineBlocks(tempDiv);
-        this.renderSnippets(tempDiv);
-        this.renderBullets(tempDiv);
-        this.renderOthers(tempDiv);
+        // this.renderInlineBlocks(tempDiv);
+        // this.renderSnippets(tempDiv);
+        // this.renderBullets(tempDiv);
+        // this.renderHints(tempDiv);
+        // this.renderOthers(tempDiv);
 
         content.innerHTML = "";
         content.append(...tempDiv.childNodes);
