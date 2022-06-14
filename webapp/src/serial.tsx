@@ -9,6 +9,7 @@ import { EditorToggle } from "../../react-common/components/controls/EditorToggl
 
 import Util = pxt.Util
 import { fireClickOnEnter } from "./util"
+import { classList } from "../../react-common/components/util"
 
 const maxEntriesPerChart: number = 4000;
 
@@ -65,11 +66,13 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b;
 
-        if (this.isCsvView === undefined) {
+        if (this.isCsvView === undefined || !this.receivedLog) {
             // If only csv received, default to csv.
             this.setCsv(!this.receivedLog);
+            this.parent.forceUpdate();
         } else if (this.isCsvView && !this.receivedCsv) {
             this.setCsv(false);
+            this.parent.forceUpdate();
         }
 
         if (this.isCsvView) {
@@ -184,6 +187,14 @@ export class Editor extends srceditor.Editor {
             this.receivedCsv = true;
         } else {
             this.receivedLog = true;
+        }
+        if (this.isVisible) {
+            if (this.isCsvView && !this.receivedCsv) {
+                // have not received a csv yet but in csv view; swap back to console.
+                this.setCsv(false);
+            } else if (!this.isCsvView && !this.receivedLog) {
+                this.setCsv(true);
+            }
         }
         if (!this.active) {
             this.saveMessageForLater(smsg);
@@ -473,9 +484,7 @@ export class Editor extends srceditor.Editor {
             pxt.BrowserUtils.addClass(this.consoleRoot, "noconsole");
             pxt.BrowserUtils.addClass(this.consoleRoot, "nochart");
         }
-        if (this.serialRoot) {
-            pxt.BrowserUtils.addClass(this.serialRoot, "no-toggle")
-        }
+
         this.charts = []
         this.serialInputDataBuffer = ""
         this.rawDataBuffer = ""
@@ -490,8 +499,15 @@ export class Editor extends srceditor.Editor {
             this.clearNode(this.csvRoot);
         }
         this.csvLineCount = 0;
-        this.receivedCsv = false;
-        this.receivedLog = false;
+
+        // If the editor is currently visible, leave these as is to leave toggle state.
+        if (!this.isVisible) {
+            this.receivedCsv = false;
+            this.receivedLog = false;
+            if (this.serialRoot) {
+                pxt.BrowserUtils.addClass(this.serialRoot, "no-toggle")
+            }
+        }
     }
 
     dataIsCsv(nl: number, datas: number[][][]): boolean {
@@ -643,8 +659,13 @@ export class Editor extends srceditor.Editor {
     }
 
     display() {
+        const rootClasses = classList(
+            !(this.receivedCsv && this.receivedLog) && "no-toggle",
+            this.isCsvView && "csv-view"
+        );
+
         return (
-            <div id="serialArea" className="no-toggle" ref={this.handleSerialRootRef}>
+            <div id="serialArea" className={rootClasses} ref={this.handleSerialRootRef}>
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
