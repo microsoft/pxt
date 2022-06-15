@@ -89,7 +89,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         }
     }
 
-    const handleDeviceShareClick = () => {
+    const handleDeviceShareClick = async () => {
         pxt.tickEvent("share.device");
 
         const shareOpts = {
@@ -98,8 +98,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
             text: lf("Check out my new MakeCode project!"),
         };
 
-        if (navigator?.canShare?.(shareOpts)) {
-            navigator.share(shareOpts);
+        // TODO: Fix this; typing for navigator not included in the lib typing we use in tsconfig
+        if ((navigator as any)?.canShare?.(shareOpts)) {
+            return navigator.share(shareOpts);
         }
     };
 
