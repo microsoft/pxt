@@ -1037,8 +1037,8 @@ namespace pxt.github {
         return id.slice(0, 7) == "github:"
     }
 
-    export function stringifyRepo(p: ParsedRepo) {
-        return p ? "github:" + p.fullName.toLowerCase() + (p.tag ? `#${p.tag}` : '') : undefined;
+    export function stringifyRepo(p: ParsedRepo, ignoreCase = false) {
+        return p ? "github:" + (ignoreCase ? p.fullName : p.fullName.toLowerCase()) + (p.tag ? `#${p.tag}` : '') : undefined;
     }
 
     export function normalizeRepoId(id: string, defaultTag?: string) {
