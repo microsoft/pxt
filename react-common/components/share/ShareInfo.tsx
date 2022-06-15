@@ -89,6 +89,15 @@ export const ShareInfo = (props: ShareInfoProps) => {
         }
     }
 
+    const handleDeviceShareClick = () => {
+        pxt.tickEvent("share.device");
+        return navigator?.share?.({
+            title: document.title,
+            url: shareData.url,
+            text: lf("Check out my new MakeCode project!"),
+        })
+    };
+
     const embedOptions = [{
         name: "code",
         label: lf("Code"),
@@ -209,6 +218,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 url={shareData?.url}
                                 type='twitter'
                                 heading={lf("Share on Twitter")} />
+                            {navigator.share && <Button className="circle-button device-share"
+                                title={lf("Show device share options")}
+                                ariaLabel={lf("Show device share options")}
+                                leftIcon={"icon share"}
+                                onClick={handleDeviceShareClick}
+                            />}
                             <Button
                                 className="menu-button project-qrcode"
                                 buttonRef={handleQRCodeButtonRef}
