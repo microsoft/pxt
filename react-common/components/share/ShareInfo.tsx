@@ -91,11 +91,16 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const handleDeviceShareClick = () => {
         pxt.tickEvent("share.device");
-        return navigator?.share?.({
+
+        const shareOpts = {
             title: document.title,
             url: shareData.url,
             text: lf("Check out my new MakeCode project!"),
-        })
+        };
+
+        if (navigator?.canShare?.(shareOpts)) {
+            navigator.share(shareOpts);
+        }
     };
 
     const embedOptions = [{
