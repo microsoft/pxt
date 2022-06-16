@@ -470,6 +470,10 @@ export class Editor extends srceditor.Editor {
             pxt.BrowserUtils.addClass(this.consoleRoot, "nochart");
         }
 
+        if (!this.isSim) {
+            this.setCsv(false);
+        }
+
         this.charts = []
         this.serialInputDataBuffer = ""
         this.rawDataBuffer = ""
