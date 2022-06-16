@@ -58,11 +58,11 @@ export class SerialIndicator extends data.Component<SerialIndicatorProps, Serial
         if (!this.active()) return <div />;
         const description = this.props.isSim ? lf("Simulator") : lf("Device");
         return (
-            <div role="button" title={lf("Open {0} console", description)} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={fireClickOnEnter}>
+            <div role="button" title={lf("Open {0} data", description)} className="ui label circular" tabIndex={0} onClick={this.props.onClick} onKeyDown={fireClickOnEnter}>
                 <div className="detail">
                     <img alt={lf("Animated bar chart")} className="barcharticon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/Bars_black.gif`)}></img>
                 </div>
-                <span>{lf("Show console")}</span>
+                <span>{lf("Show data")}</span>
                 <div className="detail">
                     {description}
                 </div>

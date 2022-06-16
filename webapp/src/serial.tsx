@@ -66,11 +66,11 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b;
 
-        if (this.isCsvView === undefined || !this.receivedLog) {
+        if (this.isSim && (this.isCsvView === undefined || !this.receivedLog)) {
             // If only csv received, default to csv.
             this.setCsv(!this.receivedLog);
             this.parent.forceUpdate();
-        } else if (this.isCsvView && !this.receivedCsv) {
+        } else if (this.isCsvView && (!this.receivedCsv || !this.isSim)) {
             this.setCsv(false);
             this.parent.forceUpdate();
         }
@@ -223,7 +223,7 @@ export class Editor extends srceditor.Editor {
 
         const niceSource = this.mapSource(source);
 
-        if (this.receivedCsv && this.receivedLog) {
+        if (this.shouldShowToggle()) {
             pxt.BrowserUtils.removeClass(this.serialRoot, "no-toggle")
         }
         if (isCsv) {
@@ -643,9 +643,13 @@ export class Editor extends srceditor.Editor {
         />
     }
 
+    shouldShowToggle = () => {
+        return this.receivedCsv && this.receivedLog && this.isSim;
+    }
+
     display() {
         const rootClasses = classList(
-            !(this.receivedCsv && this.receivedLog) && "no-toggle",
+            !this.shouldShowToggle() && "no-toggle",
             this.isCsvView && "csv-view"
         );
 
