@@ -419,17 +419,16 @@ namespace pxt.docs {
     export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
 
-            if (href.startsWith("https://www.youtube.com/embed/")){
+            if (href.startsWith("youtube:")){
 
-                // <iframe width="1358" height="773" src="https://www.youtube.com/embed/0Gl2QnHNpkA?list=RDMM8H1iMq0g31g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                if (/^[a-zA-Z0-9]+(?:\?list=[a-zA-Z0-9]+)?$/.test(href.substring("https://www.youtube.com/embed/".length))){
-                    let out = '<div class="tutorial-video-embed"><iframe src="' + href + '" title="' + title + '" frameborder="0" ' +'allowFullScreen '+ 'allow="autoplay; picture-in-picture"></iframe></div>';
+                    let out = '<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop() 
+                    + '" title="' + title + '" frameborder="0" ' +'allowFullScreen '+ 'allow="autoplay; picture-in-picture"></iframe></div>';
+
                     return out;
 
-                }
-                return lf("Video Removed");
-
-            }else{
+            }else if(href.includes("youtube")){
+                return lf("Video Removed, wrong formatting");
+            }else{  
 
                 let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
                 if (title) {
@@ -439,6 +438,7 @@ namespace pxt.docs {
                 out += (this as any).options.xhtml ? '/>' : '>';
                 return out;
             }
+            
         }
         renderer.listitem = function (text: string): string {
             const m = /^\s*\[( |x)\]/i.exec(text);
