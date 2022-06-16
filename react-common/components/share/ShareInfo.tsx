@@ -89,6 +89,21 @@ export const ShareInfo = (props: ShareInfoProps) => {
         }
     }
 
+    const handleDeviceShareClick = async () => {
+        pxt.tickEvent("share.device");
+
+        const shareOpts = {
+            title: document.title,
+            url: shareData.url,
+            text: lf("Check out my new MakeCode project!"),
+        };
+
+        // TODO: Fix this; typing for navigator not included in the lib typing we use in tsconfig
+        if ((navigator as any)?.canShare?.(shareOpts)) {
+            return navigator.share(shareOpts);
+        }
+    };
+
     const embedOptions = [{
         name: "code",
         label: lf("Code"),
@@ -209,6 +224,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 url={shareData?.url}
                                 type='twitter'
                                 heading={lf("Share on Twitter")} />
+                            {navigator.share && <Button className="circle-button device-share"
+                                title={lf("Show device share options")}
+                                ariaLabel={lf("Show device share options")}
+                                leftIcon={"icon share"}
+                                onClick={handleDeviceShareClick}
+                            />}
                             <Button
                                 className="menu-button project-qrcode"
                                 buttonRef={handleQRCodeButtonRef}
