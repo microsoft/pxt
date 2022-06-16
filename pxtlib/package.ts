@@ -720,7 +720,7 @@ namespace pxt {
                             if (!ghver.tag || semver.strcmp(repoVersion, ghver.tag) > 0) {
                                 pxt.debug(`dep: upgrade from ${ghver.tag} to ${repoVersion}`)
                                 ghver.tag = repoVersion
-                                ver = github.stringifyRepo(ghver)
+                                ver = github.stringifyRepo(ghver, true)
                             }
                         }
                     }

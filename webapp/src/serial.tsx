@@ -415,25 +415,10 @@ export class Editor extends srceditor.Editor {
             this.consoleRoot.appendChild(newEntry)
         }
         else {
-            let lastEntry = this.consoleRoot.lastChild
             let newEntry = document.createElement("div")
-            if (lastEntry && lastEntry.lastChild.textContent == line) {
-                if (lastEntry.childNodes.length == 2) {
-                    //Matches already-collapsed entry
-                    let count = parseInt(lastEntry.firstChild.textContent)
-                    lastEntry.firstChild.textContent = (count + 1).toString()
-                } else {
-                    //Make a new collapsed entry with count = 2
-                    let newLabel = document.createElement("a")
-                    newLabel.className = "ui horizontal label"
-                    newLabel.textContent = "2"
-                    lastEntry.insertBefore(newLabel, lastEntry.lastChild)
-                }
-            } else {
-                //Make a new non-collapsed entry
-                newEntry.appendChild(document.createTextNode(line))
-                this.consoleRoot.appendChild(newEntry)
-            }
+            //Make a new non-collapsed entry
+            newEntry.appendChild(document.createTextNode(line))
+            this.consoleRoot.appendChild(newEntry)
         }
         this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
         while (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
@@ -687,7 +672,7 @@ export class Editor extends srceditor.Editor {
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
-                {this.charts?.length == 0 &&<div id="serialPlaceholder" className="ui segment">
+                {this.charts?.length == 0 && <div id="serialPlaceholder" className="ui segment">
                     <div className="ui bottom left attached no-select label seriallabel">{lf("Values will be logged when the {0} sends data", this.isSim ? lf("simulator") : lf("device"))}</div>
                 </div>}
                 <div id="serialCharts" ref={this.handleChartRootRef}></div>
