@@ -66,7 +66,7 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b;
 
-        if (this.isSim && (this.isCsvView === undefined || !this.receivedLog)) {
+        if (this.isSim && this.receivedCsv && (this.isCsvView === undefined || !this.receivedLog)) {
             // If only csv received, default to csv.
             this.setCsv(!this.receivedLog);
             this.parent.forceUpdate();
