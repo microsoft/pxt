@@ -212,7 +212,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 onBlur={handleCopyBlur} />
                         </div>
                         <div className="project-share-actions">
-                            <Button className="circle-button gray"
+                            <Button className="circle-button gray embed mobile-portrait-hidden"
                                 title={lf("Show embed code")}
                                 leftIcon="fas fa-code"
                                 onClick={handleEmbedClick} />
