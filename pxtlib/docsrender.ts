@@ -420,17 +420,15 @@ namespace pxt.docs {
         renderer.image = function (href: string, title: string, text: string) {
 
             if (href.startsWith("youtube:")){
-
-                    let out = '<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop() 
+                    let out='<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop() 
                     + '" title="' + title + '" frameborder="0" ' +'allowFullScreen '+ 'allow="autoplay; picture-in-picture"></iframe></div>';
-
                     return out;
 
             }else if(href.includes("youtube")){
                 return lf("Video Removed, wrong formatting");
-            }else{  
 
-                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
+            }else{  
+                let out='<img class="ui image" src="' + href + '" alt="' + text + '"';
                 if (title) {
                     out += ' title="' + title + '"';
                 }
