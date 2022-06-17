@@ -4,7 +4,7 @@
 
 As always at this time of year we have a new MakeCode release for the micro:bit that is jam-packed full of improvements, bug fixes, and new stuff.
 
-Here’s a run-down of the new features in the 2022 release:
+Here’s a rundown of the new features in the 2022 release:
 
 ## Play Sound editor
 
@@ -70,7 +70,7 @@ We also made some small improvements to sharing projects. These allow you to inc
 
 ## Utilities
 
-These aren't specific updates to the editor, but we’ve added some cool new utilities to help teachers
+These aren't specific updates to the editor, but we’ve added some cool new utilities to help teachers.
 
 ### 1) Screenshot Tool
 
