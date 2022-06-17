@@ -288,23 +288,24 @@ export class Editor extends srceditor.Editor {
 
     checkCsvLineCount() {
         this.csvLineCount++;
-        if (this.csvLineCount > this.maxConsoleEntries) {
+        while (this.csvLineCount > this.maxConsoleEntries) {
             const firstTable = this.csvRoot.firstChild;
             const thead = firstTable.firstChild;
             const tbody = firstTable.lastChild;
-            if (thead.hasChildNodes()) {
-                // remove header
-                thead.firstChild.remove();
-            } else {
-                // else remove first data row in table
+            if (tbody.hasChildNodes()) {
+                // remove first data row in table
                 tbody.firstChild.remove();
+                this.csvLineCount--;
+            } else if (tbody.hasChildNodes()) {
+                // if no other data in body, clear header
+                thead.firstChild.remove();
+                this.csvLineCount--;
             }
 
-            if (!tbody.hasChildNodes()) {
+            if (!tbody.hasChildNodes() && !thead.hasChildNodes()) {
                 // table is now empty, clear it.
                 firstTable.remove();
             }
-            this.csvLineCount--;
         }
     }
 
