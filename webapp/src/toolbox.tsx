@@ -803,6 +803,8 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         const iconClass = `blocklyTreeIcon${subns ? 'more' : icon ? (nameid || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
         let iconContent = subns ? pxt.toolbox.getNamespaceIcon('more') : icon || pxt.toolbox.getNamespaceIcon('default');
         let iconImageStyle: JSX.Element;
+        const brandCategories = ['bluetooth', 'serial']
+        const extraIconClass = !subns && brandCategories.includes(nameid) ? 'brandIcon' : ''
         if (iconContent.length > 1) {
             // It's probably an image icon, and not an icon code
             iconImageStyle = <style>
@@ -826,7 +828,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
-            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>
+            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`} role="presentation">{iconContent}</span>
             <span className="blocklyTreeLabel">{rowTitle}</span>
             {hasDeleteButton ? <i className="blocklyTreeButton icon times circle" onClick={this.handleDeleteClick}/>: undefined}
         </div>
