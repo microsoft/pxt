@@ -2,7 +2,7 @@ import * as React from "react";
 import { classList, ControlProps } from "../util";
 
 export interface EmbedVideoProps extends ControlProps {
-  src: "youtube" | "streams";
+  src: "youtube";
   id: string;
   autoplay?: boolean;
   allowFullScreen?: boolean;
@@ -22,14 +22,6 @@ export const EmbedVideo = (props: EmbedVideoProps) => {
 
     let videoURL = `https://www.youtube.com/embed/${id}?${autoplay ? "autoplay=1" : ""}`;
 
-
-
-    let streamURL = `https://msit.microsoftstream.com/video/${id}`;
-
-    if (src == "streams"){
-        videoURL = streamURL;
-    }
-
     let appending = "";
 
     if (autoplay){
@@ -46,7 +38,7 @@ export const EmbedVideo = (props: EmbedVideoProps) => {
 
     return (
         <div className={classList("common-embed-video-wrapper")}>
-           <iframe src={videoURL} title="YouTube video player" 
+           <iframe src={videoURL} title="YouTube video player"
             frameBorder="0" allow={st2} allowFullScreen={allowFullScreen}></iframe>
         </div>
     );
