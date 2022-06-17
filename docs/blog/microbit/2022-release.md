@@ -44,7 +44,7 @@ To learn more about how to use these blocks, see the documentation here: https:/
 
 ## JacDac for micro:bit v2
 
-We are delighted to announce the public debut of Microsoft's [Jacdac platform](https://aka.ms/jacdac) for plug-and-play creation and programming of physical computing systems. Jacdac integrates with MakeCode and the micro:bit V2: see the [Jacdac blog]( https://microsoft.github.io/jacdac-docs/blog/jacdac-for-makecode-and-microbit/) for more details.
+We are delighted to announce the public debut of Microsoft's [Jacdac platform](https://aka.ms/jacdac) for plug-and-play creation and programming of physical computing systems. Jacdac integrates with MakeCode and the micro:bit V2: see the [Jacdac blog](https://medium.com/@jacdac-tap/jacdac-for-makecode-and-the-micro-bit-887291d60f3c) for more details.
 
 ![jacdac kit for micro:bit](/static/blog/microbit/2022-release/kbkit.png)
 
