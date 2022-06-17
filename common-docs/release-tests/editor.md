@@ -38,8 +38,8 @@ Browsers to test:
     2. Restart
     3. Debug mode 
         - Snail (make sure you see the code being highlighted as it's running)
-    5. Mute / Unmute
-    6. Full screen
+    4. Mute / Unmute
+    5. Full screen
 * Test the various sensor simulators
     1. Button A, B, A + B
     2. Gesture (shake)
