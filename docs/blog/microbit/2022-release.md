@@ -1,6 +1,6 @@
 # MakeCode for the micro:bit – Buzz, Beep, Bing, Hello 2022 Update!
 
-Posted on June 17, 2022 by Jaqster
+**Posted on June 17, 2022 by [Jaqster](https://github.com/jaqster)**
 
 As always at this time of year we have a new MakeCode release for the micro:bit that is jam-packed full of improvements, bug fixes, and new stuff.
 
