@@ -36,6 +36,23 @@
         .csv-hide {
             display: none;
         }
+
+        #serialCsvViewLatest {
+            position: absolute;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            left: 0;
+            right: 0;
+            max-width: 15rem;
+            margin-top: -3em;
+        }
+
+        &.hide-view-latest {
+            #serialCsvViewLatest {
+                display: none;
+            }
+        }
     }
 
     &.no-toggle #serial-editor-toggle {
