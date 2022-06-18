@@ -699,6 +699,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     private treeRow: HTMLElement;
     private baseAnimationDelay: number = 1;
     private animationDelay: number = 0.15;
+    private brandIcons = {'\uf287': 'usb', '\uf368': 'accessible-icon', '\uf170': 'adn', '\uf1a7': 'pied-piper-pp', '\uf1b6': 'steam', '\uf294': 'bluetooth-b', '\uf1d0': 'rebel', '\uf136': 'maxcdn', '\uf1aa': 'joomla', '\uf213': 'sellsy', '\uf20e': 'connectdevelop', '\uf113': 'github-alt' };
 
     constructor(props: TreeRowProps) {
         super(props);
@@ -803,8 +804,6 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         const iconClass = `blocklyTreeIcon${subns ? 'more' : icon ? (nameid || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
         let iconContent = subns ? pxt.toolbox.getNamespaceIcon('more') : icon || pxt.toolbox.getNamespaceIcon('default');
         let iconImageStyle: JSX.Element;
-        const brandCategories = ['bluetooth', 'serial']
-        const extraIconClass = !subns && brandCategories.includes(nameid) ? 'brandIcon' : ''
         if (iconContent.length > 1) {
             // It's probably an image icon, and not an icon code
             iconImageStyle = <style>
@@ -821,6 +820,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         }
         const rowTitle = name ? name : Util.capitalize(subns || nameid);
 
+        const extraIconClass = !subns && Object.keys(this.brandIcons).includes(icon) ? 'brandIcon' : ''
         return <div role="button" ref={this.handleTreeRowRef} className={treeRowClass}
             style={treeRowStyle} tabIndex={0}
             aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
