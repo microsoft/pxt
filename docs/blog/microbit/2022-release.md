@@ -48,6 +48,8 @@ We are delighted to announce the public debut of Microsoft's [Jacdac platform](h
 
 ![jacdac kit for micro:bit](/static/blog/microbit/2022-release/kbkit.png)
 
+https://youtu.be/0FUee0TMWrQ
+
 ## Workspace Search
 
 If you have a large program, it can be time consuming scrolling around, looking for that function or variable on your workspace. We’ve added the ability to search for blocks on your workspace by pressing **Ctrl+f** or right-clicking to open the context menu and selecting **Find**.
