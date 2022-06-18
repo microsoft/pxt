@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit – Buzz, Beep, Bing, Hello 2022 Update!](/blog/microbit/2022-release)
+
+June 17th, 2022 by [Jaqster](https://github.com/jaqster)
+
+As always at this time of year we have a new MakeCode release for the micro:bit that is jam-packed full of improvements, bug fixes, and new stuff.
+
+**[Continue reading this blog post](/blog/microbit/2022-release)**
+
 ## [AP Computer Science Principles with MakeCode Professional Development](/blog/csp/csp-prodev-2022)
 
 April 29th, 2022 by [Jaqster](https://github.com/jaqster)
