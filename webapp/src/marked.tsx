@@ -360,35 +360,40 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         let hintBegunElement:HTMLElement = null;
         let hintElements:HTMLElement[] = new Array();
 
-        pxt.Util.toArray(content.querySelectorAll('*'))
-             .forEach((element: HTMLElement) => {
-                if (hintBegunElement == null) {
-                    const match = element.innerHTML.match(hintBeginRegex);
-                    if (match) {
-                        const summary = match[1];
-                        hintSummary = document.createElement('summary');
-                        hintSummary.append(summary);
-                        hintBegunElement = element;
-                    }
-                }
-                else {
-                    // TODO if we catch another start, remove orphaned hint being node
-                    const match = element.innerHTML.match(hintEndRegex);
-                    if (match) {
-                        const hintDetails = document.createElement('details');
-                        hintDetails.append(" ");
-                        hintDetails.append(hintSummary);
-                        hintElements.forEach((hintElement) => { 
-                            hintDetails.appendChild(hintElement);
-                            //hintElement.parentElement.removeChild(hintElement);
-                        });
-                        
-                        element.parentNode.replaceChild(hintDetails, hintBegunElement);
+        content.childNodes
+        //pxt.Util.toArray(content.querySelectorAll('*'))
+             .forEach((node: Node) => {
+                if (node instanceof HTMLElement) {
+                    const element = node;
+                    if (hintBegunElement == null) {
+                        // TODO if element is 'p'
+                        const match = element.innerHTML.match(hintBeginRegex);
+                        if (match) {
+                            const summary = match[1];
+                            hintSummary = document.createElement('summary');
+                            hintSummary.append(summary);
+                            hintBegunElement = element;
+                        }
                     }
                     else {
-                        hintElements.push(element);
+                        // TODO if we catch another start, remove orphaned hint being node
+                        const match = element.innerHTML.match(hintEndRegex);
+                        if (match) {
+                            const hintDetails = document.createElement('details');
+                            hintDetails.append(" ");
+                            hintDetails.append(hintSummary);
+                            hintElements.forEach((hintElement) => {  // this is too greedy - it's grabbing child elements of elements
+                                hintDetails.appendChild(hintElement);
+                            });
+                            
+                            hintBegunElement.parentNode.replaceChild(hintDetails, hintBegunElement);
+                            element.parentNode.removeChild(element); // remove hint end signifier
+                        }
+                        else {
+                            hintElements.push(element);
+                        }
+                        
                     }
-                    
                 }
             });
         // TODO: if we didn't find an end, remove orphaned hint begin node
