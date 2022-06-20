@@ -354,7 +354,20 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     // Will eventually render expandable hints
     private renderHints(content: HTMLElement) {
+        const hintBeginRegex = /^~hint\s*(.+)/i;
         
+        pxt.Util.toArray(content.querySelectorAll(`p`))
+             .forEach((p: HTMLElement) => {
+                const match = p.innerHTML.match(hintBeginRegex);
+                if (match) {
+                    const summary = match[1];
+                    const hintSummary = document.createElement('summary');
+                    hintSummary.append(summary);
+                    const hintDetails = document.createElement('details');
+                    hintDetails.append(hintSummary);
+                    p.parentNode.replaceChild(hintDetails, p);
+                }
+            });
     }
 
     private renderOthers(content: HTMLElement) {
@@ -411,11 +424,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         /* eslint-enable @microsoft/sdl/no-inner-html */
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
-        // this.renderInlineBlocks(tempDiv);
-        // this.renderSnippets(tempDiv);
-        // this.renderBullets(tempDiv);
-        // this.renderHints(tempDiv);
-        // this.renderOthers(tempDiv);
+        this.renderInlineBlocks(tempDiv);
+        this.renderSnippets(tempDiv);
+        this.renderBullets(tempDiv);
+        this.renderHints(tempDiv);
+        this.renderOthers(tempDiv);
 
         content.innerHTML = "";
         content.append(...tempDiv.childNodes);
