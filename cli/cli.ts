@@ -5648,6 +5648,12 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     const docsRoot = nodeutil.targetDir;
     const docsTemplate = server.expandDocFileTemplate("docs.html")
     pxt.log(`checking docs`);
+    const ignoredFoldersKey = ".checkdocs-ignore";
+    const ignoredFolders = nodeutil.allFiles("docs", undefined, undefined, undefined, undefined, true)
+        .filter(el => el.endsWith(ignoredFoldersKey))
+        .map(el => path.dirname(path.join(el.substring(4))) + path.sep);
+    if (ignoredFolders.length)
+        pxt.log(`Ignoring folders [${ignoredFolders.join(", ")}]`);
 
     const noTOCs: string[] = [];
     const todo: string[] = [];
@@ -5664,7 +5670,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         U.userError(`files too big in docs folder`);
 
     // scan and fix image links
-    nodeutil.allFiles("docs")
+    nodeutil.allFiles("docs", undefined, undefined, undefined, ignoredFoldersKey)
         .filter(f => /\.md/.test(f))
         .forEach(f => {
             let md = fs.readFileSync(f, { encoding: "utf8" });
@@ -5722,6 +5728,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             urls[url] = isResource
                 ? nodeutil.fileExistsSync(path.join(docsRoot, "docs", url))
                 : nodeutil.resolveMd(docsRoot, url);
+            const pathedUrl = path.join(url)
+            if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
+                return;
             if (!isResource && urls[url])
                 todo.push(url);
         }
@@ -5741,7 +5750,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     }
 
     // check over TOCs
-    nodeutil.allFiles("docs", 5).filter(f => /SUMMARY\.md$/.test(f))
+    nodeutil.allFiles("docs", 5, undefined, undefined, ignoredFoldersKey)
+        .filter(f => /SUMMARY\.md$/.test(f))
         .forEach(summaryFile => {
             const summaryPath = path.join(path.dirname(summaryFile), 'SUMMARY').replace(/^docs[\/\\]/, '');
             pxt.log(`looking for ${summaryPath}`);
@@ -5781,7 +5791,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     if (targetDirs) {
         targetDirs.forEach(dir => {
             pxt.log(`looking for markdown files in ${dir}`);
-            nodeutil.allFiles(path.join("docs", dir), 3).filter(f => mdRegex.test(f))
+            nodeutil.allFiles(path.join("docs", dir), 3, null, null, ".checkdocs-ignore")
+                .filter(f => mdRegex.test(f))
                 .forEach(md => {
                     pushUrl(md.slice(5).replace(mdRegex, ""), true);
                 });
@@ -5860,6 +5871,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             let urls = [card.url]
                             if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
+                                const pathedUrl = path.join(url)
+                                if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
+                                    return;
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, url);
                                 if (!tutorialMd) {
                                     pxt.log(`unable to resolve ${url}`)
@@ -5917,6 +5931,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             let urls = [card.url]
                             if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
+                                const pathedUrl = path.join(url)
+                                if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
+                                    return;
                                 const exMd = nodeutil.resolveMd(docsRoot, url);
                                 if (!exMd) {
                                     pxt.log(`unable to resolve ${url}`)

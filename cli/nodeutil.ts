@@ -366,11 +366,19 @@ export function cp(srcFile: string, destDirectory: string, destName?: string) {
     fs.writeFileSync(dest, buf);
 }
 
-export function allFiles(top: string, maxDepth = 8, allowMissing = false, includeDirs = false, ignoredFileMarker: string = undefined): string[] {
+interface AllFilesOpts {
+    maxDepth?: number;
+    allowMissing?: boolean;
+    includeDirs?: boolean;
+    ignoredFileMarker?: string;
+    includeHidden?: boolean;
+}
+
+export function allFiles(top: string, maxDepth = 8, allowMissing = false, includeDirs = false, ignoredFileMarker: string = undefined, includeHiddenFiles = false): string[] {
     let res: string[] = []
     if (allowMissing && !existsDirSync(top)) return res
     for (const p of fs.readdirSync(top)) {
-        if (p[0] == ".") continue;
+        if (p[0] == "." && !includeHiddenFiles) continue;
         const inner = path.join(top, p)
         const st = fs.statSync(inner)
         if (st.isDirectory()) {
@@ -378,7 +386,7 @@ export function allFiles(top: string, maxDepth = 8, allowMissing = false, includ
             if (ignoredFileMarker && fs.existsSync(path.join(inner, ignoredFileMarker)))
                 continue;
             if (maxDepth > 1)
-                Util.pushRange(res, allFiles(inner, maxDepth - 1))
+                Util.pushRange(res, allFiles(inner, maxDepth - 1, allowMissing, includeDirs, ignoredFileMarker, includeHiddenFiles))
             if (includeDirs)
                 res.push(inner);
         } else {
