@@ -23,7 +23,7 @@ export class Editor extends srceditor.Editor {
     maxSerialInputDataLength: number = 255;
     isSim: boolean = true;
     isCsvView: boolean = undefined;
-    maxConsoleEntries: number = 1000;
+    maxConsoleEntries: number = 500;
     active: boolean = true
     rawDataBuffer: string = ""
     maxBufferLength: number = 100000;
@@ -278,12 +278,23 @@ export class Editor extends srceditor.Editor {
         this.addCsvRow(tr, csvTable.lastChild as HTMLTableSectionElement);
     }
 
+    goToLatest = () => {
+        const latestTable = this.csvRoot?.lastChild;
+        if (!latestTable) return;
+        //             last body row                   || last header row
+        const lastEl = latestTable.lastChild.lastChild || latestTable.firstChild.lastChild;
+        (lastEl as HTMLTableRowElement).scrollIntoView?.();
+        pxt.BrowserUtils.addClass(this.serialRoot, "hide-view-latest");
+    }
+
     addCsvRow(row: HTMLTableRowElement, target: HTMLTableSectionElement) {
         const currentlyAtBottom = target.getBoundingClientRect().bottom <= window.innerHeight;
         target.appendChild(row);
         this.checkCsvLineCount();
         if (currentlyAtBottom)
             row.scrollIntoView();
+        else
+            pxt.BrowserUtils.removeClass(this.serialRoot, "hide-view-latest");
     }
 
     checkCsvLineCount() {
@@ -489,6 +500,7 @@ export class Editor extends srceditor.Editor {
             this.clearNode(this.csvRoot);
         }
         this.csvLineCount = 0;
+        pxt.BrowserUtils.addClass(this.serialRoot, "hide-view-latest");
 
         // If the editor is currently visible, leave these as is to leave toggle state.
         if (!this.isVisible) {
@@ -655,7 +667,8 @@ export class Editor extends srceditor.Editor {
     display() {
         const rootClasses = classList(
             !this.shouldShowToggle() && "no-toggle",
-            this.isCsvView && "csv-view"
+            this.isCsvView && "csv-view",
+            "hide-view-latest"
         );
 
         return (
@@ -687,6 +700,7 @@ export class Editor extends srceditor.Editor {
                 <div id="serialCharts" ref={this.handleChartRootRef}></div>
                 <div id="serialConsole" ref={this.handleConsoleRootRef}></div>
                 <div id="serialCsv" ref={this.handleCsvRootRef}></div>
+                <sui.Button id="serialCsvViewLatest" onClick={this.goToLatest}>{lf("View latest row...")}</sui.Button>
             </div>
         )
     }
