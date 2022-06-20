@@ -270,7 +270,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
 
     let writeFiles = () => {
-        for (let f of nodeutil.allFiles(buildEngine.buildPath + "/" + buildEngine.appPath, 8, true)) {
+        for (let f of nodeutil.allFiles(buildEngine.buildPath + "/" + buildEngine.appPath, { maxDepth: 8, allowMissing: true })) {
             let bn = f.slice(buildEngine.buildPath.length)
             bn = bn.replace(/\\/g, "/").replace(/^\//, "/")
             if (U.startsWith(bn, "/" + buildEngine.appPath + "/") && !allFiles[bn]) {
@@ -545,7 +545,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                         dn = buildEngine.buildPath + "/" + dn
                         if (U.endsWith(dn, ".h")) files.push(dn)
                         else {
-                            let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
+                            let here = nodeutil.allFiles(dn, { maxDepth: 20 }).filter(fn => U.endsWith(fn, ".h"))
                             U.pushRange(files, here)
                         }
                     }
@@ -562,7 +562,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 incPath = buildEngine.buildPath
             if (!fs.existsSync(incPath))
                 U.userError("cannot find " + incPath);
-            files = nodeutil.allFiles(incPath, 20)
+            files = nodeutil.allFiles(incPath, { maxDepth: 20 })
                 .filter(fn => U.endsWith(fn, ".h"))
                 .filter(fn => fn.indexOf("/mbed-classic/") < 0)
                 .filter(fn => fn.indexOf("/mbed-os/") < 0)

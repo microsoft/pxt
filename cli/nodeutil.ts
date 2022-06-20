@@ -344,7 +344,7 @@ export function mkdirP(thePath: string) {
 
 export function cpR(src: string, dst: string, maxDepth = 8) {
     src = path.resolve(src)
-    let files = allFiles(src, maxDepth)
+    let files = allFiles(src, { maxDepth })
     let dirs: pxt.Map<boolean> = {}
     for (let f of files) {
         let bn = f.slice(src.length)
@@ -371,10 +371,20 @@ interface AllFilesOpts {
     allowMissing?: boolean;
     includeDirs?: boolean;
     ignoredFileMarker?: string;
-    includeHidden?: boolean;
+    includeHiddenFiles?: boolean;
 }
+export function allFiles(top: string, opts: AllFilesOpts = {}) {
+    const {
+        maxDepth,
+        allowMissing,
+        includeDirs,
+        ignoredFileMarker,
+        includeHiddenFiles
+    } = {
+        maxDepth: 8,
+        ...opts
+    };
 
-export function allFiles(top: string, maxDepth = 8, allowMissing = false, includeDirs = false, ignoredFileMarker: string = undefined, includeHiddenFiles = false): string[] {
     let res: string[] = []
     if (allowMissing && !existsDirSync(top)) return res
     for (const p of fs.readdirSync(top)) {
@@ -386,7 +396,7 @@ export function allFiles(top: string, maxDepth = 8, allowMissing = false, includ
             if (ignoredFileMarker && fs.existsSync(path.join(inner, ignoredFileMarker)))
                 continue;
             if (maxDepth > 1)
-                Util.pushRange(res, allFiles(inner, maxDepth - 1, allowMissing, includeDirs, ignoredFileMarker, includeHiddenFiles))
+                Util.pushRange(res, allFiles(inner, { ...opts, maxDepth: maxDepth - 1 }))
             if (includeDirs)
                 res.push(inner);
         } else {

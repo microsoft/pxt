@@ -355,11 +355,11 @@ function onlyExts(files: string[], exts: string[]) {
 
 function pxtFileList(pref: string) {
     return nodeutil.allFiles(pref + "webapp/public")
-        .concat(onlyExts(nodeutil.allFiles(pref + "built/web", 1), [".js", ".css"]))
-        .concat(nodeutil.allFiles(pref + "built/web/fonts", 1))
-        .concat(nodeutil.allFiles(pref + "built/web/vs", 4))
-        .concat(nodeutil.allFiles(pref + "built/web/skillmap", 4))
-        .concat(nodeutil.allFiles(pref + "built/web/authcode", 4))
+        .concat(onlyExts(nodeutil.allFiles(pref + "built/web", { maxDepth: 1 }), [".js", ".css"]))
+        .concat(nodeutil.allFiles(pref + "built/web/fonts", { maxDepth: 1 }))
+        .concat(nodeutil.allFiles(pref + "built/web/vs", { maxDepth: 4 }))
+        .concat(nodeutil.allFiles(pref + "built/web/skillmap", { maxDepth: 4 }))
+        .concat(nodeutil.allFiles(pref + "built/web/authcode", { maxDepth: 4 }))
 }
 
 function semverCmp(a: string, b: string) {
@@ -696,7 +696,7 @@ function targetFileList() {
     let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
         .concat(nodeutil.allFiles(path.join(simDir(), "public")));
     if (simDir() != "sim")
-        lst = lst.concat(nodeutil.allFiles(path.join("sim", "public"), 5, true))
+        lst = lst.concat(nodeutil.allFiles(path.join("sim", "public"), { maxDepth: 5, allowMissing: true }))
     pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
     return lst;
 }
@@ -1274,7 +1274,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
     let prev = process.cwd()
     let folders = pxt.appTarget.bundleddirs;
     if (includeProjects) {
-        let projects = nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true).filter(f => /prj$/.test(f));
+        let projects = nodeutil.allFiles("libs", { maxDepth: 1, includeDirs: true }).filter(f => /prj$/.test(f));
         folders = folders.concat(projects);
     }
 
@@ -1464,7 +1464,7 @@ function buildEditorExtensionAsync(dirname: string, optionName: string) {
         else
             p = buildFolderAsync(dirname, true, dirname);
         return p.then(() => {
-            const prepends = nodeutil.allFiles(path.join(dirname, "prepend"), 1, true)
+            const prepends = nodeutil.allFiles(path.join(dirname, "prepend"), { maxDepth: 1, allowMissing: true })
                 .filter(f => /\.js$/.test(f));
             if (prepends && prepends.length) {
                 const editorjs = path.join("built", dirname + ".js");
@@ -2129,7 +2129,7 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
         pxt.JAVASCRIPT_PROJECT_NAME
     ];
 
-    nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true)
+    nodeutil.allFiles("libs", { maxDepth: 1, includeDirs: true })
         .filter((f) => {
             return defaultProjects.indexOf(path.basename(f)) !== -1;
         })
@@ -2650,7 +2650,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
     docFolders.push("docs");
 
     for (const docFolder of docFolders) {
-        for (const f of nodeutil.allFiles(docFolder, 8)) {
+        for (const f of nodeutil.allFiles(docFolder, { maxDepth: 8 })) {
             pxt.log(`rendering ${f}`)
             const pathUnderDocs = f.slice(docFolder.length + 1);
             let outputFile = path.join(dst, "docs", pathUnderDocs);
@@ -5024,7 +5024,7 @@ function buildJResSpritesDirectoryAsync(dir: string) {
 
     let ts = `namespace ${metaInfo.star.namespace} {\n`
 
-    for (let fn of nodeutil.allFiles(dir, 1)) {
+    for (let fn of nodeutil.allFiles(dir, { maxDepth: 1 })) {
         fn = fn.replace(/\\/g, "/")
         let m = /(.*\/)(.*)\.png$/i.exec(fn)
         if (!m) continue
@@ -5649,7 +5649,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     const docsTemplate = server.expandDocFileTemplate("docs.html")
     pxt.log(`checking docs`);
     const ignoredFoldersKey = ".checkdocs-ignore";
-    const ignoredFolders = nodeutil.allFiles("docs", undefined, undefined, undefined, undefined, true)
+    const ignoredFolders = nodeutil.allFiles("docs", { includeHiddenFiles: true })
         .filter(el => el.endsWith(ignoredFoldersKey))
         .map(el => path.dirname(path.join(el.substring(4))) + path.sep);
     if (ignoredFolders.length)
@@ -5664,13 +5664,13 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     const existingSnippets: pxt.Map<boolean> = {};
     let snippets: CodeSnippet[] = [];
 
-    const maxFileSize = checkFileSize(nodeutil.allFiles("docs", 10, true, true, ".ignorelargefiles"));
+    const maxFileSize = checkFileSize(nodeutil.allFiles("docs", { maxDepth: 10, allowMissing: true, includeDirs: true, ignoredFileMarker: ".ignorelargefiles" }));
     if (!pxt.appTarget.ignoreDocsErrors
         && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (5000000)))
         U.userError(`files too big in docs folder`);
 
     // scan and fix image links
-    nodeutil.allFiles("docs", undefined, undefined, undefined, ignoredFoldersKey)
+    nodeutil.allFiles("docs", { ignoredFileMarker: ignoredFoldersKey })
         .filter(f => /\.md/.test(f))
         .forEach(f => {
             let md = fs.readFileSync(f, { encoding: "utf8" });
@@ -5750,7 +5750,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     }
 
     // check over TOCs
-    nodeutil.allFiles("docs", 5, undefined, undefined, ignoredFoldersKey)
+    nodeutil.allFiles("docs", { maxDepth: 5, ignoredFileMarker: ignoredFoldersKey })
         .filter(f => /SUMMARY\.md$/.test(f))
         .forEach(summaryFile => {
             const summaryPath = path.join(path.dirname(summaryFile), 'SUMMARY').replace(/^docs[\/\\]/, '');
@@ -5791,7 +5791,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     if (targetDirs) {
         targetDirs.forEach(dir => {
             pxt.log(`looking for markdown files in ${dir}`);
-            nodeutil.allFiles(path.join("docs", dir), 3, null, null, ".checkdocs-ignore")
+            nodeutil.allFiles(path.join("docs", dir), { maxDepth: 3, ignoredFileMarker: ".checkdocs-ignore" })
                 .filter(f => mdRegex.test(f))
                 .forEach(md => {
                     pushUrl(md.slice(5).replace(mdRegex, ""), true);
@@ -5985,7 +5985,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
 async function upgradeCardsAsync(): Promise<void> {
     const docsRoot = nodeutil.targetDir;
     // markdowns with cards
-    const mds = nodeutil.allFiles(docsRoot, 10, false, false)
+    const mds = nodeutil.allFiles(docsRoot, { maxDepth: 10 })
         .filter(fn => /\.md$/.test(fn))
         .map(fn => ({ filename: fn, content: nodeutil.readText(fn) }))
         .filter(f => /```codecard/.test(f.content));
@@ -6021,7 +6021,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     if (targetDirs) {
         targetDirs.forEach(dir => {
             pxt.log(`looking for tutorial markdown in ${dir}`);
-            nodeutil.allFiles(path.join("docs", dir), 3).filter(f => mdRegex.test(f))
+            nodeutil.allFiles(path.join("docs", dir), { maxDepth: 3 }).filter(f => mdRegex.test(f))
                 .forEach(md => {
                     mdPaths.push(md.slice(5).replace(mdRegex, ""));
                 });
@@ -6225,7 +6225,7 @@ function webstringsJson() {
 
 function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     let prereqs: string[] = [];
-    dirs.forEach(dir => prereqs = prereqs.concat(nodeutil.allFiles(dir, 20)));
+    dirs.forEach(dir => prereqs = prereqs.concat(nodeutil.allFiles(dir, { maxDepth: 20 })));
 
     let errCnt = 0;
     let translationStrings: pxt.Map<string> = {}
