@@ -418,13 +418,25 @@ namespace pxt.docs {
 
     export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
-            let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
-            if (title) {
-                out += ' title="' + title + '"';
+
+            if (href.startsWith("youtube:")) {
+                    let out = '<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop()
+                        + '" title="' + title + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
+                    return out;
+
+            } else if (href.includes("youtube")) {
+                return lf("Video Removed, wrong formatting");
+
+            } else {
+                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
+                if (title) {
+                    out += ' title="' + title + '"';
+                }
+                out += ' loading="lazy"';
+                out += (this as any).options.xhtml ? '/>' : '>';
+                return out;
             }
-            out += ' loading="lazy"';
-            out += (this as any).options.xhtml ? '/>' : '>';
-            return out;
+
         }
         renderer.listitem = function (text: string): string {
             const m = /^\s*\[( |x)\]/i.exec(text);

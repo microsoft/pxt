@@ -499,6 +499,7 @@ namespace pxsim {
 
         kill() {
             super.kill();
+            pxsim.codal.music.__stopSoundExpressions();
             AudioContextManager.stopAll();
         }
     }

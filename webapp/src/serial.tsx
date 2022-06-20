@@ -66,11 +66,11 @@ export class Editor extends srceditor.Editor {
         }
         this.isVisible = b;
 
-        if (this.isCsvView === undefined || !this.receivedLog) {
+        if (this.isSim && this.receivedCsv && (this.isCsvView === undefined || !this.receivedLog)) {
             // If only csv received, default to csv.
             this.setCsv(!this.receivedLog);
             this.parent.forceUpdate();
-        } else if (this.isCsvView && !this.receivedCsv) {
+        } else if (this.isCsvView && (!this.receivedCsv || !this.isSim)) {
             this.setCsv(false);
             this.parent.forceUpdate();
         }
@@ -223,7 +223,7 @@ export class Editor extends srceditor.Editor {
 
         const niceSource = this.mapSource(source);
 
-        if (this.receivedCsv && this.receivedLog) {
+        if (this.shouldShowToggle()) {
             pxt.BrowserUtils.removeClass(this.serialRoot, "no-toggle")
         }
         if (isCsv) {
@@ -288,23 +288,24 @@ export class Editor extends srceditor.Editor {
 
     checkCsvLineCount() {
         this.csvLineCount++;
-        if (this.csvLineCount > this.maxConsoleEntries) {
+        while (this.csvLineCount > this.maxConsoleEntries) {
             const firstTable = this.csvRoot.firstChild;
             const thead = firstTable.firstChild;
             const tbody = firstTable.lastChild;
-            if (thead.hasChildNodes()) {
-                // remove header
-                thead.firstChild.remove();
-            } else {
-                // else remove first data row in table
+            if (tbody.hasChildNodes()) {
+                // remove first data row in table
                 tbody.firstChild.remove();
+                this.csvLineCount--;
+            } else if (tbody.hasChildNodes()) {
+                // if no other data in body, clear header
+                thead.firstChild.remove();
+                this.csvLineCount--;
             }
 
-            if (!tbody.hasChildNodes()) {
+            if (!tbody.hasChildNodes() && !thead.hasChildNodes()) {
                 // table is now empty, clear it.
                 firstTable.remove();
             }
-            this.csvLineCount--;
         }
     }
 
@@ -415,25 +416,10 @@ export class Editor extends srceditor.Editor {
             this.consoleRoot.appendChild(newEntry)
         }
         else {
-            let lastEntry = this.consoleRoot.lastChild
             let newEntry = document.createElement("div")
-            if (lastEntry && lastEntry.lastChild.textContent == line) {
-                if (lastEntry.childNodes.length == 2) {
-                    //Matches already-collapsed entry
-                    let count = parseInt(lastEntry.firstChild.textContent)
-                    lastEntry.firstChild.textContent = (count + 1).toString()
-                } else {
-                    //Make a new collapsed entry with count = 2
-                    let newLabel = document.createElement("a")
-                    newLabel.className = "ui horizontal label"
-                    newLabel.textContent = "2"
-                    lastEntry.insertBefore(newLabel, lastEntry.lastChild)
-                }
-            } else {
-                //Make a new non-collapsed entry
-                newEntry.appendChild(document.createTextNode(line))
-                this.consoleRoot.appendChild(newEntry)
-            }
+            //Make a new non-collapsed entry
+            newEntry.appendChild(document.createTextNode(line))
+            this.consoleRoot.appendChild(newEntry)
         }
         this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
         while (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
@@ -483,6 +469,10 @@ export class Editor extends srceditor.Editor {
             this.clearNode(this.consoleRoot);
             pxt.BrowserUtils.addClass(this.consoleRoot, "noconsole");
             pxt.BrowserUtils.addClass(this.consoleRoot, "nochart");
+        }
+
+        if (!this.isSim) {
+            this.setCsv(false);
         }
 
         this.charts = []
@@ -658,9 +648,13 @@ export class Editor extends srceditor.Editor {
         />
     }
 
+    shouldShowToggle = () => {
+        return this.receivedCsv && this.receivedLog && this.isSim;
+    }
+
     display() {
         const rootClasses = classList(
-            !(this.receivedCsv && this.receivedLog) && "no-toggle",
+            !this.shouldShowToggle() && "no-toggle",
             this.isCsvView && "csv-view"
         );
 
@@ -687,7 +681,7 @@ export class Editor extends srceditor.Editor {
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
-                {this.charts?.length == 0 &&<div id="serialPlaceholder" className="ui segment">
+                {this.charts?.length == 0 && <div id="serialPlaceholder" className="ui segment">
                     <div className="ui bottom left attached no-select label seriallabel">{lf("Values will be logged when the {0} sends data", this.isSim ? lf("simulator") : lf("device"))}</div>
                 </div>}
                 <div id="serialCharts" ref={this.handleChartRootRef}></div>

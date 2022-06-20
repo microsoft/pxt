@@ -20,9 +20,20 @@
     #serialCsv {
         display: none;
     }
+
+    .common-editor-toggle-outer {
+        padding-left: 1.5rem;
+    }
+
     &.csv-view {
         #serialCsv {
             display: block;
+
+            table:last-child thead {
+                position: sticky;
+                top: -0.75rem;
+                box-shadow: inset 0 2px 0 #ddd, inset 0 -2px 0 #ddd;
+            }
         }
 
         #serialCharts,
