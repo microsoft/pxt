@@ -354,20 +354,44 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     // Will eventually render expandable hints
     private renderHints(content: HTMLElement) {
-        const hintBeginRegex = /^~hint\s*(.+)/i;
-        
-        pxt.Util.toArray(content.querySelectorAll(`p`))
-             .forEach((p: HTMLElement) => {
-                const match = p.innerHTML.match(hintBeginRegex);
-                if (match) {
-                    const summary = match[1];
-                    const hintSummary = document.createElement('summary');
-                    hintSummary.append(summary);
-                    const hintDetails = document.createElement('details');
-                    hintDetails.append(hintSummary);
-                    p.parentNode.replaceChild(hintDetails, p);
+        const hintBeginRegex = /^\s*~hint\s*(.+)/i;
+        const hintEndRegex = /^\s*hint~.*/i;
+        let hintSummary:HTMLElement = null;
+        let hintBegunElement:HTMLElement = null;
+        let hintElements:HTMLElement[] = new Array();
+
+        pxt.Util.toArray(content.querySelectorAll('*'))
+             .forEach((element: HTMLElement) => {
+                if (hintBegunElement == null) {
+                    const match = element.innerHTML.match(hintBeginRegex);
+                    if (match) {
+                        const summary = match[1];
+                        hintSummary = document.createElement('summary');
+                        hintSummary.append(summary);
+                        hintBegunElement = element;
+                    }
+                }
+                else {
+                    // TODO if we catch another start, remove orphaned hint being node
+                    const match = element.innerHTML.match(hintEndRegex);
+                    if (match) {
+                        const hintDetails = document.createElement('details');
+                        hintDetails.append(" ");
+                        hintDetails.append(hintSummary);
+                        hintElements.forEach((hintElement) => { 
+                            hintDetails.appendChild(hintElement);
+                            //hintElement.parentElement.removeChild(hintElement);
+                        });
+                        
+                        element.parentNode.replaceChild(hintDetails, hintBegunElement);
+                    }
+                    else {
+                        hintElements.push(element);
+                    }
+                    
                 }
             });
+        // TODO: if we didn't find an end, remove orphaned hint begin node
     }
 
     private renderOthers(content: HTMLElement) {
