@@ -352,6 +352,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
+    // Renders collapsable hints\
     private renderHints(content: HTMLElement) {
         const hintBeginRegex = /^\s*~hint\s*(.+)/i;
         const hintEndRegex = /^\s*hint~.*/i;
