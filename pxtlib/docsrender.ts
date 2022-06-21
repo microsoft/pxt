@@ -424,9 +424,6 @@ namespace pxt.docs {
                         + '" title="' + title + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
                     return out;
 
-            } else if (href.includes("youtube")) {
-                return lf("Video Removed, wrong formatting");
-
             } else {
                 let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
                 if (title) {
