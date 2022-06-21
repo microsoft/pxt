@@ -250,6 +250,7 @@ namespace ts.pxtc.service {
         let snippet: SnippetNode[];
         if (preDefinedSnippet) {
             snippet = [preDefinedSnippet];
+            snippetPrefix = undefined;
         } else {
             snippet = [fnName];
             if (args?.length || element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Function || element.kind == pxtc.SymbolKind.Class) {

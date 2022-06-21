@@ -179,5 +179,16 @@ namespace pxtblockly {
             // This creates the little arrow for dropdown fields. Intentionally
             // do nothing
         }
+
+        showPromptEditor_() {
+            Blockly.prompt(
+                Blockly.Msg['CHANGE_VALUE_TITLE'],
+                this.parsedValue,
+                (newValue) => {
+                    this.setValue(this.getValueFromEditorText_(newValue));
+                    this.forceRerender();
+                }
+            );
+        }
     }
 }
