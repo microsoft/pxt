@@ -129,7 +129,7 @@
     "monaco-editor": "0.24.0",
     "pouchdb": "7.2.1",
     "pouchdb-adapter-memory": "7.2.1",
-    "pxt-blockly": "4.0.9",
+    "pxt-blockly": "4.0.13",
     "react": "16.8.3",
     "react-dom": "16.11.0",
     "react-modal": "3.3.2",
