@@ -821,7 +821,9 @@ declare namespace ts.pxtc {
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
+        inlineInputModeLimit?: number; // the number of expanded arguments at which to switch from inline to external. only applies when inlineInputMode=variable and expandableArgumentsMode=enabled
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+        expandableArgumentBreaks?: string; // a comma separated list of how many arguments to reveal/hide each time + or - is pressed on a block. only applies when expandableArgumentsMode=enabled
         draggableParameters?: string; // can be reporter or variable; defaults to variable
 
 
