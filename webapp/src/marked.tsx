@@ -352,27 +352,25 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
-    // Will eventually render expandable hints
     private renderHints(content: HTMLElement) {
-        const hintBeginRegex = /^\s*~hint\s*(.+)/i;
+        const hintBeginRegex = /^\s*~hint\s*(.+)\s*/i;
         const hintEndRegex = /^\s*hint~.*/i;
         let hintSummary:HTMLElement = null;
-        let hintBegunElement:HTMLElement = null;
+        let hintBeginElement:HTMLElement = null;
         let hintElements:HTMLElement[] = new Array();
 
         content.childNodes
-        //pxt.Util.toArray(content.querySelectorAll('*'))
              .forEach((node: Node) => {
                 if (node instanceof HTMLElement) {
                     const element = node;
-                    if (hintBegunElement == null) {
+                    if (hintBeginElement == null) {
                         // TODO if element is 'p'
                         const match = element.innerHTML.match(hintBeginRegex);
                         if (match) {
                             const summary = match[1];
                             hintSummary = document.createElement('summary');
                             hintSummary.append(summary);
-                            hintBegunElement = element;
+                            hintBeginElement = element;
                         }
                     }
                     else {
@@ -386,7 +384,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                                 hintDetails.appendChild(hintElement);
                             });
                             
-                            hintBegunElement.parentNode.replaceChild(hintDetails, hintBegunElement);
+                            hintBeginElement.parentNode.replaceChild(hintDetails, hintBeginElement);
                             element.parentNode.removeChild(element); // remove hint end signifier
                         }
                         else {
