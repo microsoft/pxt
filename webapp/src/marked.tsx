@@ -353,48 +353,63 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     private renderHints(content: HTMLElement) {
-        const hintBeginRegex = /^\s*~hint\s*(.+)\s*/i;
+        const hintBeginRegex = /^\s*~hint\s*(.+)/i;
         const hintEndRegex = /^\s*hint~.*/i;
-        let hintSummary:HTMLElement = null;
-        let hintBeginElement:HTMLElement = null;
-        let hintElements:HTMLElement[] = new Array();
+        let hintFound:boolean = false;
 
-        content.childNodes
-             .forEach((node: Node) => {
-                if (node instanceof HTMLElement) {
-                    const element = node;
-                    if (hintBeginElement == null) {
-                        // TODO if element is 'p'
-                        const match = element.innerHTML.match(hintBeginRegex);
-                        if (match) {
-                            const summary = match[1];
-                            hintSummary = document.createElement('summary');
-                            hintSummary.append(summary);
-                            hintBeginElement = element;
+        do { 
+            hintFound = false;
+            let hintSummary:HTMLElement = null; // the hint summary element
+            let hintBeginElement:HTMLElement = null; // the element that signifies the beginning of the hint
+            let hintChildNodes:Node[] = new Array(); // nodex that should be inside the hint
+            
+            for (let node of content.childNodes) {
+                
+            }
+
+            content.childNodes
+                .forEach((node: Node) => {
+                    if (!hintFound && node instanceof HTMLElement) {
+                        const element = node; 
+                        if (hintBeginElement == null) {
+                            if (element.tagName.toLocaleLowerCase() === "p") { // look for hint begin signifiers in 'p' elements
+                                const match = element.innerHTML.match(hintBeginRegex); // look for a match of the hint-begin signifier (i.e. ~hint)
+                                if (match) {
+                                    const summary = match[1]; // any characters after the hint-begin signifier are considered the summary.
+                                    hintSummary = document.createElement('summary');
+                                    hintSummary.append(summary);
+                                    hintBeginElement = element; // store the beginning element so we know what to replace when we close the hint
+                                }
+                            }
+                        } else { // we have already found a hint-begin signifier element, now capture inner-nodes and look for hint-end signifier
+                            if (element.tagName.toLocaleLowerCase() === "p") { 
+                                const match = element.innerHTML.match(hintEndRegex); // look for a match of the hint-end signifier (i.e. hint~)
+                                if (match) {
+                                    const hintDetails = document.createElement('details'); // create the 'details' element...
+                                    hintDetails.append(hintSummary); // ...add the summary element...
+                                    hintChildNodes.forEach((hintChildNode) => { // ...and move the captured nodes into the 'details' element
+                                        hintDetails.appendChild(hintChildNode);
+                                    });
+                                    
+                                    hintBeginElement.parentNode.replaceChild(hintDetails, hintBeginElement); // replace the hintBegin element with the new details element
+                                    element.parentNode.removeChild(node); // remove hint-end signifier node
+                                    hintFound = true; // mark that we found a complete hint this time around
+                                    hintBeginElement = null;
+                                }
+                                else {
+                                    hintChildNodes.push(node); // we have a hint-begin node and this node is not a hint-end node, add it to hint's child nodes
+                                }
+                            }
+                            else {
+                                hintChildNodes.push(node); // we have a hint-begin node and this node is not a hint-end node, add it to hint's child nodes
+                            }
                         }
                     }
-                    else {
-                        // TODO if we catch another start, remove orphaned hint being node
-                        const match = element.innerHTML.match(hintEndRegex);
-                        if (match) {
-                            const hintDetails = document.createElement('details');
-                            hintDetails.append(" ");
-                            hintDetails.append(hintSummary);
-                            hintElements.forEach((hintElement) => {  // this is too greedy - it's grabbing child elements of elements
-                                hintDetails.appendChild(hintElement);
-                            });
-                            
-                            hintBeginElement.parentNode.replaceChild(hintDetails, hintBeginElement);
-                            element.parentNode.removeChild(element); // remove hint end signifier
-                        }
-                        else {
-                            hintElements.push(element);
-                        }
-                        
+                    else if (hintBeginElement != null) { // if we have started capturing hint nodes and this node is not an HTMLElement, add it to hint's child nodes
+                        hintChildNodes.push(node);
                     }
-                }
-            });
-        // TODO: if we didn't find an end, remove orphaned hint begin node
+                });
+        } while (hintFound); // processing a hint modifies the nodes order and count of 'content.childnodes'. Rescan the nodes starting from the beginning to look for additional hints.
     }
 
     private renderOthers(content: HTMLElement) {
