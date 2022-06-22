@@ -1304,7 +1304,7 @@ ${output}</xml>`;
                         // Logic in isAutoDeclaration() returns true if text === "0".
                         // If a variable declaration sets the inital value to "0", it is considered
                         // an auto declaration. However, getComments() will no longer be called.
-                        // This is a problem if there is a comment (e.g. //@highligh) prior to the
+                        // This is a problem if there is a comment (e.g. //@highlight) prior to the
                         // variable declaration. The result being the comment is incorrectly
                         // inserted into the XML. 
                         let skipAutoDeclarationCheck = false;
