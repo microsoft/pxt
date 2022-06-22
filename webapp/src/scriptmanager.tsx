@@ -8,6 +8,18 @@ import * as auth from "./auth";
 
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
+import { ProgressBar } from "./dialogs";
+
+declare const zip: any;
+
+let loadZipJsPromise: Promise<boolean>;
+function loadZipAsync(): Promise<boolean> {
+    if (!loadZipJsPromise)
+        loadZipJsPromise = pxt.BrowserUtils.loadScriptAsync("zip.js/zip.min.js")
+            .then(() => typeof zip !== "undefined")
+            .catch(e => false)
+    return loadZipJsPromise;
+}
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -29,6 +41,13 @@ export interface ScriptManagerDialogState {
 
     sortedBy?: string;
     sortedAsc?: boolean;
+
+    download?: DownloadProgress;
+}
+
+interface DownloadProgress {
+    completed: number;
+    max: number;
 }
 
 export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps, ScriptManagerDialogState> {
@@ -274,6 +293,133 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.setState({ sortedAsc: !sortedAsc, markedNew: {}, selected: {} });
     }
 
+    handleDownloadAsync = async () => {
+        pxt.tickEvent("scriptmanager.downloadZip", undefined, { interactiveConsent: true });
+
+        await loadZipAsync();
+
+        const { selected } = this.state;
+        const zipWriter = new zip.ZipWriter(new zip.Data64URIWriter("application/zip"));
+
+        const allHeaders = this.getSortedHeaders();
+        const selectedHeaders: pxt.workspace.Header[] = [];
+        Object.keys(selected).forEach((selectedIndex) =>  {
+            if(selected[selectedIndex]){
+                const intIndex = parseInt(selectedIndex);
+                selectedHeaders.push(allHeaders[intIndex]);
+            }
+        })
+
+        let done = 0;
+
+        const takenNames: {[index: string]: boolean} = {};
+
+        const format = (val: number, len = 2) => {
+            let out = val + "";
+            while (out.length < len) {
+                out = "0" + out
+            }
+
+            return out.substring(0, len);
+        }
+
+        this.setState({
+            download: {
+                completed: 0,
+                max: selectedHeaders.length
+            }
+        });
+
+        const targetNickname = pxt.appTarget.nickname || pxt.appTarget.id;
+
+        for (const header of selectedHeaders) {
+            const text = await workspace.getTextAsync(header.id);
+
+            let preferredEditor = "blocksprj";
+            try {
+                const config = JSON.parse(text["pxt.json"]) as pxt.PackageConfig;
+
+                preferredEditor = config.preferredEditor || "blocksprj"
+            }
+            catch (e) {
+                // ignore invalid configs
+            }
+
+            const project: pxt.cpp.HexFile = {
+                meta: {
+                    cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
+                    targetVersions: pxt.appTarget.versions,
+                    editor: preferredEditor,
+                    name: header.name
+                },
+                source: JSON.stringify(text, null, 2)
+            };
+
+            const compressed = await pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
+
+            /* eslint-disable no-control-regex */
+            let sanitizedName = header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '');
+            sanitizedName = sanitizedName.trim().replace(/\s+/g, '-');
+            /* eslint-enable no-control-regex */
+
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
+                const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
+                sanitizedName = sanitizedName.replace(rx, '');
+            }
+
+            if (!sanitizedName) {
+                sanitizedName = "Untitled"; // do not translate to avoid unicode issues
+            }
+
+            // Include the recent use time in the filename
+            const date = new Date(header.recentUse * 1000);
+            const dateSnippet = `${date.getFullYear()}-${format(date.getMonth())}-${format(date.getDate())}`
+
+            // FIXME: handle different date formatting?
+            let fn = `${targetNickname}-${dateSnippet}-${sanitizedName}.mkcd`;
+
+            // zip.js can't handle multiple files with the same name
+            if (takenNames[fn]) {
+                let index = 2;
+                do {
+                    fn = `${targetNickname}-${dateSnippet}-${sanitizedName}${index}.mkcd`
+                    index ++;
+                } while(takenNames[fn])
+            }
+
+            takenNames[fn] = true;
+
+            await zipWriter.add(fn, new zip.Uint8ArrayReader(compressed));
+
+            // Check for cancellation
+            if (!this.state.download) return;
+
+            done++;
+            this.setState({
+                download: {
+                    completed: done,
+                    max: selectedHeaders.length
+                }
+            });
+        }
+
+        const datauri = await zipWriter.close();
+
+        const zipName = `makecode-${targetNickname}-project-download.zip`
+
+        pxt.BrowserUtils.browserDownloadDataUri(datauri, zipName);
+
+        this.setState({
+            download: null
+        });
+    }
+
+    handleDownloadProgressClose = () => {
+        this.setState({
+            download: null
+        });
+    }
+
     private getSelectedHeader() {
         const { selected } = this.state;
         const indexes = Object.keys(selected);
@@ -305,7 +451,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
     }
 
     renderCore() {
-        const { visible, selected, markedNew, view, searchFor, sortedBy, sortedAsc } = this.state;
+        const { visible, selected, markedNew, view, searchFor, sortedBy, sortedAsc, download } = this.state;
         if (!visible) return <div></div>;
 
         const darkTheme = pxt.appTarget.appTheme.baseTheme == 'dark';
@@ -334,8 +480,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 style={{ flexGrow: 1 }}
                 searchOnChange={true}
             />);
-            if (Object.keys(selected).length > 0) {
-                if (Object.keys(selected).length == 1) {
+
+            const numSelected = Object.keys(selected).length
+            if (numSelected > 0) {
+                if (numSelected == 1) {
                     const openBtn = <sui.Button key="edit" icon="edit outline" className="icon"
                         text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />;
                     if (!openNewTab)
@@ -353,6 +501,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
+                if (numSelected > 1) {
+                    headerActions.push(<sui.Button key="download-zip" icon="download" className="icon"
+                        text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
+                }
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
@@ -451,6 +603,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         </table>
                     </div>
                     : undefined}
+
+                {download && <sui.Modal header={lf("Preparing your zip file...")} isOpen={!!download} onClose={this.handleDownloadProgressClose}>
+                    <ProgressBar percentage={100 * (download.completed / download.max)} />
+                </sui.Modal>}
             </sui.Modal>
         )
     }

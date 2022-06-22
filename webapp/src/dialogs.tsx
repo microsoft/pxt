@@ -304,7 +304,7 @@ interface ProgressBarProps {
     cornerRadius?: number;
 }
 
-class ProgressBar extends React.Component<ProgressBarProps, {}> {
+export class ProgressBar extends React.Component<ProgressBarProps, {}> {
     render() {
         let { percentage, label, cornerRadius } = this.props;
 
