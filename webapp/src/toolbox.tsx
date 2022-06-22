@@ -699,7 +699,10 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     private treeRow: HTMLElement;
     private baseAnimationDelay: number = 1;
     private animationDelay: number = 0.15;
-    private brandIcons = {'\uf287': 'usb', '\uf368': 'accessible-icon', '\uf170': 'adn', '\uf1a7': 'pied-piper-pp', '\uf1b6': 'steam', '\uf294': 'bluetooth-b', '\uf1d0': 'rebel', '\uf136': 'maxcdn', '\uf1aa': 'joomla', '\uf213': 'sellsy', '\uf20e': 'connectdevelop', '\uf113': 'github-alt' };
+    private brandIcons = {
+        '\uf287': 'usb', '\uf368': 'accessible-icon', '\uf170': 'adn', '\uf1a7': 'pied-piper-pp', '\uf1b6': 'steam', '\uf294': 'bluetooth-b',
+        '\uf1d0': 'rebel', '\uf136': 'maxcdn', '\uf1aa': 'joomla', '\uf213': 'sellsy', '\uf20e': 'connectdevelop', '\uf113': 'github-alt'
+    };
 
     constructor(props: TreeRowProps) {
         super(props);
