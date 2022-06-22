@@ -2063,6 +2063,7 @@ export class ProjectView
 
    async importZipFileAsync(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
+        pxt.tickEvent("import.zip");
 
         await scriptmanager.loadZipAsync();
         const reader = new zip.ZipReader(new zip.BlobReader(file));
@@ -2076,7 +2077,6 @@ export class ProjectView
             core.warningNotification(lf("No projects available to import found inside zip file."));
             return;
         }
-
 
         const confirmed = await core.confirmAsync({
             header: lf("Import zip file?"),
