@@ -329,6 +329,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             }
         });
 
+        const targetNickname = pxt.appTarget.nickname || pxt.appTarget.id;
+
         for (const header of selectedHeaders) {
             const text = await workspace.getTextAsync(header.id);
 
@@ -373,13 +375,13 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             const dateSnippet = `${date.getFullYear()}-${format(date.getMonth())}-${format(date.getDate())}`
 
             // FIXME: handle different date formatting?
-            let fn = `${pxt.appTarget.nickname || pxt.appTarget.id}-${dateSnippet}-${sanitizedName}.mkcd`;
+            let fn = `${targetNickname}-${dateSnippet}-${sanitizedName}.mkcd`;
 
             // zip.js can't handle multiple files with the same name
             if (takenNames[fn]) {
                 let index = 2;
                 do {
-                    fn = `${pxt.appTarget.nickname || pxt.appTarget.id}-${dateSnippet}-${sanitizedName}${index}.mkcd`
+                    fn = `${targetNickname}-${dateSnippet}-${sanitizedName}${index}.mkcd`
                     index ++;
                 } while(takenNames[fn])
             }
@@ -402,7 +404,9 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
         const datauri = await zipWriter.close();
 
-        pxt.BrowserUtils.browserDownloadDataUri(datauri, "projects.zip");
+        const zipName = `makecode-${targetNickname}-project-download.zip`
+
+        pxt.BrowserUtils.browserDownloadDataUri(datauri, zipName);
 
         this.setState({
             download: null
