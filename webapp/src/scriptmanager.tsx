@@ -483,8 +483,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 style={{ flexGrow: 1 }}
                 searchOnChange={true}
             />);
-            if (Object.keys(selected).length > 0) {
-                if (Object.keys(selected).length == 1) {
+
+            const numSelected = Object.keys(selected).length
+            if (numSelected > 0) {
+                if (numSelected == 1) {
                     const openBtn = <sui.Button key="edit" icon="edit outline" className="icon"
                         text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />;
                     if (!openNewTab)
@@ -502,8 +504,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
-                headerActions.push(<sui.Button key="download" icon="download" className="icon"
-                    text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
+                if (numSelected > 1) {
+                    headerActions.push(<sui.Button key="download-zip" icon="download" className="icon"
+                        text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
+                }
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
