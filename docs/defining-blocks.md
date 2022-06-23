@@ -42,7 +42,7 @@ namespace basic {
     ...
 }
 ```
-* `icon` icon Unicode character from the icon font to display. The [Semantic UI](https://semantic-ui.com/elements/icon.html) icon set has been ported from Font Awesome (v4.5.6 at the time of writing), and a full list can be found at http://fontawesome.io/icons/
+* `icon` icon Unicode character from the icon font to display. Any free non-brand icon from Font Awesome (v5.15.4 at the time of writing) can be used. The full list can be found https://fontawesome.com/v5/search?m=free
 * `color` should be included in a comment line starting with `//%`. The color takes a **hue** value or a HTML color.
 * `weight` determines where your category appears in the toolbox. Higher weight means it appears closer to the top.
 
