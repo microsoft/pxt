@@ -1,32 +1,8 @@
-# Getting started
-
-### @diffs false
-## Introduction @showdialog
-
-Let's get started!
-
-## Step 1 @showhint
-
-Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.
-
-```blocks
-basic.showString("Micro!")
-```
-
-## Step 2
-
-Click ``|Download|`` to transfer your code in your unknown macro!
-
-
-
-
 # Accordion Hints
 
 ## Step 1
 
-### Step 1
-
-Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.
+Welcome!
 
 ~hint Look here for a hint!
 
@@ -34,6 +10,8 @@ Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||``
   - :mouse pointer: Then click here!
 
 hint~
+
+Here is some more content.
 
 ~hint Look here for another hint!
 
@@ -44,4 +22,3 @@ hint~
 ## Step 2
 
 Congratulations, you did it!
-    
