@@ -17,7 +17,8 @@
     height: 90%;
     padding: 1rem;
 
-    #serialCsv {
+    #serialCsv,
+    #serialCsvViewLatest {
         display: none;
     }
 
@@ -28,6 +29,12 @@
     &.csv-view {
         #serialCsv {
             display: block;
+
+            table:last-child thead {
+                position: sticky;
+                top: -0.75rem;
+                box-shadow: inset 0 2px 0 #ddd, inset 0 -2px 0 #ddd;
+            }
         }
 
         #serialCharts,
@@ -35,6 +42,24 @@
         #serialConsole,
         .csv-hide {
             display: none;
+        }
+
+        #serialCsvViewLatest {
+            display: block;
+            position: absolute;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            left: 0;
+            right: 0;
+            max-width: 15rem;
+            margin-top: -3em;
+        }
+
+        &.hide-view-latest {
+            #serialCsvViewLatest {
+                display: none;
+            }
         }
     }
 
@@ -130,7 +155,7 @@
     }
 }
 #serialConsole.nochart {
-    height: calc(100% - 2.5rem);
+    height: calc(100% - 12.5rem);
 }
 
 #serialConsole span {
