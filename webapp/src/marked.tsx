@@ -352,8 +352,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
-    // Renders collapsable hints\
-    private renderHints(content: HTMLElement) {
+    // Renders collapsable hints
+    private renderAccordianHints(content: HTMLElement) {
         const hintBeginRegex = /^\s*~hint\s*(.+)/i;
         const hintEndRegex = /^\s*hint~.*/i;
         
@@ -492,7 +492,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         this.renderInlineBlocks(tempDiv);
         this.renderSnippets(tempDiv);
         this.renderBullets(tempDiv);
-        this.renderHints(tempDiv);
+        this.renderAccordianHints(tempDiv);
         this.renderOthers(tempDiv);
 
         content.innerHTML = "";
