@@ -1302,29 +1302,11 @@ ${output}</xml>`;
                     case SK.VariableDeclaration:
                         const decl = node as ts.VariableDeclaration;
                         if (isAutoDeclaration(decl)) {
-                        // BUG: A comment (e.g. //@highlight) prior to a variable declaration of "0"
-                        // in markdown results in mis-rendered XML.
-                        //
-                        // Logic in isAutoDeclaration() returns true if `text === "0"`. As a reuslt,
-                        // existing code will not call `getComments()` and not return `stmt`. This
-                        // results in incorrect XML.
-                        //
-                        // FIX: Skip the AutoDeclarationCheck when the variable's text is "0".
-                        let skipAutoDeclarationCheck = false;
-                        if (ts.isStringOrNumericLiteral(decl.initializer)) {
-                            const text = decl.initializer.getText();
-                            if (text === "0") {
-                                skipAutoDeclarationCheck = true;
-                            }
-                        }
-                        if(!skipAutoDeclarationCheck) {
-                            if (isAutoDeclaration(decl)) {
-                                // Don't emit null or automatic initializers;
-                                // They are implicit within the blocks. But do track them in case they
-                                // never get used in the blocks (and thus won't be emitted again)
-                                trackAutoDeclaration(decl);
-                                return getNext();
-                            }
+                            // Don't emit null or automatic initializers;
+                            // They are implicit within the blocks. But do track them in case they
+                            // never get used in the blocks (and thus won't be emitted again)
+                            trackAutoDeclaration(decl);
+                            return getNext();
                         }
                         stmt = getVariableDeclarationStatement(node as ts.VariableDeclaration);
                         break;
@@ -3250,8 +3232,16 @@ ${output}</xml>`;
                 return true
             }
             else if (isStringOrNumericLiteral(decl.initializer)) {
+                // BUG: A comment (e.g. //@highlight) prior to a variable declaration of "0"
+                // in markdown results in mis-rendered XML.
+                //
+                // Logic in isAutoDeclaration() returns true if `text === "0"`. As a reuslt,
+                // existing code will not call `getComments()` and not return `stmt`. This
+                // results in incorrect XML.
+                //
+                // FIX: Do not consider "0" to be an autoDeclaration.
                 const text = decl.initializer.getText();
-                return text === "0" || isEmptyString(text);
+                return isEmptyString(text);
             }
             else {
                 const callInfo: pxtc.CallInfo = pxtc.pxtInfo(decl.initializer).callInfo
