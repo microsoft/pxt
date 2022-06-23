@@ -356,62 +356,62 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     private renderAccordianHints(content: HTMLElement) {
         const hintBeginRegex = /^\s*~hint\s*(.+)/i;
         const hintEndRegex = /^\s*hint~.*/i;
-        
-        // Processing a hint modifies the node order and count of 'content.childnodes'. 
-        // Keep reprocessing content.childnodes until all hints have been processing.
-        let hintFound:boolean = false; 
 
-        do { 
+        // Processing a hint modifies the node order and count of 'content.childnodes'.
+        // Keep reprocessing content.childnodes until all hints have been processing.
+        let hintFound: boolean = false;
+
+        do {
             hintFound = false;
             // The hint summary element (i.e. <summary>text</summary>).
-            let hintSummary:HTMLElement = null; 
+            let hintSummary: HTMLElement = null;
             // The element that signifies the beginning of the hint (i.e. <p>~hint (hint summary)</p>).
-            let hintBeginElement:HTMLElement = null;
+            let hintBeginElement: HTMLElement = null;
             // Inner-nodes of the hint.
-            let hintChildNodes:Node[] = new Array(); 
-            
+            let hintChildNodes: Node[] = new Array();
+
             for (let node of content.childNodes) {
                 if (node instanceof HTMLElement) {
-                    const element = node; 
+                    const element = node;
                     if (hintBeginElement == null) {
                         // Look for hint begin signifiers in 'p' elements.
-                        if (element.tagName.toLocaleLowerCase() === "p") { 
+                        if (element.tagName.toLocaleLowerCase() === "p") {
                             // Look for a match of the hint-begin signifier (i.e. ~hint).
-                            const match = element.innerHTML.match(hintBeginRegex); 
+                            const match = element.innerHTML.match(hintBeginRegex);
                             if (match) {
                                 // Any characters after the hint-begin signifier are considered part of the summary.
-                                const summary = match[1]; 
+                                const summary = match[1];
                                 hintSummary = document.createElement('summary');
                                 hintSummary.append(summary);
-                                
+
                                 // Store the beginning element so we know what to replace when we close the hint.
-                                hintBeginElement = element; 
+                                hintBeginElement = element;
                             }
                         }
                     // We have already found a hint-begin signifier element, now capture inner-nodes and look for hint-end signifier.
-                    } else { 
-                        if (element.tagName.toLocaleLowerCase() === "p") { 
+                    } else {
+                        if (element.tagName.toLocaleLowerCase() === "p") {
                             // Look for a match of the hint-end signifier (i.e. hint~).
-                            const match = element.innerHTML.match(hintEndRegex); 
+                            const match = element.innerHTML.match(hintEndRegex);
                             if (match) {
                                 // Create the 'details' element...
-                                const hintDetails = document.createElement('details'); 
+                                const hintDetails = document.createElement('details');
                                 // ...add the summary element...
-                                hintDetails.append(hintSummary); 
+                                hintDetails.append(hintSummary);
                                 // ...and move the hint's child nodes into the 'details' element.
-                                hintChildNodes.forEach((hintChildNode) => { 
+                                hintChildNodes.forEach((hintChildNode) => {
                                     hintDetails.appendChild(hintChildNode);
                                 });
-                                
+
                                 // Replace the hintBegin element with the new details element.
-                                hintBeginElement.parentNode.replaceChild(hintDetails, hintBeginElement); 
+                                hintBeginElement.parentNode.replaceChild(hintDetails, hintBeginElement);
                                 // Remove hint-end signifier node.
-                                element.parentNode.removeChild(node); 
+                                element.parentNode.removeChild(node);
                                 // Mark that we found a complete hint this time around.
-                                hintFound = true; 
+                                hintFound = true;
                                 // Processing a hint modifies the node order and count of 'content.childnodes'.
-                                // Break the forloop here so we can reprocess the new state of the child nodes. 
-                                break; 
+                                // Break the forloop here so we can reprocess the new state of the child nodes.
+                                break;
                             }
                             else {
                                 // We have a hint-begin node and this node is not a hint-end node, add it to hint's child nodes.
@@ -420,7 +420,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         }
                         else {
                             // We have a hint-begin node and this node is not a hint-end node, add it to hint's child nodes.
-                            hintChildNodes.push(node); 
+                            hintChildNodes.push(node);
                         }
                     }
                 }
@@ -429,10 +429,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     hintChildNodes.push(node);
                 }
             }
-        
+
         // Processing a hint modifies the node order and count of 'content.childnodes'.
         // Rescan the nodes starting from the beginning to look for additional hints.
-        } while (hintFound); 
+        } while (hintFound);
     }
 
     private renderOthers(content: HTMLElement) {
