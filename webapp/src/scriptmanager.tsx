@@ -15,7 +15,7 @@ import { ProgressBar } from "./dialogs";
 declare const zip: any;
 
 let loadZipJsPromise: Promise<boolean>;
-function loadZipAsync(): Promise<boolean> {
+export function loadZipAsync(): Promise<boolean> {
     if (!loadZipJsPromise)
         loadZipJsPromise = pxt.BrowserUtils.loadScriptAsync("zip.js/zip.min.js")
             .then(() => typeof zip !== "undefined")
