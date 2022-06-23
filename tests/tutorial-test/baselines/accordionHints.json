@@ -4,13 +4,8 @@
     "steps": [
         {
             "title": "Step 1",
-            "contentMd": "Welcome!\n\n~hint Look here for a hint!\n\n  - :blank: Press the ``||Inline Block||`` to do something.\n  - :mouse pointer: Then click here!\n\nhint~\n\nHere is some more content.\n\n~hint Look here for another hint!\n\n``||It's another hint!||``\n\nhint~",
-            "headerContentMd": "Welcome!\n\n~hint Look here for a hint!\n\n  - :blank: Press the ``||Inline Block||`` to do something.\n  - :mouse pointer: Then click here!\n\nhint~\n\nHere is some more content.\n\n~hint Look here for another hint!\n\n``||It's another hint!||``\n\nhint~"
-        },
-        {
-            "title": "Step 2",
-            "contentMd": "Congratulations, you did it!",
-            "headerContentMd": "Congratulations, you did it!"
+            "contentMd": "Welcome!\n\n~hint This content is hidden until the user clicks here.\n\n  - :blank: Bullet 1\n  - :mouse pointer: Bullet 2\n\nhint~",
+            "headerContentMd": "Welcome!\n\n~hint This content is hidden until the user clicks here.\n\n  - :blank: Bullet 1\n  - :mouse pointer: Bullet 2\n\nhint~"
         }
     ],
     "activities": null,
