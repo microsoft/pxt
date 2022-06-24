@@ -111,6 +111,7 @@
         var highContrast = !!/hc(?:[:=])1/i.exec(window.location.href);
         var light = !!/light(?:[:=])1/i.exec(window.location.href);
         var fullScreen = !!/fullscreen(?:[:=])1/i.exec(window.location.href);
+        var autofocus = !!/autofocus(?:[:=])1/i.exec(window.location.href);
         var deps = /deps(?:[:=])([^&?]+)/i.exec(window.location.href);
         var prebuiltSimJs = /prebuilt(?:[:=])1/i.test(window.location.href);
         var single = !!/single(?:[:=])1/i.test(window.location.href);
@@ -243,7 +244,8 @@
                         fullScreen: fullScreen,
                         dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined,
                         builtJsInfo: builtSimJs,
-                        single: single
+                        single: single,
+                        autofocus: autofocus
                     };
                     console.log('simulating script')
                     pxt.runner.simulateAsync(sims, options).then(function() {
