@@ -345,7 +345,12 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
 
             const decorations: monaco.editor.IModelDeltaDecoration[] = [];
             matches.forEach(match => {
-                const line = match.range.startLineNumber;
+                let range = match.range;
+                if (matcher.validateRange) {
+                    range = matcher.validateRange(range, model);
+                    if (!range) return;
+                }
+                const line = range.startLineNumber;
 
                 if (this.getInfoForLine(line)) return;
 
@@ -356,7 +361,7 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
                     }
                 });
 
-                this.trackRange(fe.id, line, match.range);
+                this.trackRange(fe.id, line, range);
 
             });
             this.setDecorations(fe.id, this.editor.deltaDecorations([], decorations));

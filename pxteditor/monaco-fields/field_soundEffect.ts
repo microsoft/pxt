@@ -151,6 +151,47 @@ namespace pxt.editor {
         }
     }
 
+    function validateRange(range: monaco.Range, model: monaco.editor.ITextModel) {
+        let currentLine = range.startLineNumber;
+        let currentColumn = 0;
+        let foundStart = false;
+        let parenCount = 0;
+
+        const methodName = "createSoundEffect";
+        const totalLines = model.getLineCount();
+
+        while (currentLine < totalLines) {
+            const lineContent = model.getLineContent(currentLine);
+            const startIndex = lineContent.indexOf(methodName)
+            if (startIndex !== -1) {
+                foundStart = true;
+                currentColumn = startIndex + methodName.length;
+            }
+
+            if (foundStart) {
+                while (currentColumn < lineContent.length) {
+                    const currentChar = lineContent.charAt(currentColumn)
+                    if (currentChar === "(") {
+                        parenCount++
+                    }
+                    else if (currentChar === ")") {
+                        parenCount--;
+
+                        if (parenCount === 0) {
+                            return new monaco.Range(range.startLineNumber, range.startColumn, currentLine, currentColumn + model.getLineMinColumn(currentLine) + 1)
+                        }
+                    }
+                    currentColumn ++;
+                }
+            }
+
+            currentColumn = 0;
+            currentLine ++;
+        }
+
+        return undefined;
+    }
+
     function defaultSound(): pxt.assets.Sound {
         return {
             wave: "sine",
@@ -171,10 +212,11 @@ namespace pxt.editor {
         heightInPixels: 510,
         matcher: {
             // match both JS and python
-            searchString: "music\\s*\\.\\s*createSoundEffect\\s*\\([^)]*\\)",
+            searchString: "music\\s*\\.\\s*createSoundEffect\\s*\\(",
             isRegex: true,
             matchCase: true,
-            matchWholeWord: false
+            matchWholeWord: false,
+            validateRange
         },
         proto: MonacoSoundEffectEditor
     };
