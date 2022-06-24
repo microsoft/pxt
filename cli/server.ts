@@ -1093,7 +1093,7 @@ export function serveAsync(options: ServeOptions) {
 
         let publicDir = path.join(nodeutil.pxtCoreDir, "webapp/public")
 
-        if (pathname == "/--embed") {
+        if (pathname == "/--embed" || pathname === "/---embed") {
             sendFile(path.join(publicDir, 'embed.js'));
             return
         }
