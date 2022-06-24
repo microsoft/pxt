@@ -284,7 +284,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         }
     }
 
-    // Renders inline blocks, such as "||controller: Controller||"
+    // Renders inline blocks, such as "||controller: Controller||".
     private renderInlineBlocks(content: HTMLElement) {
         pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .forEach((inlineBlock: HTMLElement) => {
@@ -307,7 +307,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
-    // Renders icon bullets, such as ":mouse pointer:" and ":paint brush:"
+    // Renders icon bullets, such as ":mouse pointer:" and ":paint brush:".
     private renderBullets(content: HTMLElement) {
         const bulletRegex = /^:([^:]+):/i;
         pxt.Util.toArray(content.querySelectorAll("li"))
@@ -352,13 +352,28 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
-    // Renders collapsable hints
+    // Renders collapsable hints starting with "~hint" and ending with "hint~".
+    // Example input:
+    // -------------------------------
+    // ~hint This is the hint summary.
+    //
+    //    This is the hint content
+    //
+    // hint~
+    // -------------------------------
+    //
+    // Example output:
+    // -------------------------------
+    // <details><summary>This is the hint summary</summary>
+    //   This is the hint content
+    // </details>
+    // -------------------------------
     private renderAccordianHints(content: HTMLElement) {
         const hintBeginRegex = /^\s*~hint\s*(.+)/i;
         const hintEndRegex = /^\s*hint~.*/i;
 
-        // Processing a hint modifies the node order and count of 'content.childnodes'.
-        // Keep reprocessing content.childnodes until all hints have been processing.
+        // Processing each hint modifies the node order and count of 'content.childnodes'.
+        // Keep reprocessing content.childnodes until all hints have been processed.
         let hintFound: boolean = false;
 
         do {
@@ -380,6 +395,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                             const match = element.innerHTML.match(hintBeginRegex);
                             if (match) {
                                 // Any characters after the hint-begin signifier are considered part of the summary.
+                                // Store the summary until we detect the end of the hint and construct the final 'details' element.
                                 const summary = match[1];
                                 hintSummary = document.createElement('summary');
                                 hintSummary.append(summary);
@@ -410,28 +426,28 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                                 // Mark that we found a complete hint this time around.
                                 hintFound = true;
                                 // Processing a hint modifies the node order and count of 'content.childnodes'.
-                                // Break the forloop here so we can reprocess the new state of the child nodes.
+                                // Break the for-loop here so we can reprocess the new state of the child nodes.
                                 break;
                             }
                             else {
-                                // We have a hint-begin node and this node is not a hint-end node, add it to hint's child nodes.
+                                // We have a hint-begin node and this node is not a hint-end node, add it to the current hint's child nodes.
                                 hintChildNodes.push(node);
                             }
                         }
                         else {
-                            // We have a hint-begin node and this node is not a hint-end node, add it to hint's child nodes.
+                            // We have a hint-begin node and this node is not a hint-end node, add it to the current hint's child nodes.
                             hintChildNodes.push(node);
                         }
                     }
                 }
                 else if (hintBeginElement != null) {
-                    // If we have started capturing hint nodes and this node is not an HTMLElement, add it to hint's child nodes.
+                    // If we have started capturing hint nodes and this node is not an HTMLElement, add it to the current hint's child nodes.
                     hintChildNodes.push(node);
                 }
             }
 
         // Processing a hint modifies the node order and count of 'content.childnodes'.
-        // Rescan the nodes starting from the beginning to look for additional hints.
+        // Rescan the nodes starting from the beginning to look for more hints.
         } while (hintFound);
     }
 

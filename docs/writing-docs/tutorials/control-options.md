@@ -140,18 +140,6 @@ namespace camera {
 ```
 ````
 
-### Accordion/hidden hints
-If you want to provide extra information without having to divert the coder's attention, you can include content in an "accordion" style hint control.
-
-```
-~hint This content is hidden until the user clicks here.
-
-  - :blank: Bullet 1
-  - :mouse pointer: Bullet 2
-
-hint~
-```
-
 ## URL Parameters
 
 ### Locked Editor

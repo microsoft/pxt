@@ -168,6 +168,22 @@ forever(function() {
 ```
 ````
 
+## Accordion/hidden hints
+If you want to provide extra information without having to divert the coder's attention, you can include content in an "accordion" style hint control. 
+
+### ~ hint
+Note that the newline before the hint-end signifier (i.e. hint~) is required.
+### ~
+
+```
+~hint This content is hidden until the user clicks here.
+
+  - :blank: Bullet 1
+  - :mouse pointer: Bullet 2
+
+hint~
+```
+
 ## Testing
 
 If you are writing a third-party tutorial, please see the [User Tutorials](/writing-docs/user-tutorials) documentation for information on how to preview and share your tutorials.
