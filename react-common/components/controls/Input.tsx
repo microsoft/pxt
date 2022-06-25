@@ -15,6 +15,7 @@ export interface InputProps extends ControlProps {
     readOnly?: boolean;
     autoComplete?: boolean;
     selectOnClick?: boolean;
+    treatSpaceAsEnter?: boolean
 
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
@@ -66,7 +67,7 @@ export const Input = (props: InputProps) => {
 
     const enterKeyHandler = (e: React.KeyboardEvent) => {
         const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
-        if (charCode === /*enter*/13 || charCode === /*space*/32) {
+        if (charCode === /*enter*/13 || props.treatSpaceAsEnter && charCode === /*space*/32) {
             if (onEnterKey) {
                 e.preventDefault();
                 onEnterKey(value);
@@ -120,7 +121,7 @@ export const Input = (props: InputProps) => {
                         onClick={iconClickHandler} />
                     : <i
                         className={icon}
-                        aria-hidden={true} />) }
+                        aria-hidden={true} />)}
             </div>
         </div>
     );

@@ -1,5 +1,9 @@
 namespace pxt.BrowserUtils {
 
+    export function isDocumentVisible() {
+        return typeof window !== "undefined" && document.visibilityState === 'visible'
+    }
+
     export function isIFrame(): boolean {
         try {
             return window && window.self !== window.top;

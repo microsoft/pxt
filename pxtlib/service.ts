@@ -1679,6 +1679,7 @@ namespace ts.pxtc.service {
 
         pkgConfig?: pxt.PackageConfig; // Added if the type is Bundled
         repo?: pxt.github.GitRepo; //Added if the type is Github VVN TODO ADD THIS
+        learnMoreUrl?: string;
     }
 
 

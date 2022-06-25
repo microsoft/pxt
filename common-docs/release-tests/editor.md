@@ -36,7 +36,8 @@ Browsers to test:
 * Test the various controls
     1. Play / Stop
     2. Restart
-    3. Snail (make sure you see the code being highlighted as it's running)
+    3. Debug mode 
+        - Snail (make sure you see the code being highlighted as it's running)
     4. Mute / Unmute
     5. Full screen
 * Test the various sensor simulators

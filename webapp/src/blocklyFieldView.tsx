@@ -41,7 +41,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     protected hideCallback: () => void;
     protected containerClass: string;
 
-    constructor(protected contentDiv: HTMLDivElement, protected inContainer: boolean) {
+    constructor(protected contentDiv: HTMLDivElement, protected inContainer: boolean, protected useFlex?: boolean) {
     }
 
     injectElement(element: JSX.Element) {
@@ -62,7 +62,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
 
         this.visible = true;
         this.resize(this.editorBounds);
-        this.contentDiv.style.display = "block";
+        this.contentDiv.style.display = this.useFlex ? "flex" : "block";
 
         if (!this.inContainer) {
             this.overlayDiv = document.createElement("div");
@@ -232,7 +232,7 @@ export function init() {
             }
         }
 
-        current = new FieldEditorView(container || document.getElementById("blocks-editor-field-div") as HTMLDivElement, !!container);
+        current = new FieldEditorView(container || document.getElementById("blocks-editor-field-div") as HTMLDivElement, !!container, options?.useFlex);
 
         switch (fieldEditorId) {
             case "image-editor":

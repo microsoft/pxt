@@ -284,7 +284,7 @@ namespace pxt.blocks.layout {
         const xmlString = serializeNode(sg)
             .replace(/^\s*<svg[^>]+>/i, '')
             .replace(/<\/svg>\s*$/i, '') // strip out svg tag
-        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${renderWidth}" height="${renderHeight}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
+        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${renderWidth}" height="${renderHeight}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer classic-theme">${xmlString}</svg>`;
         const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
 
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
@@ -298,7 +298,7 @@ namespace pxt.blocks.layout {
                     .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
                 // Custom CSS injected directly into the DOM by Blockly
                 customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLLinkElement)?.innerText || "");
-                customCss.unshift((document.getElementById(`blockly-renderer-style-pxt`) as HTMLLinkElement)?.innerText || "");
+                customCss.unshift((document.getElementById(`blockly-renderer-style-pxt-classic`) as HTMLLinkElement)?.innerText || "");
                 // CSS may contain <, > which need to be stored in CDATA section
                 const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
                 cssLink.appendChild(xsg.createCDATASection(cssString));

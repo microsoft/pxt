@@ -16,6 +16,56 @@
 #serialArea {
     height: 90%;
     padding: 1rem;
+
+    #serialCsv,
+    #serialCsvViewLatest {
+        display: none;
+    }
+
+    .common-editor-toggle-outer {
+        padding-left: 1.5rem;
+    }
+
+    &.csv-view {
+        #serialCsv {
+            display: block;
+
+            table:last-child thead {
+                position: sticky;
+                top: -0.75rem;
+                box-shadow: inset 0 2px 0 #ddd, inset 0 -2px 0 #ddd;
+            }
+        }
+
+        #serialCharts,
+        #serialPlaceholder,
+        #serialConsole,
+        .csv-hide {
+            display: none;
+        }
+
+        #serialCsvViewLatest {
+            display: block;
+            position: absolute;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            left: 0;
+            right: 0;
+            max-width: 15rem;
+            margin-top: -3em;
+        }
+
+        &.hide-view-latest {
+            #serialCsvViewLatest {
+                display: none;
+            }
+        }
+    }
+
+    &.no-toggle #serial-editor-toggle {
+        display: none
+    }
 }
 
 #serialArea .ui.divider {
@@ -60,7 +110,8 @@
     transition: border-radius 1s ease-in-out;
 }
 
-#serialConsole {
+#serialConsole,
+#serialCsv {
     margin-top: 0.5rem;
     height: calc(30% - 2.5rem);
     overflow-y: auto;
@@ -76,8 +127,35 @@
     display:none;
 }
 
+#serialCsv {
+    height: 100%;
+
+    table {
+        border-collapse: collapse;
+        margin-top: 1em;
+        text-align: right;
+        border-spacing: 2px;
+        border-color: grey;
+    }
+
+    thead {
+        font-weight: 700;
+    }
+
+    tbody tr:nth-child(odd) {
+        background: #f2f2f2;
+    }
+    tr:nth-child(even), thead tr {
+        background: @white;
+    }
+    td, th {
+        border: 1px solid #ddd;
+        padding: 8px;
+        min-width: 8ch;
+    }
+}
 #serialConsole.nochart {
-    height: calc(100% - 2.5rem);
+    height: calc(100% - 12.5rem);
 }
 
 #serialConsole span {

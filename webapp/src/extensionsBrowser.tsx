@@ -274,6 +274,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             name: p.name,
             imageUrl: p.icon,
             type: pxtc.service.ExtensionType.Bundled,
+            learnMoreUrl: `/reference/${p.name}`,
             pkgConfig: p,
             description: p.description
         }
@@ -486,9 +487,10 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                         imageUrl={scr.imageUrl}
                                         extension={scr}
                                         onClick={installExtension}
-                                        learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                        learnMoreUrl={scr.learnMoreUrl || (scr.fullName ? `/pkg/${scr.fullName}` : undefined)}
                                         loading={scr.loading}
                                         label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
+                                        showDisclaimer={scr.type != pxtc.service.ExtensionType.Bundled && scr.repo?.status != pxt.github.GitRepoStatus.Approved}
                                     />)}
                             </div>
                             {searchComplete && extensionsToShow.length == 0 &&
@@ -507,7 +509,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     imageUrl={scr.imageUrl}
                                     extension={scr}
                                     onClick={installExtension}
-                                    learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                    learnMoreUrl={scr.learnMoreUrl || (scr.fullName ? `/pkg/${scr.fullName}` : undefined)}
                                     loading={scr.loading}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                 />)}
@@ -522,7 +524,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     onClick={installExtension}
                                     imageUrl={scr.imageUrl}
                                     description={scr.description}
-                                    learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
+                                    learnMoreUrl={scr.learnMoreUrl || (scr.fullName ? `/pkg/${scr.fullName}` : undefined)}
                                     loading={scr.loading}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                 />

@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "7.5.47",
+  "version": "8.1.1",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
@@ -64,6 +64,7 @@
     "@blockly/plugin-workspace-search": "^4.0.10",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/immersive-reader-sdk": "1.1.0",
+    "@zip.js/zip.js": "2.4.20",
     "applicationinsights-js": "^1.0.20",
     "browserify": "16.2.3",
     "chai": "^3.5.0",

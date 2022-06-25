@@ -208,6 +208,7 @@ namespace pxsim.codal.music {
 
     interface PendingSound {
         notes: string;
+        onStarted: () => void;
         onFinished: () => void;
         onCancelled: () => void;
     }
@@ -226,6 +227,9 @@ namespace pxsim.codal.music {
         const soundPromise = new Promise<void>((resolve, reject) => {
             soundQueue.push({
                 notes,
+                onStarted: () => {
+                    if (!waitTillDone) cb();
+                },
                 onFinished: resolve,
                 onCancelled: resolve
             });
@@ -235,8 +239,9 @@ namespace pxsim.codal.music {
             playNextSoundAsync();
         }
 
-        if (!waitTillDone) cb();
-        else soundPromise.then(cb);
+        if (waitTillDone) {
+            soundPromise.then(cb);
+        }
     }
 
     async function playNextSoundAsync() {
@@ -246,6 +251,7 @@ namespace pxsim.codal.music {
             let currentToken = cancellationToken;
 
             try {
+                sound.onStarted();
                 await playSoundExpressionAsync(sound.notes, () => currentToken.cancelled);
                 if (currentToken.cancelled) {
                     sound.onCancelled();

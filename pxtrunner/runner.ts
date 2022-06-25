@@ -19,6 +19,7 @@ namespace pxt.runner {
         // single simulator frame, no message simulators
         single?: boolean;
         hideSimButtons?: boolean;
+        autofocus?: boolean;
     }
 
     class EditorPackage {
@@ -407,6 +408,7 @@ namespace pxt.runner {
             light: simOptions.light,
             single: simOptions.single,
             hideSimButtons: simOptions.hideSimButtons
+            autofocus: simOptions.autofocus
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio

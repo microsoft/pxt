@@ -67,6 +67,8 @@ type FileHistoryEntry = pxt.editor.FileHistoryEntry;
 type EditorSettings = pxt.editor.EditorSettings;
 type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
+declare const zip: any;
+
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
@@ -327,7 +329,7 @@ export class ProjectView
             // Don't suspend when inside apps
             return;
         }
-        let active = document.visibilityState == 'visible';
+        const active = pxt.BrowserUtils.isDocumentVisible()
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active });
         data.invalidate('pkg-git-pull-status');
@@ -335,8 +337,12 @@ export class ProjectView
         data.invalidate('pkg-git-pages')
 
         // disconnect devices to avoid locking between tabs
-        if (!active && !navigator?.serviceWorker?.controller)
-            cmds.disconnectAsync(); // turn off any kind of logging
+        if (!active && !navigator?.serviceWorker?.controller) {
+            if (this._deploying) {
+                pxt.debug(`visibility: disconnect cancelled because deploy in progress`)
+            } else
+                cmds.disconnectAsync(); // turn off any kind of logging
+        }
 
         if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {
@@ -1983,6 +1989,10 @@ export class ProjectView
         return false
     }
 
+    isZipFile(filename: string): boolean {
+        return /\.zip$/i.test(filename)
+    }
+
     importProjectCoreAsync(buf: Uint8Array, options?: pxt.editor.ImportFileOptions) {
         return (buf[0] == '{'.charCodeAt(0) ?
             Promise.resolve(pxt.U.uint8ArrayToString(buf)) :
@@ -2049,6 +2059,71 @@ export class ProjectView
             .then(buf => pxt.Util.decodeBlobAsync("data:image/png;base64," +
                 btoa(pxt.Util.uint8ArrayToString(buf))))
             .then(buf => this.importProjectCoreAsync(buf, options))
+    }
+
+   async importZipFileAsync(file: File, options?: pxt.editor.ImportFileOptions) {
+        if (!file) return;
+        pxt.tickEvent("import.zip");
+
+        await scriptmanager.loadZipAsync();
+        const reader = new zip.ZipReader(new zip.BlobReader(file));
+
+        const zippedFiles = (await reader.getEntries()).filter((zipped: any) => this.isProjectFile(zipped.filename));
+        let progress = {
+            done: 0
+        }
+
+        if (zippedFiles.length === 0) {
+            core.warningNotification(lf("No projects available to import found inside zip file."));
+            return;
+        }
+
+        const confirmed = await core.confirmAsync({
+            header: lf("Import zip file?"),
+            body: lf("Do you want to import all projects in this zip file? This will import {0} projects.", zippedFiles.length),
+            agreeLbl: lf("Okay"),
+            hasCloseIcon: true,
+        });
+
+        if (!confirmed) return;
+
+        let cancelled = false;
+
+        core.dialogAsync({
+            header: lf("Extracting files..."),
+            jsxd: () => <dialogs.ProgressBar percentage={100 * (progress.done / zippedFiles.length)} />,
+            onClose: () => cancelled = true
+        })
+
+        for (const zipped of zippedFiles) {
+            try {
+                const buf: Uint8Array = await zipped.getData(new zip.Uint8ArrayWriter());
+
+                const data = JSON.parse(await pxt.lzmaDecompressAsync(buf)) as pxt.cpp.HexFile;
+
+                let h: pxt.workspace.InstallHeader = {
+                    target: pxt.appTarget.id,
+                    targetVersion: data.meta.targetVersions ? data.meta.targetVersions.target : undefined,
+                    editor: data.meta.editor,
+                    name: data.meta.name,
+                    meta: {},
+                    pubId: "",
+                    pubCurrent: false
+                }
+
+                const files = JSON.parse(data.source) as pxt.Map<string>;
+                await workspace.installAsync(h, files);
+            }
+            catch (e) {
+
+            }
+
+            if (cancelled) break;
+            progress.done ++;
+            core.forceUpdate();
+        }
+
+        core.hideDialog();
     }
 
     importPNGBuffer(buf: ArrayBuffer) {
@@ -2220,7 +2295,7 @@ export class ProjectView
 
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
-            file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name),
+            file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name) || this.isZipFile(file.name),
             files => {
                 if (files) {
                     pxt.tickEvent("dragandrop.open")
@@ -2263,6 +2338,8 @@ export class ProjectView
             this.importAssetFile(file)
         } else if (this.isPNGFile(file.name)) {
             this.importPNGFile(file, options);
+        } else if (this.isZipFile(file.name)) {
+            this.importZipFileAsync(file, options);
         } else {
             const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
             if (importer) {
@@ -2880,6 +2957,7 @@ export class ProjectView
 
     beforeCompile() { }
 
+    _deploying = false
     async compile(saveOnly = false): Promise<void> {
         pxt.tickEvent("compile", { editor: this.getPreferredEditor() });
         pxt.debug('compiling...');
@@ -2982,6 +3060,7 @@ export class ProjectView
                 pxt.tickEvent("deploy.start")
 
                 try {
+                    this._deploying = true
                     await pxt.commands.deployAsync(resp, {
                         reportError: (e) => {
                             pxt.tickEvent("deploy.reporterror");
@@ -3008,6 +3087,16 @@ export class ProjectView
                             userContextWindow.close()
                         } catch (e) {
                         }
+                    }
+                }
+                finally {
+                    this._deploying = false
+                    // the tab may have gone hidden while deploying, in which case
+                    // we skipped the disconnect path, checking again here
+                    // to disconnect if needed
+                    if (!pxt.BrowserUtils.isDocumentVisible()) {
+                        pxt.debug(`visibility: updated after deploy`)
+                        await this.updateVisibilityAsync()
                     }
                 }
             }
@@ -3272,7 +3361,7 @@ export class ProjectView
         this.deviceSerialIndicator()?.clear();
         this.setState({
             simSerialActive: false,
-            deviceSerialActive: false
+            deviceSerialActive: false,
         })
     }
 

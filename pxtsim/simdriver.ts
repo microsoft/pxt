@@ -71,6 +71,7 @@ namespace pxsim {
         // single iframe, no message simulators
         single?: boolean;
         hideSimButtons?: boolean;
+        autofocus?: boolean;
     }
 
     export interface HwDebugger {
@@ -434,6 +435,7 @@ namespace pxsim {
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
             frame.dataset['origin'] = new URL(furl).origin || "*";
+            if (this._runOptions.autofocus) frame.setAttribute("autofocus", "true");
 
             wrapper.appendChild(frame);
 
