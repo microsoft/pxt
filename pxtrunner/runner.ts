@@ -407,7 +407,7 @@ namespace pxt.runner {
             storedState: storedState,
             light: simOptions.light,
             single: simOptions.single,
-            hideSimButtons: simOptions.hideSimButtons
+            hideSimButtons: simOptions.hideSimButtons,
             autofocus: simOptions.autofocus
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
