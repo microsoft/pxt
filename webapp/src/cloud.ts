@@ -101,6 +101,9 @@ function getAsync(h: Header): Promise<File> {
                 pxt.tickEvent(`identity.cloudApi.getProject.failed`);
                 reject(result.err);
             }
+        } catch (e) {
+            pxt.tickEvent(`identity.cloudApi.getProject.failed`);
+            reject(e);
         } finally {
             cloudMeta.syncFinished();
         }
