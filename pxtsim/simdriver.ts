@@ -426,7 +426,7 @@ namespace pxsim {
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
             frame.dataset['origin'] = new URL(furl).origin || "*";
-            if (this._runOptions.autofocus) frame.setAttribute("autofocus", "true");
+            if (this._runOptions?.autofocus) frame.setAttribute("autofocus", "true");
 
             wrapper.appendChild(frame);
 
