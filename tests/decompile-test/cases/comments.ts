@@ -61,5 +61,5 @@ x += 9;
  */
 x += 10;
 
-//@highlight
+//Comment for variable classified as auto-declared.
 x = 0;

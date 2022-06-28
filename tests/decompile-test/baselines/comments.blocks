@@ -98,7 +98,7 @@
 <field name="NUM">0</field>
 </shadow>
 </value>
-<comment pinned="false">&#64;highlight</comment>
+<comment pinned="false">Comment for variable classified as auto-declared.</comment>
 </block>
 </next>
 <comment pinned="false">Comment</comment>
