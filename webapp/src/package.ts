@@ -370,6 +370,7 @@ export class EditorPackage {
     }
 
     setFile(n: string, v: string, virtual?: boolean): File {
+        Util.assert(!!n, "missing file name");
         let f = new File(this, n, v)
         if (virtual) f.virtual = true;
         this.files[n] = f
@@ -388,6 +389,7 @@ export class EditorPackage {
     }
 
     setContentAsync(n: string, v: string): Promise<void> {
+        Util.assert(!!n, "missing file name");
         let f = this.files[n];
         let p = Promise.resolve();
         if (!f) {
