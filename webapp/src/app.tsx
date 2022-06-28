@@ -2700,7 +2700,7 @@ export class ProjectView
         src = src || "\n";
         const mainPkg = pkg.mainEditorPkg();
         const fileName = this.editorFile.getVirtualFileName(prj);
-        Util.assert(fileName != this.editorFile.name);
+        Util.assert(fileName && fileName != this.editorFile.name);
         return mainPkg.setContentAsync(fileName, src).then(() => {
             if (open) {
                 let f = mainPkg.files[fileName];
@@ -2762,7 +2762,9 @@ export class ProjectView
                 if (src === undefined
                     || (this.editorFile && this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)))
                     return Promise.resolve();
-                return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
+                if (this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
+                    return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
+                return Promise.resolve();
             });
 
         if (open) {
