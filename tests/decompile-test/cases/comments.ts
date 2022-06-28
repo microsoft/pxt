@@ -60,3 +60,6 @@ x += 9;
  * Comment
  */
 x += 10;
+
+//@highlight
+x = 0;

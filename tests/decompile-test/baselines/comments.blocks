@@ -90,6 +90,17 @@
 </shadow>
 </value>
 <data>0&#59;1</data>
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<comment pinned="false">&#64;highlight</comment>
+</block>
+</next>
 <comment pinned="false">Comment</comment>
 </block>
 </next>
