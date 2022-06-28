@@ -61,5 +61,10 @@ x += 9;
  */
 x += 10;
 
-// Comment for variable classified as auto-declared.
+// Comments for variable classified as auto-declared.
+// 0
 x = 0;
+
+// Comments for variable classified as auto-declared.
+// FALSE
+let y = false;
