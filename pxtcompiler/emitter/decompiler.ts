@@ -1410,7 +1410,7 @@ ${output}</xml>`;
                             // Don't emit null or automatic initializers;
                             // They are implicit within the blocks. But do track them in case they
                             // never get used in the blocks (and thus won't be emitted again)
-                            
+
                             trackAutoDeclaration(decl);
                             return getNext();
                         }
