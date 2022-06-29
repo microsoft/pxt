@@ -179,7 +179,6 @@ If you want your hint to display by default when a step is encountered see [Expl
 Nested accordion hints are not currently supported.
 ### ~
 
-
 ```
 ~hint This content is hidden until the user clicks here.
   - :blank: Bullet 1
