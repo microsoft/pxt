@@ -11,7 +11,7 @@
 				"serve",
 				"--rebundle"
 			],
-			"cwd": "${workspaceRoot}/../pxt-microbit",
+			"cwd": "${workspaceRoot}/../pxt-arcade",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"
@@ -45,14 +45,13 @@
 			"outFiles": []
 		},
 		{
-			"name": "checkdocs",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": [
 				"checkdocs",
-				"--re", 
+				"--re",
 				"adafruit"
 			],
 			"cwd": "${workspaceRoot}/../pxt-maker",
@@ -230,7 +229,7 @@
 			"console": "integratedTerminal",
 			"sourceMaps": false,
 			"outFiles": []
-		},		
+		},
 		{
 			"name": "Attach",
 			"type": "node",
