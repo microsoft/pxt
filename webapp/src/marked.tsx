@@ -356,9 +356,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     // Example input:
     // -------------------------------
     // ~hint This is the hint summary.
-    //
     //    This is the hint content
-    //
     // hint~
     // -------------------------------
     //
@@ -369,86 +367,89 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     // </details>
     // -------------------------------
     private renderAccordianHints(content: HTMLElement) {
-        const hintBeginRegex = /^\s*~hint\s*(.+)/i;
-        const hintEndRegex = /^\s*hint~.*/i;
+        
+        // Regex for detecting which node a hint begins.
+        const hintBeginRegex = /^\s*~hint\s*(.+)\n?([\s\S]*)/i; 
+
+        // Regex for detecting which node a hint ends.
+        const hintEndRegex = /([\s\S]*\n|^.*)hint~\s*/im;
+
+        // This class tracks accordion hint elements as we find them in the DOM.
+        // Once we find a hint-end signifier after a hint-begin signifier, we transform
+        // these elements into a 'details' element heirarchy.
+        class accordianHint {
+            beginElement: HTMLElement = null; // The hint-begin element
+            summary: HTMLElement = null; // The accordion hint summary extracted from the hint-begin element
+            childNodes: Node[] = new Array() // All nodes that should be considered within the accordion hint.
+        }
 
         // Processing each hint modifies the node order and count of 'content.childnodes'.
         // Keep reprocessing content.childnodes until all hints have been processed.
         let hintFound: boolean = false;
-
         do {
             hintFound = false;
-            // The hint summary element (i.e. <summary>text</summary>).
-            let hintSummary: HTMLElement = null;
-            // The element that signifies the beginning of the hint (i.e. <p>~hint (hint summary)</p>).
-            let hintBeginElement: HTMLElement = null;
-            // Inner-nodes of the hint.
-            let hintChildNodes: Node[] = new Array();
-
+            let candidateHint: accordianHint = null;
             for (let node of content.childNodes) {
                 if (node instanceof HTMLElement) {
                     const element = node;
-                    if (hintBeginElement == null) {
-                        // Look for hint begin signifiers in 'p' elements.
-                        if (element.tagName.toLocaleLowerCase() === "p") {
-                            // Look for a match of the hint-begin signifier (i.e. ~hint).
-                            const match = element.innerHTML.match(hintBeginRegex);
-                            if (match) {
-                                // Any characters after the hint-begin signifier are considered part of the summary.
-                                // Store the summary until we detect the end of the hint and construct the final 'details' element.
-                                const summary = match[1];
-                                hintSummary = document.createElement('summary');
-                                hintSummary.append(summary);
-
-                                // Store the beginning element so we know what to replace when we close the hint.
-                                hintBeginElement = element;
+                    // Only look at "p" elements for an accordion hint-begin signifier (i.e. ~hint)
+                    if (candidateHint == null && element.tagName.toLowerCase() === "p") {
+                        const match = element.innerHTML.match(hintBeginRegex);
+                        if (match) {
+                            // We have found the start of a new accordion hint
+                            candidateHint = new accordianHint();
+                            candidateHint.beginElement = element;
+                            // Capture the accordion hint summary 
+                            candidateHint.summary = document.createElement('summary');
+                            candidateHint.summary.append(match[1]);
+                            // Anything after a newline in the summary should be considered a child 'p' element.
+                            if (match[2].length != 0) {
+                                const childElement = document.createElement('p');
+                                // In some cases the hint-end signifier will end up in the summary, remove it.
+                                childElement.append(match[2].replace("hint~", ""));
+                                candidateHint.childNodes.push(childElement);
                             }
                         }
-                    // We have already found a hint-begin signifier element, now capture inner-nodes and look for hint-end signifier.
-                    } else {
-                        if (element.tagName.toLocaleLowerCase() === "p") {
-                            // Look for a match of the hint-end signifier (i.e. hint~).
-                            const match = element.innerHTML.match(hintEndRegex);
-                            if (match) {
-                                // Create the 'details' element...
-                                const hintDetails = document.createElement('details');
-                                // ...add the summary element...
-                                hintDetails.append(hintSummary);
-                                // ...and move the hint's child nodes into the 'details' element.
-                                hintChildNodes.forEach((hintChildNode) => {
-                                    hintDetails.appendChild(hintChildNode);
-                                });
-
-                                // Replace the hintBegin element with the new details element.
-                                hintBeginElement.parentNode.replaceChild(hintDetails, hintBeginElement);
-                                // Remove hint-end signifier node.
-                                element.parentNode.removeChild(node);
-                                // Mark that we found a complete hint this time around.
-                                hintFound = true;
-                                // Processing a hint modifies the node order and count of 'content.childnodes'.
-                                // Break the for-loop here so we can reprocess the new state of the child nodes.
-                                break;
-                            }
-                            else {
-                                // We have a hint-begin node and this node is not a hint-end node, add it to the current hint's child nodes.
-                                hintChildNodes.push(node);
-                            }
+                    }
+                    if (candidateHint != null) { 
+                        // If we have started tracking a new accordion hint, add any elements that are not the beginning element as a child.
+                        if (candidateHint.beginElement != element) {
+                            candidateHint.childNodes.push(element);
                         }
-                        else {
-                            // We have a hint-begin node and this node is not a hint-end node, add it to the current hint's child nodes.
-                            hintChildNodes.push(node);
+                        
+                        if (element.innerHTML.match(hintEndRegex)) {
+                            // If we find the hint end signifier (i.e. hint~), remove it from the innerHTML and 
+                            // replace the original begin node with a 'details' node to render the accordion hint as expected.
+                            // Simple text-only accordion hints will present in the DOM in a single node, so we check for the 
+                            // hint-end signifier in all elements after and including the hint-begin element. 
+                            
+                            // Remove the hint-end signifier text from the HTML.
+                            element.innerHTML = element.innerHTML.replace("hint~", ""); // remove the hint end signifier
+
+                            // Create the new 'details' element to replace the hint-begin element.
+                            const detailsElement = document.createElement('details');
+                            detailsElement.append(candidateHint.summary);
+                            candidateHint.childNodes.forEach((accordianHintChildNode) => {
+                                detailsElement.appendChild(accordianHintChildNode);
+                            });
+
+                            // Replace the hint-begin element with the newly constructed 'details' element.
+                            candidateHint.beginElement.parentNode.replaceChild(detailsElement, candidateHint.beginElement);
+
+                            // Processing a hint modifies the node order and count of 'content.childnodes'. Reset the candidate hint, 
+                            // mark that we found a new hint, and break the for-loop here so we can reprocess the new state of the child nodes.
+                            candidateHint = null;
+                            hintFound = true;
+                            break;
                         }
                     }
                 }
-                else if (hintBeginElement != null) {
-                    // If we have started capturing hint nodes and this node is not an HTMLElement, add it to the current hint's child nodes.
-                    hintChildNodes.push(node);
+                else if (candidateHint != null) {
+                    // We have a hint-begin node and this node is not a hint-end node, add it to the current hint's child nodes.
+                    candidateHint.childNodes.push(node);
                 }
             }
-
-        // Processing a hint modifies the node order and count of 'content.childnodes'.
-        // Rescan the nodes starting from the beginning to look for more hints.
-        } while (hintFound);
+        } while(hintFound);
     }
 
     private renderOthers(content: HTMLElement) {
