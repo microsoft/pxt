@@ -419,7 +419,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                         // Remove the hint-end signifier from the innerHTML since we don't want to render it.
                         // This is safe and does not effect sanitization.
-                        element.innerHTML = element.innerHTML.replace("hint~", ""); // eslint-disable-line no-inner-html
+                        element.innerHTML = element.innerHTML.replace("hint~", ""); // eslint-disable-line @microsoft/sdl/no-inner-html
 
                         accordionHints.push(candidateHint);
                         candidateHint = null;
