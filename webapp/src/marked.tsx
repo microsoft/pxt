@@ -367,9 +367,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     // </details>
     // -------------------------------
     private renderAccordianHints(content: HTMLElement) {
-        
         // Regex for detecting which node a hint begins.
-        const hintBeginRegex = /^\s*~hint\s*(.+)\n?([\s\S]*)/i; 
+        const hintBeginRegex = /^\s*~hint\s*(.+)\n?([\s\S]*)/i;
 
         // Regex for detecting which node a hint ends.
         const hintEndRegex = /([\s\S]*\n|^.*)hint~\s*/im;
@@ -407,19 +406,19 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         }
                     }
                 }
-                if (candidateHint != null) { 
+                if (candidateHint != null) {
                     // If we have started tracking a new accordion hint, add any elements that are not the beginning element as a child.
                     if (candidateHint.beginElement != element) {
                         candidateHint.childNodes.push(element);
                     }
-                    
+
                     if (element.innerHTML.match(hintEndRegex)) {
                         // Simple text-only accordion hints will present in the DOM in a single node, so we check for the 
                         // hint-end signifier in all elements after and including the hint-begin element. 
                         // For example: <p>~hint This is the summary\nThis is some simple text\nhint~</p>
 
                         // Remove the hint-end signifier from the innerHTML since we don't want to render it.
-                        element.innerHTML = element.innerHTML.replace("hint~", ""); // remove the hint end signifier
+                        element.innerHTML = element.innerHTML.replace("hint~", "");
 
                         accordionHints.push(candidateHint);
                         candidateHint = null;
@@ -436,7 +435,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             // Create a 'details' element to replace the hint-begin element.
             const detailsElement = document.createElement('details');
             // Append the summary element to the details element...
-            detailsElement.append(hint.summary); 
+            detailsElement.append(hint.summary);
             // ...and any child nodes we detected along the way.
             hint.childNodes.forEach((accordianHintChildNode) => {
                 detailsElement.appendChild(accordianHintChildNode);
