@@ -1,11 +1,16 @@
 {
     "editor": "blocksprj",
-    "title": "Accordion Hints",
+    "title": "Accordion Hint Tests",
     "steps": [
         {
             "title": "Step 1",
-            "contentMd": "Welcome!\n\n~hint This content is hidden until the user clicks here.\n\n  - :blank: Bullet 1\n  - :mouse pointer: Bullet 2\n\nhint~",
-            "headerContentMd": "Welcome!\n\n~hint This content is hidden until the user clicks here.\n\n  - :blank: Bullet 1\n  - :mouse pointer: Bullet 2\n\nhint~"
+            "contentMd": "- :blank: Not in an ``||controller: accordion hint||``\n- :paint brush: Not in an accordion hint\n\n``||controller: Not in an accordion hint||``\n\n~hint Accordion hint summary\n  - :paint brush: Paint brush bullet\n  - :blank: ``||controller: controller||``\nhint~\n\n~hint Accordion hint summary, all one node\nStuff\nthings\nhint~\n\n~hint Accordion hint summary, hint end after newline\n- :blank: Stuff\n- :mouse pointer: other Stuff\n\nhint~\n\n~hint This is the hint summary w/lf\n- :blank: Stuff\ntext line\nhint~\n\nOrphan hint end below:\n\nhint~\n\nOrphan hint begin below:\n\n~hint This is the hint summary w/lf\n\n- :blank: End",
+            "headerContentMd": "- :blank: Not in an ``||controller: accordion hint||``\n- :paint brush: Not in an accordion hint\n\n``||controller: Not in an accordion hint||``\n\n~hint Accordion hint summary\n  - :paint brush: Paint brush bullet\n  - :blank: ``||controller: controller||``\nhint~\n\n~hint Accordion hint summary, all one node\nStuff\nthings\nhint~\n\n~hint Accordion hint summary, hint end after newline\n- :blank: Stuff\n- :mouse pointer: other Stuff\n\nhint~\n\n~hint This is the hint summary w/lf\n- :blank: Stuff\ntext line\nhint~\n\nOrphan hint end below:\n\nhint~\n\nOrphan hint begin below:\n\n~hint This is the hint summary w/lf\n\n- :blank: End"
+        },
+        {
+            "title": "Step 2",
+            "contentMd": "Congratulations, you did it!",
+            "headerContentMd": "Congratulations, you did it!"
         }
     ],
     "activities": null,
