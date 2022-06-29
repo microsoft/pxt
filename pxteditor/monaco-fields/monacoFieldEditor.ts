@@ -39,6 +39,7 @@ namespace pxt.editor {
         isRegex: boolean;
         matchWholeWord: boolean;
         matchCase: boolean;
+        validateRange?: (range: monaco.Range, model: monaco.editor.ITextModel) => monaco.Range;
     }
 
     const definitions: pxt.Map<MonacoFieldEditorDefinition> = {};

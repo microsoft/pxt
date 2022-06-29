@@ -425,7 +425,7 @@ namespace pxt.docs {
                     return out;
 
             } else {
-                let out='<img class="ui image" src="' + href + '" alt="' + text + '"';
+                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
                 if (title) {
                     out += ' title="' + title + '"';
                 }

@@ -70,6 +70,7 @@ namespace pxsim {
         dependencies?: Map<string>;
         // single iframe, no message simulators
         single?: boolean;
+        autofocus?: boolean;
     }
 
     export interface HwDebugger {
@@ -425,6 +426,7 @@ namespace pxsim {
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
             frame.dataset['origin'] = new URL(furl).origin || "*";
+            if (this._runOptions?.autofocus) frame.setAttribute("autofocus", "true");
 
             wrapper.appendChild(frame);
 
@@ -712,6 +714,8 @@ namespace pxsim {
                     const frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
                     const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
+                        if (this._runOptions?.autofocus)
+                            frame.focus();
                         this.startFrame(frame);
                         if (this.options.revealElement)
                             this.options.revealElement(frame);

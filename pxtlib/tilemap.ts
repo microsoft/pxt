@@ -607,7 +607,7 @@ namespace pxt {
                 id,
                 type: AssetType.Tilemap,
                 meta: {
-                    displayName: id
+                    displayName: name || id
                 },
                 data: data
             });

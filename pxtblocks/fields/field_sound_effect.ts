@@ -137,6 +137,8 @@ namespace pxtblockly {
             }
 
             Blockly.WidgetDiv.show(widgetOwner, this.sourceBlock_.RTL, () => {
+                if (document.activeElement && document.activeElement.tagName === "INPUT") (document.activeElement as HTMLInputElement).blur();
+
                 fv.hide();
 
                 widgetDiv.classList.remove("sound-effect-editor-widget");

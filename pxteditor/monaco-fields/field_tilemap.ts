@@ -46,8 +46,8 @@ namespace pxt.editor {
             let id: string;
 
             if (name) {
-                let id = ts.pxtc.escapeIdentifier(name)
-                proj = project.getTilemap(id);
+                id = ts.pxtc.escapeIdentifier(name)
+                proj = project.getTilemap(id) || project.lookupAssetByName(AssetType.Tilemap, name);
             }
 
             if (!proj) {
