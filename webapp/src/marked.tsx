@@ -418,7 +418,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         // For example: <p>~hint This is the summary\nThis is some simple text\nhint~</p>
 
                         // Remove the hint-end signifier from the innerHTML since we don't want to render it.
-                        element.innerHTML = element.innerHTML.replace("hint~", "");
+                        // This is safe and does not effect sanitization.
+                        element.innerHTML = element.innerHTML.replace("hint~", ""); // eslint-disable-line no-inner-html
 
                         accordionHints.push(candidateHint);
                         candidateHint = null;
