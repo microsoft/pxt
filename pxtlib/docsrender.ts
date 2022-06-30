@@ -425,7 +425,7 @@ namespace pxt.docs {
                 return out;
 
             } else if (href.startsWith("streams:")) {
-                let out = '<div class="tutorial-video-embed"><video class="ams-embed" controls src="https://makecode-lucas-testing-makecodetempmediaservice-usea.streaming.media.azure.net/' + href.split(":").pop() + 'manifest(format=mpd-time-cmaf)" /></div>';
+                let out = '<div class="tutorial-video-embed"><video class="ams-embed" controls src="https://makecode-lucas-testing-makecodetempmediaservice-usea.streaming.media.azure.net/' + href.split(":").pop() + '/manifest(format=mpd-time-cmaf)" /></div>';
                 return out;
 
             } else {
