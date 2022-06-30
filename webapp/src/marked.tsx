@@ -288,7 +288,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     private renderVideo(content: HTMLElement){
         pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
-            .forEach((inlineVideo: HTMLElement)=> {
+            .forEach((inlineVideo: HTMLElement) => {
                 let player = MediaPlayer().create()
                 if (inlineVideo) {
                     player.initialize(inlineVideo, inlineVideo.getAttribute("src"));
