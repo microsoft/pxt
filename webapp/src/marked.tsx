@@ -285,6 +285,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         }
     }
 
+
     private renderVideo(content: HTMLElement){
         pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
             .forEach((inlineVideo: HTMLElement)=> {
@@ -298,6 +299,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             });
     }
 
+
+  // Renders inline blocks, such as "||controller: Controller||".
     private renderInlineBlocks(content: HTMLElement) {
         pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .forEach((inlineBlock: HTMLElement) => {
@@ -320,6 +323,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
+    // Renders icon bullets, such as ":mouse pointer:" and ":paint brush:".
     private renderBullets(content: HTMLElement) {
         const bulletRegex = /^:([^:]+):/i;
         pxt.Util.toArray(content.querySelectorAll("li"))
@@ -362,6 +366,100 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     li.insertBefore(bullet, p);
                 }
             })
+    }
+
+    // Renders collapsable hints starting with "~hint" and ending with "hint~".
+    // Example input:
+    // -------------------------------
+    // ~hint This is the hint summary.
+    //    This is the hint content
+    // hint~
+    // -------------------------------
+    //
+    // Example output:
+    // -------------------------------
+    // <details><summary>This is the hint summary</summary>
+    //   This is the hint content
+    // </details>
+    // -------------------------------
+    private renderAccordianHints(content: HTMLElement) {
+        // Regex for detecting which node a hint begins.
+        const hintBeginRegex = /^\s*~hint\s*(.+)\n?([\s\S]*)/i;
+
+        // Regex for detecting which node a hint ends.
+        const hintEndRegex = /([\s\S]*\n|^.*)hint~\s*/im;
+
+        // This class tracks accordion hint elements as we find them in the DOM.
+        // Once we find a hint-end signifier after a hint-begin signifier, we transform
+        // these elements into a 'details' element heirarchy.
+        class accordianHint {
+            beginElement: HTMLElement = null; // The hint-begin element
+            summary: HTMLElement = null; // The accordion hint summary extracted from the hint-begin element
+            childNodes: Node[] = new Array() // All nodes that should be considered within the accordion hint.
+        }
+        let accordionHints: accordianHint[] = new Array();
+
+        let candidateHint: accordianHint = null;
+        for (let node of content.childNodes) {
+            if (node instanceof HTMLElement) {
+                const element = node;
+                // Only look at "p" elements for an accordion hint-begin signifier (i.e. ~hint)
+                if (candidateHint == null && element.tagName.toLowerCase() === "p") {
+                    const match = element.innerHTML.match(hintBeginRegex);
+                    if (match) {
+                        // We have found the start of a new accordion hint
+                        candidateHint = new accordianHint();
+                        candidateHint.beginElement = element;
+                        // Capture the accordion hint summary 
+                        candidateHint.summary = document.createElement('summary');
+                        candidateHint.summary.append(match[1]);
+                        // Anything after a newline in the summary should be considered a child 'p' element.
+                        if (match[2].length != 0) {
+                            const childElement = document.createElement('p');
+                            // In some cases the hint-end signifier will end up in the summary, remove it.
+                            childElement.append(match[2].replace("hint~", ""));
+                            candidateHint.childNodes.push(childElement);
+                        }
+                    }
+                }
+                if (candidateHint != null) {
+                    // If we have started tracking a new accordion hint, add any elements that are not the beginning element as a child.
+                    if (candidateHint.beginElement != element) {
+                        candidateHint.childNodes.push(element);
+                    }
+
+                    if (element.innerHTML.match(hintEndRegex)) {
+                        // Simple text-only accordion hints will present in the DOM in a single node, so we check for the 
+                        // hint-end signifier in all elements after and including the hint-begin element. 
+                        // For example: <p>~hint This is the summary\nThis is some simple text\nhint~</p>
+
+                        // Remove the hint-end signifier from the innerHTML since we don't want to render it.
+                        // This is safe and does not effect sanitization.
+                        element.innerHTML = element.innerHTML.replace("hint~", ""); // eslint-disable-line @microsoft/sdl/no-inner-html
+
+                        accordionHints.push(candidateHint);
+                        candidateHint = null;
+                    }
+                }
+            }
+            else if (candidateHint != null) {
+                // We have a hint-begin node and this node is not a hint-end node, add it to the current hint's child nodes.
+                candidateHint.childNodes.push(node);
+            }
+        }
+
+        accordionHints.forEach((hint) => {
+            // Create a 'details' element to replace the hint-begin element.
+            const detailsElement = document.createElement('details');
+            // Append the summary element to the details element...
+            detailsElement.append(hint.summary);
+            // ...and any child nodes we detected along the way.
+            hint.childNodes.forEach((accordianHintChildNode) => {
+                detailsElement.appendChild(accordianHintChildNode);
+            });
+
+            hint.beginElement.parentNode.replaceChild(detailsElement, hint.beginElement);
+        });
     }
 
     private renderOthers(content: HTMLElement) {
@@ -421,6 +519,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         this.renderInlineBlocks(tempDiv);
         this.renderSnippets(tempDiv);
         this.renderBullets(tempDiv);
+        this.renderAccordianHints(tempDiv);
         this.renderOthers(tempDiv);
         this.renderVideo(tempDiv);
 
