@@ -44,7 +44,7 @@ export const EmbedVideo = (props: EmbedVideoProps) => {
 
     } else {
 
-        videoURL = "https://makecode-lucas-testing-makecodetempmediaservice-usea.streaming.media.azure.net/a6dd2090-b963-490c-bc5d-cdeecdee2c6e/WIN_20220622_17_44_45_Pro.ism/manifest(format=mpd-time-cmaf)";
+        videoURL = `https://makecode-lucas-testing-makecodetempmediaservice-usea.streaming.media.azure.net/${id}/manifest(format=mpd-time-cmaf)`;
 
         const videoRef = useRef<HTMLVideoElement>(null)
         useEffect(() => {
