@@ -39,6 +39,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const showSimulator = !!screenshotAsync || !!gifRecordAsync;
     const showDescription = shareState !== "publish";
     let qrCodeButtonRef: HTMLButtonElement;
+    let inputRef: HTMLInputElement;
 
     React.useEffect(() => {
         setThumbnailUri(screenshotUri)
@@ -62,8 +63,19 @@ export const ShareInfo = (props: ShareInfoProps) => {
     }
 
     const handleCopyClick = () => {
-        navigator.clipboard.writeText(shareData.url);
-        setCopySuccessful(true);
+        if (pxt.BrowserUtils.isIpcRenderer()) {
+            // Not suppported in older chrome
+            const selection = document.createRange();
+            selection.selectNode(inputRef);
+            window.getSelection().addRange(selection);
+            const success = document.execCommand("copy");
+
+            setCopySuccessful(success);
+        }
+        else {
+            navigator.clipboard.writeText(shareData.url);
+            setCopySuccessful(true);
+        }
     }
 
     const handleCopyBlur = () => {
@@ -141,6 +153,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
         if (qrCodeButtonRef) qrCodeButtonRef.focus();
     }
 
+    const handleInputRef = (ref: HTMLInputElement) => {
+        if (ref) inputRef = ref;
+    }
+
     const prePublish = shareState === "share" || shareState === "publishing";
 
     return <>
@@ -201,6 +217,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         </div>
                         <div className="common-input-attached-button">
                             <Input
+                                handleInputRef={handleInputRef}
                                 initialValue={shareData.url}
                                 readOnly={true}
                                 onChange={setName} />

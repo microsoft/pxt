@@ -15,7 +15,8 @@ export interface InputProps extends ControlProps {
     readOnly?: boolean;
     autoComplete?: boolean;
     selectOnClick?: boolean;
-    treatSpaceAsEnter?: boolean
+    treatSpaceAsEnter?: boolean;
+    handleInputRef?: (ref: HTMLInputElement) => void;
 
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
@@ -44,7 +45,8 @@ export const Input = (props: InputProps) => {
         onChange,
         onEnterKey,
         onIconClick,
-        onBlur
+        onBlur,
+        handleInputRef
     } = props;
 
     const [value, setValue] = React.useState(undefined);
@@ -112,7 +114,8 @@ export const Input = (props: InputProps) => {
                     autoCorrect={autoComplete ? "" : "off"}
                     autoCapitalize={autoComplete ? "" : "off"}
                     spellCheck={autoComplete}
-                    disabled={disabled} />
+                    disabled={disabled}
+                    ref={handleInputRef} />
                 {icon && (onIconClick
                     ? <Button
                         leftIcon={icon}
