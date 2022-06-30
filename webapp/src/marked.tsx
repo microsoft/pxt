@@ -376,14 +376,14 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // This class tracks accordion hint elements as we find them in the DOM.
         // Once we find a hint-end signifier after a hint-begin signifier, we transform
         // these elements into a 'details' element heirarchy.
-        class accordianHint {
+        class AccordianHint {
             beginElement: HTMLElement = null; // The hint-begin element
             summary: HTMLElement = null; // The accordion hint summary extracted from the hint-begin element
-            childNodes: Node[] = new Array() // All nodes that should be considered within the accordion hint.
+            childNodes: Node[] = []; // All nodes that should be considered within the accordion hint.
         }
-        let accordionHints: accordianHint[] = new Array();
+        let accordionHints: AccordianHint[] = [];
 
-        let candidateHint: accordianHint = null;
+        let candidateHint: AccordianHint = null;
         for (let node of content.childNodes) {
             if (node instanceof HTMLElement) {
                 const element = node;
@@ -392,9 +392,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     const match = element.innerHTML.match(hintBeginRegex);
                     if (match) {
                         // We have found the start of a new accordion hint
-                        candidateHint = new accordianHint();
+                        candidateHint = new AccordianHint();
                         candidateHint.beginElement = element;
-                        // Capture the accordion hint summary 
+                        // Capture the accordion hint summary
                         candidateHint.summary = document.createElement('summary');
                         candidateHint.summary.append(match[1]);
                         // Anything after a newline in the summary should be considered a child 'p' element.
@@ -413,8 +413,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     }
 
                     if (element.innerHTML.match(hintEndRegex)) {
-                        // Simple text-only accordion hints will present in the DOM in a single node, so we check for the 
-                        // hint-end signifier in all elements after and including the hint-begin element. 
+                        // Simple text-only accordion hints will present in the DOM in a single node, so we check for the
+                        // hint-end signifier in all elements after and including the hint-begin element.
                         // For example: <p>~hint This is the summary\nThis is some simple text\nhint~</p>
 
                         // Remove the hint-end signifier from the innerHTML since we don't want to render it.
