@@ -4,7 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as marked from "marked";
 import * as compiler from "./compiler"
-import {MediaPlayer} from "dashjs"
+import { MediaPlayer } from "dashjs"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
