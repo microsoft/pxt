@@ -6,6 +6,7 @@ import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
+
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util";
