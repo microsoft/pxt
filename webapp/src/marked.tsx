@@ -4,6 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as marked from "marked";
 import * as compiler from "./compiler"
+import {MediaPlayer} from "dashjs"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -284,6 +285,26 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         }
     }
 
+    private renderVideo(content: HTMLElement){
+        pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
+            .forEach((inlineVideo: HTMLElement)=> {
+
+                const videoRef = inlineVideo;
+
+                let player = MediaPlayer().create()
+                if (inlineVideo) {
+                    player.initialize(inlineVideo, inlineVideo.getAttribute("src"));
+                }
+                return () => {
+                    player.reset();
+                };
+
+
+
+
+            });
+    }
+
     private renderInlineBlocks(content: HTMLElement) {
         pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .forEach((inlineBlock: HTMLElement) => {
@@ -408,6 +429,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         this.renderSnippets(tempDiv);
         this.renderBullets(tempDiv);
         this.renderOthers(tempDiv);
+        this.renderVideo(tempDiv);
 
         content.innerHTML = "";
         content.append(...tempDiv.childNodes);

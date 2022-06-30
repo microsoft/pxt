@@ -3,8 +3,6 @@ import { classList, ControlProps } from "../util";
 import { useRef, useEffect } from 'react';
 import * as React from 'react';  //can i have these on separate lines?
 import { MediaPlayer } from "dashjs";
-import * as dashjs from "dashjs" //same question as above
-import { ConsoleMessage } from "puppeteer";
 
 export interface EmbedVideoProps extends ControlProps {
     src: "youtube" | "streams"; //is | considered or? though it would be ||
@@ -30,7 +28,7 @@ export const EmbedVideo = (props: EmbedVideoProps) => {
     // if (src == "youtube") {
     console.log("Testing: " + src);
 
-    // if (src == "youtube") {
+    if (src == "youtube") {
 
         videoURL = `https://www.youtube.com/embed/${id}?${autoplay ? "autoplay=1" : ""}`;
         let appending = "";
@@ -57,7 +55,7 @@ export const EmbedVideo = (props: EmbedVideoProps) => {
 
 
         //should i make this an else if and handle case where either weren't entered?
-    // } else {
+    } else {
 
         videoURL = "https://makecode-lucas-testing-makecodetempmediaservice-usea.streaming.media.azure.net/a6dd2090-b963-490c-bc5d-cdeecdee2c6e/WIN_20220622_17_44_45_Pro.ism/manifest(format=mpd-time-cmaf)";
 
@@ -79,7 +77,7 @@ export const EmbedVideo = (props: EmbedVideoProps) => {
                 <video className={classList("common-video")} controls ref={videoRef} />
             </div>
         );
-    // }
+    }
 
 
 

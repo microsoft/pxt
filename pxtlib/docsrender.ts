@@ -420,9 +420,15 @@ namespace pxt.docs {
         renderer.image = function (href: string, title: string, text: string) {
 
             if (href.startsWith("youtube:")) {
-                    let out = '<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop()
-                        + '" title="' + title + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
-                    return out;
+                let out = '<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop()
+                    + '" title="' + title + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
+                return out;
+
+            } else if (href.startsWith("streams:")) {
+
+                let out = '<div class="tutorial-video-embed"><video class="ams-embed" controls src="https://makecode-lucas-testing-makecodetempmediaservice-usea.streaming.media.azure.net/' + href.split(":").pop() + 'manifest(format=mpd-time-cmaf)" /></div>';
+
+                return out;
 
             } else {
                 let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
