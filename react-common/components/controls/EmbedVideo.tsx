@@ -13,7 +13,7 @@ export interface EmbedVideoProps extends ControlProps {
 }
 
 export const EmbedVideo = (props: EmbedVideoProps) => {
-    let endpointName;
+    const endpointName = "makecode-lucas-testing-makecodetempmediaservice-usea";
     const {
         src,
         id,
