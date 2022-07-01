@@ -4,14 +4,16 @@ import { useRef, useEffect } from 'react';
 import * as React from 'react';
 import { MediaPlayer } from "dashjs";
 
+
 export interface EmbedVideoProps extends ControlProps {
-    src: "youtube" | "streams";
+    src: "youtube" | "azuremedia";
     id: string;
     autoplay?: boolean;
     allowFullScreen?: boolean;
 }
 
 export const EmbedVideo = (props: EmbedVideoProps) => {
+    let endpointName;
     const {
         src,
         id,
@@ -44,7 +46,7 @@ export const EmbedVideo = (props: EmbedVideoProps) => {
 
     } else {
 
-        videoURL = `https://makecode-lucas-testing-makecodetempmediaservice-usea.streaming.media.azure.net/${id}/manifest(format=mpd-time-cmaf)`;
+        videoURL = `${endpointName}/${id}/manifest(format=mpd-time-cmaf)`;
 
         const videoRef = useRef<HTMLVideoElement>(null)
         useEffect(() => {
