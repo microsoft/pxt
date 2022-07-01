@@ -46,7 +46,7 @@ export const EmbedVideo = (props: EmbedVideoProps) => {
 
     } else {
 
-        videoURL = `${endpointName}/${id}/manifest(format=mpd-time-cmaf)`;
+        videoURL = `https://${endpointName}.streaming.media.azure.net/${id}/manifest(format=mpd-time-cmaf)`;
 
         const videoRef = useRef<HTMLVideoElement>(null)
         useEffect(() => {
