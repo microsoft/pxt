@@ -418,11 +418,15 @@ namespace pxt.docs {
 
     export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
-
+            const endpointName="makecode-lucas-testing-makecodetempmediaservice-usea";
             if (href.startsWith("youtube:")) {
-                    let out = '<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop()
-                        + '" title="' + title + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
-                    return out;
+                let out = '<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop()
+                    + '" title="' + title + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
+                return out;
+
+            } else if (href.startsWith("azuremedia:")) {
+                let out = `<div class="tutorial-video-embed"><video class="ams-embed" controls src="https://${endpointName}.streaming.media.azure.net/` + href.split(":").pop() + '/manifest(format=mpd-time-cmaf)" /></div>';
+                return out;
 
             } else {
                 let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';

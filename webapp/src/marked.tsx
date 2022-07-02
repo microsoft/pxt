@@ -4,6 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as marked from "marked";
 import * as compiler from "./compiler"
+import { MediaPlayer } from "dashjs"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -284,7 +285,17 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         }
     }
 
-    // Renders inline blocks, such as "||controller: Controller||".
+
+    private renderVideo(content: HTMLElement){
+        pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
+            .forEach((inlineVideo: HTMLElement) => {
+                let player = MediaPlayer().create()
+                player.initialize(inlineVideo, inlineVideo.getAttribute("src"));
+            });
+    }
+
+
+  // Renders inline blocks, such as "||controller: Controller||".
     private renderInlineBlocks(content: HTMLElement) {
         pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .forEach((inlineBlock: HTMLElement) => {
@@ -394,7 +405,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         // We have found the start of a new accordion hint
                         candidateHint = new accordianHint();
                         candidateHint.beginElement = element;
-                        // Capture the accordion hint summary 
+                        // Capture the accordion hint summary
                         candidateHint.summary = document.createElement('summary');
                         candidateHint.summary.append(match[1]);
                         // Anything after a newline in the summary should be considered a child 'p' element.
@@ -413,8 +424,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     }
 
                     if (element.innerHTML.match(hintEndRegex)) {
-                        // Simple text-only accordion hints will present in the DOM in a single node, so we check for the 
-                        // hint-end signifier in all elements after and including the hint-begin element. 
+                        // Simple text-only accordion hints will present in the DOM in a single node, so we check for the
+                        // hint-end signifier in all elements after and including the hint-begin element.
                         // For example: <p>~hint This is the summary\nThis is some simple text\nhint~</p>
 
                         // Remove the hint-end signifier from the innerHTML since we don't want to render it.
@@ -505,6 +516,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         this.renderBullets(tempDiv);
         this.renderAccordianHints(tempDiv);
         this.renderOthers(tempDiv);
+        this.renderVideo(tempDiv);
 
         content.innerHTML = "";
         content.append(...tempDiv.childNodes);
