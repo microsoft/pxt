@@ -1,0 +1,18 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_callback_with_argument_no_multi_key">
+<field name="arg1">TestEnum.testValue1</field>
+<value name="arg2">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="typescript_statement">
+<mutation numlines="3" error="Events must be top level" line0="testNamespace.callbackNoMultipleKey&#40;TestEnum.testValue2&#44; 6&#44; function &#40;&#41; &#123;" line1="" line2="&#125;&#41;" />
+</block>
+<block type="typescript_statement">
+<mutation numlines="3" error="Events must be top level" line0="testNamespace.callbackNoMultipleKey&#40;TestEnum.testValue1&#44; 5&#44; function &#40;&#41; &#123;" line1="" line2="&#125;&#41;" />
+</block>
+</xml>

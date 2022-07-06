@@ -601,6 +601,57 @@ ${output}</xml>`;
             return undefined;
         }
 
+        function getCallKey(statement: ExpressionStatement) {
+            const call = statement.expression as CallExpression;
+            const callInfo = pxtInfo(call).callInfo;
+            const attributes = attrs(callInfo);
+
+            if (attributes.blockAllowMultiple) return undefined;
+            if (attributes.blockHandlerKey) return attributes.blockHandlerKey;
+
+            // FIXME: this might have some issues with whitespace?
+            const args = callInfo.args.filter(arg => !isArrowFunction(arg) && !isFunctionExpression(arg)).map(arg => getArgKeyRecursive(arg)).join("$$");
+            return attributes.blockId + "-" + args;
+        }
+
+        function getArgKeyRecursive(n: ts.Expression): string {
+            if (!n) return "";
+
+            switch (n.kind) {
+                case SK.ParenthesizedExpression:
+                case SK.AsExpression:
+                    return getArgKeyRecursive((n as ts.ParenthesizedExpression).expression);
+                case SK.Identifier:
+                    return (n as ts.Identifier).text;
+                case SK.StringLiteral:
+                case SK.FirstTemplateToken:
+                case SK.NoSubstitutionTemplateLiteral:
+                    return `"${(n as ts.StringLiteral).text}"`
+                case SK.NumericLiteral:
+                    return (n as ts.LiteralExpression).text;
+                case SK.TrueKeyword:
+                    return "true";
+                case SK.FalseKeyword:
+                    return "false";
+                case SK.BinaryExpression:
+                    return `{${getArgKeyRecursive((n as ts.BinaryExpression).left)}${(n as ts.BinaryExpression).operatorToken.getText()}${getArgKeyRecursive((n as ts.BinaryExpression).right)}}`
+                case SK.PrefixUnaryExpression:
+                    return (n as ts.PrefixUnaryExpression).operator + getArgKeyRecursive((n as ts.PrefixUnaryExpression).operand)
+                case SK.PropertyAccessExpression:
+                    return getArgKeyRecursive((n as ts.PropertyAccessExpression).expression) + "." + getArgKeyRecursive((n as ts.PropertyAccessExpression).name)
+                case SK.ArrayLiteralExpression:
+                    return `[${(n as ts.ArrayLiteralExpression).elements.map(e => getArgKeyRecursive(e))}]`
+                case SK.ElementAccessExpression:
+                    return `${(n as ts.ElementAccessExpression).expression}[${(n as ts.ElementAccessExpression).argumentExpression}]`;
+                case SK.TaggedTemplateExpression:
+                    return `${getArgKeyRecursive((n as ts.TaggedTemplateExpression).tag)}\`${(n as ts.TaggedTemplateExpression).template.getText()}\``;
+                case SK.CallExpression:
+                    return `${getArgKeyRecursive((n as ts.CallExpression).expression)}(${(n as ts.CallExpression).arguments.map(getArgKeyRecursive).join(",")})`
+                default:
+                    return n.getText();
+            }
+        }
+
         function countBlock() {
             emittedBlocks++;
             if (emittedBlocks > MAX_BLOCKS) {
@@ -2369,7 +2420,22 @@ ${output}</xml>`;
                 }
             }
 
-            eventStatements.map(n => getStatementBlock(n, undefined, undefined, false, topLevel)).forEach(emitStatementNode);
+            const compiledEvents: StatementNode[] = [];
+            const keyMap: {[index: string]: boolean} = {};
+            for (const statement of eventStatements) {
+                const key = statement.kind === SK.FunctionDeclaration ? undefined : getCallKey(statement as ExpressionStatement);
+
+                if (key && keyMap[key]) {
+                    // Pass false for topLevel to force a grey block
+                    compiledEvents.push(getStatementBlock(statement, undefined, undefined, false, false))
+                }
+                else {
+                    keyMap[key] = true;
+                    compiledEvents.push(getStatementBlock(statement, undefined, undefined, false, topLevel))
+                }
+            }
+
+            compiledEvents.forEach(emitStatementNode);
 
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
@@ -3905,5 +3971,21 @@ ${output}</xml>`;
         }
 
         return emitShadowOnly;
+    }
+
+    function cleanArgString(arg: string) {
+        const closureStack: string[] = [];
+        let out = "";
+
+        for (let i = 0; i < arg.length; i++) {
+            const current = arg.charAt(i);
+
+            if (current === "\"" || current === "'" || current === "`") {
+                const lastClosure = closureStack[closureStack.length - 1];
+
+                if (lastClosure === current) closureStack.pop();
+                else closureStack.push(current)
+            }
+        }
     }
 }
