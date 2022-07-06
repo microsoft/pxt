@@ -3973,20 +3973,4 @@ ${output}</xml>`;
 
         return emitShadowOnly;
     }
-
-    function cleanArgString(arg: string) {
-        const closureStack: string[] = [];
-        let out = "";
-
-        for (let i = 0; i < arg.length; i++) {
-            const current = arg.charAt(i);
-
-            if (current === "\"" || current === "'" || current === "`") {
-                const lastClosure = closureStack[closureStack.length - 1];
-
-                if (lastClosure === current) closureStack.pop();
-                else closureStack.push(current)
-            }
-        }
-    }
 }
