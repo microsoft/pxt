@@ -14,11 +14,15 @@ testNamespace.callbackNoMultiple(TestEnum.testValue2, testNamespace.customShadow
 
 })
 
-testNamespace.callbackNoMultiple(TestEnum.testValue2, testNamespace.customShadowFieldNoLiterals(2), function () {
+testNamespace.callbackNoMultiple(TestEnum.testValue2, (
+    testNamespace.customShadowFieldNoLiterals(
+    2
+    )), function () {
 
 })
 
-testNamespace.callbackNoMultiple(TestEnum.testValue2, testNamespace.customShadowFieldNoLiterals(1), function () {
+testNamespace.callbackNoMultiple(TestEnum.testValue2, ((testNamespace.customShadowFieldNoLiterals(1)
+)), function () {
 
 })
 

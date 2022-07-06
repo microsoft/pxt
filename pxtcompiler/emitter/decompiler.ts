@@ -609,11 +609,12 @@ ${output}</xml>`;
             if (attributes.blockAllowMultiple) return undefined;
             if (attributes.blockHandlerKey) return attributes.blockHandlerKey;
 
-            // FIXME: this might have some issues with whitespace?
             const args = callInfo.args.filter(arg => !isArrowFunction(arg) && !isFunctionExpression(arg)).map(arg => getArgKeyRecursive(arg)).join("$$");
             return attributes.blockId + "-" + args;
         }
 
+        // custom function to get the key for an argument. we do this instead of simply calling getText() because this
+        // handles whitespace and certain passthrough nodes like parenthesized expressions
         function getArgKeyRecursive(n: ts.Expression): string {
             if (!n) return "";
 
