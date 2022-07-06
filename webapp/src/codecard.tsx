@@ -68,7 +68,6 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
         const renderMd = (md: string) => md.replace(/`/g, '');
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : undefined;
-        const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
         const className = card.className;
         const cardType = card.cardType;
         const tutorialDone = card.tutorialLength == card.tutorialStep + 1;
@@ -173,12 +172,7 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
         </div>;
 
         if (!card.onClick && url) {
-            return (
-                <div>
-                    <a href={url} target="docs" className="ui widedesktop hide">{cardDiv}</a>
-                    <a href={sideUrl} className="ui widedesktop only">{cardDiv}</a>
-                </div>
-            )
+            return <a href={url}>{cardDiv}</a>;
         } else {
             return (cardDiv)
         }
