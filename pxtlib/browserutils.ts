@@ -1296,7 +1296,7 @@ namespace pxt.BrowserUtils {
             return popupWindow;
         } catch (e) {
             // Error opening popup
-            pxt.tickEvent('pxt.popupError', { url: url, msg: e.message });
+            pxt.tickEvent('pxt.popupError', { msg: e.message });
             return null;
         }
     }
