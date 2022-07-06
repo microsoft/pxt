@@ -1285,7 +1285,7 @@ namespace pxt.BrowserUtils {
             const left = ((width / 2) - (popUpWidth / 2)) + winLeft;
             const top = ((height / 2) - (popUpHeight / 2)) + winTop;
 
-            const features = "width=" + popUpWidth + ", height=" + popUpHeight + ", top=" + top + ", left=" + left + ", popup";
+            const features = "width=" + popUpWidth + ", height=" + popUpHeight + ", top=" + top + ", left=" + left;
 
             // Current CEF version does not like when features parameter is passed and just immediately rejects.
             const popupWindow = window.open(url, title, !pxt.BrowserUtils.isIpcRenderer() ? features : undefined);
