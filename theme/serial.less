@@ -142,11 +142,12 @@
         font-weight: 700;
     }
 
-    tbody tr:nth-child(odd) {
-        background: #f2f2f2;
-    }
-    tr:nth-child(even), thead tr {
+    tbody tr, thead tr {
         background: @white;
+    }
+
+    tbody tr.odd {
+        background: #f2f2f2;
     }
     td, th {
         border: 1px solid #ddd;
