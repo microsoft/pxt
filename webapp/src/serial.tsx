@@ -273,7 +273,7 @@ export class Editor extends srceditor.Editor {
         const tr = document.createElement("tr");
         tr.title = lf("Received: {0}", new Date(receivedTime).toTimeString());
         if (this.nextEntryIsOdd) {
-            tr.classList.add("odd")
+            tr.classList.add("odd");
         }
         this.nextEntryIsOdd = !this.nextEntryIsOdd;
         for (const data of line.trim().split(",")) {
