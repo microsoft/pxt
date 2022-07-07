@@ -39,6 +39,7 @@ export class Editor extends srceditor.Editor {
     rawCsvBuf = "";
     receivedCsv: boolean;
     receivedLog: boolean;
+    nextEntryIsOdd: boolean = true;
 
     //refs
     startPauseButton: StartPauseButton;
@@ -250,6 +251,7 @@ export class Editor extends srceditor.Editor {
         table.appendChild(document.createElement("thead"));
         table.appendChild(document.createElement("tbody"));
         this.csvRoot.appendChild(table);
+        this.nextEntryIsOdd = true;
         return table;
     }
 
@@ -270,6 +272,10 @@ export class Editor extends srceditor.Editor {
 
         const tr = document.createElement("tr");
         tr.title = lf("Received: {0}", new Date(receivedTime).toTimeString());
+        if (this.nextEntryIsOdd) {
+            tr.classList.add("odd");
+        }
+        this.nextEntryIsOdd = !this.nextEntryIsOdd;
         for (const data of line.trim().split(",")) {
             const dataElement = document.createElement("td");
             dataElement.appendChild(document.createTextNode(data));
