@@ -177,7 +177,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         onChange={setName} />
                     <Textarea label={lf("Description")}
                         initialValue={description}
-                        placeholder={lf("Tell others about your game")}
+                        placeholder={lf("Tell others about your project")}
                         rows={5} />
                     </>
                 }
