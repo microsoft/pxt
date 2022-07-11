@@ -100,6 +100,7 @@ const ToggleButton = (props: ToggleButtonProps) => {
     const { label, title, onClick, icon, focusable } = item;
 
     return <Button
+        className={icon ? undefined : "no-icon"}
         role={focusable ? "tab" : undefined}
         tabIndex={-1}
         onKeydown={onKeydown}
