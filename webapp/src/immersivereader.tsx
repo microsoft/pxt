@@ -191,7 +191,7 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
     const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
     if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
-        return pxt.Cloud.privateGetAsync("immreader").then(
+        return pxt.Cloud.privateGetAsync("immreader", true).then(
             res => {
                 pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res));
                 return res;
@@ -273,7 +273,7 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
     });
 
     function testConnectionAsync(token: ImmersiveReaderToken): Promise<ImmersiveReaderToken> {
-        return pxt.Cloud.privateGetAsync("ping").then(() => {return token});
+        return pxt.Cloud.privateGetAsync("ping", true).then(() => {return token});
     }
 }
 
