@@ -64,13 +64,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const handleCopyClick = () => {
         if (pxt.BrowserUtils.isIpcRenderer()) {
-            // Not suppported in older chrome
-            const selection = document.createRange();
-            selection.selectNode(inputRef);
-            window.getSelection().addRange(selection);
-            const success = document.execCommand("copy");
-
-            setCopySuccessful(success);
+            setCopySuccessful(pxt.BrowserUtils.legacyCopyText(inputRef));
         }
         else {
             navigator.clipboard.writeText(shareData.url);
