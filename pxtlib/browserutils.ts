@@ -1373,4 +1373,17 @@ namespace pxt.BrowserUtils {
         if (/[?&]rnd=/.test(url)) return url; // already busted
         return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`
     }
+
+    export function legacyCopyText(element: HTMLInputElement | HTMLTextAreaElement) {
+        element.focus();
+        element.setSelectionRange(0, 9999);
+
+        try {
+            const success = document.execCommand("copy");
+            pxt.debug('copy: ' + success);
+            return !!success;
+        } catch (e) {
+            return false;
+        }
+    }
 }

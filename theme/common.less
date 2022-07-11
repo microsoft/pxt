@@ -1478,6 +1478,12 @@ p.ui.font.small {
     i.green.icon {
         color: rgba(0,0,0,.6)!important;
     }
+
+    #boardview.headless-sim {
+        height: 100%;
+        padding: 1rem;
+        width: @simulatorWidth;
+    }
 }
 
 #root.headless.collapsedEditorTools {
@@ -1892,6 +1898,10 @@ p.ui.font.small {
     #editorSidebar, #downloadArea {
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
+    }
+
+    #boardview.headless-sim {
+        width: @simulatorWidthSmall;
     }
 
     #maineditor {
