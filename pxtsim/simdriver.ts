@@ -424,7 +424,7 @@ namespace pxsim {
             frame.className = 'no-select';
 
             let furl = url || this.getSimUrl().toString();
-            if (this._runOptions.hideSimButtons) {
+            if (this._runOptions?.hideSimButtons) {
                 const urlObject = new URL(furl);
                 urlObject.searchParams.append("hideSimButtons", "1");
                 furl = urlObject.toString();
