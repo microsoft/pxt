@@ -1,0 +1,151 @@
+
+
+.common-modal-container {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: @modalOverlayColor;
+    z-index: @modalDimmerZIndex;
+}
+
+.common-modal-container.fullscreen {
+    z-index: @modalFullscreenZIndex;
+}
+
+.common-modal {
+    width: 50%;
+    max-width: 40rem;
+    border-radius: .285rem;
+    overflow: hidden;
+}
+
+@media @mobileAndBelow {
+    .common-modal {
+        width: 95%;
+    }
+}
+
+.common-modal-header {
+    background-color: @modalHeaderBackgroundColor;
+
+    display: flex;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding-left: 1.5rem;
+    border-bottom: @modalSeparatorBorder;
+    flex-shrink: 0;
+
+    .common-modal-title {
+        flex-grow: 1;
+        padding-top: 1.25rem;
+        padding-bottom: 1.25rem;
+    }
+
+    .common-modal-close .common-button .fas {
+        color: @modalCloseColor;
+    }
+}
+
+.common-modal-body {
+    background-color: @pageBackground;
+    min-height: 4rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.common-modal-footer {
+    background-color: @modalFooterBackgroundColor;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    border-top: @modalSeparatorBorder;
+
+    button:only-child {
+        grid-column: 2 / -1;
+    }
+}
+
+.fullscreen > .common-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.fullscreen > .common-modal > .common-modal-header {
+    background-color: @primaryColor;
+    color: white;
+    margin-bottom: 0;
+
+    .common-modal-back {
+        display: flex;
+        align-items: center;
+        font-size: 1.2rem;
+        font-weight: 600;
+
+        .common-button.men .fas {
+
+        }
+    }
+
+    .common-modal-help {
+        display: flex;
+        align-items: center;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .common-modal-title {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
+
+.fullscreen > .common-modal > .common-modal-body {
+    flex-grow: 1;
+    background-color: @homeScreenBackground;
+    padding: 1rem;
+    max-height: unset;
+}
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast, .hc {
+    .common-modal-header,
+    .common-modal-body,
+    .common-modal-footer {
+        background-color: @highContrastBackgroundColor;
+        color: @highContrastTextColor;
+        border-color: @highContrastTextColor;
+
+        .common-modal-close .common-button .fas {
+            opacity: 1;
+            color: @highContrastTextColor;
+        }
+    }
+
+    .fullscreen > .common-modal > .common-modal-header,
+    .fullscreen > .common-modal > .common-modal-body {
+        background-color: @highContrastBackgroundColor;
+        color: @highContrastTextColor;
+    }
+
+    .common-modal {
+        border: 1px solid @highContrastTextColor;
+    }
+}

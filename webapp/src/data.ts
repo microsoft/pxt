@@ -1,16 +1,17 @@
 import * as React from "react";
 import * as core from "./core";
 
+import Cloud = pxt.Cloud;
+import Util = pxt.Util;
+
+
 export type Action = () => void;
 export type DataSubscriber = {
     subscriptions: CacheEntry[];
     onDataChanged: (path: string) => void;
 };
 
-import Cloud = pxt.Cloud;
-import Util = pxt.Util;
-
-interface CacheEntry {
+export interface CacheEntry {
     path: string;
     data: any;
     lastRefresh: number;
@@ -32,83 +33,7 @@ export interface DataFetchResult<T> {
     status: FetchStatus;
 }
 
-const virtualApis: pxt.Map<VirtualApi> = {}
-
-mountVirtualApi("cloud", {
-    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
-    isOffline: () => !Cloud.isOnline(),
-})
-
-mountVirtualApi("cloud-search", {
-    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(e => {
-        core.handleNetworkError(e, [404])
-        return { statusCode: 404, headers: {}, json: {} }
-    }),
-    expirationTime: p => 60 * 1000,
-    isOffline: () => !Cloud.isOnline(),
-})
-
-mountVirtualApi("gallery", {
-    getAsync: p => pxt.gallery.loadGalleryAsync(stripProtocol(decodeURIComponent(p))).catch((e) => {
-        return Promise.resolve(e);
-    }),
-    expirationTime: p => 3600 * 1000
-})
-
-mountVirtualApi("gh-search", {
-    getAsync: query => pxt.targetConfigAsync()
-        .then(config => pxt.github.searchAsync(stripProtocol(query), config ? config.packages : undefined))
-        .catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
-    isOffline: () => !Cloud.isOnline(),
-})
-
-mountVirtualApi("gh-pkgcfg", {
-    getAsync: query =>
-        pxt.github.pkgConfigAsync(stripProtocol(query)).catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
-    isOffline: () => !Cloud.isOnline(),
-})
-
-// gh-commits:repo#sha
-mountVirtualApi("gh-commits", {
-    getAsync: query => {
-        const p = stripProtocol(query);
-        const [ repo, sha ] = p.split('#', 2)
-        return pxt.github.getCommitsAsync(repo, sha).catch(e => {
-            core.handleNetworkError(e);
-            return [];
-        })
-    },
-    expirationTime: p => 60 * 1000,
-    isOffline: () => !Cloud.isOnline(),
-})
-
-let targetConfigPromise: Promise<pxt.TargetConfig> = undefined;
-mountVirtualApi("target-config", {
-    getAsync: query => {
-        if (!targetConfigPromise)
-            targetConfigPromise = pxt.targetConfigAsync()
-                .then(js => {
-                    if (js) {
-                        pxt.storage.setLocal("targetconfig", JSON.stringify(js))
-                        invalidate("target-config");
-                        invalidate("gh-search");
-                        invalidate("gh-pkgcfg");
-                    }
-                    return js;
-                })
-                .catch(core.handleNetworkError);
-        // return cached value or try again
-        const cfg = JSON.parse(pxt.storage.getLocal("targetconfig") || "null") as pxt.TargetConfig;
-        if (cfg) return Promise.resolve(cfg);
-        return targetConfigPromise;
-    },
-    expirationTime: p => 24 * 3600 * 1000,
-    isOffline: () => !Cloud.isOnline()
-})
-
+const virtualApis: pxt.Map<VirtualApi> = {};
 let cachedData: pxt.Map<CacheEntry> = {};
 
 export function subscribe(component: DataSubscriber, path: string) {
@@ -146,11 +71,11 @@ export function clearCache() {
     saveCache();
 }
 
-function loadCache() {
+export function loadCache() {
     JSON.parse(pxt.storage.getLocal("apiCache2") || "[]").forEach((e: any) => {
         let ce = lookup(e.path)
         ce.data = e.data
-    })
+    });
 }
 
 function saveCache() {
@@ -159,12 +84,21 @@ function saveCache() {
             path: e.path,
             data: e.data
         }
-    })
-    pxt.storage.setLocal("apiCache2", JSON.stringify(obj))
+    });
+    pxt.storage.setLocal("apiCache2", JSON.stringify(obj));
 }
 
 function matches(ce: CacheEntry, prefix: string) {
-    return ce.path.slice(0, prefix.length) == prefix;
+    if (ce.path.slice(0, prefix.length) == prefix) {
+        // exact match
+        return true;
+    } else if (ce.path.endsWith(":*")) {
+        // ce.path is a wildcard
+        const [ce_proto] = ce.path.split(':');
+        const [prefix_proto] = prefix.split(':');
+        return ce_proto == prefix_proto;
+    }
+    return false;
 }
 
 function notify(ce: CacheEntry, path: string) {
@@ -224,7 +158,7 @@ function lookup(path: string) {
     return cachedData[path]
 }
 
-function getCached(component: DataSubscriber, path: string): DataFetchResult<any> {
+export function getCached(component: DataSubscriber, path: string): DataFetchResult<any> {
     subscribe(component, path)
     return getDataWithStatus(path);
 }
@@ -271,12 +205,7 @@ export function invalidate(path: string) {
     })
 }
 
-export function invalidateHeader(prefix: string, hd: pxt.workspace.Header) {
-    if (hd)
-        invalidate(prefix + ':' + hd.id);
-}
-
-export function getAsync<T = any>(path: string) {
+export function getAsync<T = any>(path: string): Promise<T> {
     let ce = lookup(path)
 
     if (ce.api.isSync)
@@ -324,6 +253,87 @@ export function getDataWithStatus<T>(path: string): DataFetchResult<T> {
     return fetchRes;
 }
 
+
+mountVirtualApi("cloud", {
+    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
+mountVirtualApi("cloud-search", {
+    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(e => {
+        core.handleNetworkError(e, [404])
+        return { statusCode: 404, headers: {}, json: {} }
+    }),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
+mountVirtualApi("extension-search", {
+    getAsync: query => pxt.targetConfigAsync()
+        .then(config => pxt.github.searchAsync(stripProtocol(query), config?.packages))
+        .catch(core.handleNetworkError),
+    expirationTime: p => 3600 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
+mountVirtualApi("gallery", {
+    getAsync: p => pxt.gallery.loadGalleryAsync(stripProtocol(decodeURIComponent(p))).catch((e) => {
+        return Promise.resolve(e);
+    }),
+    expirationTime: p => 3600 * 1000
+})
+
+mountVirtualApi("gh-search", {
+    getAsync: query => pxt.targetConfigAsync()
+        .then(config => pxt.github.searchAsync(stripProtocol(query), config?.packages))
+        .catch(core.handleNetworkError),
+    expirationTime: p => 360 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
+// gh-commits:repo#sha
+mountVirtualApi("gh-commits", {
+    getAsync: query => {
+        const p = stripProtocol(query);
+        const [repo, sha] = p.split('#', 2)
+        return pxt.github.getCommitsAsync(repo, sha).catch(e => {
+            core.handleNetworkError(e);
+            return [];
+        })
+    },
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
+let targetConfigPromise: Promise<pxt.TargetConfig> = undefined;
+mountVirtualApi("target-config", {
+    getAsync: query => {
+        if (!targetConfigPromise)
+            targetConfigPromise = pxt.targetConfigAsync()
+                .then(js => {
+                    if (js) {
+                        pxt.storage.setLocal("targetconfig", JSON.stringify(js))
+                        invalidate("target-config");
+                        invalidate("gh-search");
+                    }
+                    return js;
+                })
+                .catch(core.handleNetworkError);
+        // return cached value or try again
+        const cfg = JSON.parse(pxt.storage.getLocal("targetconfig") || "null") as pxt.TargetConfig;
+        if (cfg) return Promise.resolve(cfg);
+        return targetConfigPromise;
+    },
+    expirationTime: p => 24 * 3600 * 1000,
+    isOffline: () => !Cloud.isOnline()
+})
+
+export function invalidateHeader(prefix: string, hd: pxt.workspace.Header) {
+    if (hd)
+        invalidate(prefix + ':' + hd.id);
+}
+
 export class Component<TProps, TState> extends React.Component<TProps, TState> implements DataSubscriber {
     subscriptions: CacheEntry[] = [];
     renderCoreOk = false;
@@ -345,14 +355,6 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> i
         if (!this.renderCoreOk)
             Util.oops("Override renderCore() not render()")
         return getCached(this, path)
-    }
-
-    hasCloud(): boolean {
-        return !!this.getData("sync:hascloud");
-    }
-
-    hasSync(): boolean {
-        return !!this.getData("sync:hassync")
     }
 
     onDataChanged(): void {

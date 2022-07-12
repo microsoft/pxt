@@ -14,6 +14,22 @@ If you want the hints to display by default when each step is encountered, speci
 ### @explicitHints true
 ```
 
+### Preferred editor view
+
+### ~reminder
+
+#### Asset editing support
+
+Support for this option is only available in [Microsoft MakeCode Arcade](https://arcade.makecode.com).
+
+### ~
+
+Typically, when a tutorial starts the default editor view, it's for editing code in the language specified for the tutorial. If your tutorial has steps for creating assets (tilemaps, images, tiles, or animations) when the tutorial begins, you can have the Asset Editor displayed instead of the Blocks or Code editors. You specify this with the **@preferredEditor** option using the ``asset`` setting.
+
+```
+### @preferredEditor asset
+```
+
 ### Flyout blocks
 
 To have all of the available blocks in a permanently visible flyout instead of the toolbox, use **@flyoutOnly**. The default setting is ``false``.
@@ -49,23 +65,31 @@ This template example gives some initial code as a starting point for making a g
 ````
 ```template
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-	
+
 })
 scene.setBackgroundColor(9)
 let mySprite = sprites.create(img`
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
 
     `, SpriteKind.Player)
 game.onUpdateInterval(1000, function () {
-	
+
 })
+```
+````
+
+For a "blank" template that only contains the `on start` block (in targets like Minecraft, which has two default blocks on the workspace) simply make a template block with an empty comment:
+
+````
+```template
+//
 ```
 ````
 
@@ -96,6 +120,23 @@ input.onButtonPressed(Button.A, function () {
 
 ```ghost
 basic.showIcon(IconNames.Heart)
+```
+````
+
+### Custom code
+
+If you want to load existing code into a tutorial but have it hidden from the user, you can include a `customts` block. The code in the snippet will **not** appear on the Workspace and will **not** show up in the Toolbox.
+
+This can be used to add starter code that the user does not need to see and should not have to modify. It's a good idea to add this code inside a custom namespace, to avoid inadvertent errors in user code.
+
+````
+```customts
+namespace camera {
+    let camera = sprites.create(image.create(16, 16), SpriteKind.Player)
+    controller.moveSprite(camera)
+    camera.setFlag(SpriteFlag.Invisible, true)
+    scene.cameraFollowSprite(camera)
+}
 ```
 ````
 

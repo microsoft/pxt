@@ -14,6 +14,12 @@ namespace pxt {
         displayName?: string;
         tags?: string[];
         blockIDs?: string[];
+        temporaryInfo?: TemporaryAssetInfo;
+    }
+
+    export interface TemporaryAssetInfo {
+        blockId: string;
+        fieldName: string;
     }
 
     export type Asset = ProjectImage | Tile | Animation | ProjectTilemap;
@@ -350,7 +356,7 @@ namespace pxt {
         }
 
         public createNewImage(width = 16, height = 16) {
-            const id = this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE);
+            const id = this.generateNewID(AssetType.Image);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
             const newImage: ProjectImage = {
@@ -365,7 +371,7 @@ namespace pxt {
         }
 
         public createNewAnimation(width = 16, height = 16) {
-            const id = this.generateNewID(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+            const id = this.generateNewID(AssetType.Animation);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
             const newAnimation: Animation = {
@@ -380,7 +386,7 @@ namespace pxt {
         }
 
         public createNewAnimationFromData(frames: pxt.sprite.BitmapData[], interval = 500, displayName?: string) {
-            const id = this.generateNewID(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+            const id = this.generateNewID(AssetType.Animation);
 
             const newAnimation: Animation = {
                 internalID: this.getNewInternalId(),
@@ -428,7 +434,7 @@ namespace pxt {
             this.onChange();
 
             if (!id || this.isNameTaken(AssetType.Tile, id)) {
-                id = this.generateNewID(AssetType.Tile, pxt.sprite.TILE_PREFIX, pxt.sprite.TILE_NAMESPACE);
+                id = this.generateNewID(AssetType.Tile);
             }
 
             const newTile: Tile = {
@@ -451,7 +457,7 @@ namespace pxt {
 
             const newImage: ProjectImage = {
                 internalID: this.getNewInternalId(),
-                id: this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE),
+                id: this.generateNewID(AssetType.Image),
                 type: AssetType.Image,
                 jresData: pxt.sprite.base64EncodeBitmap(data),
                 meta: {
@@ -595,13 +601,13 @@ namespace pxt {
         public createNewTilemapFromData(data: pxt.sprite.TilemapData, name?: string): [string, pxt.sprite.TilemapData] {
             this.onChange()
 
-            const id = this.generateNewID(AssetType.Tilemap, name || lf("level"));
+            const id = this.generateNewIDInternal(AssetType.Tilemap, name || lf("level"));
             this.state.tilemaps.add({
                 internalID: this.getNewInternalId(),
                 id,
                 type: AssetType.Tilemap,
                 meta: {
-                    displayName: id
+                    displayName: name || id
                 },
                 data: data
             });
@@ -760,8 +766,8 @@ namespace pxt {
             }
 
             if (files) {
-                const shortId = getShortIDForAsset(asset);
-                const displayName = asset.meta?.displayName || "";
+                const shortId = Util.escapeForRegex(getShortIDForAsset(asset));
+                const displayName = Util.escapeForRegex(asset.meta?.displayName) || "";
 
                 let assetTsRefs: string;
                 switch (asset.type) {
@@ -918,28 +924,28 @@ namespace pxt {
             }
         }
 
-        public duplicateAsset(asset: ProjectImage): ProjectImage;
-        public duplicateAsset(asset: Tile): Tile;
-        public duplicateAsset(asset: ProjectTilemap): ProjectTilemap;
-        public duplicateAsset(asset: Animation): Animation;
-        public duplicateAsset(asset: Asset): Asset;
-        public duplicateAsset(asset: Asset) {
+        public duplicateAsset(asset: ProjectImage, displayName?: string): ProjectImage;
+        public duplicateAsset(asset: Tile, displayName?: string): Tile;
+        public duplicateAsset(asset: ProjectTilemap, displayName?: string): ProjectTilemap;
+        public duplicateAsset(asset: Animation, displayName?: string): Animation;
+        public duplicateAsset(asset: Asset, displayName?: string): Asset;
+        public duplicateAsset(asset: Asset, displayName?: string) {
             this.onChange();
             const clone = cloneAsset(asset);
-            const displayName = clone.meta?.displayName;
+            const name = displayName || clone.meta?.displayName;
 
             let newAsset: pxt.Asset;
             switch (asset.type) {
                 case AssetType.Image:
-                    newAsset = this.createNewProjectImage((clone as pxt.ProjectImage).bitmap, displayName); break;
+                    newAsset = this.createNewProjectImage((clone as pxt.ProjectImage).bitmap, name); break;
                 case AssetType.Tile:
-                    newAsset = this.createNewTile((clone as pxt.Tile).bitmap, null, displayName); break;
+                    newAsset = this.createNewTile((clone as pxt.Tile).bitmap, null, name); break;
                 case AssetType.Tilemap:
-                    const [id, tilemap] = this.createNewTilemapFromData((clone as pxt.ProjectTilemap).data, displayName);
+                    const [id, tilemap] = this.createNewTilemapFromData((clone as pxt.ProjectTilemap).data, name);
                     newAsset = this.getTilemap(id);
                     break;
                 case AssetType.Animation:
-                    newAsset = this.createNewAnimationFromData((clone as pxt.Animation).frames, (clone as pxt.Animation).interval, displayName)
+                    newAsset = this.createNewAnimationFromData((clone as pxt.Animation).frames, (clone as pxt.Animation).interval, name)
             }
             return newAsset;
         }
@@ -1198,7 +1204,20 @@ namespace pxt {
             return animation;
         }
 
-        protected generateNewID(type: AssetType, varPrefix: string, namespaceString?: string) {
+        generateNewID(type: AssetType) {
+            switch (type) {
+                case AssetType.Animation:
+                    return this.generateNewIDInternal(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+                case AssetType.Image:
+                    return this.generateNewIDInternal(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE);
+                case AssetType.Tile:
+                    return this.generateNewIDInternal(AssetType.Tile, pxt.sprite.TILE_PREFIX, pxt.sprite.TILE_NAMESPACE);
+                case AssetType.Tilemap:
+                    return this.generateNewIDInternal(AssetType.Tilemap, lf("level"));
+            }
+        }
+
+        protected generateNewIDInternal(type: AssetType, varPrefix: string, namespaceString?: string) {
             varPrefix = varPrefix.replace(/\d+$/, "");
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
             let index = 1;
@@ -1404,7 +1423,7 @@ namespace pxt {
         return new pxt.sprite.TilemapData(tilemap, tileset, layers);
     }
 
-    function cloneAsset<U extends Asset>(asset: U): U {
+    export function cloneAsset<U extends Asset>(asset: U): U {
         asset.meta = Object.assign({}, asset.meta);
         switch (asset.type) {
             case AssetType.Tile:
@@ -1465,8 +1484,8 @@ namespace pxt {
     export function assetEquals(a: Asset, b: Asset) {
         if (a == b) return true;
         if (a.id !== b.id || a.type !== b.type ||
-            !arrayEquals(a.meta.tags, b.meta.tags) ||
-            !arrayEquals(a.meta.blockIDs, b.meta.blockIDs) ||
+            !U.arrayEquals(a.meta.tags, b.meta.tags) ||
+            !U.arrayEquals(a.meta.blockIDs, b.meta.blockIDs) ||
             a.meta.displayName !== b.meta.displayName
         )
             return false;
@@ -1477,7 +1496,7 @@ namespace pxt {
                 return sprite.bitmapEquals(a.bitmap, (b as ProjectImage | Tile).bitmap);
             case AssetType.Animation:
                     const bAnimation = b as Animation;
-                    return a.interval === bAnimation.interval && arrayEquals(a.frames, bAnimation.frames, sprite.bitmapEquals);
+                    return a.interval === bAnimation.interval && U.arrayEquals(a.frames, bAnimation.frames, sprite.bitmapEquals);
             case AssetType.Tilemap:
                 return a.data.equals((b as ProjectTilemap).data);
         }
@@ -1487,6 +1506,7 @@ namespace pxt {
         if (!name) return false;
 
         // Covers all punctuation/whitespace except for "-", "_", and " "
+        // eslint-disable-next-line no-control-regex
         const bannedRegex = /[\u0000-\u001f\u0021-\u002c\u002e\u002f\u003a-\u0040\u005b-\u005e\u0060\u007b-\u007f]/
         return !bannedRegex.test(name);
     }
@@ -1559,6 +1579,21 @@ namespace pxt {
         return undefined
     }
 
+    export function getDefaultAssetDisplayName(type: pxt.AssetType): string {
+        switch (type) {
+            case pxt.AssetType.Image:
+                return lf("myImage");
+            case pxt.AssetType.Tile:
+                return lf("myTile");
+            case pxt.AssetType.Tilemap:
+                return lf("level");
+            case pxt.AssetType.Animation:
+                return lf("myAnim");
+            default:
+                return lf("asset")
+        }
+    }
+
     export function getShortIDForAsset(asset: pxt.Asset) {
         return getShortIDCore(asset.type, asset.id);
     }
@@ -1593,16 +1628,6 @@ namespace pxt {
         return id;
     }
 
-    function arrayEquals<U>(a: U[], b: U[], compare: (c: U, d: U) => boolean = (c, d) => c === d) {
-        if (a == b) return true;
-        if (!a && b || !b && a || a.length !== b.length) return false;
-
-        for (let i = 0; i < a.length; i++) {
-            if (!compare(a[i], b[i])) return false;
-        }
-        return true;
-    }
-
     function serializeTilemap(tilemap: sprite.TilemapData, id: string, name: string): JRes {
         const tm = tilemap.tilemap.data();
         const data = new Uint8ClampedArray(5 + tm.data.length + tilemap.layers.data.length);
@@ -1625,27 +1650,11 @@ namespace pxt {
     }
 
     function serializeAnimation(asset: Animation): JRes {
-        const encodedFrames = asset.frames.map(frame => frame.data);
-
-        const data = new Uint8ClampedArray(8 + encodedFrames[0].length * encodedFrames.length);
-
-        // interval, frame width, frame height, frame count
-        set16Bit(data, 0, asset.interval);
-        set16Bit(data, 2, asset.frames[0].width);
-        set16Bit(data, 4, asset.frames[0].height);
-        set16Bit(data, 6, asset.frames.length);
-
-        let offset = 8;
-        encodedFrames.forEach(buf => {
-            data.set(buf, offset);
-            offset += buf.length;
-        })
-
         return {
             namespace: asset.id.substr(0, asset.id.lastIndexOf(".")),
             id: asset.id.substr(asset.id.lastIndexOf(".") + 1),
             mimeType: ANIMATION_MIME_TYPE,
-            data: btoa(pxt.sprite.uint8ArrayToHex(data)),
+            data: pxt.sprite.encodeAnimationString(asset.frames, asset.interval),
             displayName: asset.meta.displayName
         }
     }

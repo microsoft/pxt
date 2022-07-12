@@ -251,6 +251,7 @@ This severely misnamed option controls the available blocks in the Blockly edito
         // options specific to the special "on start" block
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
+        onStartGroup?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
     }

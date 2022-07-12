@@ -94,37 +94,11 @@ namespace ts.pxtc {
         }
 
         string_literal(lbl: string, strLit: string) {
-            const SKIP_INCR = 16
-            let vt = "pxt::string_inline_ascii_vt"
-            let utfLit = target.utf8 ? U.toUTF8(strLit, true) : strLit
-            if (utfLit !== strLit) {
-                if (strLit.length > SKIP_INCR) {
-                    vt = "pxt::string_skiplist16_vt"
-                    let skipList: number[] = []
-                    let off = 0
-                    for (let i = 0; i + SKIP_INCR <= strLit.length; i += SKIP_INCR) {
-                        off += U.toUTF8(strLit.slice(i, i + SKIP_INCR), true).length
-                        skipList.push(off)
-                    }
-                    return `
-.balign 4
-${lbl}: ${this.obj_header(vt)}
-        .short ${utfLit.length}, ${strLit.length}
-        .word ${lbl}data
-${lbl}data:
-        .short ${skipList.map(s => s.toString()).join(", ")}
-        .string ${asmStringLiteral(utfLit)}
-`
-                } else {
-                    vt = "pxt::string_inline_utf8_vt"
-                }
-            }
-
+            const info = utf8AsmStringLiteral(strLit)
             return `
-.balign 4
-${lbl}: ${this.obj_header(vt)}
-        .short ${utfLit.length}
-        .string ${asmStringLiteral(utfLit)}
+            .balign 4
+            ${lbl}: ${this.obj_header(info.vt)}
+            ${info.asm}
 `
         }
 
@@ -139,6 +113,38 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
 ${hexLiteralAsm(data)}
 `
         }
+    }
+
+    export function utf8AsmStringLiteral(strLit: string) {
+        const PXT_STRING_SKIP_INCR = 16
+        let vt = "pxt::string_inline_ascii_vt"
+        let utfLit = target.utf8 ? U.toUTF8(strLit, true) : strLit
+        let asm = ""
+        if (utfLit !== strLit) {
+            if (strLit.length > PXT_STRING_SKIP_INCR) {
+                vt = "pxt::string_skiplist16_packed_vt"
+                let skipList: number[] = []
+                let off = 0
+                for (let i = 0; i + PXT_STRING_SKIP_INCR <= strLit.length; i += PXT_STRING_SKIP_INCR) {
+                    off += U.toUTF8(strLit.slice(i, i + PXT_STRING_SKIP_INCR), true).length
+                    skipList.push(off)
+                }
+                asm = `
+    .short ${utfLit.length}, ${strLit.length}
+    .short ${skipList.map(s => s.toString()).join(", ")}
+    .string ${asmStringLiteral(utfLit)}
+`
+            } else {
+                vt = "pxt::string_inline_utf8_vt"
+            }
+        }
+
+        if (!asm)
+            asm = `
+    .short ${utfLit.length}
+    .string ${asmStringLiteral(utfLit)}
+`
+        return { vt, asm }
     }
 
     export function hexLiteralAsm(data: string, suff = "") {
@@ -219,12 +225,16 @@ ${hexLiteralAsm(data)}
 ;
 `)
 
-            this.emitLambdaWrapper(this.proc.isRoot)
-
             let baseLabel = this.proc.label()
+            let preLabel = baseLabel + "_pre"
             let bkptLabel = baseLabel + "_bkpt"
             let locLabel = baseLabel + "_locals"
             let endLabel = baseLabel + "_end"
+
+            this.write(`${preLabel}:`)
+
+            this.emitLambdaWrapper(this.proc.isRoot)
+
             this.write(`.section code`)
             this.write(`${baseLabel}:`)
 
@@ -255,7 +265,8 @@ ${baseLabel}_nochk:
                     bkptLoc: U.lookup(labels, bkptLabel),
                     localsMark: U.lookup(th.stackAtLabel, locLabel),
                     idx: this.proc.seqNo,
-                    calls: this.calls
+                    calls: this.calls,
+                    size: U.lookup(labels, endLabel) + 2 - U.lookup(labels, preLabel)
                 }
 
                 for (let ci of this.calls) {
@@ -320,6 +331,9 @@ ${baseLabel}_nochk:
                         this.write(s.lblName + ":")
                         this.validateJmpStack(s)
                         break;
+                    case ir.SK.Comment:
+                        this.write(`; ${s.expr.data}`)
+                        break
                     case ir.SK.Breakpoint:
                         if (this.bin.options.breakpoints) {
                             let lbl = `__brkp_${s.breakpointInfo.id}`

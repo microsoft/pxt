@@ -25,15 +25,7 @@ export class Keymap extends data.Component<ISettingsProps, KeymapState> {
         const board = pxt.appTarget && pxt.appTarget.appTheme
             && pxt.appTarget.appTheme.boardName.toLowerCase();
         this.keymap = board && Keymap._data[board];
-    }
-
-    componentDidMount() {
-        const el = this.refs["keymap"] as HTMLDivElement;
-        if (el.parentElement.clientHeight < el.parentElement.scrollHeight) {
-            this.setState({ above: true });
-        } else {
-            this.setState({ above: false });
-        }
+        this.state = { above: true };
     }
 
     hideKeymap = () => {
@@ -48,7 +40,7 @@ export class Keymap extends data.Component<ISettingsProps, KeymapState> {
                     <span className="keymap-title">{col.title}</span>
                     {
                         Object.keys(col.map).map( (el, j) => {
-                            return <div key={j}>
+                            return <div key={j} className="keymap-row">
                                 {col.map[el].map( (key, j) => {
                                     return <div className="keymap-key" key={j}>{key}</div>
                                 })}

@@ -380,6 +380,13 @@ declare interface String {
     trim(): string;
 
     /**
+     * Converts the string to upper case characters.
+     */
+    //% helper=stringToUpperCase
+    //% help=text/to-upper-case
+    toUpperCase(): string;
+
+    /**
      * Converts the string to lower case characters.
      */
     //% helper=stringToLowerCase
@@ -517,6 +524,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::log
+    //% help=math
     function log(x: number): number;
 
     /**
@@ -524,6 +532,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::exp
+    //% help=math
     function exp(x: number): number;
 
     /**
@@ -547,6 +556,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::tan
+    //% help=math/trigonometry
     function tan(x: number): number;
 
     /**
@@ -554,6 +564,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::asin
+    //% help=math/trigonometry
     function asin(x: number): number;
 
     /**
@@ -561,6 +572,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::acos
+    //% help=math/trigonometry
     function acos(x: number): number;
 
     /**
@@ -568,6 +580,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::atan
+    //% help=math/trigonometry
     function atan(x: number): number;
 
     /**
@@ -576,6 +589,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::atan2
+    //% help=math/trigonometry
     function atan2(y: number, x: number): number;
 
     /**
@@ -583,6 +597,7 @@ declare namespace Math {
      * @param x A numeric expression.
      */
     //% shim=Math_::sqrt
+    //% help=math
     function sqrt(x: number): number;
 
     /**
@@ -623,6 +638,7 @@ declare namespace Math {
      * @param y The second number
      */
     //% shim=Math_::imul
+    //% help=math
     function imul(x: number, y: number): number;
 
     /**
@@ -631,6 +647,7 @@ declare namespace Math {
      * @param y The second number
      */
     //% shim=Math_::idiv
+    //% help=math
     function idiv(x: number, y: number): number;
 }
 

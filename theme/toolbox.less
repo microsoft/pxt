@@ -8,6 +8,7 @@
     color: @blocklyToolboxText;
     overflow-x: visible;
     overflow-y: auto;
+    padding-top: 0;
     z-index: @blocklyToolboxZIndex;
     /* so blocks go over toolbox when dragging */
     -webkit-tap-highlight-color: transparent;
@@ -186,6 +187,10 @@ span.blocklyTreeIcon {
     height: 100%;
     display: none;
     vertical-align: middle;
+}
+
+.blocklyTreeIcon.brandIcon {
+    font-family: 'brand-icons';
 }
 
 div.blocklyTreeIcon span {

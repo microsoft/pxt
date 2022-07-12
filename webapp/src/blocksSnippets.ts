@@ -678,7 +678,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 return true;
             },
             attributes: {
-                advanced: true,
+                advanced: false,
                 weight: -1,
                 icon: 'addpackage',
                 callingConvention: ts.pxtc.ir.CallingConvention.Plain,
@@ -742,7 +742,8 @@ export function allBuiltinBlocks() {
         name: ts.pxtc.ON_START_TYPE,
         attributes: {
             blockId: ts.pxtc.ON_START_TYPE,
-            weight: pxt.appTarget.runtime.onStartWeight || 10
+            weight: pxt.appTarget.runtime.onStartWeight || 10,
+            group: pxt.appTarget.runtime.onStartGroup || undefined
         },
         blockXml: `<block type="pxt-on-start"></block>`
     };

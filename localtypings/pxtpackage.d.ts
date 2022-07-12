@@ -73,6 +73,7 @@ declare namespace pxt {
         weight?: number;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
+        isExtension?: boolean; // is this package an extension
         dalDTS?: {
             corePackage?: string;
             includeDirs?: string[];
@@ -80,6 +81,7 @@ declare namespace pxt {
         };
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
+        searchOnly?: boolean; // do not show by default, only as search result
         skipLocalization?: boolean;
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;
@@ -119,6 +121,10 @@ declare namespace pxt {
 
     interface CodalConfig {
         libraries?: string[];
+    }
+
+    interface CodalJson {
+        
     }
 
     interface YottaConfig {

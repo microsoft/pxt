@@ -7,6 +7,7 @@ import * as nodeutil from './nodeutil';
 import * as hid from './hid';
 import * as net from 'net';
 import * as crowdin from './crowdin';
+import * as storage from './storage';
 
 import { promisify } from "util";
 
@@ -89,9 +90,7 @@ type FsPkg = pxt.FsPkg;
 
 function readAssetsAsync(logicalDirname: string): Promise<any> {
     let dirname = path.join(userProjectsDir, logicalDirname, "assets")
-    /* tslint:disable:no-http-string */
     let pref = "http://" + serveOptions.hostname + ":" + serveOptions.port + "/assets/" + logicalDirname + "/"
-    /* tslint:enable:no-http-string */
     return readdirAsync(dirname)
         .catch(err => [])
         .then(res => U.promiseMapAll(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
@@ -285,6 +284,49 @@ function getCachedHexAsync(sha: string): Promise<any> {
                     };
                 });
         });
+}
+
+async function handleApiStoreRequestAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<void> {
+    const meth = req.method.toUpperCase();
+    const container = decodeURIComponent(elts[0]);
+    const key = decodeURIComponent(elts[1]);
+    if (!container || !key) { throw throwError(400, "malformed api/store request: " + req.url); }
+    const origin = req.headers['origin'] || '*';
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    if (meth === "GET") {
+        const val = await storage.getAsync(container, key);
+        if (val) {
+            if (typeof val === "object") {
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' });
+                res.end(JSON.stringify(val));
+            } else {
+                res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf8' });
+                res.end(val.toString());
+            }
+        } else {
+            res.writeHead(404);
+            res.end();
+        }
+    } else if (meth === "POST") {
+        const srec = (await nodeutil.readResAsync(req)).toString("utf8");
+        const rec = JSON.parse(srec) as storage.Record;
+        await storage.setAsync(container, key, rec);
+        res.writeHead(200);
+        res.end();
+    } else if (meth === "DELETE") {
+        await storage.delAsync(container, key);
+        res.writeHead(200);
+        res.end();
+    } else if (meth === "OPTIONS") {
+        const allowedHeaders = req.headers['access-control-request-headers'] || 'Content-Type';
+        const allowedMethods = req.headers['access-control-request-method'] || 'GET, POST, DELETE';
+        res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
+        res.setHeader('Access-Control-Allow-Methods', allowedMethods);
+        res.writeHead(200);
+        res.end();
+    } else {
+        throw res.writeHead(400, "Unsupported HTTP method: " + meth);
+    }
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
@@ -905,7 +947,7 @@ export function serveAsync(options: ServeOptions) {
     if (serveOptions.serial)
         initSerialMonitor();
 
-    const server = http.createServer((req, res) => {
+    const server = http.createServer(async (req, res) => {
         const error = (code: number, msg: string = null) => {
             res.writeHead(code, { "Content-Type": "text/plain" })
             res.end(msg || "Error " + code)
@@ -975,6 +1017,17 @@ export function serveAsync(options: ServeOptions) {
                 return
             }
 
+            if (elts[1] == "immreader") {
+                let trg = Cloud.apiRoot + elts[1];
+                res.setHeader("Location", trg)
+                error(302, "Redir: " + trg)
+                return
+            }
+
+            if (elts[1] == "store") {
+                return await handleApiStoreRequestAsync(req, res, elts.slice(2));
+            }
+
             if (/^\d\d\d[\d\-]*$/.test(elts[1]) && elts[2] == "js") {
                 return compileScriptAsync(elts[1])
                     .then(data => {
@@ -1040,7 +1093,7 @@ export function serveAsync(options: ServeOptions) {
 
         let publicDir = path.join(nodeutil.pxtCoreDir, "webapp/public")
 
-        if (pathname == "/--embed") {
+        if (pathname == "/--embed" || pathname === "/---embed") {
             sendFile(path.join(publicDir, 'embed.js'));
             return
         }
@@ -1062,6 +1115,11 @@ export function serveAsync(options: ServeOptions) {
 
         if (pathname == "/--skillmap") {
             sendFile(path.join(publicDir, 'skillmap.html'));
+            return
+        }
+
+        if (pathname == "/--authcode") {
+            sendFile(path.join(publicDir, 'authcode.html'));
             return
         }
 
@@ -1191,9 +1249,7 @@ export function serveAsync(options: ServeOptions) {
     const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
     if (nodeutil.fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
-        /* tslint:disable:non-literal-require */
         require(serverjs);
-        /* tslint:disable:non-literal-require */
     }
 
     const serverPromise = new Promise<void>((resolve, reject) => {
@@ -1203,9 +1259,7 @@ export function serveAsync(options: ServeOptions) {
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
-            /* tslint:disable:no-http-string */
             const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
-            /* tslint:enable:no-http-string */
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);

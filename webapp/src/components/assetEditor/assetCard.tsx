@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, isGalleryAsset } from './store/assetEditorReducer';
+import { AssetEditorState, isGalleryAsset } from './store/assetEditorReducerState';
 import { dispatchChangeSelectedAsset } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
@@ -61,7 +61,7 @@ export class AssetCardView extends React.Component<AssetCardCoreProps> {
                 {icon && <div className="asset-editor-card-icon">
                     <i className={`icon ${icon}`} />
                 </div>}
-                {!asset.meta?.displayName && !inGallery && <div className="asset-editor-card-icon">
+                {!asset.meta?.displayName && !inGallery && <div className="asset-editor-card-icon warning">
                     <i className="icon exclamation triangle" />
                 </div>}
             </div>}

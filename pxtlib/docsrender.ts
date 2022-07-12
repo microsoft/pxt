@@ -3,6 +3,7 @@
 /// <reference path="commonutil.ts"/>
 
 namespace pxt.docs {
+    // eslint-disable-next-line no-var
     declare var require: any;
     import U = pxtc.Util;
 
@@ -28,7 +29,8 @@ namespace pxt.docs {
         "codeStop": "<!-- stop -->",
         "autoOpen": "<!-- autoOpen -->",
         "autoexpandOff": "<!-- autoexpandOff -->",
-        "preferredEditor": "<!-- preferredEditor -->"
+        "preferredEditor": "<!-- preferredEditor -->",
+        "tutorialCodeValidation": "<!-- tutorialCodeValidation -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
@@ -295,10 +297,20 @@ namespace pxt.docs {
             params["drivename"] = html2Quote(theme.driveDisplayName);
         if (theme.homeUrl)
             params["homeurl"] = html2Quote(theme.homeUrl);
+
+
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
         params["docsheader"] = theme.docsHeader || "Documentation";
-        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${theme.docsLogo}" />` : ""
+        params["orgtitle"] = "MakeCode";
+
+        const docsLogo = theme.docsLogo && U.htmlEscape(theme.docsLogo);
+        const orgLogo = (theme.organizationWideLogo || theme.organizationLogo) && U.htmlEscape(theme.organizationWideLogo || theme.organizationLogo);
+        const orglogomobile = theme.organizationLogo && U.htmlEscape(theme.organizationLogo)
+        params["targetlogo"] = docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${docsLogo}" />` : ""
+        params["orglogo"] = orgLogo ? `<img aria-hidden="true" role="presentation" class="ui image" src="${orgLogo}" />` : ""
+        params["orglogomobile"] = orglogomobile ? `<img aria-hidden="true" role="presentation" class="ui image" src="${orglogomobile}" />` : ""
+
         let ghURLs = d.ghEditURLs || []
         if (ghURLs.length) {
             let ghText = `<p style="margin-top:1em">\n`
@@ -371,6 +383,8 @@ namespace pxt.docs {
             "printBtn",
             "breadcrumb",
             "targetlogo",
+            "orglogo",
+            "orglogomobile",
             "github",
             "JSON",
             "appstoremeta",
@@ -404,13 +418,26 @@ namespace pxt.docs {
 
     export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
-            let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
-            if (title) {
-                out += ' title="' + title + '"';
+            const endpointName="makecode-lucas-testing-makecodetempmediaservice-usea";
+            if (href.startsWith("youtube:")) {
+                let out = '<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop()
+                    + '" title="' + title + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
+                return out;
+
+            } else if (href.startsWith("azuremedia:")) {
+                let out = `<div class="tutorial-video-embed"><video class="ams-embed" controls src="https://${endpointName}.streaming.media.azure.net/` + href.split(":").pop() + '/manifest(format=mpd-time-cmaf)" /></div>';
+                return out;
+
+            } else {
+                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
+                if (title) {
+                    out += ' title="' + title + '"';
+                }
+                out += ' loading="lazy"';
+                out += (this as any).options.xhtml ? '/>' : '>';
+                return out;
             }
-            out += ' loading="lazy"';
-            out += (this as any).options.xhtml ? '/>' : '>';
-            return out;
+
         }
         renderer.listitem = function (text: string): string {
             const m = /^\s*\[( |x)\]/i.exec(text);
@@ -423,12 +450,16 @@ namespace pxt.docs {
             if (m) {
                 text = m[1]
                 id = m[2]
-            } else {
-                id = raw.toLowerCase().replace(/[^\w]+/g, '-')
             }
             // remove tutorial macros
             if (text)
                 text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
+            // remove brackets for hiding step title
+            if (text.match(/\{([\s\S]+)\}/))
+                text = text.match(/\{([\s\S]+)\}/)[1].trim()
+            if (id === "") {
+                id = text.toLowerCase().replace(/[^\w]+/g, '-')
+            }
             return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
         }
     }

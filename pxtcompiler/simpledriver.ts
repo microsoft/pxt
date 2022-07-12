@@ -44,6 +44,10 @@ namespace pxt {
                 })
         }
 
+        latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
+            return this.db.latestVersionAsync(repopath, config)
+        }
+
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
             return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
         }
@@ -205,8 +209,11 @@ namespace pxt {
         }
     }
 
+    // eslint-disable-next-line no-var
     declare var global: any;
+    // eslint-disable-next-line no-var
     declare var Buffer: any;
+    // eslint-disable-next-line no-var
     declare var pxtTargetBundle: TargetBundle;
 
     export function setupSimpleCompile(cfg?: SimpleDriverCallbacks) {

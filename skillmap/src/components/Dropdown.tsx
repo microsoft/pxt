@@ -1,8 +1,8 @@
 import * as React from "react";
 
-/* tslint:disable:no-import-side-effect */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/dropdown.css'
-/* tslint:enable:no-import-side-effect */
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 export interface DropdownItem {
     id: string;
@@ -12,6 +12,7 @@ export interface DropdownItem {
 
 interface DropdownProps {
     icon: string;
+    picture?: JSX.Element;
     items: DropdownItem[];
     className?: string;
 }
@@ -40,13 +41,13 @@ export class Dropdown extends React.Component<DropdownProps, DropdownState> {
     }
 
     render() {
-        const { icon, items, className } = this.props;
+        const { icon, picture, items, className } = this.props;
         const { expanded } = this.state;
 
         return <div className={`dropdown ${className} ${expanded ? 'expanded' : ''}`} tabIndex={0} role="button"
                     onClick={this.handleOnClick}
                     onBlur={this.handleOnBlur}>
-            <i className={`icon ${icon}`} />
+            {picture ? picture : <i className={icon} />}
             {expanded && <div className="dropdown-menu">
                 {items.map((el, i) => {
                     return <div key={i} className="dropdown-item" onClick={this.getItemOnClick(el)} role="menuitem">{el.label}</div>

@@ -478,7 +478,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected wallClickHandler = () => {
-        this.props.dispatchChangeDrawingMode(TileDrawingMode.Wall);
+        if (this.props.drawingMode === TileDrawingMode.Wall) {
+            this.props.dispatchChangeDrawingMode(TileDrawingMode.Default);
+        }
+        else {
+            this.props.dispatchChangeDrawingMode(TileDrawingMode.Wall);
+        }
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();

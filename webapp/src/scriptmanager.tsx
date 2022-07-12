@@ -8,6 +8,20 @@ import * as auth from "./auth";
 
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
+import { fireClickOnEnter } from "./util";
+import { Modal } from "../../react-common/components/controls/Modal";
+import { ProgressBar } from "./dialogs";
+
+declare const zip: any;
+
+let loadZipJsPromise: Promise<boolean>;
+export function loadZipAsync(): Promise<boolean> {
+    if (!loadZipJsPromise)
+        loadZipJsPromise = pxt.BrowserUtils.loadScriptAsync("zip.js/zip.min.js")
+            .then(() => typeof zip !== "undefined")
+            .catch(e => false)
+    return loadZipJsPromise;
+}
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -29,6 +43,13 @@ export interface ScriptManagerDialogState {
 
     sortedBy?: string;
     sortedAsc?: boolean;
+
+    download?: DownloadProgress;
+}
+
+interface DownloadProgress {
+    completed: number;
+    max: number;
 }
 
 export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps, ScriptManagerDialogState> {
@@ -74,22 +95,23 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         return headers;
     }
 
-    handleCardClick(e: any, scr: any, index?: number, force?: boolean) {
+    handleCardClick(e: any, scr: any, index?: number, id?: string, force?: boolean) {
         const shifted = e.shiftKey;
         const ctrlCmd = (force && !shifted) || (pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey);
         let { selected, multiSelect, multiSelectStart } = this.state;
         if (shifted && ctrlCmd) return;
         // If ctrl/cmd is down, toggle from the list
         if (ctrlCmd) {
-            if (selected[index]) delete selected[index];
-            else selected[index] = 1;
-            if (selected[index]) multiSelectStart = index;
+            if (selected[id]) delete selected[id];
+            else selected[id] = 1;
+            if (selected[id]) multiSelectStart = index;
         }
         else if (shifted) {
+            const items = this.getSortedHeaders();
             selected = {};
             // Shift is down, use the start position to select all the projects in between
             for (let i = Math.min(index, multiSelectStart); i <= Math.max(index, multiSelectStart); i++) {
-                selected[i] = 1;
+                selected[this.getId(items[i])] = 1;
             }
             multiSelect = true;
         } else if (multiSelect) {
@@ -98,13 +120,13 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             multiSelect = false;
         }
         if (!shifted && !ctrlCmd) {
-            if (Object.keys(selected).length == 1 && selected[index]) {
+            if (Object.keys(selected).length == 1 && selected[id]) {
                 // Deselect the currently selected card if we click on it again
-                delete selected[index];
+                delete selected[id];
             }
             else {
                 selected = {};
-                selected[index] = 1;
+                selected[id] = 1;
                 // Use this as an indicator for any future multi-select clicks
                 multiSelectStart = index;
             }
@@ -115,8 +137,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         e.preventDefault();
     }
 
-    handleCheckboxClick(e: any, scr: any, index?: number) {
-        this.handleCardClick(e, scr, index, true);
+    handleCheckboxClick(e: any, scr: any, index?: number, id?: string) {
+        this.handleCardClick(e, scr, index, id, true);
         e.preventDefault();
         e.stopPropagation();
     }
@@ -125,10 +147,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         let { selected } = this.state;
         const headers = this.getSortedHeaders();
         const selectedLength = Object.keys(selected).length;
-        core.confirmDelete(selectedLength == 1 ? headers[parseInt(Object.keys(selected)[0])].name : selectedLength.toString(), () => {
+        core.confirmDelete(selectedLength == 1 ? headers.find((h) => Object.keys(selected)[0].includes(h.id)).name
+                                               : selectedLength.toString(), () => {
             const promises: Promise<void>[] = [];
             headers.forEach((header, index) => {
-                if (selected[index]) {
+                if (selected[this.getId(header)]) {
                     // Delete each selected project
                     header.isDeleted = true;
                     promises.push(workspace.forceSaveAsync(header, {}));
@@ -181,17 +204,15 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         return core.promptAsync(opts).then(res => {
             if (res === null)
                 return false; // null means cancelled
+            let id: string;
             return workspace.duplicateAsync(header, res)
                 .then(clonedHeader => {
-                    delete clonedHeader.blobId_
-                    delete clonedHeader.blobVersion_
-                    delete clonedHeader.blobCurrent_
-
+                    id = this.getId(clonedHeader);
                     return workspace.saveAsync(clonedHeader);
                 })
                 .then(() => {
                     data.invalidate(`headers:${this.state.searchFor}`);
-                    this.setState({ selected: {}, markedNew: { '0': 1 }, sortedBy: 'time', sortedAsc: false });
+                    this.setState({ selected: {}, markedNew: { [id]: 1 }, sortedBy: 'time', sortedAsc: false });
                     setTimeout(() => {
                         this.setState({ markedNew: {} });
                     }, 5 * 1000);
@@ -231,7 +252,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         } else {
             // Select all
             headers.forEach((header, index) => {
-                selected[index] = 1;
+                selected[this.getId(header)] = 1;
             })
         }
         this.setState({ selected });
@@ -243,44 +264,168 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         let { sortedBy, sortedAsc } = this.state;
         if (sortedBy == 'name' && !force) sortedAsc = !sortedAsc
         else sortedAsc = true; // Default asc
-        this.setState({ sortedBy: 'name', sortedAsc, markedNew: {}, selected: {} });
+        this.setState({ sortedBy: 'name', sortedAsc });
     }
 
     toggleSortTime = (force?: boolean) => {
         let { sortedAsc, sortedBy } = this.state;
         if (sortedBy == 'time' && !force) sortedAsc = !sortedAsc
         else sortedAsc = false; // Default desc
-        this.setState({ sortedBy: 'time', sortedAsc, markedNew: {}, selected: {} });
+        this.setState({ sortedBy: 'time', sortedAsc });
     }
 
-    handleSortName = () => {
+    handleSortName: React.MouseEventHandler = e => {
+        e.stopPropagation();
         this.toggleSortName(true);
     }
 
-    handleSortTime = () => {
+    handleSortTime: React.MouseEventHandler = e => {
+        e.stopPropagation();
         this.toggleSortTime(true);
     }
 
-    handleToggleSortName = () => {
+    handleToggleSortName: React.MouseEventHandler = e => {
+        e.stopPropagation();
         this.toggleSortName(false);
     }
 
-    handleToggleSortTime = () => {
+    handleToggleSortTime: React.MouseEventHandler = e => {
+        e.stopPropagation();
         this.toggleSortTime(false);
     }
 
-    handleSwitchSortDirection = () => {
+    handleSwitchSortDirection: React.MouseEventHandler = e => {
+        e.stopPropagation();
         const { sortedAsc } = this.state;
-        this.setState({ sortedAsc: !sortedAsc, markedNew: {}, selected: {} });
+        this.setState({ sortedAsc: !sortedAsc });
+    }
+
+    handleDownloadAsync = async () => {
+        pxt.tickEvent("scriptmanager.downloadZip", undefined, { interactiveConsent: true });
+
+        await loadZipAsync();
+
+        const { selected } = this.state;
+        const zipWriter = new zip.ZipWriter(new zip.Data64URIWriter("application/zip"));
+        const selectedHeaders = this.getSortedHeaders().filter(h => selected[this.getId(h)]);
+
+        let done = 0;
+
+        const takenNames: {[index: string]: boolean} = {};
+
+        const format = (val: number, len = 2) => {
+            let out = val + "";
+            while (out.length < len) {
+                out = "0" + out
+            }
+
+            return out.substring(0, len);
+        }
+
+        this.setState({
+            download: {
+                completed: 0,
+                max: selectedHeaders.length
+            }
+        });
+
+        const targetNickname = pxt.appTarget.nickname || pxt.appTarget.id;
+
+        for (const header of selectedHeaders) {
+            const text = await workspace.getTextAsync(header.id);
+
+            let preferredEditor = "blocksprj";
+            try {
+                const config = JSON.parse(text["pxt.json"]) as pxt.PackageConfig;
+
+                preferredEditor = config.preferredEditor || "blocksprj"
+            }
+            catch (e) {
+                // ignore invalid configs
+            }
+
+            const project: pxt.cpp.HexFile = {
+                meta: {
+                    cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
+                    targetVersions: pxt.appTarget.versions,
+                    editor: preferredEditor,
+                    name: header.name
+                },
+                source: JSON.stringify(text, null, 2)
+            };
+
+            const compressed = await pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
+
+            /* eslint-disable no-control-regex */
+            let sanitizedName = header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '');
+            sanitizedName = sanitizedName.trim().replace(/\s+/g, '-');
+            /* eslint-enable no-control-regex */
+
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
+                const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
+                sanitizedName = sanitizedName.replace(rx, '');
+            }
+
+            if (!sanitizedName) {
+                sanitizedName = "Untitled"; // do not translate to avoid unicode issues
+            }
+
+            // Include the recent use time in the filename
+            const date = new Date(header.recentUse * 1000);
+            const dateSnippet = `${date.getFullYear()}-${format(date.getMonth())}-${format(date.getDate())}`
+
+            // FIXME: handle different date formatting?
+            let fn = `${targetNickname}-${dateSnippet}-${sanitizedName}.mkcd`;
+
+            // zip.js can't handle multiple files with the same name
+            if (takenNames[fn]) {
+                let index = 2;
+                do {
+                    fn = `${targetNickname}-${dateSnippet}-${sanitizedName}${index}.mkcd`
+                    index ++;
+                } while(takenNames[fn])
+            }
+
+            takenNames[fn] = true;
+
+            await zipWriter.add(fn, new zip.Uint8ArrayReader(compressed));
+
+            // Check for cancellation
+            if (!this.state.download) return;
+
+            done++;
+            this.setState({
+                download: {
+                    completed: done,
+                    max: selectedHeaders.length
+                }
+            });
+        }
+
+        const datauri = await zipWriter.close();
+
+        const zipName = `makecode-${targetNickname}-project-download.zip`
+
+        pxt.BrowserUtils.browserDownloadDataUri(datauri, zipName);
+
+        this.setState({
+            download: null
+        });
+    }
+
+    handleDownloadProgressClose = () => {
+        this.setState({
+            download: null
+        });
     }
 
     private getSelectedHeader() {
         const { selected } = this.state;
         const indexes = Object.keys(selected);
         if (indexes.length !== 1) return null; // Sanity check
-        const index = parseInt(indexes[0]);
-        const headers = this.getSortedHeaders();
-        return headers[index];
+        const id = Object.keys(selected)[0];
+        const headers = this.fetchLocalData()
+        return headers.find((h) => id.includes(h.id))
     }
 
     private getSortedHeaders() {
@@ -304,8 +449,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         return sortingFunction;
     }
 
+    private getId(scr: pxt.workspace.Header) {
+        return 'local' + scr.id + scr.recentUse;
+    }
+
     renderCore() {
-        const { visible, selected, markedNew, view, searchFor, sortedBy, sortedAsc } = this.state;
+        const { visible, selected, markedNew, view, searchFor, sortedBy, sortedAsc, download } = this.state;
         if (!visible) return <div></div>;
 
         const darkTheme = pxt.appTarget.appTheme.baseTheme == 'dark';
@@ -334,8 +483,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 style={{ flexGrow: 1 }}
                 searchOnChange={true}
             />);
-            if (Object.keys(selected).length > 0) {
-                if (Object.keys(selected).length == 1) {
+
+            const numSelected = Object.keys(selected).length
+            if (numSelected > 0) {
+                if (numSelected == 1) {
                     const openBtn = <sui.Button key="edit" icon="edit outline" className="icon"
                         text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />;
                     if (!openNewTab)
@@ -353,6 +504,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
+                if (numSelected > 1) {
+                    headerActions.push(<sui.Button key="download-zip" icon="download" className="icon"
+                        text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
+                }
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
@@ -376,7 +531,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     <div role="button" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
                         <div className="sort-by">
                             <div role="menu" className="ui compact buttons">
-                                <sui.DropdownMenu role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")} title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}>
+                                <sui.DropdownMenu
+                                    role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")}
+                                    title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}
+                                    displayLeft
+                                >
                                     <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={`${sortedBy != 'name' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
                                     <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={`${sortedBy != 'time' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
                                 </sui.DropdownMenu>
@@ -385,8 +544,9 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         </div>
                         <div className={"ui cards"}>
                             {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
-                                const isMarkedNew = !!markedNew[index];
-                                const isSelected = !!selected[index];
+                                const id = this.getId(scr);
+                                const isMarkedNew = !!markedNew[id];
+                                const isSelected = !!selected[id];
                                 const showMarkedNew = isMarkedNew && !isSelected;
 
                                 let labelIcon = `circle outline ${isSelected ? 'check' : ''} ${isSelected ? 'green' : 'grey'} ${darkTheme ? 'inverted' : ''}`;
@@ -395,9 +555,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     `right corner label large selected-label`;
                                 const label = showMarkedNew ? lf("New") : undefined;
 
+
                                 // TODO name={(scr.cloudSync && scr.blobCurrent ? '(Synced) ' : '') + scr.name}
                                 return <ProjectsCodeCard
-                                    key={'local' + scr.id + scr.recentUse}
+                                    key={id}
+                                    id={id}
                                     cardType="file"
                                     className={`file ${isMarkedNew ? 'warning' : isSelected ? 'positive' : ''}`}
                                     name={scr.name}
@@ -419,24 +581,25 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         <table className={`ui definition unstackable table ${darkTheme ? 'inverted' : ''}`}>
                             <thead className="full-width">
                                 <tr>
-                                    <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={selectedAll ? lf("De-select all projects") : lf("Select all projects")} style={{ cursor: 'pointer' }}>
+                                    <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={fireClickOnEnter} title={selectedAll ? lf("De-select all projects") : lf("Select all projects")} style={{ cursor: 'pointer' }}>
                                         <sui.Icon icon={`circle outline large ${selectedAll ? 'check' : ''}`} />
                                     </th>
-                                    <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Name {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
+                                    <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={fireClickOnEnter} title={lf("Sort by Name {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
                                         {lf("Name")} {sortedBy == 'name' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
                                     </th>
-                                    <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Last Modified {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
+                                    <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={fireClickOnEnter} title={lf("Sort by Last Modified {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
                                         {lf("Last Modified")} {sortedBy == 'time' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
-                                    const isMarkedNew = !!markedNew[index];
-                                    const isSelected = !!selected[index];
+                                    const id = this.getId(scr);
+                                    const isMarkedNew = !!markedNew[id];
+                                    const isSelected = !!selected[id];
                                     const showMarkedNew = isMarkedNew && !isSelected;
 
-                                    return <ProjectsCodeRow key={'local' + scr.id + scr.recentUse} selected={isSelected}
+                                    return <ProjectsCodeRow key={id} id={id} selected={isSelected}
                                         onRowClicked={this.handleCardClick} index={index}
                                         scr={scr} markedNew={showMarkedNew}>
                                         <td>{scr.name}</td>
@@ -447,6 +610,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         </table>
                     </div>
                     : undefined}
+
+                {download &&
+                    <Modal title={lf("Preparing your zip file...")} onClose={this.handleDownloadProgressClose}>
+                        <ProgressBar percentage={100 * (download.completed / download.max)} />
+                    </Modal>}
             </sui.Modal>
         )
     }
@@ -455,9 +623,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 interface ProjectsCodeRowProps extends pxt.CodeCard {
     scr: any;
     index?: number;
+    id?: string;
     selected?: boolean;
     markedNew?: boolean;
-    onRowClicked: (e: any, scr: any, index?: number, force?: boolean) => void;
+    onRowClicked: (e: any, scr: any, index?: number, id?: string, force?: boolean) => void;
 }
 
 class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
@@ -470,18 +639,18 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
     }
 
     handleClick(e: any) {
-        this.props.onRowClicked(e, this.props.scr, this.props.index);
+        this.props.onRowClicked(e, this.props.scr, this.props.index, this.props.id);
     }
 
     handleCheckboxClick(e: any) {
-        this.props.onRowClicked(e, this.props.scr, this.props.index, true);
+        this.props.onRowClicked(e, this.props.scr, this.props.index, this.props.id, true);
         e.preventDefault();
         e.stopPropagation();
     }
 
     renderCore() {
         const { scr, onRowClicked, onClick, selected, markedNew, children, ...rest } = this.props;
-        return <tr tabIndex={0} {...rest} onKeyDown={sui.fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
+        return <tr tabIndex={0} {...rest} onKeyDown={fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
             <td className="collapsing" onClick={this.handleCheckboxClick}>
                 <sui.Icon icon={`circle outline large ${selected ? `check green` : markedNew ? 'black' : ''}`} />
             </td>

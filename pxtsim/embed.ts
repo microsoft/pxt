@@ -24,7 +24,9 @@ namespace pxsim {
         breakOnStart?: boolean;
         storedState?: Map<any>;
         ipc?: boolean;
+        dependencies?: Map<string>;
         single?: boolean;
+        traceDisabled?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -78,6 +80,7 @@ namespace pxsim {
     }
     export interface SimulatorBroadcastMessage extends SimulatorMessage {
         broadcast: boolean;
+        toParentIFrameOnly?: boolean;
     }
 
     export interface SimulatorControlMessage extends SimulatorBroadcastMessage {
@@ -98,6 +101,7 @@ namespace pxsim {
         id: string;
         data: string;
         sim?: boolean;
+        csvType?: undefined | "headers" | "row"; // if non-nullish pass to csv view instead
         receivedTime?: number;
     }
     export interface SimulatorBulkSerialMessage extends SimulatorMessage {

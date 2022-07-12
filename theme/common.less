@@ -9,11 +9,16 @@
              Layout
 *******************************/
 
+@mobileAndBelow: ~"only screen and (max-width: @{largestMobileScreen})";
+@tabletAndBelow: ~"only screen and (max-width: @{largestTabletScreen})";
+@computerAndBelow: ~"only screen and (max-width: @{largestSmallMonitor})";
+@largeMonitorAndBelow: ~"only screen and (max-width: @{largestLargeMonitor})";
+
 html {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    font-size:16px;
+    font-size: 16px!important;
 }
 
 body {
@@ -50,18 +55,18 @@ pre {
     position: relative;
 }
 
-#filelist,
+#editorSidebar,
 #maineditor,
 #sidedocs {
   position: absolute;
   bottom: 0rem;
 }
 
-#filelist, #maineditor, #sidedocs {
+#editorSidebar, #maineditor, #sidedocs {
     top: @mainMenuHeight;
 }
 
-.hideMenuBar:not(.headless) #filelist,
+.hideMenuBar:not(.headless) #editorSidebar,
     .hideMenuBar #maineditor,
     .hideMenuBar #sidedocs {
     top: 0 !important;
@@ -96,7 +101,6 @@ pre {
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
 @editorToolsCollapsedMobileHeight: 3.4rem;
-@editorToolsThinHeight: 3rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -106,6 +110,7 @@ pre {
     z-index: @editorToolsZIndex;
     height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
+    border-top: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
 
     display: flex;
     justify-content: space-between;
@@ -151,9 +156,10 @@ pre {
 .transparentEditorTools #editortools {
     background-color: transparent;
     z-index: (@blocklyFlyoutZIndex)-1;
+    border: unset;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editorSidebar {
     bottom: @editorToolsCollapsedHeight;
 }
 
@@ -163,11 +169,11 @@ pre {
 .hideEditorToolbar #serialEditor,
 .hideEditorToolbar #githubEditor,
 .hideEditorToolbar #assetEditor,
-.hideEditorToolbar #filelist {
+.hideEditorToolbar #editorSidebar {
     bottom: 0rem !important;
 }
 
-#filelistOverlay {
+#miniSimOverlay {
     position: absolute;
     left: 0;
     top: 0;
@@ -181,40 +187,34 @@ pre {
 #simulator {
     height: 100%;
 }
-#filelist, #downloadArea {
+#editorSidebar, #downloadArea {
     min-width: @simulatorWidth;
     max-width: @simulatorWidth;
     left: 0;
 }
 
-#filelist {
-    padding-top: 1em;
-    padding-right: ~"calc(2em - @{customScrollbarWidth})";
-    padding-bottom: 1em;
-    padding-left: 2em;
-    overflow-x: hidden;
+#editorSidebar {
+    overflow: hidden;
     margin-top: 0;
     margin-bottom: 0;
     width: 100%;
     background-color: @filelistBackgroundColor;
     z-index: @filelistZIndex;
-
-    // the scroll bar is always visible, but we hide it when needed
-    overflow-y: scroll; 
 }
 
-.invisibleScrollbar::-webkit-scrollbar { 
-    background: transparent !important; 
-}    
-.invisibleScrollbar::-webkit-scrollbar-thumb { 
+.invisibleScrollbar::-webkit-scrollbar {
+    background: transparent !important;
+    width: @customScrollbarWidth; // TODO: remove this when the sim breakpoint is fixed
+}
+.invisibleScrollbar::-webkit-scrollbar-thumb {
     display: none !important;
-}    
-.invisibleScrollbar::-webkit-scrollbar-track { 
-    background: transparent !important; 
-}    
+}
+.invisibleScrollbar::-webkit-scrollbar-track {
+    background: transparent !important;
+}
 
 
-#filelist .simtoolbar {
+#editorSidebar .simtoolbar {
     -webkit-transition: opacity 0.2s; /* Safari */
     -moz-transition: opacity 0.2s; /* Mozilla */
     -webkit-transition-timing-function: linear; /* Mozilla */
@@ -225,7 +225,6 @@ pre {
 
 #downloadArea {
     margin: unset;
-    background-color: @simulatorBackground;
 
     > div {
         margin: 0;
@@ -245,30 +244,27 @@ pre {
     background-color: transparent !important;
 }
 
-.filemenu {
-    direction:ltr;
-}
-
-#filelist .menu {
+#editorSidebar .filemenu {
+    direction: ltr;
     width: 100%;
     margin: 0;
     margin-top: 1rem;
 }
 
-#filelist .nested.item {
+.filemenu .nested.item {
     padding: .92857143em 1.14285714em;
     padding-left: 1rem;
 }
 
-#filelist .header.item {
+.filemenu .header.item {
     background: @filelistHeaderBackground;
 }
 
-#filelist .folder.item {
+.filemenu .folder.item {
     font-weight: bold;
 }
 
-#filelist .folderitem.item {
+.filemenu .folderitem.item {
     padding-left: 2rem;
 }
 
@@ -277,7 +273,7 @@ pre {
 }
 
 .simulator .ui.embed .icon.xicon::before {
-    transform: translateX(-77%) translateY(-120%);
+    transform: translateX(-50%) translateY(-50%);
     transition: opacity .25s ease,color .25s ease;
 }
 
@@ -347,12 +343,47 @@ div.simframe > iframe {
     background: none;
 }
 .menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) {
-    opacity: 0.6;
+    opacity: 0.8;
 }
 .menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
     background: none;
     color: @mainMenuInvertedBackground !important;
 }
+
+.menubar {
+    .left.menu, .right.menu, .center.menu {
+        display: flex;
+        flex: 1;
+    }
+    .right.menu {
+        justify-content: flex-end;
+    }
+    .center.menu {
+        justify-content: center;
+    }
+
+    .ui.item {
+        margin: 0;
+    }
+
+    .ui.menu .brand {
+        &::before {
+            position: relative;
+            height: 1.5rem;
+            border-left: 2px solid @white;
+            content: " ";
+        }
+    }
+}
+
+.sandbox .menubar {
+    .logo.organization,
+    .logo.brand::before {
+        display: none;
+    }
+}
+
+
 
 /* toggle style */
 .ui.item.editor-menuitem .item.toggle {
@@ -380,6 +411,10 @@ div.simframe > iframe {
 
 #editortoggle > .link {
     justify-content: center;
+}
+
+#editortoggle > .item {
+    outline: none;
 }
 
 #editortoggle {
@@ -438,20 +473,52 @@ div.simframe > iframe {
     margin: 0;
     padding: 0rem !important;
 }
-.ui.item.logo .name {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
-    color: #666666;
-    padding: 0 0.3rem;
+.ui.menu .ui.item.logo:hover {
+    background: none;
 }
+
+.ui.item.logo.organization,
+.inHome .ui.item.logo.brand {
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.ui.item.logo.brand:hover {
+    cursor: pointer;
+}
+.inHome .ui.item.logo.brand:hover {
+    cursor: auto;
+}
+
+.ui.item.logo .name,
+.ui.item.logo .name-short {
+    font-family: @segoeUIFont;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-left: 1rem;
+    margin-bottom: 1px;
+}
+
+.ui.item.logo .name-short {
+    display: none;
+}
+
 .ui.item.logo svg {
     width: 1.2rem;
     height: 1.2rem;
 }
 
 .ui.item.logo img {
-    margin-left: 1rem;
-    margin-right: 1rem;
-    height: 1.6rem;
+    margin: 0 1rem;
+    height: 1.4rem;
+}
+
+/* Native Host (iOS app) back button */
+.nativeback.ui.item {
+    margin-right: -1rem;
 }
 
 /* Powered by Microsoft logo*/
@@ -607,7 +674,7 @@ div.simframe > iframe {
     z-index: 1000;
 }
 
-.notificationBannerVisible #filelist,
+.notificationBannerVisible #editorSidebar,
 .notificationBannerVisible #maineditor,
 .notificationBannerVisible #sidedocs {
     top: calc(@mainMenuHeight + @bannerHeight);
@@ -620,7 +687,7 @@ div.simframe > iframe {
 
 #notificationBanner {
     padding: 0;
-    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    font-family: @segoeUIFont;
     height: @bannerHeight;
     margin-top: 0;
     display: flex;
@@ -805,11 +872,356 @@ Field editors
 }
 .social-icons a.twitter {
     color: white;
-    background-color: #00aced;
+    background-color: #1da1f2;
 }
 .social-icons a.discourse {
     color: white;
     background-color: @primaryColor;
+}
+
+/*******************************
+        Extensions
+*******************************/
+.extensions-browser.hide {
+    display: none;
+}
+
+@keyframes cardGradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.extension-card.loading {
+    background: @loadingAnimation;
+    background-size: 400% 400%;
+    animation: cardGradient 3s infinite alternate;
+}
+
+
+.fullscreen.extensions-browser > {
+    .common-modal > {
+        .common-modal-header {
+            height: @mainMenuHeight;
+            background-color: @blue;
+            z-index: 202;
+            display: flex;
+            padding-left: 0rem;
+
+            .header-left, .header-right, .header-center {
+                flex: 1
+            }
+
+            .header-left {
+                display: flex;
+                height: 100%;
+            }
+
+            .header-center {
+                color: @white;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .common-modal-body {
+            padding: 0rem;
+        }
+    }
+}
+
+@media @tabletAndBelow {
+    .fullscreen.extensions-browser > .common-modal > .common-modal-header {
+        height: @mobileMenuHeight;
+    }
+
+    .extensions-browser {
+        .extension-header > .import-button>.common-button {
+            .common-button-label {
+                display: none;
+            }
+        }
+    }
+}
+
+@media @mobileAndBelow {
+    .extensions-browser {
+        .common-modal > .common-modal-header > .common-modal-back {
+            .common-button-label {
+                display: none;
+            }
+        }
+    }
+}
+
+.extensions-browser {
+    position: absolute;
+    background-color: @white;
+    width: 100%;
+    min-height: 100%;
+    z-index: 200;
+    font-size: 1.2rem;
+
+    .extension-search-header {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        background-color: #E5E5E5;
+
+        .common-input-wrapper {
+            width: 70%;
+
+            .common-input-group {
+                height: 3rem;
+                border-radius: 500rem;
+                padding: 0.7rem 1rem;
+
+                & > i.fas.fa-search {
+                    position: relative;
+                    margin-top: 0.1rem;
+                    right: 0;
+                    bottom: 0;
+
+                    opacity: .5;
+                    transition: opacity 0.3s ease;
+                }
+            }
+
+            &:focus-within .common-input-group > i.fas.fa-search {
+                opacity: 1;
+            }
+        }
+    }
+
+    .importButton {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        padding-bottom: 3rem;
+        gap: .8rem;
+
+        .importButtonLink {
+            color: @blue;
+            cursor: pointer;
+        }
+
+        .importButtonLink:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .extension-display {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 2rem;
+        gap: .8rem;
+
+        .breadcrumbs {
+            font-family: @segoeUIFont;
+            width: 100%;
+            padding-bottom: 1.5rem;
+
+            .link {
+                color: @blue;
+                cursor: pointer;
+            }
+
+            >span {
+                padding-right: .5rem;
+            }
+
+            .common-button {
+                font-size: 1.2rem;
+                padding-right: .5rem;
+                margin-right: 0rem;
+            }
+        }
+    }
+
+    .extension-header {
+        font-family: @segoeUIFont;
+        width: 95%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+
+    .import-button>.common-button {
+        padding: .8rem 1rem .95rem;
+    }
+
+    .extension-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .8rem;
+    }
+
+    .extension-card:hover {
+        border: @blue .15rem solid;
+    }
+
+    .extension-tags {
+        display: flex;
+        gap: 1rem;
+        width: 80%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .extension-tag {
+        border: .1rem solid @extensionTagBackgroundColor;
+        padding: .6rem 1.25rem;
+        border-radius: 1.6rem;
+        cursor: pointer;
+        color: @extensionTagColor;
+        background-color: inherit;
+    }
+
+    .extension-tag:hover {
+        background-color: @extensionTagBackgroundColor;
+    }
+
+    .extension-tag.selected {
+        background-color: @blue;
+        border-color: @blue;
+        color: @white
+    }
+
+    .extension-tag:focus::after  {
+        border: .05rem;
+        border-color: @blue;
+        border-radius: 1.6rem;
+    }
+
+    .tab-header {
+        width: 100%;
+
+        .common-button {
+            border: 2px solid @white;
+        }
+
+        .common-button.selected {
+            border-bottom: 2px solid @blue;
+            font-weight: 600;
+        }
+    }
+
+    .common-modal > .common-modal-body {
+        overflow-y: auto;
+        padding: 0rem;
+    }
+    .extension-grid {
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-top: 0.5rem;
+    }
+    .ui.card {
+        height: 20rem;
+        .ui.cardimage {
+            background-color: transparent;
+            height: 11rem;
+            &.upload {
+                margin: 3em auto;
+            }
+        }
+        .content:not(.extra) {
+            .header {
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .description {
+                height: 2.8em;
+                overflow: hidden;
+            }
+            .description.long  {
+                height: 14em;
+            }
+        }
+    }
+    .ui.card.loading {
+        background: @loadingAnimation;
+        background-size: 400% 400%;
+        animation: gradient 3s infinite alternate;
+    }
+    /* Search input */
+    .ui.search {
+        margin: auto;
+    }
+
+    .ui.inline.loader {
+        margin-top: 4em;
+        :after, :before {
+            width: 4rem;
+            height: 4rem;
+        }
+    }
+}
+
+.extension-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 18rem);
+    justify-content: center;
+    gap: 1rem;
+    max-width: 95%;
+    width: 95%;
+}
+
+.import-extension-modal {
+    .common-modal-body {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+// reduce all card sizes
+@media @mobileAndBelow {
+    .extensions-browser {
+        .ui.card, .ui.cards > .card {
+            width: 9rem;
+            height: 9rem;
+
+            .ui.cardimage {
+                height: 5rem;
+                &.upload {
+                    margin: auto;
+                }
+            }
+        }
+    }
+}
+/*******************************
+        Editor Sidebar
+*******************************/
+
+@sidebarPrimaryColor: @teal;
+@sidebarSecondaryColor: @blue;
+@sidbarActiveTabIconColor: @sidebarSecondaryColor;
+
+#editorSidebar {
+    border-right: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+
+    .tab-navigation {
+        color: @sidebarSecondaryColor;
+        background-color: @sidebarPrimaryColor;
+    }
+
+    .tab-icon.active {
+        color: @sidbarActiveTabIconColor;
+        background-color: @sidebarPrimaryColor;
+    }
 }
 
 /*******************************
@@ -899,13 +1311,34 @@ p.ui.font.small {
         display:none !important; // hide desktop simulator toggle
     }
 
-    .hideEditorToolbar #filelist {
+    .hideEditorToolbar #editorSidebar {
         display:none !important;
+    }
+
+    // Menu bar text logos ("MakeCode Arcade")
+    .ui.item.logo .name {
+        display: none;
+    }
+    .ui.item.logo .name-short {
+        display: block;
+    }
+
+    .menubar .right.menu .signin-button {
+        height: 2.5rem;
+    }
+
+    .sign-in-dropdown {
+        padding-left: .1rem;
+        padding-right: .1rem;
     }
 }
 
 /* Mobile only */
 @media only screen and (max-width: @largestMobileScreen) {
+    .menubar .right.menu .signin-button .icon {
+        margin-left: -.2rem;
+    }
+
     .ui.mobile.only {
         display:unset !important;
     }
@@ -926,6 +1359,10 @@ p.ui.font.small {
     .simView #boardview {
         padding-top: @thinMenuHeight;
     }
+
+    .menubar .right.menu .signin-button {
+        height: 2.5rem;
+    }
 }
 @media only screen and (min-height: @thinEditorBreakpoint) {
     .ui.thin.only {
@@ -938,7 +1375,7 @@ p.ui.font.small {
 *******************************/
 .fullscreensim {
     /* Full screen */
-    #filelist {
+    .simPanel {
         position: fixed;
         z-index: @fullscreenZIndex;
         top:0 !important;
@@ -950,8 +1387,9 @@ p.ui.font.small {
         max-width: 100%;
         min-width: 100%;
         height:100% !important;
+        background-color: @simulatorBackground;
     }
-    #filelistOverlay {
+    #miniSimOverlay {
         display: none;
     }
     #boardview {
@@ -985,7 +1423,7 @@ p.ui.font.small {
     #mainmenu {
         background: transparent !important;
     }
-    #filelist .simtoolbar {
+    .simPanel .simtoolbar {
         position: fixed;
         bottom: 1rem;
         left: auto;
@@ -1028,22 +1466,28 @@ p.ui.font.small {
 ************************************/
 
 #root.headless {
-    #filelist {
+    .simPanel {
         display: block;
         bottom: 0 !important;
     }
 
-    #filelist .simtoolbar.item {
+    .simPanel .simtoolbar.item {
         margin: 1rem 0;
     }
 
     i.green.icon {
         color: rgba(0,0,0,.6)!important;
     }
+
+    #boardview.headless-sim {
+        height: 100%;
+        padding: 1rem;
+        width: @simulatorWidth;
+    }
 }
 
 #root.headless.collapsedEditorTools {
-    #filelist {
+    #editorSidebar {
         position: absolute;
         width: auto;
         top: auto;
@@ -1059,7 +1503,7 @@ p.ui.font.small {
 }
 
 #root.headless:not(.collapsedEditorTools) {
-    #filelist {
+    #editorSidebar {
         left: 0;
         z-index: 40;
     }
@@ -1089,8 +1533,238 @@ p.ui.font.small {
     font-size: 0.95rem;
 }
 
-#projectNameArea .cloudState {
-    color: rgba(0, 0, 0, 0.5);
+.cloudstatusarea {
+    color: @teal;
+    align-self: center;
+    display: flex;
+
+    .cloudicon {
+        margin-left: 0.5rem;
+    }
+
+    .cloudprogress {
+        margin-left: 0.5rem !important;
+    }
+
+    .cloudtext {
+        margin-left: 0.5rem;
+    }
+
+    .ui.loader:after {
+        border-top-color: @teal;
+    }
+}
+
+/*******************************
+        Download dialogs
+*******************************/
+
+.ui.modal .actions .dialog-help-large {
+    float: left;
+    margin-left: 4px;
+}
+
+.ui.modal .actions .left-action {
+    float: left;
+}
+
+.download-callout {
+    background-color: #EAE7FF;
+    color: #4C309D;
+    border-radius: 1em;
+    padding: 1em;
+    position: relative;
+    margin-top: 1.5rem;
+
+    .ui.purple.ribbon.large.label {
+        position: absolute;
+        left: -1.2rem;
+        top: -1rem;
+    }
+
+    a {
+        color: #4C309D;
+        cursor: pointer;
+    }
+}
+
+.ui.grid>.icon-align.wide.column {
+    display: flex;
+    flex-direction: column;
+
+    div {
+        flex-grow: 1;
+    }
+}
+
+.download-device-name {
+    color: #4C309D;
+}
+
+.header>.header-inline-icon ~ .header-title {
+    display: inline;
+}
+
+.download-dialog-image img {
+    max-height: 200px;
+    object-fit: contain;
+}
+
+.download-dialog .column .ui, .download-dialog .column .ui .content {
+    height: 100%;
+    display: flex;
+    height: 100%;
+    align-items: center;
+}
+
+#downloadArea button .icon.xicon {
+    font-family: "xicon";
+}
+
+.download-troubleshoot-header {
+    padding: 0 1rem;
+}
+
+.download-troubleshoot {
+    display: flex;
+    flex-direction: row;
+    margin-top: 1rem;
+
+    .download-column {
+        padding: 0 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .download-row {
+        padding-bottom: 1rem;
+        min-height: 30%;
+
+        img {
+            width: 300px;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+    }
+
+    .download-row.image-row {
+        flex: 2;
+    }
+}
+
+
+/*******************************
+           Mini sim view
+*******************************/
+
+#root.miniSim:not(.fullscreensim) {
+    /* Layout */
+    .simPanel.ui.items {
+        position: fixed;
+        padding: 0;
+        margin: 1em 1em 0;
+        bottom: ~"calc(5.5rem + var(--extra-mobile-sim-padding))" !important;
+        right: 0.5rem;
+        top: unset;
+        left: unset;
+        width: auto;
+        height: auto;
+        min-width: inherit;
+        max-width: inherit;
+        background: transparent !important;
+        overflow: visible;
+        z-index: 20;
+    }
+    .simPanel .simtoolbar > .buttons {
+        > .debug-button {
+            display: block !important;
+        }
+    }
+    .collapsedEditorTools .simPanel {
+        > div {
+            display: none !important;
+        }
+        aside.simtoolbar button:not(.expand-button) {
+            display: none !important;
+        }
+    }
+    #miniSimOverlay {
+        position: absolute;
+        display: block;
+        width: 10rem; /* match width of div.simframe */
+        height: 8rem;
+    }
+
+    .simPanel {
+        bottom: @editorToolsCollapsedMobileHeight;
+    }
+
+    &:not(.headless):not(.sandbox) {
+        #boardview {
+            display: inline-block;
+            width: 10rem;
+        }
+        .simPanel .simtoolbar {
+            margin: 0.5em 0;
+            width: 3rem;
+            float: right;
+        }
+        .simPanel .simtoolbar > div:not(:first-child),
+        .simPanel .simtoolbar > .buttons > .button {
+            display: none;
+        }
+        .simPanel .simtoolbar > div:first-child {
+            flex-direction: column;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .simPanel .simtoolbar > div:first-child > button {
+            border-radius: 0;
+            font-size: .92857143rem;
+        }
+        #editortools .left .buttons:first-child {
+            position: absolute;
+            bottom: 0;
+        }
+    }
+    &.headless {
+        .simPanel {
+            left: 5rem!important;
+            z-index: 42!important;
+        }
+    }
+
+    /* Simulator */
+    div.simframe {
+        display:inline-block;
+        width: 10rem;
+        margin-right:0.5rem;
+        padding-bottom: 81.96% !important;
+    }
+    div.simframe:not(:first-child) {
+        display:none;
+    }
+    #simulators {
+        flex-direction: row;
+        display: flex !important;
+    }
+    /* Simulator Toggle Button */
+    #mobiletogglesim,
+    .collapsedEditorTools #mobiletogglesim {
+        border-top-right-radius: 100px;
+        border-top-left-radius: 100px;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+        top: auto;
+        left: 40%;
+        width: 20%;
+        height: auto;
+        bottom: 10rem;
+    }
+    .collapsedEditorTools #mobiletogglesim {
+        bottom: @editorToolsCollapsedHeight;
+    }
 }
 
 /*******************************
@@ -1143,6 +1817,10 @@ p.ui.font.small {
         width: ~"calc(@{blocklyRowWidthTablet} - .25rem)";
         margin-right: 0 !important;
     }
+
+    .download-troubleshoot .download-column .download-row img {
+        width: 200px;
+    }
 }
 
 /* Mobile */
@@ -1169,16 +1847,20 @@ p.ui.font.small {
         #boardview {
             width: 6.5rem !important;
         }
-        #filelistOverlay {
+        #miniSimOverlay {
             width: 6.5rem !important;
             height: 5.5rem !important;
         }
+    }
+
+    .download-troubleshoot .download-column .download-row img {
+        width: 200px;
     }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .collapsedEditorTools:not(.headless) #filelist {
+    .collapsedEditorTools:not(.headless) #editorSidebar {
         min-width: 21px;
         width: 21px;
         padding: 0;
@@ -1213,23 +1895,28 @@ p.ui.font.small {
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
 @media only screen and (max-width: @largestSmallMonitor) {
     /* Layout */
-    #filelist, #downloadArea {
+    #editorSidebar, #downloadArea {
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
+    }
+
+    #boardview.headless-sim {
+        width: @simulatorWidthSmall;
     }
 
     #maineditor {
         left:@simulatorWidthSmall;
     }
-    /* Logo */
-    .ui.logo.brand .name {
-        display: none !important;
-    }
+
     /* Help card */
     #helpcard {
         top: auto;
         bottom: 2.2rem;
         margin: 0;
+    }
+
+    .ui.card .meta .date.small-screen.hide {
+        display: none;
     }
 }
 
@@ -1252,43 +1939,8 @@ p.ui.font.small {
         bottom: 2rem;
         margin: 0;
     }
-    /* Layout */
-    #filelist {
-        position:absolute;
-        padding: 0;
-        margin: 1em;
-        bottom: ~"calc(4.5rem + var(--extra-mobile-sim-padding))" !important;
-        right: 0.5rem;
-        top: unset;
-        left: unset;
-        width: auto;
-        min-width: inherit;
-        max-width: inherit;
-        background: transparent !important;
-        overflow: visible;
-        z-index: 20;
-    }
-    #filelist .simtoolbar > .buttons {
-        > .debug-button {
-            display: block !important;
-        }
-    }
-    .collapsedEditorTools #filelist {
-        > div {
-            display: none !important;
-        }
-        aside.simtoolbar button:not(.expand-button) {
-            display: none !important;
-        }
-    }
-    #filelistOverlay {
-        position: absolute;
-        display: block;
-        width: 10rem; /* match width of div.simframe */
-        height: 9rem;
-    }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor {
         bottom: @editorToolsCollapsedMobileHeight;
     }
 
@@ -1313,40 +1965,13 @@ p.ui.font.small {
         }
     }
 
-    #root:not(.fullscreensim):not(.headless):not(.sandbox) {
-        #boardview {
-            display: inline-block;
-            width: 10rem;
-        }
-        #filelist .simtoolbar {
-            margin: 0.5em 0;
-            width: 3rem;
-            float: right;
-        }
-        #filelist .simtoolbar > div:not(:first-child),
-        #filelist .simtoolbar > .buttons > .button {
-            display: none;
-        }
-        #filelist .simtoolbar > div:first-child {
-            flex-direction: column;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        #filelist .simtoolbar > div:first-child > button {
-            border-radius: 0;
-            font-size: .92857143rem;
-        }
-        #editortools .left .buttons:first-child {
-            position: absolute;
-            bottom: 0;
-        }
+    #editorSidebar {
+        min-width: unset;
+        max-width: unset;
+        width: 0;
+        padding: 0;
     }
-    #root.headless {
-        #filelist {
-            left: 5rem!important;
-            z-index: 42!important;
-        }
-    }
+
     #root.collapsedEditorTools #editortools .left .buttons:first-child {
         bottom: auto!important; // undo bottom positioning for collapsed toolbar
     }
@@ -1375,42 +2000,13 @@ p.ui.font.small {
     .hideEditorFloats #tutorialcard.bottom {
         bottom: @editorToolsCollapsedMobileHeight;
     }
-    /* Simulator */
-    div.simframe {
-        display:inline-block;
-        width: 10rem;
-        margin-right:0.5rem;
-        padding-bottom: 81.96% !important;
-    }
-    div.simframe:not(:first-child) {
-        display:none;
-    }
-    #simulators {
-        flex-direction: row;
-        display: flex !important;
-    }
-    /* Simulator Toggle Button */
-    #mobiletogglesim,
-    .collapsedEditorTools #mobiletogglesim {
-        border-top-right-radius: 100px;
-        border-top-left-radius: 100px;
-        border-bottom-right-radius: 0;
-        border-bottom-left-radius: 0;
-        top: auto;
-        left: 40%;
-        width: 20%;
-        height: auto;
-        bottom: 10rem;
-    }
-    .collapsedEditorTools #mobiletogglesim {
-        bottom: @editorToolsCollapsedHeight;
-    }
+
     /* Hide floating editors */
     .hideEditorFloats .editorFloat {
         display:none;
     }
     /* Menu spacing */
-    #root:not(.sandbox) .menubar .ui.menu .item {
+    #root:not(.sandbox) .menubar .ui.menu .dropdown .item {
         padding: 0.3em !important;
     }
     #root .menubar .ui.menu .item.editor-menuitem .item {
@@ -1443,13 +2039,6 @@ p.ui.font.small {
         top: @sandboxMobileMenuHeight;
     }
 
-    /* Logo */
-    .ui.item.logo img {
-        height: 2.2rem;
-        width: auto;
-        margin-left: 0.4rem;
-        margin-right: 0.4rem;
-    }
     .ui.mini.image {
         display: block !important;
     }
@@ -1516,12 +2105,6 @@ p.ui.font.small {
         padding-bottom: 0.5rem;
     }
 
-    #mainmenu {
-        .ui.logo.brand,
-        .ui.logo.organization {
-            display: none !important;
-        }
-    }
     .fullscreensim .simtoolbar .ui.button {
         font-size: 1rem;
     }
@@ -1556,40 +2139,12 @@ p.ui.font.small {
     #maineditor {
         top: @thinMenuHeight;
     }
-    #filelist {
+    #editorSidebar {
         top: @thinMenuHeight;
-        padding: 0.5rem 1.5rem;
-    }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
-        bottom: @editorToolsThinHeight;
-    }
-
-
-    #editortools {
-        height: @editorToolsThinHeight;
-
-        .ui.button {
-            padding: 0.5rem;
-        }
-
-        #downloadArea,
-        #editorToolbarArea,
-        #projectNameArea,
-        input {
-            font-size: 0.8em !important;
-        }
-
-        #projectNameArea {
-            padding-left: 0;
-        }
-
-        .ui.button {
-            font-size: .92857143rem !important;
-        }
     }
 }
 
-.simView #filelist {
+.simView .simPanel {
     position: fixed;
     z-index: @fullscreenZIndex;
     top:0 !important;
@@ -1691,7 +2246,7 @@ div.simframe.ui.embed {
     }
 
     /* Not needed in triple toggle view */
-    #filelistOverlay {
+    #miniSimOverlay {
         display: none;
     }
 
@@ -1720,44 +2275,39 @@ div.simframe.ui.embed {
     -ms-interpolation-mode: nearest-neighbor;
 }
 
-/* Sign in dialog */
-.ui.modal.signindialog {
-    .content {
-        padding: 24px 20px;
+.ui.menu .logged-in-dropdown {
+    justify-content: center;
+}
+
+.ui.menu .item.sign-in-dropdown {
+    padding-left: 0rem;
+    padding-right: .3rem;
+    justify-content: center;
+}
+
+div.signin-button {
+    display: flex;
+    align-items: center;
+    background-color: @homeScreenBackground;
+    color: black;
+    border-radius: 6px;
+    height: 3rem;
+    padding: .6rem;
+    font-family: @segoeUIFont;
+    font-weight: 500;
+
+    .text {
+        margin-right: .5rem;
     }
+}
 
-    div.description {
-        margin-bottom: 20px;
-    }
+div.signin-button:hover {
+    transform: scale(1.1);
+}
 
-    div.warning {
-        background-color: #F5BC5F;
-        padding: 6px;
-        margin-bottom: 20px;
-    }
-
-    div.container {
-        display: grid;
-        row-gap: 10px;
-        grid-template-rows: 36px auto;
-        grid-template-columns: auto;
-        justify-content: center;
-
-        button {
-            margin: 0;
-        }
-
-        div.prompt {
-            justify-self: center;
-        }
-
-        div.providers {
-            display: grid;
-            row-gap: 20px;
-            grid-template-rows: auto;
-            justify-content: center;
-        }
-    }
+div.signin-button:focus {
+    border: 3px solid #fff;
+    outline: 1px ridge #000;
 }
 
 /* Profile dialog */
@@ -1849,7 +2399,7 @@ div.simframe.ui.embed {
         display: inherit;
     }
 
-    #filelist .simtoolbar {
+    .editorSidebar .simtoolbar {
         position: fixed;
         bottom: 0.25em;
         left: auto;
@@ -1860,7 +2410,8 @@ div.simframe.ui.embed {
     }
 }
 
-img.pixelart {
+.image.pixelart {
+    background-color: @white;
     image-rendering: auto;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
@@ -1878,12 +2429,21 @@ img.pixelart {
         justify-content: space-between;
         align-items: center;
         margin-top: 2em;
+
+        a {
+            text-decoration: underline;
+        }
     }
 }
 
 #blocks-editor-field-div {
     position: absolute;
     z-index: @blocklyDropdownDivZIndex;
+
+    .sound-effect-editor {
+        max-width: 30rem;
+        margin: auto;
+    }
 }
 
 .blocks-editor-field-overlay {

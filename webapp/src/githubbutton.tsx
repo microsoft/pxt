@@ -3,6 +3,7 @@ import * as sui from "./sui";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
 import * as workspace from "./workspace";
+import { fireClickOnEnter } from "./util";
 
 interface GithubButtonProps extends pxt.editor.ISettingsProps {
     className?: string;
@@ -63,10 +64,10 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         const hasissue = pullStatus == workspace.PullStatus.BranchNotFound;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const modified = meta && !!meta.modified;
-        const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
+        const repoName = ghid.project && ghid.tag ? `${ghid.project}${pxt.github.isDefaultBranch(ghid.tag) ? "" : `#${ghid.tag}`}` : ghid.fullName;
         // shrink name...
         const maxLength = 20;
-        let displayName = ghid.tag && ghid.tag != "master" ? `#${ghid.tag}` : "";
+        let displayName = ghid.tag && (pxt.github.isDefaultBranch(ghid.tag)) ? "" : `#${ghid.tag}`;
         if (displayName.length > maxLength)
             displayName = displayName.slice(0, maxLength - 2) + '..';
 
@@ -78,14 +79,19 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
 
         return <div key="githubeditorbtn" role="button" className={`${defaultCls}
             ${this.props.className || ""}`}
-            title={title} onClick={this.handleClick}>
+            title={title}
+            onClick={this.handleClick} onKeyDown={fireClickOnEnter}
+            tabIndex={0}
+        >
             <i className="github icon" />
             <span className="ui mobile hide">{displayName}</span>
-            <i className={`ui long ${
-                hasissue ? "exclamation circle"
-                    : haspull ? "arrow alternate down"
-                        : modified ? "arrow alternate up"
-                            : "check"} icon mobile hide`} />
+            <span className="ui long mobile hide">
+                <i className={`${
+                    hasissue ? "exclamation circle"
+                        : haspull ? "arrow alternate down"
+                            : modified ? "arrow alternate up"
+                                : "check"} icon`} />
+            </span>
         </div>;
     }
 }

@@ -4,7 +4,7 @@
 }
 
 .graph-icon {
-    font-family: Icons;
+    font-family: 'Font Awesome 5 Free';
     font-size: 1.75rem;
     opacity: 0.8;
 }
@@ -15,8 +15,12 @@
     opacity: 0.8;
 }
 
+.graph-activity.hover .graph-icon, .graph-activity.hover .graph-icon-x {
+    opacity: 1;
+}
+
 .graph-status-icon {
-    font-family: Icons;
+    font-family: 'Font Awesome 5 Free';
     font-size: 1rem;
 }
 
@@ -25,6 +29,30 @@
     user-select: none;
 }
 
-.graph-activity:hover .graph-icon, .graph-activity:hover .graph-icon-x {
-    opacity: 0.6;
+.graph-activity:focus-within .focus-outline {
+    stroke-width: 4px;
+    fill: transparent;
+    stroke: blue;
+}
+
+.common-button.graph-node-button {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+}
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .graph-activity.hover {
+    outline: var(--high-contrast-focus-outline);
+}
+
+.high-contrast .graph-activity:focus-within .focus-outline {
+    stroke-width: 4px;
+    fill: transparent;
+    stroke: white;
 }

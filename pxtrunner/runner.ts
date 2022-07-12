@@ -1,4 +1,4 @@
-/* tslint:disable:no-inner-html TODO(tslint): get rid of jquery html() calls */
+/* TODO(tslint): get rid of jquery html() calls */
 
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../built/pxteditor.d.ts" />
@@ -18,6 +18,8 @@ namespace pxt.runner {
         builtJsInfo?: pxtc.BuiltSimJsInfo;
         // single simulator frame, no message simulators
         single?: boolean;
+        hideSimButtons?: boolean;
+        autofocus?: boolean;
     }
 
     class EditorPackage {
@@ -192,7 +194,7 @@ namespace pxt.runner {
         let p = appTarget.tsprj
         let files = U.clone(p.files)
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(p.config);
-        files["main.blocks"] = "";
+        files[pxt.MAIN_BLOCKS] = "";
         return files
     }
 
@@ -207,31 +209,42 @@ namespace pxt.runner {
         Util.assert(!!pxt.appTarget);
 
         const href = window.location.href;
-        let live = false;
         let force = false;
         let lang: string = undefined;
         if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
             lang = ts.pxtc.Util.TRANSLATION_LOCALE;
-            live = true;
             force = true;
+            pxt.Util.enableLiveLocalizationUpdates();
         } else {
             const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
             lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-            live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+
+            const defLocale = pxt.appTarget.appTheme.defaultLocale;
+            const langLowerCase = lang?.toLocaleLowerCase();
+            const localDevServe = pxt.BrowserUtils.isLocalHostDev()
+                && (!langLowerCase || (defLocale
+                    ? defLocale.toLocaleLowerCase() === langLowerCase
+                    : "en" === langLowerCase || "en-us" === langLowerCase));
+            const serveLocal = pxt.BrowserUtils.isPxtElectron() || localDevServe;
+            const liveTranslationsDisabled = serveLocal || pxt.appTarget.appTheme.disableLiveTranslations;
+            if (!liveTranslationsDisabled || !!mlang?.[1]) {
+                pxt.Util.enableLiveLocalizationUpdates();
+            }
             force = !!mlang && !!mlang[2];
         }
         const versions = pxt.appTarget.versions;
 
         patchSemantic();
         const cfg = pxt.webConfig
-        return Util.updateLocalizationAsync(
-            pxt.appTarget.id,
-            cfg.commitCdnUrl, lang,
-            versions ? versions.pxtCrowdinBranch : "",
-            versions ? versions.targetCrowdinBranch : "",
-            live,
-            force)
+        return Util.updateLocalizationAsync({
+                targetId: pxt.appTarget.id,
+                baseUrl: cfg.commitCdnUrl,
+                code: lang,
+                pxtBranch: versions ? versions.pxtCrowdinBranch : "",
+                targetBranch: versions ? versions.targetCrowdinBranch : "",
+                force: force,
+            })
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -288,7 +301,7 @@ namespace pxt.runner {
                     if (code) {
                         //Set the custom code if provided for docs.
                         let epkg = getEditorPkg(mainPkg);
-                        epkg.files["main.ts"] = code;
+                        epkg.files[pxt.MAIN_TS] = code;
                         //set the custom doc name from the URL.
                         let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                         cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0];;
@@ -296,8 +309,8 @@ namespace pxt.runner {
 
                         //Propgate the change to main package
                         mainPkg.config.name = cfg.name;
-                        if (mainPkg.config.files.indexOf("main.blocks") == -1) {
-                            mainPkg.config.files.push("main.blocks");
+                        if (mainPkg.config.files.indexOf(pxt.MAIN_BLOCKS) == -1) {
+                            mainPkg.config.files.push(pxt.MAIN_BLOCKS);
                         }
                     }
                 }).catch(e => {
@@ -330,7 +343,7 @@ namespace pxt.runner {
     export function generateHexFileAsync(options: SimulateOptions): Promise<string> {
         return loadPackageAsync(options.id)
             .then(() => compileAsync(true, opts => {
-                if (options.code) opts.fileSystem["main.ts"] = options.code;
+                if (options.code) opts.fileSystem[pxt.MAIN_TS] = options.code;
             }))
             .then(resp => {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
@@ -344,7 +357,7 @@ namespace pxt.runner {
         pxt.setHwVariant("vm")
         return loadPackageAsync(options.id)
             .then(() => compileAsync(true, opts => {
-                if (options.code) opts.fileSystem["main.ts"] = options.code;
+                if (options.code) opts.fileSystem[pxt.MAIN_TS] = options.code;
             }))
             .then(resp => {
                 console.log(resp)
@@ -394,6 +407,8 @@ namespace pxt.runner {
             storedState: storedState,
             light: simOptions.light,
             single: simOptions.single,
+            hideSimButtons: simOptions.hideSimButtons,
+            autofocus: simOptions.autofocus
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
@@ -423,7 +438,7 @@ namespace pxt.runner {
                     }
                 }
             }
-            if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
+            if (simOptions.code) opts.fileSystem[pxt.MAIN_TS] = simOptions.code;
 
             // Api info needed for py2ts conversion, if project is shared in Python
             if (opts.target.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
@@ -452,7 +467,7 @@ namespace pxt.runner {
         if (compileResult.diagnostics?.length > 0 && didUpgrade) {
             pxt.log("Compile with upgrade rules failed, trying again with original code");
             compileResult = await compileAsync(false, opts => {
-                if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
+                if (simOptions.code) opts.fileSystem[pxt.MAIN_TS] = simOptions.code;
             });
         }
 
@@ -492,7 +507,8 @@ namespace pxt.runner {
 
     export enum LanguageMode {
         Blocks,
-        TypeScript
+        TypeScript,
+        Python
     }
 
     export let editorLanguageMode = LanguageMode.Blocks;
@@ -501,14 +517,18 @@ namespace pxt.runner {
         editorLanguageMode = mode;
         if (localeInfo != pxt.Util.localeInfo()) {
             const localeLiveRx = /^live-/;
-            return pxt.Util.updateLocalizationAsync(
-                pxt.appTarget.id,
-                pxt.webConfig.commitCdnUrl,
-                localeInfo.replace(localeLiveRx, ''),
-                pxt.appTarget.versions.pxtCrowdinBranch,
-                pxt.appTarget.versions.targetCrowdinBranch,
-                localeLiveRx.test(localeInfo)
-            );
+            const fetchLive = localeLiveRx.test(localeInfo);
+            if (fetchLive) {
+                pxt.Util.enableLiveLocalizationUpdates();
+            }
+
+            return pxt.Util.updateLocalizationAsync({
+                targetId: pxt.appTarget.id,
+                baseUrl: pxt.webConfig.commitCdnUrl,
+                code: localeInfo.replace(localeLiveRx, ''),
+                pxtBranch: pxt.appTarget.versions.pxtCrowdinBranch,
+                targetBranch: pxt.appTarget.versions.targetCrowdinBranch,
+            });
         }
 
         return Promise.resolve();
@@ -521,7 +541,15 @@ namespace pxt.runner {
             case "fileloaded":
                 let fm = m as pxsim.SimulatorFileLoadedMessage;
                 let name = fm.name;
-                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale);
+                let mode = LanguageMode.Blocks;
+                if (/\.ts$/i.test(name)) {
+                    mode = LanguageMode.TypeScript;
+                }
+                else if (/\.py$/i.test(name)) {
+                    mode = LanguageMode.Python;
+                }
+
+                setEditorContextAsync(mode, fm.locale);
                 break;
             case "popout":
                 let mp = /((\/v[0-9+])\/)?[^\/]*#(doc|md):([^&?:]+)/i.exec(window.location.href);
@@ -729,28 +757,37 @@ namespace pxt.runner {
             }
         }
 
-        function renderHash() {
+        async function renderHashAsync() {
             let m = /^#(doc|md|tutorial|book|project|projectid|print):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 pushHistory();
+
+                if (m[4]) {
+                    let mode = LanguageMode.TypeScript;
+                    if (/^blocks$/i.test(m[4])) {
+                        mode = LanguageMode.Blocks;
+                    }
+                    else if (/^python$/i.test(m[4])) {
+                        mode = LanguageMode.Python;
+                    }
+                    await setEditorContextAsync(mode, m[5]);
+                }
+
                 // navigation occured
-                const p = m[4] ? setEditorContextAsync(
-                    /^blocks$/.test(m[4]) ? LanguageMode.Blocks : LanguageMode.TypeScript,
-                    m[5]) : Promise.resolve();
-                p.then(() => render(m[1], decodeURIComponent(m[2])));
+                render(m[1], decodeURIComponent(m[2]));
             }
         }
         let promise = pxt.editor.initEditorExtensionsAsync();
         promise.then(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
-                renderHash();
+                renderHashAsync();
             }, false);
 
             parent.postMessage({ type: "sidedocready" }, "*");
 
             // delay load doc page to allow simulator to load first
-            setTimeout(() => renderHash(), 1);
+            setTimeout(() => renderHashAsync(), 1);
         })
     }
 
@@ -771,7 +808,7 @@ namespace pxt.runner {
             md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
 
         cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
-            .filter(f => (editorLanguageMode == LanguageMode.Blocks) == /\.blocks?$/.test(f))
+            .filter(f => matchesLanguageMode(f, editorLanguageMode))
             .forEach(f => {
                 if (!/^main\.(ts|blocks)$/.test(f))
                     md += `
@@ -824,6 +861,17 @@ ${linkString}
             print: true
         }
         return renderMarkdownAsync(content, md, options);
+    }
+
+    function matchesLanguageMode(filename: string, mode: LanguageMode) {
+        switch (mode) {
+            case LanguageMode.Blocks:
+                return /\.blocks?$/.test(filename)
+            case LanguageMode.TypeScript:
+                return /\.ts?$/.test(filename)
+            case LanguageMode.Python:
+                return /\.py?$/.test(filename)
+        }
     }
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
@@ -1039,7 +1087,7 @@ ${linkString}
             .then(opts => {
                 // compile
                 if (code)
-                    opts.fileSystem["main.ts"] = code;
+                    opts.fileSystem[pxt.MAIN_TS] = code;
                 opts.ast = true
 
                 if (assets) {
@@ -1064,7 +1112,7 @@ ${linkString}
                 // decompile to python
                 let compilePython: pxtc.transpile.TranspileResult = undefined;
                 if (pxt.appTarget.appTheme.python) {
-                    compilePython = ts.pxtc.transpile.tsToPy(program, "main.ts");
+                    compilePython = ts.pxtc.transpile.tsToPy(program, pxt.MAIN_TS);
                 }
 
                 // decompile to blocks
@@ -1085,7 +1133,7 @@ ${linkString}
                         }
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
-                            program.getSourceFile("main.ts"),
+                            program.getSourceFile(pxt.MAIN_TS),
                             {
                                 snippetMode,
                                 generateSourceMap
@@ -1100,9 +1148,9 @@ ${linkString}
                                 compileBlocks: bresp,
                                 apiInfo: apis
                             };
-                        pxt.debug(bresp.outfiles["main.blocks"])
+                        pxt.debug(bresp.outfiles[pxt.MAIN_BLOCKS])
 
-                        const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
+                        const blocksSvg = pxt.blocks.render(bresp.outfiles[pxt.MAIN_BLOCKS], options);
 
                         if (tilemapJres || assetsJres) {
                             tilemapProject = null;

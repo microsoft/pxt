@@ -83,9 +83,8 @@ namespace pxtblockly {
             this.blocksInfo = options.blocksInfo;
         }
 
-        init() {
-            super.init();
-
+        initView() {
+            super.initView();
             if (this.sourceBlock_ && this.sourceBlock_.isInFlyout) {
                 this.setValue(this.getOptions()[0][1]);
             }
@@ -93,7 +92,9 @@ namespace pxtblockly {
 
         getValue() {
             if (this.selectedOption_) {
-                const tile = this.selectedOption_[2];
+                let tile = this.selectedOption_[2];
+                tile = pxt.react.getTilemapProject().lookupAsset(tile.type, tile.id);
+
                 return pxt.getTSReferenceForAsset(tile);
             }
             const v = super.getValue();

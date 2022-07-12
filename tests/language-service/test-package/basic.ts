@@ -2,6 +2,12 @@ namespace testNamespace {
     export function someFunction(someParam: string, someNum: number, someBool: boolean) {
         return someParam
     }
+    
+    //% someNum.defl=5
+    //% someBool.defl=true
+    export function someFunctionWithDefl(someNum: number, someBool: boolean) {
+        return someNum + 1
+    }
 
     export let someString: string;
 

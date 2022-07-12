@@ -49,9 +49,12 @@ body#root.share-page .ui.mini.image.mclogo {
     align-items: center;
 }
 
+.page-header-item .logo.organization {
+    display: flex;
+    flex-shrink: 0;
+}
+
 .page-header-content {
-    /* aligns with edge of embedded simulator */
-    padding-left: 10px;
     max-width: 50%;
     flex-shrink: 1;
 }
@@ -60,9 +63,28 @@ body#root.share-page .ui.mini.image.mclogo {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    margin: 0 1rem;
 }
 
-.show-code-toggle {
+.page-header-content .ui.button {
+    flex-shrink: 0;
+}
+
+.page-header-product {
+    font-family: Segoe UI, Tahoma, Geneva, Verdana;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.page-header-product::before {
+    position: relative;
+    height: 1.5rem;
+    border-left: 2px solid #000;
+    content: " ";
+    margin-right: 0.9rem;
+}
+
+.page-header-spacer {
     flex-grow: 1;
     padding-left: 1rem;
 }
@@ -123,6 +145,10 @@ body#root.share-page .ui.mini.image.mclogo {
 
 /* tablet */
 @media only screen and (max-width: 768px) {
+    .page-header-product {
+        display: none;
+    }
+
     body#root.share-page #pagemenu {
         height: 2.8rem;
         min-height: 2.8rem !important;
@@ -134,8 +160,7 @@ body#root.share-page .ui.mini.image.mclogo {
 
 @media only screen and (min-width: 769px) {
     .ui.container.mainbody, .page-header .ui.container {
-        padding-left: 1em;
-        padding-right: 1em;
+        padding: 0 0.5rem;
     }
 
     .mainbody {

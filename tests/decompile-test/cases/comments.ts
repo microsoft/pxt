@@ -60,3 +60,11 @@ x += 9;
  * Comment
  */
 x += 10;
+
+// Comments for variable classified as auto-declared.
+// 0
+x = 0;
+
+// Comments for variable classified as auto-declared.
+// FALSE
+let y = false;

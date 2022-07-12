@@ -2,77 +2,43 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
-import { dispatchChangeSelectedItem, dispatchShowCompletionModal, dispatchSetSkillMapCompleted } from '../actions/dispatch';
+import { dispatchChangeSelectedItem, dispatchShowCompletionModal,
+    dispatchSetSkillMapCompleted, dispatchOpenActivity, dispatchRestartActivity } from '../actions/dispatch';
 import { GraphNode } from './GraphNode';
 import { GraphPath } from "./GraphPath";
 
-import { getActivityStatus, isActivityUnlocked } from '../lib/skillMapUtils';
-import { SvgCoord, orthogonalGraph } from '../lib/skillGraphUtils';
+import { getActivityStatus, isCodeCarryoverEnabled, lookupActivityProgress,
+    lookupPreviousCompletedActivityState } from '../lib/skillMapUtils';
+import { SvgGraphItem, SvgGraphPath } from '../lib/skillGraphUtils';
+import { tickEvent } from "../lib/browserUtils";
 
-interface SvgGraphItem {
-    activity: MapActivity;
-    position: SvgCoord;
-}
+export interface SkillGraphProps {
+    // Rendering
+    unit: number;
+    items: SvgGraphItem[];
+    paths: SvgGraphPath[];
+    width: number;
+    height: number;
 
-interface SvgGraphPath {
-    points: SvgCoord[];
-}
-
-interface SkillGraphProps {
+    // Skill map
     map: SkillMap;
     user: UserState;
     selectedActivityId?: string;
     pageSourceUrl: string;
     theme: SkillGraphTheme;
     completionState: "incomplete" | "transitioning" | "completed";
+
+    // Events
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
     dispatchSetSkillMapCompleted: (mapId: string) => void;
+    dispatchOpenActivity: (mapId: string, activityId: string) => void;
+    dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
 }
 
-const UNIT = 10;
-const PADDING = 4;
-
 class SkillGraphImpl extends React.Component<SkillGraphProps> {
-    protected items: SvgGraphItem[];
-    protected paths: SvgGraphPath[];
-    protected size: { width: number, height: number };
-
     constructor(props: SkillGraphProps) {
         super(props);
-        this.size = { width: 0, height: 0 };
-
-        const { items, paths } = this.getItems(props.map.root);
-        this.items = items;
-        this.paths = paths;
-    }
-
-    protected getItems(root: MapNode): { items: SvgGraphItem[], paths: SvgGraphPath[] } {
-        const nodes = orthogonalGraph(root);
-
-        // Convert into renderable items
-        const items: SvgGraphItem[] = [];
-        const paths: SvgGraphPath[] = [];
-        for (let current of nodes) {
-            const { depth, offset } = current;
-            items.push({
-                activity: current,
-                position: this.getPosition(depth, offset)
-            } as any);
-
-            if (current.edges) {
-                current.edges.forEach(edge => {
-                    const points: SvgCoord[] = [];
-                    edge.forEach(n => points.push(this.getPosition(n.depth, n.offset)));
-                    paths.push({ points });
-                });
-            }
-
-            this.size.height = Math.max(this.size.height, current.offset);
-            this.size.width = Math.max(this.size.width, current.depth);
-        }
-
-        return { items, paths };
     }
 
     protected onItemSelect = (activityId: string, kind: MapNodeKind) => {
@@ -81,33 +47,40 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
 
         const { status } = getActivityStatus(user, pageSourceUrl, map, activityId);
         if (kind === "completion" && status === "completed") {
+            tickEvent("skillmap.graph.reward.select", { path: map.mapId, activity: activityId})
             dispatchChangeSelectedItem(map.mapId, activityId);
             dispatchShowCompletionModal(map.mapId, activityId)
         } else {
             if (activityId !== selectedActivityId) {
+                tickEvent("skillmap.graph.item.select", { path: map.mapId, activity: activityId })
                 dispatchChangeSelectedItem(map.mapId, activityId);
             } else {
+                tickEvent("skillmap.graph.item.deselect", { path: map.mapId, activity: activityId })
                 dispatchChangeSelectedItem(undefined);
             }
         }
     }
 
-    // This function converts graph position (no units) to x/y (SVG units)
-    protected getPosition(depth: number, offset: number): SvgCoord {
-        return { x: this.getX(depth), y: this.getY(offset) }
-    }
+    protected onItemDoubleClick = (activityId: string, kind: MapNodeKind) => {
+        const { user, pageSourceUrl, map, dispatchOpenActivity, dispatchRestartActivity } = this.props;
+        const { status } = getActivityStatus(user, pageSourceUrl, map, activityId);
+        const activity = map.activities[activityId];
+        tickEvent("skillmap.activity.open.doubleclick", { path: map.mapId, activity: activityId, status: status || "" });
 
-    protected getX(position: number) {
-        return ((position * 12) + PADDING) * UNIT;
-    }
+        const progress = lookupActivityProgress(user, pageSourceUrl, map.mapId, activity.activityId);
+        const previousState = lookupPreviousCompletedActivityState(user, pageSourceUrl, map, activity.activityId);
 
-    protected getY(position: number) {
-        return ((position * 9) + PADDING) * UNIT;
+        if (isCodeCarryoverEnabled(user, pageSourceUrl, map, activity) && !progress?.headerId) {
+            dispatchRestartActivity(map.mapId, activityId, previousState.headerId, !!previousState.headerId);
+        } else if (kind == "activity" && status !== "locked") {
+            dispatchOpenActivity(map.mapId, activityId);
+        }
     }
 
     componentDidUpdate(props: SkillGraphProps) {
         if (props.completionState === "transitioning") {
             setTimeout(() => {
+                tickEvent("skillmap.graph.reward.auto", { path: props.map.mapId, activity: props.selectedActivityId || "" })
                 props.dispatchSetSkillMapCompleted(props.map.mapId)
                 props.dispatchShowCompletionModal(props.map.mapId, props.selectedActivityId)
             }, 400);
@@ -115,30 +88,30 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     render() {
-        const { map, user, selectedActivityId, pageSourceUrl, theme } = this.props;
-        const width = this.getX(this.size.width) + UNIT * PADDING;
-        const height = this.getY(this.size.height) + UNIT * PADDING;
-        return <svg className="skill-graph" xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        const { unit, items, paths, map, user, selectedActivityId, pageSourceUrl, theme } = this.props;
+
+        return <g className="skill-graph">
             <g opacity={theme.pathOpacity}>
-                {this.paths.map((el, i) => {
-                    return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color={theme.strokeColor} points={el.points} />
+                {paths.map((el, i) => {
+                    return <GraphPath className="skill-graph-path-border" key={`graph-activity-${i}`} strokeWidth={3 * unit} color={theme.strokeColor} points={el.points} />
                 })}
-                {this.paths.map((el, i) => {
-                    return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color={theme.pathColor}  points={el.points} />
+                {paths.map((el, i) => {
+                    return <GraphPath className="skill-graph-path" key={`graph-activity-${i}`} strokeWidth={3 * unit - 4} color={theme.pathColor}  points={el.points} />
                 })}
             </g>
-            {this.items.map((el, i) => {
+            {items.map((el, i) => {
                 return <GraphNode key={`graph-activity-${i}`}
+                    node={el.activity}
                     theme={theme}
                     kind={el.activity.kind}
-                    activityId={el.activity.activityId}
                     position={el.position}
-                    width={5 * UNIT}
+                    width={5 * unit}
                     selected={el.activity.activityId === selectedActivityId}
                     onItemSelect={this.onItemSelect}
+                    onItemDoubleClick={this.onItemDoubleClick}
                     status={getActivityStatus(user, pageSourceUrl, map, el.activity.activityId).status} />
             })}
-        </svg>
+        </g>
     }
 }
 
@@ -158,7 +131,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 const mapDispatchToProps = {
     dispatchChangeSelectedItem,
     dispatchShowCompletionModal,
-    dispatchSetSkillMapCompleted
+    dispatchSetSkillMapCompleted,
+    dispatchOpenActivity,
+    dispatchRestartActivity
 };
 
 export const SkillGraph = connect(mapStateToProps, mapDispatchToProps)(SkillGraphImpl);

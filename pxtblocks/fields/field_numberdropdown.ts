@@ -1,5 +1,15 @@
 /// <reference path="../../localtypings/pxtblockly.d.ts" />
 
+// common time options -- do not remove
+// lf("100 ms")
+// lf("200 ms")
+// lf("500 ms")
+// lf("1 second")
+// lf("2 seconds")
+// lf("5 seconds")
+// lf("1 minute")
+// lf("1 hour")
+
 namespace pxtblockly {
 
     export interface FieldNumberDropdownOptions extends Blockly.FieldCustomDropdownOptions {
@@ -20,8 +30,12 @@ namespace pxtblockly {
         getOptions() {
             let newOptions: string[][];
             if (this.menuGenerator_) {
-                newOptions = JSON.parse(this.menuGenerator_).map((x: number) => {
-                    return (typeof x == 'object') ? x : [String(x), String(x)]
+                newOptions = JSON.parse(this.menuGenerator_).map((x: number | string[]) => {
+                    if (typeof x == 'object') {
+                        return [pxt.Util.rlf(x[0]), x[1]]
+                    } else {
+                        return [String(x), String(x)]
+                    }
                 });
             }
             return newOptions;

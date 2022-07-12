@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-var
 declare var require: any;
 
 const PouchDB = require("pouchdb")
@@ -94,6 +95,10 @@ class GithubDb implements pxt.github.IGithubDb {
     private mem = new pxt.github.MemoryGithubDb();
     private table = new Table("github");
 
+    latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
+        return this.mem.latestVersionAsync(repopath, config)
+    }
+
     loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
         // don't cache master
         if (tag == "master")
@@ -118,7 +123,10 @@ class GithubDb implements pxt.github.IGithubDb {
         );
     }
     loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
-        tag = tag || "master";
+        if (!tag) {
+          pxt.debug(`dep: default to master`)
+          tag = "master"
+        }
         // don't cache master
         if (tag == "master")
             return this.mem.loadPackageAsync(repopath, tag);

@@ -117,6 +117,8 @@
             $(backButton).remove(); backButton = undefined;
             $('#sidedocs-back-button-divider').remove();
         }
+
+        if (/pxtElectron=true/.test(window.location)) window.pxtElectron = true;
         var loading = document.getElementById('loading');
         var content = document.getElementById('content');
         ksRunnerReady(function() {

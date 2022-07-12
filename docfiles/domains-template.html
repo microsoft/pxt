@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+
+    <meta charset="UTF-8" />
+    <meta
+        name="Description"
+        content="This page is used to test the reachable web sites (domains) required for MakeCode functionality"
+    />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="translucent-black"
+    />
+    <meta name="format-detection" content="telephone=no" />
+    <meta
+        name="application-name"
+        content="Reachable MakeCode domains"
+    />
+
+    <meta name="msapplication-config" content="none" />
+    <meta name="theme-color" content="#3DC1AA" />
+
+    <title>Reachable MakeCode domains</title>
+
+    <link rel="stylesheet" href="/doccdn/semantic.css" type="text/css">
+    <style>
+        /* styles are inlined here as we don't want depednency on another file for checking the domains */
+        /* Global --------------------------------------------------------------------------- */
+        html {
+            font-size: 10px !important;
+        }
+
+        body,
+        a,
+        button,
+        p,
+        li {
+            font-size: 1.8rem;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .lg-p {
+            font-size: 2.2rem;
+        }
+
+        li {
+            padding: 1rem 0;
+        }
+
+        li li {
+            padding: 0;
+            margin: 0.5rem 0;
+        }
+
+        /* Dynamic scaling */
+        @media (min-width: 4000px) {
+            html {
+                font-size: 16px !important;
+            }
+        }
+
+        @media (min-width: 3000px) {
+            html {
+                font-size: 14px !important;
+            }
+        }
+
+        @media (min-width: 2000px) {
+            html {
+                font-size: 12px !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            html {
+                font-size: 8px !important;
+            }
+        }
+
+        ol {
+            font-weight: bold;
+        }
+
+        li span {
+            font-weight: normal;
+        }
+
+        h1 {
+            font-size: 7.2rem;
+            text-transform: uppercase;
+        }
+        h2 {
+            font-size: 5.4rem;
+            text-transform: uppercase;
+        }
+        h3 {
+            font-size: 3.6rem;
+            text-transform: uppercase;
+        }
+        h4 {
+            font-size: 2.4rem;
+        }
+        h5 {
+            font-size: 2rem;
+        }
+
+        .background-white {
+            color: black;
+            background-color: white;
+        }
+        .background-black {
+            color: white;
+            background-color: black;
+        }
+        .background-marina {
+            color: black;
+            background-color: #3dc1aa;
+        }
+        .background-sunflower {
+            color: black;
+            background-color: #eeca49;
+        }
+        .background-papaya {
+            color: white;
+            background-color: #de594b;
+        }
+        .background-eggplant {
+            color: white;
+            background-color: #453052;
+        }
+
+        .background-eggplant a {
+            color: #3dc1aa;
+        }
+
+        .background-eggplant a:hover {
+            color: #2ead98;
+        }
+
+        .background-marina a,
+        .background-sunflower a {
+            color: #453052;
+        }
+
+        .background-marina a:hover,
+        .background-sunflower a:hover {
+            color: #33203f;
+        }
+
+        .background-papaya a {
+            color: #fadd73;
+        }
+
+        .background-papaya a:hover {
+            color: #eeca49;
+        }
+
+        .marina {
+            color: #3dc1aa;
+        }
+        .sunflower {
+            color: #eeca49;
+        }
+        .papaya {
+            color: #de594b;
+        }
+        .eggplant {
+            color: #453052;
+        }
+
+
+        #header-bar,
+        #header-bar > div {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .header-bar-left {
+            justify-content: flex-start;
+        }
+        .header-bar-right {
+            justify-content: flex-end;
+        }
+
+        .header-org-logo {
+            display: flex;
+        }
+        .header-org-logo-sm {
+            display: none;
+        }
+
+        .header-org-logo img,
+        .header-org-logo-sm img {
+            margin: 0 15px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            white-space: nowrap;
+        }
+
+        .header-title:before {
+            content: '';
+            position: relative;
+            height: 18px;
+            border-left: 2px solid white;
+        }
+
+        .header-title span {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            margin-left: 15px;
+            margin-bottom: 1px;
+        }
+
+        a.header-icon {
+            height: 100%;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+        }
+
+        a.header-icon:hover,
+        a.header-icon:focus {
+            color: white;
+            opacity: 0.8;
+        }
+
+        a.header-icon i.icon {
+            height: unset;
+        }
+
+        nav a {
+            cursor: pointer;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana;
+            font-style: unset;
+            text-transform: none !important;
+        }
+
+        nav .icon {
+            font-size: 26px;
+            line-height: 26px;
+        }
+
+        nav .header-bar-left a,
+        nav .header-bar-left a:hover {
+            display: flex;
+            color: white;
+            text-decoration: none;
+        }
+
+        nav .header-bar-right .btn:active svg path {
+            fill: white;
+        }
+
+        nav .header-bar-right .btn {
+            min-width: unset;
+            padding: 10px;
+            width: 160px;
+            margin: 0 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        nav .header-bar-right .btn span {
+            margin-right: 10px;
+            line-height: 18px;
+        }
+
+        nav .header-bar-right .btn svg path {
+            fill: black;
+        }
+
+        table{
+            border-collapse: collapse;
+            border-spacing: 0;
+            margin-top: 40px;
+            margin-left: 20%;
+            margin-right: 20%;
+
+        }
+        th, td{
+            padding: 10px 20px;
+            border: 1px solid #000;
+        }
+    </style>
+
+</head>
+
+<body id='root' class='root'>
+    <nav
+    id="header-bar"
+    class="background-eggplant"
+    style="height: 60px"
+    >
+        <div class="header-bar-left">
+            <a
+                class="header-icon"
+                role="menuitem"
+                aria-label="Return home"
+                tabindex="0"
+                href="/faq">
+                <i
+                    class="icon arrow left"
+                    aria-hidden="true"
+                    role="presentation"
+                ></i>
+            </a>
+        </div>
+        <div class="header-bar-right">
+            <a
+                class="header-icon"
+                role="menuitem"
+                aria-label="Return home"
+                tabindex="0"
+                href="@homeurl@">
+                <i
+                    class="icon home"
+                    aria-hidden="true"
+                    role="presentation"
+                ></i>
+            </a>
+        </div>
+    </nav>
+    
+    <script>
+        let table = document.createElement('table');
+        let thead = document.createElement('thead');
+        let tbody = document.createElement('tbody');
+
+        async function checkURL(url) {
+            fetch(url, {mode: 'no-cors'}).then( r=>{
+                console.log(`${url} reachable`)
+                return true;
+            })
+            .catch(e=>{
+                console.log(`Error: ${url} not reachable ${e}`)
+                return false;
+            });
+        }
+
+        function addRow(url) {
+            // Creating and adding data to second row of the table
+            let row = document.createElement('tr');
+            let row_data_1 = document.createElement('td');
+            row_data_1.innerHTML = url;
+            let row_data_2 = document.createElement('td');
+
+            row_data_2.innerHTML = "Loading..."
+            fetch(url, {mode: 'no-cors'}).then( r=>{
+                console.log(`${url} reachable`)
+                row_data_2.innerHTML = "Success"
+            })
+            .catch(e=>{
+                row_data_2.innerHTML = "Failure"
+            });
+
+            row.appendChild(row_data_1);
+            row.appendChild(row_data_2);
+            tbody.appendChild(row);
+        }
+
+        function createTable() {
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+
+            // Adding the entire table to the body tag
+            document.getElementById('root').appendChild(table);
+
+            // Creating and adding data to first row of the table
+            let row_1 = document.createElement('tr');
+            let heading_1 = document.createElement('th');
+            heading_1.innerHTML = "Domain";
+            let heading_2 = document.createElement('th');
+            heading_2.innerHTML = "Reachable?";
+
+            row_1.appendChild(heading_1);
+            row_1.appendChild(heading_2);
+            thead.appendChild(row_1);
+        }
+
+        createTable();
+
+        addRow("@homeurl@")
+        addRow("https://makecode.com");
+        addRow("https://trg-@targetid@.userpxt.io");
+        addRow("https://pxt.azureedge.net");
+        addRow("https://api.github.com");
+        addRow("https://immersivereaderprod.cognitiveservices.azure.com");
+        addRow("https://github.com");
+        addRow("https://raw.githubusercontent.com/")
+        addRow("https://microsoft.github.io/");
+
+    </script>
+
+    <!-- @include footer.html -->
+    <!-- @include tracking.html -->
+</body>
+
+</html>
+

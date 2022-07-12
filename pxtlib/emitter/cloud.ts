@@ -113,13 +113,13 @@ namespace pxt.Cloud {
         })
     }
 
-    // 1h check on markdown content if not on development server
-    const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
-    // 1w check don't use cached version and wait for new content
-    const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
     export async function markdownAsync(docid: string, locale?: string): Promise<string> {
+        // 1h check on markdown content if not on development server
+        const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
+        // 1w check don't use cached version and wait for new content
+        const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
+
         locale = locale || pxt.Util.userLanguage();
-        const live = pxt.Util.localizeLive;
         const branch = "";
 
         const db = await pxt.BrowserUtils.translationDbAsync();
@@ -127,9 +127,13 @@ namespace pxt.Cloud {
 
         const downloadAndSetMarkdownAsync = async () => {
             try {
-                const r = await downloadMarkdownAsync(docid, locale, live, entry?.etag);
-                await db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry?.md);
-                return r.md;
+                const r = await downloadMarkdownAsync(docid, locale, entry?.etag);
+                // TODO directly compare the entry/response etags after backend change
+                if (!entry || (r.md && entry.md !== r.md)) {
+                    await db.setAsync(locale, docid, branch, r.etag, undefined, r.md);
+                    return r.md;
+                }
+                return entry.md;
             } catch {
                 return ""; // no translation
             }
@@ -160,7 +164,7 @@ namespace pxt.Cloud {
         return downloadAndSetMarkdownAsync();
     }
 
-    function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean, etag?: string): Promise<{ md: string; etag?: string; }> {
+    function downloadMarkdownAsync(docid: string, locale?: string, etag?: string): Promise<{ md: string; etag?: string; }> {
         const packaged = pxt.webConfig?.isStatic;
         const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
@@ -179,18 +183,17 @@ namespace pxt.Cloud {
         } else {
             url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
         }
-        if (!packaged && locale != "en") {
-            url += `&lang=${encodeURIComponent(locale)}`
-            if (live) url += "&live=1"
+        if (locale != "en") {
+            url += `${packaged ? "?" : "&"}lang=${encodeURIComponent(locale)}`
         }
-        if (pxt.BrowserUtils.isLocalHost() && !live)
+        if (pxt.BrowserUtils.isLocalHost() && !pxt.Util.liveLocalizationEnabled()) {
             return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
                     return privateRequestAsync({ url, method: "GET" })
                         .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });
                 else return { md: resp.text, etag: undefined };
             });
-        else {
+        } else {
             const headers: pxt.Map<string> = etag && !useCdnApi() ? { "If-None-Match": etag } : undefined;
             return apiRequestWithCdnAsync({ url, method: "GET", headers })
                 .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });

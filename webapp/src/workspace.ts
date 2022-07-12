@@ -19,7 +19,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 // Avoid importing entire crypto-js
-/* tslint:disable:no-submodule-imports */
+/* eslint-disable import/no-internal-modules */
 const sha1 = require("crypto-js/sha1");
 
 type Header = pxt.workspace.Header;
@@ -91,6 +91,11 @@ export function setupWorkspace(id: string) {
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
+    if (pxt.BrowserUtils.isWinRT()) {
+        // windows app can fail on occasion, in particular when deleting projects;
+        // ignore and keep trying to read from / write.
+        return;
+    }
     pxt.log(`workspace: error '${reason}', switching from ${implType} to memory workspace`);
 
     const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning
@@ -121,13 +126,20 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
     implType = "mem";
 }
 
-export function getHeaders(withDeleted = false) {
+export function getHeaders(withDeleted = false, filterByEditorType = true) {
     maybeSyncHeadersAsync();
-    const cloudUserId = auth.user()?.id;
+    const cloudUserId = auth.userProfile()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
+        // Filter deleted projects
         (withDeleted || !h.isDeleted) &&
+        // Hide backup projects
         !h.isBackup &&
-        (!h.cloudUserId || h.cloudUserId === cloudUserId))
+        // Filter to local projects and projects belonging to this signed in user
+        (!h.cloudUserId || h.cloudUserId === cloudUserId));
+    if (filterByEditorType) {
+        // If this is the skillmap editor, filter to only skillmap projects, otherwise filter out skillmap projects
+        r = r.filter(h => !!h.isSkillmapProject === pxt.BrowserUtils.isSkillmapEditor());
+    }
     r.sort((a, b) => {
         const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime
         const bTime = b.cloudUserId ? Math.min(b.cloudLastSyncTime, b.modificationTime) : b.modificationTime
@@ -252,9 +264,9 @@ export function getHeaderLastCloudSync(h: Header): number {
     return h.cloudLastSyncTime || 0/*never*/
 }
 export function getLastCloudSync(): number {
-    if (!auth.loggedInSync())
+    if (!auth.loggedIn())
         return 0;
-    const userId = auth.user()?.id;
+    const userId = auth.userProfile()?.id;
     const cloudHeaders = getHeaders(true)
         .filter(h => h.cloudUserId && h.cloudUserId === userId);
     if (!cloudHeaders.length)
@@ -302,12 +314,7 @@ export interface ScriptMeta {
     blocksHeight?: number;
 }
 
-// https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
-export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
-    checkHeaderSession(h);
-
-    const saveId = {}
-    h.saveId = saveId
+function getScriptRequest(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
     let thumbnailBuffer: string;
     let thumbnailMimeType: string;
     if (screenshotUri) {
@@ -317,14 +324,16 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
             thumbnailMimeType = m[1];
         }
     }
-    const stext = JSON.stringify(text, null, 2) + "\n"
-    const scrReq = {
+    return {
+        id: h.id,
+        shareId: h.pubPermalink,
         name: h.name,
         target: h.target,
         targetVersion: h.targetVersion,
         description: meta.description || lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
         editor: h.editor,
-        text: text,
+        header: JSON.stringify(cloud.excludeLocalOnlyMetadataFields(h)),
+        text: JSON.stringify(text),
         meta: {
             versions: pxt.appTarget.versions,
             blocksHeight: meta.blocksHeight,
@@ -333,9 +342,20 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         thumbnailBuffer,
         thumbnailMimeType
     }
-    pxt.debug(`publishing script; ${stext.length} bytes`)
+}
+
+// https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
+export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+    checkHeaderSession(h);
+
+    const saveId = {}
+    h.saveId = saveId
+    const scrReq = getScriptRequest(h, text, meta, screenshotUri)
+    pxt.debug(`publishing script; ${scrReq.text.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
         .then((inf: Cloud.JsonScript) => {
+            if (!h.pubVersions) h.pubVersions = [];
+            h.pubVersions.push({ id: inf.id, type: "snapshot" });
             if (inf.shortid) inf.id = inf.shortid;
             h.pubId = inf.shortid
             h.pubCurrent = h.saveId === saveId
@@ -343,6 +363,27 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
             pxt.debug(`published; id /${h.pubId}`)
             return saveAsync(h)
                 .then(() => inf)
+        })
+}
+
+export function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+    checkHeaderSession(h);
+
+    const saveId = {}
+    h.saveId = saveId
+    const scrReq = getScriptRequest(h, text, meta, screenshotUri)
+    pxt.debug(`publishing script; ${scrReq.text.length} bytes`)
+    return cloud.shareAsync(h.id, scrReq)
+        .then((resp: { shareID: string, scr: cloud.SharedCloudProject }) => {
+            const { shareID, scr: script } = resp;
+            if (!h.pubVersions) h.pubVersions = [];
+            h.pubVersions.push({ id: script.id, type: "permalink" });
+            h.pubId = shareID
+            h.pubCurrent = h.saveId === saveId
+            h.pubPermalink = shareID;
+            h.meta = script.meta;
+            pxt.debug(`published; id /${h.pubId}`)
+            return saveAsync(h).then(() => h)
         })
 }
 
@@ -469,7 +510,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         allScripts.push(e)
     }
 
-    const hasUserFileChanges = async () => {
+    const hasUserFileChanges = () => {
         // we see lots of frequent "saves" that don't come from real changes made by the user. This
         // causes problems for cloud sync since this can cause us to think the user is making when
         // just reading a project. The "correct" solution would be to have a full history and .gitignore
@@ -496,18 +537,18 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         return hasUserChanges;
     }
+    const isHeaderOnlyChange = !fromCloudSync && !text;
     const isUserChange = !fromCloudSync
-        && (h.isDeleted || text && await hasUserFileChanges())
-    if (isUserChange) {
+        && (h.isDeleted || text && hasUserFileChanges())
+    if (isHeaderOnlyChange || isUserChange) {
         h.pubCurrent = false
-        h.blobCurrent_ = false
         h.cloudCurrent = false
         h.modificationTime = U.nowSeconds();
         h.targetVersion = h.targetVersion || "0.0.0";
 
         // cloud user association
-        if (auth.hasIdentity() && auth.loggedInSync()) {
-            h.cloudUserId = auth.user()?.id
+        if (auth.hasIdentity() && auth.loggedIn()) {
+            h.cloudUserId = auth.userProfile()?.id
         }
     }
 
@@ -518,24 +559,18 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         // persist header changes to our local cache, but keep the old
         // reference around because (unfortunately) other layers (e.g. package.ts)
         // assume the reference is stable per id.
-        Object.assign(e.header, h)
+        Object.assign(e.header, h);
+        // Delete keys from `e.header` that don't exist in `h`. This will clear cloud state
+        // from the header in the case where the project is being exported to local from cloud.
+        Object.keys(e.header)
+            .filter(key => h[key as keyof Header] === undefined)
+            .forEach(key => delete e.header[key as keyof Header]);
         h = e.header;
     }
     if (text)
         e.text = text
     if (text || h.isDeleted) {
         h.saveId = null
-    }
-
-    // perma-delete
-    if (h.isDeleted && h.blobVersion_ == "DELETED") {
-        let idx = allScripts.indexOf(e)
-        U.assert(idx >= 0)
-        allScripts.splice(idx, 1)
-        return headerQ.enqueue(h.id, () =>
-            fixupVersionAsync(e).then(() =>
-                impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
-            .finally(() => refreshHeadersSession())
     }
 
     // check if we have dynamic boards, store board info for home page rendering
@@ -570,7 +605,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         if (isUserChange) {
             h.pubCurrent = false;
-            h.blobCurrent_ = false;
             h.cloudCurrent = false;
             h.saveId = null;
         }
@@ -608,11 +642,11 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     return forceSaveAsync(h, text, isCloud)
 }
 
-export function installAsync(h0: InstallHeader, text: ScriptText) {
+export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
-    h.id = ts.pxtc.Util.guidGen();
+    if (!dontOverwriteID) h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
 
@@ -625,11 +659,6 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     return pxt.github.cacheProjectDependenciesAsync(cfg)
         .then(() => importAsync(h, text))
         .then(() => h);
-}
-
-export function renameAsync(h: Header, newName: string) {
-    checkHeaderSession(h);
-    return cloudsync.renameAsync(h, newName);
 }
 
 export async function duplicateAsync(h: Header, newName?: string): Promise<Header> {
@@ -711,7 +740,13 @@ export async function getPublishedScriptAsync(id: string) {
                 files = await (Cloud.downloadScriptFilesAsync(id)
                     .catch(core.handleNetworkError))
             }
-            await scripts.setAsync({ id: eid, files: files })
+            try {
+                await scripts.setAsync({ id: eid, files: files })
+            }
+            catch (e) {
+                // Don't fail if the indexeddb fails, but log it
+                pxt.log("Unable to cache script in DB");
+            }
         }
         return fixupFileNames(files)
     })
@@ -895,7 +930,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add screenshots
     let blocksDiffSha: string;
     if (options
-        && treeUpdate.tree.find(e => e.path == "main.blocks")) {
+        && treeUpdate.tree.find(e => e.path == pxt.MAIN_BLOCKS)) {
         if (options.blocksScreenshotAsync) {
             const png = await options.blocksScreenshotAsync();
             if (png)
@@ -1145,6 +1180,9 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             U.userError(lf("Invalid pxt.json file."));
         pxt.debug(`github: reconstructing pxt.json`)
         cfg = pxt.diff.reconstructConfig(parsed, files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
+        if (parsed.fileName && parsed.project)
+            // add root folder as reference when creating nested project
+            cfg.dependencies[parsed.project] = `github:${parsed.slug}`
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
     // patch the github references back to local workspaces
@@ -1169,7 +1207,14 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         await downloadAsync(fn)
 
     if (!cfg.name) {
-        cfg.name = (parsed.fileName || parsed.project || parsed.fullName).replace(/[^\w\-]/g, "");
+        cfg.name = parsed.fileName && parsed.project
+            // when creating nested project, mangle name
+            ? `${parsed.project}-${parsed.fileName}`
+            : (parsed.project || parsed.fullName)
+        cfg.name = cfg.name.replace(/pxt-/ig, '')
+            .replace(/\//g, '-')
+            .replace(/-+/, "-")
+            .replace(/[^\w\-]/g, "")
         if (!justJSON)
             files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
@@ -1228,13 +1273,13 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
     })
 
     // assign ids to blockly blocks
-    const mainBlocks = files["main.blocks"];
+    const mainBlocks = files[pxt.MAIN_BLOCKS];
     if (mainBlocks) {
         const ws = pxt.blocks.loadWorkspaceXml(mainBlocks, true);
         if (ws) {
             const mainBlocksWithIds = pxt.blocks.saveWorkspaceXml(ws, true);
             if (mainBlocksWithIds)
-                files["main.blocks"] = mainBlocksWithIds;
+                files[pxt.MAIN_BLOCKS] = mainBlocksWithIds;
         }
     }
     // save updated files
@@ -1302,19 +1347,6 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
             gitjson.isFork = !!r.fork
             files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
             await saveAsync(h, files)
-        }
-    }
-
-    // automatically update project name with github name
-    // if it start with pxt-
-    const ghid = pxt.github.parseRepoId(h.githubId);
-    if (ghid.project && /^pxt-/.test(ghid.project)) {
-        const ghname = ghid.project.replace(/^pxt-/, '').replace(/-+/g, ' ')
-        if (ghname != h.name) {
-            const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
-            cfg.name = ghname;
-            h.name = ghname;
-            await saveAsync(h, files);
         }
     }
 }
@@ -1456,7 +1488,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 }
 
 export async function importGithubAsync(id: string): Promise<Header> {
-    const repoid = pxt.github.normalizeRepoId(id).replace(/^github:/, "")
+    // if tag is not specified, asssume master
+    const repoid = pxt.github.normalizeRepoId(id, "master").replace(/^github:/, "")
     const parsed = pxt.github.parseRepoId(repoid)
 
     let sha = ""
@@ -1483,7 +1516,10 @@ export async function importGithubAsync(id: string): Promise<Header> {
                 hasCloseIcon: true,
                 helpUrl: "/github/import"
             })
-            if (!r) return Promise.resolve(undefined);
+            if (!r)
+                return Promise.resolve(undefined);
+            // make sure early that we can write to the repo
+            await cloudsync.ensureGitHubTokenAsync()
         }
     } catch (e) {
         if (e.statusCode == 409) {

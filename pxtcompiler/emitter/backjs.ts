@@ -276,6 +276,9 @@ switch (step) {
                     if (s.lblNumUses > 0)
                         writeRaw(`  case ${s.lblId}:`)
                     break;
+                case ir.SK.Comment:
+                    writeRaw(`// ${s.expr.data}`)
+                    break
                 case ir.SK.Breakpoint:
                     emitBreakpoint(s)
                     break;

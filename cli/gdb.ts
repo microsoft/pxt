@@ -239,7 +239,7 @@ function codalBin() {
         return be.buildPath + "/" + be.outputPath
     if (cs.codalBinary)
         return be.buildPath + "/build/" + cs.codalBinary
-    return be.buildPath + "/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "")
+    return be.buildPath + "/build/" + (cs.yottaTarget.split("@")[0]) + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "")
 }
 
 let cachedMap = ""
@@ -587,6 +587,7 @@ export async function dumpheapAsync(filename?: string) {
     const string_inline_utf8_vt = findAddr("pxt::string_inline_utf8_vt")
     const string_cons_vt = findAddr("pxt::string_cons_vt")
     const string_skiplist16_vt = findAddr("pxt::string_skiplist16_vt")
+    const string_skiplist16_packed_vt = findAddr("pxt::string_skiplist16_packed_vt", true)
 
     const PNG: any = require("pngjs").PNG;
     const visWidth = 256
@@ -663,6 +664,10 @@ export async function dumpheapAsync(filename?: string) {
                             category = "skip_string"
                             numbytes = 4 + 2 + 2 + 4
                             fields[".data"] = hex(read32(objPtr + 8) - 4)
+                        } else if (vtable == string_skiplist16_packed_vt) {
+                            category = "skip_string_packed"
+                            const numskip = (word0 >> 16) >> 4
+                            numbytes = 2 + 2 + numskip * 2 + (word0 & 0xffff) + 1
                         } else if (vtable == string_cons_vt) {
                             category = "cons_string"
                             numbytes = 4 + 4 + 4

@@ -50,6 +50,8 @@ namespace pxt.sprite {
         }
 
         constructor(public width: number, public height: number, public x0 = 0, public y0 = 0, buf?: Uint8ClampedArray) {
+            if (!this.width) this.width = 16;
+            if (!this.height) this.height = 16;
             this.buf = buf || new Uint8ClampedArray(this.dataLength());
         }
 
@@ -324,6 +326,20 @@ namespace pxt.sprite {
 
         return;
     }
+
+    export function isEmptyTilemap(t: TilemapData) {
+        const tiles = t.tileset.tiles;
+        const tilemap = t.tilemap;
+        const transparency =  tiles[0].id;
+
+        for (let x = 0; x < tilemap.width; x++) {
+            for (let y = 0; y < tilemap.height; y++) {
+                if (tiles[tilemap.get(x, y)].id !== transparency) return false;
+            }
+        }
+        return true;
+    }
+
 
     export function computeAverageColor(bitmap: Bitmap, colors: string[]): string {
         const parsedColors = colors.map(colorStringToRGB);
@@ -647,6 +663,26 @@ namespace pxt.sprite {
         return result;
     }
 
+    export function encodeAnimationString(frames: BitmapData[], interval: number) {
+        const encodedFrames = frames.map(frame => frame.data);
+
+        const data = new Uint8ClampedArray(8 + encodedFrames[0].length * encodedFrames.length);
+
+        // interval, frame width, frame height, frame count
+        set16Bit(data, 0, interval);
+        set16Bit(data, 2, frames[0].width);
+        set16Bit(data, 4, frames[0].height);
+        set16Bit(data, 6, frames.length);
+
+        let offset = 8;
+        encodedFrames.forEach(buf => {
+            data.set(buf, offset);
+            offset += buf.length;
+        })
+
+        return btoa(pxt.sprite.uint8ArrayToHex(data))
+    }
+
     export function addMissingTilemapTilesAndReferences(project: TilemapProject, asset: ProjectTilemap) {
         const allTiles = project.getProjectTiles(asset.data.tileset.tileWidth, true);
         asset.data.projectReferences = [];
@@ -797,7 +833,12 @@ namespace pxt.sprite {
         return res;
     }
 
-    function colorStringToRGB(color: string) {
+    function set16Bit(buf: Uint8ClampedArray, offset: number, value: number) {
+        buf[offset] = value & 0xff;
+        buf[offset + 1] = (value >> 8) & 0xff;
+    }
+
+    export function colorStringToRGB(color: string) {
         const parsed = parseColorString(color);
         return [_r(parsed), _g(parsed), _b(parsed)]
     }

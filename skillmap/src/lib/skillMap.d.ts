@@ -13,14 +13,13 @@ interface SkillMap {
     displayName: string;
     description?: string;
     prerequisites: MapPrerequisite[];
-    completionUrl?: string; // DEPRECATED, urls should be specified on completion nodes
-
-    // Indicates whether or not code can be copied from previous activity
-    // for all cards in this skillmap
-    allowCodeCarryover?: boolean;
+    allowCodeCarryover?: boolean; // Indicates if code can be copied from previous activity for all cards in this skillmap
+    layout?: "ortho" | "manual"; // The graph layout system to use. Defaults to "ortho"
 
     activities: {[index: string]: MapNode};
     root: MapNode;
+
+    completionUrl?: string; // DEPRECATED, urls should be specified on completion nodes
 }
 
 type MapPrerequisite = TagPrerequisite | MapFinishedPrerequisite;
@@ -38,7 +37,7 @@ interface MapFinishedPrerequisite {
 
 type MapNodeKind = "activity" | "reward" | "completion" | "layout";
 
-type MapNode = MapActivity | MapReward | MapCompletionNode | MapLayoutNode
+type MapNode = MapActivity | MapRewardNode | MapCompletionNode | MapLayoutNode
 
 interface BaseNode {
     kind: MapNodeKind;
@@ -48,6 +47,9 @@ interface BaseNode {
 
     next: MapNode[];
     nextIds: string[];
+
+    position?: GraphCoord; // INTERNAL: The (depth, offset) position of the node, for manually laid out graphs
+    edges?: GraphCoord[][]; // INTERNAL: A list of edges, where each edge is a list of (depth, offset) points
 }
 
 type MapActivityType = "tutorial";
@@ -66,16 +68,35 @@ interface MapActivity extends BaseNode {
     allowCodeCarryover?: boolean;
 }
 
-type MapRewardType = "certificate";
+type MapReward = MapRewardCertificate | MapCompletionBadge;
 
-interface MapReward extends BaseNode {
-    kind: "reward";
-    type: MapRewardType;
+interface MapRewardCertificate {
+    type: "certificate";
     url: string;
+    previewUrl?: string;
 }
 
-interface MapCompletionNode extends MapReward {
+interface MapCompletionBadge {
+    type: "completion-badge";
+    imageUrl: string;
+    displayName?: string;
+}
+
+interface MapRewardNode extends BaseNode {
+    kind: "reward";
+    rewards: MapReward[];
+    actions: MapCompletionAction[];
+}
+
+interface MapCompletionNode extends MapRewardNode {
     kind: "completion";
+}
+
+interface MapCompletionAction {
+    kind: "activity" | "map" | "docs" | "editor" | "tutorial";
+    label?: string;
+    activityId?: string;
+    url?: string;
 }
 
 interface MapLayoutNode extends BaseNode {
@@ -109,6 +130,16 @@ interface ActivityState {
     completedTime?: number;
 }
 
+interface GraphCoord {
+    depth: number; // The depth of this node (distance from root)
+    offset: number; // The offset of the node within the layer
+}
+
+interface GraphNode extends BaseNode, GraphCoord {
+    width?: number; // The maximum subtree width from this node
+    parents?: GraphNode[];
+}
+
 interface SkillGraphTheme {
     backgroundColor: string;
     pathColor: string;
@@ -118,6 +149,8 @@ interface SkillGraphTheme {
     unlockedNodeForeground: string;
     lockedNodeColor: string;
     lockedNodeForeground: string;
+    completedNodeColor: string;
+    completedNodeForeground: string;
     rewardNodeColor: string;
     rewardNodeForeground: string;
     pathOpacity: number;

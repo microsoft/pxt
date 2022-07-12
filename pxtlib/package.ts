@@ -52,21 +52,19 @@ namespace pxt {
                 && json;
         }
 
-        static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
-            return Promise.resolve().then(() => {
-                if (pxt.github.isGithubId(fullVers)) {
-                    const repoInfo = pxt.github.parseRepoId(fullVers);
-                    return pxt.packagesConfigAsync()
-                        .then(config => pxt.github.repoAsync(repoInfo.fullName, config))    // Make sure repo exists and is whitelisted
-                        .then(gitRepo => gitRepo ? pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag) : null);
-                } else {
-                    // If it's not from GH, assume it's a bundled package
-                    // TODO: Add logic for shared packages if we enable that
-                    const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
-                    const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
-                    return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
-                }
-            });
+        static async getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
+            if (pxt.github.isGithubId(fullVers)) {
+                const repoInfo = pxt.github.parseRepoId(fullVers);
+                const packagesConfig = await pxt.packagesConfigAsync()
+                const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is whitelisted
+                return gitRepo ? await pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag, packagesConfig) : null
+            } else {
+                // If it's not from GH, assume it's a bundled package
+                // TODO: Add logic for shared packages if we enable that
+                const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
+                const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
+                return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
+            }
         }
 
         static corePackages(): pxt.PackageConfig[] {
@@ -185,15 +183,15 @@ namespace pxt {
                 // note that the preferredEditor field will be set automatically on the first save
 
                 // 1. no main.blocks in project, open javascript
-                const hasMainBlocks = this.getFiles().indexOf("main.blocks") >= 0;
+                const hasMainBlocks = this.getFiles().indexOf(pxt.MAIN_BLOCKS) >= 0;
                 if (!hasMainBlocks)
                     return pxt.JAVASCRIPT_PROJECT_NAME;
 
                 // 2. if main.blocks is empty and main.ts is non-empty
                 //    open typescript
                 // https://github.com/microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
-                const mainBlocks = this.readFile("main.blocks");
-                const mainTs = this.readFile("main.ts");
+                const mainBlocks = this.readFile(pxt.MAIN_BLOCKS);
+                const mainTs = this.readFile(pxt.MAIN_TS);
                 if (!mainBlocks && mainTs)
                     return pxt.JAVASCRIPT_PROJECT_NAME;
 
@@ -295,7 +293,7 @@ namespace pxt {
                     this.config.name, this.config.targetVersions.target, appTarget.versions.target))
         }
 
-        isPackageInUse(pkgId: string, ts: string = this.readFile("main.ts")): boolean {
+        isPackageInUse(pkgId: string, ts: string = this.readFile(pxt.MAIN_TS)): boolean {
             // Build the RegExp that will determine whether the dependency is in use. Try to use upgrade rules,
             // otherwise fallback to the package's name
             let regex: RegExp = null;
@@ -422,7 +420,7 @@ namespace pxt {
                                     // if newversion does not have tag, it's ok
                                     // note: we are upgrade major versions as well
                                     || (ghNew.tag && pxt.semver.strcmp(ghCurrent.tag, ghNew.tag) < 0)) {
-                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})",
+                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (added: {1}, adding: {2})",
                                         depPkg.id,
                                         depPkg._verspec,
                                         version));
@@ -458,7 +456,7 @@ namespace pxt {
                     conflicts.forEach((c) => {
                         additionalConflicts.push.apply(additionalConflicts, allAncestors(c.pkg0).map((anc) => {
                             const confl = new cpp.PkgConflictError(c.isVersionConflict ?
-                                lf("a dependency of {0} has a version mismatch with extension {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
+                                lf("a dependency of {0} has a version mismatch with extension {1} (added: {1}, adding: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
                                 lf("conflict on yotta setting {0} between extensions {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
                             confl.pkg0 = anc;
                             return confl;
@@ -534,10 +532,10 @@ namespace pxt {
             // no core package? add the first one
             if (corePackages.length == 0) {
                 const allCorePkgs = pxt.Package.corePackages();
-                /* tslint:disable:no-unused-expression TODO(tslint): */
+                /* eslint-disable @typescript-eslint/no-unused-expressions */
                 if (allCorePkgs.length)
                     this.config.dependencies[allCorePkgs[0].name];
-                /* tslint:enable:no-unused-expression */
+                /* eslint-enable @typescript-eslint/no-unused-expressions */
             } else if (corePackages.length > 1) {
                 // keep last package
                 corePackages.pop();
@@ -656,15 +654,24 @@ namespace pxt {
                         // this may be an issue if the user does not create releases
                         // and pulls from master
                         const modtag = modid?.tag || mod.config?.version;
+                        const vertag = verid.tag
+
+                        // if there is no tag on the current dependency, 
+                        // assume same as existing module version if any
+                        if (modtag && !vertag) {
+                            pxt.debug(`unversioned ${ver}, using ${modtag}`)
+                            return
+                        }
+
                         const c = pxt.semver.strcmp(modtag, verid.tag);
                         if (c == 0) {
                             // turns out to be the same versions
                             pxt.debug(`resolved version are ${modtag}`)
                             return;
                         }
-                        else if (c < 0) {
-                            // already loaded version of dependencies is greater
-                            // than current version, use it instead
+                        else if (c > 0) {
+                            // already loaded version of dependencies (modtag) is greater
+                            // than current version (ver), use it instead
                             pxt.debug(`auto-upgraded ${ver} to ${modtag}`)
                             return;
                         }
@@ -694,6 +701,30 @@ namespace pxt {
                     pxt.debug(`dep: load ${from.id}.${id}${isCpp ? "++" : ""}: ${ver}`)
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
+
+                    // for github references, make sure the version is compatible with previously
+                    // loaded references, regardless of the id
+                    const ghver = github.parseRepoId(ver)
+                    if (ghver?.slug) {
+                        // let's start by resolving the maximum version
+                        // number of the parent repo already loaded
+                        const repoVersions = Object.values(from.parent.deps)
+                            .map(p =>  github.parseRepoId(p._verspec))
+                            .filter(v => v?.slug === ghver.slug)
+                            .map(v => v.tag)
+                        const repoVersion = repoVersions
+                            .reduce((v1, v2) => semver.strcmp(v1, v2) > 0 ? v1 : v2, "0.0.0")
+                        pxt.debug(`dep: common repo ${ghver.slug} version found ${repoVersion}`)
+                        if (semver.strcmp(repoVersion, "0.0.0") > 0) {
+                            // now let's check if we have a higher version to use
+                            if (!ghver.tag || semver.strcmp(repoVersion, ghver.tag) > 0) {
+                                pxt.debug(`dep: upgrade from ${ghver.tag} to ${repoVersion}`)
+                                ghver.tag = repoVersion
+                                ver = github.stringifyRepo(ghver, true)
+                            }
+                        }
+                    }
+
                     let mod = from.resolveDep(id)
                     if (mod) {
                         // check if the current dependecy matches the ones
@@ -739,7 +770,7 @@ namespace pxt {
 
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
-                        const mainTs = this.readFile("main.ts");
+                        const mainTs = this.readFile(pxt.MAIN_TS);
                         if (!mainTs) return Promise.resolve(null);
 
                         const missingPackages = this.getMissingPackages(this.config, mainTs);
@@ -844,7 +875,7 @@ namespace pxt {
                 return Promise.resolve(r);
 
             // live loc of bundled packages
-            if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
+            if (pxt.Util.liveLocalizationEnabled() && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.debug(`loading live translations for ${this.id}`)
                 return Promise.all(filenames.map(
                     fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
@@ -1064,7 +1095,7 @@ namespace pxt {
 
                 try {
                     let einfo = cpp.getExtensionInfo(this)
-                    if (!shimsGenerated) {
+                    if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
@@ -1264,7 +1295,9 @@ namespace pxt {
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
                                     let f = d.readFile(part.visual.image);
                                     if (!f) pxt.reportError("parts", "invalid part definition", { "error": `missing visual ${part.visual.image}` })
-                                    part.visual.image = `data:image/svg+xml,` + encodeURIComponent(f);
+                                    if (!/^data:image\/svg\+xml/.test(f)) // encode svg if not encoded yet
+                                        f = `data:image/svg+xml,` + encodeURIComponent(f);
+                                    part.visual.image = f;
                                 }
                             }
                         });

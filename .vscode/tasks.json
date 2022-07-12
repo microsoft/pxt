@@ -9,24 +9,18 @@
 // Uncomment the following section to use gulp to build a workspace
 // cloned from https://github.com/microsoft/TypeScript.git
 {
-	"version": "0.1.0",
+	"version": "2.0.0",
 	// Task runner is gulp
 	"command": "gulp",
-	// Need to be executed in shell / cmd
-	"isShellCommand": true,
-	"showOutput": "always",
 	"tasks": [
 		{
-			// TS build command is local.
-			"taskName": "default",
-			// Make this the default build command.
-			"isBuildCommand": true,
-			// Show the output window only if unrecognized errors occur.
-			"showOutput": "always",
-			// Use the redefined Typescript output problem matcher.
+			"label": "default",
+			"type": "gulp",
+			"task": "default",
 			"problemMatcher": [
 				"$tsc"
-			]
+			],
+			"group": "build"
 		}
 	]
 }

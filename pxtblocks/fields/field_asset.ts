@@ -15,6 +15,7 @@ namespace pxtblockly {
         initWidth: number;
         initHeight: number;
         disableResize: boolean;
+        lightMode: boolean;
     }
 
     // 32 is specifically chosen so that we can scale the images for the default
@@ -66,7 +67,9 @@ namespace pxtblockly {
         showEditor_() {
             if (this.isGreyBlock) return;
 
-            (this.params as any).blocksInfo = this.blocksInfo;
+            const params: any = {...this.params};
+
+            params.blocksInfo = this.blocksInfo;
 
             let editorKind: string;
 
@@ -74,9 +77,12 @@ namespace pxtblockly {
                 case pxt.AssetType.Tile:
                 case pxt.AssetType.Image:
                     editorKind = "image-editor";
+                    params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Image);
                     break;
                 case pxt.AssetType.Animation:
                     editorKind = "animation-editor";
+                    params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Image)
+                        .concat(getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Animation));
                     break;
                 case pxt.AssetType.Tilemap:
                     editorKind = "tilemap-editor";
@@ -86,7 +92,7 @@ namespace pxtblockly {
             }
 
 
-            const fv = pxt.react.getFieldEditorView(editorKind, this.asset, this.params);
+            const fv = pxt.react.getFieldEditorView(editorKind, this.asset, params);
 
             if (this.undoRedoState) {
                 fv.restorePersistentData(this.undoRedoState);
@@ -102,6 +108,16 @@ namespace pxtblockly {
                     const old = this.getValue();
                     if (pxt.assetEquals(this.asset, result)) return;
 
+                    const oldId = isTemporaryAsset(this.asset) ? null : this.asset.id;
+                    let newId = isTemporaryAsset(result) ? null : result.id;
+
+                    if (!oldId && newId === this.sourceBlock_.id) {
+                        // The temporary assets we create just use the block id as the id; give it something
+                        // a little nicer
+                        result.id = project.generateNewID(result.type);
+                        newId = result.id;
+                    }
+
                     this.pendingEdit = true;
 
                     if (result.meta?.displayName) this.disposeOfTemporaryAsset();
@@ -116,8 +132,15 @@ namespace pxtblockly {
                     this.undoRedoState = fv.getPersistentData();
 
                     if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                        Blockly.Events.fire(new BlocklyTilemapChange(
-                            this.sourceBlock_, 'field', this.name, old, this.getValue(), lastRevision, project.revision()));
+                        const event = new BlocklyTilemapChange(
+                            this.sourceBlock_, 'field', this.name, old, this.getValue(), lastRevision, project.revision());
+
+                        if (oldId !== newId) {
+                            event.oldAssetId = oldId;
+                            event.newAssetId = newId;
+                        }
+
+                        Blockly.Events.fire(event);
                     }
                     this.pendingEdit = false;
                 }
@@ -140,8 +163,11 @@ namespace pxtblockly {
 
         getDisplayText_() {
             // This is only used when isGreyBlock is true
-            const text = pxt.Util.htmlUnescape(this.valueText);
-            return text.substr(0, text.indexOf("(")) + "(...)";;
+            if (this.isGreyBlock) {
+                const text = pxt.Util.htmlUnescape(this.valueText);
+                return text.substr(0, text.indexOf("(")) + "(...)";
+            }
+            return "";
         }
 
         updateEditable() {
@@ -181,6 +207,19 @@ namespace pxtblockly {
             if (this.isTemporaryAsset()) {
                 this.setBlockData(null);
             }
+        }
+
+        isTemporaryAsset() {
+            return isTemporaryAsset(this.asset);
+        }
+
+        getAsset() {
+            return this.asset;
+        }
+
+        updateAsset(asset: pxt.Asset) {
+            this.asset = asset;
+            this.setValue(this.getValue());
         }
 
         protected onEditorClose(newValue: pxt.Asset) {
@@ -245,10 +284,7 @@ namespace pxtblockly {
                         if (this.sourceBlock_ && this.asset.meta.blockIDs) {
                             this.asset.meta.blockIDs = this.asset.meta.blockIDs.filter(id => id !== this.sourceBlock_.id);
 
-                            if (this.asset.meta.blockIDs.length === 0 && !this.asset.meta.displayName) {
-                                project.removeAsset(this.asset);
-                            }
-                            else {
+                            if (!this.isTemporaryAsset()) {
                                 project.updateAsset(this.asset);
                             }
                         }
@@ -262,12 +298,11 @@ namespace pxtblockly {
         }
 
         protected parseFieldOptions(opts: U): V {
-            // NOTE: This implementation is duplicated in pxtcompiler/emitter/service.ts
-            // TODO: Refactor to share implementation.
             const parsed: ParsedFieldAssetEditorOptions = {
                 initWidth: 16,
                 initHeight: 16,
                 disableResize: false,
+                lightMode: false
             };
 
             if (!opts) {
@@ -280,6 +315,7 @@ namespace pxtblockly {
 
             parsed.initWidth = withDefault(opts.initWidth, parsed.initWidth);
             parsed.initHeight = withDefault(opts.initHeight, parsed.initHeight);
+            parsed.lightMode = (opts as any).lightMode;
 
             return parsed as V;
 
@@ -308,7 +344,7 @@ namespace pxtblockly {
                     const blockIDs = this.asset.meta.blockIDs;
                     if (blockIDs.length && this.isTemporaryAsset() && blockIDs.some(id => this.sourceBlock_.workspace.getBlockById(id))) {
                         // This temporary asset is already used, so we should clone a copy for ourselves
-                        this.asset = pxt.react.getTilemapProject().duplicateAsset(this.asset);
+                        this.asset = pxt.cloneAsset(this.asset)
                         this.asset.meta.blockIDs = [];
                     }
                     this.asset.meta.blockIDs.push(this.sourceBlock_.id);
@@ -316,12 +352,20 @@ namespace pxtblockly {
                 this.setBlockData(this.asset.id);
             }
 
-            pxt.react.getTilemapProject().updateAsset(this.asset);
+            if (!this.isTemporaryAsset()) {
+                pxt.react.getTilemapProject().updateAsset(this.asset);
+            }
+            else {
+                this.asset.meta.temporaryInfo = {
+                    blockId: this.sourceBlock_.id,
+                    fieldName: this.name
+                };
+            }
         }
 
         protected updateAssetListener() {
             pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
-            if (this.asset) {
+            if (this.asset && !this.isTemporaryAsset()) {
                 pxt.react.getTilemapProject().addChangeListener(this.asset, this.assetChangeListener);
             }
         }
@@ -334,16 +378,20 @@ namespace pxtblockly {
             }
             this.redrawPreview();
         }
+    }
 
-        protected isTemporaryAsset() {
-            return this.asset && !this.asset.meta.displayName;
-        }
+    function isTemporaryAsset(asset: pxt.Asset) {
+        return asset && !asset.meta.displayName;
     }
 
     export class BlocklyTilemapChange extends Blockly.Events.BlockChange {
+        oldAssetId: string;
+        newAssetId: string;
+        fieldName: string;
 
         constructor(block: Blockly.Block, element: string, name: string, oldValue: any, newValue: any, protected oldRevision: number, protected newRevision: number) {
             super(block, element, name, oldValue, newValue);
+            this.fieldName = name;
         }
 
         isNull() {
@@ -351,6 +399,17 @@ namespace pxtblockly {
         }
 
         run(forward: boolean) {
+            if (this.newAssetId || this.oldAssetId) {
+                const block = this.getEventWorkspace_().getBlockById(this.blockId);
+
+                if (forward) {
+                    pxt.blocks.setBlockDataForField(block, this.fieldName, this.newAssetId);
+                }
+                else {
+                    pxt.blocks.setBlockDataForField(block, this.fieldName, this.oldAssetId);
+                }
+            }
+
             if (forward) {
                 pxt.react.getTilemapProject().redo();
                 super.run(forward);

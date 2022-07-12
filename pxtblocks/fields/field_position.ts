@@ -107,7 +107,16 @@ namespace pxtblockly {
                 x = Math.round(Math.max(0, Math.min(this.params.screenWidth, x / width * this.params.screenWidth)));
                 y = Math.round(Math.max(0, Math.min(this.params.screenHeight, y / height * this.params.screenHeight)));
 
-                label.textContent = `${this.params.xInputName}=${x} ${this.params.yInputName}=${y}`;
+                // Check to see if label exists instead of showing NaN
+                if(isNaN(x)) {
+                    label.textContent = `${this.params.yInputName}=${y}`;
+                }
+                else if(isNaN(y)) {
+                    label.textContent = `${this.params.xInputName}=${x}`;
+                }
+                else {
+                    label.textContent = `${this.params.xInputName}=${x} ${this.params.yInputName}=${y}`;
+                }
 
                 // Position the label so that it doesn't go outside the screen bounds
                 const bb = label.getBoundingClientRect();

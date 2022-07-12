@@ -17,6 +17,8 @@ import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util
 import { Unsubscribe, Action } from 'redux';
 import { createNewImageAsset, getNewInternalID } from '../../assets';
 
+export const LIGHT_MODE_TRANSPARENT = "#dedede";
+
 export interface ImageEditorSaveState {
     editor: EditorState;
     past: AnimationState[];
@@ -30,6 +32,7 @@ export interface ImageEditorProps {
     onDoneClicked?: (value: pxt.Asset) => void;
     onTileEditorOpenClose?: (open: boolean) => void;
     nested?: boolean;
+    lightMode?: boolean;
 }
 
 export interface ImageEditorState {
@@ -69,7 +72,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     render(): JSX.Element {
-        const { singleFrame } = this.props;
+        const { singleFrame, lightMode } = this.props;
         const instanceStore = this.getStore();
 
         const { tileToEdit, editingTile, alert } = this.state;
@@ -81,8 +84,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 <div className={`image-editor ${editingTile ? "editing-tile" : ""}`}>
                     <TopBar singleFrame={singleFrame} />
                     <div className="image-editor-content">
-                        <SideBar />
-                        <ImageCanvas suppressShortcuts={editingTile} />
+                        <SideBar lightMode={lightMode} />
+                        <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} />
                         {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
                     </div>
                     <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} />

@@ -9,9 +9,9 @@ import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../act
 import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 
-/* tslint:disable:no-import-side-effect */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/skillcard.css'
-/* tslint:enable:no-import-side-effect */
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface SkillCardProps extends Item {
     mapId: string;
@@ -75,11 +75,11 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
             <div className={`skill-card ${status || ''}`}>
                 <div className="skill-card-display">
                     <div className="skill-card-image">
-                        {imageUrl ? <img src={imageUrl} alt={lf("Preview of activity content")} /> : <i className={`icon ${status !== "locked" ? "game" : ""}`} />}
+                        {imageUrl ? <img src={imageUrl} alt={lf("Preview of activity content")} /> : <i className={status !== "locked" ? "fas fa-gamepad" : ""} />}
                     </div>
                     <div className="skill-card-label">
                         <div className="skill-card-title">
-                            {completed && <i className={`icon check circle`} />}
+                            {completed && <i className="fas fa-check-circle" />}
                             {status === "inprogress" && maxSteps &&
                                 <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
                             }
@@ -91,7 +91,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                             })}
                         </div>
                     </div>
-                    {status === "locked" && <div className="skill-card-overlay"><i className="icon lock" /></div>}
+                    {status === "locked" && <div className="skill-card-overlay"><i className="fas fa-lock" /></div>}
                 </div>
                 <div className="skill-card-info">
                     <div className="skill-card-title">{label}</div>

@@ -35,55 +35,6 @@ namespace ts.pxtc {
         "_py.range": { n: "range", t: ts.SyntaxKind.Unknown, snippet: 'range(4)' }
     }
 
-    export function snakify(s: string) {
-        const up = s.toUpperCase()
-        const lo = s.toLowerCase()
-
-        // if the name is all lowercase or all upper case don't do anything
-        if (s == up || s == lo)
-            return s
-
-        // if the name already has underscores (not as first character), leave it alone
-        if (s.lastIndexOf("_") > 0)
-            return s
-
-        const isUpper = (i: number) => s[i] != lo[i]
-        const isLower = (i: number) => s[i] != up[i]
-        //const isDigit = (i: number) => /\d/.test(s[i])
-
-        let r = ""
-        let i = 0
-        while (i < s.length) {
-            let upperMode = isUpper(i)
-            let j = i
-            while (j < s.length) {
-                if (upperMode && isLower(j)) {
-                    // ABCd -> AB_Cd
-                    if (j - i > 2) {
-                        j--
-                        break
-                    } else {
-                        // ABdefQ -> ABdef_Q
-                        upperMode = false
-                    }
-                }
-                // abcdE -> abcd_E
-                if (!upperMode && isUpper(j)) {
-                    break
-                }
-                j++
-            }
-            if (r) r += "_"
-            r += s.slice(i, j)
-            i = j
-        }
-
-        // If the name is is all caps (like a constant), preserve it
-        if (r.toUpperCase() === r) {
-            return r;
-        }
-        return r.toLowerCase();
-    }
 
     export function emitPyTypeFromTypeNode(s: ts.TypeNode): string {
         if (!s || !s.kind) return null;
@@ -112,7 +63,7 @@ namespace ts.pxtc {
             case ts.SyntaxKind.AnyKeyword:
                 return "any"
             default:
-                pxt.tickEvent("depython.todo", { kind: s.kind })
+                pxt.tickEvent("depython.todo.tstypenodetopytype", { kind: s.kind })
                 return ``
         }
         // // TODO translate type
@@ -134,7 +85,7 @@ namespace ts.pxtc {
             case ts.TypeFlags.Any:
                 return "any"
             default:
-                pxt.tickEvent("depython.todo", { kind: s.flags })
+                pxt.tickEvent("depython.todo.tstypetopytype", { kind: s.flags })
                 return ``
         }
     }
@@ -324,13 +275,13 @@ namespace ts.pxtc {
 
             switch (r.kind) {
                 case SymbolKind.EnumMember:
-                    r.pyName = snakify(r.name).toUpperCase()
+                    r.pyName = U.snakify(r.name).toUpperCase()
                     break
                 case SymbolKind.Variable:
                 case SymbolKind.Method:
                 case SymbolKind.Property:
                 case SymbolKind.Function:
-                    r.pyName = snakify(r.name)
+                    r.pyName = U.snakify(r.name)
                     break
                 case SymbolKind.Enum:
                 case SymbolKind.Class:
@@ -535,7 +486,7 @@ namespace ts.pxtc {
                             // defined in different packages/extensions, so we want to keep track of that information.
                             // That way, we can make sure each cached extension has a copy of the namespace
                             if (existing.kind === SymbolKind.Module) {
-                                // Reference the existing array of packages where this namespace has been defined 
+                                // Reference the existing array of packages where this namespace has been defined
                                 si.pkgs = existing.pkgs || []
                                 if (existing.pkg !== si.pkg) {
                                     if (!si.pkgs.find(element => element === existing.pkg)) {
@@ -701,8 +652,14 @@ namespace ts.pxtc.service {
                 if (this.opts.fileSystem[fn] != v) {
                     this.fileVersions[fn] = (this.fileVersions[fn] || 0) + 1
                 }
-            })
-            this.opts = o
+            });
+            // shallow copy, but deep copy the file system
+            this.opts = {
+                ...o,
+                fileSystem: {
+                    ...o.fileSystem,
+                },
+            }
             this.projectVer++
         }
 
@@ -814,6 +771,7 @@ namespace ts.pxtc.service {
         compile: (v: OpArg) => CompileResult;
         decompile: (v: OpArg) => CompileResult;
         pydecompile: (v: OpArg) => transpile.TranspileResult;
+        decompileSnippets: (v: OpArg) => string[];
         assemble: (v: OpArg) => {
             words: number[];
         };
@@ -851,7 +809,7 @@ namespace ts.pxtc.service {
 
     const operations: ServiceOps = {
         reset: () => {
-            service.cleanupSemanticCache();
+            service = ts.createLanguageService(host)
             lastApiInfo = undefined
             lastGlobalNames = undefined
             host.reset()
@@ -993,6 +951,10 @@ namespace ts.pxtc.service {
             host.setOpts(v.options)
             return transpile.tsToPy(service.getProgram(), v.fileName);
 
+        },
+        decompileSnippets: v => {
+            host.setOpts(v.options)
+            return decompileSnippets(service.getProgram(), v.options, false);
         },
         assemble: v => {
             return {
@@ -1284,7 +1246,7 @@ namespace ts.pxtc.service {
         addApiInfo(host.opts)
         const prevFS = U.flatClone(host.opts.fileSystem);
         let res = runConversionsAndStoreResults(host.opts);
-        if (res && res.globalNames) {
+        if (res?.globalNames) {
             lastGlobalNames = res.globalNames
         }
         const newFS = host.opts.fileSystem
@@ -1306,13 +1268,19 @@ namespace ts.pxtc.service {
                     host.opts.skipPxtModulesEmit = true
             }
             let ts2asm = compile(host.opts, service)
-            res = { sourceMap: res.sourceMap, ...ts2asm }
-            if (res.needsFullRecompile) {
-                pxt.log("trigering full recompile")
+            res = {
+                sourceMap: res.sourceMap,
+                ...ts2asm,
+            }
+            if (res.needsFullRecompile || ((!res.success || res.diagnostics.length) && host.opts.clearIncrBuildAndRetryOnError)) {
+                pxt.debug("triggering full recompile")
                 pxt.tickEvent("compile.fullrecompile")
-                host.opts.skipPxtModulesEmit = false
+                host.opts.skipPxtModulesEmit = false;
                 ts2asm = compile(host.opts, service);
-                res = { sourceMap: res.sourceMap, ...ts2asm }
+                res = {
+                    sourceMap: res.sourceMap,
+                    ...ts2asm,
+                }
             }
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
                 host.pxtModulesOK = currKey

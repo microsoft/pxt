@@ -1,0 +1,792 @@
+@defaultTutorialHeight: 18.625rem;
+@tutorialFontSize: 1.125rem;
+@tutorialTitleFontSize: 1.5rem;
+
+@tutorialPrimaryColor: @sidebarPrimaryColor;
+@tutorialSecondaryColor: @sidebarSecondaryColor;
+@tutorialBarForegroundColor: @tutorialPrimaryColor;
+@tutorialBarBackgroundColor: @tutorialSecondaryColor;
+
+@tutorialLinkColor: #0064BF;
+@tutorialLinkHoverColor: #003C94;
+
+@tutorialTabletButtonColor: #f3f3f3;
+@tutorialTabletSimulatorButtonColor: rgba(0, 0, 0, 0.05);
+@tutorialTabletStepCounterWidth: 16rem;
+
+@tutorialHintMaskZIndex: -1; // Below tutorial pane
+
+@tutorialControlsOffset: 5.725rem;
+@tutorialBoardviewOffset: 3rem;
+@tutorialTabBarOffset: 3.5rem;
+@tutorialSimulatorMinHeight: 250px;
+
+/*******************************
+        Tutorial Tab
+*******************************/
+
+#editorSidebar .tab-tutorial.active {
+    background-color: @white;
+}
+
+.tab-tutorial.tab-content {
+    padding-top: 0.5rem;
+    background-color: @white;
+}
+
+.tutorial-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tutorial-content {
+    flex: 1;
+    padding: 0 1rem;
+    margin: 2rem 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    font-family: @segoeUIFont;
+    font-size: @tutorialFontSize;
+
+    span.docs.inlineblock {
+        white-space: break-spaces;
+    }
+
+    p {
+        line-height: 1.6em;
+    }
+
+    hr {
+        border: 0;
+        border-top: 2px dashed @tutorialSecondaryColor;
+    }
+
+    .lang-blocks .ui.segment.raised {
+        overflow-x: auto;
+    }
+}
+
+.tutorial-scroll-gradient {
+    position: absolute;
+    height: 3rem;
+    width: calc(~'100% - 1rem');
+    bottom: 6rem;
+    pointer-events: none;
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), @white);
+}
+
+.tutorial-replace-code + .tutorial-scroll-gradient {
+    bottom: 9rem;
+}
+
+.tutorial-container,
+.tutorial-controls {
+    .ui.button, .ui.button:hover {
+        box-shadow: none;
+        background-image: none;
+    }
+}
+
+/*******************************
+        Exit Tutorial
+*******************************/
+
+.tutorial-exit {
+    position: absolute;
+    margin-right: 1rem;
+    top: 0;
+    right: 0;
+    color: @white;
+    font-size: @smallFontSize;
+    line-height: 3.5rem;
+    cursor: pointer;
+}
+
+.tutorial-exit:hover {
+    text-decoration: underline;
+}
+
+#mainmenu .tutorial-exit {
+    font-family: @segoeUIFont;
+    text-transform: uppercase;
+}
+
+/*******************************
+       Tutorial Top Buttons
+*******************************/
+
+.tutorial-top-bar {
+    display: flex;
+    align-items: flex-end;
+    padding: 0.5rem 1rem 0;
+}
+
+/*******************************
+         Step Counter
+*******************************/
+
+.tutorial-step-counter {
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
+.tutorial-step-label {
+    display: flex;
+}
+
+.tutorial-step-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tutorial-step-number {
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.tutorial-step-bar {
+    height: 1rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    background-color: @tutorialBarBackgroundColor;
+    cursor: pointer;
+}
+
+.tutorial-step-bar-fill {
+    background-color: @tutorialBarForegroundColor;
+    height: 100%;
+    transition: width 0.5s ease-out;
+    pointer-events: none;
+}
+
+/*******************************
+         Title
+*******************************/
+
+.tutorial-title {
+    margin-bottom: 1rem;
+    font-size: @tutorialTitleFontSize;
+    font-weight: 700;
+    line-height: 1.2em;
+}
+
+/*******************************
+        Tutorial Controls
+*******************************/
+
+.tutorial-controls {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+
+    .ui.button {
+        margin: 0 1rem;
+        color: @white;
+        background: @tutorialPrimaryColor;
+        font-size: @tutorialFontSize;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 7rem;
+    }
+
+    .ui.button:hover, .ui.button:focus {
+        background: darken(@tutorialPrimaryColor, 5%);
+        color: @white;
+    }
+}
+
+/*******************************
+        Tutorial Hint
+*******************************/
+
+.tutorial-hint.ui.button,
+.tutorial-hint .ui.button {
+    height: 3.2rem;
+    width: 3.2rem;
+    margin: 0;
+    border-radius: 50%;
+    font-size: @tutorialTitleFontSize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    > i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+// Overrides, largely using old tutorial hint CSS
+.tab-tutorial {
+    .tutorial-callout {
+        position: fixed;
+        top: unset;
+        right: unset;
+        bottom: 11rem;
+        left: 3rem;
+        max-width: 50%;
+    }
+
+    .tutorial-callout:before {
+        top: auto;
+        left: 6.5rem;
+        bottom: -2.5rem;
+        transform: rotate(-90deg);
+    }
+
+    .tutorial-callout-close.ui.button {
+        position: absolute;
+        right: 1rem;
+        padding: 0;
+        width: 1.5rem;
+        height: 1.5rem;
+        color: @white;
+        background-color: #000;
+        border-radius: 50%;
+
+        i.icon {
+            opacity: 1;
+            font-size: 1rem;
+            margin: 0 !important;
+        }
+    }
+}
+
+.tutorial-callout-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: @tutorialHintMaskZIndex;
+}
+
+/*******************************
+        Tutorial Markdown
+*******************************/
+
+.formatted-bullet-ul {
+    padding: 0;
+}
+
+.formatted-bullet-li {
+    display: flex;
+    position: relative;
+
+    p { padding: 0.4rem 0; }
+}
+
+.formatted-bullet {
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+    background: linear-gradient(@tutorialPrimaryColor, @tutorialPrimaryColor) ~'no-repeat 45% / 2px 100%';
+}
+.formatted-bullet i.icon,
+.formatted-bullet i.xicon {
+    display: block;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    color: @white;
+    background-color: @tutorialPrimaryColor;
+    line-height: 2.5rem;
+    text-align: center;
+}
+.formatted-bullet-ul .formatted-bullet-li:last-child {
+    min-height: 3.5rem;
+}
+.formatted-bullet-ul .formatted-bullet-li:last-child .formatted-bullet:after {
+    content: " ";
+    position: absolute;
+    width: 1rem;
+    bottom: 0;
+    left: 0.75rem;
+    border-bottom: 2px solid @tutorialPrimaryColor;
+}
+
+/*******************************
+    Tutorial Replace Code
+*******************************/
+.tutorial-replace-code {
+    display: flex;
+    justify-content: center;
+    font-family: @segoeUIFont;
+
+    .tutorial-callout-button.ui.button {
+        padding: 0;
+        margin: 0 0 2rem;
+        color: @tutorialLinkColor;
+        background: none transparent;
+        font-family: @segoeUIFont;
+        font-weight: 500;
+    }
+
+    .tutorial-callout-button.ui.button:hover,
+    .tutorial-callout-button.ui.button:focus {
+        color: @tutorialLinkHoverColor;
+    }
+
+    .tutorial-callout {
+        bottom: 13.5rem;
+        padding: 1rem;
+        max-width: 32rem;
+    }
+
+    .tutorial-replace-code-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
+
+/*******************************
+        Simulator Tab
+*******************************/
+
+.tab-simulator.tab-content.hidden {
+    display: block !important;
+}
+
+.tab-simulator .simPanel {
+    height: 100%;
+    padding: 1rem 0.5rem 1rem 1rem;
+    overflow-x: hidden;
+    overflow-y: scroll;
+
+    &.ui.items { margin-top: 0; }
+}
+
+// Mini sim is visible when tab is hidden
+#root.tabTutorial {
+    &:not(.fullscreensim) .tab-simulator.tab-content.hidden {
+        height: 0;
+        padding: 0;
+
+        .simPanel {
+            & > * { display: none; }
+
+            #boardview { display: inline-block; }
+
+            .simtoolbar, #miniSimOverlay { display: block; }
+            .sidebar-button, .play-button { display: block !important; }
+            .expand-button, .fullscreen-button { display: none !important; }
+        }
+
+        .tutorial-controls { display: none; }
+    }
+    .tab-simulator.tab-content:not(.hidden) {
+        .simPanel {
+            height: calc(100% - @tutorialControlsOffset);
+
+            .sidebar-button, .button.hidefullscreen { display: none !important; }
+        }
+    }
+}
+
+/*******************************
+      Skill Map Embed View
+*******************************/
+
+.tabTutorial.tutorial-embed {
+    #editorSidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+        top: 0;
+    }
+    .simView #boardview {
+        padding-top: 0;
+    }
+}
+
+/*******************************
+    Headless (no simulator)
+*******************************/
+
+#root.headless.tabTutorial {
+    #editorSidebar {
+        position: relative;
+        display: block !important;
+        width: @simulatorWidth;
+        height: calc(~'100%' - @mainMenuHeight);
+        top: @mainMenuHeight;
+        left: 0;
+    }
+
+    #boardview, .filemenu {
+        display: auto;
+    }
+
+    #maineditor {
+        left: @simulatorWidth;
+    }
+}
+
+#root.headless.tabTutorial.hideMenuBar {
+    #editorSidebar {
+        top: 0;
+        height: 100%;
+    }
+}
+
+/*******************************
+        Keymap
+*******************************/
+
+.tabTutorial .keymap.above {
+    top: calc(5.5rem + @mainMenuHeight);
+}
+
+/*********************************
+        Accordion Hints (details)
+*********************************/
+
+.tabTutorial details {
+    padding: .5rem;
+    margin-bottom: 1rem;
+    color: #028b9b;
+    background-color: #b1e3da;
+    border-radius: .5rem;
+}
+
+/*******************************
+        Media Adjustments
+*******************************/
+
+/* Desktop Only */
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestTabletScreen) {
+    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) {
+        .simPanel {
+            height: calc(100% - @tutorialControlsOffset);
+            min-height: @tutorialSimulatorMinHeight;
+        }
+        #boardview {
+            height: calc(100% - @tutorialBoardviewOffset);
+            min-height: @tutorialSimulatorMinHeight;
+        }
+        #simulators {
+            height: 100%;
+            min-height: @tutorialSimulatorMinHeight;
+        }
+        .simframe {
+            padding-bottom: unset !important;
+            height: 100%;
+            min-height: @tutorialSimulatorMinHeight;
+        }
+    }
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    #root.tabTutorial,
+    #root.headless.tabTutorial {
+        #maineditor > .full-abs {
+            top: @defaultTutorialHeight;
+        }
+
+        #editorSidebar {
+            top: @mobileMenuHeight;
+            height: @defaultTutorialHeight;
+            width: 100%;
+            border-right: 0;
+            border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+        }
+    }
+
+    .tab-tutorial.tab-content {
+        padding-top: 0;
+    }
+
+    .tutorial-container {
+        flex-direction: row;
+    }
+
+    .tutorial-content {
+        margin: 0;
+        padding: 1rem;
+    }
+
+    .tutorial-replace-code + .tutorial-scroll-gradient,
+    .tutorial-scroll-gradient {
+        width: calc(~'100% - 15rem');
+        bottom: 0;
+        left: 4rem;
+    }
+
+    /*******************************
+            Exit Tutorial
+    *******************************/
+
+    .tab-simulator.hidden .tutorial-exit {
+        // Shift in tutorial tab to make space for step counter
+        right: @tutorialTabletStepCounterWidth;
+        margin-right: 0;
+    }
+
+    /*******************************
+        Tutorial Top Buttons
+    *******************************/
+
+    .tutorial-top-bar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: @tutorialTabletStepCounterWidth;
+        flex-direction: row-reverse;
+        padding: 0.5rem 1rem;
+    }
+
+    #editorSidebar .immersive-reader-button.ui.item,
+    #editorSidebar .immersive-reader-button.ui.item:focus{
+        background-image: @immersiveReaderLightIcon;
+    }
+
+    /*******************************
+            Step Counter
+    *******************************/
+
+    .tutorial-step-counter {
+        margin-left: 1rem;
+        margin-right: 0;
+        color: @white;
+    }
+
+    .tutorial-step-bar {
+        background-color: @white;
+    }
+
+    .tutorial-step-bar-fill {
+        background-color: @tutorialBarBackgroundColor;
+    }
+
+    /*******************************
+            Tutorial Controls
+    *******************************/
+
+    .tutorial-container,
+    .tutorial-controls {
+        .ui.button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-size: 1rem;
+
+            i.icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2rem;
+            }
+
+            > .icon-and-text.icon~.ui.text {
+                margin-left: 0 !important;
+            }
+        }
+    }
+
+    .tutorial-container,
+    .tutorial-controls {
+        > .ui.button, > .ui.button:focus {
+            color: @tutorialPrimaryColor;
+            background: @tutorialTabletButtonColor;
+            border-radius: 0;
+        }
+
+        > .ui.button:hover {
+            color: @white;
+            background-color: @tutorialPrimaryColor;
+            filter: none;
+        }
+    }
+
+    .tutorial-container > .ui.button i.icon {
+        margin-bottom: 0.5rem!important;
+    }
+
+    /*******************************
+            Tutorial Hint
+    *******************************/
+
+    .tutorial-controls {
+        display: flex;
+        align-items: center;
+        margin: 0;
+
+        > .ui.button {
+            width: unset;
+        }
+    }
+
+    .tutorial-hint .tutorial-callout-button.ui.button {
+        color: @tutorialPrimaryColor;
+        background: @tutorialSecondaryColor;
+        margin: 1rem;
+
+        &.disabled {
+            display: none;
+        }
+    }
+
+    // Overrides
+    .tab-tutorial {
+        .tutorial-callout {
+            right: 1.6rem;
+            bottom: unset;
+            left: unset;
+            max-width: 80%;
+            transform: translateY(15px);
+        }
+
+        .tutorial-callout:before {
+            top: -2.5rem;
+            left: unset;
+            bottom: auto;
+            right: 3.5rem;
+            transform: rotate(90deg);
+        }
+    }
+
+    /*******************************
+         Tutorial Replace Code
+    *******************************/
+
+    .tutorial-replace-code {
+        position: absolute;
+        right: 4.5rem;
+        bottom: -0.5rem;
+        width: 4rem;
+
+        .tutorial-callout {
+            max-width: 32rem;
+            transform: translateY(65px);
+        }
+
+        .tutorial-replace-code-actions .ui.button {
+            width: unset;
+        }
+    }
+
+    .tutorial-replace-code ~ .tutorial-controls > .tutorial-hint {
+        width: 5rem;
+    }
+
+
+    /*******************************
+            Simulator Tab
+    *******************************/
+    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) {
+        .simPanel {
+            display: flex;
+            position: relative;
+            height: 100%;
+            margin: 0 4rem;
+            z-index: 30;
+
+            #simulators {
+                width: 34rem;
+                margin: auto;
+            }
+
+            .simframe {
+                padding-bottom: 39% !important;
+            }
+
+            .simtoolbar {
+                flex-direction: column;
+                flex-grow: 0;
+                width: 6rem;
+                margin-left: 1rem;
+            }
+
+            .simtoolbar > .buttons {
+                flex-direction: column;
+            }
+        }
+
+        #boardview {
+            width: 100% !important;
+        }
+
+        .tutorial-controls {
+            position: absolute;
+            top: @tutorialTabBarOffset;
+            width: 100%;
+            height: calc(100% - @tutorialTabBarOffset);
+            justify-content: space-between;
+            z-index: 10;
+
+            .ui.button {
+                height: 100%;
+            }
+
+            .ui.button:not(:hover) {
+                background-color: @tutorialTabletSimulatorButtonColor;
+            }
+        }
+    }
+
+    /*******************************
+        Headless (no simulator)
+    *******************************/
+
+    #root.headless.tabTutorial.collapsedEditorTools {
+        #maineditor { left: 0; }
+        #editorSidebar { width: 100%; }
+
+        .tutorial-top-bar {
+           right: 4rem;
+        }
+
+        #editorSidebar .immersive-reader-button.ui.item,
+        #editorSidebar .immersive-reader-button.ui.item:focus{
+            background-image: @immersiveReaderIcon;
+        }
+        .tutorial-step-counter {
+            color: @black;
+        }
+
+        .tutorial-step-bar {
+            background-color: @tutorialBarBackgroundColor;
+        }
+
+        .tutorial-step-bar-fill {
+            background-color: @tutorialBarForegroundColor;
+        }
+
+        .tutorial-hint .tutorial-callout-button.ui.button {
+            flex-direction: row;
+            width: 12rem;
+            margin: 3.5rem 1rem 0;
+        }
+
+        .tutorial-controls {
+            align-items: flex-start;
+
+            .ui.button i.icon {
+                margin-bottom: 0!important;
+            }
+        }
+    }
+}
+
+.tutorial-video-embed {
+    display: flex;
+    align-content: center;
+    justify-content: center;
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) .simPanel {
+        #simulators {
+            width: 16rem;
+        }
+
+        .simframe {
+            padding-bottom: 83% !important;
+        }
+    }
+}

@@ -152,6 +152,21 @@ a.ui.card:focus,
 .ui.card.link.newprojectcard {
     background: fade(@primaryColor, 90%) !important;
 }
+
+.ui.card.link.cloudprojectscard {
+    background: @cloudCardBackground!important;
+
+    .header {
+        white-space: normal;
+    }
+}
+
+@media only screen and (min-height: tallEditorBreakpoint), (min-width: @computerBreakpoint) {
+    .ui.card.link.cloudprojectscard .icon {
+        margin-left: -1rem
+    }
+}
+
 .ui.card.link.scriptmanagercard {
     background: darken(@secondaryColor, 20%) !important;
 }
@@ -179,6 +194,10 @@ a.ui.card:focus,
     }
     .ui.image ~ .content {
         height: 3rem;
+    }
+
+    .ui.image ~ .content.tall {
+        height: 4rem;
     }
 }
 

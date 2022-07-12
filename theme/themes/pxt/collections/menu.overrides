@@ -37,13 +37,20 @@
     transform: scale(1.2);
 }
 
+@media only screen and (max-width: @largestMobileScreen) {
+    .menubar .left.menu > .item.icon:not(.logo),  .menubar .right.menu > .item.icon:not(.logo) {
+        width: 48px;
+
+        & > i.icon {
+            margin-left: -8px;
+        }
+    }
+}
+
 @media only screen and (max-width: @largestTabletScreen) {
     .menubar .ui.menu {
         height: @mobileMenuHeight !important;
         min-height: @mobileMenuHeight !important;
-    }
-    .menubar .left.menu > .item.icon:not(.logo),  .menubar .right.menu > .item.icon:not(.logo) {
-        width: 48px;
     }
     .sandbox .menubar .ui.menu {
         height: @sandboxMobileMenuHeight !important;
@@ -70,10 +77,44 @@
 }
 
 .ui.inverted.menu .active.item {
-    background: rgba(255, 255, 255, 0.30);
+    background: rgba(255, 255, 255, 0.15);
+    outline: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+#mainmenu.ui.link.inverted.menu,
+#mainmenu.ui.inverted.menu {
+    .menu > .dropdown.item,
+    .menu > .link.item.icon {
+        border: @homeHeaderBorderSize solid transparent;
+    }
+
+    .menu > .dropdown.item:focus,
+    .menu > .link.item.icon:focus {
+        background: @invertedHoverBackground;
+        color: @invertedHoverColor;
+        border: @homeHeaderBorderSize solid @homeHeaderSelectedBorderColor;
+        outline: 1px ridge black;
+    }
+}
+
+#mainmenu .link-button {
+    font-family: @segoeUIFont;
+
+    &.link.ui.item:hover {
+        > .text { text-decoration: underline }
+        > .icon { transform: none }
+    }
+
+    .text {
+        font-size: @smallFontSize;
+        font-weight: 400;
+        text-transform: uppercase;
+    }
 }
 
 .ui.vertical.menu .item > .label {
+    background-color: #8F8F8F;
+
     &:hover,
     &:focus {
         background: #6C6C6C;

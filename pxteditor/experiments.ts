@@ -173,13 +173,6 @@ namespace pxt.editor.experiments {
                 name: lf("Blocks Error List"),
                 description: lf("Show an error list panel for Blocks")
             },
-            {
-                id: "identity",
-                name: lf("Cloud Save"),
-                description: lf("Create a profile and save projects to the cloud."),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/7801",
-                enableOnline: true,
-            }
         ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
     }
 

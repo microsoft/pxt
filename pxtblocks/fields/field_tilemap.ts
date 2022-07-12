@@ -9,6 +9,7 @@ namespace pxtblockly {
         tileWidth: string | number;
 
         filter?: string;
+        lightMode: boolean;
     }
 
     interface ParsedFieldTilemapOptions {
@@ -17,6 +18,7 @@ namespace pxtblockly {
         disableResize: boolean;
         tileWidth: 8 | 16 | 32;
         filter?: string;
+        lightMode: boolean;
     }
 
     export class FieldTilemap extends FieldAssetEditor<FieldTilemapOptions, ParsedFieldTilemapOptions> {
@@ -88,12 +90,15 @@ namespace pxtblockly {
             initWidth: 16,
             initHeight: 16,
             disableResize: false,
-            tileWidth: 16
+            tileWidth: 16,
+            lightMode: false
         };
 
         if (!opts) {
             return parsed;
         }
+
+        parsed.lightMode = opts.lightMode;
 
         if (opts.filter) {
             parsed.filter = opts.filter;

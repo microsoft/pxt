@@ -18,23 +18,9 @@ namespace pxtblockly {
         protected abstract onValueChanged(newValue: string): string;
 
         init() {
-            if (this.isInitialized()) return;
-
-            // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
-            if (!this.visible_) {
-                (this.fieldGroup_ as any).style.display = 'none';
-            }
-
+            super.init();
             this.onInit();
-
-            this.updateEditable();
-            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
-
-            // Force a render.
-            this.render_();
-            (this as any).mouseDownWrapper_ = Blockly.bindEventWithChecks_((this as any).getClickTarget_(), "mousedown", this, (this as any).onMouseDown_)
-        }
+       }
 
         dispose() {
             this.onDispose();
@@ -55,9 +41,20 @@ namespace pxtblockly {
         }
 
         onLoadedIntoWorkspace() {
+            if (this.loaded) return;
             this.loaded = true;
             this.valueText = this.onValueChanged(this.valueText);
         }
+
+        protected getAnchorDimensions() {
+            const boundingBox = this.getScaledBBox() as any;
+            if (this.sourceBlock_.RTL) {
+                boundingBox.right += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            } else {
+                boundingBox.left -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            }
+            return boundingBox;
+        };
 
         protected isInitialized() {
             return !!this.fieldGroup_;
@@ -69,6 +66,26 @@ namespace pxtblockly {
 
         protected setBlockData(value: string) {
             pxt.blocks.setBlockDataForField(this.sourceBlock_, this.name, value);
+        }
+
+        protected getSiblingBlock(inputName: string, useGrandparent = false) {
+            const block = useGrandparent ? this.sourceBlock_.parentBlock_ : this.sourceBlock_;
+
+            if (!block || !block.inputList) return undefined;
+
+            for (const input of block.inputList) {
+                if (input.name === inputName) {
+                    return input.connection.targetBlock();
+                }
+            }
+
+            return undefined;
+        }
+
+        protected getSiblingField(fieldName: string, useGrandparent = false) {
+            const block = useGrandparent ? this.sourceBlock_.parentBlock_ : this.sourceBlock_;
+            if (!block) return undefined;
+            return block.getField(fieldName);
         }
     }
 }

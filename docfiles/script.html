@@ -19,21 +19,19 @@
     <div class="showDesktop page-header">
         <div class="ui container">
             <div id="page-header-wrapper">
-                <div class="page-header-item page-header-content no-grow">
-                    <h2 class="ui item header">@title@</h2>
-                </div>
-                <div class="page-header-item show-code-toggle">
-                    <a href="/@versionsuff@#pub:@id@" class="ui tiny button">Edit Code</a>
-                </div>
                 <div class="page-header-item no-grow">
                     <a href="https://makecode.com/" title="Go to Microsoft MakeCode"
                         aria-label="Microsoft MakeCode Logo" role="menuitem" target="blank" rel="noopener"
                         class="ui item logo organization">
-                        <img class="ui logo portrait hide" src="./static/Microsoft-logo_rgb_c-gray.png"
-                            alt="Microsoft MakeCode Logo">
-                        <img class="ui mini image portrait only" src="./static/Microsoft-logo_rgb_c-gray-square.png"
+                        <img class="ui logo" src="./static/Microsoft-logo_rgb_c-gray.png"
                             alt="Microsoft MakeCode Logo">
                     </a>
+                    <div class="page-header-product">MakeCode</div>
+                </div>
+                <div class="page-header-item page-header-spacer"></div>
+                <div class="page-header-item page-header-content no-grow">
+                    <h2 class="ui item header">@title@</h2>
+                    <a href="/@versionsuff@#pub:@id@" class="ui tiny button">Edit Code</a>
                 </div>
             </div>
         </div>
@@ -45,7 +43,7 @@
 
     <div class="ui main container mainbody script-content">
         <iframe id="embed-frame" class="script-embed" src="/@versionsuff@#sandbox:@id@"
-            sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe>
+            sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-downloads" frameborder="0"></iframe>
         <div class="script-bookend">
             <div id="abuse-message" class="ui tiny blue message">
                 <div class="ui grid padded">
@@ -160,7 +158,7 @@
                                 'simulator.user.tick',
                                 data,
                             );
-                        } catch { /** failed to parse tick from game **/ }
+                        } catch (e) { /** failed to parse tick from game **/ }
                     }
                 });
             </script>
@@ -176,7 +174,7 @@
                         Of Use</a>
                     <a class="ui item " href="https://makecode.com/trademarks " target="_blank "
                         rel="noopener ">Trademarks</a>
-                    <div class="ui item ">© 2020 Microsoft</div>
+                    <div class="ui item ">© 2022 Microsoft</div>
                 </div>
             </div>
         </div>
