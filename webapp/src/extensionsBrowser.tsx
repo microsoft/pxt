@@ -56,6 +56,19 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
      * Github search
      */
     async function searchForBundledAndGithubAsync() {
+        // Hidden navigation, used to test /beta or other versions
+        // Secret prefix is /@, e.g.: /@beta
+        const urlPathExec = /^\/@(.*)$/.exec(searchFor);
+        let urlPath = urlPathExec?.[1];
+        if (urlPath) {
+            let homeUrl = pxt.appTarget.appTheme.homeUrl;
+            if (!/\/$/.test(homeUrl)) {
+                homeUrl += "/";
+            }
+            urlPath = urlPath.replace(/^\//, "");
+            window.location.href = `${homeUrl}${urlPath}`;
+        }
+
         setSelectedTag("")
         setSearchComplete(false)
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
