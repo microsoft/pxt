@@ -56,7 +56,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
      * Github search
      */
     async function searchForBundledAndGithubAsync() {
-        // Hidden navigation, used to test /beta or other versions inside released UWP apps
+        // Hidden navigation, used to test /beta or other versions
         // Secret prefix is /@, e.g.: /@beta
         const urlPathExec = /^\/@(.*)$/.exec(searchFor);
         let urlPath = urlPathExec?.[1];
