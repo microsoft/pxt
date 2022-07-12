@@ -115,9 +115,9 @@
         var deps = /deps(?:[:=])([^&?]+)/i.exec(window.location.href);
         var prebuiltSimJs = /prebuilt(?:[:=])1/i.test(window.location.href);
         var single = !!/single(?:[:=])1/i.test(window.location.href);
+        var hideSimButtons = !!/hideSimButtons(?:[:=])1/i.test(window.location.href);
         var server = !!/server(?:[:=])1/i.test(window.location.href);
         var mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
-
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
         var codeFromData = undefined;
         var assetJsonFromData = undefined;
@@ -189,7 +189,8 @@
                                 light: light,
                                 fullScreen: fullScreen,
                                 builtJsInfo: builtSimJs,
-                                single: single
+                                single: single,
+                                hideSimButtons: hideSimButtons
                             };
                             console.log('simulating project')
                             pxt.runner.simulateAsync(sims, options).then(function() {
@@ -245,6 +246,7 @@
                         dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined,
                         builtJsInfo: builtSimJs,
                         single: single,
+                        hideSimButtons: hideSimButtons,
                         autofocus: autofocus
                     };
                     console.log('simulating script')

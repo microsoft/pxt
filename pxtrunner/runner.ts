@@ -18,6 +18,7 @@ namespace pxt.runner {
         builtJsInfo?: pxtc.BuiltSimJsInfo;
         // single simulator frame, no message simulators
         single?: boolean;
+        hideSimButtons?: boolean;
         autofocus?: boolean;
     }
 
@@ -406,6 +407,7 @@ namespace pxt.runner {
             storedState: storedState,
             light: simOptions.light,
             single: simOptions.single,
+            hideSimButtons: simOptions.hideSimButtons,
             autofocus: simOptions.autofocus
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
