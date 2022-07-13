@@ -681,6 +681,8 @@ namespace pxt.blocks {
                 let inputCheck: string | string[];
                 let hasParameter = false;
 
+                const hasInput = (name: string) => block.inputList?.some(i => i.name === name);
+
                 inputParts.forEach(part => {
                     if (part.kind !== "param") {
                         const f = newLabel(part);
@@ -831,12 +833,18 @@ namespace pxt.blocks {
                 let input: Blockly.Input;
 
                 if (inputName) {
+                    // Don't add duplicate inputs
+                    if (hasInput(inputName)) return;
                     input = block.appendValueInput(inputName);
                     input.setAlign(Blockly.ALIGN_LEFT);
                 }
                 else if (expanded) {
                     const prefix = hasParameter ? optionalInputWithFieldPrefix : optionalDummyInputPrefix;
-                    input = block.appendDummyInput(prefix + (anonIndex++));
+                    inputName = prefix + (anonIndex++);
+
+                    // Don't add duplicate inputs
+                    if (hasInput(inputName)) return;
+                    input = block.appendDummyInput(inputName);
                 }
                 else {
                     input = block.appendDummyInput();
