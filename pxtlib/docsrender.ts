@@ -420,8 +420,8 @@ namespace pxt.docs {
         renderer.image = function (href: string, title: string, text: string) {
             const endpointName="makecode-lucas-testing-makecodetempmediaservice-usea";
             if (href.startsWith("youtube:")) {
-                let out = '<div class="tutorial-video-embed"><iframe src="https://www.youtube.com/embed/' + href.split(":").pop()
-                    + '" title="' + title + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
+                let out = '<div class="tutorial-video-embed"><iframe class="yt-embed" src="https://www.youtube.com/embed/' + href.split(":").pop()
+                    + '" title="' + text + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
                 return out;
 
             } else if (href.startsWith("azuremedia:")) {
