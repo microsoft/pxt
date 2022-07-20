@@ -146,7 +146,8 @@ namespace pxt.editor {
                 onClose: () => this.fv.hide(),
                 onSoundChange: (newValue: pxt.assets.Sound) => this.value = newValue,
                 initialSound: this.value,
-                useFlex: true
+                useFlex: true,
+                useMixerSynthesizer: pxt.appTarget.id !== "microbit" // FIXME
             };
         }
     }

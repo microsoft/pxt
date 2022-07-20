@@ -10,6 +10,9 @@ export interface SoundEffectEditorProps {
     onSoundChange?: (newValue: pxt.assets.Sound) => void;
     onClose?: () => void;
     initialSound: pxt.assets.Sound;
+
+    // If true, uses the mixer synth (from pxt-common-packages). If false, uses codal synth
+    useMixerSynthesizer?: boolean;
 }
 
 export interface CancellationToken {
@@ -17,7 +20,7 @@ export interface CancellationToken {
 }
 
 export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
-    const { onSoundChange, onClose, initialSound } = props;
+    const { onSoundChange, onClose, initialSound, useMixerSynthesizer } = props;
 
     const [ selectedView, setSelectedView ] = React.useState<"editor" | "gallery">("editor");
 
@@ -56,9 +59,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         return () => document.removeEventListener("keydown", keyListener);
     })
 
-    const play = (toPlay = sound) => {
-        const codalSound = soundToCodalSound(toPlay);
-
+    const play = async (toPlay = sound) => {
         cancel();
 
         let newToken = {
@@ -69,12 +70,20 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
 
         if (startPreviewAnimation) startPreviewAnimation(toPlay.duration);
         if (startControlsAnimation) startControlsAnimation(toPlay.duration);
-        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => newToken.cancelled, (freq, volume) => {
+
+        const isCancelled = () => newToken.cancelled;
+        const onPull = (freq: number, volume: number) => {
             previewSynthListener(freq, volume, toPlay, newToken)
-        })
-        .then(() => {
-            setCancelToken(null);
-        })
+        }
+
+        if (useMixerSynthesizer) {
+            await pxsim.AudioContextManager.playInstructionsNoLoopAsync(pxt.assets.soundToInstructionBuffer(toPlay, 20, 1), isCancelled, onPull);
+        }
+        else {
+            await pxsim.codal.music.playSoundExpressionAsync(soundToCodalSound(toPlay).src, isCancelled, onPull);
+        }
+
+        setCancelToken(null);
     }
 
     const handlePlayButtonClick = () => {

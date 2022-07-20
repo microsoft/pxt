@@ -198,4 +198,151 @@ namespace pxt.assets {
 
         }
     }
+
+    /**
+     * Instruction buffer format:
+     *
+     *  Param            Bits
+     *  waveform     	 8
+     *  unused           8
+     *  frequency (hz)   16
+     *  duration (ms)    16
+     *  start volume     16
+     *  end volume       16
+     *  end frequency    16
+     *
+     * Volume ranges from 0-1024
+     *
+     * Waveform values:
+     *  triangle         1
+     *  sawtooth         2
+     *  sine             3
+     *  tunable noise    4
+     *  noise            5
+     *  square (10%)     11
+     *  square (20%)     12
+     *  square (30%)     13
+     *  square (40%)     14
+     *  square (50%)     15
+     *  cycle 16         16
+     *  cycle 32         17
+     *  cycle 64         18
+     */
+
+    interface Step {
+        frequency: number;
+        volume: number;
+    }
+
+     export function soundToInstructionBuffer(sound: Sound, fxSteps: number, fxRange: number) {
+        const {
+            startFrequency,
+            endFrequency,
+            startVolume,
+            endVolume,
+            interpolation,
+            duration
+        } = sound;
+
+        const steps: Step[] = [];
+
+        // Optimize the simple case
+        if (sound.interpolation === "linear" && sound.effect === "none") {
+            steps.push({
+                frequency: startFrequency,
+                volume: (startVolume / MAX_VOLUME) * 1024,
+            })
+            steps.push({
+                frequency: endFrequency,
+                volume: (endVolume / MAX_VOLUME) * 1024,
+            })
+        }
+        else {
+
+            fxSteps = Math.min(fxSteps, Math.floor(duration / 5))
+
+            const getVolumeAt = (t: number) => ((startVolume + t * (endVolume - startVolume) / duration) / MAX_VOLUME) * 1024;
+            let getFrequencyAt: (t: number) => number;
+
+            switch (interpolation) {
+                case "linear":
+                    getFrequencyAt = t => startFrequency + t * (endFrequency - startFrequency) / duration;
+                    break;
+                case "curve":
+                    getFrequencyAt = t => startFrequency + (endFrequency - startFrequency) * Math.sin(t / duration * (Math.PI / 2));
+                    break;
+                case "logarithmic":
+                    getFrequencyAt = t => startFrequency + Math.log10(1 + 9 * (t / duration)) * (endFrequency - startFrequency)
+                    break;
+            }
+
+            const timeSlice = duration / fxSteps;
+
+            for (let i = 0; i < fxSteps; i++) {
+                const newStep = {
+                    frequency: Math.max(getFrequencyAt(i * timeSlice), 1),
+                    volume: getVolumeAt(i * timeSlice)
+                };
+
+                if (sound.effect === "tremolo") {
+                    if (i % 2 === 0) {
+                        newStep.volume = Math.max(newStep.volume - fxRange * 500, 0)
+                    }
+                    else {
+                        newStep.volume = Math.min(newStep.volume + fxRange * 500, 1023)
+                    }
+                }
+                else if (sound.effect === "vibrato") {
+                    if (i % 2 === 0) {
+                        newStep.frequency = Math.max(newStep.frequency - fxRange * 100, 1)
+                    }
+                    else {
+                        newStep.frequency = newStep.frequency + fxRange * 100
+                    }
+                }
+                else if (sound.effect === "warble") {
+                    if (i % 2 === 0) {
+                        newStep.frequency = Math.max(newStep.frequency - fxRange * 1000, 1)
+                    }
+                    else {
+                        newStep.frequency = newStep.frequency + fxRange * 1000
+                    }
+                }
+
+                steps.push(newStep)
+            }
+        }
+
+        const out = new Uint8Array(12 * (steps.length - 1));
+        const stepDuration = Math.floor(duration / (steps.length - 1))
+
+        for (let i = 0; i < steps.length - 1; i++) {
+            const offset = i * 12;
+            out[offset] = waveToValue(sound.wave);
+            set16BitNumber(out, offset + 2, steps[i].frequency);
+            set16BitNumber(out, offset + 4, stepDuration);
+            set16BitNumber(out, offset + 6, steps[i].volume);
+            set16BitNumber(out, offset + 8, steps[i + 1].volume);
+            set16BitNumber(out, offset + 10, steps[i + 1].frequency);
+        }
+
+        return out;
+    }
+
+    function waveToValue(wave: SoundWaveForm) {
+        switch (wave) {
+            case "square": return 15;
+            case "sine": return 3;
+            case "triangle": return 1;
+            case "noise": return 18;
+            case "sawtooth": return 2;
+        }
+    }
+
+    function set16BitNumber(buf: Uint8Array, offset: number, value: number) {
+        const temp = new Uint8Array(2);
+        new Uint16Array(temp.buffer)[0] = value | 0;
+        buf[offset] = temp[0];
+        buf[offset + 1] = temp[1];
+    }
 }

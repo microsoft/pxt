@@ -507,7 +507,7 @@ namespace pxsim {
                 .then(() => {
                     if (prevStop != instrStopId)
                         return Promise.resolve()
-                    return playInstructionsAsync(b)
+                    return playInstructionsNoLoopAsync(b.data)
                 });
 
         }
@@ -757,6 +757,149 @@ namespace pxsim {
 
         function frequencyFromMidiNoteNumber(note: number) {
             return 440 * Math.pow(2, (note - 69) / 12);
+        }
+
+        export async function playInstructionsNoLoopAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
+            let ctx = context();
+            let channel = new Channel()
+
+            if (channels.length > 5)
+                channels[0].remove()
+            channels.push(channel);
+
+
+            channel.gain = ctx.createGain();
+            channel.gain.gain.value = 1;
+
+            channel.gain.connect(destination);
+
+            const oscillators: pxt.Map<OscillatorNode | AudioBufferSourceNode> = {};
+            const gains: pxt.Map<GainNode> = {};
+            let startTime = ctx.currentTime;
+            let currentTime = startTime;
+            let currentWave = 0;
+
+            let totalDuration = 0;
+
+            /** Square waves are perceved as much louder than other sounds, so scale it down a bit to make it less jarring **/
+            const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 4 * (isSqWave ? .5 : 1);
+
+            const disconnectNodes = () => {
+                channel.disconnectNodes();
+
+                for (const wave of Object.keys(oscillators)) {
+                    oscillators[wave].stop();
+                    oscillators[wave].disconnect();
+                    gains[wave].disconnect();
+                }
+            }
+
+            for (let i = 0; i < instructions.length; i += 12) {
+                const wave = instructions[i];
+                const startFrequency = readUint16(instructions, i + 2);
+                const duration = readUint16(instructions, i + 4) / 1000;
+                const startVolume = readUint16(instructions, i + 6);
+                const endVolume = readUint16(instructions, i + 8);
+                const endFrequency = readUint16(instructions, i + 10);
+                totalDuration += duration
+
+                const isSquareWave = 11 <= wave && wave <= 15;
+
+                if (!oscillators[wave]) {
+                    oscillators[wave] = getGenerator(wave, startFrequency);
+                    gains[wave] = ctx.createGain();
+                    gains[wave].gain.value = 0;
+                    gains[wave].connect(channel.gain);
+                    oscillators[wave].connect(gains[wave]);
+                    oscillators[wave].start();
+                }
+
+                if (currentWave && wave !== currentWave) {
+                    gains[currentWave].gain.setTargetAtTime(0, currentTime, 0.015);
+                }
+
+                const osc = oscillators[wave];
+                const gain = gains[wave];
+
+                if (osc instanceof OscillatorNode) {
+                    osc.frequency.setValueAtTime(startFrequency, currentTime);
+                    osc.frequency.linearRampToValueAtTime(endFrequency, currentTime + duration);
+                }
+                else {
+                    const isFilteredNoise = wave == 4 || (16 <= wave && wave <= 18);
+
+                    if (isFilteredNoise)
+                        osc.playbackRate.linearRampToValueAtTime(endFrequency / (ctx.sampleRate / 4), currentTime + duration);
+                    else if (wave != 5)
+                        osc.playbackRate.linearRampToValueAtTime(endFrequency / (ctx.sampleRate / 1024), currentTime + duration);
+                }
+                gain.gain.setValueAtTime(scaleVol(startVolume, isSquareWave), currentTime);
+                gain.gain.linearRampToValueAtTime(scaleVol(endVolume, isSquareWave), currentTime + duration);
+
+                currentWave = wave;
+                currentTime += duration;
+            }
+            channel.gain.gain.setTargetAtTime(0, currentTime, 0.015);
+
+            if (isCancelled || onPull) {
+                const handleAnimationFrame = () => {
+                    const time = ctx.currentTime;
+                    if (time > startTime + totalDuration) {
+                        return;
+                    }
+
+
+                    if (isCancelled && isCancelled()) {
+                        disconnectNodes();
+                        return;
+                    }
+
+                    const { frequency, volume } = findFrequencyAndVolumeAtTime((time - startTime) * 1000, instructions);
+                    onPull(frequency, volume / 1024);
+
+                    requestAnimationFrame(handleAnimationFrame)
+                }
+                requestAnimationFrame(handleAnimationFrame);
+            }
+
+            await U.delay(totalDuration * 1000)
+            disconnectNodes();
+        }
+
+        function readUint16(buf: Uint8Array, offset: number) {
+            const temp = new Uint8Array(2);
+            temp[0] = buf[offset];
+            temp[1] = buf[offset + 1];
+            return new Uint16Array(temp.buffer)[0];
+        }
+
+        function findFrequencyAndVolumeAtTime(millis: number, instructions: Uint8Array) {
+            let currentTime = 0;
+
+            for (let i = 0; i < instructions.length; i += 12) {
+                const startFrequency = readUint16(instructions, i + 2);
+                const duration = readUint16(instructions, i + 4);
+                const startVolume = readUint16(instructions, i + 6);
+                const endVolume = readUint16(instructions, i + 8);
+                const endFrequency = readUint16(instructions, i + 10);
+
+                if (currentTime + duration < millis) {
+                    currentTime += duration;
+                    continue;
+                }
+
+                const offset = (millis - currentTime) / duration;
+
+                return {
+                    frequency: startFrequency + (endFrequency - startFrequency) * offset,
+                    volume: startVolume + (endVolume - startVolume) * offset,
+                }
+            }
+
+            return {
+                frequency: -1,
+                volume: -1
+            };
         }
 
         export function sendMidiMessage(buf: RefBuffer) {
