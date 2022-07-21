@@ -294,18 +294,14 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 let lang=pxt.appTarget.appTheme?.defaultLocale ?? "en";
                 let src=content.querySelectorAll('iframe.yt-embed')[0].getAttribute('src');
                 content.querySelectorAll('iframe.yt-embed')[0].setAttribute('src',src+"&hl="+lang);
-                alert(content.querySelectorAll('iframe.yt-embed')[0].getAttribute('src'));
-                console.log(src+"&hl="+lang);
 
                 });
 
 
         pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
             .forEach((inlineVideo: HTMLElement) => {
-                let url="https://makecodeprodmediaeastus-usea.streaming.media.azure.net/d7f12234-8cd9-4896-9dc1-fd195fb35d4f/WIN_20220705_16_09_47_Pro.ism/manifest(format=mpd-time-csf)";
                 let player = MediaPlayer().create()
-                player.initialize(inlineVideo, url);
-
+                player.initialize(inlineVideo);
             });
     }
 
