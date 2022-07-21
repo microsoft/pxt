@@ -13,10 +13,15 @@ export interface SoundGalleryProps {
     onSoundSelected: (newSound: pxt.assets.Sound) => void;
     sounds: SoundGalleryItem[];
     visible: boolean;
+    useMixerSynthesizer: boolean;
+}
+
+interface SoundGalleryItemProps extends SoundGalleryItem {
+    useMixerSynthesizer: boolean;
 }
 
 export const SoundGallery = (props: SoundGalleryProps) => {
-    const { sounds, onSoundSelected, visible } = props;
+    const { sounds, onSoundSelected, visible, useMixerSynthesizer } = props;
 
     return <div className={classList("sound-gallery", visible && "visible")} aria-hidden={!visible}>
         <div className="sound-gallery-scroller">
@@ -30,7 +35,7 @@ export const SoundGallery = (props: SoundGalleryProps) => {
                     onKeyDown={fireClickOnEnter}
                     onClick={() => onSoundSelected(item.sound)}>
 
-                    <SoundGalleryEntry {...item} />
+                    <SoundGalleryEntry {...item} useMixerSynthesizer={useMixerSynthesizer} />
                 </div>
             )}
         </div>
@@ -38,14 +43,14 @@ export const SoundGallery = (props: SoundGalleryProps) => {
 }
 
 
-const SoundGalleryEntry = (props: SoundGalleryItem) => {
-    const { sound, name } = props;
+const SoundGalleryEntry = (props: SoundGalleryItemProps) => {
+    const { sound, name, useMixerSynthesizer } = props;
     const width = 160;
     const height = 40;
 
     const [ cancelToken, setCancelToken ] = React.useState<CancellationToken>(null);
 
-    const handlePlayButtonClick = () => {
+    const handlePlayButtonClick = async () => {
         if (cancelToken) {
             cancelToken.cancelled = true
             setCancelToken(null);
@@ -55,11 +60,15 @@ const SoundGalleryEntry = (props: SoundGalleryItem) => {
             cancelled: false
         }
         setCancelToken(newToken);
-        const codalSound = soundToCodalSound(sound);
-        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => newToken.cancelled)
-            .then(() => {
-                setCancelToken(null);
-            });
+
+        if (useMixerSynthesizer) {
+            await pxsim.AudioContextManager.playInstructionsAsync(pxt.assets.soundToInstructionBuffer(sound, 20, 1));
+        }
+        else {
+            await pxsim.codal.music.playSoundExpressionAsync(soundToCodalSound(sound).src);
+        }
+
+        setCancelToken(null);
     }
 
     return <div className="sound-gallery-item-label">

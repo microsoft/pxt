@@ -77,7 +77,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         }
 
         if (useMixerSynthesizer) {
-            await pxsim.AudioContextManager.playInstructionsNoLoopAsync(pxt.assets.soundToInstructionBuffer(toPlay, 20, 1), isCancelled, onPull);
+            await pxsim.AudioContextManager.playInstructionsAsync(pxt.assets.soundToInstructionBuffer(toPlay, 20, 1), isCancelled, onPull);
         }
         else {
             await pxsim.codal.music.playSoundExpressionAsync(soundToCodalSound(toPlay).src, isCancelled, onPull);
@@ -164,9 +164,10 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
                 }}
             />
             <SoundGallery
-                sounds={getGallerySounds()}
+                sounds={getGallerySounds(useMixerSynthesizer)}
                 onSoundSelected={handleGallerySelection}
                 visible={selectedView === "gallery"}
+                useMixerSynthesizer={useMixerSynthesizer}
                 />
         </div>
     </div>
