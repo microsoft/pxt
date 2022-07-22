@@ -293,7 +293,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
             let lang=pxt.appTarget.appTheme?.defaultLocale ?? "en";
             let src=content.querySelectorAll('iframe.yt-embed')[0].getAttribute('src');
-            content.querySelectorAll('iframe.yt-embed')[0].setAttribute('src',src+"&hl="+lang);
+            content.querySelectorAll('iframe.yt-embed')[0].setAttribute('src',src+"?hl="+lang);
 
             });
 
