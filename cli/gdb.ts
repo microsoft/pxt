@@ -43,16 +43,16 @@ function getBMPSerialPortsAsync(): Promise<string[]> {
             })
     }
     else if (process.platform == "darwin") {
-        return cpExecAsync("ioreg -p IOUSB -l -w 0")
+        return cpExecAsync("system_profiler SPUSBDataType")
             .then(({ stdout, stderr }) => {
                 let res: string[] = []
                 let inBMP = false
                 stdout.split(/\n/).forEach(ln => {
-                    if (ln.indexOf("+-o Black Magic Probe") >= 0)
+                    if (ln.indexOf("   Black Magic Probe") >= 0)
                         inBMP = true
                     if (!inBMP)
                         return
-                    let m = /"USB Serial Number" = "(\w+)"/.exec(ln)
+                    let m = /  Serial Number: (\w+)/.exec(ln)
                     if (m) {
                         inBMP = false
                         res.push("/dev/cu.usbmodem" + m[1] + "1")
