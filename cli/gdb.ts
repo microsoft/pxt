@@ -52,7 +52,7 @@ function getBMPSerialPortsAsync(): Promise<string[]> {
                         inBMP = true
                     if (!inBMP)
                         return
-                    let m = /  Serial Number: (\w+)/.exec(ln)
+                    let m = / Serial Number: (\w+)/.exec(ln)
                     if (m) {
                         inBMP = false
                         res.push("/dev/cu.usbmodem" + m[1] + "1")
