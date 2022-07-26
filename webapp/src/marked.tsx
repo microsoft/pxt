@@ -294,6 +294,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             const src = inlineVideo.getAttribute('src');
             var url=new URL(src);
             url.searchParams.append('hl',lang);
+            inlineVideo.setAttribute('src',url.toString());
+
             });
 
         pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
