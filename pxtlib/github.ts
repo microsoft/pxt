@@ -892,9 +892,12 @@ namespace pxt.github {
         if (isOrgBanned(repo, config))
             return true;
         if (!config) return false; // don't know
-        if (!repo || !repo.fullName) return true;
+        if (!repo) return true;
+        const repoFull = repo.fullName?.toLowerCase();
+        const repoSlug = repo.slug?.toLowerCase();
+
         if (config.bannedRepos
-            && config.bannedRepos.some(fn => fn.toLowerCase() == repo.fullName.toLowerCase()))
+            && config.bannedRepos.some(fn => fn && (fn.toLowerCase() == repoFull || fn.toLowerCase() == repoSlug)))
             return true;
         return false;
     }
@@ -912,9 +915,11 @@ namespace pxt.github {
         if (isOrgApproved(repo, config))
             return true;
 
-        if (!repo || !config) return false;
-        if (repo.fullName
-            && config.approvedRepoLib?.[repo.fullName.toLowerCase()])
+        const repoFull = repo?.fullName?.toLowerCase();
+        const repoSlug = repo?.slug?.toLowerCase();
+        if (!config?.approvedRepoLib || !(repoFull || repoSlug)) return false;
+        if (config.approvedRepoLib[repoFull]
+            || config.approvedRepoLib[repoSlug])
             return true;
         return false;
     }
