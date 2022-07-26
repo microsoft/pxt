@@ -915,8 +915,8 @@ namespace pxt.github {
         if (isOrgApproved(repo, config))
             return true;
 
-        const repoFull = repo.fullName?.toLowerCase();
-        const repoSlug = repo.slug?.toLowerCase();
+        const repoFull = repo?.fullName?.toLowerCase();
+        const repoSlug = repo?.slug?.toLowerCase();
         if (!config?.approvedRepoLib || !(repoFull || repoSlug)) return false;
         if (config.approvedRepoLib[repoFull]
             || config.approvedRepoLib[repoSlug])
