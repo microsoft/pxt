@@ -389,7 +389,6 @@ namespace pxt {
         authcodeUrl?: string; // "/beta---authcode"
         isStatic?: boolean;
         verprefix?: string; // "v1"
-        isChinaIp?: boolean;
     }
 
     export function localWebConfig() {
