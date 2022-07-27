@@ -10,12 +10,6 @@ If you don’t already have one, create a GitHub Account. Go to https://github.c
 
 ![GitHub signup](/static/github-teacher/github-signup.png)
 
-### 2. Select 'Teacher'
-
-In the sign-up process, select **Teacher**.
-
-![Teacher signup](/static/github-teacher/teacher-signup.png)
-
 ## Get Verified as a Teacher
 
 ### 1. Verify your account
