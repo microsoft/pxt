@@ -507,109 +507,9 @@ namespace pxsim {
                 .then(() => {
                     if (prevStop != instrStopId)
                         return Promise.resolve()
-                    return playInstructionsAsync(b)
+                    return playInstructionsAsync(b.data)
                 });
 
-        }
-
-        export function playInstructionsAsync(b: RefBuffer) {
-            const prevStop = instrStopId
-            let ctx = context();
-
-            let idx = 0
-            let ch = new Channel()
-            let currWave = -1
-            let currFreq = -1
-            let timeOff = 0
-
-            if (channels.length > 5)
-                channels[0].remove()
-            channels.push(ch)
-
-            /** Square waves are perceved as much louder than other sounds, so scale it down a bit to make it less jarring **/
-            const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 4 * (isSqWave ? .5 : 1);
-
-            const finish = () => {
-                ch.disconnectNodes()
-                timeOff = 0
-                currWave = -1
-                currFreq = -1
-            }
-
-            const loopAsync = (): Promise<void> => {
-                if (idx >= b.data.length || !b.data[idx])
-                    return U.delay(timeOff).then(finish)
-
-                const soundWaveIdx = b.data[idx]
-                const freq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 2)
-                const duration = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 4)
-                const startVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 6)
-                const endVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 8)
-                const endFreq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 10)
-
-                const isSquareWave = 11 <= soundWaveIdx && soundWaveIdx <= 15;
-                const isFilteredNoise = soundWaveIdx == 4 || (16 <= soundWaveIdx && soundWaveIdx <= 18);
-                const scaledStart = scaleVol(startVol, isSquareWave);
-                const scaledEnd = scaleVol(endVol, isSquareWave);
-
-                if (!ctx || prevStop != instrStopId)
-                    return U.delay(duration)
-
-                if (currWave != soundWaveIdx || currFreq != freq || freq != endFreq) {
-                    if (ch.generator) {
-                        return U.delay(timeOff)
-                            .then(() => {
-                                finish()
-                                return loopAsync()
-                            })
-                    }
-
-                    ch.generator = getGenerator(soundWaveIdx, freq)
-
-                    if (!ch.generator)
-                        return U.delay(duration)
-
-                    currWave = soundWaveIdx
-                    currFreq = freq
-                    ch.gain = ctx.createGain()
-                    ch.gain.gain.value = 0;
-                    ch.gain.gain.setTargetAtTime(scaledStart, _context.currentTime, 0.015);
-
-                    if (endFreq != freq) {
-                        if ((ch.generator as any).frequency != undefined) {
-                            // If generator is an OscillatorNode
-                            const param = (ch.generator as any).frequency as AudioParam;
-                            param.linearRampToValueAtTime(endFreq, ctx.currentTime + ((timeOff + duration) / 1000));
-                        } else if ((ch.generator as any).playbackRate != undefined) {
-                            // If generator is an AudioBufferSourceNode
-                            const param = (ch.generator as any).playbackRate as AudioParam;
-                            const bufferSamplesPerWave = isFilteredNoise ? 4 : 1024;
-                            param.linearRampToValueAtTime(endFreq / (context().sampleRate / bufferSamplesPerWave), ctx.currentTime + ((timeOff + duration) / 1000));
-                        }
-                    }
-
-                    ch.generator.connect(ch.gain)
-                    ch.gain.connect(destination);
-                    ch.generator.start();
-                }
-
-                idx += 12
-
-                ch.gain.gain.setValueAtTime(scaledStart, ctx.currentTime + (timeOff / 1000))
-                timeOff += duration
-
-                // To prevent clipping, we ramp to this value slightly earlier than intended. This is so that we
-                // can go for a smooth ramp to 0 in ch.mute() without this operation interrupting it. If we had
-                // more accurate timing this would not be necessary, but we'd probably have to do something like
-                // running a metronome in a webworker to get the level of precision we need
-                const endTime = scaledEnd !== 0 && duration > 50 ? ((timeOff - 50) / 1000) : ((timeOff - 10) / 1000)
-                ch.gain.gain.linearRampToValueAtTime(scaledEnd, ctx.currentTime + endTime)
-
-                return loopAsync()
-            }
-
-            return loopAsync()
-                .then(() => ch.remove())
         }
 
         export function tone(frequency: number, gain: number) {
@@ -757,6 +657,155 @@ namespace pxsim {
 
         function frequencyFromMidiNoteNumber(note: number) {
             return 440 * Math.pow(2, (note - 69) / 12);
+        }
+
+        export function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
+            return new Promise<void>(async resolve => {
+                let resolved = false;
+                let ctx = context();
+                let channel = new Channel()
+
+                if (channels.length > 5)
+                    channels[0].remove()
+                channels.push(channel);
+
+
+                channel.gain = ctx.createGain();
+                channel.gain.gain.value = 1;
+
+                channel.gain.connect(destination);
+
+                const oscillators: pxt.Map<OscillatorNode | AudioBufferSourceNode> = {};
+                const gains: pxt.Map<GainNode> = {};
+                let startTime = ctx.currentTime;
+                let currentTime = startTime;
+                let currentWave = 0;
+
+                let totalDuration = 0;
+
+                /** Square waves are perceved as much louder than other sounds, so scale it down a bit to make it less jarring **/
+                const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 4 * (isSqWave ? .5 : 1);
+
+                const disconnectNodes = () => {
+                    if (resolved) return;
+                    resolved = true;
+                    channel.disconnectNodes();
+
+                    for (const wave of Object.keys(oscillators)) {
+                        oscillators[wave].stop();
+                        oscillators[wave].disconnect();
+                        gains[wave].disconnect();
+                    }
+                    resolve();
+                }
+
+                for (let i = 0; i < instructions.length; i += 12) {
+                    const wave = instructions[i];
+                    const startFrequency = readUint16(instructions, i + 2);
+                    const duration = readUint16(instructions, i + 4) / 1000;
+                    const startVolume = readUint16(instructions, i + 6);
+                    const endVolume = readUint16(instructions, i + 8);
+                    const endFrequency = readUint16(instructions, i + 10);
+                    totalDuration += duration
+
+                    const isSquareWave = 11 <= wave && wave <= 15;
+
+                    if (!oscillators[wave]) {
+                        oscillators[wave] = getGenerator(wave, startFrequency);
+                        gains[wave] = ctx.createGain();
+                        gains[wave].gain.value = 0;
+                        gains[wave].connect(channel.gain);
+                        oscillators[wave].connect(gains[wave]);
+                        oscillators[wave].start();
+                    }
+
+                    if (currentWave && wave !== currentWave) {
+                        gains[currentWave].gain.setTargetAtTime(0, currentTime, 0.015);
+                    }
+
+                    const osc = oscillators[wave];
+                    const gain = gains[wave];
+
+                    if (osc instanceof OscillatorNode) {
+                        osc.frequency.setValueAtTime(startFrequency, currentTime);
+                        osc.frequency.linearRampToValueAtTime(endFrequency, currentTime + duration);
+                    }
+                    else {
+                        const isFilteredNoise = wave == 4 || (16 <= wave && wave <= 18);
+
+                        if (isFilteredNoise)
+                            osc.playbackRate.linearRampToValueAtTime(endFrequency / (ctx.sampleRate / 4), currentTime + duration);
+                        else if (wave != 5)
+                            osc.playbackRate.linearRampToValueAtTime(endFrequency / (ctx.sampleRate / 1024), currentTime + duration);
+                    }
+                    gain.gain.setValueAtTime(scaleVol(startVolume, isSquareWave), currentTime);
+                    gain.gain.linearRampToValueAtTime(scaleVol(endVolume, isSquareWave), currentTime + duration);
+
+                    currentWave = wave;
+                    currentTime += duration;
+                }
+                channel.gain.gain.setTargetAtTime(0, currentTime, 0.015);
+
+                if (isCancelled || onPull) {
+                    const handleAnimationFrame = () => {
+                        const time = ctx.currentTime;
+                        if (time > startTime + totalDuration) {
+                            return;
+                        }
+
+
+                        if (isCancelled && isCancelled()) {
+                            disconnectNodes();
+                            return;
+                        }
+
+                        const { frequency, volume } = findFrequencyAndVolumeAtTime((time - startTime) * 1000, instructions);
+                        onPull(frequency, volume / 1024);
+
+                        requestAnimationFrame(handleAnimationFrame)
+                    }
+                    requestAnimationFrame(handleAnimationFrame);
+                }
+
+                await U.delay(totalDuration * 1000)
+                disconnectNodes();
+            })
+        }
+
+        function readUint16(buf: Uint8Array, offset: number) {
+            const temp = new Uint8Array(2);
+            temp[0] = buf[offset];
+            temp[1] = buf[offset + 1];
+            return new Uint16Array(temp.buffer)[0];
+        }
+
+        function findFrequencyAndVolumeAtTime(millis: number, instructions: Uint8Array) {
+            let currentTime = 0;
+
+            for (let i = 0; i < instructions.length; i += 12) {
+                const startFrequency = readUint16(instructions, i + 2);
+                const duration = readUint16(instructions, i + 4);
+                const startVolume = readUint16(instructions, i + 6);
+                const endVolume = readUint16(instructions, i + 8);
+                const endFrequency = readUint16(instructions, i + 10);
+
+                if (currentTime + duration < millis) {
+                    currentTime += duration;
+                    continue;
+                }
+
+                const offset = (millis - currentTime) / duration;
+
+                return {
+                    frequency: startFrequency + (endFrequency - startFrequency) * offset,
+                    volume: startVolume + (endVolume - startVolume) * offset,
+                }
+            }
+
+            return {
+                frequency: -1,
+                volume: -1
+            };
         }
 
         export function sendMidiMessage(buf: RefBuffer) {

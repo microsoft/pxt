@@ -47,7 +47,16 @@ export function soundToCodalSound(sound: pxt.assets.Sound): pxsim.codal.music.So
     return codalSound;
 }
 
-export function getGallerySounds(): SoundGalleryItem[] {
+export function getGallerySounds(useMixerSynthesizer: boolean): SoundGalleryItem[] {
+    if (useMixerSynthesizer) {
+        return getMixerGallerySounds();
+    }
+    else {
+        return getCODALGallerySounds();
+    }
+
+}
+export function getCODALGallerySounds(): SoundGalleryItem[] {
     const res: SoundGalleryItem[] = [
         {
             name: pxt.U.lf("Laser"),
@@ -177,6 +186,104 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 startFrequency: 54,
                 endFrequency: 54,
                 duration: 500
+            }
+        }
+    ];
+
+    return res;
+}
+
+export function getMixerGallerySounds(): SoundGalleryItem[] {
+    const res: SoundGalleryItem[] = [
+        {
+            name: pxt.U.lf("Laser"),
+            sound: {
+                interpolation: "curve",
+                effect: "none",
+                wave: "square",
+                startVolume: pxt.assets.MAX_VOLUME,
+                endVolume: 0,
+                startFrequency: 1600,
+                endFrequency: 1,
+                duration: 300
+            }
+        },
+        {
+            name: pxt.U.lf("Jump"),
+            sound: {
+                interpolation: "linear",
+                effect: "none",
+                wave: "square",
+                startVolume: pxt.assets.MAX_VOLUME,
+                endVolume: 0,
+                startFrequency: 400,
+                endFrequency: 600,
+                duration: 100
+            }
+        },
+        {
+            name: pxt.U.lf("Water Drop"),
+            sound: {
+                interpolation: "linear",
+                effect: "none",
+                wave: "sine",
+                startVolume: pxt.assets.MAX_VOLUME,
+                endVolume: 0,
+                startFrequency: 200,
+                endFrequency: 600,
+                duration: 150
+            }
+        },
+        {
+            name: pxt.U.lf("Kick Drum"),
+            sound: {
+                interpolation: "curve",
+                effect: "none",
+                wave: "square",
+                startVolume: pxt.assets.MAX_VOLUME,
+                endVolume: 0,
+                startFrequency: 200,
+                endFrequency: 1,
+                duration: 100
+            }
+        },
+        {
+            name: pxt.U.lf("Tom"),
+            sound: {
+                interpolation: "curve",
+                effect: "none",
+                wave: "triangle",
+                startVolume: pxt.assets.MAX_VOLUME,
+                endVolume: 0,
+                startFrequency: 300,
+                endFrequency: 200,
+                duration: 75
+            }
+        },
+        {
+            name: pxt.U.lf("Snare"),
+            sound: {
+                interpolation: "linear",
+                effect: "warble",
+                wave: "noise",
+                startVolume: pxt.assets.MAX_VOLUME,
+                endVolume: 0,
+                startFrequency: 3300,
+                endFrequency: 1400,
+                duration: 150
+            }
+        },
+        {
+            name: pxt.U.lf("Hi-Hat"),
+            sound: {
+                interpolation: "linear",
+                effect: "none",
+                wave: "noise",
+                startVolume: pxt.assets.MAX_VOLUME,
+                endVolume: 0,
+                startFrequency: 3900,
+                endFrequency: 3500,
+                duration: 10
             }
         }
     ];

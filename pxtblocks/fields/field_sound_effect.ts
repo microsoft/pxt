@@ -13,6 +13,7 @@ namespace pxtblockly {
         waveFieldName: string;
         interpolationFieldName: string;
         effectFieldName: string;
+        useMixerSynthesizer: any;
     }
 
     const MUSIC_ICON_WIDTH = 20;
@@ -38,6 +39,7 @@ namespace pxtblockly {
             if (!this.options.waveFieldName) this.options.waveFieldName = "waveShape";
             if (!this.options.interpolationFieldName) this.options.interpolationFieldName = "interpolation";
             if (!this.options.effectFieldName) this.options.effectFieldName = "effect";
+            if (!this.options.useMixerSynthesizer) this.options.useMixerSynthesizer = false;
 
             this.redrawPreview();
 
@@ -178,7 +180,8 @@ namespace pxtblockly {
                     this.updateSiblingBlocks(newSound);
                     this.redrawPreview();
                 },
-                initialSound: initialSound
+                initialSound: initialSound,
+                useMixerSynthesizer: isTrue(this.options.useMixerSynthesizer)
             }
 
             const fv = pxt.react.getFieldEditorView("soundeffect-editor", initialSound, opts, widgetDiv);
@@ -413,5 +416,24 @@ namespace pxtblockly {
 
     function reverseLookup(map: {[index: string]: string}, value: string) {
         return Object.keys(map).find(k => map[k] === value);
+    }
+
+    function isTrue(value: any) {
+        if (!value) return false;
+
+        if (typeof value === "string") {
+            switch (value.toLowerCase().trim()) {
+                case "1":
+                case "yes":
+                case "y":
+                case "on":
+                case "true":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        return !!value;
     }
 }
