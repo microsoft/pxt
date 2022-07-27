@@ -287,6 +287,16 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
 
     private renderVideo(content: HTMLElement){
+
+        pxt.Util.toArray(content.querySelectorAll('iframe.yt-embed'))
+            .forEach((inlineVideo: HTMLElement) => {
+                let lang = pxt.appTarget.appTheme?.defaultLocale ?? "en";
+                const src = inlineVideo.getAttribute('src');
+                let url = new URL(src);
+                url.searchParams.append('hl', lang);
+                inlineVideo.setAttribute('src', url.toString());
+            });
+
         pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
             .forEach((inlineVideo: HTMLElement) => {
                 let player = MediaPlayer().create()
