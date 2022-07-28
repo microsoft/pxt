@@ -425,7 +425,14 @@ namespace pxt.docs {
                 return out;
 
             } else if (href.startsWith("azuremedia:")) {
-                let out = `<div class="tutorial-video-embed"><video class="ams-embed" controls src="https://${endpointName}.streaming.media.azure.net/` + href.split(":").pop() + '/manifest(format=mpd-time-cmaf)" /></div>';
+
+                href.split(":")[1];
+                const flags=href.split(":")[2];
+                let urlFragment="";
+                if (flags){
+                    urlFragment='#'+flags;
+                }
+                let out = `<div class="tutorial-video-embed"><video class="ams-embed" controls src="https://${endpointName}.streaming.media.azure.net/${videoID}/manifest(format=mpd-time-csf).mpd${urlFragment}" /></div>`;
                 return out;
 
             } else {
