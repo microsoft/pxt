@@ -658,7 +658,13 @@ namespace ts.pxtc {
             const left = param.substr(0, dotIdx)
             let right = param.substr(dotIdx + 1)
             right = U.snakify(right).toUpperCase();
-            return `${left}.${right}`
+
+            if (left) {
+                return `${left}.${right}`
+            }
+            else {
+                return right;
+            }
         }
         return param;
     }
