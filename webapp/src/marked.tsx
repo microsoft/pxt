@@ -287,7 +287,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
 
-    private renderVideo(content: HTMLElement){
+    private renderVideo(content: HTMLElement) {
 
         pxt.Util.toArray(content.querySelectorAll('iframe.yt-embed'))
             .forEach((inlineVideo: HTMLElement) => {
@@ -308,8 +308,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const END_TIME = url.searchParams.get("endTime");
                 player.on(
                     dashjs.MediaPlayer.events.PLAYBACK_TIME_UPDATED,
-                    (e:dashjs.PlaybackTimeUpdatedEvent)=>{
-                        if (parseInt(END_TIME)<=e.time){
+                    (e: dashjs.PlaybackTimeUpdatedEvent) => {
+                        if (parseInt(END_TIME) <= e.time) {
                             player.pause();
                         }
                     })
@@ -317,7 +317,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
 
-  // Renders inline blocks, such as "||controller: Controller||".
+    // Renders inline blocks, such as "||controller: Controller||".
     private renderInlineBlocks(content: HTMLElement) {
         pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .forEach((inlineBlock: HTMLElement) => {
