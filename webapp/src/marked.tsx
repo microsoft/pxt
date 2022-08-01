@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as marked from "marked";
 import * as compiler from "./compiler"
 import { MediaPlayer } from "dashjs"
+import dashjs = require("dashjs");
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -286,7 +287,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
 
-    private renderVideo(content: HTMLElement){
+    private renderVideo(content: HTMLElement) {
 
         pxt.Util.toArray(content.querySelectorAll('iframe.yt-embed'))
             .forEach((inlineVideo: HTMLElement) => {
@@ -299,13 +300,24 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
             .forEach((inlineVideo: HTMLElement) => {
+
                 let player = MediaPlayer().create()
                 player.initialize(inlineVideo, inlineVideo.getAttribute("src"));
+                const src = inlineVideo.getAttribute('src');
+                let url = new URL(src);
+                const END_TIME = url.searchParams.get("endTime");
+                player.on(
+                    dashjs.MediaPlayer.events.PLAYBACK_TIME_UPDATED,
+                    (e: dashjs.PlaybackTimeUpdatedEvent) => {
+                        if (parseInt(END_TIME) <= e.time) {
+                            player.pause();
+                        }
+                    })
             });
     }
 
 
-  // Renders inline blocks, such as "||controller: Controller||".
+    // Renders inline blocks, such as "||controller: Controller||".
     private renderInlineBlocks(content: HTMLElement) {
         pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .forEach((inlineBlock: HTMLElement) => {
