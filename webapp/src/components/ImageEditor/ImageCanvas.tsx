@@ -424,6 +424,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                 this.props.dispatchChangeImageTool(ImageEditorTool.Marquee);
             }
 
+            this.editState.mergeFloatingLayer();
             this.editState.setFloatingLayer(image);
             this.props.dispatchImageEdit(this.editState.toImageState());
         }
