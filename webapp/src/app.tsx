@@ -3017,8 +3017,10 @@ export class ProjectView
                         || resp.diagnostics.length == 1 ? resp.diagnostics[0] : undefined;
 
                     if (noHexFileDiagnostic?.code === 9283 /*program too large*/ && pxt.commands.showProgramTooLargeErrorAsync) {
+                        pxt.tickEvent("compile.programTooLargeDialog");
                         const res = await pxt.commands.showProgramTooLargeErrorAsync(pxt.appTarget.multiVariants, core.confirmAsync);
                         if (res?.recompile) {
+                            pxt.tickEvent("compile.programTooLargeDialog.recompile");
                             const oldVariants = pxt.appTarget.multiVariants;
                             this.setState({ compiling: false, isSaving: false });
                             try {
@@ -3029,6 +3031,9 @@ export class ProjectView
                             finally {
                                 pxt.appTarget.multiVariants = oldVariants;
                             }
+                        }
+                        else {
+                            pxt.tickEvent("compile.programTooLargeDialog.cancelled");
                         }
                     }
 
