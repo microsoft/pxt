@@ -496,16 +496,15 @@ export function refreshLanguageServiceApisInfo() {
     refreshApis = true;
 }
 
-export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
-    return ensureApisInfoAsync()
-        .then(() => {
-            searchFor.localizedApis = cachedApis;
-            searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
-            return workerOpAsync("apiSearch", {
-                search: searchFor,
-                blocks: blocksOptions()
-            });
-        });
+export async function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
+    await waitForFirstTypecheckAsync();
+    await ensureApisInfoAsync();
+    searchFor.localizedApis = cachedApis;
+    searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
+    return workerOpAsync("apiSearch", {
+        search: searchFor,
+        blocks: blocksOptions()
+    });
 }
 
 export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions) {
@@ -541,6 +540,7 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
 
 export function typecheckAsync() {
     const epkg = pkg.mainEditorPkg();
+    const isFirstTypeCheck = !firstTypecheck;
     let p = epkg.buildAssetsAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync())
         .then(opts => {
@@ -549,9 +549,14 @@ export function typecheckAsync() {
         })
         .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
         .then(r => setDiagnostics("typecheck", r.diagnostics, r.sourceMap))
-        .then(ensureApisInfoAsync)
+        .then(() => {
+            if (isFirstTypeCheck) {
+                refreshLanguageServiceApisInfo();
+            }
+            return ensureApisInfoAsync();
+        })
         .catch(catchUserErrorAndSetDiags(null))
-    if (!firstTypecheck) firstTypecheck = p;
+    if (isFirstTypeCheck) firstTypecheck = p;
     return p;
 }
 
