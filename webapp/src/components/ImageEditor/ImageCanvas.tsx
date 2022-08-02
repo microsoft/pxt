@@ -712,52 +712,23 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 
     protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = false, alpha = !this.props.lightMode, target = this.canvas) {
-        if (!this.colors) {
-            this.colors = new Uint8ClampedArray(this.props.colors.length * 4);
+        const { colors } = this.props;
 
-            const transparent = pxt.sprite.colorStringToRGB(LIGHT_MODE_TRANSPARENT);
-            this.colors[0] = transparent[0];
-            this.colors[1] = transparent[1];
-            this.colors[2] = transparent[2];
-
-            for (let i = 1; i < this.props.colors.length; i++) {
-                const [r, g, b] = pxt.sprite.colorStringToRGB(this.props.colors[i]);
-                const start = i << 2;
-                this.colors[start] = r;
-                this.colors[start + 1] = g;
-                this.colors[start + 2] = b;
-                this.colors[start + 3] = 255;
-            }
-        }
-
-        this.colors[3] = alpha ? 0 : 255;
         const context = target.getContext("2d");
+        context.imageSmoothingEnabled = false;
+        for (let x = 0; x < bitmap.width; x++) {
+            for (let y = 0; y < bitmap.height; y++) {
+                const index = bitmap.get(x, y);
 
-        const data = transparent ? context.getImageData(0, 0, target.width, target.height) : new ImageData(target.width, target.height);
-
-        const colors = this.colors.slice();
-        for (let i = 0; i < colors.length; i += 4) {
-            colors[i + 3] = (colors[i + 3] * context.globalAlpha) | 0;
-        }
-
-        for (let y = 0; y < bitmap.height; y++) {
-            if (y0 + y >= target.height) break;
-            if (y0 + y < 0) continue;
-
-            for (let x = 0; x < bitmap.width; x++) {
-                if (x0 + x >= target.width || x0 + x < 0) continue;
-
-                const i = ((x0 + x) << 2) + (((y0 + y) * target.width) << 2)
-                const colorOffset = bitmap.get(x, y) << 2;
-
-                if (!colorOffset && transparent) continue;
-                data.data[i] = colors[colorOffset];
-                data.data[i + 1] = colors[colorOffset + 1];
-                data.data[i + 2] = colors[colorOffset + 2];
-                data.data[i + 3] = colors[colorOffset + 3];
+                if (index) {
+                    context.fillStyle = colors[index];
+                    context.fillRect(x + x0, y + y0, 1, 1);
+                }
+                else {
+                    if (!transparent) context.clearRect(x + x0, y + y0, 1, 1);
+                }
             }
         }
-        target.getContext("2d").putImageData(data, 0, 0);
     }
 
     protected generateTile(index: number, tileset: pxt.TileSet) {
