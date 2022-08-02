@@ -11,6 +11,7 @@ for creating JavaScript/Blocks online editors.
 * [Blog](/blog)
 * [Online Learning](/online-learning)
 * [Contact Us](/contact)
+* [Privacy FAQ](privacy-faq)
 * [Tools](/tools)
 * [JS Editor Features](/js/editor)
 * [Programming Language](/language)
