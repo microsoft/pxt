@@ -9,7 +9,7 @@ Some users may optionally choose to sign into MakeCode with a Microsoft Account 
 
 ## 2. Are you COPPA compliant?
 
-Yes, MakeCode aligns with the guidance provided in the Children's Online Privacy Protection Act (COPPA) and other frameworks like the EU General Data Protection Regulation (GDPR), which endorse the protection of children and their data.
+Yes, MakeCode aligns with the guidance provided in the [Children's Online Privacy Protection Act (COPPA)](https://www.ftc.gov/legal-library/browse/rules/childrens-online-privacy-protection-rule-coppa) and other frameworks like the [EU General Data Protection Regulation (GDPR)](https://gdpr.eu/), which endorse the protection of children and their data.
 
 ## 3. For students who do Sign In, is Parental Consent required?
 
