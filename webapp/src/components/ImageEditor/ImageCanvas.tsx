@@ -722,7 +722,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
                 if (index) {
                     context.fillStyle = colors[index];
-                    context.fillRect(x + x0, y + y0 ,1, 1);
+                    context.fillRect(x + x0, y + y0, 1, 1);
                 }
                 else {
                     if (!transparent) context.clearRect(x + x0, y + y0, 1, 1);
