@@ -496,7 +496,7 @@ export function refreshLanguageServiceApisInfo() {
     refreshApis = true;
 }
 
-export async function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
+export async function apiSearchAsync(searchFor: pxtc.service.SearchOptions): Promise<pxtc.service.SearchInfo[]> {
     await waitForFirstTypecheckAsync();
     await ensureApisInfoAsync();
     searchFor.localizedApis = cachedApis;
@@ -507,7 +507,7 @@ export async function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     });
 }
 
-export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions) {
+export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions): Promise<pxtc.service.ProjectSearchInfo[]> {
     return ensureApisInfoAsync()
         .then(() => {
             return workerOpAsync("projectSearch", { projectSearch: searchFor });
