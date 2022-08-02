@@ -294,6 +294,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 let lang = pxt.appTarget.appTheme?.defaultLocale ?? "en";
                 const src = inlineVideo.getAttribute('src');
                 let url = new URL(src);
+                pxt.tickEvent("video.loaded", {
+                    player: "youtube",
+                    url: src
+                })
                 url.searchParams.append('hl', lang);
                 inlineVideo.setAttribute('src', url.toString());
             });
@@ -305,6 +309,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 player.initialize(inlineVideo, inlineVideo.getAttribute("src"));
                 const src = inlineVideo.getAttribute('src');
                 let url = new URL(src);
+                pxt.tickEvent("video.loaded", {
+                    player: "azure",
+                    url: src
+                })
                 const END_TIME = url.searchParams.get("endTime");
                 player.on(
                     dashjs.MediaPlayer.events.PLAYBACK_TIME_UPDATED,
@@ -312,8 +320,19 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         if (parseInt(END_TIME) <= e.time) {
                             player.pause();
                         }
+
+                    }
+                )
+
+                player.on(dashjs.MediaPlayer.events.PLAYBACK_STARTED,
+                    (e: dashjs.PlaybackStartedEvent) => {
+                        pxt.tickEvent('video.playback.started', {
+                            player: "ams",
+                            url: src,
+                        });
                     })
             });
+
     }
 
 
