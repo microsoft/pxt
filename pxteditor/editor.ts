@@ -435,6 +435,7 @@ namespace pxt.editor {
         renderUsbPairDialog?: (firmwareUrl?: string, failedOnce?: boolean) => any /* JSX.Element */;
         renderIncompatibleHardwareDialog?: (unsupportedParts: string[]) => any /* JSX.Element */;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
+        showProgramTooLargeErrorAsync?: (variants: string[], confirmAsync: (options: any) => Promise<number>) => Promise<pxt.commands.RecompileOptions>;
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
         webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;
