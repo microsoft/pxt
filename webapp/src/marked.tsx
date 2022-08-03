@@ -327,7 +327,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 player.on(dashjs.MediaPlayer.events.PLAYBACK_STARTED,
                     (e: dashjs.PlaybackStartedEvent) => {
                         pxt.tickEvent('video.playback.started', {
-                            player: "ams",
+                            player: "azure",
                             url: src,
                         });
                     })
