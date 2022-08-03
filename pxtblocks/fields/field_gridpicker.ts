@@ -397,10 +397,6 @@ namespace pxtblockly {
 
             containerSize.height += addedHeight;
 
-            if (this.sourceBlock_.RTL) {
-                (Blockly.utils as any).uiMenu.adjustBBoxesForRTL(viewportBBox, anchorBBox, containerSize);
-            }
-
             // Position the menu.
             Blockly.WidgetDiv.positionWithAnchor(viewportBBox, anchorBBox, containerSize,
                 this.sourceBlock_.RTL);
