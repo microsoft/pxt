@@ -656,7 +656,7 @@ namespace pxt {
                         const modtag = modid?.tag || mod.config?.version;
                         const vertag = verid.tag
 
-                        // if there is no tag on the current dependency, 
+                        // if there is no tag on the current dependency,
                         // assume same as existing module version if any
                         if (modtag && !vertag) {
                             pxt.debug(`unversioned ${ver}, using ${modtag}`)
@@ -1160,6 +1160,9 @@ namespace pxt {
                 if (ext) {
                     opts.otherMultiVariants.push(etarget)
                 } else {
+                    etarget.target.isNative = opts.target.isNative;
+                    opts.target = etarget.target;
+
                     ext = einfo
                     opts.otherMultiVariants = []
                 }
