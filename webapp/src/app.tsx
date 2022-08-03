@@ -2940,6 +2940,28 @@ export class ProjectView
                     pxt.tickEvent("compile.noemit")
                     const noHexFileDiagnostic = resp.diagnostics.find(diag => diag.code === 9043)
                         || resp.diagnostics.length == 1 ? resp.diagnostics[0] : undefined;
+
+                    if (noHexFileDiagnostic?.code === 9283 /*program too large*/ && pxt.commands.showProgramTooLargeErrorAsync) {
+                        pxt.tickEvent("compile.programTooLargeDialog");
+                        const res = await pxt.commands.showProgramTooLargeErrorAsync(pxt.appTarget.multiVariants, core.confirmAsync);
+                        if (res?.recompile) {
+                            pxt.tickEvent("compile.programTooLargeDialog.recompile");
+                            const oldVariants = pxt.appTarget.multiVariants;
+                            this.setState({ compiling: false, isSaving: false });
+                            try {
+                                pxt.appTarget.multiVariants = res.useVariants;
+                                await this.compile(saveOnly);
+                                return;
+                            }
+                            finally {
+                                pxt.appTarget.multiVariants = oldVariants;
+                            }
+                        }
+                        else {
+                            pxt.tickEvent("compile.programTooLargeDialog.cancelled");
+                        }
+                    }
+
                     if (noHexFileDiagnostic) {
                         core.warningNotification(noHexFileDiagnostic.messageText as string);
                     }
