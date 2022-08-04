@@ -7,6 +7,8 @@ import * as data from "./data";
 
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util";
+import { PalettePicker } from "../../react-common/components/palette/PalettePicker";
+import { AllPalettes, Palette } from "../../react-common/components/palette/Palettes";
 
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
@@ -127,6 +129,11 @@ export class Editor extends srceditor.Editor {
         this.save();
     }
 
+    private onPaletteSelected = (selected: Palette) => {
+        this.config.palette = selected.colors;
+        this.save();
+    }
+
     display(): JSX.Element {
         if (!this.isVisible) return undefined;
 
@@ -135,6 +142,9 @@ export class Editor extends srceditor.Editor {
         pkg.allEditorPkgs().map(ep => ep.getKsPkg())
             .filter(dep => !!dep && dep.isLoaded && !!dep.config && !!dep.config.yotta && !!dep.config.yotta.userConfigs)
             .forEach(dep => userConfigs = userConfigs.concat(dep.config.yotta.userConfigs));
+
+
+        const showPalettePicker = pxt.editor.experiments.isEnabled("palettePicker");
 
         return (
             <div className="ui content">
@@ -155,6 +165,7 @@ export class Editor extends srceditor.Editor {
                             isUserConfigActive={this.isUserConfigActive}
                             applyUserConfig={this.applyUserConfig} />
                     )}
+                    {showPalettePicker && this.renderPalettePicker()}
                     <sui.Field>
                         <sui.Button text={lf("Save")} className={`green ${this.isSaving ? 'disabled' : ''}`} onClick={this.saveOnClick} />
                         <sui.Button text={lf("Edit Settings As text")} onClick={this.editSettingsText} />
@@ -207,6 +218,54 @@ export class Editor extends srceditor.Editor {
             return this.parent.reloadHeaderAsync();
         }
         return Promise.resolve();
+    }
+
+    protected renderPalettePicker() {
+        const currentPalette = this.getCurrentPalette();
+        let paletteOptions = AllPalettes.slice();
+
+        if (!paletteOptions.some(p => p.id === currentPalette.id)) {
+            paletteOptions.unshift(currentPalette)
+        }
+
+        return <>
+            <sui.Field>
+                <div className="palette-picker-field">
+                    <div className="palette-picker-label">
+                        {lf("Project Color Palette:")}
+                    </div>
+                    <PalettePicker
+                        palettes={paletteOptions}
+                        selectedId={currentPalette.id}
+                        onPaletteSelected={this.onPaletteSelected}
+                    />
+                </div>
+            </sui.Field>
+        </>
+    }
+
+    protected getCurrentPalette() {
+        const configPalette = this.config.palette || pxt.appTarget.runtime.palette;
+
+        if (configPalette) {
+            for (const palette of AllPalettes) {
+                let isEqual = true;
+                for (let i = 0; i < palette.colors.length; i++) {
+                    if (configPalette[i].toLowerCase() !== palette.colors[i].toLowerCase()) {
+                        isEqual = false;
+                        break;
+                    }
+                }
+
+                if (isEqual) return palette;
+            }
+        }
+
+        return {
+            id: "custom",
+            name: lf("Custom Palette"),
+            colors: configPalette
+        };
     }
 }
 

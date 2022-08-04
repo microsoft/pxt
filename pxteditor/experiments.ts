@@ -173,6 +173,11 @@ namespace pxt.editor.experiments {
                 name: lf("Blocks Error List"),
                 description: lf("Show an error list panel for Blocks")
             },
+            {
+                id: "palettePicker",
+                name: lf("Change Color Palette"),
+                description: lf("Change the game palette in project settings")
+            },
         ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
     }
 
