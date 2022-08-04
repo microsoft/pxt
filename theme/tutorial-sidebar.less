@@ -774,6 +774,10 @@
             }
         }
     }
+
+    .tutorial-title {
+        max-width: calc(100% - 10rem);
+    }
 }
 
 .tutorial-video-embed {
@@ -792,5 +796,38 @@
         .simframe {
             padding-bottom: 83% !important;
         }
+    }
+
+    .tutorial-content.has-hint > :not(.tutorial-mobile-header) {
+        padding-right: 4rem;
+    }
+
+    #root.headless.tabTutorial.collapsedEditorTools {
+        .tutorial-hint .tutorial-callout-button.ui.button {
+            margin: 0;
+        }
+
+        .tutorial-controls {
+            position: absolute;
+            right: 5.5rem;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    }
+
+    .tutorial-mobile-header {
+        display: flex;
+        flex-direction: row;
+
+        .tutorial-mobile-progress {
+            flex-grow: 1;
+            font-size: 1rem;
+        }
+    }
+
+    .tutorial-title {
+        max-width: 100%;
     }
 }

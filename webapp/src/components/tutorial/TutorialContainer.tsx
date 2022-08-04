@@ -7,6 +7,7 @@ import { ImmersiveReaderButton, launchImmersiveReader } from "../../immersiverea
 import { TutorialStepCounter } from "./TutorialStepCounter";
 import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
+import { classList } from "../../../../react-common/components/util";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -136,14 +137,24 @@ export function TutorialContainer(props: TutorialContainerProps) {
         ? <Button icon="check circle" text={lf("Done")} onClick={onTutorialComplete} />
         : <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
 
+    const progressString = `${name} ${visibleStep + 1}/${steps.length}`;
+
+    const hasHint = !!hintMarkdown;
+
 
     return <div className="tutorial-container">
-        <div className="tutorial-top-bar">
+        <div className="tutorial-top-bar mobile-hidden">
             <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
         {layout === "horizontal" && backButton}
-        <div className="tutorial-content" ref={contentRef} onScroll={tutorialContentScroll}>
+        <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
+            <div className="mobile-only tutorial-mobile-header">
+                <div className="tutorial-mobile-progress">
+                    {progressString}
+                </div>
+                {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
+            </div>
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
