@@ -131,7 +131,7 @@ export class Editor extends srceditor.Editor {
 
     private onPaletteSelected = (selected: Palette) => {
         this.config.palette = selected.colors;
-        this.save();
+        this.save(true);
     }
 
     display(): JSX.Element {
