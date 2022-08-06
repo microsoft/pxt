@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode Minecraft 2022 Update](/blog/minecraft/2022-release)
     * [MakeCode for the micro:bit - 2022 Release](/blog/microbit/2022-release)
     * [AP CSP with MakeCode Professional Development](/blog/csp/csp-prodev-2022)
     * [MakeCode Arcade Valentine’s Update](/blog/arcade/valentine-update-2022)
