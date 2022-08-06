@@ -52,7 +52,7 @@ For those of you who love the mining in Minecraft, you’ll appreciate these new
 
 ![Diamond Detector example](/static/blog/minecraft/update-2022/diamond-detector.png)
 
-Use This program to list out all the different blocks 10 blocks below you: https://makecode.com/_Eoad0vckwcRi.
+Use this program to list out all the different blocks 10 blocks below you: https://makecode.com/_Eoad0vckwcRi.
 
 ## Full Screen Tutorial Layout
 
