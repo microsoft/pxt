@@ -14,7 +14,7 @@ Always the number one request we get from students: “More mobs! More mobs!” 
 * 52 new blocks including Copper, Chain and Blackstone
 * 31 new items including Shield, Dyes and Netherite tools/armor
 
-<NewMobs.png>
+![New mobs to use](/static/blog/minecraft/update-2022/new-mobs.png)
 
 Here’s a sample program you can use to spawn some of the new animals: https://makecode.com/_cusi42faHfUA. Keep in mind that axolotls are very aggressive and will kill off your glow squid pretty quickly, and the goat will jump over the fence!
 
@@ -22,7 +22,7 @@ Here’s a sample program you can use to spawn some of the new animals: https://
 
 Continuing to focus on accessibility for all students in MakeCode and Minecraft, we’ve added support for Immersive Reader (https://azure.microsoft.com/en-us/services/immersive-reader) in tutorials. Immersive Reader is a Microsoft Azure AI service that helps students read and comprehend text by reading aloud, isolating content, highlighting parts of speech, and providing translation services.
 
-<ImmersiveReader.png>
+![Immersive Reader example](/static/blog/minecraft/update-2022/immersive-reader.png)
 
 ## New Position Blocks
 
@@ -32,15 +32,15 @@ The 3-dimensional coordinate system in Minecraft is one of the more challenging 
 
 This new block allows you to specify coordinates to the right/left, above/below, and in front/behind the player.
 
-<PlayerDirection.png>
+![Player location block](/static/blog/minecraft/update-2022/player-direction.png)
 
-<PlayerDirectionExample.png>
+![Player direction example](/static/blog/minecraft/update-2022/player-direction-example.png)
 
 ### Local coordinates
 
 This block specifies the direction the player is looking (or the camera) and is helpful for placing things dynamically wherever the player is looking. For instance, this “Magic Chicken Wand” program will magically spawn chickens in the direction the player waves the sword: https://makecode.com/_WCz3igJVXPFR
 
-<CameraDirection.png>
+![Camera location block](/static/blog/minecraft/update-2022/camera-direction.png)
 
 To learn more about the different Position API’s in MakeCode for Minecraft, see https://minecraft.makecode.com/reference/positions.
 
@@ -48,7 +48,7 @@ To learn more about the different Position API’s in MakeCode for Minecraft, se
 
 For those of you who love the mining in Minecraft, you’ll appreciate these new block detection blocks which allow you to detect different types of blocks. For example, this is a program that acts as a "Diamond Detector" showing you the location of all the diamonds in the ground below you: https://makecode.com/_Vo1a96AWpKRe.
 
-<DiamondDetector.png>
+![Diamond Detector exaple](/static/blog/minecraft/update-2022/diamond-detector.png)
 
 And this program will list out all the different blocks 10 blocks below you: https://makecode.com/_Eoad0vckwcRi.
 
@@ -56,11 +56,11 @@ And this program will list out all the different blocks 10 blocks below you: htt
 
 We’ve optimized our tutorial layout for people who expand the Code Builder window to full screen. For folks using the half-screen view of Code Builder, there won’t be any changes – the tutorials will still appear at the top of the screen. But for people who expand to a full-screen view, you will see the tutorial pane now on the left side of the screen. This optimized view allows for more vertical space working with code.
 
-<Tutorial-half.png>
+![Half size tutorial](/static/blog/minecraft/update-2022/tutorial-half.png)
 
 Tutorials in half-screen view
 
-<Tutorial-full.png>
+![Full size tutorial](/static/blog/minecraft/update-2022/tutorial-full.png)
 
 Tutorials in full-screen view
 
@@ -68,7 +68,9 @@ Tutorials in full-screen view
 
 And lastly we’ve added Arrays as a parameter data type for Functions, so now you can create your own random spawn block or do bubble sorts on mobs!
 
-<FunctionsArrays.png> https://makecode.com/_05F2zv5TWDX7
+![Functions with array parameters](/static/blog/minecraft/update-2022/functions-arrays.png)
+
+https://makecode.com/_05F2zv5TWDX7
 
 We hope these updates are helpful, and we can’t wait to see what you all create and code next in Minecraft!
 
