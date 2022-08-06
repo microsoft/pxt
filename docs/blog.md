@@ -1,12 +1,12 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode Minecraft 2022 Update](/blog/minecraft/update-2022)
+## [MakeCode Minecraft 2022 Update](/blog/minecraft/2022-release)
 
 August 9th, 2022 by [Jaqster](https://github.com/jaqster)
 
 Well, just in time for back-to-school, we have some nice MakeCode updates to share with everyone that will make your coding experience in Minecraft: Education Edition even better!
 
-**[Continue reading this blog post](/blog/minecraft/update-2022)**
+**[Continue reading this blog post](/blog/minecraft/2022-release)**
 
 ## [MakeCode for the micro:bit – Buzz, Beep, Bing, Hello 2022 Update!](/blog/microbit/2022-release)
 
