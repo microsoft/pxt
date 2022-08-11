@@ -621,7 +621,7 @@ ${baseLabel}_nochk:
             })
         }
 
-        private helperObject(desc:string) {
+        private helperObject(desc: string) {
             return `.object _pxt_helper_${desc.replace(/[^\w]+/g, "_")} "helper: ${desc}"`
         }
 
