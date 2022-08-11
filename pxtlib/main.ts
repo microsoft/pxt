@@ -489,6 +489,7 @@ namespace pxt {
     export const README_FILE = "README.md"
     export const GITIGNORE_FILE = ".gitignore"
     export const ASSETS_FILE = "assets.json"
+    export const HISTORY_FILE = "history.json";
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";

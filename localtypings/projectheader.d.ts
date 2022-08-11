@@ -62,4 +62,34 @@ declare namespace pxt.workspace {
         id: string;
         type: "snapshot" | "permalink";
     }
+
+    export interface HistoryEntry {
+        timestamp: number;
+        changes: FileChange[];
+    }
+
+    export type FileChange = FileAddedChange | FileRemovedChange | FileEditedChange;
+
+    export interface FileAddedChange {
+        type: "added";
+        filename: string;
+        value: string;
+    }
+
+    export interface FileRemovedChange {
+        type: "removed";
+        filename: string;
+        value: string;
+    }
+
+    export interface FileEditedChange {
+        type: "edited";
+        filename: string;
+        diff: string;
+    }
+
+    export interface HistoryFile {
+        history: HistoryEntry[];
+        version: number;
+    }
 }

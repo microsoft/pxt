@@ -17,6 +17,7 @@ import * as cloud from "./cloud"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
+import { pushHistoryEntry } from "./versionHistory";
 
 // Avoid importing entire crypto-js
 /* eslint-disable import/no-internal-modules */
@@ -586,6 +587,31 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         let ver: any;
 
         const toWrite = text ? e.text : null;
+
+        if (toWrite && isHistoryEnabled()) {
+            let previous: pxt.workspace.File;
+
+            try {
+                previous = await impl.getAsync(h);
+            }
+            catch (e) {
+                // Doesn't exist
+            }
+
+            let historyFile: pxt.workspace.HistoryFile = {
+                version: 0,
+                history: []
+            };
+
+            if (previous) {
+                if (previous.text[pxt.HISTORY_FILE]) {
+                    historyFile = JSON.parse(previous.text[pxt.HISTORY_FILE])
+                }
+                historyFile.history = pushHistoryEntry(previous.text, toWrite, historyFile.history);
+            }
+
+            toWrite[pxt.HISTORY_FILE] = JSON.stringify(historyFile);
+        }
 
         try {
             ver = await impl.setAsync(h, e.version, toWrite);
@@ -1666,6 +1692,10 @@ export function fireEvent(ev: pxt.editor.events.Event) {
     if (impl.fireEvent)
         return impl.fireEvent(ev)
     // otherwise, NOP
+}
+
+function isHistoryEnabled() {
+    return true;
 }
 
 // debug helpers

@@ -70,6 +70,7 @@
     "chai": "^3.5.0",
     "cssnano": "4.1.10",
     "dashjs": "^4.4.0",
+    "diff": "5.0.0",
     "dompurify": "2.0.17",
     "faye-websocket": "0.11.1",
     "karma": "6.3.10",
@@ -98,6 +99,7 @@
   "devDependencies": {
     "@microsoft/eslint-plugin-sdl": "^0.1.5",
     "@types/chai": "4.0.6",
+    "@types/diff": "5.0.1",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
     "@types/jquery": "3.3.29",
