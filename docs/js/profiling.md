@@ -117,3 +117,6 @@ This can be enabled with `?compiler=size`.
 When compiling for native, this will generate `size.csv` file alongside
 `binary.asm` and `binary.uf2`.
 You can load it into Excel and draw a treemap from the first three columns. 
+
+The switch will also generate a long comment at the head of `binary.asm`
+listing sizes of various objects and which object references which.

@@ -298,7 +298,8 @@ namespace ts.pxtc.thumb {
                         lbl = "_ldlit_" + ++seq
                         values[v] = lbl
                     }
-                    line.update(`ldr ${reg}, ${lbl}`)
+                    line.ldlitLabel = line.words[3]
+                    line.update(`ldr ${reg}, ${lbl} ; ${line.ldlitLabel}`)
                 }
                 if (line === nextGoodSpot) {
                     nextGoodSpot = null
@@ -306,6 +307,7 @@ namespace ts.pxtc.thumb {
                     let jmplbl = "_jmpwords_" + ++seq
                     if (needsJumpOver)
                         txtLines.push("bb " + jmplbl)
+                    txtLines.push(`.object PUSH`)
                     txtLines.push(".balign 4")
                     for (let v of Object.keys(values)) {
                         let lbl = values[v]
@@ -313,6 +315,7 @@ namespace ts.pxtc.thumb {
                     }
                     if (needsJumpOver)
                         txtLines.push(jmplbl + ":")
+                    txtLines.push(`.object POP`)
                     for (let t of txtLines) {
                         f.buildLine(t, outlines)
                         let ll = outlines[outlines.length - 1]
