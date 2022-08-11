@@ -97,6 +97,7 @@ namespace ts.pxtc {
             const info = utf8AsmStringLiteral(strLit)
             return `
             .balign 4
+            .object ${lbl}
             ${lbl}: ${this.obj_header(info.vt)}
             ${info.asm}
 `
@@ -109,6 +110,7 @@ namespace ts.pxtc {
             const align = /f{16}/i.test(data) ? 8 : 4
             return `
 .balign ${align}
+.object ${lbl}
 ${lbl}: ${this.obj_header("pxt::buffer_vt")}
 ${hexLiteralAsm(data)}
 `
@@ -226,6 +228,7 @@ ${hexLiteralAsm(data)}
 `)
 
             let baseLabel = this.proc.label()
+            this.write(`.object ${baseLabel} ${JSON.stringify(this.proc.getFullName())}`)
             let preLabel = baseLabel + "_pre"
             let bkptLabel = baseLabel + "_bkpt"
             let locLabel = baseLabel + "_locals"
@@ -618,9 +621,14 @@ ${baseLabel}_nochk:
             })
         }
 
+        private helperObject(desc:string) {
+            return `.object _pxt_helper_${desc.replace(/[^\w]+/g, "_")} "helper: ${desc}"`
+        }
+
         private emitBindHelper() {
             const maxArgs = 12
             this.write(`
+                ${this.helperObject("bind")}
                 .section code
                 _pxt_bind_helper:
                     push {r0, r2}
@@ -1139,6 +1147,7 @@ ${baseLabel}_nochk:
         private emitFieldMethods() {
             for (let op of ["get", "set"]) {
                 this.write(`
+                ${this.helperObject(op)}
                 .section code
                 _pxt_map_${op}:
                 `)
@@ -1191,6 +1200,7 @@ ${baseLabel}_nochk:
 
         private emitArrayMethod(op: string, isBuffer: boolean) {
             this.write(`
+            ${this.helperObject(op + " " + (isBuffer ? "buffer" : "array"))}
             .section code
             _pxt_${isBuffer ? "buffer" : "array"}_${op}:
             `)
@@ -1285,6 +1295,7 @@ ${baseLabel}_nochk:
         private emitLambdaTrampoline() {
             let r3 = target.stackAlign ? "r3," : ""
             this.write(`
+            ${this.helperObject("trampoline")}
             .section code
             _pxt_lambda_trampoline:
                 push {${r3} r4, r5, r6, r7, lr}
@@ -1325,6 +1336,7 @@ ${baseLabel}_nochk:
                 pop {${r3} r4, r5, r6, r7, pc}`)
 
             this.write(`
+            ${this.helperObject("exn")}
             .section code
             ; r0 - try frame
             ; r1 - handler PC
@@ -1355,6 +1367,7 @@ ${baseLabel}_nochk:
                 `)
 
             this.write(`
+            ${this.helperObject("stringconv")}
             .section code
             _pxt_stringConv:
             `)

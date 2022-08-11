@@ -105,6 +105,7 @@ namespace ts.pxtc {
                     return ""
                 })
                 let code =
+                    ".object inlineasm\n" +
                     ".section code\n" +
                     "@stackmark func\n" +
                     "@scope user" + asmIdx++ + "\n" +
@@ -682,6 +683,7 @@ namespace ts.pxtc {
         for (let data of Object.keys(bin.doubles)) {
             let lbl = bin.doubles[data]
             bin.otherLiterals.push(`
+.object ${lbl}
 .balign 4
 ${lbl}: ${snippets.obj_header("pxt::number_vt")}
         .hex ${data}
@@ -781,6 +783,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
 
         let ptrSz = target.shortPointers ? ".short" : ".word"
         let s = `
+        .object ${info.id}_VT
         .balign 4
 ${info.id}_VT:
         .short ${info.allfields.length * 4 + 4}  ; size in bytes
@@ -897,7 +900,11 @@ ${hexfile.hexPrelude()}
         asmsource += "_code_end:\n\n"
 
         U.iterMap(bin.codeHelpers, (code, lbl) => {
-            asmsource += `    .section code\n${lbl}:\n${code}\n`
+            asmsource +=
+                `    .section code\n` +
+                `    .object _code_helper_${lbl}\n` +
+                `${lbl}:\n` +
+                `${code}\n`
         })
         asmsource += snippets.arithmetic()
         asmsource += "_helpers_end:\n\n"
@@ -906,7 +913,7 @@ ${hexfile.hexPrelude()}
             asmsource += vtableToAsm(info, opts, bin)
         })
 
-        asmsource += `\n.balign 4\n_pxt_iface_member_names:\n`
+        asmsource += `\n.balign 4\n.object _pxt_iface_member_names\n_pxt_iface_member_names:\n`
         asmsource += `    .word ${bin.ifaceMembers.length}\n`
         let idx = 0
         for (let d of bin.ifaceMembers) {
@@ -916,7 +923,7 @@ ${hexfile.hexPrelude()}
         asmsource += `    .word 0\n`
         asmsource += "_vtables_end:\n\n"
 
-        asmsource += `\n.balign 4\n_pxt_config_data:\n`
+        asmsource += `\n.balign 4\n.object _pxt_config_data\n_pxt_config_data:\n`
         const cfg = bin.res.configData || []
         // asmsource += `    .word ${cfg.length}, 0 ; num. entries`
         for (let d of cfg) {
@@ -927,7 +934,7 @@ ${hexfile.hexPrelude()}
         emitStrings(snippets, bin)
         asmsource += bin.otherLiterals.join("")
 
-        asmsource += `\n.balign 4\n.section code\n_pxt_perf_counters:\n`
+        asmsource += `\n.balign 4\n.section code\n.object _perf_counters\n_pxt_perf_counters:\n`
         asmsource += `    .word ${perfCounters.length}\n`
         let strs = ""
         for (let i = 0; i < perfCounters.length; ++i) {
@@ -967,6 +974,9 @@ ${hexfile.hexPrelude()}
 
         if (target.switches.noPeepHole)
             b.disablePeepHole = true
+
+        if (target.switches.size)
+            b.codeSizeStats = true
 
         b.lookupExternalLabel = hexfile.lookupFunctionAddr;
         b.normalizeExternalLabel = s => {
@@ -1035,6 +1045,7 @@ ${hexfile.hexPrelude()}
 
         return `
     .balign 16
+    .object _stored_program
 _stored_program: .hex ${res}
 `
     }
