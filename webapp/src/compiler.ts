@@ -181,9 +181,10 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
 
             // keep the assembly file - it is only generated when user hits "Download"
             // and is usually overwritten by the autorun very quickly, so it's impossible to see it
-            let prevasm = outpkg.files[pxtc.BINARY_ASM]
-            if (prevasm && !resp.outfiles[pxtc.BINARY_ASM]) {
-                resp.outfiles[pxtc.BINARY_ASM] = prevasm.content
+            for (const file of Object.keys(outpkg.files)) {
+                if (file.endsWith(".asm") && !resp.outfiles[file]) {
+                    resp.outfiles[file] = outpkg.files[file].content;
+                }
             }
 
             // add metadata about current build
