@@ -1647,7 +1647,13 @@ export class ProjectView
                 // override inferred editor with tutorial editor if present in markdown
                 const tutorialPreferredEditor = h.tutorial?.metadata?.preferredEditor;
                 if (tutorialPreferredEditor) {
-                    file = main.lookupFile("this/" + filenameForEditor(tutorialPreferredEditor)) || file;
+                    let fileName  = "this/" + filenameForEditor(tutorialPreferredEditor);
+                    file = main.lookupFile(fileName);
+
+                    // If the preferred file does not exist, create it.
+                    if(!file) {
+                        file = main.setFile(fileName, '\n');
+                    }
                 }
 
                 if (file.name === pxt.MAIN_TS) {
