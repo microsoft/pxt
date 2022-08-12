@@ -1651,7 +1651,7 @@ export class ProjectView
                     file = main.lookupFile(fileName);
 
                     // If the preferred file does not exist, create it.
-                    if(!file) {
+                    if (!file) {
                         file = main.setFile(fileName, '\n');
 
                         pkg.mainPkg.config.files.push(fileName);
@@ -1831,14 +1831,14 @@ export class ProjectView
             if (newText[file] !== undefined) {
                 pkg.mainEditorPkg().setFile(file, newText[file]);
 
-                if(pkg.mainPkg.config.files.indexOf(file) < 0) {
+                if (pkg.mainPkg.config.files.indexOf(file) < 0) {
                     updateConfig = true;
                     pkg.mainPkg.config.files.push(file);
                 }
             }
         }
 
-        if(updateConfig) {
+        if (updateConfig) {
              pkg.mainPkg.saveConfig();
         }
 
