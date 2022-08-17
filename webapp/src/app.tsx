@@ -1647,7 +1647,16 @@ export class ProjectView
                 // override inferred editor with tutorial editor if present in markdown
                 const tutorialPreferredEditor = h.tutorial?.metadata?.preferredEditor;
                 if (tutorialPreferredEditor) {
-                    file = main.lookupFile("this/" + filenameForEditor(tutorialPreferredEditor)) || file;
+                    let fileName  = "this/" + filenameForEditor(tutorialPreferredEditor);
+                    file = main.lookupFile(fileName);
+
+                    // If the preferred file does not exist, create it.
+                    if (!file) {
+                        file = main.setFile(fileName, '\n');
+
+                        pkg.mainPkg.config.files.push(fileName);
+                        pkg.mainPkg.saveConfig();
+                    }
                 }
 
                 if (file.name === pxt.MAIN_TS) {
@@ -1817,10 +1826,20 @@ export class ProjectView
             }
         }
 
+        let updateConfig = false;
         for (const file of Object.keys(newText)) {
             if (newText[file] !== undefined) {
                 pkg.mainEditorPkg().setFile(file, newText[file]);
+
+                if (pkg.mainPkg.config.files.indexOf(file) < 0) {
+                    updateConfig = true;
+                    pkg.mainPkg.config.files.push(file);
+                }
             }
+        }
+
+        if (updateConfig) {
+             pkg.mainPkg.saveConfig();
         }
 
         await workspace.saveAsync(header);
