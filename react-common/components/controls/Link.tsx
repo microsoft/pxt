@@ -2,8 +2,9 @@ import * as React from "react";
 import { classList, ContainerProps } from "../util";
 
 export interface LinkProps extends ContainerProps {
-    href: string;
+    href?: string;
     target?: "_self" | "_blank" | "_parent" | "_top";
+    onClick?: () => void;
 }
 
 export const Link = (props: LinkProps) => {
@@ -29,6 +30,7 @@ export const Link = (props: LinkProps) => {
             href={href}
             target={target}
             rel={target === "_blank" ? "noopener noreferrer" : ""}
+            onClick={props.onClick}
             >
             {children}
         </a>

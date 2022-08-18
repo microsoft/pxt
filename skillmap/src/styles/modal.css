@@ -32,34 +32,6 @@
     padding-top: 1rem;
 }
 
-/* LOGIN MODAL */
-.sign-in .container {
-    display: flex;
-    align-items: center;
-}
-
-.sign-in .container a {
-    padding-left: .5rem;
-}
-
-.sign-in .remember {
-    user-select: none;
-    cursor: pointer;
-    margin-top: 0.5rem;
-    display: flex;
-    justify-content: center;
-}
-
-.sign-in .modal-actions {
-    grid-template-columns: 1fr;
-    margin-top: .5rem;
-}
-
-.common-modal .icon.cloud-user {
-    width: 7rem;
-    margin-right: 2rem;
-}
-
 /* PROFILE DIALOG */
 /* Most of this CSS is copied from the webapp in commons.less */
 .profiledialog .ui.card {

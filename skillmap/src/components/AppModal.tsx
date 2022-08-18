@@ -17,8 +17,8 @@ import { Modal, ModalAction } from 'react-common/controls/Modal';
 import { jsxLF } from "react-common/util";
 import { Badge } from "react-common/profile/Badge";
 import { Button } from "react-common/controls/Button";
-import { Checkbox } from "react-common/controls/Checkbox";
 import { Input } from "react-common/controls/Input";
+import { SignInModal } from "react-common/profile/SignInModal";
 
 interface AppModalProps {
     type: ModalType;
@@ -374,58 +374,16 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderLoginModal(activityPrompt: boolean) {
-        const rememberMeSelected = this.state.checkboxSelected ?? false;
 
-        const signInIconAltText = lf("Sign in icon")
-
-        const msft = pxt.auth.identityProvider("microsoft");
-        const buttons = [];
-        buttons.push({
-            label: lf("Sign In"),
-            onClick: async () => {
-                pxt.tickEvent(`skillmap.signindialog.signin`, { provider: msft.name ? msft.name : "", rememberMe: rememberMeSelected.toString() });
-                pxt.auth.client().loginAsync(msft.id, rememberMeSelected, { hash: location.hash })
-            }
-        })
-
-        const onRememberMeChecked = (newValue: boolean) => {
-            tickEvent("skillmap.signindialog.rememberme", { rememberMe: newValue.toString() });
-            this.setState({ checkboxSelected: newValue });
+        const signInAsync = async (provider: pxt.AppCloudProvider, rememberMe: boolean): Promise<void> => {
+            pxt.tickEvent(`identity.loginClick`, { provider: provider.name!, rememberMe: rememberMe.toString() });
+            await pxt.auth.client().loginAsync(provider.id, rememberMe, { hash: location.hash });
         }
 
-        return <Modal title={activityPrompt ? lf("Save your Completed Activity") : lf("Sign into MakeCode Arcade")} onClose={this.handleOnClose} actions={buttons} className="sign-in">
-            <div className="description">
-                <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
-
-            <div className="container">
-                    { activityPrompt && <img src={resolvePath("/assets/cloud-user.svg")} alt={signInIconAltText} className="icon cloud-user"/> }
-                    <p>{ lf("Don't have a Microsoft Account? Start signing in to create one!")}
-                        <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
-                            tickEvent("skillmap.signindialog.learn");
-                            window.open("https://aka.ms/cloudsave", "_blank");
-                        }}>
-                            <i className="fas fa-external-link-alt" aria-hidden={true} />{lf("Learn more")}
-                        </a>
-                    </p>
-                </div>
-                <div className="remember">
-                    <Checkbox id="sign-in-remember-me" label={lf("Remember me")} onChange={onRememberMeChecked} isChecked={rememberMeSelected} />
-                </div>
-            </div>
-        </Modal>
-    }
-
-    async handleSigninClick(provider: pxt.AppCloudProvider) {
-        const rememberMeSelected = this.state.checkboxSelected ?? false;
-        pxt.tickEvent(`skillmap.signindialog.signin`, { provider: provider.id, rememberMe: rememberMeSelected.toString() });
-        await pxt.auth.client().loginAsync(provider.id, rememberMeSelected, { hash: location.hash });
-    }
-
-    handleRememberMeClick() {
-        const rememberMeSelected = this.state.checkboxSelected ?? false;
-        const rememberMe = !rememberMeSelected;
-        tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
-        this.setState({ checkboxSelected: rememberMe });
+        return <>
+            {activityPrompt && <SignInModal appMessage={lf("Nice work! You've completed this activity.")} onSignIn={signInAsync} onClose={this.handleOnClose} />}
+            {!activityPrompt && <SignInModal onSignIn={signInAsync} onClose={this.handleOnClose} />}
+        </>
     }
 
     renderDeleteAccountModal() {

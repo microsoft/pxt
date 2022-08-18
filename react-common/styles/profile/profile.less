@@ -350,3 +350,70 @@
         grid-auto-rows: 12rem;
     }
 }
+
+
+/****************************************************
+ *                 Sign In Modal                    *
+ ****************************************************/
+
+.signin-form {
+    margin: 0 1rem;
+
+    .signin-header {
+        margin: 0 0 1rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .signin-body {
+        display: flex;
+        justify-content: center;
+
+        .providers {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+            margin: 0 0 1rem 0;
+
+            .provider {
+                width: 100%;
+                margin: 0;
+                padding: 0.8rem 2.5rem;
+
+                .label {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 1rem;
+
+                    .logo {
+                        width: 1.25rem;
+                    }
+
+                    .title {
+                        align-self: center;
+                    }
+                }
+            }
+        }
+    }
+
+    .signin-footer {
+        .switch {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+
+            & .common-link {
+                cursor: pointer;
+            }
+        }
+
+        .learn {
+            font-size: smaller;
+            width: 100%;
+            text-align: right;
+        }
+    }
+}

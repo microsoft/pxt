@@ -139,8 +139,13 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             });
         }
 
+        // Google user picture URL must have referrer policy set to no-referrer
         const avatarElem = this.avatarPicUrl()
-            ? <div className="avatar"><img src={this.avatarPicUrl()} aria-hidden="true" alt={lf("Profile Image")}/></div>
+            ? <div className="avatar" dangerouslySetInnerHTML={{__html: pxt.BrowserUtils.imgTag(this.avatarPicUrl()!, {
+                referrerpolicy: "no-referrer",
+                alt: lf("Profile Image"),
+                "aria-hidden": "true"
+            })}}/>
             : undefined;
 
         const initialsElem = <span><div className="avatar-initials" aria-hidden="true">{pxt.auth.userInitials(profile)}</div></span>

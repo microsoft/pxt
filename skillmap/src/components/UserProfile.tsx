@@ -81,10 +81,12 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
         const { profile } = this.props;
         const provider = profile?.idp?.provider && pxt.auth.identityProvider(profile?.idp?.provider);
 
+        // Google user picture URL must have referrer policy set to no-referrer
         const avatarElem = (
-            <div className="profile-pic avatar">
-                <img src={this.avatarPicUrl()} alt={lf("User")} />
-            </div>
+            <div className="profile-pic avatar" dangerouslySetInnerHTML={{__html: pxt.BrowserUtils.imgTag(this.avatarPicUrl()!, {
+                referrerpolicy: "no-referrer",
+                alt: lf("User")
+            })}}/>
         );
         const initialsElem = (
             <div className="profile-pic avatar">

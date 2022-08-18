@@ -1386,4 +1386,21 @@ namespace pxt.BrowserUtils {
             return false;
         }
     }
+
+    // Returns a stringified image element suitable for use in React's `dangerouslySetInnerHTML` attribute.
+    // This is useful when you want to include img attributes not supported by React, such as `referrerpolicy`.
+    export function imgTag(src: string, attrs?: {
+        alt?: string;
+        crossorigin?: string;
+        height?: number;
+        width?: number;
+        loading?: "lazy" | "eager" | "auto";
+        referrerpolicy?: "no-referrer" | "no-referrer-when-downgrade" | "origin" | "origin-when-cross-origin" | "unsafe-url"
+        "class"?: string;
+        "aria-hidden"?: "true" | "false" | "assertive" | "polite";
+    }): string {
+        attrs = attrs ?? {};
+        const attrSet = Object.keys(attrs).map(k => `${k}="${(attrs as any)[k]}"`).join(" ");
+        return `<img src="${src}" ${attrSet}/>`;
+    }
 }
