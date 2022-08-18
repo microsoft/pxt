@@ -119,6 +119,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
             </div>
         );
         // Google user picture URL must have referrer policy set to no-referrer
+        // eslint-disable-next-line: react/no-danger
         const avatarElem = <div className="avatar" dangerouslySetInnerHTML={{__html: pxt.BrowserUtils.imgTag(this.avatarPicUrl(), {
             referrerpolicy: "no-referrer",
             alt: lf("User Menu")

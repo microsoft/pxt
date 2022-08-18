@@ -31,6 +31,7 @@ export const UserPane = (props: UserPaneProps) => {
         <div className="profile-portrait">
             { picUrl ?
                 // Google user picture URL must have referrer policy set to no-referrer
+                // eslint-disable-next-line: react/no-danger
                 <div dangerouslySetInnerHTML={{__html: pxt.BrowserUtils.imgTag(picUrl, {
                     referrerpolicy: "no-referrer",
                     alt: pxt.U.lf("Profile Picture")

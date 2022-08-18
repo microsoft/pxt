@@ -140,6 +140,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         }
 
         // Google user picture URL must have referrer policy set to no-referrer
+        // eslint-disable-next-line: react/no-danger
         const avatarElem = this.avatarPicUrl()
             ? <div className="avatar" dangerouslySetInnerHTML={{__html: pxt.BrowserUtils.imgTag(this.avatarPicUrl()!, {
                 referrerpolicy: "no-referrer",
