@@ -1,3 +1,5 @@
+/// <reference path="../../localtypings/react.d.ts" />
+
 import * as React from "react";
 import * as sui from "./sui";
 import * as core from "./core";
@@ -120,10 +122,11 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         );
         // Google user picture URL must have referrer policy set to no-referrer
         // eslint-disable-next-line: react/no-danger
-        const avatarElem = <div className="avatar" dangerouslySetInnerHTML={{__html: pxt.BrowserUtils.imgTag(this.avatarPicUrl(), {
-            referrerpolicy: "no-referrer",
-            alt: lf("User Menu")
-        })}} />;
+        const avatarElem = (
+            <div className="avatar">
+                <img src={this.avatarPicUrl()} alt={lf("User Menu")} referrerPolicy="no-referrer" />
+            </div>
+        );
         const initialsElem = (
             <div className="avatar">
                 <span className="initials">{pxt.auth.userInitials(user)}</span>

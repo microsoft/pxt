@@ -1,4 +1,6 @@
 /// <reference path="../lib/skillMap.d.ts" />
+/// <reference path="../../../localtypings/react.d.ts" />
+
 import * as React from "react";
 
 import { connect } from 'react-redux';
@@ -140,13 +142,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         }
 
         // Google user picture URL must have referrer policy set to no-referrer
-        // eslint-disable-next-line: react/no-danger
         const avatarElem = this.avatarPicUrl()
-            ? <div className="avatar" dangerouslySetInnerHTML={{__html: pxt.BrowserUtils.imgTag(this.avatarPicUrl()!, {
-                referrerpolicy: "no-referrer",
-                alt: lf("Profile Image"),
-                "aria-hidden": "true"
-            })}}/>
+            ? <div className="avatar">
+                <img src={this.avatarPicUrl()} alt={lf("Profile Image")} referrerPolicy="no-referrer" aria-hidden="true" />
+            </div>
             : undefined;
 
         const initialsElem = <span><div className="avatar-initials" aria-hidden="true">{pxt.auth.userInitials(profile)}</div></span>

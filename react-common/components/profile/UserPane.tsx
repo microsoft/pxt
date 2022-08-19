@@ -1,3 +1,5 @@
+/// <reference path="../../../localtypings/react.d.ts" />
+
 import * as React from "react";
 import { fireClickOnEnter, CheckboxStatus } from "../util";
 import { UserNotification } from "./UserNotification";
@@ -31,11 +33,9 @@ export const UserPane = (props: UserPaneProps) => {
         <div className="profile-portrait">
             { picUrl ?
                 // Google user picture URL must have referrer policy set to no-referrer
-                // eslint-disable-next-line: react/no-danger
-                <div dangerouslySetInnerHTML={{__html: pxt.BrowserUtils.imgTag(picUrl, {
-                    referrerpolicy: "no-referrer",
-                    alt: pxt.U.lf("Profile Picture")
-                })}} />
+                <div>
+                    <img src={picUrl} alt={pxt.U.lf("Profile Picture")} referrerPolicy="no-referrer" />
+                </div>
                 : <div className="profile-initials-portrait">
                     {pxt.auth.userInitials(profile)}
                 </div>
