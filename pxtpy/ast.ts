@@ -172,6 +172,8 @@ namespace pxt.py {
         vars: Map<ScopeSymbolInfo>;
         parent?: ScopeDef;
         blockDepth?: number;
+        /* used to avoid name collisions when generating helper vars (e.g. __tempvar1) */
+        nextHelperVariableId?: number;
     }
 
     export interface FunctionDef extends Symbol, ScopeDef {
