@@ -284,7 +284,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
         const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
-        const showProjectSettings = targetTheme.showProjectSettings;
+        const showProjectSettings = targetTheme.showProjectSettings || pxt.editor.experiments.isEnabled("palettePicker");
         const docItems = targetTheme.docMenu && targetTheme.docMenu.filter(d => !d.tutorial);
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
 
