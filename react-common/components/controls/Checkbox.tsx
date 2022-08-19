@@ -32,7 +32,7 @@ export const Checkbox = (props: CheckboxProps) => {
                 tabIndex={0}
                 type="checkbox"
                 checked={isChecked}
-                onClick={onCheckboxClick}
+                onChange={onCheckboxClick}
                 onKeyDown={fireClickOnEnter}
                 role={role}
                 aria-hidden={ariaHidden}

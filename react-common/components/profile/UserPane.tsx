@@ -1,3 +1,6 @@
+/// <reference path="../types.d.ts" />
+/// <reference path="../../../localtypings/react.d.ts" />
+
 import * as React from "react";
 import { fireClickOnEnter, CheckboxStatus } from "../util";
 import { UserNotification } from "./UserNotification";
@@ -17,7 +20,9 @@ export interface UserPaneProps {
 export const UserPane = (props: UserPaneProps) => {
     const { profile, onSignOutClick, onDeleteProfileClick, onEmailCheckClick, notification, emailChecked } = props;
 
-    const { username, displayName, picture } = profile.idp;
+    const { username, displayName, picture, pictureUrl } = profile.idp;
+
+    const picUrl = pictureUrl ?? picture?.dataUrl;
 
     const emailLabel = <>
         {emailChecked === CheckboxStatus.Waiting ? <div className="common-spinner" /> : undefined}
@@ -27,8 +32,11 @@ export const UserPane = (props: UserPaneProps) => {
 
     return <div className="profile-user-pane">
         <div className="profile-portrait">
-            { picture?.dataUrl ?
-                <img src={picture?.dataUrl} alt={pxt.U.lf("Profile Picture")} />
+            { picUrl ?
+                // Google user picture URL must have referrer policy set to no-referrer
+                <div>
+                    <img src={picUrl} alt={pxt.U.lf("Profile Picture")} referrerPolicy="no-referrer" />
+                </div>
                 : <div className="profile-initials-portrait">
                     {pxt.auth.userInitials(profile)}
                 </div>
@@ -54,12 +62,12 @@ export const UserPane = (props: UserPaneProps) => {
                 label={emailLabel}/>
         </div>
         <div className="profile-actions">
-            <a role="button"
-                tabIndex={0}
-                onKeyPress={fireClickOnEnter}
-                onClick={onDeleteProfileClick}>
-                {lf("Delete Profile")}
-            </a>
+            <Button
+                className="link-button"
+                title={lf("Delete Profile")}
+                label={lf("Delete Profile")}
+                onClick={onDeleteProfileClick}
+            />
             <Button
                 className="sign-out"
                 leftIcon="fas fa-sign-out-alt"

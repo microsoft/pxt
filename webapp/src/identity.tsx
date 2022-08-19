@@ -1,3 +1,5 @@
+/// <reference path="../../localtypings/react.d.ts" />
+
 import * as React from "react";
 import * as sui from "./sui";
 import * as core from "./core";
@@ -5,7 +7,7 @@ import * as auth from "./auth";
 import * as data from "./data";
 import * as cloudsync from "./cloudsync";
 import * as cloud from "./cloud";
-import { fireClickOnEnter } from "./util";
+import { SignInModal } from "../../react-common/components/profile/SignInModal";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -14,7 +16,6 @@ export type LoginDialogProps = ISettingsProps & {
 
 export type LoginDialogState = {
     visible?: boolean;
-    rememberMe?: boolean;
     continuationHash?: string;
 };
 
@@ -25,13 +26,8 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
 
         this.state = {
             visible: false,
-            rememberMe: false,
             continuationHash: ""
         };
-    }
-
-    private handleRememberMeChanged = (v: boolean) => {
-        this.setState({ rememberMe: v });
     }
 
     public async show(continuationHash?: string) {
@@ -42,39 +38,19 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
         this.setState({ visible: false });
     }
 
-    private async signInAsync(provider: pxt.AppCloudProvider): Promise<void> {
-        pxt.tickEvent(`identity.loginClick`, { provider: provider.name, rememberMe: this.state.rememberMe.toString() });
-        await auth.loginAsync(provider.id, this.state.rememberMe, {
+    private signInAsync = async (provider: pxt.AppCloudProvider, rememberMe: boolean): Promise<void> => {
+        pxt.tickEvent(`identity.loginClick`, { provider: provider.name, rememberMe: rememberMe.toString() });
+        await auth.loginAsync(provider.id, rememberMe, {
             hash: this.state.continuationHash
         });
     }
 
     renderCore() {
         const { visible } = this.state;
-        const msft = pxt.auth.identityProvider("microsoft");
 
-        const buttons: sui.ModalButton[] = [];
-        buttons.push({
-            label: lf("Sign in"),
-            onclick: async () => await this.signInAsync(msft),
-            icon: "checkmark",
-            approveButton: true,
-            className: "positive"
-        });
-
-        const actions: JSX.Element[] = [];
-        actions.push(<sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} />);
-
-        return (
-            <sui.Modal isOpen={visible} className="signindialog" size="tiny"
-                onClose={this.hide} dimmer={true} buttons={buttons} actions={actions}
-                closeIcon={true} header={lf("Sign into {0}", pxt.appTarget.appTheme.organizationText)}
-                closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
-                <p>{lf("Don't have a Microsoft Account? Start signing in to create one!")}</p>
-                <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={fireClickOnEnter} />
-            </sui.Modal>
-        );
+        return <>
+            {visible && <SignInModal onClose={this.hide} onSignIn={this.signInAsync} />}
+        </>;
     }
 }
 
@@ -143,10 +119,12 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                     icon
                 })}
             </div>
-        )
+        );
+        // Google user picture URL must have referrer policy set to no-referrer
+        // eslint-disable-next-line: react/no-danger
         const avatarElem = (
             <div className="avatar">
-                <img src={this.avatarPicUrl()} alt={lf("User Menu")} />
+                <img src={this.avatarPicUrl()} alt={lf("User Menu")} referrerPolicy="no-referrer" />
             </div>
         );
         const initialsElem = (

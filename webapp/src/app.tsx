@@ -3499,6 +3499,15 @@ export class ProjectView
         // and don't want to steal focus.
         this.stopSimulator();
         this.startSimulator();
+
+        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
+        const bodyIsHighContrast = document.body.classList.contains("high-contrast");
+        if (highContrast) {
+            if (!bodyIsHighContrast) document.body.classList.add("high-contrast");
+        }
+        else if (bodyIsHighContrast) {
+            document.body.classList.remove("high-contrast");
+        }
     }
 
     onCloudStatusChanged(path: string) {
