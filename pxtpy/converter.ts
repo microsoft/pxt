@@ -1860,13 +1860,67 @@ namespace pxt.py {
                 error(n, 9556, U.lf("non-trivial tuple assignment unsupported"));
                 return stmtTODO(n)
             }
-            let tupNames = tup.elts
-                .map(e => e as py.Name)
-                .map(convertName)
-            targs.push(B.mkCommaSep(tupNames))
-            targs.push(B.mkText("]"))
-            let res = B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
-            return res
+
+            const symbols = tup.elts
+                .map(e => tryGetName(e))
+                .map(nm => nm ? currentScope().vars[nm] : undefined);
+
+            if (symbols.some(s => s?.modifier !== undefined)) {
+                const tempVarName = "__tempVar";
+                const valueAssign = B.mkStmt(
+                    B.mkInfix(
+                        B.mkGroup(
+                            [B.mkText("let "), B.mkText(tempVarName)]
+                        ),
+                        "=",
+                        expr(value)
+                    )
+                );
+
+                const assignStatements = [valueAssign];
+
+                for (let i = 0; i < symbols.length; i++) {
+                    if (symbols[i]?.modifier !== undefined) {
+                        assignStatements.push(
+                            B.mkStmt(
+                                B.mkInfix(
+                                    convertName(tup.elts[i] as py.Name),
+                                    "=",
+                                    B.mkGroup(
+                                        [B.mkText(tempVarName), B.mkText(`[${i}]`)]
+                                    )
+                                )
+                            )
+                        )
+                    }
+                    else {
+                        assignStatements.push(
+                            B.mkStmt(
+                                B.mkInfix(
+                                    B.mkGroup(
+                                        [B.mkText("let "), convertName(tup.elts[i] as py.Name)!]
+                                    ),
+                                    "=",
+                                    B.mkGroup(
+                                        [B.mkText(tempVarName), B.mkText(`[${i}]`)]
+                                    )
+                                )
+                            )
+                        )
+                    }
+                }
+
+                return B.mkGroup(assignStatements);
+            }
+            else {
+                let tupNames = tup.elts
+                    .map(e => e as py.Name)
+                    .map(convertName)
+                targs.push(B.mkCommaSep(tupNames))
+                targs.push(B.mkText("]"))
+                let res = B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
+                return res
+            }
         }
         if (target.kind === "Name") {
             const scopeSym = currentScope().vars[nm];
