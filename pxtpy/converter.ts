@@ -400,7 +400,7 @@ namespace pxt.py {
             scope.nextHelperVariableId = 0;
         }
 
-        return "__tempvar" + scope.nextHelperVariableId++
+        return "___tempvar" + scope.nextHelperVariableId++
     }
 
     function defvar(name: string, opts: py.VarDescOptions, modifier?: VarModifier, scope?: ScopeDef): ScopeSymbolInfo {
