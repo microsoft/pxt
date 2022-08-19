@@ -34,12 +34,12 @@ export const SignInModal = (props: SignInModalProps) => {
             mode === "signin" ? (
                 <div className='switch'>
                     <span>{lf("Don't have an account?")}</span>
-                    <Link onClick={() => setMode("signup")}>{lf("Sign up")}</Link>
+                    <Button className="link-button" onClick={() => setMode("signup")} title={lf("Sign up")}/>
                 </div>
             ) : (
                 <div className='switch'>
                     <span>{lf("Have an account?")}</span>
-                    <Link onClick={() => setMode("signin")}>{lf("Sign in")}</Link>
+                    <Button className="link-button" onClick={() => setMode("signin")} title={lf("Sign in")}/>
                 </div>
             ),
         [mode]
@@ -89,7 +89,7 @@ export const SignInModal = (props: SignInModalProps) => {
                 <div className='signin-footer'>
                     {footerFragment}
                     <div className='learn'>
-                        <Link href='/identity/sign-in' target='_blank' ariaHidden={true}>
+                        <Link href='/identity/sign-in' target='_blank'>
                             {lf("Learn more")}
                         </Link>
                     </div>

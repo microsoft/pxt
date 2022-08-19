@@ -1,3 +1,4 @@
+/// <reference path="../types.d.ts" />
 /// <reference path="../../../localtypings/react.d.ts" />
 
 import * as React from "react";
@@ -61,12 +62,12 @@ export const UserPane = (props: UserPaneProps) => {
                 label={emailLabel}/>
         </div>
         <div className="profile-actions">
-            <a role="button"
-                tabIndex={0}
-                onKeyPress={fireClickOnEnter}
-                onClick={onDeleteProfileClick}>
-                {lf("Delete Profile")}
-            </a>
+            <Button
+                className="link-button"
+                title={lf("Delete Profile")}
+                label={lf("Delete Profile")}
+                onClick={onDeleteProfileClick}
+            />
             <Button
                 className="sign-out"
                 leftIcon="fas fa-sign-out-alt"
