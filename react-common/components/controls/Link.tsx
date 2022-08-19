@@ -2,7 +2,7 @@ import * as React from "react";
 import { classList, ContainerProps } from "../util";
 
 export interface LinkProps extends ContainerProps {
-    href?: string;
+    href: string;
     target?: "_self" | "_blank" | "_parent" | "_top";
 }
 
