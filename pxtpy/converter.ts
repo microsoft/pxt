@@ -393,6 +393,16 @@ namespace pxt.py {
         return sym!
     }
 
+    function getHelperVariableName() {
+        const scope = currentScope();
+
+        if (scope.nextHelperVariableId === undefined) {
+            scope.nextHelperVariableId = 0;
+        }
+
+        return "___tempvar" + scope.nextHelperVariableId++
+    }
+
     function defvar(name: string, opts: py.VarDescOptions, modifier?: VarModifier, scope?: ScopeDef): ScopeSymbolInfo {
         if (!scope)
             scope = currentScope()
@@ -1853,20 +1863,9 @@ namespace pxt.py {
             return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
         }
         if (!pref && target.kind == "Tuple") {
-            let tup = target as py.Tuple
-            let targs = [B.mkText("let "), B.mkText("[")]
-            let nonNames = tup.elts.filter(e => e.kind !== "Name")
-            if (nonNames.length) {
-                error(n, 9556, U.lf("non-trivial tuple assignment unsupported"));
-                return stmtTODO(n)
-            }
-            let tupNames = tup.elts
-                .map(e => e as py.Name)
-                .map(convertName)
-            targs.push(B.mkCommaSep(tupNames))
-            targs.push(B.mkText("]"))
-            let res = B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
-            return res
+
+            return convertDestructuring(n, target as py.Tuple, value);
+
         }
         if (target.kind === "Name") {
             const scopeSym = currentScope().vars[nm];
@@ -1898,13 +1897,68 @@ namespace pxt.py {
             lExp = expr(target)
 
         return B.mkStmt(B.mkText(pref), B.mkInfix(lExp, "=", expr(value)))
+    }
 
-        function convertName(n: py.Name) {
+    function convertDestructuring(parent: py.AnnAssign | py.Assign, targets: py.Tuple, value: py.Expr) {
+        let nonNames = targets.elts.filter(e => e.kind !== "Name")
+        if (nonNames.length) {
+            error(parent, 9556, U.lf("non-trivial tuple assignment unsupported"));
+            return stmtTODO(parent)
+        }
+
+        const names = targets.elts.map(tryGetName);
+
+        const symbols = names
+            .map(nm => nm ? currentScope().vars[nm] : undefined);
+
+        if (symbols.some(s => s?.modifier !== undefined)) {
+            const helperVar = getHelperVariableName();
+            const valueAssign = B.mkStmt(
+                B.mkInfix(
+                    B.mkGroup(
+                        [B.mkText("let "), B.mkText(helperVar)]
+                    ),
+                    "=",
+                    expr(value)
+                )
+            );
+
+            const assignStatements = [valueAssign];
+
+            for (let i = 0; i < symbols.length; i++) {
+                const name = convertName(targets.elts[i] as py.Name);
+
+                assignStatements.push(
+                    B.mkStmt(
+                        B.mkInfix(
+                           name,
+                            "=",
+                            B.mkGroup(
+                                [B.mkText(helperVar), B.mkText(`[${i}]`)]
+                            )
+                        )
+                    )
+                )
+            }
+
+            return B.mkGroup(assignStatements);
+        }
+        else {
+            let targs = [B.mkText("let "), B.mkText("[")]
+            let tupNames = targets.elts
+                .map(e => e as py.Name)
+                .map(e => convertName(e, true))
+            targs.push(B.mkCommaSep(tupNames))
+            targs.push(B.mkText("]"))
+            return B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
+        }
+
+        function convertName(n: py.Name, excludeLet = false) {
             // TODO resuse with Name expr
             markInfoNode(n, "identifierCompletion")
             typeOf(n)
             let v = lookupName(n)
-            return possibleDef(n, /*excludeLet*/true)
+            return possibleDef(n, excludeLet)
         }
     }
 
