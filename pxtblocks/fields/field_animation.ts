@@ -136,7 +136,6 @@ namespace pxtblockly {
 
             const icon = new svg.Text("\uf008")
                 .at(X_PADDING, 5 + (TOTAL_HEIGHT >> 1))
-                .fill((this.sourceBlock_ as Blockly.BlockSvg).getColourSecondary())
                 .setClass("semanticIcon");
 
             this.fieldGroup_.appendChild(icon.el);
