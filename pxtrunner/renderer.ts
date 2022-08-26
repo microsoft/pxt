@@ -1251,6 +1251,13 @@ namespace pxt.runner {
         c.remove();
     }
 
+    function renderBlockConfig(options: ClientRenderOptions) {
+        let c = $('code.lang-blockconfig');
+        if (options.snippetReplaceParent)
+            c = c.parent();
+        c.remove();
+    }
+
     function renderSims(options: ClientRenderOptions) {
         if (!options.simulatorClass) return;
         // simulators
@@ -1289,6 +1296,7 @@ namespace pxt.runner {
 
         renderQueue = [];
         renderGhost(options);
+        renderBlockConfig(options);
         renderSims(options);
         renderTypeScript(options);
         renderDirectPython(options);

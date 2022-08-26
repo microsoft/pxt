@@ -995,6 +995,7 @@ declare namespace ts.pxtc {
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
         clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
         errorOnGreyBlocks?: boolean;
+        generateSourceMap?: boolean;
 
         otherMultiVariants?: ExtensionTarget[];
 
@@ -1113,6 +1114,16 @@ declare namespace pxt.tutorial {
         blockIds?: string[];
     }
 
+    interface TutorialBlockConfigEntry {
+        blockId?: string;
+        xml?: string;
+    }
+
+    interface TutorialBlockConfig {
+        md?: string;    // `blockconfig` markdown fragment
+        blocks?: TutorialBlockConfigEntry[]; // markdown fragment can contain multiple block definitions
+    }
+
     interface TutorialStepInfo {
         // Step metadata
         showHint?: boolean; // automatically displays hint
@@ -1134,6 +1145,9 @@ declare namespace pxt.tutorial {
         hintContentMd?: string;
         // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
         // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
+
+        // `blockconfig` sections
+        blockConfigs?: pxt.tutorial.TutorialBlockConfig[];
     }
 
     interface TutorialActivityInfo {

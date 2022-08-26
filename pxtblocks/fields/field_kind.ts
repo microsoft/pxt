@@ -54,7 +54,7 @@ namespace pxtblockly {
             const res: string[][] = [];
 
             const that = this as FieldKind;
-            if (that.sourceBlock_ && that.sourceBlock_.workspace) {
+            if (that.sourceBlock_ && that.sourceBlock_.workspace && !that.sourceBlock_.isInFlyout) {
                 const options = that.sourceBlock_.workspace.getVariablesOfType(kindType(opts.name));
                 options.forEach(model => {
                     res.push([model.name, model.name]);

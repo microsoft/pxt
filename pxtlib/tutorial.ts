@@ -80,6 +80,7 @@ namespace pxt.tutorial {
                 switch (m1) {
                     case "block":
                     case "blocks":
+                    case "blockconfig":
                     case "requiredTutorialBlock":
                     case "filterblocks":
                         if (!checkTutorialEditor(pxt.BLOCKS_PROJECT_NAME))
@@ -244,6 +245,7 @@ ${code}
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
             let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
+            const blockConfigs = parseTutorialBlockConfigs(step);
 
             // if title is not hidden ("{TITLE HERE}"), strip flags
             const title = !flags.match(/^\{.*\}$/)
@@ -253,7 +255,8 @@ ${code}
             let info: TutorialStepInfo = {
                 title,
                 contentMd: step,
-                headerContentMd: header
+                headerContentMd: header,
+                blockConfigs
             }
             if (/@(fullscreen|unplugged|showdialog|showhint)/i.test(flags))
                 info.showHint = true;
@@ -313,6 +316,15 @@ ${code}
         return { header, hint, requiredBlocks };
     }
 
+    function parseTutorialBlockConfigs(step: string): TutorialBlockConfig[] {
+        let blockConfigs: pxt.tutorial.TutorialBlockConfig[] = [];
+        step.replace(/```\s*blockconfig\s*\n([\s\S]*?)\n```/gmi, function (m0, m1) {
+            blockConfigs.push({ md: m1 });
+            return "";
+        });
+        return blockConfigs;
+    }
+
     function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {
         const ruleNames = Object.keys(listOfRules);
         for (let i = 0; i < ruleNames.length; i++) {
@@ -328,7 +340,7 @@ ${code}
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
         if (!str) return str;
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|customts)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|customts|blockconfig)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
 

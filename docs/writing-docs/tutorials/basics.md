@@ -168,6 +168,100 @@ forever(function() {
 ```
 ````
 
+## Reconfiguring blocks in toolbox (`blockconfig`)
+
+If you want to change the default parameters on an existing block, use a `blockconfig` section. A `blockconfig` contains a JavaScript snippet that defines one or more functions or operations. If the function is a handler, e.g. `sprites.onOverlap`, the handler may contain a code snippet.
+
+### Limitations
+
+* Declaring custom assets is not supported. You cannot set a custom image on a sprite, or declare a tilemap. We are thinking through how to support this, and may come in the future!
+
+### Examples
+
+**Set the default background color to green**
+
+````
+```blockconfig
+scene.setBackgroundColor(7)
+```
+````
+
+**When Player sprite overlaps with Food**
+````
+```blockconfig
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+})
+```
+````
+
+**When Player sprite overlaps with Food, with embedded code snippet**
+````
+```blockconfig
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+    info.changeScoreBy(1)
+})
+```
+````
+
+**Creating an Enemy sprite**
+````
+```blockconfig
+let myEnemy = sprites.create(img``, SpriteKind.Enemy)
+```
+````
+
+> **Note the empty image.** blockconfigs don't yet work with custom assets (images, tilemaps, etc)!
+
+**Change default sprite position to the center of the screen**
+````
+```blockconfig
+let mySprite: Sprite = null
+mySprite.setPosition(80, 60)
+```
+````
+
+> Note here the declaration of `mySprite`. Variables used in the snippet must be declared so the decompiler can resolve the datatypes.
+
+**Place sprite in random location**
+````
+```blockconfig
+let mySprite: Sprite = null
+mySprite.setPosition(randint(0, scene.screenWidth()), randint(0, scene.screenHeight()))
+```
+````
+
+**Change random number range**
+````
+```blockconfig
+randint(-10, 10)
+```
+````
+
+**Multiple reconfigured blocks in a single blockconfig section**
+````
+```blockconfig
+randint(-10, 10)
+let mySprite: Sprite = null
+mySprite = sprites.create(img``, SpriteKind.Enemy)
+mySprite.setPosition(randint(0, scene.screenWidth()), randint(0, scene.screenHeight()))
+```
+````
+
+### Troubleshooting blockconfigs
+
+If your reconfigured block isn't showing up in the toolbox, look for errors like this one in the debug console:
+
+`Failed to resolve block config xml for tutorial`
+
+Followed by a more detailed error message. The most common error you're likely to see is:
+
+`Block config decompiled to gray block`
+
+Gray blocks will be generated when not all datatypes are known (e.g. `mySprite` used, but not declared), or when a function name is misspelled.
+
+If you don't see an error message, try adding the `dbg=1` URL parameter and reload. This will output some information about each blockconfig to the console, and should provide a clue about what is failing.
+
+
 ## Accordion/hidden hints
 If you want to provide extra information without having to divert the coder's attention, you can include content in an "accordion" style hint control. 
 
