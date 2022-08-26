@@ -535,7 +535,8 @@ namespace Math {
       * For example, the absolute value of -5 is the same as the absolute value of 5.
       * @param x A numeric expression for which the absolute value is needed.
       */
-    //% help=./reference/math/abs
+    //% blockId=math_op3
+    //% help=math/abs
     export function abs(x: number): number {
         return x < 0 ? -x : x;
     }
