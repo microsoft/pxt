@@ -293,6 +293,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         try {
             const text = s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
             const xml = Blockly.Xml.textToDom(text);
+            this.cleanXmlForWorkspace(xml);
             pxt.blocks.domToWorkspaceNoEvents(xml, this.editor);
 
             pxtblockly.upgradeTilemapsInWorkspace(this.editor, pxt.react.getTilemapProject());
@@ -314,6 +315,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.changeCallback();
 
         return true;
+    }
+
+    private cleanXmlForWorkspace(dom: Element) {
+        // Clear out any deletable flags. There are currently no scenarios where we rely on this flag,
+        // and it can be persisted erroneously (with value "false") if the app closes unexpectedly while in debug mode.
+        dom.querySelectorAll("block[deletable]").forEach(b => { b.removeAttribute("deletable") });
     }
 
     private initLayout() {
