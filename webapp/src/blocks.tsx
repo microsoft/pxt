@@ -1745,16 +1745,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // If we're in a tutorial and the current step defines a custon block config, use that.
                 const currTutorialStep = this.parent.state.tutorialOptions?.tutorialStep;
                 const currTutorialStepInfo = currTutorialStep !== undefined ? this.parent.state.tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
-                if (currTutorialStepInfo?.blockConfigs) {
-                    const blockConfigs = currTutorialStepInfo.blockConfigs;
-                    for (const blockConfig of blockConfigs) {
-                        const entry = blockConfig.blocks.find(entry => entry.blockId === block.attributes.blockId);
-                        if (entry) {
-                            blockXml = Blockly.Xml.textToDom(entry.xml);
-                            blockXml.setAttribute("gap", `${pxt.appTarget.appTheme
-                                && pxt.appTarget.appTheme.defaultBlockGap && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8}`);
-                            break;
-                        }
+                if (currTutorialStepInfo?.blockConfig?.blocks) {
+                    const blockConfig = currTutorialStepInfo.blockConfig;
+                    const entry = blockConfig.blocks.find(entry => entry.blockId === block.attributes.blockId);
+                    if (entry) {
+                        blockXml = Blockly.Xml.textToDom(entry.xml);
+                        blockXml.setAttribute("gap", `${pxt.appTarget.appTheme
+                            && pxt.appTarget.appTheme.defaultBlockGap && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8}`);
                     }
                 }
 

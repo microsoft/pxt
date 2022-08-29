@@ -1146,8 +1146,8 @@ declare namespace pxt.tutorial {
         // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
         // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
 
-        // `blockconfig` sections
-        blockConfigs?: pxt.tutorial.TutorialBlockConfig[];
+        // concatenated `blockconfig` sections
+        blockConfig?: pxt.tutorial.TutorialBlockConfig;
     }
 
     interface TutorialActivityInfo {

@@ -245,7 +245,7 @@ ${code}
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
             let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
-            const blockConfigs = parseTutorialBlockConfigs(step);
+            const blockConfig = parseTutorialBlockConfig(step);
 
             // if title is not hidden ("{TITLE HERE}"), strip flags
             const title = !flags.match(/^\{.*\}$/)
@@ -256,7 +256,7 @@ ${code}
                 title,
                 contentMd: step,
                 headerContentMd: header,
-                blockConfigs
+                blockConfig
             }
             if (/@(fullscreen|unplugged|showdialog|showhint)/i.test(flags))
                 info.showHint = true;
@@ -316,13 +316,16 @@ ${code}
         return { header, hint, requiredBlocks };
     }
 
-    function parseTutorialBlockConfigs(step: string): TutorialBlockConfig[] {
-        let blockConfigs: pxt.tutorial.TutorialBlockConfig[] = [];
+    function parseTutorialBlockConfig(step: string): TutorialBlockConfig {
+        let blockConfig: pxt.tutorial.TutorialBlockConfig = {
+            md: "",
+            blocks: [],
+        };
         step.replace(/```\s*blockconfig\s*\n([\s\S]*?)\n```/gmi, function (m0, m1) {
-            blockConfigs.push({ md: m1 });
+            blockConfig.md += `${m1}\n`;
             return "";
         });
-        return blockConfigs;
+        return blockConfig;
     }
 
     function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {

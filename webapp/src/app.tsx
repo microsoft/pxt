@@ -1777,7 +1777,7 @@ export class ProjectView
             return;
         const resolveBlockConfigAsync = async (blockConfig: pxt.tutorial.TutorialBlockConfig): Promise<void> => {
             if (blockConfig.blocks?.length) {
-                // `blockConfig.blocks` is already populated. This information is saved in the project header, so this happens when the tutorial project is reloaded.
+                // Already populated? This is a project reload from previous save.
                 return;
             }
             blockConfig.blocks = [];
@@ -1851,10 +1851,10 @@ export class ProjectView
         };
         const tasks: Promise<void>[] = [];
         const stepInfo = header.tutorial.tutorialStepInfo;
-        stepInfo.forEach(step => {
-            const blockConfigs = step.blockConfigs ?? [];
-            blockConfigs.forEach(blockConfig => tasks.push(resolveBlockConfigAsync(blockConfig)));
-        });
+        stepInfo
+            .map(step => step.blockConfig)
+            .filter(blockConfig => blockConfig?.md)
+            .forEach(blockConfig => tasks.push(resolveBlockConfigAsync(blockConfig)));
         await Promise.all(tasks);
     }
 
