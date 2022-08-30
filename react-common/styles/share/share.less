@@ -25,22 +25,34 @@
 
 .project-share-info {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
     flex: 1;
 
     > div {
         margin-bottom: 1rem;
-        flex-shrink: 0;
+    }
+
+    .project-share-content {
+        flex-grow: 1;
+
+        .name-input .common-input-group {
+            height: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .common-checkbox {
+            margin-bottom: 0.5rem;
+        }
     }
 }
 
 .project-share-title {
-    display: flex;
+    margin-bottom: 1rem;
 
     h2 {
-        flex: 1;
         margin: 0;
+        margin-bottom: 0.5rem
     }
 }
 
@@ -51,6 +63,9 @@
 .project-share-thumbnail {
     display: flex;
     flex-direction: column;
+    min-width: 15rem;
+    align-items: center;
+    margin-right: 1rem;
 
     .project-thumbnail-placeholder,
     img {
@@ -58,6 +73,7 @@
         width: 15rem;
         height: 11.25rem;
         background-color: rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
     }
 }
 
@@ -74,6 +90,7 @@
 
 .share-publish-button {
     height: 3rem;
+    margin-right: 1rem;
 
     .common-spinner {
         display: inline-block;

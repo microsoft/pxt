@@ -1,6 +1,7 @@
 /// <reference path="../types.d.ts" />
 
 import * as React from "react";
+import { SimRecorder } from "./GifRecorder";
 import { ShareInfo } from "./ShareInfo";
 
 export interface ShareData {
@@ -18,7 +19,9 @@ export interface ShareData {
 export interface ShareProps {
     projectName: string;
     screenshotUri?: string;
-    showShareDropdown?: boolean;
+    isLoggedIn?: boolean;
+
+    simRecorder: SimRecorder;
 
     screenshotAsync: () => Promise<string>;
     gifRecordAsync: () => Promise<void>;
@@ -30,16 +33,14 @@ export interface ShareProps {
 }
 
 export const Share = (props: ShareProps) => {
-    const { projectName, screenshotUri, showShareDropdown, screenshotAsync, gifRecordAsync, gifRenderAsync,
+    const { projectName, screenshotUri, isLoggedIn, simRecorder, screenshotAsync, gifRecordAsync, gifRenderAsync,
         gifAddFrame, publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
 
 return <div className="project-share">
-        {(!!screenshotAsync || !!gifRecordAsync) && <div className="project-share-simulator">
-            <div id="shareLoanedSimulator" />
-        </div>}
         <ShareInfo projectName={projectName}
-            showShareDropdown={showShareDropdown}
+            isLoggedIn={isLoggedIn}
             screenshotUri={screenshotUri}
+            simRecorder={simRecorder}
             screenshotAsync={screenshotAsync}
             gifRecordAsync={gifRecordAsync}
             gifRenderAsync={gifRenderAsync}

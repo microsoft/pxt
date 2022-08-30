@@ -12,6 +12,20 @@ export interface GifRecorderProps {
     unregisterSimulatorMsgHandler?: () => void;
 }
 
+export interface SimRecorderProps {
+    onSimRecorderInit: (ref: SimRecorderRef) => void;
+}
+export type SimRecorder = (props: SimRecorderProps) => JSX.Element
+export type SimRecorderState = "default" | "recording" | "rendering"
+export interface SimRecorderRef {
+    state: SimRecorderState;
+    startRecordingAsync: () => Promise<void>;
+    stopRecordingAsync: () => Promise<string>;
+    screenshotAsync: () => Promise<string>;
+    onStateChange: (handler: (newState: SimRecorderState) => void) => void;
+    onThumbnail: (handler: (uri: string, type: "gif" | "png") => void) => void;
+}
+
 export const GifRecorder = (props: GifRecorderProps) => {
     const { onScreenshot, onRecordStart, onRecordStop, onGifFrame,
         registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
