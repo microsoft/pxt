@@ -1116,7 +1116,7 @@ namespace pxt.blocks {
 
         // lists_length
         const listsLengthId = "lists_length";
-        const listsLenghtqName = "Array.Length"
+        const listsLengthqName = "Array.Length"
         const listsLengthDef = pxt.blocks.getBlockDefinition(listsLengthId);
         msg.LISTS_LENGTH_TITLE = listsLengthDef.block["LISTS_LENGTH_TITLE"];
 
@@ -1139,7 +1139,7 @@ namespace pxt.blocks {
                 });
             },
 
-            codeCard: attachCardInfo(blockInfo, listsLenghtqName)
+            codeCard: attachCardInfo(blockInfo, listsLengthqName)
         }
 
 
