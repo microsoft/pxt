@@ -2,7 +2,6 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
-
     export let promptTranslateBlock: (blockId: string, blockTranslationIds: string[]) => void;
 
     export interface GrayBlock extends Blockly.Block {
@@ -547,15 +546,6 @@ namespace pxt.blocks {
         }
     }
 
-    function attachCardInfo(blockInfo: pxtc.BlocksInfo, qName: string): pxt.CodeCard | void {
-        const toModify: pxtc.SymbolInfo = blockInfo.apis.byQName[qName];
-        if (toModify) {
-            const comp = compileInfo(toModify);
-            const xml = createToolboxBlock(blockInfo, toModify, comp);
-            return mkCard(toModify, xml);
-        }
-    }
-
     function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
         if (specific == general) return true
         let inf = apis.byQName[specific]
@@ -926,7 +916,7 @@ namespace pxt.blocks {
      * Used by pxtrunner to initialize blocks in the docs
      */
     export function initializeAndInject(blockInfo: pxtc.BlocksInfo) {
-        init(blockInfo);
+        init();
         injectBlocks(blockInfo);
     }
 
@@ -935,12 +925,12 @@ namespace pxt.blocks {
      * Blocks are injected separately by called injectBlocks
      */
     export function initialize(blockInfo: pxtc.BlocksInfo) {
-        init(blockInfo);
+        init();
         initJresIcons(blockInfo);
     }
 
     let blocklyInitialized = false;
-    function init(blockInfo: pxtc.BlocksInfo) {
+    function init() {
         if (blocklyInitialized) return;
         blocklyInitialized = true;
 
@@ -954,7 +944,7 @@ namespace pxt.blocks {
         initFieldEditors();
         initContextMenu();
         initOnStart();
-        initMath(blockInfo);
+        initMath();
         initVariables();
         initFunctions();
         initLists(blockInfo);
@@ -1976,7 +1966,7 @@ namespace pxt.blocks {
         };
     }
 
-    function initMath(blockInfo: pxtc.BlocksInfo) {
+    function initMath() {
         // math_op2
         const mathOp2Id = "math_op2";
         const mathOp2Def = pxt.blocks.getBlockDefinition(mathOp2Id);
@@ -2027,7 +2017,6 @@ namespace pxt.blocks {
         // math_op3
         const mathOp3Id = "math_op3";
         const mathOp3Def = pxt.blocks.getBlockDefinition(mathOp3Id);
-        const mathOp3qName = "Math.abs";
         Blockly.Blocks[mathOp3Id] = {
             init: function () {
                 this.jsonInit({
@@ -2046,8 +2035,7 @@ namespace pxt.blocks {
                 });
 
                 setBuiltinHelpInfo(this, mathOp3Id);
-            },
-            codeCard: attachCardInfo(blockInfo, mathOp3qName)
+            }
         };
 
         // builtin math_number, math_integer, math_whole_number, math_number_minmax
