@@ -1772,14 +1772,7 @@ export class ProjectView
     }
 
     private async loadTutorialBlockConfigsAsync(): Promise<void> {
-        const header = pkg.mainEditorPkg().header;
-        if (!header || !header.tutorial || !header.tutorial.tutorialStepInfo)
-            return;
         const resolveBlockConfigAsync = async (blockConfig: pxt.tutorial.TutorialBlockConfig): Promise<void> => {
-            if (blockConfig.blocks?.length) {
-                // Already populated? This is a project reload from previous save.
-                return;
-            }
             blockConfig.blocks = [];
             const blocks: Element[] = [];
             try {
@@ -1828,7 +1821,7 @@ export class ProjectView
                         // Decompiled to gray block
                         throw new Error("Block config decompiled to gray block: " + Blockly.Xml.domToText(block));
                     }
-                    if (blockType == "variables_set") {
+                    if (blockType === "variables_set") {
                         // get block id from within variables_set context
                         const variables_set = block.children[0];
                         const value = Array.from(variables_set.children).find(child => child.tagName === "value");
@@ -1849,10 +1842,29 @@ export class ProjectView
                 }
             }
         };
-        const tasks: Promise<void>[] = [];
+        const header = pkg.mainEditorPkg().header;
+        if (!header || !header.tutorial || !header.tutorial.tutorialStepInfo) {
+            return;
+        }
+        // Check for preexisting block configs at global scope
+        if (header.tutorial.globalBlockConfig?.blocks?.length) {
+            // Global block config already populated (project was loaded from a previous save)
+            return;
+        }
         const stepInfo = header.tutorial.tutorialStepInfo;
+        // Check for preexisting block configs at local scope
+        for (const step of stepInfo) {
+            if (step.localBlockConfig?.blocks?.length) {
+                // Local block config already populated (project was loaded from a previous save)
+                return;
+            }
+        }
+        const tasks: Promise<void>[] = [];
+        if (header.tutorial.globalBlockConfig?.md) {
+            tasks.push(resolveBlockConfigAsync(header.tutorial.globalBlockConfig));
+        }
         stepInfo
-            .map(step => step.blockConfig)
+            .map(step => step.localBlockConfig)
             .filter(blockConfig => blockConfig?.md)
             .forEach(blockConfig => tasks.push(resolveBlockConfigAsync(blockConfig)));
         await Promise.all(tasks);

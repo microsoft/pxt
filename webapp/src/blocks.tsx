@@ -1470,8 +1470,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private flyoutXmlList: Element[] = [];
     public showFlyout(treeRow: toolbox.ToolboxCategory) {
         const { nameid: ns, subns } = treeRow;
-        const inTutorial = this.parent.state.tutorialOptions
-            && !!this.parent.state.tutorialOptions.tutorial;
 
         if (ns == 'search') {
             this.showSearchFlyout();
@@ -1483,10 +1481,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
 
+        const currTutorialStep = this.parent.state.tutorialOptions?.tutorialStep;
+        const currTutorialStepInfo = currTutorialStep !== undefined ? this.parent.state.tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
+        const tutorialStepIsDynamic = currTutorialStepInfo?.localBlockConfig?.blocks?.length > 0;
+
+        // Dont cache flyout xml for tutorial steps with blockconfig.local sections (because they introduce dynamic blocks), or when translating.
+        const cachable = !tutorialStepIsDynamic && !pxt.Util.isTranslationMode();
+
         this.flyoutXmlList = [];
-        let cacheKey = ns + subns;
-        // Don't use cache for tutorials, becasue tutorial blocks are dynamic (can change at runtime through blockConfigs)
-        if (!inTutorial && this.flyoutBlockXmlCache[cacheKey]) {
+        const cacheKey = ns + subns + (currTutorialStepInfo ? "tutorialexpanded" : "");
+        if (cachable && this.flyoutBlockXmlCache[cacheKey]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
             this.flyoutXmlList = this.flyoutBlockXmlCache[cacheKey];
             this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
@@ -1494,11 +1498,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         if (this.abstractShowFlyout(treeRow)) {
-            // Cache blocks xml list for later
-            // don't cache when translating, or in tutorial
-            if (!inTutorial && !pxt.Util.isTranslationMode())
+            if (cachable) {
+                // Cache blocks xml list for later
                 this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
-
+            }
             this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
         }
     }
@@ -1742,17 +1745,27 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (!shouldShowBlock(fn)) return undefined;
                 let comp = pxt.blocks.compileInfo(fn);
 
-                // If we're in a tutorial and the current step defines a custon block config, use that.
-                const currTutorialStep = this.parent.state.tutorialOptions?.tutorialStep;
-                const currTutorialStepInfo = currTutorialStep !== undefined ? this.parent.state.tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
-                if (currTutorialStepInfo?.blockConfig?.blocks) {
-                    const blockConfig = currTutorialStepInfo.blockConfig;
+                function getBlockConfigXml(blockConfig: pxt.tutorial.TutorialBlockConfig): Element | undefined {
                     const entry = blockConfig.blocks.find(entry => entry.blockId === block.attributes.blockId);
                     if (entry) {
-                        blockXml = Blockly.Xml.textToDom(entry.xml);
-                        blockXml.setAttribute("gap", `${pxt.appTarget.appTheme
+                        const xml = Blockly.Xml.textToDom(entry.xml);
+                        xml.setAttribute("gap", `${pxt.appTarget.appTheme
                             && pxt.appTarget.appTheme.defaultBlockGap && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8}`);
+                        return xml;
                     }
+                    return undefined;
+                }
+
+                // Check for custom config in scope of the current tutorial step.
+                const currTutorialStep = this.parent.state.tutorialOptions?.tutorialStep;
+                const currTutorialStepInfo = currTutorialStep !== undefined ? this.parent.state.tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
+                if (currTutorialStepInfo?.localBlockConfig?.blocks) {
+                    blockXml = getBlockConfigXml(currTutorialStepInfo.localBlockConfig);
+                }
+
+                // Check for custom config in the tutorial's global scope.
+                if (!blockXml && this.parent.state.tutorialOptions?.globalBlockConfig?.blocks) {
+                    blockXml = getBlockConfigXml(this.parent.state.tutorialOptions.globalBlockConfig);
                 }
 
                 // Create the block XML from block definition.

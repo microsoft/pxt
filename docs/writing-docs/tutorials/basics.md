@@ -168,27 +168,32 @@ forever(function() {
 ```
 ````
 
-## Reconfiguring blocks in toolbox (`blockconfig`)
+## Reconfiguring blocks in the toolbox (`blockconfig.local` and `blockconfig.global` sections)
 
-If you want to change the default parameters on an existing block, use a `blockconfig` section. A `blockconfig` contains a JavaScript snippet that defines one or more functions or operations. If the function is a handler, e.g. `sprites.onOverlap`, the handler may contain a code snippet.
+If you want to change the default parameters on an existing block as it appears in the toolbox, use a blockconfig section. A blockconfig contains a JavaScript snippet that defines one or more functions or operations along with their default arguments.
+
+There are two kinds of blockconfig sections: `blockconfig.local` and `blockconfig.global`. The global blockconfig can appear anywhere in the tutorial markdown, and the customizations it contains are applied globally, i.e. to all tutorial steps. Local blockconfigs must appear within a tutorial step, and apply to that step only. Local blockconfigs take precedence over global ones.
 
 ### Limitations
 
-* Declaring custom assets is not supported. You cannot set a custom image on a sprite, or declare a tilemap. We are thinking through how to support this, and may come in the future!
+* Declaring custom assets is not supported yet. This means you will not be able to set a custom image on sprite creation, for example. We are thinking through how to support this, and it may come in the future!
+* `blockconfig.local` sections have a performance impact on the toolbox. They aren't able to take advantage of previously cached toolbox contents and must regenerate it each time.
 
 ### Examples
 
-**Set the default background color to green**
+**Set the default background color to green. Apply globally**
 
 ````
-```blockconfig
+```blockconfig.global
 scene.setBackgroundColor(7)
 ```
 ````
 
-**When Player sprite overlaps with Food**
+**When Player sprite overlaps with Food. Apply to the current tutorial step only**
 ````
-```blockconfig
+### {Step 3}
+
+```blockconfig.local
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
 })
 ```
@@ -196,7 +201,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSpr
 
 **When Player sprite overlaps with Food, with embedded code snippet**
 ````
-```blockconfig
+```blockconfig.global
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
     info.changeScoreBy(1)
 })
@@ -205,7 +210,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSpr
 
 **Creating an Enemy sprite**
 ````
-```blockconfig
+```blockconfig.global
 let myEnemy = sprites.create(img``, SpriteKind.Enemy)
 ```
 ````
@@ -214,7 +219,7 @@ let myEnemy = sprites.create(img``, SpriteKind.Enemy)
 
 **Change default sprite position to the center of the screen**
 ````
-```blockconfig
+```blockconfig.global
 let mySprite: Sprite = null
 mySprite.setPosition(80, 60)
 ```
@@ -224,7 +229,7 @@ mySprite.setPosition(80, 60)
 
 **Place sprite in random location**
 ````
-```blockconfig
+```blockconfig.global
 let mySprite: Sprite = null
 mySprite.setPosition(randint(0, scene.screenWidth()), randint(0, scene.screenHeight()))
 ```
@@ -232,14 +237,14 @@ mySprite.setPosition(randint(0, scene.screenWidth()), randint(0, scene.screenHei
 
 **Change random number range**
 ````
-```blockconfig
+```blockconfig.global
 randint(-10, 10)
 ```
 ````
 
-**Multiple reconfigured blocks in a single blockconfig section**
+**Multiple reconfigured blocks in a single blockconfig**
 ````
-```blockconfig
+```blockconfig.global
 randint(-10, 10)
 let mySprite: Sprite = null
 mySprite = sprites.create(img``, SpriteKind.Enemy)
@@ -251,7 +256,7 @@ mySprite.setPosition(randint(0, scene.screenWidth()), randint(0, scene.screenHei
 
 If your reconfigured block isn't showing up in the toolbox, look for errors like this one in the debug console:
 
-`Failed to resolve block config xml for tutorial`
+`Failed to resolve block config for tutorial`
 
 Followed by a more detailed error message. The most common error you're likely to see is:
 

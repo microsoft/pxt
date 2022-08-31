@@ -1252,10 +1252,16 @@ namespace pxt.runner {
     }
 
     function renderBlockConfig(options: ClientRenderOptions) {
-        let c = $('code.lang-blockconfig');
-        if (options.snippetReplaceParent)
-            c = c.parent();
-        c.remove();
+        function render(scope: "local" | "global") {
+            $(`code.lang-blockconfig.${scope}`).each((i, c) => {
+                let $c = $(c);
+                if (options.snippetReplaceParent)
+                    $c = $c.parent();
+                $c.remove();
+            });
+        }
+        render("local");
+        render("global");
     }
 
     function renderSims(options: ClientRenderOptions) {
