@@ -957,10 +957,10 @@ namespace pxt.blocks {
         initMath(blockInfo);
         initVariables();
         initFunctions();
-        initLists();
+        initLists(blockInfo);
         initLoops();
         initLogic();
-        initText();
+        initText(blockInfo);
         initDrag();
         initDebugger();
         initComments();
