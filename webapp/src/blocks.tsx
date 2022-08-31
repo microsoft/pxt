@@ -1477,8 +1477,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private flyoutXmlList: Element[] = [];
     public showFlyout(treeRow: toolbox.ToolboxCategory) {
         const { nameid: ns, subns } = treeRow;
-        const inTutorial = this.parent.state.tutorialOptions
-            && !!this.parent.state.tutorialOptions.tutorial;
 
         if (ns == 'search') {
             this.showSearchFlyout();
@@ -1490,9 +1488,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
 
+        const currTutorialStep = this.parent.state.tutorialOptions?.tutorialStep;
+        const currTutorialStepInfo = currTutorialStep !== undefined ? this.parent.state.tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
+        const tutorialStepIsDynamic = currTutorialStepInfo?.localBlockConfig?.blocks?.length > 0;
+
+        // Dont cache flyout xml for tutorial steps with blockconfig.local sections (because they introduce dynamic blocks), or when translating.
+        const cachable = !tutorialStepIsDynamic && !pxt.Util.isTranslationMode();
+
         this.flyoutXmlList = [];
-        let cacheKey = ns + subns + (inTutorial ? "tutorialexpanded" : "");
-        if (this.flyoutBlockXmlCache[cacheKey]) {
+        const cacheKey = ns + subns + (currTutorialStepInfo ? "tutorialexpanded" : "");
+        if (cachable && this.flyoutBlockXmlCache[cacheKey]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
             this.flyoutXmlList = this.flyoutBlockXmlCache[cacheKey];
             this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
@@ -1500,11 +1505,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         if (this.abstractShowFlyout(treeRow)) {
-            // Cache blocks xml list for later
-            // don't cache when translating
-            if (!pxt.Util.isTranslationMode())
+            if (cachable) {
+                // Cache blocks xml list for later
                 this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
-
+            }
             this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
         }
     }
@@ -1747,77 +1751,104 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (fn) {
                 if (!shouldShowBlock(fn)) return undefined;
                 let comp = pxt.blocks.compileInfo(fn);
-                blockXml = pxt.blocks.createToolboxBlock(this.blockInfo, fn, comp);
 
-                if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
-                    const handlerArgs = comp.handlerArgs;
-                    const mutationValues = fn.attributes.toolboxVariableArgs.split(";")
-                        .map(v => parseInt(v))
-                        .filter(v => v <= handlerArgs.length && v >= 0);
+                function getBlockConfigXml(blockConfig: pxt.tutorial.TutorialBlockConfig): Element | undefined {
+                    const entry = blockConfig.blocks.find(entry => entry.blockId === block.attributes.blockId);
+                    if (entry) {
+                        const xml = Blockly.Xml.textToDom(entry.xml);
+                        xml.setAttribute("gap", `${pxt.appTarget.appTheme
+                            && pxt.appTarget.appTheme.defaultBlockGap && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8}`);
+                        return xml;
+                    }
+                    return undefined;
+                }
 
-                    mutationValues.forEach(v => {
-                        const mutation = document.createElement("mutation");
-                        mutation.setAttribute("numargs", v.toString());
-                        for (let i = 0; i < v; i++) {
-                            mutation.setAttribute("arg" + i, handlerArgs[i].name)
+                // Check for custom config in scope of the current tutorial step.
+                const currTutorialStep = this.parent.state.tutorialOptions?.tutorialStep;
+                const currTutorialStepInfo = currTutorialStep !== undefined ? this.parent.state.tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
+                if (currTutorialStepInfo?.localBlockConfig?.blocks) {
+                    blockXml = getBlockConfigXml(currTutorialStepInfo.localBlockConfig);
+                }
+
+                // Check for custom config in the tutorial's global scope.
+                if (!blockXml && this.parent.state.tutorialOptions?.globalBlockConfig?.blocks) {
+                    blockXml = getBlockConfigXml(this.parent.state.tutorialOptions.globalBlockConfig);
+                }
+
+                // Create the block XML from block definition.
+                if (!blockXml) {
+                    blockXml = pxt.blocks.createToolboxBlock(this.blockInfo, fn, comp);
+
+                    if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
+                        const handlerArgs = comp.handlerArgs;
+                        const mutationValues = fn.attributes.toolboxVariableArgs.split(";")
+                            .map(v => parseInt(v))
+                            .filter(v => v <= handlerArgs.length && v >= 0);
+
+                        mutationValues.forEach(v => {
+                            const mutation = document.createElement("mutation");
+                            mutation.setAttribute("numargs", v.toString());
+                            for (let i = 0; i < v; i++) {
+                                mutation.setAttribute("arg" + i, handlerArgs[i].name)
+                            }
+                            blockXml.appendChild(mutation);
+                        });
+                    } else if (comp.handlerArgs.length && !fn.attributes.optionalVariableArgs) {
+                        comp.handlerArgs.forEach(arg => {
+                            const getterblock = Blockly.Xml.textToDom(`
+                                <value name="HANDLER_${arg.name}">
+                                <shadow type="variables_get_reporter">
+                                <field name="VAR" variabletype="">${arg.name}</field>
+                                </shadow>
+                                </value>`);
+                            blockXml.appendChild(getterblock);
+                        });
+                    } else if (fn.attributes.mutateDefaults) {
+                        const mutationValues = fn.attributes.mutateDefaults.split(";");
+                        const mutatedBlocks: Element[] = [];
+                        mutationValues.forEach(mutation => {
+                            const mutatedBlock = blockXml.cloneNode(true) as HTMLElement;
+                            pxt.blocks.mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
+                            mutatedBlocks.push(mutatedBlock);
+                        });
+                        return mutatedBlocks;
+                    } else if (fn.attributes.blockSetVariable != undefined && fn.retType && !shadow) {
+                        // if requested, wrap block into a "set variable block"
+                        const rawName = fn.attributes.blockSetVariable;
+
+                        let varName: string;
+
+                        // By default if the API author does not put any value for blockSetVariable
+                        // then our comment parser will fill in the string "true". This gets caught
+                        // by isReservedWord() so no need to do a separate check.
+                        if (!rawName || pxt.blocks.isReservedWord(rawName)) {
+                            varName = Util.htmlEscape(fn.retType.toLowerCase());
                         }
-                        blockXml.appendChild(mutation);
-                    });
-                } else if (comp.handlerArgs.length && !fn.attributes.optionalVariableArgs) {
-                    comp.handlerArgs.forEach(arg => {
-                        const getterblock = Blockly.Xml.textToDom(`
-    <value name="HANDLER_${arg.name}">
-    <shadow type="variables_get_reporter">
-    <field name="VAR" variabletype="">${arg.name}</field>
-    </shadow>
-    </value>`);
-                        blockXml.appendChild(getterblock);
-                    });
-                } else if (fn.attributes.mutateDefaults) {
-                    const mutationValues = fn.attributes.mutateDefaults.split(";");
-                    const mutatedBlocks: Element[] = [];
-                    mutationValues.forEach(mutation => {
-                        const mutatedBlock = blockXml.cloneNode(true) as HTMLElement;
-                        pxt.blocks.mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
-                        mutatedBlocks.push(mutatedBlock);
-                    });
-                    return mutatedBlocks;
-                } else if (fn.attributes.blockSetVariable != undefined && fn.retType && !shadow) {
-                    // if requested, wrap block into a "set variable block"
-                    const rawName = fn.attributes.blockSetVariable;
+                        else {
+                            varName = Util.htmlEscape(rawName);
+                        }
+                        // since we are creating variable, generate a new name that does not
+                        // clash with existing variable names
+                        let varNameUnique = varName;
+                        let index = 2;
+                        while (variableIsAssigned(varNameUnique, this.editor)) {
+                            varNameUnique = varName + index++;
+                        }
+                        varName = varNameUnique;
 
-                    let varName: string;
-
-                    // By default if the API author does not put any value for blockSetVariable
-                    // then our comment parser will fill in the string "true". This gets caught
-                    // by isReservedWord() so no need to do a separate check.
-                    if (!rawName || pxt.blocks.isReservedWord(rawName)) {
-                        varName = Util.htmlEscape(fn.retType.toLowerCase());
+                        const setblock = Blockly.Xml.textToDom(`
+                            <block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
+                            <field name="VAR" variabletype="">${varName}</field>
+                            </block>`);
+                        {
+                            let value = document.createElement('value');
+                            value.setAttribute('name', 'VALUE');
+                            value.appendChild(blockXml);
+                            value.appendChild(pxt.blocks.mkFieldBlock("math_number", "NUM", "0", true));
+                            setblock.appendChild(value);
+                        }
+                        blockXml = setblock;
                     }
-                    else {
-                        varName = Util.htmlEscape(rawName);
-                    }
-                    // since we are creating variable, generate a new name that does not
-                    // clash with existing variable names
-                    let varNameUnique = varName;
-                    let index = 2;
-                    while (variableIsAssigned(varNameUnique, this.editor)) {
-                        varNameUnique = varName + index++;
-                    }
-                    varName = varNameUnique;
-
-                    const setblock = Blockly.Xml.textToDom(`
-<block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
-<field name="VAR" variabletype="">${varName}</field>
-</block>`);
-                    {
-                        let value = document.createElement('value');
-                        value.setAttribute('name', 'VALUE');
-                        value.appendChild(blockXml);
-                        value.appendChild(pxt.blocks.mkFieldBlock("math_number", "NUM", "0", true));
-                        setblock.appendChild(value);
-                    }
-                    blockXml = setblock;
                 }
             } else {
                 pxt.log("Couldn't find block for: " + block.attributes.blockId);
