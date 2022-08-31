@@ -957,10 +957,10 @@ namespace pxt.blocks {
         initMath(blockInfo);
         initVariables();
         initFunctions();
-        initLists(blockInfo);
+        initLists();
         initLoops();
         initLogic();
-        initText(blockInfo);
+        initText();
         initDrag();
         initDebugger();
         initComments();
@@ -1102,7 +1102,7 @@ namespace pxt.blocks {
 
     export let openHelpUrl: (url: string) => void;
 
-    function initLists(blockInfo : pxtc.BlocksInfo) {
+    function initLists() {
         const msg = Blockly.Msg;
 
         // lists_create_with
@@ -1116,32 +1116,27 @@ namespace pxt.blocks {
 
         // lists_length
         const listsLengthId = "lists_length";
-        const listsLengthqName = "Array.Length"
         const listsLengthDef = pxt.blocks.getBlockDefinition(listsLengthId);
         msg.LISTS_LENGTH_TITLE = listsLengthDef.block["LISTS_LENGTH_TITLE"];
 
         // We have to override this block definition because the builtin block
         // allows both Strings and Arrays in its input check and that confuses
         // our Blockly compiler
-        Blockly.Blocks[listsLengthId] = {
-            init: function () {
-                this.jsonInit({
-                    "message0": msg.LISTS_LENGTH_TITLE,
-                    "args0": [
-                        {
-                            "type": "input_value",
-                            "name": "VALUE",
-                            "check": ['Array']
-                        }
-                    ],
-                    "output": 'Number',
-                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-                });
-            },
-
-            codeCard: attachCardInfo(blockInfo, listsLengthqName)
+        let block = Blockly.Blocks[listsLengthId];
+        block.init = function () {
+            this.jsonInit({
+                "message0": msg.LISTS_LENGTH_TITLE,
+                "args0": [
+                    {
+                        "type": "input_value",
+                        "name": "VALUE",
+                        "check": ['Array']
+                    }
+                ],
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+            });
         }
-
 
         installBuiltinHelpInfo(listsLengthId);
     }
@@ -2781,7 +2776,7 @@ namespace pxt.blocks {
         installBuiltinHelpInfo(logicBooleanId);
     }
 
-    function initText(blockInfo: pxtc.BlocksInfo) {
+    function initText() {
         // builtin text
         const textInfo = pxt.blocks.getBlockDefinition('text');
         installHelpResources('text', textInfo.name, textInfo.tooltip, textInfo.url,
@@ -2792,30 +2787,26 @@ namespace pxt.blocks {
         // builtin text_length
         const msg = Blockly.Msg;
         const textLengthId = "text_length";
-        const textLengthqName = "String.Length"
         const textLengthDef = pxt.blocks.getBlockDefinition(textLengthId);
         msg.TEXT_LENGTH_TITLE = textLengthDef.block["TEXT_LENGTH_TITLE"];
 
         // We have to override this block definition because the builtin block
         // allows both Strings and Arrays in its input check and that confuses
         // our Blockly compiler
-        Blockly.Blocks[textLengthId] = {
-            init: function () {
-                this.jsonInit({
-                    "message0": msg.TEXT_LENGTH_TITLE,
-                    "args0": [
-                        {
-                            "type": "input_value",
-                            "name": "VALUE",
-                            "check": ['String']
-                        }
-                    ],
-                    "output": 'Number',
-                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-                });
-            },
-
-            codeCard: attachCardInfo(blockInfo, textLengthqName)
+        let block = Blockly.Blocks[textLengthId];
+        block.init = function () {
+            this.jsonInit({
+                "message0": msg.TEXT_LENGTH_TITLE,
+                "args0": [
+                    {
+                        "type": "input_value",
+                        "name": "VALUE",
+                        "check": ['String']
+                    }
+                ],
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+            });
         }
         installBuiltinHelpInfo(textLengthId);
 
