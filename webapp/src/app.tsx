@@ -1828,9 +1828,9 @@ export class ProjectView
                     const blockType = block.getAttribute("type");
                     switch (blockType) {
                         case "typescript_statement": {
-                        // Decompiled to gray block
-                        throw new Error("Block config decompiled to gray block: " + Blockly.Xml.domToText(block));
-                    }
+                            // Decompiled to gray block
+                            throw new Error("Block config decompiled to gray block: " + Blockly.Xml.domToText(block));
+                        }
                         case "variables_set":
                         case "variables_change": {
                             // get block id from within variables_set context
