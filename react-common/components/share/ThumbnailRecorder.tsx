@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Button } from "../controls/Button";
 
-export interface GifInfoProps {
+export interface ThumbnailRecorderProps {
     initialUri?: string;
 
     onApply: (uri: string) => void;
@@ -27,7 +27,7 @@ export interface SimRecorderRef {
 }
 
 
-export const GifInfo = (props: GifInfoProps) => {
+export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     const { initialUri, onApply, onCancel, simRecorder } = props;
     const [ uri, setUri ] =  React.useState(initialUri);
     const [ recorderRef, setRecorderRef ] = React.useState<SimRecorderRef>(undefined);

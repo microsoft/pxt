@@ -6,10 +6,10 @@ import { Textarea } from "../controls/Textarea";
 import { Modal } from "../controls/Modal";
 
 import { ShareData } from "./Share";
-import { GifInfo } from "./GifInfo";
+import { ThumbnailRecorder } from "./ThumbnailRecorder";
 import { SocialButton } from "./SocialButton";
 import { Checkbox } from "../controls/Checkbox";
-import { SimRecorder } from "./GifInfo";
+import { SimRecorder } from "./ThumbnailRecorder";
 
 export interface ShareInfoProps {
     projectName: string;
@@ -142,7 +142,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const prePublish = shareState === "share" || shareState === "publishing";
 
-    const inputTitle = showSimulator && prePublish ? lf("Project title") : lf("Project link")
+    const inputTitle = showSimulator && prePublish ? lf("Project Title") : lf("Project Link")
 
     return <>
         <div className="project-share-info">
@@ -269,7 +269,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             initialValue={shareData?.embed[embedState]} />
                     </div>}
                 </>}
-                {shareState === "gifrecord" && <GifInfo
+                {shareState === "gifrecord" && <ThumbnailRecorder
                     initialUri={thumbnailUri}
                     onApply={applyGifChange}
                     onCancel={exitGifRecord}

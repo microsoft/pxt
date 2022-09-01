@@ -2,7 +2,7 @@ import * as simulator from "../simulator";
 import * as React from "react"
 import * as screenshot from "../screenshot";
 import { getEditorAsync } from "../app";
-import { SimRecorder, SimRecorderRef, SimRecorderState } from "../../../react-common/components/share/GifInfo";
+import { SimRecorder, SimRecorderRef, SimRecorderState } from "../../../react-common/components/share/ThumbnailRecorder";
 
 interface SimRecorderRefImpl extends SimRecorderRef {
     gifAddFrame(data: ImageData, delay?: number): boolean;
