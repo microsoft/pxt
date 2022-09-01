@@ -146,17 +146,19 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     return <>
         <div className="project-share-info">
-            {showSimulator &&
+            {showSimulator && shareState !== "gifrecord" &&
                 <div className="project-share-thumbnail">
                     {thumbnailUri
                         ? <img src={thumbnailUri} />
                         : <div className="project-thumbnail-placeholder" />
                     }
-                    <Button
-                        className="link-button"
-                        title={lf("Update project thumbnail")}
-                        label={lf("Update project thumbnail")}
-                        onClick={() => setShareState("gifrecord")} />
+                    {shareState !== "publish" &&
+                        <Button
+                            className="link-button"
+                            title={lf("Update project thumbnail")}
+                            label={lf("Update project thumbnail")}
+                            onClick={() => setShareState("gifrecord")} />
+                    }
                 </div>
             }
             <div className="project-share-content">
@@ -173,7 +175,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         {isLoggedIn && <Checkbox
                             id="persistent-share-checkbox"
                             label={lf("Allow people to see future changes to my project")}
-                            isChecked={isAnonymous}
+                            isChecked={!isAnonymous}
                             onChange={val => setIsAnonymous(!val)}
                             />}
                         </>
@@ -229,6 +231,18 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                     url={shareData?.url}
                                     type='twitter'
                                     heading={lf("Share on Twitter")} />
+                                <SocialButton className="square-button google-classroom"
+                                    url={shareData?.url}
+                                    type='google-classroom'
+                                    heading={lf("Share on Google Classroom")} />
+                                <SocialButton className="square-button microsoft-teams"
+                                    url={shareData?.url}
+                                    type='microsoft-teams'
+                                    heading={lf("Share on Microsoft Teams")} />
+                                <SocialButton className="square-button whatsapp"
+                                    url={shareData?.url}
+                                    type='whatsapp'
+                                    heading={lf("Share on WhatsApp")} />
                                 {navigator.share && <Button className="square-button device-share"
                                     title={lf("Show device share options")}
                                     ariaLabel={lf("Show device share options")}
@@ -255,12 +269,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             initialValue={shareData?.embed[embedState]} />
                     </div>}
                 </>}
+                {shareState === "gifrecord" && <GifInfo
+                    initialUri={thumbnailUri}
+                    onApply={applyGifChange}
+                    onCancel={exitGifRecord}
+                    simRecorder={simRecorder}/>}
             </div>
-            {shareState === "gifrecord" && <GifInfo
-                initialUri={thumbnailUri}
-                onApply={applyGifChange}
-                onCancel={exitGifRecord}
-                simRecorder={simRecorder}/>}
 
             {showQRCode &&
                 <Modal title={lf("QR Code")} onClose={handleQRCodeModalClose}>

@@ -1,15 +1,18 @@
 import * as React from "react";
 import { Button } from "../controls/Button";
+import { classList } from "../util";
 
 interface SocialButtonProps {
     className?: string;
     url?: string;
-    type?: "facebook" | "twitter" | "discourse";
+    type?: "facebook" | "twitter" | "discourse" | "google-classroom" | "microsoft-teams" | "whatsapp";
     heading?: string;
 }
 
 export const SocialButton = (props: SocialButtonProps) => {
     const { className, url, type, heading } = props;
+
+    const classes = classList(className, "social-button", "type")
 
     const handleClick = () => {
         const socialOptions = pxt.appTarget.appTheme.socialOptions;
@@ -41,13 +44,40 @@ export const SocialButton = (props: SocialButtonProps) => {
                 socialUrl += `&category=${encodeURIComponent(socialOptions.discourseCategory)}`;
                 break;
             }
+            case "google-classroom":
+                socialUrl = `https://classroom.google.com/share?url=${encodeURIComponent(url)}`;
+                break;
+            case "microsoft-teams":
+                socialUrl = `https://teams.microsoft.com/share?href=${encodeURIComponent(url)}`;
+                break;
+            case "whatsapp":
+                socialUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(url)}`;
+                break;
         }
         pxt.BrowserUtils.popupWindow(socialUrl, heading, 600, 600);
     }
 
-    return <Button className={className}
-        ariaLabel={type}
-        title={heading}
-        leftIcon={`icon ${type}`}
-        onClick={handleClick} />
+    switch (type) {
+        // Icon buttons
+        case "facebook":
+        case "twitter":
+        case "discourse":
+        case "whatsapp":
+            return <Button className={classes}
+                ariaLabel={type}
+                title={heading}
+                leftIcon={`icon ${type}`}
+                onClick={handleClick} />
+
+        // Image buttons
+        case "google-classroom":
+        case "microsoft-teams":
+            return <Button className={classes}
+                ariaLabel={type}
+                title={heading}
+                label={<img src={`/static/logo/social-buttons/${type}.png`} alt={heading || pxt.U.rlf(type)} />}
+                onClick={handleClick} />
+    }
+
+
 }

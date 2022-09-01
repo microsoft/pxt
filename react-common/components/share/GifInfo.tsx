@@ -74,22 +74,41 @@ export const GifInfo = (props: GifInfoProps) => {
     const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey) ;
 
     return <>
-        <span className="thumbnail-label">{lf("Current Thumbnail")}</span>
-        {/* <div className="thumbnail-image">
-            {uri
-                ? <img src={uri} />
-                : <div className="thumbnail-placeholder" />
-            }
-        </div> */}
-        {React.createElement(simRecorder, { onSimRecorderInit: handleSimRecorderRef })}
-        <div className="thumbnail-actions">
-            <Button className="primary"
-                title={lf("Apply")}
-                label={lf("Apply")}
-                onClick={handleApplyClick} />
-            <Button title={lf("Cancel")}
-                label={lf("Cancel")}
-                onClick={onCancel} />
+        <div className="gif-recorder-content">
+            <div className="gif-recorder-sim-embed">
+                {React.createElement(simRecorder, { onSimRecorderInit: handleSimRecorderRef })}
+            </div>
+            <div className="thumbnail-controls">
+                <div className="thumbnail-preview">
+                    <div>
+                        <span className="thumbnail-label">{lf("Current Thumbnail")}</span>
+                        <div className="thumbnail-image">
+                            {initialUri
+                                ? <img src={initialUri} />
+                                : <div className="thumbnail-placeholder" />
+                            }
+                        </div>
+                    </div>
+                    <div>
+                        <span className="thumbnail-label">{lf("New Thumbnail")}</span>
+                        <div className="thumbnail-image">
+                            {uri
+                                ? <img src={uri} />
+                                : <div className="thumbnail-placeholder" />
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div className="thumbnail-actions">
+                    <Button className="primary"
+                        title={lf("Apply")}
+                        label={lf("Apply")}
+                        onClick={handleApplyClick} />
+                    <Button title={lf("Cancel")}
+                        label={lf("Cancel")}
+                        onClick={onCancel} />
+                </div>
+            </div>
         </div>
 
         <div className="gif-recorder">

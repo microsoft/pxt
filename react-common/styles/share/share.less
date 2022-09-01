@@ -23,9 +23,6 @@
     }
 }
 
-#shareLoanedSimulator {
-    width: 10rem;
-}
 
 .project-share-info {
     display: flex;
@@ -112,7 +109,7 @@
     margin-bottom: 2rem;
 
     .common-button {
-        margin-right: 1rem;
+        margin-right: 0.5rem;
     }
 }
 
@@ -165,14 +162,52 @@
 //           Gif Recorder              //
 /////////////////////////////////////////
 
+.gif-recorder-content {
+    display: flex;
+    flex-direction: row;
+
+    .thumbnail-controls {
+        display: flex;
+        flex-direction: column;
+
+        .thumbnail-preview {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            align-items: center;
+
+            & > div {
+                padding-bottom: 1rem;
+            }
+
+            .thumbnail-image,
+            .thumbnail-placeholder {
+                display: flex;
+                background-color: rgba(0, 0, 0, 0.05);
+                width: 10rem;
+                height: 7.5rem;
+            }
+        }
+    }
+}
+
+.gif-recorder-sim-embed {
+    flex-grow: 1;
+    padding-right: 1rem;
+
+    .simframe {
+        padding-bottom: 56.25%!important;
+    }
+}
+
 .gif-recorder {
     position: absolute;
     display: flex;
     flex-direction: column;
     align-items: center;
 
-    bottom: 0;
-    left: calc(~'(100vw - 25rem)/2');
+    bottom: 1rem;
+    left: 50vw;
     padding: 1rem;
     transform: translateX(-50%);
     background: @white;
