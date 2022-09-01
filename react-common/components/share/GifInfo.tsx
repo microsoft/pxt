@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Button } from "../controls/Button";
-import { GifRecorder } from "./GifRecorder";
+import { SimRecorder, SimRecorderRef, SimRecorderState } from "./GifRecorder";
 
 export interface GifInfoProps {
     initialUri?: string;
@@ -8,42 +8,55 @@ export interface GifInfoProps {
     onApply: (uri: string) => void;
     onCancel: () => void;
 
-    screenshotAsync?: () => Promise<string>;
-    gifRecordAsync?: () => Promise<void>;
-    gifRenderAsync?: () => Promise<string | void>;
-    gifAddFrame?: (dataUri: ImageData, delay?: number) => boolean;
-
-    registerSimulatorMsgHandler?: (handler: (msg: any) => void) => void;
-    unregisterSimulatorMsgHandler?: () => void;
+    simRecorder: SimRecorder;
 }
 
 export const GifInfo = (props: GifInfoProps) => {
-    const { initialUri, onApply, onCancel, screenshotAsync, gifRecordAsync, gifRenderAsync, gifAddFrame,
-        registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
+    const { initialUri, onApply, onCancel, simRecorder } = props;
     const [ uri, setUri ] =  React.useState(initialUri);
+    const [ recorderRef, setRecorderRef ] = React.useState<SimRecorderRef>(undefined);
+    const [ recorderState, setRecorderState ] = React.useState<SimRecorderState>("default");
 
     const handleApplyClick = (evt?: any) => {
         onApply(uri);
     }
 
     const handleScreenshotClick = async () => {
-        const screenshotUri = await screenshotAsync();
-        setUri(screenshotUri);
+        if (recorderRef) recorderRef.screenshotAsync();
     }
 
-    const handleRecordStopClick = async () => {
-        const gifUri = await gifRenderAsync();
-        if (gifUri) setUri(gifUri);
+    const handleRecordClick = async () => {
+        if (!recorderRef) return;
+
+        if (recorderRef.state === "recording") {
+            recorderRef.stopRecordingAsync();
+        }
+        else if (recorderRef.state === "default") {
+            recorderRef.startRecordingAsync();
+        }
     }
+
+    const targetTheme = pxt.appTarget.appTheme;
+
+    const handleSimRecorderRef = (ref: SimRecorderRef) => {
+        setRecorderRef(ref);
+        ref.onStateChange(setRecorderState);
+        ref.onThumbnail((uri, type) => setUri(uri));
+    }
+
+    const screenshotLabel = lf("Take screenshot ({0})", targetTheme.simScreenshotKey);
+    const startRecordingLabel = lf("Record game play ({0})", targetTheme.simGifKey);
+    const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey) ;
 
     return <>
         <span className="thumbnail-label">{lf("Current Thumbnail")}</span>
-        <div className="thumbnail-image">
+        {/* <div className="thumbnail-image">
             {uri
                 ? <img src={uri} />
                 : <div className="thumbnail-placeholder" />
             }
-        </div>
+        </div> */}
+        {React.createElement(simRecorder, { onSimRecorderInit: handleSimRecorderRef })}
         <div className="thumbnail-actions">
             <Button className="primary"
                 title={lf("Apply")}
@@ -53,11 +66,21 @@ export const GifInfo = (props: GifInfoProps) => {
                 label={lf("Cancel")}
                 onClick={onCancel} />
         </div>
-        <GifRecorder onScreenshot={screenshotAsync ? handleScreenshotClick : undefined}
-            onRecordStart={gifRecordAsync}
-            onRecordStop={handleRecordStopClick}
-            onGifFrame={gifAddFrame}
-            registerSimulatorMsgHandler={registerSimulatorMsgHandler}
-            unregisterSimulatorMsgHandler={unregisterSimulatorMsgHandler} />
+
+        <div className="gif-recorder">
+            <div className="gif-recorder-label">{lf("Pick your project thumbnail")}</div>
+            <div className="gif-recorder-actions">
+                {<Button className="teal inverted"
+                    title={screenshotLabel}
+                    label={screenshotLabel}
+                    leftIcon="fas fa-camera"
+                    onClick={handleScreenshotClick} />}
+                {<Button className="teal inverted"
+                    title={recorderState === "recording" ? stopRecordingLabel : startRecordingLabel}
+                    label={recorderState === "recording" ? stopRecordingLabel : startRecordingLabel}
+                    leftIcon={`fas fa-${recorderState === "recording" ? "square" : "circle"}`}
+                    onClick={handleRecordClick} />}
+            </div>
+        </div>
     </>
 }

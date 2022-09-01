@@ -11,7 +11,7 @@ interface SimRecorderRefImpl extends SimRecorderRef {
 export const SimRecorderImpl: SimRecorder = props => {
     const { onSimRecorderInit } = props;
 
-    const [loandedSimulator, setLoanedSimulator] = React.useState<HTMLElement>(undefined);
+    const [loanedSimulator, setLoanedSimulator] = React.useState<HTMLElement>(undefined);
 
 
     React.useEffect(() => {
@@ -44,7 +44,7 @@ export const SimRecorderImpl: SimRecorder = props => {
         })
 
         return () => {
-            if (loandedSimulator) {
+            if (loanedSimulator) {
                 simulator.driver.unloanSimulator();
                 simulator.driver.stopRecording();
             }
@@ -52,7 +52,7 @@ export const SimRecorderImpl: SimRecorder = props => {
                 editor.popScreenshotHandler()
             })
         }
-    })
+    }, [])
 
     let containerRef: HTMLDivElement;
     const handleContainerRef = (ref: HTMLDivElement) => {
@@ -60,9 +60,9 @@ export const SimRecorderImpl: SimRecorder = props => {
 
         containerRef = ref;
 
-        if (loandedSimulator) {
+        if (loanedSimulator && containerRef.firstChild !== loanedSimulator) {
             while (containerRef.firstChild) containerRef.firstChild.remove();
-            containerRef.appendChild(loandedSimulator);
+            containerRef.appendChild(loanedSimulator);
         }
     }
 
@@ -70,11 +70,14 @@ export const SimRecorderImpl: SimRecorder = props => {
     </div>
 }
 
+let ref: SimRecorderRefImpl;
+
 function createSimRecorderRef() {
+    if (ref) return ref;
     let encoder: screenshot.GifEncoder;
-    let ref: Partial<SimRecorderRefImpl> = {
+    ref = {
         state: "default"
-    }
+    } as any
 
     const handlers: ((newState: SimRecorderState) => void)[] = [];
     const thumbHandlers: ((uri: string, type: "gif" | "png") => void)[] = [];
@@ -103,11 +106,14 @@ function createSimRecorderRef() {
         }
 
         encoder.start();
+        const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
+        simulator.driver.startRecording(gifwidth);
         setState("recording");
     };
 
     const renderGifAsync = async () => {
         if (ref.state !== "recording") return undefined;
+        simulator.driver.stopRecording();
         setState("rendering");
 
         const uri = await encoder.renderAsync();

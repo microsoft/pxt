@@ -307,14 +307,8 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                 <Share projectName={newProjectName}
                     screenshotUri={screenshotUri}
                     isLoggedIn={hasIdentity}
-                    screenshotAsync={simScreenshot ? screenshotAsync : undefined}
-                    gifRecordAsync={!light && simGif ? this.gifRecord : undefined}
-                    gifRenderAsync={!light && simGif ? this.gifRender : undefined}
-                    gifAddFrame={!light && simGif ? this.gifAddFrame : undefined}
                     publishAsync={publishAsync}
-                    simRecorder={SimRecorderImpl}
-                    registerSimulatorMsgHandler={thumbnails ? parent.pushScreenshotHandler : undefined}
-                    unregisterSimulatorMsgHandler={thumbnails ? parent.popScreenshotHandler : undefined} />
+                    simRecorder={SimRecorderImpl} />
             </Modal>
             : <></>
     }

@@ -17,19 +17,11 @@ export interface ShareInfoProps {
     screenshotUri?: string;
     isLoggedIn?: boolean;
     simRecorder: SimRecorder;
-
-    screenshotAsync?: () => Promise<string>;
-    gifRecordAsync?: () => Promise<void>;
-    gifRenderAsync?: () => Promise<string | void>;
-    gifAddFrame?: (dataUri: ImageData, delay?: number) => boolean;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
-    registerSimulatorMsgHandler?: (handler: (msg: any) => void) => void;
-    unregisterSimulatorMsgHandler?: () => void;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, screenshotAsync, gifRecordAsync,
-        gifRenderAsync, gifAddFrame, publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
+    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
@@ -39,7 +31,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ copySuccessful, setCopySuccessful ] = React.useState(false);
     const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn);
 
-    const showSimulator = !!screenshotAsync || !!gifRecordAsync;
+    const showSimulator = !!simRecorder;
     const showDescription = shareState !== "publish";
     let qrCodeButtonRef: HTMLButtonElement;
     let inputRef: HTMLInputElement;
@@ -268,12 +260,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 initialUri={thumbnailUri}
                 onApply={applyGifChange}
                 onCancel={exitGifRecord}
-                screenshotAsync={screenshotAsync}
-                gifRecordAsync={gifRecordAsync}
-                gifRenderAsync={gifRenderAsync}
-                gifAddFrame={gifAddFrame}
-                registerSimulatorMsgHandler={registerSimulatorMsgHandler}
-                unregisterSimulatorMsgHandler={unregisterSimulatorMsgHandler} />}
+                simRecorder={simRecorder}/>}
 
             {showQRCode &&
                 <Modal title={lf("QR Code")} onClose={handleQRCodeModalClose}>

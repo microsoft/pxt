@@ -989,19 +989,16 @@ namespace pxsim {
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
-        static postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
+        static async postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
             const b = runtime && runtime.board;
-            const p = b
-                ? b.screenshotAsync().catch(e => {
-                    console.debug(`screenshot failed`);
-                    return undefined;
-                })
-                : Promise.resolve(undefined);
-            return p.then(img => Runtime.postMessage({
+            if (!b) return undefined;
+
+            const img = await b.screenshotAsync();
+            Runtime.postMessage({
                 type: "screenshot",
                 data: img,
                 delay: opts && opts.delay
-            } as SimulatorScreenshotMessage));
+            } as SimulatorScreenshotMessage)
         }
 
         static requestToggleRecording() {
