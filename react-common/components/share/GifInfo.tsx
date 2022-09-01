@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Button } from "../controls/Button";
-import { SimRecorder, SimRecorderRef, SimRecorderState } from "./GifRecorder";
 
 export interface GifInfoProps {
     initialUri?: string;
@@ -11,11 +10,39 @@ export interface GifInfoProps {
     simRecorder: SimRecorder;
 }
 
+export interface SimRecorderProps {
+    onSimRecorderInit: (ref: SimRecorderRef) => void;
+}
+export type SimRecorder = (props: SimRecorderProps) => JSX.Element
+export type SimRecorderState = "default" | "recording" | "rendering"
+export interface SimRecorderRef {
+    state: SimRecorderState;
+    startRecordingAsync: () => Promise<void>;
+    stopRecordingAsync: () => Promise<string>;
+    screenshotAsync: () => Promise<string>;
+    addStateChangeListener: (handler: (newState: SimRecorderState) => void) => void;
+    addThumbnailListener: (handler: (uri: string, type: "gif" | "png") => void) => void;
+    removeStateChangeListener: (handler: (newState: SimRecorderState) => void) => void;
+    removeThumbnailListener: (handler: (uri: string, type: "gif" | "png") => void) => void;
+}
+
+
 export const GifInfo = (props: GifInfoProps) => {
     const { initialUri, onApply, onCancel, simRecorder } = props;
     const [ uri, setUri ] =  React.useState(initialUri);
     const [ recorderRef, setRecorderRef ] = React.useState<SimRecorderRef>(undefined);
     const [ recorderState, setRecorderState ] = React.useState<SimRecorderState>("default");
+
+    React.useEffect(() => {
+        if (!recorderRef) return undefined;
+        recorderRef.addStateChangeListener(setRecorderState);
+        recorderRef.addThumbnailListener(setUri);
+
+        return () => {
+            recorderRef.removeStateChangeListener(setRecorderState);
+            recorderRef.removeThumbnailListener(setUri);
+        }
+    }, [recorderRef])
 
     const handleApplyClick = (evt?: any) => {
         onApply(uri);
@@ -40,8 +67,6 @@ export const GifInfo = (props: GifInfoProps) => {
 
     const handleSimRecorderRef = (ref: SimRecorderRef) => {
         setRecorderRef(ref);
-        ref.onStateChange(setRecorderState);
-        ref.onThumbnail((uri, type) => setUri(uri));
     }
 
     const screenshotLabel = lf("Take screenshot ({0})", targetTheme.simScreenshotKey);

@@ -9,7 +9,7 @@ import { ShareData } from "./Share";
 import { GifInfo } from "./GifInfo";
 import { SocialButton } from "./SocialButton";
 import { Checkbox } from "../controls/Checkbox";
-import { SimRecorder } from "./GifRecorder";
+import { SimRecorder } from "./GifInfo";
 
 export interface ShareInfoProps {
     projectName: string;

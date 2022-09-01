@@ -1,7 +1,7 @@
 /// <reference path="../types.d.ts" />
 
 import * as React from "react";
-import { SimRecorder } from "./GifRecorder";
+import { SimRecorder } from "./GifInfo";
 import { ShareInfo } from "./ShareInfo";
 
 export interface ShareData {

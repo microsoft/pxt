@@ -2,7 +2,7 @@ import * as simulator from "../simulator";
 import * as React from "react"
 import * as screenshot from "../screenshot";
 import { getEditorAsync } from "../app";
-import { SimRecorder, SimRecorderRef, SimRecorderState } from "../../../react-common/components/share/GifRecorder";
+import { SimRecorder, SimRecorderRef, SimRecorderState } from "../../../react-common/components/share/GifInfo";
 
 interface SimRecorderRefImpl extends SimRecorderRef {
     gifAddFrame(data: ImageData, delay?: number): boolean;
@@ -79,15 +79,23 @@ function createSimRecorderRef() {
         state: "default"
     } as any
 
-    const handlers: ((newState: SimRecorderState) => void)[] = [];
-    const thumbHandlers: ((uri: string, type: "gif" | "png") => void)[] = [];
+    let handlers: ((newState: SimRecorderState) => void)[] = [];
+    let thumbHandlers: ((uri: string, type: "gif" | "png") => void)[] = [];
 
-    const onStateChange = (handler: (newState: SimRecorderState) => void) => {
+    const addStateChangeListener = (handler: (newState: SimRecorderState) => void) => {
         handlers.push(handler);
     }
 
-    const onThumbnail = (handler: (uri: string, type: "gif" | "png") => void) => {
+    const addThumbnailListener = (handler: (uri: string, type: "gif" | "png") => void) => {
         thumbHandlers.push(handler);
+    }
+
+    const removeStateChangeListener = (handler: (newState: SimRecorderState) => void) => {
+        handlers = handlers.filter(h => h !== handler);
+    }
+
+    const removeThumbnailListener = (handler: (uri: string, type: "gif" | "png") => void) => {
+        thumbHandlers = thumbHandlers.filter(h => h !== handler);
     }
 
     const setState = (state: SimRecorderState) => {
@@ -104,7 +112,7 @@ function createSimRecorderRef() {
             // TODO: display error
             return;
         }
-
+        encoder.cancel();
         encoder.start();
         const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
         simulator.driver.startRecording(gifwidth);
@@ -150,8 +158,10 @@ function createSimRecorderRef() {
         return encoder.addFrame(data, delay);
     }
 
-    ref.onStateChange = onStateChange;
-    ref.onThumbnail = onThumbnail;
+    ref.addStateChangeListener = addStateChangeListener;
+    ref.addThumbnailListener = addThumbnailListener;
+    ref.removeStateChangeListener = removeStateChangeListener;
+    ref.removeThumbnailListener = removeThumbnailListener;
     ref.startRecordingAsync = recordGifAsync;
     ref.stopRecordingAsync = renderGifAsync;
     ref.screenshotAsync = screenshotAsync
