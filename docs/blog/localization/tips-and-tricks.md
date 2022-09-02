@@ -1,6 +1,6 @@
 # MakeCode Translation Tips and Tricks
 
-**Posted on April 26th, 2022 by [anzhou5](https://github.com/anzhou5)**
+**Posted on September 4th, 2022 by [anzhou5](https://github.com/anzhou5)**
 
 ## A quick guide to translating the MakeCode editor
 
@@ -11,14 +11,26 @@ We use [Crowdin](https://crowdin.com/project/makecode) as our main translation p
 ### Tip #1: Getting a language published
 While we offer many languages as options for translation on Crowdin, not all the languages appear on our MakeCode websites (for micro:bit, Arcade, etc.). This is because we require some level of translation to be completed before we enable a language on our site. This typically means at least 85% translation completion of our key files that comprise 3 key parts of each language:
 
-1)	User interface strings on the editor websites
+1)	User interface strings on the editor websites:
+
+![User interface strings](/static/blog/microbit/localization/user-interface-strings.png)
+
 2)	The core MakeCode blocks which are common across all editors (i.e. Math, Loops, Logic blocks)
-3)	Additional blocks specific to the editor (i.e. Radio adn LED blocks in the micro:bit editor)
+
+![Core blocks](/static/blog/microbit/localization/core-blocks.png)
+
+3)	Additional blocks specific to the editor (i.e. Radio and LED blocks in the micro:bit editor)
+
+![Specialized blocks](/static/blog/microbit/localization/specialized-blocks.png)
 
 ### Tip #2: Tasks
 For each of the 3 parts of the editor to translate, there are different files in Crowdin with the text to translate.  To make it easier for you to know which files to translate, we have created tasks that specify which file corresponds to what part of the MakeCode editor.  Once you have achieved the translation goal and have it all confirmed by a proofreader, you can message our Crowdin account and we will do a final review and schedule a release.
 
+Here is a sample task for translating MakeCode Arcade to Arabic: https://crowdin.com/project/makecode/tasks/922.
+
 ### Tip #3: In-context translations
 Another approach to translating the files directly in Crowdin is to use [in-context translations](https://makecode.com/translate/in-context). This allows you to work directly in the MakeCode interface and click on the things you want to translate. Any translations you put into the in-context translation tool will be updated in the Crowdin project. We do want to note that this tool is relatively new and you may encounter some bugs.  We encourage you to refresh the page a few times if you experience any issues and provide us with feedback.
+
+![In-context translations](/static/blog/microbit/localization/in-context-translations.png)
 
 For people interested in translating MakeCode for the micro:bit, please watch this [video](https://www.youtube.com/watch?v=eQldcOs-1_4) from Micro:bit Live about how to get involved with the micro:bit translation community.
