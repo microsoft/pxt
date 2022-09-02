@@ -554,6 +554,7 @@ namespace Math {
     /**
       * Returns the larger of two supplied numeric expressions.
       */
+    //% blockId=math_op2
     //% help=math/max
     export function max(a: number, b: number): number {
         if (a >= b) return a;
@@ -563,6 +564,7 @@ namespace Math {
     /**
       * Returns the smaller of two supplied numeric expressions.
       */
+    //% blockId=math_op2
     //% help=math/min
     export function min(a: number, b: number): number {
         if (a <= b) return a;

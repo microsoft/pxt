@@ -1974,6 +1974,7 @@ namespace pxt.blocks {
     function initMath(blockInfo: pxtc.BlocksInfo) {
         // math_op2
         const mathOp2Id = "math_op2";
+        const mathOp2qName = "Math.min"; // TODO: implement logic so that this changes based on which is used (min or max)
         const mathOp2Def = pxt.blocks.getBlockDefinition(mathOp2Id);
         const mathOp2Tooltips = <Map<string>>mathOp2Def.tooltip;
         Blockly.Blocks[mathOp2Id] = {
@@ -2016,7 +2017,9 @@ namespace pxt.blocks {
                     mathOp2Def.url,
                     pxt.toolbox.getNamespaceColor(mathOp2Def.category)
                 );
-            }
+
+            },
+            codeCard: attachCardInfo(blockInfo, mathOp2qName)
         };
 
         // math_op3
