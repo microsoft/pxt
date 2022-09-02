@@ -22,14 +22,17 @@ export interface SimRecorderRef {
     screenshotAsync: () => Promise<string>;
     addStateChangeListener: (handler: (newState: SimRecorderState) => void) => void;
     addThumbnailListener: (handler: (uri: string, type: "gif" | "png") => void) => void;
+    addErrorListener: (handler: (message: string) => void) => void;
     removeStateChangeListener: (handler: (newState: SimRecorderState) => void) => void;
     removeThumbnailListener: (handler: (uri: string, type: "gif" | "png") => void) => void;
+    removeErrorListener: (handler: (message: string) => void) => void;
 }
 
 
 export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     const { initialUri, onApply, onCancel, simRecorder } = props;
     const [ uri, setUri ] =  React.useState(initialUri);
+    const [error, setError] = React.useState<string>(undefined)
     const [ recorderRef, setRecorderRef ] = React.useState<SimRecorderRef>(undefined);
     const [ recorderState, setRecorderState ] = React.useState<SimRecorderState>("default");
 
@@ -37,10 +40,12 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
         if (!recorderRef) return undefined;
         recorderRef.addStateChangeListener(setRecorderState);
         recorderRef.addThumbnailListener(setUri);
+        recorderRef.addErrorListener(setError);
 
         return () => {
             recorderRef.removeStateChangeListener(setRecorderState);
             recorderRef.removeThumbnailListener(setUri);
+            recorderRef.removeErrorListener(setError);
         }
     }, [recorderRef])
 
@@ -49,10 +54,12 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     }
 
     const handleScreenshotClick = async () => {
+        setError(undefined);
         if (recorderRef) recorderRef.screenshotAsync();
     }
 
     const handleRecordClick = async () => {
+        setError(undefined);
         if (!recorderRef) return;
 
         if (recorderRef.state === "recording") {

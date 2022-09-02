@@ -13,7 +13,6 @@ export const SimRecorderImpl: SimRecorder = props => {
 
     const [loanedSimulator, setLoanedSimulator] = React.useState<HTMLElement>(undefined);
 
-
     React.useEffect(() => {
         const sim = simulator.driver.loanSimulator()
         setLoanedSimulator(sim);
@@ -81,6 +80,7 @@ function createSimRecorderRef() {
 
     let handlers: ((newState: SimRecorderState) => void)[] = [];
     let thumbHandlers: ((uri: string, type: "gif" | "png") => void)[] = [];
+    let errorHandlers: ((message: string) => void)[] = [];
 
     const addStateChangeListener = (handler: (newState: SimRecorderState) => void) => {
         handlers.push(handler);
@@ -88,6 +88,10 @@ function createSimRecorderRef() {
 
     const addThumbnailListener = (handler: (uri: string, type: "gif" | "png") => void) => {
         thumbHandlers.push(handler);
+    }
+
+    const addErrorListener = (handler: (message: string) => void) => {
+        errorHandlers.push(handler);
     }
 
     const removeStateChangeListener = (handler: (newState: SimRecorderState) => void) => {
@@ -98,9 +102,19 @@ function createSimRecorderRef() {
         thumbHandlers = thumbHandlers.filter(h => h !== handler);
     }
 
+    const removeErrorListener = (handler: (message: string) => void) => {
+        errorHandlers = errorHandlers.filter(h => h !== handler);
+    }
+
     const setState = (state: SimRecorderState) => {
         ref.state = state;
         for (const handler of handlers) handler(state);
+    }
+
+    const setError = (message: string) => {
+        for (const handler of errorHandlers) {
+            handler(message);
+        }
     }
 
     const recordGifAsync = async () => {
@@ -109,7 +123,7 @@ function createSimRecorderRef() {
             encoder = await screenshot.loadGifEncoderAsync();
         }
         if (!encoder) {
-            // TODO: display error
+            setError(lf("Unable to load GIF encoder. Are you offline?"))
             return;
         }
         encoder.cancel();
@@ -132,7 +146,7 @@ function createSimRecorderRef() {
         if (uri) {
             if (maxSize && uri.length > maxSize) {
                 pxt.tickEvent(`gif.toobig`, { size: uri.length });
-                // recordError = lf("Gif is too big, try recording a shorter time.");
+                setError(lf("Oops! The GIF you recorded is too large. Try recording a shorter clip!"))
                 return undefined;
             } else
                 pxt.tickEvent(`gif.ok`, { size: uri.length });
@@ -160,8 +174,10 @@ function createSimRecorderRef() {
 
     ref.addStateChangeListener = addStateChangeListener;
     ref.addThumbnailListener = addThumbnailListener;
+    ref.addErrorListener = addErrorListener
     ref.removeStateChangeListener = removeStateChangeListener;
     ref.removeThumbnailListener = removeThumbnailListener;
+    ref.removeErrorListener = removeErrorListener;
     ref.startRecordingAsync = recordGifAsync;
     ref.stopRecordingAsync = renderGifAsync;
     ref.screenshotAsync = screenshotAsync
