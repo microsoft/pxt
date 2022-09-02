@@ -1826,19 +1826,23 @@ export class ProjectView
                 try {
                     const entry: pxt.tutorial.TutorialBlockConfigEntry = {};
                     const blockType = block.getAttribute("type");
-                    if (blockType === "typescript_statement") {
-                        // Decompiled to gray block
-                        throw new Error("Block config decompiled to gray block: " + Blockly.Xml.domToText(block));
-                    }
-                    if (blockType === "variables_set") {
-                        // get block id from within variables_set context
-                        const variables_set = block.children[0];
-                        const value = Array.from(variables_set.children).find(child => child.tagName === "value");
-                        const rhs = Array.from(value.children).find(child => child.tagName === "block");
-                        entry.blockId = rhs.getAttribute("type");
-                    } else {
-                        // Set block id from root type
-                        entry.blockId = blockType;
+                    switch (blockType) {
+                        case "typescript_statement": {
+                            // Decompiled to gray block
+                            throw new Error("Block config decompiled to gray block: " + Blockly.Xml.domToText(block));
+                        }
+                        case "variables_set":
+                        case "variables_change": {
+                            // get block id from within variables_set context
+                            const value = Array.from(block.children).find(child => child.tagName === "value");
+                            const rhs = Array.from(value.children).find(child => child.tagName === "block");
+                            entry.blockId = rhs.getAttribute("type");
+                            break;
+                        }
+                        default: {
+                            // Set block id from root type
+                            entry.blockId = blockType;
+                        }
                     }
                     entry.xml =
                         Blockly.Xml.domToText(block)
