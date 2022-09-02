@@ -49,9 +49,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
         exitGifRecord();
     }
 
-    const handlePublishClick = async (forceAnonymous?: boolean) => {
+    const handlePublishClick = async () => {
         setShareState("publishing");
-        let publishedShareData = await publishAsync(name, thumbnailUri, forceAnonymous);
+        let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
         else setShareState("share")
