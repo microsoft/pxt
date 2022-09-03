@@ -4,7 +4,7 @@
 
 ## A quick guide to translating the MakeCode editor
 
-MakeCode is used by students across the world, and we are so excited and appreciative every time we are able to release a new language and support a new community of learners!  Language translation for MakeCode is possible thanks to an amazing community of volunteer translators! If you would like to get involved or want to learn more about how to help translate MakeCode, please visit our [Help Translate](https://makecode.com/translate) page.
+MakeCode is used by students across the world, and we are so excited and appreciative every time we are able to release a new language and support a new community of learners!  Language translation for MakeCode is possible thanks to an amazing community of volunteer translators! If you would like to get involved or want to learn more about translating MakeCode, please visit our [Help Translate](https://makecode.com/translate) page.
 
 We use [Crowdin](https://crowdin.com/project/makecode) as our main translation platform. Here are a few tips and tricks that can help you get started:
 
@@ -24,11 +24,13 @@ While we offer many languages as options for translation on Crowdin, not all the
 ![Specialized blocks](/static/blog/microbit/localization/specialized-blocks.png)
 
 ### Tip #2: Tasks
+
 For each of the 3 parts of the editor to translate, there are different files in Crowdin with the text to translate.  To make it easier for you to know which files to translate, we have created tasks that specify which file corresponds to what part of the MakeCode editor.  Once you have achieved the translation goal and have it all confirmed by a proofreader, you can message our Crowdin account and we will do a final review and schedule a release.
 
 Here is a sample task for translating MakeCode Arcade to Arabic: https://crowdin.com/project/makecode/tasks/922.
 
 ### Tip #3: In-context translations
+
 Another approach to translating the files directly in Crowdin is to use [in-context translations](https://makecode.com/translate/in-context). This allows you to work directly in the MakeCode interface and click on the things you want to translate. Any translations you put into the in-context translation tool will be updated in the Crowdin project. We do want to note that this tool is relatively new and you may encounter some bugs.  We encourage you to refresh the page a few times if you experience any issues and provide us with feedback.
 
 ![In-context translations](/static/blog/microbit/localization/in-context-translations.png)
