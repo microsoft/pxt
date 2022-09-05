@@ -62,6 +62,7 @@ export class Editor extends srceditor.Editor {
             // switch to previous coding experience
             if (!stayInEditor) this.parent.openPreviousEditor();
             core.resetFocus();
+            location.reload();
         })
     }
 
