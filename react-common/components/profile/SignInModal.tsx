@@ -34,12 +34,12 @@ export const SignInModal = (props: SignInModalProps) => {
             mode === "signin" ? (
                 <div className='switch'>
                     <span>{lf("Don't have an account?")}</span>
-                    <Button className="link-button" onClick={() => setMode("signup")} title={lf("Sign up")}/>
+                    <Button className="link-button" onClick={() => setMode("signup")} title={lf("Sign up")} label={lf("Sign up")}/>
                 </div>
             ) : (
                 <div className='switch'>
                     <span>{lf("Have an account?")}</span>
-                    <Button className="link-button" onClick={() => setMode("signin")} title={lf("Sign in")}/>
+                    <Button className="link-button" onClick={() => setMode("signin")} title={lf("Sign in")} label={lf("Sign in")}/>
                 </div>
             ),
         [mode]
