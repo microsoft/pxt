@@ -535,6 +535,7 @@ namespace Math {
       * For example, the absolute value of -5 is the same as the absolute value of 5.
       * @param x A numeric expression for which the absolute value is needed.
       */
+    //% blockId=math_op3
     //% help=math/abs
     export function abs(x: number): number {
         return x < 0 ? -x : x;
@@ -553,6 +554,7 @@ namespace Math {
     /**
       * Returns the larger of two supplied numeric expressions.
       */
+    //% blockId=math_op2
     //% help=math/max
     export function max(a: number, b: number): number {
         if (a >= b) return a;
@@ -562,6 +564,7 @@ namespace Math {
     /**
       * Returns the smaller of two supplied numeric expressions.
       */
+    //% blockId=math_op2
     //% help=math/min
     export function min(a: number, b: number): number {
         if (a <= b) return a;
