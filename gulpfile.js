@@ -150,7 +150,8 @@ function initWatch() {
         webapp,
         browserifyWebapp,
         browserifyAssetEditor,
-        gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco)
+        gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
+        notifyProcessingComplete
     ];
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
@@ -170,11 +171,11 @@ function initWatch() {
 
     gulp.watch("./react-common/styles/**/*.css", gulp.series(buildcss, ...tasks.slice(9)))
     gulp.watch("./react-common/**/*", gulp.series(reactCommon, ...tasks.slice(10)))
-    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp, browserifyAssetEditor));
+    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp, browserifyAssetEditor, notifyProcessingComplete));
 
-    gulp.watch(["./theme/**/*.less", "./theme/**/*.overrides", "./theme/**/*.variables", "./svgicons/**/*.svg"], gulp.parallel(buildcss, buildSVGIcons))
+    gulp.watch(["./theme/**/*.less", "./theme/**/*.overrides", "./theme/**/*.variables", "./svgicons/**/*.svg"], gulp.series(gulp.parallel(buildcss, buildSVGIcons), notifyProcessingComplete))
 
-    buildAll();
+    gulp.series(buildAll, notifyProcessingComplete)();
 }
 
 function initWatchCli() {
@@ -230,6 +231,10 @@ function pxtcommon() {
     }
     fs.writeFileSync("built/pxt-common.json", JSON.stringify(std, null, 4))
     return Promise.resolve();
+}
+
+function notifyProcessingComplete() {
+    console.log("-- Processing Complete --");
 }
 
 // TODO: Copied from Jakefile; should be async
