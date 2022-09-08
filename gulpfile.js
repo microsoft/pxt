@@ -234,7 +234,7 @@ function pxtcommon() {
 }
 
 function notifyProcessingComplete() {
-    console.log("-- Processing Complete --");
+    console.log("-- Build Complete --");
 }
 
 // TODO: Copied from Jakefile; should be async
