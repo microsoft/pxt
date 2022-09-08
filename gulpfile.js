@@ -236,6 +236,7 @@ function pxtcommon() {
 
 function notifyBuildComplete() {
     console.log("-- Build Complete --");
+    return Promise.resolve();
 }
 
 // TODO: Copied from Jakefile; should be async
