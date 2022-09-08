@@ -151,7 +151,7 @@ function initWatch() {
         browserifyWebapp,
         browserifyAssetEditor,
         gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
-        notifyProcessingComplete
+        notifyBuildComplete
     ];
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
@@ -171,11 +171,11 @@ function initWatch() {
 
     gulp.watch("./react-common/styles/**/*.css", gulp.series(buildcss, ...tasks.slice(9)))
     gulp.watch("./react-common/**/*", gulp.series(reactCommon, ...tasks.slice(10)))
-    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp, browserifyAssetEditor, notifyProcessingComplete));
+    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp, browserifyAssetEditor, notifyBuildComplete));
 
-    gulp.watch(["./theme/**/*.less", "./theme/**/*.overrides", "./theme/**/*.variables", "./svgicons/**/*.svg"], gulp.series(gulp.parallel(buildcss, buildSVGIcons), notifyProcessingComplete))
+    gulp.watch(["./theme/**/*.less", "./theme/**/*.overrides", "./theme/**/*.variables", "./svgicons/**/*.svg"], gulp.series(gulp.parallel(buildcss, buildSVGIcons), notifyBuildComplete))
 
-    gulp.series(buildAll, notifyProcessingComplete)();
+    gulp.series(buildAll, notifyBuildComplete)();
 }
 
 function initWatchCli() {
@@ -183,7 +183,8 @@ function initWatchCli() {
         pxtlib,
         gulp.parallel(pxtcompiler),
         gulp.parallel(pxtpy, gulp.series(pxtblocks, pxtblockly)),
-        cli
+        cli,
+        notifyBuildComplete
     ]
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
@@ -233,7 +234,7 @@ function pxtcommon() {
     return Promise.resolve();
 }
 
-function notifyProcessingComplete() {
+function notifyBuildComplete() {
     console.log("-- Build Complete --");
 }
 
