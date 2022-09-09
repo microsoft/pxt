@@ -1,6 +1,6 @@
 # MakeCode Translation Tips and Tricks
 
-**Posted on September 8th, 2022 by [anzhou5](https://github.com/anzhou5)**
+**Posted on September 9th, 2022 by [anzhou5](https://github.com/anzhou5)**
 
 ## A quick guide to translating the MakeCode editor
 
