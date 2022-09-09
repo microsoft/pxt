@@ -14,6 +14,7 @@ interface SkillGraphContainerProps {
     maps: SkillMap[];
     graphs: SvgGraph[];
     backgroundImageUrl: string;
+    backgroundColor: string;
     graphSize: {
         width: number;
         height: number;
@@ -25,6 +26,7 @@ interface SkillGraphContainerState {
         width: number;
         height: number;
     };
+    backgroundColor: string;
 }
 
 const THRESHOLD = 0.05;
@@ -33,7 +35,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
     constructor(props: SkillGraphContainerProps) {
         super(props);
 
-        this.state = { backgroundSize: { width: 0, height: 0 } };
+        this.state = { backgroundSize: { width: 0, height: 0 }, backgroundColor: this.props.backgroundColor };
     }
 
     protected onImageLoad = (evt: any) => {
@@ -46,8 +48,11 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
     }
 
     render() {
-        const { graphs, graphSize, backgroundImageUrl } = this.props;
+        const { maps, graphs, graphSize, backgroundImageUrl, backgroundColor } = this.props;
         const { backgroundSize } = this.state;
+        const darkBackgroundColors = ['#5c406c', '#000000'];
+        let altTextColor: string = 'black';
+        let backgroundAltText: string = `Background image for ${maps[0]?.displayName}`; 
         let translateY = 0;
 
         const padding = PADDING * UNIT;
@@ -67,6 +72,14 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
             }
         }
 
+        if (darkBackgroundColors.includes(backgroundColor) ) {
+            altTextColor = 'white';
+        }
+
+        if (maps.length > 1) {
+            backgroundAltText = `Background image for ${maps?.length} connected skillmaps`
+        }
+
         const heightDiff = Math.max(height - graphSize.height, 0) / 2;
         const widthDiff = Math.max(width - graphSize.width, 0) / 2;
 
@@ -83,7 +96,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
                     </svg>
                 </MenuBar>
                 {backgroundImageUrl && <div className="skill-graph-background">
-                    <img src={backgroundImageUrl} alt={lf("Background Image")} onLoad={this.onImageLoad} />
+                    <img src={backgroundImageUrl} alt={lf(backgroundAltText)} onLoad={this.onImageLoad} style={{ color: altTextColor}} />
                 </div>}
             </div>
         </div>
