@@ -163,11 +163,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
             }
             <div className="project-share-content">
                 {(prePublish || shareState === "publish") && <>
-                    <div className="project-share-title">
-                        <h2>{inputTitle}</h2>
+                    <div className="project-share-title project-share-label" id="share-input-title">
+                        {inputTitle}
                     </div>
                     {showDescription && <>
                         <Input
+                            ariaDescribedBy="share-input-title"
                             className="name-input"
                             initialValue={name}
                             placeholder={lf("Name your project")}
@@ -207,6 +208,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         <div className="project-share-data">
                             <div className="common-input-attached-button">
                                 <Input
+                                    ariaDescribedBy="share-input-title"
                                     handleInputRef={handleInputRef}
                                     initialValue={shareData.url}
                                     readOnly={true}
