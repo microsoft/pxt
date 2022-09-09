@@ -83,12 +83,13 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
         const isMap = !node;
         const isActivity = node && !isRewardNode(node);
         const tags = isActivity && (node as MapActivity).tags || undefined;
+        const thumbnailAltText: string = `Thumbnail for ${!subtitle ? "starting" : title} activity in skillmap ${!subtitle ? title : subtitle}`;
 
         const hasCloudSync = pxt.auth.hasIdentity();
         return <div className="info-panel" ref={this.handleRef}>
             <div className="info-panel-image">
                 {imageUrl
-                ? <img src={imageUrl} alt={lf("Preview of activity content")} />
+                ? <img src={imageUrl} alt={lf(thumbnailAltText)} />
                 : <i className={`fas fa-image`} />}
             </div>
             <div className="info-panel-content">
