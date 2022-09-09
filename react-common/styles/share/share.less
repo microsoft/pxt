@@ -23,24 +23,37 @@
     }
 }
 
+
 .project-share-info {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
     flex: 1;
 
     > div {
         margin-bottom: 1rem;
-        flex-shrink: 0;
+    }
+
+    .project-share-content {
+        flex-grow: 1;
+
+        .name-input .common-input-group {
+            height: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .common-checkbox {
+            margin-bottom: 0.5rem;
+        }
     }
 }
 
 .project-share-title {
-    display: flex;
+    margin-bottom: 1rem;
 
     h2 {
-        flex: 1;
         margin: 0;
+        margin-bottom: 0.5rem
     }
 }
 
@@ -51,6 +64,9 @@
 .project-share-thumbnail {
     display: flex;
     flex-direction: column;
+    min-width: 15rem;
+    align-items: center;
+    margin-right: 1rem;
 
     .project-thumbnail-placeholder,
     img {
@@ -58,6 +74,7 @@
         width: 15rem;
         height: 11.25rem;
         background-color: rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
     }
 }
 
@@ -74,6 +91,7 @@
 
 .share-publish-button {
     height: 3rem;
+    margin-right: 1rem;
 
     .common-spinner {
         display: inline-block;
@@ -91,7 +109,7 @@
     margin-bottom: 2rem;
 
     .common-button {
-        margin-right: 1rem;
+        margin-right: 0.5rem;
     }
 }
 
@@ -144,14 +162,52 @@
 //           Gif Recorder              //
 /////////////////////////////////////////
 
+.gif-recorder-content {
+    display: flex;
+    flex-direction: row;
+
+    .thumbnail-controls {
+        display: flex;
+        flex-direction: column;
+
+        .thumbnail-preview {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            align-items: center;
+
+            & > div {
+                padding-bottom: 1rem;
+            }
+
+            .thumbnail-image,
+            .thumbnail-placeholder {
+                display: flex;
+                background-color: rgba(0, 0, 0, 0.05);
+                width: 10rem;
+                height: 7.5rem;
+            }
+        }
+    }
+}
+
+.gif-recorder-sim-embed {
+    flex-grow: 1;
+    padding-right: 1rem;
+
+    .simframe {
+        padding-bottom: 56.25%!important;
+    }
+}
+
 .gif-recorder {
     position: absolute;
     display: flex;
     flex-direction: column;
     align-items: center;
 
-    bottom: 0;
-    left: calc(~'(100vw - 25rem)/2');
+    bottom: 1rem;
+    left: 50vw;
     padding: 1rem;
     transform: translateX(-50%);
     background: @white;
