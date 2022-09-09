@@ -43,10 +43,8 @@ export const SimRecorderImpl: SimRecorder = props => {
         })
 
         return () => {
-            if (loanedSimulator) {
-                simulator.driver.unloanSimulator();
-                simulator.driver.stopRecording();
-            }
+            simulator.driver.unloanSimulator();
+            simulator.driver.stopRecording();
             getEditorAsync().then(editor => {
                 editor.popScreenshotHandler()
             })
@@ -74,9 +72,6 @@ let ref: SimRecorderRefImpl;
 function createSimRecorderRef() {
     if (ref) return ref;
     let encoder: screenshot.GifEncoder;
-    ref = {
-        state: "default"
-    } as any
 
     let handlers: ((newState: SimRecorderState) => void)[] = [];
     let thumbHandlers: ((uri: string, type: "gif" | "png") => void)[] = [];
@@ -117,7 +112,7 @@ function createSimRecorderRef() {
         }
     }
 
-    const recordGifAsync = async () => {
+    const startRecordingAsync = async () => {
         if (ref.state !== "default") return;
         if (!encoder) {
             encoder = await screenshot.loadGifEncoderAsync();
@@ -133,7 +128,7 @@ function createSimRecorderRef() {
         setState("recording");
     };
 
-    const renderGifAsync = async () => {
+    const stopRecordingAsync = async () => {
         if (ref.state !== "recording") return undefined;
         simulator.driver.stopRecording();
         setState("rendering");
@@ -172,16 +167,19 @@ function createSimRecorderRef() {
         return encoder.addFrame(data, delay);
     }
 
-    ref.addStateChangeListener = addStateChangeListener;
-    ref.addThumbnailListener = addThumbnailListener;
-    ref.addErrorListener = addErrorListener
-    ref.removeStateChangeListener = removeStateChangeListener;
-    ref.removeThumbnailListener = removeThumbnailListener;
-    ref.removeErrorListener = removeErrorListener;
-    ref.startRecordingAsync = recordGifAsync;
-    ref.stopRecordingAsync = renderGifAsync;
-    ref.screenshotAsync = screenshotAsync
-    ref.gifAddFrame = gifAddFrame;
+    ref = {
+        state: "default",
+        addStateChangeListener,
+        addThumbnailListener,
+        addErrorListener,
+        removeStateChangeListener,
+        removeThumbnailListener,
+        removeErrorListener,
+        startRecordingAsync,
+        stopRecordingAsync,
+        screenshotAsync,
+        gifAddFrame,
+    };
 
-    return ref as SimRecorderRefImpl;
+    return ref;
 }

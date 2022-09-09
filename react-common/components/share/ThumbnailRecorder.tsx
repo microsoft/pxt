@@ -32,7 +32,7 @@ export interface SimRecorderRef {
 export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     const { initialUri, onApply, onCancel, simRecorder } = props;
     const [ uri, setUri ] =  React.useState(initialUri);
-    const [error, setError] = React.useState<string>(undefined)
+    const [ error, setError] = React.useState<string>(undefined)
     const [ recorderRef, setRecorderRef ] = React.useState<SimRecorderRef>(undefined);
     const [ recorderState, setRecorderState ] = React.useState<SimRecorderState>("default");
 
@@ -77,7 +77,7 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     }
 
     const screenshotLabel = lf("Take screenshot ({0})", targetTheme.simScreenshotKey);
-    const startRecordingLabel = lf("Record game play ({0})", targetTheme.simGifKey);
+    const startRecordingLabel = lf("Record gameplay ({0})", targetTheme.simGifKey);
     const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey) ;
 
     return <>

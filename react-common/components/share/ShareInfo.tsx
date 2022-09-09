@@ -162,7 +162,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 </div>
             }
             <div className="project-share-content">
-                {(prePublish|| shareState === "publish") && <>
+                {(prePublish || shareState === "publish") && <>
                     <div className="project-share-title">
                         <h2>{inputTitle}</h2>
                     </div>

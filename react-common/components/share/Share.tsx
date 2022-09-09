@@ -28,7 +28,7 @@ export interface ShareProps {
 export const Share = (props: ShareProps) => {
     const { projectName, screenshotUri, isLoggedIn, simRecorder, publishAsync} = props;
 
-return <div className="project-share">
+    return <div className="project-share">
         <ShareInfo projectName={projectName}
             isLoggedIn={isLoggedIn}
             screenshotUri={screenshotUri}
