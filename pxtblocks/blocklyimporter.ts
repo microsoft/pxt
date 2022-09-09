@@ -315,4 +315,23 @@ namespace pxt.blocks {
             }
         })
     }
+
+    export function validateAllReferencedBlocksExist(xml: string) {
+        pxt.U.assert(!!Blockly?.Blocks, "Called validateAllReferencedBlocksExist before initializing Blockly");
+        const dom = Blockly.Xml.textToDom(xml);
+
+        const blocks = dom.querySelectorAll("block");
+
+        for (let i = 0; i < blocks.length; i++) {
+            if (!Blockly.Blocks[blocks.item(i).getAttribute("type")]) return false;
+        }
+
+        const shadows = dom.querySelectorAll("shadow");
+
+        for (let i = 0; i < shadows.length; i++) {
+            if (!Blockly.Blocks[shadows.item(i).getAttribute("type")]) return false;
+        }
+
+        return true;
+    }
 }

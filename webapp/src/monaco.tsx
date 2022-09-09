@@ -481,7 +481,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .then(() => compiler.getBlocksAsync())
                 .then((bi: pxtc.BlocksInfo) => {
                     blocksInfo = bi;
+                    pxt.blocks.cleanBlocks();
                     pxt.blocks.initializeAndInject(blocksInfo);
+
+                    // It's possible that the extensions changed and some blocks might not exist anymore
+                    if (!pxt.blocks.validateAllReferencedBlocksExist(mainPkg.files[blockFile].content)) {
+                        return [undefined, true];
+                    }
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         return pxt.blocks.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {

@@ -1609,6 +1609,7 @@ export class ProjectView
             .then(() => this.loadTutorialJresCodeAsync())
             .then(() => this.loadTutorialCustomTsAsync())
             .then(() => this.loadTutorialTemplateCodeAsync())
+            .then(() => this.loadTutorialBlockConfigsAsync())
             .then(() => {
                 const main = pkg.getEditorPkg(pkg.mainPkg)
                 // override preferred editor if specified
@@ -1777,6 +1778,109 @@ export class ProjectView
             .finally(() => {
                 pxt.perf.measureEnd("loadTutorial loadBlockly")
             });
+    }
+
+    private async loadTutorialBlockConfigsAsync(): Promise<void> {
+        const resolveBlockConfigAsync = async (blockConfig: pxt.tutorial.TutorialBlockConfig): Promise<void> => {
+            blockConfig.blocks = [];
+            const blocks: Element[] = [];
+            try {
+                // Decompile block markdown to xml
+                const decomp = await compiler.decompileBlocksSnippetAsync(blockConfig.md, undefined, {
+                    snippetMode: true,
+                    generateSourceMap: false
+                });
+                const xml = decomp.outfiles[pxt.MAIN_BLOCKS];
+                pxt.debug(`decompiled ${blockConfig.md} to ${xml}`);
+                // Get all top-level blocks
+                (() => {
+                    const dom = Blockly.Xml.textToDom(xml);
+                    const children = Array.from(dom.children);
+                    for (const child of children) {
+                        if (child.nodeName === "block") {
+                            blocks.push(child);
+                        }
+                    }
+                })();
+                // Extract child blocks from blocks of type "next", and discard the "next" block
+                (() => {
+                    for (const block of blocks) {
+                        const children = Array.from(block.children);
+                        for (const child1 of children) {
+                            if (child1.nodeName === "next") {
+                                for (const child2 of Array.from(child1.children)) {
+                                    // Grab the blocks embedded in the "next" block
+                                    blocks.push(child2);
+                                }
+                                block.removeChild(child1);
+                            }
+                        }
+                    }
+                })();
+            } catch (e) {
+                // Failed to decompile, don't propagate exception
+                console.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}, ${e.message}. md:${blockConfig.md}`);
+            }
+
+            for (const block of blocks) {
+                try {
+                    const entry: pxt.tutorial.TutorialBlockConfigEntry = {};
+                    const blockType = block.getAttribute("type");
+                    switch (blockType) {
+                        case "typescript_statement": {
+                            // Decompiled to gray block
+                            throw new Error("Block config decompiled to gray block: " + Blockly.Xml.domToText(block));
+                        }
+                        case "variables_set":
+                        case "variables_change": {
+                            // get block id from within variables_set context
+                            const value = Array.from(block.children).find(child => child.tagName === "value");
+                            const rhs = Array.from(value.children).find(child => child.tagName === "block");
+                            entry.blockId = rhs.getAttribute("type");
+                            break;
+                        }
+                        default: {
+                            // Set block id from root type
+                            entry.blockId = blockType;
+                        }
+                    }
+                    entry.xml =
+                        Blockly.Xml.domToText(block)
+                        .replace(/^<xml[^>]*>\n*/i, '')
+                        .replace(/\n*<\/xml>\n*$/i, '');
+                    blockConfig.blocks.push(entry);
+                } catch (e) {
+                    // Failed to resolve block, don't propagate exception
+                    console.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}. ${e.message}`);
+                }
+            }
+        };
+        const header = pkg.mainEditorPkg().header;
+        if (!header || !header.tutorial || !header.tutorial.tutorialStepInfo) {
+            return;
+        }
+        // Check for preexisting block configs at global scope
+        if (header.tutorial.globalBlockConfig?.blocks?.length) {
+            // Global block config already populated (project was loaded from a previous save)
+            return;
+        }
+        const stepInfo = header.tutorial.tutorialStepInfo;
+        // Check for preexisting block configs at local scope
+        for (const step of stepInfo) {
+            if (step.localBlockConfig?.blocks?.length) {
+                // Local block config already populated (project was loaded from a previous save)
+                return;
+            }
+        }
+        const tasks: Promise<void>[] = [];
+        if (header.tutorial.globalBlockConfig?.md) {
+            tasks.push(resolveBlockConfigAsync(header.tutorial.globalBlockConfig));
+        }
+        stepInfo
+            .map(step => step.localBlockConfig)
+            .filter(blockConfig => blockConfig?.md)
+            .forEach(blockConfig => tasks.push(resolveBlockConfigAsync(blockConfig)));
+        await Promise.all(tasks);
     }
 
     private async loadTutorialTemplateCodeAsync(): Promise<void> {

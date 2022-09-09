@@ -31,6 +31,7 @@ namespace pxt.tutorial {
         }
 
         const assetFiles = parseAssetJson(assetJson);
+        const globalBlockConfig = parseTutorialBlockConfig("global", tutorialmd);
 
         // strip hidden snippets
         steps.forEach(step => {
@@ -52,7 +53,8 @@ namespace pxt.tutorial {
             jres,
             assetFiles,
             customTs,
-            tutorialValidationRules
+            tutorialValidationRules,
+            globalBlockConfig
         };
     }
 
@@ -80,6 +82,8 @@ namespace pxt.tutorial {
                 switch (m1) {
                     case "block":
                     case "blocks":
+                    case "blockconfig.local":
+                    case "blockconfig.global":
                     case "requiredTutorialBlock":
                     case "filterblocks":
                         if (!checkTutorialEditor(pxt.BLOCKS_PROJECT_NAME))
@@ -244,6 +248,7 @@ ${code}
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
             let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
+            const blockConfig = parseTutorialBlockConfig("local", step);
 
             // if title is not hidden ("{TITLE HERE}"), strip flags
             const title = !flags.match(/^\{.*\}$/)
@@ -253,7 +258,8 @@ ${code}
             let info: TutorialStepInfo = {
                 title,
                 contentMd: step,
-                headerContentMd: header
+                headerContentMd: header,
+                localBlockConfig: blockConfig
             }
             if (/@(fullscreen|unplugged|showdialog|showhint)/i.test(flags))
                 info.showHint = true;
@@ -313,6 +319,19 @@ ${code}
         return { header, hint, requiredBlocks };
     }
 
+    function parseTutorialBlockConfig(scope: "local" | "global", content: string): TutorialBlockConfig {
+        let blockConfig: pxt.tutorial.TutorialBlockConfig = {
+            md: "",
+            blocks: [],
+        };
+        const regex = new RegExp(`\`\`\`\\s*blockconfig\\.${scope}\\s*\\n([\\s\\S]*?)\\n\`\`\``, "gmi");
+        content.replace(regex, (m0, m1) => {
+            blockConfig.md += `${m1}\n`;
+            return "";
+        });
+        return blockConfig;
+    }
+
     function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {
         const ruleNames = Object.keys(listOfRules);
         for (let i = 0; i < ruleNames.length; i++) {
@@ -328,7 +347,7 @@ ${code}
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
         if (!str) return str;
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|customts)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|customts|blockconfig\.local|blockconfig\.global)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
 
@@ -416,7 +435,8 @@ ${code}
             jres: tutorialInfo.jres,
             assetFiles: tutorialInfo.assetFiles,
             customTs: tutorialInfo.customTs,
-            tutorialValidationRules: tutorialInfo.tutorialValidationRules
+            tutorialValidationRules: tutorialInfo.tutorialValidationRules,
+            globalBlockConfig: tutorialInfo.globalBlockConfig
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };

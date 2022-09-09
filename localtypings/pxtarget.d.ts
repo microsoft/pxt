@@ -995,6 +995,7 @@ declare namespace ts.pxtc {
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
         clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
         errorOnGreyBlocks?: boolean;
+        generateSourceMap?: boolean;
 
         otherMultiVariants?: ExtensionTarget[];
 
@@ -1088,6 +1089,7 @@ declare namespace pxt.tutorial {
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
+        globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
     }
 
     interface TutorialMetadata {
@@ -1113,6 +1115,16 @@ declare namespace pxt.tutorial {
         blockIds?: string[];
     }
 
+    interface TutorialBlockConfigEntry {
+        blockId?: string;
+        xml?: string;
+    }
+
+    interface TutorialBlockConfig {
+        md?: string;    // `blockconfig` markdown fragment
+        blocks?: TutorialBlockConfigEntry[]; // markdown fragment can contain multiple block definitions
+    }
+
     interface TutorialStepInfo {
         // Step metadata
         showHint?: boolean; // automatically displays hint
@@ -1134,6 +1146,9 @@ declare namespace pxt.tutorial {
         hintContentMd?: string;
         // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
         // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
+
+        // concatenated `blockconfig.local` sections. Contains block configs applicable to the current step only
+        localBlockConfig?: pxt.tutorial.TutorialBlockConfig;
     }
 
     interface TutorialActivityInfo {
@@ -1165,6 +1180,7 @@ declare namespace pxt.tutorial {
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
         templateLoaded?: boolean; // if the template code has been loaded once, we skip
+        globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

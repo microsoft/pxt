@@ -2268,6 +2268,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
+    pxt.reloadAppTargetVariant();
     dirsToWatch = cfg.bundleddirs.slice()
     if (pxt.appTarget.id != "core") {
         if (fs.existsSync("theme")) {

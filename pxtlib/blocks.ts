@@ -455,7 +455,7 @@ namespace pxt.blocks {
                     MATH_ADDITION_SYMBOL: Util.lf("{id:op}+"),
                     MATH_SUBTRACTION_SYMBOL: Util.lf("{id:op}-"),
                     MATH_MULTIPLICATION_SYMBOL: Util.lf("{id:op}×"),
-                    MATH_DIVISION_SYMBOL: Util.lf("{id:op}÷"),
+                    MATH_DIVISION_SYMBOL: Util.lf("{id:op}/"),
                     MATH_POWER_SYMBOL: Util.lf("{id:op}**")
                 }
             },
@@ -465,7 +465,7 @@ namespace pxt.blocks {
                 url: '/blocks/math',
                 category: 'math',
                 block: {
-                    MATH_MODULO_TITLE: Util.lf("remainder of %1 ÷ %2")
+                    MATH_MODULO_TITLE: Util.lf("remainder of %1 / %2")
                 }
             },
             'math_js_op': {
@@ -494,7 +494,7 @@ namespace pxt.blocks {
                     "acos": Util.lf("{id:op}acos"),
                     "tan": Util.lf("{id:op}tan"),
                     "atan2": Util.lf("{id:op}atan2"),
-                    "idiv": Util.lf("{id:op}integer ÷"),
+                    "idiv": Util.lf("{id:op}integer /"),
                     "imul": Util.lf("{id:op}integer ×"),
                 }
             },

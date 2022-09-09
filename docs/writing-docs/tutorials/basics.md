@@ -168,6 +168,105 @@ forever(function() {
 ```
 ````
 
+## Reconfiguring blocks in the toolbox (`blockconfig.local` and `blockconfig.global` sections)
+
+If you want to change the default parameters on an existing block as it appears in the toolbox, use a blockconfig section. A blockconfig contains a JavaScript snippet that defines one or more functions or operations along with their default arguments.
+
+There are two kinds of blockconfig sections: `blockconfig.local` and `blockconfig.global`. The global blockconfig can appear anywhere in the tutorial markdown, and the customizations it contains are applied globally, i.e. to all tutorial steps. Local blockconfigs must appear within a tutorial step, and apply to that step only. Local blockconfigs take precedence over global ones.
+
+### Limitations
+
+* Declaring custom assets is not supported yet. This means you will not be able to set a custom image on sprite creation, for example. We are thinking through how to support this, and it may come in the future!
+* `blockconfig.local` sections have a performance impact on the toolbox. They aren't able to take advantage of previously cached toolbox contents and must regenerate it each time.
+
+### Examples
+
+**Set the default background color to green. Apply globally**
+
+````
+```blockconfig.global
+scene.setBackgroundColor(7)
+```
+````
+
+**When Player sprite overlaps with Food. Apply to the current tutorial step only**
+````
+### {Step 3}
+
+```blockconfig.local
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+})
+```
+````
+
+**When Player sprite overlaps with Food, with embedded code snippet**
+````
+```blockconfig.global
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+    info.changeScoreBy(1)
+})
+```
+````
+
+**Creating an Enemy sprite**
+````
+```blockconfig.global
+let myEnemy = sprites.create(img``, SpriteKind.Enemy)
+```
+````
+
+> **Note the empty image.** blockconfigs don't yet work with custom assets (images, tilemaps, etc)!
+
+**Change default sprite position to the center of the screen**
+````
+```blockconfig.global
+let mySprite: Sprite = null
+mySprite.setPosition(80, 60)
+```
+````
+
+> Note here the declaration of `mySprite`. Variables used in the snippet must be declared so the decompiler can resolve the datatypes.
+
+**Place sprite in random location**
+````
+```blockconfig.global
+let mySprite: Sprite = null
+mySprite.setPosition(randint(0, scene.screenWidth()), randint(0, scene.screenHeight()))
+```
+````
+
+**Change random number range**
+````
+```blockconfig.global
+randint(-10, 10)
+```
+````
+
+**Multiple reconfigured blocks in a single blockconfig**
+````
+```blockconfig.global
+randint(-10, 10)
+let mySprite: Sprite = null
+mySprite = sprites.create(img``, SpriteKind.Enemy)
+mySprite.setPosition(randint(0, scene.screenWidth()), randint(0, scene.screenHeight()))
+```
+````
+
+### Troubleshooting blockconfigs
+
+If your reconfigured block isn't showing up in the toolbox, look for errors like this one in the debug console:
+
+`Failed to resolve block config for tutorial`
+
+Followed by a more detailed error message. The most common error you're likely to see is:
+
+`Block config decompiled to gray block`
+
+Gray blocks will be generated when not all datatypes are known (e.g. `mySprite` used, but not declared), or when a function name is misspelled.
+
+If you don't see an error message, try adding the `dbg=1` URL parameter and reload. This will output some information about each blockconfig to the console, and should provide a clue about what is failing.
+
+
 ## Accordion/hidden hints
 If you want to provide extra information without having to divert the coder's attention, you can include content in an "accordion" style hint control. 
 
