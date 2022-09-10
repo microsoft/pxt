@@ -52,7 +52,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
         const { backgroundSize } = this.state;
         const darkBackgroundColors = ['#5c406c', '#000000'];
         let altTextColor: string = 'black';
-        let backgroundAltText: string = `Background image for ${maps[0]?.displayName}`; 
+        let backgroundAltText: string = `Background image for ${maps[0]?.displayName}`;
         let translateY = 0;
 
         const padding = PADDING * UNIT;
@@ -96,7 +96,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
                     </svg>
                 </MenuBar>
                 {backgroundImageUrl && <div className="skill-graph-background">
-                    <img src={backgroundImageUrl} alt={lf(backgroundAltText)} onLoad={this.onImageLoad} style={{ color: altTextColor}} />
+                    <img src={backgroundImageUrl} alt={lf(backgroundAltText)} onLoad={this.onImageLoad} style={{ color: altTextColor }} />
                 </div>}
             </div>
         </div>
