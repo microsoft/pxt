@@ -1,6 +1,6 @@
 # MakeCode Translation Tips and Tricks
 
-**Posted on September 9th, 2022 by [anzhou5](https://github.com/anzhou5)**
+**Posted on September 12th, 2022 by [anzhou5](https://github.com/anzhou5)**
 
 ## A quick guide to translating the MakeCode editor
 
@@ -36,3 +36,20 @@ Another approach to translating the files directly in Crowdin is to use [in-cont
 ![In-context translations](/static/blog/microbit/localization/in-context-translations.png)
 
 For people interested in translating MakeCode for the micro:bit, please watch this [video](https://www.youtube.com/watch?v=eQldcOs-1_4) from Micro:bit Live about how to get involved with the micro:bit translation community.
+
+## Translator shout-outs!
+
+Our translating community is full of incredible individuals who donate their time and effort to the cause of globalizing the MakeCode editor. We wanted to take some time to thank some specific members on our Crowdin community who have gone above and beyond so far in 2022:
+
+- **syslo** has been translating Polish with over 55,000 contributions this year
+- **AntoniOlivella** has been translating Catalan with over 41,000 contributions this year
+- **CephasPi** has been translating Slovak with over 34,000 contributions this year
+- **yeremiaryangunadi** has been translating Indonesian with over 33,000 contributions this year
+- **uranlena2** has been translating Albanian with over 25,000 contributions this year
+- **goox** has been translating French with over 16,000 contributions this year
+- **Ski26** has been translating Tagalog with over 15,000 contributions this year
+- **rozsahegyip** has been translating Hungarian with over 10,000 contributions this year
+
+The above translators/proofreaders are not solely defined by the numbers provided. Many of our translators, including the above folks, are long-standing contributors who have helped us maintain content in multiple languages as we develop our content. We are so thankful for what they and the others in our community do.
+
+Additionally, we want to give a special additional shout-out to **rogerst**, who was the catalyst behind the effort to get Catalan translated for our micro:bit editor. In his work to get this done, he recruited, trained, and supported volunteers whilst proofreading translations himself. His commitment to bring the translated version of the editor and microbit.org to students in his region is truly paying off, as Catalan was recently released as a language on our MakeCode micro:bit beta site!
