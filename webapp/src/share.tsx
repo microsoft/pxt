@@ -10,6 +10,7 @@ import { fireClickOnEnter } from "./util";
 
 import { Modal, ModalAction } from "../../react-common/components/controls/Modal";
 import { Share, ShareData } from "../../react-common/components/share/Share";
+import { SimRecorderImpl } from "./components/SimRecorder";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -42,7 +43,6 @@ export interface ShareEditorState {
 }
 
 export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorState> {
-    private loanedSimulator: HTMLElement;
     private _gifEncoder: screenshot.GifEncoder;
 
     constructor(props: ShareEditorProps) {
@@ -73,11 +73,6 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             this._gifEncoder.cancel();
             this._gifEncoder = undefined;
         }
-        if (this.loanedSimulator) {
-            simulator.driver.unloanSimulator();
-            this.loanedSimulator = undefined;
-            simulator.driver.stopRecording();
-        }
         this.setState({
             visible: false,
             screenshotUri: undefined,
@@ -96,9 +91,6 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         // upon hiding dialog, the screen does not redraw properly
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
             && (pxt.appTarget.appTheme.simScreenshot || pxt.appTarget.appTheme.simGif);
-        if (thumbnails) {
-            this.loanedSimulator = simulator.driver.loanSimulator();
-        }
         this.setState({
             thumbnails,
             visible: true,
@@ -309,34 +301,19 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         return visible
             ? <Modal
                 title={lf("Share Project")}
-                fullscreen={simScreenshot || simGif}
-                className="sharedialog"
+                className="sharedialog wide"
                 parentElement={document.getElementById("root") || undefined}
                 onClose={this.hide}>
                 <Share projectName={newProjectName}
                     screenshotUri={screenshotUri}
-                    showShareDropdown={hasIdentity}
-                    screenshotAsync={simScreenshot ? screenshotAsync : undefined}
-                    gifRecordAsync={!light && simGif ? this.gifRecord : undefined}
-                    gifRenderAsync={!light && simGif ? this.gifRender : undefined}
-                    gifAddFrame={!light && simGif ? this.gifAddFrame : undefined}
+                    isLoggedIn={hasIdentity}
                     publishAsync={publishAsync}
-                    registerSimulatorMsgHandler={thumbnails ? parent.pushScreenshotHandler : undefined}
-                    unregisterSimulatorMsgHandler={thumbnails ? parent.popScreenshotHandler : undefined} />
+                    simRecorder={SimRecorderImpl} />
             </Modal>
             : <></>
     }
 
     componentDidUpdate() {
-        const container = document.getElementById("shareLoanedSimulator");
-        if (container && this.loanedSimulator && !this.loanedSimulator.parentNode) {
-            container.appendChild(this.loanedSimulator);
-        }
 
-        const { screenshotUri, visible } = this.state;
-        const targetTheme = pxt.appTarget.appTheme;
-        if (visible && this.loanedSimulator && targetTheme.simScreenshot && !screenshotUri) {
-            this.screenshotAsync().then(() => this.forceUpdate());
-        }
     }
 }

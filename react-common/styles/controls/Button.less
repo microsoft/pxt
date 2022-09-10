@@ -230,19 +230,28 @@
 }
 
 /****************************************************
- *                   Circle Buttons                 *
+ *                   Square Buttons                 *
  ****************************************************/
 
- .common-button.circle-button {
+ .common-button.square-button {
     width: 3rem;
     height: 3rem;
     overflow: hidden;
     padding: 0;
-    border-radius: 2rem;
 
     i, i.fas, i.far {
         margin: 0;
     }
+}
+
+
+/****************************************************
+ *                   Circle Buttons                 *
+ ****************************************************/
+
+ .common-button.circle-button {
+    &:extend(.common-button.square-button);
+    border-radius: 2rem;
 }
 
 .common-button.circle-button:focus::after {
@@ -252,6 +261,14 @@
 /****************************************************
  *                   Social Buttons                 *
  ****************************************************/
+
+.common-button.social-button {
+    font-size: 1.5rem;
+
+    img {
+        max-width: 100%;
+    }
+}
 
 .common-button.facebook {
     background: #4267B2;
@@ -270,6 +287,16 @@
 
 .common-button.device-share {
     background: #333333;
+    color: @buttonTextColorDarkBackground;
+}
+
+.common-button.whatsapp {
+    background: #59CE72;
+    color: @buttonTextColorDarkBackground;
+}
+
+.common-button.microsoft-teams {
+    background: #35258F;
     color: @buttonTextColorDarkBackground;
 }
 
