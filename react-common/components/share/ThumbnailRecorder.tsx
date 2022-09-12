@@ -32,7 +32,7 @@ export interface SimRecorderRef {
 
 export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     const { initialUri, onApply, onCancel, simRecorder } = props;
-    const [ uri, setUri ] =  React.useState(initialUri);
+    const [ uri, setUri ] =  React.useState(undefined);
     const [ error, setError] = React.useState<string>(undefined)
     const [ recorderRef, setRecorderRef ] = React.useState<SimRecorderRef>(undefined);
     const [ recorderState, setRecorderState ] = React.useState<SimRecorderState>("default");
