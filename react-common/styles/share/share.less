@@ -104,29 +104,26 @@
 
 .project-share-actions {
     display: flex;
+    flex-direction: row;
     margin-top: 1rem;
     position: relative;
     margin-bottom: 2rem;
+}
 
-    .common-button {
-        margin-right: 0.5rem;
-    }
+.project-share-social {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .project-share-text {
     margin-bottom: 1rem;
 }
 
-.common-button.menu-button.project-qrcode {
-    position: absolute;
-    right: 0;
-    height: 6rem;
-    padding: 0.5rem;
-    top: -0.5rem;
-
-    img {
-        height: 5rem;
-    }
+.common-button.menu-button.project-qrcode img {
+    height: 5rem;
 }
 
 .common-button.menu-button.project-qrcode:focus::after {
@@ -256,6 +253,12 @@
 
 #root.miniSim:not(.fullscreensim) .gif-recorder-sim div.simframe {
     width: 100%;
+}
+
+@media @tabletAndBelow {
+    .gif-recorder-content .thumbnail-controls {
+        padding: 0 2rem;
+    }
 }
 
 @media @mobileAndBelow {

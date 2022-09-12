@@ -77,8 +77,8 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
         setRecorderRef(ref);
     }
 
-    const screenshotLabel = lf("Take screenshot ({0})", targetTheme.simScreenshotKey);
-    const startRecordingLabel = lf("Record gameplay ({0})", targetTheme.simGifKey);
+    const screenshotLabel = lf("Screenshot ({0})", targetTheme.simScreenshotKey);
+    const startRecordingLabel = lf("Record ({0})", targetTheme.simGifKey);
     const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey) ;
 
     const thumbnailLabel = uri ? lf("New Thumbnail") : lf("Current Thumbnail");
