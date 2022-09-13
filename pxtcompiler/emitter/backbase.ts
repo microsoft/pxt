@@ -40,7 +40,7 @@ namespace ts.pxtc {
     // Assumptions:
     // - registers can hold a pointer (data or code)
     // - special registers include: sp
-    // - fixed registers are r0, r1, r2, r3, r5, r6 
+    // - fixed registers are r0, r1, r2, r3, r5, r6
     //   - r0 is the current value (from expression evaluation)
     //   - registers for runtime calls (r0, r1,r2,r3)
     //   - r5 is for captured locals in lambda
@@ -54,7 +54,7 @@ namespace ts.pxtc {
     export abstract class AssemblerSnippets {
         nop() { return "TBD(nop)" }
         reg_gets_imm(reg: string, imm: number) { return "TBD(reg_gets_imm)" }
-        // Registers are stored on the stack in numerical order 
+        // Registers are stored on the stack in numerical order
         proc_setup(numlocals: number, main?: boolean) { return "TBD(proc_setup)" }
         push_fixed(reg: string[]) { return "TBD(push_fixed)" }
         push_local(reg: string) { return "TBD(push_local)" }
@@ -291,7 +291,7 @@ ${baseLabel}_nochk:
                 }
             }
 
-            if (this.bin.options.breakpoints) {
+            if (this.bin.breakpoints) {
                 this.write(this.t.debugger_proc(bkptLabel))
             }
             this.baseStackSize = 1 // push {lr}
@@ -338,7 +338,7 @@ ${baseLabel}_nochk:
                         this.write(`; ${s.expr.data}`)
                         break
                     case ir.SK.Breakpoint:
-                        if (this.bin.options.breakpoints) {
+                        if (this.bin.breakpoints) {
                             let lbl = `__brkp_${s.breakpointInfo.id}`
                             if (s.breakpointInfo.isDebuggerStmt) {
                                 this.write(this.t.debugger_stmt(lbl))

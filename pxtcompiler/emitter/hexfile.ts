@@ -508,7 +508,7 @@ namespace ts.pxtc {
                 for (let i = 0; i < hd.length; ++i)
                     pxt.HF2.write16(resbuf, i * 2 + ctx.jmpStartAddr, hd[i])
                 if (uf2 && !bin.target.switches.rawELF) {
-                    let bn = bin.options.name || "pxt"
+                    let bn = bin.name || "pxt"
                     bn = bn.replace(/[^a-zA-Z0-9\-\.]+/g, "_")
                     uf2.filename = "Projects/" + bn + ".elf"
                     UF2.writeBytes(uf2, 0, resbuf);
@@ -765,7 +765,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
     }
 
 
-    export function vtableToAsm(info: ClassInfo, opts: CompileOptions, bin: Binary) {
+    export function vtableToAsm(info: ClassInfo, opts: CompileOptions, bin: Binary, res: CompileResult) {
         /*
         uint16_t numbytes;
         ValType objectType;
@@ -868,7 +868,7 @@ ${hexfile.hexPrelude()}
     }
 
 
-    function serialize(bin: Binary, opts: CompileOptions) {
+    function serialize(bin: Binary, opts: CompileOptions, res: CompileResult) {
         let asmsource = `
     .short ${bin.globalsWords}   ; num. globals
     .short 0 ; patched with number of 64 bit words resulting from assembly
@@ -910,7 +910,7 @@ ${hexfile.hexPrelude()}
         asmsource += "_helpers_end:\n\n"
 
         bin.usedClassInfos.forEach(info => {
-            asmsource += vtableToAsm(info, opts, bin)
+            asmsource += vtableToAsm(info, opts, bin, res)
         })
 
         asmsource += `\n.balign 4\n.object _pxt_iface_member_names\n_pxt_iface_member_names:\n`
@@ -924,7 +924,7 @@ ${hexfile.hexPrelude()}
         asmsource += "_vtables_end:\n\n"
 
         asmsource += `\n.balign 4\n.object _pxt_config_data\n_pxt_config_data:\n`
-        const cfg = bin.res.configData || []
+        const cfg = res.configData || []
         // asmsource += `    .word ${cfg.length}, 0 ; num. entries`
         for (let d of cfg) {
             asmsource += `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}\n`
@@ -1229,7 +1229,7 @@ __flash_checksums:
     }
 
     export function processorEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
-        const src = serialize(bin, opts)
+        const src = serialize(bin, opts, cres)
 
         const opts0 = U.flatClone(opts)
         // normally, this would already have been done, but if the main variant
