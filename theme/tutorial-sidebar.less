@@ -44,6 +44,7 @@
     flex: 1;
     padding: 0 1rem;
     margin: 2rem 0;
+    margin-bottom: 0;
     overflow-x: hidden;
     overflow-y: auto;
     font-family: @segoeUIFont;
@@ -75,13 +76,13 @@
     position: absolute;
     height: 3rem;
     width: calc(~'100% - 1rem');
-    bottom: 6rem;
+    bottom: 0rem;
     pointer-events: none;
     background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), @white);
 }
 
 .tutorial-replace-code + .tutorial-scroll-gradient {
-    bottom: 9rem;
+    bottom: 2rem;
 }
 
 .tutorial-container,
@@ -184,6 +185,7 @@
     display: flex;
     justify-content: center;
     margin-bottom: 1rem;
+    padding-top: 1rem;
 
     .ui.button {
         margin: 0 1rem;
@@ -322,7 +324,7 @@
 
     .tutorial-callout-button.ui.button {
         padding: 0;
-        margin: 0 0 2rem;
+        margin: 0 0 1rem;
         color: @tutorialLinkColor;
         background: none transparent;
         font-family: @segoeUIFont;
@@ -335,7 +337,7 @@
     }
 
     .tutorial-callout {
-        bottom: 13.5rem;
+        bottom: 5rem;
         padding: 1rem;
         max-width: 32rem;
     }
