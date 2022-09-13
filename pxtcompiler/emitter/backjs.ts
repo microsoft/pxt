@@ -138,7 +138,7 @@ namespace ts.pxtc {
         "leaveAccessor"
     ]
 
-    export function jsEmit(bin: Binary) {
+    export function jsEmit(bin: Binary, cres: CompileResult) {
         let jssource = "(function (ectx) {\n'use strict';\n"
 
         for (let n of evalIfaceFields) {
@@ -154,7 +154,7 @@ namespace ts.pxtc {
         jssource += "pxsim.setTitle(" + JSON.stringify(bin.getTitle()) + ");\n"
         let cfg: pxt.Map<number> = {}
         let cfgKey: pxt.Map<number> = {}
-        for (let ce of bin.res.configData || []) {
+        for (let ce of cres.configData || []) {
             cfg[ce.key + ""] = ce.value
             cfgKey[ce.name] = ce.key
         }
@@ -187,8 +187,8 @@ namespace ts.pxtc {
         bin.usedClassInfos.forEach(info => {
             jssource += vtableToJs(info)
         })
-        if (bin.res.breakpoints)
-            jssource += `\nconst breakpoints = setupDebugger(${bin.res.breakpoints.length}, [${bin.globals.filter(c => c.isUserVariable).map(c => `"${c.uniqueName()}"`).join(",")}])\n`
+        if (cres.breakpoints)
+            jssource += `\nconst breakpoints = setupDebugger(${cres.breakpoints.length}, [${bin.globals.filter(c => c.isUserVariable).map(c => `"${c.uniqueName()}"`).join(",")}])\n`
 
         jssource += `\nreturn ${bin.procs[0] ? bin.procs[0].label() : "null"}\n})\n`
 

@@ -998,7 +998,6 @@ namespace ts.pxtc {
 
         let bin = new Binary()
         let proc: ir.Procedure;
-        bin.res = res;
         bin.options = opts;
         bin.target = opts.target;
 
@@ -1262,30 +1261,8 @@ namespace ts.pxtc {
             }
         }
 
-        function recordAction<T>(f: (bin: Binary) => T): T {
-            const r = f(bin)
-            if (needsUsingInfo)
-                bin.recordAction(currUsingContext, f)
-            return r
-        }
-
         function getIfaceMemberId(name: string, markUsed = false) {
-            return recordAction(bin => {
-                if (markUsed) {
-                    if (!U.lookup(bin.explicitlyUsedIfaceMembers, name)) {
-                        U.assert(!bin.finalPass)
-                        bin.explicitlyUsedIfaceMembers[name] = true
-                    }
-                }
-
-                let v = U.lookup(bin.ifaceMemberMap, name)
-                if (v != null) return v
-                U.assert(!bin.finalPass)
-                // this gets renumbered before the final pass
-                v = bin.ifaceMemberMap[name] = -1;
-                bin.emitString(name)
-                return v
-            })
+            return recordGetInterfaceId(bin, name, markUsed, needsUsingInfo, currUsingContext);
         }
 
         function finalEmit() {
@@ -1314,12 +1291,14 @@ namespace ts.pxtc {
                         bin.writeFile("platformio.json", JSON.stringify(extinfo.platformio, null, 2));
                 })
                 if (opts.target.nativeType == NATIVE_TYPE_VM)
-                    vmEmit(bin, opts)
+                    vmEmit(bin, opts, res)
                 else
                     processorEmit(bin, opts, res)
             } else {
-                jsEmit(bin)
+                jsEmit(bin, res)
             }
+
+            bin.writeFile = undefined;
         }
 
         function typeCheckVar(tp: Type) {
@@ -2057,9 +2036,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitAndMarkString(str: string) {
-            return recordAction(bin => {
-                return bin.emitString(str)
-            })
+            return recordEmitAndMarkString(bin, str, needsUsingInfo, currUsingContext)
         }
 
         function recordUsage(decl: Declaration) {
@@ -2962,7 +2939,7 @@ ${lbl}: .short 0xffff
                 pinfo.proc = myProc;
                 myProc.usingCtx = currUsingContext;
                 proc = myProc
-                recordAction(bin => bin.addProc(myProc));
+                recordAddProc(bin, myProc, needsUsingInfo, currUsingContext);
             }
 
             proc.captured = locals;
@@ -4993,7 +4970,6 @@ ${lbl}: .short 0xffff
         finalPass = false;
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
-        res: CompileResult;
         options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
         checksumBlock: number[];
@@ -5119,5 +5095,39 @@ ${lbl}: .short 0xffff
         } else {
             return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike | TypeFlags.BooleanLike));
         }
+    }
+
+    function recordAction<T>(bin: Binary, needsUsingInfo: boolean, currUsingContext: PxtNode, f: (bin: Binary) => T): T {
+        const r = f(bin)
+        if (needsUsingInfo)
+            bin.recordAction(currUsingContext, f)
+        return r
+    }
+
+    function recordAddProc(bin: Binary, proc: ir.Procedure, needsUsingInfo: boolean, currUsingContext: PxtNode) {
+        recordAction(bin, needsUsingInfo, currUsingContext, b => b.addProc(proc));
+    }
+
+    function recordGetInterfaceId(bin: Binary, name: string, markUsed: boolean, needsUsingInfo: boolean, currUsingContext: PxtNode) {
+        return recordAction(bin, needsUsingInfo, currUsingContext, bin => {
+            if (markUsed) {
+                if (!U.lookup(bin.explicitlyUsedIfaceMembers, name)) {
+                    U.assert(!bin.finalPass)
+                    bin.explicitlyUsedIfaceMembers[name] = true
+                }
+            }
+
+            let v = U.lookup(bin.ifaceMemberMap, name)
+            if (v != null) return v
+            U.assert(!bin.finalPass)
+            // this gets renumbered before the final pass
+            v = bin.ifaceMemberMap[name] = -1;
+            bin.emitString(name)
+            return v
+        });
+    }
+
+    function recordEmitAndMarkString(bin: Binary, str: string, needsUsingInfo: boolean, currUsingContext: PxtNode) {
+        return recordAction(bin, needsUsingInfo, currUsingContext, b => b.emitString(str));
     }
 }
