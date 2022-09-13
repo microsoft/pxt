@@ -88,6 +88,16 @@ export class TestHost implements pxt.Host {
         if (!TestHost.files[module.id]) {
             TestHost.files[module.id] = {}
         }
+
+        if (module.id === "this") {
+            if (filename === "pxt.json") {
+                return;
+            }
+            else if (this.packageFiles[filename]) {
+                this.packageFiles[filename] = contents;
+                return;
+            }
+        }
         TestHost.files[module.id][filename] = contents
     }
 
