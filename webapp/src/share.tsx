@@ -43,7 +43,7 @@ export interface ShareEditorState {
 }
 
 export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorState> {
-    private _gifEncoder: screenshot.GifEncoder;
+    protected autoThumbnailFrames: ImageData[];
 
     constructor(props: ShareEditorProps) {
         super(props);
@@ -69,10 +69,6 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             this.setState({ qrCodeExpanded: !qrCodeExpanded });
             return;
         }
-        if (this._gifEncoder) {
-            this._gifEncoder.cancel();
-            this._gifEncoder = undefined;
-        }
         this.setState({
             visible: false,
             screenshotUri: undefined,
@@ -91,6 +87,12 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         // upon hiding dialog, the screen does not redraw properly
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
             && (pxt.appTarget.appTheme.simScreenshot || pxt.appTarget.appTheme.simGif);
+
+
+        if (thumbnails) {
+            this.renderInitialScreenshotAsync();
+        }
+
         this.setState({
             thumbnails,
             visible: true,
@@ -103,6 +105,10 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             title,
             projectName: header.name
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
+    }
+
+    setThumbnailFrames(frames: ImageData[]) {
+        this.autoThumbnailFrames = frames;
     }
 
     UNSAFE_componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -145,78 +151,6 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
     restartSimulator() {
         pxt.tickEvent('share.restart', undefined, { interactiveConsent: true });
         this.props.parent.restartSimulator();
-    }
-
-    screenshotAsync = () => {
-        pxt.tickEvent("share.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        return this.props.parent.requestScreenshotAsync()
-            .then(img => {
-                if (img) {
-                    this.setState({ screenshotUri: img });
-                } else {
-                    this.setState({ recordError: lf("Oops, screenshot failed. Please try again.") });
-                }
-            });
-    }
-
-    private loadEncoderAsync(): Promise<screenshot.GifEncoder> {
-        if (this._gifEncoder) return Promise.resolve(this._gifEncoder);
-        return screenshot.loadGifEncoderAsync()
-            .then(encoder => this._gifEncoder = encoder);
-    }
-
-    gifRecord = async () => {
-        pxt.tickEvent("share.gifrecord", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-
-        try {
-            const encoder = await this.loadEncoderAsync();
-            if (!encoder) {
-                this.setState({
-                    recordError: lf("Oops, gif encoder could not load. Please try again.")
-                });
-            } else {
-                encoder.start();
-                const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
-                simulator.driver.startRecording(gifwidth);
-            }
-        } catch (e: any) {
-            pxt.reportException(e);
-            this.setState({
-                recordError: lf("Oops, gif recording failed. Please try again.")
-            });
-            if (this._gifEncoder) {
-                this._gifEncoder.cancel();
-            }
-        }
-    }
-
-    gifRender = async (): Promise<string> => {
-        pxt.debug(`render gif`)
-        simulator.driver.stopRecording();
-        if (!this._gifEncoder) return undefined;
-
-        this.props.parent.stopSimulator();
-        let uri = await this._gifEncoder.renderAsync();
-        pxt.log(`gif: ${uri ? uri.length : 0} chars`)
-        const maxSize = pxt.appTarget.appTheme.simScreenshotMaxUriLength;
-        let recordError: string = undefined;
-        if (uri) {
-            if (maxSize && uri.length > maxSize) {
-                pxt.tickEvent(`gif.toobig`, { size: uri.length });
-                uri = undefined;
-                recordError = lf("Gif is too big, try recording a shorter time.");
-            } else
-                pxt.tickEvent(`gif.ok`, { size: uri.length });
-        }
-
-        // give a breather to the browser to render the gif
-        pxt.Util.delay(1000).then(() => this.props.parent.startSimulator());
-        return uri;
-    }
-
-    gifAddFrame = (dataUri?: ImageData, delay?: number) => {
-        if (this._gifEncoder) return this._gifEncoder.addFrame(dataUri, delay);
-        return false;
     }
 
     handleCreateGitHubRepository() {
@@ -271,6 +205,26 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         return shareData;
     }
 
+    protected async renderInitialScreenshotAsync() {
+        let uri: string;
+
+        if (this.autoThumbnailFrames) {
+            const encoder = await screenshot.loadGifEncoderAsync();
+            encoder.start();
+            for (const frame of this.autoThumbnailFrames) {
+                encoder.addFrame(frame);
+            }
+            uri = await encoder.renderAsync();
+        }
+        else {
+            uri = await this.props.parent.requestScreenshotAsync();
+        }
+
+        this.setState({
+            screenshotUri: uri
+        });
+    }
+
     renderCore() {
         const { parent } = this.props;
         const { visible, projectName: newProjectName, title, screenshotUri } = this.state;
@@ -280,7 +234,6 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
             && (simScreenshot || simGif);
 
-        const screenshotAsync = async () => await this.props.parent.requestScreenshotAsync();
         const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) => {
             pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
             if (name && parent.state.projectName != name) {
@@ -311,9 +264,5 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     simRecorder={SimRecorderImpl} />
             </Modal>
             : <></>
-    }
-
-    componentDidUpdate() {
-
     }
 }

@@ -150,7 +150,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 <div className="project-share-thumbnail">
                     {thumbnailUri
                         ? <img src={thumbnailUri} />
-                        : <div className="project-thumbnail-placeholder" />
+                        : <div className="project-thumbnail-placeholder">
+                             <div className="common-spinner" />
+                        </div>
                     }
                     {shareState !== "publish" &&
                         <Button
