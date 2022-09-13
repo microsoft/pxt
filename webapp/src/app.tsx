@@ -1437,7 +1437,6 @@ export class ProjectView
                         if (tt.toolboxSubset && Object.keys(tt.toolboxSubset).length > 0) {
                             this.setState({
                                 editorState: {
-                                    searchBar: false,
                                     filters: {
                                         blocks: tt.toolboxSubset,
                                         defaultState: pxt.editor.FilterState.Hidden
@@ -1752,7 +1751,6 @@ export class ProjectView
             .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language, skipTutorialInfoCache))
             .then((tutorialBlocks) => {
                 let editorState: pxt.editor.EditorState = {
-                    searchBar: false
                 }
 
                 if (tutorialBlocks?.usedBlocks && Object.keys(tutorialBlocks.usedBlocks).length > 0) {
@@ -1772,7 +1770,7 @@ export class ProjectView
             .catch(e => {
                 // Failed to decompile
                 pxt.tickEvent('tutorial.faileddecompile', { tutorial: t.tutorial });
-                this.setState({ editorState: { searchBar: false, filters: undefined } });
+                this.setState({ editorState: { filters: undefined } });
                 core.warningNotification(lf("Could not filter tutorial blocks, displaying full toolbox."))
             })
             .finally(() => {
