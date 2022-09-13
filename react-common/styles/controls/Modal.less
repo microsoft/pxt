@@ -24,7 +24,12 @@
     overflow: hidden;
 }
 
-@media @mobileAndBelow {
+.wide > .common-modal {
+    width: 75%;
+    max-width: 60rem;
+}
+
+@media @tabletAndBelow {
     .common-modal, .wide > .common-modal {
         width: 95%;
     }
@@ -119,11 +124,6 @@
     background-color: @homeScreenBackground;
     padding: 1rem;
     max-height: unset;
-}
-
-.wide > .common-modal {
-    width: 75%;
-    max-width: 60rem;
 }
 
 /****************************************************

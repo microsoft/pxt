@@ -248,6 +248,9 @@ export class ProjectView
                         event: scmsg.action
                     } as pxt.editor.ScreenshotData)
             }
+            else if (msg.type === "thumbnail") {
+                if (this.shareEditor) this.shareEditor.setThumbnailFrames((msg as pxsim.SimulatorAutomaticThumbnailMessage).frames);
+            }
         }, false);
     }
 
@@ -1517,6 +1520,8 @@ export class ProjectView
     async loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, tryCloudSync = true): Promise<void> {
         if (!h)
             return Promise.resolve()
+
+        if (this.shareEditor) this.shareEditor.setThumbnailFrames(undefined);
 
         const checkAsync = this.tryCheckTargetVersionAsync(h.targetVersion);
         if (checkAsync)

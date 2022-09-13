@@ -30,10 +30,6 @@
     justify-content: center;
     flex: 1;
 
-    > div {
-        margin-bottom: 1rem;
-    }
-
     .project-share-content {
         flex-grow: 1;
 
@@ -50,11 +46,11 @@
 
 .project-share-title {
     margin-bottom: 1rem;
+}
 
-    h2 {
-        margin: 0;
-        margin-bottom: 0.5rem
-    }
+.project-share-label {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
 }
 
 #project-share-dropdown {
@@ -75,6 +71,17 @@
         height: 11.25rem;
         background-color: rgba(0, 0, 0, 0.05);
         margin-bottom: 1rem;
+    }
+
+    .project-thumbnail-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .common-spinner {
+            width: 5rem;
+            height: 5rem;
+        }
     }
 }
 
@@ -98,35 +105,33 @@
     }
 }
 
+
 /////////////////////////////////////////
 //           Embed                     //
 /////////////////////////////////////////
 
 .project-share-actions {
     display: flex;
+    flex-direction: row;
     margin-top: 1rem;
     position: relative;
     margin-bottom: 2rem;
+}
 
-    .common-button {
-        margin-right: 0.5rem;
-    }
+.project-share-social {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .project-share-text {
     margin-bottom: 1rem;
 }
 
-.common-button.menu-button.project-qrcode {
-    position: absolute;
-    right: 0;
-    height: 6rem;
-    padding: 0.5rem;
-    top: -0.5rem;
-
-    img {
-        height: 5rem;
-    }
+.common-button.menu-button.project-qrcode img {
+    height: 5rem;
 }
 
 .common-button.menu-button.project-qrcode:focus::after {
@@ -165,10 +170,12 @@
 .gif-recorder-content {
     display: flex;
     flex-direction: row;
+    align-items: center;
 
     .thumbnail-controls {
         display: flex;
         flex-direction: column;
+        padding: 0 4rem;
 
         .thumbnail-preview {
             display: flex;
@@ -184,9 +191,14 @@
             .thumbnail-placeholder {
                 display: flex;
                 background-color: rgba(0, 0, 0, 0.05);
-                width: 10rem;
-                height: 7.5rem;
+                width: 15rem;
+                height: 12.25rem;
             }
+        }
+
+        .thumbnail-actions {
+            display: flex;
+            flex-direction: row;
         }
     }
 }
@@ -200,19 +212,14 @@
     }
 }
 
+.gif-recorder-sim {
+    flex-grow: 1;
+}
+
 .gif-recorder {
-    position: absolute;
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    bottom: 1rem;
-    left: 50vw;
-    padding: 1rem;
-    transform: translateX(-50%);
-    background: @white;
-    border: @teal;
-    border-radius: 0.2rem;
     font-family: @segoeUIFont;
 }
 
@@ -232,4 +239,79 @@
     background-color: rgba(0, 0, 0, 0.05);
     width: 24.5rem;
     height: 18.375rem;
+}
+
+.thumbnail-header {
+    display: flex;
+    flex-direction: row;
+
+    .project-share-label {
+        flex-grow: 1;
+    }
+
+    .common-button.link-button {
+        margin-bottom: 0.5rem;
+    }
+}
+
+
+/////////////////////////////////////////
+//               Mobile                //
+/////////////////////////////////////////
+
+#root.miniSim:not(.fullscreensim) .gif-recorder-sim div.simframe {
+    width: 100%;
+}
+
+@media @tabletAndBelow {
+    .gif-recorder-content .thumbnail-controls {
+        padding: 0 2rem;
+    }
+}
+
+@media @mobileAndBelow {
+    .project-share-info, .gif-recorder-content {
+        flex-direction: column;
+    }
+
+    .gif-recorder-sim {
+        width: 100%;
+    }
+
+    .gif-recorder-actions {
+        width: 100%;
+
+        .spacer {
+            flex-grow: 1;
+        }
+    }
+
+    .gif-recorder-actions .common-button:not(.mobile-only) {
+        width: 3rem;
+        height: 3rem;
+        overflow: hidden;
+        padding: 0;
+
+        i, i.fas, i.far {
+            margin: 0;
+        }
+
+        .common-button-label {
+            display: none;
+        }
+    }
+
+    .gif-recorder-content {
+        &.has-uri {
+            .gif-recorder-sim {
+                display: none;
+            }
+        }
+
+        &:not(.has-uri) {
+            .thumbnail-controls {
+                display: none;
+            }
+        }
+    }
 }
