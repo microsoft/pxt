@@ -435,7 +435,7 @@ export async function initAsync() {
     } else if (hidbridge.shouldUse()) {
         log(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-    } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken) { // local node.js
+    } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !/forcehex/i.test(window.location.href)) { // local node.js
         log(`deploy: localhost`);
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
