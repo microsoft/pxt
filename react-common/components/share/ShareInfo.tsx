@@ -204,9 +204,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                     onClick={() => {}} />
                             }
                         </div>
-                        <div className="project-share-legal">
-                            {lf("You need to publish your project to share it or embed it in other web pages. You acknowledge having consent to publish this project.")}
-                        </div>
                     </>}
 
                     {shareState === "publish" &&
