@@ -459,24 +459,42 @@
 *******************************/
 
 /* Desktop Only */
-@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestTabletScreen) {
-    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) {
-        .simPanel {
-            height: calc(100% - @tutorialControlsOffset);
-            min-height: @tutorialSimulatorMinHeight;
+@media only screen and (min-width: @largestTabletScreen) {
+    #editortools {
+        width: calc(100% - @simulatorWidth);
+        left: unset;
+        right: 0;
+    }
+    #editorSidebar {
+        bottom: unset;
+        height: calc(100% - @mainMenuHeight);
+    }
+
+    /* Short Deskstop Only */
+    @media (max-height: @tallEditorBreakpoint) {
+        #root.tabTutorial:not(.fullscreensim) {
+            .tab-simulator:not(.hidden) {
+                .simPanel {
+                    height: calc(100% - @tutorialControlsOffset);
+                    min-height: @tutorialSimulatorMinHeight;
+                }
+                #boardview {
+                    height: calc(100% - @tutorialBoardviewOffset);
+                    min-height: @tutorialSimulatorMinHeight;
+                }
+                #simulators {
+                    height: 100%;
+                    min-height: @tutorialSimulatorMinHeight;
+                }
+                .simframe {
+                    padding-bottom: unset !important;
+                    height: 100%;
+                    min-height: @tutorialSimulatorMinHeight;
+                }
+            }
         }
-        #boardview {
-            height: calc(100% - @tutorialBoardviewOffset);
-            min-height: @tutorialSimulatorMinHeight;
-        }
-        #simulators {
-            height: 100%;
-            min-height: @tutorialSimulatorMinHeight;
-        }
-        .simframe {
-            padding-bottom: unset !important;
-            height: 100%;
-            min-height: @tutorialSimulatorMinHeight;
+        #editorSidebar {
+            height: calc(100% - @thinMenuHeight);
         }
     }
 }
