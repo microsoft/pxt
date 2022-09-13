@@ -15,6 +15,6 @@ Whenever you are submitting an extension for approval, please check that you hav
 - [ ] A GitHub repo description added that's descriptive enough to help with extension search.
 - [ ] A test file, called ``test.ts``, is present and compiles when running **pxt deploy**.
 - [ ] The ``README.md`` file contains API documentation for the extension blocks.
-- [ ] Your public functions and types follow the [MakeCode naming conventions](https://makecode.com/extensions/naming-conventions).
+- [ ] Your public name, functions, and types follow the [MakeCode naming conventions](https://makecode.com/extensions/naming-conventions).
 
 ## #approval
