@@ -341,7 +341,7 @@ function ${id}(s) {
             let lbl: number;
             write(`s.lastBrkId = ${id};`)
 
-            if (bin.options.breakpoints) {
+            if (bin.breakpoints) {
                 lbl = ++lblIdx
                 let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
                 if (s.breakpointInfo.isDebuggerStmt) {
@@ -349,12 +349,12 @@ function ${id}(s) {
                 }
                 else {
                     write(`if ((breakpoints[0] && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
-                    if (bin.options.trace) {
+                    if (bin.trace) {
                         write(`else return trace(${id}, s, ${lbl}, ${proc.label()}.info);`)
                     }
                 }
             }
-            else if (bin.options.trace) {
+            else if (bin.trace) {
                 lbl = ++lblIdx
                 write(`return trace(${id}, s, ${lbl}, ${proc.label()}.info);`)
             }

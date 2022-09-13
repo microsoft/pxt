@@ -508,7 +508,7 @@ namespace ts.pxtc {
                 for (let i = 0; i < hd.length; ++i)
                     pxt.HF2.write16(resbuf, i * 2 + ctx.jmpStartAddr, hd[i])
                 if (uf2 && !bin.target.switches.rawELF) {
-                    let bn = bin.options.name || "pxt"
+                    let bn = bin.name || "pxt"
                     bn = bn.replace(/[^a-zA-Z0-9\-\.]+/g, "_")
                     uf2.filename = "Projects/" + bn + ".elf"
                     UF2.writeBytes(uf2, 0, resbuf);

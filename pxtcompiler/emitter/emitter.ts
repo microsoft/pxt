@@ -998,7 +998,9 @@ namespace ts.pxtc {
 
         let bin = new Binary()
         let proc: ir.Procedure;
-        bin.options = opts;
+        bin.trace = opts.trace;
+        bin.breakpoints = opts.breakpoints;
+        bin.name = opts.name;
         bin.target = opts.target;
 
         function reset() {
@@ -4970,7 +4972,11 @@ ${lbl}: .short 0xffff
         finalPass = false;
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
-        options: CompileOptions;
+
+        trace: boolean;
+        breakpoints: boolean;
+        name: string;
+
         usedClassInfos: ClassInfo[] = [];
         checksumBlock: number[];
         numStmts = 1;
@@ -5002,7 +5008,7 @@ ${lbl}: .short 0xffff
         }
 
         getTitle() {
-            const title = this.options.name || U.lf("Untitled")
+            const title = this.name || U.lf("Untitled")
             if (title.length >= 90)
                 return title.slice(0, 87) + "..."
             else
