@@ -1300,6 +1300,8 @@ namespace ts.pxtc {
                 jsEmit(bin, res)
             }
 
+            // Clear writeFile so that we don't leak the reference to res, which
+            // includes the entire source of the program
             bin.writeFile = undefined;
         }
 
