@@ -11,6 +11,7 @@ import * as identity from "./identity";
 import * as pkg from "./package";
 import * as projects from "./projects";
 import * as tutorial from "./tutorial";
+import { TutorialStepCounter } from "./components/tutorial/TutorialStepCounter";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox";
@@ -119,19 +120,29 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         // If there is only one editor (eg Py only, no assets), we display a label instead of a toggle
         const hideToggle = !showAssets && (languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly
             || languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) || targetTheme.blocksOnly;
-
+        const hideIteration = tutorialOptions?.metadata?.hideIteration;
         switch (view) {
             case "tutorial":
                 const activityName = tutorialOptions?.tutorialActivityInfo ?
                     tutorialOptions.tutorialActivityInfo[tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity].name :
                     null;
-                const hideIteration = tutorialOptions?.metadata?.hideIteration;
 
                 if (activityName) return <div className="ui item">{activityName}</div>
                 if (!hideIteration) return <tutorial.TutorialMenu parent={this.props.parent} />
                 break;
             case "tutorial-tab":
-                return <div />
+                if (!tutorialOptions || hideIteration) return <div />
+                const steps = tutorialOptions.tutorialStepInfo;
+                const currentStep = tutorialOptions.tutorialStep;
+                const isModal = steps[currentStep].showDialog;
+                const visibleStep = isModal ? Math.min(currentStep + 1, steps.length - 1) : currentStep;
+                return <TutorialStepCounter
+                    tutorialId={tutorialOptions?.tutorial}
+                    currentStep={visibleStep}
+                    totalSteps={steps.length}
+                    title={tutorialOptions.tutorialName}
+                    setTutorialStep={this.props.parent.setTutorialStep}
+                />;
             case "debugging":
                 return  <sui.MenuItem className="centered" icon="large bug" name="Debug Mode" />
             case "sandbox":
