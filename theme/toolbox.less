@@ -134,7 +134,14 @@ span.blocklyTreeLabel, text.blocklyText {
     font-weight: 700;
     font-size: 1.2rem;
     padding: .5rem 1rem;
-    border-bottom: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);;
+    border-bottom: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
+}
+
+@media only screen and (max-width: @largestMobileScreen) {
+    .toolbox-title {
+        font-size: .75rem;
+        padding: 0 0.2rem;
+    }
 }
 
 /*******************************
@@ -146,6 +153,13 @@ span.blocklyTreeLabel, text.blocklyText {
     border: 0 !important;
     border-radius: 0 !important;
 }
+
+@media only screen and (max-width: @largestMobileScreen) {
+    .blocklySearchInputField {
+        font-size: .75rem;
+    }
+}
+
 
 /*******************************
         Toolbox delete
