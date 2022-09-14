@@ -43,7 +43,7 @@
 .tutorial-content {
     flex: 1;
     padding: 0 1rem;
-    margin: 2rem 0;
+    margin-top: .5rem;
     margin-bottom: 0;
     overflow-x: hidden;
     overflow-y: auto;
@@ -132,8 +132,9 @@
 *******************************/
 
 .tutorial-step-counter {
-    flex: 1;
-    margin-right: 0.5rem;
+    padding: 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #CECDCE;
 }
 
 .tutorial-step-label {
@@ -536,9 +537,7 @@
 
     .tutorial-replace-code + .tutorial-scroll-gradient,
     .tutorial-scroll-gradient {
-        width: calc(~'100% - 15rem');
         bottom: 0;
-        left: 4rem;
     }
 
     /*******************************
@@ -569,17 +568,21 @@
     *******************************/
 
     .tutorial-step-counter {
-        margin-left: 1rem;
-        margin-right: 0;
-        color: @white;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding-left: 0;
+        padding-right: 0;
+        column-gap: 1rem;
+        margin-bottom: .5rem;
     }
 
     .tutorial-step-bar {
-        background-color: @white;
-    }
-
-    .tutorial-step-bar-fill {
-        background-color: @tutorialBarBackgroundColor;
+        flex: 1;
+        max-width: 15rem;
+        min-width: 10rem;
     }
 
     /*******************************
@@ -830,17 +833,6 @@
             align-items: center;
         }
     }
-
-    .tutorial-mobile-header {
-        display: flex;
-        flex-direction: row;
-
-        .tutorial-mobile-progress {
-            flex-grow: 1;
-            font-size: 1rem;
-        }
-    }
-
     .tutorial-title {
         max-width: 100%;
     }

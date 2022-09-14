@@ -43,6 +43,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const showNext = currentStep !== steps.length - 1;
     const showDone = !showNext && !pxt.appTarget.appTheme.lockedEditor && !hideIteration;
     const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
+    const isHorizontal = layout === "horizontal";
 
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
@@ -58,7 +59,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     }, [document.body])
 
     React.useEffect(() => {
-        if (layout == "horizontal") {
+        if (isHorizontal) {
             let scrollHeight = 0;
             const children = contentRef?.current?.children ? pxt.Util.toArray(contentRef?.current?.children) : [];
             children.forEach((el: any) => scrollHeight += el?.scrollHeight);
@@ -131,41 +132,31 @@ export function TutorialContainer(props: TutorialContainerProps) {
             title: lf("Launch Immersive Reader")
         })
     }
-
     const backButton = <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />;
     const nextButton = showDone
         ? <Button icon="check circle" text={lf("Done")} onClick={onTutorialComplete} />
         : <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
 
-    const progressString = `${name} ${visibleStep + 1}/${steps.length}`;
+    const stepCounter = <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />;
 
     const hasHint = !!hintMarkdown;
 
 
     return <div className="tutorial-container">
-        <div className="tutorial-top-bar mobile-hidden">
-            <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />
-        </div>
-        {layout === "horizontal" && backButton}
+        {!isHorizontal && stepCounter}
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
+            {isHorizontal && stepCounter}
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
-            <div className="mobile-only tutorial-mobile-header">
-                <div className="tutorial-mobile-progress">
-                    {progressString}
-                </div>
-            </div>
             {title && <div className="tutorial-title">{title}</div>}
-            <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
+            <MarkedContent className="no-select tutorial-step-content" tabIndex={0} markdown={markdown} parent={parent}/>
             <div className="tutorial-controls">
-                { layout === "vertical" && backButton }
                 { hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
-                { layout === "vertical" && nextButton }
+                { nextButton }
             </div>
         </div>
-        {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode ||
+        {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode &&
             <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}
-        {layout === "horizontal" && nextButton}
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={currentStepInfo.title || name} buttons={modalActions}
             className="hintdialog" onClose={onModalClose} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
