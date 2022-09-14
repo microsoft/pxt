@@ -159,7 +159,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
             <div className="tutorial-controls">
                 { layout === "vertical" && backButton }
-                <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />
+                { hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
                 { layout === "vertical" && nextButton }
             </div>
         </div>
