@@ -145,15 +145,14 @@ export function TutorialContainer(props: TutorialContainerProps) {
     return <div className="tutorial-container">
         <div className="tutorial-top-bar mobile-hidden">
             <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />
-            {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
         {layout === "horizontal" && backButton}
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
+            {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
             <div className="mobile-only tutorial-mobile-header">
                 <div className="tutorial-mobile-progress">
                     {progressString}
                 </div>
-                {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
             </div>
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>

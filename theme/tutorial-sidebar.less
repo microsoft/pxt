@@ -456,6 +456,13 @@
     border-radius: .5rem;
 }
 
+
+.tabTutorial {
+    .immersive-reader-button.ui.item {
+        float: right;
+    }
+}
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -555,11 +562,6 @@
         width: @tutorialTabletStepCounterWidth;
         flex-direction: row-reverse;
         padding: 0.5rem 1rem;
-    }
-
-    #editorSidebar .immersive-reader-button.ui.item,
-    #editorSidebar .immersive-reader-button.ui.item:focus{
-        background-image: @immersiveReaderLightIcon;
     }
 
     /*******************************
@@ -812,10 +814,6 @@
         .simframe {
             padding-bottom: 83% !important;
         }
-    }
-
-    .tutorial-content.has-hint > :not(.tutorial-mobile-header) {
-        padding-right: 4rem;
     }
 
     #root.headless.tabTutorial.collapsedEditorTools {
