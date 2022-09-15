@@ -529,13 +529,15 @@
 
 /* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
-    #editortools {
-        width: calc(100% - @simulatorWidth);
-        left: unset;
-        right: 0;
-    }
-    #editorSidebar {
-        bottom: 0;
+    #root.tabTutorial:not(.fullscreensim) {
+        #editortools {
+            width: calc(100% - @simulatorWidth);
+            left: unset;
+            right: 0;
+        }
+        #editorSidebar {
+            bottom: 0;
+        }
     }
     .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
