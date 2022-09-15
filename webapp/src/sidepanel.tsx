@@ -75,8 +75,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected tryShowSimulatorTab = () => {
         const isTabTutorial = this.props.tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const showSimulatorTab = !isTabTutorial && hasSimulator;
-        if (showSimulatorTab) {
+        const includeSimulatorTab = !isTabTutorial && hasSimulator;
+        if (includeSimulatorTab) {
             this.showSimulatorTab();
         }
     }
@@ -143,8 +143,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const isTabTutorial = tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const isLockedEditor = pxt.appTarget.appTheme.lockedEditor;
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const showSimulatorTab = !isTabTutorial && hasSimulator
-        const marginHeight = showSimulatorTab ? "6.5rem" : "3rem";
+        const includeSimulatorTab = !isTabTutorial && hasSimulator
+        const marginHeight = includeSimulatorTab ? "6.5rem" : "3rem";
 
         const backButton = <Button icon="arrow circle left" text={lf("Back")} onClick={this.tryShowTutorialTab} />;
         const nextButton = <Button icon="arrow circle right" text={lf("Next")} onClick={this.tryShowTutorialTab} />;
@@ -152,7 +152,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
             <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
-                <TabContent disabled={!showSimulatorTab} name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.tryShowSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
+                <TabContent disabled={!includeSimulatorTab} name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.tryShowSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
                     <div className="ui items simPanel" ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulatorTab} />
