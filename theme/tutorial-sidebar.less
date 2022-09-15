@@ -409,18 +409,47 @@
             #boardview { display: inline-block; }
 
             .simtoolbar, #miniSimOverlay { display: block; }
-            .sidebar-button, .play-button { display: block !important; }
-            .expand-button, .fullscreen-button { display: none !important; }
+            .play-button { display: none !important; }
+            .expand-button, .fullscreen-button { display: block !important; }
         }
 
         .tutorial-controls { display: none; }
+
+        /** TODO: change when supporting small horizontal sim && make not arcade centric at that time. **/
+        #boardview.ui.vertical.editorFloat, #boardview #simulators .simframe {
+            width: 17rem !important;
+
+        }
+        #boardview #simulators {
+            justify-content: flex-end;
+            .simframe {
+                margin-right: -2rem;
+            }
+        }
+
+        aside.simtoolbar {
+            z-index: 5;
+        }
+        /** /TODO **/
+
+        .simPanel {
+            display: flex;
+            align-items: flex-end;
+            aside.simtoolbar {
+                float: unset;
+            }
+        }
     }
     .tab-simulator.tab-content:not(.hidden) {
         .simPanel {
             height: calc(100% - @tutorialControlsOffset);
 
-            .sidebar-button, .button.hidefullscreen { display: none !important; }
+            .button.hidefullscreen { display: none !important; }
         }
+    }
+
+    #miniSimOverlay {
+        display: none !important;
     }
 }
 
