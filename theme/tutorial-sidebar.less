@@ -805,6 +805,16 @@
     }
 }
 
+/* thin tablet header */
+@media only screen and (min-width: @largestMobileScreen) and (max-height: @tallEditorBreakpoint) {
+    #root.tabTutorial,
+    #root.headless.tabTutorial {
+        #editorSidebar {
+            top: @thinMenuHeight;
+        }
+    }
+}
+
 .tutorial-video-embed {
     display: flex;
     align-content: center;
