@@ -156,7 +156,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select tutorial-step-content" tabIndex={0} markdown={markdown} parent={parent}/>
             <div className="tutorial-controls">
-                { hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
+                {hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
                 { nextButton }
             </div>
         </div>
