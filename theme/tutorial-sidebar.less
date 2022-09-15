@@ -184,7 +184,9 @@
 
 .tutorial-controls {
     display: flex;
-    justify-content: center;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
     margin-bottom: 1rem;
     padding-top: 1rem;
 
@@ -239,6 +241,7 @@
     }
 
     .tutorial-callout:before {
+        display: none;
         top: auto;
         left: 6.5rem;
         bottom: -2.5rem;
@@ -533,6 +536,7 @@
     .tutorial-content {
         margin: 0;
         padding: 1rem;
+        padding-bottom: 0;
     }
 
     .tutorial-replace-code + .tutorial-scroll-gradient,
@@ -591,44 +595,6 @@
 
     .tutorial-controls {
         padding-top: 0;
-    }
-
-    .tutorial-container,
-    .tutorial-controls {
-        .ui.button {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            font-size: 1rem;
-
-            i.icon {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 2rem;
-            }
-
-            > .icon-and-text.icon~.ui.text {
-                margin-left: 0 !important;
-            }
-        }
-    }
-
-    .tutorial-container,
-    .tutorial-controls {
-        > .ui.button, > .ui.button:focus {
-            color: @tutorialPrimaryColor;
-            background: @tutorialTabletButtonColor;
-            border-radius: 0;
-        }
-
-        > .ui.button:hover {
-            color: @white;
-            background-color: @tutorialPrimaryColor;
-            filter: none;
-        }
     }
 
     .tutorial-container > .ui.button i.icon {

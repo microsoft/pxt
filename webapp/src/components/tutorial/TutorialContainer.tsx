@@ -140,8 +140,8 @@ export function TutorialContainer(props: TutorialContainerProps) {
     }
     const backButton = <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />;
     const nextButton = showDone
-        ? <Button icon="check circle" text={lf("Done")} onClick={onTutorialComplete} />
-        : <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
+        ? <Button icon="check circle" className="primary" text={lf("Done")} onClick={onTutorialComplete} />
+        : <Button icon="arrow circle right" className="primary" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
 
     const stepCounter = <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />;
 
