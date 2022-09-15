@@ -18,7 +18,8 @@
             "mocha",
             "node"
         ],
-        "sourceMap": false
+        "sourceMap": false,
+        "skipLibCheck": true
     },
     "files": [
         "decompilerunner.ts",

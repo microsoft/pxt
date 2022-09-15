@@ -18,7 +18,8 @@
         "types": [
             "fuse"
         ],
-        "incremental": true
+        "incremental": true,
+        "skipLibCheck": true
     },
     "exclude": [
         "ext-typescript/lib/lib.d.ts"

@@ -12,7 +12,8 @@
             "mocha",
             "node"
         ],
-        "sourceMap": false
+        "sourceMap": false,
+        "skipLibCheck": true
     },
     "files": [
         "languageservicerunner.ts",

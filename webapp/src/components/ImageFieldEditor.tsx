@@ -194,7 +194,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 break;
             case pxt.AssetType.Tile:
                 options.disableResize = true;
-                this.initSingleFrame(value as pxt.ProjectImage, options);
+                this.initSingleFrame(value as unknown as pxt.ProjectImage, options);
                 break;
             case pxt.AssetType.Animation:
                 this.initAnimation(value as pxt.Animation, options);

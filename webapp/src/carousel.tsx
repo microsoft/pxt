@@ -3,11 +3,12 @@ import * as sui from "./sui";
 import * as data from "./data";
 import { fireClickOnEnter } from "./util";
 
-export interface ICarouselProps extends React.Props<Carousel> {
+export interface ICarouselProps {
     // Percentage of child width to bleed over either edge of the page
     bleedPercent: number;
     selectedIndex?: number;
     tickId?: string; // if set, collect usage analytics
+    children?: React.ReactNode;
 }
 
 export interface ICarouselState {

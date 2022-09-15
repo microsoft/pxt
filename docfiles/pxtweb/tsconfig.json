@@ -8,6 +8,7 @@
         "newLine": "LF",
         "sourceMap": false,
         "lib": ["dom", "dom.iterable", "scripthost", "es2018"],
-        "types": []
+        "types": [],
+        "skipLibCheck": true
     }
 }

@@ -338,7 +338,7 @@ export function navigateInWindow(url: string) {
 }
 
 export function findChild(c: React.Component<any, any>, selector: string): Element[] {
-    let self = ReactDOM.findDOMNode(c);
+    let self = ReactDOM.findDOMNode(c) as Element;
     if (!selector) return [self]
     return pxt.Util.toArray(self.querySelectorAll(selector));
 }
