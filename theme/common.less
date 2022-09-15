@@ -1680,10 +1680,12 @@ p.ui.font.small {
             display: block !important;
         }
     }
-    .collapsedEditorTools .simPanel {
+    .collapsedEditorTools:not(.tabTutorial) .simPanel {
         > div {
             display: none !important;
         }
+    }
+    .collapsedEditorTools .simPanel {
         aside.simtoolbar button:not(.expand-button) {
             display: none !important;
         }
@@ -1859,7 +1861,7 @@ p.ui.font.small {
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .collapsedEditorTools:not(.headless) #editorSidebar {
+    .collapsedEditorTools:not(.headless):not(.tabTutorial) #editorSidebar {
         min-width: 21px;
         width: 21px;
         padding: 0;
@@ -1872,7 +1874,7 @@ p.ui.font.small {
         background: @editorToolsBackground;
     }
 
-    .collapsedEditorTools:not(.headless) #maineditor {
+    .collapsedEditorTools:not(.headless):not(.tabTutorial) #maineditor {
         left: 21px;
     }
 
