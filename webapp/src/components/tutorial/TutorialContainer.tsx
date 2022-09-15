@@ -38,6 +38,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
     const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
     const contentRef = React.useRef(undefined);
+    const immReaderRef = React.useRef(undefined);
 
     const showBack = currentStep !== 0;
     const showNext = currentStep !== steps.length - 1;
@@ -63,6 +64,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
             let scrollHeight = 0;
             const children = contentRef?.current?.children ? pxt.Util.toArray(contentRef?.current?.children) : [];
             children.forEach((el: any) => scrollHeight += el?.scrollHeight);
+
+            if (immReaderRef) {
+                scrollHeight -= immReaderRef.current?.scrollHeight || 0;
+            }
 
             if (scrollHeight) {
                 setParentHeight(Math.min(Math.max(scrollHeight + 2, MIN_HEIGHT), MAX_HEIGHT));
@@ -146,7 +151,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         {!isHorizontal && stepCounter}
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
             {isHorizontal && stepCounter}
-            {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
+            {showImmersiveReader && <ImmersiveReaderButton ref={immReaderRef} content={markdown} tutorialOptions={tutorialOptions} />}
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select tutorial-step-content" tabIndex={0} markdown={markdown} parent={parent}/>
             <div className="tutorial-controls">
