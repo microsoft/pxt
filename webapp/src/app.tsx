@@ -3432,6 +3432,9 @@ export class ProjectView
     }
 
     setSimulatorFullScreen(enabled: boolean) {
+        if (this.state.collapseEditorTools) {
+            this.expandSimulator();
+        }
         if (!enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
