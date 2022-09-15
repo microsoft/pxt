@@ -16,7 +16,8 @@
             "chai",
             "mocha"
         ],
-        "sourceMap": false
+        "sourceMap": false,
+        "skipLibCheck": true
     },
     "files": [
         "blocksrunner.ts"

@@ -15,6 +15,7 @@
         "newLine": "LF",
         "sourceMap": false,
         "moduleResolution": "node",
-        "incremental": true
+        "incremental": true,
+        "skipLibCheck": true
     }
 }

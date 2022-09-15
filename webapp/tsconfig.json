@@ -28,7 +28,8 @@
             "react-dom",
             "resize-observer-browser"
         ],
-        "incremental": false
+        "incremental": false,
+        "skipLibCheck": true
     },
     "exclude": [
         "node_modules"
