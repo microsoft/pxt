@@ -6,6 +6,7 @@
 @tutorialSecondaryColor: @sidebarSecondaryColor;
 @tutorialBarForegroundColor: @tutorialPrimaryColor;
 @tutorialBarBackgroundColor: @tutorialSecondaryColor;
+@tutorialGrayOffset: #CECDCE;
 
 @tutorialLinkColor: #0064BF;
 @tutorialLinkHoverColor: #003C94;
@@ -134,7 +135,7 @@
 .tutorial-step-counter {
     padding: 0 1rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #CECDCE;
+    border-bottom: 2px solid @tutorialGrayOffset;
 }
 
 .tutorial-step-label {
@@ -159,10 +160,12 @@
     align-items: center;
     margin-left: auto;
 
-    .circular.button {
+    .circle-button {
         cursor: pointer;
+        transition: none;
+        width: 1rem;
+        height: 1rem;
         // buttons before selected step
-        border-color: gray;
         background: darken(@tutorialSecondaryColor, 10%);
 
         &.active {
@@ -171,9 +174,9 @@
             width: 2rem;
             height: 2rem;
 
-            ~ .circular.button {
+            ~ .circle-button {
                 // buttons after selected step
-                background: #cecdce;
+                background: @tutorialGrayOffset;
             }
         }
     }
@@ -430,7 +433,6 @@
         aside.simtoolbar {
             z-index: 5;
         }
-        /** /TODO **/
 
         .simPanel {
             display: flex;

@@ -45,7 +45,7 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
             />
             {stepsToShow.map(stepNum => <Button
                 key={`step${stepNum}`}
-                className={`ui button empty circular label clear ${stepNum === currentStep ? "active" : ""}`}
+                className={`empty circle-button ${stepNum === currentStep ? "active" : ""}`}
                 onClick={handleSetStep(stepNum)}
                 aria-label={stepButtonLabelText(stepNum)}
                 title={stepButtonLabelText(stepNum)}
