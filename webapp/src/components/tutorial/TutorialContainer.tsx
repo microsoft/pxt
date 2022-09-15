@@ -69,8 +69,9 @@ export function TutorialContainer(props: TutorialContainerProps) {
                 scrollHeight -= immReaderRef.current?.scrollHeight || 0;
             }
 
+            const maxAllowed = Math.max(Math.min(MAX_HEIGHT, Math.floor(window.innerHeight * .25)), MIN_HEIGHT)
             if (scrollHeight) {
-                setParentHeight(Math.min(Math.max(scrollHeight + 2, MIN_HEIGHT), MAX_HEIGHT));
+                setParentHeight(Math.min(Math.max(scrollHeight + 2, MIN_HEIGHT), maxAllowed));
             }
         } else {
             setParentHeight();
