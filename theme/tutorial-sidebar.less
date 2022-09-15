@@ -161,14 +161,13 @@
     margin-left: auto;
 
     .circle-button {
-        cursor: pointer;
         transition: none;
         width: 1rem;
         height: 1rem;
         // buttons before selected step
         background: darken(@tutorialSecondaryColor, 10%);
 
-        &.active {
+        &.current {
             color: white;
             background: @tutorialPrimaryColor;
             width: 2rem;

@@ -37,23 +37,27 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
         <div className="tutorial-step-bubbles">
             <Button
                 disabled={currentStep == 0}
-                className={`square-button ${currentStep == 0 ? "disabled" : ""}`}
+                className="square-button"
                 leftIcon="icon left chevron"
                 onClick={handleSetStep(currentStep - 1)}
                 aria-label={backButtonLabel}
                 title={backButtonLabel}
             />
-            {stepsToShow.map(stepNum => <Button
-                key={`step${stepNum}`}
-                className={`empty circle-button ${stepNum === currentStep ? "active" : ""}`}
-                onClick={handleSetStep(stepNum)}
-                aria-label={stepButtonLabelText(stepNum)}
-                title={stepButtonLabelText(stepNum)}
-                label={stepNum === currentStep ? `${stepNum + 1}` : undefined}
-            />)}
+            {stepsToShow.map(stepNum => {
+                const isCurrentStep = stepNum === currentStep;
+                return <Button
+                    key={`step${stepNum}`}
+                    className={`empty circle-button ${isCurrentStep ? "current" : ""}`}
+                    disabled={isCurrentStep}
+                    onClick={handleSetStep(stepNum)}
+                    aria-label={stepButtonLabelText(stepNum)}
+                    title={stepButtonLabelText(stepNum)}
+                    label={stepNum === currentStep ? `${stepNum + 1}` : undefined}
+                />
+            })}
             <Button
                 disabled={currentStep == totalSteps - 1}
-                className={`square-button ${currentStep == -1 ? "disabled" : ""}`}
+                className="square-button"
                 leftIcon="icon right chevron"
                 onClick={handleSetStep(currentStep + 1)}
                 aria-label={nextButtonLabel}
