@@ -1,3 +1,3 @@
 interface Navigator {
-    msSaveOrOpenBlob(blob: Blob, defaultName: string): void;
+    msSaveOrOpenBlob(blob: any, defaultName?: string): boolean;
 }
