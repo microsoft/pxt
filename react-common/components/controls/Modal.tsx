@@ -1,5 +1,5 @@
-import React = require("react");
-import ReactDOM = require("react-dom");
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import { classList, ContainerProps } from "../util";
 import { Button } from "./Button";
 import { FocusTrap } from "./FocusTrap";

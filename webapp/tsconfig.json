@@ -11,7 +11,7 @@
         "sourceMap": false,
         "moduleResolution": "node",
         "isolatedModules": false,
-        "jsx": "react",
+        "jsx": "react-jsx",
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "declaration": false,

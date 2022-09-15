@@ -62,7 +62,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     ensureSelectedItemVisible() {
         let activeCarousel = this.refs['activeCarousel'];
         if (activeCarousel) {
-            let domNode = (activeCarousel as ProjectsCarousel).getCarouselDOM();
+            let domNode = (activeCarousel as ProjectsCarousel).getCarouselDOM() as Element;
             this.scrollElementIntoViewIfNeeded(domNode);
         }
     }
