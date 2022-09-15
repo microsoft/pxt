@@ -138,20 +138,21 @@ export function TutorialContainer(props: TutorialContainerProps) {
             title: lf("Launch Immersive Reader")
         })
     }
-    const backButton = <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />;
     const nextButton = showDone
         ? <Button icon="check circle" className="primary" text={lf("Done")} onClick={onTutorialComplete} />
         : <Button icon="arrow circle right" className="primary" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
 
     const stepCounter = <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />;
-
     const hasHint = !!hintMarkdown;
 
 
     return <div className="tutorial-container">
         {!isHorizontal && stepCounter}
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
-            {isHorizontal && stepCounter}
+            {isHorizontal ? stepCounter : <div className="tutorial-step-label">
+                {name && <span className="tutorial-step-title">{name}</span>}
+                <span className="tutorial-step-number">{lf("Step {0} of {1}", currentStep + 1, steps.length)}</span>
+            </div>}
             {showImmersiveReader && <ImmersiveReaderButton ref={immReaderRef} content={markdown} tutorialOptions={tutorialOptions} />}
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select tutorial-step-content" tabIndex={0} markdown={markdown} parent={parent}/>

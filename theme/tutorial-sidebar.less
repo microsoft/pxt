@@ -7,6 +7,7 @@
 @tutorialBarForegroundColor: @tutorialPrimaryColor;
 @tutorialBarBackgroundColor: @tutorialSecondaryColor;
 @tutorialGrayOffset: #CECDCE;
+@tutorialDarkGray: #767676;
 
 @tutorialLinkColor: #0064BF;
 @tutorialLinkHoverColor: #003C94;
@@ -140,6 +141,10 @@
 
 .tutorial-step-label {
     display: flex;
+    user-select: none;
+    cursor: default;
+    font-size: 1rem;
+    color: @tutorialDarkGray;
 }
 
 .tutorial-step-title {
@@ -148,9 +153,9 @@
     text-overflow: ellipsis;
 }
 
-.tutorial-step-number {
+.tutorial-step-number:not(:first-child) {
     flex-shrink: 0;
-    margin-left: 0.5rem;
+    margin-left: 1rem;
 }
 
 #root.tabTutorial .tutorial-step-bubbles {
@@ -542,8 +547,13 @@
     }
     .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
-            justify-content: center;
+            display: none;
         }
+    }
+
+    .tutorial-step-label {
+        font-size: 1rem;
+        justify-content: space-between;
     }
 
     /* Short Deskstop Only */

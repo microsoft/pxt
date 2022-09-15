@@ -31,8 +31,8 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
 
     return <div className="tutorial-step-counter">
         <div className="tutorial-step-label">
-            <span className="tutorial-step-title">{title || lf("Step")}</span>
-            <span className="tutorial-step-number">{`${currentStep + 1}/${totalSteps}`}</span>
+            {title && <span className="tutorial-step-title">{title}</span>}
+            <span className="tutorial-step-number">{lf("Step {0} of {1}", currentStep + 1, totalSteps)}</span>
         </div>
         <div className="tutorial-step-bubbles">
             <Button
