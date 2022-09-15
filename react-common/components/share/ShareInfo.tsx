@@ -142,7 +142,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const prePublish = shareState === "share" || shareState === "publishing";
 
-    const inputTitle = showSimulator && prePublish ? lf("Project Title") : lf("Project Link")
+    const inputTitle = prePublish ? lf("Project Title") : lf("Project Link")
 
     return <>
         <div className="project-share-info">

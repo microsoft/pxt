@@ -47,6 +47,7 @@ import * as cloud from "./cloud";
 import * as user from "./user";
 import * as headerbar from "./headerbar";
 import * as sidepanel from "./sidepanel";
+import * as qr from "./qr";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -3881,38 +3882,25 @@ export class ProjectView
             });
     }
 
-    anonymousPublishAsync(screenshotUri?: string): Promise<string> {
-        pxt.tickEvent("publish");
-        this.setState({ publishing: true })
-        const mpkg = pkg.mainPkg
-        const epkg = pkg.getEditorPkg(mpkg)
-        return this.saveProjectNameAsync()
-            .then(() => this.saveFileAsync())
-            .then(() => mpkg.filesToBePublishedAsync(true))
-            .then(files => {
-                if (epkg.header.pubCurrent && !screenshotUri)
-                    return Promise.resolve(epkg.header.pubId)
-                const meta: workspace.ScriptMeta = {
-                    description: mpkg.config.description,
-                };
-                const blocksSize = this.blocksEditor.contentSize();
-                if (blocksSize) {
-                    meta.blocksHeight = blocksSize.height;
-                    meta.blocksWidth = blocksSize.width;
-                }
-                return workspace.anonymousPublishAsync(epkg.header, files, meta, screenshotUri)
-                    .then(inf => inf.id)
-            }).finally(() => {
-                this.setState({ publishing: false })
-            })
-    }
-
-    async anonymousPublishHeaderByIdAsync(headerId: string): Promise<Cloud.JsonScript> {
+    async anonymousPublishHeaderByIdAsync(headerId: string, projectName?: string): Promise<pxt.editor.ShareData> {
         const header = workspace.getHeader(headerId);
         const text = await workspace.getTextAsync(headerId);
         const stext = JSON.stringify(text, null, 2) + "\n"
+
+
+        if (projectName && text[pxt.CONFIG_NAME]) {
+            try {
+                const config = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
+                config.name = projectName;
+                text[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+            }
+            catch (e) {
+                pxt.debug("Could not update config");
+            }
+        }
+
         const scrReq = {
-            name: header.name,
+            name: projectName || header.name,
             target: header.target,
             targetVersion: header.targetVersion,
             description: lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
@@ -3927,34 +3915,107 @@ export class ProjectView
             }
         }
         pxt.debug(`publishing script; ${stext.length} bytes`)
-        return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
+        const script: pxt.Cloud.JsonScript = await Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true);
+
+        return this.getShareUrl(script.shortid || script.id, false);
     }
 
+    async publishAsync (name: string, screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
+        pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
+        if (name && this.state.projectName != name) {
+            await this.updateHeaderNameAsync(name);
+        }
 
-    persistentPublishAsync(screenshotUri?: string): Promise<string> {
+        const hasIdentity = auth.hasIdentity() && this.isLoggedIn();
+
+        try {
+            const persistentPublish = hasIdentity && !forceAnonymous;
+            const id = await this.publishCurrentHeaderAsync(persistentPublish, screenshotUri);
+            return await this.getShareUrl(id, persistentPublish);
+        } catch (e) {
+            pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
+            return { url: "", embed: {}, error: e } as pxt.editor.ShareData
+        }
+    }
+
+    protected async getShareUrl(pubId: string, persistent?: boolean) {
+        const targetTheme = pxt.appTarget.appTheme;
+        let shareData: pxt.editor.ShareData = {
+            url: "",
+            embed: {}
+        };
+
+        let shareUrl = (persistent
+            ? targetTheme.homeUrl
+            : targetTheme.shareUrl) || "https://makecode.com/";
+        if (!/\/$/.test(shareUrl)) shareUrl += '/';
+        let rootUrl = targetTheme.embedUrl
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+        const verPrefix = pxt.webConfig.verprefix || '';
+
+        shareData.url = `${shareUrl}${pubId}`;
+        shareData.embed.code = pxt.docs.codeEmbedUrl(`${rootUrl}${verPrefix}`, pubId);
+        shareData.embed.editor = pxt.docs.embedUrl(`${rootUrl}${verPrefix}`, "pub", pubId);
+        shareData.embed.url = `${rootUrl}${verPrefix}#pub:${pubId}`;
+
+        let padding = '81.97%';
+        // TODO: parts aspect ratio
+        let simulatorRunString = `${verPrefix}---run`;
+        if (pxt.webConfig.runUrl) {
+            if (pxt.webConfig.isStatic) {
+                simulatorRunString = pxt.webConfig.runUrl;
+            }
+            else {
+                // Always use live, not /beta etc.
+                simulatorRunString = pxt.webConfig.runUrl.replace(pxt.webConfig.relprefix, "/---")
+            }
+        }
+        if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
+        const runUrl = rootUrl + simulatorRunString.replace(/^\//, '');
+        shareData.embed.simulator = pxt.docs.runUrl(runUrl, padding, pubId);
+
+        if (targetTheme.qrCode) {
+            shareData.qr = await qr.renderAsync(`${shareUrl}${pubId}`);
+        }
+
+        return shareData;
+    }
+
+    async publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string> {
         pxt.tickEvent("publish");
         this.setState({ publishing: true })
         const mpkg = pkg.mainPkg
         const epkg = pkg.getEditorPkg(mpkg)
-        return this.saveProjectNameAsync()
-            .then(() => this.saveFileAsync())
-            .then(() => mpkg.filesToBePublishedAsync(true))
-            .then(files => {
-                if (epkg.header.pubCurrent && !screenshotUri)
-                    return Promise.resolve(epkg.header.pubId)
-                const meta: workspace.ScriptMeta = {
-                    description: mpkg.config.description,
-                };
-                const blocksSize = this.blocksEditor.contentSize();
-                if (blocksSize) {
-                    meta.blocksHeight = blocksSize.height;
-                    meta.blocksWidth = blocksSize.width;
-                }
-                return workspace.persistentPublishAsync(epkg.header, files, meta, screenshotUri)
-                    .then(header => header.pubId)
-            }).finally(() => {
-                this.setState({ publishing: false })
-            })
+
+        try {
+            await this.saveProjectNameAsync();
+            await this.saveFileAsync();
+            const files = await mpkg.filesToBePublishedAsync(true);
+            if (epkg.header.pubCurrent && !screenshotUri) {
+                return epkg.header.pubId;
+            }
+
+            const meta: workspace.ScriptMeta = {
+                description: mpkg.config.description,
+            };
+
+            const blocksSize = this.blocksEditor.contentSize();
+            if (blocksSize) {
+                meta.blocksHeight = blocksSize.height;
+                meta.blocksWidth = blocksSize.width;
+            }
+            if (persistent) {
+                const header = await workspace.persistentPublishAsync(epkg.header, files, meta, screenshotUri);
+                return header.pubId
+            }
+            else {
+                const info = await workspace.anonymousPublishAsync(epkg.header, files, meta, screenshotUri);
+                return info.id;
+            }
+        }
+        finally {
+            this.setState({ publishing: false })
+        }
     }
 
 

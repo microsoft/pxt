@@ -159,52 +159,6 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         this.props.parent.createGitHubRepositoryAsync();
     }
 
-    protected async getShareUrl(pubId: string, persistent?: boolean) {
-        const targetTheme = pxt.appTarget.appTheme;
-        const header = this.props.parent.state.header;
-        let shareData: ShareData = {
-            url: "",
-            embed: {}
-        };
-
-        let shareUrl = (persistent
-            ? targetTheme.homeUrl
-            : targetTheme.shareUrl) || "https://makecode.com/";
-        if (!/\/$/.test(shareUrl)) shareUrl += '/';
-        let rootUrl = targetTheme.embedUrl
-        if (!/\/$/.test(rootUrl)) rootUrl += '/';
-        const verPrefix = pxt.webConfig.verprefix || '';
-
-        if (header) {
-            shareData.url = `${shareUrl}${pubId}`;
-            shareData.embed.code = pxt.docs.codeEmbedUrl(`${rootUrl}${verPrefix}`, pubId);
-            shareData.embed.editor = pxt.docs.embedUrl(`${rootUrl}${verPrefix}`, "pub", pubId);
-            shareData.embed.url = `${rootUrl}${verPrefix}#pub:${pubId}`;
-
-            let padding = '81.97%';
-            // TODO: parts aspect ratio
-            let simulatorRunString = `${verPrefix}---run`;
-            if (pxt.webConfig.runUrl) {
-                if (pxt.webConfig.isStatic) {
-                    simulatorRunString = pxt.webConfig.runUrl;
-                }
-                else {
-                    // Always use live, not /beta etc.
-                    simulatorRunString = pxt.webConfig.runUrl.replace(pxt.webConfig.relprefix, "/---")
-                }
-            }
-            if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-            const runUrl = rootUrl + simulatorRunString.replace(/^\//, '');
-            shareData.embed.simulator = pxt.docs.runUrl(runUrl, padding, pubId);
-        }
-
-        if (targetTheme.qrCode) {
-            shareData.qr = await qr.renderAsync(`${shareUrl}${pubId}`);
-        }
-
-        return shareData;
-    }
-
     protected async renderInitialScreenshotAsync() {
         let uri: string;
 
@@ -234,22 +188,8 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
             && (simScreenshot || simGif);
 
-        const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) => {
-            pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
-            if (name && parent.state.projectName != name) {
-                await parent.updateHeaderNameAsync(name);
-            }
-            try {
-                const persistentPublish = hasIdentity && !forceAnonymous;
-                const id = (persistentPublish
-                    ? await parent.persistentPublishAsync(screenshotUri)
-                    : await parent.anonymousPublishAsync(screenshotUri));
-                return await this.getShareUrl(id, persistentPublish);
-            } catch (e) {
-                pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
-                return { url: "", embed: {}, error: e } as ShareData
-            }
-        }
+        const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) =>
+            parent.publishAsync(name, screenshotUri, forceAnonymous)
 
         return visible
             ? <Modal
