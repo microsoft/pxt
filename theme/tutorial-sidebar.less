@@ -152,19 +152,42 @@
     margin-left: 0.5rem;
 }
 
-.tutorial-step-bar {
-    height: 1rem;
-    overflow: hidden;
-    border-radius: 1rem;
-    background-color: @tutorialBarBackgroundColor;
-    cursor: pointer;
-}
+#root.tabTutorial .tutorial-step-bubbles {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: auto;
 
-.tutorial-step-bar-fill {
-    background-color: @tutorialBarForegroundColor;
-    height: 100%;
-    transition: width 0.5s ease-out;
-    pointer-events: none;
+    .circular.button {
+        cursor: pointer;
+        // buttons before selected step
+        border-color: gray;
+        background: darken(@tutorialSecondaryColor, 10%);
+
+        &.active {
+            color: white;
+            background: @tutorialPrimaryColor;
+            width: 2rem;
+            height: 2rem;
+
+            ~ .circular.button {
+                // buttons after selected step
+                background: #cecdce;
+            }
+        }
+    }
+
+    > .common-button.square-button {
+        border: solid 1px @tutorialPrimaryColor;
+        color: @tutorialPrimaryColor;
+        width: 2rem;
+        height: 2rem;
+
+        &.disabled {
+            visibility: hidden;
+        }
+    }
 }
 
 /*******************************
@@ -485,6 +508,11 @@
     #editorSidebar {
         bottom: 0;
     }
+    .tutorial-container .tutorial-step-counter {
+        .tutorial-step-label {
+            justify-content: center;
+        }
+    }
 
     /* Short Deskstop Only */
     @media (max-height: @tallEditorBreakpoint) {
@@ -526,6 +554,10 @@
             width: 100%;
             border-right: 0;
             border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+        }
+
+        .tutorial-content {
+            padding-top: .5rem;
         }
     }
 
@@ -587,10 +619,10 @@
         margin-bottom: .5rem;
     }
 
-    .tutorial-step-bar {
+    .tutorial-step-bubbles {
         flex: 1;
-        max-width: 15rem;
-        min-width: 10rem;
+        max-width: 20rem;
+        min-width: 13rem;
     }
 
     /*******************************
@@ -745,14 +777,6 @@
         }
         .tutorial-step-counter {
             color: @black;
-        }
-
-        .tutorial-step-bar {
-            background-color: @tutorialBarBackgroundColor;
-        }
-
-        .tutorial-step-bar-fill {
-            background-color: @tutorialBarForegroundColor;
         }
 
         .tutorial-hint .tutorial-callout-button.ui.button {
