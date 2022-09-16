@@ -85,6 +85,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     React.useEffect(() => {
         const contentDiv = contentRef?.current;
         contentDiv.scrollTo(0, 0);
+        contentDiv.querySelector(".tutorial-step-content")?.focus();
         setShowScrollGradient(contentDiv.scrollHeight > contentDiv.offsetHeight);
 
         onTutorialStepChange(currentStep);
