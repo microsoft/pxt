@@ -367,18 +367,18 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 for (const inlineBlock of inlineBlocks) {
                     let ns = inlineBlock.getAttribute("data-ns");
                     const bi = blocksInfo.apis.byQName[ns];
-                    // TODO special case functions, variables?
                     let color = bi?.attributes?.color;
-                    if (/^functions?$/i.test(ns)) {
-                        ns = "Functions";
-                        // color = pxt.appTarget.appTheme.blockColors["functions"];
-                        color = pxt.toolbox.getNamespaceColor("functions");
+                    if (/^logic$/i.test(ns)) {
+                        ns = "logic";
+                        color = pxt.toolbox.getNamespaceColor(ns);
+                    } else if (/^functions?$/i.test(ns)) {
+                        ns = "functions";
+                        color = pxt.toolbox.getNamespaceColor(ns);
                     } else if (/^variables?$/i.test(ns)) {
-                        ns = "Variables";
-                        // color = pxt.appTarget.appTheme.blockColors["variables"];
-                        color = pxt.toolbox.getNamespaceColor("variables");
+                        ns = "variables";
+                        color = pxt.toolbox.getNamespaceColor(ns);
                     } else if (bi?.kind !== pxtc.SymbolKind.Module){
-                        return;
+                        continue;
                     }
 
                     inlineBlock.classList.add("clickable");
@@ -387,7 +387,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         inlineBlock.style.borderColor = pxt.toolbox.fadeColor(color, 0.1, false);
                     }
                     inlineBlock.addEventListener("click", e => {
-                        alert(inlineBlock.getAttribute("data-ns") + " " + color + " " + pxt.toolbox.fadeColor(color, 0.1, false));
+                        const toolboxRow = document.querySelector<HTMLDivElement>(`.blocklyTreeRow[data-ns="${ns}"]`);
+                        toolboxRow?.focus();
                     });
                 }
             });
