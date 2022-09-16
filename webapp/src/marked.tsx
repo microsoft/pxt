@@ -345,20 +345,25 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
                 if (mbtn) {
                     const mtxt = /^(([^\:]*?)[\:])?(.*)$/.exec(mbtn[2]);
-                    const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
                     const txt = mtxt[3].trim();
                     const isInlineButton = mbtn[1].length == 1;
-                    const escapedNs = pxt.Util.htmlEscape(ns);
+                    const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
+                    const nsSplit = /^([^()]+)\(([^()]+)\)$/.exec(ns);
+                    const displayNs = pxt.Util.htmlEscape(nsSplit?.[1] || ns);
+                    const behaviorNs = pxt.Util.htmlEscape(nsSplit?.[2] || ns);
                     const lev = isInlineButton ?
                         `docs inlinebutton ui button ${pxt.Util.htmlEscape(txt.toLowerCase())}-button`
-                        : `docs inlineblock ${escapedNs}`;
+                        : `docs inlineblock ${displayNs}`;
 
                     const inlineBlockDiv = document.createElement('span');
                     pxsim.U.clear(inlineBlock);
                     inlineBlock.appendChild(inlineBlockDiv);
                     inlineBlockDiv.className = lev;
                     inlineBlockDiv.textContent = pxt.U.rlf(txt);
-                    inlineBlockDiv.setAttribute("data-ns", escapedNs)
+                    inlineBlockDiv.setAttribute("data-ns", behaviorNs);
+                    if (displayNs !== behaviorNs) {
+                        inlineBlockDiv.setAttribute("data-norecolor", "true")
+                    }
                     return !isInlineButton && inlineBlockDiv;
                 }
                 return undefined;
@@ -386,7 +391,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     inlineBlock.tabIndex = 0;
                     inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);
                     inlineBlock.title = inlineBlock.ariaLabel;
-                    if (color) {
+                    if (color && !inlineBlock.getAttribute("data-norecolor")) {
                         inlineBlock.style.backgroundColor = color;
                         inlineBlock.style.borderColor = pxt.toolbox.fadeColor(color, 0.1, false);
                     }
