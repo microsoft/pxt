@@ -388,7 +388,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     }
                     inlineBlock.addEventListener("click", e => {
                         const toolboxRow = document.querySelector<HTMLDivElement>(`.blocklyTreeRow[data-ns="${ns}"]`);
-                        toolboxRow?.focus();
+                        toolboxRow?.click();
                     });
                 }
             });
