@@ -6,6 +6,7 @@ import * as marked from "marked";
 import * as compiler from "./compiler"
 import { MediaPlayer } from "dashjs"
 import dashjs = require("dashjs");
+import { fireClickOnEnter } from "../../react-common/components/util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -382,6 +383,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     }
 
                     inlineBlock.classList.add("clickable");
+                    inlineBlock.tabIndex = 0;
+                    inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);
+                    inlineBlock.title = inlineBlock.ariaLabel;
                     if (color) {
                         inlineBlock.style.backgroundColor = color;
                         inlineBlock.style.borderColor = pxt.toolbox.fadeColor(color, 0.1, false);
@@ -390,6 +394,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         const toolboxRow = document.querySelector<HTMLDivElement>(`.blocklyTreeRow[data-ns="${ns}"]`);
                         toolboxRow?.click();
                     });
+                    inlineBlock.addEventListener("keydown", e => fireClickOnEnter(e as any))
                 }
             });
     }
