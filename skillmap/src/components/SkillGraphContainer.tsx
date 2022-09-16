@@ -15,6 +15,7 @@ interface SkillGraphContainerProps {
     graphs: SvgGraph[];
     backgroundImageUrl: string;
     backgroundColor: string;
+    strokeColor: string;
     graphSize: {
         width: number;
         height: number;
@@ -27,6 +28,7 @@ interface SkillGraphContainerState {
         height: number;
     };
     backgroundColor: string;
+    strokeColor: string;
 }
 
 const THRESHOLD = 0.05;
@@ -35,7 +37,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
     constructor(props: SkillGraphContainerProps) {
         super(props);
 
-        this.state = { backgroundSize: { width: 0, height: 0 }, backgroundColor: this.props.backgroundColor };
+        this.state = { backgroundSize: { width: 0, height: 0 }, backgroundColor: this.props.backgroundColor, strokeColor: this.props.strokeColor };
     }
 
     protected onImageLoad = (evt: any) => {
@@ -48,9 +50,8 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
     }
 
     render() {
-        const { maps, graphs, graphSize, backgroundImageUrl, backgroundColor } = this.props;
+        const { maps, graphs, graphSize, backgroundImageUrl, backgroundColor, strokeColor } = this.props;
         const { backgroundSize } = this.state;
-        const darkBackgroundColors = ['#5c406c', '#000000'];
         let altTextColor: string = 'black';
         let backgroundAltText: string = `Background image for ${maps[0]?.displayName}`;
         let translateY = 0;
@@ -72,7 +73,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
             }
         }
 
-        if (darkBackgroundColors.includes(backgroundColor) ) {
+        if (backgroundColor === strokeColor) {
             altTextColor = 'white';
         }
 
