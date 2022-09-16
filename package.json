@@ -145,7 +145,7 @@
     "uglifyify": "5.0.2"
   },
   "scripts": {
-    "postinstall": "cd skillmaps && npm install && cd ..",
+    "postinstall": "cd skillmap && npm install && cd ..",
     "build": "gulp",
     "test": "gulp travis",
     "clean": "gulp clean",
