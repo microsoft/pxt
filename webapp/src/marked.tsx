@@ -338,25 +338,59 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     // Renders inline blocks, such as "||controller: Controller||".
     private renderInlineBlocks(content: HTMLElement) {
-        pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
-            .forEach((inlineBlock: HTMLElement) => {
+        const inlineBlocks = pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
+            .map((inlineBlock: HTMLElement) => {
                 const text = inlineBlock.innerText;
                 const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
                 if (mbtn) {
-                    const mtxt = /^(([^\:\.]*?)[\:\.])?(.*)$/.exec(mbtn[2]);
+                    const mtxt = /^(([^\:]*?)[\:])?(.*)$/.exec(mbtn[2]);
                     const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
                     const txt = mtxt[3].trim();
-                    const lev = mbtn[1].length == 1 ?
+                    const isInlineButton = mbtn[1].length == 1;
+                    const escapedNs = pxt.Util.htmlEscape(ns);
+                    const lev = isInlineButton ?
                         `docs inlinebutton ui button ${pxt.Util.htmlEscape(txt.toLowerCase())}-button`
-                        : `docs inlineblock ${pxt.Util.htmlEscape(ns)}`;
+                        : `docs inlineblock ${escapedNs}`;
 
                     const inlineBlockDiv = document.createElement('span');
                     pxsim.U.clear(inlineBlock);
                     inlineBlock.appendChild(inlineBlockDiv);
                     inlineBlockDiv.className = lev;
                     inlineBlockDiv.textContent = pxt.U.rlf(txt);
+                    inlineBlockDiv.setAttribute("data-ns", escapedNs)
+                    return !isInlineButton && inlineBlockDiv;
                 }
-            })
+                return undefined;
+            }).filter(el => !!el);
+        compiler.getBlocksAsync()
+            .then(blocksInfo => {
+                for (const inlineBlock of inlineBlocks) {
+                    let ns = inlineBlock.getAttribute("data-ns");
+                    const bi = blocksInfo.apis.byQName[ns];
+                    // TODO special case functions, variables?
+                    let color = bi?.attributes?.color;
+                    if (/^functions?$/i.test(ns)) {
+                        ns = "Functions";
+                        // color = pxt.appTarget.appTheme.blockColors["functions"];
+                        color = pxt.toolbox.getNamespaceColor("functions");
+                    } else if (/^variables?$/i.test(ns)) {
+                        ns = "Variables";
+                        // color = pxt.appTarget.appTheme.blockColors["variables"];
+                        color = pxt.toolbox.getNamespaceColor("variables");
+                    } else if (bi?.kind !== pxtc.SymbolKind.Module){
+                        return;
+                    }
+
+                    inlineBlock.classList.add("clickable");
+                    if (color) {
+                        inlineBlock.style.backgroundColor = color;
+                        inlineBlock.style.borderColor = pxt.toolbox.fadeColor(color, 0.1, false);
+                    }
+                    inlineBlock.addEventListener("click", e => {
+                        alert(inlineBlock.getAttribute("data-ns") + " " + color + " " + pxt.toolbox.fadeColor(color, 0.1, false));
+                    });
+                }
+            });
     }
 
     // Renders icon bullets, such as ":mouse pointer:" and ":paint brush:".
