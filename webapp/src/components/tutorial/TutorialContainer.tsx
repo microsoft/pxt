@@ -152,7 +152,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
             {isHorizontal ? stepCounter : <div className="tutorial-step-label">
                 {name && <span className="tutorial-step-title">{name}</span>}
-                <span className="tutorial-step-number">{lf("Step {0} of {1}", currentStep + 1, steps.length)}</span>
+                <span className="tutorial-step-number">{lf("Step {0} of {1}", visibleStep + 1, steps.length)}</span>
             </div>}
             {showImmersiveReader && <ImmersiveReaderButton ref={immReaderRef} content={markdown} tutorialOptions={tutorialOptions} />}
             {title && <div className="tutorial-title">{title}</div>}
