@@ -1,0 +1,15 @@
+{
+  "name": "webapp",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@types/node": "10.14.2",
+    "dashjs": "4.4.0",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "react-modal": "3.3.2",
+    "react-redux": "5.1.2",
+    "react-tooltip": "3.9.0",
+    "redux": "3.7.2"
+  }
+}
