@@ -18,5 +18,3 @@ Notes:
 * The app will hot-reload as you make code changes. Pretty neat!
 * If your css changes aren't appearing, run `pxt buildcss` in the pxt-arcade folder and it should refresh.
 * Debugging with breakpoints is best done in the browser's developer console. Look for the sources under `top/localhost:3000/static/js/<your repo root>/pxt/multiplayer`
-* This app references `react-common` differently than how skillmap does it. It is experimental, and may or may not be an improvement. Time will tell.
-
