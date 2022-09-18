@@ -129,7 +129,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const restartTooltip = lf("Restart the simulator");
         const debugTooltip = lf("Toggle debug mode");
         const keymapTooltip = lf("View simulator keyboard shortcuts");
-        const sidebarTooltip = lf("Show simulator in sidebar");
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
@@ -141,7 +140,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
-                {isTabTutorial && <sui.Button key='simsidebarbtn' className="sidebar-button tablet only" icon="external flipped" title={sidebarTooltip} onClick={showSimulatorSidebar} />}
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
                 {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}

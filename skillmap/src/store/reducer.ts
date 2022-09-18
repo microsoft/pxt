@@ -1,3 +1,4 @@
+import { ShareData } from '../../../react-common/components/share/Share';
 import * as actions from '../actions/types'
 import { guidGen, cloudLocalStoreKey } from '../lib/browserUtils';
 import { ReadyResources } from '../lib/readyResources';
@@ -48,7 +49,8 @@ export interface ModalState {
 
 export interface ShareState {
     headerId: string;
-    url?: string;
+    projectName: string;
+    data?: ShareData;
     rewardsShare?: boolean;
 }
 
@@ -289,7 +291,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 shareState: action.headerId || action.url ? {
                     headerId: action.headerId,
-                    url: action.url,
+                    projectName: action.projectName,
+                    data: action.data,
                     rewardsShare: state.shareState?.rewardsShare
                 } : undefined
             }
@@ -347,7 +350,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 shareState: action.rewardsShare !== undefined ? {
                     headerId: state.shareState?.headerId || "",
-                    url: state.shareState?.url,
+                    projectName: state.shareState?.projectName || "",
+                    data: state.shareState?.data,
                     rewardsShare: action.rewardsShare
                 } : state.shareState,
                 modalQueue: [action.modal]

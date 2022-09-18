@@ -369,6 +369,7 @@ namespace pxt.editor {
     export interface EditorShareRequest extends EditorMessageRequest {
         action: "shareproject";
         headerId: string;
+        projectName: string;
     }
 
     export interface EditorShareResponse extends EditorMessageRequest {
@@ -587,7 +588,7 @@ namespace pxt.editor {
                                 }
                                 case "shareproject": {
                                     const msg = data as EditorShareRequest;
-                                    return projectView.anonymousPublishHeaderByIdAsync(msg.headerId)
+                                    return projectView.anonymousPublishHeaderByIdAsync(msg.headerId, msg.projectName)
                                         .then(scriptInfo => {
                                             resp = scriptInfo;
                                         });

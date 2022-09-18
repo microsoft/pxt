@@ -1,3 +1,4 @@
+import { ShareData } from '../../../react-common/components/share/Share';
 import { ReadyResources } from '../lib/readyResources';
 import { ModalState, PageSourceStatus } from '../store/reducer';
 import * as actions from './types'
@@ -35,7 +36,7 @@ export const dispatchLogout = () => ({ type: actions.USER_LOG_OUT });
 export const dispatchShowUserProfile = () => ({ type: actions.SHOW_USER_PROFILE });
 export const dispatchCloseUserProfile = () => ({ type: actions.HIDE_USER_PROFILE });
 
-export const dispatchSetShareStatus = (headerId?: string, url?: string) =>  ({ type: actions.SET_SHARE_STATUS, headerId, url });
+export const dispatchSetShareStatus = (headerId?: string, projectName?: string, data?: ShareData) =>  ({ type: actions.SET_SHARE_STATUS, headerId, projectName, data });
 export const dispatchSetCloudStatus = (headerId: string, status: string) => ({ type: actions.SET_CLOUD_STATUS, headerId, status });
 export const dispatchSetReadyResources = (resources: ReadyResources) => ({ type: actions.SET_READY_RESOURCES, resources });
 export const dispatchGrantSkillmapBadge = (mapId: string) => ({ type: actions.GRANT_SKILLMAP_BADGE, mapId });

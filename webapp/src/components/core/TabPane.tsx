@@ -16,6 +16,8 @@ export function TabPane(props: TabPaneProps) {
     const childArray = (Array.isArray(children) ? children : [children]).filter((el: any) => !!el);
     if (!childArray || childArray.length == 0) return <div />;
 
+    const tabsToShow = childArray.filter(el => !(el.props as TabContentProps).disabled);
+
     const [ activeTab, setActiveTab ] = React.useState(activeTabName);
 
     const selectTab = (tabProps: TabContentProps) => {
@@ -36,8 +38,8 @@ export function TabPane(props: TabPaneProps) {
     }, [activeTabName])
 
     return <div id={id} className={`tab-container ${className || ""}`} style={style}>
-        {childArray.length > 1 && <div className="tab-navigation">
-            {childArray.map(el => {
+        {tabsToShow.length > 1 && <div className="tab-navigation">
+            {tabsToShow.map(el => {
                 const { name, icon, title, ariaLabel, showBadge } = el.props as TabContentProps;
                 const tabClickHandler = () => selectTab(el.props);
 

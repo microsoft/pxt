@@ -452,6 +452,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial
         const hasTopBlocks = !!theme.topBlocks && !inTutorial;
 
+        const showToolboxLabel = inTutorial;
+
         if (loading || hasError) return <div>
             <div className="blocklyTreeRoot">
                 <div className="blocklyTreeRow" style={{ opacity: 0 }} />
@@ -492,6 +494,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         let topRowIndex = 0; // index of top-level rows for animation
         return <div ref={this.handleRootElementRef} className={classes} id={`${editorname}EditorToolbox`}>
             <ToolboxStyle categories={this.items} />
+            {showToolboxLabel && <div className="toolbox-title">{lf("Toolbox")}</div>}
             {showSearchBox ? <ToolboxSearch ref="searchbox" parent={parent} toolbox={this} editorname={editorname} /> : undefined}
             <div className="blocklyTreeRoot">
                 <div role="tree">
