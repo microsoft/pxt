@@ -2,7 +2,7 @@
 
 ## [MakeCode Translation Tips and Tricks](/blog/localization/tip-and-tricks)
 
-September 6th, 2022 by [anzhou5](https://github.com/anzhou5)
+September 19th, 2022 by [anzhou5](https://github.com/anzhou5)
 
 Language translation for MakeCode is possible thanks to an amazing community of volunteer translators! If you would like to get involved or want to learn more about translating MakeCode...
 
