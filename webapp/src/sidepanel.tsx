@@ -55,7 +55,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     UNSAFE_componentWillReceiveProps(props: SidepanelProps) {
         // This is necessary because we are not properly mounting and
         // unmounting the component as we enter/exit the editor. We
-        // instead manually reset the state as we transition
+        // instead manually reset the state as we transition.
         if ((!this.props.tutorialOptions && props.tutorialOptions)
             || (this.props.inHome && !props.inHome && props.tutorialOptions)
             || (this.props.tutorialOptions?.tutorial && props.tutorialOptions?.tutorial
@@ -71,10 +71,27 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
     }
 
+
+    protected tryShowSimulatorTab = () => {
+        const isTabTutorial = this.props.tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
+        const hasSimulator = !pxt.appTarget.simulator?.headless;
+        const includeSimulatorTab = !isTabTutorial && hasSimulator;
+        if (includeSimulatorTab) {
+            this.showSimulatorTab();
+        }
+    }
+
     protected showSimulatorTab = () => {
         this.props.showMiniSim(false);
         this.setState({ activeTab: SIMULATOR_TAB, height: undefined });
         simulator.driver.focus();
+    }
+
+    protected tryShowTutorialTab = () => {
+        const isTabTutorial = this.props.tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
+        if (isTabTutorial) {
+            this.showTutorialTab();
+        }
     }
 
     protected showTutorialTab = () => {
@@ -95,7 +112,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if (!tutorialOptions || pxt.BrowserUtils.useOldTutorialLayout()) {
             handleFullscreenButtonClick();
         } else {
-            this.showSimulatorTab();
+            this.tryShowSimulatorTab();
         }
     }
 
@@ -117,13 +134,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if (height != this.state.height) this.setState({ height });
     }
 
-    protected tutorialExitButton = () => {
-        return <div className="tutorial-exit" aria-label={lf("Exit tutorial")} tabIndex={0}
-            onClick={() => this.props.parent.exitTutorial()} onKeyDown={fireClickOnEnter}>
-            {lf("Exit Tutorial")}
-        </div>;
-    }
-
     renderCore() {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
@@ -133,19 +143,19 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const isTabTutorial = tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const isLockedEditor = pxt.appTarget.appTheme.lockedEditor;
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const marginHeight = hasSimulator ? "6.5rem" : "3rem";
+        const includeSimulatorTab = !isTabTutorial && hasSimulator
+        const marginHeight = includeSimulatorTab ? "6.5rem" : "3rem";
 
-        const backButton = <Button icon="arrow circle left" text={lf("Back")} onClick={this.showTutorialTab} />;
-        const nextButton = <Button icon="arrow circle right" text={lf("Next")} onClick={this.showTutorialTab} />;
+        const backButton = <Button icon="arrow circle left" text={lf("Back")} onClick={this.tryShowTutorialTab} />;
+        const nextButton = <Button icon="arrow circle right" text={lf("Next")} onClick={this.tryShowTutorialTab} />;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
             <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
-                {hasSimulator && <TabContent name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.showSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
-                    {isTabTutorial && !isLockedEditor && this.tutorialExitButton()}
+                <TabContent disabled={!includeSimulatorTab} name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.tryShowSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
                     <div className="ui items simPanel" ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
-                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.showSimulatorTab} />
+                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulatorTab} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
@@ -162,8 +172,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         <Button icon="lightbulb" disabled={true} className="tutorial-hint" />
                         { nextButton }
                     </div>}
-                </TabContent>}
-                {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="icon tasks" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab} ariaLabel={lf("Open the tutorial tab")}>
+                </TabContent>
+                {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="icon tasks" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.tryShowTutorialTab} ariaLabel={lf("Open the tutorial tab")}>
                     <TutorialContainer
                         parent={parent}
                         tutorialId={tutorialOptions.tutorial}

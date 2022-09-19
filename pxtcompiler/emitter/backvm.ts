@@ -195,7 +195,7 @@ ${info.id}_IfaceVT:
     }
 
     /* eslint-disable no-trailing-spaces */
-    export function vmEmit(bin: Binary, opts: CompileOptions) {
+    export function vmEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let vmsource = `; VM start
 _img_start:
 ${hexfile.hexPrelude()}
@@ -319,7 +319,7 @@ _start_${name}:
         section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n")
             + "\n.word 0, 0 ; dummy entry to make sure not empty")
 
-        const cfg = bin.res.configData || []
+        const cfg = cres.configData || []
         section("configData", SectionType.ConfigData, () => cfg.map(d =>
             `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}`).join("\n")
             + "\n    .word 0, 0")

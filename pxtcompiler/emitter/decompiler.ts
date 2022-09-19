@@ -2759,7 +2759,7 @@ ${output}</xml>`;
                     if (alias) {
                         info.decompilerBlockAlias = env.aliasBlocks[info.qName];
                     }
-                    else {
+                    else if (!env.opts.snippetMode) {
                         return Util.lf("No output expressions as statements");
                     }
                 }

@@ -10,7 +10,8 @@
             "chai",
             "mocha"
         ],
-        "sourceMap": false
+        "sourceMap": false,
+        "skipLibCheck": true
     },
     "files": [
         "test.spec.ts",

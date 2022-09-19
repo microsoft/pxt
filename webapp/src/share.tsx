@@ -10,6 +10,7 @@ import { fireClickOnEnter } from "./util";
 
 import { Modal, ModalAction } from "../../react-common/components/controls/Modal";
 import { Share, ShareData } from "../../react-common/components/share/Share";
+import { SimRecorderImpl } from "./components/SimRecorder";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -42,8 +43,7 @@ export interface ShareEditorState {
 }
 
 export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorState> {
-    private loanedSimulator: HTMLElement;
-    private _gifEncoder: screenshot.GifEncoder;
+    protected autoThumbnailFrames: ImageData[];
 
     constructor(props: ShareEditorProps) {
         super(props);
@@ -69,15 +69,6 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             this.setState({ qrCodeExpanded: !qrCodeExpanded });
             return;
         }
-        if (this._gifEncoder) {
-            this._gifEncoder.cancel();
-            this._gifEncoder = undefined;
-        }
-        if (this.loanedSimulator) {
-            simulator.driver.unloanSimulator();
-            this.loanedSimulator = undefined;
-            simulator.driver.stopRecording();
-        }
         this.setState({
             visible: false,
             screenshotUri: undefined,
@@ -96,9 +87,12 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         // upon hiding dialog, the screen does not redraw properly
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
             && (pxt.appTarget.appTheme.simScreenshot || pxt.appTarget.appTheme.simGif);
+
+
         if (thumbnails) {
-            this.loanedSimulator = simulator.driver.loanSimulator();
+            this.renderInitialScreenshotAsync();
         }
+
         this.setState({
             thumbnails,
             visible: true,
@@ -111,6 +105,10 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             title,
             projectName: header.name
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
+    }
+
+    setThumbnailFrames(frames: ImageData[]) {
+        this.autoThumbnailFrames = frames;
     }
 
     UNSAFE_componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -155,128 +153,30 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         this.props.parent.restartSimulator();
     }
 
-    screenshotAsync = () => {
-        pxt.tickEvent("share.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        return this.props.parent.requestScreenshotAsync()
-            .then(img => {
-                if (img) {
-                    this.setState({ screenshotUri: img });
-                } else {
-                    this.setState({ recordError: lf("Oops, screenshot failed. Please try again.") });
-                }
-            });
-    }
-
-    private loadEncoderAsync(): Promise<screenshot.GifEncoder> {
-        if (this._gifEncoder) return Promise.resolve(this._gifEncoder);
-        return screenshot.loadGifEncoderAsync()
-            .then(encoder => this._gifEncoder = encoder);
-    }
-
-    gifRecord = async () => {
-        pxt.tickEvent("share.gifrecord", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-
-        try {
-            const encoder = await this.loadEncoderAsync();
-            if (!encoder) {
-                this.setState({
-                    recordError: lf("Oops, gif encoder could not load. Please try again.")
-                });
-            } else {
-                encoder.start();
-                const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
-                simulator.driver.startRecording(gifwidth);
-            }
-        } catch (e: any) {
-            pxt.reportException(e);
-            this.setState({
-                recordError: lf("Oops, gif recording failed. Please try again.")
-            });
-            if (this._gifEncoder) {
-                this._gifEncoder.cancel();
-            }
-        }
-    }
-
-    gifRender = async (): Promise<string> => {
-        pxt.debug(`render gif`)
-        simulator.driver.stopRecording();
-        if (!this._gifEncoder) return undefined;
-
-        this.props.parent.stopSimulator();
-        let uri = await this._gifEncoder.renderAsync();
-        pxt.log(`gif: ${uri ? uri.length : 0} chars`)
-        const maxSize = pxt.appTarget.appTheme.simScreenshotMaxUriLength;
-        let recordError: string = undefined;
-        if (uri) {
-            if (maxSize && uri.length > maxSize) {
-                pxt.tickEvent(`gif.toobig`, { size: uri.length });
-                uri = undefined;
-                recordError = lf("Gif is too big, try recording a shorter time.");
-            } else
-                pxt.tickEvent(`gif.ok`, { size: uri.length });
-        }
-
-        // give a breather to the browser to render the gif
-        pxt.Util.delay(1000).then(() => this.props.parent.startSimulator());
-        return uri;
-    }
-
-    gifAddFrame = (dataUri?: ImageData, delay?: number) => {
-        if (this._gifEncoder) return this._gifEncoder.addFrame(dataUri, delay);
-        return false;
-    }
-
     handleCreateGitHubRepository() {
         pxt.tickEvent("share.github.create", undefined, { interactiveConsent: true });
         this.hide();
         this.props.parent.createGitHubRepositoryAsync();
     }
 
-    protected async getShareUrl(pubId: string, persistent?: boolean) {
-        const targetTheme = pxt.appTarget.appTheme;
-        const header = this.props.parent.state.header;
-        let shareData: ShareData = {
-            url: "",
-            embed: {}
-        };
+    protected async renderInitialScreenshotAsync() {
+        let uri: string;
 
-        let shareUrl = (persistent
-            ? targetTheme.homeUrl
-            : targetTheme.shareUrl) || "https://makecode.com/";
-        if (!/\/$/.test(shareUrl)) shareUrl += '/';
-        let rootUrl = targetTheme.embedUrl
-        if (!/\/$/.test(rootUrl)) rootUrl += '/';
-        const verPrefix = pxt.webConfig.verprefix || '';
-
-        if (header) {
-            shareData.url = `${shareUrl}${pubId}`;
-            shareData.embed.code = pxt.docs.codeEmbedUrl(`${rootUrl}${verPrefix}`, pubId);
-            shareData.embed.editor = pxt.docs.embedUrl(`${rootUrl}${verPrefix}`, "pub", pubId);
-            shareData.embed.url = `${rootUrl}${verPrefix}#pub:${pubId}`;
-
-            let padding = '81.97%';
-            // TODO: parts aspect ratio
-            let simulatorRunString = `${verPrefix}---run`;
-            if (pxt.webConfig.runUrl) {
-                if (pxt.webConfig.isStatic) {
-                    simulatorRunString = pxt.webConfig.runUrl;
-                }
-                else {
-                    // Always use live, not /beta etc.
-                    simulatorRunString = pxt.webConfig.runUrl.replace(pxt.webConfig.relprefix, "/---")
-                }
+        if (this.autoThumbnailFrames) {
+            const encoder = await screenshot.loadGifEncoderAsync();
+            encoder.start();
+            for (const frame of this.autoThumbnailFrames) {
+                encoder.addFrame(frame);
             }
-            if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-            const runUrl = rootUrl + simulatorRunString.replace(/^\//, '');
-            shareData.embed.simulator = pxt.docs.runUrl(runUrl, padding, pubId);
+            uri = await encoder.renderAsync();
+        }
+        else {
+            uri = await this.props.parent.requestScreenshotAsync();
         }
 
-        if (targetTheme.qrCode) {
-            shareData.qr = await qr.renderAsync(`${shareUrl}${pubId}`);
-        }
-
-        return shareData;
+        this.setState({
+            screenshotUri: uri
+        });
     }
 
     renderCore() {
@@ -288,55 +188,21 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
             && (simScreenshot || simGif);
 
-        const screenshotAsync = async () => await this.props.parent.requestScreenshotAsync();
-        const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) => {
-            pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
-            if (name && parent.state.projectName != name) {
-                await parent.updateHeaderNameAsync(name);
-            }
-            try {
-                const persistentPublish = hasIdentity && !forceAnonymous;
-                const id = (persistentPublish
-                    ? await parent.persistentPublishAsync(screenshotUri)
-                    : await parent.anonymousPublishAsync(screenshotUri));
-                return await this.getShareUrl(id, persistentPublish);
-            } catch (e) {
-                pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
-                return { url: "", embed: {}, error: e } as ShareData
-            }
-        }
+        const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) =>
+            parent.publishAsync(name, screenshotUri, forceAnonymous)
 
         return visible
             ? <Modal
                 title={lf("Share Project")}
-                fullscreen={simScreenshot || simGif}
-                className="sharedialog"
+                className="sharedialog wide"
                 parentElement={document.getElementById("root") || undefined}
                 onClose={this.hide}>
                 <Share projectName={newProjectName}
                     screenshotUri={screenshotUri}
-                    showShareDropdown={hasIdentity}
-                    screenshotAsync={simScreenshot ? screenshotAsync : undefined}
-                    gifRecordAsync={!light && simGif ? this.gifRecord : undefined}
-                    gifRenderAsync={!light && simGif ? this.gifRender : undefined}
-                    gifAddFrame={!light && simGif ? this.gifAddFrame : undefined}
+                    isLoggedIn={hasIdentity}
                     publishAsync={publishAsync}
-                    registerSimulatorMsgHandler={thumbnails ? parent.pushScreenshotHandler : undefined}
-                    unregisterSimulatorMsgHandler={thumbnails ? parent.popScreenshotHandler : undefined} />
+                    simRecorder={SimRecorderImpl} />
             </Modal>
             : <></>
-    }
-
-    componentDidUpdate() {
-        const container = document.getElementById("shareLoanedSimulator");
-        if (container && this.loanedSimulator && !this.loanedSimulator.parentNode) {
-            container.appendChild(this.loanedSimulator);
-        }
-
-        const { screenshotUri, visible } = this.state;
-        const targetTheme = pxt.appTarget.appTheme;
-        if (visible && this.loanedSimulator && targetTheme.simScreenshot && !screenshotUri) {
-            this.screenshotAsync().then(() => this.forceUpdate());
-        }
     }
 }

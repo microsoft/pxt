@@ -23,25 +23,34 @@
     }
 }
 
+
 .project-share-info {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
     flex: 1;
 
-    > div {
-        margin-bottom: 1rem;
-        flex-shrink: 0;
+    .project-share-content {
+        flex-grow: 1;
+
+        .name-input .common-input-group {
+            height: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .common-checkbox {
+            margin-bottom: 0.5rem;
+        }
     }
 }
 
 .project-share-title {
-    display: flex;
+    margin-bottom: 1rem;
+}
 
-    h2 {
-        flex: 1;
-        margin: 0;
-    }
+.project-share-label {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
 }
 
 #project-share-dropdown {
@@ -51,6 +60,9 @@
 .project-share-thumbnail {
     display: flex;
     flex-direction: column;
+    min-width: 15rem;
+    align-items: center;
+    margin-right: 1rem;
 
     .project-thumbnail-placeholder,
     img {
@@ -58,6 +70,18 @@
         width: 15rem;
         height: 11.25rem;
         background-color: rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+    }
+
+    .project-thumbnail-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .common-spinner {
+            width: 5rem;
+            height: 5rem;
+        }
     }
 }
 
@@ -74,11 +98,13 @@
 
 .share-publish-button {
     height: 3rem;
+    margin-right: 1rem;
 
     .common-spinner {
         display: inline-block;
     }
 }
+
 
 /////////////////////////////////////////
 //           Embed                     //
@@ -86,29 +112,26 @@
 
 .project-share-actions {
     display: flex;
+    flex-direction: row;
     margin-top: 1rem;
     position: relative;
     margin-bottom: 2rem;
+}
 
-    .common-button {
-        margin-right: 1rem;
-    }
+.project-share-social {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .project-share-text {
     margin-bottom: 1rem;
 }
 
-.common-button.menu-button.project-qrcode {
-    position: absolute;
-    right: 0;
-    height: 6rem;
-    padding: 0.5rem;
-    top: -0.5rem;
-
-    img {
-        height: 5rem;
-    }
+.common-button.menu-button.project-qrcode img {
+    height: 5rem;
 }
 
 .common-button.menu-button.project-qrcode:focus::after {
@@ -144,19 +167,59 @@
 //           Gif Recorder              //
 /////////////////////////////////////////
 
+.gif-recorder-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .thumbnail-controls {
+        display: flex;
+        flex-direction: column;
+        padding: 0 4rem;
+
+        .thumbnail-preview {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            align-items: center;
+
+            & > div {
+                padding-bottom: 1rem;
+            }
+
+            .thumbnail-image,
+            .thumbnail-placeholder {
+                display: flex;
+                background-color: rgba(0, 0, 0, 0.05);
+                width: 15rem;
+                height: 12.25rem;
+            }
+        }
+
+        .thumbnail-actions {
+            display: flex;
+            flex-direction: row;
+        }
+    }
+}
+
+.gif-recorder-sim-embed {
+    flex-grow: 1;
+    padding-right: 1rem;
+
+    .simframe {
+        padding-bottom: 56.25%!important;
+    }
+}
+
+.gif-recorder-sim {
+    flex-grow: 1;
+}
+
 .gif-recorder {
-    position: absolute;
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    bottom: 0;
-    left: calc(~'(100vw - 25rem)/2');
-    padding: 1rem;
-    transform: translateX(-50%);
-    background: @white;
-    border: @teal;
-    border-radius: 0.2rem;
     font-family: @segoeUIFont;
 }
 
@@ -176,4 +239,79 @@
     background-color: rgba(0, 0, 0, 0.05);
     width: 24.5rem;
     height: 18.375rem;
+}
+
+.thumbnail-header {
+    display: flex;
+    flex-direction: row;
+
+    .project-share-label {
+        flex-grow: 1;
+    }
+
+    .common-button.link-button {
+        margin-bottom: 0.5rem;
+    }
+}
+
+
+/////////////////////////////////////////
+//               Mobile                //
+/////////////////////////////////////////
+
+#root.miniSim:not(.fullscreensim) .gif-recorder-sim div.simframe {
+    width: 100%;
+}
+
+@media @tabletAndBelow {
+    .gif-recorder-content .thumbnail-controls {
+        padding: 0 2rem;
+    }
+}
+
+@media @mobileAndBelow {
+    .project-share-info, .gif-recorder-content {
+        flex-direction: column;
+    }
+
+    .gif-recorder-sim {
+        width: 100%;
+    }
+
+    .gif-recorder-actions {
+        width: 100%;
+
+        .spacer {
+            flex-grow: 1;
+        }
+    }
+
+    .gif-recorder-actions .common-button:not(.mobile-only) {
+        width: 3rem;
+        height: 3rem;
+        overflow: hidden;
+        padding: 0;
+
+        i, i.fas, i.far {
+            margin: 0;
+        }
+
+        .common-button-label {
+            display: none;
+        }
+    }
+
+    .gif-recorder-content {
+        &.has-uri {
+            .gif-recorder-sim {
+                display: none;
+            }
+        }
+
+        &:not(.has-uri) {
+            .thumbnail-controls {
+                display: none;
+            }
+        }
+    }
 }

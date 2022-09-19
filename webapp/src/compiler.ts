@@ -293,13 +293,17 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
 }
 
 // TS -> blocks, load blocs before calling this api
-export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: {
+    snippetMode?: boolean,
+    generateSourceMap?: boolean
+}): Promise<pxtc.CompileResult> {
     const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.fileSystem[pxt.MAIN_TS] = code;
             opts.fileSystem[pxt.MAIN_BLOCKS] = "";
             opts.snippetMode = (dopts && dopts.snippetMode) || false;
+            opts.generateSourceMap = dopts?.generateSourceMap;
 
             if (opts.sourceFiles.indexOf(pxt.MAIN_TS) === -1) {
                 opts.sourceFiles.push(pxt.MAIN_TS);

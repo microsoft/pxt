@@ -24,8 +24,13 @@
     overflow: hidden;
 }
 
-@media @mobileAndBelow {
-    .common-modal {
+.wide > .common-modal {
+    width: 75%;
+    max-width: 60rem;
+}
+
+@media @tabletAndBelow {
+    .common-modal, .wide > .common-modal {
         width: 95%;
     }
 }

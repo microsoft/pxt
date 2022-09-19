@@ -167,6 +167,11 @@ namespace pxsim {
         modalContext?: string;
     }
 
+    export interface SimulatorAutomaticThumbnailMessage extends SimulatorMessage {
+        type: "thumbnail";
+        frames: ImageData[];
+    }
+
     export interface SimulatorAddExtensionsMessage extends SimulatorMessage {
         type: "addextensions",
         /**

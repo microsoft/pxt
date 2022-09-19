@@ -2,32 +2,26 @@ import * as React from "react";
 import { Button } from "../controls/Button";
 import { EditorToggle } from "../controls/EditorToggle";
 import { Input } from "../controls/Input";
-import { MenuDropdown } from "../controls/MenuDropdown";
 import { Textarea } from "../controls/Textarea";
 import { Modal } from "../controls/Modal";
 
 import { ShareData } from "./Share";
-import { GifInfo } from "./GifInfo";
+import { ThumbnailRecorder } from "./ThumbnailRecorder";
 import { SocialButton } from "./SocialButton";
+import { Checkbox } from "../controls/Checkbox";
+import { SimRecorder } from "./ThumbnailRecorder";
 
 export interface ShareInfoProps {
     projectName: string;
     description?: string;
     screenshotUri?: string;
-    showShareDropdown?: boolean;
-
-    screenshotAsync?: () => Promise<string>;
-    gifRecordAsync?: () => Promise<void>;
-    gifRenderAsync?: () => Promise<string | void>;
-    gifAddFrame?: (dataUri: ImageData, delay?: number) => boolean;
+    isLoggedIn?: boolean;
+    simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
-    registerSimulatorMsgHandler?: (handler: (msg: any) => void) => void;
-    unregisterSimulatorMsgHandler?: () => void;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, showShareDropdown, screenshotAsync, gifRecordAsync,
-        gifRenderAsync, gifAddFrame, publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
+    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
@@ -35,8 +29,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ embedState, setEmbedState ] = React.useState<"none" | "code" | "editor" | "simulator">("none");
     const [ showQRCode, setShowQRCode ] = React.useState(false);
     const [ copySuccessful, setCopySuccessful ] = React.useState(false);
+    const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn);
 
-    const showSimulator = !!screenshotAsync || !!gifRecordAsync;
+    const showSimulator = !!simRecorder;
     const showDescription = shareState !== "publish";
     let qrCodeButtonRef: HTMLButtonElement;
     let inputRef: HTMLInputElement;
@@ -54,9 +49,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
         exitGifRecord();
     }
 
-    const handlePublishClick = async (forceAnonymous?: boolean) => {
+    const handlePublishClick = async () => {
         setShareState("publishing");
-        let publishedShareData = await publishAsync(name, thumbnailUri, forceAnonymous);
+        let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
         else setShareState("share")
@@ -132,12 +127,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
         onClick: () => setEmbedState("simulator")
     }];
 
-    const dropdownOptions = [{
-        title: lf("Create snapshot"),
-        label: lf("Create snapshot"),
-        onClick: () => handlePublishClick(true)
-    }];
-
     const handleQRCodeButtonRef = (ref: HTMLButtonElement) => {
         if (ref) qrCodeButtonRef = ref;
     }
@@ -153,124 +142,145 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const prePublish = shareState === "share" || shareState === "publishing";
 
+    const inputTitle = prePublish ? lf("Project Title") : lf("Project Link")
+
     return <>
         <div className="project-share-info">
-            {(prePublish|| shareState === "publish") && <>
-                {showSimulator && <div className="project-share-title">
-                    <h2>{lf("About your project")}</h2>
-                    {showShareDropdown && prePublish && <MenuDropdown id="project-share-dropdown"
-                        icon="fas fa-ellipsis-h"
-                        title={lf("More share options")}
-                        items={dropdownOptions}
-                        />}
-                </div>}
-                {showDescription && <>
-                    <Input label={lf("Project Name")}
-                        initialValue={name}
-                        placeholder={lf("Name your project")}
-                        onChange={setName} />
-                    <Textarea label={lf("Description")}
-                        initialValue={description}
-                        placeholder={lf("Tell others about your project")}
-                        rows={5} />
-                    </>
-                }
-                {prePublish && <>
-                    {showSimulator && <div className="project-share-thumbnail">
-                        {thumbnailUri
-                            ? <img src={thumbnailUri} />
-                            : <div className="project-thumbnail-placeholder" />
-                        }
-                        <Button title={lf("Update project thumbnail")}
+            {showSimulator && shareState !== "gifrecord" &&
+                <div className="project-share-thumbnail">
+                    {thumbnailUri
+                        ? <img src={thumbnailUri} />
+                        : <div className="project-thumbnail-placeholder">
+                             <div className="common-spinner" />
+                        </div>
+                    }
+                    {shareState !== "publish" &&
+                        <Button
+                            className="link-button"
+                            title={lf("Update project thumbnail")}
                             label={lf("Update project thumbnail")}
                             onClick={() => setShareState("gifrecord")} />
-                    </div>}
-                    <div>{lf("You need to publish your project to share it or embed it in other web pages. You acknowledge having consent to publish this project.")}</div>
-                    {shareData?.error && <div className="project-share-error">
-                        {(shareData.error.statusCode === 413
-                            && pxt.appTarget?.cloud?.cloudProviders?.github)
-                            ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
-                            : lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}
-                    </div>}
-                    {shareState === "share" ?
-                        <Button className="primary share-publish-button"
-                            title={lf("Publish to share")}
-                            label={lf("Publish to share")}
-                            onClick={handlePublishClick} /> :
-                        <Button className="primary share-publish-button"
-                            title={lf("Publishing...")}
-                            label={ <div className="common-spinner" />}
-                            onClick={() => {}} />
                     }
-                </>}
-
-                {shareState === "publish" &&
-                    <div className="project-share-data">
-                        <div className="project-share-text">
-                            {lf("Your project is ready! Use the address below to share your projects.")}
-                        </div>
-                        <div className="common-input-attached-button">
-                            <Input
-                                handleInputRef={handleInputRef}
-                                initialValue={shareData.url}
-                                readOnly={true}
-                                onChange={setName} />
-                            <Button className={copySuccessful ? "green" : "primary"}
-                                title={lf("Copy link")}
-                                label={copySuccessful ? lf("Copied!") : lf("Copy link")}
-                                leftIcon="fas fa-link"
-                                onClick={handleCopyClick}
-                                onBlur={handleCopyBlur} />
-                        </div>
-                        <div className="project-share-actions">
-                            <Button className="circle-button gray embed mobile-portrait-hidden"
-                                title={lf("Show embed code")}
-                                leftIcon="fas fa-code"
-                                onClick={handleEmbedClick} />
-                            <SocialButton className="circle-button facebook"
-                                url={shareData?.url}
-                                type='facebook'
-                                heading={lf("Share on Facebook")} />
-                            <SocialButton className="circle-button twitter"
-                                url={shareData?.url}
-                                type='twitter'
-                                heading={lf("Share on Twitter")} />
-                            {navigator.share && <Button className="circle-button device-share"
-                                title={lf("Show device share options")}
-                                ariaLabel={lf("Show device share options")}
-                                leftIcon={"icon share"}
-                                onClick={handleDeviceShareClick}
-                            />}
-                            <Button
-                                className="menu-button project-qrcode"
-                                buttonRef={handleQRCodeButtonRef}
-                                title={lf("Show QR Code")}
-                                label={<img className="qrcode-image" src={shareData?.qr} />}
-                                onClick={handleQRCodeClick}
-                            />
-                        </div>
+                </div>
+            }
+            <div className="project-share-content">
+                {(prePublish || shareState === "publish") && <>
+                    <div className="project-share-title project-share-label" id="share-input-title">
+                        {inputTitle}
                     </div>
-                }
-                {embedState !== "none" && <div className="project-embed">
-                    <EditorToggle id="project-embed-toggle"
-                        className="slim tablet-compact"
-                        items={embedOptions}
-                        selected={embedOptions.findIndex(i => i.name === embedState)} />
-                    <Textarea readOnly={true}
-                        rows={5}
-                        initialValue={shareData?.embed[embedState]} />
-                </div>}
-            </>}
-            {shareState === "gifrecord" && <GifInfo
-                initialUri={thumbnailUri}
-                onApply={applyGifChange}
-                onCancel={exitGifRecord}
-                screenshotAsync={screenshotAsync}
-                gifRecordAsync={gifRecordAsync}
-                gifRenderAsync={gifRenderAsync}
-                gifAddFrame={gifAddFrame}
-                registerSimulatorMsgHandler={registerSimulatorMsgHandler}
-                unregisterSimulatorMsgHandler={unregisterSimulatorMsgHandler} />}
+                    {showDescription && <>
+                        <Input
+                            ariaDescribedBy="share-input-title"
+                            className="name-input"
+                            initialValue={name}
+                            placeholder={lf("Name your project")}
+                            onChange={setName} />
+                        {isLoggedIn && <Checkbox
+                            id="persistent-share-checkbox"
+                            label={lf("Allow people to see future changes to my project")}
+                            isChecked={!isAnonymous}
+                            onChange={val => setIsAnonymous(!val)}
+                            />}
+                        </>
+                    }
+                    {prePublish && <>
+                        {shareData?.error && <div className="project-share-error">
+                            {(shareData.error.statusCode === 413
+                                && pxt.appTarget?.cloud?.cloudProviders?.github)
+                                ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
+                                : lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}
+                        </div>}
+                        <div>
+                            {shareState === "share" &&
+                                <Button className="primary share-publish-button"
+                                    title={lf("Continue")}
+                                    label={lf("Continue")}
+                                    onClick={handlePublishClick} />
+                            }
+                            { shareState === "publishing" &&
+                                <Button className="primary share-publish-button"
+                                    title={lf("Publishing...")}
+                                    label={ <div className="common-spinner" />}
+                                    onClick={() => {}} />
+                            }
+                        </div>
+                    </>}
+
+                    {shareState === "publish" &&
+                        <div className="project-share-data">
+                            <div className="common-input-attached-button">
+                                <Input
+                                    ariaDescribedBy="share-input-title"
+                                    handleInputRef={handleInputRef}
+                                    initialValue={shareData.url}
+                                    readOnly={true}
+                                    onChange={setName} />
+                                <Button className={copySuccessful ? "green" : "primary"}
+                                    title={lf("Copy link")}
+                                    label={copySuccessful ? lf("Copied!") : lf("Copy")}
+                                    leftIcon="fas fa-link"
+                                    onClick={handleCopyClick}
+                                    onBlur={handleCopyBlur} />
+                            </div>
+                            <div className="project-share-actions">
+                                <div className="project-share-social">
+                                    <Button className="square-button gray embed mobile-portrait-hidden"
+                                        title={lf("Show embed code")}
+                                        leftIcon="fas fa-code"
+                                        onClick={handleEmbedClick} />
+                                    <SocialButton className="square-button facebook"
+                                        url={shareData?.url}
+                                        type='facebook'
+                                        heading={lf("Share on Facebook")} />
+                                    <SocialButton className="square-button twitter"
+                                        url={shareData?.url}
+                                        type='twitter'
+                                        heading={lf("Share on Twitter")} />
+                                    <SocialButton className="square-button google-classroom"
+                                        url={shareData?.url}
+                                        type='google-classroom'
+                                        heading={lf("Share on Google Classroom")} />
+                                    <SocialButton className="square-button microsoft-teams"
+                                        url={shareData?.url}
+                                        type='microsoft-teams'
+                                        heading={lf("Share on Microsoft Teams")} />
+                                    <SocialButton className="square-button whatsapp"
+                                        url={shareData?.url}
+                                        type='whatsapp'
+                                        heading={lf("Share on WhatsApp")} />
+                                    {navigator.share && <Button className="square-button device-share"
+                                        title={lf("Show device share options")}
+                                        ariaLabel={lf("Show device share options")}
+                                        leftIcon={"icon share"}
+                                        onClick={handleDeviceShareClick}
+                                    />}
+                                </div>
+                                <Button
+                                    className="menu-button project-qrcode"
+                                    buttonRef={handleQRCodeButtonRef}
+                                    title={lf("Show QR Code")}
+                                    label={<img className="qrcode-image" src={shareData?.qr} />}
+                                    onClick={handleQRCodeClick}
+                                />
+                            </div>
+                        </div>
+                    }
+                    {embedState !== "none" && <div className="project-embed">
+                        <EditorToggle id="project-embed-toggle"
+                            className="slim tablet-compact"
+                            items={embedOptions}
+                            selected={embedOptions.findIndex(i => i.name === embedState)} />
+                        <Textarea readOnly={true}
+                            rows={5}
+                            initialValue={shareData?.embed[embedState]} />
+                    </div>}
+                </>}
+                {shareState === "gifrecord" && <ThumbnailRecorder
+                    initialUri={thumbnailUri}
+                    onApply={applyGifChange}
+                    onCancel={exitGifRecord}
+                    simRecorder={simRecorder}/>}
+            </div>
 
             {showQRCode &&
                 <Modal title={lf("QR Code")} onClose={handleQRCodeModalClose}>

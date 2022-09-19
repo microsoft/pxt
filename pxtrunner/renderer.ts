@@ -1251,6 +1251,19 @@ namespace pxt.runner {
         c.remove();
     }
 
+    function renderBlockConfig(options: ClientRenderOptions) {
+        function render(scope: "local" | "global") {
+            $(`code.lang-blockconfig.${scope}`).each((i, c) => {
+                let $c = $(c);
+                if (options.snippetReplaceParent)
+                    $c = $c.parent();
+                $c.remove();
+            });
+        }
+        render("local");
+        render("global");
+    }
+
     function renderSims(options: ClientRenderOptions) {
         if (!options.simulatorClass) return;
         // simulators
@@ -1289,6 +1302,7 @@ namespace pxt.runner {
 
         renderQueue = [];
         renderGhost(options);
+        renderBlockConfig(options);
         renderSims(options);
         renderTypeScript(options);
         renderDirectPython(options);

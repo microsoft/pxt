@@ -47,6 +47,7 @@ import * as cloud from "./cloud";
 import * as user from "./user";
 import * as headerbar from "./headerbar";
 import * as sidepanel from "./sidepanel";
+import * as qr from "./qr";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -247,6 +248,9 @@ export class ProjectView
                     handler({
                         event: scmsg.action
                     } as pxt.editor.ScreenshotData)
+            }
+            else if (msg.type === "thumbnail") {
+                if (this.shareEditor) this.shareEditor.setThumbnailFrames((msg as pxsim.SimulatorAutomaticThumbnailMessage).frames);
             }
         }, false);
     }
@@ -1437,7 +1441,6 @@ export class ProjectView
                         if (tt.toolboxSubset && Object.keys(tt.toolboxSubset).length > 0) {
                             this.setState({
                                 editorState: {
-                                    searchBar: false,
                                     filters: {
                                         blocks: tt.toolboxSubset,
                                         defaultState: pxt.editor.FilterState.Hidden
@@ -1517,6 +1520,8 @@ export class ProjectView
     async loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, tryCloudSync = true): Promise<void> {
         if (!h)
             return Promise.resolve()
+
+        if (this.shareEditor) this.shareEditor.setThumbnailFrames(undefined);
 
         const checkAsync = this.tryCheckTargetVersionAsync(h.targetVersion);
         if (checkAsync)
@@ -1609,6 +1614,7 @@ export class ProjectView
             .then(() => this.loadTutorialJresCodeAsync())
             .then(() => this.loadTutorialCustomTsAsync())
             .then(() => this.loadTutorialTemplateCodeAsync())
+            .then(() => this.loadTutorialBlockConfigsAsync())
             .then(() => {
                 const main = pkg.getEditorPkg(pkg.mainPkg)
                 // override preferred editor if specified
@@ -1751,7 +1757,6 @@ export class ProjectView
             .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language, skipTutorialInfoCache))
             .then((tutorialBlocks) => {
                 let editorState: pxt.editor.EditorState = {
-                    searchBar: false
                 }
 
                 if (tutorialBlocks?.usedBlocks && Object.keys(tutorialBlocks.usedBlocks).length > 0) {
@@ -1771,12 +1776,115 @@ export class ProjectView
             .catch(e => {
                 // Failed to decompile
                 pxt.tickEvent('tutorial.faileddecompile', { tutorial: t.tutorial });
-                this.setState({ editorState: { searchBar: false, filters: undefined } });
+                this.setState({ editorState: { filters: undefined } });
                 core.warningNotification(lf("Could not filter tutorial blocks, displaying full toolbox."))
             })
             .finally(() => {
                 pxt.perf.measureEnd("loadTutorial loadBlockly")
             });
+    }
+
+    private async loadTutorialBlockConfigsAsync(): Promise<void> {
+        const resolveBlockConfigAsync = async (blockConfig: pxt.tutorial.TutorialBlockConfig): Promise<void> => {
+            blockConfig.blocks = [];
+            const blocks: Element[] = [];
+            try {
+                // Decompile block markdown to xml
+                const decomp = await compiler.decompileBlocksSnippetAsync(blockConfig.md, undefined, {
+                    snippetMode: true,
+                    generateSourceMap: false
+                });
+                const xml = decomp.outfiles[pxt.MAIN_BLOCKS];
+                pxt.debug(`decompiled ${blockConfig.md} to ${xml}`);
+                // Get all top-level blocks
+                (() => {
+                    const dom = Blockly.Xml.textToDom(xml);
+                    const children = Array.from(dom.children);
+                    for (const child of children) {
+                        if (child.nodeName === "block") {
+                            blocks.push(child);
+                        }
+                    }
+                })();
+                // Extract child blocks from blocks of type "next", and discard the "next" block
+                (() => {
+                    for (const block of blocks) {
+                        const children = Array.from(block.children);
+                        for (const child1 of children) {
+                            if (child1.nodeName === "next") {
+                                for (const child2 of Array.from(child1.children)) {
+                                    // Grab the blocks embedded in the "next" block
+                                    blocks.push(child2);
+                                }
+                                block.removeChild(child1);
+                            }
+                        }
+                    }
+                })();
+            } catch (e) {
+                // Failed to decompile, don't propagate exception
+                console.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}, ${e.message}. md:${blockConfig.md}`);
+            }
+
+            for (const block of blocks) {
+                try {
+                    const entry: pxt.tutorial.TutorialBlockConfigEntry = {};
+                    const blockType = block.getAttribute("type");
+                    switch (blockType) {
+                        case "typescript_statement": {
+                            // Decompiled to gray block
+                            throw new Error("Block config decompiled to gray block: " + Blockly.Xml.domToText(block));
+                        }
+                        case "variables_set":
+                        case "variables_change": {
+                            // get block id from within variables_set context
+                            const value = Array.from(block.children).find(child => child.tagName === "value");
+                            const rhs = Array.from(value.children).find(child => child.tagName === "block");
+                            entry.blockId = rhs.getAttribute("type");
+                            break;
+                        }
+                        default: {
+                            // Set block id from root type
+                            entry.blockId = blockType;
+                        }
+                    }
+                    entry.xml =
+                        Blockly.Xml.domToText(block)
+                        .replace(/^<xml[^>]*>\n*/i, '')
+                        .replace(/\n*<\/xml>\n*$/i, '');
+                    blockConfig.blocks.push(entry);
+                } catch (e) {
+                    // Failed to resolve block, don't propagate exception
+                    console.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}. ${e.message}`);
+                }
+            }
+        };
+        const header = pkg.mainEditorPkg().header;
+        if (!header || !header.tutorial || !header.tutorial.tutorialStepInfo) {
+            return;
+        }
+        // Check for preexisting block configs at global scope
+        if (header.tutorial.globalBlockConfig?.blocks?.length) {
+            // Global block config already populated (project was loaded from a previous save)
+            return;
+        }
+        const stepInfo = header.tutorial.tutorialStepInfo;
+        // Check for preexisting block configs at local scope
+        for (const step of stepInfo) {
+            if (step.localBlockConfig?.blocks?.length) {
+                // Local block config already populated (project was loaded from a previous save)
+                return;
+            }
+        }
+        const tasks: Promise<void>[] = [];
+        if (header.tutorial.globalBlockConfig?.md) {
+            tasks.push(resolveBlockConfigAsync(header.tutorial.globalBlockConfig));
+        }
+        stepInfo
+            .map(step => step.localBlockConfig)
+            .filter(blockConfig => blockConfig?.md)
+            .forEach(blockConfig => tasks.push(resolveBlockConfigAsync(blockConfig)));
+        await Promise.all(tasks);
     }
 
     private async loadTutorialTemplateCodeAsync(): Promise<void> {
@@ -3330,6 +3438,9 @@ export class ProjectView
     }
 
     setSimulatorFullScreen(enabled: boolean) {
+        if (this.state.collapseEditorTools) {
+            this.expandSimulator();
+        }
         if (!enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
@@ -3772,38 +3883,25 @@ export class ProjectView
             });
     }
 
-    anonymousPublishAsync(screenshotUri?: string): Promise<string> {
-        pxt.tickEvent("publish");
-        this.setState({ publishing: true })
-        const mpkg = pkg.mainPkg
-        const epkg = pkg.getEditorPkg(mpkg)
-        return this.saveProjectNameAsync()
-            .then(() => this.saveFileAsync())
-            .then(() => mpkg.filesToBePublishedAsync(true))
-            .then(files => {
-                if (epkg.header.pubCurrent && !screenshotUri)
-                    return Promise.resolve(epkg.header.pubId)
-                const meta: workspace.ScriptMeta = {
-                    description: mpkg.config.description,
-                };
-                const blocksSize = this.blocksEditor.contentSize();
-                if (blocksSize) {
-                    meta.blocksHeight = blocksSize.height;
-                    meta.blocksWidth = blocksSize.width;
-                }
-                return workspace.anonymousPublishAsync(epkg.header, files, meta, screenshotUri)
-                    .then(inf => inf.id)
-            }).finally(() => {
-                this.setState({ publishing: false })
-            })
-    }
-
-    async anonymousPublishHeaderByIdAsync(headerId: string): Promise<Cloud.JsonScript> {
+    async anonymousPublishHeaderByIdAsync(headerId: string, projectName?: string): Promise<pxt.editor.ShareData> {
         const header = workspace.getHeader(headerId);
         const text = await workspace.getTextAsync(headerId);
         const stext = JSON.stringify(text, null, 2) + "\n"
+
+
+        if (projectName && text[pxt.CONFIG_NAME]) {
+            try {
+                const config = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
+                config.name = projectName;
+                text[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+            }
+            catch (e) {
+                pxt.debug("Could not update config");
+            }
+        }
+
         const scrReq = {
-            name: header.name,
+            name: projectName || header.name,
             target: header.target,
             targetVersion: header.targetVersion,
             description: lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
@@ -3818,34 +3916,107 @@ export class ProjectView
             }
         }
         pxt.debug(`publishing script; ${stext.length} bytes`)
-        return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
+        const script: pxt.Cloud.JsonScript = await Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true);
+
+        return this.getShareUrl(script.shortid || script.id, false);
     }
 
+    async publishAsync (name: string, screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
+        pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
+        if (name && this.state.projectName != name) {
+            await this.updateHeaderNameAsync(name);
+        }
 
-    persistentPublishAsync(screenshotUri?: string): Promise<string> {
+        const hasIdentity = auth.hasIdentity() && this.isLoggedIn();
+
+        try {
+            const persistentPublish = hasIdentity && !forceAnonymous;
+            const id = await this.publishCurrentHeaderAsync(persistentPublish, screenshotUri);
+            return await this.getShareUrl(id, persistentPublish);
+        } catch (e) {
+            pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
+            return { url: "", embed: {}, error: e } as pxt.editor.ShareData
+        }
+    }
+
+    protected async getShareUrl(pubId: string, persistent?: boolean) {
+        const targetTheme = pxt.appTarget.appTheme;
+        let shareData: pxt.editor.ShareData = {
+            url: "",
+            embed: {}
+        };
+
+        let shareUrl = (persistent
+            ? targetTheme.homeUrl
+            : targetTheme.shareUrl) || "https://makecode.com/";
+        if (!/\/$/.test(shareUrl)) shareUrl += '/';
+        let rootUrl = targetTheme.embedUrl
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+        const verPrefix = pxt.webConfig.verprefix || '';
+
+        shareData.url = `${shareUrl}${pubId}`;
+        shareData.embed.code = pxt.docs.codeEmbedUrl(`${rootUrl}${verPrefix}`, pubId);
+        shareData.embed.editor = pxt.docs.embedUrl(`${rootUrl}${verPrefix}`, "pub", pubId);
+        shareData.embed.url = `${rootUrl}${verPrefix}#pub:${pubId}`;
+
+        let padding = '81.97%';
+        // TODO: parts aspect ratio
+        let simulatorRunString = `${verPrefix}---run`;
+        if (pxt.webConfig.runUrl) {
+            if (pxt.webConfig.isStatic) {
+                simulatorRunString = pxt.webConfig.runUrl;
+            }
+            else {
+                // Always use live, not /beta etc.
+                simulatorRunString = pxt.webConfig.runUrl.replace(pxt.webConfig.relprefix, "/---")
+            }
+        }
+        if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
+        const runUrl = rootUrl + simulatorRunString.replace(/^\//, '');
+        shareData.embed.simulator = pxt.docs.runUrl(runUrl, padding, pubId);
+
+        if (targetTheme.qrCode) {
+            shareData.qr = await qr.renderAsync(`${shareUrl}${pubId}`);
+        }
+
+        return shareData;
+    }
+
+    async publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string> {
         pxt.tickEvent("publish");
         this.setState({ publishing: true })
         const mpkg = pkg.mainPkg
         const epkg = pkg.getEditorPkg(mpkg)
-        return this.saveProjectNameAsync()
-            .then(() => this.saveFileAsync())
-            .then(() => mpkg.filesToBePublishedAsync(true))
-            .then(files => {
-                if (epkg.header.pubCurrent && !screenshotUri)
-                    return Promise.resolve(epkg.header.pubId)
-                const meta: workspace.ScriptMeta = {
-                    description: mpkg.config.description,
-                };
-                const blocksSize = this.blocksEditor.contentSize();
-                if (blocksSize) {
-                    meta.blocksHeight = blocksSize.height;
-                    meta.blocksWidth = blocksSize.width;
-                }
-                return workspace.persistentPublishAsync(epkg.header, files, meta, screenshotUri)
-                    .then(header => header.pubId)
-            }).finally(() => {
-                this.setState({ publishing: false })
-            })
+
+        try {
+            await this.saveProjectNameAsync();
+            await this.saveFileAsync();
+            const files = await mpkg.filesToBePublishedAsync(true);
+            if (epkg.header.pubCurrent && !screenshotUri) {
+                return epkg.header.pubId;
+            }
+
+            const meta: workspace.ScriptMeta = {
+                description: mpkg.config.description,
+            };
+
+            const blocksSize = this.blocksEditor.contentSize();
+            if (blocksSize) {
+                meta.blocksHeight = blocksSize.height;
+                meta.blocksWidth = blocksSize.width;
+            }
+            if (persistent) {
+                const header = await workspace.persistentPublishAsync(epkg.header, files, meta, screenshotUri);
+                return header.pubId
+            }
+            else {
+                const info = await workspace.anonymousPublishAsync(epkg.header, files, meta, screenshotUri);
+                return info.id;
+            }
+        }
+        finally {
+            this.setState({ publishing: false })
+        }
     }
 
 

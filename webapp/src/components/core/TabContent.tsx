@@ -8,6 +8,7 @@ export interface TabContentProps {
     showBadge?: boolean;
     children?: React.ReactNode;
     onSelected?: () => void;
+    disabled?: boolean;
 }
 
 export function TabContent(props: TabContentProps) {

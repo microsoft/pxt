@@ -1,6 +1,7 @@
 /// <reference path="../types.d.ts" />
 
 import * as React from "react";
+import { SimRecorder } from "./ThumbnailRecorder";
 import { ShareInfo } from "./ShareInfo";
 
 export interface ShareData {
@@ -18,34 +19,20 @@ export interface ShareData {
 export interface ShareProps {
     projectName: string;
     screenshotUri?: string;
-    showShareDropdown?: boolean;
+    isLoggedIn?: boolean;
 
-    screenshotAsync: () => Promise<string>;
-    gifRecordAsync: () => Promise<void>;
-    gifRenderAsync: () => Promise<string | void>;
-    gifAddFrame: (dataUri: ImageData, delay?: number) => boolean;
+    simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
-    registerSimulatorMsgHandler?: (handler: (msg: any) => void) => void;
-    unregisterSimulatorMsgHandler?: () => void;
 }
 
 export const Share = (props: ShareProps) => {
-    const { projectName, screenshotUri, showShareDropdown, screenshotAsync, gifRecordAsync, gifRenderAsync,
-        gifAddFrame, publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
+    const { projectName, screenshotUri, isLoggedIn, simRecorder, publishAsync} = props;
 
-return <div className="project-share">
-        {(!!screenshotAsync || !!gifRecordAsync) && <div className="project-share-simulator">
-            <div id="shareLoanedSimulator" />
-        </div>}
+    return <div className="project-share">
         <ShareInfo projectName={projectName}
-            showShareDropdown={showShareDropdown}
+            isLoggedIn={isLoggedIn}
             screenshotUri={screenshotUri}
-            screenshotAsync={screenshotAsync}
-            gifRecordAsync={gifRecordAsync}
-            gifRenderAsync={gifRenderAsync}
-            gifAddFrame={gifAddFrame}
-            publishAsync={publishAsync}
-            registerSimulatorMsgHandler={registerSimulatorMsgHandler}
-            unregisterSimulatorMsgHandler={unregisterSimulatorMsgHandler} />
+            simRecorder={simRecorder}
+            publishAsync={publishAsync} />
     </div>
 }

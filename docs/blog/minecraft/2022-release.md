@@ -46,14 +46,6 @@ This block specifies the direction the player is looking (or the camera) and is 
 
 To learn more about the different Position API’s in MakeCode for Minecraft, see https://minecraft.makecode.com/reference/positions.
 
-## Block detection
-
-For those of you who love the mining in Minecraft, you’ll appreciate these new block detection blocks which allow you to detect different types of blocks. For example, this is a program that acts as a "Diamond Detector" showing you the location of all the diamonds in the ground below you: https://makecode.com/_Vo1a96AWpKRe.
-
-![Diamond Detector example](/static/blog/minecraft/2022-release/diamond-detector.png)
-
-Use this program to list out all the different blocks 10 blocks below you: https://makecode.com/_Eoad0vckwcRi.
-
 ## Full Screen Tutorial Layout
 
 We’ve optimized our tutorial layout for people who expand the Code Builder window to full screen. For folks using the half-screen view of Code Builder, there won’t be any changes - the tutorials will still appear at the top of the screen. But for people who expand to a full-screen view, you will see the tutorial pane now on the left side of the screen. This optimized view allows for more vertical space working with code.

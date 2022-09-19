@@ -2268,6 +2268,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
+    pxt.reloadAppTargetVariant();
     dirsToWatch = cfg.bundleddirs.slice()
     if (pxt.appTarget.id != "core") {
         if (fs.existsSync("theme")) {
@@ -4292,12 +4293,6 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 );
             }
             return;
-        }
-
-        if (++codeSnippetCount % 40 == 0) {
-            // clean up cache every once in a while to speed up / clear up mem
-            // TODO probably this should be handled in the service host as it does become a perf concern
-            cleanService();
         }
 
         const isPy = snippet.ext === "py";

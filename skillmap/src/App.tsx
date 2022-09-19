@@ -221,7 +221,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
                 this.setState({ error: undefined });
             } catch (err) {
-                this.handleError(err);
+                this.handleError(err as any);
             }
         } else {
             this.setState({ error: lf("No content loaded.") })

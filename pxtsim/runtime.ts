@@ -765,6 +765,12 @@ namespace pxsim {
         perfElapsed = 0
         perfStack = 0
 
+
+        lastInteractionTime: number;
+        lastThumbnailTime: number;
+        thumbnailRecordingIntervalRef: number;
+        thumbnailFrames: ImageData[];
+
         public refCountingDebug = false;
         private refObjId = 1;
 
@@ -989,19 +995,16 @@ namespace pxsim {
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
-        static postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
+        static async postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
             const b = runtime && runtime.board;
-            const p = b
-                ? b.screenshotAsync().catch(e => {
-                    console.debug(`screenshot failed`);
-                    return undefined;
-                })
-                : Promise.resolve(undefined);
-            return p.then(img => Runtime.postMessage({
+            if (!b) return undefined;
+
+            const img = await b.screenshotAsync();
+            Runtime.postMessage({
                 type: "screenshot",
                 data: img,
                 delay: opts && opts.delay
-            } as SimulatorScreenshotMessage));
+            } as SimulatorScreenshotMessage)
         }
 
         static requestToggleRecording() {
@@ -1061,17 +1064,8 @@ namespace pxsim {
             this.board.screenshotAsync(this.recordingWidth)
                 .then(imageData => {
                     // check for duplicate images
-                    if (this.recordingLastImageData && imageData
-                        && this.recordingLastImageData.data.byteLength == imageData.data.byteLength) {
-                        const d0 = this.recordingLastImageData.data;
-                        const d1 = imageData.data;
-                        const n = d0.byteLength;
-                        let i = 0;
-                        for (i = 0; i < n; ++i)
-                            if (d0[i] != d1[i])
-                                break;
-                        if (i == n) // same, don't send update
-                            return;
+                    if (this.recordingLastImageData && isImageDataEqual(this.recordingLastImageData, imageData)) {
+                        return;
                     }
                     this.recordingLastImageData = imageData;
                     Runtime.postMessage(<SimulatorScreenshotMessage>{
@@ -1718,6 +1712,35 @@ namespace pxsim {
                 return ts.totalRuntime > elapsed;
             })
         }
+
+        registerUserInteraction() {
+            this.lastInteractionTime = Date.now();
+
+            if (this.thumbnailRecordingIntervalRef || this.lastThumbnailTime && this.lastInteractionTime - this.lastThumbnailTime < 1000) return;
+            this.thumbnailFrames = [];
+
+            this.thumbnailRecordingIntervalRef = setInterval(async () => {
+                const imageData = await this.board.screenshotAsync();
+
+                if (this.thumbnailFrames.length && isImageDataEqual(imageData, this.thumbnailFrames[this.thumbnailFrames.length - 1])) {
+                    return;
+                }
+
+                this.thumbnailFrames.push(imageData);
+
+                if (Date.now() - this.lastInteractionTime > 10000 || this.thumbnailFrames.length > 30) {
+                    clearInterval(this.thumbnailRecordingIntervalRef);
+                    this.thumbnailRecordingIntervalRef = undefined;
+
+                    this.lastThumbnailTime = Date.now();
+
+                    Runtime.postMessage({
+                        type: "thumbnail",
+                        frames: this.thumbnailFrames
+                    } as SimulatorAutomaticThumbnailMessage)
+                }
+            }, 66) as any
+        }
     }
 
 
@@ -1730,4 +1753,13 @@ namespace pxsim {
         constructor(public name: string) { }
     }
 
+    function isImageDataEqual(d0: ImageData, d1: ImageData) {
+        if (d0.data.byteLength !== d1.data.byteLength) return false;
+        const n = d0.data.byteLength;
+        let i = 0;
+        for (i = 0; i < n; ++i)
+            if (d0.data[i] != d1.data[i])
+                break;
+        return i === n;
+    }
 }

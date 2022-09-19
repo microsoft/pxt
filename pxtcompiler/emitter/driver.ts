@@ -297,7 +297,7 @@ namespace ts.pxtc {
             snippetMode: opts.snippetMode || false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
-            generateSourceMap: !!opts.ast,
+            generateSourceMap: opts.generateSourceMap !== undefined ? opts.generateSourceMap : !!opts.ast,
             allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
             errorOnGreyBlocks: !!opts.errorOnGreyBlocks
         };
@@ -316,7 +316,7 @@ namespace ts.pxtc {
             snippetMode: opts.snippetMode || false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
-            generateSourceMap: !!opts.ast,
+            generateSourceMap: opts.generateSourceMap !== undefined ? opts.generateSourceMap : !!opts.ast,
             allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
             errorOnGreyBlocks: !!opts.errorOnGreyBlocks
         };

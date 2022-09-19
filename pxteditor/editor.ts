@@ -193,6 +193,18 @@ namespace pxt.editor {
         photo?: string;
     }
 
+    export interface ShareData {
+        url: string;
+        embed: {
+            code?: string;
+            editor?: string;
+            simulator?: string;
+            url?: string;
+        }
+        qr?: string;
+        error?: any;
+    }
+
     export type Activity = "tutorial" | "recipe" | "example";
 
     export interface IProjectView {
@@ -272,9 +284,9 @@ namespace pxt.editor {
         setHintSeen(step: number): void;
         setEditorOffset(): void;
 
-        anonymousPublishAsync(screenshotUri?: string): Promise<string>;
-        anonymousPublishHeaderByIdAsync(headerId: string): Promise<Cloud.JsonScript>;
-        persistentPublishAsync(screenshotUri?: string): Promise<string>;
+        anonymousPublishHeaderByIdAsync(headerId: string, projectName?: string): Promise<ShareData>;
+        publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string>;
+        publishAsync (name: string, screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData>;
 
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;

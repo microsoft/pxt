@@ -19,6 +19,7 @@ import { Badge } from "react-common/profile/Badge";
 import { Button } from "react-common/controls/Button";
 import { Input } from "react-common/controls/Input";
 import { SignInModal } from "react-common/profile/SignInModal";
+import { Share, ShareData } from "react-common/share/Share";
 
 interface AppModalProps {
     type: ModalType;
@@ -42,25 +43,31 @@ interface AppModalProps {
     dispatchShowUserProfile: () => void;
     dispatchCloseUserProfile: () => void;
     dispatchResetUser: () => void;
-    dispatchSetShareStatus: (headerId?: string, url?: string) => void;
+    dispatchSetShareStatus: (headerId?: string, projectName?: string, data?: ShareData) => void;
     dispatchShowShareModal: (mapId: string, activityId: string, teamsShare?: boolean) => void;
     dispatchShowLoginModal: () => void;
 }
 
 interface AppModalState {
     loading?: boolean;
-    data?: ShareModalData;
     checkboxSelected?: boolean; // For the Login modal and delete confirmation
-}
-
-interface ShareModalData {
-    shortId: string;
+    resolvePublish?: (data: ShareData) => void;
 }
 
 export class AppModalImpl extends React.Component<AppModalProps, AppModalState> {
     constructor (props: AppModalProps) {
         super(props);
         this.state = {};
+    }
+
+    componentDidUpdate(prevProps: Readonly<AppModalProps>, prevState: Readonly<AppModalState>, snapshot?: any): void {
+        if (this.state.resolvePublish && this.props.shareState?.data) {
+            const resolve = this.state.resolvePublish;
+            this.setState({
+                resolvePublish: undefined
+            });
+            resolve(this.props.shareState.data);
+        }
     }
 
     render() {
@@ -94,7 +101,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     protected handleOnClose = () => {
-        this.setState({ loading: false, data: undefined, checkboxSelected: false });
+        this.setState({ loading: false, resolvePublish: undefined, checkboxSelected: false });
         this.props.dispatchHideModal();
         this.props.dispatchSetShareStatus();
     }
@@ -325,51 +332,30 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderShareModal() {
-        const { userState, pageSourceUrl, mapId, activity, shareState, dispatchSetShareStatus } = this.props;
-        const { loading } = this.state;
+        const { userState, pageSourceUrl, mapId, activity, dispatchSetShareStatus } = this.props;
 
-        const shortId = shareState?.url;
+        const publishAsync = async (name: string) => {
+            tickEvent("skillmap.share", { path: mapId, activity: activity!.activityId });
+            const progress = lookupActivityProgress(userState!, pageSourceUrl!, mapId!, activity!.activityId);
 
-        const resetModalTitle = shortId ? lf("Share Project") : lf("Publish Project");
+            dispatchSetShareStatus(progress?.headerId, name);
 
-        const actions = [];
-        if (!shortId) {
-            actions.push({ label: lf("Cancel"), onClick: this.handleOnClose });
-            actions.push({ label: lf("Publish"), onClick: async () => {
-                tickEvent("skillmap.share", { path: mapId, activity: activity!.activityId });
-                this.setState({ loading: true });
+            return new Promise<ShareData>(resolve => {
+                this.setState({
+                    resolvePublish: resolve
+                })
+            })
+        };
 
-                const progress = lookupActivityProgress(userState!, pageSourceUrl!, mapId!, activity!.activityId);
-
-                dispatchSetShareStatus(progress?.headerId);
-            }});
-        }
-
-        return <Modal title={resetModalTitle} actions={actions} onClose={this.handleOnClose}>
-            {shortId ?
-                <div>{ lf("Your project is ready! Use the address below to share your projects.") }</div> :
-                <div className="share-disclaimer">
-                    { lf("You need to publish your project to share it or embed it in other web pages. You acknowledge having consent to publish this project.") }
-                </div>
-            }
-            {(loading && !shortId) && <div className="share-loader">
-                <div className="common-spinner" />
-                <span>{lf("Loading...")}</span>
-            </div>}
-            {shortId && <Input
-                    type="text"
-                    className="share-input"
-                    ariaLabel="Generated shareable URL for project"
-                    initialValue={`https://makecode.com/${shortId}`}
-                    icon="fas fa-copy"
-                    iconTitle="Copy project URL"
-                    readOnly={true}
-                    autoComplete={false}
-                    selectOnClick={true}
-                    onIconClick={this.handleShareCopyClick} />}
-            {(shortId && shareState?.rewardsShare) && <div>
-                {this.renderConfetti()}
-            </div>}
+        return <Modal
+            title={lf("Share Project")}
+            className="sharedialog wide"
+            parentElement={document.getElementById("root") || undefined}
+            onClose={this.handleOnClose}>
+            <Share projectName={activity!.displayName}
+                isLoggedIn={false}
+                publishAsync={publishAsync}
+                simRecorder={undefined as any} />
         </Modal>
     }
 
