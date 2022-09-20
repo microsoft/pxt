@@ -7,14 +7,15 @@ import { Track } from "./Track";
 export interface WorkspaceProps {
     song: pxt.assets.music.Song;
     onWorkspaceClick: (note: number, tick: number) => void;
+    gridTicks?: number;
 }
 
 export const Workspace = (props: WorkspaceProps) => {
-    const { song, onWorkspaceClick } = props;
+    const { song, onWorkspaceClick, gridTicks } = props;
 
     const handleWorkspaceClick = (ev: React.MouseEvent<SVGSVGElement>) => {
         const coord = screenToSVGCoord(ev.currentTarget, clientCoord(ev.nativeEvent));
-        const tick = closestTick(song, coord.x);
+        const tick = closestTick(song, coord.x, gridTicks);
         const note = closestNote(coord.y);
 
         if (tick > 0 && note > 0 && note < 12) {

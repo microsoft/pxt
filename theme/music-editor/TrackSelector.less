@@ -1,5 +1,27 @@
 .music-track-selector {
     padding: 0.5rem;
+    display: flex;
+    flex-direction: row;
+
+    .common-button.common-dropdown-button {
+        border: 3px solid #000;
+        min-width: 6rem;
+        height: 100%;
+    }
+
+    .music-track-grid {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: end;
+        align-items: center;
+    }
+
+    .music-track-grid-label {
+        padding-right: 0.5rem;
+        font-size: 18px;
+        font-weight: 700;
+    }
 }
 
 .common-button.music-track-button {

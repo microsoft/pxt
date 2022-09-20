@@ -32,7 +32,7 @@ function addToNoteArray(notes: pxt.assets.music.NoteEvent[], note: number, start
 
 export function getEmptySong(measures: number): pxt.assets.music.Song {
     return {
-        ticksPerBeat: 24,
+        ticksPerBeat: 8,
         beatsPerMeasure: 4,
         beatsPerMinute: 120,
         measures,

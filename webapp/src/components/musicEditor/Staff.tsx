@@ -32,7 +32,7 @@ export const Staff = (props: StaffProps) => {
                     <text
                         x={beatToX(i)}
                         y={STAFF_HEADER_HEIGHT - STAFF_HEADER_OFFSET}
-                        text-anchor="middle"
+                        textAnchor="middle"
                         fontSize={STAFF_HEADER_FONT_SIZE}>
                         {Math.floor(i / song.beatsPerMeasure) + 1}
                     </text>

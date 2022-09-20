@@ -22,8 +22,9 @@ export function beatToX(beat: number) {
     return CLEF_WIDTH + BEAT_WIDTH * beat;
 }
 
-export function closestTick(song: pxt.assets.music.Song, x: number) {
-    return Math.round((x - CLEF_WIDTH) * (song.ticksPerBeat / BEAT_WIDTH));
+export function closestTick(song: pxt.assets.music.Song, x: number, gridTicks?: number) {
+    const tick = Math.round((x - CLEF_WIDTH) * (song.ticksPerBeat / BEAT_WIDTH));
+    return Math.round(tick / gridTicks) * gridTicks
 }
 
 export function closestNote(y: number) {
