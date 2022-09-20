@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode Translation Tips and Tricks](/blog/localization/tip-and-tricks)
+## [MakeCode Translation Tips and Tricks](/blog/localization/tips-and-tricks)
 
 September 19th, 2022 by [anzhou5](https://github.com/anzhou5)
 
