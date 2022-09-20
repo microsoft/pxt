@@ -1,9 +1,9 @@
-export function addNoteToTrack(song: pxt.assets.music.Song, trackIndex: number, note: number, startTick: number) {
+export function addNoteToTrack(song: pxt.assets.music.Song, trackIndex: number, note: number, startTick: number, endTick: number) {
     return {
         ...song,
         tracks: song.tracks.map((track, index) => index !== trackIndex ? track : {
             ...track,
-            notes: addToNoteArray(track.notes, note, startTick, startTick + 1)
+            notes: addToNoteArray(track.notes, note, startTick, endTick)
         })
     }
 }
@@ -20,6 +20,10 @@ function addToNoteArray(notes: pxt.assets.music.NoteEvent[], note: number, start
             return notes.slice(0, i).concat([noteEvent]).concat(notes.slice(i));
         }
         else if (notes[i].endTick > startTick) {
+            if (notes[i].notes.indexOf(note) !== -1) {
+                return notes.slice();
+            }
+
             return notes.map((event, index) => index !== i ? event : {
                 ...event,
                 notes: event.notes.concat([note])
@@ -27,6 +31,89 @@ function addToNoteArray(notes: pxt.assets.music.NoteEvent[], note: number, start
         }
     }
     return notes.slice().concat([noteEvent]);
+}
+
+
+export function removeNoteFromTrack(song: pxt.assets.music.Song, trackIndex: number, note: number, startTick: number) {
+    return {
+        ...song,
+        tracks: song.tracks.map((track, index) => index !== trackIndex ? track : {
+            ...track,
+            notes: removeNoteFromNoteArray(track.notes, note, startTick)
+        })
+    }
+}
+
+function removeNoteFromNoteArray(notes: pxt.assets.music.NoteEvent[], note: number, startTick: number) {
+    const res = notes.slice();
+
+    for (let i = 0; i < res.length; i++) {
+        if (res[i].startTick == startTick) {
+            res[i] = {
+                ...res[i],
+                notes: res[i].notes.filter(n => n !== note)
+            }
+            break;
+        }
+    }
+    return res.filter(e => e.notes.length);
+}
+
+export function editNoteEventLength(song: pxt.assets.music.Song, trackIndex: number, startTick: number, endTick: number) {
+    return {
+        ...song,
+        tracks: song.tracks.map((track, index) => index !== trackIndex ? track : {
+            ...track,
+            notes: setNoteEventLength(track.notes, startTick, endTick)
+        })
+    }
+}
+
+function setNoteEventLength(notes: pxt.assets.music.NoteEvent[], startTick: number, endTick: number) {
+    const res = notes.slice();
+    if (startTick >= endTick) return res;
+
+    let newNoteEvent: pxt.assets.music.NoteEvent;
+
+    for (let i = 0; i < res.length; i++) {
+        if (res[i].startTick === startTick) {
+            newNoteEvent = {
+                ...res[i],
+                endTick: endTick
+            }
+            res[i] = newNoteEvent
+        }
+        else if (newNoteEvent && res[i].startTick < newNoteEvent.endTick) {
+            res[i] = undefined;
+        }
+    }
+    return res.filter(e => !!e);
+}
+
+export function findNoteEventAtTick(song: pxt.assets.music.Song, trackIndex: number, tick: number) {
+    const track = song.tracks[trackIndex];
+
+    for (const note of track.notes) {
+        if (note.startTick <= tick && note.endTick >= tick) {
+            return note;
+        }
+    }
+
+    return undefined;
+}
+
+export function findClosestPreviousNote(song: pxt.assets.music.Song, trackIndex: number, tick: number) {
+    const track = song.tracks[trackIndex];
+
+    let lastNote: pxt.assets.music.NoteEvent;
+    for (const note of track.notes) {
+        if (note.startTick > tick) {
+            return lastNote;
+        }
+        lastNote = note;
+    }
+
+    return lastNote;
 }
 
 

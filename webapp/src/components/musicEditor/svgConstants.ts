@@ -9,6 +9,7 @@ export const STAFF_HEADER_OFFSET = 10;
 
 export const WORKSPACE_HEIGHT = STAFF_HEADER_HEIGHT + STAFF_ROW_HEIGHT * 7;
 export const NOTE_ICON_WIDTH = 45;
+export const NOTE_DURATION_HEIGHT = NOTE_ICON_WIDTH / 3;
 
 export function workspaceWidth(song: pxt.assets.music.Song) {
     return CLEF_WIDTH + song.measures * song.beatsPerMeasure * BEAT_WIDTH;

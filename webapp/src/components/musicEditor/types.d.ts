@@ -13,3 +13,8 @@ interface MetronomeMessage {
     type: "start" | "stop" | "set-interval";
     interval?: number;
 }
+
+interface WorkspaceCoordinate {
+    tick: number;
+    note: number;
+}

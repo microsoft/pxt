@@ -12,10 +12,11 @@ export const NoteGroup = (props: NoteGroupProps) => {
     const { song, noteEvent, iconURI } = props;
 
     const xOffset = tickToX(song, noteEvent.startTick)
+    const noteLength = tickToX(song, noteEvent.endTick) - xOffset;
 
     return <g className="music-staff-note-group" transform={`translate(${xOffset}, 0)`}>
         {noteEvent.notes.map((note, index) =>
-            <Note key={index} note={note} iconURI={iconURI} />
+            <Note key={index} note={note} iconURI={iconURI} length={noteLength} />
         )}
     </g>
 }
