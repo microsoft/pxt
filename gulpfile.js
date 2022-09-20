@@ -788,7 +788,8 @@ exports.build = buildAll;
 exports.webapp = gulp.series(
     reactCommon,
     webapp,
-    browserifyWebapp
+    browserifyWebapp,
+    browserifyAssetEditor
 )
 
 exports.skillmapTest = testSkillmap;
