@@ -1,6 +1,6 @@
 import * as React from "react";
 import { classList } from "../../../../react-common/components/util";
-import { beatToX, CLEF_HEIGHT, noteY, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { beatToX, CLEF_HEIGHT, rowY, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 
 export interface StaffProps {
     song: pxt.assets.music.Song;
@@ -18,9 +18,9 @@ export const Staff = (props: StaffProps) => {
                 key={i}
                 className="music-staff-row"
                 x1={0}
-                y1={noteY(i * 2 + 2)}
+                y1={rowY(i * 2 + 2)}
                 x2={totalWidth}
-                y2={noteY(i * 2 + 2)} />
+                y2={rowY(i * 2 + 2)} />
         )
     }
 

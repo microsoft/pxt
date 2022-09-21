@@ -1,17 +1,17 @@
 import * as React from "react";
-import { noteY, NOTE_DURATION_HEIGHT, NOTE_ICON_WIDTH } from "./svgConstants";
+import { rowY, NOTE_DURATION_HEIGHT, NOTE_ICON_WIDTH } from "./svgConstants";
 
 export interface NoteProps {
-    note: number;
+    row: number;
     iconURI: string
     length?: number;
     opacity?: number;
 }
 
 export const Note = (props: NoteProps) => {
-    const { note, iconURI, length, opacity } = props;
+    const { row, iconURI, length, opacity } = props;
 
-    return <g className="music-staff-note" transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${noteY(note) - (NOTE_ICON_WIDTH / 2)})`}>
+    return <g className="music-staff-note" transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${rowY(row) - (NOTE_ICON_WIDTH / 2)})`}>
         { !!length &&
             <rect
                 x={NOTE_ICON_WIDTH / 2}

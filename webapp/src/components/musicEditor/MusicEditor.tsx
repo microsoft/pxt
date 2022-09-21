@@ -1,10 +1,10 @@
 import * as React from "react";
 import { EditControls } from "./EditControls";
-import { playNoteAsync } from "./playback";
+import { playNoteAsync, tickToMs } from "./playback";
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, editNoteEventLength, findClosestPreviousNote, removeNoteFromTrack } from "./utils";
+import { addNoteToTrack, editNoteEventLength, findClosestPreviousNote, removeNoteFromTrack, rowToNote } from "./utils";
 
 export interface MusicEditorProps {
     song: pxt.assets.music.Song;
@@ -18,19 +18,21 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [currentSong, setCurrentSong] = React.useState(song);
     const editSong = React.useRef<pxt.assets.music.Song>()
 
-    const onNoteClick = (note: number, startTick: number) => {
+    const gridTicks = gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat);
+
+    const onRowClick = (row: number, startTick: number) => {
         const instrument = currentSong.tracks[selectedTrack].instrument
-        const adjustedNote = note + instrument.octave * 12;
+        const note = rowToNote(instrument.octave, row);
 
 
         const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, startTick);
 
-        if (existingEvent?.startTick === startTick && existingEvent.notes.indexOf(adjustedNote) !== -1) {
-            setCurrentSong(removeNoteFromTrack(currentSong, selectedTrack, adjustedNote, startTick));
+        if (existingEvent?.startTick === startTick && existingEvent.notes.indexOf(note) !== -1) {
+            setCurrentSong(removeNoteFromTrack(currentSong, selectedTrack, note, startTick));
         }
         else {
-            setCurrentSong(addNoteToTrack(currentSong, selectedTrack, adjustedNote, startTick, startTick + gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat)))
-            playNoteAsync(adjustedNote, instrument, 1000)
+            setCurrentSong(addNoteToTrack(currentSong, selectedTrack, note, startTick, startTick + gridTicks))
+            playNoteAsync(note, instrument, tickToMs(currentSong, gridTicks))
         }
     }
 
@@ -60,11 +62,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
         <ScrollableWorkspace
             song={currentSong}
             selectedTrack={selectedTrack}
-            onWorkspaceClick={onNoteClick}
+            onWorkspaceClick={onRowClick}
             onWorkspaceDragStart={onNoteDragStart}
             onWorkspaceDragEnd={onNoteDragEnd}
             onWorkspaceDrag={onNoteDrag}
-            gridTicks={gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat)} />
+            gridTicks={gridTicks} />
         <PlaybackControls song={currentSong} />
         <EditControls />
     </div>

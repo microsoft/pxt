@@ -16,5 +16,5 @@ interface MetronomeMessage {
 
 interface WorkspaceCoordinate {
     tick: number;
-    note: number;
+    row: number;
 }

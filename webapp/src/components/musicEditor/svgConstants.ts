@@ -28,10 +28,10 @@ export function closestTick(song: pxt.assets.music.Song, x: number, gridTicks?: 
     return Math.round(tick / gridTicks) * gridTicks
 }
 
-export function closestNote(y: number) {
+export function closestRow(y: number) {
     return 12 - Math.round((y - STAFF_HEADER_HEIGHT) / (STAFF_ROW_HEIGHT / 2))
 }
 
-export function noteY(note: number) {
-    return STAFF_HEADER_HEIGHT + (12 - (note % 12)) * STAFF_ROW_HEIGHT / 2;
+export function rowY(row: number) {
+    return STAFF_HEADER_HEIGHT + (12 - (row % 12)) * STAFF_ROW_HEIGHT / 2;
 }

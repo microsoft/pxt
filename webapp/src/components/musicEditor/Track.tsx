@@ -16,7 +16,7 @@ export const Track = (props: TrackProps) => {
     if (cursorLocation) {
         cursorElement = <g transform={`translate(${tickToX(song, cursorLocation.tick)}, 0)`}>
             <Note
-                note={cursorLocation.note}
+                row={cursorLocation.row}
                 iconURI={track.iconURI}
                 opacity={0.5} />
         </g>
@@ -27,6 +27,7 @@ export const Track = (props: TrackProps) => {
             <NoteGroup
                 key={noteEvent.startTick}
                 noteEvent={noteEvent}
+                octave={track.instrument.octave}
                 song={song}
                 iconURI={track.iconURI} />
         )}

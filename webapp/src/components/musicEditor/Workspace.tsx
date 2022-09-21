@@ -1,7 +1,7 @@
 import * as React from "react";
 import { clientCoord, screenToSVGCoord } from "../../../../react-common/components/util";
 import { Staff } from "./Staff";
-import { closestNote, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { Track } from "./Track";
 import { findNoteEventAtTick } from "./utils";
 
@@ -28,7 +28,7 @@ export const Workspace = (props: WorkspaceProps) => {
         workspaceRef.onpointerdown = ev => {
             ev.preventDefault();
             const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
-            if (coord.tick > 0 && coord.note > 0 && coord.note < 12) {
+            if (coord.tick > 0 && coord.row > 0 && coord.row < 12) {
                 setDragStart(coord);
             }
         };
@@ -36,9 +36,9 @@ export const Workspace = (props: WorkspaceProps) => {
         workspaceRef.onpointermove = ev => {
             const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
 
-            if (cursorLocation && cursorLocation.tick === coord.tick && cursorLocation.note === coord.note) return;
+            if (cursorLocation && cursorLocation.tick === coord.tick && cursorLocation.row === coord.row) return;
 
-            if (coord.tick > 0 && coord.note > 0 && coord.note < 12) {
+            if (coord.tick > 0 && coord.row > 0 && coord.row < 12) {
                 if (dragStart) {
                     if (!isDragging) {
                         setIsDragging(true);
@@ -68,7 +68,7 @@ export const Workspace = (props: WorkspaceProps) => {
                 setIsDragging(false);
             }
             else {
-                const { note, tick } = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
+                const { row: note, tick } = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
                 if (tick >= 0 && note > 0 && note < 12) {
                     onWorkspaceClick(note, tick);
                 }
@@ -80,8 +80,8 @@ export const Workspace = (props: WorkspaceProps) => {
         if (ref) workspaceRef = ref;
     }
 
-    let cursorPreviewLocation = cursorLocation;
-    const eventAtCursor = cursorLocation ? findNoteEventAtTick(song, selectedTrack, cursorLocation.tick) : undefined;
+    let cursorPreviewLocation = isDragging ? undefined : cursorLocation;
+    const eventAtCursor = cursorPreviewLocation ? findNoteEventAtTick(song, selectedTrack, cursorLocation.tick) : undefined;
     if (eventAtCursor) {
         cursorPreviewLocation.tick = eventAtCursor.startTick;
     }
@@ -105,10 +105,10 @@ export const Workspace = (props: WorkspaceProps) => {
 function coordinateToWorkspaceCoordinate(ev: MouseEvent | PointerEvent | TouchEvent, el: SVGSVGElement, song: pxt.assets.music.Song, gridTicks?: number): WorkspaceCoordinate {
     const coord = screenToSVGCoord(el, clientCoord(ev));
     const tick = closestTick(song, coord.x, gridTicks);
-    const note = closestNote(coord.y);
+    const note = closestRow(coord.y);
 
     return {
-        note,
+        row: note,
         tick
     }
 }

@@ -1,3 +1,33 @@
+
+const staffNoteIntervals = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19];
+
+export function rowToNote(octave: number, row: number) {
+    return staffNoteIntervals[row] + octave * 12 + 1;
+}
+
+export function noteToRow(octave: number, note: number) {
+    const offset = note - 1 - octave * 12;
+
+    for (let i = 0; i < staffNoteIntervals.length; i++) {
+        if (staffNoteIntervals[i] === offset) {
+            return i;
+        }
+        else if (staffNoteIntervals[i] > offset) {
+            // sharp note
+            return i - 1;
+        }
+    }
+
+    return -1;
+}
+
+export function isSharpNote(note: number) {
+    const offset = (note - 1) % 12;
+
+    return staffNoteIntervals.indexOf(offset) === -1;
+}
+
+
 export function addNoteToTrack(song: pxt.assets.music.Song, trackIndex: number, note: number, startTick: number, endTick: number) {
     return {
         ...song,
@@ -94,7 +124,7 @@ export function findNoteEventAtTick(song: pxt.assets.music.Song, trackIndex: num
     const track = song.tracks[trackIndex];
 
     for (const note of track.notes) {
-        if (note.startTick <= tick && note.endTick >= tick) {
+        if (note.startTick <= tick && note.endTick > tick) {
             return note;
         }
     }
@@ -149,18 +179,25 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                 notes: [],
                 iconURI: "/static/music-editor/cat.png",
                 instrument: {
-                    waveform: 11,
-                    octave: 4,
+                    waveform: 12,
+                    octave: 5,
                     ampEnvelope: {
-                        attack: 10,
+                        attack: 150,
                         decay: 100,
-                        sustain: 500,
-                        release: 100,
+                        sustain: 365,
+                        release: 400,
                         amplitude: 1024
                     },
+                    pitchEnvelope: {
+                        attack: 120,
+                        decay: 300,
+                        sustain: 0,
+                        release: 100,
+                        amplitude: 50
+                    },
                     pitchLFO: {
-                        frequency: 5,
-                        amplitude: 2
+                        frequency: 10,
+                        amplitude: 6
                     }
                 }
             },
@@ -169,7 +206,7 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                 notes: [],
                 iconURI: "/static/music-editor/dog.png",
                 instrument: {
-                    waveform: 11,
+                    waveform: 3,
                     octave: 4,
                     ampEnvelope: {
                         attack: 10,
@@ -180,7 +217,7 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                     },
                     pitchLFO: {
                         frequency: 5,
-                        amplitude: 2
+                        amplitude: 0
                     }
                 }
             },
@@ -189,18 +226,22 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                 notes: [],
                 iconURI: "/static/music-editor/fish.png",
                 instrument: {
-                    waveform: 11,
+                    waveform: 1,
                     octave: 4,
                     ampEnvelope: {
-                        attack: 10,
-                        decay: 100,
-                        sustain: 500,
-                        release: 100,
+                        attack: 275,
+                        decay: 105,
+                        sustain: 1024,
+                        release: 400,
                         amplitude: 1024
                     },
-                    pitchLFO: {
+                    ampLFO: {
                         frequency: 5,
-                        amplitude: 2
+                        amplitude: 100
+                    },
+                    pitchLFO: {
+                        frequency: 1,
+                        amplitude: 5
                     }
                 }
             },
@@ -209,18 +250,18 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                 notes: [],
                 iconURI: "/static/music-editor/car.png",
                 instrument: {
-                    waveform: 11,
+                    waveform: 16,
                     octave: 4,
                     ampEnvelope: {
-                        attack: 10,
+                        attack: 5,
                         decay: 100,
-                        sustain: 500,
-                        release: 100,
+                        sustain: 1024,
+                        release: 30,
                         amplitude: 1024
                     },
                     pitchLFO: {
-                        frequency: 5,
-                        amplitude: 2
+                        frequency: 10,
+                        amplitude: 4
                     }
                 }
             },
