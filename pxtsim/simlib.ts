@@ -708,6 +708,11 @@ namespace pxsim {
                     const endFrequency = readUint16(instructions, i + 10);
                     totalDuration += duration
 
+                    if (wave === 0) {
+                        currentTime += duration;
+                        continue;
+                    }
+
                     const isSquareWave = 11 <= wave && wave <= 15;
 
                     if (!oscillators[wave]) {
@@ -760,7 +765,7 @@ namespace pxsim {
                         }
 
                         const { frequency, volume } = findFrequencyAndVolumeAtTime((time - startTime) * 1000, instructions);
-                        onPull(frequency, volume / 1024);
+                        if (onPull) onPull(frequency, volume / 1024);
 
                         requestAnimationFrame(handleAnimationFrame)
                     }
