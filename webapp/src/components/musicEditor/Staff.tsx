@@ -25,12 +25,14 @@ export const Staff = (props: StaffProps) => {
             lastTime = Date.now();
             if (!isPlaying) {
                 isPlaying = true;
+                playbackHead.style.display = "unset";
                 animationFrameRef = requestAnimationFrame(onAnimationFrame);
             }
         }
 
         const onStop = () => {
             isPlaying = false;
+            playbackHead.style.display = "none";
             if (animationFrameRef) cancelAnimationFrame(animationFrameRef);
         }
 

@@ -147,6 +147,31 @@ export function findClosestPreviousNote(song: pxt.assets.music.Song, trackIndex:
 }
 
 
+export function changeSongLength(song: pxt.assets.music.Song, measures: number) {
+    const maxTick = measures * song.beatsPerMeasure * song.ticksPerBeat;
+
+    return {
+        ...song,
+        measures,
+        tracks: song.tracks.map(t => {
+            const res = {
+                ...t,
+                notes: t.notes.slice()
+            }
+
+
+            res.notes = res.notes.filter(e => e.startTick < maxTick);
+            res.notes = res.notes.map(e => ({
+                ...e,
+                endTick: Math.min(e.endTick, maxTick)
+            }));
+
+            return res;
+        })
+    }
+}
+
+
 export function getEmptySong(measures: number): pxt.assets.music.Song {
     return {
         ticksPerBeat: 8,

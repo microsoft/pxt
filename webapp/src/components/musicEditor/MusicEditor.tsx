@@ -4,7 +4,7 @@ import { isPlaying, playNoteAsync, tickToMs, updatePlaybackSongAsync } from "./p
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, editNoteEventLength, findClosestPreviousNote, removeNoteFromTrack, rowToNote } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, findClosestPreviousNote, removeNoteFromTrack, rowToNote } from "./utils";
 
 export interface MusicEditorProps {
     song: pxt.assets.music.Song;
@@ -59,6 +59,17 @@ export const MusicEditor = (props: MusicEditorProps) => {
         updateSong(editNoteEventLength(editSong.current, selectedTrack, event.startTick, end.tick));
     }
 
+    const onTempoChange = (newTempo: number) => {
+        updateSong({
+            ...currentSong,
+            beatsPerMinute: newTempo
+        });
+    }
+
+    const onMeasuresChanged = (newMeasures: number) => {
+        updateSong(changeSongLength(currentSong, newMeasures));
+    }
+
     return <div>
         <TrackSelector
             song={currentSong}
@@ -74,7 +85,10 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onWorkspaceDragEnd={onNoteDragEnd}
             onWorkspaceDrag={onNoteDrag}
             gridTicks={gridTicks} />
-        <PlaybackControls song={currentSong} />
+        <PlaybackControls
+            song={currentSong}
+            onTempoChange={onTempoChange}
+            onMeasuresChanged={onMeasuresChanged} />
         <EditControls />
     </div>
 }
