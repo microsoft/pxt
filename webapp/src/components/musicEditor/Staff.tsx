@@ -1,6 +1,7 @@
 import * as React from "react";
 import { classList } from "../../../../react-common/components/util";
-import { beatToX, CLEF_HEIGHT, rowY, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener, tickToMs } from "./playback";
+import { beatToX, CLEF_HEIGHT, rowY, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 
 export interface StaffProps {
     song: pxt.assets.music.Song;
@@ -8,6 +9,51 @@ export interface StaffProps {
 
 export const Staff = (props: StaffProps) => {
     const { song } = props;
+
+    let playbackHead: SVGGElement;
+
+    React.useEffect(() => {
+        const tickTime = tickToMs(song, 1);
+        const tickDistance = tickToX(song, 2) - tickToX(song, 1);
+        let playbackHeadPosition = 0;
+        let isPlaying = false;
+        let animationFrameRef: number;
+        let lastTime: number;
+
+        const onTick = (tick: number) => {
+            playbackHeadPosition = tickToX(song, tick)
+            lastTime = Date.now();
+            if (!isPlaying) {
+                isPlaying = true;
+                animationFrameRef = requestAnimationFrame(onAnimationFrame);
+            }
+        }
+
+        const onStop = () => {
+            isPlaying = false;
+            if (animationFrameRef) cancelAnimationFrame(animationFrameRef);
+        }
+
+        const onAnimationFrame = () => {
+            const position = playbackHeadPosition + tickDistance * (Date.now() - lastTime) / tickTime;
+            playbackHead.setAttribute("transform", `translate(${position}, ${0})`);
+
+            if (isPlaying) animationFrameRef = requestAnimationFrame(onAnimationFrame);
+        }
+
+        addTickListener(onTick);
+        addPlaybackStopListener(onStop);
+
+        return () => {
+            removeTickListener(onTick);
+            removePlaybackStopListener(onStop);
+            if (animationFrameRef) cancelAnimationFrame(animationFrameRef);
+        }
+    }, [song])
+
+    const handlePlaybackHeadRef = (ref: SVGGElement) => {
+        if (ref) playbackHead = ref;
+    }
 
     const totalWidth = workspaceWidth(song)
 
@@ -65,6 +111,14 @@ export const Staff = (props: StaffProps) => {
         </g>
         <g className="music-staff-beats">
              {beats }
+        </g>
+        <g className="music-playback-head" ref={handlePlaybackHeadRef}>
+            <line
+                className="music-playback-line"
+                x1={0}
+                y1={STAFF_HEADER_HEIGHT}
+                x2={0}
+                y2={WORKSPACE_HEIGHT} />
         </g>
     </g>
 }

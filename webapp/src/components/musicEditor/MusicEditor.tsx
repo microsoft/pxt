@@ -1,6 +1,6 @@
 import * as React from "react";
 import { EditControls } from "./EditControls";
-import { playNoteAsync, tickToMs } from "./playback";
+import { isPlaying, playNoteAsync, tickToMs, updatePlaybackSongAsync } from "./playback";
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
@@ -20,6 +20,13 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
     const gridTicks = gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat);
 
+    const updateSong = (newSong: pxt.assets.music.Song) => {
+        if (isPlaying()) {
+            updatePlaybackSongAsync(newSong);
+        }
+        setCurrentSong(newSong);
+    }
+
     const onRowClick = (row: number, startTick: number) => {
         const instrument = currentSong.tracks[selectedTrack].instrument
         const note = rowToNote(instrument.octave, row);
@@ -28,10 +35,10 @@ export const MusicEditor = (props: MusicEditorProps) => {
         const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, startTick);
 
         if (existingEvent?.startTick === startTick && existingEvent.notes.indexOf(note) !== -1) {
-            setCurrentSong(removeNoteFromTrack(currentSong, selectedTrack, note, startTick));
+            updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, startTick));
         }
         else {
-            setCurrentSong(addNoteToTrack(currentSong, selectedTrack, note, startTick, startTick + gridTicks))
+            updateSong(addNoteToTrack(currentSong, selectedTrack, note, startTick, startTick + gridTicks))
             playNoteAsync(note, instrument, tickToMs(currentSong, gridTicks))
         }
     }
@@ -49,7 +56,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
         if (!event || end.tick < event.startTick + 1) return;
 
-        setCurrentSong(editNoteEventLength(editSong.current, selectedTrack, event.startTick, end.tick));
+        updateSong(editNoteEventLength(editSong.current, selectedTrack, event.startTick, end.tick));
     }
 
     return <div>

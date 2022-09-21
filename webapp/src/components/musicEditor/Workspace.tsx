@@ -28,7 +28,7 @@ export const Workspace = (props: WorkspaceProps) => {
         workspaceRef.onpointerdown = ev => {
             ev.preventDefault();
             const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
-            if (coord.tick > 0 && coord.row > 0 && coord.row < 12) {
+            if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
                 setDragStart(coord);
             }
         };
@@ -38,7 +38,7 @@ export const Workspace = (props: WorkspaceProps) => {
 
             if (cursorLocation && cursorLocation.tick === coord.tick && cursorLocation.row === coord.row) return;
 
-            if (coord.tick > 0 && coord.row > 0 && coord.row < 12) {
+            if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
                 if (dragStart) {
                     if (!isDragging) {
                         setIsDragging(true);
@@ -69,7 +69,7 @@ export const Workspace = (props: WorkspaceProps) => {
             }
             else {
                 const { row: note, tick } = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
-                if (tick >= 0 && note > 0 && note < 12) {
+                if (tick >= 0 && note >= 0 && note < 12) {
                     onWorkspaceClick(note, tick);
                 }
             }
