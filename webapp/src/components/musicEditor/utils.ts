@@ -252,12 +252,12 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                 iconURI: "/static/music-editor/fish.png",
                 instrument: {
                     waveform: 1,
-                    octave: 4,
+                    octave: 3,
                     ampEnvelope: {
-                        attack: 275,
+                        attack: 220,
                         decay: 105,
                         sustain: 1024,
-                        release: 400,
+                        release: 350,
                         amplitude: 1024
                     },
                     ampLFO: {
@@ -266,7 +266,7 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                     },
                     pitchLFO: {
                         frequency: 1,
-                        amplitude: 5
+                        amplitude: 4
                     }
                 }
             },
@@ -295,18 +295,14 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                 notes: [],
                 iconURI: "/static/music-editor/computer.png",
                 instrument: {
-                    waveform: 11,
-                    octave: 4,
+                    waveform: 15,
+                    octave: 1,
                     ampEnvelope: {
                         attack: 10,
                         decay: 100,
                         sustain: 500,
-                        release: 100,
+                        release: 10,
                         amplitude: 1024
-                    },
-                    pitchLFO: {
-                        frequency: 5,
-                        amplitude: 2
                     }
                 }
             },
@@ -315,18 +311,14 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                 notes: [],
                 iconURI: "/static/music-editor/burger.png",
                 instrument: {
-                    waveform: 11,
-                    octave: 4,
+                    waveform: 1,
+                    octave: 1,
                     ampEnvelope: {
                         attack: 10,
                         decay: 100,
                         sustain: 500,
                         release: 100,
                         amplitude: 1024
-                    },
-                    pitchLFO: {
-                        frequency: 5,
-                        amplitude: 2
                     }
                 }
             },
@@ -335,18 +327,14 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                 notes: [],
                 iconURI: "/static/music-editor/cherry.png",
                 instrument: {
-                    waveform: 11,
-                    octave: 4,
+                    waveform: 2,
+                    octave: 3,
                     ampEnvelope: {
                         attack: 10,
                         decay: 100,
                         sustain: 500,
                         release: 100,
                         amplitude: 1024
-                    },
-                    pitchLFO: {
-                        frequency: 5,
-                        amplitude: 2
                     }
                 }
             },
@@ -355,18 +343,14 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                 notes: [],
                 iconURI: "/static/music-editor/lemon.png",
                 instrument: {
-                    waveform: 11,
-                    octave: 4,
+                    waveform: 15,
+                    octave: 2,
                     ampEnvelope: {
                         attack: 10,
                         decay: 100,
                         sustain: 500,
-                        release: 100,
+                        release: 10,
                         amplitude: 1024
-                    },
-                    pitchLFO: {
-                        frequency: 5,
-                        amplitude: 2
                     }
                 }
             },
