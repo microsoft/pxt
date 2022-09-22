@@ -85,6 +85,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     React.useEffect(() => {
         const contentDiv = contentRef?.current;
         contentDiv.scrollTo(0, 0);
+        contentDiv.querySelector(".tutorial-step-content")?.focus();
         setShowScrollGradient(contentDiv.scrollHeight > contentDiv.offsetHeight);
 
         onTutorialStepChange(currentStep);
@@ -139,8 +140,8 @@ export function TutorialContainer(props: TutorialContainerProps) {
         })
     }
     const nextButton = showDone
-        ? <Button icon="check circle" className="primary" text={lf("Done")} onClick={onTutorialComplete} />
-        : <Button icon="arrow circle right" className="primary" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
+        ? <Button icon="check circle" text={lf("Done")} onClick={onTutorialComplete} />
+        : <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
 
     const stepCounter = <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />;
     const hasHint = !!hintMarkdown;
@@ -151,7 +152,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
             {isHorizontal ? stepCounter : <div className="tutorial-step-label">
                 {name && <span className="tutorial-step-title">{name}</span>}
-                <span className="tutorial-step-number">{lf("Step {0} of {1}", currentStep + 1, steps.length)}</span>
+                <span className="tutorial-step-number">{lf("Step {0} of {1}", visibleStep + 1, steps.length)}</span>
             </div>}
             {showImmersiveReader && <ImmersiveReaderButton ref={immReaderRef} content={markdown} tutorialOptions={tutorialOptions} />}
             {title && <div className="tutorial-title">{title}</div>}
