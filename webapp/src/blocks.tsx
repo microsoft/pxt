@@ -693,8 +693,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected resizeFieldEditorView() {
         if (!window) return;
         const blocklyDiv = this.getBlocksEditorDiv();
-        if (blocklyDiv && this.parent.isTutorial() && !pxt.BrowserUtils.isTabletSize()) {
-            const containerRect = blocklyDiv.getBoundingClientRect();
+        const containerRect = blocklyDiv.getBoundingClientRect();
+        if (blocklyDiv && this.parent.isTutorial() && containerRect.width > pxt.BREAKPOINT_TABLET) {
             blocklyFieldView.setEditorBounds({
                 top: containerRect.top,
                 left: containerRect.left,
