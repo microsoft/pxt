@@ -9,10 +9,6 @@ const concat = require("gulp-concat");
 const header = require("gulp-header");
 const replace = require("gulp-replace");
 const ju = require("./jakeutil");
-const browserify = require("browserify");
-const envify = require("envify");
-const uglifyify = require("uglifyify");
-const source = require('vinyl-source-stream');
 
 const exec = ju.exec;
 const rimraf = ju.rimraf;
@@ -51,6 +47,21 @@ const backendutils = () => compileTsProject("backendutils")
 const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
+
+// We output a dummy package.json in the built react-common directory to prevent
+// npm from complaining when we npm install in the skillmap and authcode
+const reactCommonPackageJson = () => {
+    fs.writeFileSync(path.resolve("built/react-common/components/package.json"), `
+    {
+        "name": "react-common",
+        "description": "",
+        "version": "0.0.0",
+        "dependencies": {},
+        "devDependencies": {}
+    }
+    `)
+    return Promise.resolve();
+}
 
 const pxtblockly = () => gulp.src([
     "webapp/public/blockly/blockly_compressed.js",
@@ -250,10 +261,6 @@ function updateAuthcodeStrings() {
     return buildStrings("built/authcode-strings.json", ["authcode/src"], true);
 }
 
-function updateMultiplayerStrings() {
-    return buildStrings("built/multiplayer-strings.json", ["multiplayer/src"], true);
-}
-
 // TODO: Copied from Jakefile; should be async
 function buildStrings(out, rootPaths, recursive) {
     let errCnt = 0;
@@ -401,60 +408,13 @@ const copyWebapp = () =>
 const copySemanticFonts = () => gulp.src("node_modules/semantic-ui-less/themes/default/assets/fonts/*")
     .pipe(gulp.dest("built/web/fonts"))
 
-function browserifyWebapp() {
-    if (process.env.PXT_ENV == 'production') {
-        return browserify("./built/webapp/src/app.js", {
-            paths: [
-                "./node_modules",
-                "./webapp/node_modules",
-            ]
-        })
-        .transform(envify, { global: true, _: "purge", NODE_ENV: "production" })
-        .transform(uglifyify, { global: true })
-        .bundle()
-        .pipe(source("main.js"))
-        .pipe(gulp.dest("./built/web"));
-    } else {
-        return browserify("./built/webapp/src/app.js", {
-            debug: true,
-            paths: [
-                "./node_modules",
-                "./webapp/node_modules",
-            ]
-        })
-        .bundle()
-        .pipe(source("main.js"))
-        .pipe(gulp.dest("./built/web"));
-    }
-}
+const browserifyWebapp = () => process.env.PXT_ENV == 'production' ?
+    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js') :
+    exec('node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js --debug')
 
-function browserifyAssetEditor() {
-    if (process.env.PXT_ENV == 'production') {
-        return browserify("./built/webapp/src/assetEditor.js", {
-            debug: true,
-            paths: [
-                "./node_modules",
-                "./webapp/node_modules",
-            ]
-        })
-        .transform(envify, { global: true, _: "purge", NODE_ENV: "production" })
-        .transform(uglifyify, { global: true })
-        .bundle()
-        .pipe(source("pxtasseteditor.js"))
-        .pipe(gulp.dest("./built/web"));
-    } else {
-        return browserify("./built/webapp/src/assetEditor.js", {
-            debug: true,
-            paths: [
-                "./node_modules",
-                "./webapp/node_modules",
-            ]
-        })
-        .bundle()
-        .pipe(source("pxtasseteditor.js"))
-        .pipe(gulp.dest("./built/web"));
-    }
-}
+const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
+    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/assetEditor.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/pxtasseteditor.js') :
+    exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
 
 const buildSVGIcons = () => {
     let webfontsGenerator = require('@vusion/webfonts-generator')
@@ -611,16 +571,46 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyExtensions, 
 
 const skillmapRoot = "skillmap";
 const skillmapOut = "built/web/skillmap";
+const reactScriptsConfigRoot = `${skillmapRoot}/node_modules/react-scripts/config`;
 
 const cleanSkillmap = () => rimraf(skillmapOut);
+
+const copyWebpackBase = () => gulp.src([`${reactScriptsConfigRoot}/webpack.config.js`])
+    .pipe(concat("webpack.config.base.js"))
+    .pipe(gulp.dest(`${reactScriptsConfigRoot}`))
+
+const copyWebpackOverride = () => gulp.src([`${skillmapRoot}/webpack.config.override.js`])
+    .pipe(concat("webpack.config.js"))
+    .pipe(gulp.dest(`${reactScriptsConfigRoot}`));
+
+const replaceWebpackBase = () => gulp.src([`${reactScriptsConfigRoot}/webpack.config.base.js`])
+    .pipe(concat("webpack.config.js"))
+    .pipe(gulp.dest(`${reactScriptsConfigRoot}`));
+
+const npmInstallSkillmap = async () => {
+    if (fs.existsSync(`${skillmapRoot}/node_modules`)) {
+        await exec("echo \"Skip install\"", true, { cwd: skillmapRoot });
+        return;
+    }
+    if (process.env.PXT_ENV == "production") {
+        await exec("npm ci --prefer-offline", false, { cwd: skillmapRoot })
+    }
+    else {
+        await exec("npm install", true, { cwd: skillmapRoot });
+    }
+}
 
 const npmBuildSkillmap = () => exec("npm run build", true, { cwd: skillmapRoot });
 
 const buildSkillmap = async () => {
     try {
+        await npmInstallSkillmap();
+        if (!fs.existsSync(`${reactScriptsConfigRoot}/webpack.config.base.js`)) await copyWebpackBase();
+        await copyWebpackOverride();
         await npmBuildSkillmap();
     }
     finally {
+        await replaceWebpackBase();
     }
 }
 
@@ -652,10 +642,12 @@ const authcodeOut = "built/web/authcode";
 
 const cleanAuthcode = () => rimraf(authcodeOut);
 
+const npmInstallAuthcode = () => exec(!fs.existsSync(`${authcodeRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: authcodeRoot });
 const npmBuildAuthcode = () => exec("npm run build", true, { cwd: authcodeRoot });
 
 const buildAuthcode = async () => {
     try {
+        await npmInstallAuthcode();
         await npmBuildAuthcode();
     }
     finally {
@@ -677,46 +669,13 @@ const copyAuthcodeHtml = () => rimraf("webapp/public/authcode.html")
 const authcode = gulp.series(cleanAuthcode, buildAuthcode, gulp.series(copyAuthcodeCss, copyAuthcodeJs, copyAuthcodeHtml));
 
 /********************************************************
-                      Multiplayer
-*********************************************************/
-
-const multiplayerRoot = "multiplayer";
-const multiplayerOut = "built/web/multiplayer";
-
-const cleanMultiplayer = () => rimraf(multiplayerOut);
-
-const npmBuildMultiplayer = () => exec("npm run build", true, { cwd: multiplayerRoot });
-
-const buildMultiplayer = async () => {
-    try {
-        await npmBuildMultiplayer();
-    }
-    finally {
-    }
-}
-
-const copyMultiplayerCss = () => gulp.src(`${multiplayerRoot}/build/static/css/*`)
-    .pipe(gulp.dest(`${multiplayerOut}/css`));
-
-const copyMultiplayerJs = () => gulp.src(`${multiplayerRoot}/build/static/js/*`)
-    .pipe(gulp.dest(`${multiplayerOut}/js`));
-
-const copyMultiplayerHtml = () => rimraf("webapp/public/multiplayer.html")
-    .then(() => gulp.src(`${multiplayerRoot}/build/index.html`)
-                    .pipe(replace(/="\/static\//g, `="/blb/multiplayer/`))
-                    .pipe(concat("multiplayer.html"))
-                    .pipe(gulp.dest("webapp/public")));
-
-const multiplayer = gulp.series(cleanMultiplayer, buildMultiplayer, gulp.series(copyMultiplayerCss, copyMultiplayerJs, copyMultiplayerHtml));
-
-/********************************************************
                  Tests and Linting
 *********************************************************/
 
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
-        "docfiles/pxtweb", "skillmap", "authcode", "multiplayer", "docs/static/streamer"].map(dirname =>
+        "docfiles/pxtweb", "skillmap", "authcode", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
@@ -795,12 +754,9 @@ function testTask(testFolder, testFile) {
 }
 
 const buildAll = gulp.series(
-    gulp.parallel(
-        updatestrings,
-        updateSkillMapStrings,
-        updateAuthcodeStrings,
-        updateMultiplayerStrings,
-    ),
+    updatestrings,
+    updateSkillMapStrings,
+    updateAuthcodeStrings,
     copyTypescriptServices,
     copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
@@ -811,8 +767,10 @@ const buildAll = gulp.series(
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
     reactCommon,
+    reactCommonPackageJson,
     gulp.parallel(buildcss, buildSVGIcons),
-    gulp.parallel(skillmap, authcode, multiplayer),
+    skillmap,
+    authcode,
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
@@ -856,10 +814,8 @@ exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
 exports.skillmap = skillmap;
 exports.authcode = authcode;
-exports.multiplayer = multiplayer;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
-exports.reactCommon = reactCommon;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),

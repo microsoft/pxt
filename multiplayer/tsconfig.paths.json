@@ -1,7 +1,0 @@
-{
-    "compilerOptions": {
-        "paths": {
-            "react-common/*": ["../react-common/*"]
-        }
-    }
-}

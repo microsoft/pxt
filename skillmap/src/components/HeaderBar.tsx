@@ -12,9 +12,9 @@ import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 import { isActivityCompleted } from "../lib/skillMapUtils";
 import * as authClient from '../lib/authClient';
 import { Dropdown } from "./Dropdown";
-import { Button } from "../../../react-common/components/controls/Button";
-import { MenuBar } from "../../../react-common/components/controls/MenuBar";
-import { MenuDropdown, MenuItem } from "../../../react-common/components/controls/MenuDropdown";
+import { Button } from "react-common/controls/Button";
+import { MenuBar } from "react-common/controls/MenuBar";
+import { MenuDropdown, MenuItem } from "react-common/controls/MenuDropdown";
 
 
 interface HeaderBarProps {
