@@ -102,7 +102,7 @@
     "browserify": "17.0.0",
     "chai": "3.5.0",
     "crypto-js": "3.1.9-1",
-    "cssnano": "4.1.10",
+    "cssnano": "5.1.13",
     "dompurify": "2.0.17",
     "envify": "4.1.0",
     "eslint": "7.23.0",
