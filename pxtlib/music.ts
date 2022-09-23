@@ -30,6 +30,7 @@ namespace pxt.assets.music {
 
     export interface Track {
         instrument: Instrument;
+        drums?: DrumInstrument[];
         notes: NoteEvent[];
     }
 
@@ -37,6 +38,19 @@ namespace pxt.assets.music {
         notes: number[];
         startTick: number;
         endTick: number;
+    }
+
+    export interface DrumSoundStep {
+        waveform: number;
+        frequency: number;
+        volume: number;
+        duration: number;
+    }
+
+    export interface DrumInstrument {
+        startFrequency: number;
+        startVolume: number;
+        steps: DrumSoundStep[];
     }
 
     const BUFFER_SIZE = 12;
@@ -176,6 +190,43 @@ namespace pxt.assets.music {
             prevPitch,
             prevPitch
         )
+        return out;
+    }
+
+    export function renderDrumInstrument(sound: DrumInstrument, volume: number) {
+        let prevAmp = sound.startVolume;
+        let prevFreq = sound.startFrequency;
+
+        const scaleVolume = (value: number) => (value / 1024) * volume;
+
+        let out = new Uint8Array((sound.steps.length + 1) * BUFFER_SIZE);
+
+        for (let i = 0; i < sound.steps.length; i++) {
+            addNote(
+                out,
+                i * BUFFER_SIZE,
+                sound.steps[i].duration,
+                scaleVolume(prevAmp),
+                scaleVolume(sound.steps[i].volume),
+                sound.steps[i].waveform,
+                prevFreq,
+                sound.steps[i].frequency
+            );
+            prevAmp = sound.steps[i].volume;
+            prevFreq = sound.steps[i].frequency
+        }
+
+        addNote(
+            out,
+            sound.steps.length * BUFFER_SIZE,
+            10,
+            scaleVolume(prevAmp),
+            0,
+            sound.steps[sound.steps.length - 1].waveform,
+            prevFreq,
+            prevFreq
+        );
+
         return out;
     }
 

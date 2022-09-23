@@ -9,10 +9,11 @@ export interface NoteGroupProps {
     octave: number;
     noteEvent: pxt.assets.music.NoteEvent;
     iconURI: string;
+    isDrumTrack: boolean;
 }
 
 export const NoteGroup = (props: NoteGroupProps) => {
-    const { song, noteEvent, octave, iconURI } = props;
+    const { song, noteEvent, octave, iconURI, isDrumTrack } = props;
 
     let noteGroupRef: SVGGElement;
 
@@ -62,11 +63,11 @@ export const NoteGroup = (props: NoteGroupProps) => {
     }
 
     const xOffset = tickToX(song, noteEvent.startTick)
-    const noteLength = tickToX(song, noteEvent.endTick) - xOffset;
+    const noteLength = isDrumTrack ? 0 : tickToX(song, noteEvent.endTick) - xOffset;
 
     return <g className="music-staff-note-group" transform={`translate(${xOffset}, 0)`} ref={handleNoteGroupRef}>
         {noteEvent.notes.map((note, index) =>
-            <Note key={index} row={noteToRow(octave, note)} iconURI={iconURI} length={noteLength} />
+            <Note key={index} row={isDrumTrack ? note : noteToRow(octave, note)} iconURI={iconURI} length={noteLength} />
         )}
     </g>
 }

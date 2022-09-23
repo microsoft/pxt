@@ -29,7 +29,8 @@ export const Track = (props: TrackProps) => {
                 noteEvent={noteEvent}
                 octave={track.instrument.octave}
                 song={song}
-                iconURI={track.iconURI} />
+                iconURI={track.iconURI}
+                isDrumTrack={!!track.drums} />
         )}
         { cursorElement }
     </g>

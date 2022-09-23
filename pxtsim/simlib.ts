@@ -589,7 +589,7 @@ namespace pxsim {
                 channel.gain.gain.setValueAtTime(volume, context().currentTime);
                 channel.gain.connect(destination);
 
-                if (channels.length > 5)
+                if (channels.length > 20)
                     channels[0].remove()
                 channels.push(channel);
 
@@ -665,7 +665,7 @@ namespace pxsim {
                 let ctx = context();
                 let channel = new Channel()
 
-                if (channels.length > 5)
+                if (channels.length > 20)
                     channels[0].remove()
                 channels.push(channel);
 

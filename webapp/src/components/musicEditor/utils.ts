@@ -120,6 +120,13 @@ function setNoteEventLength(notes: pxt.assets.music.NoteEvent[], startTick: numb
     return res.filter(e => !!e);
 }
 
+export function fillDrums(song: pxt.assets.music.Song, trackIndex: number, row: number, startTick: number, endTick: number, tickSpacing: number) {
+    for (let i = startTick; i < endTick; i += tickSpacing) {
+        song = addNoteToTrack(song, trackIndex, row, i, i + 1)
+    }
+    return song;
+}
+
 export function findNoteEventAtTick(song: pxt.assets.music.Song, trackIndex: number, tick: number) {
     const track = song.tracks[trackIndex];
 
@@ -367,12 +374,280 @@ export function getEmptySong(measures: number): pxt.assets.music.Song {
                         sustain: 500,
                         release: 100,
                         amplitude: 1024
-                    },
-                    pitchLFO: {
-                        frequency: 5,
-                        amplitude: 2
                     }
-                }
+                },
+                drums: [
+                    { /* kick drum */
+                        startFrequency: 100,
+                        startVolume: 1024,
+                        steps: [
+                            {
+                                waveform: 3,
+                                frequency: 120,
+                                duration: 10,
+                                volume: 1024
+                            },
+                            {
+                                waveform: 3,
+                                frequency: 1,
+                                duration: 100,
+                                volume: 0
+                            }
+                        ]
+                    },
+                    { /* closed hat */
+                        startFrequency: 1,
+                        startVolume: 1024,
+                        steps: [
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 0
+                            }
+                        ]
+                    },
+                    { /* open hat */
+                        startFrequency: 1,
+                        startVolume: 1024,
+                        steps: [
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 480
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 260
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 200
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 200,
+                                volume: 0
+                            },
+                        ]
+                    },
+                    { /* terrible snare */
+                        startFrequency: 175,
+                        startVolume: 1024,
+                        steps: [
+                            {
+                                waveform: 1,
+                                frequency: 200,
+                                duration: 10,
+                                volume: 1024
+                            },
+                            {
+                                waveform: 1,
+                                frequency: 150,
+                                duration: 20,
+                                volume: 1024
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 100
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 300,
+                                volume: 0
+                            },
+                        ]
+                    },
+                    { /* kick drum */
+                    startFrequency: 100,
+                    startVolume: 1024,
+                    steps: [
+                        {
+                            waveform: 3,
+                            frequency: 120,
+                            duration: 10,
+                            volume: 1024
+                        },
+                        {
+                            waveform: 1,
+                            frequency: 120,
+                            duration: 100,
+                            volume: 0
+                        }
+                    ]
+                },
+                { /* closed hat */
+                    startFrequency: 1,
+                    startVolume: 1024,
+                    steps: [
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 0
+                        }
+                    ]
+                },
+                { /* open hat */
+                    startFrequency: 1,
+                    startVolume: 1024,
+                    steps: [
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 480
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 260
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 200
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 200,
+                            volume: 0
+                        },
+                    ]
+                },
+                { /* terrible snare */
+                    startFrequency: 175,
+                    startVolume: 1024,
+                    steps: [
+                        {
+                            waveform: 1,
+                            frequency: 200,
+                            duration: 10,
+                            volume: 1024
+                        },
+                        {
+                            waveform: 1,
+                            frequency: 150,
+                            duration: 20,
+                            volume: 1024
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 100
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 300,
+                            volume: 0
+                        },
+                    ]
+                },
+                { /* kick drum */
+                startFrequency: 100,
+                startVolume: 1024,
+                steps: [
+                    {
+                        waveform: 3,
+                        frequency: 120,
+                        duration: 10,
+                        volume: 1024
+                    },
+                    {
+                        waveform: 1,
+                        frequency: 120,
+                        duration: 100,
+                        volume: 0
+                    }
+                ]
+            },
+            { /* closed hat */
+                startFrequency: 1,
+                startVolume: 1024,
+                steps: [
+                    {
+                        waveform: 5,
+                        frequency: 1,
+                        duration: 20,
+                        volume: 0
+                    }
+                ]
+            },
+            { /* open hat */
+                startFrequency: 1,
+                startVolume: 1024,
+                steps: [
+                    {
+                        waveform: 5,
+                        frequency: 1,
+                        duration: 20,
+                        volume: 480
+                    },
+                    {
+                        waveform: 5,
+                        frequency: 1,
+                        duration: 20,
+                        volume: 260
+                    },
+                    {
+                        waveform: 5,
+                        frequency: 1,
+                        duration: 20,
+                        volume: 200
+                    },
+                    {
+                        waveform: 5,
+                        frequency: 1,
+                        duration: 200,
+                        volume: 0
+                    },
+                ]
+            },
+            { /* terrible snare */
+                startFrequency: 175,
+                startVolume: 1024,
+                steps: [
+                    {
+                        waveform: 1,
+                        frequency: 200,
+                        duration: 10,
+                        volume: 1024
+                    },
+                    {
+                        waveform: 1,
+                        frequency: 150,
+                        duration: 20,
+                        volume: 1024
+                    },
+                    {
+                        waveform: 5,
+                        frequency: 1,
+                        duration: 20,
+                        volume: 100
+                    },
+                    {
+                        waveform: 5,
+                        frequency: 1,
+                        duration: 300,
+                        volume: 0
+                    },
+                ]
+            }
+                ]
             }
         ]
     }

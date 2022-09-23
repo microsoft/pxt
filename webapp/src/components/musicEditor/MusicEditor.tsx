@@ -1,14 +1,13 @@
 import * as React from "react";
 import { EditControls } from "./EditControls";
-import { isPlaying, playNoteAsync, tickToMs, updatePlaybackSongAsync } from "./playback";
+import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAsync } from "./playback";
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, editNoteEventLength, findClosestPreviousNote, removeNoteFromTrack, rowToNote } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findClosestPreviousNote, removeNoteFromTrack, rowToNote } from "./utils";
 
 export interface MusicEditorProps {
     song: pxt.assets.music.Song;
-
 }
 
 export const MusicEditor = (props: MusicEditorProps) => {
@@ -20,6 +19,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
     const gridTicks = gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat);
 
+    const isDrumTrack = !!currentSong.tracks[selectedTrack].drums;
+
     const updateSong = (newSong: pxt.assets.music.Song) => {
         if (isPlaying()) {
             updatePlaybackSongAsync(newSong);
@@ -28,9 +29,9 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const onRowClick = (row: number, startTick: number) => {
-        const instrument = currentSong.tracks[selectedTrack].instrument
-        const note = rowToNote(instrument.octave, row);
-
+        const track = currentSong.tracks[selectedTrack];
+        const instrument = track.instrument
+        const note = isDrumTrack ? row : rowToNote(instrument.octave, row);
 
         const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, startTick);
 
@@ -38,8 +39,15 @@ export const MusicEditor = (props: MusicEditorProps) => {
             updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, startTick));
         }
         else {
-            updateSong(addNoteToTrack(currentSong, selectedTrack, note, startTick, startTick + gridTicks))
-            playNoteAsync(note, instrument, tickToMs(currentSong, gridTicks))
+            const noteLength = isDrumTrack ? 1 : gridTicks;
+            updateSong(addNoteToTrack(currentSong, selectedTrack, note, startTick, startTick + noteLength))
+
+            if (isDrumTrack) {
+                playDrumAsync(track.drums[row]);
+            }
+            else {
+                playNoteAsync(note, instrument, tickToMs(currentSong, gridTicks))
+            }
         }
     }
 
@@ -52,11 +60,16 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const onNoteDrag = (start: WorkspaceCoordinate, end: WorkspaceCoordinate) => {
-        const event = findClosestPreviousNote(editSong.current, selectedTrack, start.tick);
+        if (!!editSong.current.tracks[selectedTrack].drums) {
+            updateSong(fillDrums(editSong.current, selectedTrack, start.row, start.tick, end.tick, gridTicks));
+        }
+        else {
+            const event = findClosestPreviousNote(editSong.current, selectedTrack, start.tick);
 
-        if (!event || end.tick < event.startTick + 1) return;
+            if (!event || end.tick < event.startTick + 1) return;
 
-        updateSong(editNoteEventLength(editSong.current, selectedTrack, event.startTick, end.tick));
+            updateSong(editNoteEventLength(editSong.current, selectedTrack, event.startTick, end.tick));
+        }
     }
 
     const onTempoChange = (newTempo: number) => {

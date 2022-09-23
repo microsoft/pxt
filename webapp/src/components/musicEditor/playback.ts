@@ -32,6 +32,13 @@ export async function playNoteAsync(note: number, instrument: pxt.assets.music.I
     )
 }
 
+export async function playDrumAsync(drum: pxt.assets.music.DrumInstrument, isCancelled?: () => boolean) {
+    await pxsim.AudioContextManager.playInstructionsAsync(
+        pxt.assets.music.renderDrumInstrument(drum, 100),
+        isCancelled
+    )
+}
+
 async function loadMetronomeAsync() {
     if (metronomeLoadPromise) return metronomeLoadPromise;
     if (metronomeWorker) return metronomeWorker;
@@ -102,7 +109,12 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
             for (const noteEvent of track.notes) {
                 if (noteEvent.startTick === currentTick) {
                     for (const note of noteEvent.notes) {
-                        playNoteAsync(note, track.instrument, tickToMs(playbackState.song, noteEvent.endTick - noteEvent.startTick), isCancelled);
+                        if (track.drums) {
+                            playDrumAsync(track.drums[note], isCancelled);
+                        }
+                        else {
+                            playNoteAsync(note, track.instrument, tickToMs(playbackState.song, noteEvent.endTick - noteEvent.startTick), isCancelled);
+                        }
                     }
                 }
                 else if (noteEvent.startTick > currentTick) {
@@ -117,7 +129,7 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
 
         currentTick ++;
 
-        if (currentTick >= song.ticksPerBeat * song.beatsPerMeasure * song.measures) {
+        if (currentTick >= playbackState.song.ticksPerBeat * playbackState.song.beatsPerMeasure * playbackState.song.measures) {
             if (!playbackState.looping) {
                 onStop();
             }
