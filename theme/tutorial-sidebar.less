@@ -95,6 +95,11 @@
     }
 }
 
+.tutorial-controls {
+    border-top: 2px solid @tutorialGrayOffset;
+    margin-top: 1rem;
+}
+
 /*******************************
         Exit Tutorial
 *******************************/
@@ -554,6 +559,7 @@
     .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
+        margin-bottom: 1.5rem;
     }
 
     /* Short Deskstop Only */
@@ -687,6 +693,7 @@
         display: flex;
         align-items: center;
         margin: 0;
+        margin-top: 0.5rem;
 
         > .ui.button {
             width: unset;
@@ -797,6 +804,11 @@
 
             .ui.button:not(:hover) {
                 background-color: @tutorialTabletSimulatorButtonColor;
+            }
+
+            > .ui.button:last-child {
+                margin-top: 0.75rem;
+                margin-bottom: 0.75rem;
             }
         }
     }
