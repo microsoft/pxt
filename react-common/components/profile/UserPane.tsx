@@ -1,4 +1,5 @@
 /// <reference path="../types.d.ts" />
+/// <reference path="../../../localtypings/react.d.ts" />
 
 import * as React from "react";
 import { fireClickOnEnter, CheckboxStatus } from "../util";

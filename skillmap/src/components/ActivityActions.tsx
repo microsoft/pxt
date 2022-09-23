@@ -8,7 +8,7 @@ import { tickEvent } from '../lib/browserUtils';
 import { editorUrl } from "./makecodeFrame";
 import { SkillMapState } from "../store/reducer";
 
-import { Button } from "../../../react-common/components/controls/Button";
+import { Button } from "react-common/controls/Button";
 
 interface OwnProps {
     mapId: string;

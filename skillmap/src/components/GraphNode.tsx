@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Button } from "../../../react-common/components/controls/Button";
+import { Button } from "react-common/controls/Button";
 
 import { SvgCoord } from '../lib/skillGraphUtils';
 import { ActivityStatus } from '../lib/skillMapUtils';

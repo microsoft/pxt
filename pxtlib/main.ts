@@ -387,7 +387,6 @@ namespace pxt {
         asseteditorUrl?: string; // "/beta---asseteditor"
         skillmapUrl?: string; // "/beta---skillmap"
         authcodeUrl?: string; // "/beta---authcode"
-        multiplayerUrl?: string; // "/beta---multiplayer"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }
