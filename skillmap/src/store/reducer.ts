@@ -1,4 +1,4 @@
-import { ShareData } from 'react-common/share/Share';
+import { ShareData } from '../../../react-common/components/share/Share';
 import * as actions from '../actions/types'
 import { guidGen, cloudLocalStoreKey } from '../lib/browserUtils';
 import { ReadyResources } from '../lib/readyResources';

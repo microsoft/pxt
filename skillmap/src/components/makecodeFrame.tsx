@@ -9,7 +9,7 @@ import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAnd
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
-import { ShareData } from "react-common/share/Share";
+import { ShareData } from "../../../react-common/components/share/Share";
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface MakeCodeFrameProps {
