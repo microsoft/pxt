@@ -8,14 +8,14 @@ import { CloudStatus } from "./CloudStatus";
 import { dispatchShowLoginModal } from '../actions/dispatch';
 
 
-import { FocusTrap } from "react-common/controls/FocusTrap";
+import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
 
 
 import { ActivityStatus, isActivityCompleted, getActivityStatus, isRewardNode } from '../lib/skillMapUtils';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/infopanel.css'
-import { Button } from "react-common/controls/Button";
+import { Button } from "../../../react-common/components/controls/Button";
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface InfoPanelProps {

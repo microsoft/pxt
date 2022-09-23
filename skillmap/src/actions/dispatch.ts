@@ -1,4 +1,4 @@
-import { ShareData } from 'react-common/share/Share';
+import { ShareData } from '../../../react-common/components/share/Share';
 import { ReadyResources } from '../lib/readyResources';
 import { ModalState, PageSourceStatus } from '../store/reducer';
 import * as actions from './types'

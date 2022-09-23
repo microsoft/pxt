@@ -1,3 +1,5 @@
+/// <reference path="../types.d.ts" />
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { classList, ContainerProps } from "../util";

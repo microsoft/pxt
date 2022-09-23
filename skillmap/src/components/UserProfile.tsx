@@ -4,9 +4,9 @@ import { SkillMapState } from "../store/reducer";
 import * as authClient from "../lib/authClient";
 import { infoNotification, errorNotification } from "../lib/notifications"
 
-import { Modal } from 'react-common/controls/Modal';
-import { CheckboxStatus} from "react-common/util";
-import { Profile} from "react-common/profile/Profile";
+import { Modal } from '../../../react-common/components/controls/Modal';
+import { CheckboxStatus} from "../../../react-common/components/util";
+import { Profile} from "../../../react-common/components/profile/Profile";
 
 import { dispatchCloseUserProfile, dispatchShowDeleteAccountModal } from "../actions/dispatch"
 
