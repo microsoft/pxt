@@ -64,7 +64,7 @@
   "dependencies": {
     "dashjs": "4.4.0",
     "faye-websocket": "0.11.1",
-    "marked": "0.3.19"
+    "marked": "4.0.10"
   },
   "lazyDependencies": {
     "node-hid": "0.7.2",
