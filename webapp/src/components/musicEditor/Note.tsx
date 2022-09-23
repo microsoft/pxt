@@ -4,12 +4,13 @@ import { rowY, NOTE_DURATION_HEIGHT, NOTE_ICON_WIDTH } from "./svgConstants";
 export interface NoteProps {
     row: number;
     iconURI: string
-    length?: number;
     opacity?: number;
+    length?: number;
+    isSharp?: boolean;
 }
 
 export const Note = (props: NoteProps) => {
-    const { row, iconURI, length, opacity } = props;
+    const { row, iconURI, length, opacity, isSharp } = props;
 
     return <g className="music-staff-note" transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${rowY(row) - (NOTE_ICON_WIDTH / 2)})`}>
         { row === 0 &&
@@ -36,5 +37,8 @@ export const Note = (props: NoteProps) => {
                 repeatCount="1"
                 begin="indefinite" />
         </image>
+        { isSharp &&
+            <text x={NOTE_ICON_WIDTH} y={0} fontSize={NOTE_ICON_WIDTH / 2}>♯</text>
+        }
     </g>
 }

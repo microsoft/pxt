@@ -7,7 +7,7 @@ import { findNoteEventAtTick } from "./utils";
 
 export interface WorkspaceProps {
     song: pxt.assets.music.Song;
-    onWorkspaceClick: (row: number, tick: number) => void;
+    onWorkspaceClick: (row: number, tick: number, ctrlIsPressed: boolean) => void;
     onWorkspaceDragStart: () => void;
     onWorkspaceDragEnd: () => void;
     onWorkspaceDrag: (startCoordinate: WorkspaceCoordinate, endCoordinate: WorkspaceCoordinate) => void;
@@ -70,7 +70,7 @@ export const Workspace = (props: WorkspaceProps) => {
             else {
                 const { row, tick } = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
                 if (tick >= 0 && row >= 0 && row < 12) {
-                    onWorkspaceClick(row, tick);
+                    onWorkspaceClick(row, tick, ev.ctrlKey);
                 }
             }
         };

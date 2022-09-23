@@ -28,10 +28,10 @@ export const MusicEditor = (props: MusicEditorProps) => {
         setCurrentSong(newSong);
     }
 
-    const onRowClick = (row: number, startTick: number) => {
+    const onRowClick = (row: number, startTick: number, ctrlIsPressed: boolean) => {
         const track = currentSong.tracks[selectedTrack];
         const instrument = track.instrument
-        const note = isDrumTrack ? row : rowToNote(instrument.octave, row);
+        const note = isDrumTrack ? row : rowToNote(instrument.octave, row, ctrlIsPressed);
 
         const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, startTick);
 
@@ -83,11 +83,23 @@ export const MusicEditor = (props: MusicEditorProps) => {
         updateSong(changeSongLength(currentSong, newMeasures));
     }
 
+    const onTrackChanged = (newTrack: number) => {
+        const t = currentSong.tracks[newTrack];
+
+        if (t.drums) {
+            playDrumAsync(t.drums[0]);
+        }
+        else {
+            playNoteAsync(rowToNote(t.instrument.octave, 6), t.instrument, tickToMs(currentSong, currentSong.ticksPerBeat / 2));
+        }
+        setSelectedTrack(newTrack);
+    }
+
     return <div>
         <TrackSelector
             song={currentSong}
             selected={selectedTrack}
-            onTrackSelected={setSelectedTrack}
+            onTrackSelected={onTrackChanged}
             selectedResolution={gridResolution}
             onResolutionSelected={setGridResolution} />
         <ScrollableWorkspace

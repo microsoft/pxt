@@ -1,8 +1,8 @@
 
 const staffNoteIntervals = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19];
 
-export function rowToNote(octave: number, row: number) {
-    return staffNoteIntervals[row] + octave * 12 + 1;
+export function rowToNote(octave: number, row: number, isSharp?: boolean) {
+    return staffNoteIntervals[row] + octave * 12 + 1 + (isSharp ? 1 : 0)
 }
 
 export function noteToRow(octave: number, note: number) {

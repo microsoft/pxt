@@ -2,7 +2,7 @@ import * as React from "react";
 import { Note } from "./Note";
 import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener } from "./playback";
 import { tickToX } from "./svgConstants";
-import { noteToRow } from "./utils";
+import { isSharpNote, noteToRow } from "./utils";
 
 export interface NoteGroupProps {
     song: pxt.assets.music.Song;
@@ -66,8 +66,16 @@ export const NoteGroup = (props: NoteGroupProps) => {
     const noteLength = isDrumTrack ? 0 : tickToX(song, noteEvent.endTick) - xOffset;
 
     return <g className="music-staff-note-group" transform={`translate(${xOffset}, 0)`} ref={handleNoteGroupRef}>
-        {noteEvent.notes.map((note, index) =>
-            <Note key={index} row={isDrumTrack ? note : noteToRow(octave, note)} iconURI={iconURI} length={noteLength} />
+        {noteEvent.notes.map((note, index) => {
+            const row = isDrumTrack ? note : noteToRow(octave, note);
+            const isSharp = isDrumTrack ? false : isSharpNote(note);
+            return <Note
+                key={index}
+                row={row}
+                isSharp={isSharp}
+                iconURI={iconURI}
+                length={noteLength} />
+        }
         )}
     </g>
 }
