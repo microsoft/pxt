@@ -55,6 +55,8 @@ function App() {
                         onClick={updateMotd}
                     />
                 </div>
+                <div className="content-row">
+                </div>
             </div>
             {showSignInModal && (
                 <SignInModal
