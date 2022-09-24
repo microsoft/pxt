@@ -587,24 +587,10 @@ const replaceWebpackBase = () => gulp.src([`${reactScriptsConfigRoot}/webpack.co
     .pipe(concat("webpack.config.js"))
     .pipe(gulp.dest(`${reactScriptsConfigRoot}`));
 
-const npmInstallSkillmap = async () => {
-    if (fs.existsSync(`${skillmapRoot}/node_modules`)) {
-        await exec("echo \"Skip install\"", true, { cwd: skillmapRoot });
-        return;
-    }
-    if (process.env.PXT_ENV == "production") {
-        await exec("npm ci --prefer-offline", false, { cwd: skillmapRoot })
-    }
-    else {
-        await exec("npm install", true, { cwd: skillmapRoot });
-    }
-}
-
 const npmBuildSkillmap = () => exec("npm run build", true, { cwd: skillmapRoot });
 
 const buildSkillmap = async () => {
     try {
-        await npmInstallSkillmap();
         if (!fs.existsSync(`${reactScriptsConfigRoot}/webpack.config.base.js`)) await copyWebpackBase();
         await copyWebpackOverride();
         await npmBuildSkillmap();
@@ -642,12 +628,10 @@ const authcodeOut = "built/web/authcode";
 
 const cleanAuthcode = () => rimraf(authcodeOut);
 
-const npmInstallAuthcode = () => exec(!fs.existsSync(`${authcodeRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: authcodeRoot });
 const npmBuildAuthcode = () => exec("npm run build", true, { cwd: authcodeRoot });
 
 const buildAuthcode = async () => {
     try {
-        await npmInstallAuthcode();
         await npmBuildAuthcode();
     }
     finally {

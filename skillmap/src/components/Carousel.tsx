@@ -1,5 +1,4 @@
 import * as React from "react";
-import { ComponentClass } from "react-redux";
 
 import { Item, CarouselItem } from './CarouselItem';
 
@@ -14,7 +13,7 @@ interface CarouselProps {
     items: Item[];
     selectedItem?: string;
     itemClassName?: string;
-    itemTemplate?: ((props: Item) => JSX.Element) | ComponentClass<any>;
+    itemTemplate?: ((props: Item) => JSX.Element) | React.JSXElementConstructor<any>;
     onItemSelect?: (id: string) => void;
     prependChildren?: JSX.Element[];
     appendChildren?: JSX.Element[];

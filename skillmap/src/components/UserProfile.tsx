@@ -124,7 +124,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         profile: state.auth.profile,
         showProfile: state.showProfile,
         preferences: state.auth.preferences
-    }
+    } as UserProfileProps
 }
 
 const mapDispatchToProps = {

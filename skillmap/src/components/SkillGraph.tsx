@@ -125,7 +125,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         theme: state.theme,
         selectedActivityId: state.selectedItem && ownProps.map?.mapId == state.selectedItem.mapId ? state.selectedItem.activityId : undefined,
         completionState: mapProgress?.[ownProps.map.mapId]?.completionState
-    }
+    } as SkillGraphProps
 }
 
 const mapDispatchToProps = {

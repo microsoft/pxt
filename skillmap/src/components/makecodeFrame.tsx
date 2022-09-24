@@ -371,7 +371,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         signedIn: state.auth.signedIn,
         highContrast: state.auth.preferences?.highContrast,
         pageSourceUrl: state.pageSourceUrl
-    }
+    } as MakeCodeFrameProps
 }
 
 function setElementVisible(selector: string, visible: boolean) {
