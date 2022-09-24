@@ -575,7 +575,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         hasPendingModals: state.modalQueue?.length && state.modalQueue?.length > 1,
         badge,
         signedIn: state.auth.signedIn,
-    }
+    } as AppModalProps
 }
 
 const mapDispatchToProps = {

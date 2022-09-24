@@ -1133,7 +1133,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
     if (editor.isTilemap) {
         let state = (present as TilemapState);
-        if (!state) return {};
+        if (!state) return {} as ImageCanvasProps;
         return {
             selectedColor: editor.selectedColor,
             tilemapState: state,
@@ -1148,11 +1148,11 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
             drawingMode: editor.drawingMode,
             gallery: editor.tileGallery,
             tilesetRevision: editor.tilesetRevision
-        };
+        } as ImageCanvasProps
     }
 
     let state = (present as AnimationState);
-    if (!state) return {};
+    if (!state) return {} as ImageCanvasProps;
 
     return {
         selectedColor: editor.selectedColor,
@@ -1166,7 +1166,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         prevFrame: state.frames[state.currentFrame - 1],
         isTilemap: editor.isTilemap,
         tilesetRevision: editor.tilesetRevision
-    };
+    } as ImageCanvasProps
 }
 
 const mapDispatchToProps = {

@@ -24,8 +24,6 @@
             "ES2018.Promise"
         ],
         "types": [
-            "react",
-            "react-dom",
             "resize-observer-browser"
         ],
         "incremental": false,
