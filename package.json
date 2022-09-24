@@ -158,6 +158,6 @@
     "test:lang": "gulp testlang",
     "update": "gulp update",
     "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch",
-    "postinstall": "cd skillmap && npm install && cd .. && cd authcode && npm install && cd .."
+    "prepare": "cd skillmap && npm install && cd .. && cd authcode && npm install && cd .."
   }
 }
