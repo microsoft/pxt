@@ -36,6 +36,17 @@ the namespace name separated with a ``:``.
 ``||loops:repeat 4 times||``
 ```
 
+If the user clicks on the resulting button, it will toggle the toolbox for the given namespace.
+
+If you have a need for a button to appear one color but open a different category,
+you can add the namespace it should open in parentheses after the normal one
+
+```
+``||variables(sprites):set mySprite to||``
+```
+
+This will appear in tutorials as the `variables` category, but clicking it will toggle the `sprites` category.
+
 ### highlight
 
 Although used in snippets, the renderer will higlight the next line of code or block following a comment containing
@@ -306,7 +317,7 @@ names using the ``package`` macro. Note, the name **package** is still used even
 though these are now called **extensions**.
 
 The package setting listed last in the example below uses a special format to reference
-its location in a separate GitHub repository. You can find this _package specification_ 
+its location in a separate GitHub repository. You can find this _package specification_
 in the ``Project Settings`` / ``pxt.json`` file, listed under ``dependencies``. Notice
 that it lists the exact version to use; this isn't required (that is, you can leave off
 the `#v0.6.12`), but it is highly recommended you include this so that future changes to
@@ -465,7 +476,7 @@ The project is specified by its share URL.
 ### sig
 
 The **sig** snippet displays a signature of the first function call in the snippet,
-rendering it in blocks, JavaScript, and Python. 
+rendering it in blocks, JavaScript, and Python.
 
     ```sig
     basic.showNumber(5)
