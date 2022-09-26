@@ -16,12 +16,13 @@ export interface ShareInfoProps {
     description?: string;
     screenshotUri?: string;
     isLoggedIn?: boolean;
+    hasProjectBeenPersistentShared?: boolean;
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync } = props;
+    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
@@ -175,9 +176,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             initialValue={name}
                             placeholder={lf("Name your project")}
                             onChange={setName} />
-                        {isLoggedIn && <Checkbox
+                        {isLoggedIn && hasProjectBeenPersistentShared && <Checkbox
                             id="persistent-share-checkbox"
-                            label={lf("Allow people to see future changes to my project")}
+                            label={lf("Update existing share link for this project")}
                             isChecked={!isAnonymous}
                             onChange={val => setIsAnonymous(!val)}
                             />}
