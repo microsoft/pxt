@@ -191,7 +191,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
                                 : lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}
                         </div>}
-                        <div>
+                        <div className="project-share-publish-actions">
                             {shareState === "share" &&
                                 <Button className="primary share-publish-button"
                                     title={lf("Continue")}
