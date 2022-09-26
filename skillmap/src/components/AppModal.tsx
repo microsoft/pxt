@@ -349,7 +349,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         return <Modal
             title={lf("Share Project")}
-            className="sharedialog wide"
+            className="sharedialog"
             parentElement={document.getElementById("root") || undefined}
             onClose={this.handleOnClose}>
             <Share projectName={activity!.displayName}
