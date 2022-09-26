@@ -196,6 +196,8 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
             && (simScreenshot || simGif);
 
+        const hasProjectBeenPersistentShared = parent.hasHeaderBeenPersistentShared();
+
         const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) =>
             parent.publishAsync(name, screenshotUri, forceAnonymous)
 
@@ -209,6 +211,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     screenshotUri={screenshotUri}
                     isLoggedIn={hasIdentity}
                     publishAsync={publishAsync}
+                    hasProjectBeenPersistentShared={hasProjectBeenPersistentShared}
                     simRecorder={SimRecorderImpl} />
             </Modal>
             : <></>
