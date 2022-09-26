@@ -403,7 +403,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         inlineBlock.style.borderColor = pxt.toolbox.fadeColor(color, 0.1, false);
                     }
                     inlineBlock.addEventListener("click", e => {
-                        const toolboxRow = document.querySelector<HTMLDivElement>(`.blocklyTreeRow[data-ns="${ns}"]`);
+                        // need to filter out editors that are currently hidden as we leave toolboxes in dom
+                        const editorSelector = `#maineditor > div:not([style*="display:none"]):not([style*="display: none"])`;
+                        const toolboxSelector = `${editorSelector} .blocklyTreeRow[data-ns="${ns}"]`;
+                        const toolboxRow = document.querySelector<HTMLDivElement>(toolboxSelector);
                         toolboxRow?.click();
                     });
                     inlineBlock.addEventListener("keydown", e => fireClickOnEnter(e as any))
