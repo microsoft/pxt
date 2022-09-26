@@ -174,9 +174,17 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             uri = await this.props.parent.requestScreenshotAsync();
         }
 
-        this.setState({
-            screenshotUri: uri
-        });
+        if (!uri) {
+            setTimeout(() => {
+                this.renderInitialScreenshotAsync();
+            }, 500)
+        }
+        else {
+            this.setState({
+                screenshotUri: uri
+            });
+        }
+
     }
 
     renderCore() {
