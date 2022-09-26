@@ -142,15 +142,15 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
                     </div>
                 </div>
                 <div className="thumbnail-actions">
+                    <Button title={lf("Cancel")}
+                        label={lf("Cancel")}
+                        onClick={onCancel} />
                     {uri && recorderState === "default" &&
                         <Button className="primary"
                             title={lf("Apply")}
                             label={lf("Apply")}
                             onClick={handleApplyClick} />
                     }
-                    <Button title={lf("Cancel")}
-                        label={lf("Cancel")}
-                        onClick={onCancel} />
                 </div>
             </div>
         </div>
