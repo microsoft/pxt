@@ -124,16 +124,25 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
                                 label={lf("Try again?")}
                                 onClick={() => setUri(undefined)} />
                         </div>
-                        <div className="thumbnail-image">
-                            {(uri || initialUri)
+                        <div className="project-share-thumbnail">
+                            {recorderState !== "default" &&
+                                <div className="project-thumbnail-placeholder">
+                                    <div className="common-spinner" />
+                                    <div className="project-thumbnail-label">
+                                        {recorderState === "recording" ? lf("Recording...") : lf("Rendering GIF...")}
+                                    </div>
+                                </div>
+                            }
+                            { recorderState === "default" &&
+                                ((uri || initialUri)
                                 ? <img src={uri || initialUri} />
-                                : <div className="thumbnail-placeholder" />
+                                : <div className="thumbnail-placeholder" />)
                             }
                         </div>
                     </div>
                 </div>
                 <div className="thumbnail-actions">
-                    {uri &&
+                    {uri && recorderState === "default" &&
                         <Button className="primary"
                             title={lf("Apply")}
                             label={lf("Apply")}
