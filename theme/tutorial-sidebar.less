@@ -182,6 +182,7 @@
             background: @tutorialPrimaryColor;
             width: 2rem;
             height: 2rem;
+            user-select: none;
 
             ~ .circle-button {
                 // buttons after selected step
@@ -405,7 +406,6 @@
     padding: 1rem 0.5rem 1rem 1rem;
     overflow-x: hidden;
     overflow-y: scroll;
-
     &.ui.items { margin-top: 0; }
 }
 
@@ -531,6 +531,8 @@
 .tabTutorial {
     .immersive-reader-button.ui.item {
         float: right;
+        border: 2px solid @tutorialGrayOffset;
+        margin-left: 1.5rem;
     }
 }
 
