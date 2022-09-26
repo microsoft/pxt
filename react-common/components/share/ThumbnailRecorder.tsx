@@ -37,6 +37,8 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     const [ recorderRef, setRecorderRef ] = React.useState<SimRecorderRef>(undefined);
     const [ recorderState, setRecorderState ] = React.useState<SimRecorderState>("default");
 
+    let simContainer: HTMLDivElement;
+
     React.useEffect(() => {
         if (!recorderRef) return undefined;
         recorderRef.addStateChangeListener(setRecorderState);
@@ -68,15 +70,22 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
         }
         else if (recorderRef.state === "default") {
             recorderRef.startRecordingAsync();
+            if (simContainer) {
+                const iframe = simContainer.querySelector("iframe");
+                if (iframe) iframe.focus();
+            }
         }
     }
-
-    const targetTheme = pxt.appTarget.appTheme;
 
     const handleSimRecorderRef = (ref: SimRecorderRef) => {
         setRecorderRef(ref);
     }
 
+    const handleSimRecorderContainerRef = (ref: HTMLDivElement) => {
+        if (ref) simContainer = ref;
+    }
+
+    const targetTheme = pxt.appTarget.appTheme;
     const screenshotLabel = lf("Screenshot ({0})", targetTheme.simScreenshotKey);
     const startRecordingLabel = lf("Record ({0})", targetTheme.simGifKey);
     const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey);
@@ -99,7 +108,7 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     return <>
         <div className={classes}>
             <div className="gif-recorder-sim">
-                <div className="gif-recorder-sim-embed">
+                <div className="gif-recorder-sim-embed" ref={handleSimRecorderContainerRef}>
                     {React.createElement(simRecorder, { onSimRecorderInit: handleSimRecorderRef })}
                 </div>
                 <div className="gif-recorder">
