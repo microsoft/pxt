@@ -79,7 +79,16 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
 
     const screenshotLabel = lf("Screenshot ({0})", targetTheme.simScreenshotKey);
     const startRecordingLabel = lf("Record ({0})", targetTheme.simGifKey);
-    const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey) ;
+    const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey);
+    const renderingLabel = lf("Rendering...");
+
+    let recordLabel: string;
+
+    switch (recorderState) {
+        case "default": recordLabel = startRecordingLabel; break;
+        case "recording": recordLabel = stopRecordingLabel; break;
+        case "rendering": recordLabel = renderingLabel; break;
+    }
 
     const thumbnailLabel = uri ? lf("New Thumbnail") : lf("Current Thumbnail");
     const classes = classList(
@@ -95,14 +104,17 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
                 </div>
                 <div className="gif-recorder">
                     <div className="gif-recorder-actions">
+                        {recorderState === "default" &&
+                            <Button className="teal inverted"
+                                title={screenshotLabel}
+                                label={screenshotLabel}
+                                leftIcon="fas fa-camera"
+                                onClick={handleScreenshotClick} />
+                        }
                         <Button className="teal inverted"
-                            title={screenshotLabel}
-                            label={screenshotLabel}
-                            leftIcon="fas fa-camera"
-                            onClick={handleScreenshotClick} />
-                        <Button className="teal inverted"
-                            title={recorderState === "recording" ? stopRecordingLabel : startRecordingLabel}
-                            label={recorderState === "recording" ? stopRecordingLabel : startRecordingLabel}
+                            disabled={recorderState === "rendering"}
+                            title={recordLabel}
+                            label={recordLabel}
                             leftIcon={`fas fa-${recorderState === "recording" ? "square" : "circle"}`}
                             onClick={handleRecordClick} />
                         <div className="spacer mobile-only" />
