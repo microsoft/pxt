@@ -370,8 +370,15 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             }).filter(el => !!el);
         compiler.getBlocksAsync()
             .then(blocksInfo => {
+                const namespaceNames = Object.keys(blocksInfo.apis.byQName)
+                    .filter(qname => blocksInfo.apis.byQName[qname]?.kind === pxtc.SymbolKind.Module);
                 for (const inlineBlock of inlineBlocks) {
                     let ns = inlineBlock.getAttribute("data-ns");
+                    // fix capitalization issues, e.g. ``||math: instead of ``||Math:
+                    const exactNamespaceName = namespaceNames.find(el => ns.toLowerCase() == el.toLowerCase());
+                    if (exactNamespaceName && (ns !== exactNamespaceName)) {
+                        ns = exactNamespaceName;
+                    }
                     const bi = blocksInfo.apis.byQName[ns];
                     let color = bi?.attributes?.color;
                     if (/^logic$/i.test(ns)) {
