@@ -11,7 +11,7 @@
         "sourceMap": false,
         "moduleResolution": "node",
         "isolatedModules": false,
-        "jsx": "react",
+        "jsx": "react-jsx",
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "declaration": false,
@@ -24,11 +24,10 @@
             "ES2018.Promise"
         ],
         "types": [
-            "react",
-            "react-dom",
             "resize-observer-browser"
         ],
-        "incremental": false
+        "incremental": false,
+        "skipLibCheck": true
     },
     "exclude": [
         "node_modules"

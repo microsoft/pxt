@@ -16,12 +16,13 @@ export interface ShareInfoProps {
     description?: string;
     screenshotUri?: string;
     isLoggedIn?: boolean;
+    hasProjectBeenPersistentShared?: boolean;
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync } = props;
+    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
@@ -142,7 +143,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const prePublish = shareState === "share" || shareState === "publishing";
 
-    const inputTitle = showSimulator && prePublish ? lf("Project Title") : lf("Project Link")
+    const inputTitle = prePublish ? lf("Project Title") : lf("Project Link")
 
     return <>
         <div className="project-share-info">
@@ -150,7 +151,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 <div className="project-share-thumbnail">
                     {thumbnailUri
                         ? <img src={thumbnailUri} />
-                        : <div className="project-thumbnail-placeholder" />
+                        : <div className="project-thumbnail-placeholder">
+                             <div className="common-spinner" />
+                        </div>
                     }
                     {shareState !== "publish" &&
                         <Button
@@ -163,18 +166,19 @@ export const ShareInfo = (props: ShareInfoProps) => {
             }
             <div className="project-share-content">
                 {(prePublish || shareState === "publish") && <>
-                    <div className="project-share-title">
-                        <h2>{inputTitle}</h2>
+                    <div className="project-share-title project-share-label" id="share-input-title">
+                        {inputTitle}
                     </div>
                     {showDescription && <>
                         <Input
+                            ariaDescribedBy="share-input-title"
                             className="name-input"
                             initialValue={name}
                             placeholder={lf("Name your project")}
                             onChange={setName} />
-                        {isLoggedIn && <Checkbox
+                        {isLoggedIn && hasProjectBeenPersistentShared && <Checkbox
                             id="persistent-share-checkbox"
-                            label={lf("Allow people to see future changes to my project")}
+                            label={lf("Update existing share link for this project")}
                             isChecked={!isAnonymous}
                             onChange={val => setIsAnonymous(!val)}
                             />}
@@ -187,7 +191,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
                                 : lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}
                         </div>}
-                        <div>
+                        <div className="project-share-publish-actions">
                             {shareState === "share" &&
                                 <Button className="primary share-publish-button"
                                     title={lf("Continue")}
@@ -207,6 +211,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         <div className="project-share-data">
                             <div className="common-input-attached-button">
                                 <Input
+                                    ariaDescribedBy="share-input-title"
                                     handleInputRef={handleInputRef}
                                     initialValue={shareData.url}
                                     readOnly={true}
@@ -219,36 +224,38 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                     onBlur={handleCopyBlur} />
                             </div>
                             <div className="project-share-actions">
-                                <Button className="square-button gray embed mobile-portrait-hidden"
-                                    title={lf("Show embed code")}
-                                    leftIcon="fas fa-code"
-                                    onClick={handleEmbedClick} />
-                                <SocialButton className="square-button facebook"
-                                    url={shareData?.url}
-                                    type='facebook'
-                                    heading={lf("Share on Facebook")} />
-                                <SocialButton className="square-button twitter"
-                                    url={shareData?.url}
-                                    type='twitter'
-                                    heading={lf("Share on Twitter")} />
-                                <SocialButton className="square-button google-classroom"
-                                    url={shareData?.url}
-                                    type='google-classroom'
-                                    heading={lf("Share on Google Classroom")} />
-                                <SocialButton className="square-button microsoft-teams"
-                                    url={shareData?.url}
-                                    type='microsoft-teams'
-                                    heading={lf("Share on Microsoft Teams")} />
-                                <SocialButton className="square-button whatsapp"
-                                    url={shareData?.url}
-                                    type='whatsapp'
-                                    heading={lf("Share on WhatsApp")} />
-                                {navigator.share && <Button className="square-button device-share"
-                                    title={lf("Show device share options")}
-                                    ariaLabel={lf("Show device share options")}
-                                    leftIcon={"icon share"}
-                                    onClick={handleDeviceShareClick}
-                                />}
+                                <div className="project-share-social">
+                                    <Button className="square-button gray embed mobile-portrait-hidden"
+                                        title={lf("Show embed code")}
+                                        leftIcon="fas fa-code"
+                                        onClick={handleEmbedClick} />
+                                    <SocialButton className="square-button facebook"
+                                        url={shareData?.url}
+                                        type='facebook'
+                                        heading={lf("Share on Facebook")} />
+                                    <SocialButton className="square-button twitter"
+                                        url={shareData?.url}
+                                        type='twitter'
+                                        heading={lf("Share on Twitter")} />
+                                    <SocialButton className="square-button google-classroom"
+                                        url={shareData?.url}
+                                        type='google-classroom'
+                                        heading={lf("Share on Google Classroom")} />
+                                    <SocialButton className="square-button microsoft-teams"
+                                        url={shareData?.url}
+                                        type='microsoft-teams'
+                                        heading={lf("Share on Microsoft Teams")} />
+                                    <SocialButton className="square-button whatsapp"
+                                        url={shareData?.url}
+                                        type='whatsapp'
+                                        heading={lf("Share on WhatsApp")} />
+                                    {navigator.share && <Button className="square-button device-share"
+                                        title={lf("Show device share options")}
+                                        ariaLabel={lf("Show device share options")}
+                                        leftIcon={"icon share"}
+                                        onClick={handleDeviceShareClick}
+                                    />}
+                                </div>
                                 <Button
                                     className="menu-button project-qrcode"
                                     buttonRef={handleQRCodeButtonRef}

@@ -115,7 +115,6 @@ namespace ts.pxtc.service {
         const fileType = python ? "python" : "typescript";
 
         let snippetPrefix = fn.namespace;
-        let isInstance = false;
         let addNamespace = false;
         let namespaceToUse = "";
         let functionCount = 0;
@@ -177,6 +176,11 @@ namespace ts.pxtc.service {
                 if (python && snippetPrefix)
                     snippetPrefix = U.snakify(snippetPrefix);
             }
+            else if (params.thisParameter?.shadowBlockId === "variables_get") {
+                snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
+                if (python && snippetPrefix)
+                    snippetPrefix = U.snakify(snippetPrefix);
+            }
             else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                 const nsInfo = apis.byQName[element.namespace];
                 if (nsInfo.attributes.fixedInstances) {
@@ -223,8 +227,6 @@ namespace ts.pxtc.service {
                     if (namespaceToUse) {
                         addNamespace = true;
                     }
-
-                    isInstance = true;
                 }
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
                     if (params.thisParameter) {
@@ -238,7 +240,6 @@ namespace ts.pxtc.service {
                         if (python && snippetPrefix)
                             snippetPrefix = U.snakify(snippetPrefix);
                     }
-                    isInstance = true;
                 }
                 else if (nsInfo.kind === pxtc.SymbolKind.Class) {
                     return undefined;

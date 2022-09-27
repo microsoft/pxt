@@ -77,7 +77,7 @@ We need to make an extension description file next. This is called `pxt.json`. T
 
 This is what the basic entries in the `pxt.json` do:
 
-* **name**: The extension name. This is used to search and select the extension when you go to add an extension in the editor.
+* **name**: The extension name. This is used to search and select the extension when you go to add an extension in the editor. Ensure it follows our [naming conventions](../naming-conventions.md#extension-name).
 * **description**: The description of the extension shown in the extension gallery.
 * **icon**: An icon shown along with the description in the extension gallery.
 * **files**: The list of sources for the code and blocks of the extension.

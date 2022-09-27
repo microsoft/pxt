@@ -19,6 +19,7 @@
         "types": [
             "fuse"
         ],
-        "incremental": true
+        "incremental": true,
+        "skipLibCheck": true
     }
 }

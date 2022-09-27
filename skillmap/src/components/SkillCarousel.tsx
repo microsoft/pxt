@@ -182,7 +182,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         pageSourceUrl: state.pageSourceUrl,
         completionState: mapProgress?.[map.mapId]?.completionState,
         selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem.activityId] ? state.selectedItem.activityId : undefined
-    }
+    } as SkillCarouselProps
 }
 
 

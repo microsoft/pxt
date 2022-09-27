@@ -213,7 +213,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
         const showHomeButton = (view === "editor" || view === "tutorial-tab") && !targetTheme.lockedEditor && !isController;
-        const showShareButton = view === "editor" && header && pxt.appTarget.cloud?.sharing && !isController;
+        const showShareButton = (view === "editor" || view === "tutorial-tab") && header && pxt.appTarget.cloud?.sharing && !isController;
         const showHelpButton = view === "editor" && targetTheme.docMenu?.length;
 
         // Approximate each tutorial step to be 22 px

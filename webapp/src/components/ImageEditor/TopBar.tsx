@@ -103,13 +103,13 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
 
 function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
     let state = present as AnimationState;
-    if (!state) return {};
+    if (!state) return {} as TopBarProps;
 
     return {
         interval: state.interval,
         previewAnimating: editor.previewAnimating,
         isTilemap: editor.isTilemap
-    };
+    } as TopBarProps
 }
 
 const mapDispatchToProps = {

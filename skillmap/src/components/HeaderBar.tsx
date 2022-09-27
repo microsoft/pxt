@@ -248,7 +248,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         signedIn: state.auth.signedIn,
         profile: state.auth.profile,
         preferences: state.auth.preferences
-    }
+    } as HeaderBarProps
 }
 
 

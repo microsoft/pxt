@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Provider, Store } from 'react-redux';
+import { Store } from 'redux';
+import { Provider } from 'react-redux';
 import { mainStore, tileEditorStore } from './store/imageStore'
 import { SideBar } from './SideBar';
 import { BottomBar } from './BottomBar';

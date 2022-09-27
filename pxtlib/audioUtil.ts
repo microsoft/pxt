@@ -51,7 +51,7 @@ namespace pxt.AudioContextManager {
 
     export function tone(frequency: number) {
         if (_mute) return;
-        if (frequency < 0) return;
+        if (isNaN(frequency) || frequency < 0) return;
         _frequency = frequency;
 
         let ctx = context() as AudioContext;

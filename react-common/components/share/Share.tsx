@@ -20,19 +20,21 @@ export interface ShareProps {
     projectName: string;
     screenshotUri?: string;
     isLoggedIn?: boolean;
+    hasProjectBeenPersistentShared?: boolean;
 
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
 }
 
 export const Share = (props: ShareProps) => {
-    const { projectName, screenshotUri, isLoggedIn, simRecorder, publishAsync} = props;
+    const { projectName, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared } = props;
 
     return <div className="project-share">
         <ShareInfo projectName={projectName}
             isLoggedIn={isLoggedIn}
             screenshotUri={screenshotUri}
             simRecorder={simRecorder}
-            publishAsync={publishAsync} />
+            publishAsync={publishAsync}
+            hasProjectBeenPersistentShared={hasProjectBeenPersistentShared} />
     </div>
 }

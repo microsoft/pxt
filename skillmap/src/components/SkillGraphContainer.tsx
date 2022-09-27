@@ -118,7 +118,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     return {
         graphs,
         graphSize: { width, height }
-    }
+    } as SkillGraphContainerProps
 }
 
 export const SkillGraphContainer = connect(mapStateToProps)(SkillGraphContainerImpl);

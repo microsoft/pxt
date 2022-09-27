@@ -7,6 +7,7 @@
         "out": "../built/backendutils.js",
         "newLine": "LF",
         "sourceMap": false,
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "skipLibCheck": true
     }
 }

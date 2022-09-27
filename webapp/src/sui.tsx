@@ -15,7 +15,7 @@ export interface UiProps {
     iconClass?: string;
     text?: string;
     textClass?: string;
-    children?: any;
+    children?: React.ReactNode;
     className?: string;
     role?: string;
     title?: string;
@@ -367,6 +367,7 @@ export interface ExpandableMenuProps {
     title?: string;
     onShow?: () => void;
     onHide?: () => void;
+    children?: React.ReactNode;
 }
 
 export interface ExpandableMenuState {
@@ -730,7 +731,7 @@ export class Input extends data.Component<InputProps, InputState> {
     copy() {
         this.setState({ copied: false });
         const p = this.props
-        const el = ReactDOM.findDOMNode(this);
+        const el = ReactDOM.findDOMNode(this) as Element;
 
         if (!p.lines || p.lines == 1) {
             const inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
@@ -873,7 +874,7 @@ export interface IconProps extends UiProps {
     onKeyDown?: () => void;
 }
 
-export const Icon: React.StatelessComponent<IconProps> = (props: IconProps) => {
+export const Icon: React.FunctionComponent<IconProps> = (props: IconProps) => {
     const { icon, className, onClick, onKeyDown, children, ...rest } = props;
     return <i className={`icon ${icon} ${className ? className : ''}`}
         onClick={onClick}

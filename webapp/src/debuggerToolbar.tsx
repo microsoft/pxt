@@ -66,7 +66,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
     }
 
     getMenuDom() {
-        const node = ReactDOM.findDOMNode(this);
+        const node = ReactDOM.findDOMNode(this) as Element;
         return node && node.firstElementChild;
     }
 
