@@ -331,7 +331,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         pxt.tickEvent("video.pip.requested");
                         player.getVideoElement().requestPictureInPicture();
                     });
-                    pipButton.addEventListener("keydown", fireClickOnEnter as any);
+                    pipButton.addEventListener("keydown", e => fireClickOnEnter(e as any));
                     pipButton.className = "common-button";
                     pipButton.textContent = lf("Pop out video");
                     pipButton.ariaLabel = lf("Open video in picture-in-picture mode");
