@@ -306,4 +306,199 @@ namespace pxt.assets.music {
         sndInstr[sndInstrPtr] = 0;
         return sndInstrPtr
     }
+
+    export function encodeSongToHex(song: Song) {
+        const encoded = encodeSong(song);
+        return `hex\`${U.toHex(encoded)}\``
+    }
+
+    /**
+     * Byte encoding format for songs
+     * FIXME: should this all be word aligned?
+     *
+     * song(7 + length of all tracks bytes)
+     *     0 version
+     *     1 beats per minute
+     *     3 beats per measure
+     *     4 ticks per beat
+     *     5 measures
+     *     6 number of tracks
+     *     ...tracks
+     *
+     * track(6 + instrument length + note length bytes)
+     *     0 id
+     *     1 flags
+     *     2 instruments byte length
+     *     4...instrument
+     *     notes byte length
+     *     ...note events
+     *
+     * instrument(27 bytes)
+     *     0 waveform
+     *     1 amp attack
+     *     3 amp decay
+     *     5 amp sustain
+     *     7 amp release
+     *     9 amp amp
+     *     11 pitch attack
+     *     13 pitch decay
+     *     15 pitch sustain
+     *     17 pitch release
+     *     19 pitch amp
+     *     21 amp lfo freq
+     *     22 amp lfo amp
+     *     24 pitch lfo freq
+     *     25 pitch lfo amp
+     *
+     * drum(5 + 7 * steps bytes)
+     *     0 steps
+     *     1 start freq
+     *     3 start amp
+     *     5...steps
+     *
+     * drum step(7 bytes)
+     *     0 waveform
+     *     1 freq
+     *     3 volume
+     *     5 duration
+     *
+     * note event(5 + 1 * polyphony bytes)
+     *     0 start tick
+     *     2 end tick
+     *     4 polyphony
+     *     5...notes(1 byte each)
+     *
+     */
+
+    function encodeSong(song: Song) {
+        const encodedTracks = song.tracks
+            .map((track, index) => [track, index] as [Track, number])
+            .filter(([track, index]) => track.notes.length > 0)
+            .map(([track, index]) => encodeTrack(track, index));
+        const trackLength = encodedTracks.reduce((d, c) => c.length + d, 0);
+
+        const out = new Uint8Array(7 + trackLength);
+        out[0] = 0; // encoding version
+        set16BitNumber(out, 1, song.beatsPerMinute);
+        out[3] = song.beatsPerMeasure;
+        out[4] = song.ticksPerBeat;
+        out[5] = song.measures;
+        out[6] = encodedTracks.length;
+
+        let current = 7;
+        for (const track of encodedTracks) {
+            out.set(track, current);
+            current += track.length;
+        }
+
+        return out;
+    }
+
+    function encodeInstrument(instrument: Instrument) {
+        const out = new Uint8Array(28);
+        out[0] = instrument.waveform;
+        set16BitNumber(out, 1, instrument.ampEnvelope.attack)
+        set16BitNumber(out, 3, instrument.ampEnvelope.decay)
+        set16BitNumber(out, 5, instrument.ampEnvelope.sustain)
+        set16BitNumber(out, 7, instrument.ampEnvelope.release)
+        set16BitNumber(out, 9, instrument.ampEnvelope.amplitude)
+        set16BitNumber(out, 11, instrument.pitchEnvelope?.attack || 0)
+        set16BitNumber(out, 13, instrument.pitchEnvelope?.decay || 0)
+        set16BitNumber(out, 15, instrument.pitchEnvelope?.sustain || 0)
+        set16BitNumber(out, 17, instrument.pitchEnvelope?.release || 0)
+        set16BitNumber(out, 19, instrument.pitchEnvelope?.amplitude || 0)
+        out[21] = instrument.ampLFO?.frequency || 0
+        set16BitNumber(out, 22, instrument.ampLFO?.amplitude || 0)
+        out[24] = instrument.pitchLFO?.frequency || 0
+        set16BitNumber(out, 25, instrument.pitchLFO?.amplitude || 0);
+
+        return out;
+    }
+
+    function encodeDrumInstrument(drum: DrumInstrument) {
+        const out = new Uint8Array(5 + 7 * drum.steps.length);
+        out[0] = drum.steps.length;
+        set16BitNumber(out, 1, drum.startFrequency);
+        set16BitNumber(out, 3, drum.startVolume);
+
+        for (let i = 0; i < drum.steps.length; i++) {
+            const start = 5 + i * 7;
+            out[start] = drum.steps[i].waveform;
+            set16BitNumber(out, start + 1, drum.steps[i].frequency);
+            set16BitNumber(out, start + 3, drum.steps[i].volume);
+            set16BitNumber(out, start + 5, drum.steps[i].duration);
+        }
+
+        return out;
+    }
+
+    function encodeNoteEvent(event: NoteEvent) {
+        const out = new Uint8Array(5 + event.notes.length);
+        set16BitNumber(out, 0, event.startTick);
+        set16BitNumber(out, 2, event.endTick);
+        out[4] = event.notes.length;
+
+        for (let i = 0; i < event.notes.length; i++) {
+            out[5 + i] = event.notes[i];
+        }
+
+        return out;
+    }
+
+    function encodeTrack(track: Track, index: number) {
+        if (track.drums) return encodeDrumTrack(track, index);
+        return encodeMelodicTrack(track, index);
+    }
+
+    function encodeMelodicTrack(track: Track, id: number) {
+        const encodedInstrument = encodeInstrument(track.instrument);
+        const encodedNotes = track.notes.map(encodeNoteEvent);
+        const noteLength = encodedNotes.reduce((d, c) => c.length + d, 0);
+
+        const out = new Uint8Array(6 + encodedInstrument.length + noteLength);
+        out[0] = id;
+        out[1] = 0;
+
+        set16BitNumber(out, 2, encodedInstrument.length);
+        let current = 4;
+        out.set(encodedInstrument, current);
+        current += encodedInstrument.length;
+
+        set16BitNumber(out, current, noteLength);
+        current += 2;
+        for (const note of encodedNotes) {
+            out.set(note, current);
+            current += note.length
+        }
+
+        return out;
+    }
+
+    function encodeDrumTrack(track: Track, id: number) {
+        const encodedDrums = track.drums.map(encodeDrumInstrument);
+        const drumLength = encodedDrums.reduce((d, c) => c.length + d, 0);
+
+        const encodedNotes = track.notes.map(encodeNoteEvent);
+        const noteLength = encodedNotes.reduce((d, c) => c.length + d, 0);
+
+        const out = new Uint8Array(6 + drumLength + noteLength);
+        out[0] = id;
+        out[1] = 1;
+        set16BitNumber(out, 2, drumLength);
+        let current = 4;
+
+        for (const drum of encodedDrums) {
+            out.set(drum, current);
+            current += drum.length
+        }
+
+        set16BitNumber(out, current, noteLength);
+        current += 2;
+        for (const note of encodedNotes) {
+            out.set(note, current);
+            current += note.length
+        }
+
+        return out;
+    }
 }
