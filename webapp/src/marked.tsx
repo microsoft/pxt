@@ -324,7 +324,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                     }
                 )
-                if (player.getVideoElement().requestPictureInPicture) {
+                if (player.getVideoElement()?.requestPictureInPicture) {
                     const pipButton = document.createElement("button");
                     inlineVideo.parentElement.insertBefore(pipButton, inlineVideo.nextSibling);
                     pipButton.addEventListener("click", () => {
