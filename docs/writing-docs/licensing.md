@@ -1,6 +1,6 @@
 # Licensing
 
-When creating content related to use of MakeCode, we strongly recommend that a you include with it a standard license. This includes content that external or contributed but served from a MakeCode website. Related content is commonly in the form of, but not limited to, these:
+When creating learning content for MakeCode, we strongly recommend that you include a standard license in your content repo. This includes content that is served from a MakeCode website, commonly in the form of, but not limited to, these:
 
 * Tutorials
 * MakeCode projects and extensions repositories on GitHub
