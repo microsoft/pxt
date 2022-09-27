@@ -68,6 +68,7 @@ export const SimRecorderImpl: SimRecorder = props => {
 }
 
 let ref: SimRecorderRefImpl;
+const MAX_RECORD_TIME_MS = 10 * 1000;
 
 function createSimRecorderRef() {
     if (ref) return ref;
@@ -76,6 +77,7 @@ function createSimRecorderRef() {
     let handlers: ((newState: SimRecorderState) => void)[] = [];
     let thumbHandlers: ((uri: string, type: "gif" | "png") => void)[] = [];
     let errorHandlers: ((message: string) => void)[] = [];
+    let timeoutRef: number;
 
     const addStateChangeListener = (handler: (newState: SimRecorderState) => void) => {
         handlers.push(handler);
@@ -126,11 +128,19 @@ function createSimRecorderRef() {
         const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
         simulator.driver.startRecording(gifwidth);
         setState("recording");
+
+        if (timeoutRef) clearTimeout(timeoutRef);
+        timeoutRef = setTimeout(() => {
+            if (ref.state === "recording") {
+                stopRecordingAsync();
+            }
+        }, MAX_RECORD_TIME_MS)
     };
 
     const stopRecordingAsync = async () => {
         if (ref.state !== "recording") return undefined;
         simulator.driver.stopRecording();
+        if (timeoutRef) clearTimeout(timeoutRef);
         setState("rendering");
 
         const uri = await encoder.renderAsync();

@@ -829,6 +829,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         const extraIconClass = !subns && Object.keys(this.brandIcons).includes(icon) ? 'brandIcon' : ''
         return <div role="button" ref={this.handleTreeRowRef} className={treeRowClass}
             style={treeRowStyle} tabIndex={0}
+            data-ns={nameid}
             aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
             onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>

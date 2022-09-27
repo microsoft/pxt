@@ -181,7 +181,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         details,
         completedHeaderId,
         signedIn: state.auth.signedIn
-    };
+    } as InfoPanelProps
 }
 
 const mapDispatchToProps = {

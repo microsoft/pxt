@@ -95,6 +95,11 @@
     }
 }
 
+.tutorial-controls {
+    border-top: 2px solid @tutorialGrayOffset;
+    margin-top: 1rem;
+}
+
 /*******************************
         Exit Tutorial
 *******************************/
@@ -177,6 +182,7 @@
             background: @tutorialPrimaryColor;
             width: 2rem;
             height: 2rem;
+            user-select: none;
 
             ~ .circle-button {
                 // buttons after selected step
@@ -400,7 +406,6 @@
     padding: 1rem 0.5rem 1rem 1rem;
     overflow-x: hidden;
     overflow-y: scroll;
-
     &.ui.items { margin-top: 0; }
 }
 
@@ -526,6 +531,8 @@
 .tabTutorial {
     .immersive-reader-button.ui.item {
         float: right;
+        border: 2px solid @tutorialGrayOffset;
+        margin-left: 1.5rem;
     }
 }
 
@@ -554,6 +561,7 @@
     .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
+        margin-bottom: 1.5rem;
     }
 
     /* Short Deskstop Only */
@@ -687,6 +695,7 @@
         display: flex;
         align-items: center;
         margin: 0;
+        margin-top: 0.5rem;
 
         > .ui.button {
             width: unset;
@@ -797,6 +806,11 @@
 
             .ui.button:not(:hover) {
                 background-color: @tutorialTabletSimulatorButtonColor;
+            }
+
+            > .ui.button:last-child {
+                margin-top: 0.75rem;
+                margin-bottom: 0.75rem;
             }
         }
     }

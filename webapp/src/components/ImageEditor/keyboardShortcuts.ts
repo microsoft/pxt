@@ -1,5 +1,5 @@
 
-import { Store } from 'react-redux';
+import { Store } from 'redux';
 import { ImageEditorTool, ImageEditorStore, TilemapState, AnimationState, CursorSize } from './store/imageReducer';
 import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit, dispatchChangeCursorSize} from './actions/dispatch';
 import { mainStore } from './store/imageStore';

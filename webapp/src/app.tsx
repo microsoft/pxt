@@ -4019,6 +4019,9 @@ export class ProjectView
         }
     }
 
+    hasHeaderBeenPersistentShared() {
+        return !!this.state.header?.pubPermalink;
+    }
 
     async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined> {
         return cloud.saveLocalProjectsToCloudAsync(headerIds);
