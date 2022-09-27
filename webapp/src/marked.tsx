@@ -326,7 +326,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 )
                 if (player.getVideoElement()?.requestPictureInPicture) {
                     const pipButton = document.createElement("button");
-                    inlineVideo.parentElement.insertBefore(pipButton, inlineVideo.nextSibling);
+                    inlineVideo.parentElement.appendChild(pipButton);
                     pipButton.addEventListener("click", () => {
                         pxt.tickEvent("video.pip.requested");
                         player.getVideoElement().requestPictureInPicture();
