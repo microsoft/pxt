@@ -324,6 +324,19 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                     }
                 )
+                if (player.getVideoElement().requestPictureInPicture) {
+                    const pipButton = document.createElement("button");
+                    inlineVideo.parentElement.insertBefore(pipButton, inlineVideo.nextSibling);
+                    pipButton.addEventListener("click", () => {
+                        pxt.tickEvent("video.pip.requested");
+                        player.getVideoElement().requestPictureInPicture();
+                    });
+                    pipButton.addEventListener("keydown", fireClickOnEnter as any);
+                    pipButton.className = "common-button";
+                    pipButton.textContent = lf("Pop out video");
+                    pipButton.ariaLabel = lf("Open video in picture-in-picture mode");
+                    pipButton.title = pipButton.ariaLabel;
+                }
 
                 player.on(dashjs.MediaPlayer.events.PLAYBACK_STARTED,
                     (e: dashjs.PlaybackStartedEvent) => {

@@ -867,8 +867,19 @@
 
 .tutorial-video-embed {
     display: flex;
-    align-content: center;
+    align-items: center;
     justify-content: center;
+    flex-direction: column;
+    > button {
+        display: block;
+        margin-top: .5rem;
+        border: solid 1px @tutorialPrimaryColor;
+        color: @tutorialPrimaryColor;
+    }
+}
+
+.tutorial-step-content video {
+    max-width: 100%;
 }
 
 /* Mobile */
