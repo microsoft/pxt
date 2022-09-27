@@ -30,6 +30,7 @@ namespace pxt.assets.music {
 
     export interface Track {
         instrument: Instrument;
+        id?: number;
         drums?: DrumInstrument[];
         notes: NoteEvent[];
     }
@@ -292,6 +293,14 @@ namespace pxt.assets.music {
         buf[offset + 1] = temp[1];
     }
 
+    function get16BitNumber(buf: Uint8Array, offset: number) {
+        const temp = new Uint8Array(2);
+        temp[0] = buf[offset];
+        temp[1] = buf[offset + 1];
+
+        return new Uint16Array(temp.buffer)[0];
+    }
+
     function addNote(sndInstr: Uint8Array, sndInstrPtr: number, ms: number, beg: number, end: number, soundWave: number, hz: number, endHz: number) {
         if (ms > 0) {
             sndInstr[sndInstrPtr] = soundWave;
@@ -310,6 +319,16 @@ namespace pxt.assets.music {
     export function encodeSongToHex(song: Song) {
         const encoded = encodeSong(song);
         return `hex\`${U.toHex(encoded)}\``
+    }
+
+    export function decodeSongFromHex(hex: string) {
+        const match = /^\s*hex\s*`([a-fA-F0-9]+)`\s*(?:;?)\s*$/.exec(hex);
+
+        if (!match) return undefined;
+
+        const bytes = pxt.U.fromHex(match[1]);
+
+        return decodeSong(bytes);
     }
 
     /**
@@ -394,6 +413,26 @@ namespace pxt.assets.music {
         return out;
     }
 
+    function decodeSong(buf: Uint8Array) {
+        const res: Song = {
+            beatsPerMinute: get16BitNumber(buf, 1),
+            beatsPerMeasure: buf[3],
+            ticksPerBeat: buf[4],
+            measures: buf[5],
+            tracks: []
+        };
+
+        let current = 7;
+
+        while (current < buf.length) {
+            const [track, pointer] = decodeTrack(buf, current);
+            current = pointer;
+            res.tracks.push(track);
+        }
+
+        return res;
+    }
+
     function encodeInstrument(instrument: Instrument) {
         const out = new Uint8Array(28);
         out[0] = instrument.waveform;
@@ -415,6 +454,42 @@ namespace pxt.assets.music {
         return out;
     }
 
+    function decodeInstrument(buf: Uint8Array, offset: number): Instrument {
+        return {
+            waveform: buf[offset],
+            ampEnvelope: {
+                attack: get16BitNumber(buf, offset + 1),
+                decay: get16BitNumber(buf, offset + 3),
+                sustain: get16BitNumber(buf, offset + 5),
+                release: get16BitNumber(buf, offset + 7),
+                amplitude: get16BitNumber(buf, offset + 9),
+            },
+            pitchEnvelope: {
+                attack: get16BitNumber(buf, offset + 11),
+                decay: get16BitNumber(buf, offset + 13),
+                sustain: get16BitNumber(buf, offset + 15),
+                release: get16BitNumber(buf, offset + 17),
+                amplitude: get16BitNumber(buf, offset + 19),
+            },
+            ampLFO: {
+                frequency: buf[offset + 21],
+                amplitude: get16BitNumber(buf, 22)
+            },
+            pitchLFO: {
+                frequency: buf[offset + 24],
+                amplitude: get16BitNumber(buf, 25)
+            }
+        }
+    }
+
+    function decodeTrack(buf: Uint8Array, offset: number): [Track, number] {
+        if (buf[offset + 1]) {
+            return decodeDrumTrack(buf, offset);
+        }
+
+        return decodeMelodicTrack(buf, offset);
+    }
+
     function encodeDrumInstrument(drum: DrumInstrument) {
         const out = new Uint8Array(5 + 7 * drum.steps.length);
         out[0] = drum.steps.length;
@@ -432,6 +507,26 @@ namespace pxt.assets.music {
         return out;
     }
 
+    function decodeDrumInstrument(buf: Uint8Array, offset: number): DrumInstrument {
+        const res: DrumInstrument = {
+            startFrequency: get16BitNumber(buf, offset + 1),
+            startVolume: get16BitNumber(buf, offset + 3),
+            steps: []
+        };
+
+        for (let i = 0; i < buf[offset]; i++) {
+            const start = offset + 5 + i * 7;
+            res.steps.push({
+                waveform: buf[start],
+                frequency: get16BitNumber(buf, start + 1),
+                volume: get16BitNumber(buf, start + 3),
+                duration: get16BitNumber(buf, start + 5)
+            })
+        }
+
+        return res;
+    }
+
     function encodeNoteEvent(event: NoteEvent) {
         const out = new Uint8Array(5 + event.notes.length);
         set16BitNumber(out, 0, event.startTick);
@@ -443,6 +538,19 @@ namespace pxt.assets.music {
         }
 
         return out;
+    }
+
+    function decodeNoteEvent(buf: Uint8Array, offset: number): NoteEvent {
+        const res: NoteEvent = {
+            startTick: get16BitNumber(buf, offset),
+            endTick: get16BitNumber(buf, offset + 2),
+            notes: []
+        };
+
+        for (let i = 0; i < buf[offset + 4]; i++) {
+            res.notes.push(buf[offset + 5 + i]);
+        }
+        return res;
     }
 
     function encodeTrack(track: Track, index: number) {
@@ -474,6 +582,26 @@ namespace pxt.assets.music {
         return out;
     }
 
+    function decodeMelodicTrack(buf: Uint8Array, offset: number): [Track, number] {
+        const res: Track = {
+            id: buf[offset],
+            instrument: decodeInstrument(buf, offset + 4),
+            notes: []
+        };
+
+        const noteStart = offset + 2 + get16BitNumber(buf, offset + 2);
+        const noteLength = get16BitNumber(buf, noteStart);
+
+        let currentOffset = noteStart + 2;
+
+        while (currentOffset < noteStart + 2 + noteLength) {
+            res.notes.push(decodeNoteEvent(buf, currentOffset));
+            currentOffset += 5 + res.notes[res.notes.length - 1].notes.length
+        }
+
+        return [res, currentOffset];
+    }
+
     function encodeDrumTrack(track: Track, id: number) {
         const encodedDrums = track.drums.map(encodeDrumInstrument);
         const drumLength = encodedDrums.reduce((d, c) => c.length + d, 0);
@@ -500,5 +628,32 @@ namespace pxt.assets.music {
         }
 
         return out;
+    }
+
+    function decodeDrumTrack(buf: Uint8Array, offset: number): [Track, number] {
+        const res: Track = {
+            id: buf[offset],
+            instrument: { ampEnvelope: { attack: 0, decay: 0, sustain: 0, release: 0, amplitude: 0 }, waveform: 0 },
+            notes: [],
+            drums: []
+        };
+
+        const drumByteLength = get16BitNumber(buf, offset + 2);
+        let currentOffset = offset + 4;
+
+        while (currentOffset < offset + 4 + drumByteLength) {
+            res.drums.push(decodeDrumInstrument(buf, currentOffset));
+            currentOffset += 5 + 7 * res.drums[res.drums.length - 1].steps.length;
+        }
+
+        const noteLength = get16BitNumber(buf, currentOffset);
+        currentOffset += 2;
+
+        while (currentOffset < offset + 4 + drumByteLength + noteLength) {
+            res.notes.push(decodeNoteEvent(buf, currentOffset));
+            currentOffset += 5 + res.notes[res.notes.length - 1].notes.length
+        }
+
+        return [res, currentOffset];
     }
 }
