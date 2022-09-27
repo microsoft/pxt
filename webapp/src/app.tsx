@@ -216,7 +216,7 @@ export class ProjectView
             && ((pxt.options.light
                 ? !!pxt.appTarget.simulator.autoRunLight
                 : !!pxt.appTarget.simulator.autoRun)
-                || !!pxt.appTarget.simulator.emptyRunCode);
+                || (this.firstRun && !!pxt.appTarget.simulator.emptyRunCode));
     }
 
     private initSimulatorMessageHandlers() {
