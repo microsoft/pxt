@@ -179,7 +179,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
 
         if (force && useLang) {
-            this.setState({ forcelang: useLang })
+            this.setState({ forcelang: useLang });
         }
     }
 

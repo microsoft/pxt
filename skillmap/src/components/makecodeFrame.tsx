@@ -22,7 +22,7 @@ interface MakeCodeFrameProps {
     activityType: MapActivityType;
     carryoverCode: boolean;
     previousHeaderId?: string;
-    forcelang?: string
+    forcelang?: string;
     progress?: ActivityState;
     shareHeaderId?: string;
     shareProjectName?: string;
