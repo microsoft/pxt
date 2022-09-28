@@ -22,6 +22,7 @@ interface MakeCodeFrameProps {
     activityType: MapActivityType;
     carryoverCode: boolean;
     previousHeaderId?: string;
+    forcelang?: string
     progress?: ActivityState;
     shareHeaderId?: string;
     shareProjectName?: string;
@@ -115,7 +116,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     render() {
-        const {title, activityId } = this.props;
+        const { title, activityId, forcelang } = this.props;
         const { frameState, loadPercent } = this.state;
 
         const loadingText =  lf("Loading...")
@@ -128,7 +129,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
             url = editorUrl.substr(0, editorUrl.length - 1);
         }
-        url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1&ws=browser`;
+        url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1&ws=browser${forcelang ? `?forcelang=${forcelang}` : ""}`;
 
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div className="makecode-frame-outer" style={{ display: activityId ? "block" : "none" }}>
