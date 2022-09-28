@@ -145,6 +145,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
+                {audio && isTabTutorial && <sui.Button key='mutebtn' className={`hidefullscreen tutorial mute-button`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} />}
                 {collapse && <sui.Button
                     className={`expand-button portrait only editortools-btn hidefullscreen`}
                     icon={`${collapsed ? 'play' : 'stop'}`}
