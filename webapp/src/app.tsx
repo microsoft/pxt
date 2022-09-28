@@ -4525,6 +4525,9 @@ export class ProjectView
                         return this.loadHeaderAsync(curr);
                     }).finally(() => {
                         core.hideLoading("leavingtutorial")
+                        if (this.state.collapseEditorTools) {
+                            this.expandSimulator();
+                        }
                         this.postTutorialProgress();
                     })
                     .then(() => {
