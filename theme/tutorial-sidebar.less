@@ -422,7 +422,7 @@
 
             .simtoolbar, #miniSimOverlay { display: block; }
             .play-button { display: none !important; }
-            .expand-button, .fullscreen-button { display: block !important; }
+            .expand-button, .fullscreen-button, .tutorial.mute-button { display: block !important; }
         }
 
         .tutorial-controls { display: none; }
@@ -457,6 +457,10 @@
 
             .button.hidefullscreen { display: none !important; }
         }
+    }
+
+    &.collapsedEditorTools:not(.fullscreensim) .tab-simulator.tab-content.hidden .simPanel{
+        .fullscreen-button, .tutorial.mute-button { display: none !important; }
     }
 
     #miniSimOverlay {
