@@ -43,7 +43,7 @@ export function parseQuery() {
     return out;
 }
 
-export async function getMarkdownAsync(source: MarkdownSource, url: string): Promise<MarkdownFetchResult | undefined> {
+export async function getMarkdownAsync(source: MarkdownSource, url: string, locale?: string): Promise<MarkdownFetchResult | undefined> {
     if (!source || !url) return undefined;
 
     let toFetch: string;
@@ -51,7 +51,7 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 
     switch (source) {
         case "docs":
-            return fetchSkillmapFromDocs(url);
+            return fetchSkillmapFromDocs(url, locale);
         case "github":
             return await fetchSkillMapFromGithub(url);
         case "local":
@@ -86,8 +86,8 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
     };
 }
 
-async function fetchSkillmapFromDocs(path: string): Promise<MarkdownFetchResult | undefined > {
-    const markdown = await pxt.Cloud.markdownAsync(cleanDocsUrl(path));
+async function fetchSkillmapFromDocs(path: string, locale?: string): Promise<MarkdownFetchResult | undefined > {
+    const markdown = await pxt.Cloud.markdownAsync(cleanDocsUrl(path), locale);
     if (markdown) {
         return {
             text: markdown,

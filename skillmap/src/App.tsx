@@ -184,7 +184,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected async fetchAndParseSkillMaps(source: MarkdownSource, url: string) {
-        const result = await getMarkdownAsync(source, url);
+        const result = await getMarkdownAsync(source, url, this.state.forcelang);
 
         const md = result?.text;
         const fetched = result?.identifier;
