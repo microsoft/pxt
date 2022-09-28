@@ -1,0 +1,33 @@
+{
+  "name": "@arcade/multiplayer",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@types/node": "^12.20.45",
+    "engine.io-client": "^6.2.2",
+    "react-scripts": "^5.0.1",
+    "typescript": "^4.8.3"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/react": "file:../node_modules/@types/react",
+    "@types/react-dom": "file:../node_modules/@types/react-dom",
+    "react-app-alias-ex": "^2.1.0",
+    "react-app-rewired": "^2.2.1"
+  }
+}
