@@ -102,6 +102,9 @@ export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConv
             asset.framePreviewURIs = asset.frames.map(bitmap => imgConv.convert("data:image/x-mkcd-f," + pxt.sprite.base64EncodeBitmap(bitmap)));
             asset.previewURI = asset.framePreviewURIs[0];
             return asset;
+        case pxt.AssetType.Song: {
+            return asset;
+        }
     }
 }
 

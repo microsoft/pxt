@@ -8,7 +8,6 @@ import { FieldEditorComponent } from "./blocklyFieldView";
 import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
 import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
 import { MusicEditor } from "./components/musicEditor/MusicEditor";
-import { getEmptySong } from "./components/musicEditor/utils";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -187,7 +186,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         //     return <TilemapFieldEditor ref={ this.refHandler } />
         // }
         // return <ImageFieldEditor ref={this.refHandler} singleFrame={true} doneButtonCallback={this.callbackOnDoneClick} />
-        return <MusicEditor song={getEmptySong(2)} />
+        return <MusicEditor song={pxt.assets.music.getEmptySong(2)} />
     }
 
 }

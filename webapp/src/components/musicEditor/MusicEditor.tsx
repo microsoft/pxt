@@ -8,10 +8,11 @@ import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findC
 
 export interface MusicEditorProps {
     song: pxt.assets.music.Song;
+    onSongChanged?: (newValue: pxt.assets.music.Song) => void;
 }
 
 export const MusicEditor = (props: MusicEditorProps) => {
-    const { song } = props;
+    const { song, onSongChanged } = props;
     const [selectedTrack, setSelectedTrack] = React.useState(0);
     const [gridResolution, setGridResolution] = React.useState<GridResolution>("1/8");
     const [currentSong, setCurrentSong] = React.useState(song);
@@ -22,10 +23,12 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const isDrumTrack = !!currentSong.tracks[selectedTrack].drums;
 
     const updateSong = (newSong: pxt.assets.music.Song) => {
+        console.log(pxt.assets.music.encodeSongToHex(newSong));
         if (isPlaying()) {
             updatePlaybackSongAsync(newSong);
         }
         setCurrentSong(newSong);
+        if (onSongChanged) onSongChanged(newSong);
     }
 
     const onRowClick = (row: number, startTick: number, ctrlIsPressed: boolean) => {

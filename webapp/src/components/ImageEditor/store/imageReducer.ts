@@ -725,7 +725,7 @@ function initialStateForAsset(asset: pxt.Asset, gallery: GalleryTile[]) {
         return initialTilemapStateForAsset(asset, gallery);
     }
     else {
-        return initialAnimationStateForAsset(asset);
+        return initialAnimationStateForAsset(asset as pxt.ProjectImage | pxt.Animation | pxt.Tile);
     }
 }
 

@@ -5,6 +5,7 @@ namespace pxt.assets.music {
         pitchEnvelope?: Envelope;
         ampLFO?: LFO;
         pitchLFO?: LFO;
+        octave?: number;
     }
 
     export interface Envelope {
@@ -30,6 +31,8 @@ namespace pxt.assets.music {
 
     export interface Track {
         instrument: Instrument;
+        name?: string;
+        iconURI?: string;
         id?: number;
         drums?: DrumInstrument[];
         notes: NoteEvent[];
@@ -318,15 +321,11 @@ namespace pxt.assets.music {
 
     export function encodeSongToHex(song: Song) {
         const encoded = encodeSong(song);
-        return `hex\`${U.toHex(encoded)}\``
+        return U.toHex(encoded);
     }
 
     export function decodeSongFromHex(hex: string) {
-        const match = /^\s*hex\s*`([a-fA-F0-9]+)`\s*(?:;?)\s*$/.exec(hex);
-
-        if (!match) return undefined;
-
-        const bytes = pxt.U.fromHex(match[1]);
+        const bytes = pxt.U.fromHex(hex);
 
         return decodeSong(bytes);
     }
@@ -589,7 +588,7 @@ namespace pxt.assets.music {
             notes: []
         };
 
-        const noteStart = offset + 2 + get16BitNumber(buf, offset + 2);
+        const noteStart = offset + 4 + get16BitNumber(buf, offset + 2);
         const noteLength = get16BitNumber(buf, noteStart);
 
         let currentOffset = noteStart + 2;
@@ -655,5 +654,540 @@ namespace pxt.assets.music {
         }
 
         return [res, currentOffset];
+    }
+
+    export function cloneSong(song: Song): Song {
+        return {
+            ...song,
+            tracks: song.tracks.map(track => ({
+                ...track,
+                instrument: track.instrument && {
+                    ...track.instrument,
+                    ampEnvelope: {
+                        ...track.instrument.ampEnvelope
+                    },
+                    pitchEnvelope: track.instrument.pitchEnvelope && {
+                        ...track.instrument.pitchEnvelope
+                    },
+                    ampLFO: track.instrument.ampLFO && {
+                        ...track.instrument.ampLFO
+                    },
+                    pitchLFO: track.instrument.pitchLFO && {
+                        ...track.instrument.pitchLFO
+                    },
+                },
+                drums: track.drums && track.drums.map(drum => ({
+                    ...drum,
+                    steps: drum.steps.map(step => ({ ...step }))
+                })),
+                notes: track.notes.map(noteEvent => ({
+                    ...noteEvent,
+                    notes: noteEvent.notes.slice()
+                }))
+            }))
+        }
+    }
+
+    export function songEquals(a: Song, b: Song) {
+        return naiveEqualCheck(a, b);
+    }
+
+    function naiveEqualCheck(a: any, b: any) {
+        if (typeof a !== typeof b) return false;
+        else if (typeof a !== "object") return a === b;
+        else if (Array.isArray(a)) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) {
+                if (!naiveEqualCheck(a[i], b[i])) return false;
+            }
+            return true;
+        }
+
+        const aKeys = Object.keys(a);
+        const bKeys = Object.keys(b);
+
+        if (aKeys.length !== bKeys.length) return false;
+
+        for (const key of aKeys) {
+            if (bKeys.indexOf(key) === -1) return false;
+
+            if (!naiveEqualCheck(a[key], b[key])) return false;
+        }
+
+        return true;
+    }
+
+    export function getEmptySong(measures: number): pxt.assets.music.Song {
+        return {
+            ticksPerBeat: 8,
+            beatsPerMeasure: 4,
+            beatsPerMinute: 120,
+            measures,
+            tracks: [
+                {
+                    name: lf("Duck"),
+                    notes: [],
+                    iconURI: "/static/music-editor/duck.png",
+                    instrument: {
+                        waveform: 11,
+                        octave: 4,
+                        ampEnvelope: {
+                            attack: 10,
+                            decay: 100,
+                            sustain: 500,
+                            release: 100,
+                            amplitude: 1024
+                        },
+                        pitchLFO: {
+                            frequency: 5,
+                            amplitude: 2
+                        }
+                    }
+                },
+                {
+                    name: lf("Cat"),
+                    notes: [],
+                    iconURI: "/static/music-editor/cat.png",
+                    instrument: {
+                        waveform: 12,
+                        octave: 5,
+                        ampEnvelope: {
+                            attack: 150,
+                            decay: 100,
+                            sustain: 365,
+                            release: 400,
+                            amplitude: 1024
+                        },
+                        pitchEnvelope: {
+                            attack: 120,
+                            decay: 300,
+                            sustain: 0,
+                            release: 100,
+                            amplitude: 50
+                        },
+                        pitchLFO: {
+                            frequency: 10,
+                            amplitude: 6
+                        }
+                    }
+                },
+                {
+                    name: lf("Dog"),
+                    notes: [],
+                    iconURI: "/static/music-editor/dog.png",
+                    instrument: {
+                        waveform: 3,
+                        octave: 4,
+                        ampEnvelope: {
+                            attack: 10,
+                            decay: 100,
+                            sustain: 500,
+                            release: 100,
+                            amplitude: 1024
+                        },
+                        pitchLFO: {
+                            frequency: 5,
+                            amplitude: 0
+                        }
+                    }
+                },
+                {
+                    name: lf("Fish"),
+                    notes: [],
+                    iconURI: "/static/music-editor/fish.png",
+                    instrument: {
+                        waveform: 1,
+                        octave: 3,
+                        ampEnvelope: {
+                            attack: 220,
+                            decay: 105,
+                            sustain: 1024,
+                            release: 350,
+                            amplitude: 1024
+                        },
+                        ampLFO: {
+                            frequency: 5,
+                            amplitude: 100
+                        },
+                        pitchLFO: {
+                            frequency: 1,
+                            amplitude: 4
+                        }
+                    }
+                },
+                {
+                    name: lf("Car"),
+                    notes: [],
+                    iconURI: "/static/music-editor/car.png",
+                    instrument: {
+                        waveform: 16,
+                        octave: 4,
+                        ampEnvelope: {
+                            attack: 5,
+                            decay: 100,
+                            sustain: 1024,
+                            release: 30,
+                            amplitude: 1024
+                        },
+                        pitchLFO: {
+                            frequency: 10,
+                            amplitude: 4
+                        }
+                    }
+                },
+                {
+                    name: lf("Computer"),
+                    notes: [],
+                    iconURI: "/static/music-editor/computer.png",
+                    instrument: {
+                        waveform: 15,
+                        octave: 1,
+                        ampEnvelope: {
+                            attack: 10,
+                            decay: 100,
+                            sustain: 500,
+                            release: 10,
+                            amplitude: 1024
+                        }
+                    }
+                },
+                {
+                    name: lf("Burger"),
+                    notes: [],
+                    iconURI: "/static/music-editor/burger.png",
+                    instrument: {
+                        waveform: 1,
+                        octave: 1,
+                        ampEnvelope: {
+                            attack: 10,
+                            decay: 100,
+                            sustain: 500,
+                            release: 100,
+                            amplitude: 1024
+                        }
+                    }
+                },
+                {
+                    name: lf("Cherry"),
+                    notes: [],
+                    iconURI: "/static/music-editor/cherry.png",
+                    instrument: {
+                        waveform: 2,
+                        octave: 3,
+                        ampEnvelope: {
+                            attack: 10,
+                            decay: 100,
+                            sustain: 500,
+                            release: 100,
+                            amplitude: 1024
+                        }
+                    }
+                },
+                {
+                    name: lf("Lemon"),
+                    notes: [],
+                    iconURI: "/static/music-editor/lemon.png",
+                    instrument: {
+                        waveform: 15,
+                        octave: 2,
+                        ampEnvelope: {
+                            attack: 10,
+                            decay: 100,
+                            sustain: 500,
+                            release: 10,
+                            amplitude: 1024
+                        }
+                    }
+                },
+                {
+                    name: lf("Explosion"),
+                    notes: [],
+                    iconURI: "/static/music-editor/explosion.png",
+                    instrument: {
+                        waveform: 11,
+                        octave: 4,
+                        ampEnvelope: {
+                            attack: 10,
+                            decay: 100,
+                            sustain: 500,
+                            release: 100,
+                            amplitude: 1024
+                        }
+                    },
+                    drums: [
+                        { /* kick drum */
+                            startFrequency: 100,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    waveform: 3,
+                                    frequency: 120,
+                                    duration: 10,
+                                    volume: 1024
+                                },
+                                {
+                                    waveform: 3,
+                                    frequency: 1,
+                                    duration: 100,
+                                    volume: 0
+                                }
+                            ]
+                        },
+                        { /* closed hat */
+                            startFrequency: 1,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    waveform: 5,
+                                    frequency: 1,
+                                    duration: 20,
+                                    volume: 0
+                                }
+                            ]
+                        },
+                        { /* open hat */
+                            startFrequency: 1,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    waveform: 5,
+                                    frequency: 1,
+                                    duration: 20,
+                                    volume: 480
+                                },
+                                {
+                                    waveform: 5,
+                                    frequency: 1,
+                                    duration: 20,
+                                    volume: 260
+                                },
+                                {
+                                    waveform: 5,
+                                    frequency: 1,
+                                    duration: 20,
+                                    volume: 200
+                                },
+                                {
+                                    waveform: 5,
+                                    frequency: 1,
+                                    duration: 200,
+                                    volume: 0
+                                },
+                            ]
+                        },
+                        { /* terrible snare */
+                            startFrequency: 175,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    waveform: 1,
+                                    frequency: 200,
+                                    duration: 10,
+                                    volume: 1024
+                                },
+                                {
+                                    waveform: 1,
+                                    frequency: 150,
+                                    duration: 20,
+                                    volume: 1024
+                                },
+                                {
+                                    waveform: 5,
+                                    frequency: 1,
+                                    duration: 20,
+                                    volume: 100
+                                },
+                                {
+                                    waveform: 5,
+                                    frequency: 1,
+                                    duration: 300,
+                                    volume: 0
+                                },
+                            ]
+                        },
+                        { /* kick drum */
+                        startFrequency: 100,
+                        startVolume: 1024,
+                        steps: [
+                            {
+                                waveform: 3,
+                                frequency: 120,
+                                duration: 10,
+                                volume: 1024
+                            },
+                            {
+                                waveform: 1,
+                                frequency: 120,
+                                duration: 100,
+                                volume: 0
+                            }
+                        ]
+                    },
+                    { /* closed hat */
+                        startFrequency: 1,
+                        startVolume: 1024,
+                        steps: [
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 0
+                            }
+                        ]
+                    },
+                    { /* open hat */
+                        startFrequency: 1,
+                        startVolume: 1024,
+                        steps: [
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 480
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 260
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 200
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 200,
+                                volume: 0
+                            },
+                        ]
+                    },
+                    { /* terrible snare */
+                        startFrequency: 175,
+                        startVolume: 1024,
+                        steps: [
+                            {
+                                waveform: 1,
+                                frequency: 200,
+                                duration: 10,
+                                volume: 1024
+                            },
+                            {
+                                waveform: 1,
+                                frequency: 150,
+                                duration: 20,
+                                volume: 1024
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 20,
+                                volume: 100
+                            },
+                            {
+                                waveform: 5,
+                                frequency: 1,
+                                duration: 300,
+                                volume: 0
+                            },
+                        ]
+                    },
+                    { /* kick drum */
+                    startFrequency: 100,
+                    startVolume: 1024,
+                    steps: [
+                        {
+                            waveform: 3,
+                            frequency: 120,
+                            duration: 10,
+                            volume: 1024
+                        },
+                        {
+                            waveform: 1,
+                            frequency: 120,
+                            duration: 100,
+                            volume: 0
+                        }
+                    ]
+                },
+                { /* closed hat */
+                    startFrequency: 1,
+                    startVolume: 1024,
+                    steps: [
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 0
+                        }
+                    ]
+                },
+                { /* open hat */
+                    startFrequency: 1,
+                    startVolume: 1024,
+                    steps: [
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 480
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 260
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 200
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 200,
+                            volume: 0
+                        },
+                    ]
+                },
+                { /* terrible snare */
+                    startFrequency: 175,
+                    startVolume: 1024,
+                    steps: [
+                        {
+                            waveform: 1,
+                            frequency: 200,
+                            duration: 10,
+                            volume: 1024
+                        },
+                        {
+                            waveform: 1,
+                            frequency: 150,
+                            duration: 20,
+                            volume: 1024
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 20,
+                            volume: 100
+                        },
+                        {
+                            waveform: 5,
+                            frequency: 1,
+                            duration: 300,
+                            volume: 0
+                        },
+                    ]
+                }
+                    ]
+                }
+            ]
+        }
     }
 }

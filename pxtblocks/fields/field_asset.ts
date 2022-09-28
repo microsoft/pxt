@@ -5,17 +5,17 @@ namespace pxtblockly {
     import svg = pxt.svgUtil;
 
     export interface FieldAssetEditorOptions {
-        initWidth: string;
-        initHeight: string;
+        initWidth?: string;
+        initHeight?: string;
 
-        disableResize: string;
+        disableResize?: string;
     }
 
     interface ParsedFieldAssetEditorOptions {
-        initWidth: number;
-        initHeight: number;
-        disableResize: boolean;
-        lightMode: boolean;
+        initWidth?: number;
+        initHeight?: number;
+        disableResize?: boolean;
+        lightMode?: boolean;
     }
 
     // 32 is specifically chosen so that we can scale the images for the default
@@ -88,6 +88,9 @@ namespace pxtblockly {
                     editorKind = "tilemap-editor";
                     const project = pxt.react.getTilemapProject();
                     pxt.sprite.addMissingTilemapTilesAndReferences(project, this.asset);
+                    break;
+                case pxt.AssetType.Song:
+                    editorKind = "music-editor";
                     break;
             }
 
@@ -260,11 +263,14 @@ namespace pxtblockly {
                         dataURI = tilemapToImageURI(this.asset.data, PREVIEW_WIDTH, this.lightMode);
                         break;
                 }
-                const img = new svg.Image()
-                    .src(dataURI)
-                    .at(X_PADDING + BG_PADDING, Y_PADDING + BG_PADDING)
-                    .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
-                this.fieldGroup_.appendChild(img.el);
+
+                if (dataURI) {
+                    const img = new svg.Image()
+                        .src(dataURI)
+                        .at(X_PADDING + BG_PADDING, Y_PADDING + BG_PADDING)
+                        .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
+                    this.fieldGroup_.appendChild(img.el);
+                }
             }
         }
 
