@@ -183,7 +183,7 @@ namespace pxt.crowdin {
                     .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
             } else if (code == 429 && errorData.error?.code == 55) {
                 // Too many concurrent requests
-                pxt.log(`Maximum concurrent requests, waiting 5s and retry...`)
+                pxt.log(`Maximum concurrent requests, waiting 10s and retry...`)
                 return U.delay(10 * 1000) // wait 10s and try again
                     .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
             } else if (code == 200 || errorData.success) {
