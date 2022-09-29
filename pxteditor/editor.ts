@@ -395,6 +395,8 @@ namespace pxt.editor {
         convertCloudProjectsToLocal(userId: string): Promise<void>;
         setLanguageRestrictionAsync(restriction: pxt.editor.LanguageRestriction): Promise<void>;
         hasHeaderBeenPersistentShared(): boolean;
+        getSharePreferenceForHeader(): boolean;
+        saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
     }
 
     export interface IHexFileImporter {
