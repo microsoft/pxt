@@ -111,6 +111,7 @@ export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConv
             asset.previewURI = asset.framePreviewURIs[0];
             return asset;
         case pxt.AssetType.Song:
+            asset.previewURI = pxtblockly.songToDataURI(asset.song, 32, 32, false, 1);
             return asset;
     }
 }

@@ -546,6 +546,7 @@ namespace pxt {
 
             this.state.images.serializeToJRes(blob);
             this.state.animations.serializeToJRes(blob);
+            this.state.songs.serializeToJRes(blob);
 
             blob["*"] = {
                 "mimeType": "image/x-mkcd-f4",
