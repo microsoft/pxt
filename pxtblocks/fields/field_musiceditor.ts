@@ -71,6 +71,10 @@ namespace pxtblockly {
         protected parseFieldOptions(opts: FieldMusicEditorOptions): ParsedFieldMusicEditorOptions {
             return {};
         }
+
+        protected isFullscreen() {
+            return false;
+        }
     }
 
     function inflateSong(song: pxt.assets.music.Song) {

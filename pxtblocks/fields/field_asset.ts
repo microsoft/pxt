@@ -95,6 +95,15 @@ namespace pxtblockly {
             }
 
 
+            if (this.isFullscreen()) {
+                this.showEditorFullscreen(editorKind, params);
+            }
+            else {
+                this.showEditorInWidgetDiv(editorKind, params);
+            }
+        }
+
+        protected showEditorFullscreen(editorKind: string, params: any) {
             const fv = pxt.react.getFieldEditorView(editorKind, this.asset, params);
 
             if (this.undoRedoState) {
@@ -104,52 +113,171 @@ namespace pxtblockly {
             pxt.react.getTilemapProject().pushUndo();
 
             fv.onHide(() => {
-                const result = fv.getResult();
-                const project = pxt.react.getTilemapProject();
-
-                if (result) {
-                    const old = this.getValue();
-                    if (pxt.assetEquals(this.asset, result)) return;
-
-                    const oldId = isTemporaryAsset(this.asset) ? null : this.asset.id;
-                    let newId = isTemporaryAsset(result) ? null : result.id;
-
-                    if (!oldId && newId === this.sourceBlock_.id) {
-                        // The temporary assets we create just use the block id as the id; give it something
-                        // a little nicer
-                        result.id = project.generateNewID(result.type);
-                        newId = result.id;
-                    }
-
-                    this.pendingEdit = true;
-
-                    if (result.meta?.displayName) this.disposeOfTemporaryAsset();
-                    this.asset = result;
-                    const lastRevision = project.revision();
-
-                    this.onEditorClose(this.asset);
-                    this.updateAssetListener();
-                    this.updateAssetMeta();
-                    this.redrawPreview();
-
-                    this.undoRedoState = fv.getPersistentData();
-
-                    if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                        const event = new BlocklyTilemapChange(
-                            this.sourceBlock_, 'field', this.name, old, this.getValue(), lastRevision, project.revision());
-
-                        if (oldId !== newId) {
-                            event.oldAssetId = oldId;
-                            event.newAssetId = newId;
-                        }
-
-                        Blockly.Events.fire(event);
-                    }
-                    this.pendingEdit = false;
-                }
+                this.onFieldEditorHide(fv);
             });
 
             fv.show();
+        }
+
+        protected showEditorInWidgetDiv(editorKind: string, params: any) {
+            let bbox: Blockly.utils.Rect;
+
+            // This is due to the changes in https://github.com/microsoft/pxt-blockly/pull/289
+            // which caused the widgetdiv to jump around if any fields underneath changed size
+            let widgetOwner = {
+                getScaledBBox: () => bbox
+            }
+
+            Blockly.WidgetDiv.show(widgetOwner, this.sourceBlock_.RTL, () => {
+                if (document.activeElement && document.activeElement.tagName === "INPUT") (document.activeElement as HTMLInputElement).blur();
+
+                fv.hide();
+
+                widgetDiv.classList.remove("sound-effect-editor-widget");
+                widgetDiv.style.transform = "";
+                widgetDiv.style.position = "";
+                widgetDiv.style.left = "";
+                widgetDiv.style.top = "";
+                widgetDiv.style.width = "";
+                widgetDiv.style.height = "";
+                widgetDiv.style.opacity = "";
+                widgetDiv.style.transition = "";
+                widgetDiv.style.alignItems = "";
+                widgetDiv.style.background = "";
+
+                Blockly.Events.enable();
+                Blockly.Events.setGroup(true);
+                this.onFieldEditorHide(fv);
+            })
+
+            const widgetDiv = Blockly.WidgetDiv.DIV as HTMLDivElement;
+
+            const fv = pxt.react.getFieldEditorView(editorKind, this.asset, params, widgetDiv);
+
+            const block = this.sourceBlock_ as Blockly.BlockSvg;
+            const bounds = block.getBoundingRectangle();
+            const coord = workspaceToScreenCoordinates(block.workspace as Blockly.WorkspaceSvg,
+                new Blockly.utils.Coordinate(bounds.right, bounds.top));
+
+            const animationDistance = 20;
+
+            const left = coord.x - 400;
+            const top = coord.y + 60 - animationDistance;
+            widgetDiv.style.opacity = "0";
+            widgetDiv.classList.add("sound-effect-editor-widget");
+            widgetDiv.style.position = "absolute";
+            widgetDiv.style.left = left + "px";
+            widgetDiv.style.top = top + "px";
+            widgetDiv.style.width = "50rem";
+            widgetDiv.style.height = "30rem";
+            widgetDiv.style.display = "flex";
+            widgetDiv.style.alignItems = "center";
+            widgetDiv.style.transition = "transform 0.25s ease 0s, opacity 0.25s ease 0s";
+            widgetDiv.style.borderRadius = "";
+            widgetDiv.style.background = this.sourceBlock_.getColour();
+
+            fv.onHide(() => {
+                // do nothing
+            });
+
+            fv.show();
+
+            const divBounds = widgetDiv.getBoundingClientRect();
+            const injectDivBounds = block.workspace.getInjectionDiv().getBoundingClientRect();
+
+            if (divBounds.height > injectDivBounds.height) {
+                widgetDiv.style.height = "";
+                widgetDiv.style.top = `calc(1rem - ${animationDistance}px)`;
+                widgetDiv.style.bottom = `calc(1rem + ${animationDistance}px)`;
+            }
+            else {
+                if (divBounds.bottom > injectDivBounds.bottom || divBounds.top < injectDivBounds.top) {
+                    // This editor is pretty tall, so just center vertically on the inject div
+                    widgetDiv.style.top = (injectDivBounds.top + (injectDivBounds.height / 2) - (divBounds.height / 2)) - animationDistance + "px";
+                }
+            }
+
+            const toolboxWidth = block.workspace.getToolbox().getWidth();
+            const workspaceLeft = injectDivBounds.left + toolboxWidth;
+
+            if (divBounds.width > injectDivBounds.width - toolboxWidth) {
+                widgetDiv.style.width = "";
+                widgetDiv.style.left = "1rem";
+                widgetDiv.style.right = "1rem";
+            }
+            else {
+                // Check to see if we are bleeding off the right side of the canvas
+                if (divBounds.left + divBounds.width >= injectDivBounds.right) {
+                    // If so, try and place to the left of the block instead of the right
+                    const blockLeft = workspaceToScreenCoordinates(block.workspace as Blockly.WorkspaceSvg,
+                        new Blockly.utils.Coordinate(bounds.left, bounds.top));
+
+                    if (blockLeft.x - divBounds.width - 20 > workspaceLeft) {
+                        widgetDiv.style.left = (blockLeft.x - divBounds.width - 20) + "px"
+                    }
+                    else {
+                        // As a last resort, just center on the inject div
+                        widgetDiv.style.left = (workspaceLeft + ((injectDivBounds.width - toolboxWidth) / 2) - divBounds.width / 2) + "px";
+                    }
+                }
+                else if (divBounds.left < injectDivBounds.left) {
+                    widgetDiv.style.left = workspaceLeft + "px"
+                }
+            }
+
+            const finalDimensions = widgetDiv.getBoundingClientRect();
+            bbox = new Blockly.utils.Rect(finalDimensions.top, finalDimensions.bottom, finalDimensions.left, finalDimensions.right);
+
+            requestAnimationFrame(() => {
+                widgetDiv.style.opacity = "1";
+                widgetDiv.style.transform = `translateY(${animationDistance}px)`;
+            })
+        }
+
+        protected onFieldEditorHide(fv: pxt.react.FieldEditorView<pxt.Asset>) {
+            const result = fv.getResult();
+            const project = pxt.react.getTilemapProject();
+
+            if (result) {
+                const old = this.getValue();
+                if (pxt.assetEquals(this.asset, result)) return;
+
+                const oldId = isTemporaryAsset(this.asset) ? null : this.asset.id;
+                let newId = isTemporaryAsset(result) ? null : result.id;
+
+                if (!oldId && newId === this.sourceBlock_.id) {
+                    // The temporary assets we create just use the block id as the id; give it something
+                    // a little nicer
+                    result.id = project.generateNewID(result.type);
+                    newId = result.id;
+                }
+
+                this.pendingEdit = true;
+
+                if (result.meta?.displayName) this.disposeOfTemporaryAsset();
+                this.asset = result;
+                const lastRevision = project.revision();
+
+                this.onEditorClose(this.asset);
+                this.updateAssetListener();
+                this.updateAssetMeta();
+                this.redrawPreview();
+
+                this.undoRedoState = fv.getPersistentData();
+
+                if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+                    const event = new BlocklyTilemapChange(
+                        this.sourceBlock_, 'field', this.name, old, this.getValue(), lastRevision, project.revision());
+
+                    if (oldId !== newId) {
+                        event.oldAssetId = oldId;
+                        event.newAssetId = newId;
+                    }
+
+                    Blockly.Events.fire(event);
+                }
+                this.pendingEdit = false;
+            }
         }
 
         render_() {
@@ -383,6 +511,10 @@ namespace pxtblockly {
                 this.asset = pxt.react.getTilemapProject().lookupAsset(this.getAssetType(), id);
             }
             this.redrawPreview();
+        }
+
+        protected isFullscreen() {
+            return true;
         }
     }
 

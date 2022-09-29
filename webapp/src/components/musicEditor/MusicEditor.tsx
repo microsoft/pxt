@@ -23,7 +23,6 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const isDrumTrack = !!currentSong.tracks[selectedTrack].drums;
 
     const updateSong = (newSong: pxt.assets.music.Song) => {
-        console.log(pxt.assets.music.encodeSongToHex(newSong));
         if (isPlaying()) {
             updatePlaybackSongAsync(newSong);
         }
