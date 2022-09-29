@@ -11,6 +11,8 @@
 
 @tutorialLinkColor: #0064BF;
 @tutorialLinkHoverColor: #003C94;
+@tutorialHintForegroundColor: #1A6771;
+@tutorialHintBackgroundColor: #CEFFF5;
 
 @tutorialTabletButtonColor: #f3f3f3;
 @tutorialTabletSimulatorButtonColor: rgba(0, 0, 0, 0.05);
@@ -278,6 +280,18 @@
         bottom: 5rem;
         left: 3rem;
         max-width: 50%;
+        border-color: @tutorialHintBackgroundColor;
+
+        .hint-title {
+            margin-top: -.75rem;
+            > span {
+                font-weight: 700;
+                background-color: @tutorialHintBackgroundColor;
+                color: @tutorialHintForegroundColor;
+                padding: 0.25rem 0.75rem;
+                border-radius: 0.5rem;
+            }
+        }
     }
 
     .tutorial-callout:before {
@@ -522,12 +536,11 @@
 /*********************************
         Accordion Hints (details)
 *********************************/
-
 .tabTutorial details {
     padding: .5rem;
     margin-bottom: 1rem;
-    color: #028b9b;
-    background-color: #b1e3da;
+    color: @tutorialHintForegroundColor;
+    background-color: @tutorialHintBackgroundColor;
     border-radius: .5rem;
 }
 
