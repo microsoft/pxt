@@ -250,7 +250,7 @@ namespace pxt.Cloud {
         if (scriptid[0] == "_" && scriptid.length == 13)
             return scriptid;
 
-        if (scriptid.length == 23 && /^[0-9\-]+$/.test(scriptid))
+        if (scriptid.length == 23 && /^[0-9\-]+$/.test(scriptid) || scriptid.length == 24 && /^S[0-9\-]+$/.test(scriptid))
             return scriptid;
 
         return undefined;
