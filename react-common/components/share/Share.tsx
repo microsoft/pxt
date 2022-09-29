@@ -21,13 +21,15 @@ export interface ShareProps {
     screenshotUri?: string;
     isLoggedIn?: boolean;
     hasProjectBeenPersistentShared?: boolean;
+    anonymousShareByDefault?: boolean;
+    setAnonymousSharePreference?: (anonymousByDefault: boolean) => void;
 
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
 }
 
 export const Share = (props: ShareProps) => {
-    const { projectName, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared } = props;
+    const { projectName, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared, anonymousShareByDefault, setAnonymousSharePreference } = props;
 
     return <div className="project-share">
         <ShareInfo projectName={projectName}
@@ -35,6 +37,8 @@ export const Share = (props: ShareProps) => {
             screenshotUri={screenshotUri}
             simRecorder={simRecorder}
             publishAsync={publishAsync}
-            hasProjectBeenPersistentShared={hasProjectBeenPersistentShared} />
+            hasProjectBeenPersistentShared={hasProjectBeenPersistentShared}
+            anonymousShareByDefault={anonymousShareByDefault}
+            setAnonymousSharePreference={setAnonymousSharePreference} />
     </div>
 }
