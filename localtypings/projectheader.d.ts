@@ -21,6 +21,7 @@ declare namespace pxt.workspace {
         pubCurrent: boolean; // is this exactly pubId, or just based on it
         pubVersions?: PublishVersion[];
         pubPermalink?: string; // permanent (persistent) share ID
+        anonymousSharePreference?: boolean; // if true, default to sharing anonymously even when logged in
         githubId?: string;
         githubTag?: string; // the release tag if any (commit.tag)
         githubCurrent?: boolean;
