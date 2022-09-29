@@ -118,6 +118,61 @@ namespace pxtblockly {
         return canvas.toDataURL();
     }
 
+    export function songToDataURI(song: pxt.assets.music.Song, width: number, height: number, lightMode: boolean, maxMeasures?: number) {
+        const colors = pxt.appTarget.runtime.palette.slice();
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        let context: CanvasRenderingContext2D;
+        if (lightMode) {
+            context = canvas.getContext("2d", { alpha: false });
+            context.fillStyle = "#dedede";
+            context.fillRect(0, 0, width, height);
+        }
+        else {
+            context = canvas.getContext("2d");
+        }
+
+        const trackColors = [
+            5,  // duck
+            11, // cat
+            5,  // dog
+            4,  // fish
+            2,  // car
+            6,  // computer
+            14, // burger
+            2,  // cherry
+            5,  // lemon
+            1,  // explosion
+        ]
+
+        maxMeasures = maxMeasures || song.measures;
+
+        const cellWidth = Math.max(Math.floor(width / (song.beatsPerMeasure * maxMeasures * 2)), 1);
+        const cellsShown = Math.floor(width / cellWidth);
+
+        const cellHeight = Math.max(Math.floor(height / 12), 1);
+        const notesShown = Math.floor(height / cellHeight);
+
+        for (const track of song.tracks) {
+            for (const noteEvent of track.notes) {
+                const col = Math.floor(noteEvent.startTick / (song.ticksPerBeat / 2));
+                if (col > cellsShown) break;
+
+                for (const note of noteEvent.notes) {
+                    const row = 12 - (note % 12);
+                    if (row > notesShown) continue;
+
+                    context.fillStyle = colors[trackColors[track.id || song.tracks.indexOf(track)]];
+                    context.fillRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
+                }
+            }
+        }
+
+        return canvas.toDataURL();
+    }
+
     function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.legacy.LegacyTileInfo) {
         const existing = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE);
 

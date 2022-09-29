@@ -390,6 +390,9 @@ namespace pxtblockly {
                     case pxt.AssetType.Tilemap:
                         dataURI = tilemapToImageURI(this.asset.data, PREVIEW_WIDTH, this.lightMode);
                         break;
+                    case pxt.AssetType.Song:
+                        dataURI = songToDataURI(this.asset.song, 60, 20, this.lightMode);
+                        break;
                 }
 
                 if (dataURI) {
