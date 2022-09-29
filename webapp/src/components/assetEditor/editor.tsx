@@ -168,6 +168,9 @@ export class AssetEditor extends Editor {
                     blocksInfo: this.blocksInfo
                 });
                 break;
+            case pxt.AssetType.Song:
+                fieldView = pxt.react.getFieldEditorView("music-editor", asset as pxt.Song, {});
+                break;
             default:
                 break;
         }

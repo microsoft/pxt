@@ -255,6 +255,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         return pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Image)
             .concat(pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Animation))
+            .concat(pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Song));
     }
 
     updateTemporaryAsset(asset: pxt.Asset) {

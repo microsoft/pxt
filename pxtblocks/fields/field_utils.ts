@@ -285,6 +285,9 @@ namespace pxtblockly {
             case pxt.AssetType.Animation:
                 return getAllFields(workspace, field => field instanceof FieldAnimationEditor && field.isTemporaryAsset())
                     .map(f => (f.ref as unknown as FieldAnimationEditor).getAsset());
+            case pxt.AssetType.Song:
+                return getAllFields(workspace, field => field instanceof FieldMusicEditor && field.isTemporaryAsset())
+                    .map(f => (f.ref as unknown as FieldMusicEditor).getAsset());
 
             default: return [];
         }

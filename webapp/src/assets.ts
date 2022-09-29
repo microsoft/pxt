@@ -48,6 +48,7 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image, temp
         .filter((t: pxt.Tile) => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(compareInternalId);
     const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(toGalleryItem).sort(compareInternalId);
     const animations = getAssetType(pxt.AssetType.Animation).map(toGalleryItem).sort(compareInternalId);
+    const songs = getAssetType(pxt.AssetType.Song).map(toGalleryItem).sort(compareInternalId);
 
     for (const asset of tempAssets) {
         switch (asset.type) {
@@ -63,22 +64,29 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image, temp
             case pxt.AssetType.Tilemap:
                 tilemaps.push(toGalleryItem(asset));
                 break;
+            case pxt.AssetType.Song:
+                songs.push(toGalleryItem(asset));
+                break;
         }
     }
 
     let assets: pxt.Asset[] = [];
     switch (firstType) {
         case pxt.AssetType.Image:
-            assets = images.concat(tiles).concat(animations).concat(tilemaps);
+            assets = images.concat(tiles).concat(animations).concat(tilemaps).concat(songs);
             break;
         case pxt.AssetType.Tile:
-            assets = tiles.concat(images).concat(animations).concat(tilemaps);
+            assets = tiles.concat(images).concat(animations).concat(tilemaps).concat(songs);
             break;
         case pxt.AssetType.Animation:
-            assets = animations.concat(images).concat(tiles).concat(tilemaps);
+            assets = animations.concat(images).concat(tiles).concat(tilemaps).concat(songs);
             break;
         case pxt.AssetType.Tilemap:
-            assets = tilemaps.concat(tiles).concat(images).concat(animations)
+            assets = tilemaps.concat(tiles).concat(images).concat(animations).concat(songs);
+            break;
+        case pxt.AssetType.Song:
+            assets = songs.concat(images).concat(tiles).concat(animations).concat(tilemaps);
+            break;
     }
 
     pxt.tickEvent(gallery ? "assets.gallery" : "assets.update", { count: assets.length });
@@ -102,9 +110,8 @@ export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConv
             asset.framePreviewURIs = asset.frames.map(bitmap => imgConv.convert("data:image/x-mkcd-f," + pxt.sprite.base64EncodeBitmap(bitmap)));
             asset.previewURI = asset.framePreviewURIs[0];
             return asset;
-        case pxt.AssetType.Song: {
+        case pxt.AssetType.Song:
             return asset;
-        }
     }
 }
 
