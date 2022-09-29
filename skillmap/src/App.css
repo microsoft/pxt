@@ -361,7 +361,7 @@ code {
 /* USABILLA */
 .usabilla_live_button_container {
     top: unset !important;
-    bottom: 9rem !important;
+    bottom: 14rem !important;
 }
 
 /** mscc cookie banner. Can be removed once the banner is out of the checked in pxtweb in doccdn */
@@ -406,10 +406,6 @@ code {
 
     .tablet-spacer {
         flex-grow: 1;
-    }
-
-    .usabilla_live_button_container {
-        bottom: 14rem !important;
     }
 }
 

@@ -422,7 +422,7 @@
 
             .simtoolbar, #miniSimOverlay { display: block; }
             .play-button { display: none !important; }
-            .expand-button, .fullscreen-button { display: block !important; }
+            .expand-button, .fullscreen-button, .tutorial.mute-button { display: block !important; }
         }
 
         .tutorial-controls { display: none; }
@@ -457,6 +457,10 @@
 
             .button.hidefullscreen { display: none !important; }
         }
+    }
+
+    &.collapsedEditorTools:not(.fullscreensim) .tab-simulator.tab-content.hidden .simPanel{
+        .fullscreen-button, .tutorial.mute-button { display: none !important; }
     }
 
     #miniSimOverlay {
@@ -550,6 +554,10 @@
         }
         #editorSidebar {
             bottom: 0;
+        }
+
+        .cloudstatusarea .cloudtext {
+            display: none;
         }
     }
     .tutorial-container .tutorial-step-counter {
@@ -867,8 +875,19 @@
 
 .tutorial-video-embed {
     display: flex;
-    align-content: center;
+    align-items: center;
     justify-content: center;
+    flex-direction: column;
+    > button {
+        display: block;
+        margin-top: .5rem;
+        border: solid 1px @tutorialPrimaryColor;
+        color: @tutorialPrimaryColor;
+    }
+}
+
+.tutorial-step-content video {
+    max-width: 100%;
 }
 
 /* Mobile */
