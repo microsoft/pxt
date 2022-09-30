@@ -92,7 +92,7 @@ pre {
 
 /* Main Editor layout */
 #maineditor {
-    left: @simulatorWidth;
+    left: var(--simulator-panel-width);
     right: 0;
     overflow: visible;
 }
@@ -187,9 +187,13 @@ pre {
 #simulator {
     height: 100%;
 }
+
+#editorcontent {
+    --simulator-panel-width: @simulatorWidth;
+}
 #editorSidebar, #downloadArea {
-    min-width: @simulatorWidth;
-    max-width: @simulatorWidth;
+    min-width: var(--simulator-panel-width);
+    max-width: var(--simulator-panel-width);
     left: 0;
 }
 
@@ -1481,7 +1485,7 @@ p.ui.font.small {
     #boardview.headless-sim {
         height: 100%;
         padding: 1rem;
-        width: @simulatorWidth;
+        width: var(--simulator-panel-width);
     }
 }
 
@@ -1895,18 +1899,16 @@ p.ui.font.small {
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
 @media only screen and (max-width: @largestSmallMonitor) {
-    /* Layout */
-    #editorSidebar, #downloadArea {
-        min-width:@simulatorWidthSmall;
-        max-width:@simulatorWidthSmall;
+    #editorcontent {
+        --simulator-panel-width: @simulatorWidthSmall;
     }
 
     #boardview.headless-sim {
-        width: @simulatorWidthSmall;
+        width: var(--simulator-panel-width);
     }
 
     #maineditor {
-        left:@simulatorWidthSmall;
+        left: var(--simulator-panel-width);
     }
 
     /* Help card */

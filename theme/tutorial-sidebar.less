@@ -503,7 +503,7 @@
     #editorSidebar {
         position: relative;
         display: block !important;
-        width: @simulatorWidth;
+        width: var(--simulator-panel-width);
         height: calc(~'100%' - @mainMenuHeight);
         top: @mainMenuHeight;
         left: 0;
@@ -514,7 +514,7 @@
     }
 
     #maineditor {
-        left: @simulatorWidth;
+        left: var(--simulator-panel-width);
     }
 }
 
@@ -564,7 +564,7 @@
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim) {
         #editortools {
-            width: calc(100% - @simulatorWidth);
+            width: calc(100% - var(--simulator-panel-width));
             left: unset;
             right: 0;
         }
@@ -574,6 +574,10 @@
 
         .cloudstatusarea .cloudtext {
             display: none;
+        }
+        #downloadArea {
+            min-width: unset;
+            min-height: unset;
         }
     }
     .tutorial-container .tutorial-step-counter {
