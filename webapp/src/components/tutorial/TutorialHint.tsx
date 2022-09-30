@@ -22,8 +22,8 @@ export function TutorialHint(props: TutorialHintProps) {
     }
 
     return <TutorialCallout className="tutorial-hint"
-            buttonIcon="lightbulb"
-            onClick={onHintClick}>
-                {markdown && <MarkedContent markdown={markdown} unboxSnippets={true} parent={parent} />}
-        </TutorialCallout>
+        buttonIcon="lightbulb"
+        onClick={onHintClick}>
+            {markdown && <MarkedContent className="hint-content" markdown={markdown} unboxSnippets={true} parent={parent} />}
+    </TutorialCallout>
 }
