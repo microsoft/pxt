@@ -1,10 +1,24 @@
-# Microsoft Accounts and MakeCode
+# Online Accounts and MakeCode
 
-**Note**: This feature only available in [**MakeCode Arcade**](https://arcade.makecode.com).
+### ~ hint
 
-## What is a Microsoft Account?
+#### Sign in with MakeCode Arcade
+
+**Note**: This feature is only available in [**MakeCode Arcade**](https://arcade.makecode.com).
+
+### ~
+
+## What is a Online Account?
+
+An online account is a user account with a provider of online services such as Microsoft or Google. MakeCode allows you to sign in using an account with either Microsoft or Google.
+
+### Microsoft Account
 
 A Microsoft Account, or MSA, is the personal user account you create when you want to sign into Microsoft services like outlook.com, Xbox, Skype, etc. Read more [here](https://aka.ms/AAdd6f8). We also support Microsoft 365 accounts that you can use from school or your workplace.
+
+### Google Account
+
+Google accounts are for sign-in access to Google's services such as GMail, YouTube, and more. See [Create a Google Account](https://support.google.com/accounts/answer/27441) for more information.
 
 ## How does it work in MakeCode?
 
