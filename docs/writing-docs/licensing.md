@@ -1,6 +1,5 @@
 # Licensing
-
-When creating content related to use of MakeCode, we strongly recommend that a you include with it a standard license. This includes content that external or contributed but served from a MakeCode website. Related content is commonly in the form of, but not limited to, these:
+WWhen creating content related to use of MakeCode, we strongly recommend that a you include with it a standard license. This includes content that external or contributed but served from a MakeCode website. Related content is commonly in the form of, but not limited to, these:
 
 * [Tutorials](/writing-docs/tutorials)
 * MakeCode projects and [extensions](/extensions) repositories on GitHub
@@ -60,3 +59,4 @@ SOFTWARE.
 ```
 
 This site, https://mit-license.org/, always contains the "official" text for the license.
+.org/, always contains the "official" text for the license.
