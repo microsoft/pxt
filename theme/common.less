@@ -204,6 +204,20 @@ pre {
     width: 100%;
     background-color: @filelistBackgroundColor;
     z-index: @filelistZIndex;
+
+    &::after {
+        content: "";
+        background-color: darken(desaturate(@editorToolsBackground, 60%), 10%);
+        position: absolute;
+        right: 0;
+        width: 4px;
+        height: 100%;
+        cursor: col-resize;
+    }
+}
+
+.cursor-resize {
+    cursor: col-resize !important;
 }
 
 .invisibleScrollbar::-webkit-scrollbar {
