@@ -1,23 +1,39 @@
-import { GameMode, GameStatus, GameInfo } from "../types"
+import {
+    AppMode,
+    defaultAppMode,
+    GameState,
+    ToastWithId,
+    Presence,
+    defaultPresence,
+} from "../types"
 
 export type AppState = {
+    appMode: AppMode
     signedIn: boolean
     profile: pxt.auth.UserProfile | undefined
-    gameMode: GameMode
     gameId: string | undefined
-    gameStatus: GameStatus
     joinCode: string | undefined
-    gameInfo: GameInfo | undefined
-    errorMessage: string | undefined
+    gameState: GameState | undefined
+    toasts: ToastWithId[]
+    presence: Presence
+    reactions: {
+        [userId: string]:
+            | {
+                  id: string
+                  index: number
+              }
+            | undefined
+    }
 }
 
 export const initialAppState: AppState = {
+    appMode: { ...defaultAppMode },
     signedIn: false,
     profile: undefined,
-    gameMode: "none",
     gameId: undefined,
-    gameStatus: "init",
     joinCode: undefined,
-    gameInfo: undefined,
-    errorMessage: undefined
+    gameState: undefined,
+    toasts: [],
+    presence: { ...defaultPresence },
+    reactions: {},
 }

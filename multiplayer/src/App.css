@@ -44,6 +44,7 @@
   --high-contrast-hyperlink: #807FFF;
 }
 
+@import "./arcade.css";
 
 body {
   position: relative;
@@ -72,26 +73,4 @@ code {
 .app-container {
   height: 100%;
   width: 100%;
-}
-
-.app-content {
-  padding-top: 3rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.content-row {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.motd-button {
-  width: fit-content;
-}
-
-.auth-button {
-  width: fit-content;
 }

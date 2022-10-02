@@ -1,23 +1,23 @@
-import { useCallback, useContext, useMemo, useState } from "react";
-import { AppStateContext } from "./state/Context";
-import SignInPage from "./components/SignInContainer";
-import SignedInPage from "./components/SignedInContainer";
+import { useCallback, useContext, useMemo, useState } from "react"
+import { AppStateContext } from "./state/AppStateContext"
+import SignInPage from "./components/SignInPage"
+import SignedInPage from "./components/SignedInPage"
+import Toast from "./components/Toast"
 
 // eslint-disable-next-line import/no-unassigned-import
-import "./App.css";
-// eslint-disable-next-line import/no-unassigned-import
-import "./arcade.css";
+import "./App.css"
 
 function App() {
-    const { state, dispatch } = useContext(AppStateContext);
-    const { signedIn } = state;
+    const { state } = useContext(AppStateContext)
+    const { signedIn } = state
 
     return (
-        <div className={`app-container ${pxt.appTarget.id}`}>
+        <div className={`${pxt.appTarget.id}`}>
             {!signedIn && <SignInPage />}
             {signedIn && <SignedInPage />}
+            <Toast />
         </div>
-    );
+    )
 }
 
-export default App;
+export default App
