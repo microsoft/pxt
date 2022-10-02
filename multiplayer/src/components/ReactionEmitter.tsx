@@ -90,8 +90,7 @@ export default function Render(props: {
                 scale: 1,
                 speed:
                     def.config.minSpeed +
-                    Math.random() *
-                        (def.config.maxSpeed - def.config.minSpeed),
+                    Math.random() * (def.config.maxSpeed - def.config.minSpeed),
             })
             const particle: Particle = {
                 id: reaction.id,
