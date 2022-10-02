@@ -23,6 +23,7 @@ class GameClient {
         try {
             this.sock?.close()
             this.sock = undefined
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             this.heartbeatTimer && clearInterval(this.heartbeatTimer)
         } catch (e) {}
     }
@@ -233,6 +234,7 @@ class GameClient {
 let gameClient: GameClient | undefined
 
 export async function hostGameAsync(shareCode: string): Promise<GameInfo> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     gameClient && gameClient.destroy()
     gameClient = new GameClient()
     const gameInfo = await gameClient.hostGameAsync(shareCode)
@@ -240,6 +242,7 @@ export async function hostGameAsync(shareCode: string): Promise<GameInfo> {
 }
 
 export async function joinGameAsync(joinCode: string): Promise<GameInfo> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     gameClient && gameClient.destroy()
     gameClient = new GameClient()
     const gameInfo = await gameClient.joinGameAsync(joinCode)
@@ -252,6 +255,7 @@ export async function startGameAsync() {
 
 export async function leaveGameAsync() {
     await gameClient?.leaveGameAsync()
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     gameClient && gameClient.destroy()
     gameClient = undefined
 }
@@ -261,6 +265,7 @@ export async function sendReactionAsync(index: number) {
 }
 
 export function destroy() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     gameClient && gameClient.destroy()
     gameClient = undefined
 }
