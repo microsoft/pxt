@@ -307,7 +307,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             .forEach((inlineVideo: HTMLElement) => {
 
                 let player = MediaPlayer().create()
-                player.initialize(inlineVideo, inlineVideo.getAttribute("src"));
+                player.initialize(inlineVideo, inlineVideo.getAttribute("src"), /** autoPlay **/ false);
                 const src = inlineVideo.getAttribute('src');
                 let url = new URL(src);
                 pxt.tickEvent("video.loaded", {
