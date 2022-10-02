@@ -307,7 +307,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             .forEach((inlineVideo: HTMLElement) => {
 
                 let player = MediaPlayer().create()
-                player.initialize(inlineVideo, inlineVideo.getAttribute("src"));
+                player.initialize(inlineVideo, inlineVideo.getAttribute("src"), /** autoPlay **/ false);
                 const src = inlineVideo.getAttribute('src');
                 let url = new URL(src);
                 pxt.tickEvent("video.loaded", {
@@ -324,6 +324,19 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                     }
                 )
+                if (player.getVideoElement()?.requestPictureInPicture) {
+                    const pipButton = document.createElement("button");
+                    inlineVideo.parentElement.appendChild(pipButton);
+                    pipButton.addEventListener("click", () => {
+                        pxt.tickEvent("video.pip.requested");
+                        player.getVideoElement().requestPictureInPicture();
+                    });
+                    pipButton.addEventListener("keydown", e => fireClickOnEnter(e as any));
+                    pipButton.className = "common-button";
+                    pipButton.textContent = lf("Pop out video");
+                    pipButton.ariaLabel = lf("Open video in picture-in-picture mode");
+                    pipButton.title = pipButton.ariaLabel;
+                }
 
                 player.on(dashjs.MediaPlayer.events.PLAYBACK_STARTED,
                     (e: dashjs.PlaybackStartedEvent) => {
@@ -370,8 +383,15 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             }).filter(el => !!el);
         compiler.getBlocksAsync()
             .then(blocksInfo => {
+                const namespaceNames = Object.keys(blocksInfo.apis.byQName)
+                    .filter(qname => blocksInfo.apis.byQName[qname]?.kind === pxtc.SymbolKind.Module);
                 for (const inlineBlock of inlineBlocks) {
                     let ns = inlineBlock.getAttribute("data-ns");
+                    // fix capitalization issues, e.g. ``||math: instead of ``||Math:
+                    const exactNamespaceName = namespaceNames.find(el => ns.toLowerCase() == el.toLowerCase());
+                    if (exactNamespaceName && (ns !== exactNamespaceName)) {
+                        ns = exactNamespaceName;
+                    }
                     const bi = blocksInfo.apis.byQName[ns];
                     let color = bi?.attributes?.color;
                     if (/^logic$/i.test(ns)) {
@@ -387,6 +407,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         continue;
                     }
 
+                    const isAdvanced = bi?.attributes?.advanced;
                     inlineBlock.classList.add("clickable");
                     inlineBlock.tabIndex = 0;
                     inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);
@@ -396,7 +417,18 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         inlineBlock.style.borderColor = pxt.toolbox.fadeColor(color, 0.1, false);
                     }
                     inlineBlock.addEventListener("click", e => {
-                        const toolboxRow = document.querySelector<HTMLDivElement>(`.blocklyTreeRow[data-ns="${ns}"]`);
+                        // need to filter out editors that are currently hidden as we leave toolboxes in dom
+                        const editorSelector = `#maineditor > div:not([style*="display:none"]):not([style*="display: none"])`;
+
+                        if (isAdvanced) {
+                            // toggle advanced open first if it is collapsed.
+                            const advancedSelector = `${editorSelector} .blocklyTreeRow[data-ns="advancedcollapsed"]`;
+                            const advancedRow = document.querySelector<HTMLDivElement>(advancedSelector);
+                            advancedRow?.click();
+                        }
+
+                        const toolboxSelector = `${editorSelector} .blocklyTreeRow[data-ns="${ns}"]`;
+                        const toolboxRow = document.querySelector<HTMLDivElement>(toolboxSelector);
                         toolboxRow?.click();
                     });
                     inlineBlock.addEventListener("keydown", e => fireClickOnEnter(e as any))

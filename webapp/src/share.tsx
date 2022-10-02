@@ -174,9 +174,17 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             uri = await this.props.parent.requestScreenshotAsync();
         }
 
-        this.setState({
-            screenshotUri: uri
-        });
+        if (!uri) {
+            setTimeout(() => {
+                this.renderInitialScreenshotAsync();
+            }, 500)
+        }
+        else {
+            this.setState({
+                screenshotUri: uri
+            });
+        }
+
     }
 
     renderCore() {
@@ -188,8 +196,12 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
             && (simScreenshot || simGif);
 
+        const hasProjectBeenPersistentShared = parent.hasHeaderBeenPersistentShared();
+
         const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) =>
             parent.publishAsync(name, screenshotUri, forceAnonymous)
+
+        const setSharePreference = (anonymousByDefault: boolean) => parent.saveSharePreferenceForHeaderAsync(anonymousByDefault)
 
         return visible
             ? <Modal
@@ -201,7 +213,10 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     screenshotUri={screenshotUri}
                     isLoggedIn={hasIdentity}
                     publishAsync={publishAsync}
-                    simRecorder={SimRecorderImpl} />
+                    hasProjectBeenPersistentShared={hasProjectBeenPersistentShared}
+                    simRecorder={SimRecorderImpl}
+                    anonymousShareByDefault={parent.getSharePreferenceForHeader()}
+                    setAnonymousSharePreference={setSharePreference} />
             </Modal>
             : <></>
     }

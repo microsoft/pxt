@@ -32,6 +32,8 @@
 
     .project-share-content {
         flex-grow: 1;
+        display: flex;
+        flex-direction: column;
 
         .name-input .common-input-group {
             height: 3rem;
@@ -77,6 +79,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-direction: column;
+        gap: 0.5rem;
 
         .common-spinner {
             width: 5rem;
@@ -103,6 +107,13 @@
     .common-spinner {
         display: inline-block;
     }
+}
+
+.project-share-publish-actions {
+    flex-grow: 1;
+    justify-content: end;
+    display: flex;
+    align-items: end;
 }
 
 
@@ -176,12 +187,14 @@
         display: flex;
         flex-direction: column;
         padding: 0 4rem;
+        height: 100%;
 
         .thumbnail-preview {
             display: flex;
             flex-direction: column;
             flex-grow: 1;
             align-items: center;
+            justify-content: center;
 
             & > div {
                 padding-bottom: 1rem;
@@ -199,6 +212,8 @@
         .thumbnail-actions {
             display: flex;
             flex-direction: row;
+            align-items: end;
+            justify-content: end;
         }
     }
 }
@@ -231,6 +246,13 @@
 
 .gif-recorder-actions {
     display: flex;
+    width: 100%;
+
+    .common-button {
+        padding-left: 0;
+        padding-right: 0;
+        flex: 1;
+    }
 }
 
 .thumbnail-image,

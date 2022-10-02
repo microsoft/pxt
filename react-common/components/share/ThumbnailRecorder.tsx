@@ -37,6 +37,8 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     const [ recorderRef, setRecorderRef ] = React.useState<SimRecorderRef>(undefined);
     const [ recorderState, setRecorderState ] = React.useState<SimRecorderState>("default");
 
+    let simContainer: HTMLDivElement;
+
     React.useEffect(() => {
         if (!recorderRef) return undefined;
         recorderRef.addStateChangeListener(setRecorderState);
@@ -68,18 +70,34 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
         }
         else if (recorderRef.state === "default") {
             recorderRef.startRecordingAsync();
+            if (simContainer) {
+                const iframe = simContainer.querySelector("iframe");
+                if (iframe) iframe.focus();
+            }
         }
     }
-
-    const targetTheme = pxt.appTarget.appTheme;
 
     const handleSimRecorderRef = (ref: SimRecorderRef) => {
         setRecorderRef(ref);
     }
 
+    const handleSimRecorderContainerRef = (ref: HTMLDivElement) => {
+        if (ref) simContainer = ref;
+    }
+
+    const targetTheme = pxt.appTarget.appTheme;
     const screenshotLabel = lf("Screenshot ({0})", targetTheme.simScreenshotKey);
     const startRecordingLabel = lf("Record ({0})", targetTheme.simGifKey);
-    const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey) ;
+    const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey);
+    const renderingLabel = lf("Rendering...");
+
+    let recordLabel: string;
+
+    switch (recorderState) {
+        case "default": recordLabel = startRecordingLabel; break;
+        case "recording": recordLabel = stopRecordingLabel; break;
+        case "rendering": recordLabel = renderingLabel; break;
+    }
 
     const thumbnailLabel = uri ? lf("New Thumbnail") : lf("Current Thumbnail");
     const classes = classList(
@@ -90,19 +108,22 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     return <>
         <div className={classes}>
             <div className="gif-recorder-sim">
-                <div className="gif-recorder-sim-embed">
+                <div className="gif-recorder-sim-embed" ref={handleSimRecorderContainerRef}>
                     {React.createElement(simRecorder, { onSimRecorderInit: handleSimRecorderRef })}
                 </div>
                 <div className="gif-recorder">
                     <div className="gif-recorder-actions">
+                        {recorderState === "default" &&
+                            <Button className="teal inverted"
+                                title={screenshotLabel}
+                                label={screenshotLabel}
+                                leftIcon="fas fa-camera"
+                                onClick={handleScreenshotClick} />
+                        }
                         <Button className="teal inverted"
-                            title={screenshotLabel}
-                            label={screenshotLabel}
-                            leftIcon="fas fa-camera"
-                            onClick={handleScreenshotClick} />
-                        <Button className="teal inverted"
-                            title={recorderState === "recording" ? stopRecordingLabel : startRecordingLabel}
-                            label={recorderState === "recording" ? stopRecordingLabel : startRecordingLabel}
+                            disabled={recorderState === "rendering"}
+                            title={recordLabel}
+                            label={recordLabel}
                             leftIcon={`fas fa-${recorderState === "recording" ? "square" : "circle"}`}
                             onClick={handleRecordClick} />
                         <div className="spacer mobile-only" />
@@ -124,24 +145,33 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
                                 label={lf("Try again?")}
                                 onClick={() => setUri(undefined)} />
                         </div>
-                        <div className="thumbnail-image">
-                            {(uri || initialUri)
+                        <div className="project-share-thumbnail">
+                            {recorderState !== "default" &&
+                                <div className="project-thumbnail-placeholder">
+                                    <div className="common-spinner" />
+                                    <div className="project-thumbnail-label">
+                                        {recorderState === "recording" ? lf("Recording...") : lf("Rendering GIF...")}
+                                    </div>
+                                </div>
+                            }
+                            { recorderState === "default" &&
+                                ((uri || initialUri)
                                 ? <img src={uri || initialUri} />
-                                : <div className="thumbnail-placeholder" />
+                                : <div className="thumbnail-placeholder" />)
                             }
                         </div>
                     </div>
                 </div>
                 <div className="thumbnail-actions">
-                    {uri &&
+                    <Button title={lf("Cancel")}
+                        label={lf("Cancel")}
+                        onClick={onCancel} />
+                    {uri && recorderState === "default" &&
                         <Button className="primary"
                             title={lf("Apply")}
                             label={lf("Apply")}
                             onClick={handleApplyClick} />
                     }
-                    <Button title={lf("Cancel")}
-                        label={lf("Cancel")}
-                        onClick={onCancel} />
                 </div>
             </div>
         </div>

@@ -838,6 +838,14 @@
         background-color: @HCbackground;
         color: @HCtextColor;
 
+        .hint-title {
+            margin: 0;
+            > span {
+                background-color: @HCbackground;
+                color: @HCtextColor;
+            }
+        }
+
         &:before {
             border-right-color: @HCtextColor;
         }
@@ -872,6 +880,12 @@
         .tab-badge {
             display: none;
         }
+    }
+
+    &.tabTutorial details {
+        background-color: @HCbackground !important;
+        border: 2px solid @HCtextColor !important;
+        color: @HCtextColor !important;
     }
 
     .ui.label {

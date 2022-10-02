@@ -41,10 +41,13 @@ export function TutorialCallout(props: TutorialCalloutProps) {
         toggleCallout(e);
     }
 
+    const buttonTitle = lf("Click to show a hint!");
     return <div className={className}>
         <Button icon={buttonIcon}
             text={buttonLabel}
             className="tutorial-callout-button"
+            title={buttonTitle}
+            ariaLabel={buttonTitle}
             disabled={!children}
             onClick={children ? handleButtonClick : undefined} />
         {visible && <div className={`tutorial-callout no-select`} onClick={captureEvent}>
