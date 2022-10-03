@@ -49,11 +49,9 @@ export default function Render() {
                     </div>
                 )}
                 {netMode === "connecting" && (
-                    <>
-                        <div className="text-lg font-bold mt-5">
-                            {lf("Connecting")}
-                        </div>
-                    </>
+                    <div className="text-lg font-bold mt-5">
+                        {lf("Connecting")}
+                    </div>
                 )}
                 {netMode === "connected" && (
                     <div className="flex flex-col gap-1">
