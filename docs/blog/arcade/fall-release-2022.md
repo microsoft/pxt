@@ -8,27 +8,28 @@ More ways to Sign In
 
 We heard you loud and clear! With many students and teachers using Google accounts, we made it easier to sign in and save your work by supporting Google email accounts natively.
 
-<SignInButton.png>
+![Sign-in Button](/static/blog/arcade/fall-release-2022/sign-in-button.png)
 
-<SignInDialog.png>
+
+![Sign-in Dialog](/static/blog/arcade/fall-release-2022/sign-in-dialog.png)
 
 Improved Sharing
 
 One of the best things about MakeCode Arcade is being able to share your games with friends and family to play and compete for the high score! To make the sharing experience even better, we’ve updated the Share Project window to make it simpler and easier for you to create images or record animations of your game to share.
 
-<ShareDialog1.png>
+![Share Dialog type 1](/static/blog/arcade/fall-release-2022/share-dialog1.png)
 
 And we also added a few new ways to share your MakeCode Arcade games to Teams, Google Classroom, WhatsApp and more!
 
-<ShareDialog2.png>
+![Share Dialog type 2](/static/blog/arcade/fall-release-2022/share-dialog2.png)
 
 For logged-in users, we’ve also added an option to use the same Share link for your project, so you don’t have to create a different link every time you want to publish a change.
 
-<ShareDialog3.png>
+![Share Dialog type 3](/static/blog/arcade/fall-release-2022/share-dialog3.png)
 
 You’ll notice that these links look a little different from the normal share links – they all start with an ‘S’.
 
-<ShareDialog4.png>
+![Share Dialog type 4](/static/blog/arcade/fall-release-2022/share-dialog4.png)
 
 Easier to follow Tutorials
 
@@ -38,39 +39,39 @@ Read, Code & Play!
 
 It’s important for students to immediately see the results of their code and get that instant feedback. We made the Game Window larger so students could more easily test and debug their games while coding and reading along with the tutorial instructions.
 
-<GameWindow.png>
+![Game Window](/static/blog/arcade/fall-release-2022/game-window.png)
 
 Navigation controls
 
 We also made the Tutorial steps and navigation controls easier to find so students can see their progress at a glance and understand how to move to the next step.
 
-<TutorialPane.png>
+![Tutorial Pane](/static/blog/arcade/fall-release-2022/tutorial-pane.png)
 
 Finding the right block
 
 There are a lot of blocks of code in MakeCode Arcade! And we noticed that sometimes it can be challenging, especially for beginners, to find the right block. So we’ve added the ability to click on a block name in the tutorial instructions to open the correct Toolbox drawer. For some of our beginner tutorials, we’ve also included the image of the block right in the tutorial pane, so there’s no guesswork! And we brought back the Toolbox Search bar so students can search for block names.
 
-<Toolbox.png>
+![Toolbox](/static/blog/arcade/fall-release-2022/toolbox.png)
 
 Video support
 
 Students love learning from watching videos. So we’re very excited to now be able to support video files in our tutorials.
 
-<TutorialVideo.png>
+![Tutorial Video](/static/blog/arcade/fall-release-2022/tutorial-video.png)
 
 Custom blocks in Toolbox
 
 This is a feature for tutorial authors to allow the option for displaying custom blocks with default values in the Toolbox. This makes tutorial steps much shorter since students don’t have to configure all parameters, and authors can focus instructions on teaching core computing concepts. See the “Reconfiguring blocks in the toolbox” (https://makecode.com/writing-docs/tutorials/basics) section for more on how to use custom blocks in your tutorials.
 
-<ToolboxCustomBlocks.png>
+![Toolbox custom blocks](/static/blog/arcade/fall-release-2022/toolbox-custom-blocks.png)
 
 New Play Sound block
 
 Games are always better with cool sounds! So we’ve brought over our custom sound effect editor from the micro:bit. With this new Play Sound block, students can control the duration, volume, frequency and add sound waves to create their own custom “zaps”, “whizzes”, and “thwaps” to add to their games!
 
-<PlaySoundBlock.png>
+![Play Sound block](/static/blog/arcade/fall-release-2022/play-sound-block.png)
 
-<PlaySoundEditor.png>
+![Play Sound editor](/static/blog/arcade/fall-release-2022/play-sound-editor.png)
 
 Performance & Reliability
 
@@ -80,21 +81,21 @@ Extensions
 
 We have such a great ecosystem of extensions for MakeCode Arcade – things like storytelling blocks, background scrolling, and 3D raycasting. We made it much easier to find the extension gallery by moving it up in the toolbox, and we also added some tags to help filter and find the extension you need.
 
-<ExtensionToolbox.png>
+![Extension Toolbox](/static/blog/arcade/fall-release-2022/extension-toolbox.png)
 
-<ExtensionGallery.gif>
+![Extension Gallery](/static/blog/arcade/fall-release-2022/extension-gallery.gif)
 
 Workspace Search
 
 If you have a large program, it can be time consuming scrolling around, looking for that function or variable on your workspace. We’ve added the ability to search for blocks on your workspace by pressing Ctrl+f or right-clicking to open the context menu and selecting Find.
 
-<WorkspaceSearch.png>
+![Extension Toolbox](/static/blog/arcade/fall-release-2022/workspace-search.png)
 
 Microsoft App
 
 For the folks who prefer apps over browser tabs, we do have a MakeCode Arcade Windows app (https://apps.microsoft.com/store/detail/makecode-arcade/9NWH29B68GTH) available in the Microsoft Store.
 
-<MSStore.png>
+![MS Store page](/static/blog/arcade/fall-release-2022/ms-store.png)
 
 Enjoy the Update!
 
@@ -104,4 +105,4 @@ And of course, as always, if you find any issues, or have suggestions for improv
 
 Happy Making and Coding!
 
-̶ The MakeCode Team
+̶- The MakeCode Team
