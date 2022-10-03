@@ -1123,6 +1123,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--multiplayer") {
+            sendFile(path.join(publicDir, 'multiplayer.html'));
+            return
+        }
+
         if (/\/-[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return
