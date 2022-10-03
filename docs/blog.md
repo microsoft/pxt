@@ -1,12 +1,20 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade Fall Release](/blog/arcade/fall-release-2022)
+
+October 3rd, 2022 by [Jaqster](https://github.com/jaqster)
+
+The [MakeCode Arcade](https://arcade.makecode.com) Fall Release is here! We wanted to get an update out sooner, but we couldn't resist adding more and more things...
+
+**[Continue reading this blog post](/blog/arcade/fall-release-2022)**
+
 ## [MakeCode Translation Tips and Tricks](/blog/localization/tips-and-tricks)
 
 September 19th, 2022 by [anzhou5](https://github.com/anzhou5)
 
 Language translation for MakeCode is possible thanks to an amazing community of volunteer translators! If you would like to get involved or want to learn more about translating MakeCode...
 
-**[Continue reading this blog post](/blog/localization/tip-and-tricks)
+**[Continue reading this blog post](/blog/localization/tip-and-tricks)**
 
 ## [MakeCode Minecraft 2022 Update](/blog/minecraft/2022-release)
 
