@@ -16,7 +16,8 @@ export interface InputProps extends ControlProps {
     autoComplete?: boolean;
     selectOnClick?: boolean;
     treatSpaceAsEnter?: boolean;
-    handleInputRef?: (ref: HTMLInputElement) => void;
+    handleInputRef?: React.RefObject<HTMLInputElement> | ((ref: HTMLInputElement) => void);
+    preserveValueOnBlur?: boolean;
 
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
@@ -46,7 +47,8 @@ export const Input = (props: InputProps) => {
         onEnterKey,
         onIconClick,
         onBlur,
-        handleInputRef
+        handleInputRef,
+        preserveValueOnBlur
     } = props;
 
     const [value, setValue] = React.useState(undefined);
@@ -85,7 +87,9 @@ export const Input = (props: InputProps) => {
         if (onBlur) {
             onBlur(value);
         }
-        setValue(undefined);
+        if (!preserveValueOnBlur) {
+            setValue(undefined);
+        }
     }
 
     return (

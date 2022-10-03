@@ -261,6 +261,10 @@ function updateAuthcodeStrings() {
     return buildStrings("built/authcode-strings.json", ["authcode/src"], true);
 }
 
+function updateMultiplayerStrings() {
+    return buildStrings("built/multiplayer-strings.json", ["multiplayer/src"], true);
+}
+
 // TODO: Copied from Jakefile; should be async
 function buildStrings(out, rootPaths, recursive) {
     let errCnt = 0;
@@ -653,13 +657,46 @@ const copyAuthcodeHtml = () => rimraf("webapp/public/authcode.html")
 const authcode = gulp.series(cleanAuthcode, buildAuthcode, gulp.series(copyAuthcodeCss, copyAuthcodeJs, copyAuthcodeHtml));
 
 /********************************************************
+                      Multiplayer
+*********************************************************/
+
+const multiplayerRoot = "multiplayer";
+const multiplayerOut = "built/web/multiplayer";
+
+const cleanMultiplayer = () => rimraf(multiplayerOut);
+
+const npmBuildMultiplayer = () => exec("npm run build", true, { cwd: multiplayerRoot });
+
+const buildMultiplayer = async () => {
+    try {
+        await npmBuildMultiplayer();
+    }
+    finally {
+    }
+}
+
+const copyMultiplayerCss = () => gulp.src(`${multiplayerRoot}/build/static/css/*`)
+    .pipe(gulp.dest(`${multiplayerOut}/css`));
+
+const copyMultiplayerJs = () => gulp.src(`${multiplayerRoot}/build/static/js/*`)
+    .pipe(gulp.dest(`${multiplayerOut}/js`));
+
+const copyMultiplayerHtml = () => rimraf("webapp/public/multiplayer.html")
+    .then(() => gulp.src(`${multiplayerRoot}/build/index.html`)
+                    .pipe(replace(/="\/static\//g, `="/blb/multiplayer/`))
+                    .pipe(concat("multiplayer.html"))
+                    .pipe(gulp.dest("webapp/public")));
+
+const multiplayer = gulp.series(cleanMultiplayer, buildMultiplayer, gulp.series(copyMultiplayerCss, copyMultiplayerJs, copyMultiplayerHtml));
+
+/********************************************************
                  Tests and Linting
 *********************************************************/
 
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
-        "docfiles/pxtweb", "skillmap", "authcode", "docs/static/streamer"].map(dirname =>
+        "docfiles/pxtweb", "skillmap", "authcode", "multiplayer", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
@@ -738,9 +775,12 @@ function testTask(testFolder, testFile) {
 }
 
 const buildAll = gulp.series(
-    updatestrings,
-    updateSkillMapStrings,
-    updateAuthcodeStrings,
+    gulp.parallel(
+        updatestrings,
+        updateSkillMapStrings,
+        updateAuthcodeStrings,
+        updateMultiplayerStrings,
+    ),
     copyTypescriptServices,
     copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
@@ -753,8 +793,7 @@ const buildAll = gulp.series(
     reactCommon,
     reactCommonPackageJson,
     gulp.parallel(buildcss, buildSVGIcons),
-    skillmap,
-    authcode,
+    gulp.parallel(skillmap, authcode, multiplayer),
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
@@ -799,6 +838,7 @@ exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
 exports.skillmap = skillmap;
 exports.authcode = authcode;
+exports.multiplayer = multiplayer;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.cli = gulp.series(

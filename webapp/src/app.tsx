@@ -4023,6 +4023,16 @@ export class ProjectView
         return !!this.state.header?.pubPermalink;
     }
 
+    getSharePreferenceForHeader() {
+        return this.state.header?.anonymousSharePreference;
+    }
+
+    async saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean) {
+        if (!this.state.header) return;
+        this.state.header.anonymousSharePreference = anonymousByDefault;
+        await workspace.saveAsync(this.state.header);
+    }
+
     async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined> {
         return cloud.saveLocalProjectsToCloudAsync(headerIds);
     }

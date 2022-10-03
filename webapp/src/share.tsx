@@ -201,6 +201,8 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) =>
             parent.publishAsync(name, screenshotUri, forceAnonymous)
 
+        const setSharePreference = (anonymousByDefault: boolean) => parent.saveSharePreferenceForHeaderAsync(anonymousByDefault)
+
         return visible
             ? <Modal
                 title={lf("Share Project")}
@@ -212,7 +214,9 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     isLoggedIn={hasIdentity}
                     publishAsync={publishAsync}
                     hasProjectBeenPersistentShared={hasProjectBeenPersistentShared}
-                    simRecorder={SimRecorderImpl} />
+                    simRecorder={SimRecorderImpl}
+                    anonymousShareByDefault={parent.getSharePreferenceForHeader()}
+                    setAnonymousSharePreference={setSharePreference} />
             </Modal>
             : <></>
     }

@@ -139,9 +139,12 @@ export function TutorialContainer(props: TutorialContainerProps) {
             title: lf("Launch Immersive Reader")
         })
     }
+
+    const doneButtonLabel = lf("Finish the tutorial.");
+    const nextButtonLabel = lf("Go to the next step of the tutorial.");
     const nextButton = showDone
-        ? <Button icon="check circle" text={lf("Done")} onClick={onTutorialComplete} />
-        : <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
+        ? <Button icon="check circle" title={doneButtonLabel} ariaLabel={doneButtonLabel} text={lf("Done")} onClick={onTutorialComplete} />
+        : <Button icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
 
     const stepCounter = <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />;
     const hasHint = !!hintMarkdown;
