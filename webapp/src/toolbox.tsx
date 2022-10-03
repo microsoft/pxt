@@ -492,6 +492,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         let index = 0;
         let topRowIndex = 0; // index of top-level rows for animation
+        const advancedButtonState = showAdvanced ? "advancedexpanded" : "advancedcollapsed";
         return <div ref={this.handleRootElementRef} className={classes} id={`${editorname}EditorToolbox`}>
             <ToolboxStyle categories={this.items} />
             {showToolboxLabel && <div className="toolbox-title">{lf("Toolbox")}</div>}
@@ -509,7 +510,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                         </CategoryItem>
                     ))}
                     {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(showAdvanced ? 'advancedexpanded' : 'advancedcollapsed') }} onCategoryClick={this.advancedClicked} topRowIndex={topRowIndex++} /> : undefined}
+                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(advancedButtonState), advancedButtonState: advancedButtonState }} onCategoryClick={this.advancedClicked} topRowIndex={topRowIndex++} /> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
@@ -683,6 +684,8 @@ export interface ToolboxCategory {
     customClick?: (theEditor: editor.ToolboxEditor) => boolean;
     advanced?: boolean; /*@internal*/
     allowDelete?: boolean;
+    // for advanced button, the current state of the button
+    advancedButtonState?: "advancedexpanded" | "advancedcollapsed";
 }
 
 export interface TreeRowProps {
@@ -762,7 +765,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
 
     renderCore() {
         const { selected, onClick, onKeyDown, isRtl, topRowIndex, hasDeleteButton, onDeleteClick } = this.props;
-        const { nameid, subns, name, icon } = this.props.treeRow;
+        const { nameid, advancedButtonState, subns, name, icon } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         const metaColor = this.getMetaColor();
 
@@ -825,11 +828,12 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             iconContent = undefined;
         }
         const rowTitle = name ? name : Util.capitalize(subns || nameid);
+        const dataNs = advancedButtonState || nameid;
 
         const extraIconClass = !subns && Object.keys(this.brandIcons).includes(icon) ? 'brandIcon' : ''
         return <div role="button" ref={this.handleTreeRowRef} className={treeRowClass}
             style={treeRowStyle} tabIndex={0}
-            data-ns={nameid}
+            data-ns={dataNs}
             aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
             onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>

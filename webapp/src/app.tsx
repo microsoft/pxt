@@ -216,7 +216,7 @@ export class ProjectView
             && ((pxt.options.light
                 ? !!pxt.appTarget.simulator.autoRunLight
                 : !!pxt.appTarget.simulator.autoRun)
-                || !!pxt.appTarget.simulator.emptyRunCode);
+                || (this.firstRun && !!pxt.appTarget.simulator.emptyRunCode));
     }
 
     private initSimulatorMessageHandlers() {
@@ -4023,6 +4023,16 @@ export class ProjectView
         return !!this.state.header?.pubPermalink;
     }
 
+    getSharePreferenceForHeader() {
+        return this.state.header?.anonymousSharePreference;
+    }
+
+    async saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean) {
+        if (!this.state.header) return;
+        this.state.header.anonymousSharePreference = anonymousByDefault;
+        await workspace.saveAsync(this.state.header);
+    }
+
     async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined> {
         return cloud.saveLocalProjectsToCloudAsync(headerIds);
     }
@@ -4525,6 +4535,9 @@ export class ProjectView
                         return this.loadHeaderAsync(curr);
                     }).finally(() => {
                         core.hideLoading("leavingtutorial")
+                        if (this.state.collapseEditorTools) {
+                            this.expandSimulator();
+                        }
                         this.postTutorialProgress();
                     })
                     .then(() => {

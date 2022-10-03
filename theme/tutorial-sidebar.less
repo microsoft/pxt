@@ -11,6 +11,8 @@
 
 @tutorialLinkColor: #0064BF;
 @tutorialLinkHoverColor: #003C94;
+@tutorialHintForegroundColor: #1A6771;
+@tutorialHintBackgroundColor: #CEFFF5;
 
 @tutorialTabletButtonColor: #f3f3f3;
 @tutorialTabletSimulatorButtonColor: rgba(0, 0, 0, 0.05);
@@ -278,6 +280,18 @@
         bottom: 5rem;
         left: 3rem;
         max-width: 50%;
+        border-color: @tutorialHintBackgroundColor;
+
+        .hint-title {
+            margin-top: -.75rem;
+            > span {
+                font-weight: 700;
+                background-color: @tutorialHintBackgroundColor;
+                color: @tutorialHintForegroundColor;
+                padding: 0.25rem 0.75rem;
+                border-radius: 0.5rem;
+            }
+        }
     }
 
     .tutorial-callout:before {
@@ -422,7 +436,7 @@
 
             .simtoolbar, #miniSimOverlay { display: block; }
             .play-button { display: none !important; }
-            .expand-button, .fullscreen-button { display: block !important; }
+            .expand-button, .fullscreen-button, .tutorial.mute-button { display: block !important; }
         }
 
         .tutorial-controls { display: none; }
@@ -457,6 +471,10 @@
 
             .button.hidefullscreen { display: none !important; }
         }
+    }
+
+    &.collapsedEditorTools:not(.fullscreensim) .tab-simulator.tab-content.hidden .simPanel{
+        .fullscreen-button, .tutorial.mute-button { display: none !important; }
     }
 
     #miniSimOverlay {
@@ -518,13 +536,15 @@
 /*********************************
         Accordion Hints (details)
 *********************************/
-
 .tabTutorial details {
     padding: .5rem;
     margin-bottom: 1rem;
-    color: #028b9b;
-    background-color: #b1e3da;
+    color: @tutorialHintForegroundColor;
+    background-color: @tutorialHintBackgroundColor;
     border-radius: .5rem;
+    summary {
+        cursor: pointer;
+    }
 }
 
 
@@ -550,6 +570,10 @@
         }
         #editorSidebar {
             bottom: 0;
+        }
+
+        .cloudstatusarea .cloudtext {
+            display: none;
         }
     }
     .tutorial-container .tutorial-step-counter {
@@ -867,8 +891,19 @@
 
 .tutorial-video-embed {
     display: flex;
-    align-content: center;
+    align-items: center;
     justify-content: center;
+    flex-direction: column;
+    > button {
+        display: block;
+        margin-top: .5rem;
+        border: solid 1px @tutorialPrimaryColor;
+        color: @tutorialPrimaryColor;
+    }
+}
+
+.tutorial-step-content video {
+    max-width: 100%;
 }
 
 /* Mobile */

@@ -19,10 +19,13 @@ export interface ShareInfoProps {
     hasProjectBeenPersistentShared?: boolean;
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
+
+    anonymousShareByDefault?: boolean;
+    setAnonymousSharePreference?: (anonymousByDefault: boolean) => void;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared } = props;
+    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared, anonymousShareByDefault, setAnonymousSharePreference } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
@@ -30,7 +33,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ embedState, setEmbedState ] = React.useState<"none" | "code" | "editor" | "simulator">("none");
     const [ showQRCode, setShowQRCode ] = React.useState(false);
     const [ copySuccessful, setCopySuccessful ] = React.useState(false);
-    const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn);
+    const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn || anonymousShareByDefault);
 
     const showSimulator = !!simRecorder;
     const showDescription = shareState !== "publish";
@@ -141,6 +144,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
         if (ref) inputRef = ref;
     }
 
+    const handleAnonymousShareClick = (newValue: boolean) => {
+        pxt.tickEvent("share.anonymousCheckbox")
+        setIsAnonymous(!newValue);
+        if (setAnonymousSharePreference) setAnonymousSharePreference(!newValue);
+    }
+
     const prePublish = shareState === "share" || shareState === "publishing";
 
     const inputTitle = prePublish ? lf("Project Title") : lf("Project Link")
@@ -180,7 +189,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             id="persistent-share-checkbox"
                             label={lf("Update existing share link for this project")}
                             isChecked={!isAnonymous}
-                            onChange={val => setIsAnonymous(!val)}
+                            onChange={handleAnonymousShareClick}
                             />}
                         </>
                     }

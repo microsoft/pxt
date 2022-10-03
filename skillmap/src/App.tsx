@@ -75,6 +75,7 @@ interface AppState {
     cloudSyncCheckHasFinished: boolean;
     badgeSyncLock: boolean;
     showingSyncLoader?: boolean;
+    forcelang?: string;
 }
 
 class AppImpl extends React.Component<AppProps, AppState> {
@@ -176,10 +177,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
             pxt.BrowserUtils.setCookieLang(useLang!);
             pxt.Util.setUserLanguage(useLang!);
         }
+
+        if (force && useLang) {
+            this.setState({ forcelang: useLang });
+        }
     }
 
     protected async fetchAndParseSkillMaps(source: MarkdownSource, url: string) {
-        const result = await getMarkdownAsync(source, url);
+        const result = await getMarkdownAsync(source, url, this.state.forcelang);
 
         const md = result?.text;
         const fetched = result?.identifier;
@@ -383,7 +388,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     render() {
         const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
-        const { error, showingSyncLoader } = this.state;
+        const { error, showingSyncLoader, forcelang } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
@@ -398,7 +403,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     }
                     { !error && <InfoPanel onFocusEscape={this.focusCurrentActivity} />}
                 </div>
-                <MakeCodeFrame onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
+                <MakeCodeFrame forcelang={forcelang} onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
                 <UserProfile />
             </div>);
