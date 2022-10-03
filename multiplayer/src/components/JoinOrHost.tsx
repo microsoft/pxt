@@ -1,10 +1,10 @@
-import { useCallback, useContext, useMemo, useState } from "react"
-import { AppStateContext } from "../state/AppStateContext"
-import { setUiMode } from "../state/actions"
-import { Button } from "../../../react-common/components/controls/Button"
+import { useCallback, useContext, useMemo, useState } from "react";
+import { AppStateContext } from "../state/AppStateContext";
+import { setUiMode } from "../state/actions";
+import { Button } from "../../../react-common/components/controls/Button";
 
 export default function Render() {
-    const { dispatch } = useContext(AppStateContext)
+    const { dispatch } = useContext(AppStateContext);
 
     return (
         <div>
@@ -19,5 +19,5 @@ export default function Render() {
                 onClick={() => dispatch(setUiMode("join"))}
             />
         </div>
-    )
+    );
 }

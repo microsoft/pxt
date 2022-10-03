@@ -1,4 +1,4 @@
-import * as authClient from "../services/authClient"
+import * as authClient from "../services/authClient";
 
 export async function signInAsync(
     idp: pxt.IdentityProviderId,
@@ -6,7 +6,7 @@ export async function signInAsync(
     callbackState?: pxt.auth.CallbackState
 ) {
     try {
-        await authClient.loginAsync(idp, persistent, callbackState)
+        await authClient.loginAsync(idp, persistent, callbackState);
     } catch (e) {
     } finally {
     }

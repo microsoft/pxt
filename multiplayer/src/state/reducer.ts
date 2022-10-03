@@ -1,6 +1,6 @@
-import { AppState } from "./state"
-import { Action } from "./actions"
-import { defaultPresence } from "../types"
+import { AppState } from "./state";
+import { Action } from "./actions";
+import { defaultPresence } from "../types";
 
 // The reducer's job is to apply state changes by creating a copy of the existing state with the change applied.
 // The reducer must not create side effects. E.g. do not dispatch a state change from within the reducer.
@@ -11,7 +11,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                 ...state,
                 profile: action.profile,
                 signedIn: !!action.profile?.id,
-            }
+            };
         }
         case "SET_UI_MODE": {
             return {
@@ -23,7 +23,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                     uiMode: action.mode,
                     netMode: "init",
                 },
-            }
+            };
         }
         case "SET_NET_MODE": {
             return {
@@ -32,7 +32,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                     ...state.appMode,
                     netMode: action.mode,
                 },
-            }
+            };
         }
         case "SET_GAME_INFO": {
             return {
@@ -41,13 +41,13 @@ export default function reducer(state: AppState, action: Action): AppState {
                     ...state.gameState,
                     ...action.gameInfo,
                 },
-            }
+            };
         }
         case "CLEAR_GAME_INFO": {
             return {
                 ...state,
                 gameState: undefined,
-            }
+            };
         }
         case "SET_GAME_MODE": {
             return {
@@ -56,25 +56,25 @@ export default function reducer(state: AppState, action: Action): AppState {
                     ...state.gameState,
                     gameMode: action.gameMode,
                 },
-            }
+            };
         }
         case "SHOW_TOAST": {
             return {
                 ...state,
                 toasts: [...state.toasts, action.toast],
-            }
+            };
         }
         case "DISMISS_TOAST": {
             return {
                 ...state,
                 toasts: state.toasts.filter(t => t.id !== action.id),
-            }
+            };
         }
         case "SET_PRESENCE": {
             return {
                 ...state,
                 presence: { ...action.presence },
-            }
+            };
         }
         case "SET_REACTION": {
             return {
@@ -86,7 +86,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                         index: action.index,
                     },
                 },
-            }
+            };
         }
         case "CLEAR_REACTION": {
             return {
@@ -95,7 +95,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                     ...state.reactions,
                     [action.userId]: undefined,
                 },
-            }
+            };
         }
     }
 }

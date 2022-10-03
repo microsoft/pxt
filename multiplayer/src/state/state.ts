@@ -5,26 +5,26 @@ import {
     ToastWithId,
     Presence,
     defaultPresence,
-} from "../types"
+} from "../types";
 
 export type AppState = {
-    appMode: AppMode
-    signedIn: boolean
-    profile: pxt.auth.UserProfile | undefined
-    gameId: string | undefined
-    joinCode: string | undefined
-    gameState: GameState | undefined
-    toasts: ToastWithId[]
-    presence: Presence
+    appMode: AppMode;
+    signedIn: boolean;
+    profile: pxt.auth.UserProfile | undefined;
+    gameId: string | undefined;
+    joinCode: string | undefined;
+    gameState: GameState | undefined;
+    toasts: ToastWithId[];
+    presence: Presence;
     reactions: {
         [userId: string]:
             | {
-                  id: string
-                  index: number
+                  id: string;
+                  index: number;
               }
-            | undefined
-    }
-}
+            | undefined;
+    };
+};
 
 export const initialAppState: AppState = {
     appMode: { ...defaultAppMode },
@@ -36,4 +36,4 @@ export const initialAppState: AppState = {
     toasts: [],
     presence: { ...defaultPresence },
     reactions: {},
-}
+};

@@ -1,1 +1,1 @@
-export { state, dispatch } from "./AppStateContext"
+export { state, dispatch } from "./AppStateContext";

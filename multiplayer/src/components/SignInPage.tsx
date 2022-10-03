@@ -1,14 +1,14 @@
-import { useCallback, useContext, useMemo, useState, useEffect } from "react"
-import { AppStateContext } from "../state/AppStateContext"
-import { signInAsync } from "../epics"
-import { dismissToast, showToast } from "../state/actions"
-import { SignInModal } from "../../../react-common/components/profile/SignInModal"
-import { Button } from "../../../react-common/components/controls/Button"
+import { useCallback, useContext, useMemo, useState, useEffect } from "react";
+import { AppStateContext } from "../state/AppStateContext";
+import { signInAsync } from "../epics";
+import { dismissToast, showToast } from "../state/actions";
+import { SignInModal } from "../../../react-common/components/profile/SignInModal";
+import { Button } from "../../../react-common/components/controls/Button";
 
 export default function Render() {
-    const { state, dispatch } = useContext(AppStateContext)
-    const [showSignInModal, setShowSignInModal] = useState(false)
-    const { signedIn } = state
+    const { state, dispatch } = useContext(AppStateContext);
+    const [showSignInModal, setShowSignInModal] = useState(false);
+    const { signedIn } = state;
 
     const progressToast = useMemo(
         () =>
@@ -18,19 +18,19 @@ export default function Render() {
                 showSpinner: true,
             }),
         []
-    )
+    );
 
     useEffect(() => {
         if (showSignInModal) {
-            dispatch(progressToast)
+            dispatch(progressToast);
         } else {
-            dispatch(dismissToast(progressToast.toast.id))
+            dispatch(dismissToast(progressToast.toast.id));
         }
-    }, [showSignInModal])
+    }, [showSignInModal]);
 
     const handleSignInClick = useCallback(async () => {
-        setShowSignInModal(true)
-    }, [signedIn, setShowSignInModal])
+        setShowSignInModal(true);
+    }, [signedIn, setShowSignInModal]);
 
     return (
         <div className="pt-3 flex flex-col items-center gap-1">
@@ -44,10 +44,10 @@ export default function Render() {
                 <SignInModal
                     onClose={() => setShowSignInModal(false)}
                     onSignIn={async (provider, rememberMe) => {
-                        await signInAsync(provider.id, rememberMe)
+                        await signInAsync(provider.id, rememberMe);
                     }}
                 />
             )}
         </div>
-    )
+    );
 }

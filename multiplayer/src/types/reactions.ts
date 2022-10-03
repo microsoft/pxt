@@ -1,83 +1,94 @@
 export type ReactionVars = {
-    xOffset: number
-    yOffset: number
-    rotation: number
-    scale: number
-    speed: number
-}
+    xOffset: number;
+    yOffset: number;
+    rotation: number;
+    scale: number;
+    speed: number;
+};
 
 export type ReactionConsts = {
-    index: number
-    start: number
-}
+    index: number;
+    start: number;
+    seed: number; // initialized to Math.random() * 100
+};
 
 export type ReactionParticleInstance = {
-    id: string
-    x: number
-    y: number
-    consts: ReactionConsts
-    vars: ReactionVars
-}
+    id: string;
+    x: number;
+    y: number;
+    consts: ReactionConsts;
+    vars: ReactionVars;
+};
 
 type ReactionConfig = {
-    spawnFreq: number
-    minSpeed: number
-    maxSpeed: number
-    maxAngle: number
-    lifetime: number
-}
+    spawnFreq: number;
+    minSpeed: number;
+    maxSpeed: number;
+    maxAngle: number;
+    lifetime: number;
+    scale: number;
+};
 
 export type ReactionDef = {
-    name: string
-    emoji: string
-    config: ReactionConfig
+    name: string;
+    emoji: string;
+    config: ReactionConfig;
     shade: (
         t: number,
         consts: ReactionConsts,
         vars: ReactionVars
-    ) => ReactionVars
-}
+    ) => ReactionVars;
+};
 
 const defaultReactionConfig: ReactionConfig = {
     spawnFreq: 2,
-    minSpeed: 200,
-    maxSpeed: 220,
+    minSpeed: 100,
+    maxSpeed: 105,
     maxAngle: 15,
     lifetime: 5000,
-}
+    scale: 1.5,
+};
 
 const simpleShader = (t: number, consts: ReactionConsts, vars: ReactionVars) =>
-    vars
+    vars;
 
-const shakyShader = (
+const swirlyShader = (
     t: number,
     consts: ReactionConsts,
     vars: ReactionVars
-) => ({
-    ...vars,
-    xOffset: vars.xOffset + Math.sin(t / 100 + Math.random() * 40) * 3,
-})
+) => {
+    const def = ReactionDb[consts.index];
+    const age = t - consts.start;
+    const pct = age / def.config.lifetime;
+    return {
+        ...vars,
+        xOffset: -Math.sin(age / 100) * Math.max(15, pct * 30),
+        yOffset: -Math.cos(age / 100) * Math.max(15, pct * 30),
+    };
+};
 
 const slowScaleShader = (
     t: number,
     consts: ReactionConsts,
     vars: ReactionVars
 ) => {
-    const def = ReactionDb[consts.index]
-    const scale = Math.max(1, 1 + (t - consts.start) / def.config.lifetime)
+    const def = ReactionDb[consts.index];
+    const age = t - consts.start;
+    const pct = age / def.config.lifetime;
+    const scale = Math.max(def.config.scale, def.config.scale + pct * 2);
     return {
         ...vars,
         scale,
-    }
-}
+    };
+};
 
 const wavyShader = (t: number, consts: ReactionConsts, vars: ReactionVars) => {
-    const age = t - consts.start
+    const age = t - consts.start;
     return {
         ...vars,
-        xOffset: Math.sin(age / 300) * 30,
-    }
-}
+        xOffset: Math.sin(age / 300) * 20,
+    };
+};
 
 export const ReactionDb: ReactionDef[] = [
     {
@@ -132,7 +143,7 @@ export const ReactionDb: ReactionDef[] = [
         name: lf("fire"),
         emoji: "🔥",
         config: defaultReactionConfig,
-        shade: shakyShader,
+        shade: swirlyShader,
     },
     {
         name: lf("cool"),
@@ -158,4 +169,4 @@ export const ReactionDb: ReactionDef[] = [
         config: defaultReactionConfig,
         shade: wavyShader,
     },
-]
+];

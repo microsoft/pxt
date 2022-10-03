@@ -1,34 +1,34 @@
-import { useCallback, useContext, useRef, useMemo, useState } from "react"
-import { AppStateContext } from "../state/AppStateContext"
-import { hostGameAsync, startGameAsync, leaveGameAsync } from "../epics"
-import { Input } from "../../../react-common/components/controls/Input"
-import { Button } from "../../../react-common/components/controls/Button"
-import Presence from "./Presence"
-import Reactions from "./Reactions"
+import { useCallback, useContext, useRef, useMemo, useState } from "react";
+import { AppStateContext } from "../state/AppStateContext";
+import { hostGameAsync, startGameAsync, leaveGameAsync } from "../epics";
+import { Input } from "../../../react-common/components/controls/Input";
+import { Button } from "../../../react-common/components/controls/Button";
+import Presence from "./Presence";
+import Reactions from "./Reactions";
 
 export default function Render() {
-    const { state } = useContext(AppStateContext)
-    const { appMode } = state
-    const { netMode } = appMode
+    const { state } = useContext(AppStateContext);
+    const { appMode } = state;
+    const { netMode } = appMode;
 
-    const inputRef = useRef<HTMLInputElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const onHostGameClick = async () => {
         if (inputRef.current) {
-            const gameId = inputRef.current.value.trim().split("/").pop()
+            const gameId = inputRef.current.value.trim().split("/").pop();
             if (gameId) {
-                await hostGameAsync(gameId)
+                await hostGameAsync(gameId);
             }
         }
-    }
+    };
 
     const onStartGameClick = async () => {
-        await startGameAsync()
-    }
+        await startGameAsync();
+    };
 
     const onLeaveGameClick = async () => {
-        await leaveGameAsync()
-    }
+        await leaveGameAsync();
+    };
 
     return (
         <>
@@ -110,5 +110,5 @@ export default function Render() {
                 </>
             )}
         </>
-    )
+    );
 }

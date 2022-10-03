@@ -1,11 +1,11 @@
-import { useRef, useEffect, useCallback, useMemo } from "react"
-import { ReactionDb, ReactionParticleInstance } from "../types/reactions"
+import { useRef, useEffect, useCallback, useMemo } from "react";
+import { ReactionDb, ReactionParticleInstance } from "../types/reactions";
 
 export default function Render(props: { particle: ReactionParticleInstance }) {
-    const { particle } = props
-    const { vars } = particle
+    const { particle } = props;
+    const { vars } = particle;
 
-    const emoji = ReactionDb[particle.consts.index].emoji
+    const emoji = ReactionDb[particle.consts.index].emoji;
 
     return (
         <div
@@ -19,5 +19,5 @@ export default function Render(props: { particle: ReactionParticleInstance }) {
         >
             {emoji}
         </div>
-    )
+    );
 }

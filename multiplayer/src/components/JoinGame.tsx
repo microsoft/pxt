@@ -1,30 +1,30 @@
-import { useCallback, useContext, useRef, useMemo, useState } from "react"
-import { AppStateContext } from "../state/AppStateContext"
-import { joinGameAsync, leaveGameAsync } from "../epics"
-import { Input } from "../../../react-common/components/controls/Input"
-import { Button } from "../../../react-common/components/controls/Button"
-import Presence from "./Presence"
-import Reactions from "./Reactions"
+import { useCallback, useContext, useRef, useMemo, useState } from "react";
+import { AppStateContext } from "../state/AppStateContext";
+import { joinGameAsync, leaveGameAsync } from "../epics";
+import { Input } from "../../../react-common/components/controls/Input";
+import { Button } from "../../../react-common/components/controls/Button";
+import Presence from "./Presence";
+import Reactions from "./Reactions";
 
 export default function Render() {
-    const { state } = useContext(AppStateContext)
-    const { appMode } = state
-    const { netMode } = appMode
+    const { state } = useContext(AppStateContext);
+    const { appMode } = state;
+    const { netMode } = appMode;
 
-    const inputRef = useRef<HTMLInputElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const onJoinGameClick = async () => {
         if (inputRef.current) {
-            const joinCode = inputRef.current.value.toUpperCase().trim()
+            const joinCode = inputRef.current.value.toUpperCase().trim();
             if (joinCode) {
-                await joinGameAsync(joinCode)
+                await joinGameAsync(joinCode);
             }
         }
-    }
+    };
 
     const onLeaveGameClick = async () => {
-        await leaveGameAsync()
-    }
+        await leaveGameAsync();
+    };
 
     return (
         <>
@@ -94,5 +94,5 @@ export default function Render() {
                 </>
             )}
         </>
-    )
+    );
 }

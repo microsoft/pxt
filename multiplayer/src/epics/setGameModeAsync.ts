@@ -1,10 +1,10 @@
-import { GameMode } from "../types"
-import { dispatch } from "../state"
-import { setGameMode, showToast } from "../state/actions"
+import { GameMode } from "../types";
+import { dispatch } from "../state";
+import { setGameMode, showToast } from "../state/actions";
 
 export async function setGameModeAsync(gameMode: GameMode) {
     try {
-        dispatch(setGameMode(gameMode))
+        dispatch(setGameMode(gameMode));
         if (gameMode === "playing")
             dispatch(
                 showToast({
@@ -12,7 +12,7 @@ export async function setGameModeAsync(gameMode: GameMode) {
                     text: lf("Game started!"),
                     timeoutMs: 5000,
                 })
-            )
+            );
     } catch (e) {
     } finally {
     }

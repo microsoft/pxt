@@ -1,10 +1,10 @@
-import { ReactionDb } from "../types/reactions"
-import { sendReactionAsync } from "../epics"
+import { ReactionDb } from "../types/reactions";
+import { sendReactionAsync } from "../epics";
 
 export default function Render() {
     const onReactionClick = async (index: number) => {
-        await sendReactionAsync(index)
-    }
+        await sendReactionAsync(index);
+    };
 
     return (
         <div>
@@ -19,9 +19,9 @@ export default function Render() {
                         >
                             {def.emoji}
                         </div>
-                    )
+                    );
                 })}
             </div>
         </div>
-    )
+    );
 }
