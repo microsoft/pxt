@@ -729,17 +729,28 @@ namespace pxt.assets.music {
                     notes: [],
                     iconURI: "/static/music-editor/duck.png",
                     instrument: {
-                        waveform: 11,
+                        waveform: 15,
                         octave: 4,
                         ampEnvelope: {
-                            attack: 10,
-                            decay: 100,
-                            sustain: 500,
-                            release: 100,
+                            attack: 5,
+                            decay: 530,
+                            sustain: 705,
+                            release: 450,
                             amplitude: 1024
                         },
+                        pitchEnvelope: {
+                            attack: 5,
+                            decay: 40,
+                            sustain: 0,
+                            release: 100,
+                            amplitude: 40
+                        },
+                        ampLFO: {
+                            frequency: 3,
+                            amplitude: 20
+                        },
                         pitchLFO: {
-                            frequency: 5,
+                            frequency: 6,
                             amplitude: 2
                         }
                     }
@@ -776,7 +787,7 @@ namespace pxt.assets.music {
                     notes: [],
                     iconURI: "/static/music-editor/dog.png",
                     instrument: {
-                        waveform: 3,
+                        waveform: 1,
                         octave: 4,
                         ampEnvelope: {
                             attack: 10,
