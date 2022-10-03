@@ -12,12 +12,29 @@ export interface PlaybackControlsProps {
     onRedoClick: () => void;
     hasUndo: boolean;
     hasRedo: boolean;
+    eraserActive: boolean;
+    onEraserClick: () => void;
+    hideTracksActive: boolean;
+    onHideTracksClick: () => void;
 }
 
 type PlaybackState = "stop" | "play" | "loop"
 
 export const PlaybackControls = (props: PlaybackControlsProps) => {
-    const { song, onTempoChange, onMeasuresChanged, onUndoClick, onRedoClick, hasUndo, hasRedo } = props;
+    const {
+        song,
+        onTempoChange,
+        onMeasuresChanged,
+        onUndoClick,
+        onRedoClick,
+        hasUndo,
+        hasRedo,
+        eraserActive,
+        hideTracksActive,
+        onEraserClick,
+        onHideTracksClick
+    } = props;
+
     const [state, setState] = React.useState<PlaybackState>("stop");
 
 
@@ -102,7 +119,7 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
             onBlur={handleTempoChange}
             onEnterKey={handleTempoChange}
             />
-        <div>
+        <div className="music-playback-buttons">
             <Button
                 className="square-button"
                 title={lf("Undo")}
@@ -115,6 +132,18 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
                 leftIcon="xicon redo"
                 disabled={!hasRedo}
                 onClick={onRedoClick} />
+        </div>
+        <div className="music-playback-buttons">
+            <Button
+                className={classList("square-button", eraserActive && "green")}
+                title={eraserActive ? lf("Turn off eraser tool") : lf("Turn on eraser tool")}
+                leftIcon="fas fa-eraser"
+                onClick={onEraserClick} />
+            <Button
+                className={classList("square-button", hideTracksActive && "green")}
+                title={hideTracksActive ? lf("Show all tracks") : lf("Hide unselected tracks")}
+                leftIcon={hideTracksActive ? "fas fa-eye-slash" : "fas fa-eye"}
+                onClick={onHideTracksClick} />
         </div>
         <div className="music-playback-measures">
             <div className="music-playback-label">

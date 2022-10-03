@@ -12,18 +12,24 @@ export interface MusicEditorProps {
     savedUndoStack?: pxt.assets.music.Song[];
 }
 
+interface EditSongState {
+    editing: pxt.assets.music.Song;
+    original: pxt.assets.music.Song;
+}
+
 export const MusicEditor = (props: MusicEditorProps) => {
     const { song, onSongChanged, savedUndoStack } = props;
     const [selectedTrack, setSelectedTrack] = React.useState(0);
     const [gridResolution, setGridResolution] = React.useState<GridResolution>("1/8");
     const [currentSong, setCurrentSong] = React.useState(song);
+    const [eraserActive, setEraserActive] = React.useState(false);
+    const [hideTracksActive, setHideTracksActive] = React.useState(false);
     const [undoStack, setUndoStack] = React.useState(savedUndoStack || []);
     const [redoStack, setRedoStack] = React.useState<pxt.assets.music.Song[]>([]);
 
-    const editSong = React.useRef<pxt.assets.music.Song>()
+    const editSong = React.useRef<EditSongState>()
 
-    const gridTicks = gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat);
-
+    const gridTicks = eraserActive ? 1 : gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat);
     const isDrumTrack = !!currentSong.tracks[selectedTrack].drums;
 
     const updateSong = (newSong: pxt.assets.music.Song, pushUndo: boolean) => {
@@ -32,17 +38,20 @@ export const MusicEditor = (props: MusicEditorProps) => {
         }
         let newUndoStack = undoStack.slice()
         if (pushUndo) {
-            newUndoStack.push(pxt.assets.music.cloneSong(currentSong));
+            newUndoStack.push(pxt.assets.music.cloneSong(editSong.current?.original || currentSong));
             setUndoStack(newUndoStack);
             setRedoStack([]);
         }
         setCurrentSong(newSong);
         if (onSongChanged) onSongChanged(newSong);
+        if (editSong.current) {
+            editSong.current.editing = newSong;
+        }
     }
 
     const onRowClick = (row: number, startTick: number, ctrlIsPressed: boolean) => {
         const track = currentSong.tracks[selectedTrack];
-        const instrument = track.instrument
+        const instrument = track.instrument;
         const note = isDrumTrack ? row : rowToNote(instrument.octave, row, ctrlIsPressed);
 
         const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, startTick);
@@ -50,7 +59,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         if (existingEvent?.startTick === startTick && existingEvent.notes.indexOf(note) !== -1) {
             updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, startTick), true);
         }
-        else {
+        else if (!eraserActive) {
             const noteLength = isDrumTrack ? 1 : gridTicks;
             updateSong(addNoteToTrack(currentSong, selectedTrack, note, startTick, startTick + noteLength), true)
 
@@ -64,26 +73,45 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const onNoteDragStart = () => {
-        editSong.current = currentSong;
+        editSong.current = {
+            editing: currentSong,
+            original: currentSong
+        }
     }
 
     const onNoteDragEnd = () => {
-        if (!pxt.assets.music.songEquals(editSong.current, currentSong)) {
-            updateSong(currentSong, true);
+        if (!pxt.assets.music.songEquals(editSong.current.editing, editSong.current.original)) {
+            updateSong(editSong.current.editing, true);
         }
         editSong.current = undefined;
     }
 
     const onNoteDrag = (start: WorkspaceCoordinate, end: WorkspaceCoordinate) => {
-        if (!!editSong.current.tracks[selectedTrack].drums) {
-            updateSong(fillDrums(editSong.current, selectedTrack, start.row, start.tick, end.tick, gridTicks), false);
+        if (eraserActive) {
+            for (let i = 0; i < currentSong.tracks.length; i++) {
+                if (hideTracksActive && i !== selectedTrack) continue;
+
+                const track = currentSong.tracks[i];
+                const instrument = track.instrument;
+                const note = !!track.drums ? end.row : rowToNote(instrument.octave, end.row, false);
+                const existingEvent = findClosestPreviousNote(currentSong, i, end.tick);
+
+                if (existingEvent?.startTick === end.tick && existingEvent.notes.indexOf(note) !== -1) {
+                    updateSong(removeNoteFromTrack(currentSong, i, note, end.tick), false);
+                }
+            }
+            return;
+        }
+
+        if (!!editSong.current.original.tracks[selectedTrack].drums) {
+            updateSong(fillDrums(editSong.current.original, selectedTrack, start.row, start.tick, end.tick, gridTicks), false);
         }
         else {
-            const event = findClosestPreviousNote(editSong.current, selectedTrack, start.tick);
+            const event = findClosestPreviousNote(editSong.current.original, selectedTrack, start.tick);
 
             if (!event || end.tick < event.startTick + 1) return;
 
-            updateSong(editNoteEventLength(editSong.current, selectedTrack, event.startTick, end.tick), false);
+            updateSong(editNoteEventLength(editSong.current.original, selectedTrack, event.startTick, end.tick), false);
         }
     }
 
@@ -126,6 +154,14 @@ export const MusicEditor = (props: MusicEditorProps) => {
         updateSong(toRestore, false);
     }
 
+    const onEraserClick = () => {
+        setEraserActive(!eraserActive);
+    }
+
+    const onHideTracksClick = () => {
+        setHideTracksActive(!hideTracksActive);
+    }
+
     return <div>
         <TrackSelector
             song={currentSong}
@@ -140,7 +176,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onWorkspaceDragStart={onNoteDragStart}
             onWorkspaceDragEnd={onNoteDragEnd}
             onWorkspaceDrag={onNoteDrag}
-            gridTicks={gridTicks} />
+            gridTicks={gridTicks}
+            hideUnselectedTracks={hideTracksActive} />
         <PlaybackControls
             song={currentSong}
             onTempoChange={onTempoChange}
@@ -148,7 +185,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onUndoClick={undo}
             onRedoClick={redo}
             hasUndo={!!undoStack.length}
-            hasRedo={!!redoStack.length} />
+            hasRedo={!!redoStack.length}
+            eraserActive={eraserActive}
+            hideTracksActive={hideTracksActive}
+            onEraserClick={onEraserClick}
+            onHideTracksClick={onHideTracksClick} />
     </div>
 }
 

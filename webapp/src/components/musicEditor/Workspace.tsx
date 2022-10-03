@@ -12,11 +12,12 @@ export interface WorkspaceProps {
     onWorkspaceDragEnd: () => void;
     onWorkspaceDrag: (startCoordinate: WorkspaceCoordinate, endCoordinate: WorkspaceCoordinate) => void;
     selectedTrack: number
+    hideUnselectedTracks: boolean;
     gridTicks?: number;
 }
 
 export const Workspace = (props: WorkspaceProps) => {
-    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd } = props;
+    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, hideUnselectedTracks } = props;
 
     const [cursorLocation, setCursorLocation] = React.useState<WorkspaceCoordinate>(null);
     const [dragStart, setDragStart] = React.useState<WorkspaceCoordinate>(null);
@@ -86,19 +87,24 @@ export const Workspace = (props: WorkspaceProps) => {
         cursorPreviewLocation.tick = eventAtCursor.startTick;
     }
 
+    const inactiveTracks = song.tracks.filter((t, i) => i !== selectedTrack);
+
     return <svg
         xmlns="http://www.w3.org/2000/svg"
         className="music-workspace"
         viewBox={`0 0 ${workspaceWidth(song)} ${WORKSPACE_HEIGHT}`}
         ref={handleWorkspaceRef}>
         <Staff song={song} />
-        {song.tracks.map((track, index) =>
+        {!hideUnselectedTracks && inactiveTracks.map((track, index) =>
             <Track
                 key={index}
                 track={track}
-                song={song}
-                cursorLocation={index === selectedTrack ? cursorPreviewLocation : undefined} />
+                song={song} />
         )}
+        <Track
+            track={song.tracks[selectedTrack]}
+            song={song}
+            cursorLocation={cursorPreviewLocation} />
     </svg>
 }
 
