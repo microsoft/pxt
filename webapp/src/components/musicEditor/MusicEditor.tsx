@@ -9,22 +9,32 @@ import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findC
 export interface MusicEditorProps {
     song: pxt.assets.music.Song;
     onSongChanged?: (newValue: pxt.assets.music.Song) => void;
+    savedUndoStack?: pxt.assets.music.Song[];
 }
 
 export const MusicEditor = (props: MusicEditorProps) => {
-    const { song, onSongChanged } = props;
+    const { song, onSongChanged, savedUndoStack } = props;
     const [selectedTrack, setSelectedTrack] = React.useState(0);
     const [gridResolution, setGridResolution] = React.useState<GridResolution>("1/8");
     const [currentSong, setCurrentSong] = React.useState(song);
+    const [undoStack, setUndoStack] = React.useState(savedUndoStack || []);
+    const [redoStack, setRedoStack] = React.useState<pxt.assets.music.Song[]>([]);
+
     const editSong = React.useRef<pxt.assets.music.Song>()
 
     const gridTicks = gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat);
 
     const isDrumTrack = !!currentSong.tracks[selectedTrack].drums;
 
-    const updateSong = (newSong: pxt.assets.music.Song) => {
+    const updateSong = (newSong: pxt.assets.music.Song, pushUndo: boolean) => {
         if (isPlaying()) {
             updatePlaybackSongAsync(newSong);
+        }
+        let newUndoStack = undoStack.slice()
+        if (pushUndo) {
+            newUndoStack.push(pxt.assets.music.cloneSong(currentSong));
+            setUndoStack(newUndoStack);
+            setRedoStack([]);
         }
         setCurrentSong(newSong);
         if (onSongChanged) onSongChanged(newSong);
@@ -38,11 +48,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
         const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, startTick);
 
         if (existingEvent?.startTick === startTick && existingEvent.notes.indexOf(note) !== -1) {
-            updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, startTick));
+            updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, startTick), true);
         }
         else {
             const noteLength = isDrumTrack ? 1 : gridTicks;
-            updateSong(addNoteToTrack(currentSong, selectedTrack, note, startTick, startTick + noteLength))
+            updateSong(addNoteToTrack(currentSong, selectedTrack, note, startTick, startTick + noteLength), true)
 
             if (isDrumTrack) {
                 playDrumAsync(track.drums[row]);
@@ -58,19 +68,22 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const onNoteDragEnd = () => {
+        if (!pxt.assets.music.songEquals(editSong.current, currentSong)) {
+            updateSong(currentSong, true);
+        }
         editSong.current = undefined;
     }
 
     const onNoteDrag = (start: WorkspaceCoordinate, end: WorkspaceCoordinate) => {
         if (!!editSong.current.tracks[selectedTrack].drums) {
-            updateSong(fillDrums(editSong.current, selectedTrack, start.row, start.tick, end.tick, gridTicks));
+            updateSong(fillDrums(editSong.current, selectedTrack, start.row, start.tick, end.tick, gridTicks), false);
         }
         else {
             const event = findClosestPreviousNote(editSong.current, selectedTrack, start.tick);
 
             if (!event || end.tick < event.startTick + 1) return;
 
-            updateSong(editNoteEventLength(editSong.current, selectedTrack, event.startTick, end.tick));
+            updateSong(editNoteEventLength(editSong.current, selectedTrack, event.startTick, end.tick), false);
         }
     }
 
@@ -78,11 +91,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
         updateSong({
             ...currentSong,
             beatsPerMinute: newTempo
-        });
+        }, true);
     }
 
     const onMeasuresChanged = (newMeasures: number) => {
-        updateSong(changeSongLength(currentSong, newMeasures));
+        updateSong(changeSongLength(currentSong, newMeasures),true);
     }
 
     const onTrackChanged = (newTrack: number) => {
@@ -95,6 +108,22 @@ export const MusicEditor = (props: MusicEditorProps) => {
             playNoteAsync(rowToNote(t.instrument.octave, 6), t.instrument, tickToMs(currentSong, currentSong.ticksPerBeat / 2));
         }
         setSelectedTrack(newTrack);
+    }
+
+    const undo = () => {
+        if (!undoStack.length) return;
+        setRedoStack(redoStack.concat([currentSong]));
+        const toRestore = undoStack.pop();
+        setUndoStack(undoStack.slice());
+        updateSong(toRestore, false);
+    }
+
+    const redo = () => {
+        if (!redoStack.length) return;
+        setUndoStack(undoStack.concat([currentSong]));
+        const toRestore = redoStack.pop();
+        setRedoStack(redoStack.slice());
+        updateSong(toRestore, false);
     }
 
     return <div>
@@ -115,8 +144,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
         <PlaybackControls
             song={currentSong}
             onTempoChange={onTempoChange}
-            onMeasuresChanged={onMeasuresChanged} />
-        <EditControls />
+            onMeasuresChanged={onMeasuresChanged}
+            onUndoClick={undo}
+            onRedoClick={redo}
+            hasUndo={!!undoStack.length}
+            hasRedo={!!redoStack.length} />
     </div>
 }
 

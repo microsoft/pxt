@@ -8,12 +8,16 @@ export interface PlaybackControlsProps {
     song: pxt.assets.music.Song;
     onTempoChange: (newTempo: number) => void;
     onMeasuresChanged: (newMeasures: number) => void;
+    onUndoClick: () => void;
+    onRedoClick: () => void;
+    hasUndo: boolean;
+    hasRedo: boolean;
 }
 
 type PlaybackState = "stop" | "play" | "loop"
 
 export const PlaybackControls = (props: PlaybackControlsProps) => {
-    const { song, onTempoChange, onMeasuresChanged } = props;
+    const { song, onTempoChange, onMeasuresChanged, onUndoClick, onRedoClick, hasUndo, hasRedo } = props;
     const [state, setState] = React.useState<PlaybackState>("stop");
 
 
@@ -98,7 +102,20 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
             onBlur={handleTempoChange}
             onEnterKey={handleTempoChange}
             />
-
+        <div>
+            <Button
+                className="square-button"
+                title={lf("Undo")}
+                leftIcon="xicon undo"
+                disabled={!hasUndo}
+                onClick={onUndoClick} />
+            <Button
+                className="square-button"
+                title={lf("Redo")}
+                leftIcon="xicon redo"
+                disabled={!hasRedo}
+                onClick={onRedoClick} />
+        </div>
         <div className="music-playback-measures">
             <div className="music-playback-label">
                 {lf("Measures:")}
