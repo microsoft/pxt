@@ -67,7 +67,7 @@ export function TabPane(props: TabPaneProps) {
     const onMouseDown = (e: React.MouseEvent) => {
         const computedStyle = getComputedStyle(tabPaneRef?.current);
         const paneWidth = parseInt(computedStyle.width) - parseInt(computedStyle.borderWidth);
-        if (e.nativeEvent.offsetX > paneWidth - RESIZABLE_BORDER_SIZE - 2) {
+        if (e.nativeEvent.offsetX > paneWidth - RESIZABLE_BORDER_SIZE - 4) {
             document.querySelector("body")?.classList.add("cursor-resize");
             lastMouseX = e.pageX;
             document.addEventListener("mousemove", resize, false);
