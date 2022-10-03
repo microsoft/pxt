@@ -41,7 +41,7 @@ export function TabPane(props: TabPaneProps) {
 
     let lastMouseX: number;
     const resize = (e: React.MouseEvent | MouseEvent) => {
-        const dx = lastMouseX - e.pageX;
+        const dx = e.pageX - lastMouseX;
         lastMouseX = e.pageX;
 
         const editorContent: HTMLDivElement = document.querySelector("#editorcontent");
@@ -57,25 +57,27 @@ export function TabPane(props: TabPaneProps) {
     }
 
     const cleanEvents = () => {
-        document.removeEventListener("mousemove", resize, false);
-        document.removeEventListener("mouseup", cleanEvents, false);
+        document.removeEventListener("pointermove", resize, false);
+        document.removeEventListener("pointerup", cleanEvents, false);
         document.querySelector("body")?.classList.remove("cursor-resize");
         // trigger blocks workspace resize?
     }
 
+    React.useEffect(() => cleanEvents, []);
+
     const RESIZABLE_BORDER_SIZE = 4;
-    const onMouseDown = (e: React.MouseEvent) => {
+    const onPointerDown = (e: React.MouseEvent) => {
         const computedStyle = getComputedStyle(tabPaneRef?.current);
         const paneWidth = parseInt(computedStyle.width) - parseInt(computedStyle.borderWidth);
         if (e.nativeEvent.offsetX > paneWidth - RESIZABLE_BORDER_SIZE - 4) {
             document.querySelector("body")?.classList.add("cursor-resize");
             lastMouseX = e.pageX;
-            document.addEventListener("mousemove", resize, false);
-            document.addEventListener("mouseup", cleanEvents, false);
+            document.addEventListener("pointermove", resize, false);
+            document.addEventListener("pointerup", cleanEvents, false);
         }
     }
 
-    return <div id={id} ref={tabPaneRef} onMouseDown={onMouseDown} className={`tab-container ${className || ""}`} style={style}>
+    return <div id={id} ref={tabPaneRef} onPointerDown={onPointerDown} className={`tab-container ${className || ""}`} style={style}>
         {tabsToShow.length > 1 && <div className="tab-navigation">
             {tabsToShow.map(el => {
                 const { name, icon, title, ariaLabel, showBadge } = el.props as TabContentProps;
