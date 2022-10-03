@@ -33,8 +33,8 @@ export default function Render() {
                 {netMode === "init" && (
                     <div className="flex flex-row gap-1 items-end">
                         <Input
-                            label="Join Code"
-                            title="Join Code"
+                            label={lf("Join Code")}
+                            title={lf("Join Code")}
                             autoComplete={false}
                             handleInputRef={inputRef}
                             preserveValueOnBlur={true}
@@ -42,8 +42,8 @@ export default function Render() {
                         />
                         <Button
                             className={"teal"}
-                            label="Join"
-                            title="Join"
+                            label={lf("Join")}
+                            title={lf("Join")}
                             onClick={onJoinGameClick}
                         />
                     </div>
@@ -51,7 +51,7 @@ export default function Render() {
                 {netMode === "connecting" && (
                     <>
                         <div className="text-lg font-bold mt-5">
-                            {"Connecting"}
+                            {lf("Connecting")}
                         </div>
                     </>
                 )}
@@ -60,7 +60,7 @@ export default function Render() {
                         {state.gameState?.gameMode === "lobby" && (
                             <div className="mt-5">
                                 <div className="text-lg font-bold">
-                                    {"In the lobby"}
+                                    {lf("In the lobby")}
                                 </div>
                             </div>
                         )}

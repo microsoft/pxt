@@ -37,8 +37,8 @@ export default function Render() {
                 {netMode === "init" && (
                     <div className="flex flex-row gap-1 items-end">
                         <Input
-                            label="Game URL or Share Code"
-                            title="Game URL or Share Code"
+                            label={lf("Game URL or Share Code")}
+                            title={lf("Game URL or Share Code")}
                             autoComplete={false}
                             handleInputRef={inputRef}
                             preserveValueOnBlur={true}
@@ -46,8 +46,8 @@ export default function Render() {
                         />
                         <Button
                             className={"teal"}
-                            label="Host"
-                            title="Host"
+                            label={lf("Host")}
+                            title={lf("Host")}
                             onClick={onHostGameClick}
                         />
                     </div>
@@ -55,7 +55,7 @@ export default function Render() {
                 {netMode === "connecting" && (
                     <>
                         <div className="text-lg font-bold mt-5">
-                            {"Connecting"}
+                            {lf("Connecting")}
                         </div>
                     </>
                 )}
@@ -70,7 +70,7 @@ export default function Render() {
                         {state.gameState?.gameMode === "lobby" && (
                             <div className="mt-5">
                                 <div className="text-lg font-bold">
-                                    {"In the lobby"}
+                                    {lf("In the lobby")}
                                 </div>
                                 <Button
                                     className={"teal"}
