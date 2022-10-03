@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Microsoft MakeCode Blog](/blog/arcade/fall-release-2022)
     * [MakeCode Translation Tips and Tricks](/blog/localization/tips-and-tricks)
     * [MakeCode Minecraft 2022 Update](/blog/minecraft/2022-release)
     * [MakeCode for the micro:bit - 2022 Release](/blog/microbit/2022-release)
