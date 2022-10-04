@@ -89,7 +89,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
         return <div className="info-panel" ref={this.handleRef}>
             <div className="info-panel-image">
                 {imageUrl
-                ? <img src={imageUrl} alt={lf(thumbnailAltText)} />
+                ? <img src={imageUrl} alt={thumbnailAltText} />
                 : <i className={`fas fa-image`} />}
             </div>
             <div className="info-panel-content">
