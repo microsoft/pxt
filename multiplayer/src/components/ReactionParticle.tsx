@@ -1,7 +1,9 @@
-import { useRef, useEffect, useCallback, useMemo } from "react";
-import { ReactionDb, ReactionParticleInstance } from "../types/reactions";
+import {
+    ReactionDb,
+    ReactionParticleInstance as Particle,
+} from "../types/reactions";
 
-export default function Render(props: { particle: ReactionParticleInstance }) {
+export default function Render(props: { particle: Particle }) {
     const { particle } = props;
     const { vars } = particle;
 

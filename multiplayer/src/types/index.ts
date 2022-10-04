@@ -157,3 +157,8 @@ export type Presence = {
 export const defaultPresence: Presence = {
     users: [],
 };
+
+export type Dimension = {
+    width: number;
+    height: number;
+};

@@ -44,7 +44,7 @@ function Toast(props: ToastWithId) {
         let t1: NodeJS.Timeout, t2: NodeJS.Timeout;
         if (props.timeoutMs) {
             t1 = setTimeout(
-                () => dispatch!(dismissToast(props.id)),
+                () => dispatch(dismissToast(props.id)),
                 SLIDER_DELAY_MS + props.timeoutMs
             );
             t2 = setTimeout(() => setSliderActive(true), SLIDER_DELAY_MS);
@@ -56,7 +56,7 @@ function Toast(props: ToastWithId) {
     }, [dispatch, props.id, props.timeoutMs]);
 
     const handleDismissClicked = () => {
-        dispatch!(dismissToast(props.id));
+        dispatch(dismissToast(props.id));
     };
 
     const sliderWidth = useCallback(() => {
