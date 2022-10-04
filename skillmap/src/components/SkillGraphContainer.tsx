@@ -14,6 +14,8 @@ interface SkillGraphContainerProps {
     maps: SkillMap[];
     graphs: SvgGraph[];
     backgroundImageUrl: string;
+    backgroundColor: string;
+    strokeColor: string;
     graphSize: {
         width: number;
         height: number;
@@ -25,6 +27,8 @@ interface SkillGraphContainerState {
         width: number;
         height: number;
     };
+    backgroundColor: string;
+    strokeColor: string;
 }
 
 const THRESHOLD = 0.05;
@@ -33,7 +37,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
     constructor(props: SkillGraphContainerProps) {
         super(props);
 
-        this.state = { backgroundSize: { width: 0, height: 0 } };
+        this.state = { backgroundSize: { width: 0, height: 0 }, backgroundColor: this.props.backgroundColor, strokeColor: this.props.strokeColor };
     }
 
     protected onImageLoad = (evt: any) => {
@@ -46,8 +50,10 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
     }
 
     render() {
-        const { graphs, graphSize, backgroundImageUrl } = this.props;
+        const { maps, graphs, graphSize, backgroundImageUrl, backgroundColor, strokeColor } = this.props;
         const { backgroundSize } = this.state;
+        let altTextColor: string = 'black';
+        let backgroundAltText: string = lf("Background image for {0}", maps[0]?.displayName || lf("skillmap"));
         let translateY = 0;
 
         const padding = PADDING * UNIT;
@@ -67,6 +73,14 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
             }
         }
 
+        if (backgroundColor === strokeColor) {
+            altTextColor = 'white';
+        }
+
+        if (maps.length > 1) {
+            backgroundAltText = lf("Background image for {0} connected skillmaps", maps?.length || 0)
+        }
+
         const heightDiff = Math.max(height - graphSize.height, 0) / 2;
         const widthDiff = Math.max(width - graphSize.width, 0) / 2;
 
@@ -83,7 +97,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
                     </svg>
                 </MenuBar>
                 {backgroundImageUrl && <div className="skill-graph-background">
-                    <img src={backgroundImageUrl} alt={lf("Background Image")} onLoad={this.onImageLoad} />
+                    <img src={backgroundImageUrl} alt={backgroundAltText} onLoad={this.onImageLoad} style={{ color: altTextColor }} />
                 </div>}
             </div>
         </div>

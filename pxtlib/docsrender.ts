@@ -439,7 +439,8 @@ namespace pxt.docs {
                 }
                 const url = new URL(`https://${endpointName}.streaming.media.azure.net/${videoID}/manifest(format=mpd-time-csf).mpd`)
                 if (startTime) {
-                    url.hash = `t=${startTime}`
+                    url.hash = `t=${startTime}`;
+                    url.searchParams.append("startTime", startTime);
                 }
                 if (endTime) {
                     url.searchParams.append("endTime", endTime);

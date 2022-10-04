@@ -15,3 +15,5 @@ export { sendReactionAsync } from "./sendReactionAsync";
 export { setReactionAsync } from "./setReactionAsync";
 export { playerJoinedAsync } from "./playerJoinedAsync";
 export { playerLeftAsync } from "./playerLeftAsync";
+export { userSignedInAsync } from "./userSignedInAsync";
+export { setUserProfileAsync } from "./setUserProfileAsync";

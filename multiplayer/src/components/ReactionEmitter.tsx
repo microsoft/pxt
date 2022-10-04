@@ -14,6 +14,7 @@ import {
     ReactionDb,
     ReactionParticleInstance,
 } from "../types/reactions";
+import { useWindowSize } from "../hooks";
 
 type Particle = ReactionParticleInstance & {
     dx: number;
@@ -35,6 +36,8 @@ export default function Render(props: {
     const animRef = useRef(0);
     const [activeParticles, setActiveParticles] = useState<Particle[]>([]);
 
+    const windowSize = useWindowSize();
+
     const parentBounds = useMemo(() => {
         return (
             props.parentRef?.getBoundingClientRect() ?? {
@@ -44,7 +47,7 @@ export default function Render(props: {
                 height: 0,
             }
         );
-    }, [props.parentRef]);
+    }, [props.parentRef, windowSize]);
 
     const animate = useCallback(
         (t: number) => {
@@ -95,7 +98,7 @@ export default function Render(props: {
             });
             const particle: Particle = {
                 id: reaction.id,
-                x: parentBounds.left + parentBounds.width / 4,
+                x: parentBounds.left + parentBounds.width / 4, // not correct
                 y: parentBounds.top,
                 dx: -20 + Math.random() * 40,
                 consts,
