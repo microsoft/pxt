@@ -97,7 +97,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
                     </svg>
                 </MenuBar>
                 {backgroundImageUrl && <div className="skill-graph-background">
-                    <img src={backgroundImageUrl} alt={lf(backgroundAltText)} onLoad={this.onImageLoad} style={{ color: altTextColor }} />
+                    <img src={backgroundImageUrl} alt={backgroundAltText} onLoad={this.onImageLoad} style={{ color: altTextColor }} />
                 </div>}
             </div>
         </div>
