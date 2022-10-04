@@ -10,6 +10,8 @@ export interface MusicEditorProps {
     song: pxt.assets.music.Song;
     onSongChanged?: (newValue: pxt.assets.music.Song) => void;
     savedUndoStack?: pxt.assets.music.Song[];
+    assetName: string;
+    onAssetNameChanged: (newName: string) => void;
 }
 
 interface EditSongState {
@@ -18,7 +20,7 @@ interface EditSongState {
 }
 
 export const MusicEditor = (props: MusicEditorProps) => {
-    const { song, onSongChanged, savedUndoStack } = props;
+    const { song, onSongChanged, savedUndoStack, assetName, onAssetNameChanged } = props;
     const [selectedTrack, setSelectedTrack] = React.useState(0);
     const [gridResolution, setGridResolution] = React.useState<GridResolution>("1/8");
     const [currentSong, setCurrentSong] = React.useState(song);
@@ -182,14 +184,17 @@ export const MusicEditor = (props: MusicEditorProps) => {
             song={currentSong}
             onTempoChange={onTempoChange}
             onMeasuresChanged={onMeasuresChanged}
+            eraserActive={eraserActive}
+            onEraserClick={onEraserClick} />
+        <EditControls
+            hideTracksActive={hideTracksActive}
+            onHideTracksClick={onHideTracksClick}
             onUndoClick={undo}
             onRedoClick={redo}
             hasUndo={!!undoStack.length}
             hasRedo={!!redoStack.length}
-            eraserActive={eraserActive}
-            hideTracksActive={hideTracksActive}
-            onEraserClick={onEraserClick}
-            onHideTracksClick={onHideTracksClick} />
+            assetName={assetName}
+            onAssetNameChanged={onAssetNameChanged} />
     </div>
 }
 

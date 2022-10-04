@@ -1587,7 +1587,7 @@ namespace pxt {
             case AssetType.Tilemap:
                 return `tilemap${leftTick}${shortId}${rightTick}`
             case AssetType.Song:
-                return `assets.animation${leftTick}${shortId}${rightTick}`
+                return `assets.song${leftTick}${shortId}${rightTick}`
         }
     }
 

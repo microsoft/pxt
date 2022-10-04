@@ -26,7 +26,11 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
 
         return <div className="music-field-editor">
             { editingSong &&
-                <MusicEditor song={editingSong.song} onSongChanged={this.onSongChanged} />
+                <MusicEditor
+                    song={editingSong.song}
+                    onSongChanged={this.onSongChanged}
+                    assetName={editingSong.meta.displayName}
+                    onAssetNameChanged={this.onAssetNameChanged} />
             }
         </div>
     }
@@ -75,5 +79,17 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
 
     protected onSongChanged = (newSong: pxt.assets.music.Song) => {
         this.mostRecentValue = newSong;
+    }
+
+    protected onAssetNameChanged = (newName: string) => {
+        this.setState({
+            editingSong: {
+                ...this.state.editingSong,
+                meta: {
+                    ...this.state.editingSong.meta,
+                    displayName: newName
+                }
+            }
+        })
     }
 }

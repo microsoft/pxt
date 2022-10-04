@@ -182,11 +182,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     render() {
-        // if (this.state.viewType === "tilemap") {
-        //     return <TilemapFieldEditor ref={ this.refHandler } />
-        // }
-        // return <ImageFieldEditor ref={this.refHandler} singleFrame={true} doneButtonCallback={this.callbackOnDoneClick} />
-        return <MusicEditor song={pxt.assets.music.getEmptySong(2)} />
+        if (this.state.viewType === "tilemap") {
+            return <TilemapFieldEditor ref={ this.refHandler } />
+        }
+        return <ImageFieldEditor ref={this.refHandler} singleFrame={true} doneButtonCallback={this.callbackOnDoneClick} />
     }
 
 }
