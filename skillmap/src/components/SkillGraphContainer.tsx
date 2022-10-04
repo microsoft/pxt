@@ -53,7 +53,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
         const { maps, graphs, graphSize, backgroundImageUrl, backgroundColor, strokeColor } = this.props;
         const { backgroundSize } = this.state;
         let altTextColor: string = 'black';
-        let backgroundAltText: string = `Background image for ${maps[0]?.displayName}`;
+        let backgroundAltText: string = lf("Background image for {0}", maps[0]?.displayName || lf("skillmap"));
         let translateY = 0;
 
         const padding = PADDING * UNIT;
