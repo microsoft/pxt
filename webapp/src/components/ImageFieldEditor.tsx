@@ -167,7 +167,9 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             <div className="image-editor-gallery-window">
                 <div className="image-editor-gallery-content">
                     {this.props.isMusicEditor ?
-                        <MusicFieldEditor ref="image-editor" /> :
+                        <MusicFieldEditor
+                            ref="image-editor"
+                            onDoneClicked={this.onDoneClick} /> :
                         <ImageEditor
                             ref="image-editor"
                             singleFrame={this.props.singleFrame}

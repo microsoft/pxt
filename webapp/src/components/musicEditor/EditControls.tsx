@@ -12,10 +12,11 @@ export interface EditControlsProps {
     onRedoClick: () => void;
     onHideTracksClick: () => void;
     onAssetNameChanged: (newName: string) => void;
+    onDoneClicked: () => void;
 }
 
 export const EditControls = (props: EditControlsProps) => {
-    const { onUndoClick, onRedoClick, onHideTracksClick, onAssetNameChanged, hasUndo, hasRedo, hideTracksActive, assetName } = props;
+    const { onUndoClick, onRedoClick, onHideTracksClick, onAssetNameChanged, onDoneClicked, hasUndo, hasRedo, hideTracksActive, assetName } = props;
     const [editName, setEditName] = React.useState<string>();
     const [nameError, setNameError] = React.useState<string>();
 
@@ -80,6 +81,6 @@ export const EditControls = (props: EditControlsProps) => {
             className="green"
             title={lf("Done")}
             label={lf("Done")}
-            onClick={onHideTracksClick} />
+            onClick={onDoneClicked} />
     </div>
 }

@@ -11,6 +11,7 @@ export interface MusicEditorProps {
     onSongChanged?: (newValue: pxt.assets.music.Song) => void;
     savedUndoStack?: pxt.assets.music.Song[];
     onAssetNameChanged: (newName: string) => void;
+    onDoneClicked: () => void;
     editRef: number;
 }
 
@@ -20,7 +21,7 @@ interface EditSongState {
 }
 
 export const MusicEditor = (props: MusicEditorProps) => {
-    const { asset, onSongChanged, savedUndoStack, onAssetNameChanged, editRef } = props;
+    const { asset, onSongChanged, savedUndoStack, onAssetNameChanged, editRef, onDoneClicked } = props;
     const [selectedTrack, setSelectedTrack] = React.useState(0);
     const [gridResolution, setGridResolution] = React.useState<GridResolution>("1/8");
     const [currentSong, setCurrentSong] = React.useState(asset.song);
@@ -200,7 +201,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
             hasUndo={!!undoStack.length}
             hasRedo={!!redoStack.length}
             assetName={asset.meta.displayName}
-            onAssetNameChanged={onAssetNameChanged} />
+            onAssetNameChanged={onAssetNameChanged}
+            onDoneClicked={onDoneClicked} />
     </div>
 }
 

@@ -5,7 +5,7 @@ import { AssetEditorCore } from "./ImageFieldEditor";
 import { MusicEditor } from "./musicEditor/MusicEditor";
 
 interface MusicFieldEditorProps {
-
+    onDoneClicked: () => void;
 }
 
 interface MusicFieldEditorState {
@@ -24,6 +24,7 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
     }
 
     render() {
+        const { onDoneClicked } = this.props;
         const { editingSong } = this.state;
 
         return <div className="music-field-editor">
@@ -32,7 +33,8 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
                     asset={editingSong}
                     onSongChanged={this.onSongChanged}
                     onAssetNameChanged={this.onAssetNameChanged}
-                    editRef={this.state.editRef} />
+                    editRef={this.state.editRef}
+                    onDoneClicked={onDoneClicked} />
             }
         </div>
     }
