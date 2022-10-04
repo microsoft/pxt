@@ -145,8 +145,6 @@ namespace pxtblockly {
                 widgetDiv.style.transition = "";
                 widgetDiv.style.alignItems = "";
 
-                Blockly.Events.enable();
-                Blockly.Events.setGroup(true);
                 this.onFieldEditorHide(fv);
             })
 
@@ -176,7 +174,7 @@ namespace pxtblockly {
             widgetDiv.style.borderRadius = "";
 
             fv.onHide(() => {
-                // do nothing
+                Blockly.WidgetDiv.hideIfOwner(widgetOwner);
             });
 
             fv.show();
