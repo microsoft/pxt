@@ -78,7 +78,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
         }
 
         if (maps.length > 1) {
-            backgroundAltText = `Background image for ${maps?.length} connected skillmaps`
+            backgroundAltText = lf("Background image for {0} connected skillmaps", maps?.length || 0)
         }
 
         const heightDiff = Math.max(height - graphSize.height, 0) / 2;
