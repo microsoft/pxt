@@ -8,7 +8,7 @@ export async function playerLeftAsync(userId: string) {
             dispatch(
                 showToast({
                     type: "info",
-                    text: lf(`${user.name} left the game.`),
+                    text: lf("{0} left the game.", user.name),
                     timeoutMs: 5000,
                 })
             );

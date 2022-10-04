@@ -3,6 +3,10 @@ import { dispatch } from "../state";
 import { clearGameInfo } from "../state/actions";
 
 export async function leaveGameAsync() {
-    await gameClient.leaveGameAsync();
-    dispatch(clearGameInfo());
+    try {
+        await gameClient.leaveGameAsync();
+        dispatch(clearGameInfo());
+    } catch (e) {
+    } finally {
+    }
 }
