@@ -251,7 +251,7 @@ export function init() {
                 current.injectElement(<SoundEffectEditor onClose={options.onClose} onSoundChange={options.onSoundChange} initialSound={options.initialSound} useMixerSynthesizer={options.useMixerSynthesizer} />)
                 break;
             case "music-editor":
-                current.injectElement(<MusicFieldEditor ref={refHandler} />)
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} isMusicEditor={true} />)
         }
 
         if (cachedBounds) current.resize(cachedBounds);

@@ -162,7 +162,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         setHideTracksActive(!hideTracksActive);
     }
 
-    return <div>
+    return <div className="music-editor">
         <TrackSelector
             song={currentSong}
             selected={selectedTrack}

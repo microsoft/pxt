@@ -143,7 +143,6 @@ namespace pxtblockly {
                 widgetDiv.style.opacity = "";
                 widgetDiv.style.transition = "";
                 widgetDiv.style.alignItems = "";
-                widgetDiv.style.background = "";
 
                 Blockly.Events.enable();
                 Blockly.Events.setGroup(true);
@@ -169,12 +168,11 @@ namespace pxtblockly {
             widgetDiv.style.left = left + "px";
             widgetDiv.style.top = top + "px";
             widgetDiv.style.width = "50rem";
-            widgetDiv.style.height = "30rem";
+            widgetDiv.style.height = "32rem";
             widgetDiv.style.display = "flex";
             widgetDiv.style.alignItems = "center";
             widgetDiv.style.transition = "transform 0.25s ease 0s, opacity 0.25s ease 0s";
             widgetDiv.style.borderRadius = "";
-            widgetDiv.style.background = this.sourceBlock_.getColour();
 
             fv.onHide(() => {
                 // do nothing

@@ -7,3 +7,19 @@
 @import "Track";
 @import "TrackSelector";
 @import "Workspace";
+
+@music-editor-background-color: #fff;
+@music-editor-header-color: #e30fc0;
+@music-editor-header-border-color: #c10da3;
+
+.music-editor {
+    background: @music-editor-background-color;
+}
+
+.music-asset-editor {
+    .gallery-editor-header {
+        background-color: @music-editor-header-color;
+        border: 2px solid @music-editor-header-border-color;
+        border-bottom: none;
+    }
+}

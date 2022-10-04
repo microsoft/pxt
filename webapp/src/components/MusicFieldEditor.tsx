@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
+import { AssetEditorCore } from "./ImageFieldEditor";
 import { MusicEditor } from "./musicEditor/MusicEditor";
 
 interface MusicFieldEditorProps {
@@ -11,7 +12,7 @@ interface MusicFieldEditorState {
     editingSong?: pxt.Song;
 }
 
-export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, MusicFieldEditorState> implements FieldEditorComponent<pxt.Song> {
+export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, MusicFieldEditorState> implements AssetEditorCore {
     protected mostRecentValue: pxt.assets.music.Song;
 
     constructor(props: MusicFieldEditorProps) {
@@ -30,17 +31,38 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
         </div>
     }
 
-    init(value: pxt.Song, close: () => void, options?: any) {
-        this.setState({
-            editingSong: value
-        });
-    }
-
-    getValue(): pxt.Song {
+    getAsset(): pxt.Song {
+        if (!this.state.editingSong) return undefined;
         return {
             ...this.state.editingSong,
             song: this.mostRecentValue || this.state.editingSong.song
         }
+    }
+
+    openAsset(value: pxt.Song) {
+        this.setState({
+            editingSong: value
+        })
+    }
+
+    openGalleryAsset(asset: pxt.Asset): void {
+        // TODO
+    }
+
+    getJres(): string {
+        return "";
+    }
+
+    loadJres(value: string): void {
+
+    }
+
+    disableResize(): void {
+
+    }
+
+    onResize(): void {
+
     }
 
     getPersistentData(): any {

@@ -9,9 +9,12 @@ import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageRedu
 import { FilterPanel } from './FilterPanel';
 import { fireClickOnEnter } from "../util";
 import { EditorToggle, EditorToggleItem, BasicEditorToggleItem } from "../../../react-common/components/controls/EditorToggle";
+import { MusicFieldEditor } from "./MusicFieldEditor";
+import { classList } from "../../../react-common/components/util";
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
+    isMusicEditor?: boolean;
     doneButtonCallback?: () => void;
 }
 
@@ -35,9 +38,21 @@ interface ProjectGalleryItem extends pxt.sprite.GalleryItem {
     id: string;
 }
 
+export interface AssetEditorCore {
+    getAsset(): pxt.Asset;
+    getPersistentData(): any;
+    restorePersistentData(value: any): void;
+    getJres(): string;
+    loadJres(value: string): void;
+    openAsset(asset: pxt.Asset, gallery?: GalleryTile[], keepPast?: boolean): void;
+    openGalleryAsset(asset: pxt.Asset): void;
+    disableResize(): void;
+    onResize(): void;
+}
+
 export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent<U> {
     protected blocksInfo: pxtc.BlocksInfo;
-    protected ref: ImageEditor;
+    protected ref: AssetEditorCore;
     protected closeEditor: () => void;
     protected options: any;
     protected editID: string;
@@ -69,7 +84,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
-        const showGallery = !this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap;;
+        const showGallery = !this.props.isMusicEditor && (!this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap);
         const showMyAssets = !hideMyAssets && !editingTile;
 
         if (this.asset && !this.galleryAssets && showGallery) {
@@ -126,7 +141,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             toggleOptions.splice(2, 1);
         }
 
-        return <div className="image-editor-wrapper">
+        return <div className={classList("image-editor-wrapper", this.props.isMusicEditor && "music-asset-editor")}>
             {showHeader && <div className="gallery-editor-header">
                 <div className="image-editor-header-left" />
                 <div className="image-editor-header-center">
@@ -151,13 +166,16 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             </div>}
             <div className="image-editor-gallery-window">
                 <div className="image-editor-gallery-content">
-                    <ImageEditor
-                        ref="image-editor"
-                        singleFrame={this.props.singleFrame}
-                        onDoneClicked={this.onDoneClick}
-                        onTileEditorOpenClose={this.onTileEditorOpenClose}
-                        lightMode={this.lightMode}
-                        />
+                    {this.props.isMusicEditor ?
+                        <MusicFieldEditor ref="image-editor" /> :
+                        <ImageEditor
+                            ref="image-editor"
+                            singleFrame={this.props.singleFrame}
+                            onDoneClicked={this.onDoneClick}
+                            onTileEditorOpenClose={this.onTileEditorOpenClose}
+                            lightMode={this.lightMode}
+                            />
+                    }
                     <ImageEditorGallery
                         items={filteredAssets}
                         hidden={currentView === "editor"}
@@ -173,7 +191,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     componentDidMount() {
-        this.ref = this.refs["image-editor"] as ImageEditor;
+        this.ref = this.refs["image-editor"] as any as AssetEditorCore;
         tickImageEditorEvent("image-editor-shown");
     }
 
@@ -202,7 +220,9 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             case pxt.AssetType.Tilemap:
                 this.initTilemap(value as pxt.ProjectTilemap, options);
                 break;
-
+            case pxt.AssetType.Song:
+                this.ref.openAsset(value);
+                break;
         }
 
         this.editID = value.id;
@@ -241,11 +261,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     getJres() {
-        if (this.ref && this.props.singleFrame) {
-            const bitmapData = this.ref.getCurrentFrame().data();
-            return pxt.sprite.base64EncodeBitmap(bitmapData);
-        }
-        return "";
+        return this.ref ? this.ref.getJres() : "";
     }
 
     getPersistentData() {
@@ -508,7 +524,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected onAssetSelected = (asset: pxt.Asset) => {
         if (this.ref && asset.id !== this.asset?.id) {
             if (this.state.editingTile) {
-                this.ref.openInTileEditor(pxt.sprite.Bitmap.fromData((asset as pxt.Tile).bitmap))
+                (this.ref as ImageEditor).openInTileEditor(pxt.sprite.Bitmap.fromData((asset as pxt.Tile).bitmap))
             }
             else if (this.state.currentView === "gallery") {
                 this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
@@ -555,12 +571,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     loadJres(jres: string) {
-        if (jres) {
-            try {
-                this.ref.setCurrentFrame(pxt.sprite.getBitmapFromJResURL(jres), true);
-            } catch (e) {
-                return
-            }
+        if (this.ref) {
+            this.ref.loadJres(jres);
         }
     }
 
