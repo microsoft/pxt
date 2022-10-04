@@ -327,7 +327,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                 const videoElement = player.getVideoElement();
                 if (videoElement?.requestPictureInPicture) {
+                    videoElement.addEventListener("enterpictureinpicture", () => {
+                        videoElement.setAttribute("data-pip-active", "true");
+                    })
                     videoElement.addEventListener("leavepictureinpicture", () => {
+                        videoElement.setAttribute("data-pip-active", undefined);
                         player.pause()
                     });
                     const pipButton = document.createElement("button");
@@ -569,6 +573,16 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         accordionHints.forEach((hint) => {
             // Create a 'details' element to replace the hint-begin element.
             const detailsElement = document.createElement('details');
+
+            detailsElement.addEventListener("pointerdown", () => {
+                const videoElements = detailsElement.querySelectorAll("video");
+                for (const el of videoElements) {
+                    if (!el.getAttribute("data-pip-active")) {
+                        el.pause();
+                    }
+                }
+            })
+            detailsElement.onkeydown = fireClickOnEnter as any;
             // Append the summary element to the details element...
             detailsElement.append(hint.summary);
             // ...and any child nodes we detected along the way.
