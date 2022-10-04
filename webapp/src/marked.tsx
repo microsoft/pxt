@@ -314,18 +314,23 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     player: "azure",
                     url: src
                 })
-                const END_TIME = url.searchParams.get("endTime");
-                player.on(
-                    dashjs.MediaPlayer.events.PLAYBACK_TIME_UPDATED,
-                    (e: dashjs.PlaybackTimeUpdatedEvent) => {
-                        if (parseInt(END_TIME) <= e.time) {
-                            player.pause();
-                        }
-
-                    }
-                )
 
                 const videoElement = player.getVideoElement();
+                const startTime = parseInt(url.searchParams.get("startTime")) || 0;
+                const endTime = parseInt(url.searchParams.get("endTime"));
+                if (endTime) {
+                    player.on(
+                        dashjs.MediaPlayer.events.PLAYBACK_TIME_UPDATED,
+                        (e: dashjs.PlaybackTimeUpdatedEvent) => {
+                            if (endTime <= e.time) {
+                                videoElement.currentTime = startTime;
+                                player.pause();
+                            }
+
+                        }
+                    )
+                }
+
                 if (videoElement?.requestPictureInPicture) {
                     videoElement.addEventListener("enterpictureinpicture", () => {
                         videoElement.setAttribute("data-pip-active", "true");
