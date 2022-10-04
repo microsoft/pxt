@@ -324,12 +324,17 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                     }
                 )
-                if (player.getVideoElement()?.requestPictureInPicture) {
+
+                const videoElement = player.getVideoElement();
+                if (videoElement?.requestPictureInPicture) {
+                    videoElement.addEventListener("leavepictureinpicture", () => {
+                        player.pause()
+                    });
                     const pipButton = document.createElement("button");
                     inlineVideo.parentElement.appendChild(pipButton);
                     pipButton.addEventListener("click", () => {
                         pxt.tickEvent("video.pip.requested");
-                        player.getVideoElement().requestPictureInPicture();
+                        videoElement.requestPictureInPicture();
                     });
                     pipButton.addEventListener("keydown", e => fireClickOnEnter(e as any));
                     pipButton.className = "common-button";
