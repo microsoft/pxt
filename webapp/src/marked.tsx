@@ -587,7 +587,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     }
                 }
             })
-            detailsElement.onkeydown = fireClickOnEnter as any;
+            detailsElement.addEventListener("keydown", fireClickOnEnter as any);
             // Append the summary element to the details element...
             detailsElement.append(hint.summary);
             // ...and any child nodes we detected along the way.
