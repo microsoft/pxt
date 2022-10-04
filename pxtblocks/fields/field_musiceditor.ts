@@ -55,7 +55,7 @@ namespace pxtblockly {
             }
             else {
                 // Restore all of the unused tracks
-                inflateSong(song);
+                pxt.assets.music.inflateSong(song);
             }
 
             const newAsset: pxt.Song = {
@@ -135,15 +135,5 @@ namespace pxtblockly {
             const measures = this.asset ? (this.asset as pxt.Song).song.measures : 2;
             return measures * PREVIEW_HEIGHT;
         }
-    }
-
-    function inflateSong(song: pxt.assets.music.Song) {
-        const base = pxt.assets.music.getEmptySong(1);
-
-        song.tracks = base.tracks.map((track, index) => {
-            const existing = song.tracks.find(t => t.id === index);
-            if (existing) track.notes = existing.notes;
-            return track;
-        })
     }
 }

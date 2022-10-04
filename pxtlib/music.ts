@@ -31,9 +31,9 @@ namespace pxt.assets.music {
 
     export interface Track {
         instrument: Instrument;
+        id: number;
         name?: string;
         iconURI?: string;
-        id?: number;
         drums?: DrumInstrument[];
         notes: NoteEvent[];
     }
@@ -390,9 +390,8 @@ namespace pxt.assets.music {
 
     function encodeSong(song: Song) {
         const encodedTracks = song.tracks
-            .map((track, index) => [track, index] as [Track, number])
-            .filter(([track, index]) => track.notes.length > 0)
-            .map(([track, index]) => encodeTrack(track, index));
+            .filter((track) => track.notes.length > 0)
+            .map(encodeTrack);
         const trackLength = encodedTracks.reduce((d, c) => c.length + d, 0);
 
         const out = new Uint8Array(7 + trackLength);
@@ -552,18 +551,18 @@ namespace pxt.assets.music {
         return res;
     }
 
-    function encodeTrack(track: Track, index: number) {
-        if (track.drums) return encodeDrumTrack(track, index);
-        return encodeMelodicTrack(track, index);
+    function encodeTrack(track: Track) {
+        if (track.drums) return encodeDrumTrack(track);
+        return encodeMelodicTrack(track);
     }
 
-    function encodeMelodicTrack(track: Track, id: number) {
+    function encodeMelodicTrack(track: Track) {
         const encodedInstrument = encodeInstrument(track.instrument);
         const encodedNotes = track.notes.map(encodeNoteEvent);
         const noteLength = encodedNotes.reduce((d, c) => c.length + d, 0);
 
         const out = new Uint8Array(6 + encodedInstrument.length + noteLength);
-        out[0] = id;
+        out[0] = track.id;
         out[1] = 0;
 
         set16BitNumber(out, 2, encodedInstrument.length);
@@ -601,7 +600,7 @@ namespace pxt.assets.music {
         return [res, currentOffset];
     }
 
-    function encodeDrumTrack(track: Track, id: number) {
+    function encodeDrumTrack(track: Track) {
         const encodedDrums = track.drums.map(encodeDrumInstrument);
         const drumLength = encodedDrums.reduce((d, c) => c.length + d, 0);
 
@@ -609,7 +608,7 @@ namespace pxt.assets.music {
         const noteLength = encodedNotes.reduce((d, c) => c.length + d, 0);
 
         const out = new Uint8Array(6 + drumLength + noteLength);
-        out[0] = id;
+        out[0] = track.id;
         out[1] = 1;
         set16BitNumber(out, 2, drumLength);
         let current = 4;
@@ -717,6 +716,16 @@ namespace pxt.assets.music {
         return true;
     }
 
+    export function inflateSong(song: pxt.assets.music.Song) {
+        const base = getEmptySong(1);
+
+        song.tracks = base.tracks.map((track, index) => {
+            const existing = song.tracks.find(t => t.id === index);
+            if (existing) track.notes = existing.notes;
+            return track;
+        })
+    }
+
     export function getEmptySong(measures: number): pxt.assets.music.Song {
         return {
             ticksPerBeat: 8,
@@ -725,6 +734,7 @@ namespace pxt.assets.music {
             measures,
             tracks: [
                 {
+                    id: 0,
                     name: lf("Duck"),
                     notes: [],
                     iconURI: "/static/music-editor/duck.png",
@@ -756,6 +766,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
+                    id: 1,
                     name: lf("Cat"),
                     notes: [],
                     iconURI: "/static/music-editor/cat.png",
@@ -783,6 +794,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
+                    id: 2,
                     name: lf("Dog"),
                     notes: [],
                     iconURI: "/static/music-editor/dog.png",
@@ -803,6 +815,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
+                    id: 3,
                     name: lf("Fish"),
                     notes: [],
                     iconURI: "/static/music-editor/fish.png",
@@ -827,6 +840,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
+                    id: 4,
                     name: lf("Car"),
                     notes: [],
                     iconURI: "/static/music-editor/car.png",
@@ -847,6 +861,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
+                    id: 5,
                     name: lf("Computer"),
                     notes: [],
                     iconURI: "/static/music-editor/computer.png",
@@ -863,6 +878,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
+                    id: 6,
                     name: lf("Burger"),
                     notes: [],
                     iconURI: "/static/music-editor/burger.png",
@@ -879,6 +895,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
+                    id: 7,
                     name: lf("Cherry"),
                     notes: [],
                     iconURI: "/static/music-editor/cherry.png",
@@ -895,6 +912,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
+                    id: 8,
                     name: lf("Lemon"),
                     notes: [],
                     iconURI: "/static/music-editor/lemon.png",
@@ -911,6 +929,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
+                    id: 9,
                     name: lf("Explosion"),
                     notes: [],
                     iconURI: "/static/music-editor/explosion.png",

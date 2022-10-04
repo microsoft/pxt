@@ -10,6 +10,7 @@ interface MusicFieldEditorProps {
 
 interface MusicFieldEditorState {
     editingSong?: pxt.Song;
+    editRef: number;
 }
 
 export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, MusicFieldEditorState> implements AssetEditorCore {
@@ -18,6 +19,7 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
     constructor(props: MusicFieldEditorProps) {
         super(props);
         this.state = {
+            editRef: 0
         }
     }
 
@@ -27,10 +29,10 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
         return <div className="music-field-editor">
             { editingSong &&
                 <MusicEditor
-                    song={editingSong.song}
+                    asset={editingSong}
                     onSongChanged={this.onSongChanged}
-                    assetName={editingSong.meta.displayName}
-                    onAssetNameChanged={this.onAssetNameChanged} />
+                    onAssetNameChanged={this.onAssetNameChanged}
+                    editRef={this.state.editRef} />
             }
         </div>
     }
@@ -44,8 +46,10 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
     }
 
     openAsset(value: pxt.Song) {
+        pxt.assets.music.inflateSong(value.song)
         this.setState({
-            editingSong: value
+            editingSong: value,
+            editRef: this.state.editRef + 1
         })
     }
 
