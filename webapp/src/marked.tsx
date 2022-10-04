@@ -314,22 +314,36 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     player: "azure",
                     url: src
                 })
-                const END_TIME = url.searchParams.get("endTime");
-                player.on(
-                    dashjs.MediaPlayer.events.PLAYBACK_TIME_UPDATED,
-                    (e: dashjs.PlaybackTimeUpdatedEvent) => {
-                        if (parseInt(END_TIME) <= e.time) {
-                            player.pause();
-                        }
 
-                    }
-                )
-                if (player.getVideoElement()?.requestPictureInPicture) {
+                const videoElement = player.getVideoElement();
+                const startTime = parseInt(url.searchParams.get("startTime")) || 0;
+                const endTime = parseInt(url.searchParams.get("endTime"));
+                if (endTime) {
+                    player.on(
+                        dashjs.MediaPlayer.events.PLAYBACK_TIME_UPDATED,
+                        (e: dashjs.PlaybackTimeUpdatedEvent) => {
+                            if (endTime <= e.time) {
+                                videoElement.currentTime = startTime;
+                                player.pause();
+                            }
+
+                        }
+                    )
+                }
+
+                if (videoElement?.requestPictureInPicture) {
+                    videoElement.addEventListener("enterpictureinpicture", () => {
+                        videoElement.setAttribute("data-pip-active", "true");
+                    })
+                    videoElement.addEventListener("leavepictureinpicture", () => {
+                        videoElement.setAttribute("data-pip-active", undefined);
+                        player.pause()
+                    });
                     const pipButton = document.createElement("button");
                     inlineVideo.parentElement.appendChild(pipButton);
                     pipButton.addEventListener("click", () => {
                         pxt.tickEvent("video.pip.requested");
-                        player.getVideoElement().requestPictureInPicture();
+                        videoElement.requestPictureInPicture();
                     });
                     pipButton.addEventListener("keydown", e => fireClickOnEnter(e as any));
                     pipButton.className = "common-button";
@@ -564,6 +578,16 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         accordionHints.forEach((hint) => {
             // Create a 'details' element to replace the hint-begin element.
             const detailsElement = document.createElement('details');
+
+            detailsElement.addEventListener("pointerdown", () => {
+                const videoElements = detailsElement.querySelectorAll("video");
+                for (const el of videoElements) {
+                    if (!el.getAttribute("data-pip-active")) {
+                        el.pause();
+                    }
+                }
+            })
+            detailsElement.addEventListener("keydown", fireClickOnEnter as any);
             // Append the summary element to the details element...
             detailsElement.append(hint.summary);
             // ...and any child nodes we detected along the way.
