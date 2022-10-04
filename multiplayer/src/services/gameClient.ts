@@ -1,4 +1,5 @@
 import { Socket } from "engine.io-client";
+import * as authClient from "./authClient";
 import { GameInfo, Cli2Srv, Srv2Cli } from "../types";
 import {
     gameDisconnected,
@@ -9,9 +10,8 @@ import {
     playerLeftAsync,
 } from "../epics";
 
-const GAME_HOST = "https://makecode-multiplayer.ngrok.io";
-const AUTH_CONTAINER = "auth"; // local storage "namespace".
-const CSRF_TOKEN_KEY = "csrf-token"; // stored in local storage.
+const GAME_HOST =
+    "https://makecode-ppe-app-multiplayer-eastus-dev.azurewebsites.net";
 
 class GameClient {
     sock: Socket | undefined;
@@ -39,13 +39,6 @@ class GameClient {
                     type: "heartbeat",
                 } as Cli2Srv.HeartbeatMessage),
             5000
-        );
-    }
-
-    async authTokenAsync() {
-        return await pxt.storage.shared.getAsync<string>(
-            AUTH_CONTAINER,
-            CSRF_TOKEN_KEY
         );
     }
 
@@ -113,7 +106,7 @@ class GameClient {
         shareCode = shareCode.toUpperCase();
         shareCode = encodeURIComponent(shareCode);
 
-        const authToken = await this.authTokenAsync();
+        const authToken = await authClient.authTokenAsync();
 
         // TODO: Send real credentials
         const res = await fetch(`${GAME_HOST}/api/game/host/${shareCode}`, {
@@ -136,7 +129,7 @@ class GameClient {
         joinCode = joinCode.toUpperCase().trim();
         joinCode = encodeURIComponent(joinCode);
 
-        const authToken = await this.authTokenAsync();
+        const authToken = await authClient.authTokenAsync();
 
         // TODO: Send real credentials
         const lookupRes = await fetch(

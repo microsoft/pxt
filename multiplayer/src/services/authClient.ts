@@ -1,33 +1,21 @@
-import { dispatch } from "../state";
-import { setUserProfile, clearUserProfile, showToast } from "../state/actions";
+import { userSignedInAsync, setUserProfileAsync } from "../epics";
 
 class AuthClient extends pxt.auth.AuthClient {
-    protected onSignedIn(): Promise<void> {
-        const userName = pxt.auth.userName(this.getState().profile!);
-        const displayName = userName.split(" ").shift() || userName;
-        dispatch(
-            showToast({
-                type: "success",
-                text: lf("Welcome {0}!", displayName),
-                timeoutMs: 5000,
-            })
-        );
-        return Promise.resolve();
+    protected async onSignedIn(): Promise<void> {
+        await userSignedInAsync(this.firstName()!);
     }
-    protected onSignedOut(): Promise<void> {
-        dispatch(clearUserProfile());
-        return Promise.resolve();
+    protected async onSignedOut(): Promise<void> {
+        await setUserProfileAsync(undefined);
     }
     protected onSignInFailed(): Promise<void> {
         return Promise.resolve();
     }
-    protected onUserProfileChanged(): Promise<void> {
+    protected async onUserProfileChanged(): Promise<void> {
         const state = this.getState();
         if (state.profile) {
             pxt.auth.generateUserProfilePicDataUrl(state.profile);
         }
-        dispatch(setUserProfile(state.profile));
-        return Promise.resolve();
+        await setUserProfileAsync(state.profile);
     }
     protected onUserPreferencesChanged(
         diff: ts.pxtc.jsonPatch.PatchOperation[]
@@ -40,6 +28,11 @@ class AuthClient extends pxt.auth.AuthClient {
     protected async onProfileDeleted(userId: string): Promise<void> {}
     protected onApiError(err: any): Promise<void> {
         return Promise.resolve();
+    }
+
+    public firstName(): string | undefined {
+        const state = this.getState();
+        return pxt.auth.firstName(state?.profile!);
     }
 }
 
@@ -93,4 +86,9 @@ export async function loginAsync(
 ): Promise<void> {
     const cli = await clientAsync();
     return await cli?.loginAsync(idp, persistent, callbackState);
+}
+
+export async function authTokenAsync(): Promise<string | undefined> {
+    const cli = await clientAsync();
+    return await cli?.authTokenAsync();
 }
