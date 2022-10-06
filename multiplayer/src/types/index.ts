@@ -74,8 +74,8 @@ export namespace Srv2Cli {
         type: "hello";
     };
 
-    export type ConnectedMessage = MessageBase & {
-        type: "connected";
+    export type JoinedMessage = MessageBase & {
+        type: "joined";
         role: ClientRole;
         slot: number;
         gameMode: GameMode;
@@ -113,7 +113,7 @@ export namespace Srv2Cli {
 
     export type Message =
         | HelloMessage
-        | ConnectedMessage
+        | JoinedMessage
         | StartGameMessage
         | ChatMessage
         | PresenceMessage
