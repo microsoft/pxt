@@ -579,7 +579,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.editor.addChangeListener((ev: any) => {
             Blockly.Events.disableOrphans(ev);
-            if ((ev.type != Blockly.Events.UI && ev.type != Blockly.Events.VIEWPORT_CHANGE)
+            const ignoredChanges = [
+                Blockly.Events.UI,
+                Blockly.Events.SELECTED,
+                Blockly.Events.CLICK,
+                Blockly.Events.VIEWPORT_CHANGE,
+                Blockly.Events.BUBBLE_OPEN
+            ];
+
+            if ((ignoredChanges.indexOf(ev.type) === -1)
                 || this.markIncomplete) {
                 this.changeCallback();
                 this.markIncomplete = false;

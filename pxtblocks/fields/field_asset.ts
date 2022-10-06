@@ -92,6 +92,7 @@ namespace pxtblockly {
                 case pxt.AssetType.Song:
                     editorKind = "music-editor";
                     params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Song);
+                    setMelodyEditorOpen(this.sourceBlock_, true);
                     break;
             }
 
@@ -234,6 +235,10 @@ namespace pxtblockly {
         protected onFieldEditorHide(fv: pxt.react.FieldEditorView<pxt.Asset>) {
             const result = fv.getResult();
             const project = pxt.react.getTilemapProject();
+
+            if (this.asset.type === pxt.AssetType.Song) {
+                setMelodyEditorOpen(this.sourceBlock_, false);
+            }
 
             if (result) {
                 const old = this.getValue();

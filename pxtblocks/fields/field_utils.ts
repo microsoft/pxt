@@ -348,6 +348,10 @@ namespace pxtblockly {
         }
     }
 
+    export function setMelodyEditorOpen(block: Blockly.Block, isOpen: boolean) {
+        Blockly.Events.fire(new Blockly.Events.Ui(block, "melody-editor", !isOpen, isOpen));
+    }
+
 
     export function workspaceToScreenCoordinates(ws: Blockly.WorkspaceSvg, wsCoordinates: Blockly.utils.Coordinate) {
         // The position in pixels relative to the origin of the

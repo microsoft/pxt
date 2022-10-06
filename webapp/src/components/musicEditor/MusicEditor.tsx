@@ -1,6 +1,6 @@
 import * as React from "react";
 import { EditControls } from "./EditControls";
-import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAsync } from "./playback";
+import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAsync, stopPlayback } from "./playback";
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
@@ -30,6 +30,12 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [undoStack, setUndoStack] = React.useState(savedUndoStack || []);
     const [redoStack, setRedoStack] = React.useState<pxt.assets.music.Song[]>([]);
     const [editingId, setEditingId] = React.useState(editRef);
+
+    React.useEffect(() => {
+        return () => {
+            stopPlayback();
+        }
+    }, [])
 
     if (editingId !== editRef) {
         setEditingId(editRef);
