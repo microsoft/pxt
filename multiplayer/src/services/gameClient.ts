@@ -10,8 +10,9 @@ import {
     playerLeftAsync,
 } from "../epics";
 
-const GAME_HOST =
-    "https://makecode-ppe-app-multiplayer-eastus-dev.azurewebsites.net";
+const GAME_HOST = "https://makecode-ppe-app-multiplayer-eastus-dev.azurewebsites.net";
+//const GAME_HOST = "http://localhost:8082"
+//const GAME_HOST = "https://makecode-multiplayer.ngrok.io";
 
 class GameClient {
     sock: Socket | undefined;
@@ -29,17 +30,12 @@ class GameClient {
     }
 
     sendMessage(msg: Cli2Srv.Message) {
-        this.sock?.send(JSON.stringify(msg), {});
-    }
-
-    startHeartbeat() {
-        this.heartbeatTimer = setInterval(
-            () =>
-                this.sendMessage({
-                    type: "heartbeat",
-                } as Cli2Srv.HeartbeatMessage),
-            5000
-        );
+        const payload = JSON.stringify(msg);
+        console.log(`Sending: ${payload}`);
+        this.sock?.send(payload, {}, (err: any) => {
+            console.log("message sent");
+            if (err) console.log("Error sending message", err);
+        });
     }
 
     public async connectAsync(ticket: string) {
@@ -49,7 +45,7 @@ class GameClient {
                 path: "/mp",
             });
             this.sock.on("open", () => {
-                console.log("connected");
+                console.log("socket opened");
 
                 this.sock?.on("message", async payload => {
                     try {
@@ -58,10 +54,8 @@ class GameClient {
                         switch (msg.type) {
                             case "hello":
                                 return await this.recvHelloMessageAsync(msg);
-                            case "connected":
-                                return await this.recvConnectedMessageAsync(
-                                    msg
-                                );
+                            case "joined":
+                                return await this.recvJoinedMessageAsync(msg);
                             case "start-game":
                                 return await this.recvStartGameMessageAsync(
                                     msg
@@ -83,19 +77,21 @@ class GameClient {
                 });
 
                 this.sock?.on("close", () => {
-                    console.log("disconnected");
+                    console.log("socket disconnected");
                     clearTimeout(this.heartbeatTimer);
                     gameDisconnected();
                 });
 
                 this.sock?.on("error", err => {
-                    console.log("error", err);
+                    console.log("socket error", err);
                 });
 
-                this.sendMessage(<Cli2Srv.ConnectMessage>{
-                    type: "connect",
-                    ticket,
-                });
+                setTimeout(() => {
+                    this.sendMessage({
+                        type: "connect",
+                        ticket,
+                    } as Cli2Srv.ConnectMessage);
+                }, 1000); // Temp hack to wait for socket to fully open
 
                 resolve();
             });
@@ -131,27 +127,10 @@ class GameClient {
 
         const authToken = await authClient.authTokenAsync();
 
-        // TODO: Send real credentials
-        const lookupRes = await fetch(
-            `${GAME_HOST}/api/game/lookup/${joinCode}`,
-            {
-                credentials: "include",
-                headers: {
-                    Authorization: "mkcd " + authToken,
-                },
-            }
-        );
-
-        const lookup = (await lookupRes.json()) as GameInfo;
-
-        if (!lookup?.affinityCookie)
-            throw new Error("Game server did not return an affinity cookie");
-
         const joinRes = await fetch(`${GAME_HOST}/api/game/join/${joinCode}`, {
             credentials: "include",
             headers: {
                 Authorization: "mkcd " + authToken,
-                //Cookie: lookup.affinityCookie,
             },
         });
 
@@ -166,9 +145,9 @@ class GameClient {
     }
 
     public async startGameAsync() {
-        this.sendMessage(<Cli2Srv.StartGameMessage>{
+        this.sendMessage({
             type: "start-game",
-        });
+        } as Cli2Srv.StartGameMessage);
     }
 
     public async leaveGameAsync() {
@@ -176,26 +155,21 @@ class GameClient {
     }
 
     public async sendReactionAsync(index: number) {
-        this.sendMessage(<Cli2Srv.ReactionMessage>{
+        this.sendMessage({
             type: "reaction",
             index,
-        });
+        } as Cli2Srv.ReactionMessage);
     }
 
     private async recvHelloMessageAsync(msg: Srv2Cli.HelloMessage) {
         console.log("Server said hello");
     }
 
-    private async recvConnectedMessageAsync(msg: Srv2Cli.ConnectedMessage) {
+    private async recvJoinedMessageAsync(msg: Srv2Cli.JoinedMessage) {
         console.log(
-            `Server said we're connected as "${msg.role}" in slot "${msg.slot}"`
+            `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
         const gameMode = msg.gameMode;
-
-        if (msg.role === "host") {
-            // The host pings the server occasionally to keep the game session alive
-            this.startHeartbeat();
-        }
 
         setGameModeAsync(gameMode);
     }
