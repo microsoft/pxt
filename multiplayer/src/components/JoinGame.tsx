@@ -5,6 +5,7 @@ import { Input } from "../../../react-common/components/controls/Input";
 import { Button } from "../../../react-common/components/controls/Button";
 import Presence from "./Presence";
 import Reactions from "./Reactions";
+import ArcadeSimulator from "./ArcadeSimulator";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -62,13 +63,6 @@ export default function Render() {
                                 </div>
                             </div>
                         )}
-                        {state.gameState?.gameMode === "playing" && (
-                            <div className="mt-5">
-                                <div className="text-lg font-bold">
-                                    {lf("Game Started!")}
-                                </div>
-                            </div>
-                        )}
                         <div className="mt-1">
                             <Button
                                 className={"gray"}
@@ -80,7 +74,9 @@ export default function Render() {
                     </div>
                 )}
             </div>
-            <div className="grow" />
+            {state.gameState?.gameMode === "playing" && (
+                <ArcadeSimulator />
+            )}
             {state.gameState?.gameMode && (
                 <>
                     <div className="mt-5">

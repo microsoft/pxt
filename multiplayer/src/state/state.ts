@@ -12,6 +12,7 @@ export type AppState = {
     signedIn: boolean;
     profile: pxt.auth.UserProfile | undefined;
     gameId: string | undefined;
+    playerSlot: number | undefined;
     joinCode: string | undefined;
     gameState: GameState | undefined;
     toasts: ToastWithId[];
@@ -31,6 +32,7 @@ export const initialAppState: AppState = {
     signedIn: false,
     profile: undefined,
     gameId: undefined,
+    playerSlot: undefined,
     joinCode: undefined,
     gameState: undefined,
     toasts: [],

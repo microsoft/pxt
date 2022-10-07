@@ -13,6 +13,11 @@ const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 bundle.bundledpkgs = {};
 
 pxt.setAppTarget(bundle);
+pxt.setupWebConfig(pxt.webConfig);
+// todo: handle this better?
+if (pxt.BrowserUtils.isLocalHostDev()) {
+    pxt.webConfig.runUrl = "http://localhost:3232/--run";
+}
 pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
 if (!isLocal()) pxt.setupWebConfig((window as any).pxtConfig);
 

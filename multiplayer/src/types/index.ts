@@ -18,6 +18,8 @@ export type GameInfo = {
     joinCode?: string;
     joinTicket?: string;
     affinityCookie?: string;
+    gameId?: string;
+    slot?: number;
 };
 
 export type GameState = GameInfo & {

@@ -184,7 +184,7 @@ class GameClient {
         );
         const gameMode = msg.gameMode;
 
-        setGameModeAsync(gameMode);
+        setGameModeAsync(gameMode, msg.slot);
 
         resolve(); // Finally! We're fully joined to the game server.
     }
