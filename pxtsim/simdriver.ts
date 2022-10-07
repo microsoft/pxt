@@ -321,8 +321,8 @@ namespace pxsim {
                 if (parentWindow) {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow) {
-                        const parentOrigin = this.options.parentOrigin || window.location.origin
-                        parentWindow.postMessage(msg, parentOrigin);
+                        // posting sim messages to parent frame; no origin restriction.
+                        parentWindow.postMessage(msg, "*");
                     }
                 }
                 if (!this.options.nestedEditorSim && !broadcastmsg?.toParentIFrameOnly) {
