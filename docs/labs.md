@@ -14,7 +14,7 @@ preferably under the MIT License.
 
 ![MicroCode editor screenshot](/static/targets/microcode/screenshot.png)
 
-A icon-based, simpler editor for micro:bit V2:
+A icon-based, simpler editor for K-3 for the micro:bit V2:
 
 - [Editor](https://aka.ms/m9)
 - [GitHub](https://github.com/microsoft/microcode)
