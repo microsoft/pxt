@@ -4,6 +4,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
+import { MusicEditor } from "./components/musicEditor/MusicEditor";
+import { MusicFieldEditor } from "./components/MusicFieldEditor";
 import { SoundEffectEditor } from "./components/soundEffectEditor/SoundEffectEditor";
 
 export interface EditorBounds {
@@ -248,7 +250,8 @@ export function init() {
             case "soundeffect-editor":
                 current.injectElement(<SoundEffectEditor onClose={options.onClose} onSoundChange={options.onSoundChange} initialSound={options.initialSound} useMixerSynthesizer={options.useMixerSynthesizer} />)
                 break;
-
+            case "music-editor":
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} isMusicEditor={true} />)
         }
 
         if (cachedBounds) current.resize(cachedBounds);

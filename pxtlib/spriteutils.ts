@@ -9,6 +9,8 @@ namespace pxt.sprite {
     export const IMAGE_PREFIX = "image";
     export const ANIMATION_NAMESPACE = "myAnimations";
     export const ANIMATION_PREFIX = "anim";
+    export const SONG_NAMESPACE = "mySongs"
+    export const SONG_PREFIX = "song";
 
     export interface Coord {
         x: number,

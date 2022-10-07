@@ -82,7 +82,7 @@ namespace pxtblockly {
 
             // The webapp listens to this event and stops the simulator so that you don't get the melody
             // playing twice (once in the editor and once when the code runs in the sim)
-            Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", false, true))
+            setMelodyEditorOpen(this.sourceBlock_, true);
 
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => {
                 this.onEditorClose();
@@ -90,7 +90,7 @@ namespace pxtblockly {
                 pxt.BrowserUtils.removeClass(contentDiv, "melody-content-div");
                 pxt.BrowserUtils.removeClass(contentDiv.parentElement, "melody-editor-dropdown");
 
-                Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", true, false))
+                setMelodyEditorOpen(this.sourceBlock_, false);
             });
         }
 

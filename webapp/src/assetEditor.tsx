@@ -7,6 +7,7 @@ import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { FieldEditorComponent } from "./blocklyFieldView";
 import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
 import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
+import { MusicEditor } from "./components/musicEditor/MusicEditor";
 
 
 document.addEventListener("DOMContentLoaded", () => {

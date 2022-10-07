@@ -42,7 +42,8 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             { label: lf("Image"), icon: "picture", handler: this.getCreateAssetHandler(pxt.AssetType.Image) },
             { label: lf("Tile"), icon: "clone", handler: this.getCreateAssetHandler(pxt.AssetType.Tile) },
             { label: lf("Tilemap"), icon: "map", handler: this.getCreateAssetHandler(pxt.AssetType.Tilemap) },
-            { label: lf("Animation"), icon: "video", handler: this.getCreateAssetHandler(pxt.AssetType.Animation) }
+            { label: lf("Animation"), icon: "video", handler: this.getCreateAssetHandler(pxt.AssetType.Animation) },
+            { label: lf("Song"), icon: "music", handler: this.getCreateAssetHandler(pxt.AssetType.Song) }
         ]
     }
 
@@ -74,6 +75,8 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
                         project.createNewTilemapFromData(result.data, name); break;
                     case pxt.AssetType.Animation:
                         project.createNewAnimationFromData(result.frames, result.interval, name); break;
+                    case pxt.AssetType.Song:
+                        project.createNewSong(result.song, name); break;
                 }
                 pkg.mainEditorPkg().buildAssetsAsync()
                     .then(() => this.props.dispatchUpdateUserAssets());
@@ -95,6 +98,9 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
                 const animation = asset as pxt.Animation;
                 animation.frames = [new pxt.sprite.Bitmap(16, 16).data()];
                 animation.interval = 200;
+                break;
+            case pxt.AssetType.Song:
+                (asset as pxt.Song).song = pxt.assets.music.getEmptySong(2);
                 break;
 
         }

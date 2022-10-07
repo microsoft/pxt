@@ -241,6 +241,8 @@ function getDisplayTextForAsset(type: pxt.AssetType) {
             return lf("Animation");
         case pxt.AssetType.Tilemap:
             return lf("Tilemap");
+        case pxt.AssetType.Song:
+            return lf("Song");
     }
 }
 
