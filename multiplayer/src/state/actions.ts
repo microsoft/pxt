@@ -137,12 +137,12 @@ export const setGameInfo = (gameInfo: GameInfo): SetGameInfo => ({
 export const setGameId = (gameId: string): SetGameId => ({
     type: "SET_GAME_ID",
     gameId,
-})
+});
 
 export const setPlayerSlot = (slot: number): SetPlayerSlot => ({
     type: "SET_PLAYER_SLOT",
     playerSlot: slot,
-})
+});
 
 export const clearGameInfo = (): ClearGameInfo => ({
     type: "CLEAR_GAME_INFO",

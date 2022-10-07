@@ -47,13 +47,13 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 gameId: action.gameId,
-            }
+            };
         }
         case "SET_PLAYER_SLOT": {
             return {
                 ...state,
                 playerSlot: action.playerSlot,
-            }
+            };
         }
         case "CLEAR_GAME_INFO": {
             return {

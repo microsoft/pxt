@@ -19,7 +19,8 @@ export default function Render() {
         "single=1",
         "nofooter=1",
         "fullscreen=1",
-        selectedPlayerTheme && `simParams=${encodeURIComponent(selectedPlayerTheme)}`,
+        selectedPlayerTheme &&
+            `simParams=${encodeURIComponent(selectedPlayerTheme)}`,
     ].filter(el => !!el);
 
     if (isHost) {
@@ -30,20 +31,23 @@ export default function Render() {
     } else {
         queryParameters.push(
             `code=${encodeURIComponent("multiplayer.init()")}`,
-            "mp=client",
+            "mp=client"
         );
     }
 
     const fullUrl = `${pxt.webConfig.runUrl}?${queryParameters.join("&")}`;
-    return <div id="sim-container" className="grow mt-5">
-        <iframe ref={simIframeRef}
-            // todo jwunderl: handle height / width tailwind style
-            style={{ height: "calc(100vh-26rem)", width: "100vw"}}
-            src={fullUrl}
-            allowFullScreen={true}
-            className="w-full h-full"
-            sandbox='allow-popups allow-forms allow-scripts allow-same-origin'
-            title={lf("Arcade Game Simulator")}
-        />
-    </div>
+    return (
+        <div id="sim-container" className="grow mt-5">
+            <iframe
+                ref={simIframeRef}
+                // todo jwunderl: handle height / width tailwind style
+                style={{ height: "calc(100vh-26rem)", width: "100vw" }}
+                src={fullUrl}
+                allowFullScreen={true}
+                className="w-full h-full"
+                sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
+                title={lf("Arcade Game Simulator")}
+            />
+        </div>
+    );
 }

@@ -74,9 +74,7 @@ export default function Render() {
                     </div>
                 )}
             </div>
-            {state.gameState?.gameMode === "playing" && (
-                <ArcadeSimulator />
-            )}
+            {state.gameState?.gameMode === "playing" && <ArcadeSimulator />}
             {state.gameState?.gameMode && (
                 <>
                     <div className="mt-5">
