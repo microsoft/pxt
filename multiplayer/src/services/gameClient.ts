@@ -10,7 +10,8 @@ import {
     playerLeftAsync,
 } from "../epics";
 
-const GAME_HOST = "https://makecode-ppe-app-multiplayer-eastus-dev.azurewebsites.net";
+const GAME_HOST =
+    "https://makecode-ppe-app-multiplayer-eastus-dev.azurewebsites.net";
 //const GAME_HOST = "http://localhost:8082"
 //const GAME_HOST = "https://makecode-multiplayer.ngrok.io";
 
@@ -39,7 +40,11 @@ class GameClient {
     }
 
     public async connectAsync(ticket: string) {
-        return new Promise<void>(resolve => {
+        return new Promise<void>((resolve, reject) => {
+            const rejectTimeout = setTimeout(() => {
+                reject("Timed out connecting to game server");
+            }, 20 * 1000); // 20 seconds to join the game server
+
             this.sock = new Socket(GAME_HOST, {
                 transports: ["websocket"], // polling is unsupported
                 path: "/mp",
@@ -54,8 +59,13 @@ class GameClient {
                         switch (msg.type) {
                             case "hello":
                                 return await this.recvHelloMessageAsync(msg);
-                            case "joined":
-                                return await this.recvJoinedMessageAsync(msg);
+                            case "joined": {
+                                clearTimeout(rejectTimeout);
+                                return await this.recvJoinedMessageAsync(
+                                    msg,
+                                    resolve
+                                );
+                            }
                             case "start-game":
                                 return await this.recvStartGameMessageAsync(
                                     msg
@@ -73,7 +83,9 @@ class GameClient {
                                     msg
                                 );
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error("Error processing message", e);
+                    }
                 });
 
                 this.sock?.on("close", () => {
@@ -91,9 +103,7 @@ class GameClient {
                         type: "connect",
                         ticket,
                     } as Cli2Srv.ConnectMessage);
-                }, 1000); // Temp hack to wait for socket to fully open
-
-                resolve();
+                }, 500); // TODO: Why is this necessary? The socket doesn't seem ready to send messages immediately. This isn't a shippable solution.
             });
         });
     }
@@ -165,13 +175,18 @@ class GameClient {
         console.log("Server said hello");
     }
 
-    private async recvJoinedMessageAsync(msg: Srv2Cli.JoinedMessage) {
+    private async recvJoinedMessageAsync(
+        msg: Srv2Cli.JoinedMessage,
+        resolve: () => void
+    ) {
         console.log(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
         const gameMode = msg.gameMode;
 
         setGameModeAsync(gameMode);
+
+        resolve(); // Finally! We're fully joined to the game server.
     }
 
     private async recvStartGameMessageAsync(msg: Srv2Cli.StartGameMessage) {
