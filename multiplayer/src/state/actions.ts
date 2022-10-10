@@ -64,14 +64,14 @@ type SetPresence = ActionBase & {
 
 type SetReaction = ActionBase & {
     type: "SET_REACTION";
-    userId: string;
+    clientId: string;
     reactionId: string;
     index: number;
 };
 
 type ClearReaction = ActionBase & {
     type: "CLEAR_REACTION";
-    userId: string;
+    clientId: string;
 };
 
 /**
@@ -150,17 +150,17 @@ export const setPresence = (presence: Presence): SetPresence => ({
 });
 
 export const setReaction = (
-    userId: string,
+    clientId: string,
     reactionId: string,
     index: number
 ): SetReaction => ({
     type: "SET_REACTION",
-    userId,
+    clientId,
     reactionId,
     index,
 });
 
-export const clearReaction = (userId: string): ClearReaction => ({
+export const clearReaction = (clientId: string): ClearReaction => ({
     type: "CLEAR_REACTION",
-    userId,
+    clientId,
 });

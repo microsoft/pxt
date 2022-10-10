@@ -201,19 +201,19 @@ class GameClient {
 
     private async recvReactionMessageAsync(msg: Srv2Cli.ReactionMessage) {
         console.log("Server sent reaction");
-        await setReactionAsync(msg.userId, msg.index);
+        await setReactionAsync(msg.clientId, msg.index);
     }
 
     private async recvPlayerJoinedMessageAsync(
         msg: Srv2Cli.PlayerJoinedMessage
     ) {
         console.log("Server sent player joined");
-        await playerJoinedAsync(msg.userId);
+        await playerJoinedAsync(msg.clientId);
     }
 
     private async recvPlayerLeftMessageAsync(msg: Srv2Cli.PlayerLeftMessage) {
         console.log("Server sent player joined");
-        await playerLeftAsync(msg.userId);
+        await playerLeftAsync(msg.clientId);
     }
 }
 

@@ -17,7 +17,7 @@ export type AppState = {
     toasts: ToastWithId[];
     presence: Presence;
     reactions: {
-        [userId: string]:
+        [clientId: string]:
             | {
                   id: string;
                   index: number;
