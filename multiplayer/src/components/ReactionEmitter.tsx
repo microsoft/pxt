@@ -23,12 +23,12 @@ type Particle = ReactionParticleInstance & {
 const MAX_PARTICLES = 20;
 
 export default function Render(props: {
-    userId: string;
+    clientId: string;
     parentRef: HTMLDivElement;
 }) {
     const { state } = useContext(AppStateContext);
-    const { userId } = props;
-    const reaction = state.reactions[userId];
+    const { clientId } = props;
+    const reaction = state.reactions[clientId];
 
     const [, updateTrigger] = useState(0);
     const forceUpdate = useCallback(() => updateTrigger(x => x + 1), []);

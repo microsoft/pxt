@@ -2,13 +2,13 @@ import { state, dispatch } from "../state";
 import { setReaction, clearReaction } from "../state/actions";
 import { nanoid } from "nanoid";
 
-export async function setReactionAsync(userId: string, index: number) {
+export async function setReactionAsync(clientId: string, index: number) {
     try {
         const reactionId = nanoid();
-        dispatch(setReaction(userId, reactionId, index));
+        dispatch(setReaction(clientId, reactionId, index));
         setTimeout(() => {
-            if (state.reactions[userId]?.id === reactionId) {
-                dispatch(clearReaction(userId));
+            if (state.reactions[clientId]?.id === reactionId) {
+                dispatch(clearReaction(clientId));
             }
         }, 1000);
     } catch (e) {
