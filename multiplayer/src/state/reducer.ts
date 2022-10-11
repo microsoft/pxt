@@ -93,7 +93,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                 ...state,
                 reactions: {
                     ...state.reactions,
-                    [action.userId]: {
+                    [action.clientId]: {
                         id: action.reactionId,
                         index: action.index,
                     },
@@ -105,7 +105,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                 ...state,
                 reactions: {
                     ...state.reactions,
-                    [action.userId]: undefined,
+                    [action.clientId]: undefined,
                 },
             };
         }

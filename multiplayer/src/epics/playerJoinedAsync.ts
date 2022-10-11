@@ -1,9 +1,9 @@
 import { state, dispatch } from "../state";
 import { showToast } from "../state/actions";
 
-export async function playerJoinedAsync(userId: string) {
+export async function playerJoinedAsync(clientId: string) {
     try {
-        const user = state.presence.users.find(u => u.id === userId);
+        const user = state.presence.users.find(u => u.id === clientId);
         if (user) {
             dispatch(
                 showToast({

@@ -32,7 +32,7 @@ export default function Render() {
                             {user?.name}
                             {user && (
                                 <ReactionEmitter
-                                    userId={user.id}
+                                    clientId={user.id}
                                     parentRef={slotRef.current[slot]!}
                                 />
                             )}

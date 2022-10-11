@@ -81,6 +81,7 @@ export namespace Srv2Cli {
         role: ClientRole;
         slot: number;
         gameMode: GameMode;
+        clientId: string;
     };
 
     export type StartGameMessage = MessageBase & {
@@ -100,17 +101,17 @@ export namespace Srv2Cli {
     export type ReactionMessage = MessageBase & {
         type: "reaction";
         index: number;
-        userId: string;
+        clientId: string;
     };
 
     export type PlayerJoinedMessage = MessageBase & {
         type: "player-joined";
-        userId: string;
+        clientId: string;
     };
 
     export type PlayerLeftMessage = MessageBase & {
         type: "player-left";
-        userId: string;
+        clientId: string;
     };
 
     export type Message =
