@@ -1,7 +1,7 @@
 import { useCallback, useContext, useMemo, useState } from "react";
 import { AppStateContext } from "./state/AppStateContext";
 import { SignInModal } from "../../react-common/components/profile/SignInModal";
-import { signInAsync } from "./epics";
+import { signInAsync, signOutAsync } from "./epics";
 import * as authClient from "./services/authClient";
 import SignInPage from "./components/SignInPage";
 import SignedInPage from "./components/SignedInPage";
@@ -20,11 +20,15 @@ function App() {
         setShowSignInModal(true);
     }, [signedIn, setShowSignInModal]);
 
+    const handleSignOutClick = useCallback(async () => {
+        await signOutAsync();
+    }, [signedIn]);
+
     return (
         <div className={`${pxt.appTarget.id}`}>
-            <HeaderBar signedIn={signedIn} handleSignIn={handleSignInClick} profile={state.profile}/>
+            <HeaderBar signedIn={signedIn} handleSignIn={handleSignInClick} handleSignOut={handleSignOutClick} profile={state.profile}/>
             {!signedIn && <SignInPage handleSignIn={handleSignInClick} />}
-            {signedIn && <SignedInPage />}
+            {signedIn && <SignedInPage handleSignOut={handleSignOutClick}/>}
             {showSignInModal && (
                 <SignInModal
                     onClose={() => setShowSignInModal(false)}

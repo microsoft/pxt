@@ -18,6 +18,7 @@ interface HeaderBarProps {
     // dispatchShowUserProfile: () => void;
     // dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
     handleSignIn: () => Promise<void>;
+    handleSignOut: () => Promise<void>;
 }
 
 export default function Render(props: HeaderBarProps) {
@@ -142,8 +143,8 @@ export default function Render(props: HeaderBarProps) {
     }
 
     const onLogoutClicked = async () => {
-        pxt.tickEvent(`skillmap.usermenu.signout`);
-        // await authClient.logoutAsync(location.hash);
+        // pxt.tickEvent(`skillmap.usermenu.signout`);
+        props.handleSignOut();
     }
 
     /*
