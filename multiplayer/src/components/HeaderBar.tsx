@@ -75,8 +75,8 @@ export default function Render(props: HeaderBarProps) {
 
         // Google user picture URL must have referrer policy set to no-referrer
         const avatarElem = avatarPicUrl()
-            ? <div className="avatar">
-                <img src={avatarPicUrl()} alt={lf("Profile Image")} referrerPolicy="no-referrer" aria-hidden="true" />
+            ? <div className="flex align-middle justify-center items-center h-full">
+                <img src={avatarPicUrl()} className="border-solid border-2 border-white rounded-[100%] w-10 h-10" alt={lf("Profile Image")} referrerPolicy="no-referrer" aria-hidden="true" />
             </div>
             : undefined;
 
