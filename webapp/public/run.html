@@ -136,7 +136,6 @@
 
         if (additionalSimParams) {
             additionalSimParams = decodeURIComponent(additionalSimParams);
-            // only allow
             if (!/^[a-z0-9=\-:&]+$/i.test(additionalSimParams)) {
                 additionalSimParams = undefined;
             }
