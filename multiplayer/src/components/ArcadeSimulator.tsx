@@ -81,6 +81,7 @@ export default function Render() {
 
     const fullUrl = `${pxt.webConfig.runUrl}?${queryParameters.join("&")}`;
     return (
+        /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         <div id="sim-container" className="grow mt-5">
             <iframe
                 id="sim-iframe"
@@ -93,5 +94,6 @@ export default function Render() {
                 title={lf("Arcade Game Simulator")}
             />
         </div>
+        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
     );
 }
