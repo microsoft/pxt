@@ -1,6 +1,6 @@
 import { Socket } from "engine.io-client";
 import * as authClient from "./authClient";
-import { GameInfo, Cli2Srv, Srv2Cli } from "../types";
+import { GameInfo, Cli2Srv, Srv2Cli, SimMultiplayer } from "../types";
 import {
     gameDisconnected,
     setGameModeAsync,
@@ -32,11 +32,37 @@ class GameClient {
 
     sendMessage(msg: Cli2Srv.Message) {
         const payload = JSON.stringify(msg);
-        console.log(`Sending: ${payload}`);
         this.sock?.send(payload, {}, (err: any) => {
-            console.log("message sent");
             if (err) console.log("Error sending message", err);
         });
+    }
+
+    private async recvMessage(msg: Srv2Cli.Message) {
+        try {
+            switch (msg.type) {
+                case "hello":
+                    return await this.recvHelloMessageAsync(msg);
+                case "joined": {
+                    return await this.recvJoinedMessageAsync(msg);
+                }
+                case "start-game":
+                    return await this.recvStartGameMessageAsync(msg);
+                case "presence":
+                    return await this.recvPresenceMessageAsync(msg);
+                case "reaction":
+                    return await this.recvReactionMessageAsync(msg);
+                case "player-joined":
+                    return await this.recvPlayerJoinedMessageAsync(msg);
+                case "player-left":
+                    return await this.recvPlayerLeftMessageAsync(msg);
+                case "screen":
+                    return await this.recvScreenMessageAsync(msg);
+                case "input":
+                    return await this.recvInputMessageAsync(msg);
+            }
+        } catch (e) {
+            console.error("Error processing message", e);
+        }
     }
 
     public async connectAsync(ticket: string) {
@@ -54,35 +80,10 @@ class GameClient {
 
                 this.sock?.on("message", async payload => {
                     try {
-                        console.log(`Server sent: ${payload}`);
                         const msg = JSON.parse(payload) as Srv2Cli.Message;
-                        switch (msg.type) {
-                            case "hello":
-                                return await this.recvHelloMessageAsync(msg);
-                            case "joined": {
-                                clearTimeout(rejectTimeout);
-                                return await this.recvJoinedMessageAsync(
-                                    msg,
-                                    resolve
-                                );
-                            }
-                            case "start-game":
-                                return await this.recvStartGameMessageAsync(
-                                    msg
-                                );
-                            case "presence":
-                                return await this.recvPresenceMessageAsync(msg);
-                            case "reaction":
-                                return await this.recvReactionMessageAsync(msg);
-                            case "player-joined":
-                                return await this.recvPlayerJoinedMessageAsync(
-                                    msg
-                                );
-                            case "player-left":
-                                return await this.recvPlayerLeftMessageAsync(
-                                    msg
-                                );
-                        }
+                        if (msg.type === "joined") clearTimeout(rejectTimeout);
+                        await this.recvMessage(msg);
+                        if (msg.type === "joined") resolve();
                     } catch (e) {
                         console.error("Error processing message", e);
                     }
@@ -175,18 +176,13 @@ class GameClient {
         console.log("Server said hello");
     }
 
-    private async recvJoinedMessageAsync(
-        msg: Srv2Cli.JoinedMessage,
-        resolve: () => void
-    ) {
+    private async recvJoinedMessageAsync(msg: Srv2Cli.JoinedMessage) {
         console.log(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
         const gameMode = msg.gameMode;
 
         setGameModeAsync(gameMode, msg.slot);
-
-        resolve(); // Finally! We're fully joined to the game server.
     }
 
     private async recvStartGameMessageAsync(msg: Srv2Cli.StartGameMessage) {
@@ -214,6 +210,45 @@ class GameClient {
     private async recvPlayerLeftMessageAsync(msg: Srv2Cli.PlayerLeftMessage) {
         console.log("Server sent player joined");
         await playerLeftAsync(msg.clientId);
+    }
+
+    private textEncoder = new TextEncoder();
+    private async recvScreenMessageAsync(msg: Srv2Cli.ScreenMessage) {
+        // console.log("Server sent player screen");
+        const { data: screen } = msg;
+
+        // convert from hexstring to uint8array
+        screen.data = Uint8Array.from(
+            screen.data
+                .match(/.{1,2}/g)
+                .map((byte: string) => parseInt(byte, 16))
+        );
+
+        this.postToSimFrame(<SimMultiplayer.ImageMessage>{
+            type: "multiplayer",
+            content: "Image",
+            image: screen,
+        });
+    }
+
+    private async recvInputMessageAsync(msg: Srv2Cli.InputMessage) {
+        // console.log(`Server sent input from slot ${msg.type}: ${msg.data}`);
+        const { slot, data } = msg;
+        const { button, state } = data;
+        this.postToSimFrame(<SimMultiplayer.InputMessage>{
+            type: "multiplayer",
+            content: "Button",
+            clientNumber: slot - 1,
+            button: button,
+            state: state,
+        });
+    }
+
+    private postToSimFrame(msg: SimMultiplayer.Message) {
+        const simIframe = document.getElementById(
+            "sim-iframe"
+        ) as HTMLIFrameElement;
+        simIframe?.contentWindow?.postMessage(msg, "*");
     }
 }
 
@@ -248,6 +283,10 @@ export async function leaveGameAsync() {
 
 export async function sendReactionAsync(index: number) {
     await gameClient?.sendReactionAsync(index);
+}
+
+export function sendSimMessage(msg: Cli2Srv.SimMessage) {
+    gameClient?.sendMessage(msg);
 }
 
 export function destroy() {

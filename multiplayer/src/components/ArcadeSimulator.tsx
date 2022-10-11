@@ -1,5 +1,7 @@
-import { useContext, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { AppStateContext } from "../state/AppStateContext";
+import { SimMultiplayer } from "../types";
+import { sendSimMessage } from "../services/gameClient";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -35,16 +37,58 @@ export default function Render() {
         );
     }
 
+    const postImageMsg = (msg: SimMultiplayer.ImageMessage) => {
+        const { image } = msg;
+        // JSON converts uint8array -> {"1": 160, "10": 2, ...}, serialize as hex string.
+        image.data = (image.data as Uint8Array).reduce(
+            (acc, byte) => acc + byte.toString(16).padStart(2, "0"),
+            ""
+        );
+        sendSimMessage({
+            type: "screen",
+            data: image,
+        });
+    };
+
+    const postInputMsg = (msg: SimMultiplayer.InputMessage) => {
+        const { button, state } = msg;
+        sendSimMessage({
+            type: "input",
+            data: {
+                button,
+                state,
+            },
+        });
+    };
+
+    const msgHandler = (msg: MessageEvent<SimMultiplayer.Message>) => {
+        const { data } = msg;
+        const { broadcast, origin, content } = data;
+
+        if (!broadcast) return;
+
+        if (origin === "client" && content === "Button") {
+            postInputMsg(data);
+        } else if (origin === "server" && content === "Image") {
+            postImageMsg(data);
+        }
+    };
+
+    useEffect(() => {
+        window.addEventListener("message", msgHandler);
+        return () => window.removeEventListener("message", msgHandler);
+    }, []);
+
     const fullUrl = `${pxt.webConfig.runUrl}?${queryParameters.join("&")}`;
     return (
         <div id="sim-container" className="grow mt-5">
             <iframe
+                id="sim-iframe"
                 ref={simIframeRef}
-                // todo jwunderl: handle height / width tailwind style
-                style={{ height: "calc(100vh-26rem)", width: "100vw" }}
                 src={fullUrl}
                 allowFullScreen={true}
-                className="w-full h-full"
+                // TODO:  this calc is weird, needs cleaning.
+                className="h-[calc(100vh-26rem)] w-[100vw]"
                 sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
                 title={lf("Arcade Game Simulator")}
             />
