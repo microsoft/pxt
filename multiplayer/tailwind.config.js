@@ -9,7 +9,7 @@ module.exports = {
       segoueUI: ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana']
     },
     extend: {
-      /* TODO thsparks : How does high contrast work? */
+      /* TODO multiplayer : How does high contrast work? */
       colors: {
         'primary-color': 'var(--primary-color)',
         'secondary-color': 'var(--secondary-color)',
