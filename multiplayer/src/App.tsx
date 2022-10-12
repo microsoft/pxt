@@ -2,7 +2,6 @@ import { useCallback, useContext, useMemo, useState } from "react";
 import { AppStateContext } from "./state/AppStateContext";
 import { SignInModal } from "../../react-common/components/profile/SignInModal";
 import { signInAsync, signOutAsync } from "./epics";
-import * as authClient from "./services/authClient";
 import SignInPage from "./components/SignInPage";
 import SignedInPage from "./components/SignedInPage";
 import HeaderBar from "./components/HeaderBar"
