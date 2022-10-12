@@ -46,7 +46,7 @@ Only translate the text enclosed and leave the leading `~ avatar avatar` and tra
 
 ### Hints
 
-Similar to avatars, hints provide a bordered section to make a message stand out. Hints are formatted simimlar to avatars.
+Similar to avatars, hints provide a bordered section to make a message stand out. Hints are formatted similar to avatars.
 
 ```
 ~ hint
