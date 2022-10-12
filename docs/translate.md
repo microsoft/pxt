@@ -38,7 +38,7 @@ Although they are linked in the [Get started](#get-started) section above, you c
 1. [Translation languages](/translate/languages)
 2. [Localization files](/translate/files)
 3. [Parts to translate](/translate/parts)
-4. [Translating markdown](/markdown)
+4. [Translating markdown](/translate/markdown)
 5. [Translator roles](/translate/roles)
 6. [In context translation](/translate/in-context)
 

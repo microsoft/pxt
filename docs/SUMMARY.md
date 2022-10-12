@@ -45,7 +45,7 @@
     * [Translation languages](/translate/languages)
     * [Localization files](/translate/files)
     * [Parts to translate](/translate/parts)
-    * [Translating markdown](/markdown)
+    * [Translating markdown](/translate/markdown)
     * [Translator roles](/translate/roles)
     * [In context translation](/translate/in-context)
 * [Blocks Embedding](/blocks-embed)

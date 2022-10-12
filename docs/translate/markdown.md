@@ -99,7 +99,7 @@ Tutorials are written as a series of steps. Usually there is a heading title for
 Introduction @unplugged
 ```
 
-The word `Introduction` is translated but the control option of `@unplugged` is left as is. Also, step heading can have a form which hides it from the tutorial window:
+The word `Introduction` is translated but the control option of `@unplugged` is left as is. Also, a step heading can have a form which hides it from the tutorial window:
 
 ```
 {Intro @unplugged}
@@ -121,7 +121,7 @@ When you encounter this, all of it is left untranslated.
 
 ### Emojis and icons
 
-Emojis and icons can be present in the markdown as well. Some of them will appear as actual images. Others will have code:
+Emojis and icons can be present in the markdown as well. Some of them will appear as actual images. Others will have a code:
 
 ```
 :id card:
