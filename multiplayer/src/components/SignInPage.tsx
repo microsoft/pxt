@@ -33,7 +33,7 @@ export default function Render() {
     }, [signedIn, setShowSignInModal]);
 
     return (
-        <div className="pt-3 flex flex-col items-center gap-1">
+        <div className="tw-pt-3 tw-flex tw-flex-col tw-items-center tw-gap-1">
             <Button
                 className="primary"
                 label={lf("Sign In")}

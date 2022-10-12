@@ -29,10 +29,10 @@ export default function Render() {
 
     return (
         <>
-            <div className="mt-2">
-                <div className="text-2xl font-bold">{"Joining a Game"}</div>
+            <div className="tw-mt-2">
+                <div className="tw-text-2xl tw-font-bold">{"Joining a Game"}</div>
                 {netMode === "init" && (
-                    <div className="flex flex-row gap-1 items-end">
+                    <div className="tw-flex tw-flex-row tw-gap-1 tw-items-end">
                         <Input
                             label={lf("Join Code")}
                             title={lf("Join Code")}
@@ -50,20 +50,20 @@ export default function Render() {
                     </div>
                 )}
                 {netMode === "connecting" && (
-                    <div className="text-lg font-bold mt-5">
+                    <div className="tw-text-lg tw-font-bold tw-mt-5">
                         {lf("Connecting")}
                     </div>
                 )}
                 {netMode === "connected" && (
-                    <div className="flex flex-col gap-1">
+                    <div className="tw-flex tw-flex-col tw-gap-1">
                         {state.gameState?.gameMode === "lobby" && (
-                            <div className="mt-5">
-                                <div className="text-lg font-bold">
+                            <div className="tw-mt-5">
+                                <div className="tw-text-lg tw-font-bold">
                                     {lf("In the lobby")}
                                 </div>
                             </div>
                         )}
-                        <div className="mt-1">
+                        <div className="tw-mt-1">
                             <Button
                                 className={"gray"}
                                 label={lf("Leave Game")}
@@ -77,10 +77,10 @@ export default function Render() {
             {state.gameState?.gameMode === "playing" && <ArcadeSimulator />}
             {state.gameState?.gameMode && (
                 <>
-                    <div className="mt-5">
+                    <div className="tw-mt-5">
                         <Presence />
                     </div>
-                    <div className="mt-5">
+                    <div className="tw-mt-5">
                         <Reactions />
                     </div>
                 </>
