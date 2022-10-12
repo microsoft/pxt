@@ -74,7 +74,7 @@ Here, only the text `NEXT: Tutorials` is translated.
 
 ## Tutorials
 
-Tutorials use a lot more extended markdown than regular document pages do. There are several directive strings and attribute strings that get included with the normal text. These are used to control the flow and behavior of the tutorial experience. You will see these in the tutorial files on Crowdin.
+Tutorial documents use a lot more extended markdown than regular document pages do. There are several directive strings and attribute strings that get included with the normal text. These are used to control the flow and behavior of the tutorial experience. You will see these in the tutorial files on Crowdin.
 
 Tutorials and skillmaps will also use some of the extended markdown used in the regular document pages.
 
@@ -133,7 +133,7 @@ Leave the code names untranslated.
 
 ## Skillmaps
 
-Skillmaps use almost the same extended markdown as tutorials. One big difference is the skillmap specification page. It is found in the root skillmap folder and has all of the skillmap paths and settings. As an example, here's the first part of the `balloon.md` skillmap.
+Skillmap documents use almost the same extended markdown as tutorials. One big difference is the skillmap specification page. It is found in the root skillmap folder and has all of the skillmap paths and settings. As an example, here's the first part of the `balloon.md` skillmap.
 
 ```
 Burstin' Balloons
@@ -179,3 +179,42 @@ Essentially, you will translate the main skillmap title and the setting values f
 * name
 * description
 * tags
+
+## Cards and card pages
+
+Card pages are markdown documents with a some data sections inside them which have "card" entries. The sections are a list of cards which represent graphic buttons that link to other documents, videos, or projects. They are used to create the link galleries on the editor's home screen. Sometimes card links are embedded in regular documents like make projects and course materials too.
+
+Here's an example card page for a set of lessons:
+
+```
+Lessons
+
+Getting started
+
+[
+{
+  "name": "Cherry Pickr",
+  "description": "Learn the basics of creating a game",
+  "url": "/lessons/cherry-pickr",
+  "imageUrl": "/static/lessons/cherry-pickr.png"
+},
+{
+  "name": "Dance Party",
+  "description": "Create a basic dance collision game using sprite overlap events and controller buttons!",
+  "url": "/lessons/dance-party",
+  "imageUrl": "/static/lessons/dance-party.png"
+},
+{
+  "name": "BlockOut",
+  "description": "Create a projectile collision game",
+  "url": "/lessons/block-out",
+  "imageUrl": "/static/lessons/block-out.png"
+}
+]
+
+See Also
+
+Block Out, Cherry Pickr, Dance Party
+```
+
+The items that get translated are the titles, subtitles, the `See Also` title, and the 'See Also' link names. Also, within each card entry, the string value after `"name":` and `"description":` are translated. Everything else is left as is. Remember, don't translate any value names before the `:`.
