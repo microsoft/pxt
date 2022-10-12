@@ -8,12 +8,12 @@ export default function Render() {
 
     return (
         <div>
-            <div className="text-lg font-bold">{lf("Reactions")}</div>
-            <div className="flex flex-row gap-1 mt-1">
+            <div className="tw-text-lg tw-font-bold">{lf("Reactions")}</div>
+            <div className="tw-flex tw-flex-row tw-gap-1 tw-mt-1">
                 {ReactionDb.map((def, i) => {
                     return (
                         <div
-                            className="cursor-pointer select-none border rounded-full border-slate-300 bg-neutral-50 hover:scale-150 ease-linear duration-[50ms] active:bg-neutral-200"
+                            className="tw-cursor-pointer tw-select-none tw-border tw-rounded-full tw-border-slate-300 tw-bg-neutral-50 hover:tw-scale-150 tw-ease-linear tw-duration-[50ms] active:tw-bg-neutral-200"
                             key={i}
                             onClick={() => onReactionClick(i)}
                         >

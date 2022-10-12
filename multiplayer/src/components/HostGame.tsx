@@ -43,10 +43,10 @@ export default function Render() {
 
     return (
         <>
-            <div className="mt-2 h-max">
-                <div className="text-2xl font-bold">{"Hosting a Game"}</div>
+            <div className="tw-mt-2 tw-h-max">
+                <div className="tw-text-2xl tw-font-bold">{"Hosting a Game"}</div>
                 {netMode === "init" && (
-                    <div className="flex flex-row gap-1 items-end">
+                    <div className="tw-flex tw-flex-row tw-gap-1 tw-items-end">
                         <Input
                             label={lf("Game URL or Share Code")}
                             title={lf("Game URL or Share Code")}
@@ -64,21 +64,21 @@ export default function Render() {
                     </div>
                 )}
                 {netMode === "connecting" && (
-                    <div className="text-lg font-bold mt-5">
+                    <div className="tw-text-lg tw-font-bold tw-mt-5">
                         {lf("Connecting")}
                     </div>
                 )}
                 {netMode === "connected" && (
-                    <div className="flex flex-col gap-1">
-                        <div className="mt-5">
+                    <div className="tw-flex tw-flex-col tw-gap-1">
+                        <div className="tw-mt-5">
                             Join Code:{" "}
-                            <span className="p-2 tracking-[.25rem] border-1 border-black bg-slate-600 solid rounded text-white">
+                            <span className="tw-p-2 tw-tracking-[.25rem] tw-border-1 tw-border-black tw-bg-slate-600 tw-solid tw-rounded tw-text-white">
                                 {state.gameState?.joinCode}
                             </span>
                         </div>
                         {state.gameState?.gameMode === "lobby" && (
-                            <div className="mt-5">
-                                <div className="text-lg font-bold">
+                            <div className="tw-mt-5">
+                                <div className="tw-text-lg tw-font-bold">
                                     {lf("In the lobby")}
                                 </div>
                                 <Button
@@ -89,7 +89,7 @@ export default function Render() {
                                 />
                             </div>
                         )}
-                        <div className="mt-1">
+                        <div className="tw-mt-1">
                             <Button
                                 className={"gray"}
                                 label={lf("Leave Game")}
@@ -103,10 +103,10 @@ export default function Render() {
             {state.gameState?.gameMode === "playing" && <ArcadeSimulator />}
             {state.gameState?.gameMode && (
                 <>
-                    <div className="mt-5">
+                    <div className="tw-mt-5">
                         <Presence />
                     </div>
-                    <div className="mt-5">
+                    <div className="tw-mt-5">
                         <Reactions />
                     </div>
                 </>

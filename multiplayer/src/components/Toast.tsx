@@ -11,17 +11,17 @@ import { dismissToast } from "../state/actions";
 import "../App.css";
 
 const backgroundColors: { [type in ToastType]: string } = {
-    success: "bg-green-300",
-    info: "bg-sky-300",
-    warning: "bg-amber-300",
-    error: "bg-red-300",
+    success: "tw-bg-green-300",
+    info: "tw-bg-sky-300",
+    warning: "tw-bg-amber-300",
+    error: "tw-bg-red-300",
 };
 
 const sliderColors: { [type in ToastType]: string } = {
-    success: "bg-green-500",
-    info: "bg-sky-500",
-    warning: "bg-amber-500",
-    error: "bg-red-500",
+    success: "tw-bg-green-500",
+    info: "tw-bg-sky-500",
+    warning: "tw-bg-amber-500",
+    error: "tw-bg-red-500",
 };
 
 const icons: { [type in ToastType]: string } = {
@@ -60,50 +60,50 @@ function Toast(props: ToastWithId) {
     };
 
     const sliderWidth = useCallback(() => {
-        return sliderActive ? "w-0" : "w-full";
+        return sliderActive ? "tw-w-0" : "tw-w-full";
     }, [sliderActive]);
 
     return (
         <div
             className={
-                "flex flex-col mr-0 md:mr-4 border-none rounded shadow-md overflow-hidden pointer-events-auto " +
+                "tw-flex tw-flex-col tw-mr-0 md:tw-mr-4 tw-border-none tw-rounded tw-shadow-md tw-overflow-hidden tw-pointer-events-auto " +
                 [
                     props.textColorClass || "text-black",
                     props.backgroundColorClass || backgroundColors[props.type],
                 ].join(" ")
             }
         >
-            <div className={"flex gap-2 p-3 text-lg"}>
+            <div className={"tw-flex tw-gap-2 tw-p-3 tw-text-lg"}>
                 {!props.hideIcon && (
                     <div
                         className={
-                            "flex justify-center border-0 rounded-full " +
+                            "tw-flex tw-justify-center tw-border-0 tw-rounded-full " +
                             sliderColors[props.type]
                         }
                     >
                         {icons[props.type]}
                     </div>
                 )}
-                <div className="flex flex-col text-left">
+                <div className="tw-flex tw-flex-col tw-text-left">
                     {props.text && (
-                        <div className="whitespace-nowrap text-md overflow-ellipsis">
+                        <div className="tw-whitespace-nowrap tw-text-md tw-overflow-ellipsis">
                             {props.text}
                         </div>
                     )}
                     {props.detail && (
-                        <div className="text-sm">{props.detail}</div>
+                        <div className="tw-text-sm">{props.detail}</div>
                     )}
                     {props.jsx && <div>{props.jsx}</div>}
                 </div>
                 {!props.hideDismissBtn && !props.showSpinner && (
                     <div
-                        className="flex flex-grow justify-end"
+                        className="tw-flex tw-flex-grow tw-justify-end"
                         onClick={handleDismissClicked}
                     >
                         <div>
                             <FontAwesomeIcon
                                 className={
-                                    "cursor-pointer hover:scale-125 transition-all"
+                                    "tw-cursor-pointer hover:tw-scale-125 tw-transition-all"
                                 }
                                 icon={faTimesCircle}
                             />
@@ -111,7 +111,7 @@ function Toast(props: ToastWithId) {
                     </div>
                 )}
                 {props.showSpinner && (
-                    <div className="flex flex-grow justify-end">
+                    <div className="tw-flex tw-flex-grow tw-justify-end">
                         <div>
                             <FontAwesomeIcon
                                 icon={faCircleNotch}
@@ -126,7 +126,7 @@ function Toast(props: ToastWithId) {
                     <div
                         ref={sliderRef}
                         className={
-                            "h-1 transition-all ease-linear " +
+                            "tw-h-1 tw-transition-all tw-ease-linear " +
                             [sliderWidth(), sliderColors[props.type]].join(" ")
                         }
                         style={{ transitionDuration: `${props.timeoutMs}ms` }}
@@ -142,7 +142,7 @@ export default function Render() {
     const { toasts } = state;
 
     return (
-        <div className="flex gap-2 flex-col-reverse items-end fixed bottom-0 right-0 mb-8 mr-4 z-50 pointer-events-none">
+        <div className="tw-flex tw-gap-2 tw-flex-col-reverse tw-items-end tw-fixed tw-bottom-0 tw-right-0 tw-mb-8 tw-mr-4 tw-z-50 tw-pointer-events-none">
             <AnimatePresence>
                 {toasts.map(item => (
                     <motion.div
