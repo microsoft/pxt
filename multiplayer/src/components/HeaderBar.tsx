@@ -1,6 +1,6 @@
 /// <reference path="../../../localtypings/react.d.ts" />
 
-// TODO thsparks : Reduce duplication with skillmap HeaderBar.tsx (may require enabling tailwind css there or removing it here?)
+// TODO multiplayer : Reduce duplication with skillmap HeaderBar.tsx (may require enabling tailwind css there or removing it here?)
 
 import { Button } from "../../../react-common/components/controls/Button";
 import { MenuBar } from "../../../react-common/components/controls/MenuBar";
@@ -18,8 +18,8 @@ export default function Render(props: HeaderBarProps) {
 
     const hasIdentity = pxt.auth.hasIdentity();
     const appTheme = pxt.appTarget?.appTheme;
-    const reportAbuseUrl = ""; // TODO thsparks, how will this work?
-    const helpUrl = ""; // TODO thsparks
+    const reportAbuseUrl = ""; // TODO multiplayer : how will this work?
+    const helpUrl = ""; // TODO multiplayer
 
     const getOrganizationLogo = (targetTheme: pxt.AppTheme) => {
         const logoUrl = targetTheme.organizationWideLogo;
@@ -34,7 +34,7 @@ export default function Render(props: HeaderBarProps) {
         return <div className={"flex pt-[2px] ml-3 before:relative before:h- before:border-l-white before:border-l-[2px] before:border-solid cursor-pointer"} onClick={onHomeClicked}>
             {targetTheme.useTextLogo
                 ? [<span className="ml-3" key="org-name" onClick={onHomeClicked}>{targetTheme.organizationText}</span>,
-                   /* TODO thsparks, make UI responsive to smaller screens <span className="hidden md:block" key="org-name-short" onClick={onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>*/]
+                   /* TODO multiplayer : Make UI responsive to smaller screens <span className="hidden md:block" key="org-name-short" onClick={onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>*/]
                 : (targetTheme.logo || targetTheme.portraitLogo
                     ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
                     : <span className="name"> {targetTheme.boardName}</span>)
