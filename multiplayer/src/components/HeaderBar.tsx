@@ -52,7 +52,7 @@ export default function Render(props: HeaderBarProps) {
         props.handleSignIn();
     }
 
-    const onSignOutClicked = async () => {
+    const onSignOutClicked = () => {
         pxt.tickEvent(`mp.usermenu.signout`);
         props.handleSignOut();
     }
