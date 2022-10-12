@@ -131,7 +131,7 @@ export default function Render(props: HeaderBarProps) {
     }
 
     const settingItems = getSettingItems();
-    return <MenuBar className="h-[var(--header-height)] bg-tertiary-color text-white flex flex-grow-0 flex-shrink-0 align-middle justify-center items-center z-[var(--above-frame-zindex)] text-[2.2rem]" ariaLabel={lf("Header")}> 
+    return <MenuBar className="h-[var(--header-height)] bg-tertiary-color text-white flex flex-grow-0 flex-shrink-0 align-middle justify-center items-center z-[var(--above-frame-zindex)] text-[2.2rem]" ariaLabel={lf("Header")}>
         <div className="select-none text-lg font-bold font-segoueUI flex align-middle p-[var(--header-padding-top)]">
             {getOrganizationLogo(appTheme)}
             {getTargetLogo(appTheme)}
@@ -142,4 +142,4 @@ export default function Render(props: HeaderBarProps) {
             { hasIdentity && getUserMenu() }
         </div>
     </MenuBar>
-} 
+}
