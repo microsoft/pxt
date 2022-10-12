@@ -82,7 +82,7 @@ export default function Render() {
     const fullUrl = `${pxt.webConfig.runUrl}?${queryParameters.join("&")}`;
     return (
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-        <div id="sim-container" className="tw-grow mt-5">
+        <div id="sim-container" className="tw-grow tw-mt-5">
             <iframe
                 id="sim-iframe"
                 ref={simIframeRef}
