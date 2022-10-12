@@ -133,7 +133,7 @@ Leave the code names untranslated.
 
 ## Skillmaps
 
-Skillmaps use almost that same extended markdown as tutorials. One big difference is the skillmap specification page. It is found in the root skillmap folder and has all of the skillmap paths and settings. As an example, here's the first part of the `balloon.md` skillmap.
+Skillmaps use almost the same extended markdown as tutorials. One big difference is the skillmap specification page. It is found in the root skillmap folder and has all of the skillmap paths and settings. As an example, here's the first part of the `balloon.md` skillmap.
 
 ```
 Burstin' Balloons
@@ -170,7 +170,7 @@ balloon1
 
 It can be hard to know what to translate and what to leave alone with this file. Basically, everything to the left of `:` remains untranslated. Then, settings that have descriptions, have a name, or are tags can get translated.
 
-In the first block of settings, the main map settings, there's the title `Burstin' Ballons`. This will be translated. The description, `Create a simple carnival game where...`, this also is translated along with the tags settings `easy, beginner, carnival`. All of these settings relate to the language locale. The remaining settings aren't locale related so they remain untranslated.
+In the first block of settings, the main map settings, there's the title `Burstin' Ballons`. This will be translated. The description, `Create a simple carnival game where...`, is also translated along with the tags settings, `easy, beginner, carnival`. All of these settings relate to the language locale. The remaining settings aren't locale related so they remain untranslated.
 
 The section headings of `burstin-balloons` and `balloon1` are skillmap paths and do not get translated.
 
