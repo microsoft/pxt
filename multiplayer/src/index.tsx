@@ -19,7 +19,6 @@ if (pxt.BrowserUtils.isLocalHostDev()) {
     pxt.webConfig.runUrl = "http://localhost:3232/--run";
 }
 pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
-if (!isLocal()) pxt.setupWebConfig((window as any).pxtConfig);
 
 ReactDOM.render(
     <React.StrictMode>

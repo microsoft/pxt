@@ -89,7 +89,7 @@ export default function Render() {
                 src={fullUrl}
                 allowFullScreen={true}
                 // TODO:  this calc is weird, needs cleaning.
-                className="h-[calc(100vh-26rem)] w-[100vw]"
+                className="h-[calc(100vh-26rem)] w-screen"
                 sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
                 title={lf("Arcade Game Simulator")}
             />

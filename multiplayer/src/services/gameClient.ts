@@ -42,9 +42,8 @@ class GameClient {
             switch (msg.type) {
                 case "hello":
                     return await this.recvHelloMessageAsync(msg);
-                case "joined": {
+                case "joined":
                     return await this.recvJoinedMessageAsync(msg);
-                }
                 case "start-game":
                     return await this.recvStartGameMessageAsync(msg);
                 case "presence":
@@ -214,7 +213,6 @@ class GameClient {
 
     private textEncoder = new TextEncoder();
     private async recvScreenMessageAsync(msg: Srv2Cli.ScreenMessage) {
-        // console.log("Server sent player screen");
         const { data: screen } = msg;
 
         // convert from hexstring to uint8array
@@ -232,7 +230,6 @@ class GameClient {
     }
 
     private async recvInputMessageAsync(msg: Srv2Cli.InputMessage) {
-        // console.log(`Server sent input from slot ${msg.type}: ${msg.data}`);
         const { slot, data } = msg;
         const { button, state } = data;
         this.postToSimFrame(<SimMultiplayer.InputMessage>{
