@@ -37,7 +37,7 @@ export default function Render(props: HeaderBarProps) {
     }
 
     const getTargetLogo = (targetTheme: pxt.AppTheme) => {
-        return <div className={"flex pt-[2px] ml-3 before:relative before:h- before:border-l-white before:border-l-[2px] before:border-solid"} onClick={onHomeClicked}>
+        return <div className={"flex pt-[2px] ml-3 before:relative before:h- before:border-l-white before:border-l-[2px] before:border-solid cursor-pointer"} onClick={onHomeClicked}>
             {targetTheme.useTextLogo
                 ? [<span className="ml-3" key="org-name" onClick={onHomeClicked}>{targetTheme.organizationText}</span>,
                    /*<span className="hidden md:block" key="org-name-short" onClick={onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>*/]
@@ -117,17 +117,12 @@ export default function Render(props: HeaderBarProps) {
             if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
                 rel = rel.substr(1);
             }
-            window.open(pxt.appTarget.appTheme.homeUrl + rel);
+            window.open(pxt.appTarget.appTheme.homeUrl + rel, "_self");
         }
         else {
-            window.open(pxt.appTarget.appTheme.homeUrl);
+            window.open(pxt.appTarget.appTheme.homeUrl, "_self");
         }
 
-    }
-
-    const onBugClicked = () => {
-        // tickEvent("skillmap.bugreport");
-        (window as any).usabilla_live?.("click");
     }
 
     const onLogoutClicked = async () => {
@@ -147,20 +142,4 @@ export default function Render(props: HeaderBarProps) {
             { hasIdentity && getUserMenu() }
         </div>
     </MenuBar>
-
-    // return <MenuBar className="header" ariaLabel={lf("Header")}>
-    //     <div className="header-left">
-    //         {getOrganizationLogo(appTheme)}
-    //         {getTargetLogo(appTheme)}
-    //     </div>
-
-    //     <div className="spacer" />
-    //     <div className="header-right">
-    //         { activityOpen && <Button className="menu-button" leftIcon="fas fa-arrow-left large" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
-    //         <Button className="menu-button" leftIcon="fas fa-home large" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
-    //         { /*helpItems?.length > 0 && <MenuDropdown id="skillmap-help" title={lf("Help menu")} icon="fas fa-question-circle large" items={helpItems}  />*/ }
-    //         { /*settingItems?.length > 0 && <MenuDropdown id="settings-help" title={lf("Settings menu")} icon="fas fa-cog large" items={settingItems}  />*/}
-    //         { hasIdentity && getUserMenu() }
-    //     </div>
-    // </MenuBar>
 } 
