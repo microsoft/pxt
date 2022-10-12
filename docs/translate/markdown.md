@@ -72,6 +72,22 @@ NEXT: Tutorials
 
 Here, only the text `NEXT: Tutorials` is translated.
 
+### Extension references
+
+An extension is extra code that is imported into a project when it's loaded into the MakeCode editor. Since code can run from a inside a markdown page, the use of additional code from an extension needs a reference in that same page. Usually these references are specified at the bottom of the page. In Crowdin, they will appear with the same font as the code snippets. You leave these extension references untranslated. They might look like this:
+
+```
+microturtle=github:Microsoft/pxt-microturtle#v0.0.9
+```
+
+Occasionally, an extension will reside with the editor itself and doesn't need a URL style reference. It might just appear at the bottom of the page as:
+
+```
+microturtle
+```
+
+In this case you might think that this is something to translate. You'll have to note that this has the same font in as a code snippet and should be left untranslated.
+
 ## Tutorials
 
 Tutorial documents use a lot more extended markdown than regular document pages do. There are several directive strings and attribute strings that get included with the normal text. These are used to control the flow and behavior of the tutorial experience. You will see these in the tutorial files on Crowdin.
