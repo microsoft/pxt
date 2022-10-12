@@ -113,7 +113,7 @@ export default function Render(props: {
 
     return (
         <div>
-            <div className="flex flex-row">
+            <div className="tw-flex tw-flex-row">
                 {activeParticles.map(p => {
                     return <ReactionParticle key={p.id} particle={p} />;
                 })}

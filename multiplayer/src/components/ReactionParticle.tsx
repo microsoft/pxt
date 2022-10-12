@@ -11,7 +11,7 @@ export default function Render(props: { particle: Particle }) {
 
     return (
         <div
-            className="fixed"
+            className="tw-fixed"
             style={{
                 left: particle.x + vars.xOffset,
                 top: particle.y + vars.yOffset,

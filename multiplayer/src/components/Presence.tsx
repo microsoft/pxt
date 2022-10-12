@@ -19,15 +19,15 @@ export default function Render() {
 
     return (
         <div>
-            <div className="text-lg font-bold">{lf("Players")}</div>
-            <div className="flex flex-row items-center justify-center gap-2 mt-2">
+            <div className="tw-text-lg tw-font-bold">{lf("Players")}</div>
+            <div className="tw-flex tw-flex-row tw-items-center tw-justify-center tw-gap-2 tw-mt-2">
                 {[1, 2, 3, 4].map(slot => {
                     const user = players.find(u => u.slot === slot);
                     return (
                         <div
                             key={slot}
                             ref={ref => (slotRef.current[slot] = ref)}
-                            className="flex p-1 border border-slate-300 rounded-full min-h-[2.25rem] min-w-[2.25rem] bg-neutral-50"
+                            className="tw-flex tw-p-1 tw-border tw-border-slate-300 tw-rounded-full tw-min-h-[2.25rem] tw-min-w-[2.25rem] tw-bg-neutral-50"
                         >
                             {user?.name}
                             {user && (
