@@ -5,6 +5,9 @@ import { Input } from "../../../react-common/components/controls/Input";
 import { Button } from "../../../react-common/components/controls/Button";
 import Presence from "./Presence";
 import Reactions from "./Reactions";
+import ArcadeSimulator from "./ArcadeSimulator";
+import { dispatch } from "../state";
+import { showToast } from "../state/actions";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -15,9 +18,17 @@ export default function Render() {
 
     const onHostGameClick = async () => {
         if (inputRef.current) {
-            const gameId = inputRef.current.value.trim().split("/").pop();
+            const gameId = pxt.Cloud.parseScriptId(inputRef.current.value);
             if (gameId) {
                 await hostGameAsync(gameId);
+            } else {
+                dispatch(
+                    showToast({
+                        type: "error",
+                        text: lf("Invalid share code"),
+                        timeoutMs: 5000,
+                    })
+                );
             }
         }
     };
@@ -78,13 +89,6 @@ export default function Render() {
                                 />
                             </div>
                         )}
-                        {state.gameState?.gameMode === "playing" && (
-                            <div className="tw-mt-5">
-                                <div className="tw-text-lg tw-font-bold">
-                                    {lf("Game Started!")}
-                                </div>
-                            </div>
-                        )}
                         <div className="tw-mt-1">
                             <Button
                                 className={"gray"}
@@ -96,7 +100,7 @@ export default function Render() {
                     </div>
                 )}
             </div>
-            <div className="tw-grow" />
+            {state.gameState?.gameMode === "playing" && <ArcadeSimulator />}
             {state.gameState?.gameMode && (
                 <>
                     <div className="tw-mt-5">

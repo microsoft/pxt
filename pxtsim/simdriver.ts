@@ -72,6 +72,7 @@ namespace pxsim {
         single?: boolean;
         hideSimButtons?: boolean;
         autofocus?: boolean;
+        queryParameters?: string;
     }
 
     export interface HwDebugger {
@@ -320,8 +321,8 @@ namespace pxsim {
                 if (parentWindow) {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow) {
-                        const parentOrigin = this.options.parentOrigin || window.location.origin
-                        parentWindow.postMessage(msg, parentOrigin);
+                        // posting sim messages to parent frame; no origin restriction.
+                        parentWindow.postMessage(msg, "*");
                     }
                 }
                 if (!this.options.nestedEditorSim && !broadcastmsg?.toParentIFrameOnly) {
@@ -427,6 +428,17 @@ namespace pxsim {
             if (this._runOptions?.hideSimButtons) {
                 const urlObject = new URL(furl);
                 urlObject.searchParams.append("hideSimButtons", "1");
+                furl = urlObject.toString();
+            }
+            if (this._runOptions?.queryParameters) {
+                const urlObject = new URL(furl);
+                const parameters = this._runOptions.queryParameters.split("&");
+                for (const param of parameters) {
+                    const [a, b] = param.split(/[:=]/);
+                    if (a && b) {
+                        urlObject.searchParams.set(a, b);
+                    }
+                }
                 furl = urlObject.toString();
             }
             furl += '#' + frame.id;

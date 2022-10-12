@@ -6,6 +6,7 @@ import {
     setNetMode,
     setGameInfo,
     showToast,
+    setGameId,
 } from "../state/actions";
 
 export async function hostGameAsync(shareCode: string) {
@@ -31,6 +32,7 @@ export async function hostGameAsync(shareCode: string) {
         );
 
         dispatch(setGameInfo(gameInfo));
+        dispatch(setGameId(shareCode));
         dispatch(setNetMode("connected"));
     } catch (e) {
         console.log("error", e);
