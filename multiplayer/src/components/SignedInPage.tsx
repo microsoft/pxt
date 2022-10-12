@@ -18,7 +18,7 @@ export default function Render() {
     const authButtonLabel = lf("Sign Out");
 
     return (
-        <div className="pt-3 pb-8 flex flex-col items-center gap-1 h-screen">
+        <div className="tw-pt-3 tw-pb-8 tw-flex tw-flex-col tw-items-center tw-gap-1 tw-h-screen">
             <Button
                 className="primary"
                 label={authButtonLabel}
