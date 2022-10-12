@@ -20,6 +20,7 @@ namespace pxt.runner {
         single?: boolean;
         hideSimButtons?: boolean;
         autofocus?: boolean;
+        additionalQueryParameters?: string;
     }
 
     class EditorPackage {
@@ -408,7 +409,8 @@ namespace pxt.runner {
             light: simOptions.light,
             single: simOptions.single,
             hideSimButtons: simOptions.hideSimButtons,
-            autofocus: simOptions.autofocus
+            autofocus: simOptions.autofocus,
+            queryParameters: simOptions.additionalQueryParameters,
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
