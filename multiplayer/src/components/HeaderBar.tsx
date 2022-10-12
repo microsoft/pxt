@@ -69,8 +69,8 @@ export default function Render(props: HeaderBarProps) {
     const getTargetLogo = (targetTheme: pxt.AppTheme) => {
         return <div className={"tw-flex tw-pt-[2px] tw-ml-3 before:tw-relative before:tw-border-l-white before:tw-border-l-[2px] before:tw-border-solid tw-cursor-pointer"} onClick={onHomeClicked}>
             {targetTheme.useTextLogo
-                ? [<span className="tw-ml-3" key="org-name" onClick={onHomeClicked}>{targetTheme.organizationText}</span>,
-                   /* TODO multiplayer : Make UI responsive to smaller screens <span className="hidden md:block" key="org-name-short" onClick={onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>*/]
+                ? [<span className="tw-ml-3 tw-hidden sm:tw-flex" key="org-name" onClick={onHomeClicked}>{targetTheme.organizationText}</span>,
+                   <span className="tw-ml-3 tw-flex sm:tw-hidden" key="org-name-short" onClick={onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>]
                 : (targetTheme.logo || targetTheme.portraitLogo
                     ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
                     : <span className="name"> {targetTheme.boardName}</span>)
