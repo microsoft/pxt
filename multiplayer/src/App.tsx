@@ -16,19 +16,19 @@ function App() {
     const { signedIn } = state;
     const [showSignInModal, setShowSignInModal] = useState(false);
 
-    const handleSignInClick = useCallback(async () => {
+    const handleSignIn = useCallback(async () => {
         setShowSignInModal(true);
     }, [signedIn, setShowSignInModal]);
 
-    const handleSignOutClick = useCallback(async () => {
+    const handleSignOut = useCallback(async () => {
         await signOutAsync();
     }, [signedIn]);
 
     return (
         <div className={`${pxt.appTarget.id}`}>
-            <HeaderBar signedIn={signedIn} handleSignIn={handleSignInClick} handleSignOut={handleSignOutClick} profile={state.profile}/>
-            {!signedIn && <SignInPage handleSignIn={handleSignInClick} />}
-            {signedIn && <SignedInPage handleSignOut={handleSignOutClick}/>}
+            <HeaderBar signedIn={signedIn} handleSignIn={handleSignIn} handleSignOut={handleSignOut} profile={state.profile}/>
+            {!signedIn && <SignInPage handleSignIn={handleSignIn} />}
+            {signedIn && <SignedInPage handleSignOut={handleSignOut}/>}
             {showSignInModal && (
                 <SignInModal
                     onClose={() => setShowSignInModal(false)}

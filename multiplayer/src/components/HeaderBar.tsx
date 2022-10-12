@@ -1,21 +1,15 @@
 /// <reference path="../../../localtypings/react.d.ts" />
 
-// TODO thsparks : Reduce duplication with skillmap HeaderBar.tsx
+// TODO thsparks : Reduce duplication with skillmap HeaderBar.tsx (may require enabling tailwind css there or removing it here?)
 
-import * as React from "react";
-import { connect } from 'react-redux';
 import { Button } from "../../../react-common/components/controls/Button";
 import { MenuBar } from "../../../react-common/components/controls/MenuBar";
 import { MenuDropdown, MenuItem } from "../../../react-common/components/controls/MenuDropdown";
 
 interface HeaderBarProps {
-    showReportAbuse?: boolean; // TODO thsparks
+    showReportAbuse?: boolean;
     signedIn: boolean;
     profile: pxt.auth.UserProfile | undefined;
-    // preferences: pxt.auth.UserPreferences;
-    // dispatchSaveAndCloseActivity: () => void;
-    // dispatchShowResetUserModal: () => void;
-    // dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
     handleSignIn: () => Promise<void>;
     handleSignOut: () => Promise<void>;
 }
@@ -40,7 +34,7 @@ export default function Render(props: HeaderBarProps) {
         return <div className={"flex pt-[2px] ml-3 before:relative before:h- before:border-l-white before:border-l-[2px] before:border-solid cursor-pointer"} onClick={onHomeClicked}>
             {targetTheme.useTextLogo
                 ? [<span className="ml-3" key="org-name" onClick={onHomeClicked}>{targetTheme.organizationText}</span>,
-                   /*<span className="hidden md:block" key="org-name-short" onClick={onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>*/]
+                   /* TODO thsparks, make UI responsive to smaller screens <span className="hidden md:block" key="org-name-short" onClick={onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>*/]
                 : (targetTheme.logo || targetTheme.portraitLogo
                     ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
                     : <span className="name"> {targetTheme.boardName}</span>)
@@ -75,7 +69,6 @@ export default function Render(props: HeaderBarProps) {
 
         const initialsElem = <span><div className="h-10 w-10 rounded-[100%] border-solid border-2 border-white bg-[#028B9B] flex items-center justify-center text-base" aria-hidden="true">{ profile ? pxt.auth.userInitials(profile) : "" }</div></span>
 
-        // div here is user-menu css class in skillmap header bar
         return <div className="h-full">
             {signedIn ?
                 <MenuDropdown id="profile-dropdown" items={items} label={avatarElem || initialsElem} title={lf("Profile Settings")}/> :
