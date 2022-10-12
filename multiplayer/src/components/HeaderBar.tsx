@@ -15,11 +15,47 @@ interface HeaderBarProps {
 }
 
 export default function Render(props: HeaderBarProps) {
-
     const hasIdentity = pxt.auth.hasIdentity();
     const appTheme = pxt.appTarget?.appTheme;
     const reportAbuseUrl = ""; // TODO multiplayer : how will this work?
     const helpUrl = ""; // TODO multiplayer
+
+    const onHelpClicked = () => {
+        pxt.tickEvent("mp.settingsmenu.help");
+        window.open(helpUrl);
+    }
+
+    const onReportAbuseClicked = () => {
+        pxt.tickEvent("mp.settingsmenu.reportabuse");
+        window.open(reportAbuseUrl);
+    }
+
+    const onHomeClicked = () => {
+        pxt.tickEvent("mp.home");
+
+        // relprefix looks like "/beta---", need to chop off the hyphens and slash
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        if (pxt.appTarget.appTheme.homeUrl && rel) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+                rel = rel.substr(1);
+            }
+            window.open(pxt.appTarget.appTheme.homeUrl + rel, "_self");
+        }
+        else {
+            window.open(pxt.appTarget.appTheme.homeUrl, "_self");
+        }
+
+    }
+
+    const onSignInClicked = () => {
+        pxt.tickEvent(`mp.signin`);
+        props.handleSignIn();
+    }
+
+    const onSignOutClicked = async () => {
+        pxt.tickEvent(`mp.usermenu.signout`);
+        props.handleSignOut();
+    }
 
     const getOrganizationLogo = (targetTheme: pxt.AppTheme) => {
         const logoUrl = targetTheme.organizationWideLogo;
@@ -56,7 +92,7 @@ export default function Render(props: HeaderBarProps) {
                 id: "signout",
                 title: lf("Sign Out"),
                 label: lf("Sign Out"),
-                onClick: onLogoutClicked
+                onClick: onSignOutClicked
             });
         }
 
@@ -72,7 +108,7 @@ export default function Render(props: HeaderBarProps) {
         return <div className="h-full">
             {signedIn ?
                 <MenuDropdown id="profile-dropdown" items={items} label={avatarElem || initialsElem} title={lf("Profile Settings")}/> :
-                <Button className="p-[0.6rem] h-4/5  m-2 mr-4 flex-row-reverse font-segoueUI font-medium align-middle" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={props.handleSignIn}/>}
+                <Button className="p-[0.6rem] h-4/5  m-2 mr-4 flex-row-reverse font-segoueUI font-medium align-middle" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={onSignInClicked}/>}
         </div>;
     }
 
@@ -83,44 +119,17 @@ export default function Render(props: HeaderBarProps) {
             id: "help",
             title: lf("Help"),
             label: lf("Help"),
-            onClick: () => {
-                window.open(helpUrl);
-            }
+            onClick: onHelpClicked
         })
 
         items.push({
             id: "report",
             title: lf("Report Abuse"),
             label: lf("Report Abuse"),
-            onClick: () => {
-                // tickEvent("skillmap.reportabuse");
-                window.open(reportAbuseUrl);
-            }
+            onClick: onReportAbuseClicked
         })
 
         return items;
-    }
-
-    const onHomeClicked = () => {
-        // tickEvent("skillmap.home");
-
-        // relprefix looks like "/beta---", need to chop off the hyphens and slash
-        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
-        if (pxt.appTarget.appTheme.homeUrl && rel) {
-            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
-                rel = rel.substr(1);
-            }
-            window.open(pxt.appTarget.appTheme.homeUrl + rel, "_self");
-        }
-        else {
-            window.open(pxt.appTarget.appTheme.homeUrl, "_self");
-        }
-
-    }
-
-    const onLogoutClicked = async () => {
-        // pxt.tickEvent(`skillmap.usermenu.signout`);
-        props.handleSignOut();
     }
 
     const settingItems = getSettingItems();
