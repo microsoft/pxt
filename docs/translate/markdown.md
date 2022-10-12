@@ -72,7 +72,7 @@ NEXT: Tutorials
 
 Here, only the text `NEXT: Tutorials` is translated.
 
-## Tutorials and skillmaps
+## Tutorials
 
 Tutorials use a lot more extended markdown than regular document pages do. There are several directive strings and attribute strings that get included with the normal text. These are used to control the flow and behavior of the tutorial experience. You will see these in the tutorial files on Crowdin.
 
@@ -129,3 +129,53 @@ Emojis and icons can be present in the markdown as well. Some of them will appea
 ```
 
 Leave the code names untranslated.
+
+
+## Skillmaps
+
+Skillmaps use almost that same extended markdown as tutorials. One big difference is the skillmap specification page. It is found in the root skillmap folder and has all of the skillmap paths and settings. As an example, here's the first part of the `balloon.md` skillmap.
+
+```
+Burstin' Balloons
+
+* name: Burstin' Balloons
+* description: Create a simple carnival game where you click quickly to try to burst a balloon before time runs out.
+* infoUrl: skillmap/educator-info/balloon-map-info
+* bannerUrl: /static/skillmap/balloon/balloon3.gif
+* backgroundurl: /static/skillmap/backgrounds/mouse-comp.gif
+* primarycolor: #ffffff
+* secondarycolor: #fff53d
+* tertiarycolor: #96ecfd
+* completednodecolor: #4a8397
+* highlightcolor: #ff0000
+* allowcodecarryover: true
+* tags: easy, beginner, carnival
+
+burstin-balloons
+
+* layout: manual
+
+balloon1
+
+* allowcodecarryover: false
+* name: Create a Clicker
+* type: tutorial
+* description: Learn to use MakeCode Arcade and create a simple clicker game.
+* tags: easy, intro, points, clicker
+* next: balloon2
+* url: /skillmap/balloon/balloon1
+* imageUrl: /static/skillmap/balloon/balloon1.gif
+* position: -1 2
+```
+
+It can be hard to know what to translate and what to leave alone with this file. Basically, everything to the left of `:` remains untranslated. Then, settings that have descriptions, have a name, or are tags can get translated.
+
+In the first block of settings, the main map settings, there's the title `Burstin' Ballons`. This will be translated. The description, `Create a simple carnival game where...`, this also is translated along with the tags settings `easy, beginner, carnival`. All of these settings relate to the language locale. The remaining settings aren't locale related so they remain untranslated.
+
+The section headings of `burstin-balloons` and `balloon1` are skillmap paths and do not get translated.
+
+Essentially, you will translate the main skillmap title and the setting values for:
+
+* name
+* description
+* tags
