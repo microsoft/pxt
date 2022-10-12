@@ -59,17 +59,17 @@ export default function Render(props: HeaderBarProps) {
 
     const getOrganizationLogo = (targetTheme: pxt.AppTheme) => {
         const logoUrl = targetTheme.organizationWideLogo;
-        return <div className="flex">
+        return <div className="tw-flex">
             {logoUrl
-                ? <img className="h-6 mx-0 my-1" src={logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
-                : <span className="h-6 mx-0 my-1">{targetTheme.organization}</span>}
+                ? <img className="tw-h-6 tw-mx-0 tw-my-1" src={logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
+                : <span className="tw-h-6 tw-mx-0 tw-my-1">{targetTheme.organization}</span>}
         </div>
     }
 
     const getTargetLogo = (targetTheme: pxt.AppTheme) => {
-        return <div className={"flex pt-[2px] ml-3 before:relative before:h- before:border-l-white before:border-l-[2px] before:border-solid cursor-pointer"} onClick={onHomeClicked}>
+        return <div className={"tw-flex tw-pt-[2px] tw-ml-3 before:tw-relative before:tw-border-l-white before:tw-border-l-[2px] before:tw-border-solid tw-cursor-pointer"} onClick={onHomeClicked}>
             {targetTheme.useTextLogo
-                ? [<span className="ml-3" key="org-name" onClick={onHomeClicked}>{targetTheme.organizationText}</span>,
+                ? [<span className="tw-ml-3" key="org-name" onClick={onHomeClicked}>{targetTheme.organizationText}</span>,
                    /* TODO multiplayer : Make UI responsive to smaller screens <span className="hidden md:block" key="org-name-short" onClick={onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>*/]
                 : (targetTheme.logo || targetTheme.portraitLogo
                     ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
@@ -98,17 +98,17 @@ export default function Render(props: HeaderBarProps) {
 
         // Google user picture URL must have referrer policy set to no-referrer
         const avatarElem = avatarPicUrl()
-            ? <div className="flex align-middle justify-center items-center h-full">
-                <img src={avatarPicUrl()} className="border-solid border-2 border-white rounded-[100%] w-10 h-10" alt={lf("Profile Image")} referrerPolicy="no-referrer" aria-hidden="true" />
+            ? <div className="tw-flex tw-align-middle tw-justify-center tw-items-center tw-h-full">
+                <img src={avatarPicUrl()} className="tw-border-solid tw-border-2 tw-border-white tw-rounded-[100%] tw-w-10 tw-h-10" alt={lf("Profile Image")} referrerPolicy="no-referrer" aria-hidden="true" />
             </div>
             : undefined;
 
-        const initialsElem = <span><div className="h-10 w-10 rounded-[100%] border-solid border-2 border-white bg-[#028B9B] flex items-center justify-center text-base" aria-hidden="true">{ profile ? pxt.auth.userInitials(profile) : "" }</div></span>
+        const initialsElem = <span><div className="tw-h-10 tw-w-10 tw-rounded-[100%] tw-border-solid tw-border-2 tw-border-white tw-bg-[#028B9B] tw-flex tw-items-center tw-justify-center tw-text-base" aria-hidden="true">{ profile ? pxt.auth.userInitials(profile) : "" }</div></span>
 
-        return <div className="h-full">
+        return <div className="tw-h-full">
             {signedIn ?
                 <MenuDropdown id="profile-dropdown" items={items} label={avatarElem || initialsElem} title={lf("Profile Settings")}/> :
-                <Button className="p-[0.6rem] h-4/5  m-2 mr-4 flex-row-reverse font-segoueUI font-medium align-middle" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={onSignInClicked}/>}
+                <Button className="tw-p-[0.6rem] tw-h-4/5 tw-m-2 tw-mr-4 tw-flex-row-reverse tw-font-segoueUI tw-font-medium tw-align-middle" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={onSignInClicked}/>}
         </div>;
     }
 
@@ -133,13 +133,13 @@ export default function Render(props: HeaderBarProps) {
     }
 
     const settingItems = getSettingItems();
-    return <MenuBar className="h-[var(--header-height)] bg-tertiary-color text-white flex flex-grow-0 flex-shrink-0 align-middle justify-center items-center z-[var(--above-frame-zindex)] text-[2.2rem]" ariaLabel={lf("Header")}>
-        <div className="select-none text-lg font-bold font-segoueUI flex align-middle p-[var(--header-padding-top)]">
+    return <MenuBar className="tw-h-[var(--header-height)] tw-bg-tertiary-color tw-text-white tw-flex tw-flex-grow-0 tw-flex-shrink-0 tw-align-middle tw-justify-center tw-items-center tw-z-[var(--above-frame-zindex)] tw-text-[2.2rem]" ariaLabel={lf("Header")}>
+        <div className="tw-select-none tw-text-lg tw-font-bold tw-font-segoueUI tw-flex tw-align-middle tw-p-[var(--header-padding-top)]">
             {getOrganizationLogo(appTheme)}
             {getTargetLogo(appTheme)}
         </div>
-        <div className="select-none flex-grow" />
-        <div className="select-none text-lg font-bold font-segoueUI flex items-center pr-[var(--header-padding-top)] h-full">
+        <div className="tw-select-none tw-flex-grow" />
+        <div className="tw-select-none tw-text-lg tw-font-bold tw-font-segoueUI tw-flex tw-items-center tw-pr-[var(--header-padding-top)] tw-h-full">
             { settingItems?.length > 0 && <MenuDropdown className="h-full" id="settings-help" title={lf("Settings menu")} icon="fas fa-cog large" items={settingItems}/>}
             { hasIdentity && getUserMenu() }
         </div>
