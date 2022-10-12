@@ -15,7 +15,6 @@ interface HeaderBarProps {
     // preferences: pxt.auth.UserPreferences;
     // dispatchSaveAndCloseActivity: () => void;
     // dispatchShowResetUserModal: () => void;
-    // dispatchShowUserProfile: () => void;
     // dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
     handleSignIn: () => Promise<void>;
     handleSignOut: () => Promise<void>;
@@ -40,8 +39,8 @@ export default function Render(props: HeaderBarProps) {
     const getTargetLogo = (targetTheme: pxt.AppTheme) => {
         return <div className={"flex pt-[2px] ml-3 before:relative before:h- before:border-l-white before:border-l-[2px] before:border-solid"} onClick={onHomeClicked}>
             {targetTheme.useTextLogo
-                ? [<span className="ml-3" key="org-name" onClick={onBackClicked}>{targetTheme.organizationText}</span>,
-                   /*<span className="hidden md:block" key="org-name-short" onClick={onBackClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>*/]
+                ? [<span className="ml-3" key="org-name" onClick={onHomeClicked}>{targetTheme.organizationText}</span>,
+                   /*<span className="hidden md:block" key="org-name-short" onClick={onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>*/]
                 : (targetTheme.logo || targetTheme.portraitLogo
                     ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
                     : <span className="name"> {targetTheme.boardName}</span>)
@@ -59,12 +58,6 @@ export default function Render(props: HeaderBarProps) {
         const items: MenuItem[] = [];
 
         if (signedIn) {
-            items.push({
-                id: "profile",
-                title: lf("My Profile"),
-                label: lf("My Profile"),
-                onClick: () => {} // onProfileClicked
-            });
             items.push({
                 id: "signout",
                 title: lf("Sign Out"),
@@ -115,11 +108,6 @@ export default function Render(props: HeaderBarProps) {
         return items;
     }
 
-    const onBackClicked = () => {
-        // tickEvent("skillmap.activity.back", { path: currentMapId || "", activity: currentActivityId || "" });
-        // props.dispatchSaveAndCloseActivity();
-    }
-
     const onHomeClicked = () => {
         // tickEvent("skillmap.home");
 
@@ -146,13 +134,6 @@ export default function Render(props: HeaderBarProps) {
         // pxt.tickEvent(`skillmap.usermenu.signout`);
         props.handleSignOut();
     }
-
-    /*
-    const onProfileClicked = () => {
-        pxt.tickEvent(`skillmap.profile`)
-        props.dispatchShowUserProfile();
-    }
-    */
 
     const settingItems = getSettingItems();
     return <MenuBar className="h-[var(--header-height)] bg-tertiary-color text-white flex flex-grow-0 flex-shrink-0 align-middle justify-center items-center z-[var(--above-frame-zindex)] text-[2.2rem]" ariaLabel={lf("Header")}> 
