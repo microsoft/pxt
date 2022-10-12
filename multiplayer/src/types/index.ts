@@ -18,6 +18,8 @@ export type GameInfo = {
     joinCode?: string;
     joinTicket?: string;
     affinityCookie?: string;
+    gameId?: string;
+    slot?: number;
 };
 
 export type GameState = GameInfo & {
@@ -46,6 +48,19 @@ export namespace Cli2Srv {
         type: "start-game";
     };
 
+    export type InputMessage = MessageBase & {
+        type: "input";
+        data: {
+            button: number;
+            state: "Pressed" | "Released" | "Held";
+        };
+    };
+
+    export type ScreenMessage = MessageBase & {
+        type: "screen";
+        data: any; // pxsim.RefBuffer
+    };
+
     export type ChatMessage = MessageBase & {
         type: "chat";
         text: string;
@@ -61,8 +76,12 @@ export namespace Cli2Srv {
         | HeartbeatMessage
         | ConnectMessage
         | StartGameMessage
+        | InputMessage
+        | ScreenMessage
         | ChatMessage
         | ReactionMessage;
+
+    export type SimMessage = ScreenMessage | InputMessage;
 }
 
 export namespace Srv2Cli {
@@ -84,6 +103,20 @@ export namespace Srv2Cli {
 
     export type StartGameMessage = MessageBase & {
         type: "start-game";
+    };
+
+    export type InputMessage = MessageBase & {
+        type: "input";
+        slot: number;
+        data: {
+            button: number;
+            state: "Pressed" | "Released" | "Held";
+        };
+    };
+
+    export type ScreenMessage = MessageBase & {
+        type: "screen";
+        data: any; // pxsim.RefBuffer
     };
 
     export type ChatMessage = MessageBase & {
@@ -116,6 +149,8 @@ export namespace Srv2Cli {
         | HelloMessage
         | JoinedMessage
         | StartGameMessage
+        | InputMessage
+        | ScreenMessage
         | ChatMessage
         | PresenceMessage
         | ReactionMessage
@@ -163,3 +198,25 @@ export type Dimension = {
     width: number;
     height: number;
 };
+
+export namespace SimMultiplayer {
+    type MessageBase = {
+        type: "multiplayer";
+        content: string;
+        origin?: "server" | "client";
+        broadcast?: boolean;
+    };
+    export type ImageMessage = MessageBase & {
+        content: "Image";
+        image: any; // pxsim.RefBuffer
+    };
+
+    export type InputMessage = MessageBase & {
+        content: "Button";
+        button: number;
+        clientNumber: number;
+        state: "Pressed" | "Released" | "Held";
+    };
+
+    export type Message = ImageMessage | InputMessage;
+}

@@ -119,6 +119,7 @@
         var server = !!/server(?:[:=])1/i.test(window.location.href);
         var mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
+        var additionalSimParams = /simParams(?:[:=])([^&?]+)/i.exec(window.location.href)?.[1];
         var codeFromData = undefined;
         var assetJsonFromData = undefined;
         try {
@@ -132,6 +133,13 @@
         }
         var code = codeFromData || (codeFromSrc ? codeFromSrc[1] : undefined);
 
+
+        if (additionalSimParams) {
+            additionalSimParams = decodeURIComponent(additionalSimParams);
+            if (!/^[a-z0-9=\-:&]+$/i.test(additionalSimParams)) {
+                additionalSimParams = undefined;
+            }
+        }
         if (!id && !code && !debugSim && !server) {
             console.error("missing id or code");
             loading.textContent = 'Oops, wrong arguments...';
@@ -190,7 +198,9 @@
                                 fullScreen: fullScreen,
                                 builtJsInfo: builtSimJs,
                                 single: single,
-                                hideSimButtons: hideSimButtons
+                                hideSimButtons: hideSimButtons,
+                                autofocus: autofocus,
+                                additionalQueryParameters: additionalSimParams
                             };
                             console.log('simulating project')
                             pxt.runner.simulateAsync(sims, options).then(function() {
@@ -247,7 +257,8 @@
                         builtJsInfo: builtSimJs,
                         single: single,
                         hideSimButtons: hideSimButtons,
-                        autofocus: autofocus
+                        autofocus: autofocus,
+                        additionalQueryParameters: additionalSimParams
                     };
                     console.log('simulating script')
                     pxt.runner.simulateAsync(sims, options).then(function() {

@@ -38,6 +38,16 @@ type SetGameInfo = ActionBase & {
     gameInfo: GameInfo | undefined;
 };
 
+type SetGameId = ActionBase & {
+    type: "SET_GAME_ID";
+    gameId: string | undefined;
+};
+
+type SetPlayerSlot = ActionBase & {
+    type: "SET_PLAYER_SLOT";
+    playerSlot: number | undefined;
+};
+
 type ClearGameInfo = ActionBase & {
     type: "CLEAR_GAME_INFO";
 };
@@ -83,6 +93,8 @@ export type Action =
     | SetUiMode
     | SetNetMode
     | SetGameInfo
+    | SetGameId
+    | SetPlayerSlot
     | ClearGameInfo
     | SetGameMode
     | ShowToast
@@ -120,6 +132,16 @@ export const setNetMode = (mode: NetMode): SetNetMode => ({
 export const setGameInfo = (gameInfo: GameInfo): SetGameInfo => ({
     type: "SET_GAME_INFO",
     gameInfo,
+});
+
+export const setGameId = (gameId: string): SetGameId => ({
+    type: "SET_GAME_ID",
+    gameId,
+});
+
+export const setPlayerSlot = (slot: number): SetPlayerSlot => ({
+    type: "SET_PLAYER_SLOT",
+    playerSlot: slot,
 });
 
 export const clearGameInfo = (): ClearGameInfo => ({

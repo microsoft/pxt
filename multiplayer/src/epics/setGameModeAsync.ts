@@ -1,11 +1,11 @@
 import { GameMode } from "../types";
 import { dispatch } from "../state";
-import { setGameMode, showToast } from "../state/actions";
+import { setGameMode, setPlayerSlot, showToast } from "../state/actions";
 
-export async function setGameModeAsync(gameMode: GameMode) {
+export async function setGameModeAsync(gameMode: GameMode, slot?: number) {
     try {
         dispatch(setGameMode(gameMode));
-        if (gameMode === "playing")
+        if (gameMode === "playing") {
             dispatch(
                 showToast({
                     type: "info",
@@ -13,6 +13,10 @@ export async function setGameModeAsync(gameMode: GameMode) {
                     timeoutMs: 5000,
                 })
             );
+        }
+        if (slot) {
+            dispatch(setPlayerSlot(slot));
+        }
     } catch (e) {
     } finally {
     }
