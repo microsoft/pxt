@@ -109,7 +109,7 @@ This translates in the same way as before, only translate `Introduction`, the `{
 
 ### Tutorial hint
 
-A tutorial hint is a special code snippet for tutorials that offers a quick coding solution the the user. It has a form like:
+A tutorial hint is a special code snippet for tutorials that offers a quick coding solution to the user. It has a form like:
 
 ```
 ~tutorialhint
