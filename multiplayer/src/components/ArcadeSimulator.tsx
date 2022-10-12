@@ -82,14 +82,14 @@ export default function Render() {
     const fullUrl = `${pxt.webConfig.runUrl}?${queryParameters.join("&")}`;
     return (
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-        <div id="sim-container" className="grow mt-5">
+        <div id="sim-container" className="tw-grow mt-5">
             <iframe
                 id="sim-iframe"
                 ref={simIframeRef}
                 src={fullUrl}
                 allowFullScreen={true}
                 // TODO:  this calc is weird, needs cleaning.
-                className="h-[calc(100vh-26rem)] w-screen"
+                className="tw-h-[calc(100vh-26rem)] tw-w-screen"
                 sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
                 title={lf("Arcade Game Simulator")}
             />
