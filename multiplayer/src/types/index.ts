@@ -1,4 +1,4 @@
-export type UiMode = "home" | "host" | "join";
+export type UiMode = "init" | "home" | "host" | "join";
 export type NetMode = "init" | "connecting" | "connected";
 
 export type AppMode = {
@@ -7,7 +7,7 @@ export type AppMode = {
 };
 
 export const defaultAppMode: AppMode = {
-    uiMode: "home",
+    uiMode: "init",
     netMode: "init",
 };
 

@@ -39,19 +39,17 @@ declare namespace pxt {
         bannedRepos?: string[];
         allowUnapproved?: boolean;
         approvedRepoLib?: pxt.Map<RepoData>;
-        // format:
-        // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
-        // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
-        upgrades?: pxt.Map<string>;
         // list of trusted custom editor extension urls
         // that can bypass consent and send/receive messages
         approvedEditorExtensionUrls?: string[];
-        extensionsToolboxDisallowDelete?: string[]; // List of extensions to ignore when allowing for deletion in toolbox
     }
 
     interface RepoData {
         preferred?: boolean;
         tags?: string[];
+        // format:
+        // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
+        // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
         upgrades?: string[];
     }
 
