@@ -5,7 +5,20 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    fontFamily: {
+      segoueUI: ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana']
+    },
+    extend: {
+      /* TODO multiplayer : How does high contrast work? */
+      colors: {
+        'primary-color': 'var(--primary-color)',
+        'secondary-color': 'var(--secondary-color)',
+        'tertiary-color': 'var(--tertiary-color)',
+        'inactive-color': 'var(--inactive-color)',
+        'body-background-color': 'var(--body-background-color);',
+        'white': 'var(--white)'
+      }
+    },
   },
   plugins: [],
 }

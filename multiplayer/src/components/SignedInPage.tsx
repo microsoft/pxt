@@ -1,19 +1,18 @@
 import { useCallback, useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/AppStateContext";
-import { signOutAsync } from "../epics";
 import { Button } from "../../../react-common/components/controls/Button";
 import JoinOrHost from "./JoinOrHost";
 import HostGame from "./HostGame";
 import JoinGame from "./JoinGame";
 
-export default function Render() {
+export interface SignedInPageProps {
+    handleSignOut: () => Promise<void>;
+}
+
+export default function Render(props: SignedInPageProps) {
     const { state } = useContext(AppStateContext);
     const { signedIn, appMode } = state;
     const { uiMode } = appMode;
-
-    const handleSignOutClick = useCallback(async () => {
-        await signOutAsync();
-    }, [signedIn]);
 
     const authButtonLabel = lf("Sign Out");
 
@@ -23,7 +22,7 @@ export default function Render() {
                 className="primary"
                 label={authButtonLabel}
                 title={authButtonLabel}
-                onClick={handleSignOutClick}
+                onClick={props.handleSignOut}
             />
             {uiMode === "home" && <JoinOrHost />}
             {uiMode === "host" && <HostGame />}
