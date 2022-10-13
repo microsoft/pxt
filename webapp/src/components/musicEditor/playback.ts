@@ -44,7 +44,7 @@ async function loadMetronomeAsync() {
     if (metronomeWorker) return metronomeWorker;
 
     metronomeLoadPromise = new Promise(resolve => {
-        metronomeWorker = new Worker("/static/music-editor/metronomeWorker.js");
+        metronomeWorker = new Worker("data:application/javascript," + encodeURIComponent(workerJS));
 
         const readyHandler = (ev: MessageEvent) => {
             if (ev.data === "ready") {
@@ -194,3 +194,41 @@ export function addPlaybackStopListener(listener: () => void) {
 export function removePlaybackStopListener(listener: () => void) {
     playbackStopListeners = playbackStopListeners.filter(l => listener !== l);
 }
+
+const workerJS = `
+/**
+ * Adpated from https://github.com/cwilso/metronome/
+ */
+
+let timerRef;
+let interval;
+
+addEventListener("message", ev => {
+    const message = ev.data;
+
+    if (message.type === "start") {
+        updateInterval(message.interval, true);
+    }
+    else if (message.type === "stop") {
+        clearInterval(timerRef);
+        timerRef = undefined;
+    }
+    else if (message.type === "set-interval") {
+        updateInterval(message.interval, false);
+    }
+})
+
+postMessage("ready");
+
+function updateInterval(interval, startIfStopped) {
+    if (timerRef) {
+        clearInterval(timerRef);
+        startIfStopped = true;
+    }
+    interval = interval;
+
+    if (startIfStopped) {
+        timerRef = setInterval(() => postMessage("tick"), interval);
+    }
+}
+`;
