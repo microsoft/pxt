@@ -28,7 +28,3 @@ ReactDOM.render(
     </React.StrictMode>,
     document.getElementById("root")
 );
-
-document.addEventListener("DOMContentLoaded", async () => {
-    await authClient.authCheckAsync();
-});

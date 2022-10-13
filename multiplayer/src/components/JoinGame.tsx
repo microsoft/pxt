@@ -30,7 +30,9 @@ export default function Render() {
     return (
         <>
             <div className="tw-mt-2">
-                <div className="tw-text-2xl tw-font-bold">{"Joining a Game"}</div>
+                <div className="tw-text-2xl tw-font-bold">
+                    {"Joining a Game"}
+                </div>
                 {netMode === "init" && (
                     <div className="tw-flex tw-flex-row tw-gap-1 tw-items-end">
                         <Input
