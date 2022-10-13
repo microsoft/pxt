@@ -25,7 +25,7 @@ function App() {
 
     return (
         <div className={`${pxt.appTarget.id}`}>
-            <HeaderBar signedIn={signedIn} handleSignIn={handleSignIn} handleSignOut={handleSignOut} profile={state.profile}/>
+            <HeaderBar handleSignIn={handleSignIn} handleSignOut={handleSignOut} />
             {!signedIn && <SignInPage handleSignIn={handleSignIn} />}
             {signedIn && <SignedInPage handleSignOut={handleSignOut}/>}
             {showSignInModal && (

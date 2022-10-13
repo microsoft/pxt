@@ -2,19 +2,21 @@
 
 // TODO multiplayer : Reduce duplication with skillmap HeaderBar.tsx (may require enabling tailwind css there or removing it here?)
 
+import { useContext } from "react";
 import { Button } from "../../../react-common/components/controls/Button";
 import { MenuBar } from "../../../react-common/components/controls/MenuBar";
 import { MenuDropdown, MenuItem } from "../../../react-common/components/controls/MenuDropdown";
+import { AppStateContext } from "../state/AppStateContext";
 
 interface HeaderBarProps {
-    showReportAbuse?: boolean;
-    signedIn: boolean;
-    profile: pxt.auth.UserProfile | undefined;
     handleSignIn: () => Promise<void>;
     handleSignOut: () => Promise<void>;
 }
 
 export default function Render(props: HeaderBarProps) {
+    const { state } = useContext(AppStateContext);
+    const { signedIn, profile } = state;
+
     const hasIdentity = pxt.auth.hasIdentity();
     const appTheme = pxt.appTarget?.appTheme;
     const reportAbuseUrl = ""; // TODO multiplayer : how will this work?
@@ -79,12 +81,10 @@ export default function Render(props: HeaderBarProps) {
     }
 
     const avatarPicUrl = (): string | undefined => {
-        const { profile } = props;
         return profile?.idp?.pictureUrl ?? profile?.idp?.picture?.dataUrl;
     }
 
     const getUserMenu = () => {
-        const { signedIn, profile } = props;
         const items: MenuItem[] = [];
 
         if (signedIn) {
