@@ -7,6 +7,7 @@ import SignInPage from "./components/SignInPage";
 import SignedInPage from "./components/SignedInPage";
 import HeaderBar from "./components/HeaderBar"
 import Toast from "./components/Toast";
+import AppModal from "./components/AppModal";
 import * as authClient from "./services/authClient";
 
 // eslint-disable-next-line import/no-unassigned-import
@@ -38,18 +39,11 @@ function App() {
 
     return (
         <div className={`${pxt.appTarget.id}`}>
-            <HeaderBar handleSignIn={handleSignIn} handleSignOut={handleSignOut} />
+            <HeaderBar handleSignOut={handleSignOut} />
             {loading && <Loading />}
-            {!loading && !signedIn && <SignInPage handleSignIn={handleSignIn} />}
+            {!loading && !signedIn && <SignInPage />}
             {!loading && signedIn && <SignedInPage handleSignOut={handleSignOut}/>}
-            {showSignInModal && (
-                <SignInModal
-                    onClose={() => setShowSignInModal(false)}
-                    onSignIn={async (provider, rememberMe) => {
-                        await signInAsync(provider.id, rememberMe);
-                    }}
-                />
-            )}
+            <AppModal />
             <Toast />
         </div>
     );

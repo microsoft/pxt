@@ -5,6 +5,7 @@ import {
     ToastWithId,
     Presence,
     defaultPresence,
+    ModalType,
 } from "../types";
 
 export type AppState = {
@@ -17,6 +18,7 @@ export type AppState = {
     gameState: GameState | undefined;
     toasts: ToastWithId[];
     presence: Presence;
+    modal: ModalType | undefined;
     reactions: {
         [clientId: string]:
             | {
@@ -37,5 +39,6 @@ export const initialAppState: AppState = {
     gameState: undefined,
     toasts: [],
     presence: { ...defaultPresence },
+    modal: undefined,
     reactions: {},
 };
