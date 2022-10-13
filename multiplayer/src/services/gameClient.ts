@@ -11,7 +11,7 @@ import {
 } from "../epics";
 
 const GAME_HOST =
-    "https://makecode-ppe-app-multiplayer-eastus-ci.azurewebsites.net";
+    "https://makecode-ppe-app-multiplayer-eastus.azurewebsites.net";
 //const GAME_HOST = "http://localhost:8082"
 //const GAME_HOST = "https://makecode-multiplayer.ngrok.io";
 
