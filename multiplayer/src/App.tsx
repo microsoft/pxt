@@ -38,8 +38,8 @@ function App() {
 
     return (
         <div className={`${pxt.appTarget.id}`}>
-            {loading && <Loading />}
             <HeaderBar handleSignIn={handleSignIn} handleSignOut={handleSignOut} />
+            {loading && <Loading />}
             {!loading && !signedIn && <SignInPage handleSignIn={handleSignIn} />}
             {!loading && signedIn && <SignedInPage handleSignOut={handleSignOut}/>}
             {showSignInModal && (
