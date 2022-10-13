@@ -1,7 +1,5 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import { AppStateContext } from "./state/AppStateContext";
-import { SignInModal } from "../../react-common/components/profile/SignInModal";
-import { signInAsync, signOutAsync } from "./epics";
 import Loading from "./components/Loading";
 import SignInPage from "./components/SignInPage";
 import SignedInPage from "./components/SignedInPage";
@@ -17,17 +15,8 @@ function App() {
     const { state } = useContext(AppStateContext);
     const { signedIn, appMode } = state;
     const { uiMode } = appMode;
-    const [showSignInModal, setShowSignInModal] = useState(false);
 
     const loading = useMemo(() => uiMode === "init", [uiMode]);
-
-    const handleSignIn = useCallback(async () => {
-        setShowSignInModal(true);
-    }, [signedIn, setShowSignInModal]);
-
-    const handleSignOut = useCallback(async () => {
-        await signOutAsync();
-    }, [signedIn]);
 
     useEffect(() => {
         // On mount, check if user is signed in
@@ -39,10 +28,10 @@ function App() {
 
     return (
         <div className={`${pxt.appTarget.id}`}>
-            <HeaderBar handleSignOut={handleSignOut} />
+            <HeaderBar />
             {loading && <Loading />}
             {!loading && !signedIn && <SignInPage />}
-            {!loading && signedIn && <SignedInPage handleSignOut={handleSignOut}/>}
+            {!loading && signedIn && <SignedInPage />}
             <AppModal />
             <Toast />
         </div>

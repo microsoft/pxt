@@ -6,14 +6,11 @@ import { useContext } from "react";
 import { Button } from "../../../react-common/components/controls/Button";
 import { MenuBar } from "../../../react-common/components/controls/MenuBar";
 import { MenuDropdown, MenuItem } from "../../../react-common/components/controls/MenuDropdown";
+import { signOutAsync } from "../epics";
 import { showModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
 
-interface HeaderBarProps {
-    handleSignOut: () => Promise<void>;
-}
-
-export default function Render(props: HeaderBarProps) {
+export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
     const { signedIn, profile } = state;
 
@@ -55,7 +52,7 @@ export default function Render(props: HeaderBarProps) {
 
     const onSignOutClicked = () => {
         pxt.tickEvent(`mp.usermenu.signout`);
-        props.handleSignOut();
+        signOutAsync();
     }
 
     const getOrganizationLogo = (targetTheme: pxt.AppTheme) => {
