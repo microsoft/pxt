@@ -28,8 +28,8 @@ function App() {
 
     return (
         <div className={`${pxt.appTarget.id}`}>
-            <HeaderBar />
             {loading && <Loading />}
+            {!loading && <HeaderBar />}
             {!loading && !signedIn && <SignInPage />}
             {!loading && signedIn && <SignedInPage />}
             <AppModal />
