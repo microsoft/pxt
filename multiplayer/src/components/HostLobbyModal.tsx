@@ -37,11 +37,11 @@ export default function Render() {
 
     const joinLink = `${state.gameState?.joinCode}`; // TODO multiplayer : create full link
     return (
-        <Modal title="Invite Players" onClose={() => dispatch(clearModal())}>
+        <Modal title={lf("Invite Players")} onClose={() => dispatch(clearModal())}>
             <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center">
                 <div className="tw-flex tw-flex-col tw-items-center">
-                    <div>Invite anyone to join your game instantly.</div>
-                    <div className="tw-mt-1">Just send them a link.</div>
+                    <div>{lf("Invite anyone to join your game instantly.")}</div>
+                    <div className="tw-mt-1">{lf("Just send them a link.")}</div>
                     <div className="common-input-attached-button tw-m-5 tw-w-full">
                                 <Input
                                     ariaDescribedBy="" // TODO thsparks : Aria stuff?
