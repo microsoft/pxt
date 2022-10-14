@@ -3,11 +3,8 @@ import { Button } from "react-common/components/controls/Button";
 import { leaveGameAsync } from "../epics";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
 import ArcadeSimulator from "./ArcadeSimulator";
-import JoinLobby from "./JoinLobbyModal";
-import HostLobby from "./HostLobbyModal";
 import Presence from "./Presence";
 import Reactions from "./Reactions";
-import { showModal } from "../state/actions";
 
 export interface GamePageProps {
 }
@@ -21,15 +18,6 @@ export default function Render(props: GamePageProps) {
         pxt.tickEvent("mp.leavegame");
         await leaveGameAsync();
     };
-
-    const showLobbyModal = () => {
-        const modalType = uiMode === "host" ? "host-lobby" : "join-lobby";
-        dispatch(showModal(modalType));
-    }
-
-    if(state.gameState?.gameMode === "lobby") {
-        //showLobbyModal();
-    }
 
     return (
         <div>
