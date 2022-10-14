@@ -7,12 +7,9 @@ export default function Render() {
 
     return (
         <Modal title={"Lobby"}>
-            <div className="tw-flex tw-flex-col tw-gap-1">
-                <div className="tw-mt-5">
-                    <div className="tw-text-lg tw-font-bold">
-                        {lf("Waiting for Players...")}
-                    </div>
-                </div>
+            <div className="tw-flex tw-flex-col tw-items-center tw-space-y-1 tw-text-lg tw-font-bold">
+                <div>{lf("Waiting for players.")}</div>
+                <div>{lf("Your host will start the game soon.")}</div>
             </div>
         </Modal>
     );
