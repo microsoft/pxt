@@ -7,6 +7,7 @@ import {
     UiMode,
     NetMode,
     Presence,
+    ModalType,
 } from "../types";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -84,6 +85,15 @@ type ClearReaction = ActionBase & {
     clientId: string;
 };
 
+type ShowModal = ActionBase & {
+    type: "SHOW_MODAL"
+    modalType: ModalType
+}
+
+type ClearModal = ActionBase & {
+    type: "CLEAR_MODAL"
+}
+
 /**
  * Union of all actions
  */
@@ -101,7 +111,9 @@ export type Action =
     | DismissToast
     | SetPresence
     | SetReaction
-    | ClearReaction;
+    | ClearReaction
+    | ShowModal
+    | ClearModal;
 
 /**
  * Action creators
@@ -186,3 +198,12 @@ export const clearReaction = (clientId: string): ClearReaction => ({
     type: "CLEAR_REACTION",
     clientId,
 });
+
+export const showModal = (modalType: ModalType): ShowModal => ({
+    type: "SHOW_MODAL",
+    modalType
+})
+
+export const clearModal = (): ClearModal => ({
+    type: "CLEAR_MODAL"
+})

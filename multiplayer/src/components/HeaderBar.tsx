@@ -6,20 +6,16 @@ import { useContext } from "react";
 import { Button } from "../../../react-common/components/controls/Button";
 import { MenuBar } from "../../../react-common/components/controls/MenuBar";
 import { MenuDropdown, MenuItem } from "../../../react-common/components/controls/MenuDropdown";
+import { signOutAsync } from "../epics";
+import { showModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
 
-interface HeaderBarProps {
-    handleSignIn: () => Promise<void>;
-    handleSignOut: () => Promise<void>;
-}
-
-export default function Render(props: HeaderBarProps) {
-    const { state } = useContext(AppStateContext);
+export default function Render() {
+    const { state, dispatch } = useContext(AppStateContext);
     const { signedIn, profile } = state;
 
     const hasIdentity = pxt.auth.hasIdentity();
     const appTheme = pxt.appTarget?.appTheme;
-    const reportAbuseUrl = ""; // TODO multiplayer : how will this work?
     const helpUrl = ""; // TODO multiplayer
 
     const onHelpClicked = () => {
@@ -29,7 +25,7 @@ export default function Render(props: HeaderBarProps) {
 
     const onReportAbuseClicked = () => {
         pxt.tickEvent("mp.settingsmenu.reportabuse");
-        window.open(reportAbuseUrl);
+        dispatch(showModal("report-abuse"))
     }
 
     const onHomeClicked = () => {
@@ -51,12 +47,12 @@ export default function Render(props: HeaderBarProps) {
 
     const onSignInClicked = () => {
         pxt.tickEvent(`mp.signin`);
-        props.handleSignIn();
+        dispatch(showModal("sign-in"))
     }
 
     const onSignOutClicked = () => {
         pxt.tickEvent(`mp.usermenu.signout`);
-        props.handleSignOut();
+        signOutAsync();
     }
 
     const getOrganizationLogo = (targetTheme: pxt.AppTheme) => {
