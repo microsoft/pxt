@@ -33,9 +33,9 @@ export default function Render(props: GamePageProps) {
             {state.gameState?.gameMode && (
                 <>
                     <ArcadeSimulator />
-                    <Presence />
-                    <div className="tw-mt-5">
+                    <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
                         <Reactions />
+                        <Presence />
                     </div>
                     <div className="tw-mt-1">
                         <Button

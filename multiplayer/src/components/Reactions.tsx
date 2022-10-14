@@ -1,15 +1,26 @@
 import { ReactionDb } from "../types/reactions";
 import { sendReactionAsync } from "../epics";
+import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFaceSmile } from "@fortawesome/free-regular-svg-icons";
 
 export default function Render() {
+    const [ showReactionPicker, setShowReactionPicker ]= useState(false);
+
     const onReactionClick = async (index: number) => {
         await sendReactionAsync(index);
     };
 
+    // const smileIcon = {...faFaceSmile, prefix: "fal"};
     return (
         <div>
-            <div className="tw-text-lg tw-font-bold">{lf("Reactions")}</div>
-            <div className="tw-flex tw-flex-row tw-gap-1 tw-mt-1">
+            <div className={`tw-flex tw-border-0 tw-text-black tw-rounded-full tw-h-11 tw-w-11 tw-justify-center tw-items-center tw-text-[2rem] tw-bg-neutral-300 tw-cursor-pointer`}
+                onClick={() => setShowReactionPicker(!showReactionPicker)}>
+                {/* {<FontAwesomeIcon icon={faFaceSmile} className="tw-w-8 tw-h-8"/>} */}
+                🙂
+            </div>
+            {/* Separate component for reaction picker? */}
+            { showReactionPicker && <div className="tw-flex tw-flex-row tw-gap-1 tw-mt-1">
                 {ReactionDb.map((def, i) => {
                     return (
                         <div
@@ -21,7 +32,7 @@ export default function Render() {
                         </div>
                     );
                 })}
-            </div>
+            </div> }
         </div>
     );
 }
