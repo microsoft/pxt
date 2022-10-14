@@ -244,7 +244,7 @@ namespace pxt.Cloud {
         const domainCheck = `(?:(?:https:\/\/)?(?:${domains.join('|')})\/)`;
         const versionRefCheck = "(?:v[0-9]+\/)";
         const oembedCheck = "api\/oembed\\?url=.*%2F([^&#]*)&.*";
-        const sharePageCheck = "([a-z0-9\-_]+)(?:[#?&].*)?";
+        const sharePageCheck = "([a-z0-9\\-_]+)(?:[#?&].*)?";
         const scriptIdCheck = `^${domainCheck}?${versionRefCheck}?(?:(?:${oembedCheck})|(?:${sharePageCheck}))$`;
         const m = new RegExp(scriptIdCheck, 'i').exec(uri.trim());
         const scriptid = m?.[1] /** oembed res **/ || m?.[2] /** share page res **/;
