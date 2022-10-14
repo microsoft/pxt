@@ -1,5 +1,6 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
+import { Input } from "react-common/components/controls/Input";
 import { Modal } from "react-common/components/controls/Modal";
 import { startGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
@@ -7,6 +8,8 @@ import { AppStateContext } from "../state/AppStateContext";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext); 
+    const [ copySuccessful, setCopySuccessful ] = useState(false);
+    let inputRef: HTMLInputElement;
 
     const onStartGameClick = async () => {
         pxt.tickEvent("mp.startgame");
@@ -14,27 +17,52 @@ export default function Render() {
         await startGameAsync();
     };
 
+    const handleCopyClick = () => {
+        if (pxt.BrowserUtils.isIpcRenderer()) {
+            setCopySuccessful(pxt.BrowserUtils.legacyCopyText(inputRef));
+        }
+        else {
+            navigator.clipboard.writeText(joinLink);
+            setCopySuccessful(true);
+        }
+    }
+
+    const handleCopyBlur = () => {
+        setCopySuccessful(false);
+    }
+
+    const handleInputRef = (ref: HTMLInputElement) => {
+        if (ref) inputRef = ref;
+    }
+
+    const joinLink = `${state.gameState?.joinCode}`; // TODO multiplayer : create full link
     return (
         <Modal title="Invite Players" onClose={() => dispatch(clearModal())}>
-            <div className="tw-flex tw-flex-col tw-gap-1">
-                <div className="tw-mt-5">
-                    Join Code:{" "}
-                    <span className="tw-p-2 tw-tracking-[.25rem] tw-border-1 tw-border-black tw-bg-slate-600 tw-solid tw-rounded tw-text-white">
-                        {state.gameState?.joinCode}
-                    </span>
+            <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center">
+                <div className="tw-flex tw-flex-col tw-items-center">
+                    <div>Invite anyone to join your game instantly.</div>
+                    <div className="tw-mt-1">Just send them a link.</div>
+                    <div className="common-input-attached-button tw-m-5 tw-w-full">
+                                <Input
+                                    ariaDescribedBy="" // TODO thsparks : Aria stuff?
+                                    handleInputRef={handleInputRef}
+                                    initialValue={joinLink}
+                                    readOnly={true} />
+                                <Button className={copySuccessful ? "green" : "primary"}
+                                    title={lf("Copy link")}
+                                    label={copySuccessful ? lf("Copied!") : lf("Copy")}
+                                    leftIcon="fas fa-link"
+                                    onClick={handleCopyClick}
+                                    onBlur={handleCopyBlur} />
+                            </div>
                 </div>
                 {state.gameState?.gameMode === "lobby" && (
-                    <div className="tw-mt-5">
-                        <div className="tw-text-lg tw-font-bold">
-                            {lf("In the lobby")}
-                        </div>
-                        <Button
-                            className={"teal"}
-                            label={lf("Start Game")}
-                            title={lf("Start Game")}
-                            onClick={onStartGameClick}
-                        />
-                    </div>
+                    <Button
+                        className={"teal"}
+                        label={lf("Start Game")}
+                        title={lf("Start Game")}
+                        onClick={onStartGameClick}
+                    />
                 )}
             </div>
         </Modal>
