@@ -34,9 +34,9 @@ export default function Render(props: GamePageProps) {
                 <div className="tw-flex tw-flex-col tw-items-center">
                     <ArcadeSimulator />
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-w-full">
-                        <div>{state.gameState?.joinCode && `Join Code: ${state.gameState?.joinCode}`}</div>
+                        <div>{state.gameState?.joinCode && `${lf("Join Code")}: ${state.gameState?.joinCode}`}</div>
                         <div className="tw-flex-grow"/>
-                        <div>Keyboard Controls</div>
+                        <div>{lf("Keyboard Controls")}</div>
                     </div>
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
                         <Reactions />
