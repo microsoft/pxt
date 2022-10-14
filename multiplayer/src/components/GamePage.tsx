@@ -44,7 +44,7 @@ export default function Render(props: GamePageProps) {
                     </div>
                     <div>
                         <Button
-                            className={"gray tw-mt-3"}
+                            className={"gray tw-mt-5"}
                             label={lf("Leave Game")}
                             title={lf("Leave Game")}
                             onClick={onLeaveGameClick}
