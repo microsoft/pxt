@@ -31,21 +31,26 @@ export default function Render(props: GamePageProps) {
             state.gameState?.gameMode === "lobby" && dispatch(showModal(uiMode === "host" ? "host-lobby" : "join-lobby"))
             */}
             {state.gameState?.gameMode && (
-                <>
+                <div className="tw-flex tw-flex-col tw-items-center">
                     <ArcadeSimulator />
+                    <div className="tw-flex tw-flex-row tw-space-x-2 tw-w-full">
+                        <div>{state.gameState?.joinCode && `Join Code: ${state.gameState?.joinCode}`}</div>
+                        <div className="tw-flex-grow"/>
+                        <div>Keyboard Controls</div>
+                    </div>
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
                         <Reactions />
                         <Presence />
                     </div>
-                    <div className="tw-mt-1">
+                    <div>
                         <Button
-                            className={"gray"}
+                            className={"gray tw-mt-3"}
                             label={lf("Leave Game")}
                             title={lf("Leave Game")}
                             onClick={onLeaveGameClick}
                         />
                     </div>
-                </>
+                </div>
             )}
         </div>
     );

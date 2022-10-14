@@ -20,7 +20,7 @@ export default function Render() {
                 🙂
             </div>
             {/* Separate component for reaction picker? */}
-            { showReactionPicker && <div className="tw-flex tw-flex-row tw-gap-1 tw-mt-1">
+            { showReactionPicker && <div className="tw-flex tw-flex-row tw-gap-1">
                 {ReactionDb.map((def, i) => {
                     return (
                         <div
