@@ -16,7 +16,7 @@ export default function Render() {
         <div>
             {/* Separate component for reaction picker? */}
             { showReactionPicker &&
-                <div className="tw-flex tw-flex-row tw-gap-1 tw-absolute">
+                <div className="tw-flex tw-flex-row tw-gap-1 tw-p-1 tw-absolute tw-translate-x-[-2rem] tw-translate-y-[-120%] tw-bg-white tw-shadow-md">
                     {ReactionDb.map((def, i) => {
                         return (
                             <div
