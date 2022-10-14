@@ -5,11 +5,12 @@ import { signOutAsync } from "../epics";
 import JoinOrHost from "./JoinOrHost";
 import HostGame from "./HostGame";
 import JoinGame from "./JoinGame";
+import GamePage from "./GamePage";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
     const { appMode } = state;
-    const { uiMode } = appMode;
+    const { uiMode, netMode } = appMode;
 
     const authButtonLabel = lf("Sign Out");
 
@@ -22,8 +23,9 @@ export default function Render() {
                 onClick={signOutAsync}
             />
             {uiMode === "home" && <JoinOrHost />}
-            {uiMode === "host" && <HostGame />}
-            {uiMode === "join" && <JoinGame />}
+            {netMode == "init" && uiMode === "host" && <HostGame />}
+            {netMode == "init" && uiMode === "join" && <JoinGame />}
+            {(netMode == "connecting" || netMode == "connected") && <GamePage />}
         </div>
     );
 }
