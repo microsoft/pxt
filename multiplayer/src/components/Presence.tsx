@@ -32,6 +32,10 @@ export default function Render() {
         }
     }
 
+    const getBorder = (slot: number | undefined) => {
+        return slot && slot < 5 ? "tw-border-2" : "tw-border-0"; 
+    }
+
     return (
         <div className="tw-flex tw-flex-row tw-items-center tw-justify-center tw-gap-2">
             {[1, 2, 3, 4].map(slot => {
@@ -40,7 +44,7 @@ export default function Render() {
                     <div
                         key={slot}
                         ref={ref => (slotRef.current[slot] = ref)}
-                        className={`tw-flex tw-border-0 tw-text-black tw-font-bold tw-rounded-full tw-h-11 tw-w-11 tw-justify-center tw-items-center ${getPlayerColors(user?.slot)}`}>
+                        className={`tw-flex tw-select-none tw-text-black tw-font-bold tw-rounded-full tw-h-11 tw-w-11 tw-justify-center tw-items-center ${getPlayerColors(user?.slot)} ${getBorder(user?.slot)}`}>
                         {user?.slot}
                         {user && (
                             <ReactionEmitter
