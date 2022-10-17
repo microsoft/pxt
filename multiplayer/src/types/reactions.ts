@@ -91,7 +91,6 @@ const wavyShader = (t: number, consts: ReactionConsts, vars: ReactionVars) => {
 };
 
 export const ReactionDb: ReactionDef[] = [
-    
     {
         name: lf("smile"),
         emoji: "😃",
