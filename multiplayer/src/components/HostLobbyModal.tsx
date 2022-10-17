@@ -44,7 +44,7 @@ export default function Render() {
                     <div className="tw-mt-1">{lf("Just send them a link.")}</div>
                     <div className="common-input-attached-button tw-m-5 tw-w-full">
                                 <Input
-                                    ariaDescribedBy="" // TODO thsparks : Aria stuff?
+                                    ariaLabel={lf("join game link")}
                                     handleInputRef={handleInputRef}
                                     initialValue={joinLink}
                                     readOnly={true} />

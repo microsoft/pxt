@@ -29,10 +29,10 @@ export default function Render() {
                     })}
                 </div>
             }
-            <div className={`tw-flex tw-border-0 tw-rounded-full tw-h-11 tw-w-11 tw-items-center tw-justify-center tw-text-[2rem] tw-cursor-pointer hover:tw-scale-110 tw-ease-linear tw-duration-[50ms]`}
+            <button id="reactionsButton" aria-label={lf("reactions")} className={`tw-flex tw-border-0 tw-rounded-full tw-h-11 tw-w-11 tw-items-center tw-justify-center tw-text-[2rem] tw-cursor-pointer hover:tw-scale-110 tw-ease-linear tw-duration-[50ms] tw-select-all`}
                 onClick={() => setShowReactionPicker(!showReactionPicker)}>
-                🙂
-            </div>
+                <span role="img" aria-aria-labelledby="reactionsButton">🙂</span>
+            </button>
         </div>
     );
 }
