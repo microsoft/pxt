@@ -4,8 +4,6 @@ import { joinGameAsync, leaveGameAsync } from "../epics";
 import { Input } from "../../../react-common/components/controls/Input";
 import { Button } from "../../../react-common/components/controls/Button";
 
-// TODO thsparks : Repurpose this so it's just an entry point where players can enter a join code and entirely skippable if they have a direct link.
-
 export default function Render() {
     const { state } = useContext(AppStateContext);
     const { appMode } = state;

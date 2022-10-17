@@ -6,8 +6,6 @@ import { Button } from "../../../react-common/components/controls/Button";
 import { dispatch } from "../state";
 import { showToast } from "../state/actions";
 
-// TODO thsparks : Repurpose this so it's just an entry point and entirely skippable if the player shares from a known game.
-
 export default function Render() {
     const { state } = useContext(AppStateContext);
     const { appMode } = state;
