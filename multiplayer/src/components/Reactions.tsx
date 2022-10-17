@@ -31,7 +31,6 @@ export default function Render() {
             }
             <div className={`tw-flex tw-border-0 tw-rounded-full tw-h-11 tw-w-11 tw-items-center tw-justify-center tw-text-[2rem] tw-cursor-pointer hover:tw-scale-110 tw-ease-linear tw-duration-[50ms]`}
                 onClick={() => setShowReactionPicker(!showReactionPicker)}>
-                {/* {<FontAwesomeIcon icon={faFaceSmile} className="tw-w-8 tw-h-8"/>} */}
                 🙂
             </div>
         </div>
