@@ -109,5 +109,17 @@ export default function reducer(state: AppState, action: Action): AppState {
                 },
             };
         }
+        case "SHOW_MODAL": {
+            return {
+                ...state,
+                modal: action.modalType
+            }
+        }
+        case "CLEAR_MODAL": {
+            return {
+                ...state,
+                modal: undefined
+            }
+        }
     }
 }
