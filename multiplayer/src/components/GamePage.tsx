@@ -26,10 +26,6 @@ export default function Render(props: GamePageProps) {
                     {lf("Connecting...")}
                 </div>
             )}
-            {/*
-            If we make the lobby non-modal, it would make sense to put it here.
-            state.gameState?.gameMode === "lobby" && dispatch(showModal(uiMode === "host" ? "host-lobby" : "join-lobby"))
-            */}
             {state.gameState?.gameMode && (
                 <div className="tw-flex tw-flex-col tw-items-center">
                     <ArcadeSimulator />
