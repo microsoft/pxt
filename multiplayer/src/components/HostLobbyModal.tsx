@@ -7,7 +7,7 @@ import { clearModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
 
 export default function Render() {
-    const { state, dispatch } = useContext(AppStateContext); 
+    const { state, dispatch } = useContext(AppStateContext);
     const [ copySuccessful, setCopySuccessful ] = useState(false);
     let inputRef: HTMLInputElement;
 

@@ -33,7 +33,7 @@ export default function Render() {
     }
 
     const getBorder = (slot: number | undefined) => {
-        return slot && slot < 5 ? "tw-border-2" : "tw-border-0"; 
+        return slot && slot < 5 ? "tw-border-2" : "tw-border-0";
     }
 
     return (
