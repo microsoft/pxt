@@ -50,9 +50,9 @@ export default function Render() {
         dispatch(showModal("sign-in"))
     }
 
-    const onSignOutClicked = () => {
+    const onSignOutClicked = async () => {
         pxt.tickEvent(`mp.usermenu.signout`);
-        signOutAsync();
+        await signOutAsync();
     }
 
     const getOrganizationLogo = (targetTheme: pxt.AppTheme) => {
