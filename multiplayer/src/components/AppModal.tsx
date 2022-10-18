@@ -27,6 +27,6 @@ export default function Render() {
         case "join-lobby":
             return <JoinLobbyModal />
         default:
-            return <div />
+            return null;
     }
 }
