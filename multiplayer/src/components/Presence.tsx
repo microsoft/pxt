@@ -20,13 +20,13 @@ export default function Render() {
     const getPlayerColors = (slot: number | undefined) => {
         switch(slot) {
             case 1:
-                return "tw-border-red-800 tw-bg-red-300";
+                return "tw-border-[#ED3636] tw-bg-red-300";
             case 2:
-                return "tw-border-blue-800 tw-bg-blue-300";
+                return "tw-border-[#4E4EE9] tw-bg-blue-300";
             case 3:
-                return "tw-border-yellow-600 tw-bg-yellow-300";
+                return "tw-border-[#C1A916] tw-bg-yellow-300";
             case 4:
-                return "tw-border-green-800 tw-bg-green-300";
+                return "tw-border-[#4EB94E] tw-bg-green-300";
             default:
                 return "tw-border-neutral-600 tw-bg-neutral-300";
         }
