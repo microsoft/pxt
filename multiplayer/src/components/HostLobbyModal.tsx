@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
 import { Modal } from "react-common/components/controls/Modal";
@@ -9,7 +9,7 @@ import { AppStateContext } from "../state/AppStateContext";
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
     const [ copySuccessful, setCopySuccessful ] = useState(false);
-const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const onStartGameClick = async () => {
         pxt.tickEvent("mp.hostlobby.startgame");
@@ -19,7 +19,9 @@ const inputRef = useRef<HTMLInputElement>(null);
 
     const handleCopyClick = () => {
         if (pxt.BrowserUtils.isIpcRenderer()) {
-            setCopySuccessful(pxt.BrowserUtils.legacyCopyText(inputRef));
+            if(inputRef.current) {
+                setCopySuccessful(pxt.BrowserUtils.legacyCopyText(inputRef.current));
+            }
         }
         else {
             navigator.clipboard.writeText(joinLink);
@@ -29,10 +31,6 @@ const inputRef = useRef<HTMLInputElement>(null);
 
     const handleCopyBlur = () => {
         setCopySuccessful(false);
-    }
-
-    const handleInputRef = (ref: HTMLInputElement) => {
-        if (ref) inputRef = ref;
     }
 
     const handleOnClose = async () => {
