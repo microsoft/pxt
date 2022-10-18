@@ -21,6 +21,7 @@ namespace pxt.runner {
         hideSimButtons?: boolean;
         autofocus?: boolean;
         additionalQueryParameters?: string;
+        debug?: boolean;
     }
 
     class EditorPackage {
@@ -398,6 +399,7 @@ namespace pxt.runner {
         let board = pxt.appTarget.simulator.boardDefinition;
         let storedState: Map<string> = getStoredState(simOptions.id)
         let runOptions: pxsim.SimulatorRunOptions = {
+            debug: simOptions.debug,
             boardDefinition: board,
             parts: parts,
             builtinParts: usedBuiltinParts,

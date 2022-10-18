@@ -2,11 +2,13 @@ import { useContext, useEffect, useRef } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { SimMultiplayer } from "../types";
 import { sendSimMessage } from "../services/gameClient";
+import { classList } from "react-common/components/util";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
     const { gameId, playerSlot } = state;
     const simIframeRef = useRef<HTMLIFrameElement>(null);
+    const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
         "background-color=ED3636&button-stroke=8d2525&button-fill=0b0b0b",
@@ -27,7 +29,7 @@ export default function Render() {
 
     if (isHost) {
         queryParameters.push(
-            `id=${gameId || "69052-09321-39220-20264"}`,
+            `id=${gameId}`,
             "mp=server"
         );
     } else {
@@ -80,9 +82,60 @@ export default function Render() {
     }, []);
 
     const fullUrl = `${pxt.webConfig.runUrl}?${queryParameters.join("&")}`;
+
+    // const createSim = () => {
+    //     var sims = document.createElement("div");
+    //     sims.className = "sim-embed";
+    //     var simframeWrapper = document.createElement("div");
+    //     simframeWrapper.className = "simframe ui embed";
+    //     var emptySim = document.createElement("iframe");
+    //     emptySim.className = "sim-embed";
+    //     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
+    //     emptySim.setAttribute("sandbox", "allow-popups allow-forms allow-scripts allow-same-origin");
+    //     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
+    //     emptySim.frameBorder = "0";
+    //     emptySim.src = pxt.webConfig.simUrl;
+    //     emptySim.className = "grayscale";
+    //     // unused, satisfying pxtsim/simdriver.ts#setFrameState. Maybe Add some animation here?
+    //     var icon = document.createElement("div");
+    //     var loader = document.createElement("div");
+    //     loader.className = "loader";
+    //     loader.appendChild(document.createElement("div"));
+    //     loader.appendChild(document.createElement("div"));
+
+    //     simframeWrapper.appendChild(emptySim);
+    //     simframeWrapper.appendChild(icon);
+    //     simframeWrapper.appendChild(loader);
+
+    //     sims.appendChild(simframeWrapper);
+    //     return sims;
+    // }
+    const runSimulator = async () => {
+        const opts: pxt.runner.SimulateOptions = {
+            additionalQueryParameters: selectedPlayerTheme,
+            single: true,
+            fullScreen: true,
+            /** Enabling debug mode so that we can stop at breakpoints as a 'global pause' **/
+            debug: true,
+        };
+        if (isHost) {
+            opts.id = gameId;
+        } else {
+            opts.code = "multiplayer.init()";
+        }
+
+        const builtJsInfo = await pxt.runner.simulateAsync(simContainerRef.current!, opts);
+        console.log(`BUILT for ${builtJsInfo.targetVersion}`);
+        const sim: HTMLIFrameElement = simContainerRef.current!.firstChild as HTMLIFrameElement;
+        sim?.classList.add(
+            "tw-h-[calc(100vh-26rem)]",
+            "tw-w-screen",
+        )
+    }
+    runSimulator();
     return (
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-        <div id="sim-container" className="tw-grow tw-mt-5">
+        <div id="sim-container" ref={simContainerRef} className="tw-grow tw-mt-5">
             <iframe
                 id="sim-iframe"
                 ref={simIframeRef}
