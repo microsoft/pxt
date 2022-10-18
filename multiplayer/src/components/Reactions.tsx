@@ -29,7 +29,7 @@ export default function Render() {
                     })}
                 </div>
             }
-            <button id="reactionsButton" aria-label={lf("reactions")} className={`tw-flex tw-border-0 tw-rounded-full tw-h-11 tw-w-11 tw-items-center tw-justify-center tw-text-[2rem] tw-cursor-pointer hover:tw-scale-110 tw-ease-linear tw-duration-[50ms] tw-select-all`}
+            <button id="reactionsButton" aria-label={lf("reactions")} className={`tw-flex tw-border-0 tw-rounded-full tw-h-11 tw-w-11 tw-items-center tw-justify-center tw-text-[2rem] tw-cursor-pointer hover:tw-scale-110 tw-ease-linear tw-duration-[50ms]`}
                 onClick={() => setShowReactionPicker(!showReactionPicker)}>
                 <span role="img" aria-labelledby="reactionsButton">🙂</span>
             </button>
