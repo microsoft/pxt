@@ -9,7 +9,7 @@ import { AppStateContext } from "../state/AppStateContext";
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
     const [ copySuccessful, setCopySuccessful ] = useState(false);
-    let inputRef: HTMLInputElement;
+const inputRef = useRef<HTMLInputElement>(null);
 
     const onStartGameClick = async () => {
         pxt.tickEvent("mp.hostlobby.startgame");
@@ -51,7 +51,7 @@ export default function Render() {
                     <div className="common-input-attached-button tw-m-5 tw-w-full">
                                 <Input
                                     ariaLabel={lf("join game link")}
-                                    handleInputRef={handleInputRef}
+                                    handleInputRef={inputRef}
                                     initialValue={joinLink}
                                     readOnly={true} />
                                 <Button className={copySuccessful ? "green" : "primary"}

@@ -15,9 +15,9 @@ export default function Render() {
     return (
         <div className="tw-pt-3 tw-pb-8 tw-flex tw-flex-col tw-items-center tw-gap-1 tw-h-screen">
             {uiMode === "home" && <JoinOrHost />}
-            {netMode == "init" && uiMode === "host" && <HostGame />}
-            {netMode == "init" && uiMode === "join" && <JoinGame />}
-            {(netMode == "connecting" || netMode == "connected") && <GamePage />}
+            {netMode === "init" && uiMode === "host" && <HostGame />}
+            {netMode === "init" && uiMode === "join" && <JoinGame />}
+            {(netMode === "connecting" || netMode === "connected") && <GamePage />}
         </div>
     );
 }
