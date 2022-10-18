@@ -116,7 +116,7 @@ export const ReactionDb: ReactionDef[] = [
         shade: simpleShader,
     },
     {
-        name: lf("tense"),
+        name: lf("scared"),
         emoji: "😬",
         config: defaultReactionConfig,
         shade: simpleShader,
