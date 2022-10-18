@@ -92,44 +92,8 @@ const wavyShader = (t: number, consts: ReactionConsts, vars: ReactionVars) => {
 
 export const ReactionDb: ReactionDef[] = [
     {
-        name: lf("heart"),
-        emoji: "❤️",
-        config: defaultReactionConfig,
-        shade: simpleShader,
-    },
-    {
-        name: lf("thinking"),
-        emoji: "🤔",
-        config: defaultReactionConfig,
-        shade: simpleShader,
-    },
-    {
-        name: lf("cry"),
-        emoji: "😭",
-        config: defaultReactionConfig,
-        shade: simpleShader,
-    },
-    {
-        name: lf("love"),
-        emoji: "😍",
-        config: defaultReactionConfig,
-        shade: simpleShader,
-    },
-    {
-        name: lf("nauseated"),
-        emoji: "🤮",
-        config: defaultReactionConfig,
-        shade: simpleShader,
-    },
-    {
         name: lf("smile"),
         emoji: "😃",
-        config: defaultReactionConfig,
-        shade: simpleShader,
-    },
-    {
-        name: lf("look"),
-        emoji: "👀",
         config: defaultReactionConfig,
         shade: simpleShader,
     },
@@ -140,33 +104,27 @@ export const ReactionDb: ReactionDef[] = [
         shade: simpleShader,
     },
     {
-        name: lf("fire"),
-        emoji: "🔥",
+        name: lf("surprise"),
+        emoji: "😯",
         config: defaultReactionConfig,
-        shade: swirlyShader,
+        shade: simpleShader,
     },
     {
-        name: lf("cool"),
-        emoji: "😎",
+        name: lf("cry"),
+        emoji: "😫",
         config: defaultReactionConfig,
-        shade: slowScaleShader,
+        shade: simpleShader,
+    },
+    {
+        name: lf("scared"),
+        emoji: "😬",
+        config: defaultReactionConfig,
+        shade: simpleShader,
     },
     {
         name: lf("angry"),
-        emoji: "😡",
+        emoji: "😠",
         config: defaultReactionConfig,
         shade: simpleShader,
-    },
-    {
-        name: lf("party"),
-        emoji: "🎉",
-        config: defaultReactionConfig,
-        shade: simpleShader,
-    },
-    {
-        name: lf("thumbs up"),
-        emoji: "👍",
-        config: defaultReactionConfig,
-        shade: wavyShader,
-    },
+    }
 ];

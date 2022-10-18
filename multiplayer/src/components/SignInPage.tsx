@@ -1,15 +1,11 @@
 import { useCallback, useContext, useMemo, useState, useEffect } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { signInAsync } from "../epics";
-import { dismissToast, showToast } from "../state/actions";
+import { dismissToast, showModal, showToast } from "../state/actions";
 import { SignInModal } from "../../../react-common/components/profile/SignInModal";
 import { Button } from "../../../react-common/components/controls/Button";
 
-export interface SignInPageProps {
-    handleSignIn: () => Promise<void>;
-}
-
-export default function Render(props: SignInPageProps) {
+export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
     const [showSignInModal, setShowSignInModal] = useState(false);
     const { signedIn } = state;
@@ -38,7 +34,7 @@ export default function Render(props: SignInPageProps) {
                 className="primary"
                 label={lf("Sign In")}
                 title={lf("Sign In")}
-                onClick={props.handleSignIn}
+                onClick={() => dispatch(showModal("sign-in"))}
             />
         </div>
     );
