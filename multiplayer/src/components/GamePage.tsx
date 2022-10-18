@@ -24,6 +24,7 @@ export default function Render(props: GamePageProps) {
     };
 
     const copyJoinCode = async() => {
+        pxt.tickEvent("mp.copyjoincode")
         if(state.gameState?.joinCode) {
             navigator.clipboard.writeText(state.gameState?.joinCode);
             setCopySuccessful(true)
@@ -45,9 +46,9 @@ export default function Render(props: GamePageProps) {
                             <div>
                                 {state.gameState?.joinCode && `${lf("Join Code")}: ${state.gameState?.joinCode}`}
                                 <button onClick={copyJoinCode} title={lf("Copy Join Code")} onBlur={() => setCopySuccessful(false)}>
-                                    <div className="tw-text-sm tw-ml-1 tw-mb-[0.1rem] ">
-                                    {!copySuccessful && <FontAwesomeIcon icon={faCopy} className="hover:tw-scale-105"/>}
-                                    {copySuccessful && <FontAwesomeIcon icon={faCheck} className="tw-text-green-600"/>}
+                                    <div className="tw-text-sm tw-ml-1">
+                                        {!copySuccessful && <FontAwesomeIcon icon={faCopy} className="hover:tw-scale-105 tw-mb-[0.1rem]"/>}
+                                        {copySuccessful && <FontAwesomeIcon icon={faCheck} className="tw-text-green-600 tw-mb-[0.1rem]"/>}
                                     </div>
                                 </button>
                             </div>
