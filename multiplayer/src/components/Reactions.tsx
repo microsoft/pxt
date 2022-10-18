@@ -11,10 +11,8 @@ export default function Render() {
         await sendReactionAsync(index);
     };
 
-    // const smileIcon = {...faFaceSmile, prefix: "fal"};
     return (
         <div>
-            {/* Separate component for reaction picker? */}
             { showReactionPicker &&
                 <div className="tw-flex tw-flex-row tw-gap-1 tw-p-2 tw-absolute tw-translate-x-[-5.8rem] tw-translate-y-[-120%] tw-bg-white tw-shadow-md">
                     {ReactionDb.map((def, i) => {
