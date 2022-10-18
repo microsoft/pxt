@@ -1,8 +1,6 @@
 import { ReactionDb } from "../types/reactions";
 import { sendReactionAsync } from "../epics";
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFaceSmile } from "@fortawesome/free-regular-svg-icons";
 
 export default function Render() {
     const [ showReactionPicker, setShowReactionPicker ]= useState(false);
