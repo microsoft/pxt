@@ -47,7 +47,6 @@ class GameClient {
         if (msg instanceof Buffer) {
             this.sock?.send(msg, {}, (err: any) => {
                 if (err) console.log("Error sending message", err);
-                else console.log("message sent");
             });
         } else {
             const payload = JSON.stringify(msg);
