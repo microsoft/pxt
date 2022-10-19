@@ -423,9 +423,13 @@ namespace pxt.runner {
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                 ? pxt.appTarget.simulator.partsAspectRatio
                 : pxt.appTarget.simulator.aspectRatio;
+        if (builtSimJS.breakpoints && simOptions.debug) {
+            simDriver.setBreakpoints(builtSimJS.breakpoints);
+        }
         simDriver.run(js, runOptions);
         return builtSimJS;
     }
+
     export function currentDriver() {
         return simDriver;
     }
@@ -439,6 +443,8 @@ namespace pxt.runner {
         let didUpgrade = false;
         const currentTargetVersion = pxt.appTarget.versions.target;
         let compileResult = await compileAsync(false, opts => {
+            if (simOptions.debug)
+                opts.breakpoints = true;
             if (simOptions.assets) {
                 const parsedAssets = JSON.parse(simOptions.assets);
                 for (const key of Object.keys(parsedAssets)) {

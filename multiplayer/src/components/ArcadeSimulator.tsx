@@ -33,30 +33,35 @@ export default function Render() {
         await sendInputAsync(button, state);
     };
 
-    const handleReadyMsg = async () => {
-        if (isHost && gameState?.gameMode !== "playing") {
-            // Sim running at this point, send a pause next breakpoint msg.
-            // Maybe settimeout for ~50ms to allow a frame to go through / get past first screen render?
-            const simDriver = pxt.runner.currentDriver();
-
-            // TODO: for this to actually work I believe when need to do set breakpoints, need to set that in pxtrunner.
-            simDriver?.resume(pxsim.SimulatorDebuggerCommand.Pause);
-        }
+    const setSimStopped = async () => {
+        pxt.runner.currentDriver()?.resume(pxsim.SimulatorDebuggerCommand.Pause);
     }
 
+    const setSimResumed = async () => {
+        pxt.runner.currentDriver()?.resume(pxsim.SimulatorDebuggerCommand.Resume);
+    }
+
+    // const handleStartMsg = async () => {
+    //     setTimeout(() => {
+    //         if (isHost && gameState?.gameMode !== "playing")
+    //             setSimStopped();
+    //     }, 200);
+    // }
+
     const msgHandler = (
-        msg: MessageEvent<SimMultiplayer.Message | pxsim.SimulatorReadyMessage>
+        msg: MessageEvent<SimMultiplayer.Message | pxsim.SimulatorStateMessage>
     ) => {
         const { data } = msg;
         const { type } = data;
 
         switch (type) {
-            case "ready":
-                handleReadyMsg();
+            case "status":
+                // TODO: if we want to show swim behind 'start game' modal we'll want to setSimStopped here
+                // if ((msg.data as pxsim.SimulatorStateMessage).state === "running")
+                    // handleStartMsg();
                 return;
             case "multiplayer":
                 const { origin, content } = data;
-
                 if (origin === "client" && content === "Button") {
                     postInputMsg(data);
                 } else if (origin === "server" && content === "Image") {
@@ -113,7 +118,7 @@ export default function Render() {
     useEffect(() => {
         if (gameState?.gameMode === "playing") {
             runSimulator();
-            // TODO: see above, once breakpoints are set we can allow sim to run for ~50ms and then freeze it.
+            // TODO: if we run sim behind modal we'll need to resume here.
             // const simDriver = pxt.runner.currentDriver();
             // simDriver?.resume(pxsim.SimulatorDebuggerCommand.Resume);
         }

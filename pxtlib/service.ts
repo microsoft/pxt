@@ -388,6 +388,7 @@ namespace ts.pxtc {
             fnArgs: compileResult.usedArguments,
             parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
             usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
+            breakpoints: compileResult.breakpoints?.map(bp => bp.id),
         };
     }
 
