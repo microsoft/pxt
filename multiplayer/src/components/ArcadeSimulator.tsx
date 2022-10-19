@@ -5,6 +5,8 @@ import { sendInputAsync, sendScreenUpdateAsync } from "../services/gameClient";
 // eslint-disable-next-line import/no-unassigned-import
 import "./ArcadeSimulator.css";
 
+let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo> | undefined;
+
 export default function Render() {
     const { state } = useContext(AppStateContext);
     const { gameId, playerSlot, gameState } = state;
@@ -31,6 +33,17 @@ export default function Render() {
         await sendInputAsync(button, state);
     };
 
+    const handleReadyMsg = async () => {
+        if (isHost && gameState?.gameMode !== "playing") {
+            // Sim running at this point, send a pause next breakpoint msg.
+            // Maybe settimeout for ~50ms to allow a frame to go through / get past first screen render?
+            const simDriver = pxt.runner.currentDriver();
+
+            // TODO: for this to actually work I believe when need to do set breakpoints, need to set that in pxtrunner.
+            simDriver?.resume(pxsim.SimulatorDebuggerCommand.Pause);
+        }
+    }
+
     const msgHandler = (
         msg: MessageEvent<SimMultiplayer.Message | pxsim.SimulatorReadyMessage>
     ) => {
@@ -39,14 +52,7 @@ export default function Render() {
 
         switch (type) {
             case "ready":
-                if (isHost && gameState?.gameMode !== "playing") {
-                    // Sim running at this point, send a pause next breakpoint msg.
-                    // Maybe settimeout for ~50ms to allow a frame to go through / get past first screen render?
-                    const simDriver = pxt.runner.currentDriver();
-
-                    // TODO: for this to work I believe when need to do set breakpoints, need to set that in in pxtrunner.
-                    simDriver?.resume(pxsim.SimulatorDebuggerCommand.Pause);
-                }
+                handleReadyMsg();
                 return;
             case "multiplayer":
                 const { origin, content } = data;
@@ -65,7 +71,7 @@ export default function Render() {
         return () => window.removeEventListener("message", msgHandler);
     }, []);
 
-    const runSimulator = async () => {
+    const getOpts = () => {
         const opts: pxt.runner.SimulateOptions = {
             additionalQueryParameters: selectedPlayerTheme,
             single: true,
@@ -73,6 +79,7 @@ export default function Render() {
             /** Enabling debug mode so that we can stop at breakpoints as a 'global pause' **/
             debug: true,
         };
+
         if (isHost) {
             opts.id = gameId;
             opts.mpRole = "server";
@@ -81,22 +88,39 @@ export default function Render() {
             opts.mpRole = "client";
         }
 
-        // TODO: do we want to keep an imm cache here for instant reload playing same game?
-        const builtJsInfo = await pxt.runner.simulateAsync(
+        return opts;
+    }
+
+    const compileSimCode = async () => {
+        builtSimJsInfo = pxt.runner.buildSimJsInfo(getOpts());
+        return await builtSimJsInfo;
+    }
+
+    const runSimulator = async () => {
+        const simOpts = getOpts();
+        if (builtSimJsInfo) {
+            simOpts.builtJsInfo = await builtSimJsInfo;
+        }
+
+        builtSimJsInfo = pxt.runner.simulateAsync(
             simContainerRef.current!,
-            opts
+            simOpts
         );
+
+        await builtSimJsInfo;
     };
 
     useEffect(() => {
         if (gameState?.gameMode === "playing") {
-            const simDriver = pxt.runner.currentDriver();
-            simDriver?.resume(pxsim.SimulatorDebuggerCommand.Resume);
+            runSimulator();
+            // TODO: see above, once breakpoitns are set we can allow sim to run for ~50ms and then freeze it.
+            // const simDriver = pxt.runner.currentDriver();
+            // simDriver?.resume(pxsim.SimulatorDebuggerCommand.Resume);
         }
     }, [gameState]);
 
     useEffect(() => {
-        runSimulator();
+        compileSimCode();
     }, [playerSlot, gameId]);
 
     return (
