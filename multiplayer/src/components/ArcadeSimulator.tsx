@@ -31,7 +31,9 @@ export default function Render() {
         await sendInputAsync(button, state);
     };
 
-    const msgHandler = (msg: MessageEvent<SimMultiplayer.Message | pxsim.SimulatorReadyMessage>) => {
+    const msgHandler = (
+        msg: MessageEvent<SimMultiplayer.Message | pxsim.SimulatorReadyMessage>
+    ) => {
         const { data } = msg;
         const { type } = data;
 
@@ -80,22 +82,28 @@ export default function Render() {
         }
 
         // TODO: do we want to keep an imm cache here for instant reload playing same game?
-        const builtJsInfo = await pxt.runner.simulateAsync(simContainerRef.current!, opts);
-
-    }
+        const builtJsInfo = await pxt.runner.simulateAsync(
+            simContainerRef.current!,
+            opts
+        );
+    };
 
     useEffect(() => {
         if (gameState?.gameMode === "playing") {
             const simDriver = pxt.runner.currentDriver();
             simDriver?.resume(pxsim.SimulatorDebuggerCommand.Resume);
         }
-    }, [gameState])
+    }, [gameState]);
 
     useEffect(() => {
         runSimulator();
     }, [playerSlot, gameId]);
 
     return (
-        <div id="sim-container" ref={simContainerRef} className="tw-h-[calc(100vh-16rem)] tw-w-[calc(100vw-6rem)]" />
+        <div
+            id="sim-container"
+            ref={simContainerRef}
+            className="tw-h-[calc(100vh-16rem)] tw-w-[calc(100vw-6rem)]"
+        />
     );
 }
