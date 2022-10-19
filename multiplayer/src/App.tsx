@@ -3,7 +3,7 @@ import { AppStateContext } from "./state/AppStateContext";
 import Loading from "./components/Loading";
 import SignInPage from "./components/SignInPage";
 import SignedInPage from "./components/SignedInPage";
-import HeaderBar from "./components/HeaderBar"
+import HeaderBar from "./components/HeaderBar";
 import Toast from "./components/Toast";
 import AppModal from "./components/AppModal";
 import * as authClient from "./services/authClient";

@@ -17,7 +17,9 @@ export default function Render() {
             {uiMode === "home" && <JoinOrHost />}
             {netMode === "init" && uiMode === "host" && <HostGame />}
             {netMode === "init" && uiMode === "join" && <JoinGame />}
-            {(netMode === "connecting" || netMode === "connected") && <GamePage />}
+            {(netMode === "connecting" || netMode === "connected") && (
+                <GamePage />
+            )}
         </div>
     );
 }
