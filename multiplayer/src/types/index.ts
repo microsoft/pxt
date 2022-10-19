@@ -1,6 +1,10 @@
 export type UiMode = "init" | "home" | "host" | "join";
 export type NetMode = "init" | "connecting" | "connected";
-export type ModalType = "sign-in" | "report-abuse" | "host-lobby" | "join-lobby";
+export type ModalType =
+    | "sign-in"
+    | "report-abuse"
+    | "host-lobby"
+    | "join-lobby";
 
 export type AppMode = {
     uiMode: UiMode;
