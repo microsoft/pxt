@@ -25,7 +25,7 @@ if (pxt.BrowserUtils.isLocalHostDev()) {
     }
 }
 pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
-pxt.reloadAppTargetVariant();
+// pxt.reloadAppTargetVariant();
 pxt.runner.initHost();
 
 ReactDOM.render(

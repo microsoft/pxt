@@ -426,7 +426,10 @@ namespace pxt.runner {
         simDriver.run(js, runOptions);
         return builtSimJS;
     }
-    export async function postSimMessage(msg: pxsim.SimulatorMessage) {
+    export function currentDriver() {
+        return simDriver;
+    }
+    export function postSimMessage(msg: pxsim.SimulatorMessage) {
         simDriver?.postMessage(msg);
     }
 

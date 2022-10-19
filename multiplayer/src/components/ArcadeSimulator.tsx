@@ -2,41 +2,22 @@ import { useContext, useEffect, useRef } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { SimMultiplayer } from "../types";
 import { sendSimMessage } from "../services/gameClient";
+// eslint-disable-next-line import/no-unassigned-import
 import "./ArcadeSimulator.css";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const { gameId, playerSlot } = state;
+    const { gameId, playerSlot, gameState } = state;
     const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
-        "background-color=ED3636&button-stroke=8d2525&button-fill=0b0b0b",
-        "background-color=4E4EE9&button-stroke=3333a1&button-fill=0b0b0b",
-        "background-color=FFDF1A&button-stroke=c1a916&button-fill=0b0b0b",
-        "background-color=4EB94E&button-stroke=245d24&button-fill=0b0b0b",
+        "background-color=ED3636&button-stroke=8d2525",
+        "background-color=4E4EE9&button-stroke=3333a1",
+        "background-color=FFDF1A&button-stroke=c1a916",
+        "background-color=4EB94E&button-stroke=245d24",
     ];
     const selectedPlayerTheme = playerThemes[(playerSlot || 0) - 1];
     const isHost = playerSlot == 1;
-
-    const queryParameters = [
-        "single=1",
-        "nofooter=1",
-        "fullscreen=1",
-        selectedPlayerTheme &&
-            `simParams=${encodeURIComponent(selectedPlayerTheme)}`,
-    ].filter(el => !!el);
-
-    if (isHost) {
-        queryParameters.push(
-            `id=${gameId}`,
-            "mp=server"
-        );
-    } else {
-        queryParameters.push(
-            `code=${encodeURIComponent("multiplayer.init()")}`,
-            "mp=client"
-        );
-    }
 
     const postImageMsg = (msg: SimMultiplayer.ImageMessage) => {
         const { image } = msg;
@@ -62,16 +43,30 @@ export default function Render() {
         });
     };
 
-    const msgHandler = (msg: MessageEvent<SimMultiplayer.Message>) => {
+    const msgHandler = (msg: MessageEvent<SimMultiplayer.Message | pxsim.SimulatorReadyMessage>) => {
         const { data } = msg;
-        const { broadcast, origin, content } = data;
+        const { type } = data;
 
-        if (!broadcast) return;
+        switch (type) {
+            case "ready":
+                if (isHost && gameState?.gameMode !== "playing") {
+                    // Sim running at this point, send a pause next breakpoint msg.
+                    // Maybe settimeout for ~50ms to allow a frame to go through / get past first screen render?
+                    const simDriver = pxt.runner.currentDriver();
 
-        if (origin === "client" && content === "Button") {
-            postInputMsg(data);
-        } else if (origin === "server" && content === "Image") {
-            postImageMsg(data);
+                    // TODO: for this to work I believe when need to do set breakpoints, need to set that in in pxtrunner.
+                    simDriver?.resume(pxsim.SimulatorDebuggerCommand.Pause);
+                }
+                return;
+            case "multiplayer":
+                const { origin, content } = data;
+
+                if (origin === "client" && content === "Button") {
+                    postInputMsg(data);
+                } else if (origin === "server" && content === "Image") {
+                    postImageMsg(data);
+                }
+                return;
         }
     };
 
@@ -80,35 +75,6 @@ export default function Render() {
         return () => window.removeEventListener("message", msgHandler);
     }, []);
 
-    const fullUrl = `${pxt.webConfig.runUrl}?${queryParameters.join("&")}`;
-
-    // const createSim = () => {
-    //     var sims = document.createElement("div");
-    //     sims.className = "sim-embed";
-    //     var simframeWrapper = document.createElement("div");
-    //     simframeWrapper.className = "simframe ui embed";
-    //     var emptySim = document.createElement("iframe");
-    //     emptySim.className = "sim-embed";
-    //     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-    //     emptySim.setAttribute("sandbox", "allow-popups allow-forms allow-scripts allow-same-origin");
-    //     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
-    //     emptySim.frameBorder = "0";
-    //     emptySim.src = pxt.webConfig.simUrl;
-    //     emptySim.className = "grayscale";
-    //     // unused, satisfying pxtsim/simdriver.ts#setFrameState. Maybe Add some animation here?
-    //     var icon = document.createElement("div");
-    //     var loader = document.createElement("div");
-    //     loader.className = "loader";
-    //     loader.appendChild(document.createElement("div"));
-    //     loader.appendChild(document.createElement("div"));
-
-    //     simframeWrapper.appendChild(emptySim);
-    //     simframeWrapper.appendChild(icon);
-    //     simframeWrapper.appendChild(loader);
-
-    //     sims.appendChild(simframeWrapper);
-    //     return sims;
-    // }
     const runSimulator = async () => {
         const opts: pxt.runner.SimulateOptions = {
             additionalQueryParameters: selectedPlayerTheme,
@@ -125,10 +91,17 @@ export default function Render() {
             opts.mpRole = "client";
         }
 
+        // TODO: do we want to keep an imm cache here for instant reload playing same game?
         const builtJsInfo = await pxt.runner.simulateAsync(simContainerRef.current!, opts);
-        // const sim: HTMLIFrameElement = simContainerRef.current!.firstChild as HTMLIFrameElement;
 
     }
+
+    useEffect(() => {
+        if (gameState?.gameMode === "playing") {
+            const simDriver = pxt.runner.currentDriver();
+            simDriver?.resume(pxsim.SimulatorDebuggerCommand.Resume);
+        }
+    }, [gameState])
 
     useEffect(() => {
         runSimulator();

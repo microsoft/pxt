@@ -203,7 +203,6 @@ export type Dimension = {
 export namespace SimMultiplayer {
     type MessageBase = {
         type: "multiplayer";
-        content: string;
         origin?: "server" | "client";
         broadcast?: boolean;
     };
