@@ -113,14 +113,16 @@ export default function Render() {
     useEffect(() => {
         if (gameState?.gameMode === "playing") {
             runSimulator();
-            // TODO: see above, once breakpoitns are set we can allow sim to run for ~50ms and then freeze it.
+            // TODO: see above, once breakpoints are set we can allow sim to run for ~50ms and then freeze it.
             // const simDriver = pxt.runner.currentDriver();
             // simDriver?.resume(pxsim.SimulatorDebuggerCommand.Resume);
         }
     }, [gameState]);
 
     useEffect(() => {
-        compileSimCode();
+        if (gameState?.gameMode !== "playing") {
+            compileSimCode();
+        }
     }, [playerSlot, gameId]);
 
     return (
