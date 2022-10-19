@@ -260,9 +260,7 @@ class GameClient {
         await playerJoinedAsync(msg.clientId);
     }
 
-    private async recvPlayerLeftMessageAsync(
-        msg: Protocol.PlayerLeftMessage
-    ) {
+    private async recvPlayerLeftMessageAsync(msg: Protocol.PlayerLeftMessage) {
         console.log("Server sent player joined");
         await playerLeftAsync(msg.clientId);
     }
