@@ -1,6 +1,10 @@
 export type UiMode = "init" | "home" | "host" | "join";
 export type NetMode = "init" | "connecting" | "connected";
-export type ModalType = "sign-in" | "report-abuse" | "host-lobby" | "join-lobby";
+export type ModalType =
+    | "sign-in"
+    | "report-abuse"
+    | "host-lobby"
+    | "join-lobby";
 
 export type AppMode = {
     uiMode: UiMode;
@@ -27,136 +31,32 @@ export type GameState = GameInfo & {
     gameMode?: GameMode;
 };
 
-export namespace Cli2Srv {
-    type MessageBase = {
-        type: string;
-    };
-
-    export type HelloMessage = MessageBase & {
-        type: "hello";
-    };
-
-    export type HeartbeatMessage = MessageBase & {
-        type: "heartbeat";
-    };
-
-    export type ConnectMessage = MessageBase & {
-        type: "connect";
-        ticket: string;
-    };
-
-    export type StartGameMessage = MessageBase & {
-        type: "start-game";
-    };
-
-    export type InputMessage = MessageBase & {
-        type: "input";
-        data: {
-            button: number;
-            state: "Pressed" | "Released" | "Held";
-        };
-    };
-
-    export type ScreenMessage = MessageBase & {
-        type: "screen";
-        data: any; // pxsim.RefBuffer
-    };
-
-    export type ChatMessage = MessageBase & {
-        type: "chat";
-        text: string;
-    };
-
-    export type ReactionMessage = MessageBase & {
-        type: "reaction";
-        index: number;
-    };
-
-    export type Message =
-        | HelloMessage
-        | HeartbeatMessage
-        | ConnectMessage
-        | StartGameMessage
-        | InputMessage
-        | ScreenMessage
-        | ChatMessage
-        | ReactionMessage;
-
-    export type SimMessage = ScreenMessage | InputMessage;
+export enum ButtonState {
+    Pressed = 1,
+    Released = 2,
+    Held = 3,
 }
 
-export namespace Srv2Cli {
-    type MessageBase = {
-        type: string;
-    };
+export function buttonStateToString(state: ButtonState): string | undefined {
+    switch (state) {
+        case ButtonState.Pressed:
+            return "Pressed";
+        case ButtonState.Released:
+            return "Released";
+        case ButtonState.Held:
+            return "Held";
+    }
+}
 
-    export type HelloMessage = MessageBase & {
-        type: "hello";
-    };
-
-    export type JoinedMessage = MessageBase & {
-        type: "joined";
-        role: ClientRole;
-        slot: number;
-        gameMode: GameMode;
-        clientId: string;
-    };
-
-    export type StartGameMessage = MessageBase & {
-        type: "start-game";
-    };
-
-    export type InputMessage = MessageBase & {
-        type: "input";
-        slot: number;
-        data: {
-            button: number;
-            state: "Pressed" | "Released" | "Held";
-        };
-    };
-
-    export type ScreenMessage = MessageBase & {
-        type: "screen";
-        data: any; // pxsim.RefBuffer
-    };
-
-    export type ChatMessage = MessageBase & {
-        type: "chat";
-        text: string;
-    };
-
-    export type PresenceMessage = MessageBase & {
-        type: "presence";
-        presence: Presence;
-    };
-
-    export type ReactionMessage = MessageBase & {
-        type: "reaction";
-        index: number;
-        clientId: string;
-    };
-
-    export type PlayerJoinedMessage = MessageBase & {
-        type: "player-joined";
-        clientId: string;
-    };
-
-    export type PlayerLeftMessage = MessageBase & {
-        type: "player-left";
-        clientId: string;
-    };
-
-    export type Message =
-        | HelloMessage
-        | JoinedMessage
-        | StartGameMessage
-        | InputMessage
-        | ScreenMessage
-        | ChatMessage
-        | PresenceMessage
-        | ReactionMessage
-        | PlayerJoinedMessage
-        | PlayerLeftMessage;
+export function stringToButtonState(state: string): ButtonState | undefined {
+    switch (state) {
+        case "Pressed":
+            return ButtonState.Pressed;
+        case "Released":
+            return ButtonState.Released;
+        case "Held":
+            return ButtonState.Held;
+    }
 }
 
 export type ToastType = "success" | "info" | "warning" | "error";

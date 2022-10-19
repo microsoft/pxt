@@ -6,8 +6,7 @@ import ArcadeSimulator from "./ArcadeSimulator";
 import Presence from "./Presence";
 import Reactions from "./Reactions";
 
-export interface GamePageProps {
-}
+export interface GamePageProps {}
 
 export default function Render(props: GamePageProps) {
     const { state } = useContext(AppStateContext);
@@ -30,8 +29,13 @@ export default function Render(props: GamePageProps) {
                 <div className="tw-flex tw-flex-col tw-items-center">
                     {state.playerSlot && <ArcadeSimulator />}
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-w-full">
-                        <div>{state.gameState?.joinCode && `${lf("Join Code")}: ${state.gameState?.joinCode}`}</div>
-                        <div className="tw-flex-grow"/>
+                        <div>
+                            {state.gameState?.joinCode &&
+                                `${lf("Join Code")}: ${
+                                    state.gameState?.joinCode
+                                }`}
+                        </div>
+                        <div className="tw-flex-grow" />
                         <div>{lf("Keyboard Controls")}</div>
                     </div>
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">

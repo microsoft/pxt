@@ -86,13 +86,13 @@ type ClearReaction = ActionBase & {
 };
 
 type ShowModal = ActionBase & {
-    type: "SHOW_MODAL"
-    modalType: ModalType
-}
+    type: "SHOW_MODAL";
+    modalType: ModalType;
+};
 
 type ClearModal = ActionBase & {
-    type: "CLEAR_MODAL"
-}
+    type: "CLEAR_MODAL";
+};
 
 /**
  * Union of all actions
@@ -201,9 +201,9 @@ export const clearReaction = (clientId: string): ClearReaction => ({
 
 export const showModal = (modalType: ModalType): ShowModal => ({
     type: "SHOW_MODAL",
-    modalType
-})
+    modalType,
+});
 
 export const clearModal = (): ClearModal => ({
-    type: "CLEAR_MODAL"
-})
+    type: "CLEAR_MODAL",
+});
