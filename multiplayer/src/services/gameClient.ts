@@ -309,16 +309,14 @@ function destroyGameClient() {
 }
 
 export async function hostGameAsync(shareCode: string): Promise<GameInfo> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    gameClient && gameClient.destroy();
+    destroyGameClient();
     gameClient = new GameClient();
     const gameInfo = await gameClient.hostGameAsync(shareCode);
     return gameInfo;
 }
 
 export async function joinGameAsync(joinCode: string): Promise<GameInfo> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    gameClient && gameClient.destroy();
+    destroyGameClient();
     gameClient = new GameClient();
     const gameInfo = await gameClient.joinGameAsync(joinCode);
     return gameInfo;
