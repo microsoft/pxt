@@ -10,22 +10,29 @@ import JoinLobbyModal from "./JoinLobbyModal";
 export default function Render() {
     const { state } = useContext(AppStateContext);
 
-    switch(state.modal) {
+    switch (state.modal) {
         case "sign-in":
-            return <SignInModal
-                onClose={() => dispatch(clearModal())}
-                onSignIn={async (provider, rememberMe) => {
-                    await signInAsync(provider.id, rememberMe);
-                }}
-            />
+            return (
+                <SignInModal
+                    onClose={() => dispatch(clearModal())}
+                    onSignIn={async (provider, rememberMe) => {
+                        await signInAsync(provider.id, rememberMe);
+                    }}
+                />
+            );
         case "report-abuse":
-            return <Modal title={lf("Report Abuse")} onClose={() => dispatch(clearModal())}>
-                Report Abuse Placeholder  {/*TODO multiplayer*/}
-            </Modal>
+            return (
+                <Modal
+                    title={lf("Report Abuse")}
+                    onClose={() => dispatch(clearModal())}
+                >
+                    Report Abuse Placeholder {/*TODO multiplayer*/}
+                </Modal>
+            );
         case "host-lobby":
-            return <HostLobbyModal />
+            return <HostLobbyModal />;
         case "join-lobby":
-            return <JoinLobbyModal />
+            return <JoinLobbyModal />;
         default:
             return null;
     }

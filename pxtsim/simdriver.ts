@@ -398,18 +398,8 @@ namespace pxsim {
         }
 
         private postMessageCore(frame: HTMLIFrameElement, msg: SimulatorMessage) {
-            frame.contentWindow.postMessage(msg, frame.dataset['origin']);
-
-            if (U.isLocalHostDev() && (pxt as any)?.appTarget?.id) {
-                // If using the production simulator on local serve, the domain might have been
-                // redirected by the CLI server. Also send to the production domain just in case
-                try {
-                    frame.contentWindow.postMessage(msg, `https://trg-${(pxt as any)?.appTarget?.id}.userpxt.io/---simulator`);
-                }
-                catch (e) {
-                    // Ignore exceptions if the target origin doesn't match
-                }
-            }
+            const origin = U.isLocalHostDev() ? "*" : frame.dataset["origin"];
+            frame.contentWindow.postMessage(msg, origin);
         }
 
         private createFrame(url?: string): HTMLDivElement {

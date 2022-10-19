@@ -1,3 +1,4 @@
+const webpack = require("webpack");
 const { aliasWebpack } = require("react-app-alias-ex");
 
 module.exports = function (config) {
@@ -5,6 +6,12 @@ module.exports = function (config) {
     config = {
         ...aliasFn(config),
         // Additional webpack config here
-    }
+        plugins: [
+            ...config.plugins,
+            new webpack.ProvidePlugin({
+                Buffer: ["buffer", "Buffer"],
+            }),
+        ],
+    };
     return config;
-}
+};
