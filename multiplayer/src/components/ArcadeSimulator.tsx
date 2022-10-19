@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { SimMultiplayer } from "../types";
-import { sendSimMessage } from "../services/gameClient";
+import { sendInputAsync, sendScreenUpdateAsync } from "../services/gameClient";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -37,28 +37,16 @@ export default function Render() {
         );
     }
 
-    const postImageMsg = (msg: SimMultiplayer.ImageMessage) => {
+    const postImageMsg = async (msg: SimMultiplayer.ImageMessage) => {
         const { image } = msg;
-        // JSON converts uint8array -> {"1": 160, "10": 2, ...}, serialize as hex string.
-        image.data = (image.data as Uint8Array).reduce(
-            (acc, byte) => acc + byte.toString(16).padStart(2, "0"),
-            ""
-        );
-        sendSimMessage({
-            type: "screen",
-            data: image,
-        });
+        const { data } = image;
+
+        await sendScreenUpdateAsync(data);
     };
 
-    const postInputMsg = (msg: SimMultiplayer.InputMessage) => {
+    const postInputMsg = async (msg: SimMultiplayer.InputMessage) => {
         const { button, state } = msg;
-        sendSimMessage({
-            type: "input",
-            data: {
-                button,
-                state,
-            },
-        });
+        await sendInputAsync(button, state);
     };
 
     const msgHandler = (msg: MessageEvent<SimMultiplayer.Message>) => {
