@@ -10,7 +10,6 @@ import { isLocal } from "./util";
 import * as authClient from "./services/authClient";
 
 const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
-bundle.bundledpkgs = {};
 
 pxt.setAppTarget(bundle);
 pxt.setupWebConfig(pxt.webConfig);
@@ -26,6 +25,8 @@ if (pxt.BrowserUtils.isLocalHostDev()) {
     }
 }
 pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
+pxt.reloadAppTargetVariant();
+pxt.runner.initHost();
 
 ReactDOM.render(
     <React.StrictMode>

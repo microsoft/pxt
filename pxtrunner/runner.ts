@@ -22,6 +22,7 @@ namespace pxt.runner {
         autofocus?: boolean;
         additionalQueryParameters?: string;
         debug?: boolean;
+        mpRole?: "server" | "client";
     }
 
     class EditorPackage {
@@ -247,9 +248,11 @@ namespace pxt.runner {
                 targetBranch: versions ? versions.targetCrowdinBranch : "",
                 force: force,
             })
-            .then(() => {
-                mainPkg = new pxt.MainPackage(new Host());
-            })
+            .then(() => initHost())
+    }
+
+    export function initHost() {
+        mainPkg = new pxt.MainPackage(new Host());
     }
 
     export function initFooter(footer: HTMLElement, shareId?: string) {
@@ -367,6 +370,7 @@ namespace pxt.runner {
             })
     }
 
+    let simDriver: pxsim.SimulatorDriver;
     export async function simulateAsync(container: HTMLElement, simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
         const builtSimJS = simOptions.builtJsInfo || await buildSimJsInfo(simOptions);
         const {
@@ -385,7 +389,7 @@ namespace pxt.runner {
         options.onSimulatorCommand = msg => {
             if (msg.command === "restart") {
                 runOptions.storedState = getStoredState(simOptions.id)
-                driver.run(js, runOptions);
+                simDriver.run(js, runOptions);
             }
             if (msg.command == "setstate") {
                 if (msg.stateKey && msg.stateValue) {
@@ -394,7 +398,7 @@ namespace pxt.runner {
             }
         };
         options.messageSimulators = pxt.appTarget?.simulator?.messageSimulators;
-        let driver = new pxsim.SimulatorDriver(container, options);
+        simDriver = new pxsim.SimulatorDriver(container, options);
 
         let board = pxt.appTarget.simulator.boardDefinition;
         let storedState: Map<string> = getStoredState(simOptions.id)
@@ -413,13 +417,17 @@ namespace pxt.runner {
             hideSimButtons: simOptions.hideSimButtons,
             autofocus: simOptions.autofocus,
             queryParameters: simOptions.additionalQueryParameters,
+            mpRole: simOptions.mpRole,
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                 ? pxt.appTarget.simulator.partsAspectRatio
                 : pxt.appTarget.simulator.aspectRatio;
-        driver.run(js, runOptions);
+        simDriver.run(js, runOptions);
         return builtSimJS;
+    }
+    export async function postSimMessage(msg: pxsim.SimulatorMessage) {
+        simDriver?.postMessage(msg);
     }
 
     export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {

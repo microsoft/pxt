@@ -2,12 +2,11 @@ import { useContext, useEffect, useRef } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { SimMultiplayer } from "../types";
 import { sendSimMessage } from "../services/gameClient";
-import { classList } from "react-common/components/util";
+import "./ArcadeSimulator.css";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
     const { gameId, playerSlot } = state;
-    const simIframeRef = useRef<HTMLIFrameElement>(null);
     const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
@@ -120,33 +119,22 @@ export default function Render() {
         };
         if (isHost) {
             opts.id = gameId;
+            opts.mpRole = "server";
         } else {
             opts.code = "multiplayer.init()";
+            opts.mpRole = "client";
         }
 
         const builtJsInfo = await pxt.runner.simulateAsync(simContainerRef.current!, opts);
-        console.log(`BUILT for ${builtJsInfo.targetVersion}`);
-        const sim: HTMLIFrameElement = simContainerRef.current!.firstChild as HTMLIFrameElement;
-        sim?.classList.add(
-            "tw-h-[calc(100vh-26rem)]",
-            "tw-w-screen",
-        )
+        // const sim: HTMLIFrameElement = simContainerRef.current!.firstChild as HTMLIFrameElement;
+
     }
-    runSimulator();
+
+    useEffect(() => {
+        runSimulator();
+    }, [playerSlot, gameId]);
+
     return (
-        /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-        <div id="sim-container" ref={simContainerRef} className="tw-grow">
-            <iframe
-                id="sim-iframe"
-                ref={simIframeRef}
-                src={fullUrl}
-                allowFullScreen={true}
-                // TODO:  this calc is weird, needs cleaning.
-                className="tw-h-[calc(100vh-26rem)] tw-w-[calc(100vw-6rem)]"
-                sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
-                title={lf("Arcade Game Simulator")}
-            />
-        </div>
-        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
+        <div id="sim-container" ref={simContainerRef} className="tw-h-[calc(100vh-16rem)] tw-w-[calc(100vw-6rem)]" />
     );
 }

@@ -242,10 +242,7 @@ class GameClient {
     }
 
     private postToSimFrame(msg: SimMultiplayer.Message) {
-        const simIframe = document.getElementById(
-            "sim-iframe"
-        ) as HTMLIFrameElement;
-        simIframe?.contentWindow?.postMessage(msg, "*");
+        pxt.runner.postSimMessage(msg);
     }
 }
 
