@@ -303,8 +303,7 @@ class GameClient {
 let gameClient: GameClient | undefined;
 
 function destroyGameClient() {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    gameClient && gameClient.destroy();
+    gameClient?.destroy();
     gameClient = undefined;
 }
 
