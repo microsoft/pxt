@@ -45,13 +45,6 @@ export default function Render() {
             ?.resume(pxsim.SimulatorDebuggerCommand.Resume);
     };
 
-    // const handleStartMsg = async () => {
-    //     setTimeout(() => {
-    //         if (isHost && gameState?.gameMode !== "playing")
-    //             setSimStopped();
-    //     }, 200);
-    // }
-
     const msgHandler = (
         msg: MessageEvent<SimMultiplayer.Message | pxsim.SimulatorStateMessage>
     ) => {
@@ -60,9 +53,6 @@ export default function Render() {
 
         switch (type) {
             case "status":
-                // TODO: if we want to show swim behind 'start game' modal we'll want to setSimStopped here
-                // if ((msg.data as pxsim.SimulatorStateMessage).state === "running")
-                // handleStartMsg();
                 return;
             case "multiplayer":
                 const { origin, content } = data;
@@ -122,9 +112,6 @@ export default function Render() {
     useEffect(() => {
         if (gameState?.gameMode === "playing") {
             runSimulator();
-            // TODO: if we run sim behind modal we'll need to resume here.
-            // const simDriver = pxt.runner.currentDriver();
-            // simDriver?.resume(pxsim.SimulatorDebuggerCommand.Resume);
         }
     }, [gameState]);
 
