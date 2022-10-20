@@ -8,6 +8,7 @@
 
 namespace pxt.runner {
     export interface SimulateOptions {
+        embedId?: string;
         id?: string;
         code?: string;
         assets?: string;
@@ -370,7 +371,6 @@ namespace pxt.runner {
             })
     }
 
-    let simDriver: pxsim.SimulatorDriver;
     export async function simulateAsync(container: HTMLElement, simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
         const builtSimJS = simOptions.builtJsInfo || await buildSimJsInfo(simOptions);
         const { js } = builtSimJS;
@@ -401,12 +401,20 @@ namespace pxt.runner {
         return builtSimJS;
     }
 
+    let simDriver: pxsim.SimulatorDriver;
+    // iff matches and truthy, reuse existing simdriver
+    let currDriverId: string;
     function initDriverAndOptions(
         container: HTMLElement,
         simOptions: SimulateOptions,
         compileInfo?: pxtc.BuiltSimJsInfo
     ): pxsim.SimulatorRunOptions {
-        simDriver = new pxsim.SimulatorDriver(container);
+        if (!simDriver || !simOptions.embedId || currDriverId !== simOptions.embedId) {
+            simDriver = new pxsim.SimulatorDriver(container);
+            currDriverId = simOptions.embedId;
+        } else {
+            simDriver.container = container;
+        }
         const {
             fnArgs,
             parts,
@@ -435,12 +443,16 @@ namespace pxt.runner {
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                 ? pxt.appTarget.simulator.partsAspectRatio
                 : pxt.appTarget.simulator.aspectRatio;
+        simDriver.setRunOptions(runOptions);
         return runOptions;
     }
 
     export function preloadSim(container: HTMLElement, simOpts: SimulateOptions) {
         initDriverAndOptions(container, simOpts);
-        simDriver.preload(pxt.appTarget?.simulator?.aspectRatio || 1);
+        simDriver.preload(
+            pxt.appTarget?.simulator?.aspectRatio || 1,
+            true /** no auto run **/
+        );
     }
 
     export function currentDriver() {

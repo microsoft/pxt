@@ -472,8 +472,10 @@ namespace pxsim {
             return wrapper;
         }
 
-        public preload(aspectRatio: number) {
+        public preload(aspectRatio: number, clearRuntime?: boolean) {
             if (!this.simFrames().length) {
+                if (clearRuntime)
+                    this._currentRuntime = undefined;
                 this.container.appendChild(this.createFrame());
                 this.applyAspectRatio(aspectRatio);
                 this.setStarting();
@@ -631,8 +633,12 @@ namespace pxsim {
             });
         }
 
-        public run(js: string, opts: SimulatorRunOptions = {}) {
+        public setRunOptions(opts: SimulatorRunOptions = {}) {
             this._runOptions = opts;
+        }
+
+        public run(js: string, opts: SimulatorRunOptions = {}) {
+            this.setRunOptions(opts);
             this.runId = this.nextId();
             // store information
             this._currentRuntime = {

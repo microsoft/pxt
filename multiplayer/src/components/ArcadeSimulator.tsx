@@ -72,6 +72,7 @@ export default function Render() {
 
     const getOpts = () => {
         const opts: pxt.runner.SimulateOptions = {
+            embedId: "multiplayer-sim",
             additionalQueryParameters: selectedPlayerTheme,
             single: true,
             fullScreen: true,
@@ -123,8 +124,11 @@ export default function Render() {
         const codeReadyToCompile =
             playerSlot! > 1 || (playerSlot == 1 && gameId);
         if (codeReadyToCompile && gameState?.gameMode !== "playing") {
-            preloadSim();
-            compileSimCode();
+            preloadSim()
+                .then(compileSimCode);
+        }
+        if (!playerSlot) {
+            builtSimJsInfo = undefined;
         }
     }, [playerSlot, gameId]);
 
