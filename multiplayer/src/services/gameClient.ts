@@ -20,8 +20,7 @@ import {
     playerLeftAsync,
 } from "../epics";
 
-const GAME_HOST =
-    "https://makecode-ppe-app-multiplayer-eastus.azurewebsites.net";
+const GAME_HOST = "https://multiplayer.staging.pxt.io";
 //const GAME_HOST = "http://localhost:8082";
 
 class GameClient {
