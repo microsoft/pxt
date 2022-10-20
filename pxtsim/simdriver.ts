@@ -73,6 +73,7 @@ namespace pxsim {
         hideSimButtons?: boolean;
         autofocus?: boolean;
         queryParameters?: string;
+        mpRole?: "server" | "client";
     }
 
     export interface HwDebugger {
@@ -291,7 +292,7 @@ namespace pxsim {
         }
 
         private getSimUrl(): URL {
-            const simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || `${location.origin}/sim/simulator.html`;
+            const simUrl = this.options.simUrl || (window as any).pxtConfig?.simUrl || (pxt as any).webConfig?.simUrl || `${location.origin}/sim/simulator.html`;
             try {
                 return new URL(simUrl);
             } catch {
@@ -420,6 +421,7 @@ namespace pxsim {
                 urlObject.searchParams.append("hideSimButtons", "1");
                 furl = urlObject.toString();
             }
+
             if (this._runOptions?.queryParameters) {
                 const urlObject = new URL(furl);
                 const parameters = this._runOptions.queryParameters.split("&");
@@ -699,9 +701,10 @@ namespace pxsim {
             if (!this._currentRuntime || !frame.contentWindow) return false;
             const msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
             msg.frameCounter = ++this.frameCounter;
+            const mpRole = this._runOptions?.mpRole || /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
-                mpRole: /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase()
+                mpRole
             };
 
             msg.id = `${msg.options.theme}-${this.nextId()}`;

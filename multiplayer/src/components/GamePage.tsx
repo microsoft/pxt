@@ -27,7 +27,7 @@ export default function Render(props: GamePageProps) {
             )}
             {state.gameState?.gameMode && (
                 <div className="tw-flex tw-flex-col tw-items-center">
-                    <ArcadeSimulator />
+                    {state.playerSlot && <ArcadeSimulator />}
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-w-full">
                         <div>
                             {state.gameState?.joinCode &&

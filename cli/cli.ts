@@ -2057,7 +2057,11 @@ function buildWebStringsAsync() {
 }
 
 function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, opts?: {
-    copyAssets?: boolean
+    copyAssets?: boolean,
+    usePxtEmbed?: boolean,
+    // this requires pxt serve to have completed before serving app, as it relies on
+    // packing of pxtarget in buildTargetCoreAsync (mainly the chunk in the forEachBundledPkgAsync)
+    expandedPxtTarget?: boolean,
 }) {
     opts = opts || {
         copyAssets: true
@@ -2070,10 +2074,18 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
         .then(() => rimrafAsync(`${appRoot}/public/docs`, {}))
         .then(() => rimrafAsync(`${appRoot}/public/static`, {}))
         .then(() => {
-            // read pxtarget.json, save into 'pxtTargetBundle' global variable
-            let cfg = readLocalPxTarget();
-            nodeutil.writeFileSync(`${appRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
-            nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
+            if (!opts.expandedPxtTarget) {
+                // read pxtarget.json, save into 'pxtTargetBundle' global variable
+                let cfg = readLocalPxTarget();
+                nodeutil.writeFileSync(`${appRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+            } else {
+                nodeutil.cp("built/target.js", `${appRoot}/public/blb`);
+            }
+            if (opts.usePxtEmbed) {
+                nodeutil.cp("node_modules/pxt-core/built/web/pxtembed.js", `${appRoot}/public/blb/web`);
+            } else {
+                nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
+            }
             nodeutil.cp("built/web/semantic.css", `${appRoot}/public/blb`);
             nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${appRoot}/public/blb`);
             nodeutil.cp(`node_modules/pxt-core/built/web/react-common-${app}.css`, `${appRoot}/public/blb`);
@@ -2107,7 +2119,15 @@ function buildAuthcodeAsync(parsed: commandParser.ParsedCommand) {
 }
 
 function buildMultiplayerAsync(parsed: commandParser.ParsedCommand) {
-    return buildReactAppAsync("multiplayer", parsed, { copyAssets: false });
+    return buildReactAppAsync(
+        "multiplayer",
+        parsed,
+        {
+            copyAssets: false,
+            usePxtEmbed: true,
+            expandedPxtTarget: true
+        }
+    );
 }
 
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
