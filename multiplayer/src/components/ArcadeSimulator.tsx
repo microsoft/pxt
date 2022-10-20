@@ -116,7 +116,9 @@ export default function Render() {
     }, [gameState]);
 
     useEffect(() => {
-        if (gameState?.gameMode !== "playing") {
+        const codeReadyToCompile =
+            playerSlot! > 1 || (playerSlot == 1 && gameId);
+        if (codeReadyToCompile && gameState?.gameMode !== "playing") {
             compileSimCode();
         }
     }, [playerSlot, gameId]);
