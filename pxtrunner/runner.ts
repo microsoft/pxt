@@ -384,7 +384,6 @@ namespace pxt.runner {
         simDriver.options.messageSimulators = pxt.appTarget?.simulator?.messageSimulators;
         simDriver.options.onSimulatorCommand = msg => {
             if (msg.command === "restart") {
-                simDriver
                 runOptions.storedState = getStoredState(simOptions.id)
                 simDriver.run(js, runOptions);
             }
