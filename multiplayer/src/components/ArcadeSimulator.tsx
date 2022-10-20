@@ -98,7 +98,7 @@ export default function Render() {
 
     const preloadSim = async () => {
         pxt.runner.preloadSim(simContainerRef.current!, getOpts());
-    }
+    };
 
     const runSimulator = async () => {
         const simOpts = getOpts();
@@ -124,8 +124,7 @@ export default function Render() {
         const codeReadyToCompile =
             playerSlot! > 1 || (playerSlot == 1 && gameId);
         if (codeReadyToCompile && gameState?.gameMode !== "playing") {
-            preloadSim()
-                .then(compileSimCode);
+            preloadSim().then(compileSimCode);
         }
         if (!playerSlot) {
             builtSimJsInfo = undefined;
