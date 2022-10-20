@@ -34,12 +34,16 @@ export default function Render() {
     };
 
     const setSimStopped = async () => {
-        pxt.runner.currentDriver()?.resume(pxsim.SimulatorDebuggerCommand.Pause);
-    }
+        pxt.runner
+            .currentDriver()
+            ?.resume(pxsim.SimulatorDebuggerCommand.Pause);
+    };
 
     const setSimResumed = async () => {
-        pxt.runner.currentDriver()?.resume(pxsim.SimulatorDebuggerCommand.Resume);
-    }
+        pxt.runner
+            .currentDriver()
+            ?.resume(pxsim.SimulatorDebuggerCommand.Resume);
+    };
 
     // const handleStartMsg = async () => {
     //     setTimeout(() => {
@@ -58,7 +62,7 @@ export default function Render() {
             case "status":
                 // TODO: if we want to show swim behind 'start game' modal we'll want to setSimStopped here
                 // if ((msg.data as pxsim.SimulatorStateMessage).state === "running")
-                    // handleStartMsg();
+                // handleStartMsg();
                 return;
             case "multiplayer":
                 const { origin, content } = data;
@@ -94,12 +98,12 @@ export default function Render() {
         }
 
         return opts;
-    }
+    };
 
     const compileSimCode = async () => {
         builtSimJsInfo = pxt.runner.buildSimJsInfo(getOpts());
         return await builtSimJsInfo;
-    }
+    };
 
     const runSimulator = async () => {
         const simOpts = getOpts();
