@@ -373,21 +373,18 @@ namespace pxt.runner {
     let simDriver: pxsim.SimulatorDriver;
     export async function simulateAsync(container: HTMLElement, simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
         const builtSimJS = simOptions.builtJsInfo || await buildSimJsInfo(simOptions);
-        const {
-            js,
-            fnArgs,
-            parts,
-            usedBuiltinParts,
-        } = builtSimJS;
+        const { js } = builtSimJS;
 
         if (!js) {
             console.error("Program failed to compile");
             return undefined;
         }
 
-        let options: pxsim.SimulatorDriverOptions = {};
-        options.onSimulatorCommand = msg => {
+        const runOptions = initDriverAndOptions(container, simOptions, builtSimJS);
+        simDriver.options.messageSimulators = pxt.appTarget?.simulator?.messageSimulators;
+        simDriver.options.onSimulatorCommand = msg => {
             if (msg.command === "restart") {
+                simDriver
                 runOptions.storedState = getStoredState(simOptions.id)
                 simDriver.run(js, runOptions);
             }
@@ -397,9 +394,24 @@ namespace pxt.runner {
                 }
             }
         };
-        options.messageSimulators = pxt.appTarget?.simulator?.messageSimulators;
-        simDriver = new pxsim.SimulatorDriver(container, options);
+        if (builtSimJS.breakpoints && simOptions.debug) {
+            simDriver.setBreakpoints(builtSimJS.breakpoints);
+        }
+        simDriver.run(js, runOptions);
+        return builtSimJS;
+    }
 
+    function initDriverAndOptions(
+        container: HTMLElement,
+        simOptions: SimulateOptions,
+        compileInfo?: pxtc.BuiltSimJsInfo
+    ): pxsim.SimulatorRunOptions {
+        simDriver = new pxsim.SimulatorDriver(container);
+        const {
+            fnArgs,
+            parts,
+            usedBuiltinParts,
+        } = compileInfo || {};
         let board = pxt.appTarget.simulator.boardDefinition;
         let storedState: Map<string> = getStoredState(simOptions.id)
         let runOptions: pxsim.SimulatorRunOptions = {
@@ -423,11 +435,12 @@ namespace pxt.runner {
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                 ? pxt.appTarget.simulator.partsAspectRatio
                 : pxt.appTarget.simulator.aspectRatio;
-        if (builtSimJS.breakpoints && simOptions.debug) {
-            simDriver.setBreakpoints(builtSimJS.breakpoints);
-        }
-        simDriver.run(js, runOptions);
-        return builtSimJS;
+        return runOptions;
+    }
+
+    export function preloadSim(container: HTMLElement, simOpts: SimulateOptions) {
+        initDriverAndOptions(container, simOpts);
+        simDriver.preload(pxt.appTarget?.simulator?.aspectRatio || 1);
     }
 
     export function currentDriver() {
