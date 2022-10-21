@@ -2068,7 +2068,6 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
     };
     // local serve
     const appRoot = `node_modules/pxt-core/${app}`;
-    const docsPath = parsed.flags["docs"];
     return rimrafAsync(`${appRoot}/public/blb`, {})
         .then(() => rimrafAsync(`${appRoot}/build/assets`, {}))
         .then(() => rimrafAsync(`${appRoot}/public/docs`, {}))
@@ -2095,11 +2094,8 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
                 nodeutil.cpR(`docs/static/${app}/assets`, `${appRoot}/public/assets`);
             }
 
-            if (docsPath) {
-                // copy docs over from specified path
-                nodeutil.cpR(`docs/${docsPath}`, `${appRoot}/public/docs/${docsPath}`);
-                nodeutil.cpR(`docs/static/${docsPath}`, `${appRoot}/public/static/${docsPath}`);
-            }
+            fs.symlinkSync(path.resolve(`docs`), path.resolve(`${appRoot}/public/docs`), "junction");
+            fs.symlinkSync(path.resolve(`docs/static`), path.resolve(`${appRoot}/public/static`), "junction");
 
             return nodeutil.spawnAsync({
                 cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
@@ -6977,7 +6973,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Serve the skill map locally after building (npm start)"
             },
             docs: {
-                description: "Path to local docs folder to copy into skillmap",
+                description: "DEPRECATED: Path to local docs folder to copy into skillmap",
+                deprecated: true,
                 type: "string",
                 argument: "docs"
             }
@@ -6994,7 +6991,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Serve the authcode app locally after building (npm start)"
             },
             docs: {
-                description: "Path to local docs folder to copy into authcode",
+                description: "DEPRECATED: Path to local docs folder to copy into authcode",
+                deprecated: true,
                 type: "string",
                 argument: "docs"
             }
@@ -7011,7 +7009,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Serve the multiplayer app locally after building (npm start)"
             },
             docs: {
-                description: "Path to local docs folder to copy into multiplayer",
+                description: "DEPRECATED: Path to local docs folder to copy into multiplayer",
+                deprecated: true,
                 type: "string",
                 argument: "docs"
             }
