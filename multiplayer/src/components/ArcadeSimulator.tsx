@@ -1,76 +1,67 @@
 import { useContext, useEffect, useRef } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { SimMultiplayer } from "../types";
-import { sendSimMessage } from "../services/gameClient";
+import { sendInputAsync, sendScreenUpdateAsync } from "../services/gameClient";
+// eslint-disable-next-line import/no-unassigned-import
+import "./ArcadeSimulator.css";
+
+let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo> | undefined;
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const { gameId, playerSlot } = state;
-    const simIframeRef = useRef<HTMLIFrameElement>(null);
+    const { gameId, playerSlot, gameState } = state;
+    const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
-        "background-color=ED3636&button-stroke=8d2525&button-fill=0b0b0b",
-        "background-color=4E4EE9&button-stroke=3333a1&button-fill=0b0b0b",
-        "background-color=FFDF1A&button-stroke=c1a916&button-fill=0b0b0b",
-        "background-color=4EB94E&button-stroke=245d24&button-fill=0b0b0b",
+        "background-color=ED3636&button-stroke=8d2525",
+        "background-color=4E4EE9&button-stroke=3333a1",
+        "background-color=FFDF1A&button-stroke=c1a916",
+        "background-color=4EB94E&button-stroke=245d24",
     ];
     const selectedPlayerTheme = playerThemes[(playerSlot || 0) - 1];
     const isHost = playerSlot == 1;
 
-    const queryParameters = [
-        "single=1",
-        "nofooter=1",
-        "fullscreen=1",
-        selectedPlayerTheme &&
-            `simParams=${encodeURIComponent(selectedPlayerTheme)}`,
-    ].filter(el => !!el);
-
-    if (isHost) {
-        queryParameters.push(
-            `id=${gameId || "69052-09321-39220-20264"}`,
-            "mp=server"
-        );
-    } else {
-        queryParameters.push(
-            `code=${encodeURIComponent("multiplayer.init()")}`,
-            "mp=client"
-        );
-    }
-
-    const postImageMsg = (msg: SimMultiplayer.ImageMessage) => {
+    const postImageMsg = async (msg: SimMultiplayer.ImageMessage) => {
         const { image } = msg;
-        // JSON converts uint8array -> {"1": 160, "10": 2, ...}, serialize as hex string.
-        image.data = (image.data as Uint8Array).reduce(
-            (acc, byte) => acc + byte.toString(16).padStart(2, "0"),
-            ""
-        );
-        sendSimMessage({
-            type: "screen",
-            data: image,
-        });
+        const { data } = image;
+
+        await sendScreenUpdateAsync(data);
     };
 
-    const postInputMsg = (msg: SimMultiplayer.InputMessage) => {
+    const postInputMsg = async (msg: SimMultiplayer.InputMessage) => {
         const { button, state } = msg;
-        sendSimMessage({
-            type: "input",
-            data: {
-                button,
-                state,
-            },
-        });
+        await sendInputAsync(button, state);
     };
 
-    const msgHandler = (msg: MessageEvent<SimMultiplayer.Message>) => {
+    const setSimStopped = async () => {
+        pxt.runner
+            .currentDriver()
+            ?.resume(pxsim.SimulatorDebuggerCommand.Pause);
+    };
+
+    const setSimResumed = async () => {
+        pxt.runner
+            .currentDriver()
+            ?.resume(pxsim.SimulatorDebuggerCommand.Resume);
+    };
+
+    const msgHandler = (
+        msg: MessageEvent<SimMultiplayer.Message | pxsim.SimulatorStateMessage>
+    ) => {
         const { data } = msg;
-        const { broadcast, origin, content } = data;
+        const { type } = data;
 
-        if (!broadcast) return;
-
-        if (origin === "client" && content === "Button") {
-            postInputMsg(data);
-        } else if (origin === "server" && content === "Image") {
-            postImageMsg(data);
+        switch (type) {
+            case "status":
+                return;
+            case "multiplayer":
+                const { origin, content } = data;
+                if (origin === "client" && content === "Button") {
+                    postInputMsg(data);
+                } else if (origin === "server" && content === "Image") {
+                    postImageMsg(data);
+                }
+                return;
         }
     };
 
@@ -79,21 +70,72 @@ export default function Render() {
         return () => window.removeEventListener("message", msgHandler);
     }, []);
 
-    const fullUrl = `${pxt.webConfig.runUrl}?${queryParameters.join("&")}`;
+    const getOpts = () => {
+        const opts: pxt.runner.SimulateOptions = {
+            embedId: "multiplayer-sim",
+            additionalQueryParameters: selectedPlayerTheme,
+            single: true,
+            fullScreen: true,
+            /** Enabling debug mode so that we can stop at breakpoints as a 'global pause' **/
+            debug: true,
+        };
+
+        if (isHost) {
+            opts.id = gameId;
+            opts.mpRole = "server";
+        } else {
+            opts.code = "multiplayer.init()";
+            opts.mpRole = "client";
+        }
+
+        return opts;
+    };
+
+    const compileSimCode = async () => {
+        builtSimJsInfo = pxt.runner.buildSimJsInfo(getOpts());
+        return await builtSimJsInfo;
+    };
+
+    const preloadSim = async () => {
+        pxt.runner.preloadSim(simContainerRef.current!, getOpts());
+    };
+
+    const runSimulator = async () => {
+        const simOpts = getOpts();
+        if (builtSimJsInfo) {
+            simOpts.builtJsInfo = await builtSimJsInfo;
+        }
+
+        builtSimJsInfo = pxt.runner.simulateAsync(
+            simContainerRef.current!,
+            simOpts
+        );
+
+        await builtSimJsInfo;
+    };
+
+    useEffect(() => {
+        if (gameState?.gameMode === "playing") {
+            runSimulator();
+        }
+    }, [gameState]);
+
+    useEffect(() => {
+        const codeReadyToCompile =
+            playerSlot! > 1 || (playerSlot == 1 && gameId);
+        if (codeReadyToCompile && gameState?.gameMode !== "playing") {
+            preloadSim().then(compileSimCode);
+        }
+        if (!playerSlot) {
+            builtSimJsInfo = undefined;
+        }
+    }, [playerSlot, gameId]);
+
     return (
-        /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-        <div id="sim-container" className="tw-grow">
-            <iframe
-                id="sim-iframe"
-                ref={simIframeRef}
-                src={fullUrl}
-                allowFullScreen={true}
-                // TODO:  this calc is weird, needs cleaning.
-                className="tw-h-[calc(100vh-26rem)] tw-w-[calc(100vw-6rem)]"
-                sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
-                title={lf("Arcade Game Simulator")}
-            />
-        </div>
-        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
+        <div
+            id="sim-container"
+            ref={simContainerRef}
+            className="tw-h-[calc(100vh-16rem)] tw-w-[calc(100vw-6rem)]"
+        />
     );
 }
