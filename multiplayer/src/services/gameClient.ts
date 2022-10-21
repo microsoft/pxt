@@ -234,6 +234,7 @@ class GameClient {
         );
         const { gameMode, shareCode } = msg;
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         (await setGameMetadataAsync(shareCode)) && (await setGameModeAsync(gameMode, msg.slot));
     }
 
