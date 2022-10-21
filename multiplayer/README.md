@@ -4,14 +4,14 @@ This app allows users to play a MakeCode Arcade game together in online multipla
 
 ## First-time dev setup
 
-This doc assumes you have a functioning pxt development environment. Refer here for setup instructions: https://github.com/microsoft/pxt-arcade#local-dev-setup 
+This doc assumes you have a functioning pxt development environment. Refer here for setup instructions: https://github.com/microsoft/pxt-arcade#local-dev-setup
 
 ## Developing
 
 1. In the `pxt` folder, run `gulp build` or `gulp watch` to ensure latest changes to `pxtlib`, `react-common`, and other dependencies are built.
 1. *If you need authentication:* In the `pxt-arcade` folder, run `pxt serve --rebundle`. This will serve the main Arcade webapp. *This is required for sign-in to work on localhost.*
   * This is because the app will try to read the auth token from the cli listening on `localhost:3232`.
-1. In another terminal, in the `pxt-arcade` folder, run `pxt multiplayer --docs .`. This will start the multiplayer app dev server.
+1. In another terminal, in the `pxt-arcade` folder, run `pxt multiplayer`. This will start the multiplayer app dev server.
 1. You're all set. Go forth and develop.
 
 
