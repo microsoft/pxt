@@ -22,13 +22,13 @@ export default function Render(props: GamePageProps) {
         await leaveGameAsync();
     };
 
-    const copyJoinCode = async() => {
-        pxt.tickEvent("mp.copyjoincode")
-        if(state.gameState?.joinCode) {
+    const copyJoinCode = async () => {
+        pxt.tickEvent("mp.copyjoincode");
+        if (state.gameState?.joinCode) {
             navigator.clipboard.writeText(state.gameState?.joinCode);
-            setCopySuccessful(true)
+            setCopySuccessful(true);
         }
-    }
+    };
 
     return (
         <div>
@@ -41,18 +41,35 @@ export default function Render(props: GamePageProps) {
                 <div className="tw-flex tw-flex-col tw-items-center">
                     {state.playerSlot && <ArcadeSimulator />}
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-w-full">
-                        {state.gameState?.joinCode &&
+                        {state.gameState?.joinCode && (
                             <div>
-                                {state.gameState?.joinCode && `${lf("Join Code")}: ${state.gameState?.joinCode}`}
-                                <button onClick={copyJoinCode} title={lf("Copy Join Code")} onBlur={() => setCopySuccessful(false)}>
+                                {state.gameState?.joinCode &&
+                                    `${lf("Join Code")}: ${
+                                        state.gameState?.joinCode
+                                    }`}
+                                <button
+                                    onClick={copyJoinCode}
+                                    title={lf("Copy Join Code")}
+                                    onBlur={() => setCopySuccessful(false)}
+                                >
                                     <div className="tw-text-sm tw-ml-1">
-                                        {!copySuccessful && <FontAwesomeIcon icon={faCopy} className="hover:tw-scale-105 tw-mb-[0.1rem]"/>}
-                                        {copySuccessful && <FontAwesomeIcon icon={faCheck} className="tw-text-green-600 tw-mb-[0.1rem]"/>}
+                                        {!copySuccessful && (
+                                            <FontAwesomeIcon
+                                                icon={faCopy}
+                                                className="hover:tw-scale-105 tw-mb-[0.1rem]"
+                                            />
+                                        )}
+                                        {copySuccessful && (
+                                            <FontAwesomeIcon
+                                                icon={faCheck}
+                                                className="tw-text-green-600 tw-mb-[0.1rem]"
+                                            />
+                                        )}
                                     </div>
                                 </button>
                             </div>
-                        }
-                        <div className="tw-flex-grow"/>
+                        )}
+                        <div className="tw-flex-grow" />
                         <div>{lf("Keyboard Controls")}</div>
                     </div>
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
