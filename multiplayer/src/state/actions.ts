@@ -8,6 +8,7 @@ import {
     NetMode,
     Presence,
     ModalType,
+    GameMetadata,
 } from "../types";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -37,6 +38,11 @@ type SetNetMode = ActionBase & {
 type SetGameInfo = ActionBase & {
     type: "SET_GAME_INFO";
     gameInfo: GameInfo | undefined;
+};
+
+type SetGameMetadata = ActionBase & {
+    type: "SET_GAME_METADATA";
+    gameMetadata: GameMetadata | undefined;
 };
 
 type SetGameId = ActionBase & {
@@ -103,6 +109,7 @@ export type Action =
     | SetUiMode
     | SetNetMode
     | SetGameInfo
+    | SetGameMetadata
     | SetGameId
     | SetPlayerSlot
     | ClearGameInfo
@@ -144,6 +151,18 @@ export const setNetMode = (mode: NetMode): SetNetMode => ({
 export const setGameInfo = (gameInfo: GameInfo): SetGameInfo => ({
     type: "SET_GAME_INFO",
     gameInfo,
+});
+
+export const setGameMetadata = (
+    gameMetadata: GameMetadata
+): SetGameMetadata => ({
+    type: "SET_GAME_METADATA",
+    gameMetadata,
+});
+
+export const clearGameMetadata = (): SetGameMetadata => ({
+    type: "SET_GAME_METADATA",
+    gameMetadata: undefined,
 });
 
 export const setGameId = (gameId: string): SetGameId => ({

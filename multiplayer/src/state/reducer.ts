@@ -43,6 +43,12 @@ export default function reducer(state: AppState, action: Action): AppState {
                 },
             };
         }
+        case "SET_GAME_METADATA": {
+            return {
+                ...state,
+                gameMetadata: action.gameMetadata,
+            };
+        }
         case "SET_GAME_ID": {
             return {
                 ...state,
