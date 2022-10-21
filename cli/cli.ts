@@ -2082,7 +2082,7 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
                 nodeutil.cp("built/target.js", `${appRoot}/public/blb`);
             }
             if (opts.usePxtEmbed) {
-                nodeutil.cp("node_modules/pxt-core/built/web/pxtembed.js", `${appRoot}/public/blb/web`);
+                nodeutil.cp("node_modules/pxt-core/built/web/pxtembed.js", `${appRoot}/public/blb`);
             } else {
                 nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
             }
