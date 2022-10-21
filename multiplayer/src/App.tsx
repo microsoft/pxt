@@ -35,7 +35,7 @@ function App() {
             {!loading && signedIn && <SignedInPage />}
             <AppModal />
             <Toast />
-            <div className="tw-flex-grow"/>
+            <div className="tw-flex-grow" />
             <Footer />
         </div>
     );
