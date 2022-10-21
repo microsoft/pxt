@@ -18,10 +18,11 @@ import {
     setReactionAsync,
     playerJoinedAsync,
     playerLeftAsync,
+    setGameMetadataAsync,
 } from "../epics";
 
-const GAME_HOST = "https://multiplayer.staging.pxt.io";
-//const GAME_HOST = "http://localhost:8082";
+//const GAME_HOST = "https://multiplayer.staging.pxt.io";
+const GAME_HOST = "http://localhost:8082";
 
 class GameClient {
     sock: Socket | undefined;
@@ -165,7 +166,7 @@ class GameClient {
     }
 
     public async hostGameAsync(shareCode: string): Promise<GameInfo> {
-        shareCode = shareCode.toUpperCase();
+        shareCode = shareCode.trim();
         shareCode = encodeURIComponent(shareCode);
 
         const authToken = await authClient.authTokenAsync();
@@ -231,14 +232,14 @@ class GameClient {
         console.log(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
-        const gameMode = msg.gameMode;
+        const { gameMode, shareCode } = msg;
 
-        setGameModeAsync(gameMode, msg.slot);
+        (await setGameMetadataAsync(shareCode)) && (await setGameModeAsync(gameMode, msg.slot));
     }
 
     private async recvStartGameMessageAsync(msg: Protocol.StartGameMessage) {
         console.log("Server said start game");
-        setGameModeAsync("playing");
+        await setGameModeAsync("playing");
     }
 
     private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
@@ -403,6 +404,7 @@ namespace Protocol {
         role: ClientRole;
         slot: number;
         gameMode: GameMode;
+        shareCode: string;
         clientId: string;
     };
 

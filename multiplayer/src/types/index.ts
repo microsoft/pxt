@@ -27,6 +27,12 @@ export type GameInfo = {
     slot?: number;
 };
 
+export type GameMetadata = {
+    title: string;
+    description: string;
+    thumbnail: string;
+};
+
 export type GameState = GameInfo & {
     gameMode?: GameMode;
 };
