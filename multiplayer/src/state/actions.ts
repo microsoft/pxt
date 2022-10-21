@@ -43,7 +43,7 @@ type SetGameInfo = ActionBase & {
 type SetGameMetadata = ActionBase & {
     type: "SET_GAME_METADATA";
     gameMetadata: GameMetadata | undefined;
-}
+};
 
 type SetGameId = ActionBase & {
     type: "SET_GAME_ID";
@@ -153,7 +153,9 @@ export const setGameInfo = (gameInfo: GameInfo): SetGameInfo => ({
     gameInfo,
 });
 
-export const setGameMetadata = (gameMetadata: GameMetadata): SetGameMetadata => ({
+export const setGameMetadata = (
+    gameMetadata: GameMetadata
+): SetGameMetadata => ({
     type: "SET_GAME_METADATA",
     gameMetadata,
 });

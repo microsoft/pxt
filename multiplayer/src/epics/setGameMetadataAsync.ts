@@ -1,25 +1,20 @@
 import { dispatch } from "../state";
 import { setGameMetadata, setNetMode, showToast } from "../state/actions";
 
-export async function setGameMetadataAsync(shareCode: string): Promise<boolean> {
+export async function setGameMetadataAsync(
+    shareCode: string
+): Promise<boolean> {
     try {
-        // Download the game
-        const res = await fetch(`https://arcade.makecode.com/${shareCode}`);
+        const metaUri = `https://makecode.com/api/${shareCode}`;
+        //Fetch the game metadata
+        const res = await fetch(metaUri);
 
         // Extract game metadata
-        const text = await res.text();
-        const mtitle =
-            /<meta\s+name="twitter:title"\s+content="(.*)"\s*\/>/gi.exec(text);
-        const mdesc =
-            /<meta\s+name="twitter:description"\s+content="(.*)"\s*\/>/gi.exec(
-                text
-            );
-        const mthumb =
-            /<meta\s+name="twitter:image"\s+content="(.*)"\s*\/>/gi.exec(text);
+        const metadata = await res.json();
 
-        const title = mtitle && mtitle.length > 1 ? mtitle[1] : lf("Untitled");
-        const description = mdesc && mdesc.length > 1 ? mdesc[1] : "";
-        const thumbnail = mthumb && mthumb.length > 1 ? mthumb[1] : "";
+        const title = metadata.name || lf("Untitled");
+        const description = metadata.description || "";
+        const thumbnail = `${metaUri}/thumb`;
 
         dispatch(setGameMetadata({ title, description, thumbnail }));
         return true;
