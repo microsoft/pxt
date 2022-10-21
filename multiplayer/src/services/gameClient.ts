@@ -21,8 +21,8 @@ import {
     setGameMetadataAsync,
 } from "../epics";
 
-//const GAME_HOST = "https://multiplayer.staging.pxt.io";
-const GAME_HOST = "http://localhost:8082";
+const GAME_HOST = "https://multiplayer.staging.pxt.io";
+//const GAME_HOST = "http://localhost:8082";
 
 class GameClient {
     sock: Socket | undefined;
