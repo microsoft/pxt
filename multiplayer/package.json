@@ -35,6 +35,7 @@
     "@types/react": "file:../node_modules/@types/react",
     "@types/react-dom": "file:../node_modules/@types/react-dom",
     "autoprefixer": "^10.4.12",
+    "node-polyfill-webpack-plugin": "^2.0.1",
     "postcss": "^8.4.16",
     "prettier": "^2.7.1",
     "react-app-alias-ex": "^2.1.0",

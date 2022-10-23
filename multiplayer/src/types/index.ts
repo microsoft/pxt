@@ -115,6 +115,7 @@ export namespace SimMultiplayer {
     export type ImageMessage = MessageBase & {
         content: "Image";
         image: any; // pxsim.RefBuffer
+        palette: Uint8Array;
     };
 
     export type InputMessage = MessageBase & {
