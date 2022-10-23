@@ -23,8 +23,8 @@ import {
     setGameMetadataAsync,
 } from "../epics";
 
-//const GAME_HOST = "https://multiplayer.staging.pxt.io";
-const GAME_HOST = "http://localhost:8082";
+const GAME_HOST = "https://multiplayer.staging.pxt.io";
+//const GAME_HOST = "http://localhost:8082";
 
 const SCREEN_BUFFER_SIZE = 9608;
 const PALETTE_BUFFER_SIZE = 48;
