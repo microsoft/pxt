@@ -1,17 +1,12 @@
 const webpack = require("webpack");
 const { aliasWebpack } = require("react-app-alias-ex");
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
 
 module.exports = function (config) {
     const aliasFn = aliasWebpack({});
     config = {
         ...aliasFn(config),
-        // Additional webpack config here
-        plugins: [
-            ...config.plugins,
-            new webpack.ProvidePlugin({
-                Buffer: ["buffer", "Buffer"],
-            }),
-        ],
+        plugins: [...config.plugins, new NodePolyfillPlugin()],
     };
     return config;
 };

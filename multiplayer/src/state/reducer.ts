@@ -65,6 +65,8 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 gameState: undefined,
+                gameId: undefined,
+                gameMetadata: undefined,
             };
         }
         case "SET_GAME_MODE": {
