@@ -68,7 +68,7 @@ export default function Render(props: GamePageProps) {
                     <div className="tw-flex tw-flex-row tw-w-full tw-px-2 tw-items-center tw-justify-between">
                         <button
                             title={lf("Toggle Mute")}
-                            className="tw-border-2 tw-border-neutral-400 tw-rounded-md tw-mt-2 tw-px-2 tw-py-1 tw-bg-neutral-300 hover:tw-bg-neutral-200 active:tw-bg-neutral-100"
+                            className="tw-border-2 tw-border-slate-400 tw-rounded-md tw-mt-2 tw-px-2 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
                             onClick={toggleMute}
                         >
                             {!muted && <FontAwesomeIcon icon={faVolumeHigh} />}
