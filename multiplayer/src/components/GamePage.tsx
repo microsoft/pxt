@@ -20,9 +20,7 @@ export default function Render(props: GamePageProps) {
         await leaveGameAsync();
     };
 
-    const toggleMute = () => {
-        
-    }
+    const toggleMute = () => {};
 
     return (
         <div>
@@ -36,11 +34,20 @@ export default function Render(props: GamePageProps) {
                     {state.playerSlot && <ArcadeSimulator />}
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-w-full tw-items-center">
                         {/* <sui.Button icon="volume up" onClick={() => {}}/> sui.Button has a volume up and volume down icon? Can we use that? What's sui? */}
-                        <button title={lf("Toggle Mute")} className="tw-border-2 tw-border-slate-400 tw-rounded-md tw-px-2 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300" onClick={toggleMute}>
-                            <FontAwesomeIcon icon={faVolumeHigh}/>
+                        <button
+                            title={lf("Toggle Mute")}
+                            className="tw-border-2 tw-border-slate-400 tw-rounded-md tw-px-2 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
+                            onClick={toggleMute}
+                        >
+                            <FontAwesomeIcon icon={faVolumeHigh} />
                         </button>
-                        <div>{state.gameState?.joinCode && `${lf("Join Code")}: ${state.gameState?.joinCode}`}</div>
-                        <div className="tw-flex-grow"/>
+                        <div>
+                            {state.gameState?.joinCode &&
+                                `${lf("Join Code")}: ${
+                                    state.gameState?.joinCode
+                                }`}
+                        </div>
+                        <div className="tw-flex-grow" />
                         <div>{lf("Keyboard Controls")}</div>
                     </div>
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
