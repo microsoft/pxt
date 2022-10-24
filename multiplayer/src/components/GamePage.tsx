@@ -1,6 +1,6 @@
-import { faVolumeHigh } from "@fortawesome/free-solid-svg-icons";
+import { faVolumeHigh, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { leaveGameAsync } from "../epics";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
@@ -14,13 +14,18 @@ export default function Render(props: GamePageProps) {
     const { state } = useContext(AppStateContext);
     const { appMode } = state;
     const { netMode, uiMode } = appMode;
+    const [muted, setMuted] = useState(false);
 
     const onLeaveGameClick = async () => {
         pxt.tickEvent("mp.leavegame");
         await leaveGameAsync();
     };
 
-    const toggleMute = () => {};
+    const toggleMute = () => {
+        setMuted(!muted);
+    };
+
+    useEffect(() => { pxt.runner.currentDriver()?.mute(muted) }, [muted]);
 
     return (
         <div>
@@ -39,7 +44,8 @@ export default function Render(props: GamePageProps) {
                             className="tw-border-2 tw-border-slate-400 tw-rounded-md tw-px-2 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
                             onClick={toggleMute}
                         >
-                            <FontAwesomeIcon icon={faVolumeHigh} />
+                            {muted && <FontAwesomeIcon icon={faVolumeHigh} />}
+                            {!muted && <FontAwesomeIcon icon={faVolumeMute} />}
                         </button>
                         <div>
                             {state.gameState?.joinCode &&
