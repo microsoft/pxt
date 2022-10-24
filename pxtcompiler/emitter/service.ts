@@ -832,7 +832,7 @@ namespace ts.pxtc.service {
                 type: v.infoType
             };
 
-            const isPython = opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME;
+            const isPython = v.fileName.endsWith(".py");
             const isSymbolReq = opts.syntaxInfo.type === "symbol";
             const isSignatureReq = opts.syntaxInfo.type === "signature";
 

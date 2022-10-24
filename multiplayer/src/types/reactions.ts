@@ -126,5 +126,5 @@ export const ReactionDb: ReactionDef[] = [
         emoji: "😠",
         config: defaultReactionConfig,
         shade: simpleShader,
-    }
+    },
 ];

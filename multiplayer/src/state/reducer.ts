@@ -43,6 +43,12 @@ export default function reducer(state: AppState, action: Action): AppState {
                 },
             };
         }
+        case "SET_GAME_METADATA": {
+            return {
+                ...state,
+                gameMetadata: action.gameMetadata,
+            };
+        }
         case "SET_GAME_ID": {
             return {
                 ...state,
@@ -59,6 +65,8 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 gameState: undefined,
+                gameId: undefined,
+                gameMetadata: undefined,
             };
         }
         case "SET_GAME_MODE": {
@@ -112,14 +120,14 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "SHOW_MODAL": {
             return {
                 ...state,
-                modal: action.modalType
-            }
+                modal: action.modalType,
+            };
         }
         case "CLEAR_MODAL": {
             return {
                 ...state,
-                modal: undefined
-            }
+                modal: undefined,
+            };
         }
     }
 }

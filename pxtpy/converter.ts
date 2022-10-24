@@ -2515,7 +2515,13 @@ namespace pxt.py {
                 fn = B.mkText("super");
             }
             else {
-                fn = methName ? B.mkInfix(expr(recv!), ".", B.mkText(methName)) : expr(n.func)
+                if (methName) {
+                    fn = B.mkInfix(expr(recv!), ".", B.mkText(methName));
+                    markInfoNode(n.func, "memberCompletion");
+                }
+                else {
+                    fn = expr(n.func);
+                }
             }
 
             let nodes = [

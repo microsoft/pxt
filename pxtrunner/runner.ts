@@ -8,6 +8,7 @@
 
 namespace pxt.runner {
     export interface SimulateOptions {
+        embedId?: string;
         id?: string;
         code?: string;
         assets?: string;
@@ -21,6 +22,8 @@ namespace pxt.runner {
         hideSimButtons?: boolean;
         autofocus?: boolean;
         additionalQueryParameters?: string;
+        debug?: boolean;
+        mpRole?: "server" | "client";
     }
 
     class EditorPackage {
@@ -246,9 +249,11 @@ namespace pxt.runner {
                 targetBranch: versions ? versions.targetCrowdinBranch : "",
                 force: force,
             })
-            .then(() => {
-                mainPkg = new pxt.MainPackage(new Host());
-            })
+            .then(() => initHost())
+    }
+
+    export function initHost() {
+        mainPkg = new pxt.MainPackage(new Host());
     }
 
     export function initFooter(footer: HTMLElement, shareId?: string) {
@@ -368,23 +373,19 @@ namespace pxt.runner {
 
     export async function simulateAsync(container: HTMLElement, simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
         const builtSimJS = simOptions.builtJsInfo || await buildSimJsInfo(simOptions);
-        const {
-            js,
-            fnArgs,
-            parts,
-            usedBuiltinParts,
-        } = builtSimJS;
+        const { js } = builtSimJS;
 
         if (!js) {
             console.error("Program failed to compile");
             return undefined;
         }
 
-        let options: pxsim.SimulatorDriverOptions = {};
-        options.onSimulatorCommand = msg => {
+        const runOptions = initDriverAndOptions(container, simOptions, builtSimJS);
+        simDriver.options.messageSimulators = pxt.appTarget?.simulator?.messageSimulators;
+        simDriver.options.onSimulatorCommand = msg => {
             if (msg.command === "restart") {
                 runOptions.storedState = getStoredState(simOptions.id)
-                driver.run(js, runOptions);
+                simDriver.run(js, runOptions);
             }
             if (msg.command == "setstate") {
                 if (msg.stateKey && msg.stateValue) {
@@ -392,12 +393,36 @@ namespace pxt.runner {
                 }
             }
         };
-        options.messageSimulators = pxt.appTarget?.simulator?.messageSimulators;
-        let driver = new pxsim.SimulatorDriver(container, options);
+        if (builtSimJS.breakpoints && simOptions.debug) {
+            simDriver.setBreakpoints(builtSimJS.breakpoints);
+        }
+        simDriver.run(js, runOptions);
+        return builtSimJS;
+    }
 
+    let simDriver: pxsim.SimulatorDriver;
+    // iff matches and truthy, reuse existing simdriver
+    let currDriverId: string;
+    function initDriverAndOptions(
+        container: HTMLElement,
+        simOptions: SimulateOptions,
+        compileInfo?: pxtc.BuiltSimJsInfo
+    ): pxsim.SimulatorRunOptions {
+        if (!simDriver || !simOptions.embedId || currDriverId !== simOptions.embedId) {
+            simDriver = new pxsim.SimulatorDriver(container);
+            currDriverId = simOptions.embedId;
+        } else {
+            simDriver.container = container;
+        }
+        const {
+            fnArgs,
+            parts,
+            usedBuiltinParts,
+        } = compileInfo || {};
         let board = pxt.appTarget.simulator.boardDefinition;
         let storedState: Map<string> = getStoredState(simOptions.id)
         let runOptions: pxsim.SimulatorRunOptions = {
+            debug: simOptions.debug,
             boardDefinition: board,
             parts: parts,
             builtinParts: usedBuiltinParts,
@@ -411,13 +436,29 @@ namespace pxt.runner {
             hideSimButtons: simOptions.hideSimButtons,
             autofocus: simOptions.autofocus,
             queryParameters: simOptions.additionalQueryParameters,
+            mpRole: simOptions.mpRole,
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                 ? pxt.appTarget.simulator.partsAspectRatio
                 : pxt.appTarget.simulator.aspectRatio;
-        driver.run(js, runOptions);
-        return builtSimJS;
+        simDriver.setRunOptions(runOptions);
+        return runOptions;
+    }
+
+    export function preloadSim(container: HTMLElement, simOpts: SimulateOptions) {
+        initDriverAndOptions(container, simOpts);
+        simDriver.preload(
+            pxt.appTarget?.simulator?.aspectRatio || 1,
+            true /** no auto run **/
+        );
+    }
+
+    export function currentDriver() {
+        return simDriver;
+    }
+    export function postSimMessage(msg: pxsim.SimulatorMessage) {
+        simDriver?.postMessage(msg);
     }
 
     export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
@@ -426,6 +467,8 @@ namespace pxt.runner {
         let didUpgrade = false;
         const currentTargetVersion = pxt.appTarget.versions.target;
         let compileResult = await compileAsync(false, opts => {
+            if (simOptions.debug)
+                opts.breakpoints = true;
             if (simOptions.assets) {
                 const parsedAssets = JSON.parse(simOptions.assets);
                 for (const key of Object.keys(parsedAssets)) {

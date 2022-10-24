@@ -17,3 +17,4 @@ export { playerJoinedAsync } from "./playerJoinedAsync";
 export { playerLeftAsync } from "./playerLeftAsync";
 export { userSignedInAsync } from "./userSignedInAsync";
 export { setUserProfileAsync } from "./setUserProfileAsync";
+export { setGameMetadataAsync } from "./setGameMetadataAsync";

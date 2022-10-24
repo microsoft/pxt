@@ -8,8 +8,7 @@ import ArcadeSimulator from "./ArcadeSimulator";
 import Presence from "./Presence";
 import Reactions from "./Reactions";
 
-export interface GamePageProps {
-}
+export interface GamePageProps {}
 
 export default function Render(props: GamePageProps) {
     const { state } = useContext(AppStateContext);
@@ -34,7 +33,7 @@ export default function Render(props: GamePageProps) {
             )}
             {state.gameState?.gameMode && (
                 <div className="tw-flex tw-flex-col tw-items-center">
-                    <ArcadeSimulator />
+                    {state.playerSlot && <ArcadeSimulator />}
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-w-full tw-items-center">
                         {/* <sui.Button icon="volume up" onClick={() => {}}/> sui.Button has a volume up and volume down icon? Can we use that? What's sui? */}
                         <button title={lf("Toggle Mute")} className="tw-border-2 tw-border-slate-400 tw-rounded-md tw-px-2 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300" onClick={toggleMute}>
