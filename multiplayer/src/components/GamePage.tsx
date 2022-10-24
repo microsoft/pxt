@@ -1,7 +1,7 @@
 import { faCopy } from "@fortawesome/free-regular-svg-icons";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { leaveGameAsync } from "../epics";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
@@ -16,6 +16,7 @@ export default function Render(props: GamePageProps) {
     const { appMode } = state;
     const { netMode } = appMode;
     const [copySuccessful, setCopySuccessful] = useState(false);
+    const copyTimeoutMs = 1000;
 
     const onLeaveGameClick = async () => {
         pxt.tickEvent("mp.leavegame");
@@ -29,6 +30,17 @@ export default function Render(props: GamePageProps) {
             setCopySuccessful(true);
         }
     };
+
+    useEffect(() => {
+        if (copySuccessful) {
+            let resetCopyTimer = setTimeout(() => {
+                setCopySuccessful(false);
+            }, copyTimeoutMs);
+            return () => {
+                clearTimeout(resetCopyTimer);
+            };
+        }
+    }, [copySuccessful]);
 
     return (
         <div>
@@ -50,7 +62,6 @@ export default function Render(props: GamePageProps) {
                                 <button
                                     onClick={copyJoinCode}
                                     title={lf("Copy Join Code")}
-                                    onBlur={() => setCopySuccessful(false)}
                                 >
                                     <div className="tw-text-sm tw-ml-1">
                                         {!copySuccessful && (
