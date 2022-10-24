@@ -1,5 +1,9 @@
 import { faCopy } from "@fortawesome/free-regular-svg-icons";
-import { faCheck, faVolumeHigh, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
+import {
+    faCheck,
+    faVolumeHigh,
+    faVolumeMute,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
@@ -47,7 +51,9 @@ export default function Render(props: GamePageProps) {
         }
     }, [copySuccessful]);
 
-    useEffect(() => { pxt.runner.currentDriver()?.mute(muted) }, [muted]);
+    useEffect(() => {
+        pxt.runner.currentDriver()?.mute(muted);
+    }, [muted]);
 
     return (
         <div>
@@ -59,17 +65,16 @@ export default function Render(props: GamePageProps) {
             {state.gameState?.gameMode && (
                 <div className="tw-flex tw-flex-col tw-items-center">
                     {state.playerSlot && <ArcadeSimulator />}
-                    <div className="tw-flex tw-flex-row tw-space-x-2 tw-w-full tw-items-center">
-                        {/* <sui.Button icon="volume up" onClick={() => {}}/> sui.Button has a volume up and volume down icon? Can we use that? What's sui? */}
+                    <div className="tw-flex tw-flex-row tw-w-full tw-px-2 tw-items-center tw-justify-between">
                         <button
                             title={lf("Toggle Mute")}
-                            className="tw-border-2 tw-border-slate-400 tw-rounded-md tw-px-2 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
+                            className="tw-border-2 tw-border-neutral-400 tw-rounded-md tw-mt-2 tw-px-2 tw-py-1 tw-bg-neutral-300 hover:tw-bg-neutral-200 active:tw-bg-neutral-100"
                             onClick={toggleMute}
                         >
                             {!muted && <FontAwesomeIcon icon={faVolumeHigh} />}
                             {muted && <FontAwesomeIcon icon={faVolumeMute} />}
                         </button>
-                        <div>
+                        <div className="tw-justify-self-center">
                             {state.gameState?.joinCode && (
                                 <div>
                                     {state.gameState?.joinCode &&
@@ -98,7 +103,6 @@ export default function Render(props: GamePageProps) {
                                 </div>
                             )}
                         </div>
-                        <div className="tw-flex-grow" />
                         <div>{lf("Keyboard Controls")}</div>
                     </div>
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
