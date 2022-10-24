@@ -277,7 +277,7 @@ class GameClient {
             Protocol.Binary.unpackCompressedScreenMessage(reader);
 
         const screen = await gunzipAsync(zippedData);
-        if (!screen || !isDelta) {
+        if (!this.screen || !isDelta) {
             // First screen or non-delta, take screen as-is
             this.screen = screen;
         } else {
@@ -293,7 +293,6 @@ class GameClient {
             image: {
                 data: image,
             },
-            palette,
         });
     }
 
@@ -369,11 +368,16 @@ class GameClient {
         palette: Uint8Array | undefined;
     } {
         if (!this.screen) return { image: undefined, palette: undefined };
-        const image = new Uint8Array(this.screen!, 0, SCREEN_BUFFER_SIZE);
+
+        const image = this.screen.slice(0, SCREEN_BUFFER_SIZE);
         const palette =
-            this.screen!.length >= SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
-                ? new Uint8Array(this.screen!, SCREEN_BUFFER_SIZE)
+            this.screen.length >= SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
+                ? this.screen.slice(
+                      SCREEN_BUFFER_SIZE,
+                      SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
+                  )
                 : undefined;
+
         return {
             image,
             palette,

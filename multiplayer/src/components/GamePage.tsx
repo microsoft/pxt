@@ -1,4 +1,5 @@
-import { faVolumeHigh, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
+import { faCopy } from "@fortawesome/free-regular-svg-icons";
+import { faCheck, faVolumeHigh, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
@@ -14,6 +15,8 @@ export default function Render(props: GamePageProps) {
     const { state } = useContext(AppStateContext);
     const { appMode } = state;
     const { netMode, uiMode } = appMode;
+    const [copySuccessful, setCopySuccessful] = useState(false);
+    const copyTimeoutMs = 1000;
     const [muted, setMuted] = useState(false);
 
     const onLeaveGameClick = async () => {
@@ -21,9 +24,28 @@ export default function Render(props: GamePageProps) {
         await leaveGameAsync();
     };
 
+    const copyJoinCode = async () => {
+        pxt.tickEvent("mp.copyjoincode");
+        if (state.gameState?.joinCode) {
+            navigator.clipboard.writeText(state.gameState?.joinCode);
+            setCopySuccessful(true);
+        }
+    };
+
     const toggleMute = () => {
         setMuted(!muted);
     };
+
+    useEffect(() => {
+        if (copySuccessful) {
+            let resetCopyTimer = setTimeout(() => {
+                setCopySuccessful(false);
+            }, copyTimeoutMs);
+            return () => {
+                clearTimeout(resetCopyTimer);
+            };
+        }
+    }, [copySuccessful]);
 
     useEffect(() => { pxt.runner.currentDriver()?.mute(muted) }, [muted]);
 
@@ -44,14 +66,37 @@ export default function Render(props: GamePageProps) {
                             className="tw-border-2 tw-border-slate-400 tw-rounded-md tw-px-2 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
                             onClick={toggleMute}
                         >
-                            {muted && <FontAwesomeIcon icon={faVolumeHigh} />}
-                            {!muted && <FontAwesomeIcon icon={faVolumeMute} />}
+                            {!muted && <FontAwesomeIcon icon={faVolumeHigh} />}
+                            {muted && <FontAwesomeIcon icon={faVolumeMute} />}
                         </button>
                         <div>
-                            {state.gameState?.joinCode &&
-                                `${lf("Join Code")}: ${
-                                    state.gameState?.joinCode
-                                }`}
+                            {state.gameState?.joinCode && (
+                                <div>
+                                    {state.gameState?.joinCode &&
+                                        `${lf("Join Code")}: ${
+                                            state.gameState?.joinCode
+                                        }`}
+                                    <button
+                                        onClick={copyJoinCode}
+                                        title={lf("Copy Join Code")}
+                                    >
+                                        <div className="tw-text-sm tw-ml-1">
+                                            {!copySuccessful && (
+                                                <FontAwesomeIcon
+                                                    icon={faCopy}
+                                                    className="hover:tw-scale-105 tw-mb-[0.1rem]"
+                                                />
+                                            )}
+                                            {copySuccessful && (
+                                                <FontAwesomeIcon
+                                                    icon={faCheck}
+                                                    className="tw-text-green-600 tw-mb-[0.1rem]"
+                                                />
+                                            )}
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                         <div className="tw-flex-grow" />
                         <div>{lf("Keyboard Controls")}</div>
