@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { SimMultiplayer } from "../types";
-import { sendInputAsync, sendScreenUpdateAsync } from "../services/gameClient";
+import * as gameClient from "../services/gameClient";
 // eslint-disable-next-line import/no-unassigned-import
 import "./ArcadeSimulator.css";
 
@@ -9,7 +9,8 @@ let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo> | undefined;
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const { gameId, playerSlot, gameState } = state;
+    const { gameId, playerSlot, gameState, appMode } = state;
+    const { uiMode } = appMode;
     const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
@@ -22,15 +23,15 @@ export default function Render() {
     const isHost = playerSlot == 1;
 
     const postImageMsg = async (msg: SimMultiplayer.ImageMessage) => {
-        const { image } = msg;
+        const { image, palette } = msg;
         const { data } = image;
 
-        await sendScreenUpdateAsync(data);
+        await gameClient.sendScreenUpdateAsync(data, palette);
     };
 
     const postInputMsg = async (msg: SimMultiplayer.InputMessage) => {
         const { button, state } = msg;
-        await sendInputAsync(button, state);
+        await gameClient.sendInputAsync(button, state);
     };
 
     const setSimStopped = async () => {
@@ -45,30 +46,48 @@ export default function Render() {
             ?.resume(pxsim.SimulatorDebuggerCommand.Resume);
     };
 
-    const msgHandler = (
-        msg: MessageEvent<SimMultiplayer.Message | pxsim.SimulatorStateMessage>
-    ) => {
-        const { data } = msg;
-        const { type } = data;
-
-        switch (type) {
-            case "status":
-                return;
-            case "multiplayer":
-                const { origin, content } = data;
-                if (origin === "client" && content === "Button") {
-                    postInputMsg(data);
-                } else if (origin === "server" && content === "Image") {
-                    postImageMsg(data);
-                }
-                return;
-        }
-    };
-
     useEffect(() => {
+        const msgHandler = (
+            msg: MessageEvent<
+                SimMultiplayer.Message | pxsim.SimulatorStateMessage
+            >
+        ) => {
+            const { data } = msg;
+            const { type } = data;
+
+            switch (type) {
+                case "status":
+                    // Once the simulator is ready, if this isn't the host, send the initial screen
+                    const { state: simState } = data;
+                    if (simState === "running" && uiMode === "join") {
+                        const { image, palette } =
+                            gameClient.getCurrentScreen();
+                        if (image) {
+                            pxt.runner.postSimMessage({
+                                type: "multiplayer",
+                                content: "Image",
+                                image: {
+                                    data: image,
+                                },
+                                palette,
+                            } as SimMultiplayer.ImageMessage);
+                        }
+                    }
+                    return;
+                case "multiplayer":
+                    const { origin, content } = data;
+                    if (origin === "client" && content === "Button") {
+                        postInputMsg(data);
+                    } else if (origin === "server" && content === "Image") {
+                        postImageMsg(data);
+                    }
+                    return;
+            }
+        };
+
         window.addEventListener("message", msgHandler);
         return () => window.removeEventListener("message", msgHandler);
-    }, []);
+    }, [uiMode]);
 
     const getOpts = () => {
         const opts: pxt.runner.SimulateOptions = {

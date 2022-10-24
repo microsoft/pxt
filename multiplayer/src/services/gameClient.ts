@@ -1,6 +1,8 @@
 import { Socket } from "engine.io-client";
 import { SmartBuffer } from "smart-buffer";
 import * as authClient from "./authClient";
+import { xorInPlace, gzipAsync, gunzipAsync } from "../util";
+import * as state from "../state";
 import {
     ButtonState,
     buttonStateToString,
@@ -24,9 +26,13 @@ import {
 const GAME_HOST = "https://multiplayer.staging.pxt.io";
 //const GAME_HOST = "http://localhost:8082";
 
+const SCREEN_BUFFER_SIZE = 9608;
+const PALETTE_BUFFER_SIZE = 48;
+
 class GameClient {
     sock: Socket | undefined;
     heartbeatTimer: NodeJS.Timeout | undefined;
+    screen: Buffer | undefined;
 
     constructor() {
         this.recvMessageWithJoinTimeout =
@@ -43,7 +49,7 @@ class GameClient {
         } catch (e) {}
     }
 
-    /*internal*/ sendMessage(msg: Protocol.Message | Buffer) {
+    private sendMessage(msg: Protocol.Message | Buffer) {
         if (msg instanceof Buffer) {
             this.sock?.send(msg, {}, (err: any) => {
                 if (err) console.log("Error sending message", err);
@@ -65,8 +71,10 @@ class GameClient {
                 const reader = SmartBuffer.fromBuffer(Buffer.from(payload));
                 const type = reader.readUInt16LE();
                 switch (type) {
-                    case Protocol.Binary.MessageType.Screen:
-                        return await this.recvScreenMessageAsync(reader);
+                    case Protocol.Binary.MessageType.CompressedScreen:
+                        return await this.recvCompressedScreenMessageAsync(
+                            reader
+                        );
                     case Protocol.Binary.MessageType.Input:
                         return await this.recvInputMessageAsync(reader);
                 }
@@ -119,7 +127,6 @@ class GameClient {
         } catch (e) {
             console.error("Error processing message", e);
         }
-        await this.recvMessageAsync(payload);
     }
 
     public async connectAsync(ticket: string) {
@@ -171,7 +178,6 @@ class GameClient {
 
         const authToken = await authClient.authTokenAsync();
 
-        // TODO: Send real credentials
         const res = await fetch(`${GAME_HOST}/api/game/host/${shareCode}`, {
             credentials: "include",
             headers: {
@@ -266,15 +272,28 @@ class GameClient {
         await playerLeftAsync(msg.clientId);
     }
 
-    private async recvScreenMessageAsync(reader: SmartBuffer) {
-        const { img } = Protocol.Binary.unpackScreenMessage(reader);
+    private async recvCompressedScreenMessageAsync(reader: SmartBuffer) {
+        const { zippedData, isDelta } =
+            Protocol.Binary.unpackCompressedScreenMessage(reader);
+
+        const screen = await gunzipAsync(zippedData);
+        if (!screen || !isDelta) {
+            // First screen or non-delta, take screen as-is
+            this.screen = screen;
+        } else {
+            // Apply delta to existing screen to get new screen
+            xorInPlace(this.screen!, screen);
+        }
+
+        const { image, palette } = this.getCurrentScreen();
 
         this.postToSimFrame(<SimMultiplayer.ImageMessage>{
             type: "multiplayer",
             content: "Image",
             image: {
-                data: img,
+                data: image,
             },
+            palette,
         });
     }
 
@@ -293,6 +312,72 @@ class GameClient {
 
     private postToSimFrame(msg: SimMultiplayer.Message) {
         pxt.runner.postSimMessage(msg);
+    }
+
+    public async sendInputAsync(
+        button: number,
+        state: "Pressed" | "Released" | "Held"
+    ) {
+        const buffer = Protocol.Binary.packInputMessage(
+            button,
+            stringToButtonState(state)!
+        );
+        this.sendMessage(buffer);
+    }
+
+    public async sendScreenUpdateAsync(
+        img: Uint8Array,
+        palette: Uint8Array | undefined
+    ) {
+        const buffers: Buffer[] = [];
+        buffers.push(Buffer.from(img));
+        if (palette) buffers.push(Buffer.from(palette));
+
+        const screen = Buffer.concat(buffers);
+
+        if (!this.screen) {
+            // First screen, remember it as baseline
+            this.screen = screen;
+        } else {
+            // XOR the new screen with the old screen to get the delta
+            xorInPlace(screen, this.screen!);
+            // Update the old screen to the new screen by applying the delta
+            xorInPlace(this.screen!, screen);
+        }
+
+        let empty = true;
+        for (let i = 0; i < screen.length; i++) {
+            if (screen[i] !== 0) {
+                empty = false;
+                break;
+            }
+        }
+
+        if (!empty) {
+            // Compress the delta and send it to the server
+            const zippedData = await gzipAsync(screen);
+            const buffer = Protocol.Binary.packCompressedScreenMessage(
+                zippedData,
+                true
+            );
+            this.sendMessage(buffer);
+        }
+    }
+
+    public getCurrentScreen(): {
+        image: Uint8Array | undefined;
+        palette: Uint8Array | undefined;
+    } {
+        if (!this.screen) return { image: undefined, palette: undefined };
+        const image = new Uint8Array(this.screen!, 0, SCREEN_BUFFER_SIZE);
+        const palette =
+            this.screen!.length >= SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
+                ? new Uint8Array(this.screen!, SCREEN_BUFFER_SIZE)
+                : undefined;
+        return {
+            image,
+            palette,
+        };
     }
 }
 
@@ -336,16 +421,26 @@ export async function sendInputAsync(
     button: number,
     state: "Pressed" | "Released" | "Held"
 ) {
-    const buffer = Protocol.Binary.packInputMessage(
-        button,
-        stringToButtonState(state)!
-    );
-    gameClient?.sendMessage(buffer);
+    await gameClient?.sendInputAsync(button, state);
 }
 
-export async function sendScreenUpdateAsync(img: Uint8Array) {
-    const buffer = Protocol.Binary.packScreenMessage(Buffer.from(img));
-    gameClient?.sendMessage(buffer);
+export async function sendScreenUpdateAsync(
+    img: Uint8Array,
+    palette: Uint8Array
+) {
+    await gameClient?.sendScreenUpdateAsync(img, palette);
+}
+
+export function getCurrentScreen(): {
+    image: Uint8Array | undefined;
+    palette: Uint8Array | undefined;
+} {
+    return (
+        gameClient?.getCurrentScreen() || {
+            image: undefined,
+            palette: undefined,
+        }
+    );
 }
 
 export function destroy() {
@@ -436,7 +531,7 @@ namespace Protocol {
     export namespace Binary {
         export enum MessageType {
             Input = 1,
-            Screen = 2,
+            CompressedScreen = 3,
         }
 
         // Input
@@ -466,20 +561,27 @@ namespace Protocol {
             };
         }
 
-        // Screen
-        export function packScreenMessage(img: Buffer): Buffer {
+        // CompressedScreen
+        export function packCompressedScreenMessage(
+            zippedData: Buffer,
+            isDelta: boolean
+        ): Buffer {
             const writer = new SmartBuffer();
-            writer.writeUInt16LE(MessageType.Screen);
-            writer.writeBuffer(img);
+            writer.writeUInt16LE(MessageType.CompressedScreen);
+            writer.writeUInt8(isDelta ? 1 : 0);
+            writer.writeBuffer(zippedData);
             return writer.toBuffer();
         }
-        export function unpackScreenMessage(reader: SmartBuffer): {
-            img: Buffer;
+        export function unpackCompressedScreenMessage(reader: SmartBuffer): {
+            zippedData: Buffer;
+            isDelta: boolean;
         } {
             // `type` field has already been read
-            const img = reader.readBuffer();
+            const isDelta = reader.readUInt8() === 1;
+            const zippedData = reader.readBuffer();
             return {
-                img,
+                zippedData,
+                isDelta,
             };
         }
     }
