@@ -73,6 +73,7 @@ namespace pxsim {
         hideSimButtons?: boolean;
         autofocus?: boolean;
         queryParameters?: string;
+        sendBuilt?: boolean;
     }
 
     export interface HwDebugger {
