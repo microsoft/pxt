@@ -24,7 +24,6 @@ namespace pxt.runner {
         additionalQueryParameters?: string;
         debug?: boolean;
         mpRole?: "server" | "client";
-        sendBuilt?: boolean;
     }
 
     class EditorPackage {
@@ -438,7 +437,6 @@ namespace pxt.runner {
             autofocus: simOptions.autofocus,
             queryParameters: simOptions.additionalQueryParameters,
             mpRole: simOptions.mpRole,
-            sendBuilt: simOptions.sendBuilt,
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio

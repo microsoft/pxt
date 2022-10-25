@@ -185,7 +185,7 @@
                     // propagate message packets to parent frames
                     window.parent.postMessage(msg.data, "*");
                 }
-                else if (server && data.type === "kiosk") {
+                else if (server && data.type === "builtjs") {
                     var options = {
                         id: id ? id[1] : undefined,
                         code: code ? decodeURIComponent(code) : undefined,
@@ -201,8 +201,8 @@
                         additionalQueryParameters: additionalSimParams
                     };
                     pxt.runner.simulateAsync(sims, options).then(function() {
-                                $(loading).remove();
-                            })
+                        $(loading).remove();
+                    })
                 }
                 else if (server && data.type === "simulateproject") {
                     var files = typeof data.project === "string" ? JSON.parse(data.project) : data.project;

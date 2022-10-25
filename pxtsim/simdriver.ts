@@ -74,7 +74,6 @@ namespace pxsim {
         autofocus?: boolean;
         queryParameters?: string;
         mpRole?: "server" | "client";
-        sendBuilt?: boolean;
     }
 
     export interface HwDebugger {
