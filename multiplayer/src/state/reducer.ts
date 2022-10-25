@@ -129,5 +129,11 @@ export default function reducer(state: AppState, action: Action): AppState {
                 modal: undefined,
             };
         }
+        case "SET_MUTE": {
+            return {
+                ...state,
+                muted: action.value
+            }
+        }
     }
 }

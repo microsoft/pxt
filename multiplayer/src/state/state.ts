@@ -21,6 +21,7 @@ export type AppState = {
     toasts: ToastWithId[];
     presence: Presence;
     modal: ModalType | undefined;
+    muted: boolean;
     reactions: {
         [clientId: string]:
             | {
@@ -43,5 +44,6 @@ export const initialAppState: AppState = {
     toasts: [],
     presence: { ...defaultPresence },
     modal: undefined,
+    muted: false,
     reactions: {},
 };

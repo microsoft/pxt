@@ -100,6 +100,11 @@ type ClearModal = ActionBase & {
     type: "CLEAR_MODAL";
 };
 
+type SetMute = ActionBase & {
+    type: "SET_MUTE"
+    value: boolean
+}
+
 /**
  * Union of all actions
  */
@@ -120,7 +125,8 @@ export type Action =
     | SetReaction
     | ClearReaction
     | ShowModal
-    | ClearModal;
+    | ClearModal
+    | SetMute;
 
 /**
  * Action creators
@@ -226,3 +232,8 @@ export const showModal = (modalType: ModalType): ShowModal => ({
 export const clearModal = (): ClearModal => ({
     type: "CLEAR_MODAL",
 });
+
+export const setMute = (value: boolean): SetMute => ({
+    type: "SET_MUTE",
+    value
+})

@@ -7,6 +7,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
+import { setMute } from "../state/actions";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
 import ArcadeSimulator from "./ArcadeSimulator";
 import Presence from "./Presence";
@@ -20,7 +21,6 @@ export default function Render(props: GamePageProps) {
     const { netMode } = appMode;
     const [copySuccessful, setCopySuccessful] = useState(false);
     const copyTimeoutMs = 1000;
-    const [muted, setMuted] = useState(false);
 
     const copyJoinCode = async () => {
         pxt.tickEvent("mp.copyjoincode");
@@ -31,7 +31,7 @@ export default function Render(props: GamePageProps) {
     };
 
     const toggleMute = () => {
-        setMuted(!muted);
+        dispatch(setMute(!state.muted));
     };
 
     useEffect(() => {
@@ -46,8 +46,8 @@ export default function Render(props: GamePageProps) {
     }, [copySuccessful]);
 
     useEffect(() => {
-        pxt.runner.currentDriver()?.mute(muted);
-    }, [muted]);
+        pxt.runner.currentDriver()?.mute(state.muted);
+    }, [state.muted]);
 
     return (
         <div>
@@ -62,7 +62,7 @@ export default function Render(props: GamePageProps) {
                     <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
                         <Button
                             leftIcon={
-                                muted
+                                state.muted
                                     ? "fas fa-volume-mute"
                                     : "fas fa-volume-up"
                             }
