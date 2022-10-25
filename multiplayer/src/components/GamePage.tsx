@@ -6,6 +6,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useState } from "react";
+import { Button } from "react-common/components/controls/Button";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
 import ArcadeSimulator from "./ArcadeSimulator";
 import Presence from "./Presence";
@@ -58,15 +59,12 @@ export default function Render(props: GamePageProps) {
             {state.gameState?.gameMode && (
                 <div className="tw-flex tw-flex-col tw-items-center">
                     {state.playerSlot && <ArcadeSimulator />}
-                    <div className="tw-flex tw-flex-row tw-w-full tw-px-2 tw-items-center tw-justify-between">
-                        <button
+                    <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
+                        <Button
+                            leftIcon={muted ? "fas fa-volume-mute" : "fas fa-volume-up"} 
                             title={lf("Toggle Mute")}
-                            className="tw-border-2 tw-border-slate-400 tw-rounded-md tw-mt-2 tw-px-2 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
-                            onClick={toggleMute}
-                        >
-                            {!muted && <FontAwesomeIcon icon={faVolumeHigh} />}
-                            {muted && <FontAwesomeIcon icon={faVolumeMute} />}
-                        </button>
+                            className="tw-border-2 tw-border-slate-400 tw-border-solid tw-py-2 tw-pl-2 tw-pr-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
+                            onClick={toggleMute} />
                         <div className="tw-justify-self-center">
                             {state.gameState?.joinCode && (
                                 <div>
