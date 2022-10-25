@@ -218,13 +218,16 @@ export default function Render() {
                 {getTargetLogo(appTheme)}
             </div>
             <div className="tw-select-none tw-flex-grow" />
-            {state.gameState?.gameMode && <div className="tw-select-none tw-flex tw-items-center tw-align-middle tw-h-full hover:tw-bg-black/10">
-                <Button
-                    className="tw-bg-transparent tw-text-white tw-text-2xl tw-m-0 tw-p-4"
-                    title={lf("Leave Game")}
-                    onClick={onLeaveGameClick}
-                    leftIcon="fas fa-arrow-left large" />
-            </div>}
+            {state.gameState?.gameMode && (
+                <div className="tw-select-none tw-flex tw-items-center tw-align-middle tw-h-full hover:tw-bg-black/10">
+                    <Button
+                        className="tw-bg-transparent tw-text-white tw-text-2xl tw-m-0 tw-p-4"
+                        title={lf("Leave Game")}
+                        onClick={onLeaveGameClick}
+                        leftIcon="fas fa-arrow-left large"
+                    />
+                </div>
+            )}
             <div className="tw-select-none tw-text-lg tw-font-bold tw-font-segoueUI tw-flex tw-items-center tw-pr-[var(--header-padding-top)] tw-h-full">
                 {settingItems?.length > 0 && (
                     <MenuDropdown
