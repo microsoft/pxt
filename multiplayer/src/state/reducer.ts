@@ -132,8 +132,8 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "SET_MUTE": {
             return {
                 ...state,
-                muted: action.value
-            }
+                muted: action.value,
+            };
         }
     }
 }

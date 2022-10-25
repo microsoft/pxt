@@ -101,9 +101,9 @@ type ClearModal = ActionBase & {
 };
 
 type SetMute = ActionBase & {
-    type: "SET_MUTE"
-    value: boolean
-}
+    type: "SET_MUTE";
+    value: boolean;
+};
 
 /**
  * Union of all actions
@@ -235,5 +235,5 @@ export const clearModal = (): ClearModal => ({
 
 export const setMute = (value: boolean): SetMute => ({
     type: "SET_MUTE",
-    value
-})
+    value,
+});
