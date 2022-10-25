@@ -2,7 +2,6 @@ import { Socket } from "engine.io-client";
 import { SmartBuffer } from "smart-buffer";
 import * as authClient from "./authClient";
 import { xorInPlace, gzipAsync, gunzipAsync } from "../util";
-import * as state from "../state";
 import {
     ButtonState,
     buttonStateToString,
@@ -277,23 +276,27 @@ class GameClient {
             Protocol.Binary.unpackCompressedScreenMessage(reader);
 
         const screen = await gunzipAsync(zippedData);
-        if (!this.screen || !isDelta) {
-            // First screen or non-delta, take screen as-is
+        if (!isDelta) {
+            // We must wait for the first non-delta screen to arrive before we can apply diffs.
             this.screen = screen;
-        } else {
+            console.log("Received non-delta screen");
+        } else if (this.screen) {
             // Apply delta to existing screen to get new screen
-            xorInPlace(this.screen!, screen);
+            xorInPlace(this.screen, screen);
         }
 
         const { image, palette } = this.getCurrentScreen();
 
-        this.postToSimFrame(<SimMultiplayer.ImageMessage>{
-            type: "multiplayer",
-            content: "Image",
-            image: {
-                data: image,
-            },
-        });
+        if (image) {
+            this.postToSimFrame(<SimMultiplayer.ImageMessage>{
+                type: "multiplayer",
+                content: "Image",
+                image: {
+                    data: image,
+                },
+                palette,
+            });
+        }
     }
 
     private async recvInputMessageAsync(reader: SmartBuffer) {
@@ -325,16 +328,17 @@ class GameClient {
     }
 
     public async sendScreenUpdateAsync(
-        img: Uint8Array,
+        image: Uint8Array,
         palette: Uint8Array | undefined
     ) {
         const buffers: Buffer[] = [];
-        buffers.push(Buffer.from(img));
+        buffers.push(Buffer.from(image));
         if (palette) buffers.push(Buffer.from(palette));
 
         const screen = Buffer.concat(buffers);
+        const firstScreen = !this.screen;
 
-        if (!this.screen) {
+        if (firstScreen) {
             // First screen, remember it as baseline
             this.screen = screen;
         } else {
@@ -352,12 +356,12 @@ class GameClient {
             }
         }
 
-        if (!empty) {
+        if (!empty || firstScreen) {
             // Compress the delta and send it to the server
             const zippedData = await gzipAsync(screen);
             const buffer = Protocol.Binary.packCompressedScreenMessage(
                 zippedData,
-                true
+                !firstScreen // If first screen, send as non-delta
             );
             this.sendMessage(buffer);
         }
@@ -372,10 +376,12 @@ class GameClient {
         const image = this.screen.slice(0, SCREEN_BUFFER_SIZE);
         const palette =
             this.screen.length >= SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
-                ? this.screen.slice(
-                      SCREEN_BUFFER_SIZE,
-                      SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
-                  )
+                ? this.screen
+                      .slice(
+                          SCREEN_BUFFER_SIZE,
+                          SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
+                      )
+                      .map(v => v)
                 : undefined;
 
         return {
@@ -412,9 +418,7 @@ export async function startGameAsync() {
 
 export async function leaveGameAsync() {
     await gameClient?.leaveGameAsync();
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    gameClient && gameClient.destroy();
-    gameClient = undefined;
+    destroyGameClient();
 }
 
 export async function sendReactionAsync(index: number) {
@@ -448,9 +452,7 @@ export function getCurrentScreen(): {
 }
 
 export function destroy() {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    gameClient && gameClient.destroy();
-    gameClient = undefined;
+    destroyGameClient();
 }
 
 //=============================================================================
