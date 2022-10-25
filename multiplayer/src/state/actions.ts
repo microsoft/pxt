@@ -94,10 +94,17 @@ type ClearReaction = ActionBase & {
 type ShowModal = ActionBase & {
     type: "SHOW_MODAL";
     modalType: ModalType;
+    modalOpts: any;
 };
 
 type ClearModal = ActionBase & {
     type: "CLEAR_MODAL";
+};
+
+type SetDeepLinks = ActionBase & {
+    type: "SET_DEEP_LINKS";
+    shareCode: string | undefined;
+    joinCode: string | undefined;
 };
 
 /**
@@ -120,7 +127,8 @@ export type Action =
     | SetReaction
     | ClearReaction
     | ShowModal
-    | ClearModal;
+    | ClearModal
+    | SetDeepLinks;
 
 /**
  * Action creators
@@ -218,11 +226,24 @@ export const clearReaction = (clientId: string): ClearReaction => ({
     clientId,
 });
 
-export const showModal = (modalType: ModalType): ShowModal => ({
+export const showModal = (
+    modalType: ModalType,
+    modalOpts?: any
+): ShowModal => ({
     type: "SHOW_MODAL",
     modalType,
+    modalOpts,
 });
 
 export const clearModal = (): ClearModal => ({
     type: "CLEAR_MODAL",
+});
+
+export const setDeepLinks = (
+    shareCode: string | undefined,
+    joinCode: string | undefined
+): SetDeepLinks => ({
+    type: "SET_DEEP_LINKS",
+    shareCode,
+    joinCode,
 });

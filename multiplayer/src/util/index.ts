@@ -41,3 +41,14 @@ export function gunzipAsync(data: zlib.InputType): Promise<Buffer> {
         });
     });
 }
+
+export function cleanupJoinCode(
+    joinCode: string | undefined
+): string | undefined {
+    if (!joinCode) return undefined;
+    joinCode = joinCode.trim();
+    if (joinCode.length !== 6) return undefined;
+    joinCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (joinCode.length !== 6) return undefined;
+    return joinCode;
+}

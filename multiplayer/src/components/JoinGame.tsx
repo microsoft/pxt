@@ -3,6 +3,7 @@ import { AppStateContext } from "../state/AppStateContext";
 import { joinGameAsync, leaveGameAsync } from "../epics";
 import { Input } from "../../../react-common/components/controls/Input";
 import { Button } from "../../../react-common/components/controls/Button";
+import { cleanupJoinCode } from "../util";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -13,7 +14,7 @@ export default function Render() {
 
     const onJoinGameClick = async () => {
         if (inputRef.current) {
-            const joinCode = inputRef.current.value.toUpperCase().trim();
+            const joinCode = cleanupJoinCode(inputRef.current.value);
             if (joinCode) {
                 await joinGameAsync(joinCode);
             }
