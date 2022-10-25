@@ -1,6 +1,17 @@
 import { Socket } from "engine.io-client";
+import { SmartBuffer } from "smart-buffer";
 import * as authClient from "./authClient";
-import { GameInfo, Cli2Srv, Srv2Cli, SimMultiplayer } from "../types";
+import { xorInPlace, gzipAsync, gunzipAsync } from "../util";
+import {
+    ButtonState,
+    buttonStateToString,
+    GameInfo,
+    SimMultiplayer,
+    ClientRole,
+    GameMode,
+    Presence,
+    stringToButtonState,
+} from "../types";
 import {
     gameDisconnected,
     setGameModeAsync,
@@ -8,18 +19,25 @@ import {
     setReactionAsync,
     playerJoinedAsync,
     playerLeftAsync,
+    setGameMetadataAsync,
 } from "../epics";
 
-const GAME_HOST =
-    "https://makecode-ppe-app-multiplayer-eastus.azurewebsites.net";
-//const GAME_HOST = "http://localhost:8082"
-//const GAME_HOST = "https://makecode-multiplayer.ngrok.io";
+const GAME_HOST = "https://multiplayer.staging.pxt.io";
+//const GAME_HOST = "http://localhost:8082";
+
+const SCREEN_BUFFER_SIZE = 9608;
+const PALETTE_BUFFER_SIZE = 48;
 
 class GameClient {
     sock: Socket | undefined;
     heartbeatTimer: NodeJS.Timeout | undefined;
+    screen: Buffer | undefined;
 
-    constructor() {}
+    constructor() {
+        this.recvMessageWithJoinTimeout =
+            this.recvMessageWithJoinTimeout.bind(this);
+        this.recvMessageAsync = this.recvMessageAsync.bind(this);
+    }
 
     destroy() {
         try {
@@ -30,34 +48,80 @@ class GameClient {
         } catch (e) {}
     }
 
-    sendMessage(msg: Cli2Srv.Message) {
-        const payload = JSON.stringify(msg);
-        this.sock?.send(payload, {}, (err: any) => {
-            if (err) console.log("Error sending message", err);
-        });
+    private sendMessage(msg: Protocol.Message | Buffer) {
+        if (msg instanceof Buffer) {
+            this.sock?.send(msg, {}, (err: any) => {
+                if (err) console.log("Error sending message", err);
+            });
+        } else {
+            const payload = JSON.stringify(msg);
+            this.sock?.send(payload, {}, (err: any) => {
+                if (err) console.log("Error sending message", err);
+            });
+        }
     }
 
-    private async recvMessage(msg: Srv2Cli.Message) {
+    private async recvMessageAsync(payload: string | ArrayBuffer) {
         try {
-            switch (msg.type) {
-                case "hello":
-                    return await this.recvHelloMessageAsync(msg);
-                case "joined":
-                    return await this.recvJoinedMessageAsync(msg);
-                case "start-game":
-                    return await this.recvStartGameMessageAsync(msg);
-                case "presence":
-                    return await this.recvPresenceMessageAsync(msg);
-                case "reaction":
-                    return await this.recvReactionMessageAsync(msg);
-                case "player-joined":
-                    return await this.recvPlayerJoinedMessageAsync(msg);
-                case "player-left":
-                    return await this.recvPlayerLeftMessageAsync(msg);
-                case "screen":
-                    return await this.recvScreenMessageAsync(msg);
-                case "input":
-                    return await this.recvInputMessageAsync(msg);
+            if (payload instanceof ArrayBuffer) {
+                //-------------------------------------------------
+                // Handle binary message
+                //--
+                const reader = SmartBuffer.fromBuffer(Buffer.from(payload));
+                const type = reader.readUInt16LE();
+                switch (type) {
+                    case Protocol.Binary.MessageType.CompressedScreen:
+                        return await this.recvCompressedScreenMessageAsync(
+                            reader
+                        );
+                    case Protocol.Binary.MessageType.Input:
+                        return await this.recvInputMessageAsync(reader);
+                }
+            } else if (typeof payload === "string") {
+                //-------------------------------------------------
+                // Handle JSON message
+                //--
+                const msg = JSON.parse(payload) as Protocol.Message;
+                switch (msg.type) {
+                    case "joined":
+                        return await this.recvJoinedMessageAsync(msg);
+                    case "start-game":
+                        return await this.recvStartGameMessageAsync(msg);
+                    case "presence":
+                        return await this.recvPresenceMessageAsync(msg);
+                    case "reaction":
+                        return await this.recvReactionMessageAsync(msg);
+                    case "player-joined":
+                        return await this.recvPlayerJoinedMessageAsync(msg);
+                    case "player-left":
+                        return await this.recvPlayerLeftMessageAsync(msg);
+                }
+            } else {
+                console.error("Unknown payload type", payload);
+            }
+        } catch (e) {
+            console.error("Error processing message", e);
+        }
+    }
+
+    private async recvMessageWithJoinTimeout(
+        payload: string | Buffer,
+        timeout: NodeJS.Timeout,
+        resolve: () => void
+    ) {
+        try {
+            if (typeof payload === "string") {
+                const msg = JSON.parse(payload) as Protocol.Message;
+                await this.recvMessageAsync(payload);
+                if (msg.type === "joined") {
+                    this.sock?.removeAllListeners("message");
+                    this.sock?.on(
+                        "message",
+                        async payload => await this.recvMessageAsync(payload)
+                    );
+                    clearTimeout(timeout);
+                    resolve();
+                }
             }
         } catch (e) {
             console.error("Error processing message", e);
@@ -66,28 +130,26 @@ class GameClient {
 
     public async connectAsync(ticket: string) {
         return new Promise<void>((resolve, reject) => {
-            const rejectTimeout = setTimeout(() => {
+            const connectTimeout = setTimeout(() => {
                 reject("Timed out connecting to game server");
-            }, 20 * 1000); // 20 seconds to join the game server
-
+                destroyGameClient();
+            }, 20 * 1000);
             this.sock = new Socket(GAME_HOST, {
                 transports: ["websocket"], // polling is unsupported
                 path: "/mp",
             });
+            this.sock.binaryType = "arraybuffer";
             this.sock.on("open", () => {
                 console.log("socket opened");
-
-                this.sock?.on("message", async payload => {
-                    try {
-                        const msg = JSON.parse(payload) as Srv2Cli.Message;
-                        if (msg.type === "joined") clearTimeout(rejectTimeout);
-                        await this.recvMessage(msg);
-                        if (msg.type === "joined") resolve();
-                    } catch (e) {
-                        console.error("Error processing message", e);
-                    }
-                });
-
+                this.sock?.on(
+                    "message",
+                    async payload =>
+                        await this.recvMessageWithJoinTimeout(
+                            payload,
+                            connectTimeout,
+                            resolve
+                        )
+                );
                 this.sock?.on("close", () => {
                     console.log("socket disconnected");
                     clearTimeout(this.heartbeatTimer);
@@ -102,19 +164,19 @@ class GameClient {
                     this.sendMessage({
                         type: "connect",
                         ticket,
-                    } as Cli2Srv.ConnectMessage);
+                        version: Protocol.VERSION,
+                    } as Protocol.ConnectMessage);
                 }, 500); // TODO: Why is this necessary? The socket doesn't seem ready to send messages immediately. This isn't a shippable solution.
             });
         });
     }
 
     public async hostGameAsync(shareCode: string): Promise<GameInfo> {
-        shareCode = shareCode.toUpperCase();
+        shareCode = shareCode.trim();
         shareCode = encodeURIComponent(shareCode);
 
         const authToken = await authClient.authTokenAsync();
 
-        // TODO: Send real credentials
         const res = await fetch(`${GAME_HOST}/api/game/host/${shareCode}`, {
             credentials: "include",
             headers: {
@@ -157,7 +219,7 @@ class GameClient {
     public async startGameAsync() {
         this.sendMessage({
             type: "start-game",
-        } as Cli2Srv.StartGameMessage);
+        } as Protocol.StartGameMessage);
     }
 
     public async leaveGameAsync() {
@@ -168,100 +230,183 @@ class GameClient {
         this.sendMessage({
             type: "reaction",
             index,
-        } as Cli2Srv.ReactionMessage);
+        } as Protocol.ReactionMessage);
     }
 
-    private async recvHelloMessageAsync(msg: Srv2Cli.HelloMessage) {
-        console.log("Server said hello");
-    }
-
-    private async recvJoinedMessageAsync(msg: Srv2Cli.JoinedMessage) {
+    private async recvJoinedMessageAsync(msg: Protocol.JoinedMessage) {
         console.log(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
-        const gameMode = msg.gameMode;
+        const { gameMode, shareCode } = msg;
 
-        setGameModeAsync(gameMode, msg.slot);
+        if (await setGameMetadataAsync(shareCode)) {
+            await setGameModeAsync(gameMode, msg.slot);
+        }
     }
 
-    private async recvStartGameMessageAsync(msg: Srv2Cli.StartGameMessage) {
+    private async recvStartGameMessageAsync(msg: Protocol.StartGameMessage) {
         console.log("Server said start game");
-        setGameModeAsync("playing");
+        await setGameModeAsync("playing");
     }
 
-    private async recvPresenceMessageAsync(msg: Srv2Cli.PresenceMessage) {
+    private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
         console.log("Server sent presence");
         await setPresenceAsync(msg.presence);
     }
 
-    private async recvReactionMessageAsync(msg: Srv2Cli.ReactionMessage) {
+    private async recvReactionMessageAsync(msg: Protocol.ReactionMessage) {
         console.log("Server sent reaction");
-        await setReactionAsync(msg.clientId, msg.index);
+        await setReactionAsync(msg.clientId!, msg.index);
     }
 
     private async recvPlayerJoinedMessageAsync(
-        msg: Srv2Cli.PlayerJoinedMessage
+        msg: Protocol.PlayerJoinedMessage
     ) {
         console.log("Server sent player joined");
         await playerJoinedAsync(msg.clientId);
     }
 
-    private async recvPlayerLeftMessageAsync(msg: Srv2Cli.PlayerLeftMessage) {
+    private async recvPlayerLeftMessageAsync(msg: Protocol.PlayerLeftMessage) {
         console.log("Server sent player joined");
         await playerLeftAsync(msg.clientId);
     }
 
-    private textEncoder = new TextEncoder();
-    private async recvScreenMessageAsync(msg: Srv2Cli.ScreenMessage) {
-        const { data: screen } = msg;
+    private async recvCompressedScreenMessageAsync(reader: SmartBuffer) {
+        const { zippedData, isDelta } =
+            Protocol.Binary.unpackCompressedScreenMessage(reader);
 
-        // convert from hexstring to uint8array
-        screen.data = Uint8Array.from(
-            screen.data
-                .match(/.{1,2}/g)
-                .map((byte: string) => parseInt(byte, 16))
-        );
+        const screen = await gunzipAsync(zippedData);
+        if (!isDelta) {
+            // We must wait for the first non-delta screen to arrive before we can apply diffs.
+            this.screen = screen;
+            console.log("Received non-delta screen");
+        } else if (this.screen) {
+            // Apply delta to existing screen to get new screen
+            xorInPlace(this.screen, screen);
+        }
 
-        this.postToSimFrame(<SimMultiplayer.ImageMessage>{
-            type: "multiplayer",
-            content: "Image",
-            image: screen,
-        });
+        const { image, palette } = this.getCurrentScreen();
+
+        if (image) {
+            this.postToSimFrame(<SimMultiplayer.ImageMessage>{
+                type: "multiplayer",
+                content: "Image",
+                image: {
+                    data: image,
+                },
+                palette,
+            });
+        }
     }
 
-    private async recvInputMessageAsync(msg: Srv2Cli.InputMessage) {
-        const { slot, data } = msg;
-        const { button, state } = data;
+    private async recvInputMessageAsync(reader: SmartBuffer) {
+        const { button, state, slot } =
+            Protocol.Binary.unpackInputMessage(reader);
+
         this.postToSimFrame(<SimMultiplayer.InputMessage>{
             type: "multiplayer",
             content: "Button",
             clientNumber: slot - 1,
             button: button,
-            state: state,
+            state: buttonStateToString(state),
         });
     }
 
     private postToSimFrame(msg: SimMultiplayer.Message) {
-        const simIframe = document.getElementById(
-            "sim-iframe"
-        ) as HTMLIFrameElement;
-        simIframe?.contentWindow?.postMessage(msg, "*");
+        pxt.runner.postSimMessage(msg);
+    }
+
+    public async sendInputAsync(
+        button: number,
+        state: "Pressed" | "Released" | "Held"
+    ) {
+        const buffer = Protocol.Binary.packInputMessage(
+            button,
+            stringToButtonState(state)!
+        );
+        this.sendMessage(buffer);
+    }
+
+    public async sendScreenUpdateAsync(
+        image: Uint8Array,
+        palette: Uint8Array | undefined
+    ) {
+        const buffers: Buffer[] = [];
+        buffers.push(Buffer.from(image));
+        if (palette) buffers.push(Buffer.from(palette));
+
+        const screen = Buffer.concat(buffers);
+        const firstScreen = !this.screen;
+
+        if (firstScreen) {
+            // First screen, remember it as baseline
+            this.screen = screen;
+        } else {
+            // XOR the new screen with the old screen to get the delta
+            xorInPlace(screen, this.screen!);
+            // Update the old screen to the new screen by applying the delta
+            xorInPlace(this.screen!, screen);
+        }
+
+        let empty = true;
+        for (let i = 0; i < screen.length; i++) {
+            if (screen[i] !== 0) {
+                empty = false;
+                break;
+            }
+        }
+
+        if (!empty || firstScreen) {
+            // Compress the delta and send it to the server
+            const zippedData = await gzipAsync(screen);
+            const buffer = Protocol.Binary.packCompressedScreenMessage(
+                zippedData,
+                !firstScreen // If first screen, send as non-delta
+            );
+            this.sendMessage(buffer);
+        }
+    }
+
+    public getCurrentScreen(): {
+        image: Uint8Array | undefined;
+        palette: Uint8Array | undefined;
+    } {
+        if (!this.screen) return { image: undefined, palette: undefined };
+
+        const image = this.screen.slice(0, SCREEN_BUFFER_SIZE);
+        const palette =
+            this.screen.length >= SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
+                ? this.screen
+                      .slice(
+                          SCREEN_BUFFER_SIZE,
+                          SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
+                      )
+                      .map(v => v)
+                : undefined;
+
+        return {
+            image,
+            palette,
+        };
     }
 }
 
 let gameClient: GameClient | undefined;
 
+function destroyGameClient() {
+    gameClient?.destroy();
+    gameClient = undefined;
+}
+
 export async function hostGameAsync(shareCode: string): Promise<GameInfo> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    gameClient && gameClient.destroy();
+    destroyGameClient();
     gameClient = new GameClient();
     const gameInfo = await gameClient.hostGameAsync(shareCode);
     return gameInfo;
 }
 
 export async function joinGameAsync(joinCode: string): Promise<GameInfo> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    gameClient && gameClient.destroy();
+    destroyGameClient();
     gameClient = new GameClient();
     const gameInfo = await gameClient.joinGameAsync(joinCode);
     return gameInfo;
@@ -273,21 +418,177 @@ export async function startGameAsync() {
 
 export async function leaveGameAsync() {
     await gameClient?.leaveGameAsync();
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    gameClient && gameClient.destroy();
-    gameClient = undefined;
+    destroyGameClient();
 }
 
 export async function sendReactionAsync(index: number) {
     await gameClient?.sendReactionAsync(index);
 }
 
-export function sendSimMessage(msg: Cli2Srv.SimMessage) {
-    gameClient?.sendMessage(msg);
+export async function sendInputAsync(
+    button: number,
+    state: "Pressed" | "Released" | "Held"
+) {
+    await gameClient?.sendInputAsync(button, state);
+}
+
+export async function sendScreenUpdateAsync(
+    img: Uint8Array,
+    palette: Uint8Array
+) {
+    await gameClient?.sendScreenUpdateAsync(img, palette);
+}
+
+export function getCurrentScreen(): {
+    image: Uint8Array | undefined;
+    palette: Uint8Array | undefined;
+} {
+    return (
+        gameClient?.getCurrentScreen() || {
+            image: undefined,
+            palette: undefined,
+        }
+    );
 }
 
 export function destroy() {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    gameClient && gameClient.destroy();
-    gameClient = undefined;
+    destroyGameClient();
+}
+
+//=============================================================================
+// Network Messages
+// Hiding these here for now to ensure they're not used outside of this module.
+namespace Protocol {
+    export const VERSION = 2;
+
+    type MessageBase = {
+        type: string;
+    };
+
+    export type ConnectMessage = MessageBase & {
+        type: "connect";
+        ticket: string;
+        version: number; // Procotol version
+    };
+
+    export type StartGameMessage = MessageBase & {
+        type: "start-game";
+    };
+
+    export type InputMessage = MessageBase & {
+        type: "input";
+        slot: number;
+        data: {
+            button: number;
+            state: "Pressed" | "Released" | "Held";
+        };
+    };
+
+    export type ScreenMessage = MessageBase & {
+        type: "screen";
+        data: {
+            img: Uint8Array; // pxsim.RefBuffer
+        };
+    };
+
+    export type ReactionMessage = MessageBase & {
+        type: "reaction";
+        index: number;
+        clientId?: string;
+    };
+
+    export type PresenceMessage = MessageBase & {
+        type: "presence";
+        presence: Presence;
+    };
+
+    export type JoinedMessage = MessageBase & {
+        type: "joined";
+        role: ClientRole;
+        slot: number;
+        gameMode: GameMode;
+        shareCode: string;
+        clientId: string;
+    };
+
+    export type PlayerJoinedMessage = MessageBase & {
+        type: "player-joined";
+        clientId: string;
+    };
+
+    export type PlayerLeftMessage = MessageBase & {
+        type: "player-left";
+        clientId: string;
+    };
+
+    export type Message =
+        | ConnectMessage
+        | StartGameMessage
+        | InputMessage
+        | ScreenMessage
+        | ReactionMessage
+        | PresenceMessage
+        | JoinedMessage
+        | PlayerJoinedMessage
+        | PlayerLeftMessage;
+
+    export type SimMessage = ScreenMessage | InputMessage;
+
+    export namespace Binary {
+        export enum MessageType {
+            Input = 1,
+            CompressedScreen = 3,
+        }
+
+        // Input
+        export function packInputMessage(
+            button: number,
+            state: ButtonState
+        ): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.Input);
+            writer.writeUInt16LE(button);
+            writer.writeUInt8(state);
+            return writer.toBuffer();
+        }
+        export function unpackInputMessage(reader: SmartBuffer): {
+            button: number;
+            state: ButtonState;
+            slot: number;
+        } {
+            // `type` field has already been read
+            const button = reader.readUInt16LE();
+            const state = reader.readUInt8();
+            const slot = reader.readUInt8();
+            return {
+                button,
+                state,
+                slot,
+            };
+        }
+
+        // CompressedScreen
+        export function packCompressedScreenMessage(
+            zippedData: Buffer,
+            isDelta: boolean
+        ): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.CompressedScreen);
+            writer.writeUInt8(isDelta ? 1 : 0);
+            writer.writeBuffer(zippedData);
+            return writer.toBuffer();
+        }
+        export function unpackCompressedScreenMessage(reader: SmartBuffer): {
+            zippedData: Buffer;
+            isDelta: boolean;
+        } {
+            // `type` field has already been read
+            const isDelta = reader.readUInt8() === 1;
+            const zippedData = reader.readBuffer();
+            return {
+                zippedData,
+                isDelta,
+            };
+        }
+    }
 }

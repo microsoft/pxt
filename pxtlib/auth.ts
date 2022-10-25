@@ -102,7 +102,6 @@ namespace pxt.auth {
         private state$: Readonly<State>;
 
         constructor() {
-            pxt.Util.assert(!_client);
             // Set global instance.
             _client = this;
         }

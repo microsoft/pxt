@@ -7,6 +7,8 @@ import {
     UiMode,
     NetMode,
     Presence,
+    ModalType,
+    GameMetadata,
 } from "../types";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -36,6 +38,11 @@ type SetNetMode = ActionBase & {
 type SetGameInfo = ActionBase & {
     type: "SET_GAME_INFO";
     gameInfo: GameInfo | undefined;
+};
+
+type SetGameMetadata = ActionBase & {
+    type: "SET_GAME_METADATA";
+    gameMetadata: GameMetadata | undefined;
 };
 
 type SetGameId = ActionBase & {
@@ -84,6 +91,15 @@ type ClearReaction = ActionBase & {
     clientId: string;
 };
 
+type ShowModal = ActionBase & {
+    type: "SHOW_MODAL";
+    modalType: ModalType;
+};
+
+type ClearModal = ActionBase & {
+    type: "CLEAR_MODAL";
+};
+
 /**
  * Union of all actions
  */
@@ -93,6 +109,7 @@ export type Action =
     | SetUiMode
     | SetNetMode
     | SetGameInfo
+    | SetGameMetadata
     | SetGameId
     | SetPlayerSlot
     | ClearGameInfo
@@ -101,7 +118,9 @@ export type Action =
     | DismissToast
     | SetPresence
     | SetReaction
-    | ClearReaction;
+    | ClearReaction
+    | ShowModal
+    | ClearModal;
 
 /**
  * Action creators
@@ -132,6 +151,18 @@ export const setNetMode = (mode: NetMode): SetNetMode => ({
 export const setGameInfo = (gameInfo: GameInfo): SetGameInfo => ({
     type: "SET_GAME_INFO",
     gameInfo,
+});
+
+export const setGameMetadata = (
+    gameMetadata: GameMetadata
+): SetGameMetadata => ({
+    type: "SET_GAME_METADATA",
+    gameMetadata,
+});
+
+export const clearGameMetadata = (): SetGameMetadata => ({
+    type: "SET_GAME_METADATA",
+    gameMetadata: undefined,
 });
 
 export const setGameId = (gameId: string): SetGameId => ({
@@ -185,4 +216,13 @@ export const setReaction = (
 export const clearReaction = (clientId: string): ClearReaction => ({
     type: "CLEAR_REACTION",
     clientId,
+});
+
+export const showModal = (modalType: ModalType): ShowModal => ({
+    type: "SHOW_MODAL",
+    modalType,
+});
+
+export const clearModal = (): ClearModal => ({
+    type: "CLEAR_MODAL",
 });

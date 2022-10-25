@@ -5,6 +5,8 @@ import {
     ToastWithId,
     Presence,
     defaultPresence,
+    ModalType,
+    GameMetadata,
 } from "../types";
 
 export type AppState = {
@@ -15,8 +17,10 @@ export type AppState = {
     playerSlot: number | undefined;
     joinCode: string | undefined;
     gameState: GameState | undefined;
+    gameMetadata: GameMetadata | undefined;
     toasts: ToastWithId[];
     presence: Presence;
+    modal: ModalType | undefined;
     reactions: {
         [clientId: string]:
             | {
@@ -35,7 +39,9 @@ export const initialAppState: AppState = {
     playerSlot: undefined,
     joinCode: undefined,
     gameState: undefined,
+    gameMetadata: undefined,
     toasts: [],
     presence: { ...defaultPresence },
+    modal: undefined,
     reactions: {},
 };
