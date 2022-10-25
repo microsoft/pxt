@@ -16,7 +16,7 @@ export interface GamePageProps {}
 export default function Render(props: GamePageProps) {
     const { state } = useContext(AppStateContext);
     const { appMode } = state;
-    const { netMode, uiMode } = appMode;
+    const { netMode } = appMode;
     const [copySuccessful, setCopySuccessful] = useState(false);
     const copyTimeoutMs = 1000;
     const [muted, setMuted] = useState(false);
