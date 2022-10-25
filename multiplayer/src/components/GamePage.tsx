@@ -61,10 +61,15 @@ export default function Render(props: GamePageProps) {
                     {state.playerSlot && <ArcadeSimulator />}
                     <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
                         <Button
-                            leftIcon={muted ? "fas fa-volume-mute" : "fas fa-volume-up"} 
+                            leftIcon={
+                                muted
+                                    ? "fas fa-volume-mute"
+                                    : "fas fa-volume-up"
+                            }
                             title={lf("Toggle Mute")}
                             className="tw-border-2 tw-border-slate-400 tw-border-solid tw-py-2 tw-pl-2 tw-pr-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
-                            onClick={toggleMute} />
+                            onClick={toggleMute}
+                        />
                         <div className="tw-justify-self-center">
                             {state.gameState?.joinCode && (
                                 <div>
