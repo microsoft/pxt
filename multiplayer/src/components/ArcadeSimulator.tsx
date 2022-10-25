@@ -21,6 +21,7 @@ export default function Render() {
     ];
     const selectedPlayerTheme = playerThemes[(playerSlot || 0) - 1];
     const isHost = playerSlot == 1;
+    const isPlayingMode = gameState?.gameMode === "playing";
 
     const postImageMsg = async (msg: SimMultiplayer.ImageMessage) => {
         const { image, palette } = msg;
@@ -154,7 +155,9 @@ export default function Render() {
         <div
             id="sim-container"
             ref={simContainerRef}
-            className="tw-h-[calc(100vh-16rem)] tw-w-[calc(100vw-6rem)]"
+            className={`tw-h-[calc(100vh-16rem)] tw-w-[calc(100vw-6rem)] ${
+                !isPlayingMode ? "tw-invisible" : ""
+            }`}
         />
     );
 }

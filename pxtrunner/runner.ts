@@ -19,6 +19,7 @@ namespace pxt.runner {
         builtJsInfo?: pxtc.BuiltSimJsInfo;
         // single simulator frame, no message simulators
         single?: boolean;
+        mute?: boolean;
         hideSimButtons?: boolean;
         autofocus?: boolean;
         additionalQueryParameters?: string;
@@ -423,6 +424,7 @@ namespace pxt.runner {
         let storedState: Map<string> = getStoredState(simOptions.id)
         let runOptions: pxsim.SimulatorRunOptions = {
             debug: simOptions.debug,
+            mute: simOptions.mute,
             boardDefinition: board,
             parts: parts,
             builtinParts: usedBuiltinParts,
