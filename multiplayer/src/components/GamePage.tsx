@@ -6,8 +6,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useState } from "react";
-import { Button } from "react-common/components/controls/Button";
-import { leaveGameAsync } from "../epics";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
 import ArcadeSimulator from "./ArcadeSimulator";
 import Presence from "./Presence";
@@ -22,11 +20,6 @@ export default function Render(props: GamePageProps) {
     const [copySuccessful, setCopySuccessful] = useState(false);
     const copyTimeoutMs = 1000;
     const [muted, setMuted] = useState(false);
-
-    const onLeaveGameClick = async () => {
-        pxt.tickEvent("mp.leavegame");
-        await leaveGameAsync();
-    };
 
     const copyJoinCode = async () => {
         pxt.tickEvent("mp.copyjoincode");
@@ -108,14 +101,6 @@ export default function Render(props: GamePageProps) {
                     <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
                         <Reactions />
                         <Presence />
-                    </div>
-                    <div>
-                        <Button
-                            className={"gray tw-mt-5"}
-                            label={lf("Leave Game")}
-                            title={lf("Leave Game")}
-                            onClick={onLeaveGameClick}
-                        />
                     </div>
                 </div>
             )}
