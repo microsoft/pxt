@@ -49,6 +49,8 @@ export default function Render(props: GamePageProps) {
         pxt.runner.currentDriver()?.mute(state.muted);
     }, [state.muted]);
 
+    const joinCodeDisplay = lf("Join Code: {0}", state.gameState?.joinCode);
+
     return (
         <div>
             {netMode === "connecting" && (
@@ -74,10 +76,7 @@ export default function Render(props: GamePageProps) {
                             {state.gameState?.joinCode && (
                                 <div>
                                     {state.gameState?.joinCode &&
-                                        lf(
-                                            "Join Code: {0}",
-                                            state.gameState?.joinCode
-                                        )}
+                                        joinCodeDisplay}
                                     <button
                                         onClick={copyJoinCode}
                                         title={lf("Copy Join Code")}
