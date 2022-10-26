@@ -94,6 +94,7 @@ export default function Render() {
             embedId: "multiplayer-sim",
             additionalQueryParameters: selectedPlayerTheme,
             single: true,
+            autofocus: true,
             fullScreen: true,
             /** Enabling debug mode so that we can stop at breakpoints as a 'global pause' **/
             debug: true,
