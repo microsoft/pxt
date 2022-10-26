@@ -28,19 +28,21 @@ export default function Render(props: GamePageProps) {
                     {state.appMode.uiMode === "join" && <JoinLobby />}
                 </div>
             )}
-            {state.gameState?.gameMode === "playing" && (
-                <div className="tw-flex tw-flex-col tw-items-center">
-                    {state.playerSlot && <ArcadeSimulator />}
-                    <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
-                        <ToggleMuteButton />
-                        <JoinCodeLabel />
-                        <div>{lf("Keyboard Controls")}</div>
-                    </div>
-                    <div className="tw-mt-3">
-                        <PresenceBar />
-                    </div>
+            <div
+                className={`tw-flex tw-flex-col tw-items-center ${
+                    state.gameState?.gameMode === "playing" ? "" : "hidden"
+                }`}
+            >
+                <ArcadeSimulator />
+                <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
+                    <ToggleMuteButton />
+                    <JoinCodeLabel />
+                    <div>{lf("Keyboard Controls")}</div>
                 </div>
-            )}
+                <div className="tw-mt-3">
+                    <PresenceBar />
+                </div>
+            </div>
         </>
     );
 }
