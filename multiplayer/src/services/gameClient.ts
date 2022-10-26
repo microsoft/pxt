@@ -22,8 +22,10 @@ import {
     setGameMetadataAsync,
 } from "../epics";
 
-const GAME_HOST = "https://multiplayer.staging.pxt.io";
-//const GAME_HOST = "http://localhost:8082";
+const GAME_HOST_PROD = "https://mp.makecode.com";
+const GAME_HOST_STAGING = "https://multiplayer.staging.pxt.io";
+const GAME_HOST_LOCALHOST = "http://localhost:8082";
+const GAME_HOST = GAME_HOST_STAGING;
 
 const SCREEN_BUFFER_SIZE = 9608;
 const PALETTE_BUFFER_SIZE = 48;
@@ -172,7 +174,6 @@ class GameClient {
     }
 
     public async hostGameAsync(shareCode: string): Promise<GameInfo> {
-        shareCode = shareCode.trim();
         shareCode = encodeURIComponent(shareCode);
 
         const authToken = await authClient.authTokenAsync();
@@ -194,7 +195,6 @@ class GameClient {
     }
 
     public async joinGameAsync(joinCode: string): Promise<GameInfo> {
-        joinCode = joinCode.toUpperCase().trim();
         joinCode = encodeURIComponent(joinCode);
 
         const authToken = await authClient.authTokenAsync();

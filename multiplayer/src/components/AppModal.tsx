@@ -9,6 +9,8 @@ import JoinLobbyModal from "./JoinLobbyModal";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
+    const { deepLinks } = state;
+    const { shareCode, joinCode } = deepLinks;
 
     switch (state.modal) {
         case "sign-in":
@@ -16,8 +18,12 @@ export default function Render() {
                 <SignInModal
                     onClose={() => dispatch(clearModal())}
                     onSignIn={async (provider, rememberMe) => {
-                        await signInAsync(provider.id, rememberMe);
+                        const params: pxt.Map<string> = {};
+                        if (shareCode) params["host"] = shareCode;
+                        if (joinCode) params["join"] = joinCode;
+                        await signInAsync(provider.id, rememberMe, { params });
                     }}
+                    dialogMessages={state.modalOpts.dialogMessages}
                 />
             );
         case "report-abuse":

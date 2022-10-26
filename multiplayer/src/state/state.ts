@@ -11,7 +11,7 @@ import {
 
 export type AppState = {
     appMode: AppMode;
-    signedIn: boolean;
+    authStatus: "signed-in" | "signed-out" | "unknown";
     profile: pxt.auth.UserProfile | undefined;
     gameId: string | undefined;
     playerSlot: number | undefined;
@@ -21,7 +21,12 @@ export type AppState = {
     toasts: ToastWithId[];
     presence: Presence;
     modal: ModalType | undefined;
+    modalOpts: any;
     muted: boolean;
+    deepLinks: {
+        shareCode?: string;
+        joinCode?: string;
+    };
     reactions: {
         [clientId: string]:
             | {
@@ -34,7 +39,7 @@ export type AppState = {
 
 export const initialAppState: AppState = {
     appMode: { ...defaultAppMode },
-    signedIn: false,
+    authStatus: "unknown",
     profile: undefined,
     gameId: undefined,
     playerSlot: undefined,
@@ -44,6 +49,8 @@ export const initialAppState: AppState = {
     toasts: [],
     presence: { ...defaultPresence },
     modal: undefined,
+    modalOpts: undefined,
     muted: false,
+    deepLinks: {},
     reactions: {},
 };
