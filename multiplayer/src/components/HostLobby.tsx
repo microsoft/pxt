@@ -39,7 +39,7 @@ export default function Render() {
         <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-bg-white tw-py-[3rem] tw-px-[7rem] tw-shadow-lg tw-rounded-lg">
             <div>{lf("Invite anyone to join your game instantly.")}</div>
             <div className="tw-mt-1">{lf("Just send them a link.")}</div>
-            <div className="common-input-attached-button tw-m-5 tw-w-full">
+            <div className="common-input-attached-button tw-mt-5 tw-w-full">
                 <Input
                     ariaLabel={lf("join game link")}
                     handleInputRef={inputRef}
@@ -56,14 +56,12 @@ export default function Render() {
                 />
             </div>
             <Button
-                className={"teal"}
+                className={"teal tw-m-5"}
                 label={lf("Start Game")}
                 title={lf("Start Game")}
                 onClick={onStartGameClick}
             />
-            <div className="tw-mt-10">
-                <PresenceBar />
-            </div>
+            <PresenceBar />
         </div>
     );
 }
