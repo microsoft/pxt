@@ -10,7 +10,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 profile: action.profile,
-                signedIn: !!action.profile?.id,
+                authStatus: !!action.profile?.id ? "signed-in" : "signed-out",
             };
         }
         case "SET_UI_MODE": {
@@ -121,12 +121,23 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 modal: action.modalType,
+                modalOpts: action.modalOpts,
             };
         }
         case "CLEAR_MODAL": {
             return {
                 ...state,
                 modal: undefined,
+                modalOpts: undefined,
+            };
+        }
+        case "SET_DEEP_LINKS": {
+            return {
+                ...state,
+                deepLinks: {
+                    shareCode: action.shareCode,
+                    joinCode: !action.shareCode ? action.joinCode : undefined,
+                },
             };
         }
     }

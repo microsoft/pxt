@@ -12,14 +12,17 @@ import {
 import { signOutAsync } from "../epics";
 import { showModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
+import { useAuthDialogMessages } from "../hooks/useAuthDialogMessages";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
-    const { signedIn, profile } = state;
+    const { authStatus, profile, deepLinks } = state;
 
     const hasIdentity = pxt.auth.hasIdentity();
     const appTheme = pxt.appTarget?.appTheme;
     const helpUrl = ""; // TODO multiplayer
+
+    const dialogMessages = useAuthDialogMessages();
 
     const onHelpClicked = () => {
         pxt.tickEvent("mp.settingsmenu.help");
@@ -54,7 +57,7 @@ export default function Render() {
 
     const onSignInClicked = () => {
         pxt.tickEvent(`mp.signin`);
-        dispatch(showModal("sign-in"));
+        dispatch(showModal("sign-in", { dialogMessages }));
     };
 
     const onSignOutClicked = async () => {
@@ -127,7 +130,7 @@ export default function Render() {
     const getUserMenu = () => {
         const items: MenuItem[] = [];
 
-        if (signedIn) {
+        if (authStatus === "signed-in") {
             items.push({
                 id: "signout",
                 title: lf("Sign Out"),
@@ -162,14 +165,15 @@ export default function Render() {
 
         return (
             <div className="tw-h-full">
-                {signedIn ? (
+                {authStatus === "signed-in" && (
                     <MenuDropdown
                         id="profile-dropdown"
                         items={items}
                         label={avatarElem || initialsElem}
                         title={lf("Profile Settings")}
                     />
-                ) : (
+                )}
+                {authStatus === "signed-out" && (
                     <Button
                         className="tw-p-[0.6rem] tw-h-4/5 tw-m-2 tw-mr-4 tw-flex-row-reverse tw-font-segoueUI tw-font-medium tw-align-middle"
                         rightIcon="xicon cloud-user"
