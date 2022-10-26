@@ -1,9 +1,5 @@
 import { faCopy } from "@fortawesome/free-regular-svg-icons";
-import {
-    faCheck,
-    faVolumeHigh,
-    faVolumeMute,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
