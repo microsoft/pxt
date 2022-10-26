@@ -74,9 +74,10 @@ export default function Render(props: GamePageProps) {
                             {state.gameState?.joinCode && (
                                 <div>
                                     {state.gameState?.joinCode &&
-lf("Join Code: {0}", state.gameState?.joinCode)
+                                        lf(
+                                            "Join Code: {0}",
                                             state.gameState?.joinCode
-                                        }`}
+                                        )}
                                     <button
                                         onClick={copyJoinCode}
                                         title={lf("Copy Join Code")}
