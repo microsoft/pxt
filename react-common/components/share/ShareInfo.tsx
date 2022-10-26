@@ -110,7 +110,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     };
 
     const handleMultiplayerShareClick = async () => {
-        // TODO: This won't work on staging (parseScriptId domains check doesn't include staging urls)
+        // TODO multiplayer: This won't work on staging (parseScriptId domains check doesn't include staging urls)
         // but those wouldn't load anyways (as staging multiplayer is currently fetching games from prod links)
         const shareId = pxt.Cloud.parseScriptId(shareData.url);
         if (!shareId)
