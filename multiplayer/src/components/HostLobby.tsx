@@ -34,15 +34,9 @@ export default function Render() {
         setCopySuccessful(false);
     };
 
-    const handleOnClose = async () => {
-        // TODO multiplayer : This is probably not the right behavior long-term if this modal is closed.
-        pxt.tickEvent("mp.hostlobby.closed");
-        await onStartGameClick();
-    };
-
     const joinLink = `${state.gameState?.joinCode}`; // TODO multiplayer : create full link
     return (
-        <Modal title={lf("Invite Players")} onClose={handleOnClose}>
+        <div title={lf("Invite Players")}>
             <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center">
                 <div className="tw-flex tw-flex-col tw-items-center">
                     <div>
@@ -77,6 +71,6 @@ export default function Render() {
                     />
                 )}
             </div>
-        </Modal>
+        </div>
     );
 }

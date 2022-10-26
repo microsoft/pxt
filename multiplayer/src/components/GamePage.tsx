@@ -6,6 +6,8 @@ import { Button } from "react-common/components/controls/Button";
 import { setMute } from "../state/actions";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
 import ArcadeSimulator from "./ArcadeSimulator";
+import HostLobby from "./HostLobby";
+import JoinLobby from "./JoinLobby";
 import Presence from "./Presence";
 import Reactions from "./Reactions";
 
@@ -54,54 +56,64 @@ export default function Render(props: GamePageProps) {
             )}
             {state.gameState?.gameMode && (
                 <div className="tw-flex tw-flex-col tw-items-center">
-                    {state.playerSlot && <ArcadeSimulator />}
-                    <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
-                        <Button
-                            leftIcon={
-                                state.muted
-                                    ? "fas fa-volume-mute"
-                                    : "fas fa-volume-up"
-                            }
-                            title={lf("Toggle Mute")}
-                            className="tw-border-2 tw-border-slate-400 tw-border-solid tw-py-2 tw-pl-2 tw-pr-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
-                            onClick={toggleMute}
-                        />
-                        <div className="tw-justify-self-center">
-                            {state.gameState?.joinCode && (
-                                <div>
-                                    {state.gameState?.joinCode &&
-                                        lf(
-                                            "Join Code: {0}",
-                                            state.gameState?.joinCode
-                                        )}
-                                    <button
-                                        onClick={copyJoinCode}
-                                        title={lf("Copy Join Code")}
-                                    >
-                                        <div className="tw-text-sm tw-ml-1">
-                                            {!copySuccessful && (
-                                                <FontAwesomeIcon
-                                                    icon={faCopy}
-                                                    className="hover:tw-scale-105 tw-mb-[0.1rem]"
-                                                />
-                                            )}
-                                            {copySuccessful && (
-                                                <FontAwesomeIcon
-                                                    icon={faCheck}
-                                                    className="tw-text-green-600 tw-mb-[0.1rem]"
-                                                />
-                                            )}
+                    {state.gameState.gameMode === "lobby" && (
+                        <>
+                            {state.appMode.uiMode === "host" && <HostLobby />}
+                            {state.appMode.uiMode === "join" && <JoinLobby />}
+                        </>
+                    )}
+                    {state.gameState.gameMode === "playing" && (
+                        <>
+                            {state.playerSlot && <ArcadeSimulator />}
+                            <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
+                                <Button
+                                    leftIcon={
+                                        state.muted
+                                            ? "fas fa-volume-mute"
+                                            : "fas fa-volume-up"
+                                    }
+                                    title={lf("Toggle Mute")}
+                                    className="tw-border-2 tw-border-slate-400 tw-border-solid tw-py-2 tw-pl-2 tw-pr-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
+                                    onClick={toggleMute}
+                                />
+                                <div className="tw-justify-self-center">
+                                    {state.gameState?.joinCode && (
+                                        <div>
+                                            {state.gameState?.joinCode &&
+                                                lf(
+                                                    "Join Code: {0}",
+                                                    state.gameState?.joinCode
+                                                )}
+                                            <button
+                                                onClick={copyJoinCode}
+                                                title={lf("Copy Join Code")}
+                                            >
+                                                <div className="tw-text-sm tw-ml-1">
+                                                    {!copySuccessful && (
+                                                        <FontAwesomeIcon
+                                                            icon={faCopy}
+                                                            className="hover:tw-scale-105 tw-mb-[0.1rem]"
+                                                        />
+                                                    )}
+                                                    {copySuccessful && (
+                                                        <FontAwesomeIcon
+                                                            icon={faCheck}
+                                                            className="tw-text-green-600 tw-mb-[0.1rem]"
+                                                        />
+                                                    )}
+                                                </div>
+                                            </button>
                                         </div>
-                                    </button>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                        <div>{lf("Keyboard Controls")}</div>
-                    </div>
-                    <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
-                        <Reactions />
-                        <Presence />
-                    </div>
+                                <div>{lf("Keyboard Controls")}</div>
+                            </div>
+                            <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
+                                <Reactions />
+                                <Presence />
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>

@@ -6,11 +6,11 @@ export default function Render() {
     const { state } = useContext(AppStateContext);
 
     return (
-        <Modal title={lf("Lobby")}>
+        <div>
             <div className="tw-flex tw-flex-col tw-items-center tw-space-y-1 tw-text-lg">
                 <div>{lf("Waiting for players.")}</div>
                 <div>{lf("Your host will start the game soon.")}</div>
             </div>
-        </Modal>
+        </div>
     );
 }
