@@ -324,8 +324,12 @@ function buildStrings(out, rootPaths, recursive) {
     fs.writeFileSync(out, JSON.stringify(strings, null, 2));
 
     console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings; " + out);
-    if (errCnt > 0)
+    if (errCnt > 0) {
         console.log("%d errors", errCnt);
+        if (process.env.PXT_ENV == 'production') {
+            throw "Broken lfs";
+        }
+    }
 
     return Promise.resolve();
 }
