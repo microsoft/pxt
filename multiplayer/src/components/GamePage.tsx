@@ -4,8 +4,7 @@ import ArcadeSimulator from "./ArcadeSimulator";
 import HostLobby from "./HostLobby";
 import JoinCodeLabel from "./JoinCodeLabel";
 import JoinLobby from "./JoinLobby";
-import Presence from "./Presence";
-import Reactions from "./Reactions";
+import PresenceBar from "./PresenceBar";
 import ToggleMuteButton from "./ToggleMuteButton";
 
 export interface GamePageProps {}
@@ -37,9 +36,8 @@ export default function Render(props: GamePageProps) {
                         <JoinCodeLabel />
                         <div>{lf("Keyboard Controls")}</div>
                     </div>
-                    <div className="tw-flex tw-flex-row tw-space-x-2 tw-items-center tw-align-middle tw-justify-center tw-mt-3">
-                        <Reactions />
-                        <Presence />
+                    <div className="tw-mt-3">
+                        <PresenceBar />
                     </div>
                 </div>
             )}
