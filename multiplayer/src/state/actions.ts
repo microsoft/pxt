@@ -107,6 +107,11 @@ type SetDeepLinks = ActionBase & {
     joinCode: string | undefined;
 };
 
+type SetMute = ActionBase & {
+    type: "SET_MUTE";
+    value: boolean;
+};
+
 /**
  * Union of all actions
  */
@@ -128,7 +133,8 @@ export type Action =
     | ClearReaction
     | ShowModal
     | ClearModal
-    | SetDeepLinks;
+    | SetDeepLinks
+    | SetMute;
 
 /**
  * Action creators
@@ -246,4 +252,9 @@ export const setDeepLinks = (
     type: "SET_DEEP_LINKS",
     shareCode,
     joinCode,
+});
+
+export const setMute = (value: boolean): SetMute => ({
+    type: "SET_MUTE",
+    value,
 });

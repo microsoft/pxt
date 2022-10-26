@@ -98,6 +98,7 @@ export default function Render() {
             fullScreen: true,
             /** Enabling debug mode so that we can stop at breakpoints as a 'global pause' **/
             debug: true,
+            mute: state.muted,
         };
 
         if (isHost) {

@@ -22,6 +22,7 @@ export type AppState = {
     presence: Presence;
     modal: ModalType | undefined;
     modalOpts: any;
+    muted: boolean;
     deepLinks: {
         shareCode?: string;
         joinCode?: string;
@@ -49,6 +50,7 @@ export const initialAppState: AppState = {
     presence: { ...defaultPresence },
     modal: undefined,
     modalOpts: undefined,
+    muted: false,
     deepLinks: {},
     reactions: {},
 };
