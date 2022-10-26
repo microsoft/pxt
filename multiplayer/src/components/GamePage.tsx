@@ -74,7 +74,7 @@ export default function Render(props: GamePageProps) {
                             {state.gameState?.joinCode && (
                                 <div>
                                     {state.gameState?.joinCode &&
-                                        `${lf("Join Code")}: ${
+lf("Join Code: {0}", state.gameState?.joinCode)
                                             state.gameState?.joinCode
                                         }`}
                                     <button
