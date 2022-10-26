@@ -36,41 +36,33 @@ export default function Render() {
 
     const joinLink = `${state.gameState?.joinCode}`; // TODO multiplayer : create full link
     return (
-        <div title={lf("Invite Players")}>
-            <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center">
-                <div className="tw-flex tw-flex-col tw-items-center">
-                    <div>
-                        {lf("Invite anyone to join your game instantly.")}
-                    </div>
-                    <div className="tw-mt-1">
-                        {lf("Just send them a link.")}
-                    </div>
-                    <div className="common-input-attached-button tw-m-5 tw-w-full">
-                        <Input
-                            ariaLabel={lf("join game link")}
-                            handleInputRef={inputRef}
-                            initialValue={joinLink}
-                            readOnly={true}
-                        />
-                        <Button
-                            className={copySuccessful ? "green" : "primary"}
-                            title={lf("Copy link")}
-                            label={copySuccessful ? lf("Copied!") : lf("Copy")}
-                            leftIcon="fas fa-link"
-                            onClick={handleCopyClick}
-                            onBlur={handleCopyBlur}
-                        />
-                    </div>
-                </div>
-                {state.gameState?.gameMode === "lobby" && (
-                    <Button
-                        className={"teal"}
-                        label={lf("Start Game")}
-                        title={lf("Start Game")}
-                        onClick={onStartGameClick}
-                    />
-                )}
+        <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-bg-white tw-py-[3rem] tw-px-[7rem] tw-shadow-lg tw-rounded-lg">
+            <div>{lf("Invite anyone to join your game instantly.")}</div>
+            <div className="tw-mt-1">{lf("Just send them a link.")}</div>
+            <div className="common-input-attached-button tw-m-5 tw-w-full">
+                <Input
+                    ariaLabel={lf("join game link")}
+                    handleInputRef={inputRef}
+                    initialValue={joinLink}
+                    readOnly={true}
+                />
+                <Button
+                    className={copySuccessful ? "green" : "primary"}
+                    title={lf("Copy link")}
+                    label={copySuccessful ? lf("Copied!") : lf("Copy")}
+                    leftIcon="fas fa-link"
+                    onClick={handleCopyClick}
+                    onBlur={handleCopyBlur}
+                />
             </div>
+            {state.gameState?.gameMode === "lobby" && (
+                <Button
+                    className={"teal"}
+                    label={lf("Start Game")}
+                    title={lf("Start Game")}
+                    onClick={onStartGameClick}
+                />
+            )}
         </div>
     );
 }

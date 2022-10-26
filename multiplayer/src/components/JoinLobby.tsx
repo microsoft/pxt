@@ -7,7 +7,7 @@ export default function Render() {
 
     return (
         <div>
-            <div className="tw-flex tw-flex-col tw-items-center tw-space-y-1 tw-text-lg">
+            <div className="tw-flex tw-flex-col tw-items-center tw-text-lg tw-space-y-4 tw-bg-white tw-py-[3rem] tw-px-[7rem] tw-shadow-lg tw-rounded-lg">
                 <div>{lf("Waiting for players.")}</div>
                 <div>{lf("Your host will start the game soon.")}</div>
             </div>
