@@ -37,8 +37,7 @@ export default function Render() {
     const joinLink = `${state.gameState?.joinCode}`; // TODO multiplayer : create full link
     return (
         <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-bg-white tw-py-[3rem] tw-px-[7rem] tw-shadow-lg tw-rounded-lg">
-            <div>{lf("Invite anyone to join your game instantly.")}</div>
-            <div className="tw-mt-1">{lf("Just send them a link.")}</div>
+            <div className="tw-font-segoueUI tw-mt-3 tw-text-lg tw-text-center tw-text-neutral-700">{lf("Invite anyone to join your game instantly. Just send them a link!")}</div>
             <div className="common-input-attached-button tw-mt-5 tw-w-full">
                 <Input
                     ariaLabel={lf("join game link")}
