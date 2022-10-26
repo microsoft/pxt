@@ -19,6 +19,7 @@ export default function Render() {
     };
 
     const handleCopyClick = () => {
+        pxt.tickEvent("mp.hostlobby.copyjoinlink");
         if (pxt.BrowserUtils.isIpcRenderer()) {
             if (inputRef.current) {
                 setCopySuccessful(
