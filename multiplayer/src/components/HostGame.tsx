@@ -42,6 +42,11 @@ export default function Render() {
                         handleInputRef={inputRef}
                         preserveValueOnBlur={true}
                         onEnterKey={onHostGameClick}
+                        initialValue={
+                            pxt.BrowserUtils.isLocalHostDev()
+                                ? "https://makecode.com/_VvPX5u9bx7fx"
+                                : undefined
+                        }
                     />
                     <Button
                         className={"teal"}
