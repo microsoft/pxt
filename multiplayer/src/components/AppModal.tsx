@@ -4,8 +4,6 @@ import { SignInModal } from "react-common/components/profile/SignInModal";
 import { signInAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
-import HostLobbyModal from "./HostLobbyModal";
-import JoinLobbyModal from "./JoinLobbyModal";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -35,10 +33,6 @@ export default function Render() {
                     Report Abuse Placeholder {/*TODO multiplayer*/}
                 </Modal>
             );
-        case "host-lobby":
-            return <HostLobbyModal />;
-        case "join-lobby":
-            return <JoinLobbyModal />;
         default:
             return null;
     }
