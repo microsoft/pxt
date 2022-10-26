@@ -1,10 +1,10 @@
 import { useContext, useRef, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
-import { Modal } from "react-common/components/controls/Modal";
 import { startGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
+import PresenceBar from "./PresenceBar";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
@@ -55,14 +55,15 @@ export default function Render() {
                     onBlur={handleCopyBlur}
                 />
             </div>
-            {state.gameState?.gameMode === "lobby" && (
-                <Button
-                    className={"teal"}
-                    label={lf("Start Game")}
-                    title={lf("Start Game")}
-                    onClick={onStartGameClick}
-                />
-            )}
+            <Button
+                className={"teal"}
+                label={lf("Start Game")}
+                title={lf("Start Game")}
+                onClick={onStartGameClick}
+            />
+            <div className="tw-mt-10">
+                <PresenceBar />
+            </div>
         </div>
     );
 }
