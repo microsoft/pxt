@@ -4,8 +4,6 @@ import { useState } from "react";
 import ReactionsIcon from "./icons/ReactionsIcon";
 import { Button } from "react-common/components/controls/Button";
 
-// fill="#4D4D4D"
-
 export default function Render() {
     const [showReactionPicker, setShowReactionPicker] = useState(false);
 
