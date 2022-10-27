@@ -32,9 +32,9 @@ export default function Render() {
         <div className="tw-justify-self-center">
             {state.gameState?.joinCode && (
                 <div>
-                    {lf("Join Code: {0}", state.gameState?.joinCode)}
+                    {state.gameState?.joinCode}
                     <button onClick={copyJoinCode} title={lf("Copy Join Code")}>
-                        <div className="tw-text-sm tw-ml-1">
+                        <div className="tw-ml-1">
                             {!copySuccessful && (
                                 <FontAwesomeIcon
                                     icon={faCopy}
