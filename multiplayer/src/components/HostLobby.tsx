@@ -47,7 +47,7 @@ export default function Render() {
                 </div>
             </div>
             <Button
-                className={"primary tw-mt-5 tw-mb-7"}
+                className={"primary tw-mt-5 tw-mb-7 tw-font-sans"}
                 label={lf("Start Game")}
                 title={lf("Start Game")}
                 onClick={onStartGameClick}
