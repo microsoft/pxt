@@ -4,13 +4,13 @@ import { Input } from "react-common/components/controls/Input";
 import { startGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
+import JoinCodeLabel from "./JoinCodeLabel";
 import PresenceBar from "./PresenceBar";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
     const [copySuccessful, setCopySuccessful] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
-    const inviteString = lf("Invite anyone to join your game instantly. Just send them a link!");
 
     const onStartGameClick = async () => {
         pxt.tickEvent("mp.hostlobby.startgame");
@@ -36,30 +36,20 @@ export default function Render() {
         setCopySuccessful(false);
     };
 
+    const joinLinkBaseUrl = "aka.ms/a9";
+    const inviteString = lf("Go to {0} and enter code", joinLinkBaseUrl);
+
     const joinLink = `${state.gameState?.joinCode}`; // TODO multiplayer : create full link
     return (
         <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-bg-white tw-py-[3rem] tw-px-[7rem] tw-shadow-lg tw-rounded-lg">
             <div className="tw-mt-3 tw-text-lg tw-text-center tw-text-neutral-700">
                 {inviteString}
             </div>
-            <div className="common-input-attached-button tw-mt-5 tw-w-full">
-                <Input
-                    ariaLabel={lf("join game link")}
-                    handleInputRef={inputRef}
-                    initialValue={joinLink}
-                    readOnly={true}
-                />
-                <Button
-                    className={copySuccessful ? "green" : "primary"}
-                    title={lf("Copy link")}
-                    label={copySuccessful ? lf("Copied!") : lf("Copy")}
-                    leftIcon="fas fa-link"
-                    onClick={handleCopyClick}
-                    onBlur={handleCopyBlur}
-                />
+            <div className="tw-text-4xl tw-mt-4">
+                <JoinCodeLabel />
             </div>
             <Button
-                className={"teal tw-m-5"}
+                className={"primary tw-mt-5 tw-mb-7"}
                 label={lf("Start Game")}
                 title={lf("Start Game")}
                 onClick={onStartGameClick}

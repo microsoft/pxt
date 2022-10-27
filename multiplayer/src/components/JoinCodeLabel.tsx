@@ -28,29 +28,27 @@ export default function Render() {
         }
     }, [copySuccessful]);
 
-    return (
-        <div className="tw-justify-self-center">
-            {state.gameState?.joinCode && (
-                <div>
-                    {state.gameState?.joinCode}
-                    <button onClick={copyJoinCode} title={lf("Copy Join Code")}>
-                        <div className="tw-ml-1">
-                            {!copySuccessful && (
-                                <FontAwesomeIcon
-                                    icon={faCopy}
-                                    className="hover:tw-scale-110 tw-ease-linear tw-duration-[50ms] tw-mb-[0.1rem]"
-                                />
-                            )}
-                            {copySuccessful && (
-                                <FontAwesomeIcon
-                                    icon={faCheck}
-                                    className="tw-text-green-600 tw-mb-[0.1rem]"
-                                />
-                            )}
-                        </div>
-                    </button>
+    const joinCode = state.gameState?.joinCode;
+    const displayJoinCode = joinCode?.slice(0, 3) + " " + joinCode?.slice(3);
+    return joinCode ? (
+        <div>
+            {displayJoinCode}
+            <button onClick={copyJoinCode} title={lf("Copy Join Code")}>
+                <div className="tw-ml-1 tw-text-[80%]">
+                    {!copySuccessful && (
+                        <FontAwesomeIcon
+                            icon={faCopy}
+                            className="hover:tw-scale-110 tw-ease-linear tw-duration-[50ms] tw-mb-[0.1rem]"
+                        />
+                    )}
+                    {copySuccessful && (
+                        <FontAwesomeIcon
+                            icon={faCheck}
+                            className="tw-text-green-600 tw-mb-[0.1rem]"
+                        />
+                    )}
                 </div>
-            )}
+            </button>
         </div>
-    );
+    ) : null;
 }
