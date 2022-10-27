@@ -27,6 +27,7 @@ export default function Render() {
     const inviteStringSegments = inviteString.split("{0}");
     const shortLink = SHORT_LINK();
 
+    // Insert a space to make the join code easier to read.
     const displayJoinCode = joinCode?.slice(0, 3) + " " + joinCode?.slice(3);
     const joinDeepLink = makeJoinLink(joinCode);
 
