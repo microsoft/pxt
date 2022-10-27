@@ -1,5 +1,6 @@
 import { useContext, useRef, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
+import { Link } from "react-common/components/controls/Link";
 import { startGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
@@ -36,13 +37,13 @@ export default function Render() {
             <div className="tw-mt-3 tw-text-lg tw-text-center tw-text-neutral-700">
                 {inviteStringSegments[0]}
                 {
-                    <a
+                    <Link
                         href={shortLink}
                         target="_blank"
                         className="tw-text-primary-color tw-font-bold hover:tw-text-orange-300"
                     >
                         {shortLink}
-                    </a>
+                    </Link>
                 }
                 {inviteStringSegments[1]}
             </div>
