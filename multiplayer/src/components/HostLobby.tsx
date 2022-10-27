@@ -22,14 +22,19 @@ export default function Render() {
         return <Loading />;
     }
 
+    
+    // To get a link in the middle of the invite string, we actually preserve the {0} and insert the link manually as an html element later.
+    const inviteString = lf("Go to {0} and enter code", "{0}");
+    const inviteStringSegments = inviteString.split("{0}");
+    const shortLink = SHORT_LINK();
+
     const displayJoinCode = joinCode?.slice(0, 3) + " " + joinCode?.slice(3);
-    const inviteString = lf("Go to {0} and enter code", SHORT_LINK());
     const joinDeepLink = makeJoinLink(joinCode);
 
     return (
         <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-bg-white tw-py-[3rem] tw-px-[7rem] tw-shadow-lg tw-rounded-lg">
             <div className="tw-mt-3 tw-text-lg tw-text-center tw-text-neutral-700">
-                {inviteString}
+                {inviteStringSegments[0]}{<a href={shortLink} target="_blank" className="tw-text-primary-color tw-font-bold hover:tw-text-orange-300">{shortLink}</a>}{inviteStringSegments[1]}
             </div>
             <div className="tw-text-4xl tw-mt-4 tw-flex tw-flex-row tw-items-center">
                 {displayJoinCode}
