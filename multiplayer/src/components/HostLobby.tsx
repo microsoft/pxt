@@ -1,17 +1,15 @@
 import { useContext, useRef, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
-import { Input } from "react-common/components/controls/Input";
 import { startGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
+import { makeJoinLink, SHORT_LINK } from "../util";
 import CopyButton from "./CopyButton";
 import Loading from "./Loading";
 import PresenceBar from "./PresenceBar";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
-    const [copySuccessful, setCopySuccessful] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
 
     const onStartGameClick = async () => {
         pxt.tickEvent("mp.hostlobby.startgame");
@@ -25,10 +23,8 @@ export default function Render() {
     }
 
     const displayJoinCode = joinCode?.slice(0, 3) + " " + joinCode?.slice(3);
-
-    const joinLinkBaseUrl = "aka.ms/a9";
-    const inviteString = lf("Go to {0} and enter code", joinLinkBaseUrl);
-    const fullJoinLink = `${joinLinkBaseUrl}?join=${joinCode}`; // TODO multiplayer : create full link
+    const inviteString = lf("Go to {0} and enter code", SHORT_LINK());
+    const joinDeepLink = makeJoinLink(joinCode);
 
     return (
         <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-bg-white tw-py-[3rem] tw-px-[7rem] tw-shadow-lg tw-rounded-lg">
@@ -39,7 +35,7 @@ export default function Render() {
                 {displayJoinCode}
                 <div className="tw-ml-2 tw-text-[75%]">
                     <CopyButton
-                        copyValue={joinCode}
+                        copyValue={joinDeepLink}
                         title={lf("Copy join link")}
                         eventName="mp.hostlobby.copyjoinlink"
                     />

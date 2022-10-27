@@ -1,13 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../state/AppStateContext";
+import { makeJoinLink } from "../util";
 import CopyButton from "./CopyButton";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const [copySuccessful, setCopySuccessful] = useState(false);
-    const copyTimeoutMs = 2500;
 
     const joinCode = state.gameState?.joinCode;
+    const joinDeepLink = joinCode ? makeJoinLink(joinCode) : "";
     return (
         <div>
             {joinCode && (
@@ -16,9 +16,9 @@ export default function Render() {
                     <div className="tw-mx-1">{joinCode}</div>
                     <div className="tw-text-[75%]">
                         <CopyButton
-                            copyValue={joinCode}
-                            title={lf("Copy join code")}
-                            eventName="mp.copyjoincode"
+                            copyValue={joinDeepLink}
+                            title={lf("Copy join link")}
+                            eventName="mp.copyjoinlink"
                         />
                     </div>
                 </div>
