@@ -156,7 +156,7 @@ export default function Render() {
         <div
             id="sim-container"
             ref={simContainerRef}
-            className={"tw-h-[calc(100vh-16rem)] tw-w-[calc(100vw-6rem)]"}
+            className={"tw-h-[calc(100vh-16rem)] tw-w-screen md:tw-w-[calc(100vw-6rem)]"}
         />
     );
 }
