@@ -1,54 +1,26 @@
-import { faCopy } from "@fortawesome/free-regular-svg-icons";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../state/AppStateContext";
+import { makeJoinLink } from "../util";
+import CopyButton from "./CopyButton";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const [copySuccessful, setCopySuccessful] = useState(false);
-    const copyTimeoutMs = 2500;
 
-    const copyJoinCode = async () => {
-        pxt.tickEvent("mp.copyjoincode");
-        if (state.gameState?.joinCode) {
-            navigator.clipboard.writeText(state.gameState?.joinCode);
-            setCopySuccessful(true);
-        }
-    };
-
-    useEffect(() => {
-        if (copySuccessful) {
-            let resetCopyTimer = setTimeout(() => {
-                setCopySuccessful(false);
-            }, copyTimeoutMs);
-            return () => {
-                clearTimeout(resetCopyTimer);
-            };
-        }
-    }, [copySuccessful]);
-
+    const joinCode = state.gameState?.joinCode;
+    const joinDeepLink = joinCode ? makeJoinLink(joinCode) : "";
     return (
-        <div className="tw-justify-self-center">
-            {state.gameState?.joinCode && (
-                <div>
-                    {lf("Join Code: {0}", state.gameState?.joinCode)}
-                    <button onClick={copyJoinCode} title={lf("Copy Join Code")}>
-                        <div className="tw-text-sm tw-ml-1">
-                            {!copySuccessful && (
-                                <FontAwesomeIcon
-                                    icon={faCopy}
-                                    className="hover:tw-scale-110 tw-ease-linear tw-duration-[50ms] tw-mb-[0.1rem]"
-                                />
-                            )}
-                            {copySuccessful && (
-                                <FontAwesomeIcon
-                                    icon={faCheck}
-                                    className="tw-text-green-600 tw-mb-[0.1rem]"
-                                />
-                            )}
-                        </div>
-                    </button>
+        <div>
+            {joinCode && (
+                <div className="tw-flex tw-flex-row tw-items-center tw-align-middle">
+                    <div className="tw-font-bold">{lf("Code:")}</div>
+                    <div className="tw-mx-1">{joinCode}</div>
+                    <div className="tw-text-[75%]">
+                        <CopyButton
+                            copyValue={joinDeepLink}
+                            title={lf("Copy join link")}
+                            eventName="mp.copyjoinlink"
+                        />
+                    </div>
                 </div>
             )}
         </div>
