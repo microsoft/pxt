@@ -66,7 +66,8 @@ function Toast(props: ToastWithId) {
     return (
         <div
             className={
-                "tw-flex tw-flex-col tw-mr-0 md:tw-mr-4 tw-border-none tw-rounded tw-shadow-md tw-overflow-hidden tw-pointer-events-auto " +
+                `tw-flex tw-flex-col tw-mr-0 md:tw-mr-4 tw-border-none tw-rounded
+                tw-shadow-md tw-overflow-hidden tw-pointer-events-none ` +
                 [
                     props.textColorClass || "text-black",
                     props.backgroundColorClass || backgroundColors[props.type],
@@ -97,7 +98,7 @@ function Toast(props: ToastWithId) {
                 </div>
                 {!props.hideDismissBtn && !props.showSpinner && (
                     <div
-                        className="tw-flex tw-flex-grow tw-justify-end"
+                        className="tw-flex tw-flex-grow tw-justify-end tw-pointer-events-auto"
                         onClick={handleDismissClicked}
                     >
                         <div>

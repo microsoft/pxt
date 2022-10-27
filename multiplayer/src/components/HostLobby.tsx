@@ -10,7 +10,9 @@ export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
     const [copySuccessful, setCopySuccessful] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
-    const inviteString = lf("Invite anyone to join your game instantly. Just send them a link!");
+    const inviteString = lf(
+        "Invite anyone to join your game instantly. Just send them a link!"
+    );
 
     const onStartGameClick = async () => {
         pxt.tickEvent("mp.hostlobby.startgame");
@@ -39,7 +41,7 @@ export default function Render() {
     const joinLink = `${state.gameState?.joinCode}`; // TODO multiplayer : create full link
     return (
         <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-bg-white tw-py-[3rem] tw-px-[7rem] tw-shadow-lg tw-rounded-lg">
-            <div className="tw-font-segoueUI tw-mt-3 tw-text-lg tw-text-center tw-text-neutral-700">
+            <div className="tw-mt-3 tw-text-lg tw-text-center tw-text-neutral-700">
                 {inviteString}
             </div>
             <div className="common-input-attached-button tw-mt-5 tw-w-full">

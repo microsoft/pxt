@@ -17,7 +17,7 @@ export default function Render(props: GamePageProps) {
     return (
         <>
             {netMode === "connecting" && (
-                <div className="tw-text-lg tw-font-bold tw-mt-5">
+                <div className="tw-text-xl tw-text-white tw-mt-5">
                     {lf("Connecting...")}
                 </div>
             )}

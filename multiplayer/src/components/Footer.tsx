@@ -6,12 +6,12 @@ export default function Render() {
         targetTheme?.privacyUrl ||
         targetTheme?.copyrightText ? (
         <div
-            className="ui horizontal small divided link list tw-text-center"
+            className="ui horizontal small link list tw-text-center !tw-pb-2"
             role="contentinfo"
         >
             {targetTheme.organizationUrl && targetTheme.organization ? (
                 <a
-                    className="item !tw-text-black"
+                    className="item !tw-text-xs"
                     target="_blank"
                     rel="noopener noreferrer"
                     href={targetTheme.organizationUrl}
@@ -22,7 +22,7 @@ export default function Render() {
             {targetTheme.termsOfUseUrl ? (
                 <a
                     target="_blank"
-                    className="item !tw-text-black"
+                    className="item !tw-text-xs"
                     href={targetTheme.termsOfUseUrl}
                     rel="noopener noreferrer"
                 >
@@ -32,7 +32,7 @@ export default function Render() {
             {targetTheme.privacyUrl ? (
                 <a
                     target="_blank"
-                    className="item !tw-text-black"
+                    className="item !tw-text-xs"
                     href={targetTheme.privacyUrl}
                     rel="noopener noreferrer"
                 >
@@ -40,7 +40,7 @@ export default function Render() {
                 </a>
             ) : undefined}
             {targetTheme.copyrightText ? (
-                <div className="ui item copyright !tw-text-black">
+                <div className="ui item copyright !tw-text-xs">
                     {targetTheme.copyrightText}
                 </div>
             ) : undefined}

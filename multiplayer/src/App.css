@@ -14,7 +14,7 @@
   --invert-active-color: #fff;
   --invert-hover-text-color: #850A6B;
 
-  --body-background-color: #F9F9F9;
+  --body-background-color: #FFF;
   --default-card-color: #CCC;
   --card-hover-color: #BFBFBF;
   --card-border-color: #e9eef2;
@@ -25,17 +25,9 @@
   --header-height: 4rem;
   --header-padding-top: 1rem;
 
-  --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-  --feature-text-font: Segoe UI,Tahoma,Geneva,Verdana;
-
-  --frame-loader-zindex: 30;
+  --body-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  
   --above-frame-zindex: 50;
-  --modal-dimmer-zindex: 100;
-
-  --fullscreen-modal-zindex: 90;
-
-  --graph-backround-zindex: 10;
-  --above-graph-zindex: 20;
 
   --high-contrast-text: var(--white);
   --high-contrast-background: var(--black);
@@ -47,13 +39,13 @@
 @import "./arcade.css";
 
 body {
-  position: relative;
   margin: 0;
+  padding: 0;
   font-family: var(--body-font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--body-background-color);
-  overflow: hidden;
+  background: linear-gradient(180deg, rgba(24,47,64,1) 0%, rgba(255,255,255,1) 73%);
 }
 
 code {
@@ -73,4 +65,65 @@ code {
 .app-container {
   height: 100%;
   width: 100%;
+}
+
+@keyframes fly-up {
+  0% {
+    transform: translateY(0);
+    scale: 1.25;
+    opacity: 0;
+  }
+  7% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-200px);
+    scale: 2.5;
+    opacity: 0;
+  }
+}
+
+@keyframes fly-left {
+  to {
+    transform: translateX(-200px);
+  }
+}
+
+@keyframes fly-right {
+  to {
+    transform: translateX(200px);
+  }
+}
+
+@keyframes rotate-left {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-30deg);
+  }
+  75% {
+    transform: rotate(30deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes rotate-right {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(30deg);
+  }
+  75% {
+    transform: rotate(-30deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }

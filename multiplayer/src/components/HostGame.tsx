@@ -31,12 +31,12 @@ export default function Render() {
     };
 
     return (
-        <div className="tw-mt-2 tw-h-max tw-flex-row">
-            <div className="tw-text-2xl tw-font-bold">{"Hosting a Game"}</div>
+        <div className="tw-mt-2 tw-h-max tw-flex-row tw-text-white">
+            <div className="tw-text-2xl tw-font-bold">{"Start a Game"}</div>
             {netMode === "init" && (
                 <div className="tw-flex tw-flex-row tw-gap-1 tw-items-end">
                     <Input
-                        label={lf("Game URL or Share Code")}
+                        label={lf("Enter Game URL or Share Code")}
                         title={lf("Game URL or Share Code")}
                         autoComplete={false}
                         handleInputRef={inputRef}
@@ -49,7 +49,7 @@ export default function Render() {
                         }
                     />
                     <Button
-                        className={"teal"}
+                        className={"teal inverted"}
                         label={lf("Host")}
                         title={lf("Host")}
                         onClick={onHostGameClick}

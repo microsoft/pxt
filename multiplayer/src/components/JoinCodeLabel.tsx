@@ -7,7 +7,7 @@ import { AppStateContext } from "../state/AppStateContext";
 export default function Render() {
     const { state } = useContext(AppStateContext);
     const [copySuccessful, setCopySuccessful] = useState(false);
-    const copyTimeoutMs = 1000;
+    const copyTimeoutMs = 2500;
 
     const copyJoinCode = async () => {
         pxt.tickEvent("mp.copyjoincode");
@@ -38,7 +38,7 @@ export default function Render() {
                             {!copySuccessful && (
                                 <FontAwesomeIcon
                                     icon={faCopy}
-                                    className="hover:tw-scale-105 tw-mb-[0.1rem]"
+                                    className="hover:tw-scale-110 tw-ease-linear tw-duration-[50ms] tw-mb-[0.1rem]"
                                 />
                             )}
                             {copySuccessful && (

@@ -12,13 +12,12 @@ export const defaultAppMode: AppMode = {
     netMode: "init",
 };
 
-export type ClientRole = "host" | "guest";
+export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
 
 export type GameInfo = {
     joinCode?: string;
     joinTicket?: string;
-    affinityCookie?: string;
     gameId?: string;
     slot?: number;
 };
@@ -86,7 +85,6 @@ export type UserInfo = {
     id: string;
     slot: number;
     role: ClientRole;
-    name: string;
 };
 
 export type Presence = {

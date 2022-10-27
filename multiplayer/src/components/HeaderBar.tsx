@@ -180,7 +180,7 @@ export default function Render() {
                 )}
                 {authStatus === "signed-out" && (
                     <Button
-                        className="tw-p-[0.6rem] tw-h-4/5 tw-m-2 tw-mr-4 tw-flex-row-reverse tw-font-segoueUI tw-font-medium tw-align-middle"
+                        className="tw-p-[0.6rem] tw-h-4/5 tw-m-2 tw-mr-4 tw-flex-row-reverse tw-font-medium tw-align-middle"
                         rightIcon="xicon cloud-user"
                         title={lf("Sign In")}
                         label={lf("Sign In")}
@@ -214,10 +214,14 @@ export default function Render() {
     const settingItems = getSettingItems();
     return (
         <MenuBar
-            className="tw-h-[var(--header-height)] tw-bg-tertiary-color tw-text-white tw-flex tw-flex-grow-0 tw-flex-shrink-0 tw-align-middle tw-justify-center tw-items-center tw-z-[var(--above-frame-zindex)] tw-text-[2.2rem]"
+            className={`tw-h-[var(--header-height)] tw-bg-tertiary-color tw-text-white
+            tw-flex tw-flex-grow-0 tw-flex-shrink-0 tw-align-middle tw-justify-center
+            tw-items-center tw-z-[var(--above-frame-zindex)] tw-text-[2.2rem]
+            tw-drop-shadow-xl
+            `}
             ariaLabel={lf("Header")}
         >
-            <div className="tw-select-none tw-text-lg tw-font-bold tw-font-segoueUI tw-flex tw-align-middle tw-p-[var(--header-padding-top)]">
+            <div className="tw-select-none tw-text-lg tw-font-bold tw-flex tw-align-middle tw-p-[var(--header-padding-top)]">
                 {getOrganizationLogo(appTheme)}
                 {getTargetLogo(appTheme)}
             </div>
@@ -232,7 +236,7 @@ export default function Render() {
                     />
                 </div>
             )}
-            <div className="tw-select-none tw-text-lg tw-font-bold tw-font-segoueUI tw-flex tw-items-center tw-pr-[var(--header-padding-top)] tw-h-full">
+            <div className="tw-select-none tw-text-lg tw-font-bold tw-flex tw-items-center tw-pr-[var(--header-padding-top)] tw-h-full">
                 {settingItems?.length > 0 && (
                     <MenuDropdown
                         className="h-full"

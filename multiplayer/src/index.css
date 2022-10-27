@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --slot-0-color: 77, 77, 77;
+    --slot-1-color: 255, 0, 0;
+    --slot-2-color: 0, 56, 255;
+    --slot-3-color: 77, 166, 77;
+    --slot-4-color: 228, 204, 0;
+}

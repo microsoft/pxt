@@ -43,6 +43,7 @@ class GameClient {
     sock: Socket | undefined;
     heartbeatTimer: NodeJS.Timeout | undefined;
     screen: Buffer | undefined;
+    clientRole: ClientRole | undefined;
 
     constructor() {
         this.recvMessageWithJoinTimeout =
@@ -246,7 +247,9 @@ class GameClient {
         console.log(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
-        const { gameMode, shareCode } = msg;
+        const { gameMode, shareCode, role } = msg;
+
+        this.clientRole = role;
 
         if (await setGameMetadataAsync(shareCode)) {
             await setGameModeAsync(gameMode, msg.slot);
@@ -272,6 +275,9 @@ class GameClient {
         msg: Protocol.PlayerJoinedMessage
     ) {
         console.log("Server sent player joined");
+        if (this.clientRole === "host") {
+            await this.sendCurrentScreenAsync(); // Workaround for server sometimes not sending the current screen to new players. Needs debugging.
+        }
         await playerJoinedAsync(msg.clientId);
     }
 
@@ -371,6 +377,17 @@ class GameClient {
             const buffer = Protocol.Binary.packCompressedScreenMessage(
                 zippedData,
                 !firstScreen // If first screen, send as non-delta
+            );
+            this.sendMessage(buffer);
+        }
+    }
+
+    private async sendCurrentScreenAsync() {
+        if (this.screen) {
+            const zippedData = await gzipAsync(this.screen);
+            const buffer = Protocol.Binary.packCompressedScreenMessage(
+                zippedData,
+                false // not a delta
             );
             this.sendMessage(buffer);
         }

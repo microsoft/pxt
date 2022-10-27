@@ -11,6 +11,7 @@ export interface ButtonViewProps extends ControlProps {
     href?: string;
     target?: string;
     tabIndex?: number;
+    style?: React.CSSProperties;
 
     /** Miscellaneous aria pass-through props */
     ariaControls?: string;
@@ -32,6 +33,7 @@ export const Button = (props: ButtonProps) => {
     const {
         id,
         className,
+        style,
         ariaLabel,
         ariaHidden,
         ariaDescribedBy,
@@ -73,6 +75,7 @@ export const Button = (props: ButtonProps) => {
         <button
             id={id}
             className={classes}
+            style={style}
             title={title}
             ref={buttonRef}
             onClick={!disabled ? clickHandler : undefined}

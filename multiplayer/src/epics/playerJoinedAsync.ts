@@ -8,7 +8,7 @@ export async function playerJoinedAsync(clientId: string) {
             dispatch(
                 showToast({
                     type: "info",
-                    text: lf("{0} joined the game.", user.name),
+                    text: lf("Player {0} joined the game.", user.slot),
                     timeoutMs: 5000,
                 })
             );

@@ -6,8 +6,6 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import { AppStateProvider } from "./state/AppStateContext";
-import { isLocal } from "./util";
-import * as authClient from "./services/authClient";
 
 const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 

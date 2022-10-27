@@ -18,7 +18,7 @@ export default function Render() {
         <Button
             leftIcon={state.muted ? "fas fa-volume-mute" : "fas fa-volume-up"}
             title={lf("Toggle Mute")}
-            className="tw-border-2 tw-border-slate-400 tw-border-solid tw-py-2 tw-pl-2 tw-pr-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300"
+            className="tw-border-2 tw-border-slate-400 tw-border-solid tw-py-2 tw-pl-2 tw-pr-1 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300 tw-ease-linear tw-duration-[50ms]"
             onClick={toggleMute}
         />
     );
