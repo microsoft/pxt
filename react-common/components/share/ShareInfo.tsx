@@ -109,6 +109,19 @@ export const ShareInfo = (props: ShareInfoProps) => {
         }
     };
 
+    const handleMultiplayerShareClick = async () => {
+        // TODO multiplayer: This won't work on staging (parseScriptId domains check doesn't include staging urls)
+        // but those wouldn't load anyways (as staging multiplayer is currently fetching games from prod links)
+        const shareId = pxt.Cloud.parseScriptId(shareData.url);
+        if (!shareId)
+            return;
+
+        const domain = pxt.BrowserUtils.isLocalHostDev() ? "http://localhost:3000" : "";
+        const multiplayerHostUrl = `${domain}${pxt.webConfig.relprefix}multiplayer?host=${shareId}`;
+
+        window.open(multiplayerHostUrl, "_blank");
+    }
+
     const embedOptions = [{
         name: "code",
         label: lf("Code"),
@@ -263,6 +276,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         ariaLabel={lf("Show device share options")}
                                         leftIcon={"icon share"}
                                         onClick={handleDeviceShareClick}
+                                    />}
+                                    {pxt.appTarget?.appTheme?.multiplayerShareButton && <Button className="square-button multiplayer-host"
+                                        title={lf("Start a multiplayer lobby")}
+                                        ariaLabel={lf("Start a multiplayer lobby")}
+                                        leftIcon={"fas fa-people-arrows"}
+                                        onClick={handleMultiplayerShareClick}
                                     />}
                                 </div>
                                 <Button
