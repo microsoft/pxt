@@ -22,12 +22,12 @@ export default function Render() {
     };
 
     return (
-        <div className="tw-mt-2">
-            <div className="tw-text-2xl tw-font-bold">{"Joining a Game"}</div>
+        <div className="tw-mt-2 tw-text-white">
+            <div className="tw-text-2xl tw-font-bold">{"Join a Game"}</div>
             {netMode === "init" && (
                 <div className="tw-flex tw-flex-row tw-gap-1 tw-items-end">
                     <Input
-                        label={lf("Join Code")}
+                        label={lf("Enter the Join Code")}
                         title={lf("Join Code")}
                         autoComplete={false}
                         handleInputRef={inputRef}
@@ -35,7 +35,7 @@ export default function Render() {
                         onEnterKey={onJoinGameClick}
                     />
                     <Button
-                        className={"teal"}
+                        className={"teal inverted"}
                         label={lf("Join")}
                         title={lf("Join")}
                         onClick={onJoinGameClick}

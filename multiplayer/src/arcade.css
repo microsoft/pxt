@@ -10,19 +10,7 @@ body {
     --invert-active-color: #fff;
     --invert-hover-text-color: #E77038;
 
-    --body-background-color: #FDF3E0;
+    --body-background-color: #FFFFFF;
     --card-hover-color: var(--default-card-color);
-}
 
-.arcade .banner {
-    background: linear-gradient(to right, #9FEFFD, #FD99C2);
-}
-
-.arcade .modal,
-.arcade .dropdown-menu {
-    background-color: var(--white);
-}
-
-.arcade .carousel-arrow {
-    color: var(--primary-color)
 }

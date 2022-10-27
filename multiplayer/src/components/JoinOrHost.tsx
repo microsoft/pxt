@@ -9,11 +9,13 @@ export default function Render() {
     return (
         <div>
             <Button
+                className="teal inverted"
                 label={lf("Host Game")}
                 title={lf("Host Game")}
                 onClick={() => dispatch(setUiMode("host"))}
             />
             <Button
+                className="teal inverted"
                 label={lf("Join Game")}
                 title={lf("Join Game")}
                 onClick={() => dispatch(setUiMode("join"))}
