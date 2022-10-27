@@ -8,14 +8,6 @@ export default function Render() {
     const { state } = useContext(AppStateContext);
     const { presence } = state;
 
-    const slotRefs = [
-        useRef<Element>(), // slot 0 unused
-        useRef<Element>(), // player 1
-        useRef<Element>(), // player 2
-        useRef<Element>(), // player 3
-        useRef<Element>(), // player 4
-    ];
-
     const players = useMemo(() => {
         return presence?.users && presence.users.filter(user => user.slot < 5);
     }, [presence]);
@@ -33,10 +25,6 @@ export default function Render() {
                         label={
                             <div
                                 key={slot}
-                                ref={ref =>
-                                    slotRefs?.[slot] &&
-                                    (slotRefs[slot].current = ref ?? undefined)
-                                }
                                 className={`tw-flex tw-select-none tw-text-black
                                 tw-font-bold tw-rounded-full tw-h-11 tw-border-2
                                 tw-w-11 tw-justify-center tw-items-center
@@ -51,10 +39,6 @@ export default function Render() {
                                         <UserIcon slot={slot} />
                                         <ReactionEmitter
                                             clientId={user.id}
-                                            parentRef={
-                                                slotRefs?.[slot] &&
-                                                slotRefs[slot].current
-                                            }
                                         />
                                     </>
                                 )}

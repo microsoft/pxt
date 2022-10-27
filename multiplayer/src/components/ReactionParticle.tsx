@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { Reactions, Particle } from "../types/reactions";
 
 export default function Render(props: { particle: Particle }) {

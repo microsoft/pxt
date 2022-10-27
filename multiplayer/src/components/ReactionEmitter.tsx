@@ -5,7 +5,6 @@ import { Particle } from "../types/reactions";
 
 export default function Render(props: {
     clientId: string;
-    parentRef: Element | undefined;
 }) {
     const { state } = useContext(AppStateContext);
     const { clientId } = props;
