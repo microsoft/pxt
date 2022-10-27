@@ -10,9 +10,7 @@ export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
     const [copySuccessful, setCopySuccessful] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
-    const inviteString = lf(
-        "Invite anyone to join your game instantly. Just send them a link!"
-    );
+    const inviteString = lf("Invite anyone to join your game instantly. Just send them a link!");
 
     const onStartGameClick = async () => {
         pxt.tickEvent("mp.hostlobby.startgame");

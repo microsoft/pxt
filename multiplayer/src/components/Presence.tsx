@@ -62,8 +62,8 @@ export default function Render() {
                         }
                         title={
                             user
-                                ? lf(`Player {0}`, slot)
-                                : lf(`Player {0} (empty)`, slot)
+                                ? lf("Player {0}", slot)
+                                : lf("Player {0} (empty)", slot)
                         }
                         onClick={() => {}}
                     />
