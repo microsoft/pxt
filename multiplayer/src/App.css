@@ -67,7 +67,7 @@ code {
   width: 100%;
 }
 
-@keyframes fly-up {
+@keyframes reaction-fly-up {
   0% {
     transform: translateY(0);
     scale: 1.25;
@@ -86,19 +86,19 @@ code {
   }
 }
 
-@keyframes fly-left {
+@keyframes reaction-fly-left {
   to {
     transform: translateX(-200px);
   }
 }
 
-@keyframes fly-right {
+@keyframes reaction-fly-right {
   to {
     transform: translateX(200px);
   }
 }
 
-@keyframes rotate-left {
+@keyframes reaction-rotate-left {
   0% {
     transform: rotate(0deg);
   }
@@ -113,7 +113,7 @@ code {
   }
 }
 
-@keyframes rotate-right {
+@keyframes reaction-rotate-right {
   0% {
     transform: rotate(0deg);
   }

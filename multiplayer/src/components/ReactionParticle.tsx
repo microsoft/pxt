@@ -13,8 +13,14 @@ export default function Render(props: { particle: Particle }) {
         return {
             flyUpDuration,
             rotationDuration: 3 + Math.random() * 0.5,
-            rotationAnim: Math.random() > 0.5 ? "rotate-left" : "rotate-right",
-            horzAnim: Math.random() > 0.5 ? "fly-left" : "fly-right",
+            rotationAnim:
+                Math.random() > 0.5
+                    ? "reaction-rotate-left"
+                    : "reaction-rotate-right",
+            horzAnim:
+                Math.random() > 0.5
+                    ? "reaction-fly-left"
+                    : "reaction-fly-right",
             flyHorzDuration,
         };
     }, []);
@@ -23,7 +29,7 @@ export default function Render(props: { particle: Particle }) {
         <div
             className="tw-absolute tw-select-none tw-pointer-events-none"
             style={{
-                animation: `fly-up linear ${parms.flyUpDuration}s forwards,
+                animation: `reaction-fly-up linear ${parms.flyUpDuration}s forwards,
                 ${parms.horzAnim} linear ${parms.flyHorzDuration}s forwards`,
                 zIndex: 100,
             }}
