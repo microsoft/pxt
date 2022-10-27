@@ -1,5 +1,39 @@
 import zlib from "zlib";
 
+export const SHORT_LINKS = {
+    PROD: "https://aka.ms/a9",
+    PROD_BETA: "https://aka.ms/a9b",
+    STAGING: "https://aka.ms/a9s",
+    STAGING_BETA: "https://aka.ms/a9sb",
+    LOCAL: "http://localhost:3000",
+};
+
+export const SHORT_LINK = () => {
+    if (pxt.BrowserUtils.isLocalHostDev()) {
+        return SHORT_LINKS.LOCAL;
+    } else if (window.location.hostname === "arcade.makecode.com") {
+        if (window.location.pathname.startsWith("/beta")) {
+            return SHORT_LINKS.PROD_BETA;
+        } else {
+            return SHORT_LINKS.PROD;
+        }
+    } else {
+        if (window.location.pathname.startsWith("/beta")) {
+            return SHORT_LINKS.STAGING_BETA;
+        } else {
+            return SHORT_LINKS.STAGING;
+        }
+    }
+};
+
+export function makeHostLink(shareUrlOrCode: string) {
+    return `${SHORT_LINK()}?host=${encodeURIComponent(shareUrlOrCode)}`;
+}
+
+export function makeJoinLink(joinCode: string) {
+    return `${SHORT_LINK()}?join=${encodeURIComponent(joinCode)}`;
+}
+
 export function isLocal() {
     return window.location.hostname === "localhost";
 }
