@@ -20,7 +20,7 @@ export default function Render() {
 
     const joinCode = state.gameState?.joinCode;
     if (!joinCode) {
-        return <Loading />;
+        return null;
     }
 
     // To get a link in the middle of the invite string, we actually preserve the {0} and insert the link manually as an html element later.
