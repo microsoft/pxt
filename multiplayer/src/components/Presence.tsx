@@ -21,6 +21,7 @@ export default function Render() {
                 const user = players.find(u => u.slot === slot);
                 return (
                     <Button
+                        key={slot}
                         className={`tw-rounded-full !tw-m-0 !tw-p-0`}
                         label={
                             <div
