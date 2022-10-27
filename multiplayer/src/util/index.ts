@@ -46,7 +46,7 @@ export function cleanupJoinCode(
     joinCode: string | undefined
 ): string | undefined {
     if (!joinCode) return undefined;
-    joinCode = joinCode.replaceAll(' ', '');
+    joinCode = joinCode.replaceAll(" ", "");
     if (joinCode.length !== 6) return undefined;
     joinCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (joinCode.length !== 6) return undefined;

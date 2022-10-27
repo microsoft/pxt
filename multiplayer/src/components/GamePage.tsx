@@ -36,10 +36,7 @@ export default function Render(props: GamePageProps) {
                 <ArcadeSimulator />
                 <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
                     <ToggleMuteButton />
-                    <div className="tw-flex tw-flex-row">
-                        <div className="tw-pr-[0.3rem] tw-font-bold">{lf("Code: ")}</div>
-                        <JoinCodeLabel />
-                    </div>
+                    <JoinCodeLabel />
                     <div>{lf("Keyboard Controls")}</div>
                 </div>
                 <div className="tw-mt-3">
