@@ -94,9 +94,7 @@ export default function Render() {
                                             handleInputRef={setShareCodeRef}
                                             preserveValueOnBlur={true}
                                             onEnterKey={onHostGameClick}
-                                            placeholder={lf(
-                                                "Enter share code or link"
-                                            )}
+                                            placeholder={lf("Enter share code or link")}
                                         />
                                     </div>
                                     <div>
@@ -112,9 +110,7 @@ export default function Render() {
                                             href="/docs/multiplayer#host-game"
                                             target="_blank"
                                         >
-                                            {lf(
-                                                "How do I get a share code or link?"
-                                            )}
+                                            {lf("How do I get a share code or link?")}
                                         </Link>
                                     </div>
                                 </div>
