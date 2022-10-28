@@ -11,8 +11,7 @@ export interface GamePageProps {}
 
 export default function Render(props: GamePageProps) {
     const { state } = useContext(AppStateContext);
-    const { appMode } = state;
-    const { netMode } = appMode;
+    const { netMode, clientRole } = state;
 
     return (
         <>
@@ -24,8 +23,8 @@ export default function Render(props: GamePageProps) {
 
             {state.gameState?.gameMode === "lobby" && (
                 <div className="tw-flex tw-flex-col tw-items-center tw-justify-center tw-w-full tw-h-full">
-                    {state.appMode.uiMode === "host" && <HostLobby />}
-                    {state.appMode.uiMode === "join" && <JoinLobby />}
+                    {clientRole === "host" && <HostLobby />}
+                    {clientRole === "guest" && <JoinLobby />}
                 </div>
             )}
             <div

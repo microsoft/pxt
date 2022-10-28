@@ -79,6 +79,12 @@ export function gunzipAsync(data: zlib.InputType): Promise<Buffer> {
 export function cleanupJoinCode(
     joinCode: string | undefined
 ): string | undefined {
+    try {
+        const url = new URL(joinCode || "");
+        if (url.searchParams.has("join")) {
+            joinCode = url.searchParams.get("join") ?? undefined;
+        }
+    } catch { }
     if (!joinCode) return undefined;
     joinCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (joinCode.length !== 6) return undefined;

@@ -13,25 +13,16 @@ export default function reducer(state: AppState, action: Action): AppState {
                 authStatus: !!action.profile?.id ? "signed-in" : "signed-out",
             };
         }
-        case "SET_UI_MODE": {
+        case "SET_CLIENT_ROLE": {
             return {
                 ...state,
-                gameState: undefined,
-                presence: { ...defaultPresence },
-                appMode: {
-                    ...state.appMode,
-                    uiMode: action.mode,
-                    netMode: "init",
-                },
+                clientRole: action.clientRole,
             };
         }
         case "SET_NET_MODE": {
             return {
                 ...state,
-                appMode: {
-                    ...state.appMode,
-                    netMode: action.mode,
-                },
+                netMode: action.mode,
             };
         }
         case "SET_GAME_INFO": {

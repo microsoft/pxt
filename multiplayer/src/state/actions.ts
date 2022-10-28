@@ -4,11 +4,11 @@ import {
     GameMode,
     Toast,
     ToastWithId,
-    UiMode,
     NetMode,
     Presence,
     ModalType,
     GameMetadata,
+    ClientRole,
 } from "../types";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -20,14 +20,14 @@ type ActionBase = {
  * Actions
  */
 
-type SetUserProfileAction = ActionBase & {
+type SetUserProfile = ActionBase & {
     type: "SET_USER_PROFILE";
     profile?: pxt.auth.UserProfile;
 };
 
-type SetUiMode = ActionBase & {
-    type: "SET_UI_MODE";
-    mode: UiMode;
+type SetClientRole = ActionBase & {
+    type: "SET_CLIENT_ROLE";
+    clientRole: ClientRole | undefined;
 };
 
 type SetNetMode = ActionBase & {
@@ -117,8 +117,8 @@ type SetMute = ActionBase & {
  */
 
 export type Action =
-    | SetUserProfileAction
-    | SetUiMode
+    | SetUserProfile
+    | SetClientRole
     | SetNetMode
     | SetGameInfo
     | SetGameMetadata
@@ -142,19 +142,21 @@ export type Action =
 
 export const setUserProfile = (
     profile?: pxt.auth.UserProfile
-): SetUserProfileAction => ({
+): SetUserProfile => ({
     type: "SET_USER_PROFILE",
     profile,
 });
 
-export const clearUserProfile = (): SetUserProfileAction => ({
+export const clearUserProfile = (): SetUserProfile => ({
     type: "SET_USER_PROFILE",
     profile: undefined,
 });
 
-export const setUiMode = (mode: UiMode): SetUiMode => ({
-    type: "SET_UI_MODE",
-    mode,
+export const setClientRole = (
+    clientRole: ClientRole | undefined
+): SetClientRole => ({
+    type: "SET_CLIENT_ROLE",
+    clientRole,
 });
 
 export const setNetMode = (mode: NetMode): SetNetMode => ({

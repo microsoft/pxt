@@ -2,21 +2,28 @@ import * as gameClient from "../services/gameClient";
 import { dispatch } from "../state";
 import {
     dismissToast,
-    setUiMode,
     setNetMode,
     setGameInfo,
     showToast,
     setGameId,
+    setClientRole,
 } from "../state/actions";
 
-export async function hostGameAsync(shareCode: string) {
+export async function hostGameAsync(shareCode: string | undefined) {
+    shareCode = pxt.Cloud.parseScriptId(shareCode ?? "");
+    if (!shareCode) {
+        return dispatch(showToast({
+            type: "error",
+            text: lf("Invalid share code or link. Please try again."),
+            timeoutMs: 5000,
+        }));
+    }
     const connectingToast = showToast({
         type: "info",
         text: lf("Connecting..."),
         showSpinner: true,
     });
     try {
-        dispatch(setUiMode("host"));
         dispatch(setNetMode("connecting"));
         dispatch(connectingToast);
 
@@ -31,6 +38,7 @@ export async function hostGameAsync(shareCode: string) {
             })
         );
 
+        dispatch(setClientRole("host"));
         dispatch(setGameInfo(gameInfo));
         dispatch(setGameId(shareCode));
         dispatch(setNetMode("connected"));

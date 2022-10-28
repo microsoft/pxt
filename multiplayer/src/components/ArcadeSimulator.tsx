@@ -9,8 +9,7 @@ let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo> | undefined;
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const { gameId, playerSlot, gameState, appMode } = state;
-    const { uiMode } = appMode;
+    const { gameId, playerSlot, gameState, clientRole } = state;
     const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
@@ -57,9 +56,9 @@ export default function Render() {
 
             switch (type) {
                 case "status":
-                    // Once the simulator is ready, if this isn't the host, send the initial screen
+                    // Once the simulator is ready, if this player is a guest, pass initial screen to simulator
                     const { state: simState } = data;
-                    if (simState === "running" && uiMode === "join") {
+                    if (simState === "running" && clientRole === "guest") {
                         const { image, palette } =
                             gameClient.getCurrentScreen();
                         if (image) {
@@ -87,7 +86,7 @@ export default function Render() {
 
         window.addEventListener("message", msgHandler);
         return () => window.removeEventListener("message", msgHandler);
-    }, [uiMode]);
+    }, [clientRole]);
 
     const getOpts = () => {
         const opts: pxt.runner.SimulateOptions = {

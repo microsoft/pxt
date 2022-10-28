@@ -1,9 +1,10 @@
 import { dispatch } from "../state";
-import { setUiMode, showToast } from "../state/actions";
+import { showToast, setClientRole, setNetMode } from "../state/actions";
 
 export function gameDisconnected() {
     try {
-        dispatch(setUiMode("home"));
+        dispatch(setClientRole(undefined));
+        dispatch(setNetMode("init"));
         dispatch(
             showToast({
                 type: "error",
