@@ -10,6 +10,9 @@ import {
 
 export async function setGameModeAsync(gameMode: GameMode, slot?: number) {
     try {
+        if (slot) {
+            dispatch(setPlayerSlot(slot));
+        }
         dispatch(setGameMode(gameMode));
         if (gameMode === "playing") {
             dispatch(clearModal());
@@ -20,9 +23,6 @@ export async function setGameModeAsync(gameMode: GameMode, slot?: number) {
                     timeoutMs: 5000,
                 })
             );
-        }
-        if (slot) {
-            dispatch(setPlayerSlot(slot));
         }
     } catch (e) {
     } finally {
