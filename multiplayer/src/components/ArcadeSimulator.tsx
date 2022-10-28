@@ -13,10 +13,10 @@ export default function Render() {
     const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
-        "background-color=ED3636&button-stroke=8d2525",
-        "background-color=4E4EE9&button-stroke=3333a1",
-        "background-color=FFDF1A&button-stroke=c1a916",
-        "background-color=4EB94E&button-stroke=245d24",
+        "background-color=ED3636&button-stroke=8D2525",
+        "background-color=4E4EE9&button-stroke=3333A1",
+        "background-color=FF9A14&button-stroke=B0701A",
+        "background-color=4EB94E&button-stroke=245D24",
     ];
     const selectedPlayerTheme = playerThemes[(playerSlot || 0) - 1];
     const isHost = playerSlot == 1;
