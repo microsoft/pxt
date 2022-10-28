@@ -12,11 +12,13 @@ import { cleanupJoinCode } from "../util";
 export async function joinGameAsync(joinCode: string | undefined) {
     joinCode = cleanupJoinCode(joinCode);
     if (!joinCode) {
-        return dispatch(showToast({
-            type: "error",
-            text: lf("Invalid join code. Please try again."),
-            timeoutMs: 5000,
-        }));
+        return dispatch(
+            showToast({
+                type: "error",
+                text: lf("Invalid join code. Please try again."),
+                timeoutMs: 5000,
+            })
+        );
     }
     const connectingToast = showToast({
         type: "info",

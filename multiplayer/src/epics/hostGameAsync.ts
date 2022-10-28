@@ -12,11 +12,13 @@ import {
 export async function hostGameAsync(shareCode: string | undefined) {
     shareCode = pxt.Cloud.parseScriptId(shareCode ?? "");
     if (!shareCode) {
-        return dispatch(showToast({
-            type: "error",
-            text: lf("Invalid share code or link. Please try again."),
-            timeoutMs: 5000,
-        }));
+        return dispatch(
+            showToast({
+                type: "error",
+                text: lf("Invalid share code or link. Please try again."),
+                timeoutMs: 5000,
+            })
+        );
     }
     const connectingToast = showToast({
         type: "info",
