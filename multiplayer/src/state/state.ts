@@ -1,18 +1,19 @@
 import {
-    AppMode,
-    defaultAppMode,
+    NetMode,
     GameState,
     ToastWithId,
     Presence,
     defaultPresence,
     ModalType,
     GameMetadata,
+    ClientRole,
 } from "../types";
 
 export type AppState = {
-    appMode: AppMode;
+    netMode: NetMode;
     authStatus: "signed-in" | "signed-out" | "unknown";
     profile: pxt.auth.UserProfile | undefined;
+    clientRole: ClientRole | undefined;
     gameId: string | undefined;
     playerSlot: number | undefined;
     joinCode: string | undefined;
@@ -38,9 +39,10 @@ export type AppState = {
 };
 
 export const initialAppState: AppState = {
-    appMode: { ...defaultAppMode },
+    netMode: "init",
     authStatus: "unknown",
     profile: undefined,
+    clientRole: undefined,
     gameId: undefined,
     playerSlot: undefined,
     joinCode: undefined,

@@ -3,9 +3,7 @@ import { AppStateContext } from "../state/AppStateContext";
 import ReactionParticle from "./ReactionParticle";
 import { Particle } from "../types/reactions";
 
-export default function Render(props: {
-    clientId: string;
-}) {
+export default function Render(props: { clientId: string }) {
     const { state } = useContext(AppStateContext);
     const { clientId } = props;
     const reaction = state.reactions[clientId];

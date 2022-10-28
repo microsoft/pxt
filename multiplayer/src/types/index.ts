@@ -1,16 +1,5 @@
-export type UiMode = "init" | "home" | "host" | "join";
 export type NetMode = "init" | "connecting" | "connected";
 export type ModalType = "sign-in" | "report-abuse";
-
-export type AppMode = {
-    uiMode: UiMode;
-    netMode: NetMode;
-};
-
-export const defaultAppMode: AppMode = {
-    uiMode: "init",
-    netMode: "init",
-};
 
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";

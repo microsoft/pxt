@@ -38,9 +38,7 @@ export default function Render() {
                                 {user && (
                                     <>
                                         <UserIcon slot={slot} />
-                                        <ReactionEmitter
-                                            clientId={user.id}
-                                        />
+                                        <ReactionEmitter clientId={user.id} />
                                     </>
                                 )}
                             </div>

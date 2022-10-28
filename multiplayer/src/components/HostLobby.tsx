@@ -24,7 +24,7 @@ export default function Render() {
     }
 
     // To get a link in the middle of the invite string, we actually preserve the {0} and insert the link manually as an html element later.
-    const inviteString = lf("Go to {0} and enter code", "{0}");
+    const inviteString = lf("Have your friend go to {0} and enter code", "{0}");
     const inviteStringSegments = inviteString.split("{0}");
     const shortLink = SHORT_LINK();
 
@@ -48,8 +48,10 @@ export default function Render() {
                 {inviteStringSegments[1]}
             </div>
             <div className="tw-text-4xl tw-mt-4 tw-flex tw-flex-row tw-items-center">
-                {displayJoinCode}
-                <div className="tw-ml-2 tw-text-[75%]">
+                <span className="tw-font-bold tw-text-neutral-700">
+                    {displayJoinCode}
+                </span>
+                <div className="tw-ml-2 tw-text-[50%]">
                     <CopyButton
                         copyValue={joinDeepLink}
                         title={lf("Copy join link")}
