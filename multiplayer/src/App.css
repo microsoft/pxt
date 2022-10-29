@@ -2,41 +2,12 @@
   --black: #000;
   --white: #fff;
 
-  --primary-color: #AA278F;
-  --secondary-color: #EAC6EB;
-  --tertiary-color: #850A6B;
-
-  --hover-color: var(--secondary-color);
-  --active-color: var(--tertiary-color);
-  --inactive-color: var(--secondary-color);
-  --inactive-hover-color: #6e6e6e;
-
-  --invert-active-color: #fff;
-  --invert-hover-text-color: #850A6B;
-
-  --body-background-color: #FFF;
-  --default-card-color: #CCC;
-  --card-hover-color: #BFBFBF;
-  --card-border-color: #e9eef2;
-  --dropdown-hover-color: #CCC;
-  --inverted-text-color: var(--white);
-  --subtitle-text-color: #6e6e6e;
-
-  --header-height: 4rem;
-  --header-padding-top: 1rem;
+  --primary-color: #6d28d9;
+  --secondary-color: #6d28d9;
+  --tertiary-color: #6d28d9;
 
   --body-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  
-  --above-frame-zindex: 50;
-
-  --high-contrast-text: var(--white);
-  --high-contrast-background: var(--black);
-  --high-contrast-highlight: #ffff00;
-  --high-contrast-focus-outline: 2px solid var(--high-contrast-highlight);
-  --high-contrast-hyperlink: #807FFF;
 }
-
-@import "./arcade.css";
 
 body {
   margin: 0;
@@ -44,7 +15,6 @@ body {
   font-family: var(--body-font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--body-background-color);
   background: linear-gradient(180deg, rgba(24,47,64,1) 0%, rgba(255,255,255,1) 73%);
 }
 
@@ -53,7 +23,22 @@ code {
 }
 
 .common-button {
-  font-family: var(--body-font-family) !important;
+  font-family: var(--body-font-family);
+}
+.common-button.primary {
+  background: var(--primary-color);
+  color: #fff;
+  border: 1px solid var(--primary-color);
+}
+.common-button.secondary {
+  background: var(--secondary-color);
+  color: #fff;
+  border: 1px solid var(--secondary-color);
+}
+.common-button.tertiary {
+  background: var(--tertiary-color);
+  color: #fff;
+  border: 1px solid var(--tertiary-color);
 }
 
 #root {
