@@ -6,6 +6,7 @@ import HostLobby from "./HostLobby";
 import JoinCodeLabel from "./JoinCodeLabel";
 import JoinLobby from "./JoinLobby";
 import PresenceBar from "./PresenceBar";
+import RemixGameButton from "./RemixGameButton";
 import ToggleMuteButton from "./ToggleMuteButton";
 
 export interface GamePageProps {}
@@ -39,7 +40,10 @@ export default function Render(props: GamePageProps) {
             >
                 <ArcadeSimulator />
                 <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
-                    <ToggleMuteButton />
+                    <div>
+                        <ToggleMuteButton />
+                        <RemixGameButton />
+                    </div>
                     <JoinCodeLabel />
                     <div>{lf("Keyboard Controls")}</div>
                 </div>
