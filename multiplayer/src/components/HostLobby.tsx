@@ -5,6 +5,7 @@ import { startGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
 import { makeJoinLink, SHORT_LINK } from "../util";
+import { QRCodeSVG } from "qrcode.react";
 import BetaTag from "./BetaTag";
 import CopyButton from "./CopyButton";
 import PresenceBar from "./PresenceBar";
@@ -63,8 +64,12 @@ export default function Render() {
                         />
                     </div>
                 </div>
+                <div className="tw-flex tw-flex-col tw-items-center tw-mt-5 tw-text-sm tw-gap-1">
+                    <QRCodeSVG value={joinDeepLink} size={120} />
+                    {lf("or scan with phone")}
+                </div>
                 <Button
-                    className={"primary tw-mt-5 tw-mb-7 tw-font-sans"}
+                    className={"primary tw-mt-5 tw-mb-7 tw-font-sans tw-mr-0"}
                     label={lf("Start Game")}
                     title={lf("Start Game")}
                     onClick={onStartGameClick}
