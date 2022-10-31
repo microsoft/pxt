@@ -471,11 +471,16 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         let gallery: GalleryTile[];
 
         // FIXME (riknoll): don't use blocksinfo, use tilemap project instead
-        if (options) {
+        if (options?.blocksInfo) {
             this.blocksInfo = options.blocksInfo;
 
             gallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"])
                 .map(g => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
+        }
+
+        if (options?.galleryTiles) {
+            gallery = options.galleryTiles
+                .map((g: any) => ({ bitmap: g.bitmap, tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
         }
 
         this.ref.openAsset(asset, gallery);
