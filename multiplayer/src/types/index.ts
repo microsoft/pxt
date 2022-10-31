@@ -49,6 +49,33 @@ export function stringToButtonState(state: string): ButtonState | undefined {
     }
 }
 
+export enum AudioInstruction {
+    MuteAllChannels = 0,
+    PlayInstruction = 1,
+}
+
+export function audioInstructionToString(
+    state: AudioInstruction
+): string | undefined {
+    switch (state) {
+        case AudioInstruction.MuteAllChannels:
+            return "muteallchannels";
+        case AudioInstruction.PlayInstruction:
+            return "playinstructions";
+    }
+}
+
+export function stringToAudioInstruction(
+    state: string
+): AudioInstruction | undefined {
+    switch (state) {
+        case "muteallchannels":
+            return AudioInstruction.MuteAllChannels;
+        case "playinstructions":
+            return AudioInstruction.PlayInstruction;
+    }
+}
+
 export type ToastType = "success" | "info" | "warning" | "error";
 
 export type Toast = {
@@ -108,5 +135,11 @@ export namespace SimMultiplayer {
         state: "Pressed" | "Released" | "Held";
     };
 
-    export type Message = ImageMessage | InputMessage;
+    export type AudioMessage = MessageBase & {
+        content: "Audio";
+        instruction: "playinstructions" | "muteallchannels";
+        soundbuf?: Uint8Array;
+    };
+
+    export type Message = ImageMessage | AudioMessage | InputMessage;
 }

@@ -3,6 +3,7 @@ import { SmartBuffer } from "smart-buffer";
 import * as authClient from "./authClient";
 import { xorInPlace, gzipAsync, gunzipAsync } from "../util";
 import {
+    audioInstructionToString,
     ButtonState,
     buttonStateToString,
     GameInfo,
@@ -10,6 +11,7 @@ import {
     ClientRole,
     GameMode,
     Presence,
+    stringToAudioInstruction,
     stringToButtonState,
 } from "../types";
 import {
@@ -25,7 +27,7 @@ import {
 const GAME_HOST_PROD = "https://mp.makecode.com";
 const GAME_HOST_STAGING = "https://multiplayer.staging.pxt.io";
 const GAME_HOST_LOCALHOST = "http://localhost:8082";
-const GAME_HOST_DEV = GAME_HOST_STAGING;
+const GAME_HOST_DEV = GAME_HOST_LOCALHOST;
 const GAME_HOST = (() => {
     if (pxt.BrowserUtils.isLocalHostDev()) {
         return GAME_HOST_DEV;
@@ -88,6 +90,8 @@ class GameClient {
                         );
                     case Protocol.Binary.MessageType.Input:
                         return await this.recvInputMessageAsync(reader);
+                    case Protocol.Binary.MessageType.Audio:
+                        return await this.recvAudioMessageAsync(reader);
                 }
             } else if (typeof payload === "string") {
                 //-------------------------------------------------
@@ -327,6 +331,17 @@ class GameClient {
         });
     }
 
+    private async recvAudioMessageAsync(reader: SmartBuffer) {
+        const { instruction, soundbuf } =
+            Protocol.Binary.unpackAudioMessage(reader);
+        this.postToSimFrame(<SimMultiplayer.AudioMessage>{
+            type: "multiplayer",
+            content: "Audio",
+            instruction: audioInstructionToString(instruction),
+            soundbuf: soundbuf,
+        });
+    }
+
     private postToSimFrame(msg: SimMultiplayer.Message) {
         pxt.runner.postSimMessage(msg);
     }
@@ -338,6 +353,17 @@ class GameClient {
         const buffer = Protocol.Binary.packInputMessage(
             button,
             stringToButtonState(state)!
+        );
+        this.sendMessage(buffer);
+    }
+
+    public async sendAudioAsync(
+        instruction: "playinstructions" | "muteallchannels",
+        soundbuf?: Uint8Array
+    ) {
+        const buffer = Protocol.Binary.packAudioMessage(
+            stringToAudioInstruction(instruction)!,
+            Buffer.from(soundbuf!)
         );
         this.sendMessage(buffer);
     }
@@ -458,6 +484,13 @@ export async function sendInputAsync(
     await gameClient?.sendInputAsync(button, state);
 }
 
+export async function sendAudioAsync(
+    instruction: "playinstructions" | "muteallchannels",
+    soundbuf?: Uint8Array
+) {
+    await gameClient?.sendAudioAsync(instruction, soundbuf);
+}
+
 export async function sendScreenUpdateAsync(
     img: Uint8Array,
     palette: Uint8Array
@@ -517,6 +550,14 @@ namespace Protocol {
         };
     };
 
+    export type SoundMessage = MessageBase & {
+        type: "sound";
+        data: {
+            instruction: "playinstructions" | "muteallchannels";
+            soundbuf?: Uint8Array;
+        };
+    };
+
     export type ReactionMessage = MessageBase & {
         type: "reaction";
         index: number;
@@ -552,18 +593,20 @@ namespace Protocol {
         | StartGameMessage
         | InputMessage
         | ScreenMessage
+        | SoundMessage
         | ReactionMessage
         | PresenceMessage
         | JoinedMessage
         | PlayerJoinedMessage
         | PlayerLeftMessage;
 
-    export type SimMessage = ScreenMessage | InputMessage;
+    export type SimMessage = ScreenMessage | SoundMessage | InputMessage;
 
     export namespace Binary {
         export enum MessageType {
             Input = 1,
             CompressedScreen = 3,
+            Audio = 4,
         }
 
         // Input
@@ -614,6 +657,34 @@ namespace Protocol {
             return {
                 zippedData,
                 isDelta,
+            };
+        }
+
+        // Audio
+        export function packAudioMessage(
+            instruction: number,
+            soundbuf?: Buffer
+        ): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.Audio);
+            writer.writeUInt8(instruction);
+            if (soundbuf) {
+                writer.writeBuffer(soundbuf);
+            }
+            return writer.toBuffer();
+        }
+        export function unpackAudioMessage(reader: SmartBuffer): {
+            instruction: number;
+            soundbuf?: Buffer;
+        } {
+            // `type` field has already been read
+            const instruction = reader.readUInt8();
+            const soundbuf = reader.remaining()
+                ? reader.readBuffer()
+                : undefined;
+            return {
+                instruction,
+                soundbuf,
             };
         }
     }
