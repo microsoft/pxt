@@ -55,6 +55,7 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "CLEAR_GAME_INFO": {
             return {
                 ...state,
+                playerSlot: undefined,
                 gameState: undefined,
                 gameId: undefined,
                 gameMetadata: undefined,
