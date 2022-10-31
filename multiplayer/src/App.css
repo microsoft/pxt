@@ -2,10 +2,13 @@
   --black: #000;
   --white: #fff;
 
-  --primary-color: #6d28d9;
-  --secondary-color: #6d28d9;
-  --tertiary-color: #6d28d9;
+  --primary-color: #E77038;
+  --secondary-color: #ffeb9a;
+  --tertiary-color: #E77038;
 
+  --header-height: 4rem;
+  --header-padding-top: 1rem;
+  
   --body-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
