@@ -214,9 +214,9 @@ export default function Render() {
     const settingItems = getSettingItems();
     return (
         <MenuBar
-            className={`tw-h-[var(--header-height)] tw-bg-tertiary-color tw-text-white
+            className={`tw-h-[var(--header-height)] tw-text-white
             tw-flex tw-flex-grow-0 tw-flex-shrink-0 tw-align-middle tw-justify-center
-            tw-items-center tw-z-[var(--above-frame-zindex)] tw-text-[2.2rem]
+            tw-items-center tw-z-[50] tw-text-[2.2rem]
             tw-drop-shadow-xl
             `}
             ariaLabel={lf("Header")}
