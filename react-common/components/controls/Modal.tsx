@@ -26,6 +26,7 @@ export interface ModalProps extends ContainerProps {
     onClose?: () => void;
     fullscreen?: boolean;
     parentElement?: Element;
+    hideDismissButton?: boolean;
 }
 
 export const Modal = (props: ModalProps) => {
@@ -42,7 +43,8 @@ export const Modal = (props: ModalProps) => {
         actions,
         onClose,
         parentElement,
-        fullscreen
+        fullscreen,
+        hideDismissButton,
     } = props;
 
     const closeClickHandler = (e?: React.MouseEvent<HTMLButtonElement>) => {
@@ -64,7 +66,7 @@ export const Modal = (props: ModalProps) => {
             aria-describedby={ariaDescribedBy}
             aria-labelledby="modal-title">
             <div className="common-modal-header">
-                {fullscreen &&
+                {fullscreen && !hideDismissButton &&
                     <div className="common-modal-back">
                         <Button
                             className="menu-button"
@@ -89,7 +91,7 @@ export const Modal = (props: ModalProps) => {
                         />
                     </div>
                 }
-                {!fullscreen &&
+                {!fullscreen && !hideDismissButton &&
                     <div className="common-modal-close">
                         <Button
                             className="menu-button inverted"

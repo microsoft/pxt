@@ -9,6 +9,7 @@ import { Modal } from "../controls/Modal"
 export interface SignInModalProps {
     onSignIn: (provider: pxt.AppCloudProvider, rememberMe: boolean) => Promise<void>
     onClose: () => void
+    hideDismissButton?: boolean
     appMessage?: string
     dialogMessages?: {
         signInMessage?: string
@@ -19,7 +20,7 @@ export interface SignInModalProps {
 }
 
 export const SignInModal = (props: SignInModalProps) => {
-    const { onSignIn, onClose, appMessage, dialogMessages } = props
+    const { onSignIn, onClose, appMessage, dialogMessages, hideDismissButton } = props
     const { signInMessage, signUpMessage } = dialogMessages || {
         signInMessage: lf("Sign in to save your progress and access your work anytime, anywhere."),
         signUpMessage: lf("Join now to save your progress and access your work anytime, anywhere.")
@@ -61,7 +62,7 @@ export const SignInModal = (props: SignInModalProps) => {
     )
 
     return (
-        <Modal title={titleText} onClose={onClose}>
+        <Modal title={titleText} onClose={onClose} hideDismissButton={hideDismissButton}>
             <div className='signin-form'>
                 <div className='signin-header'>
                     {appMessage ? appMessage : undefined} {headerText}

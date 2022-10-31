@@ -1,17 +1,16 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppStateContext } from "./state/AppStateContext";
 import Loading from "./components/Loading";
-import SignInPage from "./components/SignInPage";
+import SignedOutPage from "./components/SignedOutPage";
 import SignedInPage from "./components/SignedInPage";
 import HeaderBar from "./components/HeaderBar";
 import Toast from "./components/Toast";
 import AppModal from "./components/AppModal";
 import Footer from "./components/Footer";
 import * as authClient from "./services/authClient";
-import { setDeepLinks, showModal } from "./state/actions";
+import { setDeepLinks } from "./state/actions";
 import { cleanupJoinCode } from "./util";
 import { joinGameAsync, hostGameAsync } from "./epics";
-import { useAuthDialogMessages } from "./hooks/useAuthDialogMessages";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./App.css";
@@ -21,8 +20,6 @@ function App() {
     const { authStatus, deepLinks } = state;
     const { shareCode, joinCode } = deepLinks;
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
-
-    const dialogMessages = useAuthDialogMessages();
 
     useEffect(() => {
         // On mount, check if user is signed in
@@ -69,8 +66,6 @@ function App() {
                 }
                 // Clear the deep links
                 dispatch(setDeepLinks(undefined, undefined));
-            } else if (authStatus === "signed-out") {
-                dispatch(showModal("sign-in", { dialogMessages }));
             }
         }
     }, [dispatch, authStatus, shareCode, joinCode, authCheckComplete]);
@@ -81,7 +76,7 @@ function App() {
             {authCheckComplete && (
                 <>
                     <HeaderBar />
-                    {authStatus === "signed-out" && <SignInPage />}
+                    {authStatus === "signed-out" && <SignedOutPage />}
                     {authStatus === "signed-in" && <SignedInPage />}
                 </>
             )}
