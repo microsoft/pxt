@@ -33,6 +33,11 @@ export default function Render() {
         await gameClient.sendInputAsync(button, state);
     };
 
+    const postAudioMsg = async (msg: SimMultiplayer.AudioMessage) => {
+        const { instruction, soundbuf } = msg;
+        await gameClient.sendAudioAsync(instruction, soundbuf);
+    };
+
     const setSimStopped = async () => {
         pxt.runner
             .currentDriver()
@@ -79,6 +84,8 @@ export default function Render() {
                         postInputMsg(data);
                     } else if (origin === "server" && content === "Image") {
                         postImageMsg(data);
+                    } else if (origin === "server" && content === "Audio") {
+                        postAudioMsg(data);
                     }
                     return;
             }
