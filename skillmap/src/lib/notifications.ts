@@ -1,4 +1,4 @@
-import { pushNotificationMessage } from "react-common/Notification"
+import { pushNotificationMessage } from "react-common/components/Notification"
 
 ///////////////////////////////////////////////////////////
 ////////////       Notification msg           /////////////
