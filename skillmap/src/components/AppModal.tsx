@@ -13,13 +13,13 @@ import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCom
 import { getProjectAsync } from "../lib/workspaceProvider";
 import { editorUrl } from "./makecodeFrame";
 
-import { Modal, ModalAction } from 'react-common/controls/Modal';
-import { jsxLF } from "react-common/util";
-import { Badge } from "react-common/profile/Badge";
-import { Button } from "react-common/controls/Button";
-import { Input } from "react-common/controls/Input";
-import { SignInModal } from "react-common/profile/SignInModal";
-import { Share, ShareData } from "react-common/share/Share";
+import { Modal, ModalAction } from 'react-common/components/controls/Modal';
+import { jsxLF } from "react-common/components/util";
+import { Badge } from "react-common/components/profile/Badge";
+import { Button } from "react-common/components/controls/Button";
+import { Input } from "react-common/components/controls/Input";
+import { SignInModal } from "react-common/components/profile/SignInModal";
+import { Share, ShareData } from "react-common/components/share/Share";
 
 interface AppModalProps {
     type: ModalType;

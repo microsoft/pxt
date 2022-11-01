@@ -48,21 +48,6 @@ const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
 
-// We output a dummy package.json in the built react-common directory to prevent
-// npm from complaining when we npm install in the skillmap and authcode
-const reactCommonPackageJson = () => {
-    fs.writeFileSync(path.resolve("built/react-common/components/package.json"), `
-    {
-        "name": "react-common",
-        "description": "",
-        "version": "0.0.0",
-        "dependencies": {},
-        "devDependencies": {}
-    }
-    `)
-    return Promise.resolve();
-}
-
 const pxtblockly = () => gulp.src([
     "webapp/public/blockly/blockly_compressed.js",
     "webapp/public/blockly/blocks_compressed.js",
@@ -579,34 +564,12 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyExtensions, 
 
 const skillmapRoot = "skillmap";
 const skillmapOut = "built/web/skillmap";
-const reactScriptsConfigRoot = `${skillmapRoot}/node_modules/react-scripts/config`;
 
 const cleanSkillmap = () => rimraf(skillmapOut);
 
-const copyWebpackBase = () => gulp.src([`${reactScriptsConfigRoot}/webpack.config.js`])
-    .pipe(concat("webpack.config.base.js"))
-    .pipe(gulp.dest(`${reactScriptsConfigRoot}`))
-
-const copyWebpackOverride = () => gulp.src([`${skillmapRoot}/webpack.config.override.js`])
-    .pipe(concat("webpack.config.js"))
-    .pipe(gulp.dest(`${reactScriptsConfigRoot}`));
-
-const replaceWebpackBase = () => gulp.src([`${reactScriptsConfigRoot}/webpack.config.base.js`])
-    .pipe(concat("webpack.config.js"))
-    .pipe(gulp.dest(`${reactScriptsConfigRoot}`));
-
 const npmBuildSkillmap = () => exec("npm run build", true, { cwd: skillmapRoot });
 
-const buildSkillmap = async () => {
-    try {
-        if (!fs.existsSync(`${reactScriptsConfigRoot}/webpack.config.base.js`)) await copyWebpackBase();
-        await copyWebpackOverride();
-        await npmBuildSkillmap();
-    }
-    finally {
-        await replaceWebpackBase();
-    }
-}
+const buildSkillmap = async () => await npmBuildSkillmap();
 
 const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${skillmapOut}/css`));
@@ -638,13 +601,7 @@ const cleanAuthcode = () => rimraf(authcodeOut);
 
 const npmBuildAuthcode = () => exec("npm run build", true, { cwd: authcodeRoot });
 
-const buildAuthcode = async () => {
-    try {
-        await npmBuildAuthcode();
-    }
-    finally {
-    }
-}
+const buildAuthcode = async () => await npmBuildAuthcode();
 
 const copyAuthcodeCss = () => gulp.src(`${authcodeRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${authcodeOut}/css`));
@@ -671,13 +628,7 @@ const cleanMultiplayer = () => rimraf(multiplayerOut);
 
 const npmBuildMultiplayer = () => exec("npm run build", true, { cwd: multiplayerRoot });
 
-const buildMultiplayer = async () => {
-    try {
-        await npmBuildMultiplayer();
-    }
-    finally {
-    }
-}
+const buildMultiplayer = async () => await npmBuildMultiplayer();
 
 const copyMultiplayerCss = () => gulp.src(`${multiplayerRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${multiplayerOut}/css`));
@@ -795,7 +746,6 @@ const buildAll = gulp.series(
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
     reactCommon,
-    reactCommonPackageJson,
     gulp.parallel(buildcss, buildSVGIcons),
     gulp.parallel(skillmap, authcode, multiplayer),
     webapp,
