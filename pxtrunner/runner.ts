@@ -469,6 +469,8 @@ namespace pxt.runner {
         let didUpgrade = false;
         const currentTargetVersion = pxt.appTarget.versions.target;
         let compileResult = await compileAsync(false, opts => {
+            opts.computeUsedParts = true;
+
             if (simOptions.debug)
                 opts.breakpoints = true;
             if (simOptions.assets) {
@@ -522,7 +524,9 @@ namespace pxt.runner {
             console.error("Diagnostics", compileResult.diagnostics);
         }
 
-        return pxtc.buildSimJsInfo(compileResult);
+        const res = pxtc.buildSimJsInfo(compileResult);
+        res.parts = compileResult.usedParts;
+        return res;
     }
 
     function getStoredState(id: string) {
