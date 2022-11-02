@@ -1789,38 +1789,45 @@ export class ProjectView
             blockConfig.blocks = [];
             const blocks: Element[] = [];
             try {
+                const xmlToBlockConfig = (xml: string) => {
+                    // Get all top-level blocks
+                    (() => {
+                        const dom = Blockly.Xml.textToDom(xml);
+                        const children = Array.from(dom.children);
+                        for (const child of children) {
+                            if (child.nodeName === "block") {
+                                blocks.push(child);
+                            }
+                        }
+                    })();
+                    // Extract child blocks from blocks of type "next", discard the "next" block, and flatten
+                    (() => {
+                        loop: while (true) {
+                            for (const block of blocks.slice()) {
+                                const children = Array.from(block.children);
+                                for (const child of children) {
+                                    if (child.nodeName === "next") {
+                                        const childBlock = Array.from(child.children)?.find(c => c.nodeName === "block");
+                                        if (childBlock) blocks.push(childBlock);
+                                        block.removeChild(child);
+                                        continue loop;
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    })();
+                }
+
                 // Decompile block markdown to xml
                 const decomp = await compiler.decompileBlocksSnippetAsync(blockConfig.md, undefined, {
                     snippetMode: true,
-                    generateSourceMap: false
+                    generateSourceMap: false,
                 });
-                const xml = decomp.outfiles[pxt.MAIN_BLOCKS];
-                pxt.debug(`decompiled ${blockConfig.md} to ${xml}`);
-                // Get all top-level blocks
-                (() => {
-                    const dom = Blockly.Xml.textToDom(xml);
-                    const children = Array.from(dom.children);
-                    for (const child of children) {
-                        if (child.nodeName === "block") {
-                            blocks.push(child);
-                        }
-                    }
-                })();
-                // Extract child blocks from blocks of type "next", and discard the "next" block
-                (() => {
-                    for (const block of blocks) {
-                        const children = Array.from(block.children);
-                        for (const child1 of children) {
-                            if (child1.nodeName === "next") {
-                                for (const child2 of Array.from(child1.children)) {
-                                    // Grab the blocks embedded in the "next" block
-                                    blocks.push(child2);
-                                }
-                                block.removeChild(child1);
-                            }
-                        }
-                    }
-                })();
+                const mainXml = decomp.outfiles[pxt.MAIN_BLOCKS];
+                pxt.debug(`decompiled ${blockConfig.md} to ${mainXml}`);
+
+                xmlToBlockConfig(mainXml);
             } catch (e) {
                 // Failed to decompile, don't propagate exception
                 console.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}, ${e.message}. md:${blockConfig.md}`);
