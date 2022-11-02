@@ -4,7 +4,7 @@
  * the color attribute annotation on the namespace. Icons
  * are drawn from https://semantic-ui.com/elements/icon.html
  * To find the Unicode representation of an icon, inspect
- * the element using brower's debugger
+ * the element using the browser's debugger
  */
 
 //% color="#ff0000" icon="\uf0a4"
