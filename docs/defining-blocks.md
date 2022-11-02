@@ -187,7 +187,7 @@ For parameters of type ``number``, you can specify a minimum, maximum, and defau
 
 ```typescript-ignore
 //% block
-//% v.min=0 v.max= 42 x.defl=25
+//% v.min=0 v.max=42 v.defl=25
 export function showNumber(v: number, interval: number = 150): void
 { }
 ```
