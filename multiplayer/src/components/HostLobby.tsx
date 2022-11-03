@@ -66,7 +66,9 @@ export default function Render() {
                 </div>
                 <div className="tw-flex tw-flex-col tw-items-center tw-mt-5 tw-text-sm tw-gap-1 tw-max-h-24 md:tw-max-h-36">
                     <QRCodeSVG value={joinDeepLink} />
-                    <div className="tw-hidden md:tw-block">{lf("or scan with phone")}</div>
+                    <div className="tw-hidden md:tw-block">
+                        {lf("or scan with phone")}
+                    </div>
                 </div>
                 <Button
                     className={"primary tw-mt-5 tw-mb-7 tw-font-sans tw-mr-0"}
