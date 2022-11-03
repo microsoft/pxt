@@ -22,6 +22,7 @@ export default function Render() {
                         await signInAsync(provider.id, rememberMe, { params });
                     }}
                     dialogMessages={state.modalOpts.dialogMessages}
+                    hideDismissButton={true}
                 />
             );
         case "report-abuse":

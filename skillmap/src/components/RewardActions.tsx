@@ -5,7 +5,7 @@ import { dispatchOpenActivity, dispatchShowCompletionModal, dispatchShowLoginMod
 
 import { ActivityStatus } from '../lib/skillMapUtils';
 import { tickEvent } from "../lib/browserUtils";
-import { Button } from "react-common/controls/Button";
+import { Button } from "react-common/components/controls/Button";
 import { SkillMapState } from "../store/reducer";
 
 interface OwnProps {

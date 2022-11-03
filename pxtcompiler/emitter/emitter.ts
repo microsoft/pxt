@@ -1023,6 +1023,10 @@ namespace ts.pxtc {
             res.usedArguments = {}
         }
 
+        if (opts.computeUsedParts) {
+            res.usedParts = [];
+        }
+
         let allStmts: Statement[] = [];
         if (!opts.forceEmit || res.diagnostics.length == 0) {
             let files = program.getSourceFiles().slice();
@@ -2022,6 +2026,15 @@ ${lbl}: .short 0xffff
 
             if (opts.computeUsedSymbols && decl.symbol)
                 res.usedSymbols[getNodeFullName(checker, decl)] = null
+
+            if (opts.computeUsedParts && pinfo.commentAttrs?.parts) {
+                const partsSplit = pinfo.commentAttrs.parts.split(/[ ,]+/g);
+                for (const part of partsSplit) {
+                    if (res.usedParts.indexOf(part) === -1) {
+                        res.usedParts.push(part);
+                    }
+                }
+            }
 
             if (isStackMachine() && isClassFunction(decl))
                 getIfaceMemberId(getName(decl), true)
