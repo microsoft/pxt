@@ -10,6 +10,7 @@
     "engine.io-client": "^6.2.2",
     "framer-motion": "^6.5.1",
     "nanoid": "^4.0.0",
+    "qrcode.react": "^3.1.0",
     "react-scripts": "^5.0.1",
     "smart-buffer": "^4.2.0",
     "typescript": "^4.8.3"
