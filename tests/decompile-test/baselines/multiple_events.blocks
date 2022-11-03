@@ -33,7 +33,7 @@
 <field name="arg1">TestEnum.testValue2</field>
 <value name="arg2">
 <block type="typescript_expression">
-<field name="EXPRESSION">testNamespace.customShadowFieldNoLiterals&#40;1&#41;</field>
+<field name="EXPRESSION">testNamespace.customShadowFieldNoLiterals(1)</field>
 </block>
 </value>
 <statement name="HANDLER">
@@ -43,16 +43,16 @@
 <field name="arg1">TestEnum.testValue2</field>
 <value name="arg2">
 <block type="typescript_expression">
-<field name="EXPRESSION">testNamespace.customShadowFieldNoLiterals&#40;&#10;    2&#10;    &#41;</field>
+<field name="EXPRESSION">testNamespace.customShadowFieldNoLiterals(&#10;    2&#10;    )</field>
 </block>
 </value>
 <statement name="HANDLER">
 </statement>
 </block>
 <block type="typescript_statement">
-<mutation numlines="4" error="Events must be top level" line0="testNamespace.callbackNoMultiple&#40;TestEnum.testValue2&#44; &#40;&#40;testNamespace.customShadowFieldNoLiterals&#40;1&#41;" line1="&#41;&#41;&#44; function &#40;&#41; &#123;" line2="" line3="&#125;&#41;" />
+<mutation numlines="4" error="Events must be top level" line0="testNamespace.callbackNoMultiple(TestEnum.testValue2, ((testNamespace.customShadowFieldNoLiterals(1)" line1=")), function () {" line2="" line3="})" />
 </block>
 <block type="typescript_statement">
-<mutation numlines="3" error="Events must be top level" line0="testNamespace.callbackNoMultiple&#40;TestEnum.testValue1&#44; 1&#44; function &#40;&#41; &#123;" line1="" line2="&#125;&#41;" />
+<mutation numlines="3" error="Events must be top level" line0="testNamespace.callbackNoMultiple(TestEnum.testValue1, 1, function () {" line1="" line2="})" />
 </block>
 </xml>

@@ -10,9 +10,9 @@
 </statement>
 </block>
 <block type="typescript_statement">
-<mutation numlines="3" error="Events must be top level" line0="testNamespace.callbackNoMultipleKey&#40;TestEnum.testValue2&#44; 6&#44; function &#40;&#41; &#123;" line1="" line2="&#125;&#41;" />
+<mutation numlines="3" error="Events must be top level" line0="testNamespace.callbackNoMultipleKey(TestEnum.testValue2, 6, function () {" line1="" line2="})" />
 </block>
 <block type="typescript_statement">
-<mutation numlines="3" error="Events must be top level" line0="testNamespace.callbackNoMultipleKey&#40;TestEnum.testValue1&#44; 5&#44; function &#40;&#41; &#123;" line1="" line2="&#125;&#41;" />
+<mutation numlines="3" error="Events must be top level" line0="testNamespace.callbackNoMultipleKey(TestEnum.testValue1, 5, function () {" line1="" line2="})" />
 </block>
 </xml>
