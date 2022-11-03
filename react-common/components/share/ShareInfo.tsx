@@ -77,6 +77,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const handleEmbedClick = () => {
         if (embedState === "none") {
+            pxt.tickEvent(`share.embed`);
             setShowQRCode(false);
             setEmbedState("code");
         } else {
@@ -119,6 +120,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         const domain = pxt.BrowserUtils.isLocalHostDev() ? "http://localhost:3000" : "";
         const multiplayerHostUrl = `${domain}${pxt.webConfig.relprefix}multiplayer?host=${shareId}`;
 
+        pxt.tickEvent(`share.multiplayer`);
         window.open(multiplayerHostUrl, "_blank");
     }
 
@@ -158,7 +160,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     }
 
     const handleAnonymousShareClick = (newValue: boolean) => {
-        pxt.tickEvent("share.anonymousCheckbox")
+        pxt.tickEvent("share.anonymousCheckbox", { checked: newValue.toString() });
         setIsAnonymous(!newValue);
         if (setAnonymousSharePreference) setAnonymousSharePreference(!newValue);
     }
@@ -166,6 +168,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const prePublish = shareState === "share" || shareState === "publishing";
 
     const inputTitle = prePublish ? lf("Project Title") : lf("Project Link")
+
+    if (isLoggedIn) {
+        pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous.toString(), persistent: hasProjectBeenPersistentShared.toString() });
+    } else {
+        pxt.tickEvent("share.open", { state: shareState});
+    }
 
     return <>
         <div className="project-share-info">
