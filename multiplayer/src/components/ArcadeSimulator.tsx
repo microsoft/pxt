@@ -17,7 +17,8 @@ let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
 export default function Render() {
     const { state } = useContext(AppStateContext);
     const { playerSlot, gameState, clientRole } = state;
-    const gameId = state.gameState?.gameId;
+    const gameId = gameState?.gameId;
+    const gameMode = gameState?.gameMode;
     const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
@@ -27,7 +28,7 @@ export default function Render() {
         "background-color=4EB94E&button-stroke=245D24",
     ];
     const selectedPlayerTheme = playerThemes[(playerSlot || 0) - 1];
-    const isHost = playerSlot == 1;
+    const isHost = clientRole === "host";
 
     const postImageMsg = async (msg: SimMultiplayer.ImageMessage) => {
         const { image, palette } = msg;
@@ -135,27 +136,34 @@ export default function Render() {
     };
 
     useEffect(() => {
-        if (gameState?.gameMode === "playing") {
+        if (gameMode === "playing") {
             runSimulator();
         }
-    }, [gameState]);
+    }, [gameMode]);
 
     useEffect(() => {
-        const codeReadyToCompile =
-            playerSlot! > 1 || (playerSlot == 1 && gameId);
-        if (
-            codeReadyToCompile &&
-            gameState?.gameMode !== "playing" &&
-            simContainerRef.current
-        ) {
-            preloadSim(simContainerRef.current!, getOpts()).then(
-                compileSimCode
-            );
+        if (gameState?.gameMode !== "playing" && simContainerRef.current) {
+            preloadSim(simContainerRef.current, getOpts());
         }
-        if (!playerSlot) {
+    }, [clientRole, playerSlot]);
+
+    useEffect(() => {
+        if (!isHost) {
+            compileSimCode();
+        }
+    }, [clientRole]);
+
+    useEffect(() => {
+        if (isHost && gameId) {
+            compileSimCode();
+        }
+    }, [clientRole, gameId])
+
+    useEffect(() => {
+        return () => {
             builtSimJsInfo = undefined;
         }
-    }, [playerSlot, gameId]);
+    });
 
     return (
         <div

@@ -255,7 +255,6 @@ class GameClient {
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
         const { gameMode, shareCode, role } = msg;
-
         this.clientRole = role;
 
         if (await setGameMetadataAsync(shareCode)) {
