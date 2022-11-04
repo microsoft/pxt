@@ -19,14 +19,11 @@ export default function Render() {
     return (
         <div>
             <Popup
-                className={"tw-absolute tw-translate-y-[-120%]"}
+                className="tw-absolute tw-translate-y-[-120%]"
                 visible={showReactionPicker}
                 onClickedOutside={() => setShowReactionPicker(false)}
             >
-                <div
-                    className={`tw-flex tw-flex-row tw-gap-3 tw-p-2
-                    tw-bg-white tw-drop-shadow-xl tw-rounded-md`}
-                >
+                <div className="tw-flex tw-flex-row tw-gap-3 tw-p-2 tw-bg-white tw-drop-shadow-xl tw-rounded-md tw-border-2 tw-border-gray-100">
                     {Reactions.map((def, i) => {
                         return (
                             <Button
@@ -44,10 +41,10 @@ export default function Render() {
                 label={buttonLabel()}
                 title={lf("Reactions")}
                 className={`tw-flex tw-items-center tw-justify-center
-                tw-select-none tw-border-2 tw-text-slot-0-color
+                tw-select-none tw-border-2 tw-reaction-color
                 tw-rounded-full tw-h-11 tw-w-11 tw-text-2xl !tw-m-0 !tw-p-0`}
                 style={{
-                    backgroundColor: `rgba(var(--slot-0-color),0.1)`,
+                    backgroundColor: `rgba(var(--reaction-color),0.1)`,
                 }}
                 onClick={() => setShowReactionPicker(!showReactionPicker)}
             />
