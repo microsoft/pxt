@@ -19,13 +19,14 @@ export interface ShareInfoProps {
     hasProjectBeenPersistentShared?: boolean;
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
+    isMultiplayerGame?: boolean;
 
     anonymousShareByDefault?: boolean;
     setAnonymousSharePreference?: (anonymousByDefault: boolean) => void;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared, anonymousShareByDefault, setAnonymousSharePreference } = props;
+    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared, anonymousShareByDefault, setAnonymousSharePreference, isMultiplayerGame } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
@@ -218,7 +219,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         <div className="project-share-publish-actions">
                             {shareState === "share" &&
                             <>
-                                {pxt.appTarget?.appTheme?.multiplayerShareButton &&
+                                {pxt.appTarget?.appTheme?.multiplayerShareButton && isMultiplayerGame &&
                                     <Button className="primary inverted text-only"
                                         title={lf("Host a multiplayer game")}
                                         label={lf("Host a multiplayer game")}
