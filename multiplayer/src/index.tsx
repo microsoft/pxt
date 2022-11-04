@@ -1,4 +1,5 @@
-// / <reference path="../../built/pxtrunner.d.ts" />
+// TODO: pxtcompiler type is only needed for a few compiler service types,
+// we should get rid of this somehow.
 /// <reference path="../../built/pxtcompiler.d.ts" />
 /// <reference path="../../built/pxtsim.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
@@ -13,7 +14,6 @@ import { AppStateProvider } from "./state/AppStateContext";
 const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 
 pxt.setAppTarget(bundle);
-// pxt.setupWebConfig(pxt.webConfig);
 pxt.setupWebConfig((window as any).pxtConfig || pxt.webConfig);
 // todo: handle this better?
 if (pxt.BrowserUtils.isLocalHostDev()) {
@@ -28,8 +28,6 @@ if (pxt.BrowserUtils.isLocalHostDev()) {
     pxt.webConfig.workerjs = `/blb${pxt.webConfig.workerjs}`;
 }
 pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
-// pxt.reloadAppTargetVariant();
-// pxt.runner.initHost();
 
 ReactDOM.render(
     <React.StrictMode>

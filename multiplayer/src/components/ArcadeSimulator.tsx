@@ -4,7 +4,13 @@ import { SimMultiplayer } from "../types";
 import * as gameClient from "../services/gameClient";
 // eslint-disable-next-line import/no-unassigned-import
 import "./ArcadeSimulator.css";
-import { simDriver, preloadSim, simulateAsync, buildSimJsInfo, RunOptions } from "../services/simHost";
+import {
+    simDriver,
+    preloadSim,
+    simulateAsync,
+    buildSimJsInfo,
+    RunOptions,
+} from "../services/simHost";
 
 let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
 
@@ -100,12 +106,12 @@ export default function Render() {
                 simQueryParams: selectedPlayerTheme,
                 mpRole: "server",
                 id: gameId!,
-            }
+            };
         } else {
             opts = {
                 simQueryParams: selectedPlayerTheme,
                 mpRole: "client",
-            }
+            };
         }
 
         return opts;
@@ -122,10 +128,7 @@ export default function Render() {
             simOpts.builtJsInfo = await builtSimJsInfo;
         }
 
-        builtSimJsInfo = simulateAsync(
-            simContainerRef.current!,
-            simOpts
-        );
+        builtSimJsInfo = simulateAsync(simContainerRef.current!, simOpts);
 
         await builtSimJsInfo;
     };
@@ -139,8 +142,14 @@ export default function Render() {
     useEffect(() => {
         const codeReadyToCompile =
             playerSlot! > 1 || (playerSlot == 1 && gameId);
-        if (codeReadyToCompile && gameState?.gameMode !== "playing" && simContainerRef.current) {
-            preloadSim(simContainerRef.current!, getOpts()).then(compileSimCode);
+        if (
+            codeReadyToCompile &&
+            gameState?.gameMode !== "playing" &&
+            simContainerRef.current
+        ) {
+            preloadSim(simContainerRef.current!, getOpts()).then(
+                compileSimCode
+            );
         }
         if (!playerSlot) {
             builtSimJsInfo = undefined;

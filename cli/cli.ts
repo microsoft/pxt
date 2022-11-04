@@ -2084,7 +2084,6 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
             nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
             if (opts.includePxtSim) {
                 nodeutil.cp("node_modules/pxt-core/built/pxtsim.js", `${appRoot}/public/blb`);
-                // nodeutil.cp("node_modules/pxt-core/built/pxtcompiler.js", `${appRoot}/public/blb`); // TODO: shouldn't need this? Just for typing
                 nodeutil.cp("node_modules/pxt-core/built/web/worker.js", `${appRoot}/public/blb`);
                 nodeutil.cp("node_modules/pxt-core/built/web/pxtworker.js", `${appRoot}/public/blb`);
             }

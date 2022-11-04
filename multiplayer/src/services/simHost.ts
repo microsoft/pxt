@@ -287,20 +287,23 @@ function host() {
     return _host || (_host = new SimHost());
 }
 
-function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
-    const startTm = Date.now()
-    pxt.debug("worker op: " + op)
-    return pxt.worker.getWorker(pxt.webConfig.workerjs)
+function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(
+    op: T,
+    arg: pxtc.service.OpArg
+): Promise<any> {
+    const startTm = Date.now();
+    pxt.debug("worker op: " + op);
+    return pxt.worker
+        .getWorker(pxt.webConfig.workerjs)
         .opAsync(op, arg)
         .then(res => {
             if (pxt.appTarget.compile.switches.time) {
-                pxt.log(`Worker perf: ${op} ${Date.now() - startTm}ms`)
-                if (res.times)
-                    console.log(res.times)
+                pxt.log(`Worker perf: ${op} ${Date.now() - startTm}ms`);
+                if (res.times) console.log(res.times);
             }
-            pxt.debug("worker op done: " + op)
-            return res
-        })
+            pxt.debug("worker op done: " + op);
+            return res;
+        });
 }
 export async function compileAsync(
     updateOptions?: (ops: pxtc.CompileOptions) => void
@@ -308,8 +311,9 @@ export async function compileAsync(
     const opts = await getCompileOptionsAsync();
     if (updateOptions) updateOptions(opts);
     // let resp = pxtc.compile(opts);
-    const resp = await workerOpAsync("compile", { options: opts }) as pxtc.CompileResult;
-
+    const resp = (await workerOpAsync("compile", {
+        options: opts,
+    })) as pxtc.CompileResult;
 
     if (resp.diagnostics && resp.diagnostics.length > 0) {
         resp.diagnostics.forEach(diag => {
