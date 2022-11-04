@@ -6,7 +6,7 @@ export default function Render() {
     const { state } = useContext(AppStateContext);
 
     const remixUrl = state.gameId
-        ? `${pxt.webConfig.relprefix.slice(0, -3)}#pub:${state.gameId}`
+        ? `${pxt.webConfig.relprefix.replace(/-+$/, "")}#pub:${state.gameId}`
         : undefined;
 
     function handleRemixGameClick() {
