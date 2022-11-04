@@ -51,8 +51,8 @@ export default function Render() {
             if (clientRole === "host") {
                 return (
                     <ConfirmModal
-                        title={lf("End the Game")}
-                        message={lf("End this game? All players will be disconnected.")}
+                        title={lf("Leave Game")}
+                        message={lf("Leave the game? All players will be disconnected.")}
                         onConfirm={async () => {
                             dispatch(clearModal());
                             await leaveGameAsync("ended");
