@@ -261,7 +261,7 @@ export function mag3d(x: number, y: number, z: number): number {
 }
 ```
 
-**Playground example**: [Inline input](https://makecode.com/playground#https://makecode.com/playground#basic-inline)
+**Playground example**: [Inline input](https://makecode.com/playground#basic-input-format)
 
 ### Expandable arguments
 
