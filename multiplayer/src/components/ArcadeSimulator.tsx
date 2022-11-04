@@ -157,12 +157,12 @@ export default function Render() {
         if (isHost && gameId) {
             compileSimCode();
         }
-    }, [clientRole, gameId])
+    }, [clientRole, gameId]);
 
     useEffect(() => {
         return () => {
             builtSimJsInfo = undefined;
-        }
+        };
     });
 
     return (

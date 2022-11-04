@@ -30,7 +30,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
 
-
     // prefetch worker on load
     pxt.worker.getWorker(pxt.webConfig.workerjs);
 
@@ -42,4 +41,4 @@ window.addEventListener("DOMContentLoaded", () => {
         </React.StrictMode>,
         document.getElementById("root")
     );
-})
+});

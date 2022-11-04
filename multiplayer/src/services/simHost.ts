@@ -297,14 +297,10 @@ export async function compileAsync(
 
 let _simDriver: pxsim.SimulatorDriver;
 export function simDriver(container?: HTMLElement) {
+    if (!_simDriver) _simDriver = new pxsim.SimulatorDriver(container!);
 
-    if (!_simDriver)
-        _simDriver = new pxsim.SimulatorDriver(container!);
-
-    if (container)
-        _simDriver.container = container
-    if (!_simDriver.container)
-        return undefined;
+    if (container) _simDriver.container = container;
+    if (!_simDriver.container) return undefined;
     return _simDriver;
 }
 
