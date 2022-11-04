@@ -6,7 +6,6 @@ import SignedInPage from "./components/SignedInPage";
 import HeaderBar from "./components/HeaderBar";
 import Toast from "./components/Toast";
 import AppModal from "./components/AppModal";
-import Footer from "./components/Footer";
 import * as authClient from "./services/authClient";
 import { setDeepLinks } from "./state/actions";
 import { cleanupJoinCode } from "./util";
@@ -82,8 +81,6 @@ function App() {
             )}
             <AppModal />
             <Toast />
-            <div className="tw-flex-grow" />
-            <Footer />
         </div>
     );
 }
