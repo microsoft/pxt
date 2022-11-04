@@ -17,12 +17,21 @@ export default function Render() {
     }
 
     return remixUrl ? (
-        <Button
-            leftIcon={"fas fa-bolt"}
-            title={lf("Remix Game")}
-            label={lf("Remix Game")}
-            onClick={handleRemixGameClick}
-            className="tw-border-2 tw-border-slate-400 tw-border-solid tw-p-2 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300 tw-ease-linear tw-duration-[50ms]"
-        />
+        // TODO multiplayer : Consolidate these two buttons somehow...
+        <>
+            <Button
+                leftIcon={"fas fa-bolt"}
+                title={lf("Remix Game")}
+                label={lf("Remix Game")}
+                onClick={handleRemixGameClick}
+                className="tw-hidden sm:tw-inline tw-border-2 tw-border-slate-400 tw-border-solid tw-p-2 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300 tw-ease-linear tw-duration-[50ms]"
+            />
+            <Button
+                leftIcon={"fas fa-bolt"}
+                title={lf("Remix Game")}
+                onClick={handleRemixGameClick}
+                className="sm:tw-hidden tw-border-2 tw-border-slate-400 tw-border-solid tw-p-2 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300 tw-ease-linear tw-duration-[50ms]"
+            />
+        </>
     ) : null;
 }
