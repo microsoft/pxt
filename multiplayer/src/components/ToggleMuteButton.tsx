@@ -2,6 +2,7 @@ import { useContext, useEffect } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { setMute } from "../state/actions";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
+import { simDriver } from "../services/simHost";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -11,7 +12,7 @@ export default function Render() {
     };
 
     useEffect(() => {
-        pxt.runner.currentDriver()?.mute(state.muted);
+        // simDriver()?.mute(state.muted);
     }, [state.muted]);
 
     return (

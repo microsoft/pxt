@@ -174,6 +174,8 @@ namespace pxt.runner {
     function addPackageToConfig(cfg: pxt.PackageConfig, dep: string) {
         let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(dep);
         if (m) {
+            // TODO this line seems bad, patchdependencies is on host not this?
+            // looks like this should be a method in host
             if (m[3] && this && this.patchDependencies(cfg, m[1], m[3]))
                 return false;
             cfg.dependencies[m[1]] = m[3] || "*"

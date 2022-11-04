@@ -4,8 +4,9 @@ import { SimMultiplayer } from "../types";
 import * as gameClient from "../services/gameClient";
 // eslint-disable-next-line import/no-unassigned-import
 import "./ArcadeSimulator.css";
+import { simDriver, preloadSim, simulateAsync, buildSimJsInfo, RunOptions } from "../services/simHost";
 
-let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo> | undefined;
+let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -39,15 +40,11 @@ export default function Render() {
     };
 
     const setSimStopped = async () => {
-        pxt.runner
-            .currentDriver()
-            ?.resume(pxsim.SimulatorDebuggerCommand.Pause);
+        simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Pause);
     };
 
     const setSimResumed = async () => {
-        pxt.runner
-            .currentDriver()
-            ?.resume(pxsim.SimulatorDebuggerCommand.Resume);
+        simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Resume);
     };
 
     useEffect(() => {
@@ -67,7 +64,7 @@ export default function Render() {
                         const { image, palette } =
                             gameClient.getCurrentScreen();
                         if (image) {
-                            pxt.runner.postSimMessage({
+                            simDriver()?.postMessage({
                                 type: "multiplayer",
                                 content: "Image",
                                 image: {
@@ -95,36 +92,28 @@ export default function Render() {
         return () => window.removeEventListener("message", msgHandler);
     }, [clientRole]);
 
-    const getOpts = () => {
-        const opts: pxt.runner.SimulateOptions = {
-            embedId: "multiplayer-sim",
-            additionalQueryParameters: selectedPlayerTheme,
-            single: true,
-            autofocus: true,
-            fullScreen: true,
-            /** Enabling debug mode so that we can stop at breakpoints as a 'global pause' **/
-            debug: true,
-            mute: state.muted,
-        };
+    const getOpts: () => RunOptions = () => {
+        let opts: RunOptions;
 
         if (isHost) {
-            opts.id = gameId;
-            opts.mpRole = "server";
+            opts = {
+                simQueryParams: selectedPlayerTheme,
+                mpRole: "server",
+                id: gameId!,
+            }
         } else {
-            opts.code = "multiplayer.init()";
-            opts.mpRole = "client";
+            opts = {
+                simQueryParams: selectedPlayerTheme,
+                mpRole: "client",
+            }
         }
 
         return opts;
     };
 
     const compileSimCode = async () => {
-        builtSimJsInfo = pxt.runner.buildSimJsInfo(getOpts());
+        builtSimJsInfo = buildSimJsInfo(getOpts());
         return await builtSimJsInfo;
-    };
-
-    const preloadSim = async () => {
-        pxt.runner.preloadSim(simContainerRef.current!, getOpts());
     };
 
     const runSimulator = async () => {
@@ -133,7 +122,7 @@ export default function Render() {
             simOpts.builtJsInfo = await builtSimJsInfo;
         }
 
-        builtSimJsInfo = pxt.runner.simulateAsync(
+        builtSimJsInfo = simulateAsync(
             simContainerRef.current!,
             simOpts
         );
@@ -150,8 +139,8 @@ export default function Render() {
     useEffect(() => {
         const codeReadyToCompile =
             playerSlot! > 1 || (playerSlot == 1 && gameId);
-        if (codeReadyToCompile && gameState?.gameMode !== "playing") {
-            preloadSim().then(compileSimCode);
+        if (codeReadyToCompile && gameState?.gameMode !== "playing" && simContainerRef.current) {
+            preloadSim(simContainerRef.current!, getOpts()).then(compileSimCode);
         }
         if (!playerSlot) {
             builtSimJsInfo = undefined;

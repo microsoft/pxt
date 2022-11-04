@@ -23,6 +23,7 @@ import {
     playerLeftAsync,
     setGameMetadataAsync,
 } from "../epics";
+import { simDriver } from "./simHost";
 
 const GAME_HOST_PROD = "https://mp.makecode.com";
 const GAME_HOST_STAGING = "https://multiplayer.staging.pxt.io";
@@ -343,7 +344,7 @@ class GameClient {
     }
 
     private postToSimFrame(msg: SimMultiplayer.Message) {
-        pxt.runner.postSimMessage(msg);
+        simDriver()?.postMessage(msg);
     }
 
     public async sendInputAsync(
