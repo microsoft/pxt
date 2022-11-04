@@ -32,7 +32,7 @@ export default function Render() {
 
     return (
         <div className="tw-flex tw-w-screen tw-h-screen tw-justify-center tw-items-center">
-            <div className="tw-bg-white tw-rounded-lg tw-drop-shadow-xl tw-min-h-[17rem] tw-min-w-[25rem]">
+            <div className="tw-bg-white tw-rounded-lg tw-drop-shadow-xl tw-min-h-[17rem] tw-min-w-[17rem] md:tw-min-w-[25rem]">
                 <div className="tw-absolute tw-translate-y-[-130%]">
                     <BetaTag />
                 </div>
@@ -41,11 +41,23 @@ export default function Render() {
                         <div className="tw-flex tw-justify-center">
                             <TabButton
                                 title={lf("Join Game")}
+                                label={
+                                    <>
+                                        <div className="tw-hidden sm:tw-inline">{lf("Join Game")}</div>
+                                        <div className="sm:tw-hidden">{lf("Join")}</div>
+                                    </>
+                                }
                                 selected={currTab === "join"}
                                 onClick={() => setCurrTab("join")}
                             />
                             <TabButton
                                 title={lf("Host Game")}
+                                label={
+                                    <>
+                                        <div className="tw-hidden sm:tw-inline">{lf("Host Game")}</div>
+                                        <div className="sm:tw-hidden">{lf("Host")}</div>
+                                    </>
+                                }
                                 selected={currTab === "host"}
                                 onClick={() => setCurrTab("host")}
                             />
