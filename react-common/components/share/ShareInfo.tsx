@@ -110,9 +110,11 @@ export const ShareInfo = (props: ShareInfoProps) => {
     };
 
     const handleMultiplayerShareClick = async () => {
+        const publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
+
         // TODO multiplayer: This won't work on staging (parseScriptId domains check doesn't include staging urls)
         // but those wouldn't load anyways (as staging multiplayer is currently fetching games from prod links)
-        const shareId = pxt.Cloud.parseScriptId(shareData.url);
+        const shareId = pxt.Cloud.parseScriptId(publishedShareData.url);
         if (!shareId)
             return;
 
@@ -215,10 +217,19 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         </div>}
                         <div className="project-share-publish-actions">
                             {shareState === "share" &&
+                            <>
+                                {pxt.appTarget?.appTheme?.multiplayerShareButton &&
+                                    <Button className="primary inverted text-only"
+                                        title={lf("Host a multiplayer game")}
+                                        label={lf("Host a multiplayer game")}
+                                        leftIcon={"fas fa-people-arrows"}
+                                        onClick={handleMultiplayerShareClick} />
+                                }
                                 <Button className="primary share-publish-button"
-                                    title={lf("Continue")}
-                                    label={lf("Continue")}
-                                    onClick={handlePublishClick} />
+                                        title={lf("Share Project")}
+                                        label={lf("Share Project")}
+                                        onClick={handlePublishClick} />
+                            </>
                             }
                             { shareState === "publishing" &&
                                 <Button className="primary share-publish-button"
@@ -276,12 +287,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         ariaLabel={lf("Show device share options")}
                                         leftIcon={"icon share"}
                                         onClick={handleDeviceShareClick}
-                                    />}
-                                    {pxt.appTarget?.appTheme?.multiplayerShareButton && <Button className="square-button multiplayer-host"
-                                        title={lf("Start a multiplayer lobby")}
-                                        ariaLabel={lf("Start a multiplayer lobby")}
-                                        leftIcon={"fas fa-people-arrows"}
-                                        onClick={handleMultiplayerShareClick}
                                     />}
                                 </div>
                                 <Button
