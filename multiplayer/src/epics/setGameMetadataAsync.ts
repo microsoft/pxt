@@ -1,5 +1,10 @@
 import { dispatch } from "../state";
-import { setGameId, setGameMetadata, setNetMode, showToast } from "../state/actions";
+import {
+    setGameId,
+    setGameMetadata,
+    setNetMode,
+    showToast,
+} from "../state/actions";
 
 export async function setGameMetadataAsync(
     shareCode: string

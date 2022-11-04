@@ -45,8 +45,8 @@ export default function reducer(state: AppState, action: Action): AppState {
                 ...state,
                 gameState: {
                     ...state.gameState,
-                    gameId: action.gameId
-                }
+                    gameId: action.gameId,
+                },
             };
         }
         case "SET_PLAYER_SLOT": {
