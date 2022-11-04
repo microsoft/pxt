@@ -82,7 +82,7 @@ function Toast(props: ToastWithId) {
                             sliderColors[props.type]
                         }
                     >
-                        {icons[props.type]}
+                        {props.icon ?? icons[props.type]}
                     </div>
                 )}
                 <div className="tw-flex tw-flex-col tw-text-left">

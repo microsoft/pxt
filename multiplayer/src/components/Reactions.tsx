@@ -3,6 +3,7 @@ import { sendReactionAsync } from "../epics";
 import { useState } from "react";
 import ReactionsIcon from "./icons/ReactionsIcon";
 import { Button } from "react-common/components/controls/Button";
+import Popup from "./Popup";
 
 export default function Render() {
     const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -17,24 +18,28 @@ export default function Render() {
 
     return (
         <div>
-            {showReactionPicker && (
+            <Popup
+                className={"tw-absolute tw-translate-y-[-120%]"}
+                visible={showReactionPicker}
+                onClickedOutside={() => setShowReactionPicker(false)}
+            >
                 <div
-                    className={`tw-flex tw-flex-row tw-gap-1 tw-p-2 tw-absolute tw-translate-x-[-5.8rem]
-                    tw-translate-y-[-120%] tw-bg-white tw-drop-shadow-md tw-rounded-md`}
+                    className={`tw-flex tw-flex-row tw-gap-3 tw-p-2
+                    tw-bg-white tw-drop-shadow-xl tw-rounded-md`}
                 >
                     {Reactions.map((def, i) => {
                         return (
-                            <div
-                                className="tw-flex tw-items-center tw-justify-center tw-cursor-pointer tw-select-none tw-border tw-rounded-full tw-border-slate-300 tw-bg-neutral-50 hover:tw-scale-125 tw-ease-linear tw-duration-[50ms] active:tw-bg-neutral-200 tw-h-8 tw-w-8 tw-text-2xl"
+                            <Button
+                                className="tw-flex tw-items-center tw-justify-center tw-m-0 tw-p-0 tw-cursor-pointer tw-select-none tw-scale-110 hover:tw-scale-125 tw-ease-linear tw-duration-[50ms] tw-h-8 tw-w-8 tw-text-2xl"
                                 key={i}
+                                label={def.emoji}
+                                title={def.name}
                                 onClick={() => onReactionClick(i)}
-                            >
-                                {def.emoji}
-                            </div>
+                            />
                         );
                     })}
                 </div>
-            )}
+            </Popup>
             <Button
                 label={buttonLabel()}
                 title={lf("Reactions")}

@@ -27,18 +27,16 @@ export default function Render(props: { particle: Particle }) {
 
     return (
         <div
-            className="tw-absolute tw-select-none tw-pointer-events-none"
+            className="tw-absolute tw-select-none tw-pointer-events-none tw-z-[100]"
             style={{
                 animation: `reaction-fly-up linear ${parms.flyUpDuration}s forwards,
                 ${parms.horzAnim} linear ${parms.flyHorzDuration}s forwards`,
-                zIndex: 100,
             }}
         >
             <div
                 className="tw-select-none tw-pointer-events-none"
                 style={{
                     animation: `${parms.rotationAnim} ease-in-out ${parms.rotationDuration}s infinite`,
-                    zIndex: 100,
                 }}
             >
                 {emoji}
