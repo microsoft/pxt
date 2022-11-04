@@ -8,7 +8,7 @@ export default function Render() {
     const { netMode } = state;
 
     return (
-        <div className="tw-pt-3 tw-pb-8 tw-flex tw-flex-col tw-items-center tw-gap-1 tw-h-screen">
+        <div className="tw-flex tw-flex-col tw-items-center tw-gap-1 tw-h-screen tw-justify-around">
             {netMode === "init" && <JoinOrHost />}
             {netMode !== "init" && <GamePage />}
         </div>
