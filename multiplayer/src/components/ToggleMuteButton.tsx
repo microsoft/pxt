@@ -12,7 +12,10 @@ export default function Render() {
     };
 
     useEffect(() => {
-        // simDriver()?.mute(state.muted);
+        //TODO: fix issue where simcontainer not set initially.
+        const driver = simDriver();
+        if (driver.container)
+            driver.mute(state.muted);
     }, [state.muted]);
 
     return (
