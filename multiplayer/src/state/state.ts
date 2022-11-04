@@ -14,7 +14,6 @@ export type AppState = {
     authStatus: "signed-in" | "signed-out" | "unknown";
     profile: pxt.auth.UserProfile | undefined;
     clientRole: ClientRole | undefined;
-    gameId: string | undefined;
     playerSlot: number | undefined;
     joinCode: string | undefined;
     gameState: GameState | undefined;
@@ -43,7 +42,6 @@ export const initialAppState: AppState = {
     authStatus: "unknown",
     profile: undefined,
     clientRole: undefined,
-    gameId: undefined,
     playerSlot: undefined,
     joinCode: undefined,
     gameState: undefined,

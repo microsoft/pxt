@@ -10,27 +10,27 @@ export type Particle = {
 };
 export const Reactions: ReactionDef[] = [
     {
-        name: lf("smile"),
+        name: lf("smile emoji"),
         emoji: "😃",
     },
     {
-        name: lf("laugh"),
+        name: lf("laugh emoji"),
         emoji: "🤣",
     },
     {
-        name: lf("surprise"),
+        name: lf("surprise emoji"),
         emoji: "😯",
     },
     {
-        name: lf("cry"),
+        name: lf("cry emoji"),
         emoji: "😫",
     },
     {
-        name: lf("scared"),
+        name: lf("scared emoji"),
         emoji: "😬",
     },
     {
-        name: lf("angry"),
+        name: lf("angry emoji"),
         emoji: "😠",
     },
 ];

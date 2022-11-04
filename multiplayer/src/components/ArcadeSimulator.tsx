@@ -16,7 +16,8 @@ let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const { gameId, playerSlot, gameState, clientRole } = state;
+    const { playerSlot, gameState, clientRole } = state;
+    const gameId = state.gameState?.gameId;
     const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
