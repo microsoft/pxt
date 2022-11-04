@@ -32,16 +32,11 @@ export default function Render() {
         const { slot, children } = props;
         return (
             <Popup
-                className={
-                    "tw-absolute tw-z-50 tw-translate-y-[-110%] tw-translate-x-[-50%]"
-                }
+                className="tw-absolute tw-z-50 tw-translate-y-[-110%] tw-translate-x-[-50%] tw-rounded-lg tw-border-2 tw-border-gray-100"
                 visible={showPlayerMenu === slot}
                 onClickedOutside={() => setShowPlayerMenu(0)}
             >
-                <div
-                    className={`tw-flex tw-flex-row tw-gap-1 tw-p-2
-                              tw-bg-white tw-drop-shadow-xl tw-rounded-md`}
-                >
+                <div className="tw-flex tw-flex-row tw-gap-1 tw-p-2 tw-bg-white tw-drop-shadow-xl tw-rounded-md">
                     {children}
                 </div>
             </Popup>
@@ -59,7 +54,7 @@ export default function Render() {
             return (
                 <PlayerMenuPopup slot={slot}>
                     <Button
-                        className={"tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"}
+                        className="tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"
                         label={lf("Leave game")}
                         title={lf("Leave game")}
                         onClick={() => onLeaveGameClicked()}
@@ -72,7 +67,7 @@ export default function Render() {
             return (
                 <PlayerMenuPopup slot={slot}>
                     <Button
-                        className={"tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"}
+                        className="tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"
                         label={lf("Remove from game")}
                         title={lf("Remove from game")}
                         onClick={() => onKickPlayerClicked(slot)}
@@ -85,7 +80,7 @@ export default function Render() {
             return (
                 <PlayerMenuPopup slot={slot}>
                     <Button
-                        className={"tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"}
+                        className="tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"
                         label={lf("Leave game")}
                         title={lf("Leave game")}
                         onClick={() => onLeaveGameClicked()}
@@ -97,43 +92,56 @@ export default function Render() {
     };
 
     return (
-        <div
-            className={`tw-flex tw-flex-row tw-items-center tw-justify-center
-            tw-gap-2 tw-border-l-2 tw-pl-2 tw-border-slot-0-color`}
-        >
+        <div className="tw-flex tw-flex-row tw-items-center tw-justify-center tw-gap-2 tw-border-l-2 tw-pl-2 tw-border-slot-0-color">
             {[1, 2, 3, 4].map(slot => {
                 const user = players.find(u => u.slot === slot);
                 const menu = playerMenu(slot);
+                const isEmpty = !user;
+                const isMySlot = slot === playerSlot;
                 return (
                     <div key={slot}>
                         <div className="tw-px-[50%]">{menu}</div>
                         <Button
-                            className={`tw-rounded-full tw-m-0 tw-p-0`}
+                            className="tw-rounded-full tw-m-0 tw-p-0"
                             hardDisabled={!menu}
                             label={
                                 <div
-                                    key={slot}
                                     className={`tw-flex tw-select-none tw-text-black
                                     tw-font-bold tw-rounded-full tw-h-11 tw-border-2
                                     tw-w-11 tw-justify-center tw-items-center
                                     tw-text-slot-${slot}-color`}
                                     style={{
-                                        backgroundColor: `rgba(var(--slot-${slot}-color),0.1)`,
-                                        borderColor: `rgb(var(--slot-${slot}-color))`,
+                                        backgroundColor: `rgba(var(--slot-${
+                                            isEmpty ? 0 : slot
+                                        }-color),0.1)`,
+                                        borderColor: `rgb(var(--slot-${
+                                            isEmpty ? 0 : slot
+                                        }-color))`,
                                     }}
                                 >
+                                    <UserIcon slot={isEmpty ? 0 : slot} />
                                     {user && (
-                                        <>
-                                            <UserIcon slot={slot} />
-                                            <ReactionEmitter
-                                                clientId={user.id}
-                                            />
-                                        </>
+                                        <ReactionEmitter clientId={user.id} />
+                                    )}
+                                    {isMySlot && (
+                                        <div className="tw-absolute tw-translate-y-[110%]">
+                                            <div
+                                                className="tw-z-10 tw-border tw-rounded-xl tw-text-xs tw-px-2 tw-font-medium tw-uppercase"
+                                                style={{
+                                                    backgroundColor:
+                                                        "rgb(var(--you-tag-bg-color))",
+                                                    borderColor:
+                                                        "rgb(var(--you-tag-border-color))",
+                                                }}
+                                            >
+                                                {lf("you")}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             }
                             title={
-                                user
+                                !isEmpty
                                     ? lf("Player {0}", slot)
                                     : lf("Player {0} (empty)", slot)
                             }
