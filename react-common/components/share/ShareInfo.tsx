@@ -44,6 +44,14 @@ export const ShareInfo = (props: ShareInfoProps) => {
         setThumbnailUri(screenshotUri)
     }, [screenshotUri])
 
+    React.useEffect(() => {
+        if (isLoggedIn) {
+            pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous.toString(), persistent: hasProjectBeenPersistentShared.toString() });
+        } else {
+            pxt.tickEvent("share.open", { state: shareState});
+        }
+    }, [shareState, isAnonymous, hasProjectBeenPersistentShared]);
+
     const exitGifRecord = () => {
         setShareState("share");
     }
@@ -160,7 +168,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     }
 
     const handleAnonymousShareClick = (newValue: boolean) => {
-        pxt.tickEvent("share.anonymousCheckbox", { checked: newValue.toString() });
+        pxt.tickEvent("share.persistentCheckbox", { checked: newValue.toString() });
         setIsAnonymous(!newValue);
         if (setAnonymousSharePreference) setAnonymousSharePreference(!newValue);
     }
@@ -169,13 +177,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const inputTitle = prePublish ? lf("Project Title") : lf("Project Link")
 
-    React.useEffect(() => {
-        if (isLoggedIn) {
-            pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous.toString(), persistent: hasProjectBeenPersistentShared.toString() });
-        } else {
-            pxt.tickEvent("share.open", { state: shareState});
-        }
-    }, [state, isAnonymous, hasProjectBeenPersistentShared]);
     return <>
         <div className="project-share-info">
             {showSimulator && shareState !== "gifrecord" &&
