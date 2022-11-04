@@ -17,11 +17,7 @@ export default function Render(props: GamePageProps) {
 
     return (
         <>
-            {netMode === "connecting" && (
-                <div className="tw-text-xl tw-text-white tw-mt-5">
-                    {lf("Connecting...")}
-                </div>
-            )}
+            {netMode === "connecting" && <></>}
             {state.gameState?.gameMode === "lobby" && (
                 <div className="tw-flex tw-flex-col tw-items-center tw-justify-center tw-w-full tw-h-full">
                     {clientRole === "host" && <HostLobby />}

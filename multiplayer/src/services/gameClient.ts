@@ -13,6 +13,7 @@ import {
     Presence,
     stringToAudioInstruction,
     stringToButtonState,
+    GameOverReason,
 } from "../types";
 import {
     gameDisconnected,
@@ -22,6 +23,7 @@ import {
     playerJoinedAsync,
     playerLeftAsync,
     setGameMetadataAsync,
+    gameOverAsync,
 } from "../epics";
 
 const GAME_HOST_PROD = "https://mp.makecode.com";
@@ -43,9 +45,9 @@ const PALETTE_BUFFER_SIZE = 48;
 
 class GameClient {
     sock: Socket | undefined;
-    heartbeatTimer: NodeJS.Timeout | undefined;
     screen: Buffer | undefined;
     clientRole: ClientRole | undefined;
+    gameOverReason: GameOverReason | undefined;
 
     constructor() {
         this.recvMessageWithJoinTimeout =
@@ -57,8 +59,6 @@ class GameClient {
         try {
             this.sock?.close();
             this.sock = undefined;
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-            this.heartbeatTimer && clearInterval(this.heartbeatTimer);
         } catch (e) {}
     }
 
@@ -111,6 +111,8 @@ class GameClient {
                         return await this.recvPlayerJoinedMessageAsync(msg);
                     case "player-left":
                         return await this.recvPlayerLeftMessageAsync(msg);
+                    case "game-over":
+                        return await this.recvGameOverMessageAsync(msg);
                 }
             } else {
                 console.error("Unknown payload type", payload);
@@ -168,8 +170,7 @@ class GameClient {
                 );
                 this.sock?.on("close", () => {
                     console.log("socket disconnected");
-                    clearTimeout(this.heartbeatTimer);
-                    gameDisconnected();
+                    gameDisconnected(this.gameOverReason);
                 });
 
                 this.sock?.on("error", err => {
@@ -236,7 +237,8 @@ class GameClient {
         } as Protocol.StartGameMessage);
     }
 
-    public async leaveGameAsync() {
+    public async leaveGameAsync(reason: GameOverReason) {
+        this.gameOverReason = reason;
         this.sock?.close();
     }
 
@@ -288,6 +290,11 @@ class GameClient {
     private async recvPlayerLeftMessageAsync(msg: Protocol.PlayerLeftMessage) {
         console.log("Server sent player joined");
         await playerLeftAsync(msg.clientId);
+    }
+
+    private async recvGameOverMessageAsync(msg: Protocol.GameOverMessage) {
+        console.log("Server sent game over");
+        await gameOverAsync(msg.reason);
     }
 
     private async recvCompressedScreenMessageAsync(reader: SmartBuffer) {
@@ -419,6 +426,19 @@ class GameClient {
         }
     }
 
+    public kickPlayer(clientId: string) {
+        const msg: Protocol.KickPlayerMessage = {
+            type: "kick-player",
+            clientId,
+        };
+        this.sendMessage(msg);
+    }
+
+    public gameOver(reason: GameOverReason) {
+        this.gameOverReason = reason;
+        destroyGameClient();
+    }
+
     public getCurrentScreen(): {
         image: Uint8Array | undefined;
         palette: Uint8Array | undefined;
@@ -468,8 +488,8 @@ export async function startGameAsync() {
     await gameClient?.startGameAsync();
 }
 
-export async function leaveGameAsync() {
-    await gameClient?.leaveGameAsync();
+export async function leaveGameAsync(reason: GameOverReason) {
+    await gameClient?.leaveGameAsync(reason);
     destroyGameClient();
 }
 
@@ -496,6 +516,14 @@ export async function sendScreenUpdateAsync(
     palette: Uint8Array
 ) {
     await gameClient?.sendScreenUpdateAsync(img, palette);
+}
+
+export function kickPlayer(clientId: string) {
+    gameClient?.kickPlayer(clientId);
+}
+
+export function gameOver(reason: GameOverReason) {
+    gameClient?.gameOver(reason);
 }
 
 export function getCurrentScreen(): {
@@ -588,6 +616,16 @@ namespace Protocol {
         clientId: string;
     };
 
+    export type KickPlayerMessage = MessageBase & {
+        type: "kick-player";
+        clientId: string;
+    };
+
+    export type GameOverMessage = MessageBase & {
+        type: "game-over";
+        reason: GameOverReason;
+    };
+
     export type Message =
         | ConnectMessage
         | StartGameMessage
@@ -598,7 +636,9 @@ namespace Protocol {
         | PresenceMessage
         | JoinedMessage
         | PlayerJoinedMessage
-        | PlayerLeftMessage;
+        | PlayerLeftMessage
+        | KickPlayerMessage
+        | GameOverMessage;
 
     export type SimMessage = ScreenMessage | SoundMessage | InputMessage;
 

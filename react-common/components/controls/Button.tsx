@@ -7,7 +7,8 @@ export interface ButtonViewProps extends ControlProps {
     label?: string | JSX.Element;
     leftIcon?: string;
     rightIcon?: string;
-    disabled?: boolean;
+    disabled?: boolean;     // Disables the button in an accessible-friendly way.
+    hardDisabled?: boolean; // Disables the button and prevents clicks. Not recommended. Use `disabled` instead.
     href?: string;
     target?: string;
     tabIndex?: number;
@@ -52,11 +53,18 @@ export const Button = (props: ButtonProps) => {
         label,
         leftIcon,
         rightIcon,
-        disabled,
+        hardDisabled,
         href,
         target,
         tabIndex
     } = props;
+
+    let {
+        disabled
+    } = props;
+
+    disabled = disabled || hardDisabled;
+
 
     const classes = classList(
         "common-button",
@@ -83,6 +91,7 @@ export const Button = (props: ButtonProps) => {
             onBlur={onBlur}
             role={role || "button"}
             tabIndex={tabIndex || (disabled ? -1 : 0)}
+            disabled={hardDisabled}
             aria-label={ariaLabel}
             aria-hidden={ariaHidden}
             aria-controls={ariaControls}
