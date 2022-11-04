@@ -5,7 +5,6 @@ import {
     setNetMode,
     setGameInfo,
     showToast,
-    setGameId,
     setClientRole,
 } from "../state/actions";
 
@@ -42,7 +41,6 @@ export async function hostGameAsync(shareCode: string | undefined) {
 
         dispatch(setClientRole("host"));
         dispatch(setGameInfo(gameInfo));
-        dispatch(setGameId(shareCode));
         dispatch(setNetMode("connected"));
     } catch (e) {
         console.log("error", e);
