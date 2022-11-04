@@ -231,7 +231,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     label={lf("Claim your reward!")}
                     leftIcon="fas fa-gift"
                     onClick={onButtonClick} />
-                {shouldShowShare &&
+                {shouldShowShare && !showMultiplayerShare &&
                     <Button
                         className="primary completion-reward"
                         title={lf("Share your game!")}
