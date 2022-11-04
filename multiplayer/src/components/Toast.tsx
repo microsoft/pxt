@@ -78,7 +78,7 @@ function Toast(props: ToastWithId) {
                 {!props.hideIcon && (
                     <div
                         className={
-                            "tw-flex tw-justify-center tw-border-0 tw-rounded-full " +
+                            "tw-flex tw-items-center tw-justify-center tw-border-0 tw-rounded-full tw-w-7 tw-h-7 " +
                             sliderColors[props.type]
                         }
                     >
