@@ -169,12 +169,13 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const inputTitle = prePublish ? lf("Project Title") : lf("Project Link")
 
-    if (isLoggedIn) {
-        pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous.toString(), persistent: hasProjectBeenPersistentShared.toString() });
-    } else {
-        pxt.tickEvent("share.open", { state: shareState});
-    }
-
+    React.useEffect(() => {
+        if (isLoggedIn) {
+            pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous.toString(), persistent: hasProjectBeenPersistentShared.toString() });
+        } else {
+            pxt.tickEvent("share.open", { state: shareState});
+        }
+    }, [state, isAnonymous, hasProjectBeenPersistentShared]);
     return <>
         <div className="project-share-info">
             {showSimulator && shareState !== "gifrecord" &&
