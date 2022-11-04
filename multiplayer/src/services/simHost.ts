@@ -46,17 +46,6 @@ async function loadPackageAsync(runOpts: RunOptions, dependencies?: string[]) {
             //Set the custom code if provided for docs.
             let epkg = getEditorPkg(mainPkg());
             epkg.files[pxt.MAIN_TS] = "multiplayer.init()";
-
-            // TODO del?
-            //set the custom doc name from the URL.
-            // let cfg = JSON.parse(
-            //     epkg.files[pxt.CONFIG_NAME]
-            // ) as pxt.PackageConfig;
-            // cfg.name = "mpclient";
-            // epkg.files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
-
-            // //Propgate the change to main package
-            // mainPkg().config.name = cfg.name;
         }
     } catch (e: any) {
         console.error(lf("Cannot load extension: {0}", e));
@@ -271,22 +260,6 @@ function setStoredState(runOpts: RunOptions, key: string, value: any) {
         window.localStorage.setItem(id, JSON.stringify(storedState));
     } catch (e) {}
 }
-
-class SimHost {
-    driver: pxsim.SimulatorDriver;
-    worker: pxt.worker.Iface;
-
-    constructor() {
-        this.driver = new pxsim.SimulatorDriver(undefined!);
-        this.worker = pxt.worker.getWorker(pxt.webConfig.workerjs);
-    }
-}
-
-let _host: SimHost;
-function host() {
-    return _host || (_host = new SimHost());
-}
-
 function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(
     op: T,
     arg: pxtc.service.OpArg
@@ -310,7 +283,6 @@ export async function compileAsync(
 ) {
     const opts = await getCompileOptionsAsync();
     if (updateOptions) updateOptions(opts);
-    // let resp = pxtc.compile(opts);
     const resp = (await workerOpAsync("compile", {
         options: opts,
     })) as pxtc.CompileResult;
@@ -323,8 +295,17 @@ export async function compileAsync(
     return resp;
 }
 
-export function simDriver() {
-    return host().driver;
+let _simDriver: pxsim.SimulatorDriver;
+export function simDriver(container?: HTMLElement) {
+
+    if (!_simDriver)
+        _simDriver = new pxsim.SimulatorDriver(container!);
+
+    if (container)
+        _simDriver.container = container
+    if (!_simDriver.container)
+        return undefined;
+    return _simDriver;
 }
 
 interface RunOptionsBase {
@@ -348,8 +329,7 @@ function initDriverAndOptions(
     runOpts: RunOptions,
     compileInfo?: pxtc.BuiltSimJsInfo
 ): pxsim.SimulatorRunOptions {
-    const driver = simDriver();
-    driver.container = container;
+    const driver = simDriver(container)!;
 
     const { fnArgs, parts, usedBuiltinParts } = compileInfo || {};
     let board = pxt.appTarget.simulator?.boardDefinition!;
@@ -374,7 +354,7 @@ function initDriverAndOptions(
 
 export async function preloadSim(container: HTMLElement, runOpts: RunOptions) {
     initDriverAndOptions(container, runOpts);
-    simDriver().preload(1, true /** no auto run **/);
+    simDriver()?.preload(1, true /** no auto run **/);
 }
 
 export async function simulateAsync(
@@ -390,7 +370,7 @@ export async function simulateAsync(
     }
 
     const runOptions = initDriverAndOptions(container, runOpts, builtSimJS);
-    const driver = simDriver();
+    const driver = simDriver(container)!;
     driver.options.messageSimulators =
         pxt.appTarget?.simulator?.messageSimulators;
     driver.options.onSimulatorCommand = msg => {

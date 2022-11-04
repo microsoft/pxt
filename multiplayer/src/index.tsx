@@ -29,6 +29,10 @@ if (pxt.BrowserUtils.isLocalHostDev()) {
 }
 pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
 
+
+// prefetch worker on load
+pxt.worker.getWorker(pxt.webConfig.workerjs);
+
 ReactDOM.render(
     <React.StrictMode>
         <AppStateProvider>
