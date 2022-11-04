@@ -43,7 +43,10 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "SET_GAME_ID": {
             return {
                 ...state,
-                gameId: action.gameId,
+                gameState: {
+                    ...state.gameState,
+                    gameId: action.gameId,
+                },
             };
         }
         case "SET_PLAYER_SLOT": {
@@ -57,7 +60,6 @@ export default function reducer(state: AppState, action: Action): AppState {
                 ...state,
                 playerSlot: undefined,
                 gameState: undefined,
-                gameId: undefined,
                 gameMetadata: undefined,
             };
         }

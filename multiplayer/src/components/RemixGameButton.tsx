@@ -4,9 +4,10 @@ import { AppStateContext } from "../state/AppStateContext";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
+    const gameId = state.gameState?.gameId;
 
-    const remixUrl = state.gameId
-        ? `${pxt.webConfig.relprefix.replace(/-+$/, "")}#pub:${state.gameId}`
+    const remixUrl = gameId
+        ? `${pxt.webConfig.relprefix.replace(/-+$/, "")}#pub:${gameId}`
         : undefined;
 
     function handleRemixGameClick() {
