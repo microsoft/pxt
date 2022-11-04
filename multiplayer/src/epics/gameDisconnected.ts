@@ -1,11 +1,13 @@
 import { dispatch } from "../state";
-import { showToast, setClientRole, setNetMode } from "../state/actions";
+import { showToast, setClientRole, setNetMode, clearGameInfo, clearGameMetadata } from "../state/actions";
 import { GameOverReason } from "../types";
 
 export function gameDisconnected(reason: GameOverReason | undefined) {
     try {
         dispatch(setClientRole(undefined));
         dispatch(setNetMode("init"));
+        dispatch(clearGameInfo());
+        dispatch(clearGameMetadata());
         switch (reason) {
             case "kicked":
                 pxt.tickEvent("mp.gotkicked");
