@@ -20,7 +20,7 @@ if (!pxt.react.getTilemapProject) {
 
 async function loadPackageAsync(runOpts: RunOptions, dependencies?: string[]) {
     const verspec =
-        runOpts.mpRole === "server" ? `pub:${runOpts.id}` : "clientprj";
+        runOpts.mpRole === "server" ? `pub:${runOpts.id}` : "empty:clientprj";
     let host: pxt.Host;
     let downloadPackagePromise: Promise<void>;
     let installPromise: Promise<void>;
