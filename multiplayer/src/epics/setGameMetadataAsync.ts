@@ -1,5 +1,5 @@
 import { dispatch } from "../state";
-import { setGameMetadata, setNetMode, showToast } from "../state/actions";
+import { setGameId, setGameMetadata, setNetMode, showToast } from "../state/actions";
 
 export async function setGameMetadataAsync(
     shareCode: string
@@ -15,8 +15,10 @@ export async function setGameMetadataAsync(
         const title = metadata.name || lf("Untitled");
         const description = metadata.description || "";
         const thumbnail = `${metaUri}/thumb`;
+        const gameId = metadata.id;
 
         dispatch(setGameMetadata({ title, description, thumbnail }));
+        dispatch(setGameId(gameId));
         return true;
     } catch (e) {
         console.log("error", e);
