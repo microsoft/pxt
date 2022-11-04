@@ -379,6 +379,8 @@ class GameClient {
         image: Uint8Array,
         palette: Uint8Array | undefined
     ) {
+        const DELTAS_ENABLED = false;
+
         const buffers: Buffer[] = [];
         buffers.push(Buffer.from(image));
         if (palette) buffers.push(Buffer.from(palette));
@@ -396,20 +398,29 @@ class GameClient {
             xorInPlace(this.screen!, screen);
         }
 
-        let empty = true;
-        for (let i = 0; i < screen.length; i++) {
-            if (screen[i] !== 0) {
-                empty = false;
-                break;
+        if (DELTAS_ENABLED) {
+            let empty = true;
+            for (let i = 0; i < screen.length; i++) {
+                if (screen[i] !== 0) {
+                    empty = false;
+                    break;
+                }
             }
-        }
 
-        if (!empty || firstScreen) {
-            // Compress the delta and send it to the server
-            const zippedData = await gzipAsync(screen);
+            if (!empty || firstScreen) {
+                // Compress the delta and send it to the server
+                const zippedData = await gzipAsync(screen);
+                const buffer = Protocol.Binary.packCompressedScreenMessage(
+                    zippedData,
+                    !firstScreen // If first screen, send as non-delta
+                );
+                this.sendMessage(buffer);
+            }
+        } else {
+            const zippedData = await gzipAsync(this.screen!);
             const buffer = Protocol.Binary.packCompressedScreenMessage(
                 zippedData,
-                !firstScreen // If first screen, send as non-delta
+                false // Not a delta
             );
             this.sendMessage(buffer);
         }
