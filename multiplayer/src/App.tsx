@@ -8,7 +8,7 @@ import Toast from "./components/Toast";
 import AppModal from "./components/AppModal";
 import * as authClient from "./services/authClient";
 import { setDeepLinks } from "./state/actions";
-import { cleanupJoinCode } from "./util";
+import { cleanupJoinCode, cleanupShareCode } from "./util";
 import { joinGameAsync, hostGameAsync } from "./epics";
 
 // eslint-disable-next-line import/no-unassigned-import
@@ -31,15 +31,15 @@ function App() {
     const parseUrlParams = useCallback(() => {
         let params: URLSearchParams | undefined = undefined;
         if (window.location.hash[1] === "?") {
-            // After sign in, the params are in the hash. I think this is a bug in pxt.auth
+            // After sign in the params are in the hash. This may be a bug in pxt.auth.
             params = new URLSearchParams(window.location.hash.substr(1));
         } else {
             params = new URLSearchParams(window.location.search);
         }
         let shareCodeParam = params.get("host") ?? undefined;
         let joinCodeParam = params.get("join") ?? undefined;
-        shareCodeParam = pxt.Cloud.parseScriptId(shareCodeParam ?? "");
-        joinCodeParam = cleanupJoinCode(joinCodeParam ?? "");
+        shareCodeParam = cleanupShareCode(shareCodeParam);
+        joinCodeParam = cleanupJoinCode(joinCodeParam);
         dispatch(setDeepLinks(shareCodeParam, joinCodeParam));
     }, [dispatch]);
 

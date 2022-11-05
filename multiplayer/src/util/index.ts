@@ -90,3 +90,16 @@ export function cleanupJoinCode(
     if (joinCode.length !== 6) return undefined;
     return joinCode;
 }
+
+export function cleanupShareCode(
+    shareCode: string | undefined
+): string | undefined {
+    try {
+        const url = new URL(shareCode || "");
+        if (url.searchParams.has("host")) {
+            shareCode = url.searchParams.get("host") ?? undefined;
+        }
+    } catch {}
+    if (!shareCode) return undefined;
+    return pxt.Cloud.parseScriptId(shareCode);
+}
