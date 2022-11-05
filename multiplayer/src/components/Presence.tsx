@@ -55,8 +55,8 @@ export default function Render() {
                 <PlayerMenuPopup slot={slot}>
                     <Button
                         className="tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"
-                        label={lf("Leave game")}
-                        title={lf("Leave game")}
+                        label={lf("End the game")}
+                        title={lf("End the game")}
                         onClick={() => onLeaveGameClicked()}
                     />
                 </PlayerMenuPopup>

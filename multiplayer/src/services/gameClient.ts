@@ -14,6 +14,7 @@ import {
     stringToAudioInstruction,
     stringToButtonState,
     GameOverReason,
+    GameJoinResult,
 } from "../types";
 import {
     gameDisconnected,
@@ -209,7 +210,7 @@ class GameClient {
         return gameInfo;
     }
 
-    public async joinGameAsync(joinCode: string): Promise<GameInfo> {
+    public async joinGameAsync(joinCode: string): Promise<GameJoinResult> {
         joinCode = encodeURIComponent(joinCode);
 
         const authToken = await authClient.authTokenAsync();
@@ -221,6 +222,13 @@ class GameClient {
             },
         });
 
+        if (joinRes.status !== 200) {
+            return {
+                success: false,
+                statusCode: joinRes.status,
+            };
+        }
+
         const gameInfo = (await joinRes.json()) as GameInfo;
 
         if (!gameInfo?.joinTicket)
@@ -228,7 +236,11 @@ class GameClient {
 
         await this.connectAsync(gameInfo.joinTicket!);
 
-        return gameInfo;
+        return {
+            ...gameInfo,
+            success: true,
+            statusCode: joinRes.status,
+        };
     }
 
     public async startGameAsync() {
@@ -488,7 +500,7 @@ export async function hostGameAsync(shareCode: string): Promise<GameInfo> {
     return gameInfo;
 }
 
-export async function joinGameAsync(joinCode: string): Promise<GameInfo> {
+export async function joinGameAsync(joinCode: string): Promise<GameJoinResult> {
     destroyGameClient();
     gameClient = new GameClient();
     const gameInfo = await gameClient.joinGameAsync(joinCode);

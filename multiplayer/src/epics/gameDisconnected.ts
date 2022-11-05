@@ -4,7 +4,6 @@ import { GameOverReason } from "../types";
 
 export function gameDisconnected(reason: GameOverReason | undefined) {
     try {
-        dispatch(setClientRole(undefined));
         dispatch(setNetMode("init"));
         switch (reason) {
             case "kicked":
@@ -12,7 +11,7 @@ export function gameDisconnected(reason: GameOverReason | undefined) {
                 return dispatch(
                     showToast({
                         type: "info",
-                        text: lf("Host kicked you from the game."),
+                        text: lf("Host kicked you from the game"),
                         icon: "🤔",
                         timeoutMs: 5000,
                     })
@@ -35,12 +34,30 @@ export function gameDisconnected(reason: GameOverReason | undefined) {
                         timeoutMs: 5000,
                     })
                 );
+            case "full":
+                pxt.tickEvent("mp.gamefull");
+                return dispatch(
+                    showToast({
+                        type: "info",
+                        text: lf("Game is full"),
+                        timeoutMs: 5000,
+                    })
+                );
+            case "rejected":
+                pxt.tickEvent("mp.gamerejected");
+                return dispatch(
+                    showToast({
+                        type: "error",
+                        text: lf("Game rejected your join request"),
+                        timeoutMs: 5000,
+                    })
+                );
             default:
                 pxt.tickEvent("mp.disconnected");
                 return dispatch(
                     showToast({
                         type: "error",
-                        text: lf("Game disconnected."),
+                        text: lf("Game disconnected"),
                         timeoutMs: 5000,
                     })
                 );

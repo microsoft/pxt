@@ -7,13 +7,18 @@ export type ModalType =
 
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
-export type GameOverReason = "kicked" | "ended" | "left";
+export type GameOverReason = "kicked" | "ended" | "left" | "full" | "rejected";
 
 export type GameInfo = {
     joinCode?: string;
     joinTicket?: string;
     gameId?: string;
     slot?: number;
+};
+
+export type GameJoinResult = Partial<GameInfo> & {
+    success: boolean;
+    statusCode: number;
 };
 
 export type GameMetadata = {
