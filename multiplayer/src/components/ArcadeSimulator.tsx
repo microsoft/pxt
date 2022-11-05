@@ -142,7 +142,7 @@ export default function Render() {
     }, [gameMode]);
 
     useEffect(() => {
-        if (gameState?.gameMode !== "playing" && simContainerRef.current) {
+        if (gameMode !== "playing" && simContainerRef.current) {
             preloadSim(simContainerRef.current, getOpts());
         }
     }, [clientRole, playerSlot]);
