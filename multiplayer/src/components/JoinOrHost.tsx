@@ -43,8 +43,12 @@ export default function Render() {
                                 title={lf("Join Game")}
                                 label={
                                     <>
-                                        <div className="tw-hidden sm:tw-inline">{lf("Join Game")}</div>
-                                        <div className="sm:tw-hidden">{lf("Join")}</div>
+                                        <div className="tw-hidden sm:tw-inline">
+                                            {lf("Join Game")}
+                                        </div>
+                                        <div className="sm:tw-hidden">
+                                            {lf("Join")}
+                                        </div>
                                     </>
                                 }
                                 selected={currTab === "join"}
@@ -54,8 +58,12 @@ export default function Render() {
                                 title={lf("Host Game")}
                                 label={
                                     <>
-                                        <div className="tw-hidden sm:tw-inline">{lf("Host Game")}</div>
-                                        <div className="sm:tw-hidden">{lf("Host")}</div>
+                                        <div className="tw-hidden sm:tw-inline">
+                                            {lf("Host Game")}
+                                        </div>
+                                        <div className="sm:tw-hidden">
+                                            {lf("Host")}
+                                        </div>
                                     </>
                                 }
                                 selected={currTab === "host"}

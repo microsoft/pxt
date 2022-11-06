@@ -17,6 +17,7 @@ export default function Render() {
     }, [presence]);
 
     const onKickPlayerClicked = (slot: number) => {
+        pxt.tickEvent("mp.kickplayer");
         setShowPlayerMenu(0);
         const player = players.filter(user => user.slot === slot).shift();
         if (player) {
@@ -25,6 +26,7 @@ export default function Render() {
     };
 
     const onLeaveGameClicked = async () => {
+        pxt.tickEvent("mp.leavegame", { role: clientRole! });
         dispatch(showModal("leave-game"));
     };
 

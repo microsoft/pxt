@@ -25,12 +25,14 @@ import {
     playerLeftAsync,
     setGameMetadataAsync,
     gameOverAsync,
+    pauseGameAsync as epic_pauseGameAsync,
+    resumeGameAsync as epic_resumeGameAsync,
 } from "../epics";
 
 const GAME_HOST_PROD = "https://mp.makecode.com";
 const GAME_HOST_STAGING = "https://multiplayer.staging.pxt.io";
 const GAME_HOST_LOCALHOST = "http://localhost:8082";
-const GAME_HOST_DEV = GAME_HOST_STAGING;
+const GAME_HOST_DEV = GAME_HOST_LOCALHOST;
 const GAME_HOST = (() => {
     if (pxt.BrowserUtils.isLocalHostDev()) {
         return GAME_HOST_DEV;
@@ -49,6 +51,7 @@ class GameClient {
     screen: Buffer | undefined;
     clientRole: ClientRole | undefined;
     gameOverReason: GameOverReason | undefined;
+    paused: boolean = false;
 
     constructor() {
         this.recvMessageWithJoinTimeout =
@@ -114,6 +117,10 @@ class GameClient {
                         return await this.recvPlayerLeftMessageAsync(msg);
                     case "game-over":
                         return await this.recvGameOverMessageAsync(msg);
+                    case "pause-game":
+                        return await this.recvPauseGameMessageAsync(msg);
+                    case "resume-game":
+                        return await this.recvResumeGameMessageAsync(msg);
                 }
             } else {
                 console.error("Unknown payload type", payload);
@@ -265,18 +272,19 @@ class GameClient {
         console.log(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
-        const { gameMode, shareCode, role } = msg;
+        const { gameMode, gamePaused, shareCode, role } = msg;
 
         this.clientRole = role;
+        this.paused = gamePaused;
 
         if (await setGameMetadataAsync(shareCode)) {
-            await setGameModeAsync(gameMode, msg.slot);
+            await setGameModeAsync(gameMode, gamePaused, msg.slot);
         }
     }
 
     private async recvStartGameMessageAsync(msg: Protocol.StartGameMessage) {
         console.log("Server said start game");
-        await setGameModeAsync("playing");
+        await setGameModeAsync("playing", this.paused);
     }
 
     private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
@@ -309,6 +317,18 @@ class GameClient {
         await gameOverAsync(msg.reason);
     }
 
+    private async recvPauseGameMessageAsync(msg: Protocol.PauseGameMessage) {
+        console.log("Server sent pause game");
+        this.paused = true;
+        await epic_pauseGameAsync();
+    }
+
+    private async recvResumeGameMessageAsync(msg: Protocol.ResumeGameMessage) {
+        console.log("Server sent resume game");
+        this.paused = false;
+        await epic_resumeGameAsync();
+    }
+
     private async recvCompressedScreenMessageAsync(reader: SmartBuffer) {
         const { zippedData, isDelta } =
             Protocol.Binary.unpackCompressedScreenMessage(reader);
@@ -317,7 +337,7 @@ class GameClient {
         if (!isDelta) {
             // We must wait for the first non-delta screen to arrive before we can apply diffs.
             this.screen = screen;
-            console.log("Received non-delta screen");
+            //console.log("Received non-delta screen");
         } else if (this.screen) {
             // Apply delta to existing screen to get new screen
             xorInPlace(this.screen, screen);
@@ -369,6 +389,7 @@ class GameClient {
         button: number,
         state: "Pressed" | "Released" | "Held"
     ) {
+        if (this.paused) return;
         const buffer = Protocol.Binary.packInputMessage(
             button,
             stringToButtonState(state)!
@@ -380,6 +401,7 @@ class GameClient {
         instruction: "playinstructions" | "muteallchannels",
         soundbuf?: Uint8Array
     ) {
+        if (this.paused) return;
         const buffer = Protocol.Binary.packAudioMessage(
             stringToAudioInstruction(instruction)!,
             Buffer.from(soundbuf!)
@@ -484,6 +506,22 @@ class GameClient {
             palette,
         };
     }
+
+    public async pauseGameAsync() {
+        this.paused = true;
+        const msg: Protocol.PauseGameMessage = {
+            type: "pause-game",
+        };
+        this.sendMessage(msg);
+    }
+
+    public async resumeGameAsync() {
+        this.paused = false;
+        const msg: Protocol.ResumeGameMessage = {
+            type: "resume-game",
+        };
+        this.sendMessage(msg);
+    }
 }
 
 let gameClient: GameClient | undefined;
@@ -561,6 +599,14 @@ export function getCurrentScreen(): {
     );
 }
 
+export async function pauseGameAsync() {
+    await gameClient?.pauseGameAsync();
+}
+
+export async function resumeGameAsync() {
+    await gameClient?.resumeGameAsync();
+}
+
 export function destroy() {
     destroyGameClient();
 }
@@ -569,6 +615,10 @@ export function destroy() {
 // Network Messages
 // Hiding these here for now to ensure they're not used outside of this module.
 namespace Protocol {
+    // Procotol version. Updating this should be a rare occurance. We commit to
+    // backward compatibility, but in the case where we must make a breaking
+    // change, we can bump this version and let the server know which version
+    // we're compabible with.
     export const VERSION = 2;
 
     type MessageBase = {
@@ -578,7 +628,7 @@ namespace Protocol {
     export type ConnectMessage = MessageBase & {
         type: "connect";
         ticket: string;
-        version: number; // Procotol version
+        version: number;
     };
 
     export type StartGameMessage = MessageBase & {
@@ -625,6 +675,7 @@ namespace Protocol {
         role: ClientRole;
         slot: number;
         gameMode: GameMode;
+        gamePaused: boolean;
         shareCode: string;
         clientId: string;
     };
@@ -649,6 +700,14 @@ namespace Protocol {
         reason: GameOverReason;
     };
 
+    export type PauseGameMessage = MessageBase & {
+        type: "pause-game";
+    };
+
+    export type ResumeGameMessage = MessageBase & {
+        type: "resume-game";
+    };
+
     export type Message =
         | ConnectMessage
         | StartGameMessage
@@ -661,7 +720,9 @@ namespace Protocol {
         | PlayerJoinedMessage
         | PlayerLeftMessage
         | KickPlayerMessage
-        | GameOverMessage;
+        | GameOverMessage
+        | PauseGameMessage
+        | ResumeGameMessage;
 
     export type SimMessage = ScreenMessage | SoundMessage | InputMessage;
 

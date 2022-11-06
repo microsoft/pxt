@@ -3,7 +3,8 @@ export type ModalType =
     | "sign-in"
     | "report-abuse"
     | "kick-player"
-    | "leave-game";
+    | "leave-game"
+    | "game-paused";
 
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
