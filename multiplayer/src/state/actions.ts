@@ -112,6 +112,11 @@ type SetMute = ActionBase & {
     value: boolean;
 };
 
+type SetGamePaused = ActionBase & {
+    type: "SET_GAME_PAUSED";
+    gamePaused: boolean;
+};
+
 /**
  * Union of all actions
  */
@@ -134,7 +139,8 @@ export type Action =
     | ShowModal
     | ClearModal
     | SetDeepLinks
-    | SetMute;
+    | SetMute
+    | SetGamePaused;
 
 /**
  * Action creators
@@ -259,4 +265,9 @@ export const setDeepLinks = (
 export const setMute = (value: boolean): SetMute => ({
     type: "SET_MUTE",
     value,
+});
+
+export const setGamePaused = (gamePaused: boolean): SetGamePaused => ({
+    type: "SET_GAME_PAUSED",
+    gamePaused,
 });

@@ -18,6 +18,7 @@ export type AppState = {
     joinCode: string | undefined;
     gameState: GameState | undefined;
     gameMetadata: GameMetadata | undefined;
+    gamePaused: boolean | undefined;
     toasts: ToastWithId[];
     presence: Presence;
     modal: ModalType | undefined;
@@ -46,6 +47,7 @@ export const initialAppState: AppState = {
     joinCode: undefined,
     gameState: undefined,
     gameMetadata: undefined,
+    gamePaused: undefined,
     toasts: [],
     presence: { ...defaultPresence },
     modal: undefined,

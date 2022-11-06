@@ -6,10 +6,12 @@ import SignedInPage from "./components/SignedInPage";
 import HeaderBar from "./components/HeaderBar";
 import Toast from "./components/Toast";
 import AppModal from "./components/AppModal";
+import GamePaused from "./components/GamePaused";
 import * as authClient from "./services/authClient";
 import { setDeepLinks } from "./state/actions";
 import { cleanupJoinCode, cleanupShareCode } from "./util";
-import { joinGameAsync, hostGameAsync } from "./epics";
+import { joinGameAsync, hostGameAsync, visibilityChanged } from "./epics";
+import { useVisibilityChange } from "./hooks";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./App.css";
@@ -19,6 +21,8 @@ function App() {
     const { authStatus, deepLinks } = state;
     const { shareCode, joinCode } = deepLinks;
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
+
+    useVisibilityChange(visibilityChanged);
 
     useEffect(() => {
         // On mount, check if user is signed in
@@ -80,6 +84,7 @@ function App() {
                 </>
             )}
             <AppModal />
+            <GamePaused />
             <Toast />
         </div>
     );

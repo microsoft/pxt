@@ -11,10 +11,12 @@ export default function Render(props: {
     const actions: ModalAction[] = [
         {
             label: lf("Cancel"),
+            className: "primary",
             onClick: onCancel,
         },
         {
             label: lf("Confirm"),
+            className: "primary",
             onClick: onConfirm,
         },
     ];
@@ -22,7 +24,7 @@ export default function Render(props: {
     return (
         <Modal title={title} actions={actions} onClose={onCancel}>
             <div className="tw-flex tw-flex-col tw-gap-4">
-                <div className="">{message}</div>
+                <div className="tw-text-center">{message}</div>
             </div>
         </Modal>
     );

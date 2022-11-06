@@ -20,3 +20,6 @@ export { setUserProfileAsync } from "./setUserProfileAsync";
 export { setGameMetadataAsync } from "./setGameMetadataAsync";
 export { kickPlayer } from "./kickPlayer";
 export { gameOverAsync } from "./gameOverAsync";
+export { pauseGameAsync } from "./pauseGameAsync";
+export { resumeGameAsync } from "./resumeGameAsync";
+export { visibilityChanged } from "./visibilityChanged";

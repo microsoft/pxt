@@ -46,7 +46,13 @@ export default function Render() {
                 style={{
                     backgroundColor: `rgba(var(--reaction-color),0.1)`,
                 }}
-                onClick={() => setShowReactionPicker(!showReactionPicker)}
+                onClick={() => {
+                    const toggled = !showReactionPicker;
+                    if (toggled) {
+                        pxt.tickEvent("mp.reactions.open");
+                    }
+                    setShowReactionPicker(toggled);
+                }}
             />
         </div>
     );
