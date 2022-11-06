@@ -26,6 +26,7 @@ import {
     setGameMetadataAsync,
     gameOverAsync,
 } from "../epics";
+import { simDriver } from "./simHost";
 
 const GAME_HOST_PROD = "https://mp.makecode.com";
 const GAME_HOST_STAGING = "https://multiplayer.staging.pxt.io";
@@ -266,7 +267,6 @@ class GameClient {
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
         const { gameMode, shareCode, role } = msg;
-
         this.clientRole = role;
 
         if (await setGameMetadataAsync(shareCode)) {
@@ -362,7 +362,7 @@ class GameClient {
     }
 
     private postToSimFrame(msg: SimMultiplayer.Message) {
-        pxt.runner.postSimMessage(msg);
+        simDriver()?.postMessage(msg);
     }
 
     public async sendInputAsync(
