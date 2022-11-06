@@ -33,6 +33,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                     joinCode: undefined,
                     gameState: undefined,
                     gameMetadata: undefined,
+                    gamePaused: undefined,
                     presence: { ...defaultPresence },
                     modal: undefined,
                     modalOpts: undefined,
@@ -153,6 +154,12 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 muted: action.value,
+            };
+        }
+        case "SET_GAME_PAUSED": {
+            return {
+                ...state,
+                gamePaused: action.gamePaused,
             };
         }
     }

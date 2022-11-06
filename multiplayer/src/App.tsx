@@ -6,6 +6,7 @@ import SignedInPage from "./components/SignedInPage";
 import HeaderBar from "./components/HeaderBar";
 import Toast from "./components/Toast";
 import AppModal from "./components/AppModal";
+import GamePaused from "./components/GamePaused";
 import * as authClient from "./services/authClient";
 import { setDeepLinks } from "./state/actions";
 import { cleanupJoinCode, cleanupShareCode } from "./util";
@@ -83,6 +84,7 @@ function App() {
                 </>
             )}
             <AppModal />
+            <GamePaused />
             <Toast />
         </div>
     );

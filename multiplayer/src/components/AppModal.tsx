@@ -1,16 +1,10 @@
 import { useContext } from "react";
 import { Modal } from "react-common/components/controls/Modal";
 import { SignInModal } from "react-common/components/profile/SignInModal";
-import {
-    signInAsync,
-    kickPlayer,
-    leaveGameAsync,
-    resumeGameAsync,
-} from "../epics";
+import { signInAsync, kickPlayer, leaveGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
 import ConfirmModal from "./modals/ConfirmModal";
-import GamePaused from "./modals/GamePaused";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -79,16 +73,6 @@ export default function Render() {
                     />
                 );
             }
-        case "game-paused":
-            return (
-                <GamePaused
-                    onResume={async () => {
-                        dispatch(clearModal());
-                        await resumeGameAsync();
-                    }}
-                />
-            );
-            break;
         default:
             return null;
     }

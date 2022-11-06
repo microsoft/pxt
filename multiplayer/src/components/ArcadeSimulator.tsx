@@ -16,7 +16,7 @@ let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const { playerSlot, gameState, clientRole } = state;
+    const { playerSlot, gameState, clientRole, gamePaused } = state;
     const gameId = gameState?.gameId;
     const gameMode = gameState?.gameMode;
     const simContainerRef = useRef<HTMLDivElement>(null);
@@ -172,6 +172,9 @@ export default function Render() {
             className={
                 "tw-h-[calc(100vh-16rem)] tw-w-screen md:tw-w-[calc(100vw-6rem)]"
             }
+            style={{
+                filter: gamePaused ? "grayscale(1)" : "none",
+            }}
         />
     );
 }

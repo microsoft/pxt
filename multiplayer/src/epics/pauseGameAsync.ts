@@ -1,17 +1,18 @@
 import { state, dispatch } from "../state";
 import * as gameClient from "../services/gameClient";
-import { showModal } from "../state/actions";
+import { setGamePaused } from "../state/actions";
+import { simDriver } from "../services/simHost";
 
 export async function pauseGameAsync() {
     const { clientRole } = state;
 
     try {
-        pxt.tickEvent("mp.pausegame", { role: clientRole! });
         if (clientRole === "host") {
+            pxt.tickEvent("mp.host.pausegame");
             await gameClient.pauseGameAsync();
-            // TODO: pause simulator
+            simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Pause);
         }
-        dispatch(showModal("game-paused"));
+        dispatch(setGamePaused(true));
     } catch (e) {
     } finally {
     }
