@@ -1,5 +1,5 @@
 import { dispatch } from "../state";
-import { showToast, setClientRole, setNetMode } from "../state/actions";
+import { showToast, setNetMode } from "../state/actions";
 import { GameOverReason } from "../types";
 
 export function gameDisconnected(reason: GameOverReason | undefined) {

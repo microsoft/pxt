@@ -29,6 +29,8 @@ export default function Render() {
             await hostGameAsync(shareCodeRef.current.value);
         }
     };
+    const enterShareOrLink = lf("Enter share code or link");
+    const howToGetLink = lf("How do I get a share code or link?");
 
     return (
         <div className="tw-flex tw-w-screen tw-h-screen tw-justify-center tw-items-center">
@@ -114,7 +116,7 @@ export default function Render() {
                                             handleInputRef={setShareCodeRef}
                                             preserveValueOnBlur={true}
                                             onEnterKey={onHostGameClick}
-                                            placeholder={lf("Enter share code or link")}
+                                            placeholder={enterShareOrLink}
                                         />
                                     </div>
                                     <div>
@@ -130,7 +132,7 @@ export default function Render() {
                                             href="/docs/multiplayer#host-game"
                                             target="_blank"
                                         >
-                                            {lf("How do I get a share code or link?")}
+                                            {howToGetLink}
                                         </Link>
                                     </div>
                                 </div>

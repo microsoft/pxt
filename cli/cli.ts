@@ -2058,7 +2058,7 @@ function buildWebStringsAsync() {
 
 function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, opts?: {
     copyAssets?: boolean,
-    usePxtEmbed?: boolean,
+    includePxtSim?: boolean,
     // this requires pxt serve to have completed before serving app, as it relies on
     // packing of pxtarget in buildTargetCoreAsync (mainly the chunk in the forEachBundledPkgAsync)
     expandedPxtTarget?: boolean,
@@ -2081,10 +2081,11 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
             } else {
                 nodeutil.cp("built/target.js", `${appRoot}/public/blb`);
             }
-            if (opts.usePxtEmbed) {
-                nodeutil.cp("node_modules/pxt-core/built/web/pxtembed.js", `${appRoot}/public/blb`);
-            } else {
-                nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
+            if (opts.includePxtSim) {
+                nodeutil.cp("node_modules/pxt-core/built/pxtsim.js", `${appRoot}/public/blb`);
+                nodeutil.cp("node_modules/pxt-core/built/web/worker.js", `${appRoot}/public/blb`);
+                nodeutil.cp("node_modules/pxt-core/built/web/pxtworker.js", `${appRoot}/public/blb`);
             }
             nodeutil.cp("built/web/semantic.css", `${appRoot}/public/blb`);
             nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${appRoot}/public/blb`);
@@ -2124,7 +2125,7 @@ function buildMultiplayerAsync(parsed: commandParser.ParsedCommand) {
         parsed,
         {
             copyAssets: false,
-            usePxtEmbed: true,
+            includePxtSim: true,
             expandedPxtTarget: true
         }
     );
