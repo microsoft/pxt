@@ -18,7 +18,7 @@ export default function Render() {
                     <div className="tw-text-left tw-font-bold tw-text-lg">
                         {lf("Game Paused")}
                     </div>
-                    <div className="tw-text-center">
+                    <div className="tw-text-left">
                         {lf("The game is paused. Press the resume button to continue.")}
                     </div>
                     <div className="tw-text-right">
@@ -36,7 +36,7 @@ export default function Render() {
                     <div className="tw-text-left tw-font-bold tw-text-lg">
                         {lf("Game Paused")}
                     </div>
-                    <div className="tw-text-center">
+                    <div className="tw-text-left">
                         {lf("The game is paused. Please wait for the host to resume the game.")}
                     </div>
                 </div>
