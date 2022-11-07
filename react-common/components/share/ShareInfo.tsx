@@ -122,6 +122,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
     };
 
     const handleMultiplayerShareConfirmClick = async () => {
+        setShareState("publishing");
+        setIsShowingMultiConfirmation(false);
+
         const publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
 
         // TODO multiplayer: This won't work on staging (parseScriptId domains check doesn't include staging urls)
@@ -141,7 +144,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
         else setShareState("share")
-        setIsShowingMultiConfirmation(false);
+
     }
 
     const handleMultiplayerShareClick = async () => {
