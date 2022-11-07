@@ -10,8 +10,8 @@ export async function pauseGameAsync() {
         if (clientRole === "host") {
             pxt.tickEvent("mp.host.pausegame");
             await gameClient.pauseGameAsync();
-            simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Pause);
         }
+        simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Pause);
         dispatch(setGamePaused(true));
     } catch (e) {
     } finally {

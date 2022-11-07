@@ -173,7 +173,7 @@ export default function Render() {
                 "tw-h-[calc(100vh-16rem)] tw-w-screen md:tw-w-[calc(100vw-6rem)]"
             }
             style={{
-                filter: gamePaused ? "grayscale(1)" : "none",
+                filter: gamePaused ? "grayscale(60%) blur(8px)" : "none",
                 transition: "filter .25s",
             }}
         />
