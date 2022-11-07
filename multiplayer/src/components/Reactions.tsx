@@ -6,9 +6,7 @@ import { Button } from "react-common/components/controls/Button";
 import Popup from "./Popup";
 
 const throttledReaction = pxt.Util.throttle(
-    (ind: number) => {
-        sendReactionAsync(ind);
-    },
+    (ind: number) => sendReactionAsync(ind),
     200,
     true
 );
