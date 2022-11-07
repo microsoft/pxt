@@ -129,7 +129,7 @@ For example,
 ```typescript-ignore
 //% block="square $x"
 //% block.loc.fr="$x au carré"
-function square(x: number): number {}
+export function square(x: number): number {}
 ```
 
 You can also override the ``jsDoc`` description and parameter info.
@@ -148,7 +148,7 @@ PARAM.loc.LOCALE = parameter jsdoc
 //% block.loc.fr="$x au carré"
 //% jsdoc.loc.fr="Calcule le carré de x"
 //% x.loc.fr="le nombre"
-function square(x: number): number {}
+export function square(x: number): number {}
 ```
 
 
@@ -173,7 +173,7 @@ for an unsupported type or to override a default shadow, use the following synta
 ```typescript-ignore
 //% block="$myParam"
 //% myParam.shadow="myShadowBlockID"
-function myFunction(myParam: number): void {}
+export function myFunction(myParam: number): void {}
 ```
 
 If an existing block definition specifies the shadow block id within the block string,
@@ -210,14 +210,14 @@ To define a block that has both a reporter and a statement form, use the `blockA
 * Remove the last element from an array and return it.
 */
 //% blockId="array_pop" block="get and remove last value from %list"
-function pop(): number;
+export function pop(): number;
 
 /**
 * Remove the last element from an array and return it.
 */
 //% blockId="array_pop_statement" block="remove last value from %list"
 //% blockAliasFor="Array.pop"
-function _popStatement(): void;
+export function _popStatement(): void;
 
 ```
 
@@ -233,7 +233,7 @@ For array type parameters, set the shadow ID to "lists_create_with":
 ```typescript-ignore
 //% block="$myParam"
 //% myParam.shadow="lists_create_with"
-function myFunction(myParam: number[]): void {}
+export function myFunction(myParam: number[]): void {}
 ```
 
 To populate the array with blocks, set the default value of the parameter as well.
@@ -242,7 +242,7 @@ To populate the array with blocks, set the default value of the parameter as wel
 //% block="$myParam"
 //% myParam.shadow="lists_create_with"
 //% myParam.defl="inner_shadow_block"
-function myFunction(myParam: number[]): void {}
+export function myFunction(myParam: number[]): void {}
 ```
 
 The above will create a block that has an array by default with "inner_shadow_blocks" inside the array.
@@ -461,7 +461,7 @@ namespace blocks {
     //% shim=TD_ID
     //% blockId=minecraftItem
     //% block="item %item"
-    function item(item: Item): number;
+    export function item(item: Item): number;
 }
 
 //% enumIdentity="Item.Iron"
