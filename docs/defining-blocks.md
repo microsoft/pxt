@@ -213,7 +213,7 @@ To define a block that has both a reporter and a statement form, use the `blockA
 export function pop(): number;
 
 /**
-* Remove the last element from an array and return it.
+* Remove the last element from an array.
 */
 //% blockId="array_pop_statement" block="remove last value from %list"
 //% blockAliasFor="Array.pop"
