@@ -5,12 +5,6 @@ import ReactionsIcon from "./icons/ReactionsIcon";
 import { Button } from "react-common/components/controls/Button";
 import Popup from "./Popup";
 
-const throttledReaction = pxt.Util.throttle(
-    (ind: number) => sendReactionAsync(ind),
-    200,
-    true
-);
-
 export default function Render() {
     const [showReactionPicker, setShowReactionPicker] = useState(false);
 
@@ -29,14 +23,14 @@ export default function Render() {
                 if (!numberKey) return;
                 const ind = parseInt(numberKey) - 1;
                 if (Reactions[ind]) {
-                    throttledReaction(ind);
+                    sendReactionAsync(ind);
                 }
             }
         };
         const outsideSimKeyEvent = (e: KeyboardEvent) => {
             const ind = parseInt(e.key) - 1;
             if (Reactions[ind]) {
-                throttledReaction(ind);
+                sendReactionAsync(ind);
             }
         };
 
