@@ -6,20 +6,18 @@ import '../styles/modal.css'
 
 import * as React from "react";
 import { connect } from 'react-redux';
-import { ModalState, ModalType, ShareState, SkillMapState } from '../store/reducer';
+import { ModalType, ShareState, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchNextModal, dispatchShowShareModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile, dispatchShowUserProfile, dispatchShowLoginModal } from '../actions/dispatch';
-import { tickEvent, postAbuseReportAsync, resolvePath, postShareAsync } from "../lib/browserUtils";
-import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled, getCompletionBadge, isRewardNode } from "../lib/skillMapUtils";
-import { getProjectAsync } from "../lib/workspaceProvider";
+import { tickEvent, postAbuseReportAsync} from "../lib/browserUtils";
+import { lookupActivityProgress, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled, getCompletionBadge, isRewardNode } from "../lib/skillMapUtils";
 import { editorUrl } from "./makecodeFrame";
 
-import { Modal, ModalAction } from 'react-common/controls/Modal';
-import { jsxLF } from "react-common/util";
-import { Badge } from "react-common/profile/Badge";
-import { Button } from "react-common/controls/Button";
-import { Input } from "react-common/controls/Input";
-import { SignInModal } from "react-common/profile/SignInModal";
-import { Share, ShareData } from "react-common/share/Share";
+import { Modal, ModalAction } from 'react-common/components/controls/Modal';
+import { jsxLF } from "react-common/components/util";
+import { Badge } from "react-common/components/profile/Badge";
+import { Button } from "react-common/components/controls/Button";
+import { SignInModal } from "react-common/components/profile/SignInModal";
+import { Share, ShareData } from "react-common/components/share/Share";
 
 interface AppModalProps {
     type: ModalType;
@@ -111,6 +109,20 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
         if (previousState)
             this.props.dispatchShowShareModal(mapId, previousState.activityId, true);
+    }
+
+    protected handleMultiplayerShareClick = async () => {
+        const { mapId, userState, pageSourceUrl, skillMap, activity } = this.props;
+        const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+        const prevActivity = skillMap?.activities[previousState.activityId];
+
+        const shareInfo = await this.publishAsync(prevActivity?.displayName!, userState!, pageSourceUrl!, mapId, prevActivity!);
+
+        const domain = pxt.BrowserUtils.isLocalHostDev() ? "http://localhost:3000/--" : pxt.webConfig.relprefix;
+
+        const shareId = shareInfo.url.split("/").slice(-1)[0];
+        const multiplayerHostUrl = `${domain}multiplayer?host=${shareId}`;
+        window.open(multiplayerHostUrl, "_blank");
     }
 
     protected getCompletionActionText(action: MapCompletionAction) {
@@ -207,6 +219,9 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         const onButtonClick = reward ? onCertificateClick : dispatchNextModal
 
+        const shouldShowShare = previousState && previousState.headerId;
+        const showMultiplayerShare = shouldShowShare && (activity as MapCompletionNode).showMultiplayerShare;
+
         return <div className="confetti-container">
             <Modal title={completionModalTitle} actions={this.getCompletionActions(node.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
@@ -216,13 +231,21 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     label={lf("Claim your reward!")}
                     leftIcon="fas fa-gift"
                     onClick={onButtonClick} />
-                {(previousState && previousState.headerId) &&
+                {shouldShowShare && !showMultiplayerShare &&
                     <Button
                         className="primary completion-reward"
                         title={lf("Share your game!")}
                         label={lf("Share your game!")}
                         leftIcon="fas fa-share"
                         onClick={this.handleRewardShareClick} />
+                }
+                {showMultiplayerShare &&
+                    <Button
+                        className="primary completion-reward"
+                        title={lf("Play online with friends!")}
+                        label={lf("Play online with friends!")}
+                        leftIcon="fas fa-share"
+                        onClick={this.handleMultiplayerShareClick} />
                 }
             </Modal>
             {this.renderConfetti()}
@@ -331,21 +354,26 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         }
     }
 
-    renderShareModal() {
-        const { userState, pageSourceUrl, mapId, activity, dispatchSetShareStatus } = this.props;
+    protected publishAsync = async (name: string, userState: UserState, pageSourceUrl: string, mapId: string, activity: MapNode) => {
+        const { dispatchSetShareStatus } = this.props;
+        tickEvent("skillmap.share", { path: mapId, activity: activity.activityId });
+        const progress = lookupActivityProgress(userState, pageSourceUrl, mapId!, activity.activityId);
 
-        const publishAsync = async (name: string) => {
-            tickEvent("skillmap.share", { path: mapId, activity: activity!.activityId });
-            const progress = lookupActivityProgress(userState!, pageSourceUrl!, mapId!, activity!.activityId);
+        dispatchSetShareStatus(progress?.headerId, name);
 
-            dispatchSetShareStatus(progress?.headerId, name);
-
-            return new Promise<ShareData>(resolve => {
-                this.setState({
-                    resolvePublish: resolve
-                })
+        return new Promise<ShareData>(resolve => {
+            this.setState({
+                resolvePublish: resolve
             })
-        };
+        });
+    };
+
+    renderShareModal() {
+        const { activity, userState, pageSourceUrl, mapId } = this.props;
+
+        const publishAsync = (name: string) =>
+            this.publishAsync(name, userState!, pageSourceUrl!, mapId, activity!)
+
 
         return <Modal
             title={lf("Share Project")}

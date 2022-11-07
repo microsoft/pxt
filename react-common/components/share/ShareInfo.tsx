@@ -44,6 +44,14 @@ export const ShareInfo = (props: ShareInfoProps) => {
         setThumbnailUri(screenshotUri)
     }, [screenshotUri])
 
+    React.useEffect(() => {
+        if (isLoggedIn) {
+            pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous.toString(), persistent: hasProjectBeenPersistentShared.toString() });
+        } else {
+            pxt.tickEvent("share.open", { state: shareState});
+        }
+    }, [shareState, isAnonymous, hasProjectBeenPersistentShared]);
+
     const exitGifRecord = () => {
         setShareState("share");
     }
@@ -77,6 +85,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const handleEmbedClick = () => {
         if (embedState === "none") {
+            pxt.tickEvent(`share.embed`);
             setShowQRCode(false);
             setEmbedState("code");
         } else {
@@ -108,6 +117,20 @@ export const ShareInfo = (props: ShareInfoProps) => {
             return navigator.share(shareOpts);
         }
     };
+
+    const handleMultiplayerShareClick = async () => {
+        // TODO multiplayer: This won't work on staging (parseScriptId domains check doesn't include staging urls)
+        // but those wouldn't load anyways (as staging multiplayer is currently fetching games from prod links)
+        const shareId = pxt.Cloud.parseScriptId(shareData.url);
+        if (!shareId)
+            return;
+
+        const domain = pxt.BrowserUtils.isLocalHostDev() ? "http://localhost:3000" : "";
+        const multiplayerHostUrl = `${domain}${pxt.webConfig.relprefix}multiplayer?host=${shareId}`;
+
+        pxt.tickEvent(`share.multiplayer`);
+        window.open(multiplayerHostUrl, "_blank");
+    }
 
     const embedOptions = [{
         name: "code",
@@ -145,7 +168,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     }
 
     const handleAnonymousShareClick = (newValue: boolean) => {
-        pxt.tickEvent("share.anonymousCheckbox")
+        pxt.tickEvent("share.persistentCheckbox", { checked: newValue.toString() });
         setIsAnonymous(!newValue);
         if (setAnonymousSharePreference) setAnonymousSharePreference(!newValue);
     }
@@ -263,6 +286,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         ariaLabel={lf("Show device share options")}
                                         leftIcon={"icon share"}
                                         onClick={handleDeviceShareClick}
+                                    />}
+                                    {pxt.appTarget?.appTheme?.multiplayerShareButton && <Button className="square-button multiplayer-host"
+                                        title={lf("Start a multiplayer lobby")}
+                                        ariaLabel={lf("Start a multiplayer lobby")}
+                                        leftIcon={"fas fa-people-arrows"}
+                                        onClick={handleMultiplayerShareClick}
                                     />}
                                 </div>
                                 <Button

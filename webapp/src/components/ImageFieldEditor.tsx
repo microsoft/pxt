@@ -304,6 +304,12 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         // lf("Forest")
         // lf("Space")
         // lf("Aquatic")
+        // lf("Buildings")
+        // lf("Furniture")
+        // lf("Electronics")
+        // lf("Transportation")
+        // lf("Swamp")
+        // lf("Sports")
 
         if (this.galleryAssets) {
             filterAssets.forEach( (asset) => {

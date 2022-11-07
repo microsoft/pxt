@@ -10,29 +10,36 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 profile: action.profile,
-                signedIn: !!action.profile?.id,
+                authStatus: !!action.profile?.id ? "signed-in" : "signed-out",
             };
         }
-        case "SET_UI_MODE": {
+        case "SET_CLIENT_ROLE": {
             return {
                 ...state,
-                gameState: undefined,
-                presence: { ...defaultPresence },
-                appMode: {
-                    ...state.appMode,
-                    uiMode: action.mode,
-                    netMode: "init",
-                },
+                clientRole: action.clientRole,
             };
         }
         case "SET_NET_MODE": {
-            return {
+            let nextState = {
                 ...state,
-                appMode: {
-                    ...state.appMode,
-                    netMode: action.mode,
-                },
+                netMode: action.mode,
             };
+            if (action.mode === "init") {
+                // Clear lots of state when we go back to init mode
+                nextState = {
+                    ...nextState,
+                    clientRole: undefined,
+                    playerSlot: undefined,
+                    joinCode: undefined,
+                    gameState: undefined,
+                    gameMetadata: undefined,
+                    gamePaused: undefined,
+                    presence: { ...defaultPresence },
+                    modal: undefined,
+                    modalOpts: undefined,
+                };
+            }
+            return nextState;
         }
         case "SET_GAME_INFO": {
             return {
@@ -43,10 +50,19 @@ export default function reducer(state: AppState, action: Action): AppState {
                 },
             };
         }
+        case "SET_GAME_METADATA": {
+            return {
+                ...state,
+                gameMetadata: action.gameMetadata,
+            };
+        }
         case "SET_GAME_ID": {
             return {
                 ...state,
-                gameId: action.gameId,
+                gameState: {
+                    ...state.gameState,
+                    gameId: action.gameId,
+                },
             };
         }
         case "SET_PLAYER_SLOT": {
@@ -58,7 +74,9 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "CLEAR_GAME_INFO": {
             return {
                 ...state,
+                playerSlot: undefined,
                 gameState: undefined,
+                gameMetadata: undefined,
             };
         }
         case "SET_GAME_MODE": {
@@ -107,6 +125,41 @@ export default function reducer(state: AppState, action: Action): AppState {
                     ...state.reactions,
                     [action.clientId]: undefined,
                 },
+            };
+        }
+        case "SHOW_MODAL": {
+            return {
+                ...state,
+                modal: action.modalType,
+                modalOpts: action.modalOpts,
+            };
+        }
+        case "CLEAR_MODAL": {
+            return {
+                ...state,
+                modal: undefined,
+                modalOpts: undefined,
+            };
+        }
+        case "SET_DEEP_LINKS": {
+            return {
+                ...state,
+                deepLinks: {
+                    shareCode: action.shareCode,
+                    joinCode: !action.shareCode ? action.joinCode : undefined,
+                },
+            };
+        }
+        case "SET_MUTE": {
+            return {
+                ...state,
+                muted: action.value,
+            };
+        }
+        case "SET_GAME_PAUSED": {
+            return {
+                ...state,
+                gamePaused: action.gamePaused,
             };
         }
     }

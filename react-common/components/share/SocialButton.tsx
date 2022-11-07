@@ -17,6 +17,8 @@ export const SocialButton = (props: SocialButtonProps) => {
     const handleClick = () => {
         const socialOptions = pxt.appTarget.appTheme.socialOptions;
         let socialUrl = '';
+
+        pxt.tickEvent(`share.social.${type}`);
         switch (type) {
             case "facebook": {
                 socialUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;

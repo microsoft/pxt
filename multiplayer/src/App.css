@@ -2,62 +2,46 @@
   --black: #000;
   --white: #fff;
 
-  --primary-color: #AA278F;
-  --secondary-color: #EAC6EB;
-  --tertiary-color: #850A6B;
-
-  --hover-color: var(--secondary-color);
-  --active-color: var(--tertiary-color);
-  --inactive-color: var(--secondary-color);
-  --inactive-hover-color: #6e6e6e;
-
-  --invert-active-color: #fff;
-  --invert-hover-text-color: #850A6B;
-
-  --body-background-color: #F9F9F9;
-  --default-card-color: #CCC;
-  --card-hover-color: #BFBFBF;
-  --card-border-color: #e9eef2;
-  --dropdown-hover-color: #CCC;
-  --inverted-text-color: var(--white);
-  --subtitle-text-color: #6e6e6e;
+  --primary-color: #E77038;
+  --secondary-color: #ffeb9a;
+  --tertiary-color: #E77038;
 
   --header-height: 4rem;
   --header-padding-top: 1rem;
-
-  --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-  --feature-text-font: Segoe UI,Tahoma,Geneva,Verdana;
-
-  --frame-loader-zindex: 30;
-  --above-frame-zindex: 50;
-  --modal-dimmer-zindex: 100;
-
-  --fullscreen-modal-zindex: 90;
-
-  --graph-backround-zindex: 10;
-  --above-graph-zindex: 20;
-
-  --high-contrast-text: var(--white);
-  --high-contrast-background: var(--black);
-  --high-contrast-highlight: #ffff00;
-  --high-contrast-focus-outline: 2px solid var(--high-contrast-highlight);
-  --high-contrast-hyperlink: #807FFF;
+  
+  --body-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-@import "./arcade.css";
-
 body {
-  position: relative;
   margin: 0;
+  padding: 0;
   font-family: var(--body-font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--body-background-color);
-  overflow: hidden;
+  background: linear-gradient(180deg, rgba(24,47,64,1) 0%, rgba(255,255,255,1) 73%);
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.common-button {
+  font-family: var(--body-font-family);
+}
+.common-button.primary {
+  background: var(--primary-color);
+  color: #fff;
+  border: 1px solid var(--primary-color);
+}
+.common-button.secondary {
+  background: var(--secondary-color);
+  color: #fff;
+  border: 1px solid var(--secondary-color);
+}
+.common-button.tertiary {
+  background: var(--tertiary-color);
+  color: #fff;
+  border: 1px solid var(--tertiary-color);
 }
 
 #root {
@@ -73,4 +57,65 @@ code {
 .app-container {
   height: 100%;
   width: 100%;
+}
+
+@keyframes reaction-fly-up {
+  0% {
+    transform: translateY(0);
+    scale: 1.25;
+    opacity: 0;
+  }
+  7% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-200px);
+    scale: 2.5;
+    opacity: 0;
+  }
+}
+
+@keyframes reaction-fly-left {
+  to {
+    transform: translateX(-200px);
+  }
+}
+
+@keyframes reaction-fly-right {
+  to {
+    transform: translateX(200px);
+  }
+}
+
+@keyframes reaction-rotate-left {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-30deg);
+  }
+  75% {
+    transform: rotate(30deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes reaction-rotate-right {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(30deg);
+  }
+  75% {
+    transform: rotate(-30deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }

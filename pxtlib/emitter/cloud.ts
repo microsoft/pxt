@@ -233,7 +233,7 @@ namespace pxt.Cloud {
 
     export function parseScriptId(uri: string): string {
         const target = pxt.appTarget;
-        if (!uri || !target.appTheme || !target.cloud || !target.cloud.sharing) return undefined;
+        if (!uri || !target.appTheme || !target.cloud?.sharing) return undefined;
 
         let domains = ["makecode.com"];
         if (target.appTheme.embedUrl)
@@ -241,16 +241,15 @@ namespace pxt.Cloud {
         if (target.appTheme.shareUrl)
             domains.push(target.appTheme.shareUrl);
         domains = Util.unique(domains, d => d).map(d => Util.escapeForRegex(Util.stripUrlProtocol(d).replace(/\/$/, '')).toLowerCase());
-        const rx = `^((https:\/\/)?(?:${domains.join('|')})\/)?(?:v[0-9]+\/)?(api\/oembed\?url=.*%2F([^&]*)&.*?|([a-z0-9\-_]+))$`;
-        const m = new RegExp(rx, 'i').exec(uri.trim());
-        const scriptid = m && (!m[1] || domains.indexOf(Util.escapeForRegex(m[1].replace(/https:\/\//, '').replace(/\/$/, '')).toLowerCase()) >= 0) && (m[3] || m[4]) ? (m[3] ? m[3] : m[4]) : null
+        const domainCheck = `(?:(?:https:\/\/)?(?:${domains.join('|')})\/)`;
+        const versionRefCheck = "(?:v[0-9]+\/)";
+        const oembedCheck = "api\/oembed\\?url=.*%2F([^&#]*)&.*";
+        const sharePageCheck = "([a-z0-9\\-_]+)(?:[#?&].*)?";
+        const scriptIdCheck = `^${domainCheck}?${versionRefCheck}?(?:(?:${oembedCheck})|(?:${sharePageCheck}))$`;
+        const m = new RegExp(scriptIdCheck, 'i').exec(uri.trim());
+        const scriptid = m?.[1] /** oembed res **/ || m?.[2] /** share page res **/;
 
-        if (!scriptid) return undefined;
-
-        if (scriptid[0] == "_" && scriptid.length == 13)
-            return scriptid;
-
-        if (scriptid.length == 23 && /^[0-9\-]+$/.test(scriptid) || scriptid.length == 24 && /^S[0-9\-]+$/.test(scriptid))
+        if (/^(_.{12}|S?[0-9\-]{23})$/.test(scriptid))
             return scriptid;
 
         return undefined;

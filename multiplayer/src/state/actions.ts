@@ -4,9 +4,11 @@ import {
     GameMode,
     Toast,
     ToastWithId,
-    UiMode,
     NetMode,
     Presence,
+    ModalType,
+    GameMetadata,
+    ClientRole,
 } from "../types";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -18,14 +20,14 @@ type ActionBase = {
  * Actions
  */
 
-type SetUserProfileAction = ActionBase & {
+type SetUserProfile = ActionBase & {
     type: "SET_USER_PROFILE";
     profile?: pxt.auth.UserProfile;
 };
 
-type SetUiMode = ActionBase & {
-    type: "SET_UI_MODE";
-    mode: UiMode;
+type SetClientRole = ActionBase & {
+    type: "SET_CLIENT_ROLE";
+    clientRole: ClientRole | undefined;
 };
 
 type SetNetMode = ActionBase & {
@@ -36,6 +38,11 @@ type SetNetMode = ActionBase & {
 type SetGameInfo = ActionBase & {
     type: "SET_GAME_INFO";
     gameInfo: GameInfo | undefined;
+};
+
+type SetGameMetadata = ActionBase & {
+    type: "SET_GAME_METADATA";
+    gameMetadata: GameMetadata | undefined;
 };
 
 type SetGameId = ActionBase & {
@@ -84,15 +91,42 @@ type ClearReaction = ActionBase & {
     clientId: string;
 };
 
+type ShowModal = ActionBase & {
+    type: "SHOW_MODAL";
+    modalType: ModalType;
+    modalOpts: any;
+};
+
+type ClearModal = ActionBase & {
+    type: "CLEAR_MODAL";
+};
+
+type SetDeepLinks = ActionBase & {
+    type: "SET_DEEP_LINKS";
+    shareCode: string | undefined;
+    joinCode: string | undefined;
+};
+
+type SetMute = ActionBase & {
+    type: "SET_MUTE";
+    value: boolean;
+};
+
+type SetGamePaused = ActionBase & {
+    type: "SET_GAME_PAUSED";
+    gamePaused: boolean;
+};
+
 /**
  * Union of all actions
  */
 
 export type Action =
-    | SetUserProfileAction
-    | SetUiMode
+    | SetUserProfile
+    | SetClientRole
     | SetNetMode
     | SetGameInfo
+    | SetGameMetadata
     | SetGameId
     | SetPlayerSlot
     | ClearGameInfo
@@ -101,7 +135,12 @@ export type Action =
     | DismissToast
     | SetPresence
     | SetReaction
-    | ClearReaction;
+    | ClearReaction
+    | ShowModal
+    | ClearModal
+    | SetDeepLinks
+    | SetMute
+    | SetGamePaused;
 
 /**
  * Action creators
@@ -109,19 +148,21 @@ export type Action =
 
 export const setUserProfile = (
     profile?: pxt.auth.UserProfile
-): SetUserProfileAction => ({
+): SetUserProfile => ({
     type: "SET_USER_PROFILE",
     profile,
 });
 
-export const clearUserProfile = (): SetUserProfileAction => ({
+export const clearUserProfile = (): SetUserProfile => ({
     type: "SET_USER_PROFILE",
     profile: undefined,
 });
 
-export const setUiMode = (mode: UiMode): SetUiMode => ({
-    type: "SET_UI_MODE",
-    mode,
+export const setClientRole = (
+    clientRole: ClientRole | undefined
+): SetClientRole => ({
+    type: "SET_CLIENT_ROLE",
+    clientRole,
 });
 
 export const setNetMode = (mode: NetMode): SetNetMode => ({
@@ -132,6 +173,18 @@ export const setNetMode = (mode: NetMode): SetNetMode => ({
 export const setGameInfo = (gameInfo: GameInfo): SetGameInfo => ({
     type: "SET_GAME_INFO",
     gameInfo,
+});
+
+export const setGameMetadata = (
+    gameMetadata: GameMetadata
+): SetGameMetadata => ({
+    type: "SET_GAME_METADATA",
+    gameMetadata,
+});
+
+export const clearGameMetadata = (): SetGameMetadata => ({
+    type: "SET_GAME_METADATA",
+    gameMetadata: undefined,
 });
 
 export const setGameId = (gameId: string): SetGameId => ({
@@ -185,4 +238,36 @@ export const setReaction = (
 export const clearReaction = (clientId: string): ClearReaction => ({
     type: "CLEAR_REACTION",
     clientId,
+});
+
+export const showModal = (
+    modalType: ModalType,
+    modalOpts?: any
+): ShowModal => ({
+    type: "SHOW_MODAL",
+    modalType,
+    modalOpts,
+});
+
+export const clearModal = (): ClearModal => ({
+    type: "CLEAR_MODAL",
+});
+
+export const setDeepLinks = (
+    shareCode: string | undefined,
+    joinCode: string | undefined
+): SetDeepLinks => ({
+    type: "SET_DEEP_LINKS",
+    shareCode,
+    joinCode,
+});
+
+export const setMute = (value: boolean): SetMute => ({
+    type: "SET_MUTE",
+    value,
+});
+
+export const setGamePaused = (gamePaused: boolean): SetGamePaused => ({
+    type: "SET_GAME_PAUSED",
+    gamePaused,
 });

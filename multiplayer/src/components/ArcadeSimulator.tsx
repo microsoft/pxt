@@ -1,99 +1,181 @@
 import { useContext, useEffect, useRef } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { SimMultiplayer } from "../types";
-import { sendSimMessage } from "../services/gameClient";
+import * as gameClient from "../services/gameClient";
+// eslint-disable-next-line import/no-unassigned-import
+import "./ArcadeSimulator.css";
+import {
+    simDriver,
+    preloadSim,
+    simulateAsync,
+    buildSimJsInfo,
+    RunOptions,
+} from "../services/simHost";
+
+let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const { gameId, playerSlot } = state;
-    const simIframeRef = useRef<HTMLIFrameElement>(null);
+    const { playerSlot, gameState, clientRole, gamePaused } = state;
+    const gameId = gameState?.gameId;
+    const gameMode = gameState?.gameMode;
+    const simContainerRef = useRef<HTMLDivElement>(null);
 
     const playerThemes = [
-        "background-color=ED3636&button-stroke=8d2525&button-fill=0b0b0b",
-        "background-color=4E4EE9&button-stroke=3333a1&button-fill=0b0b0b",
-        "background-color=FFDF1A&button-stroke=c1a916&button-fill=0b0b0b",
-        "background-color=4EB94E&button-stroke=245d24&button-fill=0b0b0b",
+        "background-color=ED3636&button-stroke=8D2525",
+        "background-color=4E4EE9&button-stroke=3333A1",
+        "background-color=FF9A14&button-stroke=B0701A",
+        "background-color=4EB94E&button-stroke=245D24",
     ];
     const selectedPlayerTheme = playerThemes[(playerSlot || 0) - 1];
-    const isHost = playerSlot == 1;
+    const isHost = clientRole === "host";
 
-    const queryParameters = [
-        "single=1",
-        "nofooter=1",
-        "fullscreen=1",
-        selectedPlayerTheme &&
-            `simParams=${encodeURIComponent(selectedPlayerTheme)}`,
-    ].filter(el => !!el);
+    const postImageMsg = async (msg: SimMultiplayer.ImageMessage) => {
+        const { image, palette } = msg;
+        const { data } = image;
 
-    if (isHost) {
-        queryParameters.push(
-            `id=${gameId || "69052-09321-39220-20264"}`,
-            "mp=server"
-        );
-    } else {
-        queryParameters.push(
-            `code=${encodeURIComponent("multiplayer.init()")}`,
-            "mp=client"
-        );
-    }
-
-    const postImageMsg = (msg: SimMultiplayer.ImageMessage) => {
-        const { image } = msg;
-        // JSON converts uint8array -> {"1": 160, "10": 2, ...}, serialize as hex string.
-        image.data = (image.data as Uint8Array).reduce(
-            (acc, byte) => acc + byte.toString(16).padStart(2, "0"),
-            ""
-        );
-        sendSimMessage({
-            type: "screen",
-            data: image,
-        });
+        await gameClient.sendScreenUpdateAsync(data, palette);
     };
 
-    const postInputMsg = (msg: SimMultiplayer.InputMessage) => {
+    const postInputMsg = async (msg: SimMultiplayer.InputMessage) => {
         const { button, state } = msg;
-        sendSimMessage({
-            type: "input",
-            data: {
-                button,
-                state,
-            },
-        });
+        await gameClient.sendInputAsync(button, state);
     };
 
-    const msgHandler = (msg: MessageEvent<SimMultiplayer.Message>) => {
-        const { data } = msg;
-        const { broadcast, origin, content } = data;
+    const postAudioMsg = async (msg: SimMultiplayer.AudioMessage) => {
+        const { instruction, soundbuf } = msg;
+        await gameClient.sendAudioAsync(instruction, soundbuf);
+    };
 
-        if (!broadcast) return;
+    const setSimStopped = async () => {
+        simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Pause);
+    };
 
-        if (origin === "client" && content === "Button") {
-            postInputMsg(data);
-        } else if (origin === "server" && content === "Image") {
-            postImageMsg(data);
-        }
+    const setSimResumed = async () => {
+        simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Resume);
     };
 
     useEffect(() => {
+        const msgHandler = (
+            msg: MessageEvent<
+                SimMultiplayer.Message | pxsim.SimulatorStateMessage
+            >
+        ) => {
+            const { data } = msg;
+            const { type } = data;
+
+            switch (type) {
+                case "status":
+                    // Once the simulator is ready, if this player is a guest, pass initial screen to simulator
+                    const { state: simState } = data;
+                    if (simState === "running" && clientRole === "guest") {
+                        const { image, palette } =
+                            gameClient.getCurrentScreen();
+                        if (image) {
+                            simDriver()?.postMessage({
+                                type: "multiplayer",
+                                content: "Image",
+                                image: {
+                                    data: image,
+                                },
+                                palette,
+                            } as SimMultiplayer.ImageMessage);
+                        }
+                    }
+                    return;
+                case "multiplayer":
+                    const { origin, content } = data;
+                    if (origin === "client" && content === "Button") {
+                        postInputMsg(data);
+                    } else if (origin === "server" && content === "Image") {
+                        postImageMsg(data);
+                    } else if (origin === "server" && content === "Audio") {
+                        postAudioMsg(data);
+                    }
+                    return;
+            }
+        };
+
         window.addEventListener("message", msgHandler);
         return () => window.removeEventListener("message", msgHandler);
-    }, []);
+    }, [clientRole]);
 
-    const fullUrl = `${pxt.webConfig.runUrl}?${queryParameters.join("&")}`;
+    const getOpts: () => RunOptions = () => {
+        let opts: RunOptions;
+
+        if (isHost) {
+            opts = {
+                simQueryParams: selectedPlayerTheme,
+                mpRole: "server",
+                id: gameId!,
+            };
+        } else {
+            opts = {
+                simQueryParams: selectedPlayerTheme,
+                mpRole: "client",
+            };
+        }
+
+        return opts;
+    };
+
+    const compileSimCode = async () => {
+        builtSimJsInfo = buildSimJsInfo(getOpts());
+        return await builtSimJsInfo;
+    };
+
+    const runSimulator = async () => {
+        const simOpts = getOpts();
+        if (builtSimJsInfo) {
+            simOpts.builtJsInfo = await builtSimJsInfo;
+        }
+
+        builtSimJsInfo = simulateAsync(simContainerRef.current!, simOpts);
+
+        await builtSimJsInfo;
+    };
+
+    useEffect(() => {
+        if (gameMode === "playing") {
+            runSimulator();
+        }
+    }, [gameMode]);
+
+    useEffect(() => {
+        if (gameMode !== "playing" && simContainerRef.current) {
+            preloadSim(simContainerRef.current, getOpts());
+        }
+    }, [clientRole, playerSlot]);
+
+    useEffect(() => {
+        if (!isHost) {
+            compileSimCode();
+        }
+    }, [clientRole]);
+
+    useEffect(() => {
+        if (isHost && gameId) {
+            compileSimCode();
+        }
+    }, [clientRole, gameId]);
+
+    useEffect(() => {
+        return () => {
+            builtSimJsInfo = undefined;
+        };
+    });
+
     return (
-        /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-        <div id="sim-container" className="tw-grow tw-mt-5">
-            <iframe
-                id="sim-iframe"
-                ref={simIframeRef}
-                src={fullUrl}
-                allowFullScreen={true}
-                // TODO:  this calc is weird, needs cleaning.
-                className="tw-h-[calc(100vh-26rem)] tw-w-screen"
-                sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
-                title={lf("Arcade Game Simulator")}
-            />
-        </div>
-        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
+        <div
+            id="sim-container"
+            ref={simContainerRef}
+            className={
+                "tw-h-[calc(100vh-16rem)] tw-w-screen md:tw-w-[calc(100vw-6rem)]"
+            }
+            style={{
+                filter: gamePaused ? "grayscale(70%) blur(1px)" : "none",
+                transition: "filter .25s",
+            }}
+        />
     );
 }

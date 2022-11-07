@@ -232,6 +232,8 @@ namespace pxsim {
         // destination. Used for muting
         let destination: GainNode;
 
+        export let soundEventCallback: (ev: "playinstructions" | "muteallchannels", data?: Uint8Array) => void;
+
         function context(): AudioContext {
             if (!_context) {
                 _context = freshContext();
@@ -496,6 +498,7 @@ namespace pxsim {
 
         let instrStopId = 1
         export function muteAllChannels() {
+            soundEventCallback?.("muteallchannels");
             instrStopId++
             while (channels.length)
                 channels[0].remove()
@@ -661,6 +664,7 @@ namespace pxsim {
 
         export function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
             return new Promise<void>(async resolve => {
+                soundEventCallback?.("playinstructions", instructions);
                 let resolved = false;
                 let ctx = context();
                 let channel = new Channel()

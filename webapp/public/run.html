@@ -120,6 +120,7 @@
         var mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
         var additionalSimParams = /simParams(?:[:=])([^&?]+)/i.exec(window.location.href)?.[1];
+        var sendBuilt = !!/sendBuilt(?:[:=])1/i.test(window.location.href);
         var codeFromData = undefined;
         var assetJsonFromData = undefined;
         try {
@@ -183,6 +184,25 @@
                 else if (mpRole && data.type === "multiplayer") {
                     // propagate message packets to parent frames
                     window.parent.postMessage(msg.data, "*");
+                }
+                else if (server && data.type === "builtjs") {
+                    var options = {
+                        id: id ? id[1] : undefined,
+                        code: code ? decodeURIComponent(code) : undefined,
+                        assets: assetJsonFromData ? decodeURIComponent(assetJsonFromData) : undefined,
+                        highContrast: highContrast,
+                        light: light,
+                        fullScreen: fullScreen,
+                        dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined,
+                        builtJsInfo: data,
+                        single: single,
+                        hideSimButtons: hideSimButtons,
+                        autofocus: autofocus,
+                        additionalQueryParameters: additionalSimParams
+                    };
+                    pxt.runner.simulateAsync(sims, options).then(function() {
+                        $(loading).remove();
+                    })
                 }
                 else if (server && data.type === "simulateproject") {
                     var files = typeof data.project === "string" ? JSON.parse(data.project) : data.project;
@@ -261,7 +281,10 @@
                         additionalQueryParameters: additionalSimParams
                     };
                     console.log('simulating script')
-                    pxt.runner.simulateAsync(sims, options).then(function() {
+                    pxt.runner.simulateAsync(sims, options).then(function(value) {
+                        if (sendBuilt) {
+                            window.parent.postMessage(value, "*");
+                        }
                         console.log('simulator started...')
                         $(loading).remove();
                     })

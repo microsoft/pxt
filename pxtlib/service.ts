@@ -248,6 +248,7 @@ namespace ts.pxtc {
         blockSourceMap?: pxt.blocks.BlockSourceInterval[]; // mappings id,start,end
         usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
         usedArguments?: pxt.Map<string[]>;
+        usedParts?: string[];
         needsFullRecompile?: boolean;
         // client options
         saveOnly?: boolean;
@@ -339,8 +340,8 @@ namespace ts.pxtc {
         endingToken?: string;
     }
 
-    export function computeUsedParts(resp: CompileResult, filter?: "onlybuiltin" | "ignorebuiltin"): string[] {
-        if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
+    export function computeUsedParts(resp: CompileResult, filter?: "onlybuiltin" | "ignorebuiltin", force = false): string[] {
+        if (!resp.usedSymbols || !pxt.appTarget.simulator || (!force && !pxt.appTarget.simulator.parts))
             return [];
 
         const parseParts = (partsRaw: string, ps: string[]) => {
@@ -388,6 +389,7 @@ namespace ts.pxtc {
             fnArgs: compileResult.usedArguments,
             parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
             usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
+            breakpoints: compileResult.breakpoints?.map(bp => bp.id),
         };
     }
 

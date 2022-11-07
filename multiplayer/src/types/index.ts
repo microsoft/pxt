@@ -1,161 +1,89 @@
-export type UiMode = "init" | "home" | "host" | "join";
 export type NetMode = "init" | "connecting" | "connected";
+export type ModalType =
+    | "sign-in"
+    | "report-abuse"
+    | "kick-player"
+    | "leave-game";
 
-export type AppMode = {
-    uiMode: UiMode;
-    netMode: NetMode;
-};
-
-export const defaultAppMode: AppMode = {
-    uiMode: "init",
-    netMode: "init",
-};
-
-export type ClientRole = "host" | "guest";
+export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
+export type GameOverReason = "kicked" | "ended" | "left" | "full" | "rejected";
 
 export type GameInfo = {
     joinCode?: string;
     joinTicket?: string;
-    affinityCookie?: string;
     gameId?: string;
     slot?: number;
+};
+
+export type GameJoinResult = Partial<GameInfo> & {
+    success: boolean;
+    statusCode: number;
+};
+
+export type GameMetadata = {
+    title: string;
+    description: string;
+    thumbnail: string;
 };
 
 export type GameState = GameInfo & {
     gameMode?: GameMode;
 };
 
-export namespace Cli2Srv {
-    type MessageBase = {
-        type: string;
-    };
-
-    export type HelloMessage = MessageBase & {
-        type: "hello";
-    };
-
-    export type HeartbeatMessage = MessageBase & {
-        type: "heartbeat";
-    };
-
-    export type ConnectMessage = MessageBase & {
-        type: "connect";
-        ticket: string;
-    };
-
-    export type StartGameMessage = MessageBase & {
-        type: "start-game";
-    };
-
-    export type InputMessage = MessageBase & {
-        type: "input";
-        data: {
-            button: number;
-            state: "Pressed" | "Released" | "Held";
-        };
-    };
-
-    export type ScreenMessage = MessageBase & {
-        type: "screen";
-        data: any; // pxsim.RefBuffer
-    };
-
-    export type ChatMessage = MessageBase & {
-        type: "chat";
-        text: string;
-    };
-
-    export type ReactionMessage = MessageBase & {
-        type: "reaction";
-        index: number;
-    };
-
-    export type Message =
-        | HelloMessage
-        | HeartbeatMessage
-        | ConnectMessage
-        | StartGameMessage
-        | InputMessage
-        | ScreenMessage
-        | ChatMessage
-        | ReactionMessage;
-
-    export type SimMessage = ScreenMessage | InputMessage;
+export enum ButtonState {
+    Pressed = 1,
+    Released = 2,
+    Held = 3,
 }
 
-export namespace Srv2Cli {
-    type MessageBase = {
-        type: string;
-    };
+export function buttonStateToString(state: ButtonState): string | undefined {
+    switch (state) {
+        case ButtonState.Pressed:
+            return "Pressed";
+        case ButtonState.Released:
+            return "Released";
+        case ButtonState.Held:
+            return "Held";
+    }
+}
 
-    export type HelloMessage = MessageBase & {
-        type: "hello";
-    };
+export function stringToButtonState(state: string): ButtonState | undefined {
+    switch (state) {
+        case "Pressed":
+            return ButtonState.Pressed;
+        case "Released":
+            return ButtonState.Released;
+        case "Held":
+            return ButtonState.Held;
+    }
+}
 
-    export type JoinedMessage = MessageBase & {
-        type: "joined";
-        role: ClientRole;
-        slot: number;
-        gameMode: GameMode;
-        clientId: string;
-    };
+export enum AudioInstruction {
+    MuteAllChannels = 0,
+    PlayInstruction = 1,
+}
 
-    export type StartGameMessage = MessageBase & {
-        type: "start-game";
-    };
+export function audioInstructionToString(
+    state: AudioInstruction
+): string | undefined {
+    switch (state) {
+        case AudioInstruction.MuteAllChannels:
+            return "muteallchannels";
+        case AudioInstruction.PlayInstruction:
+            return "playinstructions";
+    }
+}
 
-    export type InputMessage = MessageBase & {
-        type: "input";
-        slot: number;
-        data: {
-            button: number;
-            state: "Pressed" | "Released" | "Held";
-        };
-    };
-
-    export type ScreenMessage = MessageBase & {
-        type: "screen";
-        data: any; // pxsim.RefBuffer
-    };
-
-    export type ChatMessage = MessageBase & {
-        type: "chat";
-        text: string;
-    };
-
-    export type PresenceMessage = MessageBase & {
-        type: "presence";
-        presence: Presence;
-    };
-
-    export type ReactionMessage = MessageBase & {
-        type: "reaction";
-        index: number;
-        clientId: string;
-    };
-
-    export type PlayerJoinedMessage = MessageBase & {
-        type: "player-joined";
-        clientId: string;
-    };
-
-    export type PlayerLeftMessage = MessageBase & {
-        type: "player-left";
-        clientId: string;
-    };
-
-    export type Message =
-        | HelloMessage
-        | JoinedMessage
-        | StartGameMessage
-        | InputMessage
-        | ScreenMessage
-        | ChatMessage
-        | PresenceMessage
-        | ReactionMessage
-        | PlayerJoinedMessage
-        | PlayerLeftMessage;
+export function stringToAudioInstruction(
+    state: string
+): AudioInstruction | undefined {
+    switch (state) {
+        case "muteallchannels":
+            return AudioInstruction.MuteAllChannels;
+        case "playinstructions":
+            return AudioInstruction.PlayInstruction;
+    }
 }
 
 export type ToastType = "success" | "info" | "warning" | "error";
@@ -173,6 +101,7 @@ export type Toast = {
     hideDismissBtn?: boolean; // if true, will hide the dismiss button
     showSpinner?: boolean; // if true, will show a spinner icon
     hideIcon?: boolean; // if true, will hide the type-specific icon
+    icon?: string; // if provided, will override the type-specific icon
 };
 
 export type ToastWithId = Toast & {
@@ -183,7 +112,6 @@ export type UserInfo = {
     id: string;
     slot: number;
     role: ClientRole;
-    name: string;
 };
 
 export type Presence = {
@@ -202,13 +130,13 @@ export type Dimension = {
 export namespace SimMultiplayer {
     type MessageBase = {
         type: "multiplayer";
-        content: string;
         origin?: "server" | "client";
         broadcast?: boolean;
     };
     export type ImageMessage = MessageBase & {
         content: "Image";
         image: any; // pxsim.RefBuffer
+        palette: Uint8Array;
     };
 
     export type InputMessage = MessageBase & {
@@ -218,5 +146,11 @@ export namespace SimMultiplayer {
         state: "Pressed" | "Released" | "Held";
     };
 
-    export type Message = ImageMessage | InputMessage;
+    export type AudioMessage = MessageBase & {
+        content: "Audio";
+        instruction: "playinstructions" | "muteallchannels";
+        soundbuf?: Uint8Array;
+    };
+
+    export type Message = ImageMessage | AudioMessage | InputMessage;
 }

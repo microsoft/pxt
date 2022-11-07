@@ -1,11 +1,14 @@
 import * as gameClient from "../services/gameClient";
 import { dispatch } from "../state";
-import { clearGameInfo } from "../state/actions";
+import { clearGameInfo, clearGameMetadata } from "../state/actions";
+import { GameOverReason } from "../types";
 
-export async function leaveGameAsync() {
+export async function leaveGameAsync(reason: GameOverReason) {
     try {
-        await gameClient.leaveGameAsync();
+        pxt.tickEvent("mp.leavegame");
+        await gameClient.leaveGameAsync(reason);
         dispatch(clearGameInfo());
+        dispatch(clearGameMetadata());
     } catch (e) {
     } finally {
     }

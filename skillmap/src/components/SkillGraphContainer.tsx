@@ -7,7 +7,7 @@ import { SvgGraph, getGraph, PADDING, UNIT, MIN_HEIGHT, MIN_WIDTH } from '../lib
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/skillgraph.css'
-import { MenuBar } from "react-common/controls/MenuBar";
+import { MenuBar } from "react-common/components/controls/MenuBar";
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface SkillGraphContainerProps {

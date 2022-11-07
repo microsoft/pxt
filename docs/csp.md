@@ -4,18 +4,6 @@
 
 The College Board’s [Advanced Placement (AP®) Computer Science Principles](https://apcentral.collegeboard.org/courses/ap-computer-science-principles) course is an introductory computer science course for High School students (typically 14-18 years old). While academically rigorous, the AP Computer Science Principles course is designed to attract students of all backgrounds, experience levels, and interests, and covers a wide range of computing topics with a special focus on the impact of technology and computing on students’ lives. The course covers a full academic year, does not require any prerequisites( Algebra I is recommended), and an end-of-course exam may be taken to receive college credit.
 
-### ~ reminder
-
-#### Professional Development Opportunities
-
-There are three free professional development opportunities available this summer to help prepare Educators to teach the AP CS Principles with Microsoft MakeCode course for the 2022-2023 academic year. These professional development workshops will focus on the course's Big Ideas, Learning Objectives and Essential Knowledge skills. Additionally, you will learn how Microsoft MakeCode's curriculum meets the course's learning objectives and prepares students for the AP Exam and Create Performance Task. By attending the training and using Microsoft MakeCode's curriculum, you will be prepared with a syllabus, pacing plan, and lesson plans, PowerPoints, student handouts, and resources for every day of the course. Register below, limited capacity:
-
-* **[Workshop 1](https://microsoftedu.eventbuilder.com/MicrosoftMakeCodeWorkshop1)**: Tuesdays and Thursdays for 2 weeks, June 7th, 9th, 14th, and 16th
-* **[Workshop 2](https://microsoftedu.eventbuilder.com/MicrosoftMakeCodeWorkshop2)**: Daily, Tuesday-Friday, June 28th-July 1st
-* **[Workshop 3](https://microsoftedu.eventbuilder.com/MicrosoftMakeCodeWorkshop3)**: Wednesdays once a week, July 6th, 13th, 20th, and 27th
-
-### ~
-
 ## AP CS Principles Curriculum
 
 The **[AP CS Principles with Microsoft MakeCode](https://microsoft.github.io/makecode-csp)** curriculum is free and uses web-based technology and tools that can be accessed across platforms and devices. The curriculum is also endorsed and approved by the College Board as aligning with the [CS Principles curriculum framework](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/course?course=ap-computer-science-principles) and [AP CS Principles exam](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/exam).

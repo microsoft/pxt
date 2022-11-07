@@ -1,22 +1,33 @@
 import {
-    AppMode,
-    defaultAppMode,
+    NetMode,
     GameState,
     ToastWithId,
     Presence,
     defaultPresence,
+    ModalType,
+    GameMetadata,
+    ClientRole,
 } from "../types";
 
 export type AppState = {
-    appMode: AppMode;
-    signedIn: boolean;
+    netMode: NetMode;
+    authStatus: "signed-in" | "signed-out" | "unknown";
     profile: pxt.auth.UserProfile | undefined;
-    gameId: string | undefined;
+    clientRole: ClientRole | undefined;
     playerSlot: number | undefined;
     joinCode: string | undefined;
     gameState: GameState | undefined;
+    gameMetadata: GameMetadata | undefined;
+    gamePaused: boolean | undefined;
     toasts: ToastWithId[];
     presence: Presence;
+    modal: ModalType | undefined;
+    modalOpts: any;
+    muted: boolean;
+    deepLinks: {
+        shareCode?: string;
+        joinCode?: string;
+    };
     reactions: {
         [clientId: string]:
             | {
@@ -28,14 +39,20 @@ export type AppState = {
 };
 
 export const initialAppState: AppState = {
-    appMode: { ...defaultAppMode },
-    signedIn: false,
+    netMode: "init",
+    authStatus: "unknown",
     profile: undefined,
-    gameId: undefined,
+    clientRole: undefined,
     playerSlot: undefined,
     joinCode: undefined,
     gameState: undefined,
+    gameMetadata: undefined,
+    gamePaused: undefined,
     toasts: [],
     presence: { ...defaultPresence },
+    modal: undefined,
+    modalOpts: undefined,
+    muted: false,
+    deepLinks: {},
     reactions: {},
 };

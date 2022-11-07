@@ -1,5 +1,5 @@
 import { dispatch } from "../state";
-import { clearUserProfile, setUiMode, setUserProfile } from "../state/actions";
+import { clearUserProfile, setUserProfile } from "../state/actions";
 
 export async function setUserProfileAsync(
     profile: pxt.auth.UserProfile | undefined
@@ -10,7 +10,6 @@ export async function setUserProfileAsync(
         } else {
             dispatch(clearUserProfile());
         }
-        dispatch(setUiMode("home"));
     } catch (e) {
     } finally {
     }

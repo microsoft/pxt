@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --slot-0-color: 204, 204, 204;
+    --slot-1-color: 255, 0, 0;
+    --slot-2-color: 0, 56, 255;
+    --slot-3-color: 255, 154, 20;
+    --slot-4-color: 77, 166, 77;
+    --reaction-color: 77, 77, 77;
+    --you-tag-border-color: 0, 138, 169;
+    --you-tag-bg-color: 205, 237, 244;
+}

@@ -454,6 +454,7 @@ declare namespace pxt {
         downloadDialogTheme?: DownloadDialogTheme;
         winAppDeprImage?: string; // Image to show on Windows App for deprecation
         showWinAppDeprBanner?: boolean; // show banner announcing Windows App deprecation
+        multiplayerShareButton?: boolean; // display multiplayer button alongside social links
     }
 
     interface DownloadDialogTheme {
@@ -986,6 +987,7 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+        computeUsedParts?: boolean;
         name?: string;
         apisInfo?: ApisInfo;
         bannedCategories?: string[];
@@ -1019,6 +1021,7 @@ declare namespace ts.pxtc {
         fnArgs?: pxt.Map<String[]>;
         parts?: string[];
         usedBuiltinParts?: string[];
+        breakpoints?: number[];
     }
 
     interface UpgradePolicy {
