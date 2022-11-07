@@ -5,6 +5,7 @@ import BetaTag from "./BetaTag";
 import HostLobby from "./HostLobby";
 import JoinCodeLabel from "./JoinCodeLabel";
 import JoinLobby from "./JoinLobby";
+import KeyboardControlsButton from "./KeyboardControlsButton";
 import PresenceBar from "./PresenceBar";
 import RemixGameButton from "./RemixGameButton";
 import ToggleMuteButton from "./ToggleMuteButton";
@@ -43,7 +44,9 @@ export default function Render(props: GamePageProps) {
                     <div className="tw-mr-1 sm:tw-mr-0">
                         <JoinCodeLabel />
                     </div>
-                    <div className="tw-hidden sm:tw-inline">{lf("Keyboard Controls")}</div>
+                    <div className="tw-hidden sm:tw-inline">
+                        <KeyboardControlsButton />
+                    </div>
                 </div>
                 <div className="tw-mt-3">
                     <PresenceBar />
