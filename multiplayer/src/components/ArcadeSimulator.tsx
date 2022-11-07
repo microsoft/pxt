@@ -174,6 +174,7 @@ export default function Render() {
             }
             style={{
                 filter: gamePaused ? "grayscale(1)" : "none",
+                transition: "filter .25s",
             }}
         />
     );
