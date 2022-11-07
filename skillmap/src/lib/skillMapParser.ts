@@ -428,6 +428,10 @@ function inflateMapReward(section: MarkdownSection, base: Partial<MapRewardNode>
         if (parsedRewards.length) result.rewards = parsedRewards;
     }
 
+    if ((result as any as MapCompletionNode).kind === "completion") {
+        (result as any as MapCompletionNode).showMultiplayerShare = isTrue(section.attributes["showmultiplayershare"]);
+    }
+
     return result as MapRewardNode;
 }
 

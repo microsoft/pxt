@@ -1,14 +1,24 @@
 export type NetMode = "init" | "connecting" | "connected";
-export type ModalType = "sign-in" | "report-abuse";
+export type ModalType =
+    | "sign-in"
+    | "report-abuse"
+    | "kick-player"
+    | "leave-game";
 
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
+export type GameOverReason = "kicked" | "ended" | "left" | "full" | "rejected";
 
 export type GameInfo = {
     joinCode?: string;
     joinTicket?: string;
     gameId?: string;
     slot?: number;
+};
+
+export type GameJoinResult = Partial<GameInfo> & {
+    success: boolean;
+    statusCode: number;
 };
 
 export type GameMetadata = {
@@ -91,6 +101,7 @@ export type Toast = {
     hideDismissBtn?: boolean; // if true, will hide the dismiss button
     showSpinner?: boolean; // if true, will show a spinner icon
     hideIcon?: boolean; // if true, will hide the type-specific icon
+    icon?: string; // if provided, will override the type-specific icon
 };
 
 export type ToastWithId = Toast & {

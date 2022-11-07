@@ -14,11 +14,11 @@ export type AppState = {
     authStatus: "signed-in" | "signed-out" | "unknown";
     profile: pxt.auth.UserProfile | undefined;
     clientRole: ClientRole | undefined;
-    gameId: string | undefined;
     playerSlot: number | undefined;
     joinCode: string | undefined;
     gameState: GameState | undefined;
     gameMetadata: GameMetadata | undefined;
+    gamePaused: boolean | undefined;
     toasts: ToastWithId[];
     presence: Presence;
     modal: ModalType | undefined;
@@ -43,11 +43,11 @@ export const initialAppState: AppState = {
     authStatus: "unknown",
     profile: undefined,
     clientRole: undefined,
-    gameId: undefined,
     playerSlot: undefined,
     joinCode: undefined,
     gameState: undefined,
     gameMetadata: undefined,
+    gamePaused: undefined,
     toasts: [],
     presence: { ...defaultPresence },
     modal: undefined,

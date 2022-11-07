@@ -20,10 +20,26 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "SET_NET_MODE": {
-            return {
+            let nextState = {
                 ...state,
                 netMode: action.mode,
             };
+            if (action.mode === "init") {
+                // Clear lots of state when we go back to init mode
+                nextState = {
+                    ...nextState,
+                    clientRole: undefined,
+                    playerSlot: undefined,
+                    joinCode: undefined,
+                    gameState: undefined,
+                    gameMetadata: undefined,
+                    gamePaused: undefined,
+                    presence: { ...defaultPresence },
+                    modal: undefined,
+                    modalOpts: undefined,
+                };
+            }
+            return nextState;
         }
         case "SET_GAME_INFO": {
             return {
@@ -43,7 +59,10 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "SET_GAME_ID": {
             return {
                 ...state,
-                gameId: action.gameId,
+                gameState: {
+                    ...state.gameState,
+                    gameId: action.gameId,
+                },
             };
         }
         case "SET_PLAYER_SLOT": {
@@ -57,7 +76,6 @@ export default function reducer(state: AppState, action: Action): AppState {
                 ...state,
                 playerSlot: undefined,
                 gameState: undefined,
-                gameId: undefined,
                 gameMetadata: undefined,
             };
         }
@@ -136,6 +154,12 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 muted: action.value,
+            };
+        }
+        case "SET_GAME_PAUSED": {
+            return {
+                ...state,
+                gamePaused: action.gamePaused,
             };
         }
     }

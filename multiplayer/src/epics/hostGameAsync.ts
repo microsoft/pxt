@@ -5,12 +5,12 @@ import {
     setNetMode,
     setGameInfo,
     showToast,
-    setGameId,
     setClientRole,
 } from "../state/actions";
+import { cleanupShareCode } from "../util";
 
 export async function hostGameAsync(shareCode: string | undefined) {
-    shareCode = pxt.Cloud.parseScriptId(shareCode ?? "");
+    shareCode = cleanupShareCode(shareCode);
     if (!shareCode) {
         return dispatch(
             showToast({
@@ -42,7 +42,6 @@ export async function hostGameAsync(shareCode: string | undefined) {
 
         dispatch(setClientRole("host"));
         dispatch(setGameInfo(gameInfo));
-        dispatch(setGameId(shareCode));
         dispatch(setNetMode("connected"));
     } catch (e) {
         console.log("error", e);

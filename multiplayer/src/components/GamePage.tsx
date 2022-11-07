@@ -17,11 +17,7 @@ export default function Render(props: GamePageProps) {
 
     return (
         <>
-            {netMode === "connecting" && (
-                <div className="tw-text-xl tw-text-white tw-mt-5">
-                    {lf("Connecting...")}
-                </div>
-            )}
+            {netMode === "connecting" && <></>}
             {state.gameState?.gameMode === "lobby" && (
                 <div className="tw-flex tw-flex-col tw-items-center tw-justify-center tw-w-full tw-h-full">
                     {clientRole === "host" && <HostLobby />}
@@ -39,13 +35,17 @@ export default function Render(props: GamePageProps) {
                 }`}
             >
                 <ArcadeSimulator />
-                <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1">
+                <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1 tw-ml-1">
                     <div>
                         <ToggleMuteButton />
                         <RemixGameButton />
                     </div>
-                    <JoinCodeLabel />
-                    <div>{lf("Keyboard Controls")}</div>
+                    <div className="tw-mr-1 sm:tw-mr-0">
+                        <JoinCodeLabel />
+                    </div>
+                    <div className="tw-hidden sm:tw-inline">
+                        {lf("Keyboard Controls")}
+                    </div>
                 </div>
                 <div className="tw-mt-3">
                     <PresenceBar />

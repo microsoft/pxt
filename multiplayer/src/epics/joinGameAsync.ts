@@ -29,20 +29,30 @@ export async function joinGameAsync(joinCode: string | undefined) {
         dispatch(setNetMode("connecting"));
         dispatch(connectingToast);
 
-        const gameInfo = await gameClient.joinGameAsync(joinCode);
-        console.log(gameInfo);
+        const joinResult = await gameClient.joinGameAsync(joinCode);
+        console.log(joinResult);
 
-        dispatch(
-            showToast({
-                type: "success",
-                text: lf("Connected!"),
-                timeoutMs: 5000,
-            })
-        );
-
-        dispatch(setClientRole("guest"));
-        dispatch(setGameInfo(gameInfo));
-        dispatch(setNetMode("connected"));
+        if (joinResult.success) {
+            dispatch(
+                showToast({
+                    type: "success",
+                    text: lf("Connected!"),
+                    timeoutMs: 5000,
+                })
+            );
+            dispatch(setClientRole("guest"));
+            dispatch(setGameInfo(joinResult));
+            dispatch(setNetMode("connected"));
+        } else {
+            dispatch(
+                showToast({
+                    type: "info",
+                    text: lf("Game not found"),
+                    timeoutMs: 5000,
+                })
+            );
+            dispatch(setNetMode("init"));
+        }
     } catch (e) {
         console.log("error", e);
         dispatch(setNetMode("init"));

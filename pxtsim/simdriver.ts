@@ -403,6 +403,25 @@ namespace pxsim {
             frame.contentWindow.postMessage(msg, origin);
         }
 
+        private setRunOptionQueryParams(url: string) {
+            const urlObject = new URL(url);
+            if (this._runOptions?.hideSimButtons) {
+                urlObject.searchParams.set("hideSimButtons", "1");
+            }
+
+            if (this._runOptions?.queryParameters) {
+                const parameters = this._runOptions.queryParameters.split("&");
+                for (const param of parameters) {
+                    const [a, b] = param.split(/[:=]/);
+                    if (a && b) {
+                        urlObject.searchParams.set(a, b);
+                    }
+                }
+            }
+
+            return urlObject.toString();
+        }
+
         private createFrame(url?: string): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = `simframe ui embed`;
@@ -415,24 +434,7 @@ namespace pxsim {
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             frame.className = 'no-select';
 
-            let furl = url || this.getSimUrl().toString();
-            if (this._runOptions?.hideSimButtons) {
-                const urlObject = new URL(furl);
-                urlObject.searchParams.append("hideSimButtons", "1");
-                furl = urlObject.toString();
-            }
-
-            if (this._runOptions?.queryParameters) {
-                const urlObject = new URL(furl);
-                const parameters = this._runOptions.queryParameters.split("&");
-                for (const param of parameters) {
-                    const [a, b] = param.split(/[:=]/);
-                    if (a && b) {
-                        urlObject.searchParams.set(a, b);
-                    }
-                }
-                furl = urlObject.toString();
-            }
+            let furl = this.setRunOptionQueryParams(url || this.getSimUrl().toString());
             furl += '#' + frame.id;
 
             frame.src = furl;
@@ -473,9 +475,11 @@ namespace pxsim {
         }
 
         public preload(aspectRatio: number, clearRuntime?: boolean) {
+            if (clearRuntime) {
+                this._currentRuntime = undefined;
+                this.container.textContent = "";
+            }
             if (!this.simFrames().length) {
-                if (clearRuntime)
-                    this._currentRuntime = undefined;
                 this.container.appendChild(this.createFrame());
                 this.applyAspectRatio(aspectRatio);
                 this.setStarting();

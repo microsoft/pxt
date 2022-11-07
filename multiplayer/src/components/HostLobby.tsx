@@ -1,10 +1,11 @@
-import { useContext, useRef, useState } from "react";
+import { useContext } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { Link } from "react-common/components/controls/Link";
 import { startGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
 import { makeJoinLink, SHORT_LINK } from "../util";
+import { QRCodeSVG } from "qrcode.react";
 import BetaTag from "./BetaTag";
 import CopyButton from "./CopyButton";
 import PresenceBar from "./PresenceBar";
@@ -33,11 +34,11 @@ export default function Render() {
     const joinDeepLink = makeJoinLink(joinCode);
 
     return (
-        <div className="tw-bg-white tw-shadow-lg tw-rounded-lg">
+        <div className="tw-bg-white tw-shadow-lg tw-rounded-lg tw-m-1 tw-min-w-[17rem]">
             <div className="tw-absolute tw-translate-y-[-130%]">
                 <BetaTag />
             </div>
-            <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-py-[3rem] tw-px-[7rem]">
+            <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-py-[3rem] tw-px-3 sm:tw-px-14 md:tw-px-[7rem]">
                 <div className="tw-mt-3 tw-text-lg tw-text-center tw-text-neutral-700">
                     {inviteStringSegments[0]}
                     {
@@ -63,8 +64,14 @@ export default function Render() {
                         />
                     </div>
                 </div>
+                <div className="tw-flex tw-flex-col tw-items-center tw-mt-5 tw-text-sm tw-gap-1 tw-max-h-24 md:tw-max-h-36">
+                    <QRCodeSVG value={joinDeepLink} />
+                    <div className="tw-hidden md:tw-block">
+                        {lf("or scan with phone")}
+                    </div>
+                </div>
                 <Button
-                    className={"primary tw-mt-5 tw-mb-7 tw-font-sans"}
+                    className={"primary tw-mt-5 tw-mb-7 tw-font-sans tw-mr-0"}
                     label={lf("Start Game")}
                     title={lf("Start Game")}
                     onClick={onStartGameClick}

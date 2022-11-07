@@ -29,10 +29,12 @@ export default function Render() {
             await hostGameAsync(shareCodeRef.current.value);
         }
     };
+    const enterShareOrLink = lf("Enter share code or link");
+    const howToGetLink = lf("How do I get a share code or link?");
 
     return (
         <div className="tw-flex tw-w-screen tw-h-screen tw-justify-center tw-items-center">
-            <div className="tw-bg-white tw-rounded-lg tw-drop-shadow-xl tw-min-h-[17rem] tw-min-w-[25rem]">
+            <div className="tw-bg-white tw-rounded-lg tw-drop-shadow-xl tw-min-h-[17rem] tw-min-w-[17rem] md:tw-min-w-[25rem]">
                 <div className="tw-absolute tw-translate-y-[-130%]">
                     <BetaTag />
                 </div>
@@ -41,11 +43,31 @@ export default function Render() {
                         <div className="tw-flex tw-justify-center">
                             <TabButton
                                 title={lf("Join Game")}
+                                label={
+                                    <>
+                                        <div className="tw-hidden sm:tw-inline">
+                                            {lf("Join Game")}
+                                        </div>
+                                        <div className="sm:tw-hidden">
+                                            {lf("Join")}
+                                        </div>
+                                    </>
+                                }
                                 selected={currTab === "join"}
                                 onClick={() => setCurrTab("join")}
                             />
                             <TabButton
                                 title={lf("Host Game")}
+                                label={
+                                    <>
+                                        <div className="tw-hidden sm:tw-inline">
+                                            {lf("Host Game")}
+                                        </div>
+                                        <div className="sm:tw-hidden">
+                                            {lf("Host")}
+                                        </div>
+                                    </>
+                                }
                                 selected={currTab === "host"}
                                 onClick={() => setCurrTab("host")}
                             />
@@ -94,7 +116,7 @@ export default function Render() {
                                             handleInputRef={setShareCodeRef}
                                             preserveValueOnBlur={true}
                                             onEnterKey={onHostGameClick}
-                                            placeholder={lf("Enter share code or link")}
+                                            placeholder={enterShareOrLink}
                                         />
                                     </div>
                                     <div>
@@ -110,7 +132,7 @@ export default function Render() {
                                             href="/docs/multiplayer#host-game"
                                             target="_blank"
                                         >
-                                            {lf("How do I get a share code or link?")}
+                                            {howToGetLink}
                                         </Link>
                                     </div>
                                 </div>

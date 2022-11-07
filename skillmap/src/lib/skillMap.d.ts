@@ -90,6 +90,7 @@ interface MapRewardNode extends BaseNode {
 
 interface MapCompletionNode extends MapRewardNode {
     kind: "completion";
+    showMultiplayerShare?: boolean;
 }
 
 interface MapCompletionAction {
