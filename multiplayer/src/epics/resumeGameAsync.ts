@@ -10,8 +10,8 @@ export async function resumeGameAsync() {
         if (clientRole === "host") {
             pxt.tickEvent("mp.host.resumegame");
             await gameClient.resumeGameAsync();
-            simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Resume);
         }
+        simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Resume);
         dispatch(setGamePaused(false));
     } catch (e) {
     } finally {
