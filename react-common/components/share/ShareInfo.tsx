@@ -10,6 +10,7 @@ import { ThumbnailRecorder } from "./ThumbnailRecorder";
 import { SocialButton } from "./SocialButton";
 import { Checkbox } from "../controls/Checkbox";
 import { SimRecorder } from "./ThumbnailRecorder";
+import { MultiplayerConfirmation } from "./MultiplayerConfirmation";
 
 export interface ShareInfoProps {
     projectName: string;
@@ -35,6 +36,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ showQRCode, setShowQRCode ] = React.useState(false);
     const [ copySuccessful, setCopySuccessful ] = React.useState(false);
     const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn || anonymousShareByDefault);
+    const [ isShowingMultiConfirmation, setIsShowingMultiConfirmation ] = React.useState(false);
 
     const showSimulator = !!simRecorder;
     const showDescription = shareState !== "publish";
@@ -119,20 +121,37 @@ export const ShareInfo = (props: ShareInfoProps) => {
         }
     };
 
-    const handleMultiplayerShareClick = async () => {
+    const handleMultiplayerShareConfirmClick = async () => {
         const publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
 
         // TODO multiplayer: This won't work on staging (parseScriptId domains check doesn't include staging urls)
         // but those wouldn't load anyways (as staging multiplayer is currently fetching games from prod links)
         const shareId = pxt.Cloud.parseScriptId(publishedShareData.url);
-        if (!shareId)
+        if (!shareId) {
+            pxt.tickEvent(`share.hostMultiplayerError`);
             return;
+        }
 
         const domain = pxt.BrowserUtils.isLocalHostDev() ? "http://localhost:3000" : "";
         const multiplayerHostUrl = `${domain}${pxt.webConfig.relprefix}multiplayer?host=${shareId}`;
 
-        pxt.tickEvent(`share.multiplayer`);
+        pxt.tickEvent(`share.hostMultiplayerShared`);
         window.open(multiplayerHostUrl, "_blank");
+
+        setShareData(publishedShareData);
+        if (!publishedShareData?.error) setShareState("publish");
+        else setShareState("share")
+        setIsShowingMultiConfirmation(false);
+    }
+
+    const handleMultiplayerShareClick = async () => {
+        setIsShowingMultiConfirmation(true);
+        pxt.tickEvent(`share.hostMultiplayer`);
+    }
+
+    const handleMultiplayerShareCancelClick = async () => {
+        setIsShowingMultiConfirmation(false);
+        pxt.tickEvent(`share.hostMultiplayerCancel`);
     }
 
     const embedOptions = [{
@@ -333,6 +352,11 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         <img className="qrcode-image" src={shareData?.qr} />
                     </div>
                 </Modal>
+            }
+            {isShowingMultiConfirmation &&
+                <MultiplayerConfirmation
+                    onCancelClicked={handleMultiplayerShareCancelClick}
+                    onConfirmClicked={handleMultiplayerShareConfirmClick} />
             }
         </div>
     </>
