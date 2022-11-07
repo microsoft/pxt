@@ -46,7 +46,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     React.useEffect(() => {
         if (isLoggedIn) {
-            pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous.toString(), persistent: hasProjectBeenPersistentShared.toString() });
+            pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous?.toString(), persistent: hasProjectBeenPersistentShared?.toString() });
         } else {
             pxt.tickEvent("share.open", { state: shareState});
         }
