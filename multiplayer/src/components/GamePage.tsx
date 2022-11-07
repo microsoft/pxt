@@ -43,7 +43,9 @@ export default function Render(props: GamePageProps) {
                     <div className="tw-mr-1 sm:tw-mr-0">
                         <JoinCodeLabel />
                     </div>
-                    <div className="tw-hidden sm:tw-inline">{lf("Keyboard Controls")}</div>
+                    <div className="tw-hidden sm:tw-inline">
+                        {lf("Keyboard Controls")}
+                    </div>
                 </div>
                 <div className="tw-mt-3">
                     <PresenceBar />

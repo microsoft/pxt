@@ -6,11 +6,12 @@ import SignedInPage from "./components/SignedInPage";
 import HeaderBar from "./components/HeaderBar";
 import Toast from "./components/Toast";
 import AppModal from "./components/AppModal";
-import Footer from "./components/Footer";
+import GamePaused from "./components/GamePaused";
 import * as authClient from "./services/authClient";
 import { setDeepLinks } from "./state/actions";
-import { cleanupJoinCode } from "./util";
-import { joinGameAsync, hostGameAsync } from "./epics";
+import { cleanupJoinCode, cleanupShareCode } from "./util";
+import { joinGameAsync, hostGameAsync, visibilityChanged } from "./epics";
+import { useVisibilityChange } from "./hooks";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./App.css";
@@ -20,6 +21,8 @@ function App() {
     const { authStatus, deepLinks } = state;
     const { shareCode, joinCode } = deepLinks;
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
+
+    useVisibilityChange(visibilityChanged);
 
     useEffect(() => {
         // On mount, check if user is signed in
@@ -32,15 +35,15 @@ function App() {
     const parseUrlParams = useCallback(() => {
         let params: URLSearchParams | undefined = undefined;
         if (window.location.hash[1] === "?") {
-            // After sign in, the params are in the hash. I think this is a bug in pxt.auth
+            // After sign in the params are in the hash. This may be a bug in pxt.auth.
             params = new URLSearchParams(window.location.hash.substr(1));
         } else {
             params = new URLSearchParams(window.location.search);
         }
         let shareCodeParam = params.get("host") ?? undefined;
         let joinCodeParam = params.get("join") ?? undefined;
-        shareCodeParam = pxt.Cloud.parseScriptId(shareCodeParam ?? "");
-        joinCodeParam = cleanupJoinCode(joinCodeParam ?? "");
+        shareCodeParam = cleanupShareCode(shareCodeParam);
+        joinCodeParam = cleanupJoinCode(joinCodeParam);
         dispatch(setDeepLinks(shareCodeParam, joinCodeParam));
     }, [dispatch]);
 
@@ -81,9 +84,8 @@ function App() {
                 </>
             )}
             <AppModal />
+            <GamePaused />
             <Toast />
-            <div className="tw-flex-grow" />
-            <Footer />
         </div>
     );
 }

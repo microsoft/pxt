@@ -110,7 +110,7 @@ export const Modal = (props: ModalProps) => {
                     { actions.map((action, index) =>
                         <Button
                             key={index}
-                            className="primary inverted"
+                            className={action.className ?? "primary inverted"}
                             disabled={action.disabled}
                             onClick={action.onClick}
                             href={action.url}
