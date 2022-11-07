@@ -14,7 +14,7 @@ export default function Render() {
     return (
         <div>
             <Popup
-                className="tw-absolute tw-translate-y-[-110%]"
+                className="tw-absolute tw-translate-y-[-105%]"
                 visible={showKeys}
                 onClickedOutside={() => setShowKeys(false)}
             >
