@@ -7,9 +7,10 @@ import {
     showToast,
     setClientRole,
 } from "../state/actions";
+import { cleanupShareCode } from "../util";
 
 export async function hostGameAsync(shareCode: string | undefined) {
-    shareCode = pxt.Cloud.parseScriptId(shareCode ?? "");
+    shareCode = cleanupShareCode(shareCode);
     if (!shareCode) {
         return dispatch(
             showToast({

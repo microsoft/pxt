@@ -9,7 +9,7 @@ import {
     MenuDropdown,
     MenuItem,
 } from "../../../react-common/components/controls/MenuDropdown";
-import { leaveGameAsync, signOutAsync } from "../epics";
+import { signOutAsync } from "../epics";
 import { showModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
 import { useAuthDialogMessages } from "../hooks/useAuthDialogMessages";
@@ -22,6 +22,9 @@ export default function Render() {
     const appTheme = pxt.appTarget?.appTheme;
     const helpUrl = ""; // TODO multiplayer
 
+    const privacyUrl = pxt?.appTarget?.appTheme?.privacyUrl;
+    const termsOfUseUrl = pxt?.appTarget?.appTheme?.termsOfUseUrl;
+
     const dialogMessages = useAuthDialogMessages();
 
     const onHelpClicked = () => {
@@ -32,6 +35,16 @@ export default function Render() {
     const onReportAbuseClicked = () => {
         pxt.tickEvent("mp.settingsmenu.reportabuse");
         dispatch(showModal("report-abuse"));
+    };
+
+    const onPrivacyClicked = () => {
+        pxt.tickEvent("mp.settingsmenu.privacy");
+        window.open(privacyUrl);
+    };
+
+    const onTermsofUseClicked = () => {
+        pxt.tickEvent("mp.settingsmenu.termsofuse");
+        window.open(termsOfUseUrl);
     };
 
     const onHomeClicked = () => {
@@ -195,6 +208,24 @@ export default function Render() {
             label: lf("Help"),
             onClick: onHelpClicked,
         });
+
+        if (privacyUrl) {
+            items.push({
+                id: "privacy",
+                title: lf("Privacy"),
+                label: lf("Privacy"),
+                onClick: onPrivacyClicked,
+            });
+        }
+
+        if (termsOfUseUrl) {
+            items.push({
+                id: "termsOfUse",
+                title: lf("Terms of Use"),
+                label: lf("Terms of Use"),
+                onClick: onTermsofUseClicked,
+            });
+        }
 
         items.push({
             id: "report",

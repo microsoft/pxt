@@ -17,6 +17,7 @@ export default function Render() {
     }, [presence]);
 
     const onKickPlayerClicked = (slot: number) => {
+        pxt.tickEvent("mp.kickplayer");
         setShowPlayerMenu(0);
         const player = players.filter(user => user.slot === slot).shift();
         if (player) {
@@ -25,6 +26,7 @@ export default function Render() {
     };
 
     const onLeaveGameClicked = async () => {
+        pxt.tickEvent("mp.leavegame", { role: clientRole! });
         dispatch(showModal("leave-game"));
     };
 
@@ -55,8 +57,8 @@ export default function Render() {
                 <PlayerMenuPopup slot={slot}>
                     <Button
                         className="tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"
-                        label={lf("Leave game")}
-                        title={lf("Leave game")}
+                        label={lf("End the game")}
+                        title={lf("End the game")}
                         onClick={() => onLeaveGameClicked()}
                     />
                 </PlayerMenuPopup>
