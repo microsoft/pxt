@@ -1,9 +1,17 @@
 import { Reactions } from "../types/reactions";
 import { sendReactionAsync } from "../epics";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReactionsIcon from "./icons/ReactionsIcon";
 import { Button } from "react-common/components/controls/Button";
 import Popup from "./Popup";
+
+const throttledReaction = pxt.Util.throttle(
+    (ind: number) => {
+        sendReactionAsync(ind);
+    },
+    200,
+    true
+);
 
 export default function Render() {
     const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -15,6 +23,32 @@ export default function Render() {
     const buttonLabel = () => (
         <ReactionsIcon className="hover:tw-scale-125 tw-ease-linear tw-duration-[50ms]" />
     );
+
+    useEffect(() => {
+        const simButtonEvent = (e: MessageEvent) => {
+            if (e.data.type === "messagepacket" && e.data.channel) {
+                const numberKey = /keydown-(\d)/i.exec(e.data.channel)?.[1];
+                if (!numberKey) return;
+                const ind = parseInt(numberKey) - 1;
+                if (Reactions[ind]) {
+                    throttledReaction(ind);
+                }
+            }
+        };
+        const outsideSimKeyEvent = (e: KeyboardEvent) => {
+            const ind = parseInt(e.key) - 1;
+            if (Reactions[ind]) {
+                throttledReaction(ind);
+            }
+        };
+
+        window.addEventListener("message", simButtonEvent);
+        window.addEventListener("keydown", outsideSimKeyEvent);
+        return () => {
+            window.removeEventListener("message", simButtonEvent);
+            window.removeEventListener("keydown", outsideSimKeyEvent);
+        };
+    });
 
     return (
         <div>
