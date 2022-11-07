@@ -42,9 +42,14 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             { label: lf("Image"), icon: "picture", handler: this.getCreateAssetHandler(pxt.AssetType.Image) },
             { label: lf("Tile"), icon: "clone", handler: this.getCreateAssetHandler(pxt.AssetType.Tile) },
             { label: lf("Tilemap"), icon: "map", handler: this.getCreateAssetHandler(pxt.AssetType.Tilemap) },
-            { label: lf("Animation"), icon: "video", handler: this.getCreateAssetHandler(pxt.AssetType.Animation) },
-            { label: lf("Song"), icon: "music", handler: this.getCreateAssetHandler(pxt.AssetType.Song) }
+            { label: lf("Animation"), icon: "video", handler: this.getCreateAssetHandler(pxt.AssetType.Animation) }
         ]
+
+        if (pxt.appTarget.appTheme?.songEditor) {
+            this.assetCreateOptions.push(
+                { label: lf("Song"), icon: "music", handler: this.getCreateAssetHandler(pxt.AssetType.Song) }
+            );
+        }
     }
 
     protected showCreateModal = () => {
