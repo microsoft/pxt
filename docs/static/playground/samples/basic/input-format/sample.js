@@ -5,6 +5,7 @@ enum MotorShaftDirection {
     CounterClockwise
 }
 
+//% color="170"
 namespace sample {
     // Use inlineInputMode=inline to force inputs to appear
     // on a single line
@@ -42,8 +43,8 @@ namespace sample {
     //% duration.shadow=timePicker
     //% expandableArgumentMode="toggle"
     export function runMotor(
-        direction: MotorShaftDirection,
-        duration: number) {
+        direction?: MotorShaftDirection,
+        duration?: number) {
 
     }
 
@@ -63,9 +64,9 @@ namespace sample {
     //% speed.min=0 speed.max=60
     //% expandableArgumentMode="enabled"
     export function setMotorSpeed(
-        direction: MotorShaftDirection,
-        speed: number,
-        duration: number) {
+        direction?: MotorShaftDirection,
+        speed?: number,
+        duration?: number) {
 
     }
 
