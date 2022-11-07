@@ -162,5 +162,11 @@ export default function reducer(state: AppState, action: Action): AppState {
                 gamePaused: action.gamePaused,
             };
         }
+        case "SET_TARGET_CONFIG": {
+            return {
+                ...state,
+                targetConfig: action.targetConfig,
+            }
+        }
     }
 }

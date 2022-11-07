@@ -36,6 +36,7 @@ export type AppState = {
               }
             | undefined;
     };
+    targetConfig: pxt.TargetConfig | undefined;
 };
 
 export const initialAppState: AppState = {
@@ -55,4 +56,5 @@ export const initialAppState: AppState = {
     muted: false,
     deepLinks: {},
     reactions: {},
+    targetConfig: undefined,
 };
