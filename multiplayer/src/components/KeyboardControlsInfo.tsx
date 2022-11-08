@@ -1,3 +1,5 @@
+import ReactionsIcon from "./icons/ReactionsIcon";
+
 export default function Render() {
     const keyData = {
         [lf("up")]: ["↑", "W"],
@@ -32,6 +34,14 @@ export default function Render() {
                     </div>
                 );
             })}
+            <div className="keymap-row tw-flex tw-flex-row tw-items-center">
+                <div className="keymap-key tw-align-middle tw-min-w-[2.5rem] tw-text-center tw-pb-[2.1rem]">
+                    1-6
+                </div>
+                <span className="keymap-name tw-font-semibold tw-text-center">
+                    <ReactionsIcon className="hover:tw-scale-125 tw-ease-linear tw-duration-[50ms]" />
+                </span>
+            </div>
         </div>
     );
 }
