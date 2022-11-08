@@ -53,7 +53,7 @@ export default function Render() {
     const moreGamesToPlay = lf("More games to play with your friends");
 
     const starterGames = targetConfig?.multiplayer?.games;
-    const showStarterGames = !!starterGames?.length && currTab === "host";
+    const showStarterGames = !!starterGames?.length;
 
     return (
         <div className="tw-flex tw-flex-col tw-w-screen tw-h-screen tw-justify-center tw-items-center">
