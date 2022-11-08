@@ -25,20 +25,20 @@ export default function Render(props: {
 
     return (
         <Button
-            className="tw-p-0 tw-rounded-md tw-border-solid tw-border-1 tw-border-gray-300 tw-overflow-hidden tw-drop-shadow-xl"
+            className="tw-p-0 sm:tw-pb-1 tw-flex tw-grow tw-basis-1 tw-rounded-md tw-border-solid tw-border-1 tw-border-gray-300 tw-overflow-hidden tw-drop-shadow-xl"
             onClick={hostGame}
             title={buttonTitle}
             label={
                 <>
                     <img
-                        className="tw-max-w-[12em] tw-h-auto tw-aspect-[4/3]"
+                        className="tw-w-full tw-aspect-[4/3]"
                         src={bkgdImage}
                         alt={thumbnailAltText}
                     />
-                    <div className="tw-text-left tw-px-2 tw-pt-1">
+                    <div className="tw-text-left tw-px-2 tw-pt-1 tw-hidden sm:tw-block">
                         {pxt.U.rlf(title)}
                     </div>
-                    <div className="tw-text-left tw-px-2 tw-pb-1 tw-text-sm tw-text-gray-500">
+                    <div className="tw-text-left tw-px-2 tw-text-sm tw-text-gray-500 tw-hidden md:tw-block">
                         {pxt.U.rlf(subtitle)}
                     </div>
                 </>
