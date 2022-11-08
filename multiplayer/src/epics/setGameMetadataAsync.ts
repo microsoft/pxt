@@ -20,10 +20,9 @@ export async function setGameMetadataAsync(
         const title = metadata.name || lf("Untitled");
         const description = metadata.description || "";
         const thumbnail = `${metaUri}/thumb`;
-        const gameId = metadata.id;
 
         dispatch(setGameMetadata({ title, description, thumbnail }));
-        dispatch(setGameId(gameId));
+        dispatch(setGameId(shareCode));
         return true;
     } catch (e) {
         console.log("error", e);
