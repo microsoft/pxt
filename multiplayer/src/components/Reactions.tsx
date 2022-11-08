@@ -42,6 +42,8 @@ export default function Render() {
         };
     });
 
+    const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
+
     return (
         <div>
             <Popup
@@ -59,9 +61,9 @@ export default function Render() {
                                     label={
                                         <div>
                                             <div>{def.emoji}</div>
-                                            <div className="tw-text-xs tw-absolute tw-bottom-[-3px] tw-right-[-3px] tw-text-white tw-bg-gray-500 tw-rounded-xl tw-px-1 ">
+                                            {!isMobile && <div className="tw-text-xs tw-absolute tw-bottom-[-3px] tw-right-[-3px] tw-text-white tw-bg-gray-500 tw-rounded-xl tw-px-1 ">
                                                 {i + 1}
-                                            </div>
+                                            </div>}
                                         </div>
                                     }
                                     title={def.name}
@@ -70,7 +72,7 @@ export default function Render() {
                             );
                         })}
                     </div>
-                    {!pxt.BrowserUtils.isMobile() && (
+                    {!isMobile && (
                         <div className="tw-text-sm tw-p-1">
                             {lf("Use your keyboard to send reactions faster")}
                         </div>

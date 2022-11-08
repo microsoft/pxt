@@ -53,7 +53,7 @@ export const initialAppState: AppState = {
     presence: { ...defaultPresence },
     modal: undefined,
     modalOpts: undefined,
-    muted: false,
+    muted: pxt.BrowserUtils.isSafari(),
     deepLinks: {},
     reactions: {},
     targetConfig: undefined,
