@@ -16,16 +16,14 @@ export default function Render(props: {
         await hostGameAsync(shareCode);
     };
 
-    const buttonTitle = lf(
-        'Host a multiplayer session with "{0}"',
-        pxt.U.rlf(title)
-    );
+    // prettier-ignore
+    const buttonTitle = lf('Host a multiplayer session with "{0}"', pxt.U.rlf(title));
     const bkgdImage = image ?? `https://makecode.com/api/${shareCode}/thumb`;
     const thumbnailAltText = lf("Preview image for game");
 
     return (
         <Button
-            className="tw-p-0 sm:tw-pb-1 tw-flex tw-grow tw-basis-1 tw-rounded-md tw-border-solid tw-border-1 tw-border-gray-300 tw-overflow-hidden tw-drop-shadow-xl"
+            className="tw-p-0 sm:tw-pb-1 tw-flex tw-grow tw-shrink tw-basis-1 tw-max-w-[min(12em,30vw)] tw-rounded-md tw-border-solid tw-border-1 tw-border-gray-300 tw-overflow-hidden tw-drop-shadow-xl"
             onClick={hostGame}
             title={buttonTitle}
             label={

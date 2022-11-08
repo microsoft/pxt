@@ -165,7 +165,7 @@ export default function Render() {
                 </div>
             </div>
             {showStarterGames && (
-                <div className="tw-max-w-[min(90vw,60em)] tw-p-2">
+                <div className="tw-max-w-[min(90vw,60em)] tw-p-2 tw-flex tw-flex-col tw-shrink">
                     <div className="tw-w-full tw-p-2">{moreGamesToPlay}</div>
                     <div className="tw-flex tw-justify-between tw-space-x-1 md:tw-space-x-4">
                         {starterGames.map((game, i) => {
