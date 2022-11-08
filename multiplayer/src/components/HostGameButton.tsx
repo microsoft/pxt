@@ -17,7 +17,7 @@ export default function Render(props: {
     };
 
     // prettier-ignore
-    const buttonTitle = lf("Host a multiplayer session with \"{0}\"", pxt.U.rlf(title));
+    const buttonTitle = lf("Host a multiplayer session with '{0}'", pxt.U.rlf(title));
     const bkgdImage = image ?? `https://makecode.com/api/${shareCode}/thumb`;
     const thumbnailAltText = lf("Preview image for game");
 
