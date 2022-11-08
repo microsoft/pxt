@@ -39,7 +39,7 @@ export default function Render() {
                     1-6
                 </div>
                 <span className="keymap-name tw-font-semibold tw-text-center">
-                    <ReactionsIcon className="hover:tw-scale-125 tw-ease-linear tw-duration-[50ms]" />
+                    <ReactionsIcon />
                 </span>
             </div>
         </div>
