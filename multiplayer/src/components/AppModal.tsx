@@ -46,7 +46,7 @@ export default function Render() {
                     onCancel={() => dispatch(clearModal())}
                 >
                     <div className="tw-flex tw-flex-col tw-gap-4">
-                        <div>{lf("Please tell us what you find offensive")}</div>
+                        <div>{lf("Why do you find it offensive?")}</div>
                         <div>
                             <Textarea onChange={setTextValue}></Textarea>
                         </div>
