@@ -22,6 +22,7 @@ declare namespace pxt {
         packages?: PackagesConfig;
         shareLinks?: ShareConfig;
         skillMap?: SkillMapConfig;
+        multiplayer?: MultiplayerConfig;
         // common galleries
         galleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
@@ -60,6 +61,17 @@ declare namespace pxt {
     interface SkillMapConfig {
         defaultPath?: string;
         pathAliases?: pxt.Map<string>; // map in the format "alias": "path"
+    }
+
+    interface MultiplayerConfig {
+        games?: MultiplayerGameCard[];
+    }
+
+    interface MultiplayerGameCard {
+        shareId: string;
+        title: string;
+        subtitle: string;
+        image?: string;
     }
 
     interface AppTarget {

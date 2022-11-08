@@ -1,16 +1,34 @@
-import { useCallback, useContext, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
+
+import { dispatch } from "../state";
+import { setTargetConfig } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
 import { Button } from "../../../react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
 import { Link } from "react-common/components/controls/Link";
 import { hostGameAsync, joinGameAsync } from "../epics";
 import TabButton from "./TabButton";
+import HostGameButton from "./HostGameButton";
 import BetaTag from "./BetaTag";
 
 export default function Render() {
+    const { state } = useContext(AppStateContext);
+    const { targetConfig } = state;
     const [currTab, setCurrTab] = useState<"join" | "host">("join");
     const joinCodeRef = useRef<HTMLInputElement>();
     const shareCodeRef = useRef<HTMLInputElement>();
+
+    useEffect(() => {
+        if (!targetConfig) {
+            // targetConfigAsync ends up at localhost:3000 and cors issues hitting 3232
+            const req = pxt.BrowserUtils.isLocalHostDev()
+                ? fetch(`/blb/targetconfig.json`, {
+                      method: "GET",
+                  }).then(resp => resp.json() as pxt.TargetConfig | undefined)
+                : pxt.targetConfigAsync();
+            req.then(trgcfg => trgcfg && dispatch(setTargetConfig(trgcfg)));
+        }
+    });
 
     const setJoinCodeRef = useCallback((ref: HTMLInputElement) => {
         joinCodeRef.current = ref;
@@ -29,11 +47,16 @@ export default function Render() {
             await hostGameAsync(shareCodeRef.current.value);
         }
     };
+
     const enterShareOrLink = lf("Enter share code or link");
     const howToGetLink = lf("How do I get a share code or link?");
+    const moreGamesToPlay = lf("More games to play with your friends");
+
+    const starterGames = targetConfig?.multiplayer?.games;
+    const showStarterGames = !!starterGames?.length;
 
     return (
-        <div className="tw-flex tw-w-screen tw-h-screen tw-justify-center tw-items-center">
+        <div className="tw-flex tw-flex-col tw-w-screen tw-h-screen tw-justify-center tw-items-center">
             <div className="tw-bg-white tw-rounded-lg tw-drop-shadow-xl tw-min-h-[17rem] tw-min-w-[17rem] md:tw-min-w-[25rem]">
                 <div className="tw-absolute tw-translate-y-[-130%]">
                     <BetaTag />
@@ -141,6 +164,24 @@ export default function Render() {
                     </div>
                 </div>
             </div>
+            {showStarterGames && (
+                <div className="tw-max-w-[min(90vw,60em)] tw-p-2 tw-flex tw-flex-col tw-shrink">
+                    <div className="tw-w-full tw-p-2">{moreGamesToPlay}</div>
+                    <div className="tw-flex tw-justify-between tw-space-x-1 md:tw-space-x-4">
+                        {starterGames.map((game, i) => {
+                            return (
+                                <HostGameButton
+                                    shareId={game.shareId}
+                                    title={game.title}
+                                    subtitle={game.subtitle}
+                                    image={game.image}
+                                    key={i}
+                                />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
