@@ -40,6 +40,7 @@ export interface ShareEditorState {
     qrCodeUri?: string;
     qrCodeExpanded?: boolean;
     title?: string;
+    isMultiplayer?: boolean;
 }
 
 export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorState> {
@@ -109,6 +110,12 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
 
     setThumbnailFrames(frames: ImageData[]) {
         this.autoThumbnailFrames = frames;
+    }
+
+    setIsMultiplayer(isMultiplayer: boolean) {
+        this.setState({
+            isMultiplayer
+        });
     }
 
     UNSAFE_componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -216,7 +223,8 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     hasProjectBeenPersistentShared={hasProjectBeenPersistentShared}
                     simRecorder={SimRecorderImpl}
                     anonymousShareByDefault={parent.getSharePreferenceForHeader()}
-                    setAnonymousSharePreference={setSharePreference} />
+                    setAnonymousSharePreference={setSharePreference}
+                    isMultiplayerGame={this.state.isMultiplayer}/>
             </Modal>
             : <></>
     }

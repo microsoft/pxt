@@ -10,6 +10,7 @@ import { ThumbnailRecorder } from "./ThumbnailRecorder";
 import { SocialButton } from "./SocialButton";
 import { Checkbox } from "../controls/Checkbox";
 import { SimRecorder } from "./ThumbnailRecorder";
+import { MultiplayerConfirmation } from "./MultiplayerConfirmation";
 
 export interface ShareInfoProps {
     projectName: string;
@@ -19,13 +20,14 @@ export interface ShareInfoProps {
     hasProjectBeenPersistentShared?: boolean;
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
+    isMultiplayerGame?: boolean;
 
     anonymousShareByDefault?: boolean;
     setAnonymousSharePreference?: (anonymousByDefault: boolean) => void;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared, anonymousShareByDefault, setAnonymousSharePreference } = props;
+    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared, anonymousShareByDefault, setAnonymousSharePreference, isMultiplayerGame } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
@@ -34,6 +36,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ showQRCode, setShowQRCode ] = React.useState(false);
     const [ copySuccessful, setCopySuccessful ] = React.useState(false);
     const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn || anonymousShareByDefault);
+    const [ isShowingMultiConfirmation, setIsShowingMultiConfirmation ] = React.useState(false);
 
     const showSimulator = !!simRecorder;
     const showDescription = shareState !== "publish";
@@ -46,7 +49,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     React.useEffect(() => {
         if (isLoggedIn) {
-            pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous.toString(), persistent: hasProjectBeenPersistentShared.toString() });
+            pxt.tickEvent("share.open.loggedIn", { state: shareState, anonymous: isAnonymous?.toString(), persistent: hasProjectBeenPersistentShared?.toString() });
         } else {
             pxt.tickEvent("share.open", { state: shareState});
         }
@@ -118,18 +121,40 @@ export const ShareInfo = (props: ShareInfoProps) => {
         }
     };
 
-    const handleMultiplayerShareClick = async () => {
+    const handleMultiplayerShareConfirmClick = async () => {
+        setShareState("publishing");
+        setIsShowingMultiConfirmation(false);
+
+        const publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
+
         // TODO multiplayer: This won't work on staging (parseScriptId domains check doesn't include staging urls)
         // but those wouldn't load anyways (as staging multiplayer is currently fetching games from prod links)
-        const shareId = pxt.Cloud.parseScriptId(shareData.url);
-        if (!shareId)
+        const shareId = pxt.Cloud.parseScriptId(publishedShareData.url);
+        if (!shareId) {
+            pxt.tickEvent(`share.hostMultiplayerError`);
             return;
+        }
 
         const domain = pxt.BrowserUtils.isLocalHostDev() ? "http://localhost:3000" : "";
         const multiplayerHostUrl = `${domain}${pxt.webConfig.relprefix}multiplayer?host=${shareId}`;
 
-        pxt.tickEvent(`share.multiplayer`);
+        pxt.tickEvent(`share.hostMultiplayerShared`);
         window.open(multiplayerHostUrl, "_blank");
+
+        setShareData(publishedShareData);
+        if (!publishedShareData?.error) setShareState("publish");
+        else setShareState("share")
+
+    }
+
+    const handleMultiplayerShareClick = async () => {
+        setIsShowingMultiConfirmation(true);
+        pxt.tickEvent(`share.hostMultiplayer`);
+    }
+
+    const handleMultiplayerShareCancelClick = async () => {
+        setIsShowingMultiConfirmation(false);
+        pxt.tickEvent(`share.hostMultiplayerCancel`);
     }
 
     const embedOptions = [{
@@ -225,10 +250,19 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         </div>}
                         <div className="project-share-publish-actions">
                             {shareState === "share" &&
+                            <>
+                                {pxt.appTarget?.appTheme?.multiplayerShareButton && isMultiplayerGame &&
+                                    <Button className="primary inverted text-only"
+                                        title={lf("Host a multiplayer game")}
+                                        label={lf("Host a multiplayer game")}
+                                        leftIcon={"fas fa-people-arrows"}
+                                        onClick={handleMultiplayerShareClick} />
+                                }
                                 <Button className="primary share-publish-button"
-                                    title={lf("Continue")}
-                                    label={lf("Continue")}
-                                    onClick={handlePublishClick} />
+                                        title={lf("Share Project")}
+                                        label={lf("Share Project")}
+                                        onClick={handlePublishClick} />
+                            </>
                             }
                             { shareState === "publishing" &&
                                 <Button className="primary share-publish-button"
@@ -287,12 +321,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         leftIcon={"icon share"}
                                         onClick={handleDeviceShareClick}
                                     />}
-                                    {pxt.appTarget?.appTheme?.multiplayerShareButton && <Button className="square-button multiplayer-host"
-                                        title={lf("Start a multiplayer lobby")}
-                                        ariaLabel={lf("Start a multiplayer lobby")}
-                                        leftIcon={"fas fa-people-arrows"}
-                                        onClick={handleMultiplayerShareClick}
-                                    />}
                                 </div>
                                 <Button
                                     className="menu-button project-qrcode"
@@ -327,6 +355,11 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         <img className="qrcode-image" src={shareData?.qr} />
                     </div>
                 </Modal>
+            }
+            {isShowingMultiConfirmation &&
+                <MultiplayerConfirmation
+                    onCancelClicked={handleMultiplayerShareCancelClick}
+                    onConfirmClicked={handleMultiplayerShareConfirmClick} />
             }
         </div>
     </>

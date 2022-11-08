@@ -467,6 +467,7 @@ declare namespace pxt {
         winAppDeprImage?: string; // Image to show on Windows App for deprecation
         showWinAppDeprBanner?: boolean; // show banner announcing Windows App deprecation
         multiplayerShareButton?: boolean; // display multiplayer button alongside social links
+        songEditor?: boolean; // enable the song asset type and field editor
     }
 
     interface DownloadDialogTheme {
