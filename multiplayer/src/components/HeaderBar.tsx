@@ -21,10 +21,11 @@ export default function Render() {
 
     const hasIdentity = pxt.auth.hasIdentity();
     const appTheme = pxt.appTarget?.appTheme;
-    const helpUrl = ""; // TODO multiplayer
 
+    const helpUrl = ""; // TODO multiplayer
     const privacyUrl = pxt?.appTarget?.appTheme?.privacyUrl;
     const termsOfUseUrl = pxt?.appTarget?.appTheme?.termsOfUseUrl;
+    const safetyUrl = "/docs/multiplayer#safety";
 
     const dialogMessages = useAuthDialogMessages();
 
@@ -46,6 +47,11 @@ export default function Render() {
     const onTermsofUseClicked = () => {
         pxt.tickEvent("mp.settingsmenu.termsofuse");
         window.open(termsOfUseUrl);
+    };
+
+    const onOnlineSafetyClicked = () => {
+        pxt.tickEvent("mp.settingsmenu.onlinesafety");
+        window.open(safetyUrl);
     };
 
     const onHomeClicked = () => {
@@ -227,6 +233,13 @@ export default function Render() {
                 onClick: onTermsofUseClicked,
             });
         }
+
+        items.push({
+            id: "safety",
+            title: lf("Online Safety"),
+            label: lf("Online Safety"),
+            onClick: onOnlineSafetyClicked,
+        });
 
         if (shareCode) {
             items.push({
