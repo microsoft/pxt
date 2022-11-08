@@ -33,10 +33,10 @@ export default function Render(props: {
                         src={bkgdImage}
                         alt={thumbnailAltText}
                     />
-                    <div className="tw-text-left tw-px-2 tw-pt-1 tw-hidden sm:tw-block">
+                    <div className="tw-text-left tw-px-2 tw-pt-1 tw-hidden tw-truncate sm:tw-block">
                         {pxt.U.rlf(title)}
                     </div>
-                    <div className="tw-text-left tw-px-2 tw-text-sm tw-text-gray-500 tw-hidden md:tw-block">
+                    <div className="tw-text-left tw-px-2 tw-text-sm tw-text-gray-500 tw-truncate tw-hidden md:tw-block">
                         {pxt.U.rlf(subtitle)}
                     </div>
                 </>
