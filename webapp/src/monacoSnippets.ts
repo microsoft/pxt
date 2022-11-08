@@ -313,7 +313,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 {
                     name: "array_create",
                     snippetName: "create",
-                    snippet: `let ${lf("{id:snippets}list")} = [1, 2, 3];`,
+                    snippet: `let ${lf("{id:snippets}list")} = [1, 2, 3]`,
                     pySnippet: `${lf("{id:snippets}list")} = [1, 2, 3]`,
                     snippetOnly: true,
                     attributes: {
