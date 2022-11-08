@@ -2,12 +2,15 @@ import { faCopy } from "@fortawesome/free-regular-svg-icons";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useState } from "react";
-import { AppStateContext } from "../state/AppStateContext";
+import { showToast } from "../state/actions";
+import { AppStateContext, dispatch } from "../state/AppStateContext";
 
 export default function Render(props: {
     copyValue: string;
     title: string;
     eventName?: string;
+    label?: JSX.Element | undefined;
+    toastMessage?: string | undefined;
 }) {
     const { state } = useContext(AppStateContext);
     const [copySuccessful, setCopySuccessful] = useState(false);
@@ -18,6 +21,13 @@ export default function Render(props: {
         if (state.gameState?.joinCode) {
             navigator.clipboard.writeText(props.copyValue);
             setCopySuccessful(true);
+            if (props.toastMessage) {
+                dispatch(showToast({
+                type: "success",
+                text: props.toastMessage,
+                timeoutMs: 5000,
+                }));
+            }
         }
     };
 
@@ -33,8 +43,17 @@ export default function Render(props: {
     }, [copySuccessful]);
 
     return (
-        <button onClick={copyValue} title={props.title}>
-            <div>
+        <button
+            onClick={copyValue}
+            title={props.title}
+            className="tw-flex tw-items-center"
+        >
+            {props.label && (
+                <span className="tw-mr-1 hover:tw-opacity-80">
+                    {props.label}
+                </span>
+            )}
+            <span>
                 {!copySuccessful && (
                     <FontAwesomeIcon
                         icon={faCopy}
@@ -47,7 +66,7 @@ export default function Render(props: {
                         className="tw-text-green-600"
                     />
                 )}
-            </div>
+            </span>
         </button>
     );
 }
