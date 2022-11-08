@@ -23,3 +23,4 @@ export { gameOverAsync } from "./gameOverAsync";
 export { pauseGameAsync } from "./pauseGameAsync";
 export { resumeGameAsync } from "./resumeGameAsync";
 export { visibilityChanged } from "./visibilityChanged";
+export { sendAbuseReportAsync } from "./sendAbuseReportAsync";
