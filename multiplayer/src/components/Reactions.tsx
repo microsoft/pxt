@@ -52,7 +52,7 @@ export default function Render() {
                 onClickedOutside={() => setShowReactionPicker(false)}
             >
                 <div className="tw-flex tw-flex-col tw-bg-white tw-drop-shadow-xl tw-rounded-md tw-border-2 tw-border-gray-100">
-                    <div className="tw-flex tw-flex-row tw-gap-3 tw-p-2">
+                    <div className="tw-flex tw-flex-row tw-gap-3 tw-p-2 tw-pb-3 tw-pr-3">
                         {Reactions.map((def, i) => {
                             return (
                                 <Button
@@ -61,7 +61,7 @@ export default function Render() {
                                     label={
                                         <div>
                                             <div>{def.emoji}</div>
-                                            {!isMobile && <div className="tw-text-xs tw-absolute tw-bottom-[-3px] tw-right-[-3px] tw-text-white tw-bg-gray-500 tw-rounded-xl tw-px-1 ">
+                                            {!isMobile && <div className="tw-text-xs tw-absolute tw-bottom-[-5px] tw-right-[-5px] tw-text-white tw-bg-gray-400 tw-rounded-sm tw-border-[1px] tw-border-solid tw-border-gray-500 tw-drop-shadow-lg tw-px-1 tw-leading-tight">
                                                 {i + 1}
                                             </div>}
                                         </div>
@@ -72,11 +72,6 @@ export default function Render() {
                             );
                         })}
                     </div>
-                    {!isMobile && (
-                        <div className="tw-text-sm tw-p-1">
-                            {lf("Use your keyboard to send reactions faster")}
-                        </div>
-                    )}
                 </div>
             </Popup>
             <Button
