@@ -71,11 +71,18 @@ export default function Render() {
                     </div>
                 </div>
                 <Button
-                    className={"primary tw-mt-5 tw-mb-7 tw-font-sans tw-mr-0"}
+                    className={"primary tw-mt-5 tw-font-sans tw-mr-0"}
                     label={lf("Start Game")}
                     title={lf("Start Game")}
                     onClick={onStartGameClick}
                 />
+                <Link
+                    href="/docs/multiplayer#safety"
+                    target="_blank"
+                    className="tw-text-sm tw-mt-1 tw-mb-7"
+                >
+                    {lf("Multiplayer Online Safety")}
+                </Link>
                 <PresenceBar />
             </div>
         </div>
