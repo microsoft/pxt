@@ -120,7 +120,7 @@ type SetGamePaused = ActionBase & {
 type SetTargetConfig = ActionBase & {
     type: "SET_TARGET_CONFIG";
     targetConfig: pxt.TargetConfig;
-}
+};
 
 /**
  * Union of all actions
@@ -281,4 +281,4 @@ export const setGamePaused = (gamePaused: boolean): SetGamePaused => ({
 export const setTargetConfig = (trgCfg: pxt.TargetConfig): SetTargetConfig => ({
     type: "SET_TARGET_CONFIG",
     targetConfig: JSON.parse(JSON.stringify(trgCfg)),
-})
+});

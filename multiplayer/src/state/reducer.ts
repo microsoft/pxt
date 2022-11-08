@@ -166,7 +166,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 targetConfig: action.targetConfig,
-            }
+            };
         }
     }
 }

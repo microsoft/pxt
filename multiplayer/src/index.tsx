@@ -10,8 +10,6 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import { AppStateProvider } from "./state/AppStateContext";
-import { dispatch } from "./state";
-import { setTargetConfig } from "./state/actions";
 
 window.addEventListener("DOMContentLoaded", () => {
     const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
@@ -31,9 +29,6 @@ window.addEventListener("DOMContentLoaded", () => {
         pxt.webConfig.workerjs = `/blb${pxt.webConfig.workerjs}`;
     }
     pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
-
-    pxt.targetConfigAsync()
-        .then(trgcfg => dispatch(setTargetConfig(trgcfg)));
 
     // prefetch worker on load
     pxt.worker.getWorker(pxt.webConfig.workerjs);
