@@ -16,7 +16,8 @@ import { useAuthDialogMessages } from "../hooks/useAuthDialogMessages";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
-    const { authStatus, profile, deepLinks } = state;
+    const { authStatus, profile, gameState } = state;
+    const { gameId: shareCode } = gameState ?? {};
 
     const hasIdentity = pxt.auth.hasIdentity();
     const appTheme = pxt.appTarget?.appTheme;
@@ -227,12 +228,14 @@ export default function Render() {
             });
         }
 
-        items.push({
-            id: "report",
-            title: lf("Report Abuse"),
-            label: lf("Report Abuse"),
-            onClick: onReportAbuseClicked,
-        });
+        if (shareCode) {
+            items.push({
+                id: "report",
+                title: lf("Report Abuse"),
+                label: lf("Report Abuse"),
+                onClick: onReportAbuseClicked,
+            });
+        }
 
         return items;
     };
