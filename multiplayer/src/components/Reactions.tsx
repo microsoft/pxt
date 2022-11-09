@@ -61,17 +61,9 @@ export default function Render() {
                                     label={
                                         <div>
                                             <div>{def.emoji}</div>
-<<<<<<< HEAD
-                                            {!isMobile && (
-                                                <div className="tw-text-xs tw-absolute tw-bottom-[-3px] tw-right-[-3px] tw-text-white tw-bg-gray-500 tw-rounded-xl tw-px-1">
-                                                    {i + 1}
-                                                </div>
-                                            )}
-=======
                                             {!isMobile && <div className="tw-text-xs tw-absolute tw-bottom-[-5px] tw-right-[-5px] tw-text-white tw-bg-gray-400 tw-rounded-sm tw-border-[1px] tw-border-solid tw-border-gray-500 tw-drop-shadow-lg tw-px-1 tw-leading-tight">
                                                 {i + 1}
                                             </div>}
->>>>>>> 229991b19e1d9266f8c09fa5b9320f91de851824
                                         </div>
                                     }
                                     title={def.name}
