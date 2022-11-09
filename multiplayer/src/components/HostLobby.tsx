@@ -52,17 +52,18 @@ export default function Render() {
                     }
                     {inviteStringSegments[1]}
                 </div>
-                <div className="tw-text-4xl tw-mt-4 tw-flex tw-flex-row tw-items-center">
-                    <span className="tw-font-bold tw-text-neutral-700">
-                        {displayJoinCode}
-                    </span>
-                    <div className="tw-ml-2 tw-text-[50%]">
-                        <CopyButton
-                            copyValue={joinDeepLink}
-                            title={lf("Copy join link")}
-                            eventName="mp.hostlobby.copyjoinlink"
-                        />
-                    </div>
+                <div className="tw-text-4xl tw-mt-4 tw-flex tw-flex-row tw-items-center tw-ml-2">
+                    <CopyButton
+                        copyValue={joinDeepLink}
+                        title={lf("Copy join link")}
+                        eventName="mp.hostlobby.copyjoinlink"
+                        label={
+                            <span className="tw-font-bold tw-text-neutral-700 tw-mr-1">
+                                {displayJoinCode}
+                            </span>
+                        }
+                        toastMessage={lf("Join link copied")}
+                    />
                 </div>
                 <div className="tw-flex tw-flex-col tw-items-center tw-mt-5 tw-text-sm tw-gap-1 tw-max-h-24 md:tw-max-h-36">
                     <QRCodeSVG value={joinDeepLink} />
