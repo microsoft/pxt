@@ -8,7 +8,7 @@ import Toast from "./components/Toast";
 import AppModal from "./components/AppModal";
 import GamePaused from "./components/GamePaused";
 import * as authClient from "./services/authClient";
-import { setDeepLinks } from "./state/actions";
+import { setDeepLinks, setTargetConfig } from "./state/actions";
 import { cleanupJoinCode, cleanupShareCode } from "./util";
 import { joinGameAsync, hostGameAsync, visibilityChanged } from "./epics";
 import { useVisibilityChange } from "./hooks";
@@ -18,9 +18,21 @@ import "./App.css";
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
-    const { authStatus, deepLinks } = state;
+    const { authStatus, deepLinks, targetConfig } = state;
     const { shareCode, joinCode } = deepLinks;
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
+
+    useEffect(() => {
+        if (!targetConfig) {
+            // targetConfigAsync ends up at localhost:3000 and cors issues hitting 3232
+            const req = pxt.BrowserUtils.isLocalHostDev()
+                ? fetch(`/blb/targetconfig.json`, {
+                      method: "GET",
+                  }).then(resp => resp.json() as pxt.TargetConfig | undefined)
+                : pxt.targetConfigAsync();
+            req.then(trgcfg => trgcfg && dispatch(setTargetConfig(trgcfg)));
+        }
+    });
 
     useVisibilityChange(visibilityChanged);
 

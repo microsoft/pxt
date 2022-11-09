@@ -39,7 +39,9 @@ export default function Render(props: GamePageProps) {
                 <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1 tw-ml-1">
                     <div>
                         <ToggleMuteButton />
-                        <div className="tw-hidden sm:tw-inline-block"><RemixGameButton /></div>
+                        <div className="tw-hidden sm:tw-inline-block">
+                            <RemixGameButton />
+                        </div>
                     </div>
                     <div className="tw-mr-1 sm:tw-mr-0">
                         <JoinCodeLabel />
@@ -47,7 +49,9 @@ export default function Render(props: GamePageProps) {
                     <div className="tw-hidden sm:tw-inline">
                         <KeyboardControlsButton />
                     </div>
-                    <div className="tw-inline-block sm:tw-hidden"><RemixGameButton /></div>
+                    <div className="tw-inline-block sm:tw-hidden">
+                        <RemixGameButton />
+                    </div>
                 </div>
                 <div className="tw-mt-3">
                     <PresenceBar />

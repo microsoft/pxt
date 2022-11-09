@@ -16,7 +16,7 @@ import { useAuthDialogMessages } from "../hooks/useAuthDialogMessages";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
-    const { authStatus, profile, gameState } = state;
+    const { authStatus, profile, gameState, targetConfig } = state;
     const { gameId: shareCode } = gameState ?? {};
 
     const hasIdentity = pxt.auth.hasIdentity();
@@ -241,7 +241,9 @@ export default function Render() {
             onClick: onOnlineSafetyClicked,
         });
 
-        if (shareCode) {
+        const approvedLinks = targetConfig?.shareLinks?.approved || [];
+
+        if (shareCode && approvedLinks.indexOf(shareCode) < 0) {
             items.push({
                 id: "report",
                 title: lf("Report Abuse"),
