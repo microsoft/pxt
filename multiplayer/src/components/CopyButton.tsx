@@ -9,7 +9,7 @@ export default function Render(props: {
     copyValue: string;
     title: string;
     eventName?: string;
-    label?: JSX.Element | undefined;
+    label?: string | JSX.Element | undefined;
     toastMessage?: string | undefined;
 }) {
     const { state } = useContext(AppStateContext);
@@ -22,11 +22,13 @@ export default function Render(props: {
             navigator.clipboard.writeText(props.copyValue);
             setCopySuccessful(true);
             if (props.toastMessage) {
-                dispatch(showToast({
-                type: "success",
-                text: props.toastMessage,
-                timeoutMs: 5000,
-                }));
+                dispatch(
+                    showToast({
+                        type: "success",
+                        text: props.toastMessage,
+                        timeoutMs: 5000,
+                    })
+                );
             }
         }
     };
@@ -46,27 +48,25 @@ export default function Render(props: {
         <button
             onClick={copyValue}
             title={props.title}
-            className="tw-flex tw-items-center"
+            className="tw-flex tw-items-center tw-align-middle"
         >
             {props.label && (
                 <span className="tw-mr-1 hover:tw-opacity-80">
                     {props.label}
                 </span>
             )}
-            <span>
-                {!copySuccessful && (
-                    <FontAwesomeIcon
-                        icon={faCopy}
-                        className="hover:tw-scale-110 tw-ease-linear tw-duration-[50ms]"
-                    />
-                )}
-                {copySuccessful && (
-                    <FontAwesomeIcon
-                        icon={faCheck}
-                        className="tw-text-green-600"
-                    />
-                )}
-            </span>
+            {!copySuccessful && (
+                <FontAwesomeIcon
+                    icon={faCopy}
+                    className="tw-text-[65%] hover:tw-scale-110 tw-ease-linear tw-duration-[50ms]"
+                />
+            )}
+            {copySuccessful && (
+                <FontAwesomeIcon
+                    icon={faCheck}
+                    className="tw-text-[65%] tw-text-green-600"
+                />
+            )}
         </button>
     );
 }

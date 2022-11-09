@@ -52,13 +52,13 @@ export default function Render() {
                     }
                     {inviteStringSegments[1]}
                 </div>
-                <div className="tw-text-xl tw-mt-4 tw-flex tw-flex-row tw-items-center tw-ml-2">
+                <div className="tw-text-4xl tw-mt-4 tw-flex tw-flex-row tw-items-center tw-ml-2">
                     <CopyButton
                         copyValue={joinDeepLink}
                         title={lf("Copy join link")}
                         eventName="mp.hostlobby.copyjoinlink"
                         label={
-                            <span className="tw-font-bold tw-text-neutral-700 tw-text-4xl">
+                            <span className="tw-font-bold tw-text-neutral-700 tw-mr-1">
                                 {displayJoinCode}
                             </span>
                         }
