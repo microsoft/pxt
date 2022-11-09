@@ -11,7 +11,9 @@ namespace language {
          * Use "$this" to define a variable block that
          * references the "this" pointer.
          */
-        //% block="robot $this(robot) say $message"
+        //% block="robot $this say $message"
+        //% this.defl=robot
+        //% this.shadow=variables_get
         public say(message: string) {
 
         }

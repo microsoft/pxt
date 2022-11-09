@@ -39,7 +39,7 @@ namespace sample {
      * @param duration in milliseconds to run the
      *      motor the alarm sound, eg: 2000
      */
-    //% block="run the motor || %direction for %duration ms"
+    //% block="run the motor || $direction for $duration ms"
     //% duration.shadow=timePicker
     //% expandableArgumentMode="toggle"
     export function runMotor(
@@ -48,7 +48,7 @@ namespace sample {
 
     }
 
-    // Use expandableArgumentMode=enabeled to collapse or
+    // Use expandableArgumentMode=enabled to collapse or
     // expand EACH input parameter
 
     /**
@@ -59,7 +59,7 @@ namespace sample {
      * @param duration in milliseconds to run the
      *      motor the alarm sound, eg: 2000
      */
-    //% block="set the motor to run || %direction|at %speed|for %duration ms"
+    //% block="set the motor to run || $direction|at $speed|for $duration ms"
     //% duration.shadow=timePicker
     //% speed.min=0 speed.max=60
     //% expandableArgumentMode="enabled"

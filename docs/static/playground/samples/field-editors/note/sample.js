@@ -7,7 +7,7 @@ namespace sample {
      * @param note pitch of the tone to play in Hertz (Hz), eg: Note.C
      */
     //% blockId=music_play_note
-    //% block="play tone $note tone"
+    //% block="play tone $note"
     //% note.shadow="device_note"
     export function playTone(note: number) {
 

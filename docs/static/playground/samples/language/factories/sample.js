@@ -28,10 +28,12 @@ class Gizmo {
     }
 
     /**
-     * Set the Gizmo widget to inactive
+     * Set the Gizmo widget to active
      * @param active set on (true) or off (false), eg: true
      */
-    //% block="turn %Widgets(gizmo) %active"
+    //% block="turn $this to $active"
+    //% this.defl=gizmo
+    //% this.shadow=variables_get
     //% active.shadow=toggleOnOff
     setActive(active: boolean) {
         this._active = active;
