@@ -18,18 +18,6 @@ export default function Render() {
     const joinCodeRef = useRef<HTMLInputElement>();
     const shareCodeRef = useRef<HTMLInputElement>();
 
-    useEffect(() => {
-        if (!targetConfig) {
-            // targetConfigAsync ends up at localhost:3000 and cors issues hitting 3232
-            const req = pxt.BrowserUtils.isLocalHostDev()
-                ? fetch(`/blb/targetconfig.json`, {
-                      method: "GET",
-                  }).then(resp => resp.json() as pxt.TargetConfig | undefined)
-                : pxt.targetConfigAsync();
-            req.then(trgcfg => trgcfg && dispatch(setTargetConfig(trgcfg)));
-        }
-    });
-
     const setJoinCodeRef = useCallback((ref: HTMLInputElement) => {
         joinCodeRef.current = ref;
     }, []);
