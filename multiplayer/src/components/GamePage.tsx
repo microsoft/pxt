@@ -34,7 +34,7 @@ export default function Render(props: GamePageProps) {
                 className="tw-flex tw-flex-col tw-items-center tw-grow tw-pb-4"
                 style={
                     state.gameState?.gameMode !== "playing"
-                        ? { visibility: "hidden" }
+                        ? { display: "none" }
                         : undefined
                 }
             >
