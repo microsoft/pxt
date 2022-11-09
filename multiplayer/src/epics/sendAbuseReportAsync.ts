@@ -15,7 +15,7 @@ export async function sendAbuseReportAsync(shareCode: string, text: string) {
             dispatch(
                 showToast({
                     type: "success",
-                    text: lf("Thank you for reporting. We will look into it."),
+                    text: lf("Thank you for helping keep Microsoft MakeCode a friendly place!"),
                     icon: "✅",
                     timeoutMs: 5000,
                 })
