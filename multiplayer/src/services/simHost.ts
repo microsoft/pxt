@@ -1,7 +1,7 @@
 let _mainPkg: pxt.MainPackage;
 let mainPkg = (reset?: boolean) => {
     if (!_mainPkg || reset) {
-        _mainPkg = new pxt.MainPackage(new PkgHost());
+        _mainPkg = new pxt.MainPackage(_mainPkg?.host() || new PkgHost());
     }
     return _mainPkg;
 };
@@ -18,32 +18,25 @@ if (!pxt.react.getTilemapProject) {
     };
 }
 
-async function loadPackageAsync(runOpts: RunOptions, dependencies?: string[]) {
+async function loadPackageAsync(runOpts: RunOptions) {
     const verspec =
         runOpts.mpRole === "server" ? `pub:${runOpts.id}` : "empty:clientprj";
-    let host: pxt.Host;
-    let downloadPackagePromise: Promise<void>;
-    let installPromise: Promise<void>;
     const previousMainPackage = mainPkg();
-    if (previousMainPackage?._verspec == verspec) {
-        host = mainPkg().host();
-        downloadPackagePromise = Promise.resolve();
-        installPromise = Promise.resolve();
-    } else {
+    if (
+        previousMainPackage?._verspec !== verspec ||
+        verspec.startsWith("pub:S")
+    ) {
         const mp = mainPkg(true /** force refresh */);
+        // we want this to be cached only within the scope of a single call to loadpackageasync,
+        // as the file can be requested multiple times while loading.
+        mp.host().cacheStoreAsync(verspec, undefined!);
         mp._verspec = verspec;
-        downloadPackagePromise = mp
-            .host()
-            .downloadPackageAsync(mainPkg(), dependencies);
-        installPromise = mainPkg().installAllAsync();
+        await mp.host().downloadPackageAsync(mainPkg());
+        await mainPkg().installAllAsync();
     }
 
-    host = mainPkg().host();
-    await downloadPackagePromise;
-    await installPromise;
     try {
         if (runOpts.mpRole === "client") {
-            //Set the custom code if provided for docs.
             let epkg = getEditorPkg(mainPkg());
             epkg.files[pxt.MAIN_TS] = "multiplayer.init()";
         }
@@ -123,12 +116,14 @@ class PkgHost implements pxt.Host {
         return pxt.hexloader.getHexInfoAsync(this, extInfo);
     }
 
-    cacheStoreAsync(id: string, val: string): Promise<void> {
-        return Promise.resolve();
+    async cacheStoreAsync(id: string, val: string): Promise<void> {
+        try {
+            this.githubPackageCache[id] = val ? JSON.parse(val) : undefined;
+        } catch (e) {}
     }
 
-    cacheGetAsync(id: string): Promise<string> {
-        return Promise.resolve(null as any as string);
+    async cacheGetAsync(id: string): Promise<string> {
+        return null as any as string;
     }
 
     patchDependencies(
@@ -162,14 +157,15 @@ class PkgHost implements pxt.Host {
         let proto = pkg.verProtocol();
         let cached: pxt.Map<string> | undefined = undefined;
         // cache resolve github packages
-        if (proto == "github") cached = this.githubPackageCache[pkg._verspec];
+        if (proto == "github" || proto == "pub")
+            cached = this.githubPackageCache[pkg._verspec];
         let epkg = getEditorPkg(pkg);
 
         return (
             cached ? Promise.resolve(cached) : pkg.commonDownloadAsync()
         ).then(resp => {
             if (resp) {
-                if (proto == "github" && !cached)
+                if ((proto == "github" || proto == "pub") && !cached)
                     this.githubPackageCache[pkg._verspec] =
                         pxt.Util.clone(resp);
                 epkg.setFiles(resp);
@@ -390,7 +386,7 @@ export async function simulateAsync(
 export async function buildSimJsInfo(
     runOpts: RunOptions
 ): Promise<pxtc.BuiltSimJsInfo> {
-    await loadPackageAsync(runOpts, []);
+    await loadPackageAsync(runOpts);
 
     let didUpgrade = false;
     const currentTargetVersion = pxt.appTarget.versions.target;
