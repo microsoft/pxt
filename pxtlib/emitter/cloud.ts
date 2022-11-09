@@ -108,7 +108,15 @@ namespace pxt.Cloud {
     }
 
     export function downloadScriptFilesAsync(id: string): Promise<Map<string>> {
-        return privateRequestAsync({ url: id + "/text", forceLiveEndpoint: true }).then(resp => {
+        return privateRequestAsync({
+            url: id + "/text" + (id.startsWith("S") ? `?time=${Date.now()}` : ""),
+            forceLiveEndpoint: true,
+            // headers: id.startsWith("S") ? {
+            //         "pragma": "no-cache, no-store",
+            //         "cache-control": "no-cache, no-store"
+            //     }
+            //     : undefined,
+        }).then(resp => {
             return JSON.parse(resp.text)
         })
     }
