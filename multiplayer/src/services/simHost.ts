@@ -31,7 +31,7 @@ async function loadPackageAsync(runOpts: RunOptions) {
         // as the file can be requested multiple times while loading.
         mp.host().cacheStoreAsync(verspec, undefined!);
         mp._verspec = verspec;
-        await mp.host().downloadPackageAsync(mainPkg());
+        await mp.host().downloadPackageAsync(mainPkg(), []);
         await mainPkg().installAllAsync();
     }
 
