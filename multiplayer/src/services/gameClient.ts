@@ -399,14 +399,21 @@ class GameClient {
         const { button, state, slot } =
             Protocol.Binary.unpackInputMessage(reader);
 
-        if (button >= SimKey.Menu || button === SimKey.None || slot < 2) return;
+        const stringifiedState = buttonStateToString(state);
+        if (
+            button <= SimKey.None ||
+            button >= SimKey.Menu ||
+            slot < 2 ||
+            !stringifiedState
+        )
+            return;
 
         this.postToSimFrame(<SimMultiplayer.InputMessage>{
             type: "multiplayer",
             content: "Button",
             clientNumber: slot - 1,
             button: button,
-            state: buttonStateToString(state),
+            state: stringifiedState,
         });
     }
 
@@ -570,7 +577,6 @@ function destroyGameClient() {
     gameClient?.destroy();
     gameClient = undefined;
 }
-
 
 /** Test code for emulating fake users in a multiplayer session **/
 export async function startPostingRandomKeys() {
