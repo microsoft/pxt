@@ -1,15 +1,21 @@
-import { useContext } from "react";
-import { Modal } from "react-common/components/controls/Modal";
+import { useContext, useState } from "react";
+import { Textarea } from "react-common/components/controls/Textarea";
 import { SignInModal } from "react-common/components/profile/SignInModal";
-import { signInAsync, kickPlayer, leaveGameAsync } from "../epics";
+import {
+    signInAsync,
+    kickPlayer,
+    leaveGameAsync,
+    sendAbuseReportAsync,
+} from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
 import ConfirmModal from "./modals/ConfirmModal";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
-    const { deepLinks, clientRole } = state;
-    const { shareCode, joinCode } = deepLinks;
+    const { deepLinks, clientRole, gameState } = state;
+    const { gameId: shareCode } = gameState ?? {};
+    const [textValue, setTextValue] = useState("");
 
     switch (state.modal) {
         case "sign-in":
@@ -18,8 +24,10 @@ export default function Render() {
                     onClose={() => dispatch(clearModal())}
                     onSignIn={async (provider, rememberMe) => {
                         const params: pxt.Map<string> = {};
-                        if (shareCode) params["host"] = shareCode;
-                        if (joinCode) params["join"] = joinCode;
+                        if (deepLinks?.shareCode)
+                            params["host"] = deepLinks.shareCode;
+                        if (deepLinks?.joinCode)
+                            params["join"] = deepLinks.joinCode;
                         await signInAsync(provider.id, rememberMe, { params });
                     }}
                     dialogMessages={state.modalOpts.dialogMessages}
@@ -28,49 +36,66 @@ export default function Render() {
             );
         case "report-abuse":
             return (
-                <Modal
+                <ConfirmModal
                     title={lf("Report Abuse")}
-                    onClose={() => dispatch(clearModal())}
+                    confirmLabel={lf("Submit Report")}
+                    onConfirm={async () => {
+                        dispatch(clearModal());
+                        await sendAbuseReportAsync(shareCode!, textValue);
+                    }}
+                    onCancel={() => dispatch(clearModal())}
                 >
-                    Report Abuse Placeholder {/*TODO multiplayer*/}
-                </Modal>
+                    <div className="tw-flex tw-flex-col tw-gap-4">
+                        <div>{lf("Why do you find it offensive?")}</div>
+                        <div>
+                            <Textarea onChange={setTextValue}></Textarea>
+                        </div>
+                    </div>
+                </ConfirmModal>
             );
         case "kick-player":
             return (
                 <ConfirmModal
                     title={lf("Kick Player")}
-                    message={lf("Kick this player? They will be blocked from rejoining the game.")}
                     onConfirm={() => {
                         dispatch(clearModal());
                         kickPlayer(state.modalOpts.clientId);
                     }}
                     onCancel={() => dispatch(clearModal())}
-                />
+                >
+                    <div>
+                        {lf("Kick this player? They will be blocked from rejoining the game.")}
+                    </div>
+                </ConfirmModal>
             );
         case "leave-game":
             if (clientRole === "host") {
                 return (
                     <ConfirmModal
                         title={lf("End the Game")}
-                        message={lf("End the game? All players will be disconnected.")}
                         onConfirm={async () => {
                             dispatch(clearModal());
                             await leaveGameAsync("ended");
                         }}
                         onCancel={() => dispatch(clearModal())}
-                    />
+                    >
+                        <div>
+                            {lf("End the game? All players will be disconnected.")}
+                        </div>
+                    </ConfirmModal>
                 );
             } else {
                 return (
                     <ConfirmModal
                         title={lf("Leave Game")}
-                        message={lf("Leave the game?")}
                         onConfirm={async () => {
                             dispatch(clearModal());
                             await leaveGameAsync("left");
                         }}
                         onCancel={() => dispatch(clearModal())}
-                    />
+                    >
+                        <div>{lf("Leave the game?")}</div>
+                    </ConfirmModal>
                 );
             }
         default:

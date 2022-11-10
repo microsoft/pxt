@@ -81,6 +81,8 @@ export default function Render() {
                                 palette,
                             } as SimMultiplayer.ImageMessage);
                         }
+                        // uncomment for local testing of 'fake players'
+                        // gameClient.startPostingRandomKeys();
                     }
                     return;
                 case "multiplayer":
@@ -169,9 +171,7 @@ export default function Render() {
         <div
             id="sim-container"
             ref={simContainerRef}
-            className={
-                "tw-h-[calc(100vh-16rem)] tw-w-screen md:tw-w-[calc(100vw-6rem)]"
-            }
+            className="tw-grow tw-w-screen md:tw-w-[calc(100vw-6rem)]"
             style={{
                 filter: gamePaused ? "grayscale(70%) blur(1px)" : "none",
                 transition: "filter .25s",

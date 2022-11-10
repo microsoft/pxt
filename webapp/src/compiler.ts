@@ -169,6 +169,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                 opts.trace = true;
             }
             opts.computeUsedSymbols = true;
+            opts.computeUsedParts = true;
             if (options.forceEmit)
                 opts.forceEmit = true;
             if (/test=1/i.test(window.location.href))

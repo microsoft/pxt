@@ -117,6 +117,11 @@ type SetGamePaused = ActionBase & {
     gamePaused: boolean;
 };
 
+type SetTargetConfig = ActionBase & {
+    type: "SET_TARGET_CONFIG";
+    targetConfig: pxt.TargetConfig;
+};
+
 /**
  * Union of all actions
  */
@@ -140,7 +145,8 @@ export type Action =
     | ClearModal
     | SetDeepLinks
     | SetMute
-    | SetGamePaused;
+    | SetGamePaused
+    | SetTargetConfig;
 
 /**
  * Action creators
@@ -270,4 +276,9 @@ export const setMute = (value: boolean): SetMute => ({
 export const setGamePaused = (gamePaused: boolean): SetGamePaused => ({
     type: "SET_GAME_PAUSED",
     gamePaused,
+});
+
+export const setTargetConfig = (trgCfg: pxt.TargetConfig): SetTargetConfig => ({
+    type: "SET_TARGET_CONFIG",
+    targetConfig: JSON.parse(JSON.stringify(trgCfg)),
 });

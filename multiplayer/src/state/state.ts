@@ -36,6 +36,7 @@ export type AppState = {
               }
             | undefined;
     };
+    targetConfig: pxt.TargetConfig | undefined;
 };
 
 export const initialAppState: AppState = {
@@ -52,7 +53,8 @@ export const initialAppState: AppState = {
     presence: { ...defaultPresence },
     modal: undefined,
     modalOpts: undefined,
-    muted: false,
+    muted: pxt.BrowserUtils.isSafari(),
     deepLinks: {},
     reactions: {},
+    targetConfig: undefined,
 };

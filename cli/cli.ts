@@ -2081,6 +2081,7 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
             } else {
                 nodeutil.cp("built/target.js", `${appRoot}/public/blb`);
             }
+            nodeutil.cp("targetconfig.json", `${appRoot}/public/blb`);
             nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
             if (opts.includePxtSim) {
                 nodeutil.cp("node_modules/pxt-core/built/pxtsim.js", `${appRoot}/public/blb`);

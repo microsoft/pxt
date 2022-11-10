@@ -1,31 +1,34 @@
+import * as React from "react";
 import { Modal, ModalAction } from "react-common/components/controls/Modal";
 
-export default function Render(props: {
-    title: string;
-    message: string | JSX.Element;
-    onConfirm: () => any;
-    onCancel: () => any;
-}) {
-    const { title, message, onConfirm, onCancel } = props;
+export default function Render(
+    props: React.PropsWithChildren<{
+        title: string;
+        confirmLabel?: string;
+        cancelLabel?: string;
+        onConfirm: () => any;
+        onCancel: () => any;
+    }>
+) {
+    const { title, confirmLabel, cancelLabel, children, onConfirm, onCancel } =
+        props;
 
     const actions: ModalAction[] = [
         {
-            label: lf("Cancel"),
-            className: "primary",
-            onClick: onCancel,
-        },
-        {
-            label: lf("Confirm"),
+            label: confirmLabel ?? lf("Confirm"),
             className: "primary",
             onClick: onConfirm,
+        },
+        {
+            label: cancelLabel ?? lf("Cancel"),
+            className: "primary inverted",
+            onClick: onCancel,
         },
     ];
 
     return (
         <Modal title={title} actions={actions} onClose={onCancel}>
-            <div className="tw-flex tw-flex-col tw-gap-4">
-                <div className="tw-text-center">{message}</div>
-            </div>
+            {children}
         </Modal>
     );
 }

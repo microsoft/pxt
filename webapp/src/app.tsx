@@ -1521,7 +1521,10 @@ export class ProjectView
         if (!h)
             return Promise.resolve()
 
-        if (this.shareEditor) this.shareEditor.setThumbnailFrames(undefined);
+        if (this.shareEditor) {
+            this.shareEditor.setThumbnailFrames(undefined);
+            this.shareEditor.setIsMultiplayer(false);
+        }
 
         const checkAsync = this.tryCheckTargetVersionAsync(h.targetVersion);
         if (checkAsync)
@@ -3128,6 +3131,14 @@ export class ProjectView
             try {
                 const resp = await compiler.compileAsync({ native: true, forceEmit: true });
                 this.editor.setDiagnostics(this.editorFile, state);
+                if (this.shareEditor) {
+                    if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
+                        this.shareEditor.setIsMultiplayer(true);
+                    }
+                    else {
+                        this.shareEditor.setIsMultiplayer(false);
+                    }
+                }
 
                 if (!saveOnly) {
                     const shouldContinue = await cmds.showUnsupportedHardwareMessageAsync(resp);
@@ -3683,6 +3694,15 @@ export class ProjectView
                     }
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
+
+                    if (this.shareEditor) {
+                        if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
+                            this.shareEditor.setIsMultiplayer(true);
+                        }
+                        else {
+                            this.shareEditor.setIsMultiplayer(false);
+                        }
+                    }
 
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {

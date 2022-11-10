@@ -5,12 +5,6 @@ import ReactionsIcon from "./icons/ReactionsIcon";
 import { Button } from "react-common/components/controls/Button";
 import Popup from "./Popup";
 
-const throttledReaction = pxt.Util.throttle(
-    (ind: number) => sendReactionAsync(ind),
-    200,
-    true
-);
-
 export default function Render() {
     const [showReactionPicker, setShowReactionPicker] = useState(false);
 
@@ -29,14 +23,14 @@ export default function Render() {
                 if (!numberKey) return;
                 const ind = parseInt(numberKey) - 1;
                 if (Reactions[ind]) {
-                    throttledReaction(ind);
+                    sendReactionAsync(ind);
                 }
             }
         };
         const outsideSimKeyEvent = (e: KeyboardEvent) => {
             const ind = parseInt(e.key) - 1;
             if (Reactions[ind]) {
-                throttledReaction(ind);
+                sendReactionAsync(ind);
             }
         };
 
@@ -48,6 +42,8 @@ export default function Render() {
         };
     });
 
+    const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
+
     return (
         <div>
             <Popup
@@ -55,18 +51,27 @@ export default function Render() {
                 visible={showReactionPicker}
                 onClickedOutside={() => setShowReactionPicker(false)}
             >
-                <div className="tw-flex tw-flex-row tw-gap-3 tw-p-2 tw-bg-white tw-drop-shadow-xl tw-rounded-md tw-border-2 tw-border-gray-100">
-                    {Reactions.map((def, i) => {
-                        return (
-                            <Button
-                                className="tw-flex tw-items-center tw-justify-center tw-m-0 tw-p-0 tw-cursor-pointer tw-select-none tw-scale-110 hover:tw-scale-125 tw-ease-linear tw-duration-[50ms] tw-h-8 tw-w-8 tw-text-2xl"
-                                key={i}
-                                label={def.emoji}
-                                title={def.name}
-                                onClick={() => onReactionClick(i)}
-                            />
-                        );
-                    })}
+                <div className="tw-flex tw-flex-col tw-bg-white tw-drop-shadow-xl tw-rounded-md tw-border-2 tw-border-gray-100">
+                    <div className="tw-flex tw-flex-row tw-gap-3 tw-p-2 tw-pb-3 tw-pr-3">
+                        {Reactions.map((def, i) => {
+                            return (
+                                <Button
+                                    className="tw-flex tw-items-center tw-justify-center tw-m-0 tw-p-0 tw-cursor-pointer tw-select-none tw-scale-110 hover:tw-scale-125 tw-ease-linear tw-duration-[50ms] tw-h-8 tw-w-8 tw-text-2xl"
+                                    key={i + 1}
+                                    label={
+                                        <div>
+                                            <div>{def.emoji}</div>
+                                            {!isMobile && <div className="tw-text-xs tw-absolute tw-bottom-[-5px] tw-right-[-5px] tw-text-white tw-bg-gray-400 tw-rounded-sm tw-border-[1px] tw-border-solid tw-border-gray-500 tw-drop-shadow-lg tw-px-1 tw-leading-tight">
+                                                {i + 1}
+                                            </div>}
+                                        </div>
+                                    }
+                                    title={def.name}
+                                    onClick={() => onReactionClick(i)}
+                                />
+                            );
+                        })}
+                    </div>
                 </div>
             </Popup>
             <Button

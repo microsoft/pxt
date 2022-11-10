@@ -16,21 +16,17 @@ import { useAuthDialogMessages } from "../hooks/useAuthDialogMessages";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
-    const { authStatus, profile, deepLinks } = state;
+    const { authStatus, profile, gameState, targetConfig } = state;
+    const { gameId: shareCode } = gameState ?? {};
 
     const hasIdentity = pxt.auth.hasIdentity();
     const appTheme = pxt.appTarget?.appTheme;
-    const helpUrl = ""; // TODO multiplayer
 
     const privacyUrl = pxt?.appTarget?.appTheme?.privacyUrl;
     const termsOfUseUrl = pxt?.appTarget?.appTheme?.termsOfUseUrl;
+    const safetyUrl = "/docs/multiplayer#safety";
 
     const dialogMessages = useAuthDialogMessages();
-
-    const onHelpClicked = () => {
-        pxt.tickEvent("mp.settingsmenu.help");
-        window.open(helpUrl);
-    };
 
     const onReportAbuseClicked = () => {
         pxt.tickEvent("mp.settingsmenu.reportabuse");
@@ -45,6 +41,11 @@ export default function Render() {
     const onTermsofUseClicked = () => {
         pxt.tickEvent("mp.settingsmenu.termsofuse");
         window.open(termsOfUseUrl);
+    };
+
+    const onOnlineSafetyClicked = () => {
+        pxt.tickEvent("mp.settingsmenu.onlinesafety");
+        window.open(safetyUrl);
     };
 
     const onHomeClicked = () => {
@@ -202,13 +203,6 @@ export default function Render() {
     const getSettingItems = () => {
         const items: MenuItem[] = [];
 
-        items.push({
-            id: "help",
-            title: lf("Help"),
-            label: lf("Help"),
-            onClick: onHelpClicked,
-        });
-
         if (privacyUrl) {
             items.push({
                 id: "privacy",
@@ -228,11 +222,22 @@ export default function Render() {
         }
 
         items.push({
-            id: "report",
-            title: lf("Report Abuse"),
-            label: lf("Report Abuse"),
-            onClick: onReportAbuseClicked,
+            id: "safety",
+            title: lf("Online Safety"),
+            label: lf("Online Safety"),
+            onClick: onOnlineSafetyClicked,
         });
+
+        const approvedLinks = targetConfig?.shareLinks?.approved || [];
+
+        if (shareCode && approvedLinks.indexOf(shareCode) < 0) {
+            items.push({
+                id: "report",
+                title: lf("Report Abuse"),
+                label: lf("Report Abuse"),
+                onClick: onReportAbuseClicked,
+            });
+        }
 
         return items;
     };

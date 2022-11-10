@@ -1,3 +1,9 @@
+export const HTTP_OK = 200;
+export const HTTP_GAME_FULL = 507; // Insuffient storage. Using this HTTP status code to indicate the game is full.
+export const HTTP_GAME_NOT_FOUND = 404; // Not found. Using this HTTP status code to indicate the game was not found.
+export const HTTP_IM_A_TEAPOT = 418; // I'm a teapot. Using this HTTP status code to indicate look elsewhere for the reason.
+export const HTTP_INTERNAL_SERVER_ERROR = 500;
+
 export type NetMode = "init" | "connecting" | "connected";
 export type ModalType =
     | "sign-in"
@@ -7,7 +13,14 @@ export type ModalType =
 
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
-export type GameOverReason = "kicked" | "ended" | "left" | "full" | "rejected";
+export type GameOverReason =
+    | "kicked"
+    | "ended"
+    | "left"
+    | "full"
+    | "rejected"
+    | "not-found"
+    | "compile-failed";
 
 export type GameInfo = {
     joinCode?: string;
@@ -35,6 +48,30 @@ export enum ButtonState {
     Pressed = 1,
     Released = 2,
     Held = 3,
+}
+
+export enum SimKey {
+    None = 0,
+
+    // Player 1
+    Left = 1,
+    Up = 2,
+    Right = 3,
+    Down = 4,
+    A = 5,
+    B = 6,
+
+    Menu = 7,
+
+    // Player 2 = Player 1 + 7
+    // Player 3 = Player 2 + 7
+    // Player 4 = Player 3 + 7
+
+    // system keys
+    Screenshot = -1,
+    Gif = -2,
+    Reset = -3,
+    TogglePause = -4
 }
 
 export function buttonStateToString(state: ButtonState): string | undefined {

@@ -29,23 +29,25 @@ export async function hostGameAsync(shareCode: string | undefined) {
         dispatch(setNetMode("connecting"));
         dispatch(connectingToast);
 
-        const gameInfo = await gameClient.hostGameAsync(shareCode);
-        console.log(gameInfo);
+        const hostResult = await gameClient.hostGameAsync(shareCode);
+        console.log(hostResult);
 
-        dispatch(
-            showToast({
-                type: "success",
-                text: lf("Connected!"),
-                timeoutMs: 5000,
-            })
-        );
-
-        dispatch(setClientRole("host"));
-        dispatch(setGameInfo(gameInfo));
-        dispatch(setNetMode("connected"));
+        if (hostResult.success) {
+            dispatch(
+                showToast({
+                    type: "success",
+                    text: lf("Connected!"),
+                    timeoutMs: 5000,
+                })
+            );
+            dispatch(setClientRole("host"));
+            dispatch(setGameInfo(hostResult));
+            dispatch(setNetMode("connected"));
+        } else {
+            throw new Error(`host http response: ${hostResult.statusCode}`);
+        }
     } catch (e) {
         console.log("error", e);
-        dispatch(setNetMode("init"));
         dispatch(
             showToast({
                 type: "error",
@@ -53,6 +55,7 @@ export async function hostGameAsync(shareCode: string | undefined) {
                 timeoutMs: 5000,
             })
         );
+        dispatch(setNetMode("init"));
     } finally {
         dispatch(dismissToast(connectingToast.toast.id));
     }
