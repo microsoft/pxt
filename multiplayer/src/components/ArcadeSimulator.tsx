@@ -81,6 +81,8 @@ export default function Render() {
                                 palette,
                             } as SimMultiplayer.ImageMessage);
                         }
+                        // uncomment for local testing of 'fake players'
+                        // gameClient.startPostingRandomKeys();
                     }
                     return;
                 case "multiplayer":
