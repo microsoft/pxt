@@ -38,9 +38,10 @@ export function gameDisconnected(reason: GameOverReason | undefined) {
                 pxt.tickEvent("mp.gamefull");
                 return dispatch(
                     showToast({
-                        type: "info",
+                        type: "warning",
                         text: lf("Game is full"),
                         timeoutMs: 5000,
+                        icon: "😤"
                     })
                 );
             case "rejected":

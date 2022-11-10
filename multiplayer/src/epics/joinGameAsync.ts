@@ -46,23 +46,26 @@ export async function joinGameAsync(joinCode: string | undefined) {
         } else {
             dispatch(
                 showToast({
-                    type: "info",
+                    type: "warning",
                     text: lf("Game not found"),
                     timeoutMs: 5000,
+                    icon: "😟"
                 })
             );
             dispatch(setNetMode("init"));
         }
     } catch (e) {
-        console.log("error", e);
-        dispatch(setNetMode("init"));
-        dispatch(
-            showToast({
-                type: "error",
-                text: lf("Something went wrong. Please try again."),
-                timeoutMs: 5000,
-            })
-        );
+        if (typeof e !== "string") {
+            console.log("error", e);
+            dispatch(setNetMode("init"));
+            dispatch(
+                showToast({
+                    type: "error",
+                    text: lf("Something went wrong. Please try again."),
+                    timeoutMs: 5000,
+                })
+            );
+        }
     } finally {
         dispatch(dismissToast(connectingToast.toast.id));
     }

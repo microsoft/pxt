@@ -81,77 +81,77 @@ class GameClient {
     }
 
     private async recvMessageAsync(payload: string | ArrayBuffer) {
-        try {
-            if (payload instanceof ArrayBuffer) {
-                //-------------------------------------------------
-                // Handle binary message
-                //--
-                const reader = SmartBuffer.fromBuffer(Buffer.from(payload));
-                const type = reader.readUInt16LE();
-                switch (type) {
-                    case Protocol.Binary.MessageType.CompressedScreen:
-                        return await this.recvCompressedScreenMessageAsync(
-                            reader
-                        );
-                    case Protocol.Binary.MessageType.Input:
-                        return await this.recvInputMessageAsync(reader);
-                    case Protocol.Binary.MessageType.Audio:
-                        return await this.recvAudioMessageAsync(reader);
-                }
-            } else if (typeof payload === "string") {
-                //-------------------------------------------------
-                // Handle JSON message
-                //--
-                const msg = JSON.parse(payload) as Protocol.Message;
-                switch (msg.type) {
-                    case "joined":
-                        return await this.recvJoinedMessageAsync(msg);
-                    case "start-game":
-                        return await this.recvStartGameMessageAsync(msg);
-                    case "presence":
-                        return await this.recvPresenceMessageAsync(msg);
-                    case "reaction":
-                        return await this.recvReactionMessageAsync(msg);
-                    case "player-joined":
-                        return await this.recvPlayerJoinedMessageAsync(msg);
-                    case "player-left":
-                        return await this.recvPlayerLeftMessageAsync(msg);
-                    case "game-over":
-                        return await this.recvGameOverMessageAsync(msg);
-                    case "pause-game":
-                        return await this.recvPauseGameMessageAsync(msg);
-                    case "resume-game":
-                        return await this.recvResumeGameMessageAsync(msg);
-                }
-            } else {
-                console.error("Unknown payload type", payload);
+        if (payload instanceof ArrayBuffer) {
+            //-------------------------------------------------
+            // Handle binary message
+            //--
+            const reader = SmartBuffer.fromBuffer(Buffer.from(payload));
+            const type = reader.readUInt16LE();
+            switch (type) {
+                case Protocol.Binary.MessageType.CompressedScreen:
+                    return await this.recvCompressedScreenMessageAsync(reader);
+                case Protocol.Binary.MessageType.Input:
+                    return await this.recvInputMessageAsync(reader);
+                case Protocol.Binary.MessageType.Audio:
+                    return await this.recvAudioMessageAsync(reader);
             }
-        } catch (e) {
-            console.error("Error processing message", e);
+        } else if (typeof payload === "string") {
+            //-------------------------------------------------
+            // Handle JSON message
+            //--
+            const msg = JSON.parse(payload) as Protocol.Message;
+            switch (msg.type) {
+                case "joined":
+                    return await this.recvJoinedMessageAsync(msg);
+                case "start-game":
+                    return await this.recvStartGameMessageAsync(msg);
+                case "presence":
+                    return await this.recvPresenceMessageAsync(msg);
+                case "reaction":
+                    return await this.recvReactionMessageAsync(msg);
+                case "player-joined":
+                    return await this.recvPlayerJoinedMessageAsync(msg);
+                case "player-left":
+                    return await this.recvPlayerLeftMessageAsync(msg);
+                case "game-over":
+                    return await this.recvGameOverMessageAsync(msg);
+                case "pause-game":
+                    return await this.recvPauseGameMessageAsync(msg);
+                case "resume-game":
+                    return await this.recvResumeGameMessageAsync(msg);
+            }
+        } else {
+            throw new Error(`Unknown payload: ${payload}`);
         }
     }
 
     private async recvMessageWithJoinTimeout(
         payload: string | Buffer,
         timeout: NodeJS.Timeout,
-        resolve: () => void
+        resolve: () => void,
+        reject: (e?: any) => void
     ) {
         try {
             if (typeof payload === "string") {
                 const msg = JSON.parse(payload) as Protocol.Message;
                 await this.recvMessageAsync(payload);
                 if (msg.type === "joined") {
+                    // We've joined the game. Replace this handler with a direct call to recvMessageAsync
                     this.sock?.removeAllListeners("message");
-                    this.sock?.on(
-                        "message",
-                        async payload => await this.recvMessageAsync(payload)
-                    );
+                    this.sock?.on("message", async payload => {
+                        try {
+                            await this.recvMessageAsync(payload);
+                        } catch (e) {
+                            console.error("Error processing message", e);
+                            destroyGameClient();
+                        }
+                    });
                     clearTimeout(timeout);
                     resolve();
                 }
             }
         } catch (e) {
-            console.error("Error processing message", e);
+            reject(e);
         }
     }
 
@@ -168,22 +168,34 @@ class GameClient {
             this.sock.binaryType = "arraybuffer";
             this.sock.on("open", () => {
                 console.log("socket opened");
-                this.sock?.on(
-                    "message",
-                    async payload =>
+                this.sock?.on("message", async payload => {
+                    try {
                         await this.recvMessageWithJoinTimeout(
                             payload,
                             connectTimeout,
-                            resolve
-                        )
-                );
+                            resolve,
+                            (e?: any) => {
+                                clearTimeout(connectTimeout);
+                                reject(e);
+                            }
+                        );
+                    } catch (e) {
+                        console.error("Error processing message", e);
+                        destroyGameClient();
+                    }
+                });
                 this.sock?.on("close", () => {
                     console.log("socket disconnected");
                     gameDisconnected(this.gameOverReason);
+                    clearTimeout(connectTimeout);
+                    reject(this.gameOverReason);
                 });
 
                 this.sock?.on("error", err => {
                     console.log("socket error", err);
+                    gameDisconnected(this.gameOverReason);
+                    clearTimeout(connectTimeout);
+                    reject(this.gameOverReason);
                 });
 
                 setTimeout(() => {
@@ -192,7 +204,7 @@ class GameClient {
                         ticket,
                         version: Protocol.VERSION,
                     } as Protocol.ConnectMessage);
-                }, 500); // TODO: Why is this necessary? The socket doesn't seem ready to send messages immediately. This isn't a shippable solution.
+                }, 500); // TODO: Why is this necessary? The socket doesn't seem ready to send messages immediately.
             });
         });
     }
