@@ -3131,11 +3131,13 @@ export class ProjectView
             try {
                 const resp = await compiler.compileAsync({ native: true, forceEmit: true });
                 this.editor.setDiagnostics(this.editorFile, state);
-                if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
-                    this.shareEditor.setIsMultiplayer(true);
-                }
-                else {
-                    this.shareEditor.setIsMultiplayer(false);
+                if (this.shareEditor) {
+                    if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
+                        this.shareEditor.setIsMultiplayer(true);
+                    }
+                    else {
+                        this.shareEditor.setIsMultiplayer(false);
+                    }
                 }
 
                 if (!saveOnly) {
@@ -3693,11 +3695,13 @@ export class ProjectView
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
 
-                    if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
-                        this.shareEditor.setIsMultiplayer(true);
-                    }
-                    else {
-                        this.shareEditor.setIsMultiplayer(false);
+                    if (this.shareEditor) {
+                        if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
+                            this.shareEditor.setIsMultiplayer(true);
+                        }
+                        else {
+                            this.shareEditor.setIsMultiplayer(false);
+                        }
                     }
 
                     if (resp.outfiles[pxtc.BINARY_JS]) {
