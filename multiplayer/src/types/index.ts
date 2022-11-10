@@ -13,7 +13,14 @@ export type ModalType =
 
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
-export type GameOverReason = "kicked" | "ended" | "left" | "full" | "rejected" | "not-found" | "compile-failed";
+export type GameOverReason =
+    | "kicked"
+    | "ended"
+    | "left"
+    | "full"
+    | "rejected"
+    | "not-found"
+    | "compile-failed";
 
 export type GameInfo = {
     joinCode?: string;
