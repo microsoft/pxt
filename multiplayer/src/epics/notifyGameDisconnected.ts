@@ -68,7 +68,7 @@ export function notifyGameDisconnected(reason: GameOverReason | undefined) {
                 return dispatch(
                     showToast({
                         type: "error",
-                        text: lf("Unable to compile game"),
+                        text: lf("There was a problem loading this game"),
                         timeoutMs: 5000,
                         icon: "😟",
                     })
