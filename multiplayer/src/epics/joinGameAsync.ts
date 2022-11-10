@@ -7,7 +7,9 @@ import {
     showToast,
     setClientRole,
 } from "../state/actions";
+import { HTTP_GAME_FULL, HTTP_GAME_NOT_FOUND } from "../types";
 import { cleanupJoinCode } from "../util";
+import { notifyGameDisconnected } from ".";
 
 export async function joinGameAsync(joinCode: string | undefined) {
     joinCode = cleanupJoinCode(joinCode);
@@ -44,18 +46,18 @@ export async function joinGameAsync(joinCode: string | undefined) {
             dispatch(setGameInfo(joinResult));
             dispatch(setNetMode("connected"));
         } else {
-            dispatch(
-                showToast({
-                    type: "info",
-                    text: lf("Game not found"),
-                    timeoutMs: 5000,
-                })
-            );
-            dispatch(setNetMode("init"));
+            if (joinResult.statusCode === HTTP_GAME_NOT_FOUND) {
+                notifyGameDisconnected("not-found");
+                dispatch(setNetMode("init"));
+            } else if (joinResult.statusCode === HTTP_GAME_FULL) {
+                // notification handled by gameClient
+                dispatch(setNetMode("init"));
+            } else {
+                throw new Error(`join http response: ${joinResult.statusCode}`);
+            }
         }
     } catch (e) {
         console.log("error", e);
-        dispatch(setNetMode("init"));
         dispatch(
             showToast({
                 type: "error",
@@ -63,6 +65,7 @@ export async function joinGameAsync(joinCode: string | undefined) {
                 timeoutMs: 5000,
             })
         );
+        dispatch(setNetMode("init"));
     } finally {
         dispatch(dismissToast(connectingToast.toast.id));
     }

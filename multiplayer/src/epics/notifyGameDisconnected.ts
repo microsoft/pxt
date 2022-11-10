@@ -2,7 +2,7 @@ import { dispatch } from "../state";
 import { showToast, setNetMode } from "../state/actions";
 import { GameOverReason } from "../types";
 
-export function gameDisconnected(reason: GameOverReason | undefined) {
+export function notifyGameDisconnected(reason: GameOverReason | undefined) {
     try {
         dispatch(setNetMode("init"));
         switch (reason) {
@@ -38,9 +38,10 @@ export function gameDisconnected(reason: GameOverReason | undefined) {
                 pxt.tickEvent("mp.gamefull");
                 return dispatch(
                     showToast({
-                        type: "info",
+                        type: "warning",
                         text: lf("Game is full"),
                         timeoutMs: 5000,
+                        icon: "😤"
                     })
                 );
             case "rejected":
@@ -50,6 +51,16 @@ export function gameDisconnected(reason: GameOverReason | undefined) {
                         type: "error",
                         text: lf("Game rejected your join request"),
                         timeoutMs: 5000,
+                    })
+                );
+            case "not-found":
+                pxt.tickEvent("mp.gamenotfound");
+                return dispatch(
+                    showToast({
+                        type: "warning",
+                        text: lf("Game not found"),
+                        timeoutMs: 5000,
+                        icon: "😟",
                     })
                 );
             default:

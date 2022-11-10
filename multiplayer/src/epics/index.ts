@@ -9,7 +9,7 @@ export { leaveGameAsync } from "./leaveGameAsync";
 export { setGameModeAsync } from "./setGameModeAsync";
 export { signInAsync } from "./signInAsync";
 export { signOutAsync } from "./signOutAsync";
-export { gameDisconnected } from "./gameDisconnected";
+export { notifyGameDisconnected } from "./notifyGameDisconnected";
 export { setPresenceAsync } from "./setPresenceAsync";
 export { sendReactionAsync } from "./sendReactionAsync";
 export { setReactionAsync } from "./setReactionAsync";
