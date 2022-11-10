@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import KeyboardControlsInfo from "./KeyboardControlsInfo";
 import Popup from "./Popup";
@@ -11,16 +11,23 @@ export default function Render() {
         setShowKeys(!showKeys);
     };
 
+    const btnRef = useRef<Element | null>();
+    const setBtnRef = useCallback((el: Element | null) => {
+        btnRef.current = el;
+    }, []);
+
     return (
         <div>
             <Popup
                 className="tw-absolute tw-translate-y-[-105%]"
                 visible={showKeys}
                 onClickedOutside={() => setShowKeys(false)}
+                triggerElementRef={btnRef}
             >
                 <KeyboardControlsInfo />
             </Popup>
             <Button
+                buttonRef={setBtnRef}
                 title={lf("Keyboard Controls")}
                 label={lf("Keyboard Controls")}
                 leftIcon="fas fa-keyboard"
