@@ -15,9 +15,13 @@ import {
     stringToButtonState,
     GameOverReason,
     GameJoinResult,
+    HTTP_OK,
+    HTTP_GAME_FULL,
+    HTTP_INTERNAL_SERVER_ERROR,
+    HTTP_IM_A_TEAPOT,
 } from "../types";
 import {
-    gameDisconnected,
+    notifyGameDisconnected,
     setGameModeAsync,
     setPresenceAsync,
     setReactionAsync,
@@ -127,9 +131,7 @@ class GameClient {
 
     private async recvMessageWithJoinTimeout(
         payload: string | Buffer,
-        timeout: NodeJS.Timeout,
-        resolve: () => void,
-        reject: (e?: any) => void
+        resolve: () => void
     ) {
         try {
             if (typeof payload === "string") {
@@ -137,27 +139,30 @@ class GameClient {
                 await this.recvMessageAsync(payload);
                 if (msg.type === "joined") {
                     // We've joined the game. Replace this handler with a direct call to recvMessageAsync
-                    this.sock?.removeAllListeners("message");
-                    this.sock?.on("message", async payload => {
-                        try {
-                            await this.recvMessageAsync(payload);
-                        } catch (e) {
-                            console.error("Error processing message", e);
-                            destroyGameClient();
-                        }
-                    });
-                    clearTimeout(timeout);
+                    if (this.sock) {
+                        this.sock.removeAllListeners("message");
+                        this.sock.on("message", async payload => {
+                            try {
+                                await this.recvMessageAsync(payload);
+                            } catch (e) {
+                                console.error("Error processing message", e);
+                                destroyGameClient();
+                            }
+                        });
+                    }
                     resolve();
                 }
             }
         } catch (e) {
-            reject(e);
+            console.error("Error processing message", e);
+            destroyGameClient();
+            resolve();
         }
     }
 
     public async connectAsync(ticket: string) {
         return new Promise<void>((resolve, reject) => {
-            const connectTimeout = setTimeout(() => {
+            const joinTimeout = setTimeout(() => {
                 reject("Timed out connecting to game server");
                 destroyGameClient();
             }, 20 * 1000);
@@ -169,33 +174,16 @@ class GameClient {
             this.sock.on("open", () => {
                 console.log("socket opened");
                 this.sock?.on("message", async payload => {
-                    try {
-                        await this.recvMessageWithJoinTimeout(
-                            payload,
-                            connectTimeout,
-                            resolve,
-                            (e?: any) => {
-                                clearTimeout(connectTimeout);
-                                reject(e);
-                            }
-                        );
-                    } catch (e) {
-                        console.error("Error processing message", e);
-                        destroyGameClient();
-                    }
+                    await this.recvMessageWithJoinTimeout(payload, () => {
+                        clearTimeout(joinTimeout);
+                        resolve();
+                    });
                 });
                 this.sock?.on("close", () => {
                     console.log("socket disconnected");
-                    gameDisconnected(this.gameOverReason);
-                    clearTimeout(connectTimeout);
-                    reject(this.gameOverReason);
-                });
-
-                this.sock?.on("error", err => {
-                    console.log("socket error", err);
-                    gameDisconnected(this.gameOverReason);
-                    clearTimeout(connectTimeout);
-                    reject(this.gameOverReason);
+                    notifyGameDisconnected(this.gameOverReason);
+                    clearTimeout(joinTimeout);
+                    resolve();
                 });
 
                 setTimeout(() => {
@@ -204,63 +192,99 @@ class GameClient {
                         ticket,
                         version: Protocol.VERSION,
                     } as Protocol.ConnectMessage);
-                }, 500); // TODO: Why is this necessary? The socket doesn't seem ready to send messages immediately.
+                }, 500); // TODO: Why is a short delay necessary here? The socket doesn't seem ready to send messages immediately.
             });
         });
     }
 
-    public async hostGameAsync(shareCode: string): Promise<GameInfo> {
-        shareCode = encodeURIComponent(shareCode);
+    public async hostGameAsync(shareCode: string): Promise<GameJoinResult> {
+        try {
+            shareCode = encodeURIComponent(shareCode);
 
-        const authToken = await authClient.authTokenAsync();
+            const authToken = await authClient.authTokenAsync();
 
-        const res = await fetch(`${GAME_HOST}/api/game/host/${shareCode}`, {
-            credentials: "include",
-            headers: {
-                Authorization: "mkcd " + authToken,
-            },
-        });
-        const gameInfo = (await res.json()) as GameInfo;
+            const hostRes = await fetch(
+                `${GAME_HOST}/api/game/host/${shareCode}`,
+                {
+                    credentials: "include",
+                    headers: {
+                        Authorization: "mkcd " + authToken,
+                    },
+                }
+            );
 
-        if (!gameInfo?.joinTicket)
-            throw new Error("Game server did not return a join ticket");
+            if (hostRes.status !== HTTP_OK) {
+                return {
+                    success: false,
+                    statusCode: hostRes.status,
+                };
+            }
 
-        await this.connectAsync(gameInfo.joinTicket!);
+            const gameInfo = (await hostRes.json()) as GameInfo;
 
-        return gameInfo;
+            if (!gameInfo?.joinTicket)
+                throw new Error("Game server did not return a join ticket");
+
+            await this.connectAsync(gameInfo.joinTicket!);
+
+            return {
+                ...gameInfo,
+                success: true,
+                statusCode: hostRes.status,
+            };
+        } catch (e) {
+            return {
+                success: false,
+                statusCode: HTTP_INTERNAL_SERVER_ERROR,
+            };
+        }
     }
 
     public async joinGameAsync(joinCode: string): Promise<GameJoinResult> {
-        joinCode = encodeURIComponent(joinCode);
+        try {
+            joinCode = encodeURIComponent(joinCode);
 
-        const authToken = await authClient.authTokenAsync();
+            const authToken = await authClient.authTokenAsync();
 
-        const joinRes = await fetch(`${GAME_HOST}/api/game/join/${joinCode}`, {
-            credentials: "include",
-            headers: {
-                Authorization: "mkcd " + authToken,
-            },
-        });
+            const joinRes = await fetch(
+                `${GAME_HOST}/api/game/join/${joinCode}`,
+                {
+                    credentials: "include",
+                    headers: {
+                        Authorization: "mkcd " + authToken,
+                    },
+                }
+            );
 
-        if (joinRes.status !== 200) {
+            if (joinRes.status !== HTTP_OK) {
+                return {
+                    success: false,
+                    statusCode: joinRes.status,
+                };
+            }
+
+            const gameInfo = (await joinRes.json()) as GameInfo;
+
+            if (!gameInfo?.joinTicket)
+                throw new Error("Game server did not return a join ticket");
+
+            await this.connectAsync(gameInfo.joinTicket!);
+
+            return {
+                ...gameInfo,
+                success: !this.gameOverReason,
+                statusCode: this.gameOverReason
+                    ? this.gameOverReason === "full"
+                        ? HTTP_GAME_FULL
+                        : HTTP_IM_A_TEAPOT
+                    : joinRes.status,
+            };
+        } catch (e) {
             return {
                 success: false,
-                statusCode: joinRes.status,
+                statusCode: HTTP_INTERNAL_SERVER_ERROR,
             };
         }
-
-        const gameInfo = (await joinRes.json()) as GameInfo;
-
-        if (!gameInfo?.joinTicket)
-            throw new Error("Game server did not return a join ticket");
-
-        await this.connectAsync(gameInfo.joinTicket!);
-
-        return {
-            ...gameInfo,
-            success: true,
-            statusCode: joinRes.status,
-        };
     }
 
     public async startGameAsync() {
@@ -544,7 +568,9 @@ function destroyGameClient() {
     gameClient = undefined;
 }
 
-export async function hostGameAsync(shareCode: string): Promise<GameInfo> {
+export async function hostGameAsync(
+    shareCode: string
+): Promise<GameJoinResult> {
     destroyGameClient();
     gameClient = new GameClient();
     const gameInfo = await gameClient.hostGameAsync(shareCode);
