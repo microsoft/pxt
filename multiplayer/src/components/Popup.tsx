@@ -6,7 +6,7 @@ export default function Render(
         className?: string;
         visible: boolean;
         onClickedOutside: () => any;
-        triggerElementRef?: RefObject<Element | undefined>;
+        triggerElementRef?: RefObject<Element | undefined>; // Allows us to avoid closing the popup if a click happens inside the trigger element
     }>
 ) {
     const { children, visible, className, onClickedOutside } = props;
@@ -16,7 +16,10 @@ export default function Render(
         ref.current = el;
     }, []);
 
-    useClickedOutside(ref, props.triggerElementRef, () => onClickedOutside());
+    useClickedOutside(
+        props.triggerElementRef ? [ref, props.triggerElementRef] : [ref],
+        () => onClickedOutside()
+    );
 
     return visible ? (
         <div ref={setRef} className={className}>
