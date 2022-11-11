@@ -84,7 +84,7 @@ you can specify the `blockId` and `block` parameters.
 
 ```typescript-ignore
 //% blockId=device_show_number
-//% block="show|number %v"
+//% block="show|number $v"
 export function showNumber(v: number, interval: number = 150): void
 { }
 ```
@@ -105,14 +105,13 @@ will be organized to create the block.
 ```
 block = field, { '|' field }
 field := string
-    | string `%` parameter [ `=` type ]
+    | string `$` parameter [ `=` type ]
 parameter = string
 type = string
 ```
 
-* each `field` is mapped to a field in the block editor
-* the function parameter are mapped **in order** to `%parameter` argument. The loader automatically builds
-a mapping between the block field names and the function names.
+* each `field` is mapped to a field name on the block
+* the function parameters are mapped to the `$parameter` argument with an identical name. The loader automatically builds a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs when enough parameters are detected
 * Using `=type` in the block string for shadow blocks is deprecated. See "Specifying shadow blocks" for more details.
 
@@ -209,13 +208,13 @@ To define a block that has both a reporter and a statement form, use the `blockA
 /**
 * Remove the last element from an array and return it.
 */
-//% blockId="array_pop" block="get and remove last value from %list"
+//% blockId="array_pop" block="get and remove last value from $list"
 export function pop(): number;
 
 /**
 * Remove the last element from an array.
 */
-//% blockId="array_pop_statement" block="remove last value from %list"
+//% blockId="array_pop_statement" block="remove last value from $list"
 //% blockAliasFor="Array.pop"
 export function _popStatement(): void;
 
@@ -245,7 +244,7 @@ To populate the array with blocks, set the default value of the parameter as wel
 export function myFunction(myParam: number[]): void {}
 ```
 
-The above will create a block that has an array by default with "inner_shadow_blocks" inside the array.
+The above will create a block that has an array by default with "inner_shadow_blocks" inside the array. Replace "inner_shadow_block" with the blockId for the type of elements you want the array to be populated with. For example, "text" will result in an array of strings and "math_number" will result in an array of numbers.
 
 ## Input formats
 
@@ -254,7 +253,7 @@ The above will create a block that has an array by default with "inner_shadow_bl
 To make a block with multiple parameters appear as a single line, use `inlineInputMode`. The block will expand left to right instead of wrapping the parameter input across mulitple lines.
 
 ```typescript-ignore
-//% block="magnitude of 3d vector at x %x and y %y and z %z"
+//% block="magnitude of 3d vector at x $x and y $y and z $z"
 //% inlineInputMode=inline
 export function mag3d(x: number, y: number, z: number): number {
     return Math.sqrt(x * x + y * y + z * z);
@@ -269,7 +268,7 @@ If your block has multiple parameters but some or all of them are likely to rema
 
 The portion of the block that is set to expand is separated by two field delimiters `||`. In the following example, the two optional parameters are separated from the first part of the block definition by `||`:
 
-``//% block="play an alarm sound || of %sound for %duration ms"``
+``//% block="play an alarm sound || of $sound for $duration ms"``
 
 The `expandableArgumentMode` attribute controls how the expansion for the parameters will work. It is set to `toggle` in this example which will show the block collapsed with a **(+)** icon which expands the block when clicked.
 
@@ -288,7 +287,7 @@ namespace alarms {
      * @param sound of the alarm to play, eg: AlarmSound.Annoy
      * @param duration of the alarm sound, eg: 2000
      */
-    //% block="play an alarm sound || of %sound for %duration ms"
+    //% block="play an alarm sound || of $sound for $duration ms"
     //% duration.shadow=timePicker
     //% expandableArgumentMode="toggle"
     export function alarmSound(sound?: AlarmSound, duration?: number) {
@@ -354,7 +353,7 @@ enum ArgNames {
 //% mutate=objectdestructuring
 //% mutateText="My Arguments"
 //% mutateDefaults="argumentA;argumentA,argumentB"
-//% mutatePropertyEnum="argNames"
+//% mutatePropertyEnum="ArgNames"
 // ...
 export function addSomeEventHandler(args: ArgNames[], (a: ArgumentClass) => void) { };
 ```
@@ -406,7 +405,7 @@ enum Delimiters {
 ```
 * a function that takes the enum as parameter and returns the according value
 ```typescript-ignore
-//% blockId="delimiter_conv" block="%del"
+//% blockId="delimiter_conv" block="$del"
 export function delimiters(del : Delimiters) : string {
     switch(del) {
         case Delimiters.NewLine: return "\n";
@@ -415,9 +414,10 @@ export function delimiters(del : Delimiters) : string {
     }
 }
 ```
-* use the enum conversion function block id (``delimiter_conv``) as the value in the ``block`` parameter of your function
+* use the enum conversion function block id (``delimiter_conv``) as the value for the shadow block of this parameter
 ```typescript-ignore
-//% blockId="read_until" block="read until %del=delimiter_conv"
+//% blockId="read_until" block="read until $del"
+//% del.shadow=delimiter_conv
 export function readUntil(del: string) : string {
     ...
 }
@@ -460,7 +460,7 @@ enum Item {
 namespace blocks {
     //% shim=TD_ID
     //% blockId=minecraftItem
-    //% block="item %item"
+    //% block="item $item"
     export function item(item: Item): number;
 }
 
@@ -478,15 +478,12 @@ in the generated TypeScript. To enable that behavior, set `shadowOptions.toStrin
 parameter like so:
 
 ```
-    //% blockId=console_log block="console|log %msg"
+    //% blockId=console_log block="console|log $text"
     //% text.shadowOptions.toString=true
     export function log(text: string): void {
         serial.writeString(text + "\r\n");
     }
 ```
-
-Note that the parameter is referred to using its declared name (`text`) and not the
-name in the block definition string (`msg`).
 
 **Playground examples**: [Enumerations](https://makecode.com/playground#basic-enums)
 
@@ -551,6 +548,7 @@ The JSDoc comment is automatically used as the help for the block.
  * Scroll a number on the screen. If the number fits on the screen (i.e. is a single digit), do not scroll.
  * @param interval speed of scroll; eg: 150, 100, 200, -100
 */
+//% block
 //% help=functions/show-number
 export function showNumber(value: number, interval: number = 150): void
 { }
@@ -558,7 +556,7 @@ export function showNumber(value: number, interval: number = 150): void
 
 * If `@param` annotation is available with an `eg:` section, the first
 value is used as the shadow value.
-* An optional `help` attribute can be used to point to an specific documentation path. To define custom help for extension blocks, see [GitHub Extension Authoring](/extensions/github-authoring).
+* An optional `help` attribute can be used to point to a specific documentation path. To define custom help for extension blocks, see [GitHub Extension Authoring](/extensions/github-authoring).
 * If the parameter has a default value (``interval`` in this case), it is **not** exposed in blocks.
 * If you want to include minimum and maximum value range for a numeric parameter, you can use square brackets with the range [min-max] after the parameter name in the `@param` annotation. It is important to include the shadow value if you are using a range.
      - `@param` power [0-7] a value in the range 0..7, where 0 is the lowest power and 7 is the highest. `eg:` 7
@@ -574,17 +572,17 @@ or with a bit of flattening (which is recommended, as flat, C-style APIs map bes
 //%
 class Message {
     ...
-    //% blockId="message_get_text" block="%this|text"
+    //% blockId="message_get_text" block="$this|text"
     public getText() { ... }
 }
 ```
 
-* when annotating an instance method, you need to specify the ``%this`` parameter in the block syntax definition. It can be called something else, eg ``%msg``.
+* when annotating an instance method, you need to specify the ``$this`` parameter in the block syntax definition.
 
 You will need to expose a factory method to create your objects as needed. For the example above, we add a function that creates the message:
 
 ```typescript-ignore
-//% blockId="create_message" block="create message|with %text"
+//% blockId="create_message" block="create message|with $text"
 export function createMessage(text: string) : Message {
     return new Message(text);
 }
@@ -592,7 +590,7 @@ export function createMessage(text: string) : Message {
 
 ### Auto-create
 
-If object has a reasonable default constructor, and it is harmless to call this
+If the object has a reasonable default constructor, and it is harmless to call this
 constructor even if the variable needs to be overwritten later, then it's useful
 to designate a parameter-less function as auto-create, like this:
 
@@ -624,8 +622,8 @@ It is possible to expose these instances in a manner similar to an enum:
 //% blockNamespace=pins
 class DigitalPin {
     ...
-    //% blockId=device_set_digital_pin block="digital write|pin %name|to %value"
-    digitalWrite(value: number): void { ... }
+    //% blockId=device_set_digital_pin block="digital write|pin $name|to $value"
+    digitalWrite(value: number, name: string): void { ... }
 }
 
 namespace pins {
@@ -649,9 +647,9 @@ declarations.
 //% fixedInstances
 class AnalogPin extends DigitalPin {
     ...
-    //% blockId=device_set_analog_pin block="analog write|pin %name|to %value"
+    //% blockId=device_set_analog_pin block="analog write|pin $name|to $value"
     //% blockNamespace=pins
-    analogWrite(value: number): void { ... }
+    analogWrite(value: number, name: string): void { ... }
 }
 
 namespace pins {
@@ -944,4 +942,4 @@ A few tips gathered while designing various APIs for the Block Editor.
 * **Anything that snaps together will be tried by the user**: your runtime should deal with invalid input with graceful degradation rather than abrupt crashes.
 Some users will try to snap anything together - get ready for it.
 * **OO is cumbersome** in blocks: we recommend using a C-like APIs -- just function -- rather than OO classes. It maps better to blocks.
-* **Keep the number of blocks small**: there's only so much space in the toolbox. Be specific about each API you want to see in Blocks.
+* **Keep the number of blocks small**: there's only so much space in the toolbox. Be specific about each API you want to see in blocks.
