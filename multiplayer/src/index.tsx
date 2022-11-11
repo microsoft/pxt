@@ -13,8 +13,8 @@ import { AppStateProvider } from "./state/AppStateContext";
 
 function enableAnalytics() {
     pxt.analytics.enable();
- 
-    const stats: pxt.Map<string | number> = {}
+
+    const stats: pxt.Map<string | number> = {};
     if (typeof window !== "undefined") {
         const screen = window.screen;
         stats["screen.width"] = screen.width;
@@ -32,6 +32,7 @@ function enableAnalytics() {
     }
     pxt.tickEvent("mp.loaded", stats);
 }
+
 window.addEventListener("DOMContentLoaded", () => {
     const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 
