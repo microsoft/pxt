@@ -19,7 +19,7 @@ Choose **Host a multiplayer game** instead of creating a share link to your proj
 Once you choose to host your game, a new window opens with your game's join code. You share this code with the other players so that they can join your game. You invite other players to join your game in one of three ways:
 
 * Give them the six-digit game code and when they navigate to the [MakeCode Game Lobby](https://aka.ms/a9b), or https://aka.ms/a9b, they can enter the code to join.
-* Scan the QR code with your mobile phone and send them a message with the join link.
+* Have your friend scan the QR code with their mobile phone to join the game.
 * Copy the full join URL with the copy button next to the game join code and send that to them. In the case of the "BurgerVSPizza" game example, the join URL is: https://aka.ms/a9b?join=F98987.
 
 Your game session begins when you press the **Start Game** button.
