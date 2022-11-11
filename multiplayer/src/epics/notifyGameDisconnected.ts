@@ -41,7 +41,7 @@ export function notifyGameDisconnected(reason: GameOverReason | undefined) {
                         type: "warning",
                         text: lf("Game is full"),
                         timeoutMs: 5000,
-                        icon: "😤"
+                        icon: "😤",
                     })
                 );
             case "rejected":
@@ -59,6 +59,16 @@ export function notifyGameDisconnected(reason: GameOverReason | undefined) {
                     showToast({
                         type: "warning",
                         text: lf("Game not found"),
+                        timeoutMs: 5000,
+                        icon: "😟",
+                    })
+                );
+            case "compile-failed":
+                pxt.tickEvent("mp.compilefailed");
+                return dispatch(
+                    showToast({
+                        type: "error",
+                        text: lf("There was a problem loading this game"),
                         timeoutMs: 5000,
                         icon: "😟",
                     })
