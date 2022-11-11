@@ -78,7 +78,7 @@ export default function Render() {
                     onClick={onStartGameClick}
                 />
                 <Link
-                    href="/docs/multiplayer#safety"
+                    href="/multiplayer#safety"
                     target="_blank"
                     className="tw-text-sm tw-mt-1 tw-mb-7"
                 >
