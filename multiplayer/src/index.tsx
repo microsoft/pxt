@@ -11,6 +11,27 @@ import "./index.css";
 import App from "./App";
 import { AppStateProvider } from "./state/AppStateContext";
 
+function enableAnalytics() {
+    pxt.analytics.enable();
+ 
+    const stats: pxt.Map<string | number> = {}
+    if (typeof window !== "undefined") {
+        const screen = window.screen;
+        stats["screen.width"] = screen.width;
+        stats["screen.height"] = screen.height;
+        stats["screen.availwidth"] = screen.availWidth;
+        stats["screen.availheight"] = screen.availHeight;
+        stats["screen.innerWidth"] = window.innerWidth;
+        stats["screen.innerHeight"] = window.innerHeight;
+        stats["screen.devicepixelratio"] = pxt.BrowserUtils.devicePixelRatio();
+        const body = document.firstElementChild; // body
+        if (body) {
+            stats["screen.clientWidth"] = body.clientWidth;
+            stats["screen.clientHeight"] = body.clientHeight;
+        }
+    }
+    pxt.tickEvent("mp.loaded", stats);
+}
 window.addEventListener("DOMContentLoaded", () => {
     const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 
@@ -29,6 +50,8 @@ window.addEventListener("DOMContentLoaded", () => {
         pxt.webConfig.workerjs = `/blb${pxt.webConfig.workerjs}`;
     }
     pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
+
+    enableAnalytics();
 
     // prefetch worker on load
     pxt.worker.getWorker(pxt.webConfig.workerjs);
