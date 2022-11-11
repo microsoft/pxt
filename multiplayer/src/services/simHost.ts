@@ -1,3 +1,7 @@
+import { gameOver } from "./gameClient";
+import { dispatch } from "../state";
+import { setNetMode } from "../state/actions";
+
 let _mainPkg: pxt.MainPackage;
 let mainPkg = (reset?: boolean) => {
     if (!_mainPkg || reset) {
@@ -31,7 +35,7 @@ async function loadPackageAsync(runOpts: RunOptions) {
         // as the file can be requested multiple times while loading.
         mp.host().cacheStoreAsync(verspec, undefined!);
         mp._verspec = verspec;
-        await mp.host().downloadPackageAsync(mainPkg());
+        await mp.host().downloadPackageAsync(mainPkg(), []);
         await mainPkg().installAllAsync();
     }
 
@@ -445,6 +449,9 @@ export async function buildSimJsInfo(
 
     if (compileResult.diagnostics?.length > 0) {
         console.error("Diagnostics", compileResult.diagnostics);
+
+        dispatch(setNetMode("init"));
+        gameOver("compile-failed");
     }
 
     const res = pxtc.buildSimJsInfo(compileResult);

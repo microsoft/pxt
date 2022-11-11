@@ -1,3 +1,9 @@
+export const HTTP_OK = 200;
+export const HTTP_GAME_FULL = 507; // Insuffient storage. Using this HTTP status code to indicate the game is full.
+export const HTTP_GAME_NOT_FOUND = 404; // Not found. Using this HTTP status code to indicate the game was not found.
+export const HTTP_IM_A_TEAPOT = 418; // I'm a teapot. Using this HTTP status code to indicate look elsewhere for the reason.
+export const HTTP_INTERNAL_SERVER_ERROR = 500;
+
 export type NetMode = "init" | "connecting" | "connected";
 export type ModalType =
     | "sign-in"
@@ -7,7 +13,14 @@ export type ModalType =
 
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
-export type GameOverReason = "kicked" | "ended" | "left" | "full" | "rejected";
+export type GameOverReason =
+    | "kicked"
+    | "ended"
+    | "left"
+    | "full"
+    | "rejected"
+    | "not-found"
+    | "compile-failed";
 
 export type GameInfo = {
     joinCode?: string;

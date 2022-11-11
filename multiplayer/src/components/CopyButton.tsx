@@ -26,6 +26,7 @@ export default function Render(props: {
                     showToast({
                         type: "success",
                         text: props.toastMessage,
+                        icon: "✅",
                         timeoutMs: 5000,
                     })
                 );
