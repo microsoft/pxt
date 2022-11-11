@@ -36,7 +36,7 @@ After you press the **Enter** button, your game view will display and you can be
 
 The "online multiplayer" mode is a user-controlled, self-contained sharing system that allows creators to play their games with friends in a safe environment that does not allow exchange of personal information.
 
-Users are expected to must share their game join code with classmates directly, as it is neither stored nor discoverable through the game galleries.
+Users are expected to share their game join code with classmates directly, as it is neither stored nor discoverable through the game galleries.
 
 Once inside an online multiplayer session, MakeCode does not provide tools for messaging any players whether joined to a host's game or not. Also, we do not provide any way to share personal contact information that might lead to opening chat session communication outside of the tool, including names, usernames, and/or profile images.
 
