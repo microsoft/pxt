@@ -24,7 +24,7 @@ export default function Render() {
 
     const privacyUrl = pxt?.appTarget?.appTheme?.privacyUrl;
     const termsOfUseUrl = pxt?.appTarget?.appTheme?.termsOfUseUrl;
-    const safetyUrl = "/docs/multiplayer#safety";
+    const safetyUrl = "/multiplayer#safety";
 
     const dialogMessages = useAuthDialogMessages();
 
