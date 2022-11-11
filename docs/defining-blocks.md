@@ -303,74 +303,20 @@ These are the settings for `expandableArgumentMode`:
 
 ## Callbacks with Parameters
 
-APIs that take in a callback function will have that callback converted into a statement input.
-If the callback in the API is designed to take in parameters, the best way to map that pattern
-to the blocks is by passing the callback a single parameter with a class type that contains
-all the other values. For example:
+APIs that take in a callback function will have that callback converted into a statement input. If the callback in the API is designed to take in parameters, those parameters can be specified on the block using the $NAME annotation (the same way function arguments are specified). For example:
 
 ```typescript-ignore
-export class ArgumentClass {
-    argumentA: number;
-    argumentB: string;
-}
-
-//% mutate=objectdestructuring
-//% mutateText="My Arguments"
-//% mutateDefaults="argumentA;argumentA,argumentB"
-// ...
-export function addSomeEventHandler((a: ArgumentClass) => void) { };
+    /**
+     * Run code when a certain kind of sprite is created
+     * @param kind
+     * @param sprite
+     */
+    //% draggableParameters="reporter"
+    //% blockId=spritesoncreated block="on created $sprite of kind $kind=spritekind"
+    export function onCreated(kind: number, handler: (sprite: Sprite) => void): void {
+    }
 ```
-
-In the above example, setting `mutate=objectdestructuring` will cause this API to use Blockly "mutators"
-to let users change what parameters appear in the blocks. Each parameter will be given an
-optional variable field in the block that defines a variable that can be used within the callback.
-The variable fields compile to object destructuring in the TypeScript code. For example:
-
-```typescript-ignore
-addSomeEventHandler(({argumentA, argumentB}) => {
-
-})
-```
-
-For an example of this pattern in action, see the `radio.onDataPacketReceived` block in
-the microbit target.
-
-In some cases it can be useful to change the runtime behavior of the API based on the properties selected by the
-user. To enable that behavior, create an enum with entries that have the same names as the argument object's
-properties and add an extra parameter taking in an enum array to the API. For example:
-
-```typescript-ignore
-export class ArgumentClass {
-    argumentA: number;
-    argumentB: string;
-}
-
-enum ArgNames {
-    argumentA,
-    argumentB
-}
-
-//% mutate=objectdestructuring
-//% mutateText="My Arguments"
-//% mutateDefaults="argumentA;argumentA,argumentB"
-//% mutatePropertyEnum="ArgNames"
-// ...
-export function addSomeEventHandler(args: ArgNames[], (a: ArgumentClass) => void) { };
-```
-
-Note the `mutatePropertyEnum` attribute added to the comment annotations. The block for this API will
-look the same as the previous example but the compiled code will also include the arguments passed:
-
-```typescript-ignore
-addSomeEventHandler([ArgNames.argumentA, ArgNames.argumentB], ({argumentA, argumentB}) => {
-
-})
-```
-
-The other attributes related to object destructuring mutators include:
-
-* `mutateText` - defines the text that appears in the top block of the Blockly mutator dialog (the dialog that appears when you click the blue gear)
-* `mutateDefaults` - defines the versions of this block that should appear in the toolbox. Block definitions are separated by semicolons and property names should be separated by commas
+In the above example, setting `draggableParameters="reporter"` makes the parameters into reporter blocks that can be dragged (and copied) from the block and used inside the event handler, like locally-scoped variables.
 
 **Playground examples**: [Functions](https://makecode.com/playground#functions), [Types of blocks](https://makecode.com/playground#basic-types), [Events](https://makecode.com/playground#events)
 
