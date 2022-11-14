@@ -296,7 +296,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         return {
             name: s.name,
             type: ExtensionType.ShareScript,
-            imageUrl: s.thumb && `${pxt.Cloud.apiRoot}/${s.id}/thumb`,
+            imageUrl: s.thumb ? `${pxt.Cloud.apiRoot}/${s.id}/thumb` : undefined,
             description: s.description,
             scriptInfo: s,
         }
