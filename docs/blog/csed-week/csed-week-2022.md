@@ -26,7 +26,7 @@ Along with the guided tutorials, Code a Carnival provides a free easy-to-use [te
 
 Minecraft: Education Edition invites students to try to escape from Dr. Breakowski's mysterious mansion by solving coding challenges and computational thinking puzzles. In this free Hour of Code world, students will unlock secrets, open trap doors and reveal hidden clues, all while learning basic coding concepts.
  
-![Minecraft Escape Estate](/static/blog/csed-week/csed-week-2022/minecraft-escape-estate.png)
+![Minecraft Escape Estate](/static/blog/csed-week/csed-week-2022/minecraft-escape-estate.jpg)
 
 **Head over to https://aka.ms/HourofCode2022 to get started.**
 
