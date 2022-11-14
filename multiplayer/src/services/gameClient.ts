@@ -19,6 +19,7 @@ import {
     HTTP_GAME_FULL,
     HTTP_INTERNAL_SERVER_ERROR,
     HTTP_IM_A_TEAPOT,
+    SimKey,
 } from "../types";
 import {
     notifyGameDisconnected,
@@ -398,12 +399,21 @@ class GameClient {
         const { button, state, slot } =
             Protocol.Binary.unpackInputMessage(reader);
 
+        const stringifiedState = buttonStateToString(state);
+        if (
+            button <= SimKey.None ||
+            button >= SimKey.Menu ||
+            slot < 2 ||
+            !stringifiedState
+        )
+            return;
+
         this.postToSimFrame(<SimMultiplayer.InputMessage>{
             type: "multiplayer",
             content: "Button",
             clientNumber: slot - 1,
             button: button,
-            state: buttonStateToString(state),
+            state: stringifiedState,
         });
     }
 
@@ -566,6 +576,19 @@ let gameClient: GameClient | undefined;
 function destroyGameClient() {
     gameClient?.destroy();
     gameClient = undefined;
+}
+
+/** Test code for emulating fake users in a multiplayer session **/
+export async function startPostingRandomKeys() {
+    const states = ["Pressed", "Released"];
+    const currentState = new Array(SimKey.B).fill(0);
+    return setInterval(() => {
+        const key = Math.floor(Math.random() * SimKey.B);
+        gameClient?.sendInputAsync(
+            key + 1,
+            states[currentState[key]++ % 2] as any
+        );
+    }, 300);
 }
 
 export async function hostGameAsync(

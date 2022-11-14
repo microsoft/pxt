@@ -50,6 +50,30 @@ export enum ButtonState {
     Held = 3,
 }
 
+export enum SimKey {
+    None = 0,
+
+    // Player 1
+    Left = 1,
+    Up = 2,
+    Right = 3,
+    Down = 4,
+    A = 5,
+    B = 6,
+
+    Menu = 7,
+
+    // Player 2 = Player 1 + 7
+    // Player 3 = Player 2 + 7
+    // Player 4 = Player 3 + 7
+
+    // system keys
+    Screenshot = -1,
+    Gif = -2,
+    Reset = -3,
+    TogglePause = -4
+}
+
 export function buttonStateToString(state: ButtonState): string | undefined {
     switch (state) {
         case ButtonState.Pressed:
