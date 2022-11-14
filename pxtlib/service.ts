@@ -1692,27 +1692,7 @@ namespace ts.pxtc.service {
         scriptInfo?: pxt.Cloud.JsonScript
     }
 
-    // TODO: this handles todo from above but extensionsBrowser.tsx would need a pass to clean up type handling
-    // export type GithubExtensionMeta = ExtensionMetaBase & {
-    //     type: ExtensionType.Github;
-    //     repo: pxt.github.GitRepo;
-    // }
-
-    // export type BundledExtensionMeta = ExtensionMetaBase & {
-    //     type: ExtensionType.Bundled;
-    //     pkgConfig: pxt.PackageConfig;
-    // }
-
-    // export type ShareScriptExtensionMeta = ExtensionMetaBase & {
-    //     type: ExtensionType.ShareScript;
-    //     scriptInfo: pxt.Cloud.JsonScript;
-    // }
-
-    // export type ExtensionMeta = GithubExtensionMeta
-    //     | BundledExtensionMeta
-    //     | ShareScriptExtensionMeta;
-
-        export interface SearchInfo {
+    export interface SearchInfo {
         id: string;
         name: string;
         qName?: string;
