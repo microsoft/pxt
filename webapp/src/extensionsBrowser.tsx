@@ -125,7 +125,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             const added = await pkg.mainEditorPkg()
                 .addDependencyAsync({ ...config, isExtension: true }, version, false)
             if (added) {
-                // TODO lower this?
                 await pxt.Util.delay(200);
                 await props.reloadHeaderAsync();
             }
