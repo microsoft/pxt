@@ -20,7 +20,7 @@ Once you choose to host your game, a new window opens with your game's join code
 
 * Give them the six-digit game code and when they navigate to the [MakeCode Game Lobby](https://aka.ms/a9), or https://aka.ms/a9, they can enter the code to join.
 * Have your friend scan the QR code with their mobile phone to join the game.
-* Copy the full join URL with the copy button next to the game join code and send that to them. In the case of the "BurgerVSPizza" game example, the join URL is: https://aka.ms/a9b?join=F98987.
+* Copy the full join URL with the copy button next to the game join code and send that to them. In the case of the "BurgerVSPizza" game example, the join URL is: https://aka.ms/a9?join=F98987.
 
 Your game session begins when you press the **Start Game** button.
 
@@ -28,20 +28,23 @@ Once your game starts, the host's view of the game displays and you can begin ga
 
 ## Join a game #join-game
 
-To join a multiplayer game hosted by another player, you can go to the [MakeCode Game Lobby](https://aka.ms/a9b), or https://aka.ms/a9b, and enter the game's join code that you received from the game host.
+To join a multiplayer game hosted by another player, you can go to the [MakeCode Game Lobby](https://aka.ms/a9), or https://aka.ms/a9, and enter the game's join code that you received from the game host.
 
-After you press the **Enter** button, your game view will display and you can begin playing. If you received a full join URL instead, such as https://aka.ms/a9b?join=F98987, this will take you directly to your player's game window.
+After you press the **Enter** button, your game view will display and you can begin playing. If you received a full join URL instead, such as https://aka.ms/a9?join=F98987, this will take you directly to your player's game window.
 
 ## Multiplayer game safety #safety
 
-The "online multiplayer" mode is a user-controlled, self-contained sharing system that allows creators to play their games with friends in a safe environment that does not allow exchange of personal information.
+For safe usage and interaction in the MakeCode online multiplayer environment, here are some important points to consider:
 
-Users are expected to share their game join code with classmates directly, as it is neither stored nor discoverable through the game galleries.
+* The "online multiplayer" mode is a user-controlled, self-contained sharing system that allows game creators to play their games with friends in a safe environment which does NOT include the exchange of any personal information.
 
-Once inside an online multiplayer session, MakeCode does not provide tools for messaging any players whether joined to a host's game or not. Also, we do not provide any way to share personal contact information that might lead to opening chat session communication outside of the tool, including names, usernames, and/or profile images.
+* Within a classroom setting, it is intended that students share their game join code with classmates directly, as this code isn't stored or available in the game galleries.
 
-Communication inside of our online multiplayer tool is limited to an allowed set of emojis.
+* Once inside an online multiplayer session, MakeCode does not provide tools for messaging any players whether joined to a host's game or not. Also, we do not provide any way to share personal contact information that might lead to opening chat session communication outside of the tool, including names, usernames, and/or profile images.
 
-User privacy and safety is of the utmost importance. As such, we empower all users to flag inappropriate games and/or teammates for immediate removal    at any time during game play. 
+* The only form of communication inside of our online multiplayer tool is limited to sending just an allowed set of emojis.
+
+User privacy and safety is of the utmost importance. To provide awareness of inappropriate content or actions, all users are able to flag inappropriate games and/or teammates for immediate removal at any time during game play.
+
 For further information regarding the security and privacy of MakeCode Arcade, please see our [Privacy Policy](https://privacy.microsoft.com/en-us/privacystatement).
 
