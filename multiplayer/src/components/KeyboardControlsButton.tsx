@@ -1,7 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import KeyboardControlsInfo from "./KeyboardControlsInfo";
-import Popup from "./Popup";
 import ToggleButtonPopup from "./ToggleButtonPopup";
 
 export default function Render() {
