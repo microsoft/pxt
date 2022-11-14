@@ -13,6 +13,7 @@ import { Modal } from "../../react-common/components/controls/Modal";
 import { classList } from "../../react-common/components/util";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta;
+const ExtensionType = pxtc.service.ExtensionType;
 type EmptyCard = { name: string, loading?: boolean }
 const emptyCard: EmptyCard = { name: "", loading: true }
 
@@ -81,6 +82,12 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 parsedExt.unshift(e)
             }
         })
+
+        const shareUrlData = await fetchShareUrlDataAsync(searchFor);
+        if (shareUrlData) {
+            parsedExt.unshift(parseShareScript(shareUrlData));
+        }
+
         addExtensionsToPool(parsedExt)
         setExtensionsToShow(parsedExt)
         setSearchComplete(true)
@@ -100,13 +107,15 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     function getExtensionFromFetched(extensionUrl: string) {
+        const parsedGithubRepo = pxt.github.parseRepoId(extensionUrl);
+        if (parsedGithubRepo)
+            return allExtensions.get(parsedGithubRepo.slug.toLowerCase());
+
         const fullName = allExtensions.get(extensionUrl.toLowerCase())
-        if (fullName) {
+        if (fullName)
             return fullName
-        }
-        const parsedGithubRepo = pxt.github.parseRepoId(extensionUrl)
-        if (!parsedGithubRepo) return undefined;
-        return allExtensions.get(parsedGithubRepo.slug.toLowerCase())
+
+        return undefined;
     }
 
     async function addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
@@ -116,7 +125,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             const added = await pkg.mainEditorPkg()
                 .addDependencyAsync({ ...config, isExtension: true }, version, false)
             if (added) {
-                await pxt.Util.delay(1000)
+                // TODO lower this?
+                await pxt.Util.delay(200);
                 await props.reloadHeaderAsync();
             }
         }
@@ -172,6 +182,42 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         return await addDepIfNoConflict(r.config, r.version)
     }
 
+    async function fetchShareUrlDataAsync(potentialShareUrl: string): Promise<pxt.Cloud.JsonScript> {
+        const scriptId = pxt.Cloud.parseScriptId(potentialShareUrl);
+        if (!scriptId)
+            return undefined;
+
+        const scriptData = await data.getAsync<pxt.Cloud.JsonScript>(`cloud-search:${scriptId}`);
+
+        // TODO: fix typing on getAsync? it looks like it returns T or the failed network request
+        if ((scriptData as any).statusCode == 404) {
+            return undefined;
+        }
+        // unwrap array if returned as array
+        if (Array.isArray(scriptData)) {
+            return scriptData[0];
+        }
+
+        return scriptData;
+    }
+    async function addShareUrlExtension(scr: pxt.Cloud.JsonScript): Promise<void> {
+        const mp = pkg.mainEditorPkg();
+        // should we use addDepIfNoConflict?
+        try {
+            core.showLoading("installingextension", lf("Adding extension..."));
+            // todo: we justed used name before but that's easy to lead to conflicts?
+            // should this be scr.id or something as pkgid?
+            // todo: how to handle persistent links? right now scr.id is the current version,
+            // we should probably persist the s id and make it updatable with a refresh.
+            await mp.setDependencyAsync(scr.name, `pub:${scr.id}`);
+            await pxt.Util.delay(200);
+            await props.reloadHeaderAsync();
+        }
+        finally {
+            core.hideLoading("installingextension");
+        }
+    }
+
     async function fetchGithubDataAsync(preferredRepos: string[]): Promise<pxt.github.GitRepo[]> {
         // When searching multiple repos at the same time, use 'extension-search' which caches results
         // for much longer than 'gh-search'
@@ -208,14 +254,18 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     function installExtension(scr: ExtensionMeta) {
         switch (scr.type) {
-            case pxtc.service.ExtensionType.Bundled:
+            case ExtensionType.Bundled:
                 pxt.tickEvent("packages.bundled", { name: scr.name });
                 props.hideExtensions();
-                addDepIfNoConflict(scr.pkgConfig, "*")
+                addDepIfNoConflict(scr.pkgConfig, "*");
                 break;
-            case pxtc.service.ExtensionType.Github:
+            case ExtensionType.Github:
                 props.hideExtensions();
                 addGithubPackage(scr);
+                break;
+            case ExtensionType.ShareScript:
+                props.hideExtensions();
+                addShareUrlExtension(scr.scriptInfo);
                 break;
         }
     }
@@ -234,11 +284,21 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     function parseGithubRepo(r: pxt.github.GitRepo): ExtensionMeta {
         return {
             name: ghName(r),
-            type: pxtc.service.ExtensionType.Github,
+            type: ExtensionType.Github,
             imageUrl: pxt.github.repoIconUrl(r),
             repo: r,
             description: r.description,
             fullName: r.fullName
+        }
+    }
+
+    function parseShareScript(s: pxt.Cloud.JsonScript): ExtensionMeta {
+        return {
+            name: s.name,
+            type: ExtensionType.ShareScript,
+            imageUrl: s.thumb && `${pxt.Cloud.apiRoot}/${s.id}/thumb`,
+            description: s.description,
+            scriptInfo: s,
         }
     }
 
@@ -286,7 +346,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         return {
             name: p.name,
             imageUrl: p.icon,
-            type: pxtc.service.ExtensionType.Bundled,
+            type: ExtensionType.Bundled,
             learnMoreUrl: `/reference/${p.name}`,
             pkgConfig: p,
             description: p.description
@@ -375,6 +435,21 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         } else {
             addGithubPackage(ext)
         }
+    }
+
+    function extensionMetaCard(scr: ExtensionMeta & EmptyCard, baseClass: string, ind: number) {
+        return <ExtensionCard
+            key={classList(baseClass, ind + "", scr.loading && "loading")}
+            title={scr.name ?? `${ind}`}
+            description={scr.description}
+            imageUrl={scr.imageUrl}
+            extension={scr}
+            onClick={installExtension}
+            learnMoreUrl={scr.learnMoreUrl || (scr.fullName ? `/pkg/${scr.fullName}` : undefined)}
+            loading={scr.loading}
+            label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
+            showDisclaimer={scr.type != ExtensionType.Bundled && scr.repo?.status != pxt.github.GitRepoStatus.Approved}
+        />
     }
 
     enum ExtensionView {
@@ -492,19 +567,9 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     {displayMode == ExtensionView.Search &&
                         <>
                             <div className="extension-cards">
-                                {extensionsToShow?.map((scr, index) =>
-                                    <ExtensionCard
-                                        key={classList("searched", index + "", scr.loading && "loading")}
-                                        title={scr.name ?? `${index}`}
-                                        description={scr.description}
-                                        imageUrl={scr.imageUrl}
-                                        extension={scr}
-                                        onClick={installExtension}
-                                        learnMoreUrl={scr.learnMoreUrl || (scr.fullName ? `/pkg/${scr.fullName}` : undefined)}
-                                        loading={scr.loading}
-                                        label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                        showDisclaimer={scr.type != pxtc.service.ExtensionType.Bundled && scr.repo?.status != pxt.github.GitRepoStatus.Approved}
-                                    />)}
+                                {extensionsToShow?.map(
+                                    (scr, index) => extensionMetaCard(scr, "searched", index)
+                                )}
                             </div>
                             {searchComplete && extensionsToShow.length == 0 &&
                                 <div aria-label="Extension search results">
@@ -514,33 +579,14 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         </>}
                     {displayMode == ExtensionView.Tags &&
                         <div className="extension-cards">
-                            {extensionsToShow?.map((scr, index) =>
-                                <ExtensionCard
-                                    key={classList("tagged", index + "", scr.loading && "loading")}
-                                    title={scr.name ?? `${index}`}
-                                    description={scr.description}
-                                    imageUrl={scr.imageUrl}
-                                    extension={scr}
-                                    onClick={installExtension}
-                                    learnMoreUrl={scr.learnMoreUrl || (scr.fullName ? `/pkg/${scr.fullName}` : undefined)}
-                                    loading={scr.loading}
-                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                />)}
+                            {extensionsToShow?.map(
+                                (scr, index) => extensionMetaCard(scr, "tagged", index)
+                            )}
                         </div>}
                     {displayMode == ExtensionView.Tabbed &&
                         <div className="extension-cards">
-                            {currentTab == TabState.Recommended && preferredExts.map((scr, index) =>
-                                <ExtensionCard
-                                    key={classList("preferred", index + "", scr.loading && "loading")}
-                                    extension={scr}
-                                    title={scr.name ?? `${index}`}
-                                    onClick={installExtension}
-                                    imageUrl={scr.imageUrl}
-                                    description={scr.description}
-                                    learnMoreUrl={scr.learnMoreUrl || (scr.fullName ? `/pkg/${scr.fullName}` : undefined)}
-                                    loading={scr.loading}
-                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                />
+                            {currentTab == TabState.Recommended && preferredExts.map(
+                                (scr, index) => extensionMetaCard(scr, "preferred", index)
                             )}
                             {currentTab == TabState.InDevelopment && extensionsInDevelopment.map((p, index) =>
                                 <ExtensionCard

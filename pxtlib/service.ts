@@ -1674,8 +1674,9 @@ namespace ts.pxtc.service {
 
 
     export enum ExtensionType {
-        Bundled,
-        Github
+        Bundled = 1,
+        Github = 2,
+        ShareScript = 3,
     }
 
     export interface ExtensionMeta {
@@ -1684,14 +1685,34 @@ namespace ts.pxtc.service {
         description?: string,
         imageUrl?: string,
         type?: ExtensionType
+        learnMoreUrl?: string;
 
         pkgConfig?: pxt.PackageConfig; // Added if the type is Bundled
         repo?: pxt.github.GitRepo; //Added if the type is Github VVN TODO ADD THIS
-        learnMoreUrl?: string;
+        scriptInfo?: pxt.Cloud.JsonScript
     }
 
+    // TODO: this handles todo from above but extensionsBrowser.tsx would need a pass to clean up type handling
+    // export type GithubExtensionMeta = ExtensionMetaBase & {
+    //     type: ExtensionType.Github;
+    //     repo: pxt.github.GitRepo;
+    // }
 
-    export interface SearchInfo {
+    // export type BundledExtensionMeta = ExtensionMetaBase & {
+    //     type: ExtensionType.Bundled;
+    //     pkgConfig: pxt.PackageConfig;
+    // }
+
+    // export type ShareScriptExtensionMeta = ExtensionMetaBase & {
+    //     type: ExtensionType.ShareScript;
+    //     scriptInfo: pxt.Cloud.JsonScript;
+    // }
+
+    // export type ExtensionMeta = GithubExtensionMeta
+    //     | BundledExtensionMeta
+    //     | ShareScriptExtensionMeta;
+
+        export interface SearchInfo {
         id: string;
         name: string;
         qName?: string;
