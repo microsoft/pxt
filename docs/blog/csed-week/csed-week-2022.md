@@ -2,7 +2,7 @@
 
 **Posted on November 14th, 2022 by [Jaqster](https://github.com/jaqster)**
 
-Along with the holidays, [Computer Science Education Week](https://www.csedweek.org) is coming up December 5th – 11th. This is an annual event to raise the visibility of computer science in education, and to inspire all teachers and students to do an "Hour of Code" during this week.
+Along with the holidays, [Computer Science Education Week](https://www.csedweek.org) is coming up December 5th - 11th. This is an annual event to raise the visibility of computer science in education, and to inspire all teachers and students to do an "Hour of Code" during this week.
 
 At Microsoft, our mission is to empower every person on the planet to achieve more. And with technology being pervasive in the modern workplace, this mission extends to empowering every young person with the opportunity to learn computer science and develop career-ready skills. In the US, only 1 in 2 high schools offer a CS class, only 5.6% of high school students are enrolled in a CS class, and only 32% of these enrolled students are female.¹
 
