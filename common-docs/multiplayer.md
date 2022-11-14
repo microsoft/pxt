@@ -20,7 +20,7 @@ Once you choose to host your game, a new window opens with your game's join code
 
 * Give them the six-digit game code and when they navigate to the [MakeCode Game Lobby](https://aka.ms/a9), or https://aka.ms/a9, they can enter the code to join.
 * Have your friend scan the QR code with their mobile phone to join the game.
-* Copy the full join URL with the copy button next to the game join code and send that to them. In the case of the "BurgerVSPizza" game example, the join URL is: https://aka.ms/a9b?join=F98987.
+* Copy the full join URL with the copy button next to the game join code and send that to them. In the case of the "BurgerVSPizza" game example, the join URL is: https://aka.ms/a9?join=F98987.
 
 Your game session begins when you press the **Start Game** button.
 
@@ -28,9 +28,9 @@ Once your game starts, the host's view of the game displays and you can begin ga
 
 ## Join a game #join-game
 
-To join a multiplayer game hosted by another player, you can go to the [MakeCode Game Lobby](https://aka.ms/a9b), or https://aka.ms/a9b, and enter the game's join code that you received from the game host.
+To join a multiplayer game hosted by another player, you can go to the [MakeCode Game Lobby](https://aka.ms/a9), or https://aka.ms/a9, and enter the game's join code that you received from the game host.
 
-After you press the **Enter** button, your game view will display and you can begin playing. If you received a full join URL instead, such as https://aka.ms/a9b?join=F98987, this will take you directly to your player's game window.
+After you press the **Enter** button, your game view will display and you can begin playing. If you received a full join URL instead, such as https://aka.ms/a9?join=F98987, this will take you directly to your player's game window.
 
 ## Multiplayer game safety #safety
 
