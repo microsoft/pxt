@@ -874,6 +874,7 @@ General Public License.
 856. seriously.js 513d2b8696b76fe764b3033aa6dc7c99005acccd (https://github.com/brianchirls/Seriously.js)
 857. @zip.js/@zip.js 2.4.20 (https://registry.npmjs.org/@zip.js/zip.js/-/zip.js-2.4.20.tgz)
 858. metronome 28a6e49d9dd75985d67d94fa9f45327d7310d62f (https://github.com/cwilso/metronome)
+859. qrcode.react 3.1.0 (https://github.com/zpao/qrcode.react)
 
 
 
@@ -27894,3 +27895,28 @@ SOFTWARE.
 
 =========================================
 END OF metronome NOTICES AND INFORMATION
+
+%% qrcode.react 3.1.0 NOTICES AND INFORMATION BEGIN HERE (https://github.com/zpao/qrcode.react)
+=========================================
+
+ISC License
+
+Copyright (c) 2015, Paul O’Shannessy
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
+This product bundles QR Code Generator, which is available under a
+"MIT" license. For details, see src/third-party/qrcodegen.
+
+=========================================
+END OF qrcode.react NOTICES AND INFORMATION
