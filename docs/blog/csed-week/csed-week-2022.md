@@ -34,7 +34,7 @@ Minecraft: Education Edition invites students to try to escape from Dr. Breakows
 
 Create your own Wakanda Forever inspired adventure - Shuri, Okoye, and Riri are on a mission to protect Wakanda. Code your own Wakanda themed game using MakeCode Arcade.
  
-![Wakanda coding banner](/static/blog/csed-week/csed-week-2022/wakanda.png)
+![Wakanda coding banner](/static/blog/csed-week/csed-week-2022/wakanda.jpg)
 
 **Stand with Wakanda and level-up your coding skills!** - https://aka.ms/wakanda 
 
