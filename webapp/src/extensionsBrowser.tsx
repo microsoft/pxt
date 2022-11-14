@@ -152,11 +152,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         let r: { version: string, config: pxt.PackageConfig };
         try {
             core.showLoading("downloadingpackage", lf("downloading extension..."));
-            const pkg = getExtensionFromFetched(scr.name);
+            const pkg = getExtensionFromFetched(scr.repo.slug);
             if (pkg) {
                 r = await pxt.github.downloadLatestPackageAsync(pkg.repo);
             } else {
-                const res = await fetchGithubDataAsync([scr.name]);
+                const res = await fetchGithubDataAsync([scr.repo.slug]);
                 if (res && res.length > 0) {
                     const parsed = parseGithubRepo(res[0])
                     addExtensionsToPool([parsed])
