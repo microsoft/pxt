@@ -430,9 +430,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     function ExtensionMetaCard(props: {
         extensionInfo: ExtensionMeta & EmptyCard,
-        className: string
     }) {
-        const { className, extensionInfo } = props;
+        const { extensionInfo } = props;
         const {
             description,
             fullName,
@@ -445,7 +444,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         } = extensionInfo;
 
         return <ExtensionCard
-            key={classList(className, loading && "loading")}
             title={name || fullName}
             description={description}
             imageUrl={imageUrl}
@@ -574,7 +572,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <>
                             <div className="extension-cards">
                                 {extensionsToShow?.map(
-                                    (scr, index) => <ExtensionMetaCard className="searched" extensionInfo={scr} key={index} />
+                                    (scr, index) => <ExtensionMetaCard extensionInfo={scr} key={index} />
                                 )}
                             </div>
                             {searchComplete && extensionsToShow.length == 0 &&
@@ -586,13 +584,13 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     {displayMode == ExtensionView.Tags &&
                         <div className="extension-cards">
                             {extensionsToShow?.map(
-                                (scr, index) => <ExtensionMetaCard className="tagged" extensionInfo={scr} key={index} />
+                                (scr, index) => <ExtensionMetaCard extensionInfo={scr} key={index} />
                             )}
                         </div>}
                     {displayMode == ExtensionView.Tabbed &&
                         <div className="extension-cards">
                             {currentTab == TabState.Recommended && preferredExts.map(
-                                (scr, index) => <ExtensionMetaCard className="preferred" extensionInfo={scr} key={index} />
+                                (scr, index) => <ExtensionMetaCard extensionInfo={scr} key={index} />
                             )}
                             {currentTab == TabState.InDevelopment && extensionsInDevelopment.map((p, index) =>
                                 <ExtensionCard
