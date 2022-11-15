@@ -428,19 +428,34 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         }
     }
 
-    function extensionMetaCard(scr: ExtensionMeta & EmptyCard, baseClass: string, ind: number) {
+    function ExtensionMetaCard(props: {
+        extensionInfo: ExtensionMeta & EmptyCard,
+        className: string
+    }) {
+        const { className, extensionInfo } = props;
+        const {
+            description,
+            fullName,
+            imageUrl,
+            learnMoreUrl,
+            loading,
+            name,
+            repo,
+            type,
+        } = extensionInfo;
+
         return <ExtensionCard
-            key={classList(baseClass, ind + "", scr.loading && "loading")}
-            title={scr.name ?? `${ind}`}
-            description={scr.description}
-            imageUrl={scr.imageUrl}
-            extension={scr}
+            key={classList(className, loading && "loading")}
+            title={name || fullName}
+            description={description}
+            imageUrl={imageUrl}
+            extension={extensionInfo}
             onClick={installExtension}
-            learnMoreUrl={scr.learnMoreUrl || (scr.fullName ? `/pkg/${scr.fullName}` : undefined)}
-            loading={scr.loading}
-            label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-            showDisclaimer={scr.type != ExtensionType.Bundled && scr.repo?.status != pxt.github.GitRepoStatus.Approved}
-        />
+            learnMoreUrl={learnMoreUrl || (fullName ? `/pkg/${fullName}` : undefined)}
+            loading={loading}
+            label={pxt.isPkgBeta(extensionInfo) ? lf("Beta") : undefined}
+            showDisclaimer={type != ExtensionType.Bundled && repo?.status != pxt.github.GitRepoStatus.Approved}
+        />;
     }
 
     enum ExtensionView {
@@ -559,7 +574,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <>
                             <div className="extension-cards">
                                 {extensionsToShow?.map(
-                                    (scr, index) => extensionMetaCard(scr, "searched", index)
+                                    (scr, index) => <ExtensionMetaCard className="searched" extensionInfo={scr} key={index} />
                                 )}
                             </div>
                             {searchComplete && extensionsToShow.length == 0 &&
@@ -571,13 +586,13 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     {displayMode == ExtensionView.Tags &&
                         <div className="extension-cards">
                             {extensionsToShow?.map(
-                                (scr, index) => extensionMetaCard(scr, "tagged", index)
+                                (scr, index) => <ExtensionMetaCard className="tagged" extensionInfo={scr} key={index} />
                             )}
                         </div>}
                     {displayMode == ExtensionView.Tabbed &&
                         <div className="extension-cards">
                             {currentTab == TabState.Recommended && preferredExts.map(
-                                (scr, index) => extensionMetaCard(scr, "preferred", index)
+                                (scr, index) => <ExtensionMetaCard className="preferred" extensionInfo={scr} key={index} />
                             )}
                             {currentTab == TabState.InDevelopment && extensionsInDevelopment.map((p, index) =>
                                 <ExtensionCard
