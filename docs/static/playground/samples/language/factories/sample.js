@@ -41,7 +41,7 @@ class Gizmo {
 }
 
 /**
- * Widget namespace using en external class
+ * Widget namespace using an external class
  */
 //% color="#FF8000"
 namespace Widgets {

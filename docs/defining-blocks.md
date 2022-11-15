@@ -2,12 +2,6 @@
 
 This section describes how to annotate your MakeCode APIs to expose them in the Block Editor.
 
-```block
-let APIs = false;
-let Annotations = false;
-let Blocks = APIs && Annotations;
-```
-
 ## ~ hint
 
 Try out some blocks live in the **[Playground](https://makecode.com/playground)** to see how they work. Modify them or even create new ones!
@@ -113,7 +107,7 @@ type = string
 * each `field` is mapped to a field name on the block
 * the function parameters are mapped to the `$parameter` argument with an identical name. The loader automatically builds a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs when enough parameters are detected
-* Using `=type` in the block string for shadow blocks is deprecated. See "Specifying shadow blocks" for more details.
+* Using `=type` in the block string for shadow blocks is deprecated. See the [Specifying shadow blocks](#shadow-block) section for more details.
 
 ## Custom block localization
 
@@ -312,7 +306,8 @@ APIs that take in a callback function will have that callback converted into a s
      * @param sprite
      */
     //% draggableParameters="reporter"
-    //% blockId=spritesoncreated block="on created $sprite of kind $kind=spritekind"
+    //% blockId=spritesoncreated block="on created $sprite of kind $kind"
+    //% kind.defl=spritekind
     export function onCreated(kind: number, handler: (sprite: Sprite) => void): void {
     }
 ```
@@ -393,7 +388,7 @@ const IRON = Item.Iron;
 ```
 
 If the enum has a shim function, you can also set `blockIdentity` just like you can for enum members. This
-will make the decompiler will convert any instance of that constant into the block for that enum.
+will make the decompiler convert any instance of that constant into the block for that enum.
 
 ```typescript
 //% emitAsConstant
@@ -550,7 +545,7 @@ class Image {
 }
 ```
 
-Now, when user adds a block referring to a method of `Image`, a global
+Now, when the user adds a block referring to a method of `Image`, a global
 variable will be automatically introduced and initialized with `images.emptyImage()`.
 
 In cases when the default constructor has side effects (eg., configuring a pin),
@@ -560,7 +555,7 @@ the `autoCreate` syntax should not be used.
 ### Fixed Instance Set
 
 It is sometimes the case that there is only a fixed number of instances
-of a given class. One example is object representing pins on an electronic board.
+of a given class. One example is an object representing pins on an electronic board.
 It is possible to expose these instances in a manner similar to an enum:
 
 ```typescript-ignore
@@ -568,8 +563,8 @@ It is possible to expose these instances in a manner similar to an enum:
 //% blockNamespace=pins
 class DigitalPin {
     ...
-    //% blockId=device_set_digital_pin block="digital write|pin $name|to $value"
-    digitalWrite(value: number, name: string): void { ... }
+    //% blockId=device_set_digital_pin block="digital write|pin $this|to $value"
+    digitalWrite(value: number): void { ... }
 }
 
 namespace pins {
@@ -752,7 +747,7 @@ The `block` attribute for `setInactive` includes a reference to the `gizmo` vari
 
 Field editors let you control how a parameter value is entered or selected. A field editor is a [shadow](#shadow-block) block that invokes the render of a selection UI element, dropdown list of items, or some other extended input method.
 
-A field editor is attached to a parameter using the `shadow` attribute with the field editor name. In this example, a function to turn an LED on or off uses the `toggleOnOff` field editor to show a switch element as a block paramter.
+A field editor is attached to a parameter using the `shadow` attribute with the field editor name. In this example, a function to turn an LED on or off uses the `toggleOnOff` field editor to show a switch element as a block parameter.
 
 ```typescript-ignore
 /**
@@ -781,13 +776,13 @@ There are ready made field editors that are built-in and available to use direct
 
 ### Custom field editor
 
-If you want to create a custom field editor for you blocks then you need to define the shadow block for it. The `blockId` is the name that is used as the parameter `shadow` attribute.
+If you want to create a custom field editor for your blocks then you need to define the shadow block for it. The `blockId` is the name that is used as the parameter `shadow` attribute.
 
 Here's an example field editor for setting the score of a tennis game:
 
 ```typescript-ignore
 /**
-  * Get the score for a tennis score
+  * Get the score for a tennis game
   * @param score eg: 1
   */
 //% blockId=tennisScore block="$score"
