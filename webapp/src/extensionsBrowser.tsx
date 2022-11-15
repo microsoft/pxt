@@ -121,7 +121,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     async function addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
         try {
             props.hideExtensions();
-            core.showLoading("installingextension", lf("Adding extension..."))
+            core.showLoading("installingextension", lf("Adding extension..."));
             const added = await pkg.mainEditorPkg()
                 .addDependencyAsync({ ...config, isExtension: true }, version, false)
             if (added) {
@@ -200,21 +200,13 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         return scriptData;
     }
     async function addShareUrlExtension(scr: pxt.Cloud.JsonScript): Promise<void> {
-        const mp = pkg.mainEditorPkg();
-        // should we use addDepIfNoConflict?
-        try {
-            core.showLoading("installingextension", lf("Adding extension..."));
-            // todo: we justed used name before but that's easy to lead to conflicts?
-            // should this be scr.id or something as pkgid?
-            // todo: how to handle persistent links? right now scr.id is the current version,
-            // we should probably persist the s id and make it updatable with a refresh.
-            await mp.setDependencyAsync(scr.name, `pub:${scr.id}`);
-            await pxt.Util.delay(200);
-            await props.reloadHeaderAsync();
-        }
-        finally {
-            core.hideLoading("installingextension");
-        }
+        // todo: we justed used name before but that's easy to lead to conflicts?
+        // should this be scr.id or something as pkgid?
+        // todo: how to handle persistent links? right now scr.id is the current version,
+        // we should probably persist the s id and make it updatable with a refresh.
+        const shareScript = await workspace.getPublishedScriptAsync(scr.id);
+        const config = pxt.Util.jsonTryParse(shareScript[pxt.CONFIG_NAME]);
+        addDepIfNoConflict({...config, version: scr.id }, `pub:${scr.id}`);
     }
 
     async function fetchGithubDataAsync(preferredRepos: string[]): Promise<pxt.github.GitRepo[]> {
