@@ -111,6 +111,11 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         window.open("/windows-app", '_blank')
     }
 
+    getNewAppClick() {
+        pxt.tickEvent("winApp.banner.installNew", undefined);
+        window.open("https://apps.microsoft.com/store/detail/microsoft-makecode-for-microbit/9NMQDQ2XZKWK", '_blank')
+    }
+
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
         const isApp = pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
@@ -121,7 +126,11 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const showExperiments = pxt.editor.experiments.someEnabled() && !/experiments=1/.test(window.location.href);
         const showWinAppBanner = pxt.appTarget.appTheme.showWinAppDeprBanner && pxt.BrowserUtils.isWinRT();
 
-        const errMsg = lf("This app is being deprecated. Please use the website instead.");
+        const errMsg = this.jsxLF(
+            "This app is no longer supported. For the latest updates, {0} to install our new app! {1}",
+            <sui.Link className="link" ariaLabel={lf("click here")} onClick={this.getNewAppClick}>{lf("click here")}</sui.Link>,            
+            <sui.Link className="link" ariaLabel={lf("More info")} onClick={this.handleBannerClick}>{lf("Learn More")}</sui.Link>
+        );
 
         if (showWinAppBanner) {
             return <GenericBanner id="winAppBanner" parent={this.props.parent} bannerType={"negative"}>
@@ -129,8 +138,6 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
                 <div className="header">
                     {errMsg}
                 </div>
-                <sui.Link className="link" ariaLabel={lf("More info")} onClick={this.handleBannerClick}>{lf("More info")}</sui.Link>
-
             </GenericBanner>
         }
 
@@ -155,5 +162,32 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         }
 
         return <div></div>;
+    }
+
+    // Based on https://github.com/microsoft/pxt/blob/master/react-common/components/util.tsx#L15.
+    jsxLF(loc: string, ...rest: JSX.Element[]) {
+        const indices: number[] = [];
+    
+        loc.replace(/\{\d\}/g, match => {
+            indices.push(parseInt(match.substr(1, 1)));
+            return match;
+        });
+    
+        const out: JSX.Element[] = [];
+    
+        let parts: string[];
+    
+        let i = 0;
+    
+        for (const index of indices) {
+            parts = loc.split(`{${index}}`);
+            pxt.U.assert(parts.length === 2);
+            out.push(<span key={i++}>{parts[0]}</span>);
+            out.push(<span key={i++}>{rest[index]}</span>);
+            loc = parts[1];
+        }
+        out.push(<span key={i++}>{loc}</span>);
+    
+        return out;
     }
 }
