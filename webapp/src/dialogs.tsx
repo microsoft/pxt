@@ -9,6 +9,7 @@ import * as cloudsync from "./cloudsync";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { jsxLF } from "./util";
 
 let dontShowDownloadFlag = false;
 
@@ -689,6 +690,11 @@ export function showReportAbuseAsync(pubId?: string) {
     })
 }
 
+function getNewAppClick() {
+    pxt.tickEvent("winApp.deprecateModal.installNew", undefined);
+    window.open("https://apps.microsoft.com/store/detail/microsoft-makecode-for-microbit/9NMQDQ2XZKWK", '_blank')
+}
+
 export function showWinAppDeprecateAsync() {
     pxt.tickEvent("winApp.dialog", undefined)
     return core.confirmAsync({
@@ -699,8 +705,8 @@ export function showWinAppDeprecateAsync() {
         jsx: <div>
             <img className="ui medium centered image" src={pxt.appTarget.appTheme.winAppDeprImage} alt={lf("An image of a shrugging board")}/>
             <div>
-                {lf(`This app is being deprecated. Text editing is only available on the MakeCode website `)}
-                {`(https://${pxt.appTarget.name}).`}
+                {jsxLF(`This app is no longer supported. {0} for text editing and more new features!`,
+                <strong><sui.Link className="link bold" ariaLabel={lf("Install our new app")} onClick={getNewAppClick}>{lf("Install our new app")}</sui.Link></strong>)}
             </div>
         </div>
     })
