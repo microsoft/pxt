@@ -304,7 +304,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const allHeaders = this.getSortedHeaders();
         const selectedHeaders: pxt.workspace.Header[] = [];
         Object.keys(selected).forEach((selectedIndex) =>  {
-            if(selected[selectedIndex]){
+            if (selected[selectedIndex]) {
                 const intIndex = parseInt(selectedIndex);
                 selectedHeaders.push(allHeaders[intIndex]);
             }
