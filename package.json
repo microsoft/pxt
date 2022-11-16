@@ -58,7 +58,6 @@
   },
   "dependencies": {
     "@microsoft/immersive-reader-sdk": "1.1.0",
-    "@zip.js/zip.js": "2.4.20",
     "applicationinsights-js": "^1.0.20",
     "browserify": "16.2.0",
     "chai": "^3.5.0",
