@@ -292,12 +292,14 @@ enum AlarmSound {
 namespace alarms {
     /**
      * Play an alarm sound for some time
-     * @param sound of the alarm to play, eg: AlarmSound.Annoy
-     * @param duration of the alarm sound, eg: 2000
+     * @param sound of the alarm to play
+     * @param duration of the alarm sound
      */
     //% block="play an alarm sound || of $sound for $duration ms"
     //% duration.shadow=timePicker
     //% expandableArgumentMode="toggle"
+    //% sound.defl=AlarmSound.Annoy
+    //% duaration.defl=2000
     export function alarmSound(sound?: AlarmSound, duration?: number) {
     }
 }
@@ -497,13 +499,13 @@ export function whatPlanet(planet: number): number{
 
 **Playground example**: [Create Enums from Blocks](https://makecode.com/playground#language-create-enums)
 
-## Docs and default values #jsdoc
+## JSDoc
 
-The JSDoc comment is automatically used as the help for the block.
+The JSDoc comment is automatically used as the tooltip for the block.
 ```typescript-ignore
 /**
  * Scroll a number on the screen. If the number fits on the screen (i.e. is a single digit), do not scroll.
- * @param interval speed of scroll; eg: 150, 100, 200, -100
+ * @param interval speed of scroll
 */
 //% block
 //% help=functions/show-number
@@ -511,12 +513,7 @@ export function showNumber(value: number, interval: number = 150): void
 { }
 ```
 
-* If `@param` annotation is available with an `eg:` section, the first
-value is used as the shadow value.
-* An optional `help` attribute can be used to point to a specific documentation path. To define custom help for extension blocks, see [GitHub Extension Authoring](/extensions/github-authoring).
-* If the parameter has a default value (``interval`` in this case), it is **not** exposed in blocks.
-* If you want to include minimum and maximum value range for a numeric parameter, you can use square brackets with the range [min-max] after the parameter name in the `@param` annotation. It is important to include the shadow value if you are using a range.
-     - `@param` power [0-7] a value in the range 0..7, where 0 is the lowest power and 7 is the highest. `eg:` 7
+An optional `help` attribute can be used to point to a specific documentation path. To define custom help for extension blocks, see [GitHub Extension Authoring](/extensions/github-authoring).
 
 ## Objects and Instance methods
 
@@ -799,7 +796,7 @@ Here's an example field editor for setting the score of a tennis game:
 ```typescript-ignore
 /**
   * Get the score for a tennis game
-  * @param score eg: 1
+  * @param score
   */
 //% blockId=tennisScore block="$score"
 //% blockHidden=true

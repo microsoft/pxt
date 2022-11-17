@@ -43,14 +43,15 @@ namespace sample {
 
     /**
      * Run a motor
-     * @param directon to turn the motor shaft in,
-     *      eg: MotorShaftDirection.Clockwise
+     * @param directon to turn the motor shaft in
      * @param duration in milliseconds to run the
-     *      motor the alarm sound, eg: 2000
+     *      motor the alarm sound
      */
     //% block="run the motor || $direction for $duration ms"
     //% duration.shadow=timePicker
     //% expandableArgumentMode="toggle"
+    //% direction.defl=MotorShaftDirection.CounterClockwise
+    //% duration.defl=200
     export function runMotor(
         direction?: MotorShaftDirection,
         duration?: number) {
@@ -62,16 +63,18 @@ namespace sample {
 
     /**
      * Set the motor speed and direction
-     * @param directon to turn the motor shaft in,
-     *      eg: MotorShaftDirection.Clockwise
-     * @param speed of the motor in RPM, eg: 30
+     * @param directon to turn the motor shaft in
+     * @param speed of the motor in RPM
      * @param duration in milliseconds to run the
-     *      motor the alarm sound, eg: 2000
+     *      motor the alarm sound
      */
     //% block="set the motor to run || $direction|at $speed|for $duration ms"
     //% duration.shadow=timePicker
     //% speed.min=0 speed.max=60
     //% expandableArgumentMode="enabled"
+    //% direction.defl=MotorShaftDirection.Clockwise
+    //% speed.defl=30
+    //% duration.defl=2000
     export function setMotorSpeed(
         direction?: MotorShaftDirection,
         speed?: number,
