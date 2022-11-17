@@ -62,6 +62,12 @@
             path: "basic/variable-names"
         },
         {
+            chapter: "Basic",
+            name: "Array default values",
+            id: "basic-array-default-values",
+            path: "basic/array-default-values"
+        },
+        {
             chapter: "Field editors",
             name: "Range",
             id: "field-editors-range",

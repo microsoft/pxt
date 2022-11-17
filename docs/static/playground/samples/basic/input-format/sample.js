@@ -29,6 +29,15 @@ namespace sample {
             / (fromHigh - fromLow) + toLow;
     }
 
+    // Use inlineInputMode=external to force inputs to wrap
+    // across several lines
+
+    //% block="magnitude of 3d vector | at x $x and y $y and z $z"
+    //% inlineInputMode=external
+    export function mag3d(x: number, y: number, z: number): number {
+        return Math.sqrt(x * x + y * y + z * z);
+    }
+
     // Use expandableArgumentMode=toggle to collapse or
     // expand input parameters
 

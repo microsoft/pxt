@@ -22,9 +22,9 @@ namespace basic {
 }
 ```
 
-You can also provide a JsDoc comment, color and weight for the namespace, as well as a friendly name (in Unicode).
+You can also provide a JSDoc comment, color and weight for the namespace, as well as a friendly name (in Unicode).
 We strongly recommend carefully picking colors as it dramatically impacts
-that appearance and readability of your blocks. All blocks within the same namespace have the same color so that users can find the category easily from
+the appearance and readability of your blocks. All blocks within the same namespace have the same color so that users can find the category easily from
 samples.
 
 ```typescript-ignore
@@ -36,7 +36,7 @@ namespace basic {
     ...
 }
 ```
-* `icon` icon Unicode character from the icon font to display. Any free non-brand icon from Font Awesome (v5.15.4 at the time of writing) can be used. The full list can be found https://fontawesome.com/v5/search?m=free
+* `icon` The Unicode character from the icon font to display. Any free non-brand icon from Font Awesome (v5.15.4 at the time of writing) can be used. The full list can be found https://fontawesome.com/v5/search?m=free
 * `color` should be included in a comment line starting with `//%`. The color takes a **hue** value or a HTML color.
 * `weight` determines where your category appears in the toolbox. Higher weight means it appears closer to the top.
 
@@ -50,7 +50,7 @@ This makes it easier for the user to go through your available blocks.
 To define your groups, add the `groups` attribute to your namespace. The `groups` attribute is an array of group names. You can individually assign blocks to these groups when defining each block.
 
 > **Notes**:
->* The order in which you define your groups is the order in which the groups will appear in the toolbox flyout
+>* The order in which you define your groups is the order in which the groups will appear in the toolbox flyout.
 >* Blocks that are not assigned to a named group are placed in the default `others` group, which does not show a label. The `others` group can be used to decide where in the order of groups the ungrouped blocks will appear. This is based on where you place `others` in the `groups` array.
 >* When assigning blocks to groups, names are case sensitive, so make sure the group names you put on your blocks are identical to the ones in your group definitions.
 
@@ -88,7 +88,7 @@ export function showNumber(v: number, interval: number = 150): void
 * `block` contains the syntax to build the block structure (more below).
 
 Other optional attributes can also be used:
-* `blockExternalInputs=` forces `External Inputs` rendering
+* `inlineInputMode=external` forces external inputs rendering. This causes the block parameters to wrap across multiple lines instead of staying inline. See the [Inline input](#inline-input) section for more information.
 * `advanced=true` causes this block to be placed under the parent category's "More..." subcategory. Useful for hiding advanced or rarely-used blocks by default
 
 ## Block syntax
@@ -104,9 +104,10 @@ parameter = string
 type = string
 ```
 
-* each `field` is mapped to a field name on the block
+* each `field` is mapped to a field name on the block.
 * the function parameters are mapped to the `$parameter` argument with an identical name. The loader automatically builds a mapping between the block field names and the function names.
-* the block will automatically switch to external inputs when enough parameters are detected
+* the block will automatically switch to external inputs (wrapping) when there are four or more parameters.
+* the `|` indicates where to start a new line if the block is in external inputs mode. 
 * Using `=type` in the block string for shadow blocks is deprecated. See the [Specifying shadow blocks](#shadow-block) section for more details.
 
 ## Custom block localization
@@ -125,7 +126,7 @@ For example,
 export function square(x: number): number {}
 ```
 
-You can also override the ``jsDoc`` description and parameter info.
+You can also override the ``jsdoc`` description and parameter info.
 
 ```
 jsdoc.loc.LOCALE = translated jsdoc
@@ -185,8 +186,6 @@ export function showNumber(v: number, interval: number = 150): void
 { }
 ```
 
->**Note**: Using ``defl`` to specify a default parameter value will take precedence over a default value given in the `eg:` portion for ``@param`` in JsDoc. See the [Docs and default values](#jsdoc) section below.
-
 **Playground examples**: [Range](https://makecode.com/playground#field-editors-range), [Default values](https://makecode.com/playground#basic-default-values)
 
 
@@ -221,34 +220,49 @@ The value of `blockAliasFor` should be the fully qualified name of the source fu
 
 ## Array default values
 
-For array type parameters, set the shadow ID to "lists_create_with":
+For arrays of primitive types, the default values on the block are generated according to the array type in the function signature.
+
+```typescript-ignore
+//% block="$myParam"
+export function mySimpleFunction(myParam: number[]): void {}
+```
+
+For arrays with non-primitive or custom types, set the shadow ID to "lists_create_with" and set the default value of the parameter with the blockId for the type of elements you want the array to be populated with.
 
 ```typescript-ignore
 //% block="$myParam"
 //% myParam.shadow="lists_create_with"
-export function myFunction(myParam: number[]): void {}
+//% myParam.defl="screen_image_picker"
+export function myFunction(myParam: Image[]): void {}
 ```
 
-To populate the array with blocks, set the default value of the parameter as well.
+> **Note**: The above example will only render in the Arcade editor, since that is where the Image type is supported.
 
-```typescript-ignore
-//% block="$myParam"
-//% myParam.shadow="lists_create_with"
-//% myParam.defl="inner_shadow_block"
-export function myFunction(myParam: number[]): void {}
-```
-
-The above will create a block that has an array by default with "inner_shadow_blocks" inside the array. Replace "inner_shadow_block" with the blockId for the type of elements you want the array to be populated with. For example, "text" will result in an array of strings and "math_number" will result in an array of numbers.
+**Playground example**: [Array default values](https://makecode.com/playground#basic-array-default-values)
 
 ## Input formats
 
 ### Inline input
 
-To make a block with multiple parameters appear as a single line, use `inlineInputMode`. The block will expand left to right instead of wrapping the parameter input across mulitple lines.
+Blocks with four or more parameters automatically switch to `External Inputs` mode, in which the parameters wrap instead of staying inline. To make a block with multiple parameters appear as a single line, use `inlineInputMode=inline`. The block will expand left to right instead of wrapping the parameter input across mulitple lines.
 
 ```typescript-ignore
-//% block="magnitude of 3d vector at x $x and y $y and z $z"
+//% block="map $value|from low $fromLow|high $fromHigh|to low $toLow|high $toHigh"
 //% inlineInputMode=inline
+export function map(value: number,
+    fromLow: number, fromHigh: number,
+    toLow: number, toHigh: number): number {
+
+    return ((value - fromLow) * (toHigh - toLow))
+        / (fromHigh - fromLow) + toLow;
+}
+```
+
+ To force external inputs, set `inlineInputMode=external`. In the block defintion, the `|` indicates where to start a new line if the block is in external inputs mode. New lines are also started after each parameter.
+
+```typescript-ignore
+//% block="magnitude of 3d vector | at x $x and y $y and z $z"
+//% inlineInputMode=external
 export function mag3d(x: number, y: number, z: number): number {
     return Math.sqrt(x * x + y * y + z * z);
 }
@@ -294,6 +308,8 @@ These are the settings for `expandableArgumentMode`:
 * `toggle` - expand all parameters when the the expand icon is selected (clicked).
 * `enabled` - expand one parameter at a time for each selection (click) of the expand icon.
 * `disabled` - don't expand any parameters, keep the block collapsed. No icon is shown.
+
+**Playground example**: [Inline input](https://makecode.com/playground#basic-input-format)
 
 ## Callbacks with Parameters
 
