@@ -108,7 +108,7 @@ export default function Render() {
                                     </div>
                                     <div className="tw-text-sm">
                                         <Link
-                                            href="/docs/multiplayer#join-game"
+                                            href="/multiplayer#join-game"
                                             target="_blank"
                                         >
                                             {lf("How do I get a game code?")}
@@ -140,7 +140,7 @@ export default function Render() {
                                     </div>
                                     <div className="tw-text-sm">
                                         <Link
-                                            href="/docs/multiplayer#host-game"
+                                            href="/multiplayer#host-game"
                                             target="_blank"
                                         >
                                             {howToGetLink}

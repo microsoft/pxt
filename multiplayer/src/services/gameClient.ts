@@ -15,9 +15,14 @@ import {
     stringToButtonState,
     GameOverReason,
     GameJoinResult,
+    HTTP_OK,
+    HTTP_GAME_FULL,
+    HTTP_INTERNAL_SERVER_ERROR,
+    HTTP_IM_A_TEAPOT,
+    SimKey,
 } from "../types";
 import {
-    gameDisconnected,
+    notifyGameDisconnected,
     setGameModeAsync,
     setPresenceAsync,
     setReactionAsync,
@@ -81,59 +86,52 @@ class GameClient {
     }
 
     private async recvMessageAsync(payload: string | ArrayBuffer) {
-        try {
-            if (payload instanceof ArrayBuffer) {
-                //-------------------------------------------------
-                // Handle binary message
-                //--
-                const reader = SmartBuffer.fromBuffer(Buffer.from(payload));
-                const type = reader.readUInt16LE();
-                switch (type) {
-                    case Protocol.Binary.MessageType.CompressedScreen:
-                        return await this.recvCompressedScreenMessageAsync(
-                            reader
-                        );
-                    case Protocol.Binary.MessageType.Input:
-                        return await this.recvInputMessageAsync(reader);
-                    case Protocol.Binary.MessageType.Audio:
-                        return await this.recvAudioMessageAsync(reader);
-                }
-            } else if (typeof payload === "string") {
-                //-------------------------------------------------
-                // Handle JSON message
-                //--
-                const msg = JSON.parse(payload) as Protocol.Message;
-                switch (msg.type) {
-                    case "joined":
-                        return await this.recvJoinedMessageAsync(msg);
-                    case "start-game":
-                        return await this.recvStartGameMessageAsync(msg);
-                    case "presence":
-                        return await this.recvPresenceMessageAsync(msg);
-                    case "reaction":
-                        return await this.recvReactionMessageAsync(msg);
-                    case "player-joined":
-                        return await this.recvPlayerJoinedMessageAsync(msg);
-                    case "player-left":
-                        return await this.recvPlayerLeftMessageAsync(msg);
-                    case "game-over":
-                        return await this.recvGameOverMessageAsync(msg);
-                    case "pause-game":
-                        return await this.recvPauseGameMessageAsync(msg);
-                    case "resume-game":
-                        return await this.recvResumeGameMessageAsync(msg);
-                }
-            } else {
-                console.error("Unknown payload type", payload);
+        if (payload instanceof ArrayBuffer) {
+            //-------------------------------------------------
+            // Handle binary message
+            //--
+            const reader = SmartBuffer.fromBuffer(Buffer.from(payload));
+            const type = reader.readUInt16LE();
+            switch (type) {
+                case Protocol.Binary.MessageType.CompressedScreen:
+                    return await this.recvCompressedScreenMessageAsync(reader);
+                case Protocol.Binary.MessageType.Input:
+                    return await this.recvInputMessageAsync(reader);
+                case Protocol.Binary.MessageType.Audio:
+                    return await this.recvAudioMessageAsync(reader);
             }
-        } catch (e) {
-            console.error("Error processing message", e);
+        } else if (typeof payload === "string") {
+            //-------------------------------------------------
+            // Handle JSON message
+            //--
+            const msg = JSON.parse(payload) as Protocol.Message;
+            switch (msg.type) {
+                case "joined":
+                    return await this.recvJoinedMessageAsync(msg);
+                case "start-game":
+                    return await this.recvStartGameMessageAsync(msg);
+                case "presence":
+                    return await this.recvPresenceMessageAsync(msg);
+                case "reaction":
+                    return await this.recvReactionMessageAsync(msg);
+                case "player-joined":
+                    return await this.recvPlayerJoinedMessageAsync(msg);
+                case "player-left":
+                    return await this.recvPlayerLeftMessageAsync(msg);
+                case "game-over":
+                    return await this.recvGameOverMessageAsync(msg);
+                case "pause-game":
+                    return await this.recvPauseGameMessageAsync(msg);
+                case "resume-game":
+                    return await this.recvResumeGameMessageAsync(msg);
+            }
+        } else {
+            throw new Error(`Unknown payload: ${payload}`);
         }
     }
 
     private async recvMessageWithJoinTimeout(
         payload: string | Buffer,
-        timeout: NodeJS.Timeout,
         resolve: () => void
     ) {
         try {
@@ -141,23 +139,31 @@ class GameClient {
                 const msg = JSON.parse(payload) as Protocol.Message;
                 await this.recvMessageAsync(payload);
                 if (msg.type === "joined") {
-                    this.sock?.removeAllListeners("message");
-                    this.sock?.on(
-                        "message",
-                        async payload => await this.recvMessageAsync(payload)
-                    );
-                    clearTimeout(timeout);
+                    // We've joined the game. Replace this handler with a direct call to recvMessageAsync
+                    if (this.sock) {
+                        this.sock.removeAllListeners("message");
+                        this.sock.on("message", async payload => {
+                            try {
+                                await this.recvMessageAsync(payload);
+                            } catch (e) {
+                                console.error("Error processing message", e);
+                                destroyGameClient();
+                            }
+                        });
+                    }
                     resolve();
                 }
             }
         } catch (e) {
             console.error("Error processing message", e);
+            destroyGameClient();
+            resolve();
         }
     }
 
     public async connectAsync(ticket: string) {
         return new Promise<void>((resolve, reject) => {
-            const connectTimeout = setTimeout(() => {
+            const joinTimeout = setTimeout(() => {
                 reject("Timed out connecting to game server");
                 destroyGameClient();
             }, 20 * 1000);
@@ -168,22 +174,17 @@ class GameClient {
             this.sock.binaryType = "arraybuffer";
             this.sock.on("open", () => {
                 console.log("socket opened");
-                this.sock?.on(
-                    "message",
-                    async payload =>
-                        await this.recvMessageWithJoinTimeout(
-                            payload,
-                            connectTimeout,
-                            resolve
-                        )
-                );
+                this.sock?.on("message", async payload => {
+                    await this.recvMessageWithJoinTimeout(payload, () => {
+                        clearTimeout(joinTimeout);
+                        resolve();
+                    });
+                });
                 this.sock?.on("close", () => {
                     console.log("socket disconnected");
-                    gameDisconnected(this.gameOverReason);
-                });
-
-                this.sock?.on("error", err => {
-                    console.log("socket error", err);
+                    notifyGameDisconnected(this.gameOverReason);
+                    clearTimeout(joinTimeout);
+                    resolve();
                 });
 
                 setTimeout(() => {
@@ -192,63 +193,99 @@ class GameClient {
                         ticket,
                         version: Protocol.VERSION,
                     } as Protocol.ConnectMessage);
-                }, 500); // TODO: Why is this necessary? The socket doesn't seem ready to send messages immediately. This isn't a shippable solution.
+                }, 500); // TODO: Why is a short delay necessary here? The socket doesn't seem ready to send messages immediately.
             });
         });
     }
 
-    public async hostGameAsync(shareCode: string): Promise<GameInfo> {
-        shareCode = encodeURIComponent(shareCode);
+    public async hostGameAsync(shareCode: string): Promise<GameJoinResult> {
+        try {
+            shareCode = encodeURIComponent(shareCode);
 
-        const authToken = await authClient.authTokenAsync();
+            const authToken = await authClient.authTokenAsync();
 
-        const res = await fetch(`${GAME_HOST}/api/game/host/${shareCode}`, {
-            credentials: "include",
-            headers: {
-                Authorization: "mkcd " + authToken,
-            },
-        });
-        const gameInfo = (await res.json()) as GameInfo;
+            const hostRes = await fetch(
+                `${GAME_HOST}/api/game/host/${shareCode}`,
+                {
+                    credentials: "include",
+                    headers: {
+                        Authorization: "mkcd " + authToken,
+                    },
+                }
+            );
 
-        if (!gameInfo?.joinTicket)
-            throw new Error("Game server did not return a join ticket");
+            if (hostRes.status !== HTTP_OK) {
+                return {
+                    success: false,
+                    statusCode: hostRes.status,
+                };
+            }
 
-        await this.connectAsync(gameInfo.joinTicket!);
+            const gameInfo = (await hostRes.json()) as GameInfo;
 
-        return gameInfo;
+            if (!gameInfo?.joinTicket)
+                throw new Error("Game server did not return a join ticket");
+
+            await this.connectAsync(gameInfo.joinTicket!);
+
+            return {
+                ...gameInfo,
+                success: true,
+                statusCode: hostRes.status,
+            };
+        } catch (e) {
+            return {
+                success: false,
+                statusCode: HTTP_INTERNAL_SERVER_ERROR,
+            };
+        }
     }
 
     public async joinGameAsync(joinCode: string): Promise<GameJoinResult> {
-        joinCode = encodeURIComponent(joinCode);
+        try {
+            joinCode = encodeURIComponent(joinCode);
 
-        const authToken = await authClient.authTokenAsync();
+            const authToken = await authClient.authTokenAsync();
 
-        const joinRes = await fetch(`${GAME_HOST}/api/game/join/${joinCode}`, {
-            credentials: "include",
-            headers: {
-                Authorization: "mkcd " + authToken,
-            },
-        });
+            const joinRes = await fetch(
+                `${GAME_HOST}/api/game/join/${joinCode}`,
+                {
+                    credentials: "include",
+                    headers: {
+                        Authorization: "mkcd " + authToken,
+                    },
+                }
+            );
 
-        if (joinRes.status !== 200) {
+            if (joinRes.status !== HTTP_OK) {
+                return {
+                    success: false,
+                    statusCode: joinRes.status,
+                };
+            }
+
+            const gameInfo = (await joinRes.json()) as GameInfo;
+
+            if (!gameInfo?.joinTicket)
+                throw new Error("Game server did not return a join ticket");
+
+            await this.connectAsync(gameInfo.joinTicket!);
+
+            return {
+                ...gameInfo,
+                success: !this.gameOverReason,
+                statusCode: this.gameOverReason
+                    ? this.gameOverReason === "full"
+                        ? HTTP_GAME_FULL
+                        : HTTP_IM_A_TEAPOT
+                    : joinRes.status,
+            };
+        } catch (e) {
             return {
                 success: false,
-                statusCode: joinRes.status,
+                statusCode: HTTP_INTERNAL_SERVER_ERROR,
             };
         }
-
-        const gameInfo = (await joinRes.json()) as GameInfo;
-
-        if (!gameInfo?.joinTicket)
-            throw new Error("Game server did not return a join ticket");
-
-        await this.connectAsync(gameInfo.joinTicket!);
-
-        return {
-            ...gameInfo,
-            success: true,
-            statusCode: joinRes.status,
-        };
     }
 
     public async startGameAsync() {
@@ -362,12 +399,21 @@ class GameClient {
         const { button, state, slot } =
             Protocol.Binary.unpackInputMessage(reader);
 
+        const stringifiedState = buttonStateToString(state);
+        if (
+            button <= SimKey.None ||
+            button >= SimKey.Menu ||
+            slot < 2 ||
+            !stringifiedState
+        )
+            return;
+
         this.postToSimFrame(<SimMultiplayer.InputMessage>{
             type: "multiplayer",
             content: "Button",
             clientNumber: slot - 1,
             button: button,
-            state: buttonStateToString(state),
+            state: stringifiedState,
         });
     }
 
@@ -532,7 +578,22 @@ function destroyGameClient() {
     gameClient = undefined;
 }
 
-export async function hostGameAsync(shareCode: string): Promise<GameInfo> {
+/** Test code for emulating fake users in a multiplayer session **/
+export async function startPostingRandomKeys() {
+    const states = ["Pressed", "Released"];
+    const currentState = new Array(SimKey.B).fill(0);
+    return setInterval(() => {
+        const key = Math.floor(Math.random() * SimKey.B);
+        gameClient?.sendInputAsync(
+            key + 1,
+            states[currentState[key]++ % 2] as any
+        );
+    }, 300);
+}
+
+export async function hostGameAsync(
+    shareCode: string
+): Promise<GameJoinResult> {
     destroyGameClient();
     gameClient = new GameClient();
     const gameInfo = await gameClient.hostGameAsync(shareCode);

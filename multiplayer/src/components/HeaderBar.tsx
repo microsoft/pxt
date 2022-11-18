@@ -22,17 +22,11 @@ export default function Render() {
     const hasIdentity = pxt.auth.hasIdentity();
     const appTheme = pxt.appTarget?.appTheme;
 
-    const helpUrl = ""; // TODO multiplayer
     const privacyUrl = pxt?.appTarget?.appTheme?.privacyUrl;
     const termsOfUseUrl = pxt?.appTarget?.appTheme?.termsOfUseUrl;
-    const safetyUrl = "/docs/multiplayer#safety";
+    const safetyUrl = "/multiplayer#safety";
 
     const dialogMessages = useAuthDialogMessages();
-
-    const onHelpClicked = () => {
-        pxt.tickEvent("mp.settingsmenu.help");
-        window.open(helpUrl);
-    };
 
     const onReportAbuseClicked = () => {
         pxt.tickEvent("mp.settingsmenu.reportabuse");
@@ -208,13 +202,6 @@ export default function Render() {
 
     const getSettingItems = () => {
         const items: MenuItem[] = [];
-
-        items.push({
-            id: "help",
-            title: lf("Help"),
-            label: lf("Help"),
-            onClick: onHelpClicked,
-        });
 
         if (privacyUrl) {
             items.push({
