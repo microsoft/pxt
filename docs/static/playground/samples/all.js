@@ -150,6 +150,12 @@
             name: "Factories",
             id: "factories",
             path: "language/factories"
+        },
+        {
+            chapter: "Language",
+            name: "Fixed Instances",
+            id: "fixed-instances",
+            path: "language/fixed-instances"
         }
     ];
 

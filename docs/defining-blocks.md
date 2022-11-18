@@ -444,7 +444,7 @@ parameter like so:
     }
 ```
 
-**Playground examples**: [Enumerations](https://makecode.com/playground#basic-enums)
+**Playground example**: [Enumerations](https://makecode.com/playground#basic-enums)
 
 ### Creating enumerations with blocks
 
@@ -582,9 +582,9 @@ class DigitalPin {
 
 namespace pins {
     //% fixedInstance
-    let D0: DigitalPin;
+    export let D0: DigitalPin;
     //% fixedInstance
-    let D1: DigitalPin;
+    export let D1: DigitalPin;
 }
 ```
 
@@ -601,14 +601,14 @@ declarations.
 //% fixedInstances
 class AnalogPin extends DigitalPin {
     ...
-    //% blockId=device_set_analog_pin block="analog write|pin $name|to $value"
+    //% blockId=device_set_analog_pin block="analog write|pin $this|to $value"
     //% blockNamespace=pins
-    analogWrite(value: number, name: string): void { ... }
+    analogWrite(value: number): void { ... }
 }
 
 namespace pins {
     //% fixedInstance
-    let A0: AnalogPin;
+    export let A0: AnalogPin;
 }
 ```
 
@@ -640,6 +640,8 @@ when it is used, even though it is initialized with something that can possibly
 have side effects. This happens automatically when there is no initializer,
 or the initializer is a simple constant, but for function calls and constructors
 you have to include `whenUsed`.
+
+**Playground example**: [Fixed instances](https://makecode.com/playground#language-fixed-instances)
 
 ### Properties
 
@@ -674,7 +676,7 @@ class Foo {
 }
 ```
 
-**Playground examples**: [Classes](https://makecode.com/playground#classes)
+**Playground example**: [Classes](https://makecode.com/playground#classes)
 
 ### Factories #factories
 
@@ -708,7 +710,7 @@ namespace Widgets {
 
 To ensure there's a valid instance of the class when the block is used, the `blockSetVariable` attribute sets a variable to the new instance. In the example above, the `blockSetVariable` attribute will automatically create an instance of `Gizmo` and set the `gizmo` variable to it. The `gizmo` variable is created if it doesn't exist already. This allows a valid instance of `Gizmo` to be created by default when the block is pulled into the editor.
 
-**Playground examples**: [Factories](https://makecode.com/playground#factories)
+**Playground example**: [Factories](https://makecode.com/playground#factories)
 
 ### Namespace attachment
 
@@ -752,7 +754,7 @@ namespace Widgets {
 }
 ```
 
-**Playground examples**: [Factories](https://makecode.com/playground#factories)
+**Playground example**: [Factories](https://makecode.com/playground#factories)
 
 The `block` attribute for `setInactive` includes a reference to the `gizmo` variable created by the `createGizmo` factory function. This matches the block with a valid instance by default.
 
