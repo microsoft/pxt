@@ -109,12 +109,10 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
 
     handleBannerClick() {
         pxt.tickEvent("winApp.banner", undefined);
-        window.open("/windows-app", '_blank')
     }
 
-    getNewAppClick() {
+    handleGetNewAppClick() {
         pxt.tickEvent("winApp.banner.installNew", undefined);
-        window.open("https://apps.microsoft.com/store/detail/microsoft-makecode-for-microbit/9NMQDQ2XZKWK", '_blank')
     }
 
     renderCore() {
@@ -129,8 +127,8 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
 
         const errMsg = jsxLF(
             "This app is no longer supported. For the latest updates, {0} to install our new app! {1}",
-            <sui.Link className="link" ariaLabel={lf("click here")} onClick={this.getNewAppClick}>{lf("click here")}</sui.Link>,
-            <sui.Link className="link" ariaLabel={lf("More info")} onClick={this.handleBannerClick}>{lf("Learn More")}</sui.Link>
+            <sui.Link className="link" ariaLabel={lf("click here")} onClick={this.handleGetNewAppClick} href="ms-windows-store://pdp/?ProductId=9NMQDQ2XZKWK">{lf("click here")}</sui.Link>,
+            <sui.Link className="link" ariaLabel={lf("More info")} onClick={this.handleBannerClick} href="/windows-app" target="_blank">{lf("Learn More")}</sui.Link>
         );
 
         if (showWinAppBanner) {
