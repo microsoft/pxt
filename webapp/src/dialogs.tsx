@@ -692,7 +692,6 @@ export function showReportAbuseAsync(pubId?: string) {
 
 function getNewAppClick() {
     pxt.tickEvent("winApp.deprecateModal.installNew", undefined);
-    window.open("https://apps.microsoft.com/store/detail/microsoft-makecode-for-microbit/9NMQDQ2XZKWK", '_blank')
 }
 
 export function showWinAppDeprecateAsync() {
@@ -706,7 +705,7 @@ export function showWinAppDeprecateAsync() {
             <img className="ui medium centered image" src={pxt.appTarget.appTheme.winAppDeprImage} alt={lf("An image of a shrugging board")}/>
             <div>
                 {jsxLF(`This app is no longer supported. {0} for text editing and more new features!`,
-                <strong><sui.Link className="link bold" ariaLabel={lf("Install our new app")} onClick={getNewAppClick}>{lf("Install our new app")}</sui.Link></strong>)}
+                <strong><sui.Link className="link bold" ariaLabel={lf("Install our new app")} onClick={getNewAppClick} href="ms-windows-store://pdp/?ProductId=9NMQDQ2XZKWK">{lf("Install our new app")}</sui.Link></strong>)}
             </div>
         </div>
     })
