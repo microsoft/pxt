@@ -99,16 +99,14 @@ will be organized to create the block.
 ```
 block = field, { '|' field }
 field := string
-    | string `$` parameter [ `=` type ]
+    | string `$` parameter
 parameter = string
-type = string
 ```
 
 * each `field` is mapped to a field name on the block.
 * the function parameters are mapped to the `$parameter` argument with an identical name. The loader automatically builds a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs (wrapping) when there are four or more parameters.
 * the `|` indicates where to start a new line if the block is in external inputs mode. 
-* Using `=type` in the block string for shadow blocks is deprecated. See the [Specifying shadow blocks](#shadow-block) section for more details.
 
 ## Custom block localization
 
