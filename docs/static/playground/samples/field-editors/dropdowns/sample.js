@@ -14,7 +14,7 @@ namespace time {
 
     /**
       * Get the word field editor
-      * @param word eg: Hello
+      * @param word
       */
     //% blockId=wordPicker block="$word"
     //% blockHidden=true
@@ -22,6 +22,7 @@ namespace time {
     //% word.fieldEditor="textdropdown"
     //% word.fieldOptions.decompileLiterals=true
     //% word.fieldOptions.values='hi,hello'
+    //% word.defl='hello'
     export function __wordPicker(word: string): string {
         return word;
     }
