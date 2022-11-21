@@ -4630,16 +4630,18 @@ export class ProjectView
                 }
             } else {
                 const tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-                const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
+                const flyoutOnly = this.state.editorState?.hasCategories === false;
                 let headerHeight = 0;
                 if (flyoutOnly) {
                     let headers = document.getElementById("headers");
                     headerHeight += headers.offsetHeight;
                 }
                 if (tc) {
-                    // maxium offset of 18rem
-                    let maxOffset = Math.min(tc.getCardHeight() + headerHeight, parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
-                    this.setState({ editorOffset: "calc(" + maxOffset + "px + 2em)" }); // 2em for margins
+                    const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+                    const maxContentHeight = 22;
+                    let maxOffset = Math.min(tc.getCardHeight() + headerHeight, fontSize * maxContentHeight);
+                    this.setState({ editorOffset: `calc(${maxOffset}px + 2rem)` });
+                    // 2rem for margins, e.g. see TutorialCard.getExpandedCardStyle
                 }
             }
         }
