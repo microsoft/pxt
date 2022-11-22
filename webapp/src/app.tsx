@@ -4630,13 +4630,13 @@ export class ProjectView
                 }
             } else {
                 const tc = document.getElementById("tutorialcard");
-                const flyoutOnly = this.state.editorState?.hasCategories === false;
-                let headerHeight = 0;
-                if (flyoutOnly) {
-                    const headers = document.getElementById("headers");
-                    headerHeight += headers.offsetHeight;
-                }
                 if (tc) {
+                    const flyoutOnly = this.state.editorState?.hasCategories === false;
+                    let headerHeight = 0;
+                    if (flyoutOnly) {
+                        const headers = document.getElementById("headers");
+                        headerHeight = headers.offsetHeight;
+                    }
                     const offset = tc.offsetHeight + headerHeight;
                     this.setState({ editorOffset: `${offset}px` });
                 }
