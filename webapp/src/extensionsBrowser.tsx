@@ -554,7 +554,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                             className={currentTab == TabState.InDevelopment ? "selected" : ""}
                                         />
                                     </>}
-                                {(!extensionsInDevelopment.length && !!extensionsToShow.length) &&
+                                {(!extensionsInDevelopment.length && !!preferredExts.length) &&
                                     <h2>{lf("Recommended")}</h2>
                                 }
                             </div>
