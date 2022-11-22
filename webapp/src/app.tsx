@@ -1331,6 +1331,7 @@ export class ProjectView
                     this.blocksEditor.hideFlyout()
                 else if (this.editor == this.textEditor)
                     this.textEditor.hideFlyout()
+                this.setEditorOffset();
             });
     }
 
