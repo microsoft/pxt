@@ -4629,19 +4629,16 @@ export class ProjectView
                     this.setState({ editorOffset: undefined });
                 }
             } else {
-                const tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
+                const tc = document.getElementById("tutorialcard");
                 const flyoutOnly = this.state.editorState?.hasCategories === false;
                 let headerHeight = 0;
                 if (flyoutOnly) {
-                    let headers = document.getElementById("headers");
+                    const headers = document.getElementById("headers");
                     headerHeight += headers.offsetHeight;
                 }
                 if (tc) {
-                    const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
-                    const maxContentHeight = 22;
-                    let maxOffset = Math.min(tc.getCardHeight() + headerHeight, fontSize * maxContentHeight);
-                    this.setState({ editorOffset: `calc(${maxOffset}px + 2rem)` });
-                    // 2rem for margins, e.g. see TutorialCard.getExpandedCardStyle
+                    const offset = tc.offsetHeight + headerHeight;
+                    this.setState({ editorOffset: `${offset}px` });
                 }
             }
         }
