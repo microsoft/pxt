@@ -217,6 +217,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     async function fetchGithubDataAndAddAsync(repos: string[]): Promise<ExtensionMeta[]> {
+        if (!repos.length)
+            return [];
         const fetched = await fetchGithubDataAsync(repos)
         if (!fetched) {
             return []
@@ -552,7 +554,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                             className={currentTab == TabState.InDevelopment ? "selected" : ""}
                                         />
                                     </>}
-                                {!extensionsInDevelopment.length &&
+                                {(!extensionsInDevelopment.length && !!extensionsToShow.length) &&
                                     <h2>{lf("Recommended")}</h2>
                                 }
                             </div>
