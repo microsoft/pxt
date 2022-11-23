@@ -1327,6 +1327,7 @@ export class ProjectView
                     this.blocksEditor.hideFlyout()
                 else if (this.editor == this.textEditor)
                     this.textEditor.hideFlyout()
+                this.setEditorOffset();
             });
     }
 
@@ -4372,17 +4373,16 @@ export class ProjectView
                     this.setState({ editorOffset: undefined });
                 }
             } else {
-                const tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-                const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
-                let headerHeight = 0;
-                if (flyoutOnly) {
-                    let headers = document.getElementById("headers");
-                    headerHeight += headers.offsetHeight;
-                }
+                const tc = document.getElementById("tutorialcard");
                 if (tc) {
-                    // maxium offset of 18rem
-                    let maxOffset = Math.min(tc.getCardHeight() + headerHeight, parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
-                    this.setState({ editorOffset: "calc(" + maxOffset + "px + 2em)" }); // 2em for margins
+                    const flyoutOnly = this.state.editorState?.hasCategories === false;
+                    let headerHeight = 0;
+                    if (flyoutOnly) {
+                        const headers = document.getElementById("headers");
+                        headerHeight = headers.offsetHeight;
+                    }
+                    const offset = tc.offsetHeight + headerHeight;
+                    this.setState({ editorOffset: `${offset}px` });
                 }
             }
         }
