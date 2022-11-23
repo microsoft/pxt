@@ -96,7 +96,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     function getExtensionFromFetched(extensionUrl: string) {
         const parsedGithubRepo = pxt.github.parseRepoId(extensionUrl);
         if (parsedGithubRepo)
-            return allExtensions.get(parsedGithubRepo.slug.toLowerCase());
+            return allExtensions.get(parsedGithubRepo.fullName.toLowerCase());
 
         const fullName = allExtensions.get(extensionUrl.toLowerCase())
         if (fullName)
@@ -148,11 +148,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         let r: { version: string, config: pxt.PackageConfig };
         try {
             core.showLoading("downloadingpackage", lf("downloading extension..."));
-            const pkg = getExtensionFromFetched(scr.repo.slug);
+            const pkg = getExtensionFromFetched(scr.repo.fullName);
             if (pkg) {
                 r = await pxt.github.downloadLatestPackageAsync(pkg.repo);
             } else {
-                const res = await fetchGithubDataAsync([scr.repo.slug]);
+                const res = await fetchGithubDataAsync([scr.repo.fullName]);
                 if (res && res.length > 0) {
                     const parsed = parseGithubRepo(res[0])
                     addExtensionsToPool([parsed])
