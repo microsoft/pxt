@@ -8,6 +8,7 @@ import { TutorialStepCounter } from "./TutorialStepCounter";
 import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
+import * as TutorialCodeValidation from "../../tutorialCodeValidation";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -37,6 +38,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
     const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
+    const [ showValidationMessage, setShowValidationMessage ] = React.useState(false);
     const contentRef = React.useRef(undefined);
     const immReaderRef = React.useRef(undefined);
 
@@ -106,9 +108,32 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const markdown = steps[visibleStep].headerContentMd;
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
+    const validateTutorialStep = () => {
+        const codeValidated = false;
+        if(codeValidated) {
+            tutorialStepNext();
+        } else {
+            setShowValidationMessage(true);
+        }
+    }
+
+    const handleStepCounterSetStep = (step: number) => {
+        // Only validate if we're moving to the next step.
+        // If going backwards, user could be trying to fix something from a previous step and this message could be annoying/confusing.
+        // If going forwards multiple steps, then the user has fully skipped entire steps, so validation doesn't make much sense.
+        if(step == currentStep+1) {
+            validateTutorialStep();
+        } else {
+            setCurrentStep(step);
+        }
+    }
+
     const tutorialStepNext = () => {
         const step = Math.min(currentStep + 1, props.steps.length - 1);
         pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: isModal ? 1 : 0 }, { interactiveConsent: true });
+        if(showValidationMessage) {
+            setShowValidationMessage(false);
+        }
         setCurrentStep(step);
     }
 
@@ -144,9 +169,14 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const nextButtonLabel = lf("Go to the next step of the tutorial.");
     const nextButton = showDone
         ? <Button icon="check circle" title={doneButtonLabel} ariaLabel={doneButtonLabel} text={lf("Done")} onClick={onTutorialComplete} />
-        : <Button icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
+        : <Button icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!showNext} text={lf("Next")} onClick={validateTutorialStep} />;
 
-    const stepCounter = <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />;
+    const stepCounter = <TutorialStepCounter
+        tutorialId={tutorialId}
+        currentStep={visibleStep}
+        totalSteps={steps.length}
+        title={name}
+        setTutorialStep={handleStepCounterSetStep} />;
     const hasHint = !!hintMarkdown;
 
 
@@ -165,6 +195,16 @@ export function TutorialContainer(props: TutorialContainerProps) {
                 { nextButton }
             </div>
         </div>
+        {showValidationMessage && 
+            <TutorialCodeValidation.ShowValidationMessage
+                onYesButtonClick={tutorialStepNext}
+                onNoButtonClick={() => setShowValidationMessage(false)}
+                initialVisible={false}
+                isTutorialCodeInvalid={true}
+                areStrictRulesPresent={true}
+                parent={props.parent}
+                validationTelemetry={() => {}}
+                ruleComponents={[]} />}
         {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode &&
             <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}
