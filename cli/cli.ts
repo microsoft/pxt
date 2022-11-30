@@ -1899,6 +1899,19 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     pxt.log(`target-strings.json built`)
 }
 
+function lessFilePaths() {
+    return [
+        "node_modules/semantic-ui-less",
+        "node_modules/pxt-core/theme",
+        "theme/foo/bar",
+        "theme",
+        "node_modules/pxt-core/react-common/styles",
+        "react-common/styles",
+        "node_modules/@fortawesome",
+        "node_modules/pxt-core/node_modules/@fortawesome"
+    ];
+}
+
 async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     if (!fs.existsSync(path.join("theme", "style.less")) || !fs.existsSync(path.join("theme", "theme.config"))) {
         return;
@@ -1910,17 +1923,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     nodeutil.mkdirP(path.join("built", "web"));
     const lessPath = require.resolve('less');
     const lessCPath = path.join(path.dirname(lessPath), '/bin/lessc');
-
-    const lessIncludePaths = [
-        "node_modules/semantic-ui-less",
-        "node_modules/pxt-core/theme",
-        "theme/foo/bar",
-        "theme",
-        "node_modules/pxt-core/react-common/styles",
-        "react-common/styles",
-        "node_modules/@fortawesome",
-        "node_modules/pxt-core/node_modules/@fortawesome" // for locally linked dev environment
-    ].join(":");
+    const lessIncludePaths = lessFilePaths().join(":");
 
     // Build semantic css
     await nodeutil.spawnAsync({
@@ -1977,6 +1980,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                 "--include-path=" + lessIncludePaths
             ]
         });
+
         let appCss = await readFileAsync(`built/web/react-common-${app}.css`, "utf8");
         appCss = await linkFontAsync("fa-solid-900", appCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
         appCss = await linkFontAsync("fa-regular-400", appCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
@@ -2611,10 +2615,20 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
         simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
     }
 
+    const lessFiles = lessFilePaths();
+    let skipFirstCssBuild = true;
     return buildAndWatchAsync(() => buildCommonSimAsync()
         .catch(e => buildFailed("common sim build failed: " + e.message, e))
         .then(() => internalBuildTargetAsync({ localDir: true, rebundle }))
         .catch(e => buildFailed("target build failed: " + e.message, e))
+        .then(() => buildAndWatchAsync(async () => {
+            if (skipFirstCssBuild) {
+                skipFirstCssBuild = false;
+            } else {
+                buildSemanticUIAsync()
+            }
+            return lessFiles;
+        }))
         .then(() => {
             let toWatch = dirsToWatch.slice();
             if (hasCommonPackages) {
