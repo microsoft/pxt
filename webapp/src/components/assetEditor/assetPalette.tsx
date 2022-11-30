@@ -39,7 +39,7 @@ export const AssetPalette = () => {
         // const configPalette = this.config.palette || pxt.appTarget.runtime.palette;
         // const configPalette = pxt.appTarget.runtime.palette;
         const configPalette = currentColors || pxt.appTarget.runtime.palette;
-        
+
         if (configPalette) {
             for (const palette of AllPalettes) {
                 let isEqual = true;
