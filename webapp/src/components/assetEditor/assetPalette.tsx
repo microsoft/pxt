@@ -63,7 +63,7 @@ export const AssetPalette = () => {
 
 
     return <div className="asset-palette">
-        <Button className="teal" title={lf("Color Palette")} label={lf("Color Palette")} leftIcon="fas fa-palette" onClick={openPaletteModal} />
+        <Button className="teal asset-palette-button" title={lf("Color Palette")} label={lf("Color Palette")} leftIcon="fas fa-palette" onClick={openPaletteModal} />
         {openPalette && renderPalettePicker()}
     </div>
 }
