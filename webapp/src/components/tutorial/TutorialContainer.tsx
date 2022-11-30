@@ -8,7 +8,7 @@ import { TutorialStepCounter } from "./TutorialStepCounter";
 import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
-import * as TutorialCodeValidation from "../../tutorialCodeValidation";
+import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -196,15 +196,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             </div>
         </div>
         {showValidationMessage && 
-            <TutorialCodeValidation.ShowValidationMessage
-                onYesButtonClick={tutorialStepNext}
-                onNoButtonClick={() => setShowValidationMessage(false)}
-                initialVisible={false}
-                isTutorialCodeInvalid={true}
-                areStrictRulesPresent={true}
-                parent={props.parent}
-                validationTelemetry={() => {}}
-                ruleComponents={[]} />}
+            <TutorialValidationErrorMessage onContinueClicked={tutorialStepNext} onReturnClicked={() => setShowValidationMessage(false)} />}
         {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode &&
             <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}
