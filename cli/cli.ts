@@ -2641,14 +2641,16 @@ async function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: bo
         if (skipFirstCssBuild) {
             skipFirstCssBuild = false;
         } else {
-            console.log("rebuilding css")
+            console.log("rebuilding css");
             await buildSemanticUIAsync();
-            console.log("css build complete")
+            console.log("css build complete");
         }
         return lessFiles;
     };
 
-    await buildAndWatchAsync(buildTarget, 1)
+    // some of the watched targets for buildTarget include nested built files,
+    // such as libs/game/_locales/*, so can't just grab subdirectories
+    await buildAndWatchAsync(buildTarget, 1);
     await buildAndWatchAsync(buildCss, 6);
 }
 
