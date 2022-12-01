@@ -4632,7 +4632,7 @@ export class ProjectView
             } else {
                 const tc = document.getElementById("tutorialcard");
                 if (tc) {
-                    const flyoutOnly = this.state.editorState?.hasCategories === false;
+                    const flyoutOnly = this.state.editorState?.hasCategories === false || this.state.tutorialOptions?.metadata?.flyoutOnly;
                     let headerHeight = 0;
                     if (flyoutOnly) {
                         const headers = document.getElementById("headers");
@@ -4834,12 +4834,12 @@ export class ProjectView
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
-        const hideTutorialIteration = inTutorial && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen, accessibleBlocks } = this.state;
-        const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
+        const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
+        const flyoutOnly = this.state.editorState?.hasCategories === false || (inTutorial && tutorialOptions.metadata?.flyoutOnly);
 
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial);
