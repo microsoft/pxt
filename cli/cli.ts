@@ -2625,13 +2625,13 @@ async function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: bo
             await internalBuildTargetAsync({ localDir: true, rebundle });
         } catch (e) {
             buildFailed(`${currentlyBuilding} build failed: ${e?.message}`, e);
-        } finally {
-            let toWatch = dirsToWatch.slice();
-            if (hasCommonPackages) {
-                toWatch = toWatch.concat(simDirectories);
-            }
-            return toWatch.filter(d => fs.existsSync(d));
         }
+
+        let toWatch = dirsToWatch.slice();
+        if (hasCommonPackages) {
+            toWatch = toWatch.concat(simDirectories);
+        }
+        return toWatch.filter(d => fs.existsSync(d));
     }
 
     const lessFiles = lessFilePaths().filter(p => fs.existsSync(p));
