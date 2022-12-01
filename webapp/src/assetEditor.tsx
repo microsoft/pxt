@@ -47,7 +47,7 @@ interface DuplicateAssetEditorRequest extends BaseAssetEditorRequest {
     assetType: pxt.AssetType;
 }
 
-type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorReqeust | DuplicateAssetEditorRequest;
+type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
 
 interface BaseAssetEditorResponse {
     id?: number;
