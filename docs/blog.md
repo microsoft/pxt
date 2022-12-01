@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [Computer Science Education Week 2022](/blog/csed-week/csed-week-2022)
+
+November 14th, 2022 by [Jaqster](https://github.com/jaqster)
+
+Along with the holidays, Computer Science Education Week is coming up December 5th - 11th. This is an annual event to raise the visibility of computer science in education, and to inspire all teachers and students to do an "Hour of Code" during this week.
+
+**[Continue reading this blog post](/blog/csed-week/csed-week-2022)**
+
 ## [MakeCode Arcade Fall Release](/blog/arcade/fall-release-2022)
 
 October 3rd, 2022 by [Jaqster](https://github.com/jaqster)

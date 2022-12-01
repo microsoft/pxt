@@ -29,40 +29,52 @@ namespace sample {
             / (fromHigh - fromLow) + toLow;
     }
 
+    // Use inlineInputMode=external to force inputs to wrap
+    // across several lines
+
+    //% block="magnitude of 3d vector | at x $x and y $y and z $z"
+    //% inlineInputMode=external
+    export function mag3d(x: number, y: number, z: number): number {
+        return Math.sqrt(x * x + y * y + z * z);
+    }
+
     // Use expandableArgumentMode=toggle to collapse or
     // expand input parameters
 
     /**
      * Run a motor
-     * @param directon to turn the motor shaft in,
-     *      eg: MotorShaftDirection.Clockwise
+     * @param directon to turn the motor shaft in
      * @param duration in milliseconds to run the
-     *      motor the alarm sound, eg: 2000
+     *      motor the alarm sound
      */
-    //% block="run the motor || %direction for %duration ms"
+    //% block="run the motor || $direction for $duration ms"
     //% duration.shadow=timePicker
     //% expandableArgumentMode="toggle"
+    //% direction.defl=MotorShaftDirection.CounterClockwise
+    //% duration.defl=200
     export function runMotor(
         direction?: MotorShaftDirection,
         duration?: number) {
 
     }
 
-    // Use expandableArgumentMode=enabeled to collapse or
+    // Use expandableArgumentMode=enabled to collapse or
     // expand EACH input parameter
 
     /**
      * Set the motor speed and direction
-     * @param directon to turn the motor shaft in,
-     *      eg: MotorShaftDirection.Clockwise
-     * @param speed of the motor in RPM, eg: 30
+     * @param directon to turn the motor shaft in
+     * @param speed of the motor in RPM
      * @param duration in milliseconds to run the
-     *      motor the alarm sound, eg: 2000
+     *      motor the alarm sound
      */
-    //% block="set the motor to run || %direction|at %speed|for %duration ms"
+    //% block="set the motor to run || $direction|at $speed|for $duration ms"
     //% duration.shadow=timePicker
     //% speed.min=0 speed.max=60
     //% expandableArgumentMode="enabled"
+    //% direction.defl=MotorShaftDirection.Clockwise
+    //% speed.defl=30
+    //% duration.defl=2000
     export function setMotorSpeed(
         direction?: MotorShaftDirection,
         speed?: number,
