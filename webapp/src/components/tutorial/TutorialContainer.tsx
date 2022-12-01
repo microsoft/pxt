@@ -9,6 +9,7 @@ import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
 import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage";
+import { TutorialRule, TutorialRuleResult, TutorialRules } from "../tutorialRules";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -39,6 +40,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
     const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
     const [ showValidationMessage, setShowValidationMessage ] = React.useState(false);
+    const [ validationMessageHint, setValidationMessageHint ] = React.useState("");
     const contentRef = React.useRef(undefined);
     const immReaderRef = React.useRef(undefined);
 
@@ -109,11 +111,22 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
     const validateTutorialStep = () => {
-        const codeValidated = false;
-        if(codeValidated) {
-            tutorialStepNext();
-        } else {
+        let rules: TutorialRule[] = TutorialRules; // TODO thsparks : Filter using id based on what's in the markdown?
+        const tutorialStep = props.steps[props.currentStep];
+        let failedResults: TutorialRuleResult[] = [];
+        for(let rule of rules) {
+            let result = rule.execute(props.tutorialOptions, tutorialStep);
+            if(!result.validationResult) {
+                failedResults.push(result);
+            }
+        }
+
+        if(failedResults.length > 0) {
+            const validationMsg = failedResults.map(r => r.message).join('\n');
+            setValidationMessageHint(validationMsg);
             setShowValidationMessage(true);
+        } else {
+            tutorialStepNext();
         }
     }
 
@@ -196,7 +209,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             </div>
         </div>
         {showValidationMessage && 
-            <TutorialValidationErrorMessage onContinueClicked={tutorialStepNext} onReturnClicked={() => setShowValidationMessage(false)} />}
+            <TutorialValidationErrorMessage onContinueClicked={tutorialStepNext} onReturnClicked={() => setShowValidationMessage(false)} hint={validationMessageHint}/>}
         {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode &&
             <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}
