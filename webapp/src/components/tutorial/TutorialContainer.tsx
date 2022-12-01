@@ -113,7 +113,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         let rules: TutorialRule[] = TutorialRules; // TODO thsparks : Filter using id based on what's in the markdown?
         let failedResults: TutorialRuleResult[] = [];
         for(let rule of rules) {
-            let result = await rule.execute(props.tutorialOptions);
+            let result = await rule.execute(props.parent, props.tutorialOptions);
             if(!result.isValid) {
                 failedResults.push(result);
             }

@@ -1,5 +1,7 @@
+import { MarkedContent } from "../marked";
 import TutorialOptions = pxt.tutorial.TutorialOptions;
 import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
+import IProjectView = pxt.editor.IProjectView;
 
 export type TutorialRuleResult = {
     isValid: Boolean;
@@ -11,7 +13,7 @@ export type TutorialRule = {
 
     // TODO thsparks : Remove unused parameters.
     // TODO thsparks : Add params here or in rule info?
-    execute: (tutorialOptions: TutorialOptions) => Promise<TutorialRuleResult>;
+    execute: (parent: IProjectView, tutorialOptions: TutorialOptions) => Promise<TutorialRuleResult>;
 }
 
 export const TutorialRules: TutorialRule[] = [
@@ -58,7 +60,7 @@ export const TutorialRules: TutorialRule[] = [
     }
 
 
-async function validateAnswerKeyBlocksExist(tutorialOptions: TutorialOptions): Promise<TutorialRuleResult> {
+async function validateAnswerKeyBlocksExist(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialRuleResult> {
     const stepInfo = tutorialOptions.tutorialStepInfo ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep] : null;
     if(!stepInfo) return {isValid: true, hint: ""};
 
@@ -80,6 +82,6 @@ async function validateAnswerKeyBlocksExist(tutorialOptions: TutorialOptions): P
     const isValid = missingBlocks.length == 0;
     return {
         isValid: isValid,
-        hint: isValid ? undefined : `Missing blocks: ${missingBlocks.join(", ")}`,
+        hint: isValid ? undefined : <MarkedContent markdown={stepInfo.hintContentMd} parent={parent} />, //`Missing blocks: ${missingBlocks.join(", ")}`
     }
 }
