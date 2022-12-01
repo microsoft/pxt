@@ -2601,7 +2601,7 @@ function buildFailed(msg: string, e: any) {
     console.log("")
 }
 
-function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
+async function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
     if (fs.existsSync("pxt.json") &&
         !(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
@@ -2617,21 +2617,26 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
         simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
     }
 
-    const lessFiles = lessFilePaths().filter(p => fs.existsSync(p));
-    // css build already occurs midway through internalBuildTargetAsync, so skip first rerun
-    let skipFirstCssBuild = true;
-
-    const buildTarget = () => buildCommonSimAsync()
-        .catch(e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => internalBuildTargetAsync({ localDir: true, rebundle }))
-        .catch(e => buildFailed("target build failed: " + e.message, e))
-        .then(() => {
+    const buildTarget = async () => {
+        let currentlyBuilding = "common sim";
+        try {
+            await buildCommonSimAsync();
+            currentlyBuilding = "target";
+            await internalBuildTargetAsync({ localDir: true, rebundle });
+        } catch (e) {
+            buildFailed(`${currentlyBuilding} build failed: ${e?.message}`, e);
+        } finally {
             let toWatch = dirsToWatch.slice();
             if (hasCommonPackages) {
                 toWatch = toWatch.concat(simDirectories);
             }
             return toWatch.filter(d => fs.existsSync(d));
-        });
+        }
+    }
+
+    const lessFiles = lessFilePaths().filter(p => fs.existsSync(p));
+    // css build already occurs midway through internalBuildTargetAsync, so skip first rerun
+    let skipFirstCssBuild = true;
     const buildCss = async () => {
         if (skipFirstCssBuild) {
             skipFirstCssBuild = false;
@@ -2642,8 +2647,9 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
         }
         return lessFiles;
     };
-    return buildAndWatchAsync(buildTarget, 1)
-        .then(() => buildAndWatchAsync(buildCss, 6));
+
+    await buildAndWatchAsync(buildTarget, 1)
+    await buildAndWatchAsync(buildCss, 6);
 }
 
 function buildCommonSimAsync() {
