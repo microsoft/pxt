@@ -1905,7 +1905,6 @@ function lessFilePaths() {
     return [
         "node_modules/semantic-ui-less",
         "node_modules/pxt-core/theme",
-        "theme/foo/bar",
         "theme",
         "node_modules/pxt-core/react-common/styles",
         "react-common/styles",
