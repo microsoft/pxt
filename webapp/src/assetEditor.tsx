@@ -41,7 +41,13 @@ interface SaveAssetEditorReqeust extends BaseAssetEditorRequest {
     type: "save";
 }
 
-type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorReqeust;
+interface DuplicateAssetEditorRequest extends BaseAssetEditorRequest {
+    type: "duplicate";
+    assetId: string;
+    assetType: pxt.AssetType;
+}
+
+type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorReqeust | DuplicateAssetEditorRequest;
 
 interface BaseAssetEditorResponse {
     id?: number;
@@ -60,7 +66,11 @@ interface SaveAssetEditorResponse extends BaseAssetEditorResponse {
     files: pxt.Map<string>;
 }
 
-type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse;
+interface DuplicateAssetEditorResponse extends BaseAssetEditorResponse {
+    type: "duplicate";
+}
+
+type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
 
 interface AssetEditorDoneClickedEvent {
     type: "event";
@@ -119,6 +129,17 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                     type: request.type
                 });
                 break;
+            case "duplicate":
+                this.initTilemapProject(request.files);
+                const existing = this.lookupAsset(request.assetType, request.assetId);
+                this.setState({
+                    editing: this.tilemapProject.duplicateAsset(existing)
+                });
+                this.sendResponse({
+                    id: request.id,
+                    type: request.type
+                });
+                break;
             case "save":
                 this.sendResponse({
                     id: request.id,
@@ -159,7 +180,11 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     render() {
         if (this.state.editing) {
-            return <ImageFieldEditor ref={this.refHandler}  singleFrame={this.state.editing.type !== "animation"} isMusicEditor={this.state.editing.type === "song"} />
+            return <ImageFieldEditor
+                ref={this.refHandler}
+                singleFrame={this.state.editing.type !== "animation"}
+                isMusicEditor={this.state.editing.type === "song"}
+                doneButtonCallback={this.callbackOnDoneClick} />
         }
 
         return <div></div>
@@ -186,22 +211,28 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         const currentValue = this.editor.getValue();
         if (this.state.isEmptyAsset) {
             const name = currentValue.meta?.displayName;
+            let newAsset: pxt.Asset;
             switch (currentValue.type) {
                 case pxt.AssetType.Image:
-                    this.tilemapProject.createNewProjectImage(currentValue.bitmap, name); break;
+                    newAsset = this.tilemapProject.createNewProjectImage(currentValue.bitmap, name); break;
                 case pxt.AssetType.Tile:
-                    this.tilemapProject.createNewTile(currentValue.bitmap, null, name); break;
+                    newAsset = this.tilemapProject.createNewTile(currentValue.bitmap, null, name); break;
                 case pxt.AssetType.Tilemap:
-                    this.tilemapProject.createNewTilemapFromData(currentValue.data, name); break;
+                    const [newName, data] = this.tilemapProject.createNewTilemapFromData(currentValue.data, name);
+                    newAsset = this.tilemapProject.lookupAssetByName(pxt.AssetType.Tilemap, newName);
+                    break;
                 case pxt.AssetType.Animation:
-                    this.tilemapProject.createNewAnimationFromData(currentValue.frames, currentValue.interval, name); break;
+                    newAsset = this.tilemapProject.createNewAnimationFromData(currentValue.frames, currentValue.interval, name); break;
                 case pxt.AssetType.Song:
-                    this.tilemapProject.createNewSong(currentValue.song, name); break;
+                    newAsset = this.tilemapProject.createNewSong(currentValue.song, name); break;
             }
 
             this.setState({
                 isEmptyAsset: false,
-                editing: currentValue
+                editing: newAsset
+            });
+            this.editor.init(this.state.editing, () => {}, {
+                galleryTiles: this.galleryTiles
             });
         }
         else {
@@ -233,7 +264,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
         for (const filename of Object.keys(newFileJRes)) {
             outFiles[filename] = JSON.stringify(newFileJRes[filename], null, 4);
-            const generatedFile = filename.substring(0, filename.length - "jres".length) + "g.ts";
+            const generatedFile = filename.substring(0, filename.length - "jres".length) + "ts";
             if (outFiles[generatedFile] || filename === pxt.IMAGES_JRES || filename === pxt.TILEMAP_JRES) {
                 outFiles[generatedFile] = pxt.emitProjectImages(newFileJRes[filename]) + "\n" + pxt.emitTilemapsFromJRes(newFileJRes[filename]);
             }

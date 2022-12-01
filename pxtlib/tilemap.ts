@@ -1336,8 +1336,13 @@ namespace pxt {
 
             if (entry.tilemapTile) {
                 // FIXME: we should get the "image.ofBuffer" and blockIdentity from pxtarget probably
+                let varName = key;
+                if (varName.indexOf(".") !== -1) {
+                    varName = varName.split(".").slice(-1)[0];
+                }
+
                 out += `${indent}//% fixedInstance jres blockIdentity=images._tile\n`
-                out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
+                out += `${indent}export const ${varName} = image.ofBuffer(hex\`\`);\n`
 
                 tileEntries.push({ keys: [entry.displayName, getShortIDCore(AssetType.Tile, key, true)], expression: key})
             }
