@@ -39,8 +39,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
     const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
-    const [ showValidationMessage, setShowValidationMessage ] = React.useState(false);
-    const [ validationMessageHint, setValidationMessageHint ] = React.useState("");
+    const [ validationFailures, setValidationFailures ] = React.useState([]);
     const contentRef = React.useRef(undefined);
     const immReaderRef = React.useRef(undefined);
 
@@ -110,22 +109,18 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const markdown = steps[visibleStep].headerContentMd;
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
-    const validateTutorialStep = () => {
+    const validateTutorialStep = async () => {
         let rules: TutorialRule[] = TutorialRules; // TODO thsparks : Filter using id based on what's in the markdown?
-        const tutorialStep = props.steps[props.currentStep];
         let failedResults: TutorialRuleResult[] = [];
         for(let rule of rules) {
-            let result = rule.execute(props.tutorialOptions, tutorialStep);
-            if(!result.validationResult) {
+            let result = await rule.execute(props.tutorialOptions);
+            if(!result.isValid) {
                 failedResults.push(result);
             }
         }
 
-        if(failedResults.length > 0) {
-            const validationMsg = failedResults.map(r => r.message).join('\n');
-            setValidationMessageHint(validationMsg);
-            setShowValidationMessage(true);
-        } else {
+        setValidationFailures(failedResults);
+        if(failedResults.length == 0) {
             tutorialStepNext();
         }
     }
@@ -144,8 +139,8 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const tutorialStepNext = () => {
         const step = Math.min(currentStep + 1, props.steps.length - 1);
         pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: isModal ? 1 : 0 }, { interactiveConsent: true });
-        if(showValidationMessage) {
-            setShowValidationMessage(false);
+        if(validationFailures.length > 0) {
+            setValidationFailures([]);
         }
         setCurrentStep(step);
     }
@@ -208,8 +203,8 @@ export function TutorialContainer(props: TutorialContainerProps) {
                 { nextButton }
             </div>
         </div>
-        {showValidationMessage && 
-            <TutorialValidationErrorMessage onContinueClicked={tutorialStepNext} onReturnClicked={() => setShowValidationMessage(false)} hint={validationMessageHint}/>}
+        {validationFailures.length > 0 &&
+            <TutorialValidationErrorMessage onContinueClicked={tutorialStepNext} onReturnClicked={() => setValidationFailures([])} validationFailures={validationFailures}/>}
         {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode &&
             <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}
