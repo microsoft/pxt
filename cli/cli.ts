@@ -1394,14 +1394,16 @@ export function ghpPushAsync(builtPackaged: string, minify = false) {
         .then(() => ghpGitAsync("push"))
 }
 
-function maxMTimeAsync(dirs: string[]) {
+async function maxMTimeAsync(dirs: string[], maxDepth: number) {
     let max = 0
-    return U.promiseMapAll(dirs, dn => readDirAsync(dn)
-        .then(files => U.promiseMapAll(files, fn => statAsync(path.join(dn, fn))
-            .then(st => {
-                max = Math.max(st.mtime.getTime(), max)
-            }))))
-        .then(() => max)
+    await U.promiseMapAll(dirs, async dir => {
+        const files = nodeutil.allFiles(dir, { allowMissing: true, maxDepth });
+        await U.promiseMapAll(files, async file => {
+            const st = await statAsync(file);
+            max = Math.max(st.mtime.getTime(), max);
+        });
+    });
+    return max;
 }
 
 export interface BuildTargetOptions {
@@ -1899,6 +1901,19 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     pxt.log(`target-strings.json built`)
 }
 
+function lessFilePaths() {
+    return [
+        "node_modules/semantic-ui-less",
+        "node_modules/pxt-core/theme",
+        "theme/foo/bar",
+        "theme",
+        "node_modules/pxt-core/react-common/styles",
+        "react-common/styles",
+        "node_modules/@fortawesome",
+        "node_modules/pxt-core/node_modules/@fortawesome"
+    ];
+}
+
 async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     if (!fs.existsSync(path.join("theme", "style.less")) || !fs.existsSync(path.join("theme", "theme.config"))) {
         return;
@@ -1910,17 +1925,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     nodeutil.mkdirP(path.join("built", "web"));
     const lessPath = require.resolve('less');
     const lessCPath = path.join(path.dirname(lessPath), '/bin/lessc');
-
-    const lessIncludePaths = [
-        "node_modules/semantic-ui-less",
-        "node_modules/pxt-core/theme",
-        "theme/foo/bar",
-        "theme",
-        "node_modules/pxt-core/react-common/styles",
-        "react-common/styles",
-        "node_modules/@fortawesome",
-        "node_modules/pxt-core/node_modules/@fortawesome" // for locally linked dev environment
-    ].join(":");
+    const lessIncludePaths = lessFilePaths().join(":");
 
     // Build semantic css
     await nodeutil.spawnAsync({
@@ -1977,6 +1982,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                 "--include-path=" + lessIncludePaths
             ]
         });
+
         let appCss = await readFileAsync(`built/web/react-common-${app}.css`, "utf8");
         appCss = await linkFontAsync("fa-solid-900", appCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
         appCss = await linkFontAsync("fa-regular-400", appCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
@@ -2559,7 +2565,7 @@ function targetCrowdinBranch(): string {
     return theme ? theme.crowdinBranch : undefined;
 }
 
-function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
+function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promise<void> {
     let currMtime = Date.now()
     return f()
         .then(dirs => {
@@ -2567,7 +2573,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
             pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
                 U.delay(1000)
-                    .then(() => maxMTimeAsync(dirs))
+                    .then(() => maxMTimeAsync(dirs, maxDepth))
                     .then(num => {
                         if (num > currMtime) {
                             currMtime = num
@@ -2595,7 +2601,7 @@ function buildFailed(msg: string, e: any) {
     console.log("")
 }
 
-function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
+async function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
     if (fs.existsSync("pxt.json") &&
         !(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
@@ -2611,17 +2617,41 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
         simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
     }
 
-    return buildAndWatchAsync(() => buildCommonSimAsync()
-        .catch(e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => internalBuildTargetAsync({ localDir: true, rebundle }))
-        .catch(e => buildFailed("target build failed: " + e.message, e))
-        .then(() => {
-            let toWatch = dirsToWatch.slice();
-            if (hasCommonPackages) {
-                toWatch = toWatch.concat(simDirectories);
-            }
-            return toWatch.filter(d => fs.existsSync(d));
-        }));
+    const buildTarget = async () => {
+        let currentlyBuilding = "common sim";
+        try {
+            await buildCommonSimAsync();
+            currentlyBuilding = "target";
+            await internalBuildTargetAsync({ localDir: true, rebundle });
+        } catch (e) {
+            buildFailed(`${currentlyBuilding} build failed: ${e?.message}`, e);
+        }
+
+        let toWatch = dirsToWatch.slice();
+        if (hasCommonPackages) {
+            toWatch = toWatch.concat(simDirectories);
+        }
+        return toWatch.filter(d => fs.existsSync(d));
+    }
+
+    const lessFiles = lessFilePaths().filter(p => fs.existsSync(p));
+    // css build already occurs midway through internalBuildTargetAsync, so skip first rerun
+    let skipFirstCssBuild = true;
+    const buildCss = async () => {
+        if (skipFirstCssBuild) {
+            skipFirstCssBuild = false;
+        } else {
+            console.log("rebuilding css");
+            await buildSemanticUIAsync();
+            console.log("css build complete");
+        }
+        return lessFiles;
+    };
+
+    // some of the watched targets for buildTarget include nested built files,
+    // such as libs/game/_locales/*, so can't just grab subdirectories
+    await buildAndWatchAsync(buildTarget, 1);
+    await buildAndWatchAsync(buildCss, 6);
 }
 
 function buildCommonSimAsync() {
