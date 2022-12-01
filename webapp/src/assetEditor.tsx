@@ -37,7 +37,7 @@ interface CreateAssetEditorRequest extends BaseAssetEditorRequest {
     assetType: pxt.AssetType;
 }
 
-interface SaveAssetEditorReqeust extends BaseAssetEditorRequest {
+interface SaveAssetEditorRequest extends BaseAssetEditorRequest {
     type: "save";
 }
 
