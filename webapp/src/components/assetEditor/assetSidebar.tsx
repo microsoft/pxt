@@ -228,11 +228,11 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                         className="asset-editor-button"
                         leftIcon="icon trash"
                         onClick={this.showDeleteModal} />}
-                <Button className="teal asset-palette-button" 
-                    title={lf("Color Palette")} 
-                    label={lf("Color Palette")} 
-                    leftIcon="fas fa-palette" 
-                    onClick={this.showPaletteModal} 
+                <Button className="teal asset-palette-button"
+                    title={lf("Color Palette")}
+                    label={lf("Color Palette")}
+                    leftIcon="fas fa-palette"
+                    onClick={this.showPaletteModal}
                 />
             </List>
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>

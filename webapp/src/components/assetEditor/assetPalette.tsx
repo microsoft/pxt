@@ -14,11 +14,10 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
 
     const [currentColors, setCurrentColors] = React.useState<string[] | undefined>(pxt.appTarget.runtime.palette);
-        
+
     useEffect(() => {
         // save pxt.json
         pkg.mainEditorPkg().updateConfigAsync(cfg => cfg.palette = currentColors);
-        
     }, [currentColors]);
 
     const onPaletteEdit = (selected: Palette) => {
@@ -40,7 +39,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         }
 
         return <Modal title={lf("Edit Palette")} onClose={onModalClose}>
-            <PalettePicker 
+            <PalettePicker
                 palettes={paletteOptions}
                 selectedId={currentPalette.id}
                 onPaletteSelected={onPaletteEdit}
