@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Modal } from "../controls/Modal";
+import { useEffect } from "react";
 import { ColorPickerField } from "./ColorPickerField";
 import { Palette } from "./Palettes";
 
@@ -13,6 +13,10 @@ export const PaletteEditor = (props: PaletteEditorProps) => {
 
     const [currentPalette, setCurrentPalette] = React.useState<Palette | undefined>(undefined);
 
+    useEffect(() => {
+        onPaletteChanged(currentPalette || palette);
+    }, [currentPalette]);
+    
     const updateColor = (index: number, newColor: string) => {
         const toUpdate = currentPalette || palette;
         setCurrentPalette({
@@ -45,22 +49,16 @@ export const PaletteEditor = (props: PaletteEditorProps) => {
         setCurrentPalette(res);
     }
 
-    const onClose = () => {
-        onPaletteChanged(currentPalette || palette);
-    }
-
-    return <Modal title={lf("Edit Palette")} onClose={onClose}>
-        <div className="common-palette-editor">
-            {(currentPalette || palette).colors.map((c, i) =>
-                <ColorPickerField
-                    key={i}
-                    index={i}
-                    color={c}
-                    onColorChanged={newColor => updateColor(i, newColor)}
-                    onMoveColor={up => moveColor(i, up)}
-                    disabled={i === 0}
-                />
-            )}
-        </div>
-    </Modal>
+    return <div className="common-palette-editor">
+        {(currentPalette || palette).colors.map((c, i) =>
+            <ColorPickerField
+                key={i}
+                index={i}
+                color={c}
+                onColorChanged={newColor => updateColor(i, newColor)}
+                onMoveColor={up => moveColor(i, up)}
+                disabled={i === 0}
+            />
+        )}
+    </div>
 }

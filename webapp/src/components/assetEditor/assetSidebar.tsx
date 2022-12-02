@@ -11,6 +11,7 @@ import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEdit
 import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
+import { AssetPalette } from "./assetPalette";
 import { getBlocksEditor } from "../../app";
 
 interface AssetDetail {
@@ -29,6 +30,7 @@ interface AssetSidebarProps {
 
 interface AssetSidebarState {
     showDeleteModal: boolean;
+    showPaletteModal: boolean;
     canEdit: boolean;
     canCopy: boolean;
     canDelete: boolean;
@@ -39,7 +41,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
     constructor(props: AssetSidebarProps) {
         super(props);
-        this.state = { showDeleteModal: false, canEdit: true, canCopy: true, canDelete: true };
+        this.state = { showDeleteModal: false, showPaletteModal: false, canEdit: true, canCopy: true, canDelete: true };
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: AssetSidebarProps) {
@@ -150,6 +152,14 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         this.setState({ showDeleteModal: false });
     }
 
+    protected showPaletteModal = () => {
+        this.setState({ showPaletteModal: true });
+    }
+
+    protected hidePaletteModal = () => {
+        this.setState({ showPaletteModal: false });
+    }
+
     protected deleteAssetHandler = () => {
         pxt.tickEvent("assets.delete", { type: this.props.asset.type.toString() });
 
@@ -163,7 +173,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
     render() {
         const { asset, isGalleryAsset } = this.props;
-        const { showDeleteModal, canEdit, canCopy, canDelete } = this.state;
+        const { showDeleteModal, showPaletteModal, canEdit, canCopy, canDelete } = this.state;
         const details = this.getAssetDetails();
         const isNamed = asset?.meta?.displayName || isGalleryAsset;
         const name = getDisplayNameForAsset(asset, isGalleryAsset);
@@ -189,35 +199,42 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                     return <div key={el.name} className="asset-editor-sidebar-detail">{`${el.name}: ${el.value}`}</div>
                 })}
             </List>
-            { asset && <List className="asset-editor-sidebar-controls">
-                {canEdit && <Button
-                    label={lf("Edit")}
-                    title={lf("Edit the selected asset")}
-                    ariaLabel={lf("Edit the selected asset")}
-                    leftIcon="icon edit"
-                    className="asset-editor-button"
-                    onClick={this.editAssetHandler} />}
-                <Button
-                    label={lf("Duplicate")}
-                    title={lf("Duplicate the selected asset")}
-                    ariaLabel={lf("Duplicate the selected asset")}
-                    leftIcon="icon copy"
-                    className="asset-editor-button"
-                    onClick={this.duplicateAssetHandler} />
-                {canCopy && <Button
-                    label={lf("Copy")}
-                    title={lf("Copy the selected asset to the clipboard")}
-                    ariaLabel={lf("Copy the selected asset to the clipboard")}
-                    leftIcon="icon paste"
-                    className="asset-editor-button"
-                    onClick={this.copyAssetHandler} />}
-                {canDelete && <Button
-                    label={lf("Delete Asset")}
-                    title={lf("Delete the selected asset")}
-                    ariaLabel={lf("Delete the selected asset")}
-                    className="delete-asset"
-                    onClick={this.showDeleteModal} />}
-            </List>}
+            <List className="asset-editor-sidebar-controls">
+                    { asset && canEdit && <Button
+                        label={lf("Edit")}
+                        title={lf("Edit the selected asset")}
+                        ariaLabel={lf("Edit the selected asset")}
+                        leftIcon="icon edit"
+                        className="asset-editor-button"
+                        onClick={this.editAssetHandler} />}
+                    { asset && <Button
+                        label={lf("Duplicate")}
+                        title={lf("Duplicate the selected asset")}
+                        ariaLabel={lf("Duplicate the selected asset")}
+                        leftIcon="icon copy"
+                        className="asset-editor-button"
+                        onClick={this.duplicateAssetHandler} />}
+                    { asset && canCopy && <Button
+                        label={lf("Copy")}
+                        title={lf("Copy the selected asset to the clipboard")}
+                        ariaLabel={lf("Copy the selected asset to the clipboard")}
+                        leftIcon="icon paste"
+                        className="asset-editor-button"
+                        onClick={this.copyAssetHandler} />}
+                    { asset && canDelete && <Button
+                        label={lf("Delete")}
+                        title={lf("Delete the selected asset")}
+                        ariaLabel={lf("Delete the selected asset")}
+                        className="asset-editor-button"
+                        leftIcon="icon trash"
+                        onClick={this.showDeleteModal} />}
+                <Button className="teal asset-palette-button" 
+                    title={lf("Color Palette")} 
+                    label={lf("Color Palette")} 
+                    leftIcon="fas fa-palette" 
+                    onClick={this.showPaletteModal} 
+                />
+            </List>
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
             {showDeleteModal && <Modal
                 className="asset-editor-delete-dialog"
@@ -227,6 +244,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 parentElement={document.getElementById("root")}>
                 <div>{lf("Are you sure you want to delete {0}? Deleted assets cannot be recovered.", name)}</div>
             </Modal>}
+            {showPaletteModal && <AssetPalette onClose={this.hidePaletteModal} />}
         </div>
     }
 }

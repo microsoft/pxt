@@ -1,24 +1,37 @@
 import * as React from "react";
-import { Button } from "../../../../react-common/components/controls/Button";
+import * as pkg from "../../package";
+import { useEffect } from "react";
+import { Modal } from "../../../../react-common/components/controls/Modal";
 import { PalettePicker } from "../../../../react-common/components/palette/PalettePicker";
+import { PaletteEditor } from "../../../../react-common/components/palette/PaletteEditor";
 import { AllPalettes, Palette } from "../../../../react-common/components/palette/Palettes";
 
-export const AssetPalette = () => {
-    const [openPalette, setOpenPalette] = React.useState<boolean>(false);
+export interface AssetPaletteProps {
+    onClose: () => void;
+}
+
+export const AssetPalette = (props: AssetPaletteProps) => {
+    const { onClose } = props;
 
     const [currentColors, setCurrentColors] = React.useState<string[] | undefined>(pxt.appTarget.runtime.palette);
-
-    const openPaletteModal = () => {
-        setOpenPalette(!openPalette);
-    }
-
-    const onPaletteSelected = (selected: Palette) => {
-        //this.config.palette = selected.colors;
-        setCurrentColors(selected.colors);
+        
+    useEffect(() => {
         // save pxt.json
+        pkg.mainEditorPkg().updateConfigAsync(cfg => cfg.palette = currentColors);
+        
+    }, [currentColors]);
+
+    const onPaletteEdit = (selected: Palette) => {
+        setCurrentColors(selected.colors);
     }
 
-    const renderPalettePicker = () => {
+    const onModalClose = () => {
+        onClose();
+        // force project view update
+        // possibly check whether there is a change and only update accordingly
+    }
+
+    const renderPaletteModal = () => {
         const currentPalette = getCurrentPalette();
         let paletteOptions = AllPalettes.slice();
 
@@ -26,18 +39,17 @@ export const AssetPalette = () => {
             paletteOptions.unshift(currentPalette)
         }
 
-        return <>
-            <PalettePicker
+        return <Modal title={lf("Edit Palette")} onClose={onModalClose}>
+            <PalettePicker 
                 palettes={paletteOptions}
                 selectedId={currentPalette.id}
-                onPaletteSelected={onPaletteSelected}
+                onPaletteSelected={onPaletteEdit}
             />
-        </>
+            <PaletteEditor palette={currentPalette} onPaletteChanged={onPaletteEdit}/>
+        </Modal>
     }
 
     const getCurrentPalette = () => {
-        // const configPalette = this.config.palette || pxt.appTarget.runtime.palette;
-        // const configPalette = pxt.appTarget.runtime.palette;
         const configPalette = currentColors || pxt.appTarget.runtime.palette;
 
         if (configPalette) {
@@ -62,13 +74,5 @@ export const AssetPalette = () => {
     }
 
 
-    return <div className="asset-palette">
-        <Button className="teal asset-palette-button" 
-            title={lf("Color Palette")} 
-            label={lf("Color Palette")} 
-            leftIcon="fas fa-palette" 
-            onClick={openPaletteModal} 
-        />
-        {openPalette && renderPalettePicker()}
-    </div>
+    return renderPaletteModal();
 }
