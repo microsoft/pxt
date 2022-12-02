@@ -1323,7 +1323,7 @@ namespace pxt {
                 v = { data: v } as any
             }
             let ns = v.namespace || base.namespace || ""
-            if (ns) ns += "."
+            if (ns && !ns.endsWith(".")) ns += "."
             let id = v.id || ns + k
             let icon = v.icon
             let mimeType = v.mimeType || base.mimeType

@@ -1039,34 +1039,43 @@ namespace pxt {
             this.redoStack = [];
         }
 
-        loadTilemapJRes(jres: Map<JRes>, skipDuplicates = false) {
+        loadTilemapJRes(jres: Map<JRes>, skipDuplicates = false, gallery = false) {
             jres = inflateJRes(jres)
 
-            const tiles = this.readImages(jres, true).filter(im => im.type === pxt.AssetType.Tile) as Tile[];
+            const tiles = this.readImages(jres, !gallery).filter(im => im.type === pxt.AssetType.Tile) as Tile[];
 
             // If we are loading JRES into an existing project (i.e. in multipart tutorials)
             // we need to correct the tile ids because the user may have created new tiles
             // and taken some of the ids that were used by the tutorial author
             let tileMapping: Map<string> = {};
 
-            for (const tile of tiles) {
-                if (skipDuplicates) {
-                    const existing = this.resolveTileByBitmap(tile.bitmap);
-                    if (existing) {
-                        tileMapping[tile.id] = existing.id;
-                        continue;
-                    }
+            if (gallery) {
+                for (const tile of tiles) {
+                    this.gallery.tiles.add(tile);
                 }
+            }
+            else {
+                for (const tile of tiles) {
+                    if (skipDuplicates) {
+                        const existing = this.resolveTileByBitmap(tile.bitmap);
+                        if (existing) {
+                            tileMapping[tile.id] = existing.id;
+                            continue;
+                        }
+                    }
 
-                const newTile = this.createNewTile(tile.bitmap, tile.id, tile.meta.displayName);
+                    const newTile = this.createNewTile(tile.bitmap, tile.id, tile.meta.displayName);
 
-                if (newTile.id !== tile.id) {
-                    tileMapping[tile.id] = newTile.id;
+                    if (newTile.id !== tile.id) {
+                        tileMapping[tile.id] = newTile.id;
+                    }
                 }
             }
 
+            const state = gallery ? this.gallery : this.state;
+
             for (const tm of getTilemaps(jres)) {
-                this.state.tilemaps.add({
+                state.tilemaps.add({
                     internalID: this.getNewInternalId(),
                     type: AssetType.Tilemap,
                     id: tm.id,
@@ -1085,33 +1094,35 @@ namespace pxt {
             }
         }
 
-        loadAssetsJRes(jres: Map<JRes>) {
+        loadAssetsJRes(jres: Map<JRes>, gallery = false) {
             jres = inflateJRes(jres);
 
             const toInflate = [];
+
+            const state = gallery ? this.gallery : this.state;
 
             for (const key of Object.keys(jres)) {
                 const entry = jres[key];
 
                 if (entry.tilemapTile) {
-                    this.state.tiles.add(this.generateImage(entry, AssetType.Tile));
+                    state.tiles.add(this.generateImage(entry, AssetType.Tile));
                 } else if (entry.mimeType === IMAGE_MIME_TYPE) {
-                    this.state.images.add(this.generateImage(entry, AssetType.Image));
+                    state.images.add(this.generateImage(entry, AssetType.Image));
                 } else if (entry.mimeType === ANIMATION_MIME_TYPE) {
                     const [animation, needsInflation] = this.generateAnimation(entry)
                     if (needsInflation) {
                         toInflate.push(animation);
                     } else {
-                        this.state.animations.add(animation);
+                        state.animations.add(animation);
                     }
                 } else if (entry.mimeType === SONG_MIME_TYPE) {
-                    this.state.songs.add(this.generateSong(entry));
+                    state.songs.add(this.generateSong(entry));
                 }
             }
 
             for (const animation of toInflate) {
-                this.state.animations.add(
-                    this.inflateAnimation(animation, this.state.images.getSnapshot())
+                state.animations.add(
+                    this.inflateAnimation(animation, state.images.getSnapshot())
                 );
             }
         }
@@ -1325,8 +1336,13 @@ namespace pxt {
 
             if (entry.tilemapTile) {
                 // FIXME: we should get the "image.ofBuffer" and blockIdentity from pxtarget probably
+                let varName = key;
+                if (varName.indexOf(".") !== -1) {
+                    varName = varName.split(".").slice(-1)[0];
+                }
+
                 out += `${indent}//% fixedInstance jres blockIdentity=images._tile\n`
-                out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
+                out += `${indent}export const ${varName} = image.ofBuffer(hex\`\`);\n`
 
                 tileEntries.push({ keys: [entry.displayName, getShortIDCore(AssetType.Tile, key, true)], expression: key})
             }
