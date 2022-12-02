@@ -9,7 +9,7 @@ interface TutorialStepCounterProps {
 }
 
 export function TutorialStepCounter(props: TutorialStepCounterProps) {
-    const { tutorialId, currentStep, totalSteps, title } = props;
+    const { tutorialId, currentStep, totalSteps, title, setTutorialStep } = props;
 
     const MAX_BUBBLES = 7;
     const startPoint = Math.max(0, Math.min(currentStep - Math.floor(MAX_BUBBLES / 2), totalSteps - MAX_BUBBLES));
@@ -20,8 +20,19 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
     }
 
     const handleSetStep = (step: number) => () => {
-        const { setTutorialStep } = props;
-        pxt.tickEvent("tutorial.step", { tutorial: tutorialId, step: step }, { interactiveConsent: true });
+        pxt.tickEvent("tutorial.step", { tutorial: tutorialId, step: step, prevStep: currentStep }, { interactiveConsent: true });
+        setTutorialStep(step);
+    }
+
+    const handleNextStep = () => {
+        const step = Math.min(currentStep + 1, totalSteps - 1);
+        pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: 0, isStepCounter: 1 }, { interactiveConsent: true });
+        setTutorialStep(step);
+    }
+
+    const handlePreviousStep = () => {
+        const step = Math.max(currentStep - 1, 0);
+        pxt.tickEvent("tutorial.previous", { tutorial: tutorialId, step: step, isModal: 0, isStepCounter: 1 }, { interactiveConsent: true });
         setTutorialStep(step);
     }
 
@@ -39,7 +50,7 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
                 disabled={currentStep == 0}
                 className="square-button"
                 leftIcon="icon left chevron"
-                onClick={handleSetStep(currentStep - 1)}
+                onClick={handlePreviousStep}
                 aria-label={backButtonLabel}
                 title={backButtonLabel}
             />
@@ -59,7 +70,7 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
                 disabled={currentStep == totalSteps - 1}
                 className="square-button"
                 leftIcon="icon right chevron"
-                onClick={handleSetStep(currentStep + 1)}
+                onClick={handleNextStep}
                 aria-label={nextButtonLabel}
                 title={nextButtonLabel}
             />
