@@ -16,7 +16,7 @@ export const PaletteEditor = (props: PaletteEditorProps) => {
     useEffect(() => {
         onPaletteChanged(currentPalette || palette);
     }, [currentPalette]);
-    
+
     const updateColor = (index: number, newColor: string) => {
         const toUpdate = currentPalette || palette;
         setCurrentPalette({
@@ -50,14 +50,13 @@ export const PaletteEditor = (props: PaletteEditorProps) => {
     }
 
     return <div className="common-palette-editor">
-        {(currentPalette || palette).colors.map((c, i) =>
+        {(currentPalette || palette).colors.slice(1).map((c, i) =>
             <ColorPickerField
                 key={i}
                 index={i}
                 color={c}
-                onColorChanged={newColor => updateColor(i, newColor)}
-                onMoveColor={up => moveColor(i, up)}
-                disabled={i === 0}
+                onColorChanged={newColor => updateColor(i + 1, newColor)}
+                onMoveColor={up => moveColor(i + 1, up)}
             />
         )}
     </div>
