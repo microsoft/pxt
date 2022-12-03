@@ -24,15 +24,15 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
         setTutorialStep(step);
     }
 
-    const handleNextStep = () => {
-        const step = Math.min(currentStep + 1, totalSteps - 1);
-        pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: 0, isStepCounter: 1 }, { interactiveConsent: true });
-        setTutorialStep(step);
-    }
-
     const handlePreviousStep = () => {
         const step = Math.max(currentStep - 1, 0);
         pxt.tickEvent("tutorial.previous", { tutorial: tutorialId, step: step, isModal: 0, isStepCounter: 1 }, { interactiveConsent: true });
+        setTutorialStep(step);
+    }
+
+    const handleNextStep = () => {
+        const step = Math.min(currentStep + 1, totalSteps - 1);
+        pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: 0, isStepCounter: 1 }, { interactiveConsent: true });
         setTutorialStep(step);
     }
 
