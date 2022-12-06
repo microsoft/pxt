@@ -9,18 +9,24 @@ namespace pxt.blocks {
         extensions?: string[]; // currently unpopulated. list of extensions used in screenshotted projects
     }
 
+    export interface DomToWorkspaceOptions {
+        applyMetaComments?: boolean;
+    }
+
     /**
      * Converts a DOM into workspace without triggering any Blockly event. Returns the new block ids
      * @param dom
      * @param workspace
      */
-    export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace): string[] {
+    export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace, opts?: DomToWorkspaceOptions): string[] {
         pxt.tickEvent(`blocks.domtow`)
         let newBlockIds: string[] = [];
         try {
             Blockly.Events.disable();
             newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
-            applyMetaComments(workspace);
+            if (opts?.applyMetaComments) {
+                applyMetaComments(workspace);
+            }
         } catch (e) {
             pxt.reportException(e);
         } finally {
@@ -41,7 +47,7 @@ namespace pxt.blocks {
                     b.setCommentText(cc || null);
                     (workspace as Blockly.WorkspaceSvg).highlightBlock?.(b.id)
                 }
-                if (/@tutorialdelete/.test(c)) {
+                if (/@hide/.test(c)) {
                     b.dispose(true);
                 }
             });
