@@ -26,7 +26,7 @@ namespace pxt.blocks {
         } finally {
             Blockly.Events.enable();
         }
-        return newBlockIds;
+        return newBlockIds.filter(id => workspace.getBlockById(id));
     }
 
     function applyMetaComments(workspace: Blockly.Workspace) {
@@ -40,6 +40,9 @@ namespace pxt.blocks {
                     const cc = c.replace(/@highlight/g, '').trim();
                     b.setCommentText(cc || null);
                     (workspace as Blockly.WorkspaceSvg).highlightBlock?.(b.id)
+                }
+                if (/@tutorialdelete/.test(c)) {
+                    b.dispose(true);
                 }
             });
     }
