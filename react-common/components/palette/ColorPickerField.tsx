@@ -21,7 +21,7 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
     }
 
     const onColorPickerChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setCurrentColor(e.target.value);
+        setCurrentColor(e.target.value.toUpperCase());
     }
 
     const onTextInputChanged = (newValue: string) => {
@@ -32,7 +32,7 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
             newValue = newValue.substring(0,7);
         }
         if (/#[0-9a-fA-F]{6}/.test(newValue)) {
-            onColorChanged(newValue);
+            onColorChanged(newValue.toUpperCase());
         }
     }
 
