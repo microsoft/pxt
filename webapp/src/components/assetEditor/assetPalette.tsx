@@ -13,7 +13,7 @@ export interface AssetPaletteProps {
 export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
 
-    const [currentColors, setCurrentColors] = React.useState<string[] | undefined>(pxt.appTarget.runtime.palette);
+    const [currentColors, setCurrentColors] = React.useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
 
     useEffect(() => {
         // save pxt.json
@@ -25,9 +25,9 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const onModalClose = () => {
-        onClose();
         // force project view update
         // possibly check whether there is a change and only update accordingly
+        onClose();
     }
 
     const renderPaletteModal = () => {
