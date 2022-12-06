@@ -115,9 +115,6 @@ async function validateAnswerKeyBlocksExist(parent: IProjectView, tutorialOption
     }
 
     const isValid = missingBlocks.length == 0;
-    const missingBlocksMd = `\`\`\`\`blocks
-    ${missingBlocks.join('\n')}
-    \`\`\``; // stepInfo.hintContentMd
     const blockImageUris = await getBlockImageUris(missingBlocks);
     const blockImages = (
         <div>
@@ -126,9 +123,6 @@ async function validateAnswerKeyBlocksExist(parent: IProjectView, tutorialOption
         </div>);
     return {
         isValid: isValid,
-        hint: isValid ? undefined : blockImages 
-        // (
-        //     <MarkedContent markdown={missingBlocksMd} parent={parent} />
-        // ), //`Missing blocks: ${missingBlocks.join(", ")}`
+        hint: isValid ? undefined : blockImages,
     };
 }
