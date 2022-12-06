@@ -10,8 +10,8 @@ is an alternative to the web version for offline and portability purposes.
 
 #### Windows app deprecation
 
-MakeCode Windows app is being deprecated. Support for the Windows app
-will end after June 2022.
+MakeCode Windows app is deprecated. Support for the Windows app
+ended after June 2022.
 
 ### ~
 

@@ -60,11 +60,6 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /arm/i.test(navigator.platform);
     }
 
-    // Detects if we are running inside the UWP runtime (Microsoft Edge)
-    export function isUwpEdge(): boolean {
-        return typeof window !== "undefined" && !!(<any>window).Windows;
-    }
-
     /*
     Notes on browser detection
 
@@ -148,8 +143,9 @@ namespace pxt.BrowserUtils {
         return isPxtElectron() || isIpcRenderer();
     }
 
-    // this function gets overriden when loading pxtwinrt.js
-    export let isWinRT = () => false;
+    // TODO jwunderl: double potential check usage in microbit / adafruit
+    declare let Windows: any;
+    export let isWinRT = () => typeof (Windows as any) !== "undefined";
 
     export function isLocalHost(ignoreFlags?: boolean): boolean {
         try {

@@ -265,29 +265,6 @@ function pairBootloaderAsync(): Promise<void> {
     return pairAsync();
 }
 
-function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
-    log(`winrt deploy`)
-    return pxt.Util.promiseTimeout(180000, hidDeployCoreAsync(r, d))
-        .catch((e) => {
-            return pxt.packetio.disconnectAsync()
-                .catch((e) => {
-                    // Best effort disconnect; at this point we don't even know the state of the device
-                    pxt.reportException(e);
-                })
-                .then(() => {
-                    return core.confirmAsync({
-                        header: lf("Something went wrong..."),
-                        body: lf("Flashing your {0} took too long. Please disconnect your {0} from your computer and try reconnecting it.", pxt.appTarget.appTheme.boardName || lf("device")),
-                        disagreeLbl: lf("Ok"),
-                        hideAgree: true
-                    });
-                })
-                .then(() => {
-                    return pxt.commands.saveOnlyAsync(r);
-                });
-        });
-}
-
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     log('local deploy');
     core.infoNotification(lf("Uploading..."));
@@ -308,15 +285,6 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return deploy()
 }
 
-function winrtSaveAsync(resp: pxtc.CompileResult) {
-    return pxt.winrt.saveOnlyAsync(resp)
-        .then((saved) => {
-            if (saved) {
-                core.infoNotification(lf("file saved!"));
-            }
-        })
-        .catch((e) => core.errorNotification(lf("saving file failed...")));
-}
 
 export function setExtensionResult(res: pxt.editor.ExtensionResult) {
     extensionResult = res;
@@ -434,12 +402,6 @@ export async function initAsync() {
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
         pxt.commands.workspaceLoadedAsync = nativeHostWorkspaceLoadedCoreAsync;
-    } else if (pxt.winrt.isWinRT()) { // windows app
-        log(`deploy: winrt`)
-        pxt.packetio.mkPacketIOAsync = pxt.winrt.mkWinRTPacketIOAsync;
-        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
-        pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
-        pxt.commands.saveOnlyAsync = winrtSaveAsync;
     } else if (pxt.BrowserUtils.isPxtElectron()) {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
@@ -460,15 +422,6 @@ export async function initAsync() {
     }
 
     applyExtensionResult();
-
-    // don't initialize until extension has hookup as well
-    if (pxt.winrt.isWinRT()) {
-        log(`deploy: init winrt`)
-        pxt.winrt.initWinrtHid(
-            () => pxt.packetio.initAsync(true).then(wrap => wrap?.reconnectAsync()),
-            () => pxt.packetio.disconnectAsync()
-        );
-    }
 }
 
 export function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfConnected = false) {

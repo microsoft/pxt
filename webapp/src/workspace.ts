@@ -1,6 +1,5 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
-/// <reference path="../../built/pxtwinrt.d.ts" />
 
 import * as db from "./db";
 import * as core from "./core";
@@ -76,10 +75,6 @@ export function setupWorkspace(id: string) {
             // Iframe workspace, the editor relays sync messages back and forth when hosted in an iframe
             impl = iframeworkspace.provider;
             break;
-        case "uwp":
-            fileworkspace.setApiAsync(pxt.winrt.workspace.fileApiAsync);
-            impl = pxt.winrt.workspace.getProvider(fileworkspace.provider);
-            break;
         case "idb":
             impl = indexedDBWorkspace.provider;
             break;
@@ -91,11 +86,6 @@ export function setupWorkspace(id: string) {
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
-    if (pxt.BrowserUtils.isWinRT()) {
-        // windows app can fail on occasion, in particular when deleting projects;
-        // ignore and keep trying to read from / write.
-        return;
-    }
     pxt.log(`workspace: error '${reason}', switching from ${implType} to memory workspace`);
 
     const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning

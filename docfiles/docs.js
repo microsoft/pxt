@@ -399,8 +399,6 @@ function buildLangPicker() {
                 pxt.BrowserUtils.setCookieLang(langId, /** docs **/ true);
                 if (langId !== initialLang) {
                     pxt.tickEvent("menu.lang.changelang", { lang: langId, docs: "true" });
-                    // In react app before reload we are using pxt.winrt.releaseAllDevicesAsync()
-                    // In docs we currently don't have access to pxt.winrt
                     location.reload();
                 } else {
                     pxt.tickEvent(`menu.lang.samelang`, { lang: langId, docs: "true" });

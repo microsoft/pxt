@@ -466,7 +466,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
         const openNewTab = pxt.appTarget.appTheme.openProjectNewTab
             && !pxt.BrowserUtils.isElectron()
-            && !pxt.BrowserUtils.isUwpEdge()
             && !pxt.BrowserUtils.isIOS();
         const openDependent = openNewTab
             && pxt.appTarget.appTheme.openProjectNewDependentTab

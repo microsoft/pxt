@@ -409,11 +409,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxt.tickEvent(`typescript.showBlocks`);
         let initPromise = Promise.resolve();
 
-        const isWinApp = pxt.BrowserUtils.isWinRT();
-        if (isWinApp) {
-            return;
-        }
-
         if (!this.currFile) {
             const mainPkg = pkg.mainEditorPkg();
             if (mainPkg && mainPkg.files[pxt.MAIN_TS]) {
@@ -641,8 +636,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     display(): JSX.Element {
         const showErrorList = pxt.appTarget.appTheme.errorList;
         const isAndroid = pxt.BrowserUtils.isAndroid();
-        const isWinApp = pxt.BrowserUtils.isWinRT();
-        const textElements = isWinApp ? this.getWinAppErrorMsg(): [];
 
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea ${isAndroid ? "android" : ""}`} style={{ direction: 'ltr' }}>
@@ -650,43 +643,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                     <div id="monacoDebuggerToolbox"></div>
                 </div>}
-
-                { isWinApp ?
-                    <div id="winAppError">
-                        <img className="ui medium centered image" alt={lf("An image of a shrugging board")} src={pxt.appTarget.appTheme.winAppDeprImage}/>
-                        <div className="ui centered" id="winAppErrorMsg">
-                            {textElements}
-                        </div>
-                    </div>:
-                    <div id="monacoEditorRightArea" className="monacoEditorRightArea">
-                        <div id='monacoEditorInner'>
-                            <MonacoFlyout ref={this.handleFlyoutRef} fileType={this.fileType}
-                                blockIdMap={this.blockIdMap}
-                                moveFocusToParent={this.moveFocusToToolbox}
-                                insertSnippet={this.insertSnippet}
-                                setInsertionSnippet={this.setInsertionSnippet}
-                                parent={this.parent} />
-                        </div>
-                        {showErrorList && <ErrorList isInBlocksEditor={false} onSizeChange={this.setErrorListState}
-                            listenToErrorChanges={this.listenToErrorChanges}
-                            listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
-                            startDebugger={this.startDebugger} />}
+                <div id="monacoEditorRightArea" className="monacoEditorRightArea">
+                    <div id='monacoEditorInner'>
+                        <MonacoFlyout ref={this.handleFlyoutRef} fileType={this.fileType}
+                            blockIdMap={this.blockIdMap}
+                            moveFocusToParent={this.moveFocusToToolbox}
+                            insertSnippet={this.insertSnippet}
+                            setInsertionSnippet={this.setInsertionSnippet}
+                            parent={this.parent} />
                     </div>
-                }
+                    {showErrorList && <ErrorList isInBlocksEditor={false} onSizeChange={this.setErrorListState}
+                        listenToErrorChanges={this.listenToErrorChanges}
+                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
+                        startDebugger={this.startDebugger} />}
+                </div>
             </div>
         )
-    }
-
-    getWinAppErrorMsg(): (JSX.Element | string)[] {
-        const errMsg = lf("Oops! Text editing is only available on the website at {0}. Go {1} for more information.", `https://${pxt.appTarget.name}`, "{1}");
-        const parts = errMsg.split(/\{\d\}/);
-        const textElements: (JSX.Element | string)[] = [
-            parts[0],
-            <a href={"/windows-app"} target="_blank" rel="noopener noreferrer">
-                {lf("here")}
-            </a>,
-            parts[1]]
-        return textElements;
     }
 
     listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) {
@@ -1366,13 +1338,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         let mode = pxt.editor.FileType.Text;
         this.currSource = file.content;
-
-
-        const isWinApp = pxt.BrowserUtils.isWinRT();
-        if (isWinApp) {
-            this.currFile = file;
-            return Promise.resolve();
-        }
 
         let loading = document.createElement("div");
         loading.className = "ui inverted loading dimmer active";

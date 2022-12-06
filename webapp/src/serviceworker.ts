@@ -59,7 +59,6 @@ function initWebappServiceWorker() {
         `/blb/pxtcompiler.js`,
         `/blb/pxtpy.js`,
         `/blb/pxtblockly.js`,
-        `/blb/pxtwinrt.js`,
         `/blb/pxteditor.js`,
         `/blb/pxtsim.js`,
         `/blb/pxtembed.js`,
