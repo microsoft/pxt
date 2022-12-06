@@ -14,6 +14,7 @@ export function TutorialValidationErrorMessage(
   return (
     <Modal title="Placeholder Title" onClose={props.onReturnClicked}>
       <div>Something doesn't look quite right...</div>
+      <br />
       <div className="tabTutorial">
         {props.validationFailures.map((f) => {
           return f.hint ? (
