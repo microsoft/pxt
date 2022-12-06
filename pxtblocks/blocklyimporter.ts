@@ -32,7 +32,7 @@ namespace pxt.blocks {
         } finally {
             Blockly.Events.enable();
         }
-        return newBlockIds.filter(id => workspace.getBlockById(id));
+        return newBlockIds.filter(id => !!workspace.getBlockById(id));
     }
 
     function applyMetaComments(workspace: Blockly.Workspace) {
