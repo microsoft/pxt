@@ -39,7 +39,7 @@ namespace pxt.blocks {
                 if (/@highlight/.test(c)) {
                     const cc = c.replace(/@highlight/g, '').trim();
                     b.setCommentText(cc || null);
-                    (workspace as Blockly.WorkspaceSvg).highlightBlock?.(b.id)
+                    (workspace as Blockly.WorkspaceSvg).highlightBlock?.(b.id, true)
                 }
             });
     }
