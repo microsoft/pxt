@@ -3,26 +3,77 @@ import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
 import IProjectView = pxt.editor.IProjectView;
 import * as compiler from "../compiler";
 
-export type TutorialRuleResult = {
+export type TutorialValidationResult = {
     isValid: Boolean;
     hint: string | JSX.Element;
 };
 
-export type TutorialRule = {
-    id: String; // Value used to indicate rule in markdown.
-
-    // TODO thsparks : Remove unused parameters.
-    // TODO thsparks : Add params here or in rule info?
-    execute: (parent: IProjectView, tutorialOptions: TutorialOptions) => Promise<TutorialRuleResult>;
+const defaultResult: TutorialValidationResult = {
+    isValid: true,
+    hint: null,
 };
 
-export const TutorialRules: TutorialRule[] = [
-    {
-        id: "validateAnswerKeyBlocksExist",
-        // TODO thsparks : Params?
-        execute: validateAnswerKeyBlocksExist,
-    },
-];
+export abstract class TutorialValidator {
+    enabled: boolean = false;
+
+    execute(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialValidationResult> {
+        if (!this.enabled) return Promise.resolve(defaultResult);
+
+        return this.executeInternal(parent, tutorialOptions);
+    }
+
+    protected abstract executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialValidationResult>;
+}
+
+export class BlocksExistValidator extends TutorialValidator {
+    private hintBlocks = false;
+
+    checkHintBlocks() {
+        this.enabled = true;
+        this.hintBlocks = true;
+    }
+
+    async executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialValidationResult> {
+
+        let missingBlocks: string[] = [];
+
+        if (this.hintBlocks) {
+            const stepInfo = tutorialOptions.tutorialStepInfo
+                ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep]
+                : null;
+            if (!stepInfo) return { isValid: true, hint: "" };
+
+            // TODO thsparks : Confirm loaded before accessing?
+            const userBlocks = Blockly.getMainWorkspace().getAllBlocks(false /* ordered */);
+            const userBlocksByType: Set<string> = new Set<string>(userBlocks.map((b) => b.type));
+
+            const indexdb = await tutorialBlockList(tutorialOptions, stepInfo);
+            const tutorialBlocks = extractBlockSnippet(tutorialOptions, indexdb);
+            const tutorialBlockKeys = Object.keys(tutorialBlocks ?? {});
+
+            for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
+                let tutorialBlockKey = tutorialBlockKeys[i];
+                if (!userBlocksByType.has(tutorialBlockKey)) {
+                    // user did not use a specific block
+                    missingBlocks.push(tutorialBlockKey);
+                }
+            }
+        }
+
+        const isValid = missingBlocks.length == 0;
+        const blockImageUris = isValid ? [] : await getBlockImageUris(missingBlocks);
+        const blockImages = (
+            <div>
+                <p>We expected to see these blocks in your workspace, but couldn't find them:</p>
+                {blockImageUris.filter(b => !!b).map((blockUri, index) => <img key={index + blockUri} src={blockUri} alt="block rendered" />)}
+            </div>);
+
+        return {
+            isValid: isValid,
+            hint: isValid ? undefined : blockImages,
+        }
+    }
+}
 
 // TODO thsparks: Understand, comment, reduce duplication with old validation
 function tutorialBlockList(tutorial: TutorialOptions, step: TutorialStepInfo): Promise<pxt.Map<pxt.Map<number>> | undefined> {
@@ -89,40 +140,4 @@ async function getBlockImageUris(blockIds: string[]): Promise<string[]> {
             return Promise.resolve(undefined)
         }));
     })
-}
-
-async function validateAnswerKeyBlocksExist(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialRuleResult> {
-    const stepInfo = tutorialOptions.tutorialStepInfo
-        ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep]
-        : null;
-    if (!stepInfo) return { isValid: true, hint: "" };
-
-    // TODO thsparks : Confirm loaded before accessing?
-    const userBlocks = Blockly.getMainWorkspace().getAllBlocks(false /* ordered */);
-    const userBlocksByType: Set<string> = new Set<string>(userBlocks.map((b) => b.type));
-
-    const indexdb = await tutorialBlockList(tutorialOptions, stepInfo);
-    const tutorialBlocks = extractBlockSnippet(tutorialOptions, indexdb);
-    const tutorialBlockKeys = Object.keys(tutorialBlocks ?? {});
-
-    let missingBlocks: string[] = [];
-    for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
-        let tutorialBlockKey = tutorialBlockKeys[i];
-        if (!userBlocksByType.has(tutorialBlockKey)) {
-            // user did not use a specific block
-            missingBlocks.push(tutorialBlockKey);
-        }
-    }
-
-    const isValid = missingBlocks.length == 0;
-    const blockImageUris = await getBlockImageUris(missingBlocks);
-    const blockImages = (
-        <div>
-            <p>We expected to see these blocks in your workspace, but couldn't find them:</p>
-            {blockImageUris.filter(b => !!b).map((blockUri, index) => <img key={index + blockUri} src={blockUri} alt="block rendered" />)}
-        </div>);
-    return {
-        isValid: isValid,
-        hint: isValid ? undefined : blockImages,
-    };
 }

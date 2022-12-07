@@ -9,7 +9,7 @@ import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
 import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage";
-import { TutorialRule, TutorialRuleResult, TutorialRules } from "../tutorialRules";
+import { BlocksExistValidator, TutorialValidationResult, TutorialValidator } from "../tutorialValidators";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -110,10 +110,17 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
     const validateTutorialStep = async () => {
-        let rules: TutorialRule[] = TutorialRules; // TODO thsparks : Filter using id based on what's in the markdown?
-        let failedResults: TutorialRuleResult[] = [];
-        for(let rule of rules) {
-            let result = await rule.execute(props.parent, props.tutorialOptions);
+        const blocksExistValidator = new BlocksExistValidator();
+
+        const validators: TutorialValidator[] = [
+            blocksExistValidator,
+        ]
+
+        blocksExistValidator.checkHintBlocks(); // TODO thsparks : Pull config from markdown?
+
+        let failedResults: TutorialValidationResult[] = [];
+        for(let validator of validators) {
+            let result = await validator.execute(props.parent, props.tutorialOptions);
             if(!result.isValid) {
                 failedResults.push(result);
             }

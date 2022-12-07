@@ -1,11 +1,11 @@
 import { Button } from "../../../../react-common/components/controls/Button";
 import { Modal } from "../../../../react-common/components/controls/Modal";
-import { TutorialRuleResult } from "../tutorialRules";
+import { TutorialValidationResult } from "../tutorialValidators";
 
 interface TutorialValidationErrorMessageProps {
   onContinueClicked: () => void;
   onReturnClicked: () => void;
-  validationFailures: TutorialRuleResult[];
+  validationFailures: TutorialValidationResult[];
 }
 
 export function TutorialValidationErrorMessage(
