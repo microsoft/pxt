@@ -143,7 +143,6 @@ namespace pxt.BrowserUtils {
         return isPxtElectron() || isIpcRenderer();
     }
 
-    // TODO jwunderl: double potential check usage in microbit / adafruit
     declare let Windows: any;
     export let isWinRT = () => typeof (Windows as any) !== "undefined";
 
