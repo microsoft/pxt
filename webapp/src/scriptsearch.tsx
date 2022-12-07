@@ -222,7 +222,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     handleSearch(str: string) {
-        // Hidden navigation, used to test /beta or other versions inside released UWP apps
+        // Hidden navigation, used to test /beta or other versions inside released apps
         // Secret prefix is /@, e.g.: /@beta
         const urlPathExec = /^\/@(.*)$/.exec(str);
         let urlPath = urlPathExec && urlPathExec[1];
@@ -237,10 +237,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     homeUrl += "/";
                 }
                 urlPath = urlPath.replace(/^\//, "");
-                pxt.winrt.releaseAllDevicesAsync()
-                    .then(() => {
-                        window.location.href = homeUrl + urlPath;
-                    });
+                window.location.href = homeUrl + urlPath;
             }
         }
         else {
