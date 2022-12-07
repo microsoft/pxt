@@ -23,6 +23,7 @@ interface AssetSidebarProps {
     asset?: pxt.Asset;
     isGalleryAsset?: boolean;
     showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
+    updateProject: () => void;
     dispatchChangeGalleryView: (view: GalleryView, assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchChangeSelectedAsset: (assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchUpdateUserAssets: () => void;
@@ -158,6 +159,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
     protected hidePaletteModal = () => {
         this.setState({ showPaletteModal: false });
+        this.props.updateProject();
     }
 
     protected deleteAssetHandler = () => {
