@@ -13,7 +13,7 @@ export interface AssetPaletteProps {
 export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
 
-    const [currentColors, setCurrentColors] = React.useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
+    const [currentColors, setCurrentColors] = React.useState<string[] | undefined>(pkg.mainPkg.config.palette);
 
     useEffect(() => {
         // save pxt.json
@@ -49,13 +49,11 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const getCurrentPalette = () => {
-        const configPalette = currentColors || pxt.appTarget.runtime.palette;
-
-        if (configPalette) {
+        if (currentColors) {
             for (const palette of AllPalettes) {
                 let isEqual = true;
                 for (let i = 0; i < palette.colors.length; i++) {
-                    if (configPalette[i].toLowerCase() !== palette.colors[i].toLowerCase()) {
+                    if (currentColors[i].toLowerCase() !== palette.colors[i].toLowerCase()) {
                         isEqual = false;
                         break;
                     }
@@ -68,7 +66,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         return {
             id: "custom",
             name: lf("Custom Palette"),
-            colors: configPalette
+            colors: currentColors
         };
     }
 
