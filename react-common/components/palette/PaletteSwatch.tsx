@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Palette } from "./Palettes";
 
 export interface PaletteSwatchProps {

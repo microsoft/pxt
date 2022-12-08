@@ -62,18 +62,18 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const asset = this.props.asset;
         const details: AssetDetail[] = [];
         if (asset) {
-            details.push({ name: lf("Type"), value: getDisplayTextForAsset(asset.type)});
+            details.push({ name: lf("Type"), value: getDisplayTextForAsset(asset.type) });
 
             switch (asset.type) {
                 case pxt.AssetType.Image:
                 case pxt.AssetType.Tile:
-                    details.push({ name: lf("Size"), value: `${asset.bitmap.width} x ${asset.bitmap.height}`});
+                    details.push({ name: lf("Size"), value: `${asset.bitmap.width} x ${asset.bitmap.height}` });
                     break;
                 case pxt.AssetType.Tilemap:
-                    details.push({ name: lf("Size"), value: `${asset.data.tilemap.width} x ${asset.data.tilemap.height}`});
+                    details.push({ name: lf("Size"), value: `${asset.data.tilemap.width} x ${asset.data.tilemap.height}` });
                     break;
                 case pxt.AssetType.Animation:
-                    details.push({ name: lf("Size"), value: `${asset.frames[0].width} x ${asset.frames[0].height}`});
+                    details.push({ name: lf("Size"), value: `${asset.frames[0].width} x ${asset.frames[0].height}` });
                     break;
             }
         }
@@ -188,10 +188,10 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
             <List className="asset-editor-sidebar-info">
                 <div>{lf("Asset Preview")}</div>
                 <div className="asset-editor-sidebar-preview">
-                    { asset && <AssetPreview asset={asset} />  }
+                    {asset && <AssetPreview asset={asset} />}
                 </div>
                 {isNamed || !asset
-                    ? <div className="asset-editor-sidebar-name">{ name }</div>
+                    ? <div className="asset-editor-sidebar-name">{name}</div>
                     : <div className="asset-editor-sidebar-temp">
                         <i className="icon exclamation triangle" />
                         <span>{lf("No asset name")}</span>
@@ -202,34 +202,34 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 })}
             </List>
             <List className="asset-editor-sidebar-controls">
-                    { asset && canEdit && <Button
-                        label={lf("Edit")}
-                        title={lf("Edit the selected asset")}
-                        ariaLabel={lf("Edit the selected asset")}
-                        leftIcon="icon edit"
-                        className="asset-editor-button"
-                        onClick={this.editAssetHandler} />}
-                    { asset && <Button
-                        label={lf("Duplicate")}
-                        title={lf("Duplicate the selected asset")}
-                        ariaLabel={lf("Duplicate the selected asset")}
-                        leftIcon="icon copy"
-                        className="asset-editor-button"
-                        onClick={this.duplicateAssetHandler} />}
-                    { asset && canCopy && <Button
-                        label={lf("Copy")}
-                        title={lf("Copy the selected asset to the clipboard")}
-                        ariaLabel={lf("Copy the selected asset to the clipboard")}
-                        leftIcon="icon paste"
-                        className="asset-editor-button"
-                        onClick={this.copyAssetHandler} />}
-                    { asset && canDelete && <Button
-                        label={lf("Delete")}
-                        title={lf("Delete the selected asset")}
-                        ariaLabel={lf("Delete the selected asset")}
-                        className="asset-editor-button"
-                        leftIcon="icon trash"
-                        onClick={this.showDeleteModal} />}
+                {asset && canEdit && <Button
+                    label={lf("Edit")}
+                    title={lf("Edit the selected asset")}
+                    ariaLabel={lf("Edit the selected asset")}
+                    leftIcon="icon edit"
+                    className="asset-editor-button"
+                    onClick={this.editAssetHandler} />}
+                {asset && <Button
+                    label={lf("Duplicate")}
+                    title={lf("Duplicate the selected asset")}
+                    ariaLabel={lf("Duplicate the selected asset")}
+                    leftIcon="icon copy"
+                    className="asset-editor-button"
+                    onClick={this.duplicateAssetHandler} />}
+                {asset && canCopy && <Button
+                    label={lf("Copy")}
+                    title={lf("Copy the selected asset to the clipboard")}
+                    ariaLabel={lf("Copy the selected asset to the clipboard")}
+                    leftIcon="icon paste"
+                    className="asset-editor-button"
+                    onClick={this.copyAssetHandler} />}
+                {asset && canDelete && <Button
+                    label={lf("Delete")}
+                    title={lf("Delete the selected asset")}
+                    ariaLabel={lf("Delete the selected asset")}
+                    className="asset-editor-button"
+                    leftIcon="icon trash"
+                    onClick={this.showDeleteModal} />}
                 <Button className="teal asset-palette-button"
                     title={lf("Color Palette")}
                     label={lf("Color Palette")}

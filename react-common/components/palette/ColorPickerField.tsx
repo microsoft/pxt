@@ -29,7 +29,7 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
             newValue = "#" + newValue;
         }
         if (newValue.length > 7) {
-            newValue = newValue.substring(0,7);
+            newValue = newValue.substring(0, 7);
         }
         if (/#[0-9a-fA-F]{6}/.test(newValue)) {
             onColorChanged(newValue.toUpperCase());

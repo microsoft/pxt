@@ -1,5 +1,4 @@
-import * as React from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ColorPickerField } from "./ColorPickerField";
 import { Palette } from "./Palettes";
 
@@ -11,7 +10,7 @@ export interface PaletteEditorProps {
 export const PaletteEditor = (props: PaletteEditorProps) => {
     const { palette, onPaletteChanged } = props;
 
-    const [currentPalette, setCurrentPalette] = React.useState<Palette | undefined>(palette);
+    const [currentPalette, setCurrentPalette] = useState<Palette | undefined>(palette);
 
     useEffect(() => {
         onPaletteChanged(currentPalette);
@@ -54,7 +53,7 @@ export const PaletteEditor = (props: PaletteEditorProps) => {
     }
 
     return <div className="common-palette-editor">
-        {(currentPalette).colors.slice(1).map((c, i) =>
+        {currentPalette.colors.slice(1).map((c, i) =>
             <ColorPickerField
                 key={i}
                 index={i}
