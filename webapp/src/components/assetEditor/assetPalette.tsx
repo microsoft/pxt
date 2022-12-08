@@ -13,7 +13,7 @@ export interface AssetPaletteProps {
 export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
 
-    const [currentColors, setCurrentColors] = React.useState<string[] | undefined>(pkg.mainPkg.config.palette);
+    const [currentColors, setCurrentColors] = React.useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
 
     useEffect(() => {
         // save pxt.json
