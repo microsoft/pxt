@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as pkg from "../../package";
 import { useEffect } from "react";
-import { Modal } from "../../../../react-common/components/controls/Modal";
+import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
 import { PalettePicker } from "../../../../react-common/components/palette/PalettePicker";
 import { PaletteEditor } from "../../../../react-common/components/palette/PaletteEditor";
 import { AllPalettes, Palette } from "../../../../react-common/components/palette/Palettes";
@@ -30,6 +30,14 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         onClose();
     }
 
+    const onResetColors = () => {
+
+    }
+
+    const onSave = () => {
+
+    }
+
     const renderPaletteModal = () => {
         const currentPalette = getCurrentPalette();
         let paletteOptions = AllPalettes.slice();
@@ -38,12 +46,16 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             paletteOptions.unshift(currentPalette)
         }
 
-        return <Modal title={lf("Edit Palette")} onClose={onModalClose}>
+        const actions: ModalAction[] = [
+            { label: lf("Reset Colors"), onClick: onResetColors, leftIcon: 'icon undo', className: 'palette-reset-button' },
+            { label: lf("Save new palette"), onClick: onSave, className: 'green palette-save-button' }
+        ];
+
+        return <Modal title={lf("Edit Palette")} onClose={onModalClose} actions={actions}>
             <PalettePicker
                 palettes={paletteOptions}
                 selectedId={currentPalette.id}
-                onPaletteSelected={onPaletteEdit}
-            />
+                onPaletteSelected={onPaletteEdit} />
             <PaletteEditor palette={currentPalette} onPaletteChanged={onPaletteEdit}/>
         </Modal>
     }
