@@ -100,7 +100,11 @@ namespace pxt.blocks {
         try {
             let text = blocksXml || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
-            pxt.blocks.domToWorkspaceNoEvents(xml, workspace);
+            pxt.blocks.domToWorkspaceNoEvents(
+                xml,
+                workspace,
+                { applyMetaComments: true }
+            );
 
             return renderWorkspace(options);
         } catch (e) {

@@ -385,7 +385,7 @@ declare namespace pxt {
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
-        appPathNames?: string[]; // Authorized URL paths in UWP, all other paths will display a warning banner
+        appPathNames?: string[]; // Authorized URL paths in embedded apps, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
@@ -394,7 +394,6 @@ declare namespace pxt {
         hideReplaceMyCode?: boolean; // hides the "replace my code" button for tutorials with templates in their markdown
         fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
-        appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
         browserDbPrefixes?: { [majorVersion: number]: string }; // Prefix used when storing projects in the DB to allow side-by-side projects of different major versions
         editorVersionPaths?: { [majorVersion: number]: string }; // A map of major editor versions to their corresponding paths (alpha, v1, etc.)
         experiments?: string[]; // list of experiment ids, also enables this feature
@@ -464,8 +463,6 @@ declare namespace pxt {
         immersiveReader?: boolean; // enables the immersive reader for tutorials
         tutorialCodeValidation?: boolean; // Enable code validation for tutorials
         downloadDialogTheme?: DownloadDialogTheme;
-        winAppDeprImage?: string; // Image to show on Windows App for deprecation
-        showWinAppDeprBanner?: boolean; // show banner announcing Windows App deprecation
         multiplayerShareButton?: boolean; // display multiplayer button alongside social links
         songEditor?: boolean; // enable the song asset type and field editor
     }

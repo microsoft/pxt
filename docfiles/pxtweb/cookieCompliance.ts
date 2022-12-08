@@ -1,5 +1,3 @@
-/// <reference path="../../pxtwinrt/winrtrefs.d.ts"/>
-
 declare let process: any;
 
 namespace pxt {
@@ -186,8 +184,6 @@ namespace pxt {
         telemetryItem.properties["target"] = pxtConfig.targetId;
         telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
 
-        if (typeof Windows !== "undefined")
-            telemetryItem.properties["WindowsApp"] = 1;
         const userAgent = navigator.userAgent.toLowerCase();
         const userAgentRegexResult = /\belectron\/(\d+\.\d+\.\d+.*?)(?: |$)/i.exec(userAgent); // Example navigator.userAgent: "Mozilla/5.0 Chrome/61.0.3163.100 Electron/2.0.0 Safari/537.36"
         if (userAgentRegexResult) {
@@ -219,14 +215,13 @@ namespace pxt {
     }
 
     /**
-     * Checks for winrt, pxt-electron and Code Connection
+     * Checks for pxt-electron and Code Connection
      */
     function isNativeApp(): boolean {
         const hasWindow = typeof window !== "undefined";
-        const isUwp = typeof Windows !== "undefined";
         const isPxtElectron = hasWindow && !!(window as any).pxtElectron;
         const isCC = hasWindow && !!(window as any).ipcRenderer || /ipc=1/.test(location.hash) || /ipc=1/.test(location.search); // In WKWebview, ipcRenderer is injected later, so use the URL query
-        return isUwp || isPxtElectron || isCC;
+        return isPxtElectron || isCC;
     }
     /**
      * Checks whether we should hide the cookie banner

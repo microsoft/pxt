@@ -522,9 +522,9 @@ namespace pxt.usb {
             return;
         }
 
-        if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT()) {
-            pxt.debug(`webusb: off, electron or winrt`)
-            pxt.tickEvent('webusb.off', { 'reason': 'electronwinrt' })
+        if (pxt.BrowserUtils.isElectron()) {
+            pxt.debug(`webusb: off, electron`)
+            pxt.tickEvent('webusb.off', { 'reason': 'electron' })
             _available = false;
             return;
         }
