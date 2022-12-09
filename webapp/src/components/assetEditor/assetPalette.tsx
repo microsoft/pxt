@@ -1,6 +1,5 @@
-import * as React from "react";
 import * as pkg from "../../package";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
 import { PalettePicker } from "../../../../react-common/components/palette/PalettePicker";
 import { PaletteEditor } from "../../../../react-common/components/palette/PaletteEditor";
@@ -13,7 +12,7 @@ export interface AssetPaletteProps {
 export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
 
-    const [currentColors, setCurrentColors] = React.useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
+    const [currentColors, setCurrentColors] = useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
 
     useEffect(() => {
         // save pxt.json
