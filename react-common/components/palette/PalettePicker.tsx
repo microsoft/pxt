@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Dropdown } from "../controls/Dropdown";
 import { Palette } from "./Palettes";
 import { PaletteSwatch } from "./PaletteSwatch";
@@ -11,11 +10,11 @@ export interface PalettePickerProps {
 
 export const PalettePicker = (props: PalettePickerProps) => {
     const { palettes, selectedId, onPaletteSelected } = props;
-    
+
     const onItemSelected = (id: string) => {
         onPaletteSelected(palettes.find(p => p.id === id));
     }
-    
+
     return <div className="common-palette-picker">
         <Dropdown
             id="common-palette-picker"
