@@ -38,7 +38,7 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
 
     return <div className="common-color-picker-field">
         <div className="common-color-index">
-            {index + 1}
+            {index}
         </div>
         <div className="common-color-inputs">
             <input type="color" value={currentColor || color} onBlur={onBlur} onChange={onColorPickerChanged} />

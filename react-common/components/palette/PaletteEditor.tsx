@@ -53,10 +53,11 @@ export const PaletteEditor = (props: PaletteEditorProps) => {
     }
 
     return <div className="common-palette-editor">
+        {/* remove transparent color before displaying and update indices */}
         {currentPalette.colors.slice(1).map((c, i) =>
             <ColorPickerField
-                key={i}
-                index={i}
+                key={i + 1}
+                index={i + 1}
                 color={c}
                 onColorChanged={newColor => updateColor(i + 1, newColor)}
                 onMoveColor={up => moveColor(i + 1, up)}
