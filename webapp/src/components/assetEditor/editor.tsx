@@ -83,11 +83,16 @@ export class AssetEditor extends Editor {
     }
 
     display(): JSX.Element {
+        const updateProject = async () => {
+            await this.parent.reloadHeaderAsync();
+            this.parent.openAssets();
+        }
+
         // TODO: re-enable the create asset button in tutorials when we add
         // the ability to switch editors inside a tutorial
         return <Provider store={store}>
             <div className="asset-editor-outer">
-                <AssetSidebar showAssetFieldView={this.showAssetFieldView} />
+                <AssetSidebar showAssetFieldView={this.showAssetFieldView} updateProject={updateProject}/>
                 <AssetGallery showAssetFieldView={this.showAssetFieldView} disableCreateButton={this.parent.isTutorial()} />
             </div>
         </Provider>
