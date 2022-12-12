@@ -157,9 +157,9 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         this.setState({ showPaletteModal: true });
     }
 
-    protected hidePaletteModal = () => {
+    protected hidePaletteModal = (paletteChanged: boolean) => {
         this.setState({ showPaletteModal: false });
-        this.props.updateProject();
+        if (paletteChanged) this.props.updateProject();
     }
 
     protected deleteAssetHandler = () => {
