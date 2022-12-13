@@ -95,7 +95,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                     onPaletteSelected={onPaletteEdit} />
                 <PaletteEditor palette={currentPalette} onPaletteChanged={onPaletteEdit} />
             </Modal>
-            {showExitModal && <Modal title={lf("Exit without saving")} onClose={onExitModalClose} actions={exitActions}>
+            {showExitModal && <Modal title={lf("Exit without saving")} onClose={onGoBack} actions={exitActions}>
                 <div>{lf("Exit without saving? Your palette changes will be reverted.")}</div>
             </Modal>}
         </div>
