@@ -1,5 +1,5 @@
 import * as pkg from "../../package";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
 import { PalettePicker } from "../../../../react-common/components/palette/PalettePicker";
 import { PaletteEditor } from "../../../../react-common/components/palette/PaletteEditor";
@@ -12,30 +12,61 @@ export interface AssetPaletteProps {
 export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
 
-    const [initialColors, setInitialColors] = useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
+    const [showExitModal, setShowExitModal] = useState<boolean>(false);
+
+    const inExitModal = useRef<boolean>(false);
+
+    const initialColors = useRef<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette)
+
+    const [prevColors, setPrevColors] = useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
 
     const [currentColors, setCurrentColors] = useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
+
+    const [disableButtons, setDisableButtons] = useState<boolean>(true);
 
     useEffect(() => {
         // save pxt.json
         pkg.mainEditorPkg().updateConfigAsync(cfg => cfg.palette = currentColors);
+        if (inExitModal.current) {
+            onClose(!isSameAsCurrentColors(initialColors.current));
+            inExitModal.current = false;
+        }
     }, [currentColors]);
 
     const onPaletteEdit = (selected: Palette) => {
         setCurrentColors(selected.colors);
+        if (!isSameAsCurrentColors(prevColors)) {
+            setDisableButtons(false);
+        }
     }
 
     const onModalClose = () => {
-        // check whether there is a change and update project view accordingly
-        onClose(!isSameAsCurrentColors(initialColors));
+        // check whether exiting without saved changes
+        if (!isSameAsCurrentColors(prevColors)) {
+            setShowExitModal(true);
+        } else {
+            onClose(!isSameAsCurrentColors(initialColors.current));
+        }
+    }
+
+    const onExitModalClose = () => {
+        inExitModal.current = true;
+        setShowExitModal(false);
+        setCurrentColors(prevColors);
     }
 
     const onResetColors = () => {
-
+        setCurrentColors(prevColors);
+        setDisableButtons(true);
     }
 
     const onSave = () => {
+        setPrevColors(currentColors);
+        setDisableButtons(true);
+    }
 
+    const onGoBack = () => {
+        setShowExitModal(false);
     }
 
     const renderPaletteModal = () => {
@@ -47,17 +78,27 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         }
 
         const actions: ModalAction[] = [
-            { label: lf("Reset Colors"), onClick: onResetColors, leftIcon: 'icon undo', className: 'palette-reset-button' },
-            { label: lf("Save new palette"), onClick: onSave, className: 'green palette-save-button' }
+            { label: lf("Reset colors"), onClick: onResetColors, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
+            { label: lf("Save new palette"), onClick: onSave, className: 'green', disabled: disableButtons }
         ];
 
-        return <Modal title={lf("Edit Palette")} onClose={onModalClose} actions={actions}>
-            <PalettePicker
-                palettes={paletteOptions}
-                selectedId={currentPalette.id}
-                onPaletteSelected={onPaletteEdit} />
-            <PaletteEditor palette={currentPalette} onPaletteChanged={onPaletteEdit}/>
-        </Modal>
+        const exitActions: ModalAction[] = [
+            { label: lf("Go back"), onClick: onGoBack, className: 'palette-transparent-button' },
+            { label: lf("Exit"), onClick: onExitModalClose, className: 'teal' }
+        ];
+
+        return <div>
+            <Modal title={lf("Edit Palette")} onClose={onModalClose} actions={actions}>
+                <PalettePicker
+                    palettes={paletteOptions}
+                    selectedId={currentPalette.id}
+                    onPaletteSelected={onPaletteEdit} />
+                <PaletteEditor palette={currentPalette} onPaletteChanged={onPaletteEdit} />
+            </Modal>
+            {showExitModal && <Modal title={lf("Exit without saving")} onClose={onExitModalClose} actions={exitActions}>
+                <div>{lf("Exit without saving? Your palette changes will be reverted.")}</div>
+            </Modal>}
+        </div>
     }
 
     const getCurrentPalette = () => {
