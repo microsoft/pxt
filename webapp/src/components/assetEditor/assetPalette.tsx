@@ -6,11 +6,13 @@ import { PaletteEditor } from "../../../../react-common/components/palette/Palet
 import { AllPalettes, Palette } from "../../../../react-common/components/palette/Palettes";
 
 export interface AssetPaletteProps {
-    onClose: () => void;
+    onClose: (paletteChanged: boolean) => void;
 }
 
 export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
+
+    const [initialColors, setInitialColors] = useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
 
     const [currentColors, setCurrentColors] = useState<string[] | undefined>(pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette);
 
@@ -24,9 +26,8 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const onModalClose = () => {
-        // force project view update
-        // possibly check whether there is a change and only update accordingly
-        onClose();
+        // check whether there is a change and update project view accordingly
+        onClose(!isSameAsCurrentColors(initialColors));
     }
 
     const onResetColors = () => {
@@ -62,15 +63,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     const getCurrentPalette = () => {
         if (currentColors) {
             for (const palette of AllPalettes) {
-                let isEqual = true;
-                for (let i = 0; i < palette.colors.length; i++) {
-                    if (currentColors[i].toLowerCase() !== palette.colors[i].toLowerCase()) {
-                        isEqual = false;
-                        break;
-                    }
-                }
-
-                if (isEqual) return palette;
+                if (isSameAsCurrentColors(palette.colors)) return palette;
             }
         }
 
@@ -81,6 +74,16 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         };
     }
 
+    const isSameAsCurrentColors = (colorSet: string[]) => {
+        let isEqual = true;
+        for (let i = 0; i < colorSet.length; i++) {
+            if (currentColors[i].toLowerCase() !== colorSet[i].toLowerCase()) {
+                isEqual = false;
+                break;
+            }
+        }
+        return isEqual;
+    }
 
     return renderPaletteModal();
 }
