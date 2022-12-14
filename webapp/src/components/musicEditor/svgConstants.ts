@@ -6,6 +6,7 @@ export const CLEF_HEIGHT = 320;
 export const STAFF_HEADER_HEIGHT = STAFF_ROW_HEIGHT;
 export const STAFF_HEADER_FONT_SIZE = 40;
 export const STAFF_HEADER_OFFSET = 10;
+export const STAFF_END_WIDTH = 25;
 
 export const WORKSPACE_HEIGHT = STAFF_HEADER_HEIGHT + STAFF_ROW_HEIGHT * 7;
 export const NOTE_ICON_WIDTH = 45;
@@ -17,7 +18,7 @@ export const BASS_CLEF_TOP = 90;
 export const BASS_CLEF_HEIGHT = 230;
 
 export function workspaceWidth(song: pxt.assets.music.Song) {
-    return CLEF_WIDTH + song.measures * song.beatsPerMeasure * BEAT_WIDTH;
+    return CLEF_WIDTH + song.measures * song.beatsPerMeasure * BEAT_WIDTH + STAFF_END_WIDTH;
 }
 
 export function tickToX(song: pxt.assets.music.Song, tick: number) {

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { clientCoord, screenToSVGCoord } from "../../../../react-common/components/util";
+import { classList, clientCoord, screenToSVGCoord } from "../../../../react-common/components/util";
 import { Staff } from "./Staff";
 import { BASS_STAFF_TOP, closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { Track } from "./Track";
@@ -13,11 +13,12 @@ export interface WorkspaceProps {
     onWorkspaceDrag: (startCoordinate: WorkspaceCoordinate, endCoordinate: WorkspaceCoordinate) => void;
     selectedTrack: number
     hideUnselectedTracks: boolean;
+    eraserActive: boolean;
     gridTicks?: number;
 }
 
 export const Workspace = (props: WorkspaceProps) => {
-    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, hideUnselectedTracks } = props;
+    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, hideUnselectedTracks, eraserActive } = props;
 
     const [cursorLocation, setCursorLocation] = React.useState<WorkspaceCoordinate>(null);
     const [dragStart, setDragStart] = React.useState<WorkspaceCoordinate>(null);
@@ -81,7 +82,7 @@ export const Workspace = (props: WorkspaceProps) => {
         if (ref) workspaceRef = ref;
     }
 
-    let cursorPreviewLocation = isDragging ? undefined : cursorLocation;
+    let cursorPreviewLocation = (isDragging || eraserActive) ? undefined : cursorLocation;
     const eventAtCursor = cursorPreviewLocation ? findNoteEventAtTick(song, selectedTrack, cursorLocation.tick) : undefined;
     if (eventAtCursor) {
         cursorPreviewLocation.tick = eventAtCursor.startTick;
@@ -91,8 +92,8 @@ export const Workspace = (props: WorkspaceProps) => {
 
     return <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="music-workspace"
-        viewBox={`0 0 ${workspaceWidth(song)} ${WORKSPACE_HEIGHT * 2}`}
+        className={classList("music-workspace", eraserActive && "erasing")}
+        viewBox={`0 0 ${workspaceWidth(song) + 20} ${WORKSPACE_HEIGHT * 2}`}
         ref={handleWorkspaceRef}>
         <Staff song={song} top={0} />
         <Staff song={song} top={BASS_STAFF_TOP} isBassClef={true} />

@@ -101,7 +101,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 internalID: -1,
                 meta: {},
                 type: pxt.AssetType.Song,
-                song: pxt.assets.music.getEmptySong(8)
+                song: pxt.assets.music.getEmptySong(2)
             }
         };
         pxt.react.getTilemapProject = () => this.tilemapProject;

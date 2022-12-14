@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
+import { Checkbox } from "../../../../react-common/components/controls/Checkbox";
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown";
 import { classList } from "../../../../react-common/components/util";
 
@@ -7,6 +8,10 @@ export interface TrackSelectorProps {
     song: pxt.assets.music.Song;
     selected: number;
     onTrackSelected: (index: number) => void;
+    eraserActive: boolean;
+    hideTracksActive: boolean;
+    onHideTracksClick: () => void;
+    onEraserClick: () => void;
     onResolutionSelected: (resolution: GridResolution) => void;
     selectedResolution: GridResolution;
 }
@@ -21,7 +26,7 @@ const idToRes: pxt.Map<GridResolution> = {
 }
 
 export const TrackSelector = (props: TrackSelectorProps) => {
-    const { song, selected, onTrackSelected, selectedResolution, onResolutionSelected } = props;
+    const { song, selected, onTrackSelected, selectedResolution, onResolutionSelected, eraserActive, onEraserClick, hideTracksActive, onHideTracksClick } = props;
 
     const setSelectedTrack = (index: number) => {
         onTrackSelected(index)
@@ -59,13 +64,25 @@ export const TrackSelector = (props: TrackSelectorProps) => {
             <Button
                 key={track.name}
                 title={track.name}
-                className={classList("music-track-button", selected === index && "selected")}
+                className={classList("music-track-button square-button pixellated", selected === index &&  !eraserActive && "selected")}
                 label={<img src={track.iconURI} alt={track.name} />}
                 onClick={() => setSelectedTrack(index)}
                 />
         )}
+        <Button
+            className={classList("music-track-button square-button", eraserActive && "selected")}
+            title={eraserActive ? lf("Turn off eraser tool") : lf("Turn on eraser tool")}
+            leftIcon="fas fa-eraser"
+            onClick={onEraserClick} />
+        <Checkbox
+            className="music-editor-label"
+            id="hide-tracks"
+            label={lf("Only show selected instrument")}
+            isChecked={hideTracksActive}
+            onChange={onHideTracksClick}
+        />
         <div className="music-track-grid">
-            <div className="music-track-grid-label">
+            <div className="music-editor-label">
                 {lf("Grid:")}
             </div>
             <Dropdown

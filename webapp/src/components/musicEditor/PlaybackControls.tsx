@@ -8,8 +8,6 @@ export interface PlaybackControlsProps {
     song: pxt.assets.music.Song;
     onTempoChange: (newTempo: number) => void;
     onMeasuresChanged: (newMeasures: number) => void;
-    eraserActive: boolean;
-    onEraserClick: () => void;
 
     hasUndo: boolean;
     hasRedo: boolean;
@@ -24,8 +22,6 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
         song,
         onTempoChange,
         onMeasuresChanged,
-        eraserActive,
-        onEraserClick,
         onUndoClick,
         onRedoClick,
         hasUndo,
@@ -110,19 +106,12 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
                 onClick={onLoopClick} />
         </div>
         <Input
-            id="music-playback-tempo-input"
+            id="music-playback-tempo-input music-editor-label"
             label={lf("Tempo:")}
             initialValue={song.beatsPerMinute.toString()}
             onBlur={handleTempoChange}
             onEnterKey={handleTempoChange}
             />
-        <div className="music-playback-buttons">
-            <Button
-                className={classList("square-button", eraserActive && "green")}
-                title={eraserActive ? lf("Turn off eraser tool") : lf("Turn on eraser tool")}
-                leftIcon="fas fa-eraser"
-                onClick={onEraserClick} />
-        </div>
         <div className="music-undo-redo common-button-group">
             <Button
                 className="square-button purple"
@@ -138,7 +127,7 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
                 onClick={onRedoClick} />
         </div>
         <div className="music-playback-measures">
-            <div className="music-playback-label">
+            <div className="music-editor-label">
                 {lf("Measures:")}
             </div>
             <Button

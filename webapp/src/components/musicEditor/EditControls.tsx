@@ -4,15 +4,13 @@ import { Input } from "../../../../react-common/components/controls/Input";
 import { isNameTaken } from "../../assets";
 
 export interface EditControlsProps {
-    hideTracksActive: boolean;
     assetName: string;
-    onHideTracksClick: () => void;
     onAssetNameChanged: (newName: string) => void;
     onDoneClicked: () => void;
 }
 
 export const EditControls = (props: EditControlsProps) => {
-    const { onHideTracksClick, onAssetNameChanged, onDoneClicked, hideTracksActive, assetName } = props;
+    const { onAssetNameChanged, onDoneClicked, assetName } = props;
     const [editName, setEditName] = React.useState<string>();
     const [nameError, setNameError] = React.useState<string>();
 
@@ -56,11 +54,6 @@ export const EditControls = (props: EditControlsProps) => {
             initialValue={assetName || editName}
             onBlur={handleNameEdit}
             onEnterKey={handleNameEdit} />
-        <Button
-            className="menu-button"
-            title={hideTracksActive ? lf("Show all tracks") : lf("Hide unselected tracks")}
-            leftIcon={hideTracksActive ? "fas fa-eye-slash" : "fas fa-eye"}
-            onClick={onHideTracksClick} />
         <Button
             className="green"
             title={lf("Done")}

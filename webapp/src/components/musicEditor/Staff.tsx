@@ -1,7 +1,7 @@
 import * as React from "react";
 import { classList } from "../../../../react-common/components/util";
 import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener, tickToMs } from "./playback";
-import { BASS_CLEF_HEIGHT, BASS_CLEF_TOP, beatToX, CLEF_HEIGHT, rowY, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { BASS_CLEF_HEIGHT, BASS_CLEF_TOP, beatToX, CLEF_HEIGHT, rowY, STAFF_END_WIDTH, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 
 export interface StaffProps {
     song: pxt.assets.music.Song;
@@ -116,7 +116,21 @@ export const Staff = (props: StaffProps) => {
             { rows }
         </g>
         <g className="music-staff-beats">
-             {beats }
+             { beats }
+        </g>
+        <g className="music-staff-end">
+            <rect
+                x={totalWidth - STAFF_END_WIDTH}
+                y={STAFF_HEADER_HEIGHT}
+                width={3}
+                height={WORKSPACE_HEIGHT - STAFF_HEADER_HEIGHT}
+            />
+            <rect
+                x={totalWidth - 12}
+                y={STAFF_HEADER_HEIGHT}
+                width={12}
+                height={WORKSPACE_HEIGHT - STAFF_HEADER_HEIGHT}
+            />
         </g>
         <g className="music-playback-head" ref={handlePlaybackHeadRef}>
             <line

@@ -108,11 +108,20 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
                 const track = currentSong.tracks[i];
                 const instrument = track.instrument;
-                const note = !!track.drums ? end.row : rowToNote(instrument.octave, end.row, false);
+                const note = !!track.drums ? end.row : rowToNote(instrument.octave, end.row, end.isBassClef);
                 const existingEvent = findClosestPreviousNote(currentSong, i, end.tick);
 
-                if (existingEvent?.startTick === end.tick && existingEvent.notes.indexOf(note) !== -1) {
-                    updateSong(removeNoteFromTrack(currentSong, i, note, end.tick), false);
+                if (existingEvent?.startTick === end.tick || existingEvent?.endTick > end.tick) {
+                    if (existingEvent.notes.indexOf(note) !== -1) {
+                        updateSong(removeNoteFromTrack(currentSong, i, note, existingEvent.startTick), false);
+                    }
+
+                    if (track.drums) continue;
+
+                    const sharp = rowToNote(instrument.octave, end.row, end.isBassClef, true);
+                    if (existingEvent.notes.indexOf(sharp) !== -1) {
+                        updateSong(removeNoteFromTrack(currentSong, i, sharp, existingEvent.startTick), false);
+                    }
                 }
             }
             return;
@@ -151,6 +160,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             playNoteAsync(rowToNote(t.instrument.octave, 6, false), t.instrument, tickToMs(currentSong, currentSong.ticksPerBeat / 2));
         }
         setSelectedTrack(newTrack);
+        if (eraserActive) setEraserActive(false);
     }
 
     const undo = () => {
@@ -182,11 +192,16 @@ export const MusicEditor = (props: MusicEditorProps) => {
             song={currentSong}
             selected={selectedTrack}
             onTrackSelected={onTrackChanged}
+            eraserActive={eraserActive}
+            onEraserClick={onEraserClick}
+            hideTracksActive={hideTracksActive}
+            onHideTracksClick={onHideTracksClick}
             selectedResolution={gridResolution}
             onResolutionSelected={setGridResolution} />
         <ScrollableWorkspace
             song={currentSong}
             selectedTrack={selectedTrack}
+            eraserActive={eraserActive}
             onWorkspaceClick={onRowClick}
             onWorkspaceDragStart={onNoteDragStart}
             onWorkspaceDragEnd={onNoteDragEnd}
@@ -197,15 +212,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
             song={currentSong}
             onTempoChange={onTempoChange}
             onMeasuresChanged={onMeasuresChanged}
-            eraserActive={eraserActive}
-            onEraserClick={onEraserClick}
             onUndoClick={undo}
             onRedoClick={redo}
             hasUndo={!!undoStack.length}
             hasRedo={!!redoStack.length} />
         <EditControls
-            hideTracksActive={hideTracksActive}
-            onHideTracksClick={onHideTracksClick}
             assetName={asset.meta.displayName}
             onAssetNameChanged={onAssetNameChanged}
             onDoneClicked={onDoneClicked} />
