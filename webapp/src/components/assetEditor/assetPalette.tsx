@@ -37,6 +37,8 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         setCurrentColors(selected.colors);
         if (!isSameAsCurrentColors(prevColors)) {
             setDisableButtons(false);
+        } else {
+            setDisableButtons(true);
         }
     }
 
