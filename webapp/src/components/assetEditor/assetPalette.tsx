@@ -80,12 +80,11 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         }
 
         const actions: ModalAction[] = [
-            { label: lf("Reset colors"), onClick: onResetColors, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
-            { label: lf("Save new palette"), onClick: onSave, className: 'green', disabled: disableButtons }
+            { label: lf("Reset"), onClick: onResetColors, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
+            { label: lf("Save"), onClick: onSave, className: 'green', disabled: disableButtons }
         ];
 
         const exitActions: ModalAction[] = [
-            { label: lf("Go back"), onClick: onGoBack, className: 'palette-transparent-button' },
             { label: lf("Exit"), onClick: onExitModalClose, className: 'teal' }
         ];
 
