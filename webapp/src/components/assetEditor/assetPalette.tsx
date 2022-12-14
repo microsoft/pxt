@@ -28,7 +28,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         // save pxt.json
         pkg.mainEditorPkg().updateConfigAsync(cfg => cfg.palette = currentColors);
         if (inExitModal.current) {
-            onClose(!isSameAsCurrentColors(initialColors.current));
+            onFinalClose();
             inExitModal.current = false;
         }
     }, [currentColors]);
@@ -42,12 +42,20 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         }
     }
 
+    const onFinalClose = () => {
+        const paletteChanged = !isSameAsCurrentColors(initialColors.current);
+        onClose(paletteChanged);
+        if (paletteChanged) {
+            pxt.tickEvent("palette.modified", {id: getCurrentPalette().id})
+        }
+    }
+
     const onModalClose = () => {
         // check whether exiting without saved changes
         if (!isSameAsCurrentColors(prevColors)) {
             setShowExitModal(true);
         } else {
-            onClose(!isSameAsCurrentColors(initialColors.current));
+            onFinalClose();
         }
     }
 
