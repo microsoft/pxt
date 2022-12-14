@@ -10,6 +10,11 @@ export interface PlaybackControlsProps {
     onMeasuresChanged: (newMeasures: number) => void;
     eraserActive: boolean;
     onEraserClick: () => void;
+
+    hasUndo: boolean;
+    hasRedo: boolean;
+    onUndoClick: () => void;
+    onRedoClick: () => void;
 }
 
 type PlaybackState = "stop" | "play" | "loop"
@@ -21,6 +26,10 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
         onMeasuresChanged,
         eraserActive,
         onEraserClick,
+        onUndoClick,
+        onRedoClick,
+        hasUndo,
+        hasRedo,
     } = props;
 
     const [state, setState] = React.useState<PlaybackState>("stop");
@@ -113,6 +122,20 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
                 title={eraserActive ? lf("Turn off eraser tool") : lf("Turn on eraser tool")}
                 leftIcon="fas fa-eraser"
                 onClick={onEraserClick} />
+        </div>
+        <div className="music-undo-redo common-button-group">
+            <Button
+                className="square-button purple"
+                title={lf("Undo")}
+                leftIcon="xicon undo"
+                disabled={!hasUndo}
+                onClick={onUndoClick} />
+            <Button
+                className="square-button purple"
+                title={lf("Redo")}
+                leftIcon="xicon redo"
+                disabled={!hasRedo}
+                onClick={onRedoClick} />
         </div>
         <div className="music-playback-measures">
             <div className="music-playback-label">

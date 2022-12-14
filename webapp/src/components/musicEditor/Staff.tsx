@@ -1,7 +1,7 @@
 import * as React from "react";
 import { classList } from "../../../../react-common/components/util";
 import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener, tickToMs } from "./playback";
-import { BASS_CLEF_HEIGHT, beatToX, CLEF_HEIGHT, rowY, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { BASS_CLEF_HEIGHT, BASS_CLEF_TOP, beatToX, CLEF_HEIGHT, rowY, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 
 export interface StaffProps {
     song: pxt.assets.music.Song;
@@ -76,9 +76,10 @@ export const Staff = (props: StaffProps) => {
 
     const beats: JSX.Element[] = [];
     for (let i = 0; i < song.measures * song.beatsPerMeasure; i++) {
+        const isMeasureLine = i % song.beatsPerMeasure === 0;
         beats.push(
             <g key={i}>
-                {i % song.beatsPerMeasure === 0 &&
+                {isMeasureLine && !isBassClef &&
                     <text
                         x={beatToX(i)}
                         y={STAFF_HEADER_HEIGHT - STAFF_HEADER_OFFSET}
@@ -88,9 +89,9 @@ export const Staff = (props: StaffProps) => {
                     </text>
                 }
                 <line
-                    className={classList("music-staff-beat", i % song.beatsPerMeasure === 0 && "measure-start")}
+                    className={classList("music-staff-beat", isMeasureLine && "measure-start")}
                     x1={beatToX(i)}
-                    y1={STAFF_HEADER_HEIGHT}
+                    y1={isBassClef && isMeasureLine ? 0 : STAFF_HEADER_HEIGHT}
                     x2={beatToX(i)}
                     y2={WORKSPACE_HEIGHT} />
             </g>
@@ -109,8 +110,8 @@ export const Staff = (props: StaffProps) => {
             className="music-staff-clef"
             href={isBassClef ? "/static/music-editor/bass-clef.svg" : "/static/music-editor/treble-clef.svg" }
             height={isBassClef ? BASS_CLEF_HEIGHT : CLEF_HEIGHT}
-            x={isBassClef ? -30 : 0}
-            y={STAFF_HEADER_HEIGHT}  />
+            x={0}
+            y={isBassClef ? BASS_CLEF_TOP : STAFF_HEADER_HEIGHT}  />
         <g className="music-staff-rows">
             { rows }
         </g>

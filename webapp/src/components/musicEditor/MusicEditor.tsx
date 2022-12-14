@@ -198,14 +198,14 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onTempoChange={onTempoChange}
             onMeasuresChanged={onMeasuresChanged}
             eraserActive={eraserActive}
-            onEraserClick={onEraserClick} />
-        <EditControls
-            hideTracksActive={hideTracksActive}
-            onHideTracksClick={onHideTracksClick}
+            onEraserClick={onEraserClick}
             onUndoClick={undo}
             onRedoClick={redo}
             hasUndo={!!undoStack.length}
-            hasRedo={!!redoStack.length}
+            hasRedo={!!redoStack.length} />
+        <EditControls
+            hideTracksActive={hideTracksActive}
+            onHideTracksClick={onHideTracksClick}
             assetName={asset.meta.displayName}
             onAssetNameChanged={onAssetNameChanged}
             onDoneClicked={onDoneClicked} />

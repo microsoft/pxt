@@ -1,7 +1,7 @@
 import * as React from "react";
 import { clientCoord, screenToSVGCoord } from "../../../../react-common/components/util";
 import { Staff } from "./Staff";
-import { BASS_CLEF_TOP, closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { BASS_STAFF_TOP, closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { Track } from "./Track";
 import { findNoteEventAtTick } from "./utils";
 
@@ -95,7 +95,7 @@ export const Workspace = (props: WorkspaceProps) => {
         viewBox={`0 0 ${workspaceWidth(song)} ${WORKSPACE_HEIGHT * 2}`}
         ref={handleWorkspaceRef}>
         <Staff song={song} top={0} />
-        <Staff song={song} top={WORKSPACE_HEIGHT} isBassClef={true} />
+        <Staff song={song} top={BASS_STAFF_TOP} isBassClef={true} />
         {!hideUnselectedTracks && inactiveTracks.map((track, index) =>
             <Track
                 key={index}
@@ -111,7 +111,7 @@ export const Workspace = (props: WorkspaceProps) => {
 
 function coordinateToWorkspaceCoordinate(ev: MouseEvent | PointerEvent | TouchEvent, el: SVGSVGElement, song: pxt.assets.music.Song, gridTicks?: number): WorkspaceCoordinate {
     const coord = screenToSVGCoord(el, clientCoord(ev));
-    const isBassClef = coord.y > BASS_CLEF_TOP
+    const isBassClef = coord.y > BASS_STAFF_TOP
     const tick = closestTick(song, coord.x, gridTicks);
     const note = closestRow(coord.y);
 

@@ -25,6 +25,26 @@
     }
 }
 
+.music-undo-redo  {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    justify-content: end;
+    margin-right: 0.5rem;
+
+    .square-button {
+        background-color: @music-editor-header-color;
+        color: white;
+
+        &.disabled {
+            color: white;
+            background-color: @music-editor-header-color;
+            opacity: 0.5;
+        }
+    }
+}
+
 .music-playback-buttons {
     margin-right: 0.5rem;
 }
@@ -40,8 +60,6 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    flex-grow: 1;
-    justify-content: end;
 
     .common-button.menu-button {
         color: black;

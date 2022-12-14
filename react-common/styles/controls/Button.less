@@ -273,6 +273,36 @@
 }
 
 /****************************************************
+ *                 Button Group                     *
+ ****************************************************/
+
+ .common-button-group {
+    display: flex;
+    flex-direction: row;
+
+    .common-button {
+        border-radius: 0;
+        margin: 0;
+    }
+
+    .common-button.inverted:not(:last-child) {
+        border-right: none;
+    }
+
+    .common-button:first-child {
+        border-top-left-radius: 0.2em;
+        border-bottom-left-radius: 0.2em;
+    }
+    .common-button:last-child {
+        border-top-right-radius: 0.2em;
+        border-bottom-right-radius: 0.2em;
+
+        margin: 0 0.25rem 0 0;
+    }
+ }
+
+
+/****************************************************
  *                   Social Buttons                 *
  ****************************************************/
 
