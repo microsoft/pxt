@@ -16,6 +16,7 @@ export const Track = (props: TrackProps) => {
     if (cursorLocation) {
         cursorElement = <g transform={`translate(${tickToX(song, cursorLocation.tick)}, 0)`}>
             <Note
+                isBassClef={cursorLocation.isBassClef}
                 row={cursorLocation.row}
                 iconURI={track.iconURI}
                 opacity={0.5} />

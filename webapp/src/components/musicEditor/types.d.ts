@@ -15,6 +15,7 @@ interface MetronomeMessage {
 }
 
 interface WorkspaceCoordinate {
+    isBassClef: boolean;
     tick: number;
     row: number;
 }

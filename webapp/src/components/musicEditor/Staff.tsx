@@ -1,14 +1,16 @@
 import * as React from "react";
 import { classList } from "../../../../react-common/components/util";
 import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener, tickToMs } from "./playback";
-import { beatToX, CLEF_HEIGHT, rowY, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { BASS_CLEF_HEIGHT, beatToX, CLEF_HEIGHT, rowY, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 
 export interface StaffProps {
     song: pxt.assets.music.Song;
+    top: number;
+    isBassClef?: boolean;
 }
 
 export const Staff = (props: StaffProps) => {
-    const { song } = props;
+    const { song, top, isBassClef } = props;
 
     let playbackHead: SVGGElement;
 
@@ -66,9 +68,9 @@ export const Staff = (props: StaffProps) => {
                 key={i}
                 className="music-staff-row"
                 x1={0}
-                y1={rowY(i * 2 + 2)}
+                y1={rowY(i * 2 + 2, false)}
                 x2={totalWidth}
-                y2={rowY(i * 2 + 2)} />
+                y2={rowY(i * 2 + 2, false)} />
         )
     }
 
@@ -95,7 +97,7 @@ export const Staff = (props: StaffProps) => {
         )
     }
 
-    return <g className="music-staff">
+    return <g className="music-staff" transform={`translate(0 ${top})`}>
         <rect
             className="music-staff-background"
             x={0}
@@ -105,8 +107,9 @@ export const Staff = (props: StaffProps) => {
             />
         <image
             className="music-staff-clef"
-            href="/static/music-editor/treble-clef.svg"
-            height={CLEF_HEIGHT}
+            href={isBassClef ? "/static/music-editor/bass-clef.svg" : "/static/music-editor/treble-clef.svg" }
+            height={isBassClef ? BASS_CLEF_HEIGHT : CLEF_HEIGHT}
+            x={isBassClef ? -30 : 0}
             y={STAFF_HEADER_HEIGHT}  />
         <g className="music-staff-rows">
             { rows }

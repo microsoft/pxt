@@ -64,22 +64,22 @@ export const MusicEditor = (props: MusicEditorProps) => {
         }
     }
 
-    const onRowClick = (row: number, startTick: number, ctrlIsPressed: boolean) => {
+    const onRowClick = (coord: WorkspaceCoordinate, ctrlIsPressed: boolean) => {
         const track = currentSong.tracks[selectedTrack];
         const instrument = track.instrument;
-        const note = isDrumTrack ? row : rowToNote(instrument.octave, row, ctrlIsPressed);
+        const note = isDrumTrack ? coord.row : rowToNote(instrument.octave, coord.row, coord.isBassClef, ctrlIsPressed);
 
-        const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, startTick);
+        const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, coord.tick);
 
-        if (existingEvent?.startTick === startTick && existingEvent.notes.indexOf(note) !== -1) {
-            updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, startTick), true);
+        if (existingEvent?.startTick === coord.tick && existingEvent.notes.indexOf(note) !== -1) {
+            updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, coord.tick), true);
         }
         else if (!eraserActive) {
             const noteLength = isDrumTrack ? 1 : gridTicks;
-            updateSong(addNoteToTrack(currentSong, selectedTrack, note, startTick, startTick + noteLength), true)
+            updateSong(addNoteToTrack(currentSong, selectedTrack, note, coord.tick, coord.tick + noteLength), true)
 
             if (isDrumTrack) {
-                playDrumAsync(track.drums[row]);
+                playDrumAsync(track.drums[note]);
             }
             else {
                 playNoteAsync(note, instrument, tickToMs(currentSong, gridTicks))
@@ -148,7 +148,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             playDrumAsync(t.drums[0]);
         }
         else {
-            playNoteAsync(rowToNote(t.instrument.octave, 6), t.instrument, tickToMs(currentSong, currentSong.ticksPerBeat / 2));
+            playNoteAsync(rowToNote(t.instrument.octave, 6, false), t.instrument, tickToMs(currentSong, currentSong.ticksPerBeat / 2));
         }
         setSelectedTrack(newTrack);
     }

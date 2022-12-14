@@ -7,12 +7,13 @@ export interface NoteProps {
     opacity?: number;
     length?: number;
     isSharp?: boolean;
+    isBassClef: boolean;
 }
 
 export const Note = (props: NoteProps) => {
-    const { row, iconURI, length, opacity, isSharp } = props;
+    const { row, iconURI, length, opacity, isSharp, isBassClef } = props;
 
-    return <g className="music-staff-note" transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${rowY(row) - (NOTE_ICON_WIDTH / 2)})`}>
+    return <g className="music-staff-note" transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${rowY(row, isBassClef) - (NOTE_ICON_WIDTH / 2)})`}>
         { row === 0 &&
             <line
                 className="music-staff-row"

@@ -1,13 +1,13 @@
 import * as React from "react";
 import { clientCoord, screenToSVGCoord } from "../../../../react-common/components/util";
 import { Staff } from "./Staff";
-import { closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { BASS_CLEF_TOP, closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { Track } from "./Track";
 import { findNoteEventAtTick } from "./utils";
 
 export interface WorkspaceProps {
     song: pxt.assets.music.Song;
-    onWorkspaceClick: (row: number, tick: number, ctrlIsPressed: boolean) => void;
+    onWorkspaceClick: (coordinate: WorkspaceCoordinate, ctrlIsPressed: boolean) => void;
     onWorkspaceDragStart: () => void;
     onWorkspaceDragEnd: () => void;
     onWorkspaceDrag: (startCoordinate: WorkspaceCoordinate, endCoordinate: WorkspaceCoordinate) => void;
@@ -69,9 +69,9 @@ export const Workspace = (props: WorkspaceProps) => {
                 setIsDragging(false);
             }
             else {
-                const { row, tick } = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
-                if (tick >= 0 && row >= 0 && row < 12) {
-                    onWorkspaceClick(row, tick, ev.ctrlKey);
+                const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
+                if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
+                    onWorkspaceClick(coord, ev.ctrlKey);
                 }
             }
         };
@@ -92,9 +92,10 @@ export const Workspace = (props: WorkspaceProps) => {
     return <svg
         xmlns="http://www.w3.org/2000/svg"
         className="music-workspace"
-        viewBox={`0 0 ${workspaceWidth(song)} ${WORKSPACE_HEIGHT}`}
+        viewBox={`0 0 ${workspaceWidth(song)} ${WORKSPACE_HEIGHT * 2}`}
         ref={handleWorkspaceRef}>
-        <Staff song={song} />
+        <Staff song={song} top={0} />
+        <Staff song={song} top={WORKSPACE_HEIGHT} isBassClef={true} />
         {!hideUnselectedTracks && inactiveTracks.map((track, index) =>
             <Track
                 key={index}
@@ -110,10 +111,12 @@ export const Workspace = (props: WorkspaceProps) => {
 
 function coordinateToWorkspaceCoordinate(ev: MouseEvent | PointerEvent | TouchEvent, el: SVGSVGElement, song: pxt.assets.music.Song, gridTicks?: number): WorkspaceCoordinate {
     const coord = screenToSVGCoord(el, clientCoord(ev));
+    const isBassClef = coord.y > BASS_CLEF_TOP
     const tick = closestTick(song, coord.x, gridTicks);
     const note = closestRow(coord.y);
 
     return {
+        isBassClef,
         row: note,
         tick
     }
