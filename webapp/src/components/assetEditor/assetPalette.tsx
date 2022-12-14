@@ -59,13 +59,13 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         }
     }
 
-    const onExitModalClose = () => {
+    const onExit = () => {
         inExitModal.current = true;
         setShowExitModal(false);
         setCurrentColors(prevColors);
     }
 
-    const onResetColors = () => {
+    const onReset = () => {
         setCurrentColors(prevColors);
         setDisableButtons(true);
     }
@@ -88,12 +88,12 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         }
 
         const actions: ModalAction[] = [
-            { label: lf("Reset"), onClick: onResetColors, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
+            { label: lf("Reset"), onClick: onReset, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
             { label: lf("Save"), onClick: onSave, className: 'green', disabled: disableButtons }
         ];
 
         const exitActions: ModalAction[] = [
-            { label: lf("Exit"), onClick: onExitModalClose, className: 'teal' }
+            { label: lf("Exit"), onClick: onExit, className: 'teal' }
         ];
 
         return <div>
