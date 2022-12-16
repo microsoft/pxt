@@ -89,7 +89,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
         const actions: ModalAction[] = [
             { label: lf("Reset"), onClick: onReset, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
-            { label: lf("Save"), onClick: onSave, className: 'green', disabled: disableButtons }
+            { label: lf("Save"), onClick: onSave, className: 'green palette-save-button', disabled: disableButtons }
         ];
 
         const exitActions: ModalAction[] = [
