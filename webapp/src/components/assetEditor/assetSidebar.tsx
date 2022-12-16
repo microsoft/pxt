@@ -155,6 +155,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
     protected showPaletteModal = () => {
         this.setState({ showPaletteModal: true });
+        pxt.tickEvent("palette.open");
     }
 
     protected hidePaletteModal = (paletteChanged: boolean) => {
