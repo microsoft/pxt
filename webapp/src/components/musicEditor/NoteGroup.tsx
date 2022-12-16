@@ -62,8 +62,8 @@ export const NoteGroup = (props: NoteGroupProps) => {
         if (ref) noteGroupRef = ref;
     }
 
-    const xOffset = tickToX(song, noteEvent.startTick)
-    const noteLength = isDrumTrack ? 0 : tickToX(song, noteEvent.endTick) - xOffset;
+    const xOffset = tickToX(song.ticksPerBeat, noteEvent.startTick)
+    const noteLength = isDrumTrack ? 0 : tickToX(song.ticksPerBeat, noteEvent.endTick) - xOffset;
 
     return <g className="music-staff-note-group" transform={`translate(${xOffset}, 0)`} ref={handleNoteGroupRef}>
         {noteEvent.notes.map((note, index) => {

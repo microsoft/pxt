@@ -18,20 +18,20 @@ export const BASS_STAFF_HEADER_HEIGHT = STAFF_ROW_HEIGHT / 2;
 export const BASS_CLEF_TOP = 90;
 export const BASS_CLEF_HEIGHT = 230;
 
-export function workspaceWidth(song: pxt.assets.music.Song) {
-    return CLEF_WIDTH + song.measures * song.beatsPerMeasure * BEAT_WIDTH + STAFF_END_WIDTH;
+export function workspaceWidth(measures: number, beatsPerMeasure: number) {
+    return CLEF_WIDTH + measures * beatsPerMeasure * BEAT_WIDTH + STAFF_END_WIDTH;
 }
 
-export function tickToX(song: pxt.assets.music.Song, tick: number) {
-    return CLEF_WIDTH + (BEAT_WIDTH / song.ticksPerBeat) * tick;
+export function tickToX(ticksPerBeat: number, tick: number) {
+    return CLEF_WIDTH + (BEAT_WIDTH / ticksPerBeat) * tick;
 }
 
 export function beatToX(beat: number) {
     return CLEF_WIDTH + BEAT_WIDTH * beat;
 }
 
-export function closestTick(song: pxt.assets.music.Song, x: number, gridTicks?: number) {
-    const tick = Math.round((x - CLEF_WIDTH) * (song.ticksPerBeat / BEAT_WIDTH));
+export function closestTick(ticksPerBeat: number, x: number, gridTicks?: number) {
+    const tick = Math.round((x - CLEF_WIDTH) * (ticksPerBeat / BEAT_WIDTH));
     return Math.round(tick / gridTicks) * gridTicks
 }
 

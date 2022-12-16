@@ -113,7 +113,7 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
                             playDrumAsync(track.drums[note], isCancelled);
                         }
                         else {
-                            playNoteAsync(note, track.instrument, tickToMs(playbackState.song, noteEvent.endTick - noteEvent.startTick), isCancelled);
+                            playNoteAsync(note, track.instrument, tickToMs(playbackState.song.beatsPerMinute, playbackState.song.ticksPerBeat, noteEvent.endTick - noteEvent.startTick), isCancelled);
                         }
                     }
                 }
@@ -141,13 +141,13 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
 
     postMessage({
         type: "start",
-        interval: tickToMs(playbackState.song, 1)
+        interval: tickToMs(playbackState.song.beatsPerMinute, playbackState.song.ticksPerBeat, 1)
     })
     metronome.addEventListener("message", onTick);
 }
 
-export function tickToMs(song: pxt.assets.music.Song, ticks: number) {
-    return ((60000 / song.beatsPerMinute) / song.ticksPerBeat) * ticks;
+export function tickToMs(beatsPerMinute: number, ticksPerBeat: number, ticks: number) {
+    return ((60000 / beatsPerMinute) / ticksPerBeat) * ticks;
 }
 
 export function isPlaying() {
@@ -169,7 +169,7 @@ export async function updatePlaybackSongAsync(song: pxt.assets.music.Song) {
         const metronome = await loadMetronomeAsync();
         metronome.postMessage({
             type: "set-interval",
-            interval: tickToMs(song, 1)
+            interval: tickToMs(song.beatsPerMinute, song.ticksPerBeat, 1)
         })
     }
     currentPlaybackState.song = song;

@@ -82,7 +82,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
                 playDrumAsync(track.drums[note]);
             }
             else {
-                playNoteAsync(note, instrument, tickToMs(currentSong, gridTicks))
+                playNoteAsync(note, instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, gridTicks))
             }
         }
     }
@@ -157,7 +157,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             playDrumAsync(t.drums[0]);
         }
         else {
-            playNoteAsync(rowToNote(t.instrument.octave, 6, false), t.instrument, tickToMs(currentSong, currentSong.ticksPerBeat / 2));
+            playNoteAsync(rowToNote(t.instrument.octave, 6, false), t.instrument, tickToMs(currentSong.beatsPerMeasure, currentSong.ticksPerBeat, currentSong.ticksPerBeat / 2));
         }
         setSelectedTrack(newTrack);
         if (eraserActive) setEraserActive(false);

@@ -14,7 +14,7 @@ export const Track = (props: TrackProps) => {
 
     let cursorElement: JSX.Element;
     if (cursorLocation) {
-        cursorElement = <g transform={`translate(${tickToX(song, cursorLocation.tick)}, 0)`}>
+        cursorElement = <g transform={`translate(${tickToX(song.ticksPerBeat, cursorLocation.tick)}, 0)`}>
             <Note
                 isBassClef={cursorLocation.isBassClef}
                 row={cursorLocation.row}

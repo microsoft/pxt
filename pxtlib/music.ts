@@ -21,11 +21,14 @@ namespace pxt.assets.music {
         amplitude: number;
     }
 
-    export interface Song {
+    export interface SongInfo {
         measures: number;
         beatsPerMeasure: number;
         beatsPerMinute: number;
         ticksPerBeat: number;
+    }
+
+    export interface Song extends SongInfo {
         tracks: Track[];
     }
 
@@ -724,6 +727,15 @@ namespace pxt.assets.music {
             if (existing) track.notes = existing.notes;
             return track;
         })
+    }
+
+    export function getSongInfo(song: pxt.assets.music.Song): SongInfo {
+        return {
+            ticksPerBeat: song.ticksPerBeat,
+            beatsPerMeasure: song.beatsPerMeasure,
+            beatsPerMinute: song.beatsPerMinute,
+            measures: song.measures
+        }
     }
 
     export function getEmptySong(measures: number): pxt.assets.music.Song {
