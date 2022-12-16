@@ -1,16 +1,17 @@
 import * as React from "react";
 import { classList } from "../../../../react-common/components/util";
 import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener, tickToMs } from "./playback";
-import { BASS_CLEF_HEIGHT, BASS_CLEF_TOP, beatToX, CLEF_HEIGHT, rowY, STAFF_END_WIDTH, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { BASS_CLEF_HEIGHT, BASS_CLEF_TOP, beatToX, CLEF_HEIGHT, CLEF_WIDTH, rowY, STAFF_END_WIDTH, STAFF_GRID_TICK_HEIGHT, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 
 export interface StaffProps {
     song: pxt.assets.music.Song;
     top: number;
+    gridTicks: number;
     isBassClef?: boolean;
 }
 
 export const Staff = (props: StaffProps) => {
-    const { song, top, isBassClef } = props;
+    const { song, top, isBassClef, gridTicks } = props;
 
     let playbackHead: SVGGElement;
 
@@ -61,7 +62,8 @@ export const Staff = (props: StaffProps) => {
 
     const totalWidth = workspaceWidth(song)
 
-    const rows: JSX.Element[] = [];
+    const rows: JSX.Element[] = [
+    ];
     for (let i = 0; i < 5; i++) {
         rows.push(
             <line
@@ -75,25 +77,36 @@ export const Staff = (props: StaffProps) => {
     }
 
     const beats: JSX.Element[] = [];
-    for (let i = 0; i < song.measures * song.beatsPerMeasure; i++) {
-        const isMeasureLine = i % song.beatsPerMeasure === 0;
+    const step = gridTicks;
+    for (let i = 0; i < song.measures * song.beatsPerMeasure * song.ticksPerBeat; i += step) {
+        const isBeatStart = i % song.ticksPerBeat === 0;
+        const isMeasureStart = i % (song.beatsPerMeasure * song.ticksPerBeat) === 0;
+        const isTick = !isBeatStart && !isMeasureStart;
         beats.push(
             <g key={i}>
-                {isMeasureLine && !isBassClef &&
+                {isMeasureStart && !isBassClef &&
                     <text
-                        x={beatToX(i)}
+                        x={tickToX(song, i)}
                         y={STAFF_HEADER_HEIGHT - STAFF_HEADER_OFFSET}
                         textAnchor="middle"
                         fontSize={STAFF_HEADER_FONT_SIZE}>
                         {Math.floor(i / song.beatsPerMeasure) + 1}
                     </text>
                 }
+                {!isTick &&
+                    <line
+                        className={classList("music-staff-column", isBeatStart && "beat-start", isMeasureStart && "measure-start")}
+                        x1={tickToX(song, i)}
+                        y1={isBassClef && isMeasureStart ? 0 : STAFF_HEADER_HEIGHT}
+                        x2={tickToX(song, i)}
+                        y2={WORKSPACE_HEIGHT} />
+                }
                 <line
-                    className={classList("music-staff-beat", isMeasureLine && "measure-start")}
-                    x1={beatToX(i)}
-                    y1={isBassClef && isMeasureLine ? 0 : STAFF_HEADER_HEIGHT}
-                    x2={beatToX(i)}
-                    y2={WORKSPACE_HEIGHT} />
+                    className="music-staff-column"
+                    x1={tickToX(song, i)}
+                    y1={STAFF_HEADER_HEIGHT - STAFF_GRID_TICK_HEIGHT}
+                    x2={tickToX(song, i)}
+                    y2={STAFF_HEADER_HEIGHT} />
             </g>
         )
     }
@@ -112,6 +125,18 @@ export const Staff = (props: StaffProps) => {
             height={isBassClef ? BASS_CLEF_HEIGHT : CLEF_HEIGHT}
             x={0}
             y={isBassClef ? BASS_CLEF_TOP : STAFF_HEADER_HEIGHT}  />
+        <rect
+            fill="#000"
+            x={0}
+            y={STAFF_HEADER_HEIGHT- STAFF_GRID_TICK_HEIGHT}
+            width={totalWidth}
+            height={STAFF_GRID_TICK_HEIGHT} />
+        <rect
+            fill="#dedede"
+            x={CLEF_WIDTH}
+            y={STAFF_HEADER_HEIGHT- STAFF_GRID_TICK_HEIGHT}
+            width={totalWidth - CLEF_WIDTH - STAFF_END_WIDTH}
+            height={STAFF_GRID_TICK_HEIGHT} />
         <g className="music-staff-rows">
             { rows }
         </g>

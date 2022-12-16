@@ -207,7 +207,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onWorkspaceDragEnd={onNoteDragEnd}
             onWorkspaceDrag={onNoteDrag}
             gridTicks={gridTicks}
-            hideUnselectedTracks={hideTracksActive} />
+            hideUnselectedTracks={hideTracksActive}
+            showBassClef={true} />
         <PlaybackControls
             song={currentSong}
             onTempoChange={onTempoChange}

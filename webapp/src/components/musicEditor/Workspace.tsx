@@ -15,10 +15,11 @@ export interface WorkspaceProps {
     hideUnselectedTracks: boolean;
     eraserActive: boolean;
     gridTicks?: number;
+    showBassClef: boolean;
 }
 
 export const Workspace = (props: WorkspaceProps) => {
-    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, hideUnselectedTracks, eraserActive } = props;
+    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, hideUnselectedTracks, eraserActive, showBassClef } = props;
 
     const [cursorLocation, setCursorLocation] = React.useState<WorkspaceCoordinate>(null);
     const [dragStart, setDragStart] = React.useState<WorkspaceCoordinate>(null);
@@ -90,13 +91,24 @@ export const Workspace = (props: WorkspaceProps) => {
 
     const inactiveTracks = song.tracks.filter((t, i) => i !== selectedTrack);
 
+    const height = showBassClef ? WORKSPACE_HEIGHT * 2 : WORKSPACE_HEIGHT;
+
     return <svg
         xmlns="http://www.w3.org/2000/svg"
         className={classList("music-workspace", eraserActive && "erasing")}
-        viewBox={`0 0 ${workspaceWidth(song) + 20} ${WORKSPACE_HEIGHT * 2}`}
+        viewBox={`0 0 ${workspaceWidth(song) + 20} ${height}`}
         ref={handleWorkspaceRef}>
-        <Staff song={song} top={0} />
-        <Staff song={song} top={BASS_STAFF_TOP} isBassClef={true} />
+        <Staff
+            song={song}
+            top={0}
+            gridTicks={gridTicks} />
+        {showBassClef &&
+            <Staff
+                song={song}
+                top={BASS_STAFF_TOP}
+                isBassClef={true}
+                gridTicks={gridTicks} />
+        }
         {!hideUnselectedTracks && inactiveTracks.map((track, index) =>
             <Track
                 key={index}

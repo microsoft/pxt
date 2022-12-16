@@ -3,16 +3,19 @@
     stroke: black;
 }
 
-.music-staff-beat {
-    stroke-width: 2;
+.music-staff-column {
+    stroke-width: 1;
     stroke: #666666;
-    stroke-dasharray: 2;
 }
 
-.music-staff-beat.measure-start {
+.music-staff-column.measure-start {
     stroke: orange;
-    stroke-dasharray: 0;
     stroke-width: 3;
+}
+
+.music-staff-column.beat-start {
+    stroke-dasharray: 2;
+    stroke-width: 2;
 }
 
 .music-staff-background {

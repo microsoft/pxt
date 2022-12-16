@@ -7,6 +7,7 @@ export const STAFF_HEADER_HEIGHT = STAFF_ROW_HEIGHT;
 export const STAFF_HEADER_FONT_SIZE = 40;
 export const STAFF_HEADER_OFFSET = 10;
 export const STAFF_END_WIDTH = 25;
+export const STAFF_GRID_TICK_HEIGHT = 7;
 
 export const WORKSPACE_HEIGHT = STAFF_HEADER_HEIGHT + STAFF_ROW_HEIGHT * 7;
 export const NOTE_ICON_WIDTH = 45;
