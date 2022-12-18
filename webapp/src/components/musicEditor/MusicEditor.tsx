@@ -4,7 +4,7 @@ import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAs
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findClosestPreviousNote, removeNoteFromTrack, rowToNote } from "./utils";
+import { addNoteToTrack, changeSongLength, clearSelection, editNoteEventLength, fillDrums, findClosestPreviousNote, findNoteEventAtPosition, findSelectedRange, moveSelectedNotes, removeNoteFromTrack, rowToNote, selectNoteEventsInRange } from "./utils";
 
 export interface MusicEditorProps {
     asset: pxt.Song;
@@ -18,6 +18,7 @@ export interface MusicEditorProps {
 interface EditSongState {
     editing: pxt.assets.music.Song;
     original: pxt.assets.music.Song;
+    isMarqueeSelection: boolean;
 }
 
 export const MusicEditor = (props: MusicEditorProps) => {
@@ -30,6 +31,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [undoStack, setUndoStack] = React.useState(savedUndoStack || []);
     const [redoStack, setRedoStack] = React.useState<pxt.assets.music.Song[]>([]);
     const [editingId, setEditingId] = React.useState(editRef);
+    const [selection, setSelection] = React.useState<WorkspaceRange | undefined>();
 
     React.useEffect(() => {
         return () => {
@@ -71,6 +73,9 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
         const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, coord.tick);
 
+        updateSong(clearSelection(currentSong), true);
+        setSelection(undefined);
+
         if (existingEvent?.startTick === coord.tick && existingEvent.notes.indexOf(note) !== -1) {
             updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, coord.tick), true);
         }
@@ -90,7 +95,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const onNoteDragStart = () => {
         editSong.current = {
             editing: currentSong,
-            original: currentSong
+            original: currentSong,
+            isMarqueeSelection: false
         }
     }
 
@@ -98,10 +104,32 @@ export const MusicEditor = (props: MusicEditorProps) => {
         if (!pxt.assets.music.songEquals(editSong.current.editing, editSong.current.original)) {
             updateSong(editSong.current.editing, true);
         }
+        if (editSong.current.isMarqueeSelection) {
+            const selectedRange = findSelectedRange(editSong.current.editing, gridTicks);
+
+            if (selectedRange) {
+                setSelection({
+                    start: {
+                        row: 0,
+                        isBassClef: false,
+                        tick: selectedRange.start,
+                    },
+                    end: {
+                        row: 0,
+                        isBassClef: false,
+                        tick: selectedRange.end,
+                    }
+                })
+            }
+            else {
+                setSelection(undefined);
+            }
+        }
         editSong.current = undefined;
     }
 
     const onNoteDrag = (start: WorkspaceCoordinate, end: WorkspaceCoordinate) => {
+        // First, check if we are erasing
         if (eraserActive) {
             for (let i = 0; i < currentSong.tracks.length; i++) {
                 if (hideTracksActive && i !== selectedTrack) continue;
@@ -127,16 +155,61 @@ export const MusicEditor = (props: MusicEditorProps) => {
             return;
         }
 
+        editSong.current.isMarqueeSelection = false;
+
         if (!!editSong.current.original.tracks[selectedTrack].drums) {
             updateSong(fillDrums(editSong.current.original, selectedTrack, start.row, start.tick, end.tick, gridTicks), false);
+            return;
         }
-        else {
-            const event = findClosestPreviousNote(editSong.current.original, selectedTrack, start.tick);
 
-            if (!event || end.tick < event.startTick + 1) return;
+        // If we have a selection, check to see if this is dragging the selection around
+        if (selection) {
+            const possibleSelection = findNoteEventAtPosition(editSong.current.original, start, hideTracksActive ? selectedTrack : undefined);
+            if (possibleSelection?.selected) {
+                const dt = end.tick - start.tick;
+                const dr = (end.row - (end.isBassClef ? 12 : 0)) - (start.row - (start.isBassClef ? 12 : 0))
+                const updated = moveSelectedNotes(editSong.current.original, dt, dr, hideTracksActive ? selectedTrack : undefined)
+                updateSong(updated, false);
+                const selectedRange = findSelectedRange(updated, gridTicks);
+
+                if (selectedRange) {
+                    setSelection({
+                        start: {
+                            row: 0,
+                            isBassClef: false,
+                            tick: selectedRange.start,
+                        },
+                        end: {
+                            row: 0,
+                            isBassClef: false,
+                            tick: selectedRange.end,
+                        }
+                    })
+                }
+                else {
+                    setSelection(undefined);
+                }
+                return;
+            }
+        }
+
+        // Next, check if this is a drag to change a note length
+        const event = findClosestPreviousNote(editSong.current.original, selectedTrack, start.tick);
+
+        if (event && start.tick >= event.startTick && start.tick <= event.endTick) {
+            if (end.tick < event.startTick + 1) return;
 
             updateSong(editNoteEventLength(editSong.current.original, selectedTrack, event.startTick, end.tick), false);
+            return;
         }
+
+        // Otherwise, it must be a marquee selection
+        setSelection({
+            start,
+            end
+        });
+        updateSong(selectNoteEventsInRange(editSong.current.original, start.tick, end.tick, hideTracksActive ? selectedTrack : undefined), false);
+        editSong.current.isMarqueeSelection = true;
     }
 
     const onTempoChange = (newTempo: number) => {
@@ -208,7 +281,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onWorkspaceDrag={onNoteDrag}
             gridTicks={gridTicks}
             hideUnselectedTracks={hideTracksActive}
-            showBassClef={true} />
+            showBassClef={true}
+            selection={selection} />
         <PlaybackControls
             song={currentSong}
             onTempoChange={onTempoChange}

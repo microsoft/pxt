@@ -5,6 +5,7 @@ import { Staff } from "./Staff";
 import { BASS_STAFF_TOP, closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { Track } from "./Track";
 import { findNoteEventAtTick } from "./utils";
+import { WorkspaceSelection } from "./WorkspaceSelection";
 
 export interface WorkspaceProps {
     song: pxt.assets.music.Song;
@@ -17,10 +18,11 @@ export interface WorkspaceProps {
     eraserActive: boolean;
     gridTicks?: number;
     showBassClef: boolean;
+    selection?: WorkspaceRange;
 }
 
 export const Workspace = (props: WorkspaceProps) => {
-    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, hideUnselectedTracks, eraserActive, showBassClef } = props;
+    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, hideUnselectedTracks, eraserActive, showBassClef, selection } = props;
 
     const [cursorLocation, setCursorLocation] = React.useState<WorkspaceCoordinate>(null);
     const [dragStart, setDragStart] = React.useState<WorkspaceCoordinate>(null);
@@ -126,6 +128,17 @@ export const Workspace = (props: WorkspaceProps) => {
         className={classList("music-workspace", eraserActive && "erasing")}
         viewBox={`0 0 ${workspaceWidth(song.measures, song.beatsPerMeasure) + 20} ${height}`}
         ref={handleWorkspaceRef}>
+            <filter id="selection-outline">
+                <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="4" />
+
+                <feFlood floodColor="yellow" floodOpacity="1" result="FLOODED" />
+                <feComposite in="FLOODED" in2="DILATED" operator="in" result="OUTLINE" />
+
+                <feMerge>
+                    <feMergeNode in="OUTLINE" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
         <Staff
             {...songInfo}
             top={0}
@@ -139,8 +152,14 @@ export const Workspace = (props: WorkspaceProps) => {
         }
         <GridHighlight
             {...songInfo}
-            gridHighlightStart={gridHighlightStart}
-            gridHighlightEnd={gridHighlightEnd} />
+            start={gridHighlightStart}
+            end={gridHighlightEnd} />
+
+        {selection &&
+            <WorkspaceSelection
+                {...songInfo}
+                range={selection} />
+        }
         {!hideUnselectedTracks && inactiveTracks.map((track, index) =>
             <Track
                 key={index}

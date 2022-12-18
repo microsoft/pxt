@@ -91,7 +91,8 @@ export const NoteGroup = (props: NoteGroupProps) => {
                 row={row}
                 isSharp={isSharp}
                 iconURI={iconURI}
-                length={noteLength} />
+                length={noteLength}
+                selected={noteEvent.selected} />
         }
         )}
     </g>

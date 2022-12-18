@@ -157,6 +157,27 @@ export function findClosestPreviousNote(song: pxt.assets.music.Song, trackIndex:
     return lastNote;
 }
 
+export function findNoteEventAtPosition(song: pxt.assets.music.Song, position: WorkspaceCoordinate, trackIndex?: number) {
+    if (trackIndex !== undefined) {
+        const event = findNoteEventAtTick(song, trackIndex, position.tick);
+
+        if (event?.notes.some(n => noteToRow(song.tracks[trackIndex].instrument.octave - (position.isBassClef ? 2 : 0), n) === position.row)) {
+            return event;
+        }
+        return undefined;
+    }
+
+    for (let i = 0; i < song.tracks.length; i++) {
+        const event = findNoteEventAtTick(song, i, position.tick);
+
+        if (event?.notes.some(n => noteToRow(song.tracks[i].instrument.octave - (position.isBassClef ? 2 : 0), n) === position.row)) {
+            return event;
+        }
+    }
+
+    return undefined;
+}
+
 
 export function changeSongLength(song: pxt.assets.music.Song, measures: number) {
     const maxTick = measures * song.beatsPerMeasure * song.ticksPerBeat;
@@ -180,4 +201,141 @@ export function changeSongLength(song: pxt.assets.music.Song, measures: number) 
             return res;
         })
     }
+}
+
+export function findSelectedRange(song: pxt.assets.music.Song, gridTicks?: number) {
+    let start = song.measures * song.beatsPerMeasure * song.ticksPerBeat + 1;
+    let end = -1;
+
+    for (const track of song.tracks) {
+        for (const note of track.notes) {
+            if (note.selected) {
+                start = Math.min(note.startTick, start);
+                end = Math.max(note.endTick, end);
+            }
+        }
+    }
+
+    if (end === -1) return undefined;
+
+    if (gridTicks !== undefined) {
+        start = Math.floor(start / gridTicks) * gridTicks;
+        end = Math.ceil(end / gridTicks) * gridTicks;
+    }
+
+    return {
+        start,
+        end
+    }
+}
+
+export function selectNoteEventsInRange(song: pxt.assets.music.Song, startTick: number, endTick: number, trackIndex?: number): pxt.assets.music.Song {
+    if (trackIndex !== undefined) {
+        return {
+            ...song,
+            tracks: song.tracks.map((t, i) => i !== trackIndex ? t : selectTrackNoteEventsInRange(t, Math.min(startTick, endTick), Math.max(startTick, endTick)))
+        }
+    }
+    return {
+        ...song,
+        tracks: song.tracks.map(t => selectTrackNoteEventsInRange(t, Math.min(startTick, endTick), Math.max(startTick, endTick)))
+    }
+}
+
+function selectTrackNoteEventsInRange(track: pxt.assets.music.Track, startTick: number, endTick: number): pxt.assets.music.Track {
+    return {
+        ...track,
+        notes: track.notes.map(e => ({
+            ...e,
+            notes: e.notes.slice(),
+            selected: !(e.startTick >= endTick || e.endTick <= startTick)
+        }))
+    }
+}
+
+export function clearSelection(song: pxt.assets.music.Song): pxt.assets.music.Song {
+    return {
+        ...song,
+        tracks: song.tracks.map(t => ({
+            ...t,
+            notes: t.notes.map(n => ({
+                ...n,
+                selected: false
+            }))
+        }))
+    }
+}
+
+export function deleteSelectedNotes(song: pxt.assets.music.Song): pxt.assets.music.Song {
+    return {
+        ...song,
+        tracks: song.tracks.map(t => ({
+            ...t,
+            notes: t.notes.filter(n => !n.selected)
+        }))
+    }
+}
+
+export function moveSelectedNotes(song: pxt.assets.music.Song, deltaTicks: number, deltaRows: number, trackIndex?: number): pxt.assets.music.Song {
+    const { start, end } = findSelectedRange(song);
+
+    const newStart = start + deltaTicks;
+    const newEnd = end + deltaTicks;
+
+    return {
+        ...song,
+        tracks: song.tracks.map((t, i) => (trackIndex !== undefined && trackIndex != i) ? t : ({
+            ...t,
+            notes: t.notes
+                .filter(n => n.selected || n.endTick < newStart || n.startTick > newEnd)
+                .map(n => !n.selected ? n : moveNoteEvent(n, t.instrument.octave, deltaTicks, deltaRows, !!t.drums))
+                .filter(n => n.notes.length > 0)
+                .sort((a, b) => a.startTick - b.startTick)
+        }))
+    }
+}
+
+function moveNoteEvent(noteEvent: pxt.assets.music.NoteEvent, trackOctave: number, deltaTicks: number, deltaRows: number, isDrumTrack: boolean) {
+    const res: pxt.assets.music.NoteEvent = {
+        ...noteEvent,
+        startTick: noteEvent.startTick + deltaTicks,
+        endTick: noteEvent.endTick + deltaTicks,
+        notes: []
+    }
+
+    if (isDrumTrack) {
+        // Don't transpose drum rows since it would completely change the sounds
+        res.notes = noteEvent.notes.slice();
+    }
+    else {
+        for (const note of noteEvent.notes) {
+            let isBass = isBassClefNote(trackOctave, note);
+            let row = noteToRow(isBass ? trackOctave - 2 : trackOctave, note);
+            let isSharp = isSharpNote(note);
+
+            if (row + deltaRows >= staffNoteIntervals.length) {
+                if (isBass) {
+                    row -= 12;
+                    isBass = false;
+                }
+            }
+            else if (row + deltaRows < 0) {
+                if (!isBass) {
+                    row += 12;
+                    isBass = true
+                }
+            }
+
+            const newRow = row + deltaRows;
+
+            if (newRow < 0 || newRow >= staffNoteIntervals.length) {
+                // drop notes that are no longer visible on the staff
+                continue;
+            }
+
+            res.notes.push(rowToNote(trackOctave, newRow, isBass, isSharp));
+        }
+    }
+
+    return res;
 }

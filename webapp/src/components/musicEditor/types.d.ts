@@ -7,6 +7,10 @@ namespace pxt.assets.music {
     export interface Instrument {
         octave: number;
     }
+
+    export interface NoteEvent {
+        selected?: boolean;
+    }
 }
 
 interface MetronomeMessage {
@@ -18,4 +22,9 @@ interface WorkspaceCoordinate {
     isBassClef: boolean;
     tick: number;
     row: number;
+}
+
+interface WorkspaceRange {
+    start: WorkspaceCoordinate;
+    end: WorkspaceCoordinate;
 }
