@@ -88,15 +88,20 @@ export const Workspace = (props: WorkspaceProps) => {
     let gridHighlightEnd: number;
 
     let cursorPreviewLocation = (isDragging || eraserActive) ? undefined : cursorLocation;
-    const eventAtCursor = cursorLocation && findNoteEventAtTick(song, selectedTrack, cursorLocation.tick - (isDragging ? 1 : 0));
+    const eventAtCursor = cursorLocation && findNoteEventAtTick(song, selectedTrack, cursorLocation.tick);
+    const dragEvent = dragStart && findNoteEventAtTick(song, selectedTrack, dragStart.tick)
 
-    if (eventAtCursor) {
-        gridHighlightStart = eventAtCursor.startTick;
-        gridHighlightEnd = eventAtCursor.endTick;
+    if (!eraserActive && dragEvent && cursorLocation?.tick >= dragEvent.startTick) {
+        gridHighlightStart = dragEvent.startTick;
+        gridHighlightEnd = dragEvent.endTick;
     }
-    else if (isDragging && cursorLocation && dragStart) {
+    else if (!eraserActive && isDragging && cursorLocation && dragStart) {
         gridHighlightStart = Math.min(cursorLocation.tick, dragStart.tick);
         gridHighlightEnd = Math.max(cursorLocation.tick, dragStart.tick);
+    }
+    else if (eventAtCursor) {
+        gridHighlightStart = eventAtCursor.startTick;
+        gridHighlightEnd = eventAtCursor.endTick;
     }
     else if (cursorLocation) {
         gridHighlightStart = cursorLocation.tick;
