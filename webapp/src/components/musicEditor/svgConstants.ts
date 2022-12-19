@@ -31,8 +31,8 @@ export function beatToX(beat: number) {
 }
 
 export function closestTick(ticksPerBeat: number, x: number, gridTicks?: number) {
-    const tick = Math.round((x - CLEF_WIDTH) * (ticksPerBeat / BEAT_WIDTH));
-    return Math.round(tick / gridTicks) * gridTicks
+    const tick = Math.floor((x - CLEF_WIDTH) * (ticksPerBeat / BEAT_WIDTH));
+    return Math.floor(tick / gridTicks) * gridTicks
 }
 
 export function closestRow(y: number) {

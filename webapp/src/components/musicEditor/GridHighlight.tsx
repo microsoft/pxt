@@ -10,20 +10,23 @@ export const GridHighlight = (props: GridHighlightProps) => {
 
     const hasGridHighlight = start != undefined && end != undefined;
 
+    const s = Math.min(start, end);
+    const e = Math.max(start, end);
+
     if (!hasGridHighlight) return <g/>;
 
     return <g>
         <rect
             fill="#03adfc"
-            x={tickToX(ticksPerBeat, start)}
+            x={tickToX(ticksPerBeat, s)}
             y={STAFF_HEADER_HEIGHT - STAFF_GRID_TICK_HEIGHT}
-            width={tickToX(ticksPerBeat, end) - tickToX(ticksPerBeat, start)}
+            width={tickToX(ticksPerBeat, e) - tickToX(ticksPerBeat, s)}
             height={STAFF_GRID_TICK_HEIGHT} />
         <rect
             fill="#03adfc"
-            x={tickToX(ticksPerBeat, start)}
+            x={tickToX(ticksPerBeat, s)}
             y={BASS_STAFF_TOP + STAFF_HEADER_HEIGHT- STAFF_GRID_TICK_HEIGHT}
-            width={tickToX(ticksPerBeat, end) - tickToX(ticksPerBeat, start)}
+            width={tickToX(ticksPerBeat, e) - tickToX(ticksPerBeat, s)}
             height={STAFF_GRID_TICK_HEIGHT} />
     </g>
 }

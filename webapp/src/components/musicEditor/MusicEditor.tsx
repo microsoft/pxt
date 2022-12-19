@@ -4,7 +4,7 @@ import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAs
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findClosestPreviousNote, findNoteEventAtPosition, findSelectedRange, moveSelectedNotes, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findClosestPreviousNote, findNoteEventAtPosition, findSelectedRange, moveSelectedNotes, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
 
 export interface MusicEditorProps {
     asset: pxt.Song;
@@ -94,11 +94,15 @@ export const MusicEditor = (props: MusicEditorProps) => {
         clearSelection();
 
         if (existingEvent?.startTick === coord.tick && existingEvent.notes.indexOf(note) !== -1) {
-            updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, coord.tick), true);
+            updateSong(unselectAllNotes(removeNoteFromTrack(currentSong, selectedTrack, note, coord.tick)), true);
         }
         else if (!eraserActive) {
+            const maxTick = currentSong.beatsPerMeasure * currentSong.ticksPerBeat * currentSong.measures;
+
+            if (coord.tick === maxTick) return;
+
             const noteLength = isDrumTrack ? 1 : gridTicks;
-            updateSong(addNoteToTrack(currentSong, selectedTrack, note, coord.tick, coord.tick + noteLength), true)
+            updateSong(unselectAllNotes(addNoteToTrack(currentSong, selectedTrack, note, coord.tick, coord.tick + noteLength)), true)
 
             if (isDrumTrack) {
                 playDrumAsync(track.drums[note]);
@@ -254,14 +258,24 @@ export const MusicEditor = (props: MusicEditorProps) => {
         // Next, check if this is a drag to change a note length
         const event = findClosestPreviousNote(dragState.current.original, selectedTrack, start.tick);
 
-        if (event && start.tick >= event.startTick && start.tick <= event.endTick) {
-            if (end.tick < event.startTick + 1) return;
+        if (!isDrumTrack && event && start.tick >= event.startTick && start.tick < event.endTick) {
+            let isOnRow = false;
+            for (const note of event.notes) {
+                if (noteToRow(currentSong.tracks[selectedTrack].instrument.octave - (start.isBassClef ? 2 : 0), note) === start.row) {
+                    isOnRow = true;
+                    break;
+                }
+            }
 
-            setSelection(undefined);
-            dragState.current.dragType = "note-length";
+            if (isOnRow) {
+                if (end.tick < event.startTick + 1) return;
 
-            updateSong(editNoteEventLength(dragState.current.original, selectedTrack, event.startTick, end.tick), false);
-            return;
+                setSelection(undefined);
+                dragState.current.dragType = "note-length";
+
+                updateSong(editNoteEventLength(dragState.current.original, selectedTrack, event.startTick, end.tick), false);
+                return;
+            }
         }
 
         // Otherwise, it must be a marquee selection

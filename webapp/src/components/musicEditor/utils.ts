@@ -94,11 +94,13 @@ function removeNoteFromNoteArray(notes: pxt.assets.music.NoteEvent[], note: numb
 }
 
 export function editNoteEventLength(song: pxt.assets.music.Song, trackIndex: number, startTick: number, endTick: number) {
+    const maxTick = song.beatsPerMeasure * song.ticksPerBeat * song.measures;
+
     return {
         ...song,
         tracks: song.tracks.map((track, index) => index !== trackIndex ? track : {
             ...track,
-            notes: setNoteEventLength(track.notes, startTick, endTick)
+            notes: setNoteEventLength(track.notes, startTick, Math.min(endTick, maxTick))
         })
     }
 }
@@ -281,15 +283,17 @@ export function moveSelectedNotes(song: pxt.assets.music.Song, deltaTicks: numbe
 
     const newStart = start + deltaTicks;
     const newEnd = end + deltaTicks;
+    const maxTick = song.beatsPerMeasure * song.ticksPerBeat * song.measures;
 
     return {
         ...song,
         tracks: song.tracks.map((t, i) => (trackIndex !== undefined && trackIndex != i) ? t : ({
             ...t,
             notes: t.notes
-                .filter(n => n.selected || n.endTick < newStart || n.startTick > newEnd)
+                .filter(n => n.selected || n.endTick <= newStart || n.startTick >= newEnd)
                 .map(n => !n.selected ? n : moveNoteEvent(n, t.instrument.octave, deltaTicks, deltaRows, !!t.drums))
-                .filter(n => n.notes.length > 0)
+                .map(n => ({ ...n, endTick: Math.min(n.endTick, maxTick) }))
+                .filter(n => n.notes.length > 0 && n.startTick >= 0 && n.startTick < maxTick)
                 .sort((a, b) => a.startTick - b.startTick)
         }))
     }

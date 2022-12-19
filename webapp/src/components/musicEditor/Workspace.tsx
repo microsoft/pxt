@@ -2,7 +2,7 @@ import * as React from "react";
 import { classList, clientCoord, screenToSVGCoord } from "../../../../react-common/components/util";
 import { GridHighlight } from "./GridHighlight";
 import { Staff } from "./Staff";
-import { BASS_STAFF_TOP, closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { BASS_STAFF_TOP, BEAT_WIDTH, closestRow, closestTick, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { Track } from "./Track";
 import { findNoteEventAtTick } from "./utils";
 import { WorkspaceSelection } from "./WorkspaceSelection";
@@ -44,7 +44,9 @@ export const Workspace = (props: WorkspaceProps) => {
 
             if (cursorLocation && cursorLocation.tick === coord.tick && cursorLocation.row === coord.row) return;
 
-            if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
+            const maxTick = song.beatsPerMeasure * song.ticksPerBeat * song.measures;
+
+            if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12 && coord.tick <= maxTick) {
                 if (dragStart) {
                     if (!isDragging) {
                         setIsDragging(true);
@@ -52,7 +54,15 @@ export const Workspace = (props: WorkspaceProps) => {
                     }
                     onWorkspaceDrag(dragStart, coord);
                 }
-                setCursorLocation(coord);
+
+                // We don't show the cursor on the last tick, since you can't place notes there.
+                // Events still fire, though, because you need to be able to drag note lengths to the end
+                if (coord.tick < maxTick) {
+                    setCursorLocation(coord);
+                }
+                else {
+                    setCursorLocation(null);
+                }
             }
             else {
                 setCursorLocation(null);
@@ -93,7 +103,11 @@ export const Workspace = (props: WorkspaceProps) => {
     const eventAtCursor = cursorLocation && findNoteEventAtTick(song, selectedTrack, cursorLocation.tick);
     const dragEvent = dragStart && findNoteEventAtTick(song, selectedTrack, dragStart.tick)
 
-    if (!eraserActive && dragEvent && cursorLocation?.tick >= dragEvent.startTick) {
+    if (selection) {
+        gridHighlightStart = selection.start.tick;
+        gridHighlightEnd = selection.end.tick;
+    }
+    else if (!eraserActive && dragEvent && cursorLocation?.tick >= dragEvent.startTick) {
         gridHighlightStart = dragEvent.startTick;
         gridHighlightEnd = dragEvent.endTick;
     }
@@ -175,8 +189,10 @@ export const Workspace = (props: WorkspaceProps) => {
 
 function coordinateToWorkspaceCoordinate(ev: MouseEvent | PointerEvent | TouchEvent, el: SVGSVGElement, song: pxt.assets.music.Song, gridTicks?: number): WorkspaceCoordinate {
     const coord = screenToSVGCoord(el, clientCoord(ev));
-    const isBassClef = coord.y > BASS_STAFF_TOP
-    const tick = closestTick(song.ticksPerBeat, coord.x, gridTicks);
+    const isBassClef = coord.y > BASS_STAFF_TOP;
+
+    // We add 1 tick to make it easier to click on the exact tick where a grid line begins
+    const tick = closestTick(song.ticksPerBeat, coord.x + (BEAT_WIDTH / song.ticksPerBeat), gridTicks);
     const note = closestRow(coord.y);
 
     return {
