@@ -247,5 +247,13 @@
 .palette-transparent-button.common-button {
     background: none transparent;
     border: none;
-
+    &.disabled {
+        background: none transparent;
+        border: none;
+        color: @grey;
+    }
+}
+.palette-save-button.common-button.disabled.green {
+    background-color: @grey;
+    color: @white;
 }

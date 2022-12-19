@@ -83,7 +83,11 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const onModalClose = () => {
         // check whether exiting without saved changes
-        (isSameColors(currentPalette.colors, prevPalette.colors)) ? onFinalClose() : setShowExitModal(true);
+        if (isSameColors(currentPalette.colors, prevPalette.colors)) {
+            onFinalClose();
+        } else {
+            setShowExitModal(true);
+        }
     }
 
     const onExit = () => {
@@ -134,7 +138,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
         const actions: ModalAction[] = [
             { label: lf("Reset"), onClick: onReset, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
-            { label: lf("Save"), onClick: onSave, className: 'green', disabled: disableButtons }
+            { label: lf("Save"), onClick: onSave, className: 'green palette-save-button', disabled: disableButtons }
         ];
 
         const exitActions: ModalAction[] = [
