@@ -4,7 +4,7 @@ import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAs
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, clearSelection, editNoteEventLength, fillDrums, findClosestPreviousNote, findNoteEventAtPosition, findSelectedRange, moveSelectedNotes, removeNoteFromTrack, rowToNote, selectNoteEventsInRange } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findClosestPreviousNote, findNoteEventAtPosition, findSelectedRange, moveSelectedNotes, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
 
 export interface MusicEditorProps {
     asset: pxt.Song;
@@ -15,10 +15,17 @@ export interface MusicEditorProps {
     editRef: number;
 }
 
-interface EditSongState {
+interface DragState {
     editing: pxt.assets.music.Song;
     original: pxt.assets.music.Song;
-    isMarqueeSelection: boolean;
+    moveStartState?: pxt.assets.music.Song;
+    moveDeltaRow?: number;
+    moveDeltaTick?: number;
+
+    dragStart?: WorkspaceCoordinate;
+    dragEnd?: WorkspaceCoordinate;
+
+    dragType?: "marquee" | "move" | "note-length";
 }
 
 export const MusicEditor = (props: MusicEditorProps) => {
@@ -44,7 +51,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         setCurrentSong(asset.song);
     }
 
-    const editSong = React.useRef<EditSongState>()
+    const dragState = React.useRef<DragState>()
 
     const gridTicks = eraserActive ? 1 : gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat);
     const isDrumTrack = !!currentSong.tracks[selectedTrack].drums;
@@ -55,14 +62,25 @@ export const MusicEditor = (props: MusicEditorProps) => {
         }
         let newUndoStack = undoStack.slice()
         if (pushUndo) {
-            newUndoStack.push(pxt.assets.music.cloneSong(editSong.current?.original || currentSong));
+            newUndoStack.push(pxt.assets.music.cloneSong(dragState.current?.moveStartState || dragState.current?.original || currentSong));
             setUndoStack(newUndoStack);
             setRedoStack([]);
         }
         setCurrentSong(newSong);
         if (onSongChanged) onSongChanged(newSong);
-        if (editSong.current) {
-            editSong.current.editing = newSong;
+        if (dragState.current) {
+            dragState.current.editing = newSong;
+        }
+    }
+
+    const clearSelection = () => {
+        setSelection(undefined);
+        if (dragState?.current?.dragType === "move") {
+            updateSong(unselectAllNotes(dragState.current.editing), true);
+            dragState.current = undefined;
+        }
+        else if (findSelectedRange(currentSong)) {
+            updateSong(unselectAllNotes(currentSong), true);
         }
     }
 
@@ -73,8 +91,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
         const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, coord.tick);
 
-        updateSong(clearSelection(currentSong), true);
-        setSelection(undefined);
+        clearSelection();
 
         if (existingEvent?.startTick === coord.tick && existingEvent.notes.indexOf(note) !== -1) {
             updateSong(removeNoteFromTrack(currentSong, selectedTrack, note, coord.tick), true);
@@ -93,19 +110,45 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const onNoteDragStart = () => {
-        editSong.current = {
+        if (dragState.current) {
+            dragState.current.editing = currentSong;
+            dragState.current.original = currentSong;
+            return;
+        }
+        dragState.current = {
             editing: currentSong,
-            original: currentSong,
-            isMarqueeSelection: false
+            original: currentSong
         }
     }
 
     const onNoteDragEnd = () => {
-        if (!pxt.assets.music.songEquals(editSong.current.editing, editSong.current.original)) {
-            updateSong(editSong.current.editing, true);
+        if (dragState.current.dragType === "move") {
+            const dt = dragState.current.dragEnd.tick - dragState.current.dragStart.tick;
+            const dr = (dragState.current.dragEnd.row - (dragState.current.dragEnd.isBassClef ? 12 : 0)) - (dragState.current.dragStart.row - (dragState.current.dragStart.isBassClef ? 12 : 0));
+
+            if (dragState.current.moveDeltaRow == undefined) {
+                dragState.current.moveDeltaRow = dr;
+                dragState.current.moveDeltaTick = dt;
+            }
+            else {
+                dragState.current.moveDeltaRow += dr;
+                dragState.current.moveDeltaTick += dt;
+            }
+
+            dragState.current.dragStart = undefined;
+            dragState.current.dragEnd = undefined;
+            return;
         }
-        if (editSong.current.isMarqueeSelection) {
-            const selectedRange = findSelectedRange(editSong.current.editing, gridTicks);
+
+        if (dragState.current.dragType === "note-length") {
+            clearSelection();
+        }
+
+        if (!pxt.assets.music.songEquals(dragState.current.editing, dragState.current.original)) {
+            updateSong(dragState.current.editing, true);
+        }
+        if (dragState.current.dragType === "marquee") {
+            const selectedRange = findSelectedRange(dragState.current.editing, gridTicks);
 
             if (selectedRange) {
                 setSelection({
@@ -125,7 +168,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
                 setSelection(undefined);
             }
         }
-        editSong.current = undefined;
+        dragState.current = undefined;
     }
 
     const onNoteDrag = (start: WorkspaceCoordinate, end: WorkspaceCoordinate) => {
@@ -155,20 +198,32 @@ export const MusicEditor = (props: MusicEditorProps) => {
             return;
         }
 
-        editSong.current.isMarqueeSelection = false;
+        dragState.current.dragType = undefined;
+        dragState.current.dragStart = start;
+        dragState.current.dragEnd = end;
 
-        if (!!editSong.current.original.tracks[selectedTrack].drums) {
-            updateSong(fillDrums(editSong.current.original, selectedTrack, start.row, start.tick, end.tick, gridTicks), false);
+        if (!!dragState.current.original.tracks[selectedTrack].drums) {
+            updateSong(fillDrums(dragState.current.original, selectedTrack, start.row, start.tick, end.tick, gridTicks), false);
             return;
         }
 
         // If we have a selection, check to see if this is dragging the selection around
         if (selection) {
-            const possibleSelection = findNoteEventAtPosition(editSong.current.original, start, hideTracksActive ? selectedTrack : undefined);
+            const possibleSelection = findNoteEventAtPosition(dragState.current.original, start, hideTracksActive ? selectedTrack : undefined);
             if (possibleSelection?.selected) {
+                if (!dragState.current.moveStartState) {
+                    dragState.current.moveStartState = dragState.current.original;
+                }
+
+                dragState.current.dragType = "move";
                 const dt = end.tick - start.tick;
                 const dr = (end.row - (end.isBassClef ? 12 : 0)) - (start.row - (start.isBassClef ? 12 : 0))
-                const updated = moveSelectedNotes(editSong.current.original, dt, dr, hideTracksActive ? selectedTrack : undefined)
+                const updated = moveSelectedNotes(
+                    dragState.current.moveStartState,
+                    dt + (dragState.current.moveDeltaTick || 0),
+                    dr + (dragState.current.moveDeltaRow || 0),
+                    hideTracksActive ? selectedTrack : undefined
+                );
                 updateSong(updated, false);
                 const selectedRange = findSelectedRange(updated, gridTicks);
 
@@ -193,13 +248,19 @@ export const MusicEditor = (props: MusicEditorProps) => {
             }
         }
 
+        // If not moving the selection, clear the selection state
+        dragState.current.moveStartState = undefined;
+
         // Next, check if this is a drag to change a note length
-        const event = findClosestPreviousNote(editSong.current.original, selectedTrack, start.tick);
+        const event = findClosestPreviousNote(dragState.current.original, selectedTrack, start.tick);
 
         if (event && start.tick >= event.startTick && start.tick <= event.endTick) {
             if (end.tick < event.startTick + 1) return;
 
-            updateSong(editNoteEventLength(editSong.current.original, selectedTrack, event.startTick, end.tick), false);
+            setSelection(undefined);
+            dragState.current.dragType = "note-length";
+
+            updateSong(editNoteEventLength(dragState.current.original, selectedTrack, event.startTick, end.tick), false);
             return;
         }
 
@@ -208,11 +269,12 @@ export const MusicEditor = (props: MusicEditorProps) => {
             start,
             end
         });
-        updateSong(selectNoteEventsInRange(editSong.current.original, start.tick, end.tick, hideTracksActive ? selectedTrack : undefined), false);
-        editSong.current.isMarqueeSelection = true;
+        updateSong(selectNoteEventsInRange(dragState.current.original, start.tick, end.tick, hideTracksActive ? selectedTrack : undefined), false);
+        dragState.current.dragType = "marquee";
     }
 
     const onTempoChange = (newTempo: number) => {
+        clearSelection();
         updateSong({
             ...currentSong,
             beatsPerMinute: newTempo
@@ -220,10 +282,12 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const onMeasuresChanged = (newMeasures: number) => {
+        clearSelection();
         updateSong(changeSongLength(currentSong, newMeasures),true);
     }
 
     const onTrackChanged = (newTrack: number) => {
+        clearSelection();
         const t = currentSong.tracks[newTrack];
 
         if (t.drums) {
@@ -253,10 +317,12 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const onEraserClick = () => {
+        clearSelection();
         setEraserActive(!eraserActive);
     }
 
     const onHideTracksClick = () => {
+        clearSelection();
         setHideTracksActive(!hideTracksActive);
     }
 

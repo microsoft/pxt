@@ -253,7 +253,7 @@ function selectTrackNoteEventsInRange(track: pxt.assets.music.Track, startTick: 
     }
 }
 
-export function clearSelection(song: pxt.assets.music.Song): pxt.assets.music.Song {
+export function unselectAllNotes(song: pxt.assets.music.Song): pxt.assets.music.Song {
     return {
         ...song,
         tracks: song.tracks.map(t => ({
