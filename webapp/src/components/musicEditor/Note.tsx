@@ -9,13 +9,14 @@ export interface NoteProps {
     length?: number;
     isSharp?: boolean;
     isBassClef: boolean;
-    selected?: boolean
+    selected?: boolean;
+    cursorHighlighted?: boolean;
 }
 
 export const Note = (props: NoteProps) => {
-    const { row, iconURI, length, opacity, isSharp, isBassClef, selected } = props;
+    const { row, iconURI, length, opacity, isSharp, isBassClef, selected, cursorHighlighted } = props;
 
-    return <g className={classList("music-staff-note", selected && "selected")} transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${rowY(row, isBassClef) - (NOTE_ICON_WIDTH / 2)})`}>
+    return <g className={classList("music-staff-note", selected && "selected", cursorHighlighted && "cursor-highlighted")} transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${rowY(row, isBassClef) - (NOTE_ICON_WIDTH / 2)})`}>
         { row === 0 &&
             <line
                 className="music-staff-row"

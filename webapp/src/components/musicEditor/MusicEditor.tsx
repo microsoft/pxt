@@ -1,5 +1,6 @@
 import * as React from "react";
 import { EditControls } from "./EditControls";
+import { CursorState, handleKeyboardEvent } from "./keyboardNavigation";
 import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAsync, stopPlayback } from "./playback";
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
@@ -39,6 +40,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [redoStack, setRedoStack] = React.useState<pxt.assets.music.Song[]>([]);
     const [editingId, setEditingId] = React.useState(editRef);
     const [selection, setSelection] = React.useState<WorkspaceRange | undefined>();
+    const [cursor, setCursor] = React.useState<CursorState>();
 
     React.useEffect(() => {
         return () => {
@@ -261,7 +263,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         if (!isDrumTrack && event && start.tick >= event.startTick && start.tick < event.endTick) {
             let isOnRow = false;
             for (const note of event.notes) {
-                if (noteToRow(currentSong.tracks[selectedTrack].instrument.octave - (start.isBassClef ? 2 : 0), note) === start.row) {
+                if (noteToRow(currentSong.tracks[selectedTrack].instrument.octave, note, start.isBassClef) === start.row) {
                     isOnRow = true;
                     break;
                 }
@@ -311,6 +313,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             playNoteAsync(rowToNote(t.instrument.octave, 6, false), t.instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, currentSong.ticksPerBeat / 2));
         }
         setSelectedTrack(newTrack);
+        if (cursor) setCursor({ ...cursor, track: newTrack });
         if (eraserActive) setEraserActive(false);
     }
 
@@ -340,6 +343,25 @@ export const MusicEditor = (props: MusicEditorProps) => {
         setHideTracksActive(!hideTracksActive);
     }
 
+    const onWorkspaceKeydown = (event: React.KeyboardEvent) => {
+        let currentCursor = cursor;
+        if (!currentCursor) {
+            currentCursor = {
+                tick: 0,
+                gridTicks,
+                track: selectedTrack,
+                bassClef: false
+            }
+        }
+
+        const [ newSong, newCursor ] = handleKeyboardEvent(currentSong, currentCursor, event);
+
+        if (!pxt.assets.music.songEquals(newSong, currentSong)) {
+            updateSong(newSong, true);
+        }
+        setCursor(newCursor);
+    }
+
     return <div className="music-editor">
         <TrackSelector
             song={currentSong}
@@ -362,7 +384,9 @@ export const MusicEditor = (props: MusicEditorProps) => {
             gridTicks={gridTicks}
             hideUnselectedTracks={hideTracksActive}
             showBassClef={true}
-            selection={selection} />
+            selection={selection}
+            cursor={cursor}
+            onKeydown={onWorkspaceKeydown} />
         <PlaybackControls
             song={currentSong}
             onTempoChange={onTempoChange}

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { CursorState } from "./keyboardNavigation";
 import { Note } from "./Note";
 import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener } from "./playback";
 import { tickToX } from "./svgConstants";
@@ -10,10 +11,11 @@ export interface NoteGroupProps {
     noteEvent: pxt.assets.music.NoteEvent;
     iconURI: string;
     isDrumTrack: boolean;
+    cursor?: CursorState;
 }
 
 export const NoteGroup = (props: NoteGroupProps) => {
-    const { song, noteEvent, octave, iconURI, isDrumTrack } = props;
+    const { song, noteEvent, octave, iconURI, isDrumTrack, cursor } = props;
 
     let noteGroupRef: SVGGElement;
 
@@ -64,10 +66,10 @@ export const NoteGroup = (props: NoteGroupProps) => {
 
     const xOffset = tickToX(song.ticksPerBeat, noteEvent.startTick)
     const noteLength = isDrumTrack ? 0 : tickToX(song.ticksPerBeat, noteEvent.endTick) - xOffset;
+    const isCursor = cursor?.tick === noteEvent.startTick;
 
     return <g className="music-staff-note-group" transform={`translate(${xOffset}, 0)`} ref={handleNoteGroupRef}>
         {noteEvent.notes.map((note, index) => {
-
             let row: number;
             let isBassClef = false
 
@@ -76,13 +78,7 @@ export const NoteGroup = (props: NoteGroupProps) => {
             }
             else {
                 isBassClef = isBassClefNote(octave, note);
-
-                if (isBassClef) {
-                    row = noteToRow(octave - 2, note);
-                }
-                else {
-                    row = noteToRow(octave, note);
-                }
+                row = noteToRow(octave, note, isBassClef);
             }
             const isSharp = isDrumTrack ? false : isSharpNote(note);
             return <Note
@@ -92,7 +88,8 @@ export const NoteGroup = (props: NoteGroupProps) => {
                 isSharp={isSharp}
                 iconURI={iconURI}
                 length={noteLength}
-                selected={noteEvent.selected} />
+                selected={noteEvent.selected}
+                cursorHighlighted={isCursor && cursor.noteGroupIndex === index} />
         }
         )}
     </g>

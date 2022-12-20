@@ -1,6 +1,7 @@
 import * as React from "react";
 import { classList, clientCoord, screenToSVGCoord } from "../../../../react-common/components/util";
 import { GridHighlight } from "./GridHighlight";
+import { CursorState } from "./keyboardNavigation";
 import { Staff } from "./Staff";
 import { BASS_STAFF_TOP, BEAT_WIDTH, closestRow, closestTick, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { Track } from "./Track";
@@ -13,6 +14,8 @@ export interface WorkspaceProps {
     onWorkspaceDragStart: () => void;
     onWorkspaceDragEnd: () => void;
     onWorkspaceDrag: (startCoordinate: WorkspaceCoordinate, endCoordinate: WorkspaceCoordinate) => void;
+    onKeydown: (event: React.KeyboardEvent) => void;
+    cursor: CursorState;
     selectedTrack: number
     hideUnselectedTracks: boolean;
     eraserActive: boolean;
@@ -22,7 +25,7 @@ export interface WorkspaceProps {
 }
 
 export const Workspace = (props: WorkspaceProps) => {
-    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, hideUnselectedTracks, eraserActive, showBassClef, selection } = props;
+    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, onKeydown, cursor, hideUnselectedTracks, eraserActive, showBassClef, selection } = props;
 
     const [cursorLocation, setCursorLocation] = React.useState<WorkspaceCoordinate>(null);
     const [dragStart, setDragStart] = React.useState<WorkspaceCoordinate>(null);
@@ -141,11 +144,25 @@ export const Workspace = (props: WorkspaceProps) => {
         xmlns="http://www.w3.org/2000/svg"
         className={classList("music-workspace", eraserActive && "erasing")}
         viewBox={`0 0 ${workspaceWidth(song.measures, song.beatsPerMeasure) + 20} ${height}`}
+        aria-label={lf("Music Workspace")}
+        tabIndex={0}
+        onKeyDown={onKeydown}
         ref={handleWorkspaceRef}>
             <filter id="selection-outline">
                 <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="4" />
 
                 <feFlood floodColor="yellow" floodOpacity="1" result="FLOODED" />
+                <feComposite in="FLOODED" in2="DILATED" operator="in" result="OUTLINE" />
+
+                <feMerge>
+                    <feMergeNode in="OUTLINE" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+            <filter id="cursor-outline">
+                <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="4" />
+
+                <feFlood floodColor="purple" floodOpacity="1" result="FLOODED" />
                 <feComposite in="FLOODED" in2="DILATED" operator="in" result="OUTLINE" />
 
                 <feMerge>
@@ -183,7 +200,8 @@ export const Workspace = (props: WorkspaceProps) => {
         <Track
             track={song.tracks[selectedTrack]}
             song={song}
-            cursorLocation={cursorPreviewLocation} />
+            cursorLocation={cursorPreviewLocation}
+            keyboardCursor={cursor} />
     </svg>
 }
 

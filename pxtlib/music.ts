@@ -942,7 +942,7 @@ namespace pxt.assets.music {
                 },
                 {
                     id: 9,
-                    name: lf("Explosion"),
+                    name: lf("Drums"),
                     notes: [],
                     iconURI: "/static/music-editor/explosion.png",
                     instrument: {
