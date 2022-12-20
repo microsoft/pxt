@@ -15,8 +15,7 @@ export const PalettePicker = (props: PalettePickerProps) => {
         onPaletteSelected(palettes.find(p => p.id === id));
     }
 
-    return <div className="common-palette-picker">
-        <Dropdown
+    return <Dropdown
             id="common-palette-picker"
             selectedId={selectedId}
             onItemSelected={onItemSelected}
@@ -26,5 +25,4 @@ export const PalettePicker = (props: PalettePickerProps) => {
                 label: <PaletteSwatch palette={p} />
             }))}
         />
-    </div>
 }

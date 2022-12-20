@@ -1,10 +1,12 @@
 import * as pkg from "../../package";
 import { useEffect, useRef, useState } from "react";
 import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
+import { Input } from "../../../../react-common/components/controls/Input";
+import { Button } from "../../../../react-common/components/controls/Button";
 import { PalettePicker } from "../../../../react-common/components/palette/PalettePicker";
 import { PaletteEditor } from "../../../../react-common/components/palette/PaletteEditor";
-import { AllPalettes as BuiltinPalettes, Palette } from "../../../../react-common/components/palette/Palettes";
-import { Input } from "../../../../react-common/components/controls/Input";
+import { AllPalettes as BuiltinPalettes, Arcade, Palette } from "../../../../react-common/components/palette/Palettes";
+
 
 export interface CustomPalettes {
     nextPaletteID: number;
@@ -120,6 +122,11 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         setCurrentPalette({...currentPalette, name: name});
     }
 
+    const deletePalette = () => {
+        setCurrentPalette(Arcade);
+        customPalettes.current.palettes = customPalettes.current.palettes.filter(p => p.id !== currentPalette.id);
+    }
+
     const renderPaletteModal = () => {
         if (firstRender.current) {
             const f = pkg.mainEditorPkg().lookupFile("this/_palettes.json");
@@ -151,10 +158,19 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
         return <div>
             <Modal title={lf("Project Color Palette")} onClose={onModalClose} actions={actions}>
-                <PalettePicker
-                    palettes={paletteOptions}
-                    selectedId={currentPalette?.id  || customPalettes.current.initialPalette.id}
-                    onPaletteSelected={onPaletteEdit} />
+                <div className="common-palette-picker">
+                    <PalettePicker
+                        palettes={paletteOptions}
+                        selectedId={currentPalette?.id  || customPalettes.current.initialPalette.id}
+                        onPaletteSelected={onPaletteEdit} />
+                    {(currentPalette?.custom) && <Button
+                        label={lf("Delete")}
+                        title={lf("Delete the selected palete")}
+                        ariaLabel={lf("Delete the selected palette")}
+                        className="palette-delete-button"
+                        leftIcon="icon trash"
+                        onClick={deletePalette} />}
+                </div>
                 <PaletteEditor palette={currentPalette || customPalettes.current.initialPalette} onPaletteChanged={onPaletteEdit} />
             </Modal>
             {showExitModal && <Modal title={lf("Exit Without Saving")} onClose={onGoBack} actions={exitActions}>
