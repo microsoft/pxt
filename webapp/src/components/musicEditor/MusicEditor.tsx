@@ -5,7 +5,7 @@ import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAs
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findClosestPreviousNote, findNoteEventAtPosition, findSelectedRange, moveSelectedNotes, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, moveSelectedNotes, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
 
 export interface MusicEditorProps {
     asset: pxt.Song;
@@ -41,6 +41,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [editingId, setEditingId] = React.useState(editRef);
     const [selection, setSelection] = React.useState<WorkspaceRange | undefined>();
     const [cursor, setCursor] = React.useState<CursorState>();
+    const [keyboardCursorVisible, setKeyboardCursorVisible] = React.useState(false);
 
     React.useEffect(() => {
         return () => {
@@ -91,7 +92,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         const instrument = track.instrument;
         const note = isDrumTrack ? coord.row : rowToNote(instrument.octave, coord.row, coord.isBassClef, ctrlIsPressed);
 
-        const existingEvent = findClosestPreviousNote(currentSong, selectedTrack, coord.tick);
+        const existingEvent = findPreviousNoteEvent(currentSong, selectedTrack, coord.tick);
 
         clearSelection();
 
@@ -186,7 +187,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
                 const track = currentSong.tracks[i];
                 const instrument = track.instrument;
                 const note = !!track.drums ? end.row : rowToNote(instrument.octave, end.row, end.isBassClef);
-                const existingEvent = findClosestPreviousNote(currentSong, i, end.tick);
+                const existingEvent = findPreviousNoteEvent(currentSong, i, end.tick);
 
                 if (existingEvent?.startTick === end.tick || existingEvent?.endTick > end.tick) {
                     if (existingEvent.notes.indexOf(note) !== -1) {
@@ -258,7 +259,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         dragState.current.moveStartState = undefined;
 
         // Next, check if this is a drag to change a note length
-        const event = findClosestPreviousNote(dragState.current.original, selectedTrack, start.tick);
+        const event = findPreviousNoteEvent(dragState.current.original, selectedTrack, start.tick);
 
         if (!isDrumTrack && event && start.tick >= event.startTick && start.tick < event.endTick) {
             let isOnRow = false;
@@ -354,6 +355,13 @@ export const MusicEditor = (props: MusicEditorProps) => {
             }
         }
 
+        if (!keyboardCursorVisible) {
+            setKeyboardCursorVisible(true);
+        }
+
+        currentCursor.gridTicks = gridTicks;
+        currentCursor.track = selectedTrack;
+
         const [ newSong, newCursor ] = handleKeyboardEvent(currentSong, currentCursor, event);
 
         if (!pxt.assets.music.songEquals(newSong, currentSong)) {
@@ -385,7 +393,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             hideUnselectedTracks={hideTracksActive}
             showBassClef={true}
             selection={selection}
-            cursor={cursor}
+            cursor={keyboardCursorVisible ? cursor : undefined}
             onKeydown={onWorkspaceKeydown} />
         <PlaybackControls
             song={currentSong}

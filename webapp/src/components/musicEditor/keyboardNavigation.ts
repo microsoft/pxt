@@ -1,5 +1,5 @@
 import { playNoteAsync, tickToMs } from "./playback";
-import { addNoteToTrack, editNoteEventLength, findNoteEventAtTick, removeNoteEventFromTrack, removeNoteFromTrack, rowToNote } from "./utils";
+import { addNoteToTrack, editNoteEventLength, findNextNoteEvent, findNoteEventAtTick, findPreviousNoteEvent, isBassClefNote, removeNoteEventFromTrack, removeNoteFromTrack, rowToNote } from "./utils";
 
 export interface CursorState {
     tick: number;
@@ -128,14 +128,16 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 break;
             }
 
-            const prevNoteEvent = findNoteEventAtTick(song, cursor.track, cursor.tick - cursor.gridTicks);
-            if (prevNoteEvent) {
+            const prevTick = cursor.tick % cursor.gridTicks !== 0 ? Math.floor(editedCursor.tick / cursor.gridTicks) * cursor.gridTicks: cursor.tick - cursor.gridTicks;
+
+            const prevNoteEvent = findPreviousNoteEvent(song, cursor.track, cursor.tick - 1);
+            if (prevNoteEvent?.endTick > prevTick) {
                 editedCursor.tick = prevNoteEvent.startTick;
                 editedCursor.noteGroupIndex = 0;
                 break;
             }
 
-            editedCursor.tick = Math.max(editedCursor.tick - cursor.gridTicks, 0);
+            editedCursor.tick = Math.max(prevTick, 0);
             editedCursor.noteGroupIndex = undefined;
             break;
         case "ArrowRight":
@@ -143,13 +145,14 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             event.preventDefault();
             if (ctrlPressed) {
                 if (editedCursor.tick % ticksPerMeasure === 0) {
-                    editedCursor.tick = Math.min(editedCursor.tick - ticksPerMeasure, maxTicks - ticksPerMeasure);
+                    editedCursor.tick = Math.min(editedCursor.tick + ticksPerMeasure, maxTicks - ticksPerMeasure);
                 }
                 else {
                     editedCursor.tick = Math.min(Math.ceil(editedCursor.tick / ticksPerMeasure) * ticksPerMeasure, maxTicks - ticksPerMeasure);
 
                     if (editedCursor.tick >= maxTicks) editedCursor.tick -= ticksPerMeasure;
                 }
+
                 const noteEvent = findNoteEventAtTick(song, cursor.track, editedCursor.tick);
                 if (noteEvent?.startTick === editedCursor.tick) {
                     editedCursor.noteGroupIndex = 0;
@@ -161,14 +164,16 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 break;
             }
 
-            const nextNoteEvent = findNoteEventAtTick(song, cursor.track, cursor.tick + cursor.gridTicks);
-            if (nextNoteEvent) {
+            const nextTick = noteEventAtCursor ? Math.ceil(noteEventAtCursor.endTick / cursor.gridTicks) * cursor.gridTicks : cursor.tick + cursor.gridTicks;
+
+            const nextNoteEvent = findNextNoteEvent(song, cursor.track, cursor.tick);
+            if (nextNoteEvent?.startTick <= nextTick) {
                 editedCursor.tick = nextNoteEvent.startTick;
                 editedCursor.noteGroupIndex = 0;
                 break;
             }
 
-            editedCursor.tick = Math.min(editedCursor.tick + cursor.gridTicks, maxTicks - cursor.gridTicks);
+            editedCursor.tick = Math.min(Math.ceil(nextTick / cursor.gridTicks) * cursor.gridTicks, maxTicks - cursor.gridTicks);
             editedCursor.noteGroupIndex = undefined;
             break;
         case "End":
@@ -222,7 +227,15 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
         default:
             if (/^[a-g]$/i.test(event.key)) {
                 event.preventDefault();
-                const newNote = rowToNote(instrumentOctave, 5 + "abcdefg".indexOf(event.key.toLowerCase()), cursor.bassClef);
+                let newNote;
+
+                if (cursor.bassClef) {
+                    newNote = rowToNote(instrumentOctave, 3 + "abcdefg".indexOf(event.key.toLowerCase()), true);
+                }
+                else {
+                    newNote = rowToNote(instrumentOctave, 5 + "abcdefg".indexOf(event.key.toLowerCase()), false);
+                }
+
                 if (noteEventAtCursor) {
                     if (noteEventAtCursor.notes.indexOf(newNote) === -1) {
                         editedSong = addNoteToTrack(song, cursor.track, newNote, noteEventAtCursor.startTick, noteEventAtCursor.endTick);

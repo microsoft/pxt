@@ -80,7 +80,7 @@ export const NoteGroup = (props: NoteGroupProps) => {
                 isBassClef = isBassClefNote(octave, note);
                 row = noteToRow(octave, note, isBassClef);
             }
-            const isSharp = isDrumTrack ? false : isSharpNote(note);
+            const isSharp = isDrumTrack ? false : isSharpNote(octave, note, isBassClef);
             return <Note
                 key={index}
                 isBassClef={isBassClef}

@@ -21,10 +21,8 @@ export function noteToRow(octave: number, note: number, isBassClef: boolean) {
     return -1;
 }
 
-export function isSharpNote(note: number) {
-    const offset = (note - 1) % 12;
-
-    return staffNoteIntervals.indexOf(offset) === -1;
+export function isSharpNote(octave: number, note: number, isBassClef: boolean) {
+    return rowToNote(octave, noteToRow(octave, note, isBassClef), isBassClef) !== note;
 }
 
 export function isBassClefNote(octave: number, note: number) {
@@ -155,7 +153,7 @@ export function findNoteEventAtTick(song: pxt.assets.music.Song, trackIndex: num
     return undefined;
 }
 
-export function findClosestPreviousNote(song: pxt.assets.music.Song, trackIndex: number, tick: number) {
+export function findPreviousNoteEvent(song: pxt.assets.music.Song, trackIndex: number, tick: number) {
     const track = song.tracks[trackIndex];
 
     let lastNote: pxt.assets.music.NoteEvent;
@@ -167,6 +165,18 @@ export function findClosestPreviousNote(song: pxt.assets.music.Song, trackIndex:
     }
 
     return lastNote;
+}
+
+export function findNextNoteEvent(song: pxt.assets.music.Song, trackIndex: number, tick: number) {
+    const track = song.tracks[trackIndex];
+
+    for (const note of track.notes) {
+        if (note.startTick > tick) {
+            return note;
+        }
+    }
+
+    return undefined;
 }
 
 export function findNoteEventAtPosition(song: pxt.assets.music.Song, position: WorkspaceCoordinate, trackIndex?: number) {
@@ -325,7 +335,7 @@ function moveNoteEvent(noteEvent: pxt.assets.music.NoteEvent, trackOctave: numbe
         for (const note of noteEvent.notes) {
             let isBass = isBassClefNote(trackOctave, note);
             let row = noteToRow(trackOctave, note, isBass);
-            let isSharp = isSharpNote(note);
+            let isSharp = isSharpNote(trackOctave, note, isBass);
 
             if (row + deltaRows >= staffNoteIntervals.length) {
                 if (isBass) {
