@@ -10,6 +10,7 @@ export interface ModalAction {
     disabled?: boolean;
     icon?: string;
     xicon?: boolean;
+    leftIcon?: string;
     onClick: () => void;
     url?: string;
 
@@ -117,6 +118,7 @@ export const Modal = (props: ModalProps) => {
                             label={action.label}
                             title={action.label}
                             rightIcon={(action.xicon ? "xicon " : "") + action.icon}
+                            leftIcon={action.leftIcon}
                         />
                     )}
                 </div>

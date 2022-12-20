@@ -243,3 +243,17 @@
         transform: rotate(90deg);
     }
 }
+
+.palette-transparent-button.common-button {
+    background: none;
+    border: none;
+    &.disabled {
+        background: none;
+        border: none;
+        color: @grey;
+    }
+}
+.palette-save-button.common-button.disabled.green {
+    background-color: @grey;
+    color: @white;
+}
