@@ -2,6 +2,7 @@ import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
 import { Checkbox } from "../../../../react-common/components/controls/Checkbox";
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown";
+import { FocusList } from "../../../../react-common/components/controls/FocusList";
 import { classList } from "../../../../react-common/components/util";
 
 export interface TrackSelectorProps {
@@ -60,20 +61,29 @@ export const TrackSelector = (props: TrackSelectorProps) => {
     }
 
     return <div className="music-track-selector">
-        {song.tracks.map((track, index) =>
+        <FocusList role="radiogroup" ariaLabel={lf("Track selection")}>
+            {song.tracks.map((track, index) =>
+                <Button
+                    role="radio"
+                    ariaSelected={selected === index && !eraserActive}
+                    ariaPosInSet={index + 1}
+                    ariaSetSize={song.tracks.length + 1}
+                    key={track.name}
+                    title={track.name}
+                    className={classList("music-track-button square-button pixellated", selected === index &&  !eraserActive && "selected")}
+                    label={<img src={track.iconURI} alt={track.name} />}
+                    onClick={() => setSelectedTrack(index)}
+                    />
+            )}
             <Button
-                key={track.name}
-                title={track.name}
-                className={classList("music-track-button square-button pixellated", selected === index &&  !eraserActive && "selected")}
-                label={<img src={track.iconURI} alt={track.name} />}
-                onClick={() => setSelectedTrack(index)}
-                />
-        )}
-        <Button
-            className={classList("music-track-button square-button", eraserActive && "selected")}
-            title={eraserActive ? lf("Turn off eraser tool") : lf("Turn on eraser tool")}
-            leftIcon="fas fa-eraser"
-            onClick={onEraserClick} />
+                className={classList("music-track-button square-button", eraserActive && "selected")}
+                title={eraserActive ? lf("Turn off eraser tool") : lf("Turn on eraser tool")}
+                leftIcon="fas fa-eraser"
+                ariaSelected={eraserActive}
+                ariaPosInSet={song.tracks.length}
+                ariaSetSize={song.tracks.length + 1}
+                onClick={onEraserClick} />
+        </FocusList>
         <Checkbox
             className="music-editor-label"
             id="hide-tracks"
@@ -87,6 +97,7 @@ export const TrackSelector = (props: TrackSelectorProps) => {
             </div>
             <Dropdown
                 id="grid-resolution"
+                ariaLabel={lf("Staff grid resolution")}
                 items={gridChoices}
                 selectedId={Object.keys(idToRes).find(id => idToRes[id] === selectedResolution)}
                 onItemSelected={handleDropdownSelection}
