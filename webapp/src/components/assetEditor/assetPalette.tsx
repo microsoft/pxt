@@ -1,5 +1,5 @@
 import * as pkg from "../../package";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
 import { Input } from "../../../../react-common/components/controls/Input";
 import { Button } from "../../../../react-common/components/controls/Button";
@@ -10,7 +10,7 @@ import { AllPalettes as BuiltinPalettes, Arcade, Palette } from "../../../../rea
 
 export interface CustomPalettes {
     nextPaletteID: number;
-    palettes: Palette[];
+    palettes: Map<string, Palette>;
 }
 export interface AssetPaletteProps {
     onClose: (paletteChanged: boolean) => void;
@@ -23,7 +23,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const [showNameModal, setShowNameModal] = useState<boolean>(false);
 
-    const [customPalettes, setCustomPalettes] = useState<CustomPalettes>({nextPaletteID: 0, palettes: []});
+    const [customPalettes, setCustomPalettes] = useState<CustomPalettes>({nextPaletteID: 0, palettes: new Map()});
 
     const [initialPalette, setinitialPalette] = useState<Palette | undefined>(undefined);
 
@@ -50,7 +50,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                     colors: selected.colors,
                     custom: true
                 }
-                customPalettes.palettes.unshift(customPalette);
+                customPalettes.palettes.set(customPalette.id, customPalette);
                 setCustomPalettes({
                     ...customPalettes,
                     nextPaletteID: ++customPalettes.nextPaletteID,
@@ -58,8 +58,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 setCurrentPalette(customPalette);
                 setShowNameModal(true);
             } else { // custom palette edited
-                const i = customPalettes.palettes.findIndex(p => p.id === currentPalette.id);
-                customPalettes.palettes[i].colors = selected.colors;
+                customPalettes.palettes.set(currentPalette.id, selected);
                 setCustomPalettes({...customPalettes, palettes: customPalettes.palettes});
                 setCurrentPalette(selected);
             }
@@ -109,20 +108,19 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const setName = (name: string) => {
-        const i = customPalettes.palettes.findIndex(p => p.id === currentPalette.id);
-        customPalettes.palettes[i].name = name;
+        customPalettes.palettes.set(currentPalette.id, {...currentPalette, name: name});
         setCustomPalettes({...customPalettes, palettes: customPalettes.palettes});
         setCurrentPalette({...currentPalette, name: name});
     }
 
     const deletePalette = () => {
-        setCurrentPalette(Arcade);
-        customPalettes.palettes = customPalettes.palettes.filter(p => p.id !== currentPalette.id);
+        customPalettes.palettes.delete(currentPalette.id);
         setCustomPalettes({...customPalettes, palettes: customPalettes.palettes});
+        setCurrentPalette(Arcade);
     }
 
     const renderPaletteModal = () => {
-        const paletteOptions = customPalettes.palettes.concat(BuiltinPalettes);
+        const paletteOptions = Array.from(customPalettes.palettes.values()).reverse().concat(BuiltinPalettes);
 
         const actions: ModalAction[] = [
             { label: lf("Reset"), onClick: onReset, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
@@ -184,7 +182,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         if (f) {
             setCustomPalettes(JSON.parse(f.content) as CustomPalettes);
         }
-        const paletteOptions = customPalettes.palettes.concat(BuiltinPalettes);
+        const paletteOptions = Array.from(customPalettes.palettes.values()).concat(BuiltinPalettes);
         const colors = pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette;
         let match = false;
         for (const palette of paletteOptions) {
@@ -203,7 +201,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 colors: colors,
                 custom: true
             }
-            customPalettes.palettes.unshift(customPalette);
+            customPalettes.palettes.set(customPalette.id, customPalette);
             setCustomPalettes({
                 ...customPalettes,
                 nextPaletteID: ++customPalettes.nextPaletteID,
