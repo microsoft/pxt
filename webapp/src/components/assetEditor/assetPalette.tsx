@@ -23,8 +23,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const [showNameModal, setShowNameModal] = useState<boolean>(false);
 
-    const inExitModal = useRef<boolean>(false);
-
     const [customPalettes, setCustomPalettes] = useState<CustomPalettes>({nextPaletteID: 0, palettes: []});
 
     const [initialPalette, setinitialPalette] = useState<Palette | undefined>(undefined);
@@ -38,15 +36,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     useEffect(() => {
         initiatePalettes();
     }, []);
-
-    useEffect(() => {
-        // save pxt.json
-        pkg.mainEditorPkg().updateConfigAsync(cfg => cfg.palette = currentPalette.colors);
-        if (inExitModal.current) {
-            onFinalClose();
-            inExitModal.current = false;
-        }
-    }, [currentPalette]);
 
     const onPaletteEdit = (selected: Palette) => {
         if (currentPalette && !isSameColors(currentPalette.colors, selected.colors)) {
@@ -79,10 +68,12 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const onFinalClose = () => {
         const paletteChanged = !isSameColors(initialPalette.colors, prevPalette.colors);
-        onClose(paletteChanged);
         if (paletteChanged) {
             pxt.tickEvent("palette.modified", {id: prevPalette.id})
+            // save pxt.json
+            pkg.mainEditorPkg().updateConfigAsync(cfg => cfg.palette = prevPalette.colors);
         }
+        onClose(paletteChanged);
     }
 
     const onModalClose = () => {
@@ -95,9 +86,8 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const onExit = () => {
-        inExitModal.current = true;
         setShowExitModal(false);
-        setCurrentPalette(prevPalette);
+        onFinalClose();
     }
 
     const onReset = () => {
