@@ -122,8 +122,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         } else {
             setCurrentPalette(prevPalette);
         }
-
-
     }
 
     const renderPaletteModal = () => {
