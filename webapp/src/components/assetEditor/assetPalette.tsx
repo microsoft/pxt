@@ -10,7 +10,6 @@ import { AllPalettes as BuiltinPalettes, Arcade, Palette } from "../../../../rea
 
 export interface CustomPalettes {
     nextPaletteID: number;
-    initialPalette: Palette; // could be custom or built-in
     palettes: Palette[];
 }
 export interface AssetPaletteProps {
@@ -26,9 +25,9 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const inExitModal = useRef<boolean>(false);
 
-    const firstRender = useRef<boolean>(true);
+    const [customPalettes, setCustomPalettes] = useState<CustomPalettes>({nextPaletteID: 0, palettes: []});
 
-    const customPalettes = useRef<CustomPalettes | undefined>(undefined);
+    const [initialPalette, setinitialPalette] = useState<Palette | undefined>(undefined);
 
     const [prevPalette, setPrevPalette] = useState<Palette | undefined>(undefined);
 
@@ -37,9 +36,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     const [disableButtons, setDisableButtons] = useState<boolean>(true);
 
     useEffect(() => {
-        firstRender.current = false;
-        setPrevPalette(customPalettes.current.initialPalette);
-        setCurrentPalette(customPalettes.current.initialPalette);
+        initiatePalettes();
     }, []);
 
     useEffect(() => {
@@ -52,34 +49,39 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }, [currentPalette]);
 
     const onPaletteEdit = (selected: Palette) => {
-        if (!firstRender.current && !isSameColors(currentPalette.colors, selected.colors)) {
+        if (currentPalette && !isSameColors(currentPalette.colors, selected.colors)) {
             setDisableButtons(false);
             if (selected.id !== currentPalette.id) { // palette selected
                 setCurrentPalette(selected);
             } else if (isBuiltinPalette(selected)) { // builtin palette edited
                 // create new custom palette and prompt user to name custom palette
                 const customPalette = {
-                    id: "custom" + customPalettes.current.nextPaletteID++,
+                    id: "custom" + customPalettes.nextPaletteID,
                     name: lf("Custom Palette"),
                     colors: selected.colors,
                     custom: true
                 }
-                customPalettes.current.palettes.unshift(customPalette);
+                customPalettes.palettes.unshift(customPalette);
+                setCustomPalettes({
+                    ...customPalettes,
+                    nextPaletteID: ++customPalettes.nextPaletteID,
+                    palettes: customPalettes.palettes});
                 setCurrentPalette(customPalette);
                 setShowNameModal(true);
             } else { // custom palette edited
-                const i = customPalettes.current.palettes.findIndex(p => p.id === currentPalette.id);
-                customPalettes.current.palettes[i].colors = selected.colors;
+                const i = customPalettes.palettes.findIndex(p => p.id === currentPalette.id);
+                customPalettes.palettes[i].colors = selected.colors;
+                setCustomPalettes({...customPalettes, palettes: customPalettes.palettes});
                 setCurrentPalette(selected);
             }
         }
     }
 
     const onFinalClose = () => {
-        const paletteChanged = !isSameColors(customPalettes.current.initialPalette.colors, prevPalette.colors);
+        const paletteChanged = !isSameColors(initialPalette.colors, prevPalette.colors);
         onClose(paletteChanged);
         if (paletteChanged) {
-            pxt.tickEvent("palette.modified", {id: currentPalette.id})
+            pxt.tickEvent("palette.modified", {id: prevPalette.id})
         }
     }
 
@@ -117,31 +119,20 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const setName = (name: string) => {
-        const i = customPalettes.current.palettes.findIndex(p => p.id === currentPalette.id);
-        customPalettes.current.palettes[i].name = name;
+        const i = customPalettes.palettes.findIndex(p => p.id === currentPalette.id);
+        customPalettes.palettes[i].name = name;
+        setCustomPalettes({...customPalettes, palettes: customPalettes.palettes});
         setCurrentPalette({...currentPalette, name: name});
     }
 
     const deletePalette = () => {
         setCurrentPalette(Arcade);
-        customPalettes.current.palettes = customPalettes.current.palettes.filter(p => p.id !== currentPalette.id);
+        customPalettes.palettes = customPalettes.palettes.filter(p => p.id !== currentPalette.id);
+        setCustomPalettes({...customPalettes, palettes: customPalettes.palettes});
     }
 
     const renderPaletteModal = () => {
-        if (firstRender.current) {
-            const f = pkg.mainEditorPkg().lookupFile("this/_palettes.json");
-            if (f) {
-                customPalettes.current = JSON.parse(f.content) as CustomPalettes;
-            } else {
-                initiatePalettes();
-            }
-        }
-
-        let paletteOptions = customPalettes.current.palettes.concat(BuiltinPalettes);
-
-        if (!paletteOptions.some(p => p.id === (currentPalette?.id || customPalettes.current.initialPalette.id))) {
-            paletteOptions.unshift(currentPalette || customPalettes.current.initialPalette)
-        }
+        const paletteOptions = customPalettes.palettes.concat(BuiltinPalettes);
 
         const actions: ModalAction[] = [
             { label: lf("Reset"), onClick: onReset, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
@@ -161,7 +152,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 <div className="common-palette-picker">
                     <PalettePicker
                         palettes={paletteOptions}
-                        selectedId={currentPalette?.id  || customPalettes.current.initialPalette.id}
+                        selectedId={currentPalette?.id  || Arcade.id}
                         onPaletteSelected={onPaletteEdit} />
                     {(currentPalette?.custom) && <Button
                         label={lf("Delete")}
@@ -171,7 +162,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                         leftIcon="icon trash"
                         onClick={deletePalette} />}
                 </div>
-                <PaletteEditor palette={currentPalette || customPalettes.current.initialPalette} onPaletteChanged={onPaletteEdit} />
+                <PaletteEditor palette={currentPalette || Arcade} onPaletteChanged={onPaletteEdit} />
             </Modal>
             {showExitModal && <Modal title={lf("Exit Without Saving")} onClose={onGoBack} actions={exitActions}>
                 <div>{lf("Exit without saving? Your palette changes will be reverted.")}</div>
@@ -199,31 +190,37 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const initiatePalettes = () => {
+        const f = pkg.mainEditorPkg().lookupFile("this/_palettes.json");
+        if (f) {
+            setCustomPalettes(JSON.parse(f.content) as CustomPalettes);
+        }
+        const paletteOptions = customPalettes.palettes.concat(BuiltinPalettes);
         const colors = pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette;
         let match = false;
-        for (const palette of BuiltinPalettes) {
+        for (const palette of paletteOptions) {
             if (isSameColors(colors, palette.colors)) {
                 match = true;
-                customPalettes.current = {
-                    nextPaletteID: 0,
-                    initialPalette: palette,
-                    palettes: []
-                };
+                setinitialPalette(palette);
+                setPrevPalette(palette);
+                setCurrentPalette(palette);
                 break;
             }
         }
         if (!match) {
             const customPalette = {
-                id: "custom0",
+                id: "custom" + customPalettes.nextPaletteID,
                 name: lf("Custom Palette"),
                 colors: colors,
                 custom: true
             }
-            customPalettes.current = {
-                nextPaletteID: 1,
-                initialPalette: customPalette,
-                palettes: [customPalette]
-            };
+            customPalettes.palettes.unshift(customPalette);
+            setCustomPalettes({
+                ...customPalettes,
+                nextPaletteID: ++customPalettes.nextPaletteID,
+                palettes: customPalettes.palettes});
+            setinitialPalette(customPalette);
+            setPrevPalette(customPalette);
+            setCurrentPalette(customPalette);
         }
     }
 
