@@ -116,7 +116,14 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     const deletePalette = () => {
         customPalettes.palettes.delete(currentPalette.id);
         setCustomPalettes({...customPalettes, palettes: customPalettes.palettes});
-        setCurrentPalette(Arcade);
+        if (prevPalette.id === currentPalette.id) {
+            setPrevPalette(Arcade);
+            setCurrentPalette(Arcade);
+        } else {
+            setCurrentPalette(prevPalette);
+        }
+
+
     }
 
     const renderPaletteModal = () => {
