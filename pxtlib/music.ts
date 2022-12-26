@@ -879,7 +879,7 @@ namespace pxt.assets.music {
                     iconURI: "/static/music-editor/computer.png",
                     instrument: {
                         waveform: 15,
-                        octave: 1,
+                        octave: 2,
                         ampEnvelope: {
                             attack: 10,
                             decay: 100,
@@ -896,7 +896,7 @@ namespace pxt.assets.music {
                     iconURI: "/static/music-editor/burger.png",
                     instrument: {
                         waveform: 1,
-                        octave: 1,
+                        octave: 2,
                         ampEnvelope: {
                             attack: 10,
                             decay: 100,

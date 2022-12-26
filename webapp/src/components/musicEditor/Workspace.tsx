@@ -3,7 +3,7 @@ import { classList, clientCoord, screenToSVGCoord } from "../../../../react-comm
 import { GridHighlight } from "./GridHighlight";
 import { CursorState } from "./keyboardNavigation";
 import { Staff } from "./Staff";
-import { BASS_STAFF_TOP, BEAT_WIDTH, closestRow, closestTick, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { BASS_STAFF_TOP, BEAT_WIDTH, closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { Track } from "./Track";
 import { findNoteEventAtTick } from "./utils";
 import { WorkspaceSelection } from "./WorkspaceSelection";
@@ -36,6 +36,7 @@ export const Workspace = (props: WorkspaceProps) => {
     React.useEffect(() => {
         workspaceRef.onpointerdown = ev => {
             ev.preventDefault();
+            workspaceRef.focus();
             const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
             if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
                 setDragStart(coord);
