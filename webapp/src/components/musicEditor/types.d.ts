@@ -31,4 +31,6 @@ interface WorkspaceSelectionState {
 
     deltaTick: number;
     transpose: number;
+
+    pastedContent?: WorkspaceSelectionState;
 }

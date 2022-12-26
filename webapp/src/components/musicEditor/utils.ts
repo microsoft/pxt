@@ -324,8 +324,41 @@ export function moveSelectedNotes(song: pxt.assets.music.Song, deltaTicks: numbe
 }
 
 export function applySelection(selection: WorkspaceSelectionState, trackIndex?: number) {
+    if (selection.pastedContent) {
+        return pasteNotes(selection, trackIndex);
+    }
+
     const selected = selectNoteEventsInRange(selection.originalSong, selection.startTick, selection.endTick, trackIndex);
     return moveSelectedNotes(selected, selection.deltaTick, selection.transpose, trackIndex);
+}
+
+function pasteNotes(selection: WorkspaceSelectionState, trackIndex?: number): pxt.assets.music.Song {
+    const toPaste = applySelection(selection.pastedContent, trackIndex);
+    const sourceRange = findSelectedRange(toPaste, trackIndex);
+
+    const pasteStart = selection.startTick + selection.deltaTick;
+    const pasteEnd = pasteStart + (sourceRange.end - sourceRange.start);
+
+    const song = unselectAllNotes(selection.originalSong);
+    const maxTick = song.beatsPerMeasure * song.ticksPerBeat * song.measures;
+
+    return {
+        ...song,
+        tracks: song.tracks.map((t, i) => (trackIndex !== undefined && trackIndex != i) ? t : ({
+            ...t,
+            notes: t.notes
+                .filter(n => n.endTick <= pasteStart || n.startTick >= pasteEnd)
+                .concat(
+                    toPaste.tracks[i].notes
+                        .filter(n => n.selected)
+                        .map(n => ({...n, startTick: n.startTick - sourceRange.start + selection.startTick, endTick: n.endTick - sourceRange.start + selection.startTick}))
+                )
+                .map(n => !n.selected ? n : moveNoteEvent(n, t.instrument.octave, selection.deltaTick, selection.transpose, !!t.drums))
+                .map(n => ({ ...n, endTick: Math.min(n.endTick, maxTick) }))
+                .filter(n => n.notes.length > 0 && n.startTick >= 0 && n.startTick < maxTick)
+                .sort((a, b) => a.startTick - b.startTick)
+        }))
+    }
 }
 
 function moveNoteEvent(noteEvent: pxt.assets.music.NoteEvent, trackOctave: number, deltaTicks: number, deltaRows: number, isDrumTrack: boolean) {

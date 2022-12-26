@@ -1,4 +1,4 @@
-import { playNoteAsync, tickToMs } from "./playback";
+import { isPlaying, playNoteAsync, startPlaybackAsync, stopPlayback, tickToMs } from "./playback";
 import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLength, findNextNoteEvent, findNoteEventAtTick, findPreviousNoteEvent, findSelectedRange, isBassClefNote, moveSelectedNotes, removeNoteEventFromTrack, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
 
 /**
@@ -338,6 +338,18 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 else {
                     editedCursor.noteGroupIndex = Math.min(editedCursor.noteGroupIndex, noteEventAtCursor.notes.length - 2);
                 }
+            }
+            break;
+        case "Enter":
+            if (hasSelection) clearSelection(true);
+            break;
+        case "Spacebar":
+        case " ":
+            if (isPlaying()) {
+                stopPlayback();
+            }
+            else {
+                startPlaybackAsync(song, ctrlPressed);
             }
             break;
         default:

@@ -2,7 +2,7 @@ import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
 import { Input } from "../../../../react-common/components/controls/Input";
 import { classList } from "../../../../react-common/components/util";
-import { addPlaybackStopListener, isLooping, isPlaying, removePlaybackStopListener, setLooping, startPlaybackAsync, stopPlayback } from "./playback";
+import { addPlaybackStateListener, isLooping, isPlaying, removePlaybackStateListener, setLooping, startPlaybackAsync, stopPlayback } from "./playback";
 
 export interface PlaybackControlsProps {
     song: pxt.assets.music.Song;
@@ -32,13 +32,13 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
 
 
     React.useEffect(() => {
-        const onStop = () => {
-            setState("stop");
+        const onStateChange = (state: PlaybackState) => {
+            setState(state);
         };
 
-        addPlaybackStopListener(onStop);
+        addPlaybackStateListener(onStateChange);
 
-        return () => removePlaybackStopListener(onStop)
+        return () => removePlaybackStateListener(onStateChange)
     }, [])
 
     const onStopClick = () => {

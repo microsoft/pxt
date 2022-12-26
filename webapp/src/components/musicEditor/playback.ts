@@ -12,7 +12,7 @@ interface PlaybackState {
     looping: boolean;
 }
 
-let playbackStopListeners: (() => void)[] = [];
+let playbackStateListeners: ((state: "play" | "loop" | "stop") => void)[] = [];
 let onTickListeners: ((tick: number) => void)[] = [];
 
 
@@ -91,8 +91,8 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
                 type: "stop"
             });
 
-            for (const listener of playbackStopListeners) {
-                listener();
+            for (const listener of playbackStateListeners) {
+                listener("stop");
             }
         }
     }
@@ -144,6 +144,10 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
         interval: tickToMs(playbackState.song.beatsPerMinute, playbackState.song.ticksPerBeat, 1)
     })
     metronome.addEventListener("message", onTick);
+
+    for (const listener of playbackStateListeners) {
+        listener(loop ? "loop" : "play");
+    }
 }
 
 export function tickToMs(beatsPerMinute: number, ticksPerBeat: number, ticks: number) {
@@ -187,12 +191,12 @@ export function removeTickListener(listener: (tick: number) => void) {
     onTickListeners = onTickListeners.filter(l => listener !== l);
 }
 
-export function addPlaybackStopListener(listener: () => void) {
-    playbackStopListeners.push(listener);
+export function addPlaybackStateListener(listener: (state: "play" | "stop" | "loop") => void) {
+    playbackStateListeners.push(listener);
 }
 
-export function removePlaybackStopListener(listener: () => void) {
-    playbackStopListeners = playbackStopListeners.filter(l => listener !== l);
+export function removePlaybackStateListener(listener: (state: "play" | "stop" | "loop") => void) {
+    playbackStateListeners = playbackStateListeners.filter(l => listener !== l);
 }
 
 const workerJS = `

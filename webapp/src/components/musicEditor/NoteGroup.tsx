@@ -1,7 +1,7 @@
 import * as React from "react";
 import { CursorState } from "./keyboardNavigation";
 import { Note } from "./Note";
-import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener } from "./playback";
+import { addPlaybackStateListener, addTickListener, removePlaybackStateListener, removeTickListener } from "./playback";
 import { tickToX } from "./svgConstants";
 import { isBassClefNote, isSharpNote, noteToRow } from "./utils";
 
@@ -50,11 +50,11 @@ export const NoteGroup = (props: NoteGroupProps) => {
 
 
         addTickListener(onTick);
-        addPlaybackStopListener(onStop);
+        addPlaybackStateListener(onStop);
 
         return () => {
             removeTickListener(onTick);
-            removePlaybackStopListener(onStop);
+            removePlaybackStateListener(onStop);
             noteGroupRef.classList.remove(playingClass);
         }
     }, [noteEvent])

@@ -5,7 +5,7 @@ import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAs
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove, deleteSelectedNotes, applySelection } from "./utils";
 
 export interface MusicEditorProps {
     asset: pxt.Song;
@@ -40,13 +40,78 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [editingId, setEditingId] = React.useState(editRef);
     const [selection, setSelection] = React.useState<WorkspaceSelectionState | undefined>();
     const [cursor, setCursor] = React.useState<CursorState>();
-    const [keyboardCursorVisible, setKeyboardCursorVisible] = React.useState(false);
+    const [cursorVisible, setCursorVisible] = React.useState(false);
 
     React.useEffect(() => {
         return () => {
             stopPlayback();
         }
     }, [])
+
+    React.useEffect(() => {
+        const onCopy = (ev: ClipboardEvent) => {
+            if (selection) {
+                ev.preventDefault();
+                ev.stopPropagation();
+
+                ev.clipboardData.setData("application/makecode-song", JSON.stringify(selection))
+            }
+        }
+
+        const onCut = (ev: ClipboardEvent) => {
+            if (selection) {
+                ev.preventDefault();
+                ev.stopPropagation();
+
+                ev.clipboardData.setData("application/makecode-song", JSON.stringify(selection))
+
+                const updated = applySelection(selection, hideTracksActive ? selectedTrack : undefined);
+                updateSong(deleteSelectedNotes(updated), true);
+            }
+        }
+
+        const onPaste = (ev: ClipboardEvent) => {
+            const data = ev.clipboardData.getData("application/makecode-song");
+
+            if (data) {
+                const pasted = JSON.parse(data) as WorkspaceSelectionState;
+
+                let newSelection: WorkspaceSelectionState;
+                if (selection) {
+                    newSelection = {
+                        originalSong: deleteSelectedNotes(applySelection(selection, hideTracksActive ? selectedTrack : undefined)),
+                        pastedContent: pasted,
+                        startTick: selection.startTick,
+                        endTick: selection.startTick + (pasted.endTick - pasted.startTick),
+                        deltaTick: 0,
+                        transpose: 0
+                    };
+                }
+                else {
+                    newSelection = {
+                        originalSong: currentSong,
+                        pastedContent: pasted,
+                        startTick: 0,
+                        endTick: pasted.endTick - pasted.startTick,
+                        deltaTick: 0,
+                        transpose: 0,
+                    };
+                }
+
+                updateSong(applySelection(newSelection, hideTracksActive ? selectedTrack : undefined), false);
+                setSelection(newSelection)
+            }
+        }
+
+        document.addEventListener("copy", onCopy);
+        document.addEventListener("cut", onCut);
+        document.addEventListener("paste", onPaste);
+        return () => {
+            document.removeEventListener("copy", onCopy);
+            document.removeEventListener("cut", onCut);
+            document.removeEventListener("paste", onPaste);
+        }
+    }, [selection, hideTracksActive, currentSong])
 
     if (editingId !== editRef) {
         setEditingId(editRef);
@@ -77,16 +142,46 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
     const clearSelection = () => {
         setSelection(undefined);
+        let updated: pxt.assets.music.Song;
         if (dragState?.current?.dragType === "move") {
-            updateSong(unselectAllNotes(dragState.current.editing), true);
-            dragState.current = undefined;
+            updated = unselectAllNotes(dragState.current.editing)
         }
         else if (findSelectedRange(currentSong)) {
-            updateSong(unselectAllNotes(currentSong), true);
+            updated = unselectAllNotes(currentSong);
+        }
+
+        if (updated) {
+            updateSong(updated, true);
+
+            if (dragState?.current?.dragType === "move") {
+                dragState.current = undefined;
+            }
+        }
+
+        return updated;
+    }
+
+    const setCursorTick = (tick: number) => {
+        if (cursor) {
+            setCursor({
+                ...cursor,
+                tick
+            })
+        }
+        else {
+            setCursor({
+                tick,
+                gridTicks,
+                track: selectedTrack,
+                bassClef: false,
+                hideTracksActive,
+                selection
+            })
         }
     }
 
     const onRowClick = (coord: WorkspaceCoordinate, ctrlIsPressed: boolean) => {
+        setCursorVisible(false);
         const track = currentSong.tracks[selectedTrack];
         const instrument = track.instrument;
         const note = isDrumTrack ? coord.row : rowToNote(instrument.octave, coord.row, coord.isBassClef, ctrlIsPressed);
@@ -94,6 +189,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         const existingEvent = findPreviousNoteEvent(currentSong, selectedTrack, coord.tick);
 
         clearSelection();
+        setCursorTick(coord.tick);
 
         if (existingEvent?.startTick === coord.tick && existingEvent.notes.indexOf(note) !== -1) {
             updateSong(unselectAllNotes(removeNoteFromTrack(currentSong, selectedTrack, note, coord.tick)), true);
@@ -116,6 +212,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const onNoteDragStart = () => {
+        setCursorVisible(false);
         if (dragState.current) {
             dragState.current.editing = currentSong;
             dragState.current.original = currentSong;
@@ -173,6 +270,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const onNoteDrag = (start: WorkspaceCoordinate, end: WorkspaceCoordinate) => {
+        setCursorTick(end.tick);
+
         // First, check if we are erasing
         if (eraserActive) {
             for (let i = 0; i < currentSong.tracks.length; i++) {
@@ -271,6 +370,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
     const onTempoChange = (newTempo: number) => {
         clearSelection();
+        setCursorVisible(false);
         updateSong({
             ...currentSong,
             beatsPerMinute: newTempo
@@ -279,11 +379,13 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
     const onMeasuresChanged = (newMeasures: number) => {
         clearSelection();
+        setCursorVisible(false);
         updateSong(changeSongLength(currentSong, newMeasures),true);
     }
 
     const onTrackChanged = (newTrack: number) => {
         clearSelection();
+        setCursorVisible(false);
         const t = currentSong.tracks[newTrack];
 
         if (t.drums) {
@@ -315,15 +417,19 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
     const onEraserClick = () => {
         clearSelection();
+        setCursorVisible(false);
         setEraserActive(!eraserActive);
     }
 
     const onHideTracksClick = () => {
         clearSelection();
+        setCursorVisible(false);
         setHideTracksActive(!hideTracksActive);
     }
 
     const onWorkspaceKeydown = (event: React.KeyboardEvent) => {
+        setCursorVisible(true);
+
         let currentCursor = cursor;
         if (!currentCursor) {
             currentCursor = {
@@ -336,13 +442,10 @@ export const MusicEditor = (props: MusicEditorProps) => {
             }
         }
 
-        if (!keyboardCursorVisible) {
-            setKeyboardCursorVisible(true);
-        }
-
         currentCursor.gridTicks = gridTicks;
         currentCursor.track = selectedTrack;
         currentCursor.selection = selection;
+        currentCursor.hideTracksActive = hideTracksActive;
 
         const [ newSong, newCursor ] = handleKeyboardEvent(currentSong, currentCursor, event);
 
@@ -352,6 +455,9 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
         if (newCursor.selection) {
             setSelection(newCursor.selection);
+        }
+        else {
+            setSelection(undefined);
         }
         setCursor(newCursor);
     }
@@ -379,7 +485,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             hideUnselectedTracks={hideTracksActive}
             showBassClef={true}
             selection={selection}
-            cursor={keyboardCursorVisible ? cursor : undefined}
+            cursor={cursorVisible ? cursor : undefined}
             onKeydown={onWorkspaceKeydown} />
         <PlaybackControls
             song={currentSong}

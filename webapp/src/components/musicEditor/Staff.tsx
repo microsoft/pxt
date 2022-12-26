@@ -1,6 +1,6 @@
 import * as React from "react";
 import { classList } from "../../../../react-common/components/util";
-import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener, tickToMs } from "./playback";
+import { addPlaybackStateListener, addTickListener, removePlaybackStateListener, removeTickListener, tickToMs } from "./playback";
 import { BASS_CLEF_HEIGHT, BASS_CLEF_TOP, beatToX, CLEF_HEIGHT, CLEF_WIDTH, rowY, STAFF_END_WIDTH, STAFF_GRID_TICK_HEIGHT, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 
 export interface StaffProps extends pxt.assets.music.SongInfo {
@@ -46,11 +46,11 @@ export const Staff = (props: StaffProps) => {
         }
 
         addTickListener(onTick);
-        addPlaybackStopListener(onStop);
+        addPlaybackStateListener(onStop);
 
         return () => {
             removeTickListener(onTick);
-            removePlaybackStopListener(onStop);
+            removePlaybackStateListener(onStop);
             if (animationFrameRef) cancelAnimationFrame(animationFrameRef);
         }
     }, [ticksPerBeat, beatsPerMinute])
