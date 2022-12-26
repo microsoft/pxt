@@ -5,7 +5,7 @@ import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAs
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, moveSelectedNotes, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove } from "./utils";
 
 export interface MusicEditorProps {
     asset: pxt.Song;
@@ -19,12 +19,11 @@ export interface MusicEditorProps {
 interface DragState {
     editing: pxt.assets.music.Song;
     original: pxt.assets.music.Song;
-    moveStartState?: pxt.assets.music.Song;
-    moveDeltaRow?: number;
-    moveDeltaTick?: number;
 
     dragStart?: WorkspaceCoordinate;
     dragEnd?: WorkspaceCoordinate;
+
+    selectionAtDragStart?: WorkspaceSelectionState;
 
     dragType?: "marquee" | "move" | "note-length";
 }
@@ -39,7 +38,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [undoStack, setUndoStack] = React.useState(savedUndoStack || []);
     const [redoStack, setRedoStack] = React.useState<pxt.assets.music.Song[]>([]);
     const [editingId, setEditingId] = React.useState(editRef);
-    const [selection, setSelection] = React.useState<WorkspaceRange | undefined>();
+    const [selection, setSelection] = React.useState<WorkspaceSelectionState | undefined>();
     const [cursor, setCursor] = React.useState<CursorState>();
     const [keyboardCursorVisible, setKeyboardCursorVisible] = React.useState(false);
 
@@ -65,7 +64,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         }
         let newUndoStack = undoStack.slice()
         if (pushUndo) {
-            newUndoStack.push(pxt.assets.music.cloneSong(dragState.current?.moveStartState || dragState.current?.original || currentSong));
+            newUndoStack.push(pxt.assets.music.cloneSong(selection?.originalSong || dragState.current?.original || currentSong));
             setUndoStack(newUndoStack);
             setRedoStack([]);
         }
@@ -120,11 +119,13 @@ export const MusicEditor = (props: MusicEditorProps) => {
         if (dragState.current) {
             dragState.current.editing = currentSong;
             dragState.current.original = currentSong;
+            dragState.current.selectionAtDragStart = selection && { ...selection }
             return;
         }
         dragState.current = {
             editing: currentSong,
-            original: currentSong
+            original: currentSong,
+            selectionAtDragStart: selection && { ...selection }
         }
     }
 
@@ -133,17 +134,15 @@ export const MusicEditor = (props: MusicEditorProps) => {
             const dt = dragState.current.dragEnd.tick - dragState.current.dragStart.tick;
             const dr = (dragState.current.dragEnd.row - (dragState.current.dragEnd.isBassClef ? 12 : 0)) - (dragState.current.dragStart.row - (dragState.current.dragStart.isBassClef ? 12 : 0));
 
-            if (dragState.current.moveDeltaRow == undefined) {
-                dragState.current.moveDeltaRow = dr;
-                dragState.current.moveDeltaTick = dt;
-            }
-            else {
-                dragState.current.moveDeltaRow += dr;
-                dragState.current.moveDeltaTick += dt;
-            }
+            setSelection({
+                ...dragState.current.selectionAtDragStart,
+                deltaTick: dragState.current.selectionAtDragStart.deltaTick + dt,
+                transpose: dragState.current.selectionAtDragStart.transpose + dr
+            })
 
             dragState.current.dragStart = undefined;
             dragState.current.dragEnd = undefined;
+            dragState.current.selectionAtDragStart = undefined;
             return;
         }
 
@@ -159,16 +158,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
             if (selectedRange) {
                 setSelection({
-                    start: {
-                        row: 0,
-                        isBassClef: false,
-                        tick: selectedRange.start,
-                    },
-                    end: {
-                        row: 0,
-                        isBassClef: false,
-                        tick: selectedRange.end,
-                    }
+                    startTick: selectedRange.start,
+                    endTick: selectedRange.end,
+                    deltaTick: 0,
+                    transpose: 0,
+                    originalSong: dragState.current.editing
                 })
             }
             else {
@@ -215,48 +209,30 @@ export const MusicEditor = (props: MusicEditorProps) => {
         }
 
         // If we have a selection, check to see if this is dragging the selection around
-        if (selection) {
+        if (dragState.current.selectionAtDragStart) {
             const possibleSelection = findNoteEventAtPosition(dragState.current.original, start, hideTracksActive ? selectedTrack : undefined);
             if (possibleSelection?.selected) {
-                if (!dragState.current.moveStartState) {
-                    dragState.current.moveStartState = dragState.current.original;
-                }
 
                 dragState.current.dragType = "move";
                 const dt = end.tick - start.tick;
                 const dr = (end.row - (end.isBassClef ? 12 : 0)) - (start.row - (start.isBassClef ? 12 : 0))
-                const updated = moveSelectedNotes(
-                    dragState.current.moveStartState,
-                    dt + (dragState.current.moveDeltaTick || 0),
-                    dr + (dragState.current.moveDeltaRow || 0),
+
+                const newSelection = {
+                    ...dragState.current.selectionAtDragStart,
+                    deltaTick: dt + dragState.current.selectionAtDragStart.deltaTick,
+                    transpose: dr + dragState.current.selectionAtDragStart.transpose
+                }
+
+                const updated = applySelectionMove(
+                    newSelection,
                     hideTracksActive ? selectedTrack : undefined
                 );
                 updateSong(updated, false);
-                const selectedRange = findSelectedRange(updated, gridTicks);
-
-                if (selectedRange) {
-                    setSelection({
-                        start: {
-                            row: 0,
-                            isBassClef: false,
-                            tick: selectedRange.start,
-                        },
-                        end: {
-                            row: 0,
-                            isBassClef: false,
-                            tick: selectedRange.end,
-                        }
-                    })
-                }
-                else {
-                    setSelection(undefined);
-                }
+                setSelection(newSelection);
                 return;
             }
         }
 
-        // If not moving the selection, clear the selection state
-        dragState.current.moveStartState = undefined;
 
         // Next, check if this is a drag to change a note length
         const event = findPreviousNoteEvent(dragState.current.original, selectedTrack, start.tick);
@@ -283,9 +259,12 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
         // Otherwise, it must be a marquee selection
         setSelection({
-            start,
-            end
-        });
+            startTick: start.tick,
+            endTick: end.tick,
+            deltaTick: 0,
+            transpose: 0,
+            originalSong: dragState.current.editing
+        })
         updateSong(selectNoteEventsInRange(dragState.current.original, start.tick, end.tick, hideTracksActive ? selectedTrack : undefined), false);
         dragState.current.dragType = "marquee";
     }
@@ -351,7 +330,9 @@ export const MusicEditor = (props: MusicEditorProps) => {
                 tick: 0,
                 gridTicks,
                 track: selectedTrack,
-                bassClef: false
+                bassClef: false,
+                hideTracksActive,
+                selection
             }
         }
 
@@ -361,11 +342,16 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
         currentCursor.gridTicks = gridTicks;
         currentCursor.track = selectedTrack;
+        currentCursor.selection = selection;
 
         const [ newSong, newCursor ] = handleKeyboardEvent(currentSong, currentCursor, event);
 
         if (!pxt.assets.music.songEquals(newSong, currentSong)) {
-            updateSong(newSong, true);
+            updateSong(newSong, !newCursor.selection);
+        }
+
+        if (newCursor.selection) {
+            setSelection(newCursor.selection);
         }
         setCursor(newCursor);
     }

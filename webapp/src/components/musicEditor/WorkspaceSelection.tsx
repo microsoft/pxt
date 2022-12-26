@@ -1,14 +1,14 @@
 import { tickToX, STAFF_HEADER_HEIGHT, BASS_STAFF_TOP, WORKSPACE_HEIGHT } from "./svgConstants";
 
 export interface WorkspaceSelectionProps extends pxt.assets.music.SongInfo {
-    range: WorkspaceRange;
+    range: WorkspaceSelectionState;
 }
 
 export const WorkspaceSelection = (props: WorkspaceSelectionProps) => {
     const { range, ticksPerBeat } = props;
 
-    const x0 = tickToX(ticksPerBeat, range.start.tick);
-    const x1 = tickToX(ticksPerBeat, range.end.tick);
+    const x0 = tickToX(ticksPerBeat, range.startTick + range.deltaTick);
+    const x1 = tickToX(ticksPerBeat, range.endTick + range.deltaTick);
 
     return <g>
         <rect

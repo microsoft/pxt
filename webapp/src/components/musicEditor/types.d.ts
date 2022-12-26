@@ -24,7 +24,11 @@ interface WorkspaceCoordinate {
     row: number;
 }
 
-interface WorkspaceRange {
-    start: WorkspaceCoordinate;
-    end: WorkspaceCoordinate;
+interface WorkspaceSelectionState {
+    originalSong: pxt.assets.music.Song;
+    startTick: number;
+    endTick: number;
+
+    deltaTick: number;
+    transpose: number;
 }

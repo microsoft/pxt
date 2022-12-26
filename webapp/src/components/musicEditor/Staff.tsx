@@ -91,6 +91,12 @@ export const Staff = (props: StaffProps) => {
                         {Math.floor(i / (beatsPerMeasure * ticksPerBeat)) + 1}
                     </text>
                 }
+                <line
+                    className="music-staff-column"
+                    x1={tickToX(ticksPerBeat, i)}
+                    y1={STAFF_HEADER_HEIGHT - STAFF_GRID_TICK_HEIGHT}
+                    x2={tickToX(ticksPerBeat, i)}
+                    y2={STAFF_HEADER_HEIGHT} />
                 {!isTick &&
                     <line
                         className={classList("music-staff-column", isBeatStart && "beat-start", isMeasureStart && "measure-start")}
@@ -99,12 +105,6 @@ export const Staff = (props: StaffProps) => {
                         x2={tickToX(ticksPerBeat, i)}
                         y2={WORKSPACE_HEIGHT} />
                 }
-                <line
-                    className="music-staff-column"
-                    x1={tickToX(ticksPerBeat, i)}
-                    y1={STAFF_HEADER_HEIGHT - STAFF_GRID_TICK_HEIGHT}
-                    x2={tickToX(ticksPerBeat, i)}
-                    y2={STAFF_HEADER_HEIGHT} />
             </g>
         )
     }

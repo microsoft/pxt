@@ -21,7 +21,7 @@ export interface WorkspaceProps {
     eraserActive: boolean;
     gridTicks?: number;
     showBassClef: boolean;
-    selection?: WorkspaceRange;
+    selection?: WorkspaceSelectionState;
 }
 
 export const Workspace = (props: WorkspaceProps) => {
@@ -107,8 +107,8 @@ export const Workspace = (props: WorkspaceProps) => {
     const dragEvent = dragStart && findNoteEventAtTick(song, selectedTrack, dragStart.tick)
 
     if (selection) {
-        gridHighlightStart = selection.start.tick;
-        gridHighlightEnd = selection.end.tick;
+        gridHighlightStart = selection.startTick + selection.deltaTick;
+        gridHighlightEnd = selection.endTick + selection.deltaTick;
     }
     else if (!eraserActive && dragEvent && cursorLocation?.tick >= dragEvent.startTick) {
         gridHighlightStart = dragEvent.startTick;

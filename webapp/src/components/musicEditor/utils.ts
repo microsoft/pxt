@@ -299,7 +299,11 @@ export function deleteSelectedNotes(song: pxt.assets.music.Song): pxt.assets.mus
 }
 
 export function moveSelectedNotes(song: pxt.assets.music.Song, deltaTicks: number, deltaRows: number, trackIndex?: number): pxt.assets.music.Song {
-    const { start, end } = findSelectedRange(song);
+    const range = findSelectedRange(song);
+
+    if (!range) return song;
+
+    const { start, end } = range;
 
     const newStart = start + deltaTicks;
     const newEnd = end + deltaTicks;
@@ -317,6 +321,11 @@ export function moveSelectedNotes(song: pxt.assets.music.Song, deltaTicks: numbe
                 .sort((a, b) => a.startTick - b.startTick)
         }))
     }
+}
+
+export function applySelection(selection: WorkspaceSelectionState, trackIndex?: number) {
+    const selected = selectNoteEventsInRange(selection.originalSong, selection.startTick, selection.endTick, trackIndex);
+    return moveSelectedNotes(selected, selection.deltaTick, selection.transpose, trackIndex);
 }
 
 function moveNoteEvent(noteEvent: pxt.assets.music.NoteEvent, trackOctave: number, deltaTicks: number, deltaRows: number, isDrumTrack: boolean) {

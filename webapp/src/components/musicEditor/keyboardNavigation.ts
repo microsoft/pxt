@@ -1,12 +1,94 @@
 import { playNoteAsync, tickToMs } from "./playback";
-import { addNoteToTrack, editNoteEventLength, findNextNoteEvent, findNoteEventAtTick, findPreviousNoteEvent, isBassClefNote, removeNoteEventFromTrack, removeNoteFromTrack, rowToNote } from "./utils";
+import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLength, findNextNoteEvent, findNoteEventAtTick, findPreviousNoteEvent, findSelectedRange, isBassClefNote, moveSelectedNotes, removeNoteEventFromTrack, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
+
+/**
+ * All shortcuts
+ *
+ * edit notes:
+ *     add note to group at cursor:
+ *         a-g
+ *     edit note group length
+ *         1-9
+ *     delete all notes in group:
+ *         ctrl + backspace
+ *     delete note from group:
+ *         backspace
+ *     transpose note up:
+ *         up
+ *     transpose note down:
+ *         down
+ *     transpose note octave up:
+ *         ctrl + up
+ *     transpose note octave down:
+ *         ctrl + down
+ *     change enharmonic spelling (TODO):
+ *         j
+ *
+ * select range:
+ *     select (TODO):
+ *         shift + navigation
+ *     copy (TODO):
+ *         ctrl + c
+ *     paste (TODO):
+ *         ctrl + v
+ *     cut (TODO):
+ *         ctrl + x
+ *
+ *
+ * cursor navigation:
+ *     next note:
+ *         right
+ *     previous note:
+ *         left
+ *     next measure:
+ *         ctrl + right
+ *     previous measure:
+ *         ctrl + left
+ *     next note in group:
+ *         alt + down
+ *     previous note in group:
+ *         alt + up
+ *     top note in group:
+ *         ctrl + alt + up
+ *     bottom note in group:
+ *         ctrl + alt + down
+ *     jump to treble staff:
+ *         shift + up
+ *     jump to bass staff:
+ *         shift + down
+ *     jump to start:
+ *         ctrl + home
+ *     jump to end:
+ *         ctrl + end
+ *     jump to measure (TODO):
+ *         ctrl + f
+ *
+ * meta:
+ *     change grid (TODO):
+ *         ???
+ *     change track (TODO):
+ *         ???
+ *
+ *
+ * playback:
+ *     start playback from cursor (TODO):
+ *         space
+ *     start playback from beginning (TODO):
+ *         shift + space
+ *     stop playback (TODO):
+ *         space
+ *     loop playback (TODO):
+ *         ???
+ */
 
 export interface CursorState {
     tick: number;
     track: number;
     gridTicks: number;
     bassClef: boolean;
+    hideTracksActive: boolean;
     noteGroupIndex?: number;
+    selection?: WorkspaceSelectionState;
 }
 
 export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorState, event: React.KeyboardEvent): [pxt.assets.music.Song, CursorState] {
@@ -14,13 +96,13 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
     const shiftPressed = event.shiftKey;
     const altPressed = event.altKey;
 
-    const noteEventAtCursor = findNoteEventAtTick(song, cursor.track, cursor.tick);
+    const noteEventAtCursor = !cursor.selection ? findNoteEventAtTick(song, cursor.track, cursor.tick) : undefined;
     if (noteEventAtCursor?.startTick === cursor.tick && cursor.noteGroupIndex === undefined) {
         cursor.noteGroupIndex = 0;
     }
 
     let editedSong = song;
-    let editedCursor = { ...cursor };
+    let editedCursor = { ...cursor, selection: cursor.selection && { ...cursor.selection } };
 
     const instrument = song.tracks[cursor.track].instrument;
     const instrumentOctave = instrument.octave;
@@ -29,13 +111,23 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
     const maxNote = drums ? drums.length - 1 : instrumentOctave * 12 + 19;
     const ticksPerMeasure = song.ticksPerBeat * song.beatsPerMeasure;
     const maxTicks = ticksPerMeasure * song.measures;
+    const hasSelection = !!cursor.selection;
 
-    const playNoteEvent = (ev: pxt.assets.music.NoteEvent) => {
-        for (const note of ev.notes) {
-            playNoteAsync(note, instrument, tickToMs(song.beatsPerMinute, song.ticksPerBeat, ev.endTick - ev.startTick));
+    const clearSelection = (unselectNotes?: boolean) => {
+        if (editedCursor.selection) {
+            editedSong = applySelection(editedCursor.selection, cursor.hideTracksActive ? cursor.track : undefined);
+            if (unselectNotes) {
+                editedSong = unselectAllNotes(editedSong);
+            }
+            delete editedCursor.selection;
         }
     }
 
+    const playNoteEvent = (ev: pxt.assets.music.NoteEvent) => {
+        for (const note of ev.notes) {
+            playNoteAsync(note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, ev.endTick - ev.startTick));
+        }
+    }
 
     switch (event.key) {
         case "ArrowUp":
@@ -45,6 +137,13 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 editedCursor.bassClef = false;
                 break;
             }
+
+            if (editedCursor.selection) {
+                editedCursor.selection.transpose++;
+                editedSong = applySelection(editedCursor.selection);
+                break;
+            }
+
             if (!noteEventAtCursor) break;
             if (altPressed && ctrlPressed) {
                 editedCursor.noteGroupIndex = noteEventAtCursor.notes.length - 1;
@@ -55,21 +154,23 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             else {
                 let note = noteEventAtCursor.notes[cursor.noteGroupIndex];
 
+                const delta = ctrlPressed ? 12 : 1;
                 while (noteEventAtCursor.notes.indexOf(note) !== -1) {
-                    note++;
+                    note += delta;
                 }
+
                 if (note < minNote || note > maxNote) {
                     break;
                 }
 
 
-                editedSong = removeNoteFromTrack(song, cursor.track, noteEventAtCursor.notes[cursor.noteGroupIndex], noteEventAtCursor.startTick);
+                editedSong = removeNoteFromTrack(editedSong, cursor.track, noteEventAtCursor.notes[cursor.noteGroupIndex], noteEventAtCursor.startTick);
                 editedSong = addNoteToTrack(editedSong, cursor.track, note, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
 
                 const newEvent = findNoteEventAtTick(editedSong, cursor.track, cursor.tick);
                 editedCursor.noteGroupIndex = newEvent.notes.indexOf(note);
 
-                playNoteAsync(note, instrument, tickToMs(song.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));
+                playNoteAsync(note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));
             }
             break;
 
@@ -80,6 +181,13 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 editedCursor.bassClef = true;
                 break;
             }
+
+            if (editedCursor.selection) {
+                editedCursor.selection.transpose--;
+                editedSong = applySelection(editedCursor.selection);
+                break;
+            }
+
             if (!noteEventAtCursor) break;
             if (altPressed && ctrlPressed) {
                 editedCursor.noteGroupIndex = 0;
@@ -90,26 +198,29 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             else {
                 let note = noteEventAtCursor.notes[cursor.noteGroupIndex];
 
+                const delta = ctrlPressed ? 12 : 1;
                 while (noteEventAtCursor.notes.indexOf(note) !== -1) {
-                    note--;
+                    note -= delta;
                 }
+
                 if (note < minNote || note > maxNote) {
                     break;
                 }
 
-                editedSong = removeNoteFromTrack(song, cursor.track, noteEventAtCursor.notes[cursor.noteGroupIndex], noteEventAtCursor.startTick);
+                editedSong = removeNoteFromTrack(editedSong, cursor.track, noteEventAtCursor.notes[cursor.noteGroupIndex], noteEventAtCursor.startTick);
                 editedSong = addNoteToTrack(editedSong, cursor.track, note, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
 
                 const newEvent = findNoteEventAtTick(editedSong, cursor.track, cursor.tick);
                 editedCursor.noteGroupIndex = newEvent.notes.indexOf(note);
 
-                playNoteAsync(note, instrument, tickToMs(song.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));
+                playNoteAsync(note, instrument, tickToMs(editedSong.beatsPerMinute, editedSong.ticksPerBeat, newEvent.endTick - newEvent.startTick));
             }
             break;
 
         case "ArrowLeft":
         case "Left":
             event.preventDefault();
+            if (shiftPressed && hasSelection && (editedCursor.selection.deltaTick || editedCursor.selection.transpose)) clearSelection(true);
             if (ctrlPressed) {
                 if (editedCursor.tick % ticksPerMeasure === 0) {
                     editedCursor.tick = Math.max(editedCursor.tick - ticksPerMeasure, 0);
@@ -117,7 +228,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 else {
                     editedCursor.tick = Math.floor(editedCursor.tick / ticksPerMeasure) * ticksPerMeasure;
                 }
-                const noteEvent = findNoteEventAtTick(song, cursor.track, editedCursor.tick);
+                const noteEvent = findNoteEventAtTick(editedSong, cursor.track, editedCursor.tick);
                 if (noteEvent?.startTick === editedCursor.tick) {
                     editedCursor.noteGroupIndex = 0;
                     playNoteEvent(noteEvent);
@@ -130,7 +241,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
 
             const prevTick = cursor.tick % cursor.gridTicks !== 0 ? Math.floor(editedCursor.tick / cursor.gridTicks) * cursor.gridTicks: cursor.tick - cursor.gridTicks;
 
-            const prevNoteEvent = findPreviousNoteEvent(song, cursor.track, cursor.tick - 1);
+            const prevNoteEvent = findPreviousNoteEvent(editedSong, cursor.track, cursor.tick - 1);
             if (prevNoteEvent?.endTick > prevTick) {
                 editedCursor.tick = prevNoteEvent.startTick;
                 editedCursor.noteGroupIndex = 0;
@@ -143,6 +254,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
         case "ArrowRight":
         case "Right":
             event.preventDefault();
+            if (shiftPressed && hasSelection && (editedCursor.selection.deltaTick || editedCursor.selection.transpose)) clearSelection(true);
             if (ctrlPressed) {
                 if (editedCursor.tick % ticksPerMeasure === 0) {
                     editedCursor.tick = Math.min(editedCursor.tick + ticksPerMeasure, maxTicks - ticksPerMeasure);
@@ -153,7 +265,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                     if (editedCursor.tick >= maxTicks) editedCursor.tick -= ticksPerMeasure;
                 }
 
-                const noteEvent = findNoteEventAtTick(song, cursor.track, editedCursor.tick);
+                const noteEvent = findNoteEventAtTick(editedSong, cursor.track, editedCursor.tick);
                 if (noteEvent?.startTick === editedCursor.tick) {
                     editedCursor.noteGroupIndex = 0;
                     playNoteEvent(noteEvent);
@@ -166,7 +278,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
 
             const nextTick = noteEventAtCursor ? Math.ceil(noteEventAtCursor.endTick / cursor.gridTicks) * cursor.gridTicks : cursor.tick + cursor.gridTicks;
 
-            const nextNoteEvent = findNextNoteEvent(song, cursor.track, cursor.tick);
+            const nextNoteEvent = findNextNoteEvent(editedSong, cursor.track, cursor.tick);
             if (nextNoteEvent?.startTick <= nextTick) {
                 editedCursor.tick = nextNoteEvent.startTick;
                 editedCursor.noteGroupIndex = 0;
@@ -180,7 +292,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             event.preventDefault();
             if (ctrlPressed) {
                 editedCursor.tick = maxTicks - cursor.gridTicks;
-                const lastNoteEvent = findNoteEventAtTick(song, cursor.track, editedCursor.tick);
+                const lastNoteEvent = findNoteEventAtTick(editedSong, cursor.track, editedCursor.tick);
                 if (lastNoteEvent) {
                     editedCursor.tick = lastNoteEvent.startTick;
                     editedCursor.noteGroupIndex = 0;
@@ -195,7 +307,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             event.preventDefault();
             if (ctrlPressed) {
                 editedCursor.tick = 0;
-                const firstNoteEvent = findNoteEventAtTick(song, cursor.track, editedCursor.tick);
+                const firstNoteEvent = findNoteEventAtTick(editedSong, cursor.track, editedCursor.tick);
                 if (firstNoteEvent) {
                     editedCursor.noteGroupIndex = 0;
                     playNoteEvent(firstNoteEvent);
@@ -207,14 +319,18 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             break;
         case "Backspace":
             event.preventDefault();
-            if (cursor.noteGroupIndex !== undefined) {
+            if (cursor.selection) {
+                clearSelection();
+                editedSong = deleteSelectedNotes(editedSong);
+            }
+            else if (cursor.noteGroupIndex !== undefined) {
                 if (ctrlPressed) {
-                    editedSong = removeNoteEventFromTrack(song, cursor.track, cursor.tick);
+                    editedSong = removeNoteEventFromTrack(editedSong, cursor.track, cursor.tick);
                     editedCursor.noteGroupIndex = undefined;
                     break;
                 }
 
-                editedSong = removeNoteFromTrack(song, cursor.track, noteEventAtCursor.notes[cursor.noteGroupIndex], noteEventAtCursor.startTick);
+                editedSong = removeNoteFromTrack(editedSong, cursor.track, noteEventAtCursor.notes[cursor.noteGroupIndex], noteEventAtCursor.startTick);
 
                 if (noteEventAtCursor.notes.length === 1) {
                     editedCursor.noteGroupIndex = undefined;
@@ -227,6 +343,8 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
         default:
             if (/^[a-g]$/i.test(event.key)) {
                 event.preventDefault();
+                clearSelection(true);
+
                 let newNote;
 
                 if (cursor.bassClef) {
@@ -238,13 +356,13 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
 
                 if (noteEventAtCursor) {
                     if (noteEventAtCursor.notes.indexOf(newNote) === -1) {
-                        editedSong = addNoteToTrack(song, cursor.track, newNote, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
+                        editedSong = addNoteToTrack(editedSong, cursor.track, newNote, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
                         const newEvent = findNoteEventAtTick(editedSong, cursor.track, noteEventAtCursor.startTick);
                         playNoteEvent(newEvent);
                     }
                 }
                 else {
-                    editedSong = addNoteToTrack(song, cursor.track, newNote, cursor.tick, cursor.tick + cursor.gridTicks);
+                    editedSong = addNoteToTrack(editedSong, cursor.track, newNote, cursor.tick, cursor.tick + cursor.gridTicks);
                     editedCursor.noteGroupIndex = 0;
                     const newEvent = findNoteEventAtTick(editedSong, cursor.track, cursor.tick);
                     playNoteEvent(newEvent);
@@ -253,13 +371,49 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             }
             else if (/^[1-9]$/.test(event.key)) {
                 event.preventDefault();
+                clearSelection(true);
+
                 if (noteEventAtCursor) {
-                    editedSong = editNoteEventLength(song, cursor.track, noteEventAtCursor.startTick, noteEventAtCursor.startTick + parseInt(event.key) * cursor.gridTicks);
+                    editedSong = editNoteEventLength(editedSong, cursor.track, noteEventAtCursor.startTick, noteEventAtCursor.startTick + parseInt(event.key) * cursor.gridTicks);
                     const newEvent = findNoteEventAtTick(editedSong, cursor.track, noteEventAtCursor.startTick);
                     playNoteEvent(newEvent);
                 }
                 break;
             }
+    }
+
+    if (editedCursor.tick !== cursor.tick) {
+        if (shiftPressed) {
+            if (!editedCursor.selection) {
+                editedCursor.selection = {
+                    originalSong: song,
+                    startTick: cursor.tick,
+                    endTick: editedCursor.tick,
+                    transpose: 0,
+                    deltaTick: 0
+                }
+            }
+            else {
+                editedCursor.selection.endTick = editedCursor.tick;
+            }
+            editedSong = applySelection(editedCursor.selection, editedCursor.hideTracksActive ? editedCursor.track : undefined);
+        }
+        else if (editedCursor.selection) {
+            const applied = selectNoteEventsInRange(editedCursor.selection.originalSong, editedCursor.selection.startTick, editedCursor.selection.endTick, editedCursor.hideTracksActive ? editedCursor.track : undefined);
+            const range = findSelectedRange(applied, editedCursor.gridTicks);
+
+            if (range) {
+                editedCursor.selection.startTick = range.start;
+                editedCursor.selection.endTick = range.end;
+            }
+
+            editedCursor.selection.deltaTick += editedCursor.tick - cursor.tick;
+            editedSong = applySelection(editedCursor.selection, editedCursor.hideTracksActive ? editedCursor.track : undefined);
+
+            if (editedCursor.selection.startTick + editedCursor.selection.deltaTick > 0) {
+                editedCursor.tick = editedCursor.selection.startTick + editedCursor.selection.deltaTick;
+            }
+        }
     }
 
     return [ editedSong, editedCursor ];
