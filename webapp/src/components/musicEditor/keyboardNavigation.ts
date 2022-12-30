@@ -25,13 +25,13 @@ import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLengt
  *         j
  *
  * select range:
- *     select (TODO):
+ *     select:
  *         shift + navigation
- *     copy (TODO):
+ *     copy:
  *         ctrl + c
- *     paste (TODO):
+ *     paste:
  *         ctrl + v
- *     cut (TODO):
+ *     cut:
  *         ctrl + x
  *
  *
@@ -71,14 +71,12 @@ import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLengt
  *
  *
  * playback:
- *     start playback from cursor (TODO):
+ *     start playback from beginning:
  *         space
- *     start playback from beginning (TODO):
- *         shift + space
- *     stop playback (TODO):
- *         space
- *     loop playback (TODO):
- *         ???
+ *     stop playback:
+ *         space (while playing)
+ *     loop playback:
+ *         ctrl + space
  */
 
 export interface CursorState {
