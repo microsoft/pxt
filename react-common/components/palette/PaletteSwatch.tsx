@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Palette } from "./Palettes";
 
 export interface PaletteSwatchProps {
@@ -14,7 +13,7 @@ export const PaletteSwatch = (props: PaletteSwatchProps) => {
             {palette.name}
         </div>
         <div className="common-palette-color-list">
-            {palette.colors.map((color, index) => <PaletteColor key={index} color={color} />)}
+            {palette.colors.slice(1).map((color, index) => <PaletteColor key={index} color={color} />)}
         </div>
     </div>
 }

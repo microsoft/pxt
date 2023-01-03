@@ -1295,7 +1295,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         const showImport = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const classes = this.props.parent.createModalClasses("importdialog");
         const showCreateGithubRepo = targetTheme.githubEditor
-            && !pxt.winrt.isWinRT() // not supported in windows 10
             && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget?.cloud?.cloudProviders?.github;
         const showOpenFiles = pxt.appTarget.compile && !disableFileAccessinMaciOs && !disableFileAccessinAndroid;

@@ -8,31 +8,10 @@ export interface ColorPickerFieldProps {
     color: string;
     onColorChanged: (color: string) => void;
     onMoveColor: (up: boolean) => void;
-    disabled?: boolean;
 }
 
-const colorNames = [
-    lf("Transparency"),
-    lf("White"),
-    lf("Red"),
-    lf("Pink"),
-    lf("Orange"),
-    lf("Yellow"),
-    lf("Teal"),
-    lf("Green"),
-    lf("Blue"),
-    lf("Cyan"),
-    lf("Purple"),
-    lf("Light Purple"),
-    lf("Dark Purple"),
-    lf("Tan"),
-    lf("Brown"),
-    lf("Black"),
-]
-
-
 export const ColorPickerField = (props: ColorPickerFieldProps) => {
-    const { index, color, onColorChanged, onMoveColor, disabled } = props;
+    const { index, color, onColorChanged, onMoveColor } = props;
 
     const [currentColor, setCurrentColor] = React.useState<string | undefined>(undefined);
 
@@ -42,24 +21,30 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
     }
 
     const onColorPickerChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setCurrentColor(e.target.value);
+        setCurrentColor(e.target.value.toUpperCase());
     }
 
     const onTextInputChanged = (newValue: string) => {
+        if (newValue?.[0] != '#') {
+            newValue = "#" + newValue;
+        }
+        if (newValue.length > 7) {
+            newValue = newValue.substring(0, 7);
+        }
         if (/#[0-9a-fA-F]{6}/.test(newValue)) {
-            onColorChanged(newValue);
+            onColorChanged(newValue.toUpperCase());
         }
     }
 
     return <div className="common-color-picker-field">
         <div className="common-color-index">
-            {index} ({colorNames[index]})
+            {index}
         </div>
         <div className="common-color-inputs">
-            <input type="color" value={currentColor || color} onBlur={onBlur} onChange={onColorPickerChanged} disabled={disabled}  />
-            <Input initialValue={currentColor || color} onChange={onTextInputChanged} disabled={disabled} />
+            <input type="color" value={currentColor || color} onBlur={onBlur} onChange={onColorPickerChanged} />
+            <Input initialValue={currentColor || color} onChange={onTextInputChanged} />
         </div>
-        <Button className="circle-button" title={lf("Move color up")} leftIcon="fas fa-arrow-up" onClick={() => onMoveColor(true)} disabled={disabled} />
-        <Button className="circle-button" title={lf("Move color down")} leftIcon="fas fa-arrow-down" onClick={() => onMoveColor(false)} disabled={disabled} />
+        <Button className="circle-button" title={lf("Move color up")} leftIcon="fas fa-arrow-up" onClick={() => onMoveColor(true)} />
+        <Button className="circle-button" title={lf("Move color down")} leftIcon="fas fa-arrow-down" onClick={() => onMoveColor(false)} />
     </div>
 }

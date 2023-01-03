@@ -331,7 +331,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
             && targetTheme.githubEditor
-            && !pxt.winrt.isWinRT() // not supported in windows 10
             && !pxt.BrowserUtils.isPxtElectron()
             && !readOnly && !isController && !debugging && !tutorial;
 

@@ -20,8 +20,7 @@ function isMediaDevicesSupported(): boolean {
         && !!navigator.mediaDevices
         && !!navigator.mediaDevices.enumerateDevices
         && !!navigator.mediaDevices.getUserMedia
-        && !pxt.BrowserUtils.isElectron()
-        && !pxt.BrowserUtils.isUwpEdge();
+        && !pxt.BrowserUtils.isElectron();
 }
 
 export class WebCam extends data.Component<WebCamProps, WebCamState> {

@@ -2,7 +2,6 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
-/// <reference path="../../built/pxtwinrt.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -178,7 +177,7 @@ export class ProjectView
         this.state = {
             showFiles: false,
             home: shouldShowHomeScreen,
-            active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
+            active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
             // don't start collapsed in mobile since we can go fullscreen now
             collapseEditorTools: simcfg.headless,
             simState: pxt.editor.SimState.Stopped,
@@ -321,7 +320,7 @@ export class ProjectView
         const hash = parseHash();
         const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
         // Only show the start screen if there are no initial projects requested
-        // (e.g. from the URL hash or from WinRT activation arguments)
+        // (e.g. from the URL hash or from controller mode)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
             || pxt.shell.isControllerMode()
             || /^#editor/.test(window.location.hash);
@@ -329,7 +328,7 @@ export class ProjectView
     }
 
     async updateVisibilityAsync() {
-        if (pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility) {
+        if (pxt.BrowserUtils.isElectron() || pxt.appTarget.appTheme.dontSuspendOnVisibility) {
             // Don't suspend when inside apps
             return;
         }
@@ -3745,7 +3744,6 @@ export class ProjectView
     openNewTab(hd: pxt.workspace.Header, dependent: boolean) {
         if (!hd
             || pxt.BrowserUtils.isElectron()
-            || pxt.BrowserUtils.isUwpEdge()
             || pxt.BrowserUtils.isIOS())
             return;
         let url = window.location.href.replace(/#.*$/, '');
@@ -4214,14 +4212,8 @@ export class ProjectView
     showResetDialog() {
         dialogs.showResetDialogAsync().then(r => {
             if (!r) return Promise.resolve();
-            return Promise.resolve()
-                .then(() => {
-                    return pxt.winrt.releaseAllDevicesAsync();
-                })
-                .then(() => {
-                    dialogs.clearDontShowDownloadDialogFlag();
-                    return this.resetWorkspace();
-                });
+            dialogs.clearDontShowDownloadDialogFlag();
+            return this.resetWorkspace();
         });
     }
 
@@ -4858,7 +4850,7 @@ export class ProjectView
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
-        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
+        const isApp = cmds.isNativeHost() || pxt.BrowserUtils.isElectron();
 
         const hc = this.getData<boolean>(auth.HIGHCONTRAST)
 
@@ -5048,10 +5040,9 @@ function initPacketIO() {
 }
 
 function initSerial() {
-    const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
     const isValidLocalhostSerial = pxt.appTarget.serial && pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken;
 
-    if (!isHF2WinRTSerial && !isValidLocalhostSerial && !pxt.usb.isEnabled)
+    if (!isValidLocalhostSerial && !pxt.usb.isEnabled)
         return;
 
     if (hidbridge.shouldUse() || pxt.usb.isEnabled)
@@ -5346,7 +5337,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 }
 
 async function importGithubProject(repoid: string, requireSignin?: boolean) {
-    if (!pxt.appTarget.appTheme.githubEditor || pxt.winrt.isWinRT() || pxt.BrowserUtils.isPxtElectron()) {
+    if (!pxt.appTarget.appTheme.githubEditor || pxt.BrowserUtils.isPxtElectron()) {
         core.warningNotification(lf("Importing GitHub projects not currently supported"));
         theEditor.openHome();
         return;
@@ -5498,7 +5489,6 @@ function filenameForEditor(editor: string): string {
     }
 }
 
-pxt.winrt.captureInitialActivation();
 document.addEventListener("DOMContentLoaded", async () => {
     pxt.perf.recordMilestone(`DOM loaded`)
 
@@ -5529,6 +5519,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         pxt.tickEvent("unsupported");
         window.location.href = "/browsers";
         core.showLoading("browsernotsupported", lf("Sorry, this browser is not supported."));
+        return;
+    } else if (pxt.BrowserUtils.isWinRT()) {
+        pxt.tickEvent("redirected.winrt");
+        window.location.href = "/v4";
+        core.showLoading("micro:bit-winrt-reload", lf("Redirecting to MakeCode micro:bit v4"));
         return;
     }
 
@@ -5561,7 +5556,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.hexloader.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
     pxt.hexloader.hideLoading = () => core.hideLoading("hexcloudcompiler");
     pxt.docs.requireMarked = () => require("marked");
-    const importHex = (hex: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) => theEditor.importHex(hex, options);
 
     // allow static web site to specify custom backend
     if (pxt.appTarget.cloud?.apiRoot)
@@ -5589,7 +5583,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (query["ws"]) workspace.setupWorkspace(query["ws"]);
     else if ((theme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
-    else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
     else if (pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     else workspace.setupWorkspace("browser");
@@ -5696,21 +5689,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
-            return pxt.winrt.initAsync(importHex);
         })
-        .then(() => pxt.winrt.hasActivationProjectAsync())
-        .then((hasWinRTProject) => {
+        .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();
-            if (!showHome || hasWinRTProject) {
+            if (!showHome) {
                 // Hide the home screen
                 theEditor.setState({ home: false });
             }
 
             if (hash.cmd && handleHash(hash, true)) {
                 return Promise.resolve();
-            }
-            if (hasWinRTProject) {
-                return pxt.winrt.loadActivationProject();
             }
             if (pxt.shell.isNoProject()) {
                 pxt.editor.postHostMessageAsync({

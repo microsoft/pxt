@@ -39,7 +39,6 @@ const pxtcompiler = () => compileTsProject("pxtcompiler");
 const pxtpy = () => compileTsProject("pxtpy");
 const pxtsim = () => compileTsProject("pxtsim");
 const pxtblocks = () => compileTsProject("pxtblocks");
-const pxtwinrt = () => compileTsProject("pxtwinrt");
 const pxtrunner = () => compileTsProject("pxtrunner");
 const pxteditor = () => compileTsProject("pxteditor");
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
@@ -62,7 +61,6 @@ const pxtapp = () => gulp.src([
     "node_modules/lzma/src/lzma_worker-min.js",
     "node_modules/dompurify/dist/purify.min.js",
     "built/pxtlib.js",
-    "built/pxtwinrt.js",
     "built/pxteditor.js",
     "built/pxtsim.js"
 ])
@@ -127,7 +125,7 @@ function initWatch() {
         gulp.parallel(pxtcompiler, pxtsim, backendutils),
         gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
         pxteditor,
-        gulp.parallel(pxtrunner, pxtwinrt, cli, pxtcommon),
+        gulp.parallel(pxtrunner, cli, pxtcommon),
         updatestrings,
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
@@ -151,7 +149,6 @@ function initWatch() {
     gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
 
     gulp.watch("./pxtrunner/**/*", gulp.series(pxtrunner, ...tasks.slice(5)));
-    gulp.watch("./pxtwinrt/**/*", gulp.series(pxtwinrt, ...tasks.slice(5)));
     gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
 
     gulp.watch("./react-common/styles/**/*.css", gulp.series(buildcss, ...tasks.slice(9)))
@@ -390,7 +387,6 @@ const copyWebapp = () =>
         "built/pxtsim.js",
         "built/pxtrunner.js",
         "built/pxteditor.js",
-        "built/pxtwinrt.js",
         "built/webapp/src/worker.js",
         "built/webapp/src/serviceworker.js",
         "built/webapp/src/simulatorserviceworker.js",
@@ -650,7 +646,7 @@ const multiplayer = gulp.series(cleanMultiplayer, buildMultiplayer, gulp.series(
 
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
-        "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
+        "pxtpy", "pxtrunner", "pxtsim", "webapp",
         "docfiles/pxtweb", "skillmap", "authcode", "multiplayer", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
@@ -742,7 +738,7 @@ const buildAll = gulp.series(
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
     pxteditor,
-    gulp.parallel(pxtrunner, pxtwinrt, cli, pxtcommon),
+    gulp.parallel(pxtrunner, cli, pxtcommon),
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
     reactCommon,
@@ -800,7 +796,7 @@ exports.cli = gulp.series(
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
     pxteditor,
-    gulp.parallel(pxtrunner, pxtwinrt, cli, pxtcommon),
+    gulp.parallel(pxtrunner, cli, pxtcommon),
     pxtjs
 );
 
