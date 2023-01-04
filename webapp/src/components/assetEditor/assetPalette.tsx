@@ -31,6 +31,8 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const [disableButtons, setDisableButtons] = useState<boolean>(true);
 
+    const [invalidName, setInvalidName] = useState<boolean>(false);
+
     useEffect(() => {
         initiatePalettes();
     }, []);
@@ -116,9 +118,17 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const onNameDone = () => {
         setShowNameModal(false);
+        setInvalidName(false);
     }
 
     const setName = (name: string) => {
+        name = name.trim();
+        if (name.length === 0) {
+            setInvalidName(true);
+            return
+        } else {
+            setInvalidName(false);
+        }
         setCustomPalettes({
             ...customPalettes,
             palettes: {
@@ -208,7 +218,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     ];
 
     const nameActions: ModalAction[] = [
-        { label: lf("Done"), onClick: onNameDone, className: 'teal' }
+        { label: lf("Done"), onClick: onNameDone, className: 'teal palette-done-button', disabled: invalidName }
     ];
 
     return <div>
@@ -234,10 +244,11 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         {showNameModal && <Modal title={lf("Name Your Custom Palette")} onClose={onNameDone} actions={nameActions}>
             <Input
                 className="palette-name-input"
-                initialValue={currentPalette.name}
+                initialValue={invalidName ? "" : currentPalette.name}
                 placeholder={lf("Palette Name")}
                 onBlur={setName}
                 onEnterKey={setName} />
+            {invalidName && <p className="invalid-palette-name">{lf("Name must not be empty")}</p>}
         </Modal>}
     </div>
 }
