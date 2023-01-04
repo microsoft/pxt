@@ -73,7 +73,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const onFinalClose = (paletteChanged: boolean) => {
-        pkg.mainEditorPkg().setFile("_palettes.json", JSON.stringify(customPalettes, undefined, 4));
+        pkg.mainEditorPkg().setFile(pxt.PALETTES_FILE, JSON.stringify(customPalettes, undefined, 4));
         if (paletteChanged) {
             pxt.tickEvent("palette.modified", {id: currentPalette.id})
             // save pxt.json
@@ -146,7 +146,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const initiatePalettes = () => {
-        const f = pkg.mainEditorPkg().lookupFile("this/_palettes.json");
+        const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.PALETTES_FILE);
         let initialCustomPalettes: CustomPalettes = undefined;
         if (f) {
             initialCustomPalettes = JSON.parse(f.content) as CustomPalettes;
