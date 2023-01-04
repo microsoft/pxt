@@ -18,20 +18,13 @@ export interface AssetPaletteProps {
 
 export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
-
-    const [showExitModal, setShowExitModal] = useState<boolean>(false);
-
-    const [showNameModal, setShowNameModal] = useState<boolean>(false);
-
     const [customPalettes, setCustomPalettes] = useState<CustomPalettes>(undefined);
-
     const [initialPalette, setinitialPalette] = useState<Palette | undefined>(undefined);
-
     const [currentPalette, setCurrentPalette] = useState<Palette | undefined>(undefined);
-
-    const [disableButtons, setDisableButtons] = useState<boolean>(true);
-
+    const [showExitModal, setShowExitModal] = useState<boolean>(false);
+    const [showNameModal, setShowNameModal] = useState<boolean>(false);
     const [invalidName, setInvalidName] = useState<boolean>(false);
+    const [disableButtons, setDisableButtons] = useState<boolean>(true);
 
     useEffect(() => {
         initiatePalettes();
