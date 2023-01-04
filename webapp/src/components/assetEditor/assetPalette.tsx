@@ -27,8 +27,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const [initialPalette, setinitialPalette] = useState<Palette | undefined>(undefined);
 
-    const [prevPalette, setPrevPalette] = useState<Palette | undefined>(undefined);
-
     const [currentPalette, setCurrentPalette] = useState<Palette | undefined>(undefined);
 
     const [disableButtons, setDisableButtons] = useState<boolean>(true);
@@ -37,9 +35,16 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         initiatePalettes();
     }, []);
 
+    useEffect(() => {
+        if (currentPalette && !isSameColors(currentPalette.colors, initialPalette.colors)) {
+            setDisableButtons(false);
+        } else {
+            setDisableButtons(true);
+        }
+    }, [currentPalette]);
+
     const onPaletteEdit = (selected: Palette) => {
         if (currentPalette && !isSameColors(currentPalette.colors, selected.colors)) {
-            setDisableButtons(false);
             if (selected.id !== currentPalette.id) { // palette selected
                 setCurrentPalette(selected);
             } else if (isBuiltinPalette(selected)) { // builtin palette edited
@@ -73,21 +78,20 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         }
     }
 
-    const onFinalClose = () => {
-        const paletteChanged = !isSameColors(initialPalette.colors, prevPalette.colors);
+    const onFinalClose = (paletteChanged: boolean) => {
+        pkg.mainEditorPkg().setFile("_palettes.json", JSON.stringify(customPalettes, undefined, 4)); // TODO: make virtual file after testing
         if (paletteChanged) {
-            pxt.tickEvent("palette.modified", {id: prevPalette.id})
+            pxt.tickEvent("palette.modified", {id: currentPalette.id})
             // save pxt.json
-            pkg.mainEditorPkg().updateConfigAsync(cfg => cfg.palette = prevPalette.colors);
+            pkg.mainEditorPkg().updateConfigAsync(cfg => cfg.palette = currentPalette.colors);
         }
         onClose(paletteChanged);
-        pkg.mainEditorPkg().setFile("_palettes.json", JSON.stringify(customPalettes, undefined, 4)); // TODO: make virtual file after testing
     }
 
     const onModalClose = () => {
-        // check whether exiting without saved changes
-        if (isSameColors(currentPalette.colors, prevPalette.colors)) {
-            onFinalClose();
+        // check whether exiting without applied changes
+        if (isSameColors(currentPalette.colors, initialPalette.colors)) {
+            onFinalClose(false);
         } else {
             setShowExitModal(true);
         }
@@ -95,17 +99,15 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const onExit = () => {
         setShowExitModal(false);
-        onFinalClose();
+        onFinalClose(false);
     }
 
     const onReset = () => {
-        setCurrentPalette(prevPalette);
-        setDisableButtons(true);
+        setCurrentPalette(initialPalette);
     }
 
-    const onSave = () => {
-        setPrevPalette(currentPalette);
-        setDisableButtons(true);
+    const onApply = () => {
+        onFinalClose(true);
     }
 
     const onGoBack = () => {
@@ -138,12 +140,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 [currentPalette.id]: undefined
             }
         });
-        if (prevPalette.id === currentPalette.id) {
-            setPrevPalette(Arcade);
-            setCurrentPalette(Arcade);
-        } else {
-            setCurrentPalette(prevPalette);
-        }
+        setCurrentPalette(Arcade);
     }
 
     const isSameColors = (colorSet1: string[], colorSet2: string[]) => {
@@ -172,7 +169,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             if (isSameColors(colors, palette.colors)) {
                 match = true;
                 setinitialPalette(palette);
-                setPrevPalette(palette);
                 setCurrentPalette(palette);
                 break;
             }
@@ -186,7 +182,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             }
             initialCustomPalettes.palettes[customPalette.id] = customPalette;
             setinitialPalette(customPalette);
-            setPrevPalette(customPalette);
             setCurrentPalette(customPalette);
         }
         setCustomPalettes(initialCustomPalettes);
@@ -205,7 +200,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const actions: ModalAction[] = [
         { label: lf("Reset"), onClick: onReset, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
-        { label: lf("Save"), onClick: onSave, className: 'green palette-save-button', disabled: disableButtons }
+        { label: lf("Apply"), onClick: onApply, className: 'green palette-apply-button', disabled: disableButtons }
     ];
 
     const exitActions: ModalAction[] = [
@@ -233,8 +228,8 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             </div>
             <PaletteEditor palette={currentPalette || Arcade} onPaletteChanged={onPaletteEdit} />
         </Modal>
-        {showExitModal && <Modal title={lf("Exit Without Saving")} onClose={onGoBack} actions={exitActions}>
-            <div>{lf("Exit without saving? Your palette changes will be reverted.")}</div>
+        {showExitModal && <Modal title={lf("Exit Without Applying Changes?")} onClose={onGoBack} actions={exitActions}>
+            <div>{lf("Your palette changes will be reverted.")}</div>
         </Modal>}
         {showNameModal && <Modal title={lf("Name Your Custom Palette")} onClose={onNameDone} actions={nameActions}>
             <Input
