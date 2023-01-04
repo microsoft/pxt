@@ -2,7 +2,6 @@ import * as pkg from "../../package";
 import { useEffect, useState } from "react";
 import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
 import { Input } from "../../../../react-common/components/controls/Input";
-import { Button } from "../../../../react-common/components/controls/Button";
 import { PalettePicker } from "../../../../react-common/components/palette/PalettePicker";
 import { PaletteEditor } from "../../../../react-common/components/palette/PaletteEditor";
 import { AllPalettes as BuiltinPalettes, Arcade, Palette } from "../../../../react-common/components/palette/Palettes";
@@ -74,7 +73,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const onFinalClose = (paletteChanged: boolean) => {
-        pkg.mainEditorPkg().setFile("_palettes.json", JSON.stringify(customPalettes, undefined, 4)); // TODO: make virtual file after testing
+        pkg.mainEditorPkg().setFile("_palettes.json", JSON.stringify(customPalettes, undefined, 4));
         if (paletteChanged) {
             pxt.tickEvent("palette.modified", {id: currentPalette.id})
             // save pxt.json
@@ -133,17 +132,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             }
         });
         setCurrentPalette({ ...currentPalette, name: name });
-    }
-
-    const deletePalette = () => {
-        setCustomPalettes({
-            ...customPalettes,
-            palettes: {
-                ...customPalettes.palettes,
-                [currentPalette.id]: undefined
-            }
-        });
-        setCurrentPalette(Arcade);
     }
 
     const isSameColors = (colorSet1: string[], colorSet2: string[]) => {
@@ -221,13 +209,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                     palettes={paletteOptions}
                     selectedId={currentPalette?.id || Arcade.id}
                     onPaletteSelected={onPaletteEdit} />
-                {(currentPalette?.custom) && <Button
-                    label={lf("Delete")}
-                    title={lf("Delete the selected palete")}
-                    ariaLabel={lf("Delete the selected palette")}
-                    className="palette-delete-button"
-                    leftIcon="icon trash"
-                    onClick={deletePalette} />}
             </div>
             <PaletteEditor palette={currentPalette || Arcade} onPaletteChanged={onPaletteEdit} />
         </Modal>
