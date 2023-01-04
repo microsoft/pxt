@@ -10,31 +10,22 @@
     Tutorial Code Validation
 *******************************/
 
+/*
+TODO thparks : Move to tutorial-sidebar.less?
+TODO thsparks : Z-Index above simulator (same as hint?)
+*/
 .tutorialCodeValidation {
-    position: absolute;
+    position: fixed;
+    top: unset;
+    right: unset;
+    bottom: 5.5rem;
+    left: 23rem;
     max-width: 100%;
     min-width: 18.75rem;
-    top: ~'calc(50% + 3rem)';
-    right: 2rem;
     padding: 0.625rem 1.625rem;
-    border-radius: 1.2rem;
     background: @white;
-    z-index: @tutorialLightboxCardZIndex;
-    border: 0.5rem solid @black;
-    box-shadow: 0rem 0rem 0.5rem 0.063rem rgba(0, 0, 0, .3);
-}
-
-.tutorialCodeValidation:before {
-    content: ' ';
-    position: absolute;
-    width: 0;
-    height: 0;
-    right: 0.313rem;
-    top: -1.5rem;
-    bottom: auto;
-    border: 1rem solid;
-    border-color: transparent @black transparent transparent;
-    transform: rotateZ(-135deg);
+    box-shadow: 0 0rem 0.5rem;
+    border-radius: 0.5rem;
 }
 
 .tutorialCodeValidation > div {

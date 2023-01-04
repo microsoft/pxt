@@ -12,7 +12,7 @@ export function TutorialValidationErrorMessage(
   props: TutorialValidationErrorMessageProps
 ) {
   return (
-    <Modal title="Placeholder Title" onClose={props.onReturnClicked}>
+    <div className="tutorialCodeValidation">
       <div>Something doesn't look quite right...</div>
       <br />
       <div className="tabTutorial">
@@ -37,6 +37,6 @@ export function TutorialValidationErrorMessage(
         title={lf("Continue Anyway")}
         label={lf("Continue Anyway")}
       />
-    </Modal>
+    </div>
   );
 }
