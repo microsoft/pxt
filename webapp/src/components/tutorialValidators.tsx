@@ -64,8 +64,8 @@ export class BlocksExistValidator extends TutorialValidator {
         const blockImageUris = isValid ? [] : await getBlockImageUris(missingBlocks);
         const blockImages = (
             <div>
-                <p>We expected to see these blocks in your workspace, but couldn't find them:</p>
-                {blockImageUris.filter(b => !!b).map((blockUri, index) => <img key={index + blockUri} src={blockUri} alt="block rendered" />)}
+                <p>{lf("Double check your workspace to make sure these blocks are inside and connected to the rest of your code:")}</p>
+                {blockImageUris.filter(b => !!b).map((blockUri, index) => <img key={index + blockUri} src={blockUri} alt={lf("missing block")} />)}
             </div>);
 
         return {
@@ -91,7 +91,7 @@ function tutorialBlockList(tutorial: TutorialOptions, step: TutorialStepInfo): P
 // TODO thsparks: Understand, comment, reduce duplication with old validation
 function extractBlockSnippet(tutorial: TutorialOptions, indexdb: pxt.Map<pxt.Map<number>>) {
     const { tutorialStepInfo, tutorialStep } = tutorial;
-    const body = tutorial.tutorialStepInfo[tutorialStep].hintContentMd;
+    const body = tutorialStepInfo[tutorialStep].hintContentMd;
     let hintCode = "";
     if (body != undefined) {
         body.replace(/((?!.)\s)+/g, "\n")

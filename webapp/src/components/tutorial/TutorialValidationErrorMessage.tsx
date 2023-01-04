@@ -1,5 +1,4 @@
 import { Button } from "../../../../react-common/components/controls/Button";
-import { Modal } from "../../../../react-common/components/controls/Modal";
 import { TutorialValidationResult } from "../tutorialValidators";
 
 interface TutorialValidationErrorMessageProps {
@@ -12,7 +11,7 @@ export function TutorialValidationErrorMessage(
   props: TutorialValidationErrorMessageProps
 ) {
   return (
-    <div className="tutorialCodeValidation">
+    <div className="tutorialCodeValidationError">
       <div>Something doesn't look quite right...</div>
       <br />
       <div className="tabTutorial">
