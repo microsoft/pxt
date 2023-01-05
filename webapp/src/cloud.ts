@@ -500,7 +500,7 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
         errors = [];
 
         const elapsed = U.nowSeconds() - syncStart;
-        pxt.tickEvent(`identity.sync.finished`, { elapsed })
+        pxt.tickEvent(`identity.sync.finished`, { elapsed, provider: pxt.auth.identityProviderId() })
 
         data.invalidate("headers:");
 

@@ -154,7 +154,7 @@ namespace pxt.auth {
             const currIdp = state.profile?.idp;
 
             // Check if we're already signed into this identity provider.
-            if (currIdp === idp) {
+            if (currIdp?.provider === idp) {
                 pxt.debug(`loginAsync: Already signed into ${idp}.`);
                 return;
             }
@@ -684,6 +684,10 @@ namespace pxt.auth {
 
     export function userName(user: pxt.auth.UserProfile): string {
         return user?.idp?.displayName ?? user?.idp?.username ?? EMPTY_USERNAME;
+    }
+
+    export function identityProviderId(): pxt.IdentityProviderId | undefined {
+        return client()?.getState()?.profile?.idp?.provider;
     }
 
     export function firstName(user: pxt.auth.UserProfile): string {
