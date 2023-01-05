@@ -22,6 +22,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     const [initialPalette, setinitialPalette] = useState<Palette | undefined>(undefined);
     const [currentPalette, setCurrentPalette] = useState<Palette | undefined>(undefined);
     const [showExitModal, setShowExitModal] = useState<boolean>(false);
+    const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
     const [showNameModal, setShowNameModal] = useState<boolean>(false);
     const [invalidName, setInvalidName] = useState<boolean>(false);
     const [disableButtons, setDisableButtons] = useState<boolean>(true);
@@ -98,6 +99,15 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const onReset = () => {
+        if (initialPalette.custom && !customPalettes.palettes[initialPalette.id]) {
+            setCustomPalettes({
+                ...customPalettes,
+                palettes: {
+                    ...customPalettes.palettes,
+                    [initialPalette.id]: initialPalette
+                }
+            });
+        }
         setCurrentPalette(initialPalette);
     }
 
@@ -136,6 +146,10 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const deletePalette = () => {
+        setShowDeleteModal(true);
+    }
+
+    const onDelete = () => {
         setCustomPalettes({
             ...customPalettes,
             palettes: {
@@ -144,6 +158,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             }
         });
         setCurrentPalette(Arcade);
+        setShowDeleteModal(false);
     }
 
     const isSameColors = (colorSet1: string[], colorSet2: string[]) => {
@@ -214,6 +229,10 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         { label: lf("Done"), onClick: onNameDone, className: 'teal palette-done-button', disabled: invalidName }
     ];
 
+    const deleteActions: ModalAction[] = [
+        { label: lf("Delete"), onClick: onDelete, leftIcon: 'icon trash', className: 'red' }
+    ];
+
     return <div>
         <Modal title={lf("Project Color Palette")} onClose={onModalClose} actions={actions}>
             <div className="common-palette-picker">
@@ -242,6 +261,9 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 onBlur={setName}
                 onEnterKey={setName} />
             {invalidName && <p className="invalid-palette-name">{lf("Name must not be empty")}</p>}
+        </Modal>}
+        {showDeleteModal && <Modal title={lf("Delete Palette")} onClose={() => setShowDeleteModal(false)} actions={deleteActions}>
+            <div>{lf("Are you sure you want to delete this palette?")}</div>
         </Modal>}
     </div>
 }
