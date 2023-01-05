@@ -5,6 +5,7 @@ import { Input } from "../../../../react-common/components/controls/Input";
 import { Button } from "../../../../react-common/components/controls/Button";
 import { PalettePicker } from "../../../../react-common/components/palette/PalettePicker";
 import { PaletteEditor } from "../../../../react-common/components/palette/PaletteEditor";
+import { PaletteSwatch } from "../../../../react-common/components/palette/PaletteSwatch";
 import { AllPalettes as BuiltinPalettes, Arcade, Palette } from "../../../../react-common/components/palette/Palettes";
 
 
@@ -262,8 +263,9 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 onEnterKey={setName} />
             {invalidName && <p className="invalid-palette-name">{lf("Name must not be empty")}</p>}
         </Modal>}
-        {showDeleteModal && <Modal title={lf("Delete Palette")} onClose={() => setShowDeleteModal(false)} actions={deleteActions}>
+        {showDeleteModal && <Modal title={lf("Delete Palette")} onClose={() => setShowDeleteModal(false)} actions={deleteActions} className="palette-delete-modal">
             <div>{lf("Are you sure you want to delete this palette?")}</div>
+            <PaletteSwatch palette={currentPalette} />
         </Modal>}
     </div>
 }
