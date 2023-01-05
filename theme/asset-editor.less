@@ -258,6 +258,14 @@
     background: none;
     border: none;
     padding: 0;
+    &.disabled {
+        background: none;
+        border: none;
+        color: @grey;
+        &:focus::after {
+            outline: none;
+        }
+    }
 }
 
 .palette-delete-modal {

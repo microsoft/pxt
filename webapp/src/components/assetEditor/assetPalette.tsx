@@ -241,13 +241,13 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                     palettes={paletteOptions}
                     selectedId={currentPalette?.id || Arcade.id}
                     onPaletteSelected={onPaletteEdit} />
-                {(currentPalette?.custom) && <Button
-                    label={lf("Delete")}
-                    title={lf("Delete the selected palete")}
-                    ariaLabel={lf("Delete the selected palette")}
+                <Button
+                    title={lf("Delete palete")}
+                    ariaLabel={lf("Delete palette")}
                     className="palette-delete-button"
                     leftIcon="icon trash"
-                    onClick={deletePalette} />}
+                    onClick={deletePalette}
+                    disabled={!currentPalette.custom} />
             </div>
             <PaletteEditor palette={currentPalette || Arcade} onPaletteChanged={onPaletteEdit} />
         </Modal>
