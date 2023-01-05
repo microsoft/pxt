@@ -18,7 +18,7 @@ export interface AssetPaletteProps {
 export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
     const [customPalettes, setCustomPalettes] = useState<CustomPalettes>(undefined);
-    const [initialPalette, setinitialPalette] = useState<Palette | undefined>(undefined);
+    const [initialPalette, setInitialPalette] = useState<Palette | undefined>(undefined);
     const [currentPalette, setCurrentPalette] = useState<Palette | undefined>(undefined);
     const [showExitModal, setShowExitModal] = useState<boolean>(false);
     const [showNameModal, setShowNameModal] = useState<boolean>(false);
@@ -26,7 +26,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     const [disableButtons, setDisableButtons] = useState<boolean>(true);
 
     useEffect(() => {
-        initiatePalettes();
+        initializePalettes();
     }, []);
 
     useEffect(() => {
@@ -145,7 +145,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         return isEqual;
     }
 
-    const initiatePalettes = () => {
+    const initializePalettes = () => {
         const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.PALETTES_FILE);
         let initialCustomPalettes: CustomPalettes = undefined;
         if (f) {
@@ -159,7 +159,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         for (const palette of paletteOptions) {
             if (isSameColors(colors, palette.colors)) {
                 match = true;
-                setinitialPalette(palette);
+                setInitialPalette(palette);
                 setCurrentPalette(palette);
                 break;
             }
@@ -172,7 +172,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 custom: true
             }
             initialCustomPalettes.palettes[customPalette.id] = customPalette;
-            setinitialPalette(customPalette);
+            setInitialPalette(customPalette);
             setCurrentPalette(customPalette);
         }
         setCustomPalettes(initialCustomPalettes);
