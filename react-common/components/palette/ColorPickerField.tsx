@@ -41,8 +41,8 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
             {index}
         </div>
         <div className="common-color-inputs">
-            <input type="color" value={currentColor || color} onBlur={onBlur} onChange={onColorPickerChanged} />
-            <Input initialValue={currentColor || color} onChange={onTextInputChanged} />
+            <input className="color-input" type="color" value={currentColor || color} onBlur={onBlur} onChange={onColorPickerChanged} />
+            <Input initialValue={currentColor || color.toUpperCase()} onChange={onTextInputChanged} />
         </div>
         <Button className="circle-button" title={lf("Move color up")} leftIcon="fas fa-arrow-up" onClick={() => onMoveColor(true)} />
         <Button className="circle-button" title={lf("Move color down")} leftIcon="fas fa-arrow-down" onClick={() => onMoveColor(false)} />
