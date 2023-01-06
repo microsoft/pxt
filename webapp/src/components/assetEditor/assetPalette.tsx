@@ -43,38 +43,44 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }, [currentPalette]);
 
     const onPaletteEdit = (selected: Palette) => {
-        if (currentPalette && !isSameColors(currentPalette.colors, selected.colors)) {
+        if (currentPalette) {
             if (selected.id !== currentPalette.id) { // palette selected
                 setCurrentPalette(selected);
-            } else if (isBuiltinPalette(selected)) { // builtin palette edited
-                // create new custom palette and prompt user to name custom palette
-                const customPalette = {
-                    id: "custom" + customPalettes.nextPaletteID,
-                    name: lf("Custom"),
-                    colors: selected.colors,
-                    custom: true
+            } else if (!isSameColors(currentPalette.colors, selected.colors)) {
+                if (isBuiltinPalette(selected) ) { // builtin palette edited
+                    createNewPalette();
+                } else { // custom palette edited
+                    setCustomPalettes({
+                        ...customPalettes,
+                        palettes: {
+                            ...customPalettes.palettes,
+                            [currentPalette.id]: selected
+                        }
+                    });
+                    setCurrentPalette(selected);
                 }
-                setCustomPalettes({
-                    ...customPalettes,
-                    nextPaletteID: ++customPalettes.nextPaletteID,
-                    palettes: {
-                        ...customPalettes.palettes,
-                        [customPalette.id]: customPalette
-                    }
-                });
-                setCurrentPalette(customPalette);
-                setShowNameModal(true);
-            } else { // custom palette edited
-                setCustomPalettes({
-                    ...customPalettes,
-                    palettes: {
-                        ...customPalettes.palettes,
-                        [currentPalette.id]: selected
-                    }
-                });
-                setCurrentPalette(selected);
             }
+
         }
+    }
+
+    const createNewPalette = () => {
+        const customPalette = {
+            id: "custom" + customPalettes.nextPaletteID,
+            name: lf("Custom"),
+            colors: currentPalette.colors,
+            custom: true
+        }
+        setCustomPalettes({
+            ...customPalettes,
+            nextPaletteID: ++customPalettes.nextPaletteID,
+            palettes: {
+                ...customPalettes.palettes,
+                [customPalette.id]: customPalette
+            }
+        });
+        setCurrentPalette(customPalette);
+        setShowNameModal(true);
     }
 
     const onFinalClose = (paletteChanged: boolean) => {
@@ -231,13 +237,28 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                     palettes={paletteOptions}
                     selectedId={currentPalette?.id || Arcade.id}
                     onPaletteSelected={onPaletteEdit} />
-                <Button
-                    title={lf("Delete palete")}
-                    ariaLabel={lf("Delete palette")}
-                    className="palette-delete-button"
-                    leftIcon="icon trash"
-                    onClick={() => setShowDeleteModal(true)}
-                    disabled={!currentPalette.custom} />
+                <div className="palette-actions">
+                    <Button
+                        title={lf("New palete")}
+                        ariaLabel={lf("New palette")}
+                        className="palette-new-button"
+                        leftIcon="icon add"
+                        onClick={createNewPalette} />
+                    <Button
+                        title={lf("Rename palete")}
+                        ariaLabel={lf("Rename palette")}
+                        className="palette-rename-button"
+                        leftIcon="icon font"
+                        onClick={() => setShowNameModal(true)}
+                        disabled={!currentPalette.custom} />
+                    <Button
+                        title={lf("Delete palete")}
+                        ariaLabel={lf("Delete palette")}
+                        className="palette-delete-button"
+                        leftIcon="icon trash"
+                        onClick={() => setShowDeleteModal(true)}
+                        disabled={!currentPalette.custom} />
+                </div>
             </div>
             <PaletteEditor palette={currentPalette || Arcade} onPaletteChanged={onPaletteEdit} />
         </Modal>
