@@ -50,7 +50,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 // create new custom palette and prompt user to name custom palette
                 const customPalette = {
                     id: "custom" + customPalettes.nextPaletteID,
-                    name: lf("Custom Palette"),
+                    name: lf("Custom"),
                     colors: selected.colors,
                     custom: true
                 }
@@ -193,7 +193,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         if (!match) {
             const customPalette = {
                 id: "custom" + initialCustomPalettes.nextPaletteID++,
-                name: lf("Custom Palette"),
+                name: lf("Custom"),
                 colors: colors,
                 custom: true
             }
@@ -233,7 +233,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     ];
 
     return <div>
-        <Modal title={lf("Project Color Palette")} onClose={onModalClose} actions={actions}>
+        <Modal title={lf("Color Palette")} onClose={onModalClose} actions={actions}>
             <div className="common-palette-picker">
                 <PalettePicker
                     palettes={paletteOptions}
