@@ -35,6 +35,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ embedState, setEmbedState ] = React.useState<"none" | "code" | "editor" | "simulator">("none");
     const [ showQRCode, setShowQRCode ] = React.useState(false);
     const [ copySuccessful, setCopySuccessful ] = React.useState(false);
+    const [ kioskSubmitSuccessful, setKioskSubmitSuccessful ] = React.useState(false);
+    const [ kioskState, setKioskState ] = React.useState(false);
     const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn || anonymousShareByDefault);
     const [ isShowingMultiConfirmation, setIsShowingMultiConfirmation ] = React.useState(false);
 
@@ -86,13 +88,34 @@ export const ShareInfo = (props: ShareInfoProps) => {
         setCopySuccessful(false);
     }
 
+    const handleKioskSubmitBlur = () => {
+        setKioskSubmitSuccessful(false);
+    }
+
+    const handleKioskSubmitClick = () => {
+        //TODO: make the api call to kiosk
+        setKioskSubmitSuccessful(true);
+    }
+
     const handleEmbedClick = () => {
         if (embedState === "none") {
             pxt.tickEvent(`share.embed`);
             setShowQRCode(false);
+            setKioskState(false);
             setEmbedState("code");
         } else {
             setEmbedState("none");
+        }
+    }
+
+    const handleKioskClick = () => {
+        if (!kioskState) {
+            pxt.tickEvent(`share.kiosk`);
+            setEmbedState("none");
+            setShowQRCode(false);
+            setKioskState(true);
+        } else {
+            setKioskState(false);
         }
     }
 
@@ -295,6 +318,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         title={lf("Show embed code")}
                                         leftIcon="fas fa-code"
                                         onClick={handleEmbedClick} />
+                                    <Button className="square-button gray mobile-portrait-hidden"
+                                        title={lf("Share to MakeCode Kiosk")}
+                                        leftIcon={"xicon kiosk"}
+                                        onClick={handleKioskClick} />
                                     <SocialButton className="square-button facebook"
                                         url={shareData?.url}
                                         type='facebook'
@@ -341,6 +368,21 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             rows={5}
                             initialValue={shareData?.embed[embedState]} />
                     </div>}
+                    {kioskState &&
+                        <div className="common-input-attached-button">
+                            <Input
+                                label={lf("Enter Kiosk Code")}
+                                ariaDescribedBy="share-input-title"
+                                handleInputRef={handleInputRef}
+                                placeholder="ABC123"
+                            />
+                            <Button className={kioskSubmitSuccessful ? "green" : "primary"}
+                                title={lf("Submit Kiosk Code")}
+                                label={kioskSubmitSuccessful ? lf("Submitted!") : lf("Submit")}
+                                onClick={handleKioskSubmitClick}
+                                onBlur={handleKioskSubmitBlur} />
+                    </div>
+                    }
                 </>}
                 {shareState === "gifrecord" && <ThumbnailRecorder
                     initialUri={thumbnailUri}
