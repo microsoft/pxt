@@ -114,14 +114,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         setCurrentPalette(initialPalette);
     }
 
-    const onApply = () => {
-        onFinalClose(true);
-    }
-
-    const onGoBack = () => {
-        setShowExitModal(false);
-    }
-
     const onNameDone = () => {
         setShowNameModal(false);
         setInvalidName(false);
@@ -217,7 +209,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
 
     const actions: ModalAction[] = [
         { label: lf("Reset"), onClick: onReset, leftIcon: 'icon undo', className: 'palette-transparent-button', disabled: disableButtons },
-        { label: lf("Apply"), onClick: onApply, className: 'green palette-apply-button', disabled: disableButtons }
+        { label: lf("Apply"), onClick: () => onFinalClose(true), className: 'green palette-apply-button', disabled: disableButtons }
     ];
 
     const exitActions: ModalAction[] = [
@@ -249,7 +241,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             </div>
             <PaletteEditor palette={currentPalette || Arcade} onPaletteChanged={onPaletteEdit} />
         </Modal>
-        {showExitModal && <Modal title={lf("Exit Without Applying Changes?")} onClose={onGoBack} actions={exitActions}>
+        {showExitModal && <Modal title={lf("Exit Without Applying Changes?")} onClose={() => setShowExitModal(false)} actions={exitActions}>
             <div>{lf("Your palette changes will be reverted.")}</div>
         </Modal>}
         {showNameModal && <Modal title={lf("Name Your Custom Palette")} onClose={onNameDone} actions={nameActions}>
