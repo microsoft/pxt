@@ -2,6 +2,7 @@ import TutorialOptions = pxt.tutorial.TutorialOptions;
 import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
 import IProjectView = pxt.editor.IProjectView;
 import * as compiler from "../compiler";
+import { MarkedContent } from "../marked";
 
 export type TutorialValidationResult = {
     isValid: Boolean;
@@ -36,13 +37,13 @@ export class BlocksExistValidator extends TutorialValidator {
     async executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialValidationResult> {
 
         let missingBlocks: string[] = [];
+        const stepInfo = tutorialOptions.tutorialStepInfo
+            ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep]
+            : null;
+        if (!stepInfo) return { isValid: true, hint: "" };
 
         // TODO thsparks : If not supporting custom blocks to check, can remove useHintHighlight for now. Otherwise allow for custom block ids.
         if (this.useHintHighlight) {
-            const stepInfo = tutorialOptions.tutorialStepInfo
-                ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep]
-                : null;
-            if (!stepInfo) return { isValid: true, hint: "" };
 
             // TODO thsparks : Confirm loaded before accessing?
             const userBlocks = Blockly.getMainWorkspace().getAllBlocks(false /* ordered */);
@@ -67,12 +68,22 @@ export class BlocksExistValidator extends TutorialValidator {
         }
 
         const isValid = missingBlocks.length == 0;
+
+        // TODO thsparks : Revisit showing individual blocks if time permits.
+        /*
         const blockImageUris = isValid ? [] : await getBlockImageUris(missingBlocks);
         const blockImages = (
             <div>
                 <p>{lf("Double check your workspace to make sure these blocks are inside and connected to the rest of your code:")}</p>
                 {blockImageUris.filter(b => !!b).map((blockUri, index) => <img key={index + blockUri} src={blockUri} alt={lf("missing block")} />)}
             </div>);
+        */
+
+        const blockImages = stepInfo?.hintContentMd ? (<div>
+            <b>{lf("Looks like you're missing some blocks.")}</b>
+            <p>{lf("Make sure you see blocks that look like this and that they're connected to the rest of your code.")}</p>
+            <MarkedContent className="no-select tutorial-step-content" markdown={stepInfo.hintContentMd} parent={parent} />
+        </div>) : "";
 
         return {
             isValid: isValid,
@@ -111,7 +122,9 @@ function getTutorialStepHash(tutorial: TutorialOptions): string {
     return pxt.BrowserUtils.getTutorialCodeHash([hintCode]);
 }
 
+// TODO thsparks : Revisit if time permits.
 // TODO thsparks : Reduce duplication from tutorialCodeValidation.
+/*
 async function getBlockImageUris(blockIds: string[]): Promise<string[]> {
     // Get all APIs from compiler
     return compiler.getBlocksAsync().then(blocksInfo => {
@@ -140,3 +153,4 @@ async function getBlockImageUris(blockIds: string[]): Promise<string[]> {
         }));
     })
 }
+*/
