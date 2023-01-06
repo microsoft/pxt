@@ -6127,7 +6127,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
                     const decompiled = pxtc.decompileSnippets(pxtc.getTSProgram(opts), opts, false);
                     if (decompiled?.length > 0) {
                         // scrape block IDs matching <block type="block_id">
-                        let builtInfo: pxt.BuiltTutorialInfo = builtTututorialInfo[hash] || { usedBlocks: {}, snippetBlocks: {} };
+                        let builtInfo: pxt.BuiltTutorialInfo = builtTututorialInfo[hash] || { usedBlocks: {}, snippetBlocks: {}, highlightBlocks: {} };
                         const blockIdRegex = /<\s*block(?:[^>]*)? type="([^ ]*)"/ig;
                         for (let i = 0; i < decompiled.length; i++) {
                             const blocksXml = decompiled[i];
@@ -6136,6 +6136,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
                                 if (!builtInfo.snippetBlocks[snippetHash]) builtInfo.snippetBlocks[snippetHash] = {};
                                 builtInfo.snippetBlocks[snippetHash][m1] = 1;
                                 builtInfo.usedBlocks[m1] = 1;
+                                // TODO thsparks : How to fill highlighted blocks here?
                                 return m0;
                             })
                         }

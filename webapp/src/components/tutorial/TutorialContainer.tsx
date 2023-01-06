@@ -116,7 +116,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             blocksExistValidator,
         ]
 
-        blocksExistValidator.checkHintBlocks(); // TODO thsparks : Pull config from markdown?
+        blocksExistValidator.useHintHighlightBlocks(); // TODO thsparks : Pull config from markdown?
 
         let failedResults: TutorialValidationResult[] = [];
         for(let validator of validators) {

@@ -530,6 +530,7 @@ declare namespace pxt {
         hash?: string;
         usedBlocks: Map<number>;
         snippetBlocks: Map<Map<number>>;
+        highlightBlocks: Map<Map<number>>;
     }
 
     interface PackageApiInfo {

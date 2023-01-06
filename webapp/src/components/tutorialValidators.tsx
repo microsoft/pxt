@@ -26,18 +26,19 @@ export abstract class TutorialValidator {
 }
 
 export class BlocksExistValidator extends TutorialValidator {
-    private hintBlocks = false;
+    private useHintHighlight = false;
 
-    checkHintBlocks() {
+    useHintHighlightBlocks() {
         this.enabled = true;
-        this.hintBlocks = true;
+        this.useHintHighlight = true;
     }
 
     async executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialValidationResult> {
 
         let missingBlocks: string[] = [];
 
-        if (this.hintBlocks) {
+        // TODO thsparks : If not supporting custom blocks to check, can remove useHintHighlight for now. Otherwise allow for custom block ids.
+        if (this.useHintHighlight) {
             const stepInfo = tutorialOptions.tutorialStepInfo
                 ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep]
                 : null;
@@ -47,12 +48,17 @@ export class BlocksExistValidator extends TutorialValidator {
             const userBlocks = Blockly.getMainWorkspace().getAllBlocks(false /* ordered */);
             const userBlocksByType: Set<string> = new Set<string>(userBlocks.map((b) => b.type));
 
-            const indexdb = await tutorialBlockList(tutorialOptions, stepInfo);
-            const tutorialBlocks = extractBlockSnippet(tutorialOptions, indexdb);
-            const tutorialBlockKeys = Object.keys(tutorialBlocks ?? {});
+            const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
+            if(!allHighlightedBlocks) {
+                return defaultResult;
+            }
 
-            for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
-                let tutorialBlockKey = tutorialBlockKeys[i];
+            const stepHash = getTutorialStepHash(tutorialOptions);
+            const stepHighlights = allHighlightedBlocks[stepHash];
+            const highlightedBlockKeys = stepHighlights ? Object.keys(stepHighlights) : [];
+
+            for (let i: number = 0; i < highlightedBlockKeys.length; i++) {
+                let tutorialBlockKey = highlightedBlockKeys[i];
                 if (!userBlocksByType.has(tutorialBlockKey)) {
                     // user did not use a specific block
                     missingBlocks.push(tutorialBlockKey);
@@ -75,12 +81,11 @@ export class BlocksExistValidator extends TutorialValidator {
     }
 }
 
-// TODO thsparks: Understand, comment, reduce duplication with old validation
-function tutorialBlockList(tutorial: TutorialOptions, step: TutorialStepInfo): Promise<pxt.Map<pxt.Map<number>> | undefined> {
+function getTutorialHighlightedBlocks(tutorial: TutorialOptions, step: TutorialStepInfo): Promise<pxt.Map<pxt.Map<number>> | undefined> {
     return pxt.BrowserUtils.tutorialInfoDbAsync().then((db) =>
         db.getAsync(tutorial.tutorial, tutorial.tutorialCode).then((entry) => {
-            if (entry?.snippets) {
-                return Promise.resolve(entry.snippets);
+            if (entry?.highlightBlocks) {
+                return Promise.resolve(entry.highlightBlocks);
             } else {
                 return Promise.resolve(undefined);
             }
@@ -88,8 +93,7 @@ function tutorialBlockList(tutorial: TutorialOptions, step: TutorialStepInfo): P
     );
 }
 
-// TODO thsparks: Understand, comment, reduce duplication with old validation
-function extractBlockSnippet(tutorial: TutorialOptions, indexdb: pxt.Map<pxt.Map<number>>) {
+function getTutorialStepHash(tutorial: TutorialOptions): string {
     const { tutorialStepInfo, tutorialStep } = tutorial;
     const body = tutorialStepInfo[tutorialStep].hintContentMd;
     let hintCode = "";
@@ -104,12 +108,7 @@ function extractBlockSnippet(tutorial: TutorialOptions, indexdb: pxt.Map<pxt.Map
             );
     }
 
-    const snippetStepKey = pxt.BrowserUtils.getTutorialCodeHash([hintCode]);
-    let blockMap = {};
-    if (indexdb != undefined) {
-        blockMap = indexdb[snippetStepKey];
-    }
-    return blockMap;
+    return pxt.BrowserUtils.getTutorialCodeHash([hintCode]);
 }
 
 // TODO thsparks : Reduce duplication from tutorialCodeValidation.
