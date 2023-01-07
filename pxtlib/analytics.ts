@@ -20,7 +20,7 @@ namespace pxt.analytics {
         });
     }
 
-    export function enable(lang : string) {
+    export function enable(lang: string) {
         if (!pxt.aiTrackException || !pxt.aiTrackEvent || enabled) return;
 
         enabled = true;
