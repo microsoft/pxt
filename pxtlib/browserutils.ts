@@ -1362,6 +1362,7 @@ namespace pxt.BrowserUtils {
             const expiration = new Date();
             expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
             document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}; path=/`;
+            pxt?.analytics?.addDefaultProperties({lang: langId}); //set the new language in analytics.
         }
     }
 

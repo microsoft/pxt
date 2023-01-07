@@ -12,7 +12,7 @@ import App from "./App";
 import { AppStateProvider } from "./state/AppStateContext";
 
 function enableAnalytics() {
-    pxt.analytics.enable();
+    pxt.analytics.enable(pxt.BrowserUtils.getCookieLang());
 
     const stats: pxt.Map<string | number> = {};
     if (typeof window !== "undefined") {

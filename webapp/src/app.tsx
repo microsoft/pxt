@@ -5079,7 +5079,7 @@ function getsrc() {
 }
 
 function enableAnalytics() {
-    pxt.analytics.enable();
+    pxt.analytics.enable(pxt.BrowserUtils.getCookieLang());
     pxt.editor.enableControllerAnalytics();
 
     const stats: pxt.Map<string | number> = {}

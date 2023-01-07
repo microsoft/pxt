@@ -1292,7 +1292,7 @@ namespace pxt.runner {
     }
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
-        pxt.analytics.enable();
+        pxt.analytics.enable(pxt.BrowserUtils.getCookieLang());
         if (!options) options = defaultClientRenderOptions();
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();

@@ -20,10 +20,15 @@ namespace pxt.analytics {
         });
     }
 
-    export function enable() {
+    export function enable(lang : string) {
         if (!pxt.aiTrackException || !pxt.aiTrackEvent || enabled) return;
 
         enabled = true;
+        if (typeof lang != "string" || lang.length == 0) {
+            lang = "en"; //Always have a default language.
+        }
+        addDefaultProperties({ lang: lang })
+
         pxt.debug('setting up app insights')
 
         const te = pxt.tickEvent;
