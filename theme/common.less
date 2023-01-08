@@ -2285,9 +2285,7 @@ div.simframe.ui.embed {
 }
 
 .ui.menu .item.sign-in-dropdown {
-    padding-left: 0rem;
-    padding-right: .3rem;
-    justify-content: center;
+    padding-right: .2rem;
 }
 
 div.signin-button {
@@ -2297,22 +2295,57 @@ div.signin-button {
     color: black;
     border-radius: 6px;
     height: 3rem;
-    padding: .6rem;
+    padding: 0 .6rem;
     font-family: @segoeUIFont;
     font-weight: 500;
 
     .text {
         margin-right: .5rem;
     }
+
+    &:focus {
+        border: 3px solid #fff;
+        outline: 1px ridge #000;
+    }
 }
 
-div.signin-button:hover {
-    transform: scale(1.1);
+div.ui.item.link.playwithfriends-button {
+    .playwithfriends-content {
+        background-color: @homeScreenBackground !important;
+        color: @primaryColor !important;
+        border-radius: 9999px !important;
+        padding: .5rem .5rem;
+        font-family: @segoeUIFont;
+        font-weight: 500;
+        gap: 0.5rem;
+        display: flex;
+
+        & i.icon {
+            opacity: 1;
+            margin: 0;
+        }
+
+        > .text {
+            display: none;
+        }
+    }
+
+    &:focus {
+        border: 3px solid #fff;
+        outline: 1px ridge #000;
+    }
 }
 
-div.signin-button:focus {
-    border: 3px solid #fff;
-    outline: 1px ridge #000;
+@media only screen and (min-width: @largestTabletScreen) {
+    div.ui.item.link.playwithfriends-button {
+        .playwithfriends-content {
+            padding: .5rem 1.5rem;
+
+            > .text {
+                display: inherit;
+            }
+        }
+    }
 }
 
 /* Profile dialog */

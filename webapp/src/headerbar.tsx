@@ -75,6 +75,12 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         clearTimeout(this.longpressTimer);
     }
 
+    onPlayWithFriendsClick = (evt: any) => {
+        evt.preventDefault();
+        pxt.tickEvent("menu.playwithfriends", undefined, { interactiveConsent: true });
+        window.open(pxt.multiplayer.SHORT_LINK(), "_blank");
+    }
+
     protected getView = (): HeaderBarView => {
         const { home, debugging, tutorialOptions } = this.props.parent.state;
         if (home) {
@@ -200,6 +206,26 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         }
     }
 
+    getPlayWithFriendsButton = () => {
+        const textLabel = lf("Play with friends");
+        return (
+            <>
+                <sui.Item
+                    className='playwithfriends-button'
+                    onClick={this.onPlayWithFriendsClick}
+                    role='menuitem'
+                    title={textLabel}
+                    ariaLabel={textLabel}
+                >
+                    <sui.Item tabIndex={-1} className='playwithfriends-content'>
+                        <sui.Icon icon='xicon multiplayer large' />
+                        <div className='ui text'>{textLabel}</div>
+                    </sui.Item>
+                </sui.Item>
+            </>
+        );
+    }
+
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
@@ -209,12 +235,14 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const isController = pxt.shell.isControllerMode();
         const isNativeHost = cmds.isNativeHost();
         const hasIdentity = auth.hasIdentity();
+        const multiplayer = targetTheme.multiplayer;
         const activeEditor = this.props.parent.isPythonActive() ? "Python"
             : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
         const showHomeButton = (view === "editor" || view === "tutorial-tab") && !targetTheme.lockedEditor && !isController;
         const showShareButton = (view === "editor" || view === "tutorial-tab") && header && pxt.appTarget.cloud?.sharing && !isController;
         const showHelpButton = view === "editor" && targetTheme.docMenu?.length;
+        const showPlayWithFriendsButton  = multiplayer && view === "home" && !isController;
 
         // Approximate each tutorial step to be 22 px
         const manyTutorialSteps = view == "tutorial" && (tutorialOptions.tutorialStepInfo.length * 22 > window.innerWidth / 3);
@@ -235,6 +263,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             <div className="right menu">
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
                 {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobile hide" : ""}`} role="menuitem" title={lf("Home")} icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
+                {showPlayWithFriendsButton && this.getPlayWithFriendsButton()}
                 {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" title={lf("Publish your game to create a shareable link")} icon="share alternate large" ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
                 {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}
                 {this.getSettingsMenu(view)}

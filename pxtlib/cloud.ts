@@ -1,4 +1,19 @@
 namespace pxt.cloud {
+    export type DevBackendType = "default" | "prod" | "staging" | "localhost";
+
+    const DEV_BACKEND_PROD = "https://www.makecode.com";
+    const DEV_BACKEND_STAGING = "https://staging.pxt.io";
+    const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
+
+    export const DEV_BACKEND = DEV_BACKEND_PROD;
+
+    export function devBackendType(): DevBackendType {
+        if (<any>DEV_BACKEND === DEV_BACKEND_PROD) return "prod";
+        if (<any>DEV_BACKEND === DEV_BACKEND_STAGING) return "staging";
+        if (<any>DEV_BACKEND === DEV_BACKEND_LOCALHOST) return "localhost";
+        return "prod";
+    }
+
     export type CloudStatus = "none" | "synced" | "justSynced" | "offline" | "syncing" | "conflict" | "localEdits";
 
     export type CloudStatusInfo = {
