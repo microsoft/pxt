@@ -278,10 +278,10 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             </div>
             <PaletteEditor palette={currentPalette || Arcade} onPaletteChanged={onPaletteEdit} />
         </Modal>
-        {showExitModal && <Modal title={lf("Exit Without Applying Changes?")} onClose={() => setShowExitModal(false)} actions={exitActions}>
+        {showExitModal && <Modal title={lf("Exit Without Applying Changes?")} onClose={() => setShowExitModal(false)} actions={exitActions} className="palette-exit-modal">
             <div>{lf("Your palette changes will be reverted.")}</div>
         </Modal>}
-        {nameModalTitle && <Modal title={nameModalTitle} onClose={onCloseNameModal} actions={nameActions}>
+        {nameModalTitle && <Modal title={nameModalTitle} onClose={onCloseNameModal} actions={nameActions} className="palette-name-modal">
             <Input
                 className="palette-name-input"
                 initialValue={invalidName ? "" : currentPalette.name}
