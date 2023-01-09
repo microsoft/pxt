@@ -239,20 +239,20 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                     onPaletteSelected={onPaletteEdit} />
                 <div className="palette-actions">
                     <Button
-                        title={lf("New palete")}
+                        title={lf("New palette")}
                         ariaLabel={lf("New palette")}
                         className="palette-new-button"
                         leftIcon="icon add"
                         onClick={createNewPalette} />
                     <Button
-                        title={lf("Rename palete")}
+                        title={lf("Rename palette")}
                         ariaLabel={lf("Rename palette")}
                         className="palette-rename-button"
-                        leftIcon="icon font"
+                        leftIcon="xicon rename"
                         onClick={() => setShowNameModal(true)}
                         disabled={!currentPalette.custom} />
                     <Button
-                        title={lf("Delete palete")}
+                        title={lf("Delete palette")}
                         ariaLabel={lf("Delete palette")}
                         className="palette-delete-button"
                         leftIcon="icon trash"
