@@ -170,7 +170,8 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 [currentPalette.id]: undefined
             }
         });
-        setCurrentPalette(Arcade);
+        // set current palette to the next palette in the list
+        setCurrentPalette(paletteOptions[paletteOptions.findIndex(p => p === currentPalette) + 1]);
         setShowDeleteModal(false);
     }
 
