@@ -134,6 +134,13 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         setInvalidName(false);
     }
 
+    const onCloseNameModal = () => {
+        if (nameModalTitle === lf("Name Your New Palette")) {
+            onDelete();
+        }
+        onNameDone();
+    }
+
     const setName = (name: string) => {
         name = name.trim();
         if (name.length === 0) {
@@ -274,7 +281,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         {showExitModal && <Modal title={lf("Exit Without Applying Changes?")} onClose={() => setShowExitModal(false)} actions={exitActions}>
             <div>{lf("Your palette changes will be reverted.")}</div>
         </Modal>}
-        {nameModalTitle && <Modal title={nameModalTitle} onClose={onNameDone} actions={nameActions}>
+        {nameModalTitle && <Modal title={nameModalTitle} onClose={onCloseNameModal} actions={nameActions}>
             <Input
                 className="palette-name-input"
                 initialValue={invalidName ? "" : currentPalette.name}
