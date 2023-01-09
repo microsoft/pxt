@@ -209,20 +209,18 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
     getPlayWithFriendsButton = () => {
         const textLabel = lf("Play with friends");
         return (
-            <>
-                <sui.Item
-                    className='playwithfriends-button'
-                    onClick={this.onPlayWithFriendsClick}
-                    role='menuitem'
-                    title={textLabel}
-                    ariaLabel={textLabel}
-                >
-                    <sui.Item tabIndex={-1} className='playwithfriends-content'>
-                        <sui.Icon icon='xicon multiplayer large' />
-                        <div className='ui text'>{textLabel}</div>
-                    </sui.Item>
+            <sui.Item
+                className='playwithfriends-button'
+                onClick={this.onPlayWithFriendsClick}
+                role='menuitem'
+                title={textLabel}
+                ariaLabel={textLabel}
+            >
+                <sui.Item tabIndex={-1} className='playwithfriends-content'>
+                    <sui.Icon icon='xicon multiplayer large' />
+                    <div className='ui text'>{textLabel}</div>
                 </sui.Item>
-            </>
+            </sui.Item>
         );
     }
 

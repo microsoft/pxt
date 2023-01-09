@@ -11,9 +11,9 @@ namespace pxt.multiplayer {
         if (pxt.BrowserUtils.isLocalHostDev()) {
             switch (pxt.cloud.devBackendType()) {
                 case "prod":
-                    return SHORT_LINKS.PROD;
+                    return SHORT_LINKS.PROD_BETA;
                 case "staging":
-                    return SHORT_LINKS.STAGING;
+                    return SHORT_LINKS.STAGING_BETA;
                 case "localhost":
                     return SHORT_LINKS.LOCAL;
             }
