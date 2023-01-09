@@ -25,7 +25,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     const [currentPalette, setCurrentPalette] = useState<Palette | undefined>(undefined);
     const [showExitModal, setShowExitModal] = useState<boolean>(false);
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-    const [showNameModal, setShowNameModal] = useState<boolean>(false);
+    const [nameModalTitle, setNameModalTitle] = useState<string>(undefined);
     const [invalidName, setInvalidName] = useState<boolean>(false);
     const [disableButtons, setDisableButtons] = useState<boolean>(true);
 
@@ -49,6 +49,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             } else if (!isSameColors(currentPalette.colors, selected.colors)) {
                 if (isBuiltinPalette(selected) ) { // builtin palette edited
                     createNewPalette();
+                    setNameModalTitle(lf("Name Your Custom Palette"));
                 } else { // custom palette edited
                     setCustomPalettes({
                         ...customPalettes,
@@ -80,7 +81,15 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             }
         });
         setCurrentPalette(customPalette);
-        setShowNameModal(true);
+    }
+
+    const onNew = () => {
+        createNewPalette();
+        setNameModalTitle(lf("Name Your New Palette"));
+    }
+
+    const onRename = () => {
+        setNameModalTitle(lf("Rename Your Custom Palette"));
     }
 
     const onFinalClose = (paletteChanged: boolean) => {
@@ -121,7 +130,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const onNameDone = () => {
-        setShowNameModal(false);
+        setNameModalTitle(undefined);
         setInvalidName(false);
     }
 
@@ -243,13 +252,13 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                         ariaLabel={lf("New palette")}
                         className="palette-new-button"
                         leftIcon="icon add"
-                        onClick={createNewPalette} />
+                        onClick={onNew} />
                     <Button
                         title={lf("Rename palette")}
                         ariaLabel={lf("Rename palette")}
                         className="palette-rename-button"
                         leftIcon="xicon rename"
-                        onClick={() => setShowNameModal(true)}
+                        onClick={onRename}
                         disabled={!currentPalette.custom} />
                     <Button
                         title={lf("Delete palette")}
@@ -265,7 +274,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         {showExitModal && <Modal title={lf("Exit Without Applying Changes?")} onClose={() => setShowExitModal(false)} actions={exitActions}>
             <div>{lf("Your palette changes will be reverted.")}</div>
         </Modal>}
-        {showNameModal && <Modal title={lf("Name Your Custom Palette")} onClose={onNameDone} actions={nameActions}>
+        {nameModalTitle && <Modal title={nameModalTitle} onClose={onNameDone} actions={nameActions}>
             <Input
                 className="palette-name-input"
                 initialValue={invalidName ? "" : currentPalette.name}
