@@ -28,7 +28,7 @@ export const ScrollableWorkspace = (props: ScrollableWorkspaceProps) => {
         const x = convertX(svgOffset);
         const noteEvent = findNoteEventAtTick(song, cursor.track, cursor.tick);
 
-        const beatWidth = convertX(svgOffset + BEAT_WIDTH) - x;;
+        const beatWidth = convertX(svgOffset + BEAT_WIDTH) - x;
 
         let cursorWidth;
         if (noteEvent) {
