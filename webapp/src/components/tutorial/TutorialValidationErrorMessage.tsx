@@ -44,7 +44,7 @@ export function TutorialValidationErrorMessage(props: TutorialValidationErrorMes
       />
       {showHint ? hintContent : (
         <div className="tutorial-validation-error-body">
-          <div className="tutorial-validation-error-emoji">🐞</div>
+          <span role="img" aria-label={lf("Ladybug")} className="tutorial-validation-error-emoji">🐞</span>
           <div className="tutorial-validation-error-inner">
             <strong>{lf("Is there a bug?")}</strong>
             <p>{lf("This code doesn't look the way we expected.")}</p>
