@@ -114,7 +114,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
 
         const signedOutElem = (
             <div className="signin-button">
-                <div className="ui text desktop only">{lf("Sign In")}</div>
+                <div className="ui text widedesktop only">{lf("Sign In")}</div>
                 {sui.genericContent({
                     icon
                 })}
