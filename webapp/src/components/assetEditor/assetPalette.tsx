@@ -18,6 +18,12 @@ export interface AssetPaletteProps {
     onClose: (paletteChanged: boolean) => void;
 }
 
+const enum NameModal {
+    None,
+    New,
+    Rename
+}
+
 export const AssetPalette = (props: AssetPaletteProps) => {
     const { onClose } = props;
     const [customPalettes, setCustomPalettes] = useState<CustomPalettes>(undefined);
@@ -25,7 +31,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     const [currentPalette, setCurrentPalette] = useState<Palette | undefined>(undefined);
     const [showExitModal, setShowExitModal] = useState<boolean>(false);
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-    const [nameModalTitle, setNameModalTitle] = useState<string>(undefined);
+    const [nameModal, setNameModal] = useState<NameModal>(NameModal.None);
     const [invalidName, setInvalidName] = useState<boolean>(false);
     const [disableButtons, setDisableButtons] = useState<boolean>(true);
 
@@ -49,7 +55,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             } else if (!isSameColors(currentPalette.colors, selected.colors)) {
                 if (isBuiltinPalette(selected) ) { // builtin palette edited
                     createNewPalette();
-                    setNameModalTitle(lf("Name Your Custom Palette"));
                 } else { // custom palette edited
                     setCustomPalettes({
                         ...customPalettes,
@@ -81,15 +86,15 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             }
         });
         setCurrentPalette(customPalette);
+        setNameModal(NameModal.New);
     }
 
     const onNew = () => {
         createNewPalette();
-        setNameModalTitle(lf("Name Your New Palette"));
     }
 
     const onRename = () => {
-        setNameModalTitle(lf("Rename Your Custom Palette"));
+        setNameModal(NameModal.Rename);
     }
 
     const onFinalClose = (paletteChanged: boolean) => {
@@ -130,12 +135,12 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const onNameDone = () => {
-        setNameModalTitle(undefined);
+        setNameModal(NameModal.None);
         setInvalidName(false);
     }
 
     const onCloseNameModal = () => {
-        if (nameModalTitle === lf("Name Your New Palette")) {
+        if (nameModal === NameModal.New) {
             onDelete();
         }
         onNameDone();
@@ -252,6 +257,17 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         { label: lf("Delete"), onClick: onDelete, leftIcon: 'icon trash', className: 'red' }
     ];
 
+    const nameModalTitle = () => {
+        switch(nameModal) {
+            case NameModal.None:
+                return undefined;
+            case NameModal.New:
+                return lf("Name Your Custom Palette");
+            case NameModal.Rename:
+                return lf("Rename Your Custom Palette");
+        }
+    }
+
     return <div>
         <Modal title={lf("Color Palette")} onClose={onModalClose} actions={actions}>
             <div className="common-palette-picker">
@@ -287,7 +303,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         {showExitModal && <Modal title={lf("Exit Without Applying Changes?")} onClose={() => setShowExitModal(false)} actions={exitActions} className="palette-exit-modal">
             <div>{lf("Your palette changes will be reverted.")}</div>
         </Modal>}
-        {nameModalTitle && <Modal title={nameModalTitle} onClose={onCloseNameModal} actions={nameActions} className="palette-name-modal">
+        {nameModalTitle() && <Modal title={nameModalTitle()} onClose={onCloseNameModal} actions={nameActions} className="palette-name-modal">
             <Input
                 className="palette-name-input"
                 initialValue={invalidName ? "" : currentPalette.name}
