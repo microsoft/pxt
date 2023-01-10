@@ -39,7 +39,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         initializePalettes();
     }, []);
 
-
     useEffect(() => {
         if (currentPalette && !isSameColors(currentPalette.colors, initialPalette.colors)) {
             setDisableButtons(false);
@@ -87,14 +86,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         });
         setCurrentPalette(customPalette);
         setNameModal(NameModal.New);
-    }
-
-    const onNew = () => {
-        createNewPalette();
-    }
-
-    const onRename = () => {
-        setNameModal(NameModal.Rename);
     }
 
     const onFinalClose = (paletteChanged: boolean) => {
@@ -281,13 +272,13 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                         ariaLabel={lf("New palette")}
                         className="palette-new-button"
                         leftIcon="icon add"
-                        onClick={onNew} />
+                        onClick={createNewPalette} />
                     <Button
                         title={lf("Rename palette")}
                         ariaLabel={lf("Rename palette")}
                         className="palette-rename-button"
                         leftIcon="xicon rename"
-                        onClick={onRename}
+                        onClick={() => setNameModal(NameModal.Rename)}
                         disabled={!currentPalette.custom} />
                     <Button
                         title={lf("Delete palette")}
