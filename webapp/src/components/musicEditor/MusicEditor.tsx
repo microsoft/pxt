@@ -209,6 +209,30 @@ export const MusicEditor = (props: MusicEditorProps) => {
                 playNoteAsync(note, instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, gridTicks))
             }
         }
+        else {
+            for (let i = 0; i < currentSong.tracks.length; i++) {
+                if (hideTracksActive && i !== selectedTrack) continue;
+
+                const track = currentSong.tracks[i];
+                const instrument = track.instrument;
+                const note = !!track.drums ? coord.row : rowToNote(instrument.octave, coord.row, coord.isBassClef);
+                const existingEvent = findPreviousNoteEvent(currentSong, i, coord.tick);
+
+                if (existingEvent?.startTick === coord.tick || existingEvent?.endTick > coord.tick) {
+                    if (existingEvent.notes.indexOf(note) !== -1) {
+                        updateSong(removeNoteFromTrack(currentSong, i, note, existingEvent.startTick), false);
+                    }
+
+                    if (track.drums) continue;
+
+                    const sharp = rowToNote(instrument.octave, coord.row, coord.isBassClef, true);
+                    if (existingEvent.notes.indexOf(sharp) !== -1) {
+                        updateSong(removeNoteFromTrack(currentSong, i, sharp, existingEvent.startTick), false);
+                    }
+                }
+            }
+            return;
+        }
     }
 
     const onNoteDragStart = () => {
