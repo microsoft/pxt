@@ -559,19 +559,68 @@
 /*********************************
         Validation
 *********************************/
-.tutorialCodeValidationError {
+.tutorial-validation-error-container {
     position: fixed;
     top: unset;
     right: unset;
     bottom: 5.5rem;
     left: 23rem;
-    max-width: 100%;
+    max-width: 60%;
     min-width: 18.75rem;
-    padding: 0.625rem 1.625rem;
     background: @white;
     box-shadow: 0 0rem 0.5rem;
     border-radius: 0.5rem;
     z-index: 40;
+}
+
+.tutorial-validation-error-body {
+    display: flex;
+    flex-direction: row;
+    padding: 2rem 2rem 2rem 0.5rem;
+}
+
+.tutorial-validation-error-hint {
+    padding: 1.5rem;
+}
+
+.tutorial-validation-error-inner {
+    display: flex;
+    flex-direction: column;
+}
+
+.tutorial-validation-error-emoji {
+    font-size: 3rem;
+    padding-top: 1rem;
+    padding-right: 0.2rem;
+}
+
+.tutorial-validation-error-controls {
+    display: flex;
+    justify-content: right;
+    margin: 0;
+    margin-top: 0.5rem;
+
+    > .common-button {
+        width: unset;
+    }
+}
+
+.tutorial-validation-error-close.ui.button {
+    position: absolute;
+    right: 0.7rem;
+    top: 0.7rem;
+    padding: 0 !important;
+    width: 1.5rem;
+    height: 1.5rem;
+    color: @white;
+    background-color: #000;
+    border-radius: 50%;
+
+    i.icon {
+        opacity: 1;
+        font-size: 1rem;
+        margin: 0 !important;
+    }
 }
 
 /*******************************

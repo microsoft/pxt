@@ -80,9 +80,9 @@ export class BlocksExistValidator extends TutorialValidator {
         */
 
         const blockImages = stepInfo?.hintContentMd ? (<div>
-            <b>{lf("Looks like you're missing some blocks.")}</b>
+            <strong>{lf("Looks like you're missing some blocks.")}</strong>
             <p>{lf("Make sure you see blocks that look like this and that they're connected to the rest of your code.")}</p>
-            <MarkedContent className="no-select tutorial-step-content" markdown={stepInfo.hintContentMd} parent={parent} />
+            <MarkedContent className="no-select" markdown={stepInfo.hintContentMd} parent={parent} />
         </div>) : "";
 
         return {
