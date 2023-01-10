@@ -8,7 +8,8 @@ import { showModal } from "../state/actions";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
-    const { presence, clientRole, playerSlot } = state;
+    const { presence, clientRole, playerSlot, gameState } = state;
+    const presenceIconOverrides = gameState?.presenceIconOverrides;
 
     const [showPlayerMenu, setShowPlayerMenu] = useState(0);
 
@@ -100,6 +101,7 @@ export default function Render() {
                 const menu = playerMenu(slot);
                 const isEmpty = !user;
                 const isMySlot = slot === playerSlot;
+                const iconOverride = presenceIconOverrides?.[slot];
                 return (
                     <div key={slot}>
                         <div className="tw-px-[50%]">{menu}</div>
@@ -121,7 +123,10 @@ export default function Render() {
                                         }-color))`,
                                     }}
                                 >
-                                    <UserIcon slot={isEmpty ? 0 : slot} />
+                                    <UserIcon
+                                        slot={isEmpty ? 0 : slot}
+                                        datauri={iconOverride}
+                                    />
                                     {user && (
                                         <ReactionEmitter clientId={user.id} />
                                     )}

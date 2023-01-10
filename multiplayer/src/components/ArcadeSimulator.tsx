@@ -46,6 +46,11 @@ export default function Render() {
         const { instruction, soundbuf } = msg;
         await gameClient.sendAudioAsync(instruction, soundbuf);
     };
+    const postIconMsg = async (msg: SimMultiplayer.MultiplayerIconMessage) => {
+        const { iconType, palette, icon, slot } = msg;
+        const { data } = icon;
+        await gameClient.sendIconAsync(iconType, slot, palette, icon);
+    };
 
     const setSimStopped = async () => {
         simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Pause);
@@ -93,6 +98,8 @@ export default function Render() {
                         postImageMsg(data);
                     } else if (origin === "server" && content === "Audio") {
                         postAudioMsg(data);
+                    } else if (origin === "server" && content === "Icon") {
+                        postIconMsg(data);
                     }
                     return;
             }
