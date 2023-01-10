@@ -2309,45 +2309,6 @@ div.signin-button {
     }
 }
 
-div.ui.item.link.playwithfriends-button {
-    .playwithfriends-content {
-        background-color: @homeScreenBackground !important;
-        color: @primaryColor !important;
-        border-radius: 9999px !important;
-        padding: .5rem .5rem;
-        font-family: @segoeUIFont;
-        font-weight: 500;
-        gap: 0.5rem;
-        display: flex;
-
-        & i.icon {
-            opacity: 1;
-            margin: 0;
-        }
-
-        > .text {
-            display: none;
-        }
-    }
-
-    &:focus {
-        border: 3px solid #fff;
-        outline: 1px ridge #000;
-    }
-}
-
-@media only screen and (min-width: @largestTabletScreen) {
-    div.ui.item.link.playwithfriends-button {
-        .playwithfriends-content {
-            padding: .5rem 1.5rem;
-
-            > .text {
-                display: inherit;
-            }
-        }
-    }
-}
-
 /* Profile dialog */
 .profiledialog {
     .ui.card {

@@ -19,18 +19,18 @@ namespace pxt.multiplayer {
             }
         }
 
-        if (window.location.hostname.includes(".makecode.com")) {
+        if (window.location.host.endsWith(".staging.pxt.io")) {
             if (window.location.pathname.startsWith("/beta")) {
-                return SHORT_LINKS.PROD_BETA;
+                return SHORT_LINKS.STAGING_BETA;
             } else {
-                return SHORT_LINKS.PROD;
+                return SHORT_LINKS.STAGING;
             }
         }
 
         if (window.location.pathname.startsWith("/beta")) {
-            return SHORT_LINKS.STAGING_BETA;
+            return SHORT_LINKS.PROD_BETA;
         } else {
-            return SHORT_LINKS.STAGING;
+            return SHORT_LINKS.PROD;
         }
     };
 
