@@ -5,12 +5,13 @@ namespace pxt.cloud {
     const DEV_BACKEND_STAGING = "https://staging.pxt.io";
     const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
 
-    export const DEV_BACKEND = DEV_BACKEND_PROD;
-
+    type BackendUrls = typeof DEV_BACKEND_PROD | typeof DEV_BACKEND_STAGING | typeof DEV_BACKEND_LOCALHOST;
+    export const DEV_BACKEND: BackendUrls = DEV_BACKEND_PROD;
+    
     export function devBackendType(): DevBackendType {
-        if (<any>DEV_BACKEND === DEV_BACKEND_PROD) return "prod";
-        if (<any>DEV_BACKEND === DEV_BACKEND_STAGING) return "staging";
-        if (<any>DEV_BACKEND === DEV_BACKEND_LOCALHOST) return "localhost";
+        if (DEV_BACKEND === DEV_BACKEND_PROD) return "prod";
+        if (DEV_BACKEND === DEV_BACKEND_STAGING) return "staging";
+        if (DEV_BACKEND === DEV_BACKEND_LOCALHOST) return "localhost";
         return "prod";
     }
 
