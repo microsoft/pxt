@@ -3,7 +3,7 @@ export default function Render(props: { slot: number; datauri?: string }) {
 
     if (datauri) {
         return (
-            <img src={datauri} alt={lf("User set icon for player {0}", slot)} />
+            <img className="pixel-art-image tw-w-[65%]" src={datauri} alt={lf("User set icon for player {0}", slot)} />
         );
     }
 

@@ -459,21 +459,18 @@ class GameClient {
             const unzipped = await gunzipAsync(iconBuffer);
             const imgConv = new pxt.ImageConverter();
             const iconPalette = unzipped.slice(0, 48);
-            const iconImage = iconBuffer.slice(48);
+            const iconImage = unzipped.slice(48);
             const paletteAsTripletArray: number[][] = [];
 
             for (let i = 0; i < 16; i++) {
                 paletteAsTripletArray.push([
-                    iconPalette[i * 3 + 0],
-                    iconPalette[i * 3 + 1],
                     iconPalette[i * 3 + 2],
+                    iconPalette[i * 3 + 1],
+                    iconPalette[i * 3 + 0],
+                    255
                 ]);
             }
             imgConv.setPalette(paletteAsTripletArray);
-            // const stringifiedRefBuffer = iconImage.reduce(
-            //     (prev, curr) => prev + String.fromCharCode(curr),
-            //     ""
-            // );
             const stringifiedRefBuffer = String.fromCharCode.apply(
                 null,
                 iconImage as any as number[]

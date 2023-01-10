@@ -49,7 +49,7 @@ export default function Render() {
     const postIconMsg = async (msg: SimMultiplayer.MultiplayerIconMessage) => {
         const { iconType, palette, icon, slot } = msg;
         const { data } = icon;
-        await gameClient.sendIconAsync(iconType, slot, palette, icon);
+        await gameClient.sendIconAsync(iconType, slot, palette, data);
     };
 
     const setSimStopped = async () => {
