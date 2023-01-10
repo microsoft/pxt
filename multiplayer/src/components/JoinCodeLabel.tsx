@@ -1,13 +1,12 @@
 import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../state/AppStateContext";
-import { makeJoinLink } from "../util";
 import CopyButton from "./CopyButton";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
 
     const joinCode = state.gameState?.joinCode;
-    const joinDeepLink = joinCode ? makeJoinLink(joinCode) : "";
+    const joinDeepLink = joinCode ? pxt.multiplayer.makeJoinLink(joinCode) : "";
     return (
         <div>
             {joinCode && (

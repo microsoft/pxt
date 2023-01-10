@@ -2285,9 +2285,7 @@ div.simframe.ui.embed {
 }
 
 .ui.menu .item.sign-in-dropdown {
-    padding-left: 0rem;
-    padding-right: .3rem;
-    justify-content: center;
+    padding-right: .2rem;
 }
 
 div.signin-button {
@@ -2297,22 +2295,18 @@ div.signin-button {
     color: black;
     border-radius: 6px;
     height: 3rem;
-    padding: .6rem;
+    padding: 0 .6rem;
     font-family: @segoeUIFont;
     font-weight: 500;
 
     .text {
         margin-right: .5rem;
     }
-}
 
-div.signin-button:hover {
-    transform: scale(1.1);
-}
-
-div.signin-button:focus {
-    border: 3px solid #fff;
-    outline: 1px ridge #000;
+    &:focus {
+        border: 3px solid #fff;
+        outline: 1px ridge #000;
+    }
 }
 
 /* Profile dialog */

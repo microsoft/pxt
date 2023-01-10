@@ -251,7 +251,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         <div className="project-share-publish-actions">
                             {shareState === "share" &&
                             <>
-                                {pxt.appTarget?.appTheme?.multiplayerShareButton && isMultiplayerGame &&
+                                {pxt.appTarget?.appTheme?.multiplayer && isMultiplayerGame &&
                                     <Button className="primary inverted text-only share-publish-button share-host-button"
                                         title={lf("Host a multiplayer game")}
                                         label={lf("Host a multiplayer game")}

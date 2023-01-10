@@ -4,7 +4,6 @@ import { Link } from "react-common/components/controls/Link";
 import { startGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
-import { makeJoinLink, SHORT_LINK } from "../util";
 import { QRCodeSVG } from "qrcode.react";
 import BetaTag from "./BetaTag";
 import CopyButton from "./CopyButton";
@@ -27,11 +26,11 @@ export default function Render() {
     // To get a link in the middle of the invite string, we actually preserve the {0} and insert the link manually as an html element later.
     const inviteString = lf("Have your friend go to {0} and enter code", "{0}");
     const inviteStringSegments = inviteString.split("{0}");
-    const shortLink = SHORT_LINK();
+    const shortLink = pxt.multiplayer.SHORT_LINK();
 
     // Insert a space to make the join code easier to read.
     const displayJoinCode = joinCode?.slice(0, 3) + " " + joinCode?.slice(3);
-    const joinDeepLink = makeJoinLink(joinCode);
+    const joinDeepLink = pxt.multiplayer.makeJoinLink(joinCode);
 
     return (
         <div className="tw-bg-white tw-shadow-lg tw-rounded-lg tw-m-1 tw-min-w-[17rem]">
