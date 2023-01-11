@@ -383,7 +383,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             <Share projectName={activity!.displayName}
                 isLoggedIn={false}
                 publishAsync={publishAsync}
-                simRecorder={undefined as any} />
+                simRecorder={undefined as any}
+                onClose={this.handleOnClose} />
         </Modal>
     }
 

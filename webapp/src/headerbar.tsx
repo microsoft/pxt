@@ -75,6 +75,12 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         clearTimeout(this.longpressTimer);
     }
 
+    onPlayWithFriendsClick = (evt: any) => {
+        evt.preventDefault();
+        pxt.tickEvent("menu.playwithfriends", undefined, { interactiveConsent: true });
+        window.open(pxt.multiplayer.SHORT_LINK(), "_blank");
+    }
+
     protected getView = (): HeaderBarView => {
         const { home, debugging, tutorialOptions } = this.props.parent.state;
         if (home) {
