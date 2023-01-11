@@ -2,6 +2,8 @@
     padding: 0.5rem;
     display: flex;
     flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
 
     .common-button.common-dropdown-button {
         border: 3px solid #000;
@@ -23,26 +25,38 @@
         font-weight: 700;
         user-select: none;
     }
+
+    .common-checkbox {
+        margin-left: 0.5rem;
+
+        input {
+            width: 1rem;
+            height: 1rem;
+        }
+    }
 }
 
 .common-button.music-track-button {
-    border: 3px solid #000;
-    padding: 0.1rem;
-    border-radius: 0;
+    margin-right: 0;
 
     img {
-        image-rendering: optimizeSpeed;
-        image-rendering: -moz-crisp-edges;
-        image-rendering: -webkit-optimize-contrast;
-        image-rendering: optimize-contrast;
-        image-rendering: pixelated;
-        -ms-interpolation-mode: nearest-neighbor;
-
         width: 2rem;
         height: 2rem;
+    }
+    i.fas, i.far, i {
+        font-size: 24px;
     }
 }
 
 .common-button.music-track-button.selected {
-    border: 3px solid orange;
+    border: 3px solid black;
+}
+
+.pixellated img {
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
 }

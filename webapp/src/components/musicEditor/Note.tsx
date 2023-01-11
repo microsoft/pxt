@@ -1,4 +1,5 @@
 import * as React from "react";
+import { classList } from "../../../../react-common/components/util";
 import { rowY, NOTE_DURATION_HEIGHT, NOTE_ICON_WIDTH } from "./svgConstants";
 
 export interface NoteProps {
@@ -7,12 +8,15 @@ export interface NoteProps {
     opacity?: number;
     length?: number;
     isSharp?: boolean;
+    isBassClef: boolean;
+    selected?: boolean;
+    cursorHighlighted?: boolean;
 }
 
 export const Note = (props: NoteProps) => {
-    const { row, iconURI, length, opacity, isSharp } = props;
+    const { row, iconURI, length, opacity, isSharp, isBassClef, selected, cursorHighlighted } = props;
 
-    return <g className="music-staff-note" transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${rowY(row) - (NOTE_ICON_WIDTH / 2)})`}>
+    return <g className={classList("music-staff-note", selected && "selected", cursorHighlighted && "cursor-highlighted")} transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${rowY(row, isBassClef) - (NOTE_ICON_WIDTH / 2)})`}>
         { row === 0 &&
             <line
                 className="music-staff-row"

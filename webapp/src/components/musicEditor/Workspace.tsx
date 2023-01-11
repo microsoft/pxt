@@ -1,23 +1,31 @@
 import * as React from "react";
-import { clientCoord, screenToSVGCoord } from "../../../../react-common/components/util";
+import { classList, clientCoord, screenToSVGCoord } from "../../../../react-common/components/util";
+import { GridHighlight } from "./GridHighlight";
+import { CursorState } from "./keyboardNavigation";
 import { Staff } from "./Staff";
-import { closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
+import { BASS_STAFF_TOP, BEAT_WIDTH, closestRow, closestTick, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { Track } from "./Track";
 import { findNoteEventAtTick } from "./utils";
+import { WorkspaceSelection } from "./WorkspaceSelection";
 
 export interface WorkspaceProps {
     song: pxt.assets.music.Song;
-    onWorkspaceClick: (row: number, tick: number, ctrlIsPressed: boolean) => void;
+    onWorkspaceClick: (coordinate: WorkspaceCoordinate, ctrlIsPressed: boolean) => void;
     onWorkspaceDragStart: () => void;
     onWorkspaceDragEnd: () => void;
     onWorkspaceDrag: (startCoordinate: WorkspaceCoordinate, endCoordinate: WorkspaceCoordinate) => void;
+    onKeydown: (event: React.KeyboardEvent) => void;
+    cursor: CursorState;
     selectedTrack: number
     hideUnselectedTracks: boolean;
+    eraserActive: boolean;
     gridTicks?: number;
+    showBassClef: boolean;
+    selection?: WorkspaceSelectionState;
 }
 
 export const Workspace = (props: WorkspaceProps) => {
-    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, hideUnselectedTracks } = props;
+    const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, onKeydown, cursor, hideUnselectedTracks, eraserActive, showBassClef, selection } = props;
 
     const [cursorLocation, setCursorLocation] = React.useState<WorkspaceCoordinate>(null);
     const [dragStart, setDragStart] = React.useState<WorkspaceCoordinate>(null);
@@ -28,6 +36,7 @@ export const Workspace = (props: WorkspaceProps) => {
     React.useEffect(() => {
         workspaceRef.onpointerdown = ev => {
             ev.preventDefault();
+            workspaceRef.focus();
             const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
             if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
                 setDragStart(coord);
@@ -39,7 +48,9 @@ export const Workspace = (props: WorkspaceProps) => {
 
             if (cursorLocation && cursorLocation.tick === coord.tick && cursorLocation.row === coord.row) return;
 
-            if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
+            const maxTick = song.beatsPerMeasure * song.ticksPerBeat * song.measures;
+
+            if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12 && coord.tick <= maxTick) {
                 if (dragStart) {
                     if (!isDragging) {
                         setIsDragging(true);
@@ -47,7 +58,15 @@ export const Workspace = (props: WorkspaceProps) => {
                     }
                     onWorkspaceDrag(dragStart, coord);
                 }
-                setCursorLocation(coord);
+
+                // We don't show the cursor on the last tick, since you can't place notes there.
+                // Events still fire, though, because you need to be able to drag note lengths to the end
+                if (coord.tick < maxTick) {
+                    setCursorLocation(coord);
+                }
+                else {
+                    setCursorLocation(null);
+                }
             }
             else {
                 setCursorLocation(null);
@@ -69,9 +88,9 @@ export const Workspace = (props: WorkspaceProps) => {
                 setIsDragging(false);
             }
             else {
-                const { row, tick } = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
-                if (tick >= 0 && row >= 0 && row < 12) {
-                    onWorkspaceClick(row, tick, ev.ctrlKey);
+                const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
+                if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
+                    onWorkspaceClick(coord, ev.ctrlKey);
                 }
             }
         };
@@ -81,20 +100,98 @@ export const Workspace = (props: WorkspaceProps) => {
         if (ref) workspaceRef = ref;
     }
 
-    let cursorPreviewLocation = isDragging ? undefined : cursorLocation;
-    const eventAtCursor = cursorPreviewLocation ? findNoteEventAtTick(song, selectedTrack, cursorLocation.tick) : undefined;
-    if (eventAtCursor) {
-        cursorPreviewLocation.tick = eventAtCursor.startTick;
+    let gridHighlightStart: number;
+    let gridHighlightEnd: number;
+
+    let cursorPreviewLocation = (isDragging || eraserActive) ? undefined : cursorLocation;
+    const eventAtCursor = cursorLocation && findNoteEventAtTick(song, selectedTrack, cursorLocation.tick);
+    const dragEvent = dragStart && findNoteEventAtTick(song, selectedTrack, dragStart.tick)
+
+    if (selection) {
+        gridHighlightStart = selection.startTick + selection.deltaTick;
+        gridHighlightEnd = selection.endTick + selection.deltaTick;
+    }
+    else if (!eraserActive && dragEvent && cursorLocation?.tick >= dragEvent.startTick) {
+        gridHighlightStart = dragEvent.startTick;
+        gridHighlightEnd = dragEvent.endTick;
+    }
+    else if (!eraserActive && isDragging && cursorLocation && dragStart) {
+        gridHighlightStart = Math.min(cursorLocation.tick, dragStart.tick);
+        gridHighlightEnd = Math.max(cursorLocation.tick, dragStart.tick);
+    }
+    else if (eventAtCursor) {
+        gridHighlightStart = eventAtCursor.startTick;
+        gridHighlightEnd = eventAtCursor.endTick;
+    }
+    else if (cursorLocation) {
+        gridHighlightStart = cursorLocation.tick;
+        gridHighlightEnd = cursorLocation.tick + gridTicks;
+    }
+
+    if (eventAtCursor && cursorPreviewLocation) {
+        cursorPreviewLocation = {
+            ...cursorPreviewLocation,
+            tick: eventAtCursor.startTick
+        }
     }
 
     const inactiveTracks = song.tracks.filter((t, i) => i !== selectedTrack);
 
+    const height = showBassClef ? WORKSPACE_HEIGHT * 2 : WORKSPACE_HEIGHT;
+
+    const songInfo = pxt.assets.music.getSongInfo(song);
+
     return <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="music-workspace"
-        viewBox={`0 0 ${workspaceWidth(song)} ${WORKSPACE_HEIGHT}`}
+        className={classList("music-workspace", eraserActive && "erasing")}
+        viewBox={`0 0 ${workspaceWidth(song.measures, song.beatsPerMeasure) + 20} ${height}`}
+        aria-label={lf("Music Workspace")}
+        tabIndex={0}
+        onKeyDown={onKeydown}
         ref={handleWorkspaceRef}>
-        <Staff song={song} />
+            <filter id="selection-outline">
+                <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="4" />
+
+                <feFlood floodColor="yellow" floodOpacity="1" result="FLOODED" />
+                <feComposite in="FLOODED" in2="DILATED" operator="in" result="OUTLINE" />
+
+                <feMerge>
+                    <feMergeNode in="OUTLINE" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+            <filter id="cursor-outline">
+                <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="4" />
+
+                <feFlood floodColor="purple" floodOpacity="1" result="FLOODED" />
+                <feComposite in="FLOODED" in2="DILATED" operator="in" result="OUTLINE" />
+
+                <feMerge>
+                    <feMergeNode in="OUTLINE" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        <Staff
+            {...songInfo}
+            top={0}
+            gridTicks={gridTicks} />
+        {showBassClef &&
+            <Staff
+                {...songInfo}
+                top={BASS_STAFF_TOP}
+                isBassClef={true}
+                gridTicks={gridTicks} />
+        }
+        <GridHighlight
+            {...songInfo}
+            start={gridHighlightStart}
+            end={gridHighlightEnd} />
+
+        {selection &&
+            <WorkspaceSelection
+                {...songInfo}
+                range={selection} />
+        }
         {!hideUnselectedTracks && inactiveTracks.map((track, index) =>
             <Track
                 key={index}
@@ -104,16 +201,21 @@ export const Workspace = (props: WorkspaceProps) => {
         <Track
             track={song.tracks[selectedTrack]}
             song={song}
-            cursorLocation={cursorPreviewLocation} />
+            cursorLocation={cursorPreviewLocation}
+            keyboardCursor={cursor} />
     </svg>
 }
 
 function coordinateToWorkspaceCoordinate(ev: MouseEvent | PointerEvent | TouchEvent, el: SVGSVGElement, song: pxt.assets.music.Song, gridTicks?: number): WorkspaceCoordinate {
     const coord = screenToSVGCoord(el, clientCoord(ev));
-    const tick = closestTick(song, coord.x, gridTicks);
+    const isBassClef = coord.y > BASS_STAFF_TOP;
+
+    // We add 1 tick to make it easier to click on the exact tick where a grid line begins
+    const tick = closestTick(song.ticksPerBeat, coord.x + (BEAT_WIDTH / song.ticksPerBeat), gridTicks);
     const note = closestRow(coord.y);
 
     return {
+        isBassClef,
         row: note,
         tick
     }

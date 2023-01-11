@@ -12,7 +12,7 @@ interface PlaybackState {
     looping: boolean;
 }
 
-let playbackStopListeners: (() => void)[] = [];
+let playbackStateListeners: ((state: "play" | "loop" | "stop") => void)[] = [];
 let onTickListeners: ((tick: number) => void)[] = [];
 
 
@@ -91,8 +91,8 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
                 type: "stop"
             });
 
-            for (const listener of playbackStopListeners) {
-                listener();
+            for (const listener of playbackStateListeners) {
+                listener("stop");
             }
         }
     }
@@ -113,7 +113,7 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
                             playDrumAsync(track.drums[note], isCancelled);
                         }
                         else {
-                            playNoteAsync(note, track.instrument, tickToMs(playbackState.song, noteEvent.endTick - noteEvent.startTick), isCancelled);
+                            playNoteAsync(note, track.instrument, tickToMs(playbackState.song.beatsPerMinute, playbackState.song.ticksPerBeat, noteEvent.endTick - noteEvent.startTick), isCancelled);
                         }
                     }
                 }
@@ -141,13 +141,17 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
 
     postMessage({
         type: "start",
-        interval: tickToMs(playbackState.song, 1)
+        interval: tickToMs(playbackState.song.beatsPerMinute, playbackState.song.ticksPerBeat, 1)
     })
     metronome.addEventListener("message", onTick);
+
+    for (const listener of playbackStateListeners) {
+        listener(loop ? "loop" : "play");
+    }
 }
 
-export function tickToMs(song: pxt.assets.music.Song, ticks: number) {
-    return ((60000 / song.beatsPerMinute) / song.ticksPerBeat) * ticks;
+export function tickToMs(beatsPerMinute: number, ticksPerBeat: number, ticks: number) {
+    return ((60000 / beatsPerMinute) / ticksPerBeat) * ticks;
 }
 
 export function isPlaying() {
@@ -169,7 +173,7 @@ export async function updatePlaybackSongAsync(song: pxt.assets.music.Song) {
         const metronome = await loadMetronomeAsync();
         metronome.postMessage({
             type: "set-interval",
-            interval: tickToMs(song, 1)
+            interval: tickToMs(song.beatsPerMinute, song.ticksPerBeat, 1)
         })
     }
     currentPlaybackState.song = song;
@@ -187,12 +191,12 @@ export function removeTickListener(listener: (tick: number) => void) {
     onTickListeners = onTickListeners.filter(l => listener !== l);
 }
 
-export function addPlaybackStopListener(listener: () => void) {
-    playbackStopListeners.push(listener);
+export function addPlaybackStateListener(listener: (state: "play" | "stop" | "loop") => void) {
+    playbackStateListeners.push(listener);
 }
 
-export function removePlaybackStopListener(listener: () => void) {
-    playbackStopListeners = playbackStopListeners.filter(l => listener !== l);
+export function removePlaybackStateListener(listener: (state: "play" | "stop" | "loop") => void) {
+    playbackStateListeners = playbackStateListeners.filter(l => listener !== l);
 }
 
 const workerJS = `
