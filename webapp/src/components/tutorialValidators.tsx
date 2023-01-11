@@ -47,7 +47,8 @@ export class BlocksExistValidator extends TutorialValidator {
 
             // TODO thsparks : Confirm loaded before accessing?
             const userBlocks = Blockly.getMainWorkspace().getAllBlocks(false /* ordered */);
-            const userBlocksByType: Set<string> = new Set<string>(userBlocks.map((b) => b.type));
+            const enabledBlocks = userBlocks.filter(b => b.isEnabled()); // TODO thsparks : Move enabled/disabled to different validator or customize hint.
+            const userBlocksByType: Set<string> = new Set<string>(enabledBlocks.map((b) => b.type));
 
             const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
             if(!allHighlightedBlocks) {
