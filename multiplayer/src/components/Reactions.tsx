@@ -1,12 +1,16 @@
 import { Reactions } from "../types/reactions";
 import { sendReactionAsync } from "../epics";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import ReactionsIcon from "./icons/ReactionsIcon";
 import { Button } from "react-common/components/controls/Button";
 import Popup from "./Popup";
+import { AppStateContext } from "../state/AppStateContext";
 
 export default function Render() {
+    const { state } = useContext(AppStateContext);
     const [showReactionPicker, setShowReactionPicker] = useState(false);
+    const { gameState } = state;
+    const reactionIconOverrides = gameState?.reactionIconOverrides;
 
     const onReactionClick = async (index: number) => {
         await sendReactionAsync(index);
@@ -54,16 +58,28 @@ export default function Render() {
                 <div className="tw-flex tw-flex-col tw-bg-white tw-drop-shadow-xl tw-rounded-md tw-border-2 tw-border-gray-100">
                     <div className="tw-flex tw-flex-row tw-gap-3 tw-p-2 tw-pb-3 tw-pr-3">
                         {Reactions.map((def, i) => {
+                            const override = reactionIconOverrides?.[i + 1];
+                            const display = override ? (
+                                <img
+                                    className="pixel-art-image tw-w-6"
+                                    src={override}
+                                    alt={lf(`Game reaction image ${i + 1}`)}
+                                />
+                            ) : (
+                                def.emoji
+                            );
                             return (
                                 <Button
                                     className="tw-flex tw-items-center tw-justify-center tw-m-0 tw-p-0 tw-cursor-pointer tw-select-none tw-scale-110 hover:tw-scale-125 tw-ease-linear tw-duration-[50ms] tw-h-8 tw-w-8 tw-text-2xl"
                                     key={i + 1}
                                     label={
                                         <div>
-                                            <div>{def.emoji}</div>
-                                            {!isMobile && <div className="tw-text-xs tw-absolute tw-bottom-[-5px] tw-right-[-5px] tw-text-white tw-bg-gray-400 tw-rounded-sm tw-border-[1px] tw-border-solid tw-border-gray-500 tw-drop-shadow-lg tw-px-1 tw-leading-tight">
-                                                {i + 1}
-                                            </div>}
+                                            <div>{display}</div>
+                                            {!isMobile && (
+                                                <div className="tw-text-xs tw-absolute tw-bottom-[-5px] tw-right-[-5px] tw-text-white tw-bg-gray-400 tw-rounded-sm tw-border-[1px] tw-border-solid tw-border-gray-500 tw-drop-shadow-lg tw-px-1 tw-leading-tight">
+                                                    {i + 1}
+                                                </div>
+                                            )}
                                         </div>
                                     }
                                     title={def.name}

@@ -1,9 +1,13 @@
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
+import { AppStateContext } from "../state/AppStateContext";
 import { Reactions, Particle } from "../types/reactions";
 
 export default function Render(props: { particle: Particle }) {
     const { particle } = props;
     const { index } = particle;
+    const { state } = useContext(AppStateContext);
+    const { gameState } = state;
+    const reactionIconOverrides = gameState?.reactionIconOverrides;
 
     const emoji = Reactions[index].emoji;
 
@@ -25,12 +29,25 @@ export default function Render(props: { particle: Particle }) {
         };
     }, []);
 
+    const override = reactionIconOverrides?.[index + 1];
+    const display = override ? (
+        <img
+            className="pixel-art-image tw-w-[100%]"
+            src={override}
+            alt={lf(`Game reaction image ${index + 1}`)}
+        />
+    ) : (
+        emoji
+    );
+
     return (
         <div
             className="tw-absolute tw-select-none tw-pointer-events-none tw-z-[100]"
             style={{
                 animation: `reaction-fly-up linear ${parms.flyUpDuration}s forwards,
                 ${parms.horzAnim} linear ${parms.flyHorzDuration}s forwards`,
+                width: override ? "1.5rem" : undefined,
+                height: override ? "1.5rem" : undefined,
             }}
         >
             <div
@@ -39,7 +56,7 @@ export default function Render(props: { particle: Particle }) {
                     animation: `${parms.rotationAnim} ease-in-out ${parms.rotationDuration}s infinite`,
                 }}
             >
-                {emoji}
+                {display}
             </div>
         </div>
     );
