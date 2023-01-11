@@ -260,7 +260,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     return <div>
-        <Modal title={lf("Color Palette")} onClose={onModalClose} actions={actions}>
+        <Modal title={lf("Color Palette")} onClose={onModalClose} actions={actions} leftIcon="fas fa-palette">
             <div className="common-palette-picker">
                 <PalettePicker
                     palettes={paletteOptions}
