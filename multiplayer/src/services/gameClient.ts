@@ -34,12 +34,8 @@ import {
     gameOverAsync,
     pauseGameAsync as epic_pauseGameAsync,
     resumeGameAsync as epic_resumeGameAsync,
+    setCustomIconAsync,
 } from "../epics";
-import { dispatch } from "../state";
-import {
-    setPresenceIconOverride,
-    setReactionIconOverride,
-} from "../state/actions";
 import { simDriver } from "./simHost";
 
 const GAME_HOST_PROD = "https://mp.makecode.com";
@@ -441,17 +437,14 @@ class GameClient {
         const { iconType, iconSlot, iconBuffer } =
             Protocol.Binary.unpackIconMessage(reader);
 
-        let dispatchHandler;
         if (iconType === IconType.Player && iconSlot >= 1 && iconSlot <= 4) {
-            dispatchHandler = setPresenceIconOverride;
         } else if (
             iconType === IconType.Reaction &&
             iconSlot >= 1 &&
             iconSlot <= 6
         ) {
-            dispatchHandler = setReactionIconOverride;
         } else {
-            // unhandled icon type, ignore.
+            // unhandled icon type or invalid slot, ignore.
             return;
         }
 
@@ -482,10 +475,10 @@ class GameClient {
 
             const iconPngDataUri = imgConv.convert(jresFormattedIconBuffer);
 
-            dispatch(dispatchHandler(iconSlot, iconPngDataUri));
+            setCustomIconAsync(iconType, iconSlot, iconPngDataUri);
         } else {
             // clear this value from overrides list if set
-            dispatch(dispatchHandler(iconSlot));
+            setCustomIconAsync(iconType, iconSlot);
         }
     }
 
