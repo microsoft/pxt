@@ -181,7 +181,8 @@ export class ProjectView
             // don't start collapsed in mobile since we can go fullscreen now
             collapseEditorTools: simcfg.headless,
             simState: pxt.editor.SimState.Stopped,
-            autoRun: this.autoRunOnStart()
+            autoRun: this.autoRunOnStart(),
+            isMultiplayerGame: false
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -1523,7 +1524,7 @@ export class ProjectView
 
         if (this.shareEditor) {
             this.shareEditor.setThumbnailFrames(undefined);
-            this.shareEditor.setIsMultiplayer(false);
+            this.setState({ isMultiplayerGame: false });
         }
 
         const checkAsync = this.tryCheckTargetVersionAsync(h.targetVersion);
@@ -1680,7 +1681,8 @@ export class ProjectView
                     projectName: h.name,
                     currFile: file,
                     sideDocsLoadUrl: '',
-                    debugging: false
+                    debugging: false,
+                    isMultiplayerGame: false
                 })
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
@@ -3133,10 +3135,10 @@ export class ProjectView
                 this.editor.setDiagnostics(this.editorFile, state);
                 if (this.shareEditor) {
                     if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
-                        this.shareEditor.setIsMultiplayer(true);
+                        this.setState({ isMultiplayerGame: true });
                     }
                     else {
-                        this.shareEditor.setIsMultiplayer(false);
+                        this.setState({ isMultiplayerGame: false });
                     }
                 }
 
@@ -3697,10 +3699,10 @@ export class ProjectView
 
                     if (this.shareEditor) {
                         if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
-                            this.shareEditor.setIsMultiplayer(true);
+                            this.setState({ isMultiplayerGame: true });
                         }
                         else {
-                            this.shareEditor.setIsMultiplayer(false);
+                            this.setState({ isMultiplayerGame: false });
                         }
                     }
 
@@ -4160,8 +4162,8 @@ export class ProjectView
         this.profileDialog.show(location);
     }
 
-    showShareDialog(title?: string) {
-        this.shareEditor.show(title);
+    showShareDialog(title?: string, forMultiplayer?: boolean) {
+        this.shareEditor.show(title, forMultiplayer);
     }
 
     showLanguagePicker() {
@@ -4832,14 +4834,12 @@ export class ProjectView
         const { lightbox, greenScreen, accessibleBlocks } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const flyoutOnly = this.state.editorState?.hasCategories === false || (inTutorial && tutorialOptions.metadata?.flyoutOnly);
-
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial);
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
-
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isTabTutorial;
         const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
@@ -4847,11 +4847,10 @@ export class ProjectView
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const editorOffset = ((inTutorialExpanded || isTabTutorial) && this.state.editorOffset) ? { top: this.state.editorOffset } : undefined;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
-
+        const isMultiplayerSupported = targetTheme.multiplayer;
+        const isMultiplayerGame = this.state.isMultiplayerGame;
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
-
         const isApp = cmds.isNativeHost() || pxt.BrowserUtils.isElectron();
-
         const hc = this.getData<boolean>(auth.HIGHCONTRAST)
 
         let rootClassList = [
@@ -4929,16 +4928,14 @@ export class ProjectView
                     showSerialButtons={useSerialEditor}
                     showFileList={showFileList}
                     showFullscreenButton={!isHeadless}
-
+                    showHostMultiplayerGameButton={isMultiplayerSupported && isMultiplayerGame}
                     collapseEditorTools={this.state.collapseEditorTools}
                     simSerialActive={this.state.simSerialActive}
                     devSerialActive={this.state.deviceSerialActive}
-
                     showMiniSim={this.showMiniSim}
                     openSerial={this.openSerial}
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
-
                     tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
                     onTutorialStepChange={this.setTutorialStep}
                     onTutorialComplete={this.completeTutorialAsync}

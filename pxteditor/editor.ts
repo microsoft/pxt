@@ -54,11 +54,9 @@ namespace pxt.editor {
         sideDocsCollapsed?: boolean;
         projectName?: string;
         suppressPackageWarning?: boolean;
-
         tutorialOptions?: pxt.tutorial.TutorialOptions;
         lightbox?: boolean;
         keymap?: boolean;
-
         simState?: SimState;
         autoRun?: boolean;
         resumeOnVisibility?: boolean;
@@ -85,22 +83,18 @@ namespace pxt.editor {
         pokeUserComponent?: string;
         flashHint?: boolean;
         editorOffset?: string;
-
         print?: boolean;
         greenScreen?: boolean;
         accessibleBlocks?: boolean;
-
         home?: boolean;
         hasError?: boolean;
         cancelledDownload?: boolean;
-
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;
-
         errorListState?: ErrorListState;
-
         screenshoting?: boolean;
         extensionsVisible?: boolean;
+        isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
     }
 
     export interface EditorState {
@@ -360,7 +354,7 @@ namespace pxt.editor {
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
-        showShareDialog(title?: string): void;
+        showShareDialog(title?: string, forMultiplayer?: boolean): void;
         showAboutDialog(): void;
 
         showLoginDialog(continuationHash?: string): void;

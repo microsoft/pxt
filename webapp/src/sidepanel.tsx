@@ -21,22 +21,18 @@ interface SidepanelState {
 
 interface SidepanelProps extends pxt.editor.ISettingsProps {
     inHome: boolean;
-
     showKeymap?: boolean;
     showSerialButtons?: boolean;
     showFileList?: boolean;
     showFullscreenButton?: boolean;
-
+    showHostMultiplayerGameButton?: boolean;
     collapseEditorTools?: boolean;
     simSerialActive?: boolean;
     deviceSerialActive?: boolean;
-
     tutorialOptions?: pxt.tutorial.TutorialOptions;
-
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
     setEditorOffset?: () => void;
-
     showMiniSim: (visible?: boolean) => void;
     openSerial: (isSim: boolean) => void;
     handleHardwareDebugClick: () => void;
@@ -134,8 +130,14 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if (height != this.state.height) this.setState({ height });
     }
 
+    onHostMultiplayerGameClick = (evt: any) => {
+        evt.preventDefault();
+        pxt.tickEvent("sidepanel.hostmultiplayergame");
+        this.props.parent.showShareDialog(undefined, true);
+    }
+
     renderCore() {
-        const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton,
+        const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
         const { activeTab, height } = this.state;
@@ -160,10 +162,12 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
                         </div>
+                        {showHostMultiplayerGameButton && <Button className={"teal hostmultiplayergame-button portrait hide hidefullscreen"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
                         {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                             <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
                             <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
                         </div>}
+
                         {showFileList && <filelist.FileList parent={parent} />}
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                     </div>

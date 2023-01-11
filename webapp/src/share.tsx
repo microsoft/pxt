@@ -40,7 +40,7 @@ export interface ShareEditorState {
     qrCodeUri?: string;
     qrCodeExpanded?: boolean;
     title?: string;
-    isMultiplayer?: boolean;
+    forMultiplayer?: boolean;   // Was the share dialog opened specifically for hosting a multiplayer game?
 }
 
 export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorState> {
@@ -81,7 +81,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         });
     }
 
-    show(title?: string) {
+    show(title?: string, forMultiplayer?: boolean) {
         const { header } = this.props.parent.state;
         if (!header) return;
         // TODO investigate why edge does not render well
@@ -104,18 +104,13 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             qrCodeUri: undefined,
             qrCodeExpanded: false,
             title,
-            projectName: header.name
+            projectName: header.name,
+            forMultiplayer
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
     }
 
     setThumbnailFrames(frames: ImageData[]) {
         this.autoThumbnailFrames = frames;
-    }
-
-    setIsMultiplayer(isMultiplayer: boolean) {
-        this.setState({
-            isMultiplayer
-        });
     }
 
     UNSAFE_componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -144,6 +139,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             || this.state.qrCodeUri != nextState.qrCodeUri
             || this.state.qrCodeExpanded != nextState.qrCodeExpanded
             || this.state.title != nextState.title
+            || this.state.forMultiplayer != nextState.forMultiplayer
             ;
     }
 
@@ -224,7 +220,9 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     simRecorder={SimRecorderImpl}
                     anonymousShareByDefault={parent.getSharePreferenceForHeader()}
                     setAnonymousSharePreference={setSharePreference}
-                    isMultiplayerGame={this.state.isMultiplayer}/>
+                    isMultiplayerGame={this.props.parent.state.isMultiplayerGame}
+                    forMultiplayer={this.state.forMultiplayer}
+                    onClose={this.hide}/>
             </Modal>
             : <></>
     }
