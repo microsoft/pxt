@@ -125,7 +125,7 @@ export default function Render() {
                                 >
                                     <UserIcon
                                         slot={isEmpty ? 0 : slot}
-                                        datauri={iconOverride}
+                                        dataUri={iconOverride}
                                     />
                                     {user && (
                                         <ReactionEmitter clientId={user.id} />
