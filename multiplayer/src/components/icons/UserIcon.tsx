@@ -1,9 +1,9 @@
-export default function Render(props: { slot: number; datauri?: string }) {
-    const { slot, datauri } = props;
+export default function Render(props: { slot: number; dataUri?: string }) {
+    const { slot, dataUri } = props;
 
-    if (datauri) {
+    if (dataUri) {
         return (
-            <img className="pixel-art-image tw-w-[65%]" src={datauri} alt={lf("User set icon for player {0}", slot)} />
+            <img className="pixel-art-image tw-w-[65%]" src={dataUri} alt={lf("User set icon for player {0}", slot)} />
         );
     }
 
