@@ -63,7 +63,7 @@ export default function Render() {
                                 <img
                                     className="pixel-art-image tw-w-6"
                                     src={override}
-                                    alt={lf(`Game reaction image ${i + 1}`)}
+                                    alt={lf("Game reaction image {0}", i + 1)}
                                 />
                             ) : (
                                 def.emoji

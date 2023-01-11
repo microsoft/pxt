@@ -34,7 +34,7 @@ export default function Render(props: { particle: Particle }) {
         <img
             className="pixel-art-image tw-w-[100%]"
             src={override}
-            alt={lf(`Game reaction image ${index + 1}`)}
+            alt={lf("Game reaction image {0}", index + 1)}
         />
     ) : (
         emoji
