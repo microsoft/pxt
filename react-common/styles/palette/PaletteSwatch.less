@@ -6,12 +6,17 @@
 .common-palette-color-list {
     display: flex;
     flex-direction: row;
+    :last-child {
+        border: 1px solid #000;
+    }
 }
 
 .common-palette-color {
     width: 1rem;
     height: 1rem;
-    border: 1px solid #000;
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    border-left: 1px solid #000;
 }
 
 .common-palette-swatch-name {
