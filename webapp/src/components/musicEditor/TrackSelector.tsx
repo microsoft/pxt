@@ -70,7 +70,7 @@ export const TrackSelector = (props: TrackSelectorProps) => {
                     ariaSetSize={song.tracks.length + 1}
                     key={track.name}
                     title={track.name}
-                    className={classList("music-track-button square-button pixellated", selected === index &&  !eraserActive && "selected")}
+                    className={classList("music-track-button square-button pixellated", selected === index && !eraserActive && "selected")}
                     label={<img src={track.iconURI} alt={track.name} />}
                     onClick={() => setSelectedTrack(index)}
                     />
