@@ -11,6 +11,7 @@ import { SocialButton } from "./SocialButton";
 import { Checkbox } from "../controls/Checkbox";
 import { SimRecorder } from "./ThumbnailRecorder";
 import { MultiplayerConfirmation } from "./MultiplayerConfirmation";
+import { addGameToKioskAsync } from "./Kiosk";
 
 export interface ShareInfoProps {
     projectName: string;
@@ -44,6 +45,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const showDescription = shareState !== "publish";
     let qrCodeButtonRef: HTMLButtonElement;
     let inputRef: HTMLInputElement;
+    let kioskInputRef: HTMLInputElement;
 
     React.useEffect(() => {
         setThumbnailUri(screenshotUri)
@@ -92,9 +94,15 @@ export const ShareInfo = (props: ShareInfoProps) => {
         setKioskSubmitSuccessful(false);
     }
 
-    const handleKioskSubmitClick = () => {
-        //TODO: make the api call to kiosk
-        setKioskSubmitSuccessful(true);
+    const handleKioskSubmitClick = async () => {
+        const gameId = /([^\/]+$)/.exec(shareData.url)?.[1];
+        if (kioskInputRef?.value) {
+            const validKioskId = /^[a-zA-Z0-9]{6}$/.exec(kioskInputRef.value)?.[0];
+            if (validKioskId) {
+                setKioskSubmitSuccessful(true);
+                await addGameToKioskAsync(validKioskId, gameId);
+            }
+        }
     }
 
     const handleEmbedClick = () => {
@@ -124,6 +132,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         if (!showQRCode) {
             setEmbedState("none");
             setShowQRCode(true);
+            setKioskState(false);
         } else {
             setShowQRCode(false);
         }
@@ -213,6 +222,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const handleInputRef = (ref: HTMLInputElement) => {
         if (ref) inputRef = ref;
+    }
+
+    const handleKioskInputRef = (ref: HTMLInputElement) => {
+        if (ref) kioskInputRef = ref;
     }
 
     const handleAnonymousShareClick = (newValue: boolean) => {
@@ -369,19 +382,25 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             initialValue={shareData?.embed[embedState]} />
                     </div>}
                     {kioskState &&
-                        <div className="common-input-attached-button">
-                            <Input
-                                label={lf("Enter Kiosk Code")}
-                                ariaDescribedBy="share-input-title"
-                                handleInputRef={handleInputRef}
-                                placeholder="ABC123"
-                            />
-                            <Button className={kioskSubmitSuccessful ? "green" : "primary"}
-                                title={lf("Submit Kiosk Code")}
-                                label={kioskSubmitSuccessful ? lf("Submitted!") : lf("Submit")}
-                                onClick={handleKioskSubmitClick}
-                                onBlur={handleKioskSubmitBlur} />
-                    </div>
+                        <div>
+                            <div className="project-share-label">
+                                Enter Kiosk Code
+                            </div>
+                            <div className="common-input-attached-button">
+                                <Input
+                                    handleInputRef={handleKioskInputRef}
+                                    ariaDescribedBy="share-input-title"
+                                    preserveValueOnBlur={true}
+                                    placeholder="A12B3C"
+                                />
+                                <Button className={kioskSubmitSuccessful ? "green" : "primary"}
+                                    title={lf("Submit Kiosk Code")}
+                                    label={kioskSubmitSuccessful ? lf("Submitted!") : lf("Submit")}
+                                    onClick={handleKioskSubmitClick}
+                                    onBlur={handleKioskSubmitBlur} />
+                            </div>
+                        </div>
+
                     }
                 </>}
                 {shareState === "gifrecord" && <ThumbnailRecorder
