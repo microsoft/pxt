@@ -36,19 +36,8 @@ namespace pxt {
                 return [(v >> 0) & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, 0xff]
             }
 
-
             if (!this.palette) {
-                let arrs = pxt.appTarget.runtime.palette.map(htmlColorToBytes);
-
-                // Set the alpha for transparency at index 0
-                arrs[0][3] = 0;
-                this.palette = new Uint8Array(arrs.length * 4)
-                for (let i = 0; i < arrs.length; ++i) {
-                    this.palette[i * 4 + 0] = arrs[i][0]
-                    this.palette[i * 4 + 1] = arrs[i][1]
-                    this.palette[i * 4 + 2] = arrs[i][2]
-                    this.palette[i * 4 + 3] = arrs[i][3]
-                }
+                this.setPalette(pxt.appTarget.runtime.palette.map(htmlColorToBytes));
             }
 
             if (magic == 0xe1) {
@@ -57,6 +46,19 @@ namespace pxt {
 
             const scaleFactor = ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && w < 100 && h < 100) ? 3 : 1;
             return this.genColor(data, w, h, scaleFactor);
+        }
+
+        // p: [[r,g,b,a?], [r,g,b,a?], ...]
+        setPalette(paletteArrays: number[][]) {
+            // Set the alpha for transparency at index 0
+            paletteArrays[0][3] = 0;
+            this.palette = new Uint8Array(paletteArrays.length * 4);
+            for (let i = 0; i < paletteArrays.length; ++i) {
+                this.palette[i * 4 + 0] = paletteArrays[i][0];
+                this.palette[i * 4 + 1] = paletteArrays[i][1];
+                this.palette[i * 4 + 2] = paletteArrays[i][2];
+                this.palette[i * 4 + 3] = paletteArrays[i][3];
+            }
         }
 
         genMonochrome(data: string, w: number, h: number) {

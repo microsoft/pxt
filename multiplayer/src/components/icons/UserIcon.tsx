@@ -1,5 +1,11 @@
-export default function Render(props: { slot: number }) {
-    const { slot } = props;
+export default function Render(props: { slot: number; dataUri?: string }) {
+    const { slot, dataUri } = props;
+
+    if (dataUri) {
+        return (
+            <img className="pixel-art-image tw-w-[65%]" src={dataUri} alt={lf("User set icon for player {0}", slot)} />
+        );
+    }
 
     return (
         <svg

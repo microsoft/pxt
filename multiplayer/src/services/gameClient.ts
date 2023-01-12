@@ -20,6 +20,8 @@ import {
     HTTP_INTERNAL_SERVER_ERROR,
     HTTP_IM_A_TEAPOT,
     SimKey,
+    IconMessage,
+    IconType,
 } from "../types";
 import {
     notifyGameDisconnected,
@@ -32,6 +34,7 @@ import {
     gameOverAsync,
     pauseGameAsync as epic_pauseGameAsync,
     resumeGameAsync as epic_resumeGameAsync,
+    setCustomIconAsync,
 } from "../epics";
 import { simDriver } from "./simHost";
 
@@ -99,6 +102,8 @@ class GameClient {
                     return await this.recvInputMessageAsync(reader);
                 case Protocol.Binary.MessageType.Audio:
                     return await this.recvAudioMessageAsync(reader);
+                case Protocol.Binary.MessageType.Icon:
+                    return await this.recvIconMessageAsync(reader);
             }
         } else if (typeof payload === "string") {
             //-------------------------------------------------
@@ -428,6 +433,55 @@ class GameClient {
         });
     }
 
+    private async recvIconMessageAsync(reader: SmartBuffer) {
+        const { iconType, iconSlot, iconBuffer } =
+            Protocol.Binary.unpackIconMessage(reader);
+
+        if (iconType === IconType.Player && iconSlot >= 1 && iconSlot <= 4) {
+        } else if (
+            iconType === IconType.Reaction &&
+            iconSlot >= 1 &&
+            iconSlot <= 6
+        ) {
+        } else {
+            // unhandled icon type or invalid slot, ignore.
+            return;
+        }
+
+        if (iconBuffer) {
+            const unzipped = await gunzipAsync(iconBuffer);
+            const imgConv = new pxt.ImageConverter();
+            const iconPalette = unzipped.slice(0, PALETTE_BUFFER_SIZE);
+            const iconImage = unzipped.slice(PALETTE_BUFFER_SIZE);
+            const paletteAsTripletArray: number[][] = [];
+
+            for (let i = 0; i < 16; i++) {
+                paletteAsTripletArray.push([
+                    iconPalette[i * 3 + 2],
+                    iconPalette[i * 3 + 1],
+                    iconPalette[i * 3 + 0],
+                    255,
+                ]);
+            }
+            imgConv.setPalette(paletteAsTripletArray);
+            const stringifiedRefBuffer = String.fromCharCode.apply(
+                null,
+                iconImage as any as number[]
+            );
+
+            const jresFormattedIconBuffer = `data:image/x-mkcd-f4;base64,${btoa(
+                stringifiedRefBuffer
+            )}`;
+
+            const iconPngDataUri = imgConv.convert(jresFormattedIconBuffer);
+
+            setCustomIconAsync(iconType, iconSlot, iconPngDataUri);
+        } else {
+            // clear this value from overrides list if set
+            setCustomIconAsync(iconType, iconSlot);
+        }
+    }
+
     private postToSimFrame(msg: SimMultiplayer.Message) {
         simDriver()?.postMessage(msg);
     }
@@ -454,6 +508,28 @@ class GameClient {
             Buffer.from(soundbuf!)
         );
         this.sendMessage(buffer);
+    }
+
+    public async sendIconAsync(
+        type: IconType,
+        slot: number,
+        palette: Uint8Array | undefined,
+        img: Uint8Array | undefined
+    ) {
+        let zippedIconBuffer: Buffer | undefined;
+
+        if (palette && img) {
+            const iconDataBuf = Buffer.concat([palette, img]);
+            zippedIconBuffer = await gzipAsync(iconDataBuf);
+        }
+
+        const msgBuffer = Protocol.Binary.packIconMessage(
+            type,
+            slot,
+            zippedIconBuffer
+        );
+
+        this.sendMessage(msgBuffer);
     }
 
     public async sendScreenUpdateAsync(
@@ -634,6 +710,15 @@ export async function sendAudioAsync(
     await gameClient?.sendAudioAsync(instruction, soundbuf);
 }
 
+export async function sendIconAsync(
+    iconType: IconType,
+    slot: number,
+    palette: Uint8Array,
+    icon: Uint8Array
+) {
+    await gameClient?.sendIconAsync(iconType, slot, palette, icon);
+}
+
 export async function sendScreenUpdateAsync(
     img: Uint8Array,
     palette: Uint8Array
@@ -793,6 +878,7 @@ namespace Protocol {
             Input = 1,
             CompressedScreen = 3,
             Audio = 4,
+            Icon = 5,
         }
 
         // Input
@@ -871,6 +957,38 @@ namespace Protocol {
             return {
                 instruction,
                 soundbuf,
+            };
+        }
+
+        // Icon
+        export function packIconMessage(
+            iconType: IconType,
+            iconSlot: number,
+            iconBuffer?: Buffer
+        ): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.Icon);
+            writer.writeUInt8(iconType);
+            writer.writeUInt8(iconSlot);
+            if (iconBuffer) {
+                writer.writeBuffer(iconBuffer);
+            }
+            return writer.toBuffer();
+        }
+        export function unpackIconMessage(reader: SmartBuffer): IconMessage {
+            // `type` field has already been read
+            const iconType = reader.readUInt8();
+            const iconSlot = reader.readUInt8();
+            let iconBuffer: Buffer | undefined;
+            let iconPalette: Buffer | undefined;
+            if (reader.remaining()) {
+                iconBuffer = reader.readBuffer();
+            }
+
+            return {
+                iconType,
+                iconSlot,
+                iconBuffer,
             };
         }
     }
