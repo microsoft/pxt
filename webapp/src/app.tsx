@@ -5076,7 +5076,7 @@ function getsrc() {
 }
 
 function enableAnalytics() {
-    pxt.analytics.enable();
+    pxt.analytics.enable(pxt.Util.userLanguage());
     pxt.editor.enableControllerAnalytics();
 
     const stats: pxt.Map<string | number> = {}
