@@ -3,7 +3,14 @@ export default function Render(props: { slot: number; dataUri?: string }) {
 
     if (dataUri) {
         return (
-            <img className="pixel-art-image tw-w-[65%]" src={dataUri} alt={lf("User set icon for player {0}", slot)} />
+            <img
+                className="pixel-art-image tw-w-[65%]"
+                style={{
+                    filter: slot === 0 ? "grayscale(1)" : undefined,
+                }}
+                src={dataUri}
+                alt={lf("User set icon for player {0}", slot)}
+            />
         );
     }
 
