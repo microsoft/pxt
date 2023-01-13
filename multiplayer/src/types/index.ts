@@ -42,6 +42,9 @@ export type GameMetadata = {
 
 export type GameState = GameInfo & {
     gameMode?: GameMode;
+    // png data uris
+    presenceIconOverrides?: (string | undefined)[];
+    reactionIconOverrides?: (string | undefined)[];
 };
 
 export enum ButtonState {
@@ -49,6 +52,17 @@ export enum ButtonState {
     Released = 2,
     Held = 3,
 }
+
+export enum IconType {
+    Player = 0,
+    Reaction = 1,
+}
+
+export type IconMessage = {
+    iconType: IconType;
+    iconSlot: number;
+    iconBuffer?: Buffer;
+};
 
 export enum SimKey {
     None = 0,
@@ -71,7 +85,7 @@ export enum SimKey {
     Screenshot = -1,
     Gif = -2,
     Reset = -3,
-    TogglePause = -4
+    TogglePause = -4,
 }
 
 export function buttonStateToString(state: ButtonState): string | undefined {
@@ -189,5 +203,18 @@ export namespace SimMultiplayer {
         soundbuf?: Uint8Array;
     };
 
-    export type Message = ImageMessage | AudioMessage | InputMessage;
+    export type MultiplayerIconMessage = MessageBase & {
+        content: "Icon";
+        icon: any; // pxsim.RefBuffer
+        slot: number;
+        iconType: IconType;
+        // 48bytes, [r0,g0,b0,r1,g1,b1,...]
+        palette: Uint8Array;
+    };
+
+    export type Message =
+        | ImageMessage
+        | AudioMessage
+        | InputMessage
+        | MultiplayerIconMessage;
 }

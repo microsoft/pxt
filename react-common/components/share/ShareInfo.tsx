@@ -21,14 +21,28 @@ export interface ShareInfoProps {
     hasProjectBeenPersistentShared?: boolean;
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
-    isMultiplayerGame?: boolean;
-
+    isMultiplayerGame?: boolean; // Arcade: Does the game being shared have multiplayer enabled?
+    forMultiplayer?: boolean; // Arcade: Was the share dialog opened specifically for hosting a multiplayer game?
     anonymousShareByDefault?: boolean;
     setAnonymousSharePreference?: (anonymousByDefault: boolean) => void;
+    onClose: () => void;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared, anonymousShareByDefault, setAnonymousSharePreference, isMultiplayerGame } = props;
+    const {
+        projectName,
+        description,
+        screenshotUri,
+        isLoggedIn,
+        simRecorder,
+        publishAsync,
+        hasProjectBeenPersistentShared,
+        anonymousShareByDefault,
+        setAnonymousSharePreference,
+        isMultiplayerGame,
+        forMultiplayer,
+        onClose,
+    } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
@@ -167,16 +181,21 @@ export const ShareInfo = (props: ShareInfoProps) => {
             return;
         }
 
-        const domain = pxt.BrowserUtils.isLocalHostDev() ? "http://localhost:3000" : "";
-        const multiplayerHostUrl = `${domain}${pxt.webConfig.relprefix}multiplayer?host=${shareId}`;
+        const multiplayerHostUrl = pxt.multiplayer.makeHostLink(shareId);
 
-        pxt.tickEvent(`share.hostMultiplayerShared`);
+        // NOTE: It is allowable to log the shareId here because this is within the multiplayer context.
+        // In this context, the user has consented to allowing the shareId being made public.
+        pxt.tickEvent(`share.hostMultiplayerShared`, { shareId });
         window.open(multiplayerHostUrl, "_blank");
 
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
         else setShareState("share")
 
+        if (forMultiplayer) {
+            // If we're in the "for multiplayer" context, we want to close the share dialog after launching the multiplayer session.
+            onClose();
+        }
     }
 
     const handleMultiplayerShareClick = async () => {
@@ -287,17 +306,18 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         <div className="project-share-publish-actions">
                             {shareState === "share" &&
                             <>
-                                {pxt.appTarget?.appTheme?.multiplayerShareButton && isMultiplayerGame &&
-                                    <Button className="primary inverted text-only share-publish-button share-host-button"
+                                {pxt.appTarget?.appTheme?.multiplayer && (isMultiplayerGame || forMultiplayer) &&
+                                    <Button className={(forMultiplayer ? "primary share-publish-button share-host-button" : "primary inverted text-only share-publish-button share-host-button")}
                                         title={lf("Host a multiplayer game")}
                                         label={lf("Host a multiplayer game")}
                                         leftIcon={"xicon multiplayer"}
                                         onClick={handleMultiplayerShareClick} />
                                 }
-                                <Button className="primary share-publish-button"
+                                {!forMultiplayer && <Button className="primary share-publish-button"
                                         title={lf("Share Project")}
                                         label={lf("Share Project")}
                                         onClick={handlePublishClick} />
+                                }
                             </>
                             }
                             { shareState === "publishing" &&

@@ -90,10 +90,6 @@ namespace pxtblockly {
             return {};
         }
 
-        protected isFullscreen() {
-            return false;
-        }
-
         protected redrawPreview() {
             if (!this.fieldGroup_) return;
             pxsim.U.clear(this.fieldGroup_);

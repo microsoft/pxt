@@ -21,11 +21,14 @@ namespace pxt.assets.music {
         amplitude: number;
     }
 
-    export interface Song {
+    export interface SongInfo {
         measures: number;
         beatsPerMeasure: number;
         beatsPerMinute: number;
         ticksPerBeat: number;
+    }
+
+    export interface Song extends SongInfo {
         tracks: Track[];
     }
 
@@ -726,6 +729,15 @@ namespace pxt.assets.music {
         })
     }
 
+    export function getSongInfo(song: pxt.assets.music.Song): SongInfo {
+        return {
+            ticksPerBeat: song.ticksPerBeat,
+            beatsPerMeasure: song.beatsPerMeasure,
+            beatsPerMinute: song.beatsPerMinute,
+            measures: song.measures
+        }
+    }
+
     export function getEmptySong(measures: number): pxt.assets.music.Song {
         return {
             ticksPerBeat: 8,
@@ -867,7 +879,7 @@ namespace pxt.assets.music {
                     iconURI: "/static/music-editor/computer.png",
                     instrument: {
                         waveform: 15,
-                        octave: 1,
+                        octave: 2,
                         ampEnvelope: {
                             attack: 10,
                             decay: 100,
@@ -884,7 +896,7 @@ namespace pxt.assets.music {
                     iconURI: "/static/music-editor/burger.png",
                     instrument: {
                         waveform: 1,
-                        octave: 1,
+                        octave: 2,
                         ampEnvelope: {
                             attack: 10,
                             decay: 100,
@@ -930,7 +942,7 @@ namespace pxt.assets.music {
                 },
                 {
                     id: 9,
-                    name: lf("Explosion"),
+                    name: lf("Drums"),
                     notes: [],
                     iconURI: "/static/music-editor/explosion.png",
                     instrument: {

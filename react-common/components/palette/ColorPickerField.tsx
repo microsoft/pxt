@@ -25,6 +25,7 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
     }
 
     const onTextInputChanged = (newValue: string) => {
+        newValue = newValue.trim();
         if (newValue?.[0] != '#') {
             newValue = "#" + newValue;
         }

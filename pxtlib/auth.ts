@@ -15,15 +15,6 @@ namespace pxt.auth {
         err: any;
     };
 
-    const DEV_BACKEND_DEFAULT = "";
-    const DEV_BACKEND_PROD = "https://www.makecode.com";
-    const DEV_BACKEND_STAGING = "https://staging.pxt.io";
-    // Localhost endpoints. Ensure matching port number in pxt-backend/node/.vscode/launch.json
-    const DEV_BACKEND_LOCALHOST_5500 = "http://localhost:5500"; // if running in Docker container
-    const DEV_BACKEND_LOCALHOST_8080 = "http://localhost:8080"; // if not running in Docker
-
-    const DEV_BACKEND = DEV_BACKEND_STAGING;
-
     let authDisabled = false;
 
     export type UserProfile = {
@@ -543,7 +534,7 @@ namespace pxt.auth {
             }
             headers[X_PXT_TARGET] = pxt.appTarget?.id;
 
-            url = pxt.BrowserUtils.isLocalHostDev() ? `${DEV_BACKEND}${url}` : url;
+            url = pxt.BrowserUtils.isLocalHostDev() ? `${pxt.cloud.DEV_BACKEND}${url}` : url;
 
             return pxt.Util.requestAsync({
                 url,
