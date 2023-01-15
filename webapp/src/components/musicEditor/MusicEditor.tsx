@@ -41,6 +41,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [selection, setSelection] = React.useState<WorkspaceSelectionState | undefined>();
     const [cursor, setCursor] = React.useState<CursorState>();
     const [cursorVisible, setCursorVisible] = React.useState(false);
+    const [bassClefVisible, setBassClefVisible] = React.useState(false);
 
     React.useEffect(() => {
         return () => {
@@ -507,7 +508,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onWorkspaceDrag={onNoteDrag}
             gridTicks={gridTicks}
             hideUnselectedTracks={hideTracksActive}
-            showBassClef={true}
+            showBassClef={bassClefVisible}
             selection={selection}
             cursor={cursorVisible ? cursor : undefined}
             onKeydown={onWorkspaceKeydown} />
@@ -517,6 +518,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onMeasuresChanged={onMeasuresChanged}
             onUndoClick={undo}
             onRedoClick={redo}
+            showBassClef={bassClefVisible}
+            onBassClefCheckboxClick={setBassClefVisible}
             hasUndo={!!undoStack.length}
             hasRedo={!!redoStack.length} />
         <EditControls
