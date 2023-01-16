@@ -70,6 +70,13 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image, temp
         }
     }
 
+    // sort so that non-builtin assets appear at the top of the gallery
+    images.sort(comparePackage);
+    tiles.sort(comparePackage);
+    tilemaps.sort(comparePackage);
+    animations.sort(comparePackage);
+    songs.sort(comparePackage);
+
     let assets: pxt.Asset[] = [];
     switch (firstType) {
         case pxt.AssetType.Image:
@@ -118,4 +125,10 @@ export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConv
 
 function compareInternalId(a: pxt.Asset, b: pxt.Asset) {
     return a.internalID - b.internalID;
+}
+
+function comparePackage(a: pxt.Asset, b: pxt.Asset) {
+    const aPack = a.meta.package === "device" ?  1 : 0;
+    const bPack = b.meta.package === "device" ?  1 : 0;
+    return aPack - bPack;
 }

@@ -17,6 +17,7 @@ namespace pxt {
         tags?: string[];
         blockIDs?: string[];
         temporaryInfo?: TemporaryAssetInfo;
+        package?: string;
     }
 
     export interface TemporaryAssetInfo {
@@ -987,6 +988,7 @@ namespace pxt {
                 const images = this.readImages(dep.parseJRes(), isProject);
 
                 for (const image of images) {
+                    image.meta.package = dep.id;
                     if (image.type === AssetType.Tile) {
                         if (isProject) {
                             this.state.tiles.add(image);
