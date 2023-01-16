@@ -128,7 +128,7 @@ function compareInternalId(a: pxt.Asset, b: pxt.Asset) {
 }
 
 function comparePackage(a: pxt.Asset, b: pxt.Asset) {
-    const aPack = a.meta.package === "device" ?  1 : 0;
-    const bPack = b.meta.package === "device" ?  1 : 0;
+    const aPack = a.meta.package === "device" ? 1 : 0;
+    const bPack = b.meta.package === "device" ? 1 : 0;
     return aPack - bPack;
 }
