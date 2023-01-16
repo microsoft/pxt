@@ -43,12 +43,12 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image, temp
 
     const getAssetType = gallery ? project.getGalleryAssets.bind(project) : project.getAssets.bind(project);
 
-    const images = getAssetType(pxt.AssetType.Image).map(toGalleryItem).sort(compareInternalId);
+    const images = getAssetType(pxt.AssetType.Image).map(toGalleryItem).sort(comparePackage);
     const tiles = getAssetType(pxt.AssetType.Tile).map(toGalleryItem)
-        .filter((t: pxt.Tile) => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(compareInternalId);
-    const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(toGalleryItem).sort(compareInternalId);
-    const animations = getAssetType(pxt.AssetType.Animation).map(toGalleryItem).sort(compareInternalId);
-    const songs = getAssetType(pxt.AssetType.Song).map(toGalleryItem).sort(compareInternalId);
+        .filter((t: pxt.Tile) => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(comparePackage);
+    const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(toGalleryItem).sort(comparePackage);
+    const animations = getAssetType(pxt.AssetType.Animation).map(toGalleryItem).sort(comparePackage);
+    const songs = getAssetType(pxt.AssetType.Song).map(toGalleryItem).sort(comparePackage);
 
     for (const asset of tempAssets) {
         switch (asset.type) {
@@ -69,13 +69,6 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image, temp
                 break;
         }
     }
-
-    // sort so that non-builtin assets appear at the top of the gallery
-    images.sort(comparePackage);
-    tiles.sort(comparePackage);
-    tilemaps.sort(comparePackage);
-    animations.sort(comparePackage);
-    songs.sort(comparePackage);
 
     let assets: pxt.Asset[] = [];
     switch (firstType) {
@@ -130,5 +123,8 @@ function compareInternalId(a: pxt.Asset, b: pxt.Asset) {
 function comparePackage(a: pxt.Asset, b: pxt.Asset) {
     const aPack = a.meta.package === "device" ? 1 : 0;
     const bPack = b.meta.package === "device" ? 1 : 0;
+    if (aPack === bPack) {
+        return compareInternalId(a, b);
+    }
     return aPack - bPack;
 }

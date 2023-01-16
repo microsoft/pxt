@@ -1022,20 +1022,22 @@ namespace pxt {
                         }
                     }
                 }
+
+                for (const tm of getTilemaps(dep.parseJRes())) {
+                    this.state.tilemaps.add({
+                        internalID: this.getNewInternalId(),
+                        type: AssetType.Tilemap,
+                        id: tm.id,
+                        meta: {
+                            // For tilemaps, use the id as the display name for backwards compat
+                            displayName: tm.displayName || tm.id,
+                            package: dep.id
+                        },
+                        data: decodeTilemap(tm, id => this.resolveTile(id))
+                    })
+                }
             }
 
-            for (const tm of getTilemaps(pack.parseJRes())) {
-                this.state.tilemaps.add({
-                    internalID: this.getNewInternalId(),
-                    type: AssetType.Tilemap,
-                    id: tm.id,
-                    meta: {
-                        // For tilemaps, use the id as the display name for backwards compat
-                        displayName: tm.displayName || tm.id
-                    },
-                    data: decodeTilemap(tm, id => this.resolveTile(id))
-                })
-            }
             this.committedState = this.cloneState();
             this.undoStack = [];
             this.redoStack = [];
