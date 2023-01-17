@@ -1146,10 +1146,15 @@ declare namespace pxt.tutorial {
         isValid: Boolean;
         hint: any; // TODO thsparks, Ideally this would be string | JSX.Element but it can't find namespace JSX??
     }
-    
+
+    interface CodeValidationExecuteOptions {
+        parent: pxt.editor.IProjectView;
+        tutorialOptions: TutorialOptions;
+    }
+
     interface CodeValidator {
         enabled: boolean;
-        execute(parent: pxt.editor.IProjectView, tutorialOptions: TutorialOptions): Promise<CodeValidationResult>;
+        execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
     }
     
     interface ValidationConfig {

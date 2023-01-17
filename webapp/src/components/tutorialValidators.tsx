@@ -1,8 +1,8 @@
 import TutorialOptions = pxt.tutorial.TutorialOptions;
 import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
-import IProjectView = pxt.editor.IProjectView;
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
+import CodeValidationExecuteOptions = pxt.tutorial.CodeValidationExecuteOptions;
 import { MarkedContent } from "../marked";
 
 const defaultResult: CodeValidationResult = {
@@ -13,13 +13,13 @@ const defaultResult: CodeValidationResult = {
 abstract class CodeValidatorBase implements CodeValidator {
     enabled: boolean = false;
 
-    execute(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<CodeValidationResult> {
+    execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
         if (!this.enabled) return Promise.resolve(defaultResult);
 
-        return this.executeInternal(parent, tutorialOptions);
+        return this.executeInternal(options);
     }
 
-    protected abstract executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<CodeValidationResult>;
+    protected abstract executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
 }
 
 export class BlocksExistValidator extends CodeValidatorBase {
@@ -30,9 +30,10 @@ export class BlocksExistValidator extends CodeValidatorBase {
         this.useHintHighlight = true;
     }
 
-    async executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<CodeValidationResult> {
+    async executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
 
         let missingBlocks: string[] = [];
+        const {parent, tutorialOptions} = options;
         const stepInfo = tutorialOptions.tutorialStepInfo
             ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep]
             : null;
