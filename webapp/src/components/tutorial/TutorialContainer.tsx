@@ -1,15 +1,16 @@
+import CodeValidator = pxt.tutorial.CodeValidator;
+import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 import * as React from "react";
-
 import { MarkedContent } from "../../marked";
 import { Button, Modal, ModalButton } from "../../sui";
-
 import { ImmersiveReaderButton, launchImmersiveReader } from "../../immersivereader";
 import { TutorialStepCounter } from "./TutorialStepCounter";
 import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
 import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage";
-import { BlocksExistValidator, TutorialValidationResult, TutorialValidator } from "../tutorialValidators";
+import { BlocksExistValidator } from "../tutorialValidators";
+
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -112,13 +113,13 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const validateTutorialStep = async () => {
         const blocksExistValidator = new BlocksExistValidator();
 
-        const validators: TutorialValidator[] = [
+        const validators: CodeValidator[] = [
             blocksExistValidator,
         ]
 
         blocksExistValidator.useHintHighlightBlocks(); // TODO thsparks : Pull config from markdown?
 
-        let failedResults: TutorialValidationResult[] = [];
+        let failedResults: CodeValidationResult[] = [];
         for(let validator of validators) {
             let result = await validator.execute(props.parent, props.tutorialOptions);
             if(!result.isValid) {

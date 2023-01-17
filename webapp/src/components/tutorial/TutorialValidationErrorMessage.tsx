@@ -1,12 +1,12 @@
 import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
 import { Button as SuiButton } from "../../sui";
-import { TutorialValidationResult } from "../tutorialValidators";
+import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 
 interface TutorialValidationErrorMessageProps {
   onContinueClicked: () => void;
   onReturnClicked: () => void;
-  validationFailures: TutorialValidationResult[];
+  validationFailures: CodeValidationResult[];
 }
 
 export function TutorialValidationErrorMessage(props: TutorialValidationErrorMessageProps) {

@@ -1,32 +1,28 @@
 import TutorialOptions = pxt.tutorial.TutorialOptions;
 import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
 import IProjectView = pxt.editor.IProjectView;
-import * as compiler from "../compiler";
+import CodeValidator = pxt.tutorial.CodeValidator;
+import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 import { MarkedContent } from "../marked";
 
-export type TutorialValidationResult = {
-    isValid: Boolean;
-    hint: string | JSX.Element;
-};
-
-const defaultResult: TutorialValidationResult = {
+const defaultResult: CodeValidationResult = {
     isValid: true,
     hint: null,
 };
 
-export abstract class TutorialValidator {
+abstract class CodeValidatorBase implements CodeValidator {
     enabled: boolean = false;
 
-    execute(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialValidationResult> {
+    execute(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<CodeValidationResult> {
         if (!this.enabled) return Promise.resolve(defaultResult);
 
         return this.executeInternal(parent, tutorialOptions);
     }
 
-    protected abstract executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialValidationResult>;
+    protected abstract executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<CodeValidationResult>;
 }
 
-export class BlocksExistValidator extends TutorialValidator {
+export class BlocksExistValidator extends CodeValidatorBase {
     private useHintHighlight = false;
 
     useHintHighlightBlocks() {
@@ -34,7 +30,7 @@ export class BlocksExistValidator extends TutorialValidator {
         this.useHintHighlight = true;
     }
 
-    async executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<TutorialValidationResult> {
+    async executeInternal(parent: IProjectView, tutorialOptions: TutorialOptions): Promise<CodeValidationResult> {
 
         let missingBlocks: string[] = [];
         const stepInfo = tutorialOptions.tutorialStepInfo

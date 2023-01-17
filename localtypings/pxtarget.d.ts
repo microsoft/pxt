@@ -635,6 +635,10 @@ declare namespace pxt.editor {
         NoPython = "no-python",
         NoJavaScript = "no-javascript"
     }
+
+    // Placeholder for IProjectView defined in pxteditor.d.ts
+    interface IProjectView {
+    }
 }
 
 declare namespace ts.pxtc {
@@ -1102,6 +1106,7 @@ declare namespace pxt.tutorial {
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
+        globalValidationConfig?: ValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
     }
 
     interface TutorialMetadata {
@@ -1137,6 +1142,20 @@ declare namespace pxt.tutorial {
         blocks?: TutorialBlockConfigEntry[]; // markdown fragment can contain multiple block definitions
     }
 
+    interface CodeValidationResult {
+        isValid: Boolean;
+        hint: any; // TODO thsparks, Ideally this would be string | JSX.Element but it can't find namespace JSX??
+    }
+    
+    interface CodeValidator {
+        enabled: boolean;
+        execute(parent: pxt.editor.IProjectView, tutorialOptions: TutorialOptions): Promise<CodeValidationResult>;
+    }
+    
+    interface ValidationConfig {
+        validators: CodeValidator[];
+    }
+    
     interface TutorialStepInfo {
         // Step metadata
         showHint?: boolean; // automatically displays hint
@@ -1161,6 +1180,9 @@ declare namespace pxt.tutorial {
 
         // concatenated `blockconfig.local` sections. Contains block configs applicable to the current step only
         localBlockConfig?: pxt.tutorial.TutorialBlockConfig;
+
+        // concatenated 'validation.local' sections. Contains config applicable to this step only.
+        localValidationConfig?: pxt.tutorial.ValidationConfig;
     }
 
     interface TutorialActivityInfo {

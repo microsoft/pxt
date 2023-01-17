@@ -32,6 +32,7 @@ namespace pxt.tutorial {
 
         const assetFiles = parseAssetJson(assetJson);
         const globalBlockConfig = parseTutorialBlockConfig("global", tutorialmd);
+        const globalValidationConfig = parseTutorialValidationConfig("global", tutorialmd);
 
         // strip hidden snippets
         steps.forEach(step => {
@@ -116,7 +117,7 @@ namespace pxt.tutorial {
                         customTs = m2;
                         m2 = "";
                         break;
-                    case "tutorialValidationRules":
+                    case "tutorialValidationRules": // TODO thsparks : Deprecate?
                         tutorialValidationRulesStr = m2;
                         break;
                 }
@@ -249,6 +250,7 @@ ${code}
             step = step.trim();
             let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
             const blockConfig = parseTutorialBlockConfig("local", step);
+            const validationConfig = parseTutorialValidationConfig("local", step);
 
             // if title is not hidden ("{TITLE HERE}"), strip flags
             const title = !flags.match(/^\{.*\}$/)
@@ -259,7 +261,8 @@ ${code}
                 title,
                 contentMd: step,
                 headerContentMd: header,
-                localBlockConfig: blockConfig
+                localBlockConfig: blockConfig,
+                localValidationConfig: validationConfig
             }
             if (/@(fullscreen|unplugged|showdialog|showhint)/i.test(flags))
                 info.showHint = true;
@@ -330,6 +333,12 @@ ${code}
             return "";
         });
         return blockConfig;
+    }
+
+    function parseTutorialValidationConfig(scope: "local" | "global", content: string): ValidationConfig {
+        return {
+            validators: []
+        }
     }
 
     function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {
