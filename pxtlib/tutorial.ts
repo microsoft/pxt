@@ -55,7 +55,8 @@ namespace pxt.tutorial {
             assetFiles,
             customTs,
             tutorialValidationRules,
-            globalBlockConfig
+            globalBlockConfig,
+            globalValidationConfig
         };
     }
 
@@ -335,9 +336,28 @@ ${code}
         return blockConfig;
     }
 
-    function parseTutorialValidationConfig(scope: "local" | "global", content: string): ValidationConfig {
+    function parseTutorialValidationConfig(scope: "local" | "global", content: string): CodeValidationConfig {
+        let markdown: string;
+        const regex = new RegExp(`\`\`\`\\s*validation\\.${scope}\\s*\\n([\\s\\S]*?)\\n\`\`\``, "gmi");
+        content.replace(regex, (m0, m1) => {
+            markdown = m1;
+            return "";
+        });
+
+        if(!markdown || markdown == "") {
+            return null;
+        }
+
+        const validationSections = pxt.getSectionsFromMarkdownMetadata(markdown);
+        const sectionedMetadata = validationSections.map((v) => {
+          return {
+            validatorType: v.header,
+            properties: v.attributes,
+          };
+        });
+
         return {
-            validators: []
+            validatorsMetadata: sectionedMetadata
         }
     }
 
@@ -445,7 +465,8 @@ ${code}
             assetFiles: tutorialInfo.assetFiles,
             customTs: tutorialInfo.customTs,
             tutorialValidationRules: tutorialInfo.tutorialValidationRules,
-            globalBlockConfig: tutorialInfo.globalBlockConfig
+            globalBlockConfig: tutorialInfo.globalBlockConfig,
+            globalValidationConfig: tutorialInfo.globalValidationConfig
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };

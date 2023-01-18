@@ -1,6 +1,7 @@
 import TutorialOptions = pxt.tutorial.TutorialOptions;
 import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
 import CodeValidator = pxt.tutorial.CodeValidator;
+import CodeValidatorMetadata = pxt.tutorial.CodeValidatorMetadata;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 import CodeValidationExecuteOptions = pxt.tutorial.CodeValidationExecuteOptions;
 import { MarkedContent } from "../marked";
@@ -10,8 +11,20 @@ const defaultResult: CodeValidationResult = {
     hint: null,
 };
 
+export function GetValidator(metadata: CodeValidatorMetadata): CodeValidator {
+    switch(metadata.validatorType.toLowerCase()) {
+        case "blocksexistvalidator":
+            return new BlocksExistValidator(metadata.properties);
+    }
+    return null;
+}
+
 abstract class CodeValidatorBase implements CodeValidator {
-    enabled: boolean = false;
+    enabled: boolean;
+
+    constructor(properties: {[index: string]: string}) {
+        this.enabled = properties["enabled"] != "false"; // Default to true
+    }
 
     execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
         if (!this.enabled) return Promise.resolve(defaultResult);
@@ -25,13 +38,12 @@ abstract class CodeValidatorBase implements CodeValidator {
 export class BlocksExistValidator extends CodeValidatorBase {
     private useHintHighlight = false;
 
-    useHintHighlightBlocks() {
-        this.enabled = true;
-        this.useHintHighlight = true;
+    constructor(properties: { [index: string]: string }) {
+        super(properties);
+        this.useHintHighlight = properties["useanswerkeyhighlight"]?.toLowerCase() === "true";
     }
 
     async executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
-
         let missingBlocks: string[] = [];
         const {parent, tutorialOptions} = options;
         const stepInfo = tutorialOptions.tutorialStepInfo
@@ -41,7 +53,6 @@ export class BlocksExistValidator extends CodeValidatorBase {
 
         // TODO thsparks : If not supporting custom blocks to check, can remove useHintHighlight for now. Otherwise allow for custom block ids.
         if (this.useHintHighlight) {
-
             // TODO thsparks : Confirm loaded before accessing?
             const userBlocks = Blockly.getMainWorkspace().getAllBlocks(false /* ordered */);
             const enabledBlocks = userBlocks.filter(b => b.isEnabled()); // TODO thsparks : Move enabled/disabled to different validator or customize hint.

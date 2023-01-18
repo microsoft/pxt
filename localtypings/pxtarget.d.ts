@@ -1106,7 +1106,7 @@ declare namespace pxt.tutorial {
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
-        globalValidationConfig?: ValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
+        globalValidationConfig?: CodeValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
     }
 
     interface TutorialMetadata {
@@ -1157,8 +1157,13 @@ declare namespace pxt.tutorial {
         execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
     }
     
-    interface ValidationConfig {
-        validators: CodeValidator[];
+    interface CodeValidatorMetadata {
+        validatorType: string;
+        properties: {[index: string]: string}
+    }
+
+    interface CodeValidationConfig {
+        validatorsMetadata: CodeValidatorMetadata[];
     }
     
     interface TutorialStepInfo {
@@ -1187,7 +1192,7 @@ declare namespace pxt.tutorial {
         localBlockConfig?: pxt.tutorial.TutorialBlockConfig;
 
         // concatenated 'validation.local' sections. Contains config applicable to this step only.
-        localValidationConfig?: pxt.tutorial.ValidationConfig;
+        localValidationConfig?: pxt.tutorial.CodeValidationConfig;
     }
 
     interface TutorialActivityInfo {
@@ -1220,6 +1225,7 @@ declare namespace pxt.tutorial {
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
         templateLoaded?: boolean; // if the template code has been loaded once, we skip
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
+        globalValidationConfig?: CodeValidationConfig // concatenated 'validation.global' sections. Contains validation config applicable to all steps
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

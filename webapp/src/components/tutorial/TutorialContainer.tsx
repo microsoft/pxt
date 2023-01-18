@@ -9,7 +9,7 @@ import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
 import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage";
-import { BlocksExistValidator } from "../tutorialValidators";
+import { GetValidator } from "../tutorialValidators";
 
 
 interface TutorialContainerProps {
@@ -111,17 +111,22 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
     const validateTutorialStep = async () => {
-        const blocksExistValidator = new BlocksExistValidator();
+        const globalValidatorMetadata = tutorialOptions.globalValidationConfig;
+        const localValidatorMetadata = currentStepInfo.localValidationConfig;
 
-        const validators: CodeValidator[] = [
-            blocksExistValidator,
-        ]
-
-        blocksExistValidator.useHintHighlightBlocks(); // TODO thsparks : Pull config from markdown?
+        let validators = new Map<string, CodeValidator>();
+        localValidatorMetadata?.validatorsMetadata.forEach((v) =>
+            validators.set(v.validatorType, GetValidator(v))
+        );
+        globalValidatorMetadata?.validatorsMetadata.forEach((v) => {
+            if (!validators.has(v.validatorType)) {
+                validators.set(v.validatorType, GetValidator(v));
+            }
+        });
 
         let failedResults: CodeValidationResult[] = [];
         for(let validator of validators) {
-            let result = await validator.execute({parent: props.parent, tutorialOptions: props.tutorialOptions});
+            let result = await validator[1].execute({parent: props.parent, tutorialOptions: props.tutorialOptions});
             if(!result.isValid) {
                 failedResults.push(result);
             }
