@@ -609,7 +609,7 @@ namespace pxt.assets.music {
 
     function encodeMelodicTrack(track: Track) {
         const encodedInstrument = encodeInstrument(track.instrument);
-        const encodedNotes = track.notes.map(note => encodeNoteEvent(note, track.instrument.octave, !!track.drums));
+        const encodedNotes = track.notes.map(note => encodeNoteEvent(note, track.instrument.octave, false));
         const noteLength = encodedNotes.reduce((d, c) => c.length + d, 0);
 
         const out = new Uint8Array(6 + encodedInstrument.length + noteLength);
@@ -655,7 +655,7 @@ namespace pxt.assets.music {
         const encodedDrums = track.drums.map(encodeDrumInstrument);
         const drumLength = encodedDrums.reduce((d, c) => c.length + d, 0);
 
-        const encodedNotes = track.notes.map(note => encodeNoteEvent(note, 0, false));
+        const encodedNotes = track.notes.map(note => encodeNoteEvent(note, 0, true));
         const noteLength = encodedNotes.reduce((d, c) => c.length + d, 0);
 
         const out = new Uint8Array(6 + drumLength + noteLength);
@@ -795,6 +795,27 @@ namespace pxt.assets.music {
             tracks: [
                 {
                     id: 0,
+                    name: lf("Dog"),
+                    notes: [],
+                    iconURI: "/static/music-editor/dog.png",
+                    instrument: {
+                        waveform: 1,
+                        octave: 4,
+                        ampEnvelope: {
+                            attack: 10,
+                            decay: 100,
+                            sustain: 500,
+                            release: 100,
+                            amplitude: 1024
+                        },
+                        pitchLFO: {
+                            frequency: 5,
+                            amplitude: 0
+                        }
+                    }
+                },
+                {
+                    id: 1,
                     name: lf("Duck"),
                     notes: [],
                     iconURI: "/static/music-editor/duck.png",
@@ -826,7 +847,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
-                    id: 1,
+                    id: 2,
                     name: lf("Cat"),
                     notes: [],
                     iconURI: "/static/music-editor/cat.png",
@@ -850,27 +871,6 @@ namespace pxt.assets.music {
                         pitchLFO: {
                             frequency: 10,
                             amplitude: 6
-                        }
-                    }
-                },
-                {
-                    id: 2,
-                    name: lf("Dog"),
-                    notes: [],
-                    iconURI: "/static/music-editor/dog.png",
-                    instrument: {
-                        waveform: 1,
-                        octave: 4,
-                        ampEnvelope: {
-                            attack: 10,
-                            decay: 100,
-                            sustain: 500,
-                            release: 100,
-                            amplitude: 1024
-                        },
-                        pitchLFO: {
-                            frequency: 5,
-                            amplitude: 0
                         }
                     }
                 },
