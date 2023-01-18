@@ -1,4 +1,8 @@
-import { getSectionsFromText, MarkdownList, MarkdownSection } from "../src/lib/skillMapParser";
+
+/// <reference path="../../built/pxtlib.d.ts"/>
+import getSectionsFromText = pxt.getSectionsFromMarkdownMetadata;
+import MarkdownList = pxt.MarkdownList;
+import MarkdownSection = pxt.MarkdownSection;
 import chai = require("chai");
 
 
