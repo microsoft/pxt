@@ -110,8 +110,6 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
     const validateTutorialStep = async () => {
-        // TODO thsparks : Do we need to cache validators on the step and not globally (in which case maybe just do it as a local map here?)
-        // TODO thsparks : Concern is if the validator preserves state (for progressive hints or something), need reset on each step. Maybe? Or maybe not?
         const globalValidators = tutorialOptions.globalValidationConfig?.validators
                                     ?? PopulateValidatorCache(tutorialOptions.globalValidationConfig);
         const localValidators = currentStepInfo.localValidationConfig?.validators

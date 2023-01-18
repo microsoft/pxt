@@ -70,11 +70,13 @@ export class BlocksExistValidator extends CodeValidatorBase {
             : null;
         if (!stepInfo) return { isValid: true, hint: "" };
 
-        // TODO thsparks : If not supporting custom blocks to check, can remove useHintHighlight for now. Otherwise allow for custom block ids.
+        // Currently, this validator only supports useHintHighlight, so this flag/check is redundant,
+        // but there are plans to support manual specification of blocks in the future.
+        // As such, it felt prudent to still require this flag so tutorial authors don't have to go back and add it later on.
         if (this.useHintHighlight) {
             // TODO thsparks : Confirm loaded before accessing?
             const userBlocks = Blockly.getMainWorkspace().getAllBlocks(false /* ordered */);
-            const enabledBlocks = userBlocks.filter(b => b.isEnabled()); // TODO thsparks : Move enabled/disabled to different validator or customize hint.
+            const enabledBlocks = userBlocks.filter(b => b.isEnabled()); // TODO thsparks : Customize hint if all are present but not enabled (or vice versa).
             const userBlocksByType: Set<string> = new Set<string>(enabledBlocks.map((b) => b.type));
 
             const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
