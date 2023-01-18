@@ -114,7 +114,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
             const validKioskId = /^[a-zA-Z0-9]{6}$/.exec(kioskInputRef.value)?.[0];
             if (validKioskId) {
                 setKioskSubmitSuccessful(true);
-                await addGameToKioskAsync(validKioskId, gameId);
+                try {
+                    await addGameToKioskAsync(validKioskId, gameId);
+                } catch (error) {
+                    console.log("there was an error sending game to kiosk");
+                    //TODO: give some feedback to the user, no kiosk exists...
+                }
             }
         }
     }
@@ -352,7 +357,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         leftIcon="fas fa-code"
                                         onClick={handleEmbedClick} />
                                     <Button className="square-button gray mobile-portrait-hidden"
-                                        title={lf("Share to MakeCode Kiosk")}
+                                        title={lf("Share to MakeCode Arcade Kiosk")}
                                         leftIcon={"xicon kiosk"}
                                         onClick={handleKioskClick} />
                                     <SocialButton className="square-button facebook"
