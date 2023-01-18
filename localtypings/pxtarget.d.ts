@@ -1159,12 +1159,12 @@ declare namespace pxt.tutorial {
     
     interface CodeValidatorMetadata {
         validatorType: string;
-        properties: {[index: string]: string}
+        properties: pxt.Map<string>;
     }
 
     interface CodeValidationConfig {
         validatorsMetadata: CodeValidatorMetadata[];
-        validators: Map<string, CodeValidator>; // A cache of the parsed validatorsMetadata. Key = validator type, Value = validator.
+        validators: pxt.Map<CodeValidator>; // A cache of the parsed validatorsMetadata. Key = validator type, Value = validator.
     }
     
     interface TutorialStepInfo {

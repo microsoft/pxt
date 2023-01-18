@@ -117,16 +117,21 @@ export function TutorialContainer(props: TutorialContainerProps) {
         const localValidators = currentStepInfo.localValidationConfig?.validators
                                     ?? PopulateValidatorCache(currentStepInfo.localValidationConfig);
 
-        let validators = new Map<string, CodeValidator>(localValidators);
-        for(let v of globalValidators) {
-            if (!validators.has(v[0])) {
-                validators.set(v[0], v[1]);
+        let validators: pxt.Map<CodeValidator> = {}
+        if(localValidators) {
+            Object.entries(localValidators).forEach(v => validators[v[0]] = v[1]);
+        }
+        if (globalValidators) {
+          for (let v of Object.entries(globalValidators)) {
+            if (!validators[v[0]]) {
+              validators[v[0]] = v[1];
             }
-        };
+          }
+        }
 
         let failedResults: CodeValidationResult[] = [];
-        for(let validator of validators) {
-            let result = await validator[1]?.execute({parent: props.parent, tutorialOptions: props.tutorialOptions});
+        for(let validator of Object.values(validators)) {
+            let result = await validator?.execute({parent: props.parent, tutorialOptions: props.tutorialOptions});
             if(result && !result.isValid) {
                 failedResults.push(result);
             }

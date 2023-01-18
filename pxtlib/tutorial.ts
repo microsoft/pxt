@@ -357,7 +357,8 @@ ${code}
         });
 
         return {
-            validatorsMetadata: sectionedMetadata
+            validatorsMetadata: sectionedMetadata,
+            validators: undefined
         }
     }
 

@@ -22,16 +22,16 @@ export function GetValidator(metadata: CodeValidatorMetadata): CodeValidator {
     }
 }
 
-export function PopulateValidatorCache(metadata: CodeValidationConfig): Map<string, CodeValidator>{
+export function PopulateValidatorCache(metadata: CodeValidationConfig): pxt.Map<CodeValidator>{
     if(!metadata?.validatorsMetadata) {
         return null;
     }
 
-    metadata.validators = new Map<string, CodeValidator>();
+    metadata.validators = {};
     metadata.validatorsMetadata.forEach(v => {
         const validator = GetValidator(v);
         if(validator) {
-            metadata.validators.set(v.validatorType, validator);
+            metadata.validators[v.validatorType] = validator;
         }
     });
 
