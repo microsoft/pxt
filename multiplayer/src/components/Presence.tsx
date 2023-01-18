@@ -6,6 +6,27 @@ import Popup from "./Popup";
 import { Button } from "react-common/components/controls/Button";
 import { showModal } from "../state/actions";
 
+function PlayerMenuPopup(
+    props: React.PropsWithChildren<{
+        slot: number;
+        setShowPlayerMenu: (p: number) => void;
+        currentlyDisplayed: number;
+    }>
+) {
+    const { slot, children, currentlyDisplayed, setShowPlayerMenu } = props;
+    return (
+        <Popup
+            className="tw-absolute tw-z-50 tw-translate-y-[-110%] tw-translate-x-[-50%] tw-rounded-lg tw-border-2 tw-border-gray-100"
+            visible={currentlyDisplayed === slot}
+            onClickedOutside={() => setShowPlayerMenu(0)}
+        >
+            <div className="tw-flex tw-flex-row tw-gap-1 tw-p-2 tw-bg-white tw-drop-shadow-xl tw-rounded-md">
+                {children}
+            </div>
+        </Popup>
+    );
+}
+
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
     const { presence, clientRole, playerSlot, gameState } = state;
@@ -31,21 +52,6 @@ export default function Render() {
         dispatch(showModal("leave-game"));
     };
 
-    function PlayerMenuPopup(props: React.PropsWithChildren<{ slot: number }>) {
-        const { slot, children } = props;
-        return (
-            <Popup
-                className="tw-absolute tw-z-50 tw-translate-y-[-110%] tw-translate-x-[-50%] tw-rounded-lg tw-border-2 tw-border-gray-100"
-                visible={showPlayerMenu === slot}
-                onClickedOutside={() => setShowPlayerMenu(0)}
-            >
-                <div className="tw-flex tw-flex-row tw-gap-1 tw-p-2 tw-bg-white tw-drop-shadow-xl tw-rounded-md">
-                    {children}
-                </div>
-            </Popup>
-        );
-    }
-
     const playerMenu = (slot: number) => {
         const isHost = clientRole === "host";
         const isHostSlot = slot === 1;
@@ -55,7 +61,11 @@ export default function Render() {
         if (isHost && isMySlot) {
             // Host's own menu
             return (
-                <PlayerMenuPopup slot={slot}>
+                <PlayerMenuPopup
+                    slot={slot}
+                    currentlyDisplayed={showPlayerMenu}
+                    setShowPlayerMenu={setShowPlayerMenu}
+                >
                     <Button
                         className="tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"
                         label={lf("End the game")}
@@ -68,7 +78,11 @@ export default function Render() {
         if (isHost && !isHostSlot && !!player) {
             // Host's menu for other players
             return (
-                <PlayerMenuPopup slot={slot}>
+                <PlayerMenuPopup
+                    slot={slot}
+                    currentlyDisplayed={showPlayerMenu}
+                    setShowPlayerMenu={setShowPlayerMenu}
+                >
                     <Button
                         className="tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"
                         label={lf("Remove from game")}
@@ -81,7 +95,11 @@ export default function Render() {
         if (!isHost && isMySlot) {
             // Guest's own menu
             return (
-                <PlayerMenuPopup slot={slot}>
+                <PlayerMenuPopup
+                    slot={slot}
+                    currentlyDisplayed={showPlayerMenu}
+                    setShowPlayerMenu={setShowPlayerMenu}
+                >
                     <Button
                         className="tw-m-0 tw-py-2 tw-bg-red-600 tw-text-white"
                         label={lf("Leave game")}
