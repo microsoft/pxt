@@ -118,7 +118,7 @@ namespace pxt.tutorial {
                         customTs = m2;
                         m2 = "";
                         break;
-                    case "tutorialValidationRules": // TODO thsparks : Deprecate?
+                    case "tutorialValidationRules":
                         tutorialValidationRulesStr = m2;
                         break;
                 }
