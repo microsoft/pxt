@@ -122,11 +122,11 @@ export function TutorialContainer(props: TutorialContainerProps) {
             Object.entries(localValidators).forEach(v => validators[v[0]] = v[1]);
         }
         if (globalValidators) {
-          for (let v of Object.entries(globalValidators)) {
+          Object.entries(globalValidators).forEach(v => {
             if (!validators[v[0]]) {
               validators[v[0]] = v[1];
             }
-          }
+          });
         }
 
         let failedResults: CodeValidationResult[] = [];
