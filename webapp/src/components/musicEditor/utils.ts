@@ -468,3 +468,13 @@ function moveNoteEvent(noteEvent: pxt.assets.music.NoteEvent, trackOctave: numbe
 
     return res;
 }
+
+export function doesSongUseBassClef(song: pxt.assets.music.Song) {
+    return song.tracks.some(track =>
+        !track.drums && track.notes.some(noteEvent =>
+            noteEvent.notes.some(note =>
+                isBassClefNote(track.instrument.octave, note)
+            )
+        )
+    );
+}

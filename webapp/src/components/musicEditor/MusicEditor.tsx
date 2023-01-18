@@ -5,7 +5,7 @@ import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAs
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove, deleteSelectedNotes, applySelection, removeNoteAtRowFromTrack, isBassClefNote } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove, deleteSelectedNotes, applySelection, removeNoteAtRowFromTrack, isBassClefNote, doesSongUseBassClef } from "./utils";
 
 export interface MusicEditorProps {
     asset: pxt.Song;
@@ -41,7 +41,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [selection, setSelection] = React.useState<WorkspaceSelectionState | undefined>();
     const [cursor, setCursor] = React.useState<CursorState>();
     const [cursorVisible, setCursorVisible] = React.useState(false);
-    const [bassClefVisible, setBassClefVisible] = React.useState(false);
+    const [bassClefVisible, setBassClefVisible] = React.useState(doesSongUseBassClef(asset.song));
 
     React.useEffect(() => {
         return () => {
@@ -185,7 +185,6 @@ export const MusicEditor = (props: MusicEditorProps) => {
         setCursorVisible(false);
         const track = currentSong.tracks[selectedTrack];
         const instrument = track.instrument;
-        // const note = isDrumTrack ? coord.row : rowToNote(instrument.octave, coord.row, coord.isBassClef, ctrlIsPressed);
 
         const existingEvent = findPreviousNoteEvent(currentSong, selectedTrack, coord.tick);
 
