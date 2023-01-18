@@ -1144,7 +1144,7 @@ declare namespace pxt.tutorial {
 
     interface CodeValidationResult {
         isValid: Boolean;
-        hint: any; // TODO thsparks, Ideally this would be string | JSX.Element but it can't find namespace JSX??
+        hint: any;
     }
 
     interface CodeValidationExecuteOptions {

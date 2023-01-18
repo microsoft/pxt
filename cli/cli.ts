@@ -6136,7 +6136,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
                                 if (!builtInfo.snippetBlocks[snippetHash]) builtInfo.snippetBlocks[snippetHash] = {};
                                 builtInfo.snippetBlocks[snippetHash][m1] = 1;
                                 builtInfo.usedBlocks[m1] = 1;
-                                // TODO thsparks : How to fill highlighted blocks here?
+                                //TODO: Fill builtInfo.HighlightedBlocks
                                 return m0;
                             })
                         }
