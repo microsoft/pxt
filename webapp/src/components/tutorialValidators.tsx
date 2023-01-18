@@ -74,9 +74,8 @@ export class BlocksExistValidator extends CodeValidatorBase {
         // but there are plans to support manual specification of blocks in the future.
         // As such, it felt prudent to still require this flag so tutorial authors don't have to go back and add it later on.
         if (this.useHintHighlight) {
-            // TODO thsparks : Confirm loaded before accessing?
-            const userBlocks = Blockly.getMainWorkspace().getAllBlocks(false /* ordered */);
-            const enabledBlocks = userBlocks.filter(b => b.isEnabled()); // TODO thsparks : Customize hint if all are present but not enabled (or vice versa).
+            const userBlocks = Blockly.getMainWorkspace()?.getAllBlocks(false /* ordered */);
+            const enabledBlocks = userBlocks?.filter(b => b.isEnabled()) ?? []; // TODO thsparks : Customize hint if all are present but not enabled (or vice versa).
             const userBlocksByType: Set<string> = new Set<string>(enabledBlocks.map((b) => b.type));
 
             const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
