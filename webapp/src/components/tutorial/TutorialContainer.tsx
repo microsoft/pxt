@@ -9,7 +9,7 @@ import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
 import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage";
-import { GetValidator } from "../tutorialValidators";
+import { PopulateValidatorCache } from "../tutorialValidators";
 
 
 interface TutorialContainerProps {
@@ -111,18 +111,17 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
     const validateTutorialStep = async () => {
-        const globalValidatorMetadata = tutorialOptions.globalValidationConfig;
-        const localValidatorMetadata = currentStepInfo.localValidationConfig;
+        const globalValidators = tutorialOptions.globalValidationConfig?.validators 
+                                    ?? PopulateValidatorCache(tutorialOptions.globalValidationConfig);
+        const localValidators = currentStepInfo.localValidationConfig?.validators
+                                    ?? PopulateValidatorCache(currentStepInfo.localValidationConfig);
 
-        let validators = new Map<string, CodeValidator>();
-        localValidatorMetadata?.validatorsMetadata.forEach((v) =>
-            validators.set(v.validatorType, GetValidator(v))
-        );
-        globalValidatorMetadata?.validatorsMetadata.forEach((v) => {
-            if (!validators.has(v.validatorType)) {
-                validators.set(v.validatorType, GetValidator(v));
+        let validators = new Map<string, CodeValidator>(localValidators);
+        for(let v of globalValidators) {
+            if (!validators.has(v[0])) {
+                validators.set(v[0], v[1]);
             }
-        });
+        };
 
         let failedResults: CodeValidationResult[] = [];
         for(let validator of validators) {

@@ -1,5 +1,6 @@
 import TutorialOptions = pxt.tutorial.TutorialOptions;
 import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
+import CodeValidationConfig = pxt.tutorial.CodeValidationConfig;
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidatorMetadata = pxt.tutorial.CodeValidatorMetadata;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
@@ -21,11 +22,27 @@ export function GetValidator(metadata: CodeValidatorMetadata): CodeValidator {
     }
 }
 
+export function PopulateValidatorCache(metadata: CodeValidationConfig): Map<string, CodeValidator>{
+    if(!metadata?.validatorsMetadata) {
+        return null;
+    }
+
+    metadata.validators = new Map<string, CodeValidator>();
+    metadata.validatorsMetadata.forEach(v => {
+        const validator = GetValidator(v);
+        if(validator) {
+            metadata.validators.set(v.validatorType, validator);
+        }
+    });
+
+    return metadata.validators;
+}
+
 abstract class CodeValidatorBase implements CodeValidator {
     enabled: boolean;
 
     constructor(properties: {[index: string]: string}) {
-        this.enabled = properties["enabled"] != "false"; // Default to true
+        this.enabled = properties["enabled"]?.toLowerCase() != "false"; // Default to true
     }
 
     execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
