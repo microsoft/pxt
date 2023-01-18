@@ -161,7 +161,7 @@ namespace pxtblockly {
                 if (col > cellsShown) break;
 
                 for (const note of noteEvent.notes) {
-                    const row = 12 - (note % 12);
+                    const row = 12 - (note.note % 12);
                     if (row > notesShown) continue;
 
                     context.fillStyle = colors[trackColors[track.id || song.tracks.indexOf(track)]];
