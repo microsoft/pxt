@@ -15,8 +15,10 @@ export function GetValidator(metadata: CodeValidatorMetadata): CodeValidator {
     switch(metadata.validatorType.toLowerCase()) {
         case "blocksexistvalidator":
             return new BlocksExistValidator(metadata.properties);
+        default:
+            console.error(`Unrecognized validator: ${metadata.validatorType}`);
+            return null;
     }
-    return null;
 }
 
 abstract class CodeValidatorBase implements CodeValidator {

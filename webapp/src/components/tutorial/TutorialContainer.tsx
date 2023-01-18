@@ -126,8 +126,8 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
         let failedResults: CodeValidationResult[] = [];
         for(let validator of validators) {
-            let result = await validator[1].execute({parent: props.parent, tutorialOptions: props.tutorialOptions});
-            if(!result.isValid) {
+            let result = await validator[1]?.execute({parent: props.parent, tutorialOptions: props.tutorialOptions});
+            if(result && !result.isValid) {
                 failedResults.push(result);
             }
         }
