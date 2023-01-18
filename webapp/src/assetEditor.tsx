@@ -95,15 +95,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     constructor(props: {}) {
         super(props);
-        this.state = {
-            editing: {
-                id: "",
-                internalID: -1,
-                meta: {},
-                type: pxt.AssetType.Song,
-                song: pxt.assets.music.getEmptySong(2)
-            }
-        };
+        this.state = {};
         pxt.react.getTilemapProject = () => this.tilemapProject;
 
         setTelemetryFunction(tickAssetEditorEvent);
@@ -188,12 +180,12 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     render() {
         if (this.state.editing) {
+            return <ImageFieldEditor
+                ref={this.refHandler}
+                singleFrame={this.state.editing.type !== "animation"}
+                isMusicEditor={this.state.editing.type === "song"}
+                doneButtonCallback={this.callbackOnDoneClick} />
         }
-        return <ImageFieldEditor
-            ref={this.refHandler}
-            singleFrame={true}
-            isMusicEditor={true}
-            doneButtonCallback={this.callbackOnDoneClick} />
 
         return <div></div>
     }
