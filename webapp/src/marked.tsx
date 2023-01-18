@@ -359,7 +359,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     });
                     pipInstructionButton.addEventListener("keydown", e => fireClickOnEnter(e as any));
                     pipInstructionButton.className = "common-button";
-                    pipInstructionButton.textContent = lf("How to pop out video");
+                    pipInstructionButton.textContent = lf("Pop out video");
                     pipInstructionButton.ariaLabel = lf("Instructions on how to open video in picture-in-picture mode");
                     pipInstructionButton.title = pipInstructionButton.ariaLabel;
                 }
