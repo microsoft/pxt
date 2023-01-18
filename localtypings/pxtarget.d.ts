@@ -465,6 +465,7 @@ declare namespace pxt {
         downloadDialogTheme?: DownloadDialogTheme;
         songEditor?: boolean; // enable the song asset type and field editor
         multiplayer?: boolean; // enable multiplayer features
+        shareToKiosk?: boolean; // enable sharing to a kiosk
     }
 
     interface DownloadDialogTheme {

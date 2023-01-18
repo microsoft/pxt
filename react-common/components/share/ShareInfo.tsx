@@ -109,7 +109,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     }
 
     const handleKioskSubmitClick = async () => {
-        const gameId = /([^\/]+$)/.exec(shareData.url)?.[1];
+        const gameId = pxt.Cloud.parseScriptId(shareData.url);
         if (kioskInputRef?.value) {
             const validKioskId = /^[a-zA-Z0-9]{6}$/.exec(kioskInputRef.value)?.[0];
             if (validKioskId) {
@@ -117,7 +117,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 try {
                     await addGameToKioskAsync(validKioskId, gameId);
                 } catch (error) {
-                    console.log("there was an error sending game to kiosk");
+                    pxt.log(error.message);
                     //TODO: give some feedback to the user, no kiosk exists...
                 }
             }
@@ -409,7 +409,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                     {kioskState &&
                         <div>
                             <div className="project-share-label">
-                                Enter Kiosk Code
+                                {lf("Enter Kiosk Code")}
                             </div>
                             <div className="common-input-attached-button">
                                 <Input

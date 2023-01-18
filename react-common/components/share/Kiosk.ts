@@ -15,6 +15,6 @@ export const addGameToKioskAsync = async (kioskId: string, gameId: string) => {
         await response.json();
     }
     catch (error) {
-        throw new Error("Failed to post game to the kiosk");
+        throw new Error(error.message);
     }
 }
