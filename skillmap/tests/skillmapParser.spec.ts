@@ -1,10 +1,9 @@
-
 /// <reference path="../../built/pxtlib.d.ts"/>
-import getSectionsFromText = pxt.getSectionsFromMarkdownMetadata;
+
+import getSectionsFromMarkdownMetadata = pxt.getSectionsFromMarkdownMetadata;
 import MarkdownList = pxt.MarkdownList;
 import MarkdownSection = pxt.MarkdownSection;
 import chai = require("chai");
-
 
 describe("skillmap parser", () => {
     it("should parse nested lists", () => {
@@ -56,7 +55,7 @@ describe("skillmap parser", () => {
         }
 
 
-        const result = getSectionsFromText(test);
+        const result = getSectionsFromMarkdownMetadata(test);
         chai.assert(result.length === 1, "Wrong number of sections");
         chai.expect(result[0]).deep.equals(expected);
     });
@@ -84,7 +83,7 @@ describe("skillmap parser", () => {
         ]
 
 
-        const result = getSectionsFromText(test);
+        const result = getSectionsFromMarkdownMetadata(test);
         chai.expect(result).deep.equals(expected);
     });
 
@@ -119,7 +118,7 @@ describe("skillmap parser", () => {
         ]
 
 
-        const result = getSectionsFromText(test);
+        const result = getSectionsFromMarkdownMetadata(test);
         chai.expect(result).deep.equals(expected);
     });
 })

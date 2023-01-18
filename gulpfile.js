@@ -582,9 +582,22 @@ const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
 const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.series(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
 
 const buildSkillmapTests = () => compileTsProject("skillmap/tests", "built/tests");
-const runSkillmapTests = () => exec("./node_modules/.bin/mocha ./built/tests/tests/skillmapParser.spec.js", true)
+const copySkillmapTests = () => gulp.src([
+        "./built/pxtlib.js",
+        "./built/tests/tests/skillmapParser.spec.js"])
+    .pipe(concat("skillmapParserTests.js"))
+    .pipe(gulp.dest("built/tests/tests"));
+const runSkillmapTests = () => {
+    let command;
+    if(isWin32) {
+        command = path.resolve("node_modules/.bin/mocha.cmd") + " ./built/tests/tests/skillmapParserTests.js";
+    } else {
+        command = "./node_modules/.bin/mocha skillmapParserTests.js"; 
+    }
+    return exec(command, true);
+}
 
-const testSkillmap = gulp.series(buildSkillmapTests, runSkillmapTests);
+const testSkillmap = gulp.series(buildSkillmapTests, copySkillmapTests, runSkillmapTests);
 
 /********************************************************
                       Authcode
