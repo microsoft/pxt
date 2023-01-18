@@ -43,12 +43,14 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image, temp
 
     const getAssetType = gallery ? project.getGalleryAssets.bind(project) : project.getAssets.bind(project);
 
-    const images = getAssetType(pxt.AssetType.Image).map(toGalleryItem).sort(comparePackage);
+    const defaultPackages = getDefaultPackages();
+
+    const images = getAssetType(pxt.AssetType.Image).map(toGalleryItem).sort(comparePackage(defaultPackages));
     const tiles = getAssetType(pxt.AssetType.Tile).map(toGalleryItem)
-        .filter((t: pxt.Tile) => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(comparePackage);
-    const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(toGalleryItem).sort(comparePackage);
-    const animations = getAssetType(pxt.AssetType.Animation).map(toGalleryItem).sort(comparePackage);
-    const songs = getAssetType(pxt.AssetType.Song).map(toGalleryItem).sort(comparePackage);
+        .filter((t: pxt.Tile) => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(comparePackage(defaultPackages));
+    const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(toGalleryItem).sort(comparePackage(defaultPackages));
+    const animations = getAssetType(pxt.AssetType.Animation).map(toGalleryItem).sort(comparePackage(defaultPackages));
+    const songs = getAssetType(pxt.AssetType.Song).map(toGalleryItem).sort(comparePackage(defaultPackages));
 
     for (const asset of tempAssets) {
         switch (asset.type) {
@@ -120,11 +122,23 @@ function compareInternalId(a: pxt.Asset, b: pxt.Asset) {
     return a.internalID - b.internalID;
 }
 
-function comparePackage(a: pxt.Asset, b: pxt.Asset) {
-    const aPack = a.meta.package === "device" ? 1 : 0;
-    const bPack = b.meta.package === "device" ? 1 : 0;
-    if (aPack === bPack) {
-        return compareInternalId(a, b);
+function comparePackage(dependencies: string[]) {
+    return function(a: pxt.Asset, b: pxt.Asset) {
+        const aPack = dependencies.indexOf(a.meta.package) === -1 ? 0 : 1;
+        const bPack = dependencies.indexOf(b.meta.package) === -1 ? 0 : 1;
+        if (aPack === bPack) {
+            return compareInternalId(a, b);
+        }
+        return aPack - bPack;
     }
-    return aPack - bPack;
+}
+
+function getDefaultPackages() {
+    // TODO this only grabs the top-level dependencies
+    const config = pxt.appTarget.blocksprj?.config;
+    if (config) {
+        const dependencies = Object.keys(config.dependencies);
+        return dependencies;
+    }
+    return [];
 }
