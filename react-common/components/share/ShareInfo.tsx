@@ -352,14 +352,14 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             </div>
                             <div className="project-share-actions">
                                 <div className="project-share-social">
+                                <Button className="square-button gray mobile-portrait-hidden"
+                                        title={lf("Share to MakeCode Arcade Kiosk")}
+                                        leftIcon={"xicon kiosk"}
+                                        onClick={handleKioskClick} />
                                     <Button className="square-button gray embed mobile-portrait-hidden"
                                         title={lf("Show embed code")}
                                         leftIcon="fas fa-code"
                                         onClick={handleEmbedClick} />
-                                    <Button className="square-button gray mobile-portrait-hidden"
-                                        title={lf("Share to MakeCode Arcade Kiosk")}
-                                        leftIcon={"xicon kiosk"}
-                                        onClick={handleKioskClick} />
                                     <SocialButton className="square-button facebook"
                                         url={shareData?.url}
                                         type='facebook'
