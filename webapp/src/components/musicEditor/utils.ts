@@ -63,12 +63,12 @@ export function addNoteToTrack(song: pxt.assets.music.Song, trackIndex: number, 
         ...song,
         tracks: song.tracks.map((track, index) => index !== trackIndex ? track : {
             ...track,
-            notes: addToNoteArray(track.notes, note, startTick, endTick)
+            notes: addToNoteArray(track.notes, note, startTick, endTick, track.instrument.octave, !!track.drums)
         })
     }
 }
 
-function addToNoteArray(notes: pxt.assets.music.NoteEvent[], note: pxt.assets.music.Note, startTick: number, endTick: number) {
+function addToNoteArray(notes: pxt.assets.music.NoteEvent[], note: pxt.assets.music.Note, startTick: number, endTick: number, octave: number, isDrumTrack: boolean) {
     const noteEvent: pxt.assets.music.NoteEvent = {
         notes: [note],
         startTick,
@@ -86,7 +86,15 @@ function addToNoteArray(notes: pxt.assets.music.NoteEvent[], note: pxt.assets.mu
 
             return notes.map((event, index) => index !== i ? event : {
                 ...event,
-                notes: event.notes.concat([note]).sort()
+                notes: event.notes.concat([note]).sort((a, b) => {
+                    if (isDrumTrack) return a.note - b.note;
+                    const aIsBassClef = isBassClefNote(octave, a);
+                    const bIsBassClef = isBassClefNote(octave, b);
+
+                    if (aIsBassClef === bIsBassClef) return noteToRow(octave, a) - noteToRow(octave, b);
+                    else if (aIsBassClef) return -1;
+                    else return 1;
+                })
             })
         }
     }

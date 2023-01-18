@@ -21,7 +21,7 @@ import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLengt
  *         ctrl + up
  *     transpose note octave down:
  *         ctrl + down
- *     change enharmonic spelling (TODO):
+ *     change enharmonic spelling:
  *         j
  *
  * select range:
@@ -388,6 +388,46 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             }
             else {
                 startPlaybackAsync(song, ctrlPressed);
+            }
+            break;
+        case "j":
+        case "J":
+            if (song.tracks[cursor.track].drums) break;
+
+            if (noteEventAtCursor) {
+                event.preventDefault();
+                const existingNote = noteEventAtCursor.notes[editedCursor.noteGroupIndex]
+
+                const minNote = instrument.octave * 12 - 20;
+                const maxNote = instrument.octave * 12 + 20;
+
+                const row = noteToRow(instrumentOctave, existingNote);
+                const tick = noteEventAtCursor.startTick;
+                const bass = isBassClefNote(instrumentOctave, existingNote);
+
+                editedSong = removeNoteAtRowFromTrack(editedSong, editedCursor.track, row, bass, tick);
+
+                let newSpelling: "normal" | "sharp" | "flat";
+                if (existingNote.enharmonicSpelling === "normal" && existingNote.note < maxNote) {
+                    newSpelling = "sharp";
+                }
+                else if (existingNote.enharmonicSpelling === "sharp" && existingNote.note > minNote || existingNote.note === maxNote) {
+                    newSpelling = "flat"
+                }
+                else {
+                    newSpelling = "normal"
+                }
+                const newNote = rowToNote(instrument.octave, row, bass, newSpelling)
+
+                editedSong = addNoteToTrack(
+                    editedSong,
+                    editedCursor.track,
+                    newNote,
+                    noteEventAtCursor.startTick,
+                    noteEventAtCursor.endTick
+                );
+
+                playNoteAsync(newNote.note, instrument, tickToMs(editedSong.beatsPerMinute, editedSong.ticksPerBeat, cursor.gridTicks));
             }
             break;
         default:
