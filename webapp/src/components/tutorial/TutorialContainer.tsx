@@ -1,5 +1,3 @@
-import CodeValidator = pxt.tutorial.CodeValidator;
-import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 import * as React from "react";
 import { MarkedContent } from "../../marked";
 import { Button, Modal, ModalButton } from "../../sui";
@@ -10,6 +8,8 @@ import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
 import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage";
 import { PopulateValidatorCache } from "../tutorialValidators";
+import CodeValidator = pxt.tutorial.CodeValidator;
+import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;

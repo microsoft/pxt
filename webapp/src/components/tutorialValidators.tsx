@@ -1,3 +1,4 @@
+import { MarkedContent } from "../marked";
 import TutorialOptions = pxt.tutorial.TutorialOptions;
 import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
 import CodeValidationConfig = pxt.tutorial.CodeValidationConfig;
@@ -5,7 +6,6 @@ import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidatorMetadata = pxt.tutorial.CodeValidatorMetadata;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 import CodeValidationExecuteOptions = pxt.tutorial.CodeValidationExecuteOptions;
-import { MarkedContent } from "../marked";
 
 const defaultResult: CodeValidationResult = {
     isValid: true,
