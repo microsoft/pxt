@@ -148,9 +148,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const handleKioskHelpClick = () => {
         pxt.log("this will lead the user to documentation");
-        // TODO: have this actually link to the documentation when it's done
-        //const kioskDocumentationUrl = ....
-        // window.open(kioskDocumentationUrl, "_blank");
+        const kioskDocumentationUrl = "https://arcade.makecode.com/developer/kiosk";
+        window.open(kioskDocumentationUrl, "_blank");
     }
 
     const handleQRCodeClick = () => {
