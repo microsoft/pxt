@@ -117,7 +117,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
         let errorDescription: string;
 
         if (missingBlocks.length > 0 && disabledBlocks.length > 0) {
-            isValid = false; 
+            isValid = false;
             errorDescription = lf("Make sure you see blocks that look like this and that they're connected to the rest of your code.")
         } else if (missingBlocks.length > 0) {
             isValid = false;
