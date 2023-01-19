@@ -7,14 +7,14 @@ export interface NoteProps {
     iconURI: string
     opacity?: number;
     length?: number;
-    isSharp?: boolean;
+    enharmonicSpelling?: "sharp" | "flat" | "normal";
     isBassClef: boolean;
     selected?: boolean;
     cursorHighlighted?: boolean;
 }
 
 export const Note = (props: NoteProps) => {
-    const { row, iconURI, length, opacity, isSharp, isBassClef, selected, cursorHighlighted } = props;
+    const { row, iconURI, length, opacity, enharmonicSpelling, isBassClef, selected, cursorHighlighted } = props;
 
     return <g className={classList("music-staff-note", selected && "selected", cursorHighlighted && "cursor-highlighted")} transform={`translate(${-(NOTE_ICON_WIDTH / 2)}, ${rowY(row, isBassClef) - (NOTE_ICON_WIDTH / 2)})`}>
         { row === 0 &&
@@ -41,8 +41,10 @@ export const Note = (props: NoteProps) => {
                 repeatCount="1"
                 begin="indefinite" />
         </image>
-        { isSharp &&
-            <text x={NOTE_ICON_WIDTH} y={0} fontSize={NOTE_ICON_WIDTH / 2}>♯</text>
+        {(enharmonicSpelling && enharmonicSpelling !== "normal") &&
+            <text x={NOTE_ICON_WIDTH} y={0} fontSize={NOTE_ICON_WIDTH / 2}>
+                { enharmonicSpelling === "sharp" ? "♯" : "♭" }
+            </text>
         }
     </g>
 }

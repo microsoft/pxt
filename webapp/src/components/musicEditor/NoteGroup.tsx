@@ -3,7 +3,7 @@ import { CursorState } from "./keyboardNavigation";
 import { Note } from "./Note";
 import { addPlaybackStateListener, addTickListener, removePlaybackStateListener, removeTickListener } from "./playback";
 import { tickToX } from "./svgConstants";
-import { isBassClefNote, isSharpNote, noteToRow } from "./utils";
+import { isBassClefNote, noteToRow } from "./utils";
 
 export interface NoteGroupProps {
     song: pxt.assets.music.Song;
@@ -74,18 +74,17 @@ export const NoteGroup = (props: NoteGroupProps) => {
             let isBassClef = false
 
             if (isDrumTrack) {
-                row = note;
+                row = note.note;
             }
             else {
                 isBassClef = isBassClefNote(octave, note);
-                row = noteToRow(octave, note, isBassClef);
+                row = noteToRow(octave, note);
             }
-            const isSharp = isDrumTrack ? false : isSharpNote(octave, note, isBassClef);
             return <Note
                 key={index}
                 isBassClef={isBassClef}
                 row={row}
-                isSharp={isSharp}
+                enharmonicSpelling={note.enharmonicSpelling}
                 iconURI={iconURI}
                 length={noteLength}
                 selected={noteEvent.selected}

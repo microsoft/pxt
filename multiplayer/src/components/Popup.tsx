@@ -1,21 +1,23 @@
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, RefObject } from "react";
 import { useClickedOutside } from "../hooks";
 
 export default function Render(
     props: React.PropsWithChildren<{
         className?: string;
         visible: boolean;
+        ignoreRefs?: RefObject<Element | null>[];
         onClickedOutside: () => any;
     }>
 ) {
-    const { children, visible, className, onClickedOutside } = props;
+    const { children, visible, className, ignoreRefs, onClickedOutside } =
+        props;
 
-    const ref = useRef<Element | null>();
+    const ref = useRef<Element | null>(null);
     const setRef = useCallback((el: Element | null) => {
         ref.current = el;
     }, []);
 
-    useClickedOutside(ref, () => onClickedOutside());
+    useClickedOutside([ref, ...(ignoreRefs || [])], () => onClickedOutside());
 
     return visible ? (
         <div ref={setRef} className={className}>

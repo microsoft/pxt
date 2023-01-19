@@ -8,8 +8,8 @@ export function useAuthDialogMessages(): {
     const { state } = useContext(AppStateContext);
     const { deepLinks } = state;
     const { shareCode, joinCode } = deepLinks;
-    const hostSignIn = lf("Sign in to host multiplayer game {0}", shareCode);
-    const hostSignUp = lf("Sign up to host multiplayer game {0}", shareCode);
+    const hostSignIn = lf("Sign in to host this multiplayer game");
+    const hostSignUp = lf("Sign up to host this multiplayer game");
     const joinSignIn = lf("Sign in to join multiplayer game {0}", joinCode);
     const joinSignUp = lf("Sign up to join multiplayer game {0}", joinCode);
     const eitherSignIn = lf("Sign in to host or join a multiplayer game");

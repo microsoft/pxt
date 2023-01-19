@@ -1,5 +1,5 @@
 import { isPlaying, playNoteAsync, startPlaybackAsync, stopPlayback, tickToMs } from "./playback";
-import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLength, findNextNoteEvent, findNoteEventAtTick, findPreviousNoteEvent, findSelectedRange, isBassClefNote, moveSelectedNotes, removeNoteEventFromTrack, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
+import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLength, findNextNoteEvent, findNoteEventAtTick, findPreviousNoteEvent, findSelectedRange, isBassClefNote, moveSelectedNotes, noteToRow, removeNoteAtRowFromTrack, removeNoteEventFromTrack, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
 
 /**
  * All shortcuts
@@ -21,7 +21,7 @@ import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLengt
  *         ctrl + up
  *     transpose note octave down:
  *         ctrl + down
- *     change enharmonic spelling (TODO):
+ *     change enharmonic spelling:
  *         j
  *
  * select range:
@@ -104,9 +104,6 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
 
     const instrument = song.tracks[cursor.track].instrument;
     const instrumentOctave = instrument.octave;
-    const drums = song.tracks[cursor.track].drums;
-    const minNote = drums ? 0 : instrumentOctave * 12 - 20;
-    const maxNote = drums ? drums.length - 1 : instrumentOctave * 12 + 19;
     const ticksPerMeasure = song.ticksPerBeat * song.beatsPerMeasure;
     const maxTicks = ticksPerMeasure * song.measures;
     const hasSelection = !!cursor.selection;
@@ -123,7 +120,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
 
     const playNoteEvent = (ev: pxt.assets.music.NoteEvent) => {
         for (const note of ev.notes) {
-            playNoteAsync(note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, ev.endTick - ev.startTick));
+            playNoteAsync(note.note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, ev.endTick - ev.startTick));
         }
     }
 
@@ -151,24 +148,45 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             }
             else {
                 let note = noteEventAtCursor.notes[cursor.noteGroupIndex];
+                const track = editedSong.tracks[cursor.track];
+                let isBass = isBassClefNote(instrumentOctave, note);
+
+                const originalRow = track.drums ? note.note : noteToRow(instrumentOctave, note)
+
+                let row = originalRow;
 
                 const delta = ctrlPressed ? 12 : 1;
-                while (noteEventAtCursor.notes.indexOf(note) !== -1) {
-                    note += delta;
+                while (noteEventAtCursor.notes.some(n => {
+                    if (track.drums) return n.note === row;
+                    if (isBassClefNote(instrumentOctave, n) !== isBass) return false;
+                    return row === noteToRow(instrumentOctave, n)
+                })) {
+                    row += delta;
+
+                    if (row >= 12) {
+                        if (isBass) {
+                            isBass = false;
+                            row -= 12;
+                        }
+                        else {
+                            break;
+                        }
+                    }
                 }
 
-                if (note < minNote || note > maxNote) {
-                    break;
-                }
+                if (row >= 12 || row < 0) break;
 
+                const newNote: pxt.assets.music.Note = track.drums ?
+                    { note: row, enharmonicSpelling: "normal" } :
+                    rowToNote(instrumentOctave, row, isBass, note.enharmonicSpelling)
 
-                editedSong = removeNoteFromTrack(editedSong, cursor.track, noteEventAtCursor.notes[cursor.noteGroupIndex], noteEventAtCursor.startTick);
-                editedSong = addNoteToTrack(editedSong, cursor.track, note, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
+                editedSong = removeNoteAtRowFromTrack(editedSong, cursor.track, originalRow, isBassClefNote(instrumentOctave, note), noteEventAtCursor.startTick);
+                editedSong = addNoteToTrack(editedSong, cursor.track, newNote, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
 
                 const newEvent = findNoteEventAtTick(editedSong, cursor.track, cursor.tick);
-                editedCursor.noteGroupIndex = newEvent.notes.indexOf(note);
+                editedCursor.noteGroupIndex = newEvent.notes.findIndex(n => n.note === newNote.note);
 
-                playNoteAsync(note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));
+                playNoteAsync(newNote.note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));
             }
             break;
 
@@ -195,24 +213,46 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             }
             else {
                 let note = noteEventAtCursor.notes[cursor.noteGroupIndex];
+                const track = editedSong.tracks[cursor.track];
+                let isBass = isBassClefNote(instrumentOctave, note);
 
-                const delta = ctrlPressed ? 12 : 1;
-                while (noteEventAtCursor.notes.indexOf(note) !== -1) {
-                    note -= delta;
+                const originalRow = track.drums ? note.note : noteToRow(instrumentOctave, note)
+
+                let row = originalRow;
+
+                const delta = ctrlPressed ? -12 : -1;
+
+                while (noteEventAtCursor.notes.some(n => {
+                    if (track.drums) return n.note === row;
+                    if (isBassClefNote(instrumentOctave, n) !== isBass) return false;
+                    return row === noteToRow(instrumentOctave, n)
+                })) {
+                    row += delta;
+
+                    if (row < 0) {
+                        if (!isBass) {
+                            isBass = true;
+                            row += 12;
+                        }
+                        else {
+                            break;
+                        }
+                    }
                 }
 
-                if (note < minNote || note > maxNote) {
-                    break;
-                }
+                if (row >= 12 || row < 0) break;
 
-                editedSong = removeNoteFromTrack(editedSong, cursor.track, noteEventAtCursor.notes[cursor.noteGroupIndex], noteEventAtCursor.startTick);
-                editedSong = addNoteToTrack(editedSong, cursor.track, note, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
+                const newNote: pxt.assets.music.Note = track.drums ?
+                    { note: row, enharmonicSpelling: "normal" } :
+                    rowToNote(instrumentOctave, row, isBass, note.enharmonicSpelling)
+
+                editedSong = removeNoteAtRowFromTrack(editedSong, cursor.track, originalRow, isBassClefNote(instrumentOctave, note), noteEventAtCursor.startTick);
+                editedSong = addNoteToTrack(editedSong, cursor.track, newNote, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
 
                 const newEvent = findNoteEventAtTick(editedSong, cursor.track, cursor.tick);
-                editedCursor.noteGroupIndex = newEvent.notes.indexOf(note);
+                editedCursor.noteGroupIndex = newEvent.notes.findIndex(n => n.note === newNote.note);
 
-                playNoteAsync(note, instrument, tickToMs(editedSong.beatsPerMinute, editedSong.ticksPerBeat, newEvent.endTick - newEvent.startTick));
-            }
+                playNoteAsync(newNote.note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));            }
             break;
 
         case "ArrowLeft":
@@ -348,6 +388,46 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             }
             else {
                 startPlaybackAsync(song, ctrlPressed);
+            }
+            break;
+        case "j":
+        case "J":
+            if (song.tracks[cursor.track].drums) break;
+
+            if (noteEventAtCursor) {
+                event.preventDefault();
+                const existingNote = noteEventAtCursor.notes[editedCursor.noteGroupIndex]
+
+                const minNote = instrument.octave * 12 - 20;
+                const maxNote = instrument.octave * 12 + 20;
+
+                const row = noteToRow(instrumentOctave, existingNote);
+                const tick = noteEventAtCursor.startTick;
+                const bass = isBassClefNote(instrumentOctave, existingNote);
+
+                editedSong = removeNoteAtRowFromTrack(editedSong, editedCursor.track, row, bass, tick);
+
+                let newSpelling: "normal" | "sharp" | "flat";
+                if (existingNote.enharmonicSpelling === "normal" && existingNote.note < maxNote) {
+                    newSpelling = "sharp";
+                }
+                else if (existingNote.enharmonicSpelling === "sharp" && existingNote.note > minNote || existingNote.note === maxNote) {
+                    newSpelling = "flat"
+                }
+                else {
+                    newSpelling = "normal"
+                }
+                const newNote = rowToNote(instrument.octave, row, bass, newSpelling)
+
+                editedSong = addNoteToTrack(
+                    editedSong,
+                    editedCursor.track,
+                    newNote,
+                    noteEventAtCursor.startTick,
+                    noteEventAtCursor.endTick
+                );
+
+                playNoteAsync(newNote.note, instrument, tickToMs(editedSong.beatsPerMinute, editedSong.ticksPerBeat, cursor.gridTicks));
             }
             break;
         default:

@@ -272,7 +272,7 @@ function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(
         .then(res => {
             if (pxt.appTarget.compile.switches.time) {
                 pxt.log(`Worker perf: ${op} ${Date.now() - startTm}ms`);
-                if (res.times) console.log(res.times);
+                if (res.times) pxt.debug(res.times);
             }
             pxt.debug("worker op done: " + op);
             return res;
