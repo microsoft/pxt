@@ -139,7 +139,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         if(failedResults.length == 0) {
             tutorialStepNext();
         } else {
-            pxt.tickEvent("codevalidation.errordetected", {
+            pxt.tickEvent("codevalidation.stopnext", {
               tutorial: tutorialId,
               step: currentStep,
               errorCount: failedResults.length,
