@@ -23,14 +23,14 @@ export function GetValidator(metadata: CodeValidatorMetadata): CodeValidator {
 }
 
 export function PopulateValidatorCache(metadata: CodeValidationConfig): pxt.Map<CodeValidator>{
-    if(!metadata?.validatorsMetadata) {
+    if (!metadata?.validatorsMetadata) {
         return null;
     }
 
     metadata.validators = {};
     metadata.validatorsMetadata.forEach(v => {
         const validator = GetValidator(v);
-        if(validator) {
+        if (validator) {
             metadata.validators[v.validatorType] = validator;
         }
     });
@@ -51,7 +51,7 @@ abstract class CodeValidatorBase implements CodeValidator {
 
         const result = this.executeInternal(options);
 
-        if(!result) {
+        if (!result) {
             pxt.tickEvent(`codevalidation.detectederror`, {
                 validator: this.name,
                 tutorial: options.tutorialOptions?.tutorial,
@@ -93,7 +93,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
             userBlocks.forEach(b => userBlocksEnabledByType.set(b.type, userBlocksEnabledByType.get(b.type) || b.isEnabled()));
 
             const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
-            if(!allHighlightedBlocks) {
+            if (!allHighlightedBlocks) {
                 return defaultResult;
             }
 
@@ -107,7 +107,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
                 if (isEnabled === undefined) {
                     // user did not use a specific block
                     missingBlocks.push(tutorialBlockKey);
-                } else if(!isEnabled) {
+                } else if (!isEnabled) {
                     disabledBlocks.push(tutorialBlockKey);
                 }
             }

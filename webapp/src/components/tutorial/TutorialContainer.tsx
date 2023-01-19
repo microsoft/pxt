@@ -116,7 +116,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
                                     ?? PopulateValidatorCache(currentStepInfo.localValidationConfig);
 
         let validators: pxt.Map<CodeValidator> = {}
-        if(localValidators) {
+        if (localValidators) {
             Object.entries(localValidators).forEach(v => validators[v[0]] = v[1]);
         }
         if (globalValidators) {
@@ -130,13 +130,13 @@ export function TutorialContainer(props: TutorialContainerProps) {
         let failedResults: CodeValidationResult[] = [];
         for(let validator of Object.values(validators)) {
             let result = await validator?.execute({parent: props.parent, tutorialOptions: props.tutorialOptions});
-            if(result && !result.isValid) {
+            if (result && !result.isValid) {
                 failedResults.push(result);
             }
         }
 
         setValidationFailures(failedResults);
-        if(failedResults.length == 0) {
+        if (failedResults.length == 0) {
             tutorialStepNext();
         } else {
             pxt.tickEvent("codevalidation.stopnext", {
@@ -167,7 +167,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         // Only validate if we're moving to the next step.
         // If going backwards, user could be trying to fix something from a previous step and this message could be annoying/confusing.
         // If going forwards multiple steps, then the user has fully skipped entire steps, so validation doesn't make much sense.
-        if(step == currentStep+1) {
+        if (step == currentStep+1) {
             validateTutorialStep();
         } else {
             setCurrentStep(step);
@@ -177,7 +177,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const tutorialStepNext = () => {
         const step = Math.min(currentStep + 1, props.steps.length - 1);
         pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: isModal ? 1 : 0, validationErrors: validationFailures?.length ?? 0 }, { interactiveConsent: true });
-        if(validationFailures.length > 0) {
+        if (validationFailures.length > 0) {
             setValidationFailures([]);
         }
         setCurrentStep(step);
