@@ -1,6 +1,6 @@
 import { Reactions } from "../types/reactions";
 import { sendReactionAsync } from "../epics";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import ReactionsIcon from "./icons/ReactionsIcon";
 import { Button } from "react-common/components/controls/Button";
 import Popup from "./Popup";
@@ -9,11 +9,19 @@ import { AppStateContext } from "../state/AppStateContext";
 export default function Render() {
     const { state } = useContext(AppStateContext);
     const [showReactionPicker, setShowReactionPicker] = useState(false);
+    const reactionButtonsRef = useRef<Element | null>(null);
+    const setReactionsButtonRef = useCallback((el: Element | null) => {
+        reactionButtonsRef.current = el;
+    }, []);
     const { gameState } = state;
     const reactionIconOverrides = gameState?.reactionIconOverrides;
 
     const onReactionClick = async (index: number) => {
         await sendReactionAsync(index);
+    };
+
+    const onReactionsButtonRef = (ref: HTMLButtonElement) => {
+        setReactionsButtonRef(ref);
     };
 
     const buttonLabel = () => (
@@ -53,7 +61,10 @@ export default function Render() {
             <Popup
                 className="tw-absolute tw-translate-y-[-120%]"
                 visible={showReactionPicker}
-                onClickedOutside={() => setShowReactionPicker(false)}
+                ignoreRefs={[reactionButtonsRef]}
+                onClickedOutside={() => {
+                    setShowReactionPicker(false);
+                }}
             >
                 <div className="tw-flex tw-flex-col tw-bg-white tw-drop-shadow-xl tw-rounded-md tw-border-2 tw-border-gray-100">
                     <div className="tw-flex tw-flex-row tw-gap-3 tw-p-2 tw-pb-3 tw-pr-3">
@@ -106,6 +117,7 @@ export default function Render() {
                     }
                     setShowReactionPicker(toggled);
                 }}
+                buttonRef={onReactionsButtonRef}
             />
         </div>
     );
