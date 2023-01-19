@@ -11,6 +11,7 @@ import { SocialButton } from "./SocialButton";
 import { Checkbox } from "../controls/Checkbox";
 import { SimRecorder } from "./ThumbnailRecorder";
 import { MultiplayerConfirmation } from "./MultiplayerConfirmation";
+import { addGameToKioskAsync } from "./Kiosk";
 
 export interface ShareInfoProps {
     projectName: string;
@@ -49,6 +50,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ embedState, setEmbedState ] = React.useState<"none" | "code" | "editor" | "simulator">("none");
     const [ showQRCode, setShowQRCode ] = React.useState(false);
     const [ copySuccessful, setCopySuccessful ] = React.useState(false);
+    const [ kioskSubmitSuccessful, setKioskSubmitSuccessful ] = React.useState(false);
+    const [ kioskState, setKioskState ] = React.useState(false);
     const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn || anonymousShareByDefault);
     const [ isShowingMultiConfirmation, setIsShowingMultiConfirmation ] = React.useState(false);
 
@@ -56,6 +59,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const showDescription = shareState !== "publish";
     let qrCodeButtonRef: HTMLButtonElement;
     let inputRef: HTMLInputElement;
+    let kioskInputRef: HTMLInputElement;
 
     React.useEffect(() => {
         setThumbnailUri(screenshotUri)
@@ -100,14 +104,52 @@ export const ShareInfo = (props: ShareInfoProps) => {
         setCopySuccessful(false);
     }
 
+    const handleKioskSubmitBlur = () => {
+        setKioskSubmitSuccessful(false);
+    }
+
+    const handleKioskSubmitClick = async () => {
+        const gameId = pxt.Cloud.parseScriptId(shareData.url);
+        if (kioskInputRef?.value) {
+            const validKioskId = /^[a-zA-Z0-9]{6}$/.exec(kioskInputRef.value)?.[0];
+            if (validKioskId) {
+                setKioskSubmitSuccessful(true);
+                try {
+                    await addGameToKioskAsync(validKioskId, gameId);
+                } catch (error) {
+                    pxt.log(error.message);
+                    //TODO: give some feedback to the user, no kiosk exists...
+                }
+            }
+        }
+    }
+
     const handleEmbedClick = () => {
         if (embedState === "none") {
             pxt.tickEvent(`share.embed`);
             setShowQRCode(false);
+            setKioskState(false);
             setEmbedState("code");
         } else {
             setEmbedState("none");
         }
+    }
+
+    const handleKioskClick = () => {
+        if (!kioskState) {
+            pxt.tickEvent(`share.kiosk`);
+            setEmbedState("none");
+            setShowQRCode(false);
+            setKioskState(true);
+        } else {
+            setKioskState(false);
+        }
+    }
+
+    const handleKioskHelpClick = () => {
+        pxt.log("this will lead the user to documentation");
+        const kioskDocumentationUrl = "https://arcade.makecode.com/developer/kiosk";
+        window.open(kioskDocumentationUrl, "_blank");
     }
 
     const handleQRCodeClick = () => {
@@ -115,6 +157,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         if (!showQRCode) {
             setEmbedState("none");
             setShowQRCode(true);
+            setKioskState(false);
         } else {
             setShowQRCode(false);
         }
@@ -209,6 +252,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const handleInputRef = (ref: HTMLInputElement) => {
         if (ref) inputRef = ref;
+    }
+
+    const handleKioskInputRef = (ref: HTMLInputElement) => {
+        if (ref) kioskInputRef = ref;
     }
 
     const handleAnonymousShareClick = (newValue: boolean) => {
@@ -311,6 +358,13 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             </div>
                             <div className="project-share-actions">
                                 <div className="project-share-social">
+                                    {
+                                        pxt.appTarget?.appTheme?.shareToKiosk &&
+                                            <Button className="square-button gray mobile-portrait-hidden"
+                                            title={lf("Share to MakeCode Arcade Kiosk")}
+                                            leftIcon={"xicon kiosk"}
+                                            onClick={handleKioskClick} />
+                                    }
                                     <Button className="square-button gray embed mobile-portrait-hidden"
                                         title={lf("Show embed code")}
                                         leftIcon="fas fa-code"
@@ -361,6 +415,31 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             rows={5}
                             initialValue={shareData?.embed[embedState]} />
                     </div>}
+                    {kioskState &&
+                        <div>
+                            <div className="project-share-label">
+                                {lf("Enter Kiosk Code")}
+                                <Button className="link-button kiosk"
+                                        title={lf("Learn more about Kiosk")}
+                                        leftIcon="far fa-question-circle"
+                                        onClick={handleKioskHelpClick} />
+                            </div>
+                            <div className="common-input-attached-button">
+                                <Input
+                                    handleInputRef={handleKioskInputRef}
+                                    ariaDescribedBy="share-input-title"
+                                    preserveValueOnBlur={true}
+                                    placeholder="A12B3C"
+                                />
+                                <Button className={kioskSubmitSuccessful ? "green" : "primary"}
+                                    title={lf("Submit Kiosk Code")}
+                                    label={kioskSubmitSuccessful ? lf("Submitted!") : lf("Submit")}
+                                    onClick={handleKioskSubmitClick}
+                                    onBlur={handleKioskSubmitBlur} />
+                            </div>
+                        </div>
+
+                    }
                 </>}
                 {shareState === "gifrecord" && <ThumbnailRecorder
                     initialUri={thumbnailUri}
