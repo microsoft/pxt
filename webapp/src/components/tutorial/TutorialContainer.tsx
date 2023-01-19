@@ -110,26 +110,33 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
     const validateTutorialStep = async () => {
-        const globalValidators = tutorialOptions.globalValidationConfig?.validators
-                                    ?? PopulateValidatorCache(tutorialOptions.globalValidationConfig);
-        const localValidators = currentStepInfo.localValidationConfig?.validators
-                                    ?? PopulateValidatorCache(currentStepInfo.localValidationConfig);
+        const globalValidators =
+            tutorialOptions.globalValidationConfig?.validators ??
+            PopulateValidatorCache(tutorialOptions.globalValidationConfig);
+        const localValidators =
+            currentStepInfo.localValidationConfig?.validators ??
+            PopulateValidatorCache(currentStepInfo.localValidationConfig);
 
-        let validators: pxt.Map<CodeValidator> = {}
+        let validators: pxt.Map<CodeValidator> = {};
         if (localValidators) {
-            Object.entries(localValidators).forEach(v => validators[v[0]] = v[1]);
+            Object.entries(localValidators).forEach(
+                (v) => (validators[v[0]] = v[1])
+            );
         }
         if (globalValidators) {
-          Object.entries(globalValidators).forEach(v => {
-            if (!validators[v[0]]) {
-              validators[v[0]] = v[1];
-            }
-          });
+            Object.entries(globalValidators).forEach((v) => {
+                if (!validators[v[0]]) {
+                    validators[v[0]] = v[1];
+                }
+            });
         }
 
         let failedResults: CodeValidationResult[] = [];
-        for(let validator of Object.values(validators)) {
-            let result = await validator?.execute({parent: props.parent, tutorialOptions: props.tutorialOptions});
+        for (let validator of Object.values(validators)) {
+            let result = await validator?.execute({
+                parent: props.parent,
+                tutorialOptions: props.tutorialOptions,
+            });
             if (result && !result.isValid) {
                 failedResults.push(result);
             }
@@ -140,27 +147,27 @@ export function TutorialContainer(props: TutorialContainerProps) {
             tutorialStepNext();
         } else {
             pxt.tickEvent("codevalidation.stopnext", {
-              tutorial: tutorialId,
-              step: currentStep,
-              errorCount: failedResults.length,
+                tutorial: tutorialId,
+                step: currentStep,
+                errorCount: failedResults.length,
             });
         }
-    }
+    };
 
     const handleTutorialContinueAnyway = () => {
-      pxt.tickEvent("codevalidation.continueanyway", {
-        tutorial: tutorialId,
-        step: currentStep,
-      });
-      tutorialStepNext();
+        pxt.tickEvent("codevalidation.continueanyway", {
+            tutorial: tutorialId,
+            step: currentStep,
+        });
+        tutorialStepNext();
     };
 
     const handleTutorialClose = () => {
-      setValidationFailures([]);
-      pxt.tickEvent("codevalidation.popupclose", {
-        tutorial: tutorialId,
-        step: currentStep,
-      });
+        setValidationFailures([]);
+        pxt.tickEvent("codevalidation.popupclose", {
+            tutorial: tutorialId,
+            step: currentStep,
+        });
     };
 
     const handleStepCounterSetStep = (step: number) => {
