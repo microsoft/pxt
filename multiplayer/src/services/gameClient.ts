@@ -78,12 +78,12 @@ class GameClient {
     private sendMessage(msg: Protocol.Message | Buffer) {
         if (msg instanceof Buffer) {
             this.sock?.send(msg, {}, (err: any) => {
-                if (err) console.log("Error sending message", err);
+                if (err) pxt.log("Error sending message. " + err.toString());
             });
         } else {
             const payload = JSON.stringify(msg);
             this.sock?.send(payload, {}, (err: any) => {
-                if (err) console.log("Error sending message", err);
+                if (err) pxt.log("Error sending message. " + err.toString());
             });
         }
     }
@@ -178,7 +178,7 @@ class GameClient {
             });
             this.sock.binaryType = "arraybuffer";
             this.sock.on("open", () => {
-                console.log("socket opened");
+                pxt.debug("socket opened");
                 this.sock?.on("message", async payload => {
                     await this.recvMessageWithJoinTimeout(payload, () => {
                         clearTimeout(joinTimeout);
@@ -186,7 +186,7 @@ class GameClient {
                     });
                 });
                 this.sock?.on("close", () => {
-                    console.log("socket disconnected");
+                    pxt.debug("socket disconnected");
                     notifyGameDisconnected(this.gameOverReason);
                     clearTimeout(joinTimeout);
                     resolve();
@@ -312,7 +312,7 @@ class GameClient {
     }
 
     private async recvJoinedMessageAsync(msg: Protocol.JoinedMessage) {
-        console.log(
+        pxt.debug(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
         const { gameMode, gamePaused, shareCode, role } = msg;
@@ -326,24 +326,24 @@ class GameClient {
     }
 
     private async recvStartGameMessageAsync(msg: Protocol.StartGameMessage) {
-        console.log("Server said start game");
+        pxt.debug("Server said start game");
         await setGameModeAsync("playing", this.paused);
     }
 
     private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
-        console.log("Server sent presence");
+        pxt.debug("Server sent presence");
         await setPresenceAsync(msg.presence);
     }
 
     private async recvReactionMessageAsync(msg: Protocol.ReactionMessage) {
-        console.log("Server sent reaction");
+        pxt.debug("Server sent reaction");
         await setReactionAsync(msg.clientId!, msg.index);
     }
 
     private async recvPlayerJoinedMessageAsync(
         msg: Protocol.PlayerJoinedMessage
     ) {
-        console.log("Server sent player joined");
+        pxt.debug("Server sent player joined");
         if (this.clientRole === "host") {
             await this.sendCurrentScreenAsync(); // Workaround for server sometimes not sending the current screen to new players. Needs debugging.
         }
@@ -351,23 +351,23 @@ class GameClient {
     }
 
     private async recvPlayerLeftMessageAsync(msg: Protocol.PlayerLeftMessage) {
-        console.log("Server sent player joined");
+        pxt.debug("Server sent player joined");
         await playerLeftAsync(msg.clientId);
     }
 
     private async recvGameOverMessageAsync(msg: Protocol.GameOverMessage) {
-        console.log("Server sent game over");
+        pxt.debug("Server sent game over");
         await gameOverAsync(msg.reason);
     }
 
     private async recvPauseGameMessageAsync(msg: Protocol.PauseGameMessage) {
-        console.log("Server sent pause game");
+        pxt.debug("Server sent pause game");
         this.paused = true;
         await epic_pauseGameAsync();
     }
 
     private async recvResumeGameMessageAsync(msg: Protocol.ResumeGameMessage) {
-        console.log("Server sent resume game");
+        pxt.debug("Server sent resume game");
         this.paused = false;
         await epic_resumeGameAsync();
     }
@@ -380,7 +380,7 @@ class GameClient {
         if (!isDelta) {
             // We must wait for the first non-delta screen to arrive before we can apply diffs.
             this.screen = screen;
-            //console.log("Received non-delta screen");
+            //pxt.debug("Received non-delta screen");
         } else if (this.screen) {
             // Apply delta to existing screen to get new screen
             xorInPlace(this.screen, screen);

@@ -32,7 +32,7 @@ export async function joinGameAsync(joinCode: string | undefined) {
         dispatch(connectingToast);
 
         const joinResult = await gameClient.joinGameAsync(joinCode);
-        console.log(joinResult);
+        pxt.debug(joinResult);
 
         if (joinResult.success) {
             dispatch(
@@ -56,8 +56,8 @@ export async function joinGameAsync(joinCode: string | undefined) {
                 throw new Error(`join http response: ${joinResult.statusCode}`);
             }
         }
-    } catch (e) {
-        console.log("error", e);
+    } catch (e: any) {
+        pxt.log(e.toString());
         dispatch(
             showToast({
                 type: "error",
