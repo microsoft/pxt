@@ -592,7 +592,7 @@ const runSkillmapTests = () => {
     if(isWin32) {
         command = path.resolve("node_modules/.bin/mocha.cmd") + " ./built/tests/tests/skillmapParserTests.js";
     } else {
-        command = "./node_modules/.bin/mocha skillmapParserTests.js"; 
+        command = "./node_modules/.bin/mocha ./built/tests/tests/skillmapParserTests.js"; 
     }
     return exec(command, true);
 }
