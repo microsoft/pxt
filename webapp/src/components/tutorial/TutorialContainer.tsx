@@ -176,7 +176,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const tutorialStepNext = () => {
         const step = Math.min(currentStep + 1, props.steps.length - 1);
-        pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: isModal ? 1 : 0 }, { interactiveConsent: true });
+        pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: isModal ? 1 : 0, validationErrors: validationFailures?.length ?? 0 }, { interactiveConsent: true });
         if(validationFailures.length > 0) {
             setValidationFailures([]);
         }
