@@ -146,6 +146,13 @@ export const ShareInfo = (props: ShareInfoProps) => {
         }
     }
 
+    const handleKioskHelpClick = () => {
+        pxt.log("this will lead the user to documentation");
+        // TODO: have this actually link to the documentation when it's done
+        //const kioskDocumentationUrl = ....
+        // window.open(multiplayerHostUrl, "_blank");
+    }
+
     const handleQRCodeClick = () => {
         pxt.tickEvent('share.qrtoggle');
         if (!showQRCode) {
@@ -410,6 +417,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         <div>
                             <div className="project-share-label">
                                 {lf("Enter Kiosk Code")}
+                                <Button className="link-button kiosk"
+                                        title={lf("Learn more about Kiosk")}
+                                        leftIcon="far fa-question-circle"
+                                        onClick={handleKioskHelpClick} />
                             </div>
                             <div className="common-input-attached-button">
                                 <Input
