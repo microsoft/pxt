@@ -64,6 +64,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
 
     async executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
         let missingBlocks: string[] = [];
+        let disabledBlocks: string[] = [];
         const {parent, tutorialOptions} = options;
         const stepInfo = tutorialOptions.tutorialStepInfo
             ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep]
@@ -75,8 +76,8 @@ export class BlocksExistValidator extends CodeValidatorBase {
         // As such, it felt prudent to still require this flag so tutorial authors don't have to go back and add it later on.
         if (this.useHintHighlight) {
             const userBlocks = Blockly.getMainWorkspace()?.getAllBlocks(false /* ordered */);
-            const enabledBlocks = userBlocks?.filter(b => b.isEnabled()) ?? []; // TODO thsparks : Customize hint if all are present but not enabled (or vice versa).
-            const userBlocksByType: Set<string> = new Set<string>(enabledBlocks.map((b) => b.type));
+            const userBlocksEnabledByType = new Map<string, boolean>(); // Key = type, value = enabled
+            userBlocks.forEach(b => userBlocksEnabledByType.set(b.type, userBlocksEnabledByType.get(b.type) || b.isEnabled()));
 
             const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
             if(!allHighlightedBlocks) {
@@ -89,17 +90,33 @@ export class BlocksExistValidator extends CodeValidatorBase {
 
             for (let i: number = 0; i < highlightedBlockKeys.length; i++) {
                 let tutorialBlockKey = highlightedBlockKeys[i];
-                if (!userBlocksByType.has(tutorialBlockKey)) {
+                const isEnabled = userBlocksEnabledByType.get(tutorialBlockKey);
+                if (isEnabled === undefined) {
                     // user did not use a specific block
                     missingBlocks.push(tutorialBlockKey);
+                } else if(!isEnabled) {
+                    disabledBlocks.push(tutorialBlockKey);
                 }
             }
         }
 
-        const isValid = missingBlocks.length == 0;
+        let isValid = true;
+        let errorDescription: string;
+
+        if (missingBlocks.length > 0 && disabledBlocks.length > 0) {
+            isValid = false; 
+            errorDescription = lf("Make sure you see blocks that look like this and that they're connected to the rest of your code.")
+        } else if (missingBlocks.length > 0) {
+            isValid = false;
+            errorDescription = lf("Make sure you see blocks that look like this in your workspace.");
+        } else if (disabledBlocks.length > 0) {
+            isValid = false;
+            errorDescription = lf("Make sure your blocks are connected to the rest of your code like this.");
+        }
+
         const blockImages = stepInfo?.hintContentMd ? (<div>
             <strong>{lf("Looks like you're missing some blocks.")}</strong>
-            <p>{lf("Make sure you see blocks that look like this and that they're connected to the rest of your code.")}</p>
+            <p>{errorDescription}</p>
             <MarkedContent className="no-select" markdown={stepInfo.hintContentMd} parent={parent} />
         </div>) : "";
 
