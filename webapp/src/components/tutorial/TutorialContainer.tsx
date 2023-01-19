@@ -138,8 +138,30 @@ export function TutorialContainer(props: TutorialContainerProps) {
         setValidationFailures(failedResults);
         if(failedResults.length == 0) {
             tutorialStepNext();
+        } else {
+            pxt.tickEvent("codevalidation.errordetected", {
+              tutorial: tutorialId,
+              step: currentStep,
+              errorCount: failedResults.length,
+            });
         }
     }
+
+    const handleTutorialContinueAnyway = () => {
+      pxt.tickEvent("codevalidation.continueanyway", {
+        tutorial: tutorialId,
+        step: currentStep,
+      });
+      tutorialStepNext();
+    };
+
+    const handleTutorialClose = () => {
+      setValidationFailures([]);
+      pxt.tickEvent("codevalidation.popupclose", {
+        tutorial: tutorialId,
+        step: currentStep,
+      });
+    };
 
     const handleStepCounterSetStep = (step: number) => {
         // Only validate if we're moving to the next step.
@@ -220,7 +242,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             </div>
         </div>
         {validationFailures.length > 0 &&
-            <TutorialValidationErrorMessage onContinueClicked={tutorialStepNext} onReturnClicked={() => setValidationFailures([])} validationFailures={validationFailures}/>}
+            <TutorialValidationErrorMessage onContinueClicked={handleTutorialContinueAnyway} onReturnClicked={handleTutorialClose} validationFailures={validationFailures} tutorialId={tutorialId} currentStep={currentStep} />}
         {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode &&
             <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}

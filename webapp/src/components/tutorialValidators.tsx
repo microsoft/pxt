@@ -40,6 +40,7 @@ export function PopulateValidatorCache(metadata: CodeValidationConfig): pxt.Map<
 
 abstract class CodeValidatorBase implements CodeValidator {
     enabled: boolean;
+    abstract name: string;
 
     constructor(properties: {[index: string]: string}) {
         this.enabled = properties["enabled"]?.toLowerCase() != "false"; // Default to true
@@ -48,13 +49,25 @@ abstract class CodeValidatorBase implements CodeValidator {
     execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
         if (!this.enabled) return Promise.resolve(defaultResult);
 
-        return this.executeInternal(options);
+        const result = this.executeInternal(options);
+
+        if(!result) {
+            pxt.tickEvent(`codevalidation.detectederror`, {
+                validator: this.name,
+                tutorial: options.tutorialOptions?.tutorial,
+                step: options.tutorialOptions?.tutorialStep,
+            });
+        }
+
+        return result;
     }
 
     protected abstract executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
 }
 
 export class BlocksExistValidator extends CodeValidatorBase {
+    name = "blocksexistvalidator";
+
     private useHintHighlight = false;
 
     constructor(properties: { [index: string]: string }) {

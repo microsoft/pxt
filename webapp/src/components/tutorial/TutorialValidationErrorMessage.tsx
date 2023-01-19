@@ -7,6 +7,8 @@ interface TutorialValidationErrorMessageProps {
   onContinueClicked: () => void;
   onReturnClicked: () => void;
   validationFailures: CodeValidationResult[];
+  tutorialId: string;
+  currentStep: number;
 }
 
 export function TutorialValidationErrorMessage(props: TutorialValidationErrorMessageProps) {
@@ -14,7 +16,10 @@ export function TutorialValidationErrorMessage(props: TutorialValidationErrorMes
 
   const onShowHintClicked = () => {
     if (!showHint) {
-      pxt.tickEvent("codevalidation.showhint");
+      pxt.tickEvent("codevalidation.showhint", {
+        tutorial: props.tutorialId,
+        step: props.currentStep,
+      });
       setShowHint(true);
     }
   };
