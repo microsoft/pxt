@@ -110,10 +110,10 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
                 if (noteEvent.startTick === currentTick) {
                     for (const note of noteEvent.notes) {
                         if (track.drums) {
-                            playDrumAsync(track.drums[note], isCancelled);
+                            playDrumAsync(track.drums[note.note], isCancelled);
                         }
                         else {
-                            playNoteAsync(note, track.instrument, tickToMs(playbackState.song.beatsPerMinute, playbackState.song.ticksPerBeat, noteEvent.endTick - noteEvent.startTick), isCancelled);
+                            playNoteAsync(note.note, track.instrument, tickToMs(playbackState.song.beatsPerMinute, playbackState.song.ticksPerBeat, noteEvent.endTick - noteEvent.startTick), isCancelled);
                         }
                     }
                 }

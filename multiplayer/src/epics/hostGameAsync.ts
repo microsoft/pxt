@@ -30,7 +30,7 @@ export async function hostGameAsync(shareCode: string | undefined) {
         dispatch(connectingToast);
 
         const hostResult = await gameClient.hostGameAsync(shareCode);
-        console.log(hostResult);
+        pxt.debug(hostResult);
 
         if (hostResult.success) {
             dispatch(
@@ -46,8 +46,8 @@ export async function hostGameAsync(shareCode: string | undefined) {
         } else {
             throw new Error(`host http response: ${hostResult.statusCode}`);
         }
-    } catch (e) {
-        console.log("error", e);
+    } catch (e: any) {
+        pxt.log(e.toString());
         dispatch(
             showToast({
                 type: "error",

@@ -36,6 +36,10 @@ function enableAnalytics() {
 window.addEventListener("DOMContentLoaded", () => {
     const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 
+    pxt.options.debug = /dbg=1/i.test(window.location.href);
+    if (pxt.options.debug)
+        pxt.debug = console.debug;
+
     pxt.setAppTarget(bundle);
     pxt.setupWebConfig((window as any).pxtConfig || pxt.webConfig);
     // todo: handle this better?

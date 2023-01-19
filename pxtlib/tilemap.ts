@@ -17,6 +17,7 @@ namespace pxt {
         tags?: string[];
         blockIDs?: string[];
         temporaryInfo?: TemporaryAssetInfo;
+        package?: string;
     }
 
     export interface TemporaryAssetInfo {
@@ -987,6 +988,7 @@ namespace pxt {
                 const images = this.readImages(dep.parseJRes(), isProject);
 
                 for (const image of images) {
+                    image.meta.package = dep.id;
                     if (image.type === AssetType.Tile) {
                         if (isProject) {
                             this.state.tiles.add(image);
@@ -1029,11 +1031,13 @@ namespace pxt {
                     id: tm.id,
                     meta: {
                         // For tilemaps, use the id as the display name for backwards compat
-                        displayName: tm.displayName || tm.id
+                        displayName: tm.displayName || tm.id,
+                        package: pack.id
                     },
                     data: decodeTilemap(tm, id => this.resolveTile(id))
                 })
             }
+
             this.committedState = this.cloneState();
             this.undoStack = [];
             this.redoStack = [];

@@ -5,7 +5,7 @@ import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAs
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove, deleteSelectedNotes, applySelection } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove, deleteSelectedNotes, applySelection, removeNoteAtRowFromTrack, isBassClefNote, doesSongUseBassClef } from "./utils";
 
 export interface MusicEditorProps {
     asset: pxt.Song;
@@ -41,6 +41,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
     const [selection, setSelection] = React.useState<WorkspaceSelectionState | undefined>();
     const [cursor, setCursor] = React.useState<CursorState>();
     const [cursorVisible, setCursorVisible] = React.useState(false);
+    const [bassClefVisible, setBassClefVisible] = React.useState(doesSongUseBassClef(asset.song));
 
     React.useEffect(() => {
         return () => {
@@ -184,17 +185,70 @@ export const MusicEditor = (props: MusicEditorProps) => {
         setCursorVisible(false);
         const track = currentSong.tracks[selectedTrack];
         const instrument = track.instrument;
-        const note = isDrumTrack ? coord.row : rowToNote(instrument.octave, coord.row, coord.isBassClef, ctrlIsPressed);
 
         const existingEvent = findPreviousNoteEvent(currentSong, selectedTrack, coord.tick);
 
         clearSelection();
         setCursorTick(coord.tick);
 
-        if (existingEvent?.startTick === coord.tick && existingEvent.notes.indexOf(note) !== -1) {
-            updateSong(unselectAllNotes(removeNoteFromTrack(currentSong, selectedTrack, note, coord.tick)), true);
+        const isAtCoord = (note: pxt.assets.music.Note) => {
+            if (isDrumTrack) return note.note === coord.row;
+            const isBassClef = isBassClefNote(instrument.octave, note);
+
+            if (isBassClef !== coord.isBassClef) return false;
+
+            return noteToRow(instrument.octave, note) === coord.row;
+        }
+
+        if (existingEvent?.startTick === coord.tick && existingEvent.notes.some(isAtCoord)) {
+            const unselected = unselectAllNotes(currentSong);
+
+            if (ctrlIsPressed && !isDrumTrack) {
+                // Change the enharmonic spelling
+                const existingNote = existingEvent.notes.find(isAtCoord);
+
+                const minNote = instrument.octave * 12 - 20;
+                const maxNote = instrument.octave * 12 + 20;
+
+                const removed = removeNoteAtRowFromTrack(unselected, selectedTrack, coord.row, coord.isBassClef, coord.tick);
+
+                let newSpelling: "normal" | "sharp" | "flat";
+                if (existingNote.enharmonicSpelling === "normal" && existingNote.note < maxNote) {
+                    newSpelling = "sharp";
+                }
+                else if (existingNote.enharmonicSpelling === "sharp" && existingNote.note > minNote || existingNote.note === maxNote) {
+                    newSpelling = "flat"
+                }
+                else {
+                    newSpelling = "normal"
+                }
+                const newNote = rowToNote(instrument.octave, coord.row, coord.isBassClef, newSpelling)
+
+                updateSong(
+                    addNoteToTrack(
+                        removed,
+                        selectedTrack,
+                        newNote,
+                        existingEvent.startTick,
+                        existingEvent.endTick
+                    ),
+                    true
+                );
+
+                playNoteAsync(newNote.note, instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, gridTicks))
+            }
+            else {
+                updateSong(
+                    removeNoteAtRowFromTrack(unselected, selectedTrack, coord.row, coord.isBassClef, coord.tick),
+                    true
+                );
+            }
         }
         else if (!eraserActive) {
+            const note: pxt.assets.music.Note = isDrumTrack ?
+                { note: coord.row, enharmonicSpelling: "normal" } :
+                rowToNote(instrument.octave, coord.row, coord.isBassClef);
+
             const maxTick = currentSong.beatsPerMeasure * currentSong.ticksPerBeat * currentSong.measures;
 
             if (coord.tick === maxTick) return;
@@ -203,10 +257,10 @@ export const MusicEditor = (props: MusicEditorProps) => {
             updateSong(unselectAllNotes(addNoteToTrack(currentSong, selectedTrack, note, coord.tick, coord.tick + noteLength)), true)
 
             if (isDrumTrack) {
-                playDrumAsync(track.drums[note]);
+                playDrumAsync(track.drums[coord.row]);
             }
             else {
-                playNoteAsync(note, instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, gridTicks))
+                playNoteAsync(note.note, instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, gridTicks))
             }
         }
         else {
@@ -219,15 +273,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
                 const existingEvent = findPreviousNoteEvent(currentSong, i, coord.tick);
 
                 if (existingEvent?.startTick === coord.tick || existingEvent?.endTick > coord.tick) {
-                    if (existingEvent.notes.indexOf(note) !== -1) {
-                        updateSong(removeNoteFromTrack(currentSong, i, note, existingEvent.startTick), false);
-                    }
-
-                    if (track.drums) continue;
-
-                    const sharp = rowToNote(instrument.octave, coord.row, coord.isBassClef, true);
-                    if (existingEvent.notes.indexOf(sharp) !== -1) {
-                        updateSong(removeNoteFromTrack(currentSong, i, sharp, existingEvent.startTick), false);
+                    if (existingEvent.notes.some(isAtCoord)) {
+                        updateSong(removeNoteAtRowFromTrack(currentSong, i, coord.row, coord.isBassClef, existingEvent.startTick), false);
                     }
                 }
             }
@@ -303,19 +350,20 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
                 const track = currentSong.tracks[i];
                 const instrument = track.instrument;
-                const note = !!track.drums ? end.row : rowToNote(instrument.octave, end.row, end.isBassClef);
                 const existingEvent = findPreviousNoteEvent(currentSong, i, end.tick);
 
+                const isAtCoord = (note: pxt.assets.music.Note) => {
+                    if (isDrumTrack) return note.note === end.row;
+                    const isBassClef = isBassClefNote(instrument.octave, note);
+
+                    if (isBassClef !== end.isBassClef) return false;
+
+                    return noteToRow(instrument.octave, note) === end.row;
+                }
+
                 if (existingEvent?.startTick === end.tick || existingEvent?.endTick > end.tick) {
-                    if (existingEvent.notes.indexOf(note) !== -1) {
-                        updateSong(removeNoteFromTrack(currentSong, i, note, existingEvent.startTick), false);
-                    }
-
-                    if (track.drums) continue;
-
-                    const sharp = rowToNote(instrument.octave, end.row, end.isBassClef, true);
-                    if (existingEvent.notes.indexOf(sharp) !== -1) {
-                        updateSong(removeNoteFromTrack(currentSong, i, sharp, existingEvent.startTick), false);
+                    if (existingEvent.notes.some(isAtCoord)) {
+                        updateSong(removeNoteAtRowFromTrack(currentSong, i, end.row, end.isBassClef, existingEvent.startTick), false);
                     }
                 }
             }
@@ -363,7 +411,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         if (!isDrumTrack && event && start.tick >= event.startTick && start.tick < event.endTick) {
             let isOnRow = false;
             for (const note of event.notes) {
-                if (noteToRow(currentSong.tracks[selectedTrack].instrument.octave, note, start.isBassClef) === start.row) {
+                if (noteToRow(currentSong.tracks[selectedTrack].instrument.octave, note) === start.row) {
                     isOnRow = true;
                     break;
                 }
@@ -416,7 +464,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             playDrumAsync(t.drums[0]);
         }
         else {
-            playNoteAsync(rowToNote(t.instrument.octave, 6, false), t.instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, currentSong.ticksPerBeat / 2));
+            playNoteAsync(rowToNote(t.instrument.octave, 6, false).note, t.instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, currentSong.ticksPerBeat / 2));
         }
         setSelectedTrack(newTrack);
         if (cursor) setCursor({ ...cursor, track: newTrack });
@@ -507,7 +555,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onWorkspaceDrag={onNoteDrag}
             gridTicks={gridTicks}
             hideUnselectedTracks={hideTracksActive}
-            showBassClef={true}
+            showBassClef={bassClefVisible}
             selection={selection}
             cursor={cursorVisible ? cursor : undefined}
             onKeydown={onWorkspaceKeydown} />
@@ -517,6 +565,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onMeasuresChanged={onMeasuresChanged}
             onUndoClick={undo}
             onRedoClick={redo}
+            showBassClef={bassClefVisible}
+            onBassClefCheckboxClick={setBassClefVisible}
             hasUndo={!!undoStack.length}
             hasRedo={!!redoStack.length} />
         <EditControls

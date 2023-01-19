@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
+import { Checkbox } from "../../../../react-common/components/controls/Checkbox";
 import { Input } from "../../../../react-common/components/controls/Input";
 import { classList } from "../../../../react-common/components/util";
 import { addPlaybackStateListener, isLooping, isPlaying, removePlaybackStateListener, setLooping, startPlaybackAsync, stopPlayback } from "./playback";
@@ -8,6 +9,8 @@ export interface PlaybackControlsProps {
     song: pxt.assets.music.Song;
     onTempoChange: (newTempo: number) => void;
     onMeasuresChanged: (newMeasures: number) => void;
+    showBassClef: boolean;
+    onBassClefCheckboxClick: (newValue: boolean) => void;
 
     hasUndo: boolean;
     hasRedo: boolean;
@@ -26,6 +29,8 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
         onRedoClick,
         hasUndo,
         hasRedo,
+        showBassClef,
+        onBassClefCheckboxClick
     } = props;
 
     const [state, setState] = React.useState<PlaybackState>("stop");
@@ -110,8 +115,14 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
             label={lf("Tempo:")}
             initialValue={song.beatsPerMinute.toString()}
             onBlur={handleTempoChange}
-            onEnterKey={handleTempoChange}
-            />
+            onEnterKey={handleTempoChange} />
+        <div className="spacer"/>
+        <Checkbox
+            className="music-editor-label"
+            id="show-bass-clef"
+            label={lf("Show bass clef")}
+            isChecked={showBassClef}
+            onChange={onBassClefCheckboxClick} />
         <div className="music-undo-redo common-button-group">
             <Button
                 className="square-button purple"

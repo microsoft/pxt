@@ -15,14 +15,14 @@ export default function Render(
 
     const actions: ModalAction[] = [
         {
-            label: confirmLabel ?? lf("Confirm"),
-            className: "primary",
-            onClick: onConfirm,
-        },
-        {
             label: cancelLabel ?? lf("Cancel"),
             className: "primary inverted",
             onClick: onCancel,
+        },
+        {
+            label: confirmLabel ?? lf("Confirm"),
+            className: "primary",
+            onClick: onConfirm,
         },
     ];
 
