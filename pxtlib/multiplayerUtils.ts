@@ -1,4 +1,11 @@
 namespace pxt.multiplayer {
+    enum MultiplayerDevBackendType {
+        PROD,
+        STAGING,
+        LOCAL
+    }
+    let MULTIPLAYER_DEV_BACKEND_TYPE = MultiplayerDevBackendType.STAGING;
+
     export const SHORT_LINKS = {
         PROD: "https://aka.ms/a9",
         PROD_BETA: "https://aka.ms/a9b",
@@ -9,12 +16,12 @@ namespace pxt.multiplayer {
 
     export const SHORT_LINK = () => {
         if (pxt.BrowserUtils.isLocalHostDev()) {
-            switch (pxt.cloud.devBackendType()) {
-                case "prod":
+            switch (MULTIPLAYER_DEV_BACKEND_TYPE) {
+                case MultiplayerDevBackendType.PROD:
                     return SHORT_LINKS.PROD_BETA;
-                case "staging":
+                case MultiplayerDevBackendType.STAGING:
                     return SHORT_LINKS.STAGING_BETA;
-                case "localhost":
+                case MultiplayerDevBackendType.LOCAL:
                     return SHORT_LINKS.LOCAL;
             }
         }
