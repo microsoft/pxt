@@ -126,13 +126,13 @@ type SetPresenceIconOverride = ActionBase & {
     type: "SET_PRESENCE_ICON_OVERRIDE";
     slot: number;
     icon: string | undefined;
-}
+};
 
 type SetReactionIconOverride = ActionBase & {
     type: "SET_REACTION_ICON_OVERRIDE";
     slot: number;
     icon: string | undefined;
-}
+};
 
 /**
  * Union of all actions
@@ -297,14 +297,20 @@ export const setTargetConfig = (trgCfg: pxt.TargetConfig): SetTargetConfig => ({
     targetConfig: JSON.parse(JSON.stringify(trgCfg)),
 });
 
-export const setPresenceIconOverride = (slot: number, icon?: string): SetPresenceIconOverride => ({
+export const setPresenceIconOverride = (
+    slot: number,
+    icon?: string
+): SetPresenceIconOverride => ({
     type: "SET_PRESENCE_ICON_OVERRIDE",
     slot,
-    icon
+    icon,
 });
 
-export const setReactionIconOverride = (slot: number, icon?: string): SetReactionIconOverride => ({
+export const setReactionIconOverride = (
+    slot: number,
+    icon?: string
+): SetReactionIconOverride => ({
     type: "SET_REACTION_ICON_OVERRIDE",
     slot,
-    icon
+    icon,
 });
