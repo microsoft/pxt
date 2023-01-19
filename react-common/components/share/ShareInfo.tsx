@@ -150,7 +150,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         pxt.log("this will lead the user to documentation");
         // TODO: have this actually link to the documentation when it's done
         //const kioskDocumentationUrl = ....
-        // window.open(multiplayerHostUrl, "_blank");
+        // window.open(kioskDocumentationUrl, "_blank");
     }
 
     const handleQRCodeClick = () => {
@@ -359,10 +359,13 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             </div>
                             <div className="project-share-actions">
                                 <div className="project-share-social">
-                                <Button className="square-button gray mobile-portrait-hidden"
-                                        title={lf("Share to MakeCode Arcade Kiosk")}
-                                        leftIcon={"xicon kiosk"}
-                                        onClick={handleKioskClick} />
+                                    {
+                                        pxt.appTarget?.appTheme?.shareToKiosk &&
+                                            <Button className="square-button gray mobile-portrait-hidden"
+                                            title={lf("Share to MakeCode Arcade Kiosk")}
+                                            leftIcon={"xicon kiosk"}
+                                            onClick={handleKioskClick} />
+                                    }
                                     <Button className="square-button gray embed mobile-portrait-hidden"
                                         title={lf("Show embed code")}
                                         leftIcon="fas fa-code"
