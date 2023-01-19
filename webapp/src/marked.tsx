@@ -350,6 +350,18 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     pipButton.textContent = lf("Pop out video");
                     pipButton.ariaLabel = lf("Open video in picture-in-picture mode");
                     pipButton.title = pipButton.ariaLabel;
+                } else if (pxt.BrowserUtils.isFirefox()) {
+                    const pipInstructionButton = document.createElement("button");
+                    inlineVideo.parentElement.appendChild(pipInstructionButton);
+                    pipInstructionButton.addEventListener("click", () => {
+                        pxt.tickEvent("video.pip.firefoxHelp");
+                        window.open("/firefox-picture-in-picture", "_blank");
+                    });
+                    pipInstructionButton.addEventListener("keydown", e => fireClickOnEnter(e as any));
+                    pipInstructionButton.className = "common-button";
+                    pipInstructionButton.textContent = lf("Pop out video");
+                    pipInstructionButton.ariaLabel = lf("Instructions on how to open video in picture-in-picture mode");
+                    pipInstructionButton.title = pipInstructionButton.ariaLabel;
                 }
 
                 player.on(dashjs.MediaPlayer.events.PLAYBACK_STARTED,

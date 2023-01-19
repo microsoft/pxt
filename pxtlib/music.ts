@@ -42,9 +42,14 @@ namespace pxt.assets.music {
     }
 
     export interface NoteEvent {
-        notes: number[];
+        notes: Note[];
         startTick: number;
         endTick: number;
+    }
+
+    export interface Note {
+        note: number;
+        enharmonicSpelling: "normal" | "flat" | "sharp";
     }
 
     export interface DrumSoundStep {
@@ -354,7 +359,7 @@ namespace pxt.assets.music {
      *     notes byte length
      *     ...note events
      *
-     * instrument(27 bytes)
+     * instrument(28 bytes)
      *     0 waveform
      *     1 amp attack
      *     3 amp decay
@@ -370,6 +375,7 @@ namespace pxt.assets.music {
      *     22 amp lfo amp
      *     24 pitch lfo freq
      *     25 pitch lfo amp
+     *     27 octave
      *
      * drum(5 + 7 * steps bytes)
      *     0 steps
@@ -389,6 +395,12 @@ namespace pxt.assets.music {
      *     4 polyphony
      *     5...notes(1 byte each)
      *
+     * note (1 byte)
+     *     lower six bits = note - (instrumentOctave - 2) * 12
+     *     upper two bits are the enharmonic spelling:
+     *          0 = normal
+     *          1 = flat
+     *          2 = sharp
      */
 
     function encodeSong(song: Song) {
@@ -451,6 +463,7 @@ namespace pxt.assets.music {
         set16BitNumber(out, 22, instrument.ampLFO?.amplitude || 0)
         out[24] = instrument.pitchLFO?.frequency || 0
         set16BitNumber(out, 25, instrument.pitchLFO?.amplitude || 0);
+        out[27] = instrument.octave;
 
         return out;
     }
@@ -479,7 +492,8 @@ namespace pxt.assets.music {
             pitchLFO: {
                 frequency: buf[offset + 24],
                 amplitude: get16BitNumber(buf, 25)
-            }
+            },
+            octave: buf[offset + 27]
         }
     }
 
@@ -528,20 +542,20 @@ namespace pxt.assets.music {
         return res;
     }
 
-    function encodeNoteEvent(event: NoteEvent) {
+    function encodeNoteEvent(event: NoteEvent, instrumentOctave: number, isDrumTrack: boolean) {
         const out = new Uint8Array(5 + event.notes.length);
         set16BitNumber(out, 0, event.startTick);
         set16BitNumber(out, 2, event.endTick);
         out[4] = event.notes.length;
 
         for (let i = 0; i < event.notes.length; i++) {
-            out[5 + i] = event.notes[i];
+            out[5 + i] = encodeNote(event.notes[i], instrumentOctave, isDrumTrack);
         }
 
         return out;
     }
 
-    function decodeNoteEvent(buf: Uint8Array, offset: number): NoteEvent {
+    function decodeNoteEvent(buf: Uint8Array, offset: number, instrumentOctave: number, isDrumTrack: boolean): NoteEvent {
         const res: NoteEvent = {
             startTick: get16BitNumber(buf, offset),
             endTick: get16BitNumber(buf, offset + 2),
@@ -549,9 +563,43 @@ namespace pxt.assets.music {
         };
 
         for (let i = 0; i < buf[offset + 4]; i++) {
-            res.notes.push(buf[offset + 5 + i]);
+            res.notes.push(decodeNote(buf[offset + 5 + i], instrumentOctave, isDrumTrack));
         }
         return res;
+    }
+
+    function encodeNote(note: Note, instrumentOctave: number, isDrumTrack: boolean) {
+        if (isDrumTrack) {
+            return note.note;
+        }
+
+        let flags = 0;
+        if (note.enharmonicSpelling === "flat") {
+            flags = 1;
+        }
+        else if (note.enharmonicSpelling === "sharp") {
+            flags = 2;
+        }
+
+        return (note.note - (instrumentOctave - 2) * 12) | (flags << 6)
+    }
+
+    function decodeNote(note: number, instrumentOctave: number, isDrumTrack: boolean) {
+        const flags = note >> 6;
+
+        const result: Note = {
+            note: isDrumTrack ? note : ((note & 0x3f) + (instrumentOctave - 2) * 12),
+            enharmonicSpelling: "normal"
+        }
+
+        if (flags === 1) {
+            result.enharmonicSpelling = "flat";
+        }
+        else if (flags === 2) {
+            result.enharmonicSpelling = "sharp";
+        }
+
+        return result;
     }
 
     function encodeTrack(track: Track) {
@@ -561,7 +609,7 @@ namespace pxt.assets.music {
 
     function encodeMelodicTrack(track: Track) {
         const encodedInstrument = encodeInstrument(track.instrument);
-        const encodedNotes = track.notes.map(encodeNoteEvent);
+        const encodedNotes = track.notes.map(note => encodeNoteEvent(note, track.instrument.octave, false));
         const noteLength = encodedNotes.reduce((d, c) => c.length + d, 0);
 
         const out = new Uint8Array(6 + encodedInstrument.length + noteLength);
@@ -596,7 +644,7 @@ namespace pxt.assets.music {
         let currentOffset = noteStart + 2;
 
         while (currentOffset < noteStart + 2 + noteLength) {
-            res.notes.push(decodeNoteEvent(buf, currentOffset));
+            res.notes.push(decodeNoteEvent(buf, currentOffset, res.instrument.octave, false));
             currentOffset += 5 + res.notes[res.notes.length - 1].notes.length
         }
 
@@ -607,7 +655,7 @@ namespace pxt.assets.music {
         const encodedDrums = track.drums.map(encodeDrumInstrument);
         const drumLength = encodedDrums.reduce((d, c) => c.length + d, 0);
 
-        const encodedNotes = track.notes.map(encodeNoteEvent);
+        const encodedNotes = track.notes.map(note => encodeNoteEvent(note, 0, true));
         const noteLength = encodedNotes.reduce((d, c) => c.length + d, 0);
 
         const out = new Uint8Array(6 + drumLength + noteLength);
@@ -651,7 +699,7 @@ namespace pxt.assets.music {
         currentOffset += 2;
 
         while (currentOffset < offset + 4 + drumByteLength + noteLength) {
-            res.notes.push(decodeNoteEvent(buf, currentOffset));
+            res.notes.push(decodeNoteEvent(buf, currentOffset, 0, true));
             currentOffset += 5 + res.notes[res.notes.length - 1].notes.length
         }
 
@@ -747,6 +795,27 @@ namespace pxt.assets.music {
             tracks: [
                 {
                     id: 0,
+                    name: lf("Dog"),
+                    notes: [],
+                    iconURI: "/static/music-editor/dog.png",
+                    instrument: {
+                        waveform: 1,
+                        octave: 4,
+                        ampEnvelope: {
+                            attack: 10,
+                            decay: 100,
+                            sustain: 500,
+                            release: 100,
+                            amplitude: 1024
+                        },
+                        pitchLFO: {
+                            frequency: 5,
+                            amplitude: 0
+                        }
+                    }
+                },
+                {
+                    id: 1,
                     name: lf("Duck"),
                     notes: [],
                     iconURI: "/static/music-editor/duck.png",
@@ -778,7 +847,7 @@ namespace pxt.assets.music {
                     }
                 },
                 {
-                    id: 1,
+                    id: 2,
                     name: lf("Cat"),
                     notes: [],
                     iconURI: "/static/music-editor/cat.png",
@@ -802,27 +871,6 @@ namespace pxt.assets.music {
                         pitchLFO: {
                             frequency: 10,
                             amplitude: 6
-                        }
-                    }
-                },
-                {
-                    id: 2,
-                    name: lf("Dog"),
-                    notes: [],
-                    iconURI: "/static/music-editor/dog.png",
-                    instrument: {
-                        waveform: 1,
-                        octave: 4,
-                        ampEnvelope: {
-                            attack: 10,
-                            decay: 100,
-                            sustain: 500,
-                            release: 100,
-                            amplitude: 1024
-                        },
-                        pitchLFO: {
-                            frequency: 5,
-                            amplitude: 0
                         }
                     }
                 },

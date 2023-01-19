@@ -735,6 +735,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             youTubeId={selectedElement.youTubeId}
                             youTubePlaylistId={selectedElement.youTubePlaylistId}
                             buttonLabel={selectedElement.buttonLabel}
+                            actionIcon={selectedElement.actionIcon}
                             scr={selectedElement}
                             onClick={this.props.onClick}
                             cardType={selectedElement.cardType}
@@ -864,6 +865,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     youTubeId?: string;
     youTubePlaylistId?: string;
     buttonLabel?: string;
+    actionIcon?: string;
     url?: string;
     scr?: pxt.CodeCard;
     onClick: (scr: any, action?: pxt.CodeCardAction) => void;
@@ -917,32 +919,36 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
     }
 
-    protected getActionIcon(onClick: any, type: pxt.CodeCardType, editor?: pxt.CodeCardEditorType): JSX.Element {
+    protected getActionIcon(onClick: any, type: pxt.CodeCardType, editor?: pxt.CodeCardEditorType, actionIcon?: string): JSX.Element {
         const { youTubeId, youTubePlaylistId } = this.props;
         let icon = "file text";
-        switch (type) {
-            case "tutorial":
-            case "example":
-                icon = "xicon blocks"
-                if (editor) icon = `xicon ${editor}`;
-                break;
-            case "codeExample":
-                icon = `xicon ${editor || "js"}`;
-                break;
-            case "sharedExample":
-                icon = "pencil"
-                if (editor) icon = `xicon ${editor}`;
-                break;
-            case "forumUrl":
-                icon = "comments"
-                break;
-            case "forumExample":
-                icon = "pencil"
-                break;
-            case "template":
-            default:
-                if (youTubeId || youTubePlaylistId) icon = "youtube";
-                break;
+        if (actionIcon) {
+            icon = actionIcon;
+        } else {
+            switch (type) {
+                case "tutorial":
+                case "example":
+                    icon = "xicon blocks"
+                    if (editor) icon = `xicon ${editor}`;
+                    break;
+                case "codeExample":
+                    icon = `xicon ${editor || "js"}`;
+                    break;
+                case "sharedExample":
+                    icon = "pencil"
+                    if (editor) icon = `xicon ${editor}`;
+                    break;
+                case "forumUrl":
+                    icon = "comments"
+                    break;
+                case "forumExample":
+                    icon = "pencil"
+                    break;
+                case "template":
+                default:
+                    if (youTubeId || youTubePlaylistId) icon = "youtube";
+                    break;
+            }
         }
         return this.isLink(type) && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
             ? <sui.Link role="presentation" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
@@ -962,12 +968,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
     }
 
-    protected getActionCard(text: string, type: pxt.CodeCardType, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
+    protected getActionCard(text: string, type: pxt.CodeCardType, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string, actionIcon?: string): JSX.Element {
         const editor = this.getActionEditor(type, action);
         const title = this.getActionTitle(editor);
 
-        return <div className={`card-action ui items ${editor || ""}`} key={key}>
-            {this.getActionIcon(onClick, type, editor)}
+        return <div className={`card-action ui items ${editor || ""} ${actionIcon ? "custom-icon" : ""}`} key={key}>
+            {this.getActionIcon(onClick, type, editor, actionIcon)}
             {title && <div className="card-action-title">{title}</div>}
             {cardActionButton(
                 this.props,
@@ -1029,7 +1035,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     renderCore() {
         const { name, description, largeImageUrl, videoUrl,
-            youTubeId, youTubePlaylistId, buttonLabel, cardType, tags, otherActions } = this.props;
+            youTubeId, youTubePlaylistId, buttonLabel, actionIcon, cardType, tags, otherActions } = this.props;
 
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
@@ -1076,7 +1082,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             </div>
             <div className="actions column ten wide">
                 <div className="segment">
-                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
+                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true, undefined, undefined, actionIcon)}
                     {otherActions && otherActions.map((el, i) => {
                         let onClick = this.handleActionClick(el);
                         let label = el.cardType ? this.getClickLabel(el.cardType) : clickLabel;

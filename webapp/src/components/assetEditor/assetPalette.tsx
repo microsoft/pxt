@@ -53,7 +53,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
                 setCurrentPalette(selected);
             } else if (!isSameColors(currentPalette.colors, selected.colors)) {
                 if (isBuiltinPalette(selected) ) { // builtin palette edited
-                    createNewPalette();
+                    createNewPalette(selected);
                 } else { // custom palette edited
                     setCustomPalettes({
                         ...customPalettes,
@@ -69,11 +69,11 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         }
     }
 
-    const createNewPalette = () => {
+    const createNewPalette = (selected?: Palette) => {
         const customPalette = {
             id: "custom" + customPalettes.nextPaletteID,
             name: lf("Custom"),
-            colors: currentPalette.colors,
+            colors: selected?.colors || currentPalette.colors,
             custom: true
         }
         setCustomPalettes({

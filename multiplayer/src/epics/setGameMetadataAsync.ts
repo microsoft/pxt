@@ -24,8 +24,8 @@ export async function setGameMetadataAsync(
         dispatch(setGameMetadata({ title, description, thumbnail }));
         dispatch(setGameId(shareCode));
         return true;
-    } catch (e) {
-        console.log("error", e);
+    } catch (e: any) {
+        pxt.log(e.toString());
         dispatch(setNetMode("init"));
         dispatch(
             showToast({
