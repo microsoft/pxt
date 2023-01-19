@@ -124,7 +124,7 @@ declare namespace pxt {
     }
 
     interface CodalJson {
-        
+
     }
 
     interface YottaConfig {
@@ -165,6 +165,7 @@ declare namespace pxt {
         youTubeId?: string;
         youTubePlaylistId?: string; // playlist this video belongs to
         buttonLabel?: string;
+        actionIcon?: string; // icon to override default icon on the action button
         time?: number;
         url?: string;
         learnMoreUrl?: string;
