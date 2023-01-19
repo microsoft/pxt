@@ -57,7 +57,7 @@ export default function Render() {
                         title={lf("Copy join link")}
                         eventName="mp.hostlobby.copyjoinlink"
                         label={
-                            <span className="tw-font-bold tw-text-neutral-700 tw-mr-1">
+                            <span className="tw-font-bold tw-text-neutral-700 tw-mr-1 tw-whitespace-nowrap">
                                 {displayJoinCode}
                             </span>
                         }
