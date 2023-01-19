@@ -2,8 +2,8 @@ namespace pxt {
     export interface MarkdownSection {
         headerKind: "single" | "double" | "triple";
         header: string;
-        attributes: { [index: string]: string };
-        listAttributes?: { [index: string]: MarkdownList };
+        attributes: pxt.Map<string>;
+        listAttributes?: pxt.Map<MarkdownList>;
     }
 
     export interface MarkdownList {
