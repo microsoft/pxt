@@ -62,9 +62,7 @@ export default function Render() {
                 className="tw-absolute tw-translate-y-[-120%]"
                 visible={showReactionPicker}
                 ignoreRefs={[reactionButtonsRef]}
-                onClickedOutside={() => {
-                    setShowReactionPicker(false);
-                }}
+                onClickedOutside={() => setShowReactionPicker(false)}
             >
                 <div className="tw-flex tw-flex-col tw-bg-white tw-drop-shadow-xl tw-rounded-md tw-border-2 tw-border-gray-100">
                     <div className="tw-flex tw-flex-row tw-gap-3 tw-p-2 tw-pb-3 tw-pr-3">
