@@ -1288,6 +1288,7 @@ namespace ts.pxtc.Util {
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
+                    pxt.analytics?.addDefaultProperties({lang: code}); //set the new language in analytics.
                     setLocalizedStrings(translations);
                 }
 

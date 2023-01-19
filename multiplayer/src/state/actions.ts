@@ -122,6 +122,18 @@ type SetTargetConfig = ActionBase & {
     targetConfig: pxt.TargetConfig;
 };
 
+type SetPresenceIconOverride = ActionBase & {
+    type: "SET_PRESENCE_ICON_OVERRIDE";
+    slot: number;
+    icon: string | undefined;
+}
+
+type SetReactionIconOverride = ActionBase & {
+    type: "SET_REACTION_ICON_OVERRIDE";
+    slot: number;
+    icon: string | undefined;
+}
+
 /**
  * Union of all actions
  */
@@ -146,7 +158,9 @@ export type Action =
     | SetDeepLinks
     | SetMute
     | SetGamePaused
-    | SetTargetConfig;
+    | SetTargetConfig
+    | SetPresenceIconOverride
+    | SetReactionIconOverride;
 
 /**
  * Action creators
@@ -281,4 +295,16 @@ export const setGamePaused = (gamePaused: boolean): SetGamePaused => ({
 export const setTargetConfig = (trgCfg: pxt.TargetConfig): SetTargetConfig => ({
     type: "SET_TARGET_CONFIG",
     targetConfig: JSON.parse(JSON.stringify(trgCfg)),
+});
+
+export const setPresenceIconOverride = (slot: number, icon?: string): SetPresenceIconOverride => ({
+    type: "SET_PRESENCE_ICON_OVERRIDE",
+    slot,
+    icon
+});
+
+export const setReactionIconOverride = (slot: number, icon?: string): SetReactionIconOverride => ({
+    type: "SET_REACTION_ICON_OVERRIDE",
+    slot,
+    icon
 });

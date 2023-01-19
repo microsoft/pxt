@@ -176,6 +176,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         if (pxt.Util.isLocaleEnabled(useLang!)) {
             pxt.BrowserUtils.setCookieLang(useLang!);
             pxt.Util.setUserLanguage(useLang!);
+            pxt.analytics?.addDefaultProperties({lang: useLang!}); //set the new language in analytics
         }
 
         if (force && useLang) {

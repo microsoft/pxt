@@ -22,15 +22,28 @@ export interface ShareProps {
     isLoggedIn?: boolean;
     hasProjectBeenPersistentShared?: boolean;
     anonymousShareByDefault?: boolean;
-    isMultiplayerGame?: boolean;
+    isMultiplayerGame?: boolean; // Arcade: Does the game being shared have multiplayer enabled?
+    forMultiplayer?: boolean; // Arcade: Was the share dialog opened specifically for hosting a multiplayer game?
     setAnonymousSharePreference?: (anonymousByDefault: boolean) => void;
-
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
+    onClose: () => void;
 }
 
 export const Share = (props: ShareProps) => {
-    const { projectName, screenshotUri, isLoggedIn, simRecorder, publishAsync, hasProjectBeenPersistentShared, anonymousShareByDefault, setAnonymousSharePreference, isMultiplayerGame } = props;
+    const {
+        projectName,
+        screenshotUri,
+        isLoggedIn,
+        simRecorder,
+        publishAsync,
+        hasProjectBeenPersistentShared,
+        anonymousShareByDefault,
+        setAnonymousSharePreference,
+        isMultiplayerGame,
+        forMultiplayer,
+        onClose
+    } = props;
 
     return <div className="project-share">
         <ShareInfo projectName={projectName}
@@ -39,8 +52,10 @@ export const Share = (props: ShareProps) => {
             simRecorder={simRecorder}
             publishAsync={publishAsync}
             isMultiplayerGame={isMultiplayerGame}
+            forMultiplayer={forMultiplayer}
             hasProjectBeenPersistentShared={hasProjectBeenPersistentShared}
             anonymousShareByDefault={anonymousShareByDefault}
-            setAnonymousSharePreference={setAnonymousSharePreference} />
+            setAnonymousSharePreference={setAnonymousSharePreference}
+            onClose={onClose} />
     </div>
 }

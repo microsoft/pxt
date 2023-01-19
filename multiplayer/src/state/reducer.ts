@@ -168,5 +168,29 @@ export default function reducer(state: AppState, action: Action): AppState {
                 targetConfig: action.targetConfig,
             };
         }
+        case "SET_PRESENCE_ICON_OVERRIDE": {
+            let nextPresenceIcon =
+                state.gameState?.presenceIconOverrides?.slice() || [];
+            nextPresenceIcon[action.slot] = action.icon;
+            return {
+                ...state,
+                gameState: {
+                    ...state.gameState,
+                    presenceIconOverrides: nextPresenceIcon,
+                },
+            };
+        }
+        case "SET_REACTION_ICON_OVERRIDE": {
+            let nextReactionIcons =
+                state.gameState?.reactionIconOverrides?.slice() || [];
+            nextReactionIcons[action.slot] = action.icon;
+            return {
+                ...state,
+                gameState: {
+                    ...state.gameState,
+                    reactionIconOverrides: nextReactionIcons,
+                },
+            };
+        }
     }
 }

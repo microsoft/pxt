@@ -2,6 +2,7 @@ export interface Palette {
     name: string;
     id: string;
     colors: string[];
+    custom?: boolean;
 }
 
 export const Adafruit: Palette = {
