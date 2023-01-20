@@ -117,19 +117,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
             currentStepInfo.localValidationConfig?.validators ??
             PopulateValidatorCache(currentStepInfo.localValidationConfig);
 
-        let validators: pxt.Map<CodeValidator> = {};
-        if (localValidators) {
-            Object.entries(localValidators).forEach(
-                (v) => (validators[v[0]] = v[1])
-            );
-        }
-        if (globalValidators) {
-            Object.entries(globalValidators).forEach((v) => {
-                if (!validators[v[0]]) {
-                    validators[v[0]] = v[1];
-                }
-            });
-        }
+        let validators: pxt.Map<CodeValidator> = {
+            ...(globalValidators ?? {}),
+            ...(localValidators ?? {})
+        };
 
         let failedResults: CodeValidationResult[] = [];
         for (let validator of Object.values(validators)) {
