@@ -102,8 +102,8 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                         }
 
                         const comment = blk.getCommentText();
-                        if(comment && /@highlight/.test(comment)) {
-                            if(!highlightBlocks[snippetHash][blk.type]) {
+                        if (comment && /@highlight/.test(comment)) {
+                            if (!highlightBlocks[snippetHash][blk.type]) {
                                 highlightBlocks[snippetHash][blk.type] = 0;
                             }
                             highlightBlocks[snippetHash][blk.type] = highlightBlocks[snippetHash][blk.type] + 1;

@@ -165,7 +165,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         // Only validate if we're moving to the next step.
         // If going backwards, user could be trying to fix something from a previous step and this message could be annoying/confusing.
         // If going forwards multiple steps, then the user has fully skipped entire steps, so validation doesn't make much sense.
-        if (step == currentStep+1) {
+        if (step == currentStep + 1) {
             validateTutorialStep();
         } else {
             setCurrentStep(step);
