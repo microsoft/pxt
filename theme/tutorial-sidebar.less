@@ -618,10 +618,18 @@
     }
 }
 
-.tutorial-validation-answer-key-hint  {
+.tutorial-validation-answer-key-hint {
     max-height: 50vh;
     overflow: auto;
     padding-right: 2rem;
+}
+
+/* Remove border around blocks in the hint */
+.tutorial-validation-answer-key-hint .lang-blocks .segment.raised {
+    border: none;
+    background: none;
+    box-shadow: none;
+    padding: 0;
 }
 /*******************************
         Media Adjustments
