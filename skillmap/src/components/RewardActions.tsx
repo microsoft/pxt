@@ -52,11 +52,20 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
                     label={lf("Claim Reward")}
                     onClick={this.handleActionButtonClick}
                 />
+                <Button
+                    tabIndex={-1}
+                    ariaPosInSet={2}
+                    ariaSetSize={showSignIn ? 2 : 1}
+                    className="primary inverted"
+                    title={lf("Play your game")}
+                    label={lf("Play your game")}
+                    onClick={this.handleActionButtonClick}
+                />
                 {showSignIn &&
                     <Button
                         tabIndex={-1}
-                        ariaPosInSet={2}
-                        ariaSetSize={2}
+                        ariaPosInSet={3}
+                        ariaSetSize={3}
                         className="teal"
                         onClick={dispatchShowLoginModal}
                         label={lf("Sign in to Save")}
