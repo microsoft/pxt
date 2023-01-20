@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
-import { Button as SuiButton } from "../../sui";
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 
 interface TutorialValidationErrorMessageProps {
@@ -41,13 +40,12 @@ export function TutorialValidationErrorMessage(
     const closeLabel = lf("Close");
     return (
         <div className="tutorial-validation-error-container">
-            {/* Using SuiButton to get close icon consistent with other popups */}
-            <SuiButton
-                icon="close"
+            <Button
                 className="tutorial-validation-error-close"
                 onClick={props.onReturnClicked}
                 title={closeLabel}
                 ariaLabel={closeLabel}
+                rightIcon="fas fa-times-circle"
             />
             {showHint ? hintContent : (
                 <div className="tutorial-validation-error-body">
