@@ -555,6 +555,68 @@
     }
 }
 
+/*********************************
+        Validation
+*********************************/
+.tutorial-validation-error-container {
+    position: fixed;
+    top: unset;
+    right: unset;
+    bottom: 5.5rem;
+    left: 23rem;
+    max-width: 60%;
+    min-width: 18.75rem;
+    background: @white;
+    box-shadow: 0 0rem 0.5rem;
+    border-radius: 0.5rem;
+    z-index: 40;
+}
+
+.tutorial-validation-error-body {
+    display: flex;
+    flex-direction: row;
+    padding: 2rem 2rem 2rem 0.5rem;
+}
+
+.tutorial-validation-error-hint {
+    padding: 1.5rem;
+}
+
+.tutorial-validation-error-inner {
+    display: flex;
+    flex-direction: column;
+}
+
+.tutorial-validation-error-emoji {
+    font-size: 3rem;
+    padding-top: 1rem;
+    padding-right: 0.2rem;
+}
+
+.tutorial-validation-error-controls {
+    display: flex;
+    justify-content: right;
+    margin: 0;
+    margin-top: 0.5rem;
+
+    > .common-button {
+        width: unset;
+    }
+}
+
+.tutorial-validation-error-close.common-button {
+    position: absolute;
+    right: 0.6rem;
+    top: 0.8rem;
+    padding: 0 !important;
+
+    i.right {
+        opacity: 1;
+        font-size: 1.3rem;
+        margin: 0 !important;
+    }
+}
+
 /*******************************
         Media Adjustments
 *******************************/

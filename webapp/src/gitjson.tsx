@@ -492,6 +492,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 tutorialInfo[`https://github.com/${githubId.fullName}${formatPath == "README" ? "" : "/" + formatPath}`] = {
                     snippetBlocks: tutorialBlocks.snippetBlocks,
                     usedBlocks: tutorialBlocks.usedBlocks,
+                    highlightBlocks: tutorialBlocks.highlightBlocks,
                     hash
                 };
 

@@ -32,6 +32,7 @@ namespace pxt.tutorial {
 
         const assetFiles = parseAssetJson(assetJson);
         const globalBlockConfig = parseTutorialBlockConfig("global", tutorialmd);
+        const globalValidationConfig = parseTutorialValidationConfig("global", tutorialmd);
 
         // strip hidden snippets
         steps.forEach(step => {
@@ -54,7 +55,8 @@ namespace pxt.tutorial {
             assetFiles,
             customTs,
             tutorialValidationRules,
-            globalBlockConfig
+            globalBlockConfig,
+            globalValidationConfig
         };
     }
 
@@ -249,6 +251,7 @@ ${code}
             step = step.trim();
             let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
             const blockConfig = parseTutorialBlockConfig("local", step);
+            const validationConfig = parseTutorialValidationConfig("local", step);
 
             // if title is not hidden ("{TITLE HERE}"), strip flags
             const title = !flags.match(/^\{.*\}$/)
@@ -259,7 +262,8 @@ ${code}
                 title,
                 contentMd: step,
                 headerContentMd: header,
-                localBlockConfig: blockConfig
+                localBlockConfig: blockConfig,
+                localValidationConfig: validationConfig
             }
             if (/@(fullscreen|unplugged|showdialog|showhint)/i.test(flags))
                 info.showHint = true;
@@ -332,6 +336,32 @@ ${code}
         return blockConfig;
     }
 
+    function parseTutorialValidationConfig(scope: "local" | "global", content: string): CodeValidationConfig {
+        let markdown: string;
+        const regex = new RegExp(`\`\`\`\\s*validation\\.${scope}\\s*\\n([\\s\\S]*?)\\n\`\`\``, "gmi");
+        content.replace(regex, (m0, m1) => {
+            markdown = m1;
+            return "";
+        });
+
+        if(!markdown || markdown == "") {
+            return null;
+        }
+
+        const validationSections = pxt.getSectionsFromMarkdownMetadata(markdown);
+        const sectionedMetadata = validationSections.map((v) => {
+          return {
+            validatorType: v.header,
+            properties: v.attributes,
+          };
+        });
+
+        return {
+            validatorsMetadata: sectionedMetadata,
+            validators: undefined
+        }
+    }
+
     function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {
         const ruleNames = Object.keys(listOfRules);
         for (let i = 0; i < ruleNames.length; i++) {
@@ -347,7 +377,7 @@ ${code}
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
         if (!str) return str;
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|customts|blockconfig\.local|blockconfig\.global)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|customts|blockconfig\.local|blockconfig\.global|validation\.local|validation\.global)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
 
@@ -436,7 +466,8 @@ ${code}
             assetFiles: tutorialInfo.assetFiles,
             customTs: tutorialInfo.customTs,
             tutorialValidationRules: tutorialInfo.tutorialValidationRules,
-            globalBlockConfig: tutorialInfo.globalBlockConfig
+            globalBlockConfig: tutorialInfo.globalBlockConfig,
+            globalValidationConfig: tutorialInfo.globalValidationConfig
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };
@@ -451,11 +482,11 @@ ${code}
             .then(db => {
                 if (id && cachedInfo[id]) {
                     const info = cachedInfo[id];
-                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.snippetBlocks, info.hash);
+                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.snippetBlocks, info.hash, info.highlightBlocks);
                 } else {
                     for (let key of Object.keys(cachedInfo)) {
                         const info = cachedInfo[key];
-                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.snippetBlocks, info.hash);
+                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.snippetBlocks, info.hash, info.highlightBlocks);
                     }
                 }
             }).catch((err) => { })

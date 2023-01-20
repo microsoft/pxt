@@ -1696,6 +1696,9 @@ namespace ts.pxtc.Util {
                     },
                     snippetBlocks: {
                         ...built.snippetBlocks
+                    },
+                    highlightBlocks: {
+                        ...built.highlightBlocks
                     }
                 }
             }
