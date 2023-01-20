@@ -68,13 +68,6 @@ abstract class CodeValidatorBase implements CodeValidator {
 export class BlocksExistValidator extends CodeValidatorBase {
     name = "blocksexistvalidator";
 
-    private useHintHighlight = false;
-
-    constructor(properties: { [index: string]: string }) {
-        super(properties);
-        this.useHintHighlight = properties["useanswerkeyhighlight"]?.toLowerCase() === "true";
-    }
-
     async executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
         let missingBlocks: string[] = [];
         let disabledBlocks: string[] = [];
@@ -82,34 +75,31 @@ export class BlocksExistValidator extends CodeValidatorBase {
         const stepInfo = tutorialOptions.tutorialStepInfo
             ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep]
             : null;
-        if (!stepInfo) return { isValid: true, hint: "" };
+        if (!stepInfo) {
+            return defaultResult;
+        }
 
-        // Currently, this validator only supports useHintHighlight, so this flag/check is redundant,
-        // but there are plans to support manual specification of blocks in the future.
-        // As such, it felt prudent to still require this flag so tutorial authors don't have to go back and add it later on.
-        if (this.useHintHighlight) {
-            const userBlocks = Blockly.getMainWorkspace()?.getAllBlocks(false /* ordered */);
-            const userBlocksEnabledByType = new Map<string, boolean>(); // Key = type, value = enabled
-            userBlocks.forEach(b => userBlocksEnabledByType.set(b.type, userBlocksEnabledByType.get(b.type) || b.isEnabled()));
+        const userBlocks = Blockly.getMainWorkspace()?.getAllBlocks(false /* ordered */);
+        const userBlocksEnabledByType = new Map<string, boolean>(); // Key = type, value = enabled
+        userBlocks.forEach(b => userBlocksEnabledByType.set(b.type, userBlocksEnabledByType.get(b.type) || b.isEnabled()));
 
-            const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
-            if (!allHighlightedBlocks) {
-                return defaultResult;
-            }
+        const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
+        if (!allHighlightedBlocks) {
+            return defaultResult;
+        }
 
-            const stepHash = getTutorialStepHash(tutorialOptions);
-            const stepHighlights = allHighlightedBlocks[stepHash];
-            const highlightedBlockKeys = stepHighlights ? Object.keys(stepHighlights) : [];
+        const stepHash = getTutorialStepHash(tutorialOptions);
+        const stepHighlights = allHighlightedBlocks[stepHash];
+        const highlightedBlockKeys = stepHighlights ? Object.keys(stepHighlights) : [];
 
-            for (let i: number = 0; i < highlightedBlockKeys.length; i++) {
-                let tutorialBlockKey = highlightedBlockKeys[i];
-                const isEnabled = userBlocksEnabledByType.get(tutorialBlockKey);
-                if (isEnabled === undefined) {
-                    // user did not use a specific block
-                    missingBlocks.push(tutorialBlockKey);
-                } else if (!isEnabled) {
-                    disabledBlocks.push(tutorialBlockKey);
-                }
+        for (let i: number = 0; i < highlightedBlockKeys.length; i++) {
+            let tutorialBlockKey = highlightedBlockKeys[i];
+            const isEnabled = userBlocksEnabledByType.get(tutorialBlockKey);
+            if (isEnabled === undefined) {
+                // user did not use a specific block
+                missingBlocks.push(tutorialBlockKey);
+            } else if (!isEnabled) {
+                disabledBlocks.push(tutorialBlockKey);
             }
         }
 
