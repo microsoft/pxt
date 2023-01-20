@@ -13,6 +13,7 @@ interface TutorialCalloutProps extends React.PropsWithChildren<{}> {
 export function TutorialCallout(props: TutorialCalloutProps) {
     const { children, className, buttonIcon, buttonLabel } = props;
     const [ visible, setVisible ] = React.useState(false);
+    const popupRef = React.useRef<HTMLDivElement>(null);
 
     const captureEvent = (e: any) => {
         e.preventDefault();
@@ -21,16 +22,22 @@ export function TutorialCallout(props: TutorialCalloutProps) {
     }
 
     const closeCallout = (e: any) => {
-        document.removeEventListener("click", closeCallout);
+        document.removeEventListener("click", closeCalloutIfClickedOutside, true);
         setVisible(false);
+    }
+
+    const closeCalloutIfClickedOutside = (e: PointerEvent) => {
+        if (!popupRef?.current?.contains(e.target as Node)) {
+            closeCallout(e);
+        }
     }
 
     const toggleCallout = (e: any) => {
         captureEvent(e);
         if (!visible) {
-            document.addEventListener("click", closeCallout);
+            document.addEventListener("click", closeCalloutIfClickedOutside, true);
         } else {
-            document.removeEventListener("click", closeCallout);
+            document.removeEventListener("click", closeCalloutIfClickedOutside, true);
         }
         setVisible(!visible);
     }
@@ -42,7 +49,7 @@ export function TutorialCallout(props: TutorialCalloutProps) {
     }
 
     const buttonTitle = lf("Click to show a hint!");
-    return <div className={className}>
+    return <div ref={popupRef} className={className}>
         <Button icon={buttonIcon}
             text={buttonLabel}
             className="tutorial-callout-button"
