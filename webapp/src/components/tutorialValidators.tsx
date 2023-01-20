@@ -120,7 +120,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
         const blockImages = stepInfo?.hintContentMd ? (<div>
             <strong>{lf("Looks like you're missing some blocks.")}</strong>
             <p>{errorDescription}</p>
-            <MarkedContent className="no-select" markdown={stepInfo.hintContentMd} parent={parent} />
+            <MarkedContent className="no-select tutorial-validation-answer-key-hint" markdown={stepInfo.hintContentMd} parent={parent} />
         </div>) : "";
 
         return {
