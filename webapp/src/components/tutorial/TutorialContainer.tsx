@@ -114,7 +114,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
         currentStepInfo.localValidationConfig?.validatorsMetadata?.forEach(v => validators[v.validatorType] = GetValidator(v));
         tutorialOptions.globalValidationConfig?.validatorsMetadata?.forEach(v => {
-            if(!validators[v.validatorType]) {
+            if (!validators[v.validatorType]) {
                 validators[v.validatorType] = GetValidator(v);
             }
         })
