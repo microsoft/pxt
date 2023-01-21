@@ -3,9 +3,10 @@ import { connect } from 'react-redux';
 
 import { dispatchOpenActivity, dispatchShowCompletionModal, dispatchShowLoginModal } from '../actions/dispatch';
 
-import { ActivityStatus } from '../lib/skillMapUtils';
+import { ActivityStatus, lookupPreviousCompletedActivityState } from '../lib/skillMapUtils';
 import { tickEvent } from "../lib/browserUtils";
 import { Button } from "react-common/components/controls/Button";
+import { editorUrl } from "./makecodeFrame";
 import { SkillMapState } from "../store/reducer";
 
 interface OwnProps {
@@ -13,6 +14,7 @@ interface OwnProps {
     activityId: string;
     status?: ActivityStatus;
     signedIn?: boolean;
+    previousHeaderId?: string;
 }
 
 interface DispatchProps {
@@ -33,6 +35,12 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
                 tickEvent("skillmap.sidebar.reward", { path: mapId, activity: activityId })
                 return dispatchShowCompletionModal(mapId, activityId)
         }
+    }
+
+    protected handlePlayGameClick = () => {
+        const { previousHeaderId, mapId, activityId } = this.props;
+        tickEvent("skillmap.play", { path: mapId || "", activity: activityId || "" });
+        window.open(`${editorUrl}#skillmapimport:${previousHeaderId}`)
     }
 
     render() {
@@ -59,7 +67,7 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
                     className="primary inverted"
                     title={lf("Play your game")}
                     label={lf("Play your game")}
-                    onClick={this.handleActionButtonClick}
+                    onClick={this.handlePlayGameClick}
                 />
                 {showSignIn &&
                     <Button
@@ -80,8 +88,13 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
 
+    const props = ownProps as OwnProps;
+    const map = state.maps[props.mapId];
+    const previousState = lookupPreviousCompletedActivityState(state.user, state.pageSourceUrl, map, props.activityId);
+
     return {
-        signedIn: state.auth.signedIn
+        signedIn: state.auth.signedIn,
+        previousHeaderId: previousState?.headerId
     };
 }
 
