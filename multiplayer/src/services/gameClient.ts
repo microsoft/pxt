@@ -192,13 +192,11 @@ class GameClient {
                     resolve();
                 });
 
-                setTimeout(() => {
-                    this.sendMessage({
-                        type: "connect",
-                        ticket,
-                        version: Protocol.VERSION,
-                    } as Protocol.ConnectMessage);
-                }, 500); // TODO: Why is a short delay necessary here? The socket doesn't seem ready to send messages immediately.
+                this.sendMessage({
+                    type: "connect",
+                    ticket,
+                    version: Protocol.VERSION,
+                } as Protocol.ConnectMessage);
             });
         });
     }
