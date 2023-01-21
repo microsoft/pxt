@@ -60,12 +60,10 @@ class GameClient {
     screen: Buffer | undefined;
     clientRole: ClientRole | undefined;
     gameOverReason: GameOverReason | undefined;
+    joinMessageInTimeHandler: ((a: any) => void) | undefined;
     paused: boolean = false;
 
     constructor() {
-        this.recvMessageWithJoinTimeout =
-            this.recvMessageWithJoinTimeout.bind(this);
-        this.recvMessageAsync = this.recvMessageAsync.bind(this);
     }
 
     destroy() {
@@ -88,7 +86,7 @@ class GameClient {
         }
     }
 
-    private async recvMessageAsync(payload: string | ArrayBuffer) {
+    private recvMessageAsync = async (payload: string | ArrayBuffer) => {
         if (payload instanceof ArrayBuffer) {
             //-------------------------------------------------
             // Handle binary message
@@ -135,26 +133,17 @@ class GameClient {
         }
     }
 
-    private async recvMessageWithJoinTimeout(
+    private recvMessageWithJoinTimeout = async (
         payload: string | Buffer,
         resolve: () => void
-    ) {
+    ) => {
         try {
             if (typeof payload === "string") {
                 const msg = JSON.parse(payload) as Protocol.Message;
-                await this.recvMessageAsync(payload);
                 if (msg.type === "joined") {
                     // We've joined the game. Replace this handler with a direct call to recvMessageAsync
                     if (this.sock) {
-                        this.sock.removeAllListeners("message");
-                        this.sock.on("message", async payload => {
-                            try {
-                                await this.recvMessageAsync(payload);
-                            } catch (e) {
-                                console.error("Error processing message", e);
-                                destroyGameClient();
-                            }
-                        });
+                        this.sock.removeListener("message", this.joinMessageInTimeHandler);
                     }
                     resolve();
                 }
@@ -179,11 +168,20 @@ class GameClient {
             this.sock.binaryType = "arraybuffer";
             this.sock.on("open", () => {
                 pxt.debug("socket opened");
-                this.sock?.on("message", async payload => {
+                this.joinMessageInTimeHandler = async payload => {
                     await this.recvMessageWithJoinTimeout(payload, () => {
                         clearTimeout(joinTimeout);
                         resolve();
                     });
+                }
+                this.sock?.on("message", this.joinMessageInTimeHandler);
+                this.sock?.on("message", async payload => {
+                    try {
+                        await this.recvMessageAsync(payload);
+                    } catch (e) {
+                        console.error("Error processing message", e);
+                        destroyGameClient();
+                    }
                 });
                 this.sock?.on("close", () => {
                     pxt.debug("socket disconnected");
