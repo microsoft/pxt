@@ -60,7 +60,7 @@ class GameClient {
     screen: Buffer | undefined;
     clientRole: ClientRole | undefined;
     gameOverReason: GameOverReason | undefined;
-    joinMessageInTimeHandler: ((a: any) => void) | undefined;
+    receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
     paused: boolean = false;
 
     constructor() {
@@ -143,7 +143,8 @@ class GameClient {
                 if (msg.type === "joined") {
                     // We've joined the game. Replace this handler with a direct call to recvMessageAsync
                     if (this.sock) {
-                        this.sock.removeListener("message", this.joinMessageInTimeHandler);
+                        this.sock.removeListener("message", this.receivedJoinMessageInTimeHandler);
+                        this.receivedJoinMessageInTimeHandler = undefined;
                     }
                     resolve();
                 }
@@ -168,13 +169,13 @@ class GameClient {
             this.sock.binaryType = "arraybuffer";
             this.sock.on("open", () => {
                 pxt.debug("socket opened");
-                this.joinMessageInTimeHandler = async payload => {
+                this.receivedJoinMessageInTimeHandler = async payload => {
                     await this.recvMessageWithJoinTimeout(payload, () => {
                         clearTimeout(joinTimeout);
                         resolve();
                     });
                 }
-                this.sock?.on("message", this.joinMessageInTimeHandler);
+                this.sock?.on("message", this.receivedJoinMessageInTimeHandler);
                 this.sock?.on("message", async payload => {
                     try {
                         await this.recvMessageAsync(payload);
