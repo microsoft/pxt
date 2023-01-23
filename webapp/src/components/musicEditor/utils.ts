@@ -132,22 +132,25 @@ export function removeNoteAtRowFromTrack(song: pxt.assets.music.Song, trackIndex
         ...song,
         tracks: song.tracks.map((track, index) => index !== trackIndex ? track : {
             ...track,
-            notes: removeNoteAtRowFromNoteArray(track.notes, row, isBassClef, track.instrument.octave, startTick)
+            notes: removeNoteAtRowFromNoteArray(track.notes, row, isBassClef, track.instrument.octave, startTick, !!track.drums)
         })
     }
 }
 
-function removeNoteAtRowFromNoteArray(notes: pxt.assets.music.NoteEvent[], row: number, isBassClef: boolean, octave: number, startTick: number) {
+function removeNoteAtRowFromNoteArray(notes: pxt.assets.music.NoteEvent[], row: number, isBassClef: boolean, octave: number, startTick: number, isDrumTrack: boolean) {
     const res = notes.slice();
 
     for (let i = 0; i < res.length; i++) {
         if (res[i].startTick == startTick) {
             res[i] = {
                 ...res[i],
-                notes: res[i].notes.filter(n =>
-                    isBassClefNote(octave, n) !== isBassClef ||
-                    noteToRow(octave, n) !== row
-                )
+                notes: res[i].notes.filter(n =>{
+                    if (isDrumTrack) {
+                        return n.note !== row
+                    }
+                    return isBassClefNote(octave, n) !== isBassClef ||
+                        noteToRow(octave, n) !== row;
+                })
             }
             break;
         }
