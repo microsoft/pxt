@@ -356,10 +356,7 @@ ${code}
           };
         });
 
-        return {
-            validatorsMetadata: sectionedMetadata,
-            validators: undefined
-        }
+        return { validatorsMetadata: sectionedMetadata };
     }
 
     function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {

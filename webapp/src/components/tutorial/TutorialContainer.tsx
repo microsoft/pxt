@@ -7,7 +7,7 @@ import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
 import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage";
-import { PopulateValidatorCache } from "../tutorialValidators";
+import { GetValidator } from "../tutorialValidators";
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 
@@ -110,17 +110,14 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
     const validateTutorialStep = async () => {
-        const globalValidators =
-            tutorialOptions.globalValidationConfig?.validators ??
-            PopulateValidatorCache(tutorialOptions.globalValidationConfig);
-        const localValidators =
-            currentStepInfo.localValidationConfig?.validators ??
-            PopulateValidatorCache(currentStepInfo.localValidationConfig);
+        let validators: pxt.Map<CodeValidator> = {};
 
-        let validators: pxt.Map<CodeValidator> = {
-            ...(globalValidators ?? {}),
-            ...(localValidators ?? {})
-        };
+        currentStepInfo.localValidationConfig?.validatorsMetadata?.forEach(v => validators[v.validatorType] = GetValidator(v));
+        tutorialOptions.globalValidationConfig?.validatorsMetadata?.forEach(v => {
+            if (!validators[v.validatorType]) {
+                validators[v.validatorType] = GetValidator(v);
+            }
+        })
 
         let failedResults: CodeValidationResult[] = [];
         for (let validator of Object.values(validators)) {

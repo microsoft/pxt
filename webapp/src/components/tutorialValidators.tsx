@@ -22,22 +22,6 @@ export function GetValidator(metadata: CodeValidatorMetadata): CodeValidator {
     }
 }
 
-export function PopulateValidatorCache(metadata: CodeValidationConfig): pxt.Map<CodeValidator>{
-    if (!metadata?.validatorsMetadata) {
-        return null;
-    }
-
-    metadata.validators = {};
-    metadata.validatorsMetadata.forEach(v => {
-        const validator = GetValidator(v);
-        if (validator) {
-            metadata.validators[v.validatorType] = validator;
-        }
-    });
-
-    return metadata.validators;
-}
-
 abstract class CodeValidatorBase implements CodeValidator {
     enabled: boolean;
     abstract name: string;
