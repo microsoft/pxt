@@ -95,7 +95,7 @@ namespace pxt.editor {
     export const songEditorDefinition: MonacoFieldEditorDefinition = {
         id: fieldEditorId,
         foldMatches: true,
-        glyphCssClass: "sprite-editor-glyph sprite-focus-hover",
+        glyphCssClass: "fas fa-music sprite-focus-hover",
         heightInPixels: 510,
         matcher: {
             /**
