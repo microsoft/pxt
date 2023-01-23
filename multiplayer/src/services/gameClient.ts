@@ -533,7 +533,7 @@ class GameClient {
         image: Uint8Array,
         palette: Uint8Array | undefined
     ) {
-        const DELTAS_ENABLED = false;
+        const DELTAS_ENABLED = true;
 
         const buffers: Buffer[] = [];
         buffers.push(Buffer.from(image));
