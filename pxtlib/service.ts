@@ -883,7 +883,14 @@ namespace ts.pxtc {
                         res._shadowOverrides[n.slice(0, n.length - 7)] = v;
                     } else if (U.endsWith(n, ".snippet")) {
                         if (!res.paramSnippets) res.paramSnippets = {};
-                        res.paramSnippets[n.slice(0, n.length - 8)] = v;
+                        const paramName = n.slice(0, n.length - 8);
+                        if (!res.paramSnippets[paramName]) res.paramSnippets[paramName] = {};
+                        res.paramSnippets[paramName].ts = v;
+                    } else if (U.endsWith(n, ".pySnippet")) {
+                        if (!res.paramSnippets) res.paramSnippets = {};
+                        const paramName = n.slice(0, n.length - 10);
+                        if (!res.paramSnippets[paramName]) res.paramSnippets[paramName] = {};
+                        res.paramSnippets[paramName].python = v;
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v

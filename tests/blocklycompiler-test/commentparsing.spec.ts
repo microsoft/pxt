@@ -474,10 +474,11 @@ describe("comment attribute parser", () => {
              */
             //% block="foo $bar"
             //% bar.snippet="hello"
+            //% bar.pySnippet="goodbye"
         `);
-        chai.assert(parsed.paramSnippets?.["bar"] === "hello", "bar.snippet === \"hello\"")
-    })
-
+        chai.assert(parsed.paramSnippets?.["bar"].ts === "hello", "bar.snippet === \"hello\"")
+        chai.assert(parsed.paramSnippets?.["bar"].python === "goodbye", "bar.pySnippet === \"goodbye\"")
+    });
 });
 
 function brk(): pxtc.BlockBreak {

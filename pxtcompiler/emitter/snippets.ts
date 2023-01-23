@@ -295,8 +295,12 @@ namespace ts.pxtc.service {
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
-            if (attrs.paramSnippets?.[name]) {
-                return attrs.paramSnippets?.[name];
+            const override = attrs.paramSnippets?.[name];
+            if (override) {
+                if (python) {
+                    if (override.python) return override.python;
+                }
+                else if (override.ts) return override.ts;
             }
 
             // check for explicit default in the attributes
