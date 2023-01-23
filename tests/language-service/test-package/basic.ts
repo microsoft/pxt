@@ -40,6 +40,12 @@ namespace testNamespace {
     export function registerSomeEvent(param1: number, handler: () => void, param2: boolean) {
         handler()
     }
+
+    //% param.snippet="'hello'"
+    //% param.pySnippet="'goodbye'"
+    export function paramOverride(param: string) {
+
+    }
 }
 
 //% fixedInstances decompileIndirectFixedInstances

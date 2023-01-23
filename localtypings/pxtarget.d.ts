@@ -890,6 +890,7 @@ declare namespace ts.pxtc {
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }; eg.: 12 in arg description will also go here
         paramDefl: pxt.Map<string>;
+        paramSnippets?: pxt.Map<ParamSnippet>;
         // this lists arguments that have .defl as opposed to just eg.: stuff
         explicitDefaults?: string[];
 
@@ -905,6 +906,11 @@ declare namespace ts.pxtc {
         alias?: string; // another symbol alias for this member
         pyAlias?: string; // optional python version of the alias
         blockAliasFor?: string; // qname of the function this block is an alias for
+    }
+
+    interface ParamSnippet {
+        ts?: string;
+        python?: string;
     }
 
     interface ParameterDesc {
