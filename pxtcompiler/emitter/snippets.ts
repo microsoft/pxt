@@ -295,6 +295,10 @@ namespace ts.pxtc.service {
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
+            if (attrs.paramSnippets?.[name]) {
+                return attrs.paramSnippets?.[name];
+            }
+
             // check for explicit default in the attributes
             const paramDefl = attrs?.paramDefl?.[name]
             if (paramDefl) {

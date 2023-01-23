@@ -465,7 +465,18 @@ describe("comment attribute parser", () => {
         chai.assert(parsed.locs["es|block"] == "SPANISH $bar", JSON.stringify(parsed.locs));
         chai.assert(parsed.locs["fr|jsdoc"] == "bli", JSON.stringify(parsed.locs));
         chai.assert(parsed.locs["fr|param|bar"] == "bah", JSON.stringify(parsed.locs));
-});
+    });
+
+    it("should parse parameter snippets", () => {
+        const parsed = ts.pxtc.parseCommentString(`
+            /**
+             * Bla
+             */
+            //% block="foo $bar"
+            //% bar.snippet="hello"
+        `);
+        chai.assert(parsed.paramSnippets?.["bar"] === "hello", "bar.snippet === \"hello\"")
+    })
 
 });
 

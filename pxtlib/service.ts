@@ -881,6 +881,9 @@ namespace ts.pxtc {
                     } else if (U.endsWith(n, ".shadow")) {
                         if (!res._shadowOverrides) res._shadowOverrides = {};
                         res._shadowOverrides[n.slice(0, n.length - 7)] = v;
+                    } else if (U.endsWith(n, ".snippet")) {
+                        if (!res.paramSnippets) res.paramSnippets = {};
+                        res.paramSnippets[n.slice(0, n.length - 8)] = v;
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v
