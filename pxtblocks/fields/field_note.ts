@@ -210,8 +210,8 @@ namespace pxtblockly {
             } else {
                 const note = +this.value_;
                 for (let i = 0; i < this.nKeys_; i++) {
-                    if (Math.abs(this.getKeyFreq(i) - note) < this.eps) {
-                        return this.getKeyName(i);
+                    if (Math.abs(this.getKeyFreq(i + this.minNote_) - note) < this.eps) {
+                        return this.getKeyName(i + this.minNote_);
                     }
                 }
                 let text = note.toString();
@@ -301,18 +301,18 @@ namespace pxtblockly {
             let startingPage = 0;
             for (let i = 0; i < this.nKeys_; i++) {
                 const currentOctave = Math.floor(i / FieldNote.notesPerOctave);
-                let position = this.getPosition(i);
+                let position = this.getPosition(i + this.minNote_);
 
                 // modify original position in pagination
                 if (pagination && i >= FieldNote.notesPerOctave)
                     position -= whiteKeysPerOctave * currentOctave * FieldNote.keyWidth;
 
-                const key = this.getKeyDiv(i, position);
+                const key = this.getKeyDiv(i + this.minNote_, position);
                 this.piano.push(key);
                 pianoDiv.appendChild(key);
 
                 // if the current value is within eps of this note, select it.
-                if (Math.abs(this.getKeyFreq(i) - Number(this.getValue())) < this.eps) {
+                if (Math.abs(this.getKeyFreq(i + this.minNote_) - Number(this.getValue())) < this.eps) {
                     pxt.BrowserUtils.addClass(key, "selected");
                     this.currentSelectedKey = key;
                     startingPage = currentOctave;
@@ -459,6 +459,7 @@ namespace pxtblockly {
          * @return true if idx is white
          */
         protected isWhite(idx: number): boolean {
+            idx += 8;
             switch (idx % 12) {
                 case 1: case 3: case 6:
                 case 8: case 10:
@@ -466,6 +467,31 @@ namespace pxtblockly {
                 default:
                     return true;
             }
+        }
+
+        protected whiteKeysBefore(idx: number): number {
+            idx += 8;
+            switch (idx % 12) {
+                case 0: return 0;
+                case 1:
+                case 2:
+                    return 1;
+                case 3:
+                case 4:
+                    return 2;
+                case 5:
+                    return 3;
+                case 6:
+                case 7:
+                    return 4;
+                case 8:
+                case 9:
+                    return 5;
+                case 10:
+                case 11:
+                    return 6
+            }
+            return -1;
         }
 
         /**
@@ -508,7 +534,7 @@ namespace pxtblockly {
         }
 
         private getKeyNoteData(keyIndex: number) {
-            return FieldNote.Notes[keyIndex + this.minNote_];
+            return FieldNote.Notes[keyIndex];
         }
 
         /**
@@ -517,11 +543,30 @@ namespace pxtblockly {
          * @return position of the key
          */
         protected getPosition(idx: number): number {
-            const whiteKeyCount = idx - Math.floor((idx + 1) / FieldNote.notesPerOctave * FieldNote.blackKeysPerOctave);
-            const pos = whiteKeyCount * FieldNote.keyWidth;
-            if (this.isWhite(idx))
-                return pos;
-            return pos - (FieldNote.keyWidth / 4);
+            if (idx === this.minNote_) return 0;
+
+            const blackKeyOffset = (FieldNote.keyWidth / 4);
+
+            const startOctave = Math.floor((this.minNote_ + 8) / FieldNote.notesPerOctave);
+            const currentOctave = Math.floor((idx + 8) / FieldNote.notesPerOctave);
+
+            let startOffset = this.whiteKeysBefore(this.minNote_) * FieldNote.keyWidth;
+            if (!this.isWhite(this.minNote_)) {
+                startOffset -= blackKeyOffset;
+            }
+
+
+            if (currentOctave > startOctave) {
+                const octaveWidth = FieldNote.keyWidth * 7;
+                const firstOctaveWidth = octaveWidth - startOffset;
+                const octaveStart = firstOctaveWidth + (currentOctave - startOctave - 1) * octaveWidth;
+
+                return this.whiteKeysBefore(idx) * FieldNote.keyWidth + octaveStart - (this.isWhite(idx) ? 0 : blackKeyOffset);
+
+            }
+            else {
+                return this.whiteKeysBefore(idx) * FieldNote.keyWidth - startOffset - (this.isWhite(idx) ? 0 : blackKeyOffset);
+            }
         }
 
         private prepareNotes() {

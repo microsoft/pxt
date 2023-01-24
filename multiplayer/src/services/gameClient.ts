@@ -60,12 +60,10 @@ class GameClient {
     screen: Buffer | undefined;
     clientRole: ClientRole | undefined;
     gameOverReason: GameOverReason | undefined;
+    receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
     paused: boolean = false;
 
     constructor() {
-        this.recvMessageWithJoinTimeout =
-            this.recvMessageWithJoinTimeout.bind(this);
-        this.recvMessageAsync = this.recvMessageAsync.bind(this);
     }
 
     destroy() {
@@ -88,7 +86,7 @@ class GameClient {
         }
     }
 
-    private async recvMessageAsync(payload: string | ArrayBuffer) {
+    private recvMessageAsync = async (payload: string | ArrayBuffer) => {
         if (payload instanceof ArrayBuffer) {
             //-------------------------------------------------
             // Handle binary message
@@ -135,26 +133,18 @@ class GameClient {
         }
     }
 
-    private async recvMessageWithJoinTimeout(
+    private recvMessageWithJoinTimeout = async (
         payload: string | Buffer,
         resolve: () => void
-    ) {
+    ) => {
         try {
             if (typeof payload === "string") {
                 const msg = JSON.parse(payload) as Protocol.Message;
-                await this.recvMessageAsync(payload);
                 if (msg.type === "joined") {
                     // We've joined the game. Replace this handler with a direct call to recvMessageAsync
                     if (this.sock) {
-                        this.sock.removeAllListeners("message");
-                        this.sock.on("message", async payload => {
-                            try {
-                                await this.recvMessageAsync(payload);
-                            } catch (e) {
-                                console.error("Error processing message", e);
-                                destroyGameClient();
-                            }
-                        });
+                        this.sock.removeListener("message", this.receivedJoinMessageInTimeHandler);
+                        this.receivedJoinMessageInTimeHandler = undefined;
                     }
                     resolve();
                 }
@@ -179,11 +169,20 @@ class GameClient {
             this.sock.binaryType = "arraybuffer";
             this.sock.on("open", () => {
                 pxt.debug("socket opened");
-                this.sock?.on("message", async payload => {
+                this.receivedJoinMessageInTimeHandler = async payload => {
                     await this.recvMessageWithJoinTimeout(payload, () => {
                         clearTimeout(joinTimeout);
                         resolve();
                     });
+                }
+                this.sock?.on("message", this.receivedJoinMessageInTimeHandler);
+                this.sock?.on("message", async payload => {
+                    try {
+                        await this.recvMessageAsync(payload);
+                    } catch (e) {
+                        console.error("Error processing message", e);
+                        destroyGameClient();
+                    }
                 });
                 this.sock?.on("close", () => {
                     pxt.debug("socket disconnected");
@@ -192,13 +191,11 @@ class GameClient {
                     resolve();
                 });
 
-                setTimeout(() => {
-                    this.sendMessage({
-                        type: "connect",
-                        ticket,
-                        version: Protocol.VERSION,
-                    } as Protocol.ConnectMessage);
-                }, 500); // TODO: Why is a short delay necessary here? The socket doesn't seem ready to send messages immediately.
+                this.sendMessage({
+                    type: "connect",
+                    ticket,
+                    version: Protocol.VERSION,
+                } as Protocol.ConnectMessage);
             });
         });
     }
@@ -536,7 +533,7 @@ class GameClient {
         image: Uint8Array,
         palette: Uint8Array | undefined
     ) {
-        const DELTAS_ENABLED = false;
+        const DELTAS_ENABLED = true;
 
         const buffers: Buffer[] = [];
         buffers.push(Buffer.from(image));

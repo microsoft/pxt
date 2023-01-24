@@ -22,6 +22,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 interface ITutorialBlocks {
     snippetBlocks: pxt.Map<pxt.Map<number>>;
     usedBlocks: pxt.Map<number>;
+    highlightBlocks: pxt.Map<pxt.Map<number>>;
 }
 
 /**
@@ -47,7 +48,7 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
                     pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: id });
                     // populate snippets if usedBlocks are present, but snippets are not
                     if (!entry?.snippets) getUsedBlocksInternalAsync(code, id, language, db, skipCache);
-                    return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks });
+                    return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks, highlightBlocks: entry.highlightBlocks });
                 } else {
                     return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
                 }
@@ -65,6 +66,7 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
 function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<ITutorialBlocks> {
     const snippetBlocks: pxt.Map<pxt.Map<number>> = {};
     const usedBlocks: pxt.Map<number> = {};
+    const highlightBlocks: pxt.Map<pxt.Map<number>> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
@@ -85,7 +87,8 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                         throw new Error("blocksXml failed to load");
                     }
                     const allblocks = headless.getAllBlocks(false);
-                    snippetBlocks[snippetHash] = {}
+                    snippetBlocks[snippetHash] = {};
+                    highlightBlocks[snippetHash] = {};
                     for (let bi = 0; bi < allblocks.length; ++bi) {
                         const blk = allblocks[bi];
                         if (blk.type == "typescript_statement") {
@@ -97,16 +100,25 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                             snippetBlocks[snippetHash][blk.type] = snippetBlocks[snippetHash][blk.type] + 1;
                             usedBlocks[blk.type] = 1;
                         }
+
+                        const comment = blk.getCommentText();
+                        if (comment && /@highlight/.test(comment)) {
+                            if (!highlightBlocks[snippetHash][blk.type]) {
+                                highlightBlocks[snippetHash][blk.type] = 0;
+                            }
+                            highlightBlocks[snippetHash][blk.type] = highlightBlocks[snippetHash][blk.type] + 1;
+                        }
                     }
                 }
 
                 headless?.dispose();
 
-                if (pxt.options.debug)
+                if (pxt.options.debug) {
                     pxt.debug(JSON.stringify(snippetBlocks, null, 2));
+                }
 
                 try {
-                    if (db && !skipCache) db.setAsync(id, snippetBlocks, code);
+                    if (db && !skipCache) db.setAsync(id, snippetBlocks, code, highlightBlocks);
                 }
                 catch (e) {
                     // Don't fail if the indexeddb fails, but log it
@@ -117,7 +129,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                 throw new Error("Failed to decompile");
             }
 
-            return { snippetBlocks, usedBlocks };
+            return { snippetBlocks, usedBlocks, highlightBlocks };
         }).catch((e) => {
             pxt.reportException(e);
             throw new Error(`Failed to decompile tutorial`);
