@@ -10,7 +10,7 @@ namespace pxt.blocks {
     }
 
     export interface DomToWorkspaceOptions {
-        applyMetaComments?: boolean;
+        applyHideMetaComment?: boolean;
     }
 
     /**
@@ -24,9 +24,7 @@ namespace pxt.blocks {
         try {
             Blockly.Events.disable();
             newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
-            if (opts?.applyMetaComments) {
-                applyMetaComments(workspace);
-            }
+            applyMetaComments(workspace, opts);
         } catch (e) {
             pxt.reportException(e);
         } finally {
@@ -35,20 +33,30 @@ namespace pxt.blocks {
         return newBlockIds.filter(id => !!workspace.getBlockById(id));
     }
 
-    function applyMetaComments(workspace: Blockly.Workspace) {
+    function applyMetaComments(workspace: Blockly.Workspace, opts?: DomToWorkspaceOptions) {
         // process meta comments
         // @highlight -> highlight block
         workspace.getAllBlocks(false)
             .filter(b => !!b.getCommentText())
             .forEach(b => {
-                const c = b.getCommentText();
-                if (/@highlight/.test(c)) {
-                    const cc = c.replace(/@highlight/g, '').trim();
-                    b.setCommentText(cc || null);
+                const initialCommentText = b.getCommentText();
+                if (/@hide/.test(initialCommentText) && opts?.applyHideMetaComment) {
+                    b.dispose(true);
+                    return;
+                }
+
+                let newCommentText = initialCommentText;
+                if (/@highlight/.test(newCommentText)) {
+                    newCommentText = newCommentText.replace(/@highlight/g, '').trim();
                     (workspace as Blockly.WorkspaceSvg).highlightBlock?.(b.id, true)
                 }
-                if (/@hide/.test(c)) {
-                    b.dispose(true);
+                if (/@collapsed/.test(newCommentText) && !b.getParent()) {
+                    newCommentText = newCommentText.replace(/@collapsed/g, '').trim();
+                    b.setCollapsed(true);
+                }
+
+                if (initialCommentText !== newCommentText) {
+                    b.setCommentText(newCommentText || null);
                 }
             });
     }

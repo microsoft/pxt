@@ -103,7 +103,7 @@ namespace pxt.blocks {
             pxt.blocks.domToWorkspaceNoEvents(
                 xml,
                 workspace,
-                { applyMetaComments: true }
+                { applyHideMetaComment: true }
             );
 
             return renderWorkspace(options);
