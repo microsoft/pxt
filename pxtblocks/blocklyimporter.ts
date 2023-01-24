@@ -40,7 +40,7 @@ namespace pxt.blocks {
             .filter(b => !!b.getCommentText())
             .forEach(b => {
                 const initialCommentText = b.getCommentText();
-                if (/@hide/.test(initialCommentText) && opts.applyHideMetaComment) {
+                if (/@hide/.test(initialCommentText) && opts?.applyHideMetaComment) {
                     b.dispose(true);
                     return;
                 }
