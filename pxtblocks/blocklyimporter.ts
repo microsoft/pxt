@@ -40,18 +40,21 @@ namespace pxt.blocks {
             .filter(b => !!b.getCommentText())
             .forEach(b => {
                 const initialCommentText = b.getCommentText();
+                if (/@hide/.test(initialCommentText) && opts.applyHideMetaComment) {
+                    b.dispose(true);
+                    return;
+                }
+
                 let newCommentText = initialCommentText;
                 if (/@highlight/.test(newCommentText)) {
                     newCommentText = newCommentText.replace(/@highlight/g, '').trim();
                     (workspace as Blockly.WorkspaceSvg).highlightBlock?.(b.id, true)
                 }
-                if (/@hide/.test(newCommentText) && opts.applyHideMetaComment) {
-                    b.dispose(true);
-                }
                 if (/@collapsed/.test(newCommentText) && !b.getParent()) {
                     newCommentText = newCommentText.replace(/@collapsed/g, '').trim();
                     b.setCollapsed(true);
                 }
+
                 if (initialCommentText !== newCommentText) {
                     b.setCommentText(newCommentText || null);
                 }
