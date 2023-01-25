@@ -192,7 +192,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
             return;
         }
 
-        const multiplayerHostUrl = pxt.multiplayer.makeHostLink(shareId);
+        const multiplayerHostUrl = pxt.multiplayer.makeHostLink(shareId, false);
 
         // NOTE: It is allowable to log the shareId here because this is within the multiplayer context.
         // In this context, the user has consented to allowing the shareId being made public.

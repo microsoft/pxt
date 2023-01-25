@@ -30,7 +30,7 @@ export default function Render() {
 
     // Insert a space to make the join code easier to read.
     const displayJoinCode = joinCode?.slice(0, 3) + " " + joinCode?.slice(3);
-    const joinDeepLink = pxt.multiplayer.makeJoinLink(joinCode);
+    const joinDeepLink = pxt.multiplayer.makeJoinLink(joinCode, true);
 
     return (
         <div className="tw-bg-white tw-shadow-lg tw-rounded-lg tw-m-1 tw-min-w-[17rem]">
