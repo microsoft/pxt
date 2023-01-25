@@ -81,7 +81,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     const blocksXml = xml[i];
                     const snippetHash = pxt.BrowserUtils.getTutorialCodeHash([code[i]]);
 
-                    headless = pxt.blocks.loadWorkspaceXml(blocksXml);
+                    headless = pxt.blocks.loadWorkspaceXml(blocksXml, false, { keepMetaComments: true });
                     if (!headless) {
                         pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
                         throw new Error("blocksXml failed to load");

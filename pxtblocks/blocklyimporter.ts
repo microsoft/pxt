@@ -11,6 +11,7 @@ namespace pxt.blocks {
 
     export interface DomToWorkspaceOptions {
         applyHideMetaComment?: boolean;
+        keepMetaComments?: boolean;
     }
 
     /**
@@ -55,7 +56,7 @@ namespace pxt.blocks {
                     b.setCollapsed(true);
                 }
 
-                if (initialCommentText !== newCommentText) {
+                if (initialCommentText !== newCommentText && !opts?.keepMetaComments) {
                     b.setCommentText(newCommentText || null);
                 }
             });
@@ -128,11 +129,11 @@ namespace pxt.blocks {
     /**
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
-    export function loadWorkspaceXml(xml: string, skipReport = false): Blockly.Workspace {
+    export function loadWorkspaceXml(xml: string, skipReport = false, opts?: DomToWorkspaceOptions): Blockly.Workspace {
         const workspace = new Blockly.Workspace() as Blockly.WorkspaceSvg;
         try {
             const dom = Blockly.Xml.textToDom(xml);
-            pxt.blocks.domToWorkspaceNoEvents(dom, workspace);
+            pxt.blocks.domToWorkspaceNoEvents(dom, workspace, opts);
             return workspace;
         } catch (e) {
             if (!skipReport)
