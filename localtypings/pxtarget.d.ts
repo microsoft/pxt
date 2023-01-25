@@ -40,6 +40,7 @@ declare namespace pxt {
         bannedRepos?: string[];
         allowUnapproved?: boolean;
         approvedRepoLib?: pxt.Map<RepoData>;
+        builtinExtensionsLib?: pxt.Map<RepoData>;
         // list of trusted custom editor extension urls
         // that can bypass consent and send/receive messages
         approvedEditorExtensionUrls?: string[];
@@ -1163,7 +1164,7 @@ declare namespace pxt.tutorial {
         enabled: boolean;
         execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
     }
-    
+
     interface CodeValidatorMetadata {
         validatorType: string;
         properties: pxt.Map<string>;
@@ -1172,7 +1173,7 @@ declare namespace pxt.tutorial {
     interface CodeValidationConfig {
         validatorsMetadata: CodeValidatorMetadata[];
     }
-    
+
     interface TutorialStepInfo {
         // Step metadata
         showHint?: boolean; // automatically displays hint
