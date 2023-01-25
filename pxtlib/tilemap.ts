@@ -369,6 +369,7 @@ namespace pxt {
         }
 
         public createNewImage(width = 16, height = 16) {
+            this.onChange();
             const id = this.generateNewID(AssetType.Image);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
@@ -384,6 +385,7 @@ namespace pxt {
         }
 
         public createNewAnimation(width = 16, height = 16) {
+            this.onChange();
             const id = this.generateNewID(AssetType.Animation);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
@@ -399,6 +401,7 @@ namespace pxt {
         }
 
         public createNewAnimationFromData(frames: pxt.sprite.BitmapData[], interval = 500, displayName?: string) {
+            this.onChange();
             const id = this.generateNewID(AssetType.Animation);
 
             const newAnimation: Animation = {
