@@ -977,14 +977,29 @@ namespace pxt.assets.music {
                     notes: [],
                     iconURI: "/static/music-editor/lemon.png",
                     instrument: {
-                        waveform: 15,
+                        waveform: 14,
                         octave: 2,
                         ampEnvelope: {
-                            attack: 10,
-                            decay: 100,
-                            sustain: 500,
-                            release: 10,
+                            attack: 5,
+                            decay: 70,
+                            sustain: 870,
+                            release: 50,
                             amplitude: 1024
+                        },
+                        pitchEnvelope: {
+                            attack: 10,
+                            decay: 45,
+                            sustain: 0,
+                            release: 100,
+                            amplitude: 20
+                        },
+                        ampLFO: {
+                            frequency: 1,
+                            amplitude: 50
+                        },
+                        pitchLFO: {
+                            frequency: 2,
+                            amplitude: 1
                         }
                     }
                 },
