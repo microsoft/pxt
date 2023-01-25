@@ -1098,7 +1098,7 @@ namespace pxt.BrowserUtils {
 
         static createAsync(): Promise<TutorialInfoIndexedDb> {
             function openAsync() {
-                const idbWrapper = new pxt.BrowserUtils.IDBWrapper(TutorialInfoIndexedDb.dbName(), 3, (ev, r) => {
+                const idbWrapper = new pxt.BrowserUtils.IDBWrapper(TutorialInfoIndexedDb.dbName(), 2, (ev, r) => {
                     const db = r.result as IDBDatabase;
                     db.createObjectStore(TutorialInfoIndexedDb.TABLE, { keyPath: TutorialInfoIndexedDb.KEYPATH });
                 }, () => {
