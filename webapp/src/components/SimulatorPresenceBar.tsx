@@ -25,12 +25,5 @@ function PlayerPresenceIcon(props: React.PropsWithoutRef<{slot: 1 | 2 | 3 | 4}>)
         className={`sim-presence-bar-player player-${slot}`}
         title={lf("Player {0}", slot)}
         onClick={onClick}
-        // label={(
-        //     <img
-        //         className={"player-icon"}
-        //         alt={lf("User set icon for player {0}", slot)}
-        //         src="" // set in css as content:
-        //     />
-        // )}
     />);
 }
