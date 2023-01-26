@@ -11,6 +11,7 @@ import * as simulator from "./simulator";
 import { Button } from "./sui";
 import { TabContent } from "./components/core/TabContent";
 import { TabPane } from "./components/core/TabPane";
+import { SimulatorPresenceBar } from "./components/SimulatorPresenceBar"
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 import { fireClickOnEnter } from "./util";
 
@@ -155,8 +156,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
             <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
                 <TabContent disabled={!includeSimulatorTab} name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.tryShowSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
-                    <div className="ui items simPanel" ref={this.handleSimPanelRef}>
+                    <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
+                        {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
+                            <SimulatorPresenceBar />
+                        </div>}
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulatorTab} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">

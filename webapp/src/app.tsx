@@ -251,6 +251,15 @@ export class ProjectView
             }
             else if (msg.type === "thumbnail") {
                 if (this.shareEditor) this.shareEditor.setThumbnailFrames((msg as pxsim.SimulatorAutomaticThumbnailMessage).frames);
+            } else if (msg.type === "multiplayer") {
+                // todo move over types from multiplayer app to pxsim/embed.ts
+                const multiplayerMessage = msg as any;
+                if (multiplayerMessage.content === "Icon"
+                    && multiplayerMessage.iconType === 0 /** IconType.Player **/
+                ) {
+                    const { palette, icon, slot } = multiplayerMessage;
+                    this.handleSetPresenceIcon(slot, palette, icon.data);
+                }
             }
         }, false);
     }
@@ -314,6 +323,36 @@ export class ProjectView
             core.handleNetworkError(e);
         } finally {
             core.hideLoading("addextensions")
+        }
+    }
+
+    handleSetPresenceIcon = (slot: number, palette?: Uint8Array, icon?: Uint8Array) => {
+        slot = slot | 0;
+        if (slot < 1 || slot > 4)
+            return;
+
+        const root = document.getElementById("root");
+
+        const slotCssVarName = `--multiplayer-presence-icon-${slot}`;
+
+        if (!palette || !icon) {
+            root.style.removeProperty(slotCssVarName);
+            return;
+        } else {
+            const iconPngDataUri = pxt.convertUint8BufferToPngUri(
+                palette,
+                icon,
+            );
+            if (!iconPngDataUri) {
+                // failed to parse icon, bail out
+                return;
+            }
+            const asUrl = `url("${iconPngDataUri}")`;
+            root.style.setProperty(
+                slotCssVarName,
+                asUrl
+            );
+            // TODO: set with `content: url(var(--multiplayer-presence-icon-1))` in css later
         }
     }
 
@@ -4887,7 +4926,8 @@ export class ProjectView
             this.editor != this.blocksEditor ? "editorlang-text" : "",
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
-            pxt.appTarget.appTheme.embeddedTutorial ? "tutorial-embed" : ""
+            pxt.appTarget.appTheme.embeddedTutorial ? "tutorial-embed" : "",
+            // isMultiplayerGame ? "multiplayer-preview" : "",
         ];
         this.rootClasses = rootClassList;
         const rootClasses = sui.cx(rootClassList);

@@ -74,6 +74,7 @@ namespace pxsim {
         autofocus?: boolean;
         queryParameters?: string;
         mpRole?: "server" | "client";
+        activePlayer?: 1 | 2 | 3 | 4 | undefined;
     }
 
     export interface HwDebugger {
@@ -666,7 +667,8 @@ namespace pxsim {
                 storedState: opts.storedState,
                 ipc: opts.ipc,
                 single: opts.single,
-                dependencies: opts.dependencies
+                dependencies: opts.dependencies,
+                activePlayer: opts.activePlayer,
             }
             this.start();
         }

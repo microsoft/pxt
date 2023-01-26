@@ -1429,6 +1429,13 @@ p.ui.font.small {
         right: auto;
         display: block !important;
     }
+    .simPanel .multiplayer-presence {
+        position: fixed;
+        bottom: 4rem;
+    }
+    .simPanel.multiplayer-preview #simulators {
+        height: calc(100% - 2rem);
+    }
     #simulators {
         position: relative;
         padding: 3rem 1rem 3rem;
@@ -2322,6 +2329,86 @@ button.ui.button.hostmultiplayergame-button {
     .icon.xicon.multiplayer {
         font-size: 24px;
         margin-top: 0.25rem !important;
+    }
+}
+
+#root {
+    --multiplayer-presence-icon-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%23FF0000'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+    --multiplayer-presence-icon-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%230038FF'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+    --multiplayer-presence-icon-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%23FF9A14'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+    --multiplayer-presence-icon-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%234DA64D'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+}
+
+#root:not(.fullscreensim) .multiplayer-presence {
+    margin: 0;
+    margin-bottom: -.5rem;
+}
+
+.sim-presence-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+    gap: 1rem;
+    padding: 0;
+
+    .sim-presence-bar-player {
+        border-radius: 3rem;
+        height: 3rem;
+        width: 3rem;
+        padding: 0.2rem;
+        border: 2px solid;
+
+        // img {
+            image-rendering: optimizeSpeed;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimize-contrast;
+            image-rendering: pixelated;
+            -ms-interpolation-mode: nearest-neighbor;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 75%;
+        //     width: 2rem;
+        //     height: 2rem;
+
+        //     object-fit: contain;
+        //     height: auto;
+        // }
+        &.player-1 {
+            border-color: #FF0000;
+            // TODO: what to use for background color? just leave as default white?
+            // background-color: #FF00001A;
+            // img {
+            //     content: var(--multiplayer-presence-icon-1);
+            // }
+            background-image: var(--multiplayer-presence-icon-1);
+        }
+        &.player-2 {
+            border-color: #0038FF;
+            // background-color: #0038FF1A;
+            // img {
+            //     content: var(--multiplayer-presence-icon-2);
+            // }
+            background-image: var(--multiplayer-presence-icon-2);
+        }
+        &.player-3 {
+            border-color: #FF9A14;
+            // background-color: #FF9A141A;
+            // img {
+            //     content: var(--multiplayer-presence-icon-3);
+            // }
+            background-image: var(--multiplayer-presence-icon-3);
+        }
+        &.player-4 {
+            border-color: #4DA64D;
+            // background-color: #4DA64D1A;
+            // img {
+            //     content: var(--multiplayer-presence-icon-4);
+            // }
+            background-image: var(--multiplayer-presence-icon-4);
+        }
     }
 }
 

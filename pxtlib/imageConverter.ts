@@ -185,4 +185,31 @@ namespace pxt {
             return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
         }
     }
+
+    export function convertUint8BufferToPngUri(palette: Uint8Array, icon: Uint8Array) {
+        const imgConv = new pxt.ImageConverter();
+        const paletteAsTripletArray: number[][] = [];
+
+        for (let i = 0; i < 16; i++) {
+            paletteAsTripletArray.push([
+                palette[i * 3 + 2],
+                palette[i * 3 + 1],
+                palette[i * 3 + 0],
+                255,
+            ]);
+        }
+
+        imgConv.setPalette(paletteAsTripletArray);
+        const stringifiedRefBuffer = String.fromCharCode.apply(
+            null,
+            icon as any as number[]
+        );
+
+        const jresFormattedIconBuffer = `data:image/x-mkcd-f4;base64,${btoa(
+            stringifiedRefBuffer
+        )}`;
+
+        const iconPngDataUri = imgConv.convert(jresFormattedIconBuffer);
+        return iconPngDataUri;
+    }
 }

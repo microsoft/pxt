@@ -289,6 +289,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         fnArgs,
         parts,
         usedBuiltinParts,
+        allParts
     } = pxtc.buildSimJsInfo(res);
     lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
@@ -296,6 +297,15 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     const dependencies: pxt.Map<string> = {}
     for(const dep of pkg.sortedDeps())
         dependencies[dep.id] = dep.version()
+
+    const playerNumber = allParts && allParts.indexOf("multiplayer") >= 0 ? 1 : undefined;
+    if (playerNumber) {
+        const root = document.getElementById("root");
+        for (let i = 1; i < 4; i++) {
+            const cssVar = `--multiplayer-presence-icon-${i}`;
+            root?.style?.removeProperty(cssVar);
+        }
+    }
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
@@ -318,7 +328,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         storedState: storedState,
         autoRun,
         ipc: isIpcRenderer,
-        dependencies
+        dependencies,
+        activePlayer: playerNumber
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
