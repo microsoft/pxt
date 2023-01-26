@@ -150,7 +150,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         if (builtinExtensions)
             allExtensions = allExtensions.concat(Object.keys(builtinExtensions));
         allExtensions.forEach(repoSlug => {
-            const repoData = trgConfig.packages.approvedRepoLib[repoSlug] || trgConfig.packages.builtinExtensionsLib[repoSlug];
+            const repoData = approvedRepos?.[repoSlug] || builtinExtensions?.[repoSlug];
             repoData.tags?.forEach(tag => {
                 if (!newMap.has(tag)) {
                     newMap.set(tag, [])
