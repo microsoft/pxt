@@ -4926,7 +4926,6 @@ export class ProjectView
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
             pxt.appTarget.appTheme.embeddedTutorial ? "tutorial-embed" : "",
-            // isMultiplayerGame ? "multiplayer-preview" : "",
         ];
         this.rootClasses = rootClassList;
         const rootClasses = sui.cx(rootClassList);
