@@ -1434,7 +1434,7 @@ p.ui.font.small {
         bottom: 4rem;
     }
     .simPanel.multiplayer-preview #simulators {
-        height: calc(100% - 2rem);
+        height: calc(100% - 1.5rem);
     }
     #simulators {
         position: relative;
@@ -2342,6 +2342,22 @@ button.ui.button.hostmultiplayergame-button {
 #root:not(.fullscreensim) .multiplayer-presence {
     margin: 0;
     margin-bottom: -.5rem;
+}
+
+.miniSim:not(.fullscreensim):not(.tabTutorial) .multiplayer-presence {
+    display: none;
+}
+
+#root.tabTutorial:not(.fullscreensim):not(.collapsedEditorTools) .tab-content.tab-simulator.hidden .simPanel > .multiplayer-presence {
+    display: block;
+    position: fixed;
+    bottom: 7rem;
+    right: 16.5rem;
+    width: 4rem;
+
+    .sim-presence-bar {
+        flex-direction: column;
+    }
 }
 
 .sim-presence-bar {
