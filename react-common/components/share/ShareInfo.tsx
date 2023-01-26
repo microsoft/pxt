@@ -358,13 +358,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             </div>
                             <div className="project-share-actions">
                                 <div className="project-share-social">
-                                    {
-                                        pxt.appTarget?.appTheme?.shareToKiosk &&
-                                            <Button className="square-button gray mobile-portrait-hidden"
-                                            title={lf("Share to MakeCode Arcade Kiosk")}
-                                            leftIcon={"xicon kiosk"}
-                                            onClick={handleKioskClick} />
-                                    }
                                     <Button className="square-button gray embed mobile-portrait-hidden"
                                         title={lf("Show embed code")}
                                         leftIcon="fas fa-code"
@@ -389,12 +382,20 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         url={shareData?.url}
                                         type='whatsapp'
                                         heading={lf("Share on WhatsApp")} />
-                                    {navigator.share && <Button className="square-button device-share"
-                                        title={lf("Show device share options")}
-                                        ariaLabel={lf("Show device share options")}
-                                        leftIcon={"icon share"}
-                                        onClick={handleDeviceShareClick}
-                                    />}
+                                    {
+                                        pxt.appTarget?.appTheme?.shareToKiosk &&
+                                            <Button className="square-button gray mobile-portrait-hidden"
+                                            title={lf("Share to MakeCode Arcade Kiosk")}
+                                            leftIcon={"xicon kiosk"}
+                                            onClick={handleKioskClick} />
+                                    }
+                                    {
+                                        navigator.share && <Button className="square-button device-share"
+                                            title={lf("Show device share options")}
+                                            ariaLabel={lf("Show device share options")}
+                                            leftIcon={"icon share"}
+                                            onClick={handleDeviceShareClick} />
+                                    }
                                 </div>
                                 <Button
                                     className="menu-button project-qrcode"
