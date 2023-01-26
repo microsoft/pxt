@@ -40,6 +40,7 @@ declare namespace pxt {
         bannedRepos?: string[];
         allowUnapproved?: boolean;
         approvedRepoLib?: pxt.Map<RepoData>;
+        builtinExtensionsLib?: pxt.Map<RepoData>;
         // list of trusted custom editor extension urls
         // that can bypass consent and send/receive messages
         approvedEditorExtensionUrls?: string[];

@@ -139,11 +139,18 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         if (extensionTags.size > 0)
             return
         let trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
-        if (!trgConfig?.packages?.approvedRepoLib)
-            return;
+        const approvedRepos = trgConfig?.packages?.approvedRepoLib;
+        const builtinExtensions = trgConfig?.packages?.builtinExtensionsLib;
+        let allExtensions: string[] = [];
         const newMap = extensionTags;
-        Object.keys(trgConfig.packages.approvedRepoLib).forEach(repoSlug => {
-            const repoData = trgConfig.packages.approvedRepoLib[repoSlug];
+        if (!approvedRepos && !builtinExtensions)
+            return;
+        if (approvedRepos)
+            allExtensions = allExtensions.concat(Object.keys(approvedRepos));
+        if (builtinExtensions)
+            allExtensions = allExtensions.concat(Object.keys(builtinExtensions));
+        allExtensions.forEach(repoSlug => {
+            const repoData = approvedRepos?.[repoSlug] || builtinExtensions?.[repoSlug];
             repoData.tags?.forEach(tag => {
                 if (!newMap.has(tag)) {
                     newMap.set(tag, [])
