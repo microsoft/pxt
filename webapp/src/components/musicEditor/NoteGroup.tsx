@@ -70,16 +70,8 @@ export const NoteGroup = (props: NoteGroupProps) => {
 
     return <g className="music-staff-note-group" transform={`translate(${xOffset}, 0)`} ref={handleNoteGroupRef}>
         {noteEvent.notes.map((note, index) => {
-            let row: number;
-            let isBassClef = false
-
-            if (isDrumTrack) {
-                row = note.note;
-            }
-            else {
-                isBassClef = isBassClefNote(octave, note);
-                row = noteToRow(octave, note);
-            }
+            const isBassClef = isBassClefNote(octave, note, isDrumTrack);
+            const row = noteToRow(octave, note, isDrumTrack);
             return <Note
                 key={index}
                 isBassClef={isBassClef}

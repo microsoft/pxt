@@ -192,12 +192,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
         setCursorTick(coord.tick);
 
         const isAtCoord = (note: pxt.assets.music.Note) => {
-            if (isDrumTrack) return note.note === coord.row;
-            const isBassClef = isBassClefNote(instrument.octave, note);
+            const isBassClef = isBassClefNote(instrument.octave, note, isDrumTrack);
 
             if (isBassClef !== coord.isBassClef) return false;
 
-            return noteToRow(instrument.octave, note) === coord.row;
+            return noteToRow(instrument.octave, note, isDrumTrack) === coord.row;
         }
 
         if (existingEvent?.startTick === coord.tick && existingEvent.notes.some(isAtCoord)) {
@@ -222,7 +221,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
                 else {
                     newSpelling = "normal"
                 }
-                const newNote = rowToNote(instrument.octave, coord.row, coord.isBassClef, newSpelling)
+                const newNote = rowToNote(instrument.octave, coord.row, coord.isBassClef, isDrumTrack, newSpelling)
 
                 updateSong(
                     addNoteToTrack(
@@ -245,9 +244,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
             }
         }
         else if (!eraserActive) {
-            const note: pxt.assets.music.Note = isDrumTrack ?
-                { note: coord.row, enharmonicSpelling: "normal" } :
-                rowToNote(instrument.octave, coord.row, coord.isBassClef);
+            const note: pxt.assets.music.Note =
+                rowToNote(instrument.octave, coord.row, coord.isBassClef, isDrumTrack);
 
             const maxTick = currentSong.beatsPerMeasure * currentSong.ticksPerBeat * currentSong.measures;
 
@@ -257,7 +255,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             updateSong(unselectAllNotes(addNoteToTrack(currentSong, selectedTrack, note, coord.tick, coord.tick + noteLength)), true)
 
             if (isDrumTrack) {
-                playDrumAsync(track.drums[coord.row]);
+                playDrumAsync(track.drums[note.note]);
             }
             else {
                 playNoteAsync(note.note, instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, gridTicks))
@@ -267,9 +265,6 @@ export const MusicEditor = (props: MusicEditorProps) => {
             for (let i = 0; i < currentSong.tracks.length; i++) {
                 if (hideTracksActive && i !== selectedTrack) continue;
 
-                const track = currentSong.tracks[i];
-                const instrument = track.instrument;
-                const note = !!track.drums ? coord.row : rowToNote(instrument.octave, coord.row, coord.isBassClef);
                 const existingEvent = findPreviousNoteEvent(currentSong, i, coord.tick);
 
                 if (existingEvent?.startTick === coord.tick || existingEvent?.endTick > coord.tick) {
@@ -353,12 +348,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
                 const existingEvent = findPreviousNoteEvent(currentSong, i, end.tick);
 
                 const isAtCoord = (note: pxt.assets.music.Note) => {
-                    if (isDrumTrack) return note.note === end.row;
-                    const isBassClef = isBassClefNote(instrument.octave, note);
+                    const isBassClef = isBassClefNote(instrument.octave, note, isDrumTrack);
 
                     if (isBassClef !== end.isBassClef) return false;
 
-                    return noteToRow(instrument.octave, note) === end.row;
+                    return noteToRow(instrument.octave, note, isDrumTrack) === end.row;
                 }
 
                 if (existingEvent?.startTick === end.tick || existingEvent?.endTick > end.tick) {
@@ -411,7 +405,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
         if (!isDrumTrack && event && start.tick >= event.startTick && start.tick < event.endTick) {
             let isOnRow = false;
             for (const note of event.notes) {
-                if (noteToRow(currentSong.tracks[selectedTrack].instrument.octave, note) === start.row) {
+                if (noteToRow(currentSong.tracks[selectedTrack].instrument.octave, note, false) === start.row) {
                     isOnRow = true;
                     break;
                 }
@@ -464,7 +458,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
             playDrumAsync(t.drums[0]);
         }
         else {
-            playNoteAsync(rowToNote(t.instrument.octave, 6, false).note, t.instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, currentSong.ticksPerBeat / 2));
+            playNoteAsync(rowToNote(t.instrument.octave, 6, false, !!t.drums).note, t.instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, currentSong.ticksPerBeat / 2));
         }
         setSelectedTrack(newTrack);
         if (cursor) setCursor({ ...cursor, track: newTrack });

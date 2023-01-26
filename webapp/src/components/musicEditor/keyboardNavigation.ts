@@ -107,6 +107,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
     const ticksPerMeasure = song.ticksPerBeat * song.beatsPerMeasure;
     const maxTicks = ticksPerMeasure * song.measures;
     const hasSelection = !!cursor.selection;
+    const isDrumTrack = !!song.tracks[cursor.track].drums;
 
     const clearSelection = (unselectNotes?: boolean) => {
         if (editedCursor.selection) {
@@ -148,18 +149,16 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             }
             else {
                 let note = noteEventAtCursor.notes[cursor.noteGroupIndex];
-                const track = editedSong.tracks[cursor.track];
-                let isBass = isBassClefNote(instrumentOctave, note);
+                let isBass = isBassClefNote(instrumentOctave, note, isDrumTrack);
 
-                const originalRow = track.drums ? note.note : noteToRow(instrumentOctave, note)
+                const originalRow = noteToRow(instrumentOctave, note, isDrumTrack)
 
                 let row = originalRow;
 
                 const delta = ctrlPressed ? 12 : 1;
                 while (noteEventAtCursor.notes.some(n => {
-                    if (track.drums) return n.note === row;
-                    if (isBassClefNote(instrumentOctave, n) !== isBass) return false;
-                    return row === noteToRow(instrumentOctave, n)
+                    if (isBassClefNote(instrumentOctave, n, isDrumTrack) !== isBass) return false;
+                    return row === noteToRow(instrumentOctave, n, isDrumTrack)
                 })) {
                     row += delta;
 
@@ -176,11 +175,10 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
 
                 if (row >= 12 || row < 0) break;
 
-                const newNote: pxt.assets.music.Note = track.drums ?
-                    { note: row, enharmonicSpelling: "normal" } :
-                    rowToNote(instrumentOctave, row, isBass, note.enharmonicSpelling)
+                const newNote: pxt.assets.music.Note =
+                    rowToNote(instrumentOctave, row, isBass, isDrumTrack, note.enharmonicSpelling)
 
-                editedSong = removeNoteAtRowFromTrack(editedSong, cursor.track, originalRow, isBassClefNote(instrumentOctave, note), noteEventAtCursor.startTick);
+                editedSong = removeNoteAtRowFromTrack(editedSong, cursor.track, originalRow, isBassClefNote(instrumentOctave, note, isDrumTrack), noteEventAtCursor.startTick);
                 editedSong = addNoteToTrack(editedSong, cursor.track, newNote, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
 
                 const newEvent = findNoteEventAtTick(editedSong, cursor.track, cursor.tick);
@@ -214,18 +212,17 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             else {
                 let note = noteEventAtCursor.notes[cursor.noteGroupIndex];
                 const track = editedSong.tracks[cursor.track];
-                let isBass = isBassClefNote(instrumentOctave, note);
+                let isBass = isBassClefNote(instrumentOctave, note, !!track.drums);
 
-                const originalRow = track.drums ? note.note : noteToRow(instrumentOctave, note)
+                const originalRow = noteToRow(instrumentOctave, note, !!track.drums)
 
                 let row = originalRow;
 
                 const delta = ctrlPressed ? -12 : -1;
 
                 while (noteEventAtCursor.notes.some(n => {
-                    if (track.drums) return n.note === row;
-                    if (isBassClefNote(instrumentOctave, n) !== isBass) return false;
-                    return row === noteToRow(instrumentOctave, n)
+                    if (isBassClefNote(instrumentOctave, n, !!track.drums) !== isBass) return false;
+                    return row === noteToRow(instrumentOctave, n, !!track.drums)
                 })) {
                     row += delta;
 
@@ -242,11 +239,10 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
 
                 if (row >= 12 || row < 0) break;
 
-                const newNote: pxt.assets.music.Note = track.drums ?
-                    { note: row, enharmonicSpelling: "normal" } :
-                    rowToNote(instrumentOctave, row, isBass, note.enharmonicSpelling)
+                const newNote: pxt.assets.music.Note =
+                    rowToNote(instrumentOctave, row, isBass, !!track.drums, note.enharmonicSpelling)
 
-                editedSong = removeNoteAtRowFromTrack(editedSong, cursor.track, originalRow, isBassClefNote(instrumentOctave, note), noteEventAtCursor.startTick);
+                editedSong = removeNoteAtRowFromTrack(editedSong, cursor.track, originalRow, isBassClefNote(instrumentOctave, note, !!track.drums), noteEventAtCursor.startTick);
                 editedSong = addNoteToTrack(editedSong, cursor.track, newNote, noteEventAtCursor.startTick, noteEventAtCursor.endTick);
 
                 const newEvent = findNoteEventAtTick(editedSong, cursor.track, cursor.tick);
@@ -401,9 +397,9 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 const minNote = instrument.octave * 12 - 20;
                 const maxNote = instrument.octave * 12 + 20;
 
-                const row = noteToRow(instrumentOctave, existingNote);
+                const row = noteToRow(instrumentOctave, existingNote, false);
                 const tick = noteEventAtCursor.startTick;
-                const bass = isBassClefNote(instrumentOctave, existingNote);
+                const bass = isBassClefNote(instrumentOctave, existingNote, false);
 
                 editedSong = removeNoteAtRowFromTrack(editedSong, editedCursor.track, row, bass, tick);
 
@@ -417,7 +413,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 else {
                     newSpelling = "normal"
                 }
-                const newNote = rowToNote(instrument.octave, row, bass, newSpelling)
+                const newNote = rowToNote(instrument.octave, row, bass, false, newSpelling)
 
                 editedSong = addNoteToTrack(
                     editedSong,
@@ -438,10 +434,10 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 let newNote;
 
                 if (cursor.bassClef) {
-                    newNote = rowToNote(instrumentOctave, 3 + "abcdefg".indexOf(event.key.toLowerCase()), true);
+                    newNote = rowToNote(instrumentOctave, 3 + "abcdefg".indexOf(event.key.toLowerCase()), true, isDrumTrack);
                 }
                 else {
-                    newNote = rowToNote(instrumentOctave, 5 + "abcdefg".indexOf(event.key.toLowerCase()), false);
+                    newNote = rowToNote(instrumentOctave, 5 + "abcdefg".indexOf(event.key.toLowerCase()), false, isDrumTrack);
                 }
 
                 if (noteEventAtCursor) {
