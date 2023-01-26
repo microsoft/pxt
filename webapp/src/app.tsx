@@ -352,7 +352,6 @@ export class ProjectView
                 slotCssVarName,
                 asUrl
             );
-            // TODO: set with `content: url(var(--multiplayer-presence-icon-1))` in css later
         }
     }
 
