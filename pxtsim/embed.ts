@@ -27,6 +27,7 @@ namespace pxsim {
         dependencies?: Map<string>;
         single?: boolean;
         traceDisabled?: boolean;
+        activePlayer?: 1 | 2 | 3 | 4 | undefined;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -255,6 +256,22 @@ namespace pxsim {
         css?: string;
         uri?: string;
         error?: string;
+    }
+
+    export interface SetActivePlayerMessage extends SimulatorMessage {
+        type: "setactiveplayer";
+        playerNumber: 1 | 2 | 3 | 4 | undefined;
+    }
+
+    export interface SetSimThemeMessage extends SimulatorMessage {
+        type: "setsimthemecolor";
+        part:
+            | "background-color"
+            | "button-stroke"
+            | "text-color"
+            | "button-fill"
+            | "dpad-fill";
+        color: string;
     }
 
     export function print(delay: number = 0) {

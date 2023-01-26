@@ -1043,6 +1043,7 @@ declare namespace ts.pxtc {
         fnArgs?: pxt.Map<String[]>;
         parts?: string[];
         usedBuiltinParts?: string[];
+        allParts?: string[];
         breakpoints?: number[];
     }
 
@@ -1163,7 +1164,7 @@ declare namespace pxt.tutorial {
         enabled: boolean;
         execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
     }
-    
+
     interface CodeValidatorMetadata {
         validatorType: string;
         properties: pxt.Map<string>;
@@ -1172,7 +1173,7 @@ declare namespace pxt.tutorial {
     interface CodeValidationConfig {
         validatorsMetadata: CodeValidatorMetadata[];
     }
-    
+
     interface TutorialStepInfo {
         // Step metadata
         showHint?: boolean; // automatically displays hint
