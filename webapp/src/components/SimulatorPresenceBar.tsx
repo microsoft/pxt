@@ -20,6 +20,7 @@ function PlayerPresenceIcon(props: React.PropsWithoutRef<{slot: 1 | 2 | 3 | 4}>)
             playerNumber: slot,
         };
         simulator.driver.postMessage(setSlotMsg);
+        simulator.driver.focus();
     }
     return (<Button
         className={`sim-presence-bar-player player-${slot}`}
