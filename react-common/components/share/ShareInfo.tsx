@@ -126,8 +126,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
                     })
 
                 } catch (error) {
+                    pxt.tickEvent("share.kiosk.submitServerError");
                     if (error.message === "Not Found") {
-                        pxt.tickEvent("share.kiosk.submitServerError");
                         pushNotificationMessage({
                             kind: 'err',
                             text: lf("Kiosk Code not found"),
@@ -151,7 +151,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         } else {
             pushNotificationMessage({
                 kind: 'err',
-                text: lf("Input a 6-character kiosk Code"),
+                text: lf("Input a six-character kiosk Code"),
                 hc: false
             });
         }
