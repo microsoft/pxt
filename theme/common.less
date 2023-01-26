@@ -2374,24 +2374,32 @@ button.ui.button.hostmultiplayergame-button {
             border-color: #FF0000;
             // TODO: what to use for background color? just leave as default white?
             // background-color: #FF00001A;
-            background-image: var(--multiplayer-presence-icon-1);
+            // !importants here as we have to override hc nulling background properties
+            background-image: var(--multiplayer-presence-icon-1) !important;
         }
         &.player-2 {
             border-color: #0038FF;
             // background-color: #0038FF1A;
-            background-image: var(--multiplayer-presence-icon-2);
+            background-image: var(--multiplayer-presence-icon-2) !important;
         }
         &.player-3 {
             border-color: #FF9A14;
             // background-color: #FF9A141A;
-            background-image: var(--multiplayer-presence-icon-3);
+            background-image: var(--multiplayer-presence-icon-3) !important;
         }
         &.player-4 {
             border-color: #4DA64D;
             // background-color: #4DA64D1A;
-            background-image: var(--multiplayer-presence-icon-4);
+            background-image: var(--multiplayer-presence-icon-4) !important;
         }
     }
+}
+
+// win the specificity fight with hc mode
+#root.hc .sim-presence-bar .sim-presence-bar-player {
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 75% !important;
 }
 
 /* Profile dialog */
