@@ -1,5 +1,7 @@
 import { state, dispatch } from "../state";
 import { showToast } from "../state/actions";
+import { simDriver } from "../services/simHost";
+import { SimMultiplayer } from "../types";
 
 export async function playerLeftAsync(clientId: string) {
     try {
@@ -12,6 +14,12 @@ export async function playerLeftAsync(clientId: string) {
                     timeoutMs: 5000,
                 })
             );
+            simDriver()?.postMessage({
+                type: "multiplayer",
+                content: "Connection",
+                slot: user.slot,
+                connected: false,
+            } as SimMultiplayer.MultiplayerConnectionMessage);
         }
     } catch (e) {
     } finally {
