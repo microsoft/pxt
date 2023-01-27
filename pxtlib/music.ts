@@ -977,14 +977,29 @@ namespace pxt.assets.music {
                     notes: [],
                     iconURI: "/static/music-editor/lemon.png",
                     instrument: {
-                        waveform: 15,
+                        waveform: 14,
                         octave: 2,
                         ampEnvelope: {
-                            attack: 10,
-                            decay: 100,
-                            sustain: 500,
-                            release: 10,
+                            attack: 5,
+                            decay: 70,
+                            sustain: 870,
+                            release: 50,
                             amplitude: 1024
+                        },
+                        pitchEnvelope: {
+                            attack: 10,
+                            decay: 45,
+                            sustain: 0,
+                            release: 100,
+                            amplitude: 20
+                        },
+                        ampLFO: {
+                            frequency: 1,
+                            amplitude: 50
+                        },
+                        pitchLFO: {
+                            frequency: 2,
+                            amplitude: 1
                         }
                     }
                 },
@@ -1005,7 +1020,8 @@ namespace pxt.assets.music {
                         }
                     },
                     drums: [
-                        { /* kick drum */
+                        {
+                            /* neutral kick */
                             startFrequency: 100,
                             startVolume: 1024,
                             steps: [
@@ -1023,49 +1039,33 @@ namespace pxt.assets.music {
                                 }
                             ]
                         },
-                        { /* closed hat */
-                            startFrequency: 1,
+                        {
+                            /* punchy kick */
+                            startFrequency: 200,
                             startVolume: 1024,
-                            steps: [
-                                {
-                                    waveform: 5,
-                                    frequency: 1,
-                                    duration: 20,
-                                    volume: 0
-                                }
-                            ]
+                            steps: [{
+                                frequency: 0,
+                                volume: 0,
+                                duration: 100,
+                                waveform: 1
+                            }]
                         },
-                        { /* open hat */
-                            startFrequency: 1,
+
+                        {
+                            /* booming kick */
+                            startFrequency: 100,
                             startVolume: 1024,
-                            steps: [
-                                {
-                                    waveform: 5,
-                                    frequency: 1,
-                                    duration: 20,
-                                    volume: 480
-                                },
-                                {
-                                    waveform: 5,
-                                    frequency: 1,
-                                    duration: 20,
-                                    volume: 260
-                                },
-                                {
-                                    waveform: 5,
-                                    frequency: 1,
-                                    duration: 20,
-                                    volume: 200
-                                },
-                                {
-                                    waveform: 5,
-                                    frequency: 1,
-                                    duration: 200,
-                                    volume: 0
-                                },
-                            ]
+                            steps: [{
+                                frequency: 0,
+                                volume: 0,
+                                duration: 250,
+                                waveform: 1
+                            }]
                         },
-                        { /* terrible snare */
+
+
+                        {
+                            /* snare 1 */
                             startFrequency: 175,
                             startVolume: 1024,
                             steps: [
@@ -1095,187 +1095,468 @@ namespace pxt.assets.music {
                                 },
                             ]
                         },
-                        { /* kick drum */
-                        startFrequency: 100,
-                        startVolume: 1024,
-                        steps: [
-                            {
-                                waveform: 3,
-                                frequency: 120,
-                                duration: 10,
-                                volume: 1024
-                            },
-                            {
-                                waveform: 1,
-                                frequency: 120,
-                                duration: 100,
-                                volume: 0
-                            }
-                        ]
-                    },
-                    { /* closed hat */
-                        startFrequency: 1,
-                        startVolume: 1024,
-                        steps: [
-                            {
-                                waveform: 5,
-                                frequency: 1,
-                                duration: 20,
-                                volume: 0
-                            }
-                        ]
-                    },
-                    { /* open hat */
-                        startFrequency: 1,
-                        startVolume: 1024,
-                        steps: [
-                            {
-                                waveform: 5,
-                                frequency: 1,
-                                duration: 20,
-                                volume: 480
-                            },
-                            {
-                                waveform: 5,
-                                frequency: 1,
-                                duration: 20,
-                                volume: 260
-                            },
-                            {
-                                waveform: 5,
-                                frequency: 1,
-                                duration: 20,
-                                volume: 200
-                            },
-                            {
-                                waveform: 5,
-                                frequency: 1,
-                                duration: 200,
-                                volume: 0
-                            },
-                        ]
-                    },
-                    { /* terrible snare */
-                        startFrequency: 175,
-                        startVolume: 1024,
-                        steps: [
-                            {
-                                waveform: 1,
-                                frequency: 200,
-                                duration: 10,
-                                volume: 1024
-                            },
-                            {
-                                waveform: 1,
-                                frequency: 150,
-                                duration: 20,
-                                volume: 1024
-                            },
-                            {
-                                waveform: 5,
-                                frequency: 1,
-                                duration: 20,
-                                volume: 100
-                            },
-                            {
-                                waveform: 5,
-                                frequency: 1,
-                                duration: 300,
-                                volume: 0
-                            },
-                        ]
-                    },
-                    { /* kick drum */
-                    startFrequency: 100,
-                    startVolume: 1024,
-                    steps: [
+
                         {
-                            waveform: 3,
-                            frequency: 120,
-                            duration: 10,
-                            volume: 1024
+                            /* snare 2 */
+                            startFrequency: 220,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    waveform: 1,
+                                    frequency: 250,
+                                    duration: 10,
+                                    volume: 1024
+                                },
+                                {
+                                    waveform: 1,
+                                    frequency: 200,
+                                    duration: 20,
+                                    volume: 1024
+                                },
+                                {
+                                    waveform: 5,
+                                    frequency: 2000,
+                                    duration: 20,
+                                    volume: 100
+                                },
+                                {
+                                    waveform: 5,
+                                    frequency: 2000,
+                                    duration: 200,
+                                    volume: 0
+                                },
+                            ]
+                        },
+
+
+                        {
+                            /* hat 1 */
+                            startFrequency: 400,
+                            startVolume: 500,
+                            steps: [
+                                {
+                                    frequency: 450,
+                                    volume: 500,
+                                    duration: 10,
+                                    waveform: 5
+                                },
+                                {
+                                    frequency: 400,
+                                    volume: 20,
+                                    duration: 20,
+                                    waveform: 5
+                                },
+                            ]
+                        },
+
+                        {
+                            /* hat 2 */
+                            startFrequency: 400,
+                            startVolume: 0,
+                            steps: [
+                                {
+                                    frequency: 450,
+                                    volume: 500,
+                                    duration: 5,
+                                    waveform: 5
+                                },
+                                {
+                                    frequency: 900,
+                                    volume: 5,
+                                    duration: 50,
+                                    waveform: 5
+                                },
+                                {
+                                    frequency: 900,
+                                    volume: 0,
+                                    duration: 250,
+                                    waveform: 5
+                                }
+                            ]
+                        },
+
+
+                        {
+                            /* hat 3 */
+                            startFrequency: 400,
+                            startVolume: 0,
+                            steps: [
+                                {
+                                    frequency: 450,
+                                    volume: 500,
+                                    duration: 5,
+                                    waveform: 5
+                                },
+                                {
+                                    frequency: 900,
+                                    volume: 200,
+                                    duration: 50,
+                                    waveform: 5
+                                },
+                                {
+                                    frequency: 900,
+                                    volume: 5,
+                                    duration: 100,
+                                    waveform: 5
+                                },
+                                {
+                                    frequency: 900,
+                                    volume: 0,
+                                    duration: 400,
+                                    waveform: 5
+                                }
+                            ]
+                        },
+
+                        {
+                            /* hat 4 */
+                            startFrequency: 400,
+                            startVolume: 0,
+                            steps: [
+                                {
+                                    frequency: 450,
+                                    volume: 500,
+                                    duration: 5,
+                                    waveform: 5
+                                },
+                                {
+                                    frequency: 900,
+                                    volume: 200,
+                                    duration: 100,
+                                    waveform: 5
+                                },
+                                {
+                                    frequency: 900,
+                                    volume: 5,
+                                    duration: 200,
+                                    waveform: 5
+                                },
+                                {
+                                    frequency: 900,
+                                    volume: 0,
+                                    duration: 500,
+                                    waveform: 5
+                                }
+                            ]
+                        },
+
+                        {
+                            /* double hat */
+                            startFrequency: 3500,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 4000,
+                                    volume: 0,
+                                    duration: 10,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 3500,
+                                    volume: 800,
+                                    duration: 1,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 4000,
+                                    volume: 0,
+                                    duration: 40,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 3500,
+                                    volume: 400,
+                                    duration: 1,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 4000,
+                                    volume: 0,
+                                    duration: 40,
+                                    waveform: 4
+                                },
+                            ]
+                        },
+
+                        {
+                            /* metallic */
+                            startFrequency: 2000,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 1800,
+                                    volume: 15,
+                                    duration: 100,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 1800,
+                                    volume: 0,
+                                    duration: 200,
+                                    waveform: 4
+                                }
+                            ]
+                        },
+
+                        {
+                            /* low tom */
+                            startFrequency: 200,
+                            startVolume: 200,
+                            steps: [
+                                {
+                                    frequency: 125,
+                                    volume: 200,
+                                    duration: 25,
+                                    waveform: 14
+                                },
+                                {
+                                    frequency: 100,
+                                    volume: 15,
+                                    duration: 50,
+                                    waveform: 14
+                                },
+                                {
+                                    frequency: 120,
+                                    volume: 0,
+                                    duration: 250,
+                                    waveform: 14
+                                }
+                            ]
+                        },
+
+                        {
+                            /* mid tom */
+                            startFrequency: 300,
+                            startVolume: 200,
+                            steps: [
+                                {
+                                    frequency: 225,
+                                    volume: 200,
+                                    duration: 25,
+                                    waveform: 14
+                                },
+                                {
+                                    frequency: 200,
+                                    volume: 15,
+                                    duration: 50,
+                                    waveform: 14
+                                },
+                                {
+                                    frequency: 220,
+                                    volume: 0,
+                                    duration: 250,
+                                    waveform: 14
+                                }
+                            ]
+                        },
+
+                        {
+                            /* hi tom */
+                            startFrequency: 500,
+                            startVolume: 200,
+                            steps: [
+                                {
+                                    frequency: 425,
+                                    volume: 200,
+                                    duration: 25,
+                                    waveform: 14
+                                },
+                                {
+                                    frequency: 400,
+                                    volume: 15,
+                                    duration: 50,
+                                    waveform: 14
+                                },
+                                {
+                                    frequency: 420,
+                                    volume: 0,
+                                    duration: 250,
+                                    waveform: 14
+                                }
+                            ]
                         },
                         {
-                            waveform: 1,
-                            frequency: 120,
-                            duration: 100,
-                            volume: 0
-                        }
-                    ]
-                },
-                { /* closed hat */
-                    startFrequency: 1,
-                    startVolume: 1024,
-                    steps: [
-                        {
-                            waveform: 5,
-                            frequency: 1,
-                            duration: 20,
-                            volume: 0
-                        }
-                    ]
-                },
-                { /* open hat */
-                    startFrequency: 1,
-                    startVolume: 1024,
-                    steps: [
-                        {
-                            waveform: 5,
-                            frequency: 1,
-                            duration: 20,
-                            volume: 480
+                            /* lo tom 2 */
+                            startFrequency: 200,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 75,
+                                    volume: 0,
+                                    duration: 200,
+                                    waveform: 1
+                                }
+                            ]
                         },
                         {
-                            waveform: 5,
-                            frequency: 1,
-                            duration: 20,
-                            volume: 260
+                            /* mid tom 2 */
+                            startFrequency: 300,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 200,
+                                    volume: 0,
+                                    duration: 200,
+                                    waveform: 1
+                                }
+                            ]
                         },
+
+
                         {
-                            waveform: 5,
-                            frequency: 1,
-                            duration: 20,
-                            volume: 200
+                            /* hi tom 2 */
+                            startFrequency: 400,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 300,
+                                    volume: 0,
+                                    duration: 200,
+                                    waveform: 1
+                                }
+                            ]
                         },
+
+
                         {
-                            waveform: 5,
-                            frequency: 1,
-                            duration: 200,
-                            volume: 0
+                            /* thump 1 */
+                            startFrequency: 200,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 200,
+                                    volume: 15,
+                                    duration: 100,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 150,
+                                    volume: 0,
+                                    duration: 200,
+                                    waveform: 4
+                                }
+                            ]
                         },
-                    ]
-                },
-                { /* terrible snare */
-                    startFrequency: 175,
-                    startVolume: 1024,
-                    steps: [
+
                         {
-                            waveform: 1,
-                            frequency: 200,
-                            duration: 10,
-                            volume: 1024
+                            /* thump 2 */
+                            startFrequency: 450,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 350,
+                                    volume: 15,
+                                    duration: 100,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 300,
+                                    volume: 0,
+                                    duration: 100,
+                                    waveform: 4
+                                }
+                            ]
                         },
+
                         {
-                            waveform: 1,
-                            frequency: 150,
-                            duration: 20,
-                            volume: 1024
+                            /* cymbal */
+                            startFrequency: 2500,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 2500,
+                                    volume: 100,
+                                    duration: 150,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 2550,
+                                    volume: 0,
+                                    duration: 500,
+                                    waveform: 4
+                                }
+                            ]
                         },
+
                         {
-                            waveform: 5,
-                            frequency: 1,
-                            duration: 20,
-                            volume: 100
+                            /* crash 1 */
+                            startFrequency: 3000,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 3000,
+                                    volume: 100,
+                                    duration: 300,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 3060,
+                                    volume: 0,
+                                    duration: 500,
+                                    waveform: 4
+                                }
+                            ]
                         },
+
                         {
-                            waveform: 5,
-                            frequency: 1,
-                            duration: 300,
-                            volume: 0
+                            /* crash 2 */
+                            startFrequency: 800,
+                            startVolume: 0,
+                            steps: [
+                                {
+                                    frequency: 800,
+                                    volume: 1024,
+                                    duration: 10,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 800,
+                                    volume: 0,
+                                    duration: 490,
+                                    waveform: 4
+                                }
+                            ]
                         },
-                    ]
-                }
-                    ]
+
+                        {
+                            /* crash 3 */
+                            startFrequency: 400,
+                            startVolume: 0,
+                            steps: [
+                                {
+                                    frequency: 400,
+                                    volume: 1024,
+                                    duration: 10,
+                                    waveform: 4
+                                },
+                                {
+                                    frequency: 400,
+                                    volume: 0,
+                                    duration: 400,
+                                    waveform: 4
+                                }
+                            ]
+                        },
+
+                        {
+                            /* buzzer */
+                            startFrequency: 2000,
+                            startVolume: 1024,
+                            steps: [
+                                {
+                                    frequency: 2000,
+                                    volume: 100,
+                                    duration: 150,
+                                    waveform: 16
+                                },
+                                {
+                                    frequency: 2000,
+                                    volume: 0,
+                                    duration: 200,
+                                    waveform: 16
+                                }
+                            ]
+                        },]
                 }
             ]
         }

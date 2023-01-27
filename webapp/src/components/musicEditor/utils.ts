@@ -1,8 +1,15 @@
 
 const staffNoteIntervals = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19];
 
-export function rowToNote(octave: number, row: number, isBassClef: boolean, enharmonicSpelling?: "flat" | "sharp" | "normal"): pxt.assets.music.Note {
+export function rowToNote(octave: number, row: number, isBassClef: boolean, isDrumTrack: boolean, enharmonicSpelling?: "flat" | "sharp" | "normal"): pxt.assets.music.Note {
     const base = staffNoteIntervals[row] + octave * 12 + 1 - (isBassClef ? 20 : 0);
+
+    if (isDrumTrack) {
+        return {
+            note: row + (isBassClef ? 12 : 0),
+            enharmonicSpelling: "normal"
+        }
+    }
 
     if (!enharmonicSpelling || enharmonicSpelling === "normal") {
         return {
@@ -24,8 +31,12 @@ export function rowToNote(octave: number, row: number, isBassClef: boolean, enha
     }
 }
 
-export function noteToRow(octave: number, note: pxt.assets.music.Note) {
-    const offset = note.note - 1 - octave * 12 + (isBassClefNote(octave, note) ? 20 : 0);
+export function noteToRow(octave: number, note: pxt.assets.music.Note, isDrumTrack: boolean) {
+    if (isDrumTrack) {
+        if (note.note >= 12) return note.note - 12;
+        return note.note;
+    }
+    const offset = note.note - 1 - octave * 12 + (isBassClefNote(octave, note, false) ? 20 : 0);
 
     for (let i = 0; i < staffNoteIntervals.length; i++) {
         if (staffNoteIntervals[i] === offset) {
@@ -47,7 +58,8 @@ export function noteToRow(octave: number, note: pxt.assets.music.Note) {
     return -1;
 }
 
-export function isBassClefNote(octave: number, note: pxt.assets.music.Note) {
+export function isBassClefNote(octave: number, note: pxt.assets.music.Note, isDrumTrack: boolean) {
+    if (isDrumTrack) return note.note >= 12;
     if (note.enharmonicSpelling === "flat") {
         return note.note < octave * 12;
     }
@@ -87,11 +99,10 @@ function addToNoteArray(notes: pxt.assets.music.NoteEvent[], note: pxt.assets.mu
             return notes.map((event, index) => index !== i ? event : {
                 ...event,
                 notes: event.notes.concat([note]).sort((a, b) => {
-                    if (isDrumTrack) return a.note - b.note;
-                    const aIsBassClef = isBassClefNote(octave, a);
-                    const bIsBassClef = isBassClefNote(octave, b);
+                    const aIsBassClef = isBassClefNote(octave, a, isDrumTrack);
+                    const bIsBassClef = isBassClefNote(octave, b, isDrumTrack);
 
-                    if (aIsBassClef === bIsBassClef) return noteToRow(octave, a) - noteToRow(octave, b);
+                    if (aIsBassClef === bIsBassClef) return noteToRow(octave, a, isDrumTrack) - noteToRow(octave, b, isDrumTrack);
                     else if (aIsBassClef) return -1;
                     else return 1;
                 })
@@ -145,11 +156,8 @@ function removeNoteAtRowFromNoteArray(notes: pxt.assets.music.NoteEvent[], row: 
             res[i] = {
                 ...res[i],
                 notes: res[i].notes.filter(n =>{
-                    if (isDrumTrack) {
-                        return n.note !== row
-                    }
-                    return isBassClefNote(octave, n) !== isBassClef ||
-                        noteToRow(octave, n) !== row;
+                    return isBassClefNote(octave, n, isDrumTrack) !== isBassClef ||
+                        noteToRow(octave, n, isDrumTrack) !== row;
                 })
             }
             break;
@@ -250,7 +258,9 @@ export function findNoteEventAtPosition(song: pxt.assets.music.Song, position: W
     if (trackIndex !== undefined) {
         const event = findNoteEventAtTick(song, trackIndex, position.tick);
 
-        if (event?.notes.some(n => noteToRow(song.tracks[trackIndex].instrument.octave, n) === position.row)) {
+        const track = song.tracks[trackIndex];
+
+        if (event?.notes.some(n => noteToRow(track.instrument.octave, n, !!track.drums) === position.row)) {
             return event;
         }
         return undefined;
@@ -259,7 +269,9 @@ export function findNoteEventAtPosition(song: pxt.assets.music.Song, position: W
     for (let i = 0; i < song.tracks.length; i++) {
         const event = findNoteEventAtTick(song, i, position.tick);
 
-        if (event?.notes.some(n => noteToRow(song.tracks[i].instrument.octave, n) === position.row)) {
+        const track = song.tracks[i];
+
+        if (event?.notes.some(n => noteToRow(track.instrument.octave, n, !!track.drums) === position.row)) {
             return event;
         }
     }
@@ -442,8 +454,8 @@ function moveNoteEvent(noteEvent: pxt.assets.music.NoteEvent, trackOctave: numbe
     }
     else {
         for (const note of noteEvent.notes) {
-            let isBass = isBassClefNote(trackOctave, note);
-            let row = noteToRow(trackOctave, note);
+            let isBass = isBassClefNote(trackOctave, note, isDrumTrack);
+            let row = noteToRow(trackOctave, note, isDrumTrack);
 
             if (row + deltaRows >= staffNoteIntervals.length) {
                 if (isBass) {
@@ -465,7 +477,7 @@ function moveNoteEvent(noteEvent: pxt.assets.music.NoteEvent, trackOctave: numbe
                 continue;
             }
 
-            res.notes.push(rowToNote(trackOctave, newRow, isBass, note.enharmonicSpelling));
+            res.notes.push(rowToNote(trackOctave, newRow, isBass, isDrumTrack, note.enharmonicSpelling));
         }
     }
 
@@ -476,7 +488,7 @@ export function doesSongUseBassClef(song: pxt.assets.music.Song) {
     return song.tracks.some(track =>
         !track.drums && track.notes.some(noteEvent =>
             noteEvent.notes.some(note =>
-                isBassClefNote(track.instrument.octave, note)
+                isBassClefNote(track.instrument.octave, note, !!track.drums)
             )
         )
     );
