@@ -11,6 +11,7 @@ import {
     buildSimJsInfo,
     RunOptions,
 } from "../services/simHost";
+import { state as currentState } from "../state";
 
 let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
 
@@ -63,7 +64,7 @@ export default function Render() {
     useEffect(() => {
         const msgHandler = (
             msg: MessageEvent<
-                SimMultiplayer.Message | pxsim.SimulatorStateMessage
+                SimMultiplayer.Message | pxsim.SimulatorStateMessage | pxsim.SimulatorTopLevelCodeFinishedMessage
             >
         ) => {
             const { data } = msg;
@@ -90,6 +91,20 @@ export default function Render() {
                         // gameClient.startPostingRandomKeys();
                     }
                     return;
+                case "toplevelcodefinished": {
+                    // broadcast initial presence state
+                    if (clientRole === "host") {
+                        for (const player of currentState?.presence.users) {
+                            simDriver()?.postMessage({
+                                type: "multiplayer",
+                                content: "Connection",
+                                slot: player.slot,
+                                connected: true,
+                            } as SimMultiplayer.MultiplayerConnectionMessage);
+                        }
+                    }
+                    return;
+                }
                 case "multiplayer":
                     const { origin, content } = data;
                     if (origin === "client" && content === "Button") {

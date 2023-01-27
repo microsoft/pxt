@@ -212,6 +212,12 @@ export namespace SimMultiplayer {
         palette: Uint8Array;
     };
 
+    export type MultiplayerConnectionMessage = MessageBase & {
+        content: "Connection";
+        slot: number;
+        connected: boolean;
+    }
+
     export type Message =
         | ImageMessage
         | AudioMessage
