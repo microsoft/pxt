@@ -562,7 +562,7 @@ class GameClient {
         }
     }
 
-    private async sendCurrentScreenAsync() {
+    public async sendCurrentScreenAsync() {
         if (this.screen) {
             const zippedData = await gzipAsync(this.screen);
             const buffer = Protocol.Binary.packCompressedScreenMessage(
@@ -703,6 +703,10 @@ export async function sendScreenUpdateAsync(
     palette: Uint8Array
 ) {
     await gameClient?.sendScreenUpdateAsync(img, palette);
+}
+
+export async function sendCurrentScreenAsync() {
+    await gameClient?.sendCurrentScreenAsync();
 }
 
 export function kickPlayer(clientId: string) {
