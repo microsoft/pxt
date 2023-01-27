@@ -5545,6 +5545,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     pxt.perf.measureStart("setAppTarget");
     pkg.setupAppTarget((window as any).pxtTargetBundle);
+
+    // DO NOT put any async code before this line! The serviceworker must be initialized before
+    // the window load event fires
     appcache.init(() => theEditor.reloadEditor());
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
     pxt.perf.measureEnd("setAppTarget");
