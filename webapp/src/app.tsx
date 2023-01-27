@@ -5545,6 +5545,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     pxt.perf.measureStart("setAppTarget");
     pkg.setupAppTarget((window as any).pxtTargetBundle);
+    appcache.init(() => theEditor.reloadEditor());
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
     pxt.perf.measureEnd("setAppTarget");
 
@@ -5574,7 +5575,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     cloudsync.loginCheck()
     parseLocalToken();
     hash = parseHash();
-    appcache.init(() => theEditor.reloadEditor());
     blocklyFieldView.init();
 
     pxt.react.getTilemapProject = () => {
