@@ -80,7 +80,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
                 let newSelection: WorkspaceSelectionState;
                 if (selection) {
                     newSelection = {
-                        originalSong: deleteSelectedNotes(applySelection(selection, hideTracksActive ? selectedTrack : undefined)),
+                        originalSong: unselectAllNotes(applySelection(selection, hideTracksActive ? selectedTrack : undefined)),
                         pastedContent: pasted,
                         startTick: selection.startTick,
                         endTick: selection.startTick + (pasted.endTick - pasted.startTick),
