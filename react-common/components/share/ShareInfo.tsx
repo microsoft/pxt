@@ -12,6 +12,7 @@ import { Checkbox } from "../controls/Checkbox";
 import { SimRecorder } from "./ThumbnailRecorder";
 import { MultiplayerConfirmation } from "./MultiplayerConfirmation";
 import { addGameToKioskAsync } from "./Kiosk";
+import { pushNotificationMessage } from "../Notification";
 
 export interface ShareInfoProps {
     projectName: string;
@@ -116,10 +117,33 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 setKioskSubmitSuccessful(true);
                 try {
                     await addGameToKioskAsync(validKioskId, gameId);
+                    pushNotificationMessage({
+                        kind: 'info',
+                        text: lf("Game submitted to kiosk {0} successfully!", validKioskId),
+                        hc: false
+                    })
+
                 } catch (error) {
-                    pxt.log(error.message);
-                    //TODO: give some feedback to the user, no kiosk exists...
+                    if (error.message === "Not Found") {
+                        pushNotificationMessage({
+                            kind: 'err',
+                            text: lf("Kiosk Code not found"),
+                            hc: false
+                        });
+                    } else {
+                        pushNotificationMessage({
+                            kind: 'err',
+                            text: lf("Something went wrong submitting game to kiosk {0}", validKioskId),
+                            hc: false
+                        });
+                    }
                 }
+            } else {
+                pushNotificationMessage({
+                    kind: 'err',
+                    text: lf("Invalid format for Kiosk Code"),
+                    hc: false
+                });
             }
         }
     }
@@ -147,8 +171,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     }
 
     const handleKioskHelpClick = () => {
-        pxt.log("this will lead the user to documentation");
-        const kioskDocumentationUrl = "https://arcade.makecode.com/developer/kiosk";
+        const kioskDocumentationUrl = "https://arcade.makecode.com/hardware/kiosk";
         window.open(kioskDocumentationUrl, "_blank");
     }
 
