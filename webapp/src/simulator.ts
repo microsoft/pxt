@@ -301,7 +301,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     const playerNumber = allParts && allParts.indexOf("multiplayer") >= 0 ? 1 : undefined;
     if (playerNumber) {
         const root = document.getElementById("root");
-        for (let i = 1; i < 4; i++) {
+        for (let i = 1; i <= 4; i++) {
             const cssVar = `--multiplayer-presence-icon-${i}`;
             root?.style?.removeProperty(cssVar);
         }
