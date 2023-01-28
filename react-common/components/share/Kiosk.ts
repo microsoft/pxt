@@ -12,6 +12,6 @@ export const addGameToKioskAsync = async (kioskId: string, gameId: string) => {
         }),
     });
     if (!response.ok) {
-        throw new Error(lf(response.statusText));
+        throw new Error(response.statusText);
     }
 }

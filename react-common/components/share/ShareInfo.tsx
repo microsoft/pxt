@@ -110,6 +110,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     }
 
     const handleKioskSubmitClick = async () => {
+        pxt.tickEvent("share.kiosk.submitClicked");
         const gameId = pxt.Cloud.parseScriptId(shareData.url);
         if (kioskInputRef?.value) {
             const validKioskId = /^[a-zA-Z0-9]{6}$/.exec(kioskInputRef.value)?.[0];
@@ -117,6 +118,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 setKioskSubmitSuccessful(true);
                 try {
                     await addGameToKioskAsync(validKioskId, gameId);
+                    pxt.tickEvent("share.kiosk.submitSuccessful");
                     pushNotificationMessage({
                         kind: 'info',
                         text: lf("Game submitted to kiosk {0} successfully!", validKioskId),
@@ -124,6 +126,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                     })
 
                 } catch (error) {
+                    pxt.tickEvent("share.kiosk.submitServerError");
                     if (error.message === "Not Found") {
                         pushNotificationMessage({
                             kind: 'err',
@@ -145,6 +148,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
                     hc: false
                 });
             }
+        } else {
+            pushNotificationMessage({
+                kind: 'err',
+                text: lf("Input a six-character kiosk Code"),
+                hc: false
+            });
         }
     }
 
