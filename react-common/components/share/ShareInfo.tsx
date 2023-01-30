@@ -113,8 +113,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
         pxt.tickEvent("share.kiosk.submitClicked");
         const gameId = pxt.Cloud.parseScriptId(shareData.url);
         if (kioskInputRef?.value) {
-            const validKioskId = /^[a-zA-Z0-9]{6}$/.exec(kioskInputRef.value)?.[0];
+            let validKioskId = /^[a-zA-Z0-9]{6}$/.exec(kioskInputRef.value)?.[0];
             if (validKioskId) {
+                validKioskId = validKioskId.toUpperCase();
                 setKioskSubmitSuccessful(true);
                 try {
                     await addGameToKioskAsync(validKioskId, gameId);
