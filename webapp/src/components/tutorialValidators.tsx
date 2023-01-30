@@ -1,7 +1,7 @@
 import { MarkedContent } from "../marked";
+import { getBlocksEditor } from "../app";
 import TutorialOptions = pxt.tutorial.TutorialOptions;
 import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
-import CodeValidationConfig = pxt.tutorial.CodeValidationConfig;
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidatorMetadata = pxt.tutorial.CodeValidatorMetadata;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
@@ -63,9 +63,14 @@ export class BlocksExistValidator extends CodeValidatorBase {
             return defaultResult;
         }
 
-        const userBlocks = Blockly.getMainWorkspace()?.getAllBlocks(false /* ordered */);
+        const editor = getBlocksEditor()?.editor;
+        if(!editor) {
+            return defaultResult;
+        }
+
+        const userBlocks = editor.getAllBlocks(false /* ordered */);
         const userBlocksEnabledByType = new Map<string, boolean>(); // Key = type, value = enabled
-        userBlocks.forEach(b => userBlocksEnabledByType.set(b.type, userBlocksEnabledByType.get(b.type) || b.isEnabled()));
+        userBlocks?.forEach(b => userBlocksEnabledByType.set(b.type, userBlocksEnabledByType.get(b.type) || b.isEnabled()));
 
         const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
         if (!allHighlightedBlocks) {
