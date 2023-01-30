@@ -9,7 +9,6 @@ import { Link } from "react-common/components/controls/Link";
 import { hostGameAsync, joinGameAsync } from "../epics";
 import TabButton from "./TabButton";
 import HostGameButton from "./HostGameButton";
-import BetaTag from "./BetaTag";
 
 export default function Render() {
     const { state } = useContext(AppStateContext);
@@ -46,9 +45,6 @@ export default function Render() {
     return (
         <div className="tw-flex tw-flex-col tw-w-screen tw-h-screen tw-justify-center tw-items-center">
             <div className="tw-bg-white tw-rounded-lg tw-drop-shadow-xl tw-min-h-[17rem] tw-min-w-[17rem] md:tw-min-w-[25rem]">
-                <div className="tw-absolute tw-translate-y-[-130%]">
-                    <BetaTag />
-                </div>
                 <div className="tw-py-5 tw-px-10 ">
                     <div className="tw-pt-2">
                         <div className="tw-flex tw-justify-center">

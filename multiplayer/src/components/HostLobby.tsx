@@ -5,7 +5,6 @@ import { startGameAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
 import { QRCodeSVG } from "qrcode.react";
-import BetaTag from "./BetaTag";
 import CopyButton from "./CopyButton";
 import PresenceBar from "./PresenceBar";
 
@@ -34,9 +33,6 @@ export default function Render() {
 
     return (
         <div className="tw-bg-white tw-shadow-lg tw-rounded-lg tw-m-1 tw-min-w-[17rem]">
-            <div className="tw-absolute tw-translate-y-[-130%]">
-                <BetaTag />
-            </div>
             <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-between tw-py-[3rem] tw-px-3 sm:tw-px-14 md:tw-px-[7rem]">
                 <div className="tw-mt-3 tw-text-lg tw-text-center tw-text-neutral-700">
                     {inviteStringSegments[0]}
