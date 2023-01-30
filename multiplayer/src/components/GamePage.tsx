@@ -1,7 +1,6 @@
 import { useContext } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import ArcadeSimulator from "./ArcadeSimulator";
-import BetaTag from "./BetaTag";
 import HostLobby from "./HostLobby";
 import JoinCodeLabel from "./JoinCodeLabel";
 import JoinLobby from "./JoinLobby";
@@ -23,11 +22,6 @@ export default function Render(props: GamePageProps) {
                 <div className="tw-flex tw-flex-col tw-items-center tw-justify-center tw-w-full tw-h-full">
                     {clientRole === "host" && <HostLobby />}
                     {clientRole === "guest" && <JoinLobby />}
-                </div>
-            )}
-            {state.gameState?.gameMode === "playing" && (
-                <div className="tw-mx-2 tw-self-start tw-mb-1">
-                    <BetaTag />
                 </div>
             )}
             <div
