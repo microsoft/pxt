@@ -1562,8 +1562,8 @@ export class ProjectView
 
         if (this.shareEditor) {
             this.shareEditor.setThumbnailFrames(undefined);
-            this.setState({ isMultiplayerGame: false });
         }
+        this.setState({ isMultiplayerGame: false });
 
         const checkAsync = this.tryCheckTargetVersionAsync(h.targetVersion);
         if (checkAsync)
@@ -3171,13 +3171,11 @@ export class ProjectView
             try {
                 const resp = await compiler.compileAsync({ native: true, forceEmit: true });
                 this.editor.setDiagnostics(this.editorFile, state);
-                if (this.shareEditor) {
-                    if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
-                        this.setState({ isMultiplayerGame: true });
-                    }
-                    else {
-                        this.setState({ isMultiplayerGame: false });
-                    }
+                if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
+                    this.setState({ isMultiplayerGame: true });
+                }
+                else {
+                    this.setState({ isMultiplayerGame: false });
                 }
 
                 if (!saveOnly) {
@@ -3735,13 +3733,11 @@ export class ProjectView
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
 
-                    if (this.shareEditor) {
-                        if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
-                            this.setState({ isMultiplayerGame: true });
-                        }
-                        else {
-                            this.setState({ isMultiplayerGame: false });
-                        }
+                    if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
+                        this.setState({ isMultiplayerGame: true });
+                    }
+                    else {
+                        this.setState({ isMultiplayerGame: false });
                     }
 
                     if (resp.outfiles[pxtc.BINARY_JS]) {
