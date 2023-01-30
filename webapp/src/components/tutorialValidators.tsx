@@ -64,7 +64,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
         }
 
         const editor = getBlocksEditor()?.editor;
-        if(!editor) {
+        if (!editor) {
             return defaultResult;
         }
 
