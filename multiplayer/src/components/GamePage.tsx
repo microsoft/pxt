@@ -1,13 +1,12 @@
 import { useContext } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import ArcadeSimulator from "./ArcadeSimulator";
-import BetaTag from "./BetaTag";
 import HostLobby from "./HostLobby";
 import JoinCodeLabel from "./JoinCodeLabel";
 import JoinLobby from "./JoinLobby";
 import KeyboardControlsButton from "./KeyboardControlsButton";
 import PresenceBar from "./PresenceBar";
-import RemixGameButton from "./RemixGameButton";
+import EditGameButton from "./EditGameButton";
 import ToggleMuteButton from "./ToggleMuteButton";
 
 export interface GamePageProps {}
@@ -25,11 +24,6 @@ export default function Render(props: GamePageProps) {
                     {clientRole === "guest" && <JoinLobby />}
                 </div>
             )}
-            {state.gameState?.gameMode === "playing" && (
-                <div className="tw-mx-2 tw-self-start tw-mb-1">
-                    <BetaTag />
-                </div>
-            )}
             <div
                 className="tw-flex tw-flex-col tw-items-center tw-grow tw-pb-4"
                 style={
@@ -43,7 +37,7 @@ export default function Render(props: GamePageProps) {
                     <div>
                         <ToggleMuteButton />
                         <div className="tw-hidden sm:tw-inline-block">
-                            <RemixGameButton />
+                            <EditGameButton />
                         </div>
                     </div>
                     <div className="tw-mr-1 sm:tw-mr-0">
@@ -53,7 +47,7 @@ export default function Render(props: GamePageProps) {
                         <KeyboardControlsButton />
                     </div>
                     <div className="tw-inline-block sm:tw-hidden">
-                        <RemixGameButton />
+                        <EditGameButton />
                     </div>
                 </div>
                 <div className="tw-mt-3">
