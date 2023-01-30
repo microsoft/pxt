@@ -7,7 +7,7 @@ import JoinCodeLabel from "./JoinCodeLabel";
 import JoinLobby from "./JoinLobby";
 import KeyboardControlsButton from "./KeyboardControlsButton";
 import PresenceBar from "./PresenceBar";
-import RemixGameButton from "./RemixGameButton";
+import EditGameButton from "./EditGameButton";
 import ToggleMuteButton from "./ToggleMuteButton";
 
 export interface GamePageProps {}
@@ -43,7 +43,7 @@ export default function Render(props: GamePageProps) {
                     <div>
                         <ToggleMuteButton />
                         <div className="tw-hidden sm:tw-inline-block">
-                            <RemixGameButton />
+                            <EditGameButton />
                         </div>
                     </div>
                     <div className="tw-mr-1 sm:tw-mr-0">
@@ -53,7 +53,7 @@ export default function Render(props: GamePageProps) {
                         <KeyboardControlsButton />
                     </div>
                     <div className="tw-inline-block sm:tw-hidden">
-                        <RemixGameButton />
+                        <EditGameButton />
                     </div>
                 </div>
                 <div className="tw-mt-3">
