@@ -49,10 +49,16 @@ export function TutorialValidationErrorMessage(
             />
             {showHint ? hintContent : (
                 <div className="tutorial-validation-error-body">
-                    <span role="img" aria-label={lf("Ladybug")} className="tutorial-validation-error-emoji">🐞</span>
+                    <img
+                        className="tutorial-validation-error-emoji"
+                        src="/static/validation/ladybeetle.svg"
+                        alt={lf("Ladybug")}
+                        height="50%"/>
                     <div className="tutorial-validation-error-inner">
                         <strong>{lf("Is there a bug?")}</strong>
-                        <p>{lf("This code doesn't look the way we expected.")}</p>
+                        <p>
+                            {lf("This code doesn't look the way we expected.")}
+                        </p>
                         <div className="tutorial-validation-error-controls">
                             {hintsExist && (
                                 <Button
