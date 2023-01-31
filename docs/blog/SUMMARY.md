@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode Arcade 2023 Update](/blog/arcade/release-jan-2023)
     * [Computer Science Education Week 2022](/blog/csed-week/csed-week-2022)
     * [MakeCode Arcade Fall Release](/blog/arcade/fall-release-2022)
     * [MakeCode Translation Tips and Tricks](/blog/localization/tips-and-tricks)
