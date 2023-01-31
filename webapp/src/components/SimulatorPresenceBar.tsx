@@ -19,7 +19,14 @@ function PlayerPresenceIcon(props: React.PropsWithoutRef<{slot: 1 | 2 | 3 | 4}>)
             type: "setactiveplayer",
             playerNumber: slot,
         };
+        const connectionMsg: pxsim.multiplayer.ConnectionMessage = {
+            type: "multiplayer",
+            content: "Connection",
+            slot: slot,
+            connected: true,
+        };
         simulator.driver.postMessage(setSlotMsg);
+        simulator.driver.postMessage(connectionMsg);
         simulator.driver.focus();
     }
     return (<Button

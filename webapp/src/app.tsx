@@ -252,13 +252,22 @@ export class ProjectView
             else if (msg.type === "thumbnail") {
                 if (this.shareEditor) this.shareEditor.setThumbnailFrames((msg as pxsim.SimulatorAutomaticThumbnailMessage).frames);
             } else if (msg.type === "multiplayer") {
-                // todo move over types from multiplayer app to pxsim/embed.ts
-                const multiplayerMessage = msg as any;
+                const multiplayerMessage = msg as pxsim.multiplayer.Message;
                 if (multiplayerMessage.content === "Icon"
-                    && multiplayerMessage.iconType === 0 /** IconType.Player **/
+                    && multiplayerMessage.iconType === pxsim.multiplayer.IconType.Player
                 ) {
                     const { palette, icon, slot } = multiplayerMessage;
-                    this.handleSetPresenceIcon(slot, palette, icon.data);
+                    this.handleSetPresenceIcon(slot, palette, icon?.data);
+                }
+            } else if (msg.type === "toplevelcodefinished") {
+                if (pxt.appTarget?.appTheme?.multiplayer) {
+                    const playerOneConnectedMsg: pxsim.multiplayer.ConnectionMessage = {
+                        type: "multiplayer",
+                        content: "Connection",
+                        slot: 1,
+                        connected: true,
+                    };
+                    simulator.driver.postMessage(playerOneConnectedMsg);
                 }
             }
         }, false);
