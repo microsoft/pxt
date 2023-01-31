@@ -5,7 +5,8 @@
 Welcome to 2023 – year of the rabbit!
 
 To start off the year right, we’ve got some great updates to MakeCode Arcade that will make playing games even more fun with multiplayer and Kiosk mode!
-And we also have lots of other goodies packed into this release, as well as addressing reported bug fixes.
+
+And, we also have lots of other goodies packed into this release, as well as addressing reported bug fixes.
 
 Let’s hop into the updates!
 
