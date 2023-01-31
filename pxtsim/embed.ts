@@ -274,6 +274,60 @@ namespace pxsim {
         color: string;
     }
 
+    export namespace multiplayer {
+        type MessageBase = {
+            type: "multiplayer";
+            origin?: "server" | "client";
+            broadcast?: boolean;
+        };
+
+        export enum IconType {
+            Player = 0,
+            Reaction = 1,
+        }
+
+        export type ImageMessage = MessageBase & {
+            content: "Image";
+            image?: pxsim.RefBuffer; // pxsim.RefBuffer
+            palette: Uint8Array;
+        };
+
+        export type InputMessage = MessageBase & {
+            content: "Button";
+            button: number;
+            clientNumber: number;
+            state: "Pressed" | "Released" | "Held";
+        };
+
+        export type AudioMessage = MessageBase & {
+            content: "Audio";
+            instruction: "playinstructions" | "muteallchannels";
+            soundbuf?: Uint8Array;
+        };
+
+        export type IconMessage = MessageBase & {
+            content: "Icon";
+            icon?: pxsim.RefBuffer; // pxsim.RefBuffer
+            slot: number;
+            iconType: IconType;
+            // 48bytes, [r0,g0,b0,r1,g1,b1,...]
+            palette: Uint8Array;
+        };
+
+        export type ConnectionMessage = MessageBase & {
+            content: "Connection";
+            slot: number;
+            connected: boolean;
+        }
+
+        export type Message =
+            | ImageMessage
+            | AudioMessage
+            | InputMessage
+            | IconMessage
+            | ConnectionMessage;
+    }
+
     export function print(delay: number = 0) {
         function p() {
             try {
