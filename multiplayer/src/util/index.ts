@@ -69,3 +69,11 @@ export function cleanupShareCode(
     if (!shareCode) return undefined;
     return pxt.Cloud.parseScriptId(shareCode);
 }
+
+export function resourceUrl(path: string | undefined): string | undefined {
+    if (!path) return;
+    if (pxt.BrowserUtils.isLocalHostDev() && !(path.startsWith('https:') || path.startsWith('data:'))) {
+        return pxt.appTarget?.appTheme.homeUrl + path;
+    }
+    return path;
+}

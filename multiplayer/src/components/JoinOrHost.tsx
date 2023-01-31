@@ -7,6 +7,7 @@ import { Button } from "../../../react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
 import { Link } from "react-common/components/controls/Link";
 import { hostGameAsync, joinGameAsync } from "../epics";
+import { resourceUrl } from "../util";
 import TabButton from "./TabButton";
 import HostGameButton from "./HostGameButton";
 
@@ -158,7 +159,7 @@ export default function Render() {
                                     shareId={game.shareId}
                                     title={game.title}
                                     subtitle={game.subtitle}
-                                    image={game.image}
+                                    image={resourceUrl(game.image)}
                                     key={i}
                                 />
                             );

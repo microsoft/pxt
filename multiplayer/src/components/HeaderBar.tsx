@@ -13,6 +13,7 @@ import { signOutAsync } from "../epics";
 import { showModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
 import { useAuthDialogMessages } from "../hooks/useAuthDialogMessages";
+import { resourceUrl } from "../util";
 
 export default function Render() {
     const { state, dispatch } = useContext(AppStateContext);
@@ -80,15 +81,23 @@ export default function Render() {
     };
 
     const getOrganizationLogo = (targetTheme: pxt.AppTheme) => {
-        const logoUrl = targetTheme.organizationWideLogo;
+        const logoWideUrl = targetTheme.organizationWideLogo;
+        const logoUrl = targetTheme.organizationLogo;
         return (
             <div className="tw-flex">
-                {logoUrl ? (
-                    <img
-                        className="tw-h-6 tw-mx-0 tw-my-1"
-                        src={logoUrl}
-                        alt={lf("{0} Logo", targetTheme.organization)}
-                    />
+                {logoWideUrl && logoUrl ? (
+                    <>
+                        <img
+                            className="tw-h-6 tw-mx-0 tw-my-1 tw-hidden sm:tw-block"
+                            src={resourceUrl(logoWideUrl)}
+                            alt={lf("{0} Logo", targetTheme.organization)}
+                        />
+                        <img
+                            className="tw-h-6 tw-mx-0 tw-my-1 tw-object-contain tw-block sm:tw-hidden"
+                            src={resourceUrl(logoUrl)}
+                            alt={lf("{0} Logo", targetTheme.organization)}
+                        />
+                    </>
                 ) : (
                     <span className="tw-h-6 tw-mx-0 tw-my-1">
                         {targetTheme.organization}
@@ -102,7 +111,7 @@ export default function Render() {
         return (
             <div
                 className={
-                    "tw-flex tw-pt-[2px] tw-ml-3 before:tw-relative before:tw-border-l-white before:tw-border-l-[2px] before:tw-border-solid tw-cursor-pointer"
+                    "tw-flex tw-pt-[2px] tw-ml-3 tw-cursor-pointer"
                 }
                 onClick={onHomeClicked}
             >
@@ -127,7 +136,7 @@ export default function Render() {
                 ) : targetTheme.logo || targetTheme.portraitLogo ? (
                     <img
                         className="logo"
-                        src={targetTheme.logo || targetTheme.portraitLogo}
+                        src={resourceUrl(targetTheme.logo || targetTheme.portraitLogo)}
                         alt={lf("{0} Logo", targetTheme.boardName)}
                     />
                 ) : (
@@ -252,12 +261,12 @@ export default function Render() {
             `}
             ariaLabel={lf("Header")}
         >
-            <div className="tw-select-none tw-text-lg tw-font-bold tw-flex tw-align-middle tw-p-[var(--header-padding-top)]">
+            <div className="tw-select-none tw-text-lg tw-font-bold tw-flex tw-align-middle tw-p-[var(--header-padding-top)] tw-flex-none">
                 {getOrganizationLogo(appTheme)}
                 {getTargetLogo(appTheme)}
             </div>
-            <div className="tw-select-none tw-flex-grow" />
-            <div className="tw-select-none tw-text-lg tw-font-bold tw-flex tw-items-center tw-pr-[var(--header-padding-top)] tw-h-full">
+            <div className="tw-select-none tw-grow" />
+            <div className="tw-select-none tw-text-lg tw-font-bold tw-flex tw-items-center tw-h-full tw-flex-none">
                 {settingItems?.length > 0 && (
                     <MenuDropdown
                         className="h-full"
