@@ -269,7 +269,7 @@ If you don't see an error message, try adding the `dbg=1` URL parameter and relo
 
 ## Code Validation (`validation.local` and `validation.global` sections)
 
-If you want to enable code validation in your tutorial, you can do so by adding a validation section. As with [`blockconfig` above](#reconfiguring-blocks-in-the-toolbox-blockconfiglocal-and-blockconfigglobal-sections), there are two types of sections: `validation.local` and `validation.global`. Global can be anywhere in the markdown and applies to all steps in the tutorial. Local must appear within a specific step, and applies only to that step. Local takes precedence over global.
+If you want to enable code validation in your tutorial, you can do so by adding a validation section. As with [`blockconfig` above](#reconfiguring-blocks-in-the-toolbox-blockconfiglocal-and-blockconfigglobal-sections), there are two types of sections: `validation.global` and `validation.local`. Global can be anywhere in the markdown and applies to all steps in the tutorial. Local must appear within a specific step, and applies only to that step. Local takes precedence over global.
 
 Within a validation section, you may specify which validators you want to enable and properties for those validators using the same syntax we use for writing Skillmaps (see [skillmap structure](..\skillmaps.md#skillmap-structure)).
 
