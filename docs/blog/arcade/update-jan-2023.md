@@ -64,9 +64,10 @@ Being able to automatically validate the correctness of code in tutorials has be
 
 ![Code validation checks](/static/blog/arcade/update-jan-2023/code-validation.gif)
 
-For tutorial authors who would like to add code validation in their tutorials, please see the documentation on how to do this here <insert link to code validation documentation>
+To see code validation in action, check out these tutorials:
 
-To see code validation in action, check out these tutorials <link to tutorials>
+* [Time Flies](http://arcade.makecode.com/#tutorial:/tutorials/froggy)
+* [Collect the Clovers](http://arcade.makecode.com/#tutorial:/tutorials/collect-the-clovers)
 
 ## Game Over
 
