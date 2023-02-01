@@ -4581,10 +4581,11 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
 function setBuildEngine() {
     const cs = pxt.appTarget.compileService
-    if (cs && cs.buildEngine) {
-        build.setThisBuild(build.buildEngines[cs.buildEngine]);
+    if (cs) {
+        const engine = cs.buildEngine || "yotta"
+        build.setThisBuild(build.buildEngines[engine]);
         if (!build.thisBuild)
-            U.userError("cannot find build engine: " + cs.buildEngine)
+            U.userError("cannot find build engine: " + engine)
     }
 }
 
