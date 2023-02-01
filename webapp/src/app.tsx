@@ -4205,8 +4205,8 @@ export class ProjectView
         this.profileDialog.show(location);
     }
 
-    showShareDialog(title?: string, forMultiplayer?: boolean) {
-        this.shareEditor.show(title, forMultiplayer);
+    showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share") {
+        this.shareEditor.show(title, kind);
     }
 
     showLanguagePicker() {
