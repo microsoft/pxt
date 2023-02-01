@@ -428,6 +428,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             break;
         default:
             if (/^[a-g]$/i.test(event.key)) {
+                if (ctrlPressed) break;
                 event.preventDefault();
                 clearSelection(true);
 
