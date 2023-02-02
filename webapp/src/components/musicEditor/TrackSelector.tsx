@@ -4,6 +4,7 @@ import { Checkbox } from "../../../../react-common/components/controls/Checkbox"
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown";
 import { FocusList } from "../../../../react-common/components/controls/FocusList";
 import { classList } from "../../../../react-common/components/util";
+import { resolveImageURL } from "./utils";
 
 export interface TrackSelectorProps {
     song: pxt.assets.music.Song;
@@ -71,7 +72,7 @@ export const TrackSelector = (props: TrackSelectorProps) => {
                     key={track.name}
                     title={track.name}
                     className={classList("music-track-button square-button pixellated", selected === index && !eraserActive && "selected")}
-                    label={<img src={track.iconURI} alt={track.name} />}
+                    label={<img src={resolveImageURL(track.iconURI)} alt={track.name} />}
                     onClick={() => setSelectedTrack(index)}
                     />
             )}

@@ -31,6 +31,13 @@ export function rowToNote(octave: number, row: number, isBassClef: boolean, isDr
     }
 }
 
+export function resolveImageURL(path: string) {
+    if ((window as any).MonacoPaths) {
+        return (window as any).MonacoPaths[path] || path;
+    }
+    return path;
+}
+
 export function noteToRow(octave: number, note: pxt.assets.music.Note, isDrumTrack: boolean) {
     if (isDrumTrack) {
         if (note.note >= 12) return note.note - 12;
