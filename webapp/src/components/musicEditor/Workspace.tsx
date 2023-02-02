@@ -10,10 +10,10 @@ import { WorkspaceSelection } from "./WorkspaceSelection";
 
 export interface WorkspaceProps {
     song: pxt.assets.music.Song;
-    onWorkspaceClick: (coordinate: WorkspaceCoordinate, ctrlIsPressed: boolean) => void;
+    onWorkspaceClick: (coordinate: WorkspaceClickCoordinate, ctrlIsPressed: boolean) => void;
     onWorkspaceDragStart: () => void;
     onWorkspaceDragEnd: () => void;
-    onWorkspaceDrag: (startCoordinate: WorkspaceCoordinate, endCoordinate: WorkspaceCoordinate) => void;
+    onWorkspaceDrag: (startCoordinate: WorkspaceClickCoordinate, endCoordinate: WorkspaceClickCoordinate) => void;
     onKeydown: (event: React.KeyboardEvent) => void;
     cursor: CursorState;
     selectedTrack: number
@@ -27,8 +27,8 @@ export interface WorkspaceProps {
 export const Workspace = (props: WorkspaceProps) => {
     const { song, onWorkspaceClick, gridTicks, selectedTrack, onWorkspaceDrag, onWorkspaceDragStart, onWorkspaceDragEnd, onKeydown, cursor, hideUnselectedTracks, eraserActive, showBassClef, selection } = props;
 
-    const [cursorLocation, setCursorLocation] = React.useState<WorkspaceCoordinate>(null);
-    const [dragStart, setDragStart] = React.useState<WorkspaceCoordinate>(null);
+    const [cursorLocation, setCursorLocation] = React.useState<WorkspaceClickCoordinate>(null);
+    const [dragStart, setDragStart] = React.useState<WorkspaceClickCoordinate>(null);
     const [isDragging, setIsDragging] = React.useState(false);
 
     let workspaceRef: SVGSVGElement;
@@ -46,7 +46,7 @@ export const Workspace = (props: WorkspaceProps) => {
         workspaceRef.onpointermove = ev => {
             const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
 
-            if (cursorLocation && cursorLocation.tick === coord.tick && cursorLocation.row === coord.row) return;
+            if (cursorLocation && cursorLocation.exactTick === coord.exactTick && cursorLocation.row === coord.row) return;
 
             const maxTick = song.beatsPerMeasure * song.ticksPerBeat * song.measures;
 
@@ -206,7 +206,7 @@ export const Workspace = (props: WorkspaceProps) => {
     </svg>
 }
 
-function coordinateToWorkspaceCoordinate(ev: MouseEvent | PointerEvent | TouchEvent, el: SVGSVGElement, song: pxt.assets.music.Song, gridTicks?: number): WorkspaceCoordinate {
+function coordinateToWorkspaceCoordinate(ev: MouseEvent | PointerEvent | TouchEvent, el: SVGSVGElement, song: pxt.assets.music.Song, gridTicks?: number): WorkspaceClickCoordinate {
     const coord = screenToSVGCoord(el, clientCoord(ev));
     const isBassClef = coord.y > BASS_STAFF_TOP;
 
@@ -217,6 +217,7 @@ function coordinateToWorkspaceCoordinate(ev: MouseEvent | PointerEvent | TouchEv
     return {
         isBassClef,
         row: note,
-        tick
+        tick,
+        exactTick: closestTick(song.ticksPerBeat, coord.x, 1)
     }
 }
