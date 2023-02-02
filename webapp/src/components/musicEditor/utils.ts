@@ -1,14 +1,22 @@
 
 const staffNoteIntervals = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19];
+const bassStaffNoteIntervals = [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19];
 
 export function rowToNote(octave: number, row: number, isBassClef: boolean, isDrumTrack: boolean, enharmonicSpelling?: "flat" | "sharp" | "normal"): pxt.assets.music.Note {
-    const base = staffNoteIntervals[row] + octave * 12 + 1 - (isBassClef ? 20 : 0);
-
     if (isDrumTrack) {
         return {
             note: row + (isBassClef ? 12 : 0),
             enharmonicSpelling: "normal"
         }
+    }
+
+    let base: number;
+
+    if (isBassClef) {
+        base = bassStaffNoteIntervals[row] + octave * 12 - 19;
+    }
+    else {
+        base = staffNoteIntervals[row] + octave * 12 + 1
     }
 
     if (!enharmonicSpelling || enharmonicSpelling === "normal") {
@@ -31,28 +39,38 @@ export function rowToNote(octave: number, row: number, isBassClef: boolean, isDr
     }
 }
 
+export function resolveImageURL(path: string) {
+    if ((window as any).MonacoPaths) {
+        return (window as any).MonacoPaths[path] || path;
+    }
+    return path;
+}
+
 export function noteToRow(octave: number, note: pxt.assets.music.Note, isDrumTrack: boolean) {
     if (isDrumTrack) {
         if (note.note >= 12) return note.note - 12;
         return note.note;
     }
-    const offset = note.note - 1 - octave * 12 + (isBassClefNote(octave, note, false) ? 20 : 0);
+    const isBass = isBassClefNote(octave, note, false);
+    const offset = note.note - 1 - octave * 12 + (isBass ? 20 : 0);
 
-    for (let i = 0; i < staffNoteIntervals.length; i++) {
-        if (staffNoteIntervals[i] === offset) {
+    const intervals = isBass ? bassStaffNoteIntervals : staffNoteIntervals;
+
+    for (let i = 0; i < intervals.length; i++) {
+        if (intervals[i] === offset) {
             if (note.enharmonicSpelling === "normal") return i;
             else if (note.enharmonicSpelling === "sharp") return i - 1;
             else return i + 1;
         }
-        else if (staffNoteIntervals[i] > offset) {
+        else if (intervals[i] > offset) {
             // must be sharp or flat note
             if (note.enharmonicSpelling === "sharp") return i - 1;
             else if (note.enharmonicSpelling === "flat") return i;
         }
     }
 
-    if (note.enharmonicSpelling === "sharp" && offset === staffNoteIntervals[staffNoteIntervals.length - 1] + 1) {
-        return staffNoteIntervals.length - 1;
+    if (note.enharmonicSpelling === "sharp" && offset === intervals[intervals.length - 1] + 1) {
+        return intervals.length - 1;
     }
 
     return -1;
