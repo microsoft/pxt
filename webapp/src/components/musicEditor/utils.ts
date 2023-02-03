@@ -94,6 +94,7 @@ export function addNoteToTrack(song: pxt.assets.music.Song, trackIndex: number, 
         tracks: song.tracks.map((track, index) => index !== trackIndex ? track : {
             ...track,
             notes: addToNoteArray(track.notes, note, startTick, endTick, track.instrument.octave, !!track.drums)
+                .filter(ev => (ev.startTick <= startTick || ev.startTick >= endTick) && (ev.endTick >= endTick || ev.endTick <= startTick))
         })
     }
 }

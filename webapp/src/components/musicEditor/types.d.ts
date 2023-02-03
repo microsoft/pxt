@@ -24,6 +24,10 @@ interface WorkspaceCoordinate {
     row: number;
 }
 
+interface WorkspaceClickCoordinate extends WorkspaceCoordinate {
+    exactTick: number;
+}
+
 interface WorkspaceSelectionState {
     originalSong: pxt.assets.music.Song;
     startTick: number;
