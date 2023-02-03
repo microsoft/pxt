@@ -87,7 +87,7 @@ myCoolFunction();
 
 When used in snippets, the following function or event will show up collapsed in the hint. This
 can also be used in template code in order to have code start off collapsed in the user's workspace,
-in case there is code that should exist but not be focused on immediately / that you will call out a few steps in.
+in case there is code that should exist but not be focused on immediately, or that you will call out in subsequent steps.
 
 ````
 ```blocks
