@@ -18,6 +18,8 @@ import { Badge } from "react-common/components/profile/Badge";
 import { Button } from "react-common/components/controls/Button";
 import { SignInModal } from "react-common/components/profile/SignInModal";
 import { Share, ShareData } from "react-common/components/share/Share";
+import { Input } from 'react-common/components/controls/Input';
+import { pdfRenderNameField, loadPdfLibAsync } from '../lib/pdfUtil';
 
 interface AppModalProps {
     type: ModalType;
@@ -53,6 +55,8 @@ interface AppModalState {
 }
 
 export class AppModalImpl extends React.Component<AppModalProps, AppModalState> {
+    protected textInput: HTMLInputElement | undefined;
+
     constructor (props: AppModalProps) {
         super(props);
         this.state = {};
@@ -454,12 +458,19 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     renderCertificateModal(reward: MapRewardCertificate) {
         const title = lf("Rewards");
         const  { mapId, skillMap, activity, hasPendingModals, dispatchNextModal } = this.props;
+        const isFirstParty = reward.url.startsWith("/static/")
+            || (pxt.webConfig?.cdnUrl && reward.url.startsWith(pxt.webConfig.cdnUrl));
+        const certIs1stPartyPdf = isFirstParty && reward.url.toLowerCase().endsWith(".pdf");
 
+        if (certIs1stPartyPdf) {
+            // start loading pdf-lib as lazy dep
+            loadPdfLibAsync();
+        }
         const buttons: ModalAction[] = [];
 
         const onCertificateClick = () => {
             tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
-            window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
+            window.open(reward.url || skillMap!.completionUrl);
         };
 
         buttons.push(
@@ -487,6 +498,21 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             )
         }
 
+        const handleInputRef = (ref: HTMLInputElement) => {
+            if (ref) this.textInput = ref;
+        }
+
+        const handleNamedCert = async () => {
+            const pdfBuf = await fetch(reward.url).then((res) => res.arrayBuffer());
+            const namedPdfBuf = await pdfRenderNameField(pdfBuf, this.textInput?.value);
+            pxt.BrowserUtils.browserDownloadUInt8Array(
+                namedPdfBuf,
+                `${skillMap?.displayName?.replace(/\s/g, "") || "skillmap"}-completion-certificate.pdf`,
+                { contentType: "application/pdf" }
+            );
+
+        }
+
         return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
             {lf("Use the button below to get your completion certificate!")}
             {reward.previewUrl &&
@@ -494,6 +520,29 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     <img src={reward.previewUrl} alt={lf("certificate Preview")} />
                 </div>
             }
+            {certIs1stPartyPdf &&
+                <div>
+                    {lf("Put your name on it!")}
+                    <Input
+                        className="cert-name-input"
+                        placeholder={"Put your name on it!"}
+                        type="text"
+                        // initialValue='' // TODO: check with Eric on auto filling when auth-ed
+                        handleInputRef={handleInputRef}
+                        preserveValueOnBlur={true}
+                        onEnterKey={handleNamedCert}
+                        title={lf("Enter a custom name to put on the certificate")}
+                        ariaLabel={lf("Enter a custom name to put on the certificate")}
+                    />
+                    <Button
+                        label={lf("Download")}
+                        title={lf("Download certificate")}
+                        ariaLabel={lf("Download certificate")}
+                        onClick={handleNamedCert}
+                    />
+                </div>
+            }
+            <div></div>
         </Modal>
     }
 

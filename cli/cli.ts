@@ -2068,6 +2068,7 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
     // this requires pxt serve to have completed before serving app, as it relies on
     // packing of pxtarget in buildTargetCoreAsync (mainly the chunk in the forEachBundledPkgAsync)
     expandedPxtTarget?: boolean,
+    includePdfLib?: boolean,
 }) {
     opts = opts || {
         copyAssets: true
@@ -2087,6 +2088,16 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
             } else {
                 nodeutil.cp("built/target.js", `${appRoot}/public/blb`);
             }
+
+            // todo do we through this into built/web like jquery?
+            if (opts.includePdfLib
+                && fs.existsSync("node_modules/pxt-core/webapp/public/pdf-lib/pdf-lib.min.js")) {
+                nodeutil.cp(
+                    "node_modules/pxt-core/webapp/public/pdf-lib/pdf-lib.min.js",
+                    `${appRoot}/public/blb/pdf-lib`
+                );
+            }
+
             nodeutil.cp("targetconfig.json", `${appRoot}/public/blb`);
             nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
             if (opts.includePxtSim) {
@@ -2119,7 +2130,14 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
 }
 
 function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
-    return buildReactAppAsync("skillmap", parsed);
+    return buildReactAppAsync(
+        "skillmap",
+        parsed,
+        {
+            includePdfLib: true,
+            copyAssets: true
+        }
+    );
 }
 
 function buildAuthcodeAsync(parsed: commandParser.ParsedCommand) {
