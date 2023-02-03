@@ -49,7 +49,7 @@ This will appear in tutorials as the `variables` category, but clicking it will 
 
 ### highlight
 
-Although used in snippets, the renderer will higlight the next line of code or block following a comment containing
+When used in snippets, the renderer will higlight the next line of code or block following a comment containing
 **@highlight**. Use `// @highlight` in blocks and TypeScript, and `# @highlight`
 in Python.
 
@@ -58,6 +58,60 @@ in Python.
 console.log(":)")
 // @highlight
 console.log(":(")
+```
+````
+
+### hide
+
+When used in snippets that produce an image of blocks, the renderer will remove the code or block following the a
+comment containing **@hide**. Use `// @hide` in blocks and TypeScript, and `# @hide` in Python.
+
+This will most often be useful when hiding set up code - e.g. a variable or function declaration.
+
+````
+```blocks
+// @hide
+function myCoolFunction() {
+
+}
+
+// @hide
+let mySprite = sprites.create(img`1`);
+
+mySprite.x += 50;
+myCoolFunction();
+```
+````
+
+### collapsed
+
+When used in snippets, the following function or event will show up collapsed in the hint. This
+can also be used in template code in order to have code start off collapsed in the user's workspace,
+in case there is code that should exist but not be focused on immediately / that you will call out a few steps in.
+
+````
+```blocks
+// @collapsed
+function myCoolFunction() {
+    console.log("this");
+    console.log("is");
+    console.log("a");
+    console.log("really");
+    console.log("long");
+    console.log("function");
+}
+
+// @collapsed
+game.onUpdate(() => {
+    console.log("this");
+    console.log("is");
+    console.log("a");
+    console.log("really");
+    console.log("long");
+    console.log("event");
+})
+
+myCoolFunction();
 ```
 ````
 
