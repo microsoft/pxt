@@ -5,7 +5,7 @@ export function loadPdfLibAsync(): Promise<boolean> {
     if (!loadPdfLibPromise)
         loadPdfLibPromise = pxt.BrowserUtils.loadScriptAsync("pdf-lib/pdf-lib.min.js")
             .then(() => typeof PDFLib !== "undefined")
-            .catch(e => false)
+            .catch(e => false);
     return loadPdfLibPromise;
 }
 

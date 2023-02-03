@@ -6,7 +6,7 @@ import '../styles/modal.css'
 
 import * as React from "react";
 import { connect } from 'react-redux';
-import { ModalType, ShareState, SkillMapState } from '../store/reducer';
+import { ModalType, PageSourceStatus, ShareState, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchNextModal, dispatchShowShareModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile, dispatchShowUserProfile, dispatchShowLoginModal } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync} from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled, getCompletionBadge, isRewardNode } from "../lib/skillMapUtils";
@@ -36,6 +36,7 @@ interface AppModalProps {
     badge?: pxt.auth.Badge;
     signedIn: boolean;
     profile?: pxt.auth.UserProfile;
+    pageSourceState?: PageSourceStatus;
     dispatchHideModal: () => void;
     dispatchNextModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
@@ -458,25 +459,58 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     renderCertificateModal(reward: MapRewardCertificate) {
         const title = lf("Rewards");
-        const  { mapId, skillMap, activity, hasPendingModals, dispatchNextModal, profile, signedIn } = this.props;
-        const isFirstParty = reward.url.startsWith("/static/")
-            || (pxt.webConfig?.cdnUrl && reward.url.startsWith(pxt.webConfig.cdnUrl));
-        const certIs1stPartyPdf = isFirstParty && reward.url.toLowerCase().endsWith(".pdf");
+        const  {
+            mapId,
+            skillMap,
+            activity,
+            hasPendingModals,
+            dispatchNextModal,
+            profile,
+            signedIn,
+            pageSourceState
+        } = this.props;
+        const isApproved = pageSourceState === "approved";
+        const isApprovedPdfCert = isApproved && reward.url?.toLowerCase().endsWith(".pdf");
 
-        if (certIs1stPartyPdf) {
-            // start loading pdf-lib as lazy dep
+        if (isApprovedPdfCert) {
+            // start loading pdf-lib immediately as it is a lazy dep
             loadPdfLibAsync();
         }
+
+        const handleNamedCert = async () => {
+            const pdfBuf = await fetch(reward.url).then((res) => res.arrayBuffer());
+            const namedPdfBuf = await pdfRenderNameField(pdfBuf, this.textInput?.value);
+            pxt.BrowserUtils.browserDownloadUInt8Array(
+                namedPdfBuf,
+                `${skillMap?.displayName?.replace(/\s/g, "") || "skillmap"}-completion-certificate.pdf`,
+                { contentType: "application/pdf" },
+            );
+        }
+
         const buttons: ModalAction[] = [];
 
         const onCertificateClick = () => {
-            tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
-            window.open(reward.url || skillMap!.completionUrl);
+            tickEvent("skillmap.openCertificate", {
+                path: mapId,
+                activity: activity!.activityId,
+                addedName: !!this.textInput?.value?.trim() ? 1 : 0
+            });
+            if (isApprovedPdfCert) {
+                handleNamedCert();
+            } else {
+                window.open(reward.url || skillMap!.completionUrl);
+            }
+
+            if (hasPendingModals) {
+                dispatchNextModal();
+            } else {
+                this.handleOnClose();
+            }
         };
 
         buttons.push(
             {
-                label: lf("Open Certificate"),
+                label: isApprovedPdfCert ? lf("Save Certificate") : lf("Open Certificate"),
                 className: "completion-reward inverted",
                 icon: "file outline",
                 onClick: onCertificateClick
@@ -503,16 +537,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             if (ref) this.textInput = ref;
         }
 
-        const handleNamedCert = async () => {
-            const pdfBuf = await fetch(reward.url).then((res) => res.arrayBuffer());
-            const namedPdfBuf = await pdfRenderNameField(pdfBuf, this.textInput?.value);
-            pxt.BrowserUtils.browserDownloadUInt8Array(
-                namedPdfBuf,
-                `${skillMap?.displayName?.replace(/\s/g, "") || "skillmap"}-completion-certificate.pdf`,
-                { contentType: "application/pdf" }
-            );
-        }
-
         const firstName = signedIn && profile && pxt.auth.firstName(profile);
 
         return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
@@ -522,27 +546,19 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     <img src={reward.previewUrl} alt={lf("certificate Preview")} />
                 </div>
             }
-            {certIs1stPartyPdf &&
-                <div>
-                    {lf("Put your name on it!")}
-                    <Input
-                        className="cert-name-input"
-                        placeholder={"Put your name on it!"}
-                        type="text"
-                        initialValue={firstName || undefined}
-                        handleInputRef={handleInputRef}
-                        preserveValueOnBlur={true}
-                        onEnterKey={handleNamedCert}
-                        title={lf("Enter a custom name to put on the certificate")}
-                        ariaLabel={lf("Enter a custom name to put on the certificate")}
-                    />
-                    <Button
-                        label={lf("Download")}
-                        title={lf("Download certificate")}
-                        ariaLabel={lf("Download certificate")}
-                        onClick={handleNamedCert}
-                    />
-                </div>
+            {isApprovedPdfCert &&
+                <Input
+                    className="cert-name-input"
+                    placeholder={"Put your name on it!"}
+                    label={lf("Enter your name")}
+                    type="text"
+                    initialValue={firstName || undefined}
+                    handleInputRef={handleInputRef}
+                    preserveValueOnBlur={true}
+                    onEnterKey={onCertificateClick}
+                    title={lf("Enter a custom name to put on the certificate")}
+                    ariaLabel={lf("Enter a custom name to put on the certificate")}
+                />
             }
             <div></div>
         </Modal>
@@ -656,6 +672,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         badge,
         signedIn: state.auth.signedIn,
         profile: state.auth.profile,
+        pageSourceState: state.pageSourceStatus,
     } as AppModalProps
 }
 
