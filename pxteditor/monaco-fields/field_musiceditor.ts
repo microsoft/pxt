@@ -110,7 +110,7 @@ namespace pxt.editor {
              * For the hex literal matches, it includes the call to music.startSong since
              * hex buffers can also be used for other things
              */
-            searchString: "(?:(?:assets\\s*\\.\\s*song)|(?:music\\s*\\.\\s*start(?:S|_s)ong\\s*\\(\\s*hex))\\s*(?:`|\\(\\s*\"\"\")(?:(?:[^(){}:\\[\\]\"';?/,+\\-=*&|^%!`~]|\\n)*)\\s*(?:`|\"\"\"\\s*\\))",
+            searchString: "(?:(?:assets\\s*\\.\\s*song)|(?:music\\s*\\.\\s*create(?:S|_s)ong\\s*\\(\\s*hex))\\s*(?:`|\\(\\s*\"\"\")(?:(?:[^(){}:\\[\\]\"';?/,+\\-=*&|^%!`~]|\\n)*)\\s*(?:`|\"\"\"\\s*\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false
