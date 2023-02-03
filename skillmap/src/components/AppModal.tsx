@@ -479,12 +479,18 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         const handleNamedCert = async () => {
             const pdfBuf = await fetch(reward.url).then((res) => res.arrayBuffer());
-            const namedPdfBuf = await pdfRenderNameField(pdfBuf, this.textInput?.value);
-            pxt.BrowserUtils.browserDownloadUInt8Array(
-                namedPdfBuf,
-                `${skillMap?.displayName?.replace(/\s/g, "") || "skillmap"}-completion-certificate.pdf`,
-                { contentType: "application/pdf" },
+            let namedPdfBuf: ArrayBuffer | undefined;
+            try {
+                namedPdfBuf = await pdfRenderNameField(pdfBuf, this.textInput?.value);
+            } catch (e) {
+                // Rendering name failed for some reason, just use empty pdf as back up.
+            }
+            const blobObj = new Blob(
+                [ namedPdfBuf || pdfBuf ],
+                { type: "application/pdf" }
             );
+            const blobUrl = URL.createObjectURL(blobObj);
+            window.open(blobUrl, "_blank", "noopener noreferrer");
         }
 
         const buttons: ModalAction[] = [];
@@ -510,7 +516,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         buttons.push(
             {
-                label: isApprovedPdfCert ? lf("Save Certificate") : lf("Open Certificate"),
+                label: lf("Open Certificate"),
                 className: "completion-reward inverted",
                 icon: "file outline",
                 onClick: onCertificateClick
