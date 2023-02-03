@@ -35,6 +35,7 @@ interface AppModalProps {
     reward?: MapReward;
     badge?: pxt.auth.Badge;
     signedIn: boolean;
+    profile?: pxt.auth.UserProfile;
     dispatchHideModal: () => void;
     dispatchNextModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
@@ -457,7 +458,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     renderCertificateModal(reward: MapRewardCertificate) {
         const title = lf("Rewards");
-        const  { mapId, skillMap, activity, hasPendingModals, dispatchNextModal } = this.props;
+        const  { mapId, skillMap, activity, hasPendingModals, dispatchNextModal, profile, signedIn } = this.props;
         const isFirstParty = reward.url.startsWith("/static/")
             || (pxt.webConfig?.cdnUrl && reward.url.startsWith(pxt.webConfig.cdnUrl));
         const certIs1stPartyPdf = isFirstParty && reward.url.toLowerCase().endsWith(".pdf");
@@ -510,8 +511,9 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 `${skillMap?.displayName?.replace(/\s/g, "") || "skillmap"}-completion-certificate.pdf`,
                 { contentType: "application/pdf" }
             );
-
         }
+
+        const firstName = signedIn && profile && pxt.auth.firstName(profile);
 
         return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
             {lf("Use the button below to get your completion certificate!")}
@@ -527,7 +529,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                         className="cert-name-input"
                         placeholder={"Put your name on it!"}
                         type="text"
-                        // initialValue='' // TODO: check with Eric on auto filling when auth-ed
+                        initialValue={firstName || undefined}
                         handleInputRef={handleInputRef}
                         preserveValueOnBlur={true}
                         onEnterKey={handleNamedCert}
@@ -653,6 +655,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         hasPendingModals: state.modalQueue?.length && state.modalQueue?.length > 1,
         badge,
         signedIn: state.auth.signedIn,
+        profile: state.auth.profile,
     } as AppModalProps
 }
 
