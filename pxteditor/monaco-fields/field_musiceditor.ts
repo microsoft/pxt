@@ -104,10 +104,10 @@ namespace pxt.editor {
              *     assets.song("""name""")
              *
              * and the hex-literal syntax:
-             *     music.startSong(hex`01234`
-             *     music.start_song(hex("""01234""")
+             *     music.createSong(hex`01234`
+             *     music.create_song(hex("""01234""")
              *
-             * For the hex literal matches, it includes the call to music.startSong since
+             * For the hex literal matches, it includes the call to music.createSong since
              * hex buffers can also be used for other things
              */
             searchString: "(?:(?:assets\\s*\\.\\s*song)|(?:music\\s*\\.\\s*create(?:S|_s)ong\\s*\\(\\s*hex))\\s*(?:`|\\(\\s*\"\"\")(?:(?:[^(){}:\\[\\]\"';?/,+\\-=*&|^%!`~]|\\n)*)\\s*(?:`|\"\"\"\\s*\\))",
