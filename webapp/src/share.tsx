@@ -40,7 +40,7 @@ export interface ShareEditorState {
     qrCodeUri?: string;
     qrCodeExpanded?: boolean;
     title?: string;
-    forMultiplayer?: boolean;   // Was the share dialog opened specifically for hosting a multiplayer game?
+    kind?: "multiplayer" | "vscode" | "share";   // Was the share dialog opened specifically for hosting a multiplayer game?
 }
 
 export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorState> {
@@ -81,7 +81,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         });
     }
 
-    show(title?: string, forMultiplayer?: boolean) {
+    show(title?: string, kind: "multiplayer" | "vscode" | "share" = "share") {
         const { header } = this.props.parent.state;
         if (!header) return;
         // TODO investigate why edge does not render well
@@ -105,7 +105,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             qrCodeExpanded: false,
             title,
             projectName: header.name,
-            forMultiplayer
+            kind
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
     }
 
@@ -139,7 +139,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             || this.state.qrCodeUri != nextState.qrCodeUri
             || this.state.qrCodeExpanded != nextState.qrCodeExpanded
             || this.state.title != nextState.title
-            || this.state.forMultiplayer != nextState.forMultiplayer
+            || this.state.kind != nextState.kind
             ;
     }
 
@@ -221,7 +221,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     anonymousShareByDefault={parent.getSharePreferenceForHeader()}
                     setAnonymousSharePreference={setSharePreference}
                     isMultiplayerGame={this.props.parent.state.isMultiplayerGame}
-                    forMultiplayer={this.state.forMultiplayer}
+                    kind={this.state.kind}
                     onClose={this.hide}/>
             </Modal>
             : <></>

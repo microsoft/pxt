@@ -1,0 +1,66 @@
+{
+    "editor": "blocksprj",
+    "title": "Getting started",
+    "steps": [
+        {
+            "title": "Introduction",
+            "contentMd": "Let's get started!",
+            "headerContentMd": "Let's get started!",
+            "localBlockConfig": {
+                "md": "",
+                "blocks": []
+            },
+            "localValidationConfig": null,
+            "showHint": true,
+            "showDialog": true
+        },
+        {
+            "title": "Step 1",
+            "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
+            "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
+            "localBlockConfig": {
+                "md": "",
+                "blocks": []
+            },
+            "localValidationConfig": {
+                "validatorsMetadata": [
+                    {
+                        "validatorType": "BlocksExistValidator",
+                        "properties": {
+                            "enabled": "false"
+                        }
+                    }
+                ]
+            },
+            "showHint": true,
+            "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```"
+        },
+        {
+            "title": "Step 2",
+            "contentMd": "Click ``|Download|`` to transfer your code in your unknown macro!",
+            "headerContentMd": "Click ``|Download|`` to transfer your code in your unknown macro!",
+            "localBlockConfig": {
+                "md": "",
+                "blocks": []
+            },
+            "localValidationConfig": null
+        }
+    ],
+    "activities": null,
+    "code": [
+        "{\nbasic.showString(\"Micro!\")\n}"
+    ],
+    "metadata": {},
+    "globalBlockConfig": {
+        "md": "",
+        "blocks": []
+    },
+    "globalValidationConfig": {
+        "validatorsMetadata": [
+            {
+                "validatorType": "BlocksExistValidator",
+                "properties": {}
+            }
+        ]
+    }
+}

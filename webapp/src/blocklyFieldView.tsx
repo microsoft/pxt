@@ -265,6 +265,8 @@ export function init() {
     pxt.react.getTilemapProject = () => {
         return project;
     }
+
+    pxt.react.isFieldEditorViewVisible = () => !!current;
 }
 
 export function dismissIfVisible() {

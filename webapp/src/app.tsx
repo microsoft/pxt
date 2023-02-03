@@ -3754,14 +3754,16 @@ export class ProjectView
                             pxt.debug(`sim: run`)
 
                             const hc = data.getData<boolean>(auth.HIGHCONTRAST)
-                            simulator.run(pkg.mainPkg, opts.debug, resp, {
-                                mute: this.state.mute,
-                                highContrast: hc,
-                                light: pxt.options.light,
-                                clickTrigger: opts.clickTrigger,
-                                storedState: pkg.mainEditorPkg().getSimState(),
-                                autoRun: this.state.autoRun
-                            }, opts.trace)
+                            if (!pxt.react.isFieldEditorViewVisible?.()) {
+                                simulator.run(pkg.mainPkg, opts.debug, resp, {
+                                    mute: this.state.mute,
+                                    highContrast: hc,
+                                    light: pxt.options.light,
+                                    clickTrigger: opts.clickTrigger,
+                                    storedState: pkg.mainEditorPkg().getSimState(),
+                                    autoRun: this.state.autoRun
+                                }, opts.trace)
+                            }
                             this.blocksEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);
                             this.textEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);
                             if (!cancellationToken.isCancelled()) {
@@ -4205,8 +4207,8 @@ export class ProjectView
         this.profileDialog.show(location);
     }
 
-    showShareDialog(title?: string, forMultiplayer?: boolean) {
-        this.shareEditor.show(title, forMultiplayer);
+    showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share") {
+        this.shareEditor.show(title, kind);
     }
 
     showLanguagePicker() {

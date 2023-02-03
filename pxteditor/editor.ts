@@ -354,7 +354,7 @@ namespace pxt.editor {
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
-        showShareDialog(title?: string, forMultiplayer?: boolean): void;
+        showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share"): void;
         showAboutDialog(): void;
 
         showLoginDialog(continuationHash?: string): void;

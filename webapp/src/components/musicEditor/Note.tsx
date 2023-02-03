@@ -1,6 +1,7 @@
 import * as React from "react";
 import { classList } from "../../../../react-common/components/util";
 import { rowY, NOTE_DURATION_HEIGHT, NOTE_ICON_WIDTH } from "./svgConstants";
+import { resolveImageURL } from "./utils";
 
 export interface NoteProps {
     row: number;
@@ -33,7 +34,7 @@ export const Note = (props: NoteProps) => {
                 width={length}
                 height={NOTE_DURATION_HEIGHT} />
         }
-        <image x={0} y={0} width={NOTE_ICON_WIDTH} height={NOTE_ICON_WIDTH} href={iconURI} opacity={opacity}>
+        <image x={0} y={0} width={NOTE_ICON_WIDTH} height={NOTE_ICON_WIDTH} href={resolveImageURL(iconURI)} opacity={opacity}>
             <animate
                 attributeName="y"
                 values="0;-7;-10;-7;0"

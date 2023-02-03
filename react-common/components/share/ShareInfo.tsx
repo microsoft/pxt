@@ -13,6 +13,7 @@ import { SimRecorder } from "./ThumbnailRecorder";
 import { MultiplayerConfirmation } from "./MultiplayerConfirmation";
 import { addGameToKioskAsync } from "./Kiosk";
 import { pushNotificationMessage } from "../Notification";
+import { classList } from "../util";
 
 export interface ShareInfoProps {
     projectName: string;
@@ -23,7 +24,7 @@ export interface ShareInfoProps {
     simRecorder: SimRecorder;
     publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
     isMultiplayerGame?: boolean; // Arcade: Does the game being shared have multiplayer enabled?
-    forMultiplayer?: boolean; // Arcade: Was the share dialog opened specifically for hosting a multiplayer game?
+    kind?: "multiplayer" | "vscode" | "share"; // Arcade: Was the share dialog opened specifically for hosting a multiplayer game?
     anonymousShareByDefault?: boolean;
     setAnonymousSharePreference?: (anonymousByDefault: boolean) => void;
     onClose: () => void;
@@ -41,7 +42,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         anonymousShareByDefault,
         setAnonymousSharePreference,
         isMultiplayerGame,
-        forMultiplayer,
+        kind,
         onClose,
     } = props;
     const [ name, setName ] = React.useState(projectName);
@@ -236,7 +237,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         if (!publishedShareData?.error) setShareState("publish");
         else setShareState("share")
 
-        if (forMultiplayer) {
+        if (kind === "multiplayer") {
             // If we're in the "for multiplayer" context, we want to close the share dialog after launching the multiplayer session.
             onClose();
         }
@@ -350,16 +351,27 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         <div className="project-share-publish-actions">
                             {shareState === "share" &&
                             <>
-                                {pxt.appTarget?.appTheme?.multiplayer && (isMultiplayerGame || forMultiplayer) &&
-                                    <Button className={(forMultiplayer ? "primary share-publish-button share-host-button" : "primary inverted text-only share-publish-button share-host-button")}
+                                {pxt.appTarget?.appTheme?.multiplayer && (isMultiplayerGame || kind === "multiplayer") &&
+                                    <Button className={
+                                            classList(
+                                                "primary share-host-button",
+                                                kind === "share" && "primary inverted text-only",
+                                                kind === "multiplayer" && "share-publish-button"
+                                            )
+                                        }
                                         title={lf("Host a multiplayer game")}
                                         label={lf("Host a multiplayer game")}
                                         leftIcon={"xicon multiplayer"}
                                         onClick={handleMultiplayerShareClick} />
                                 }
-                                {!forMultiplayer && <Button className="primary share-publish-button"
+                                {kind === "share" && <Button className="primary share-publish-button"
                                         title={lf("Share Project")}
                                         label={lf("Share Project")}
+                                        onClick={handlePublishClick} />
+                                }
+                                {kind === "vscode" && <Button className="primary share-publish-button"
+                                        title={lf("Open in VS Code")}
+                                        label={lf("Open in VS Code")}
                                         onClick={handlePublishClick} />
                                 }
                             </>

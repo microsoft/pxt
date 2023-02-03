@@ -134,7 +134,13 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     onHostMultiplayerGameClick = (evt: any) => {
         evt.preventDefault();
         pxt.tickEvent("sidepanel.hostmultiplayergame");
-        this.props.parent.showShareDialog(undefined, true);
+        this.props.parent.showShareDialog(undefined, "multiplayer");
+    }
+
+    onOpenInVSCodeClick = (evt: any) => {
+        evt.preventDefault();
+        pxt.tickEvent("sidepanel.openinvscode");
+        this.props.parent.showShareDialog(undefined, "vscode");
     }
 
     renderCore() {
@@ -148,6 +154,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const includeSimulatorTab = !isTabTutorial && hasSimulator
         const marginHeight = includeSimulatorTab ? "6.5rem" : "3rem";
+        const showOpenInVscodeButton = parent.isJavaScriptActive();
 
         const backButton = <Button icon="arrow circle left" text={lf("Back")} onClick={this.tryShowTutorialTab} />;
         const nextButton = <Button icon="arrow circle right" text={lf("Next")} onClick={this.tryShowTutorialTab} />;
@@ -167,6 +174,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                             {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
                         </div>
                         <div className="ui item grid centered portrait hide hidefullscreen">
+                            {showOpenInVscodeButton && <Button className={"teal hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
+                        </div>
+                        <div className="ui item grid centered portrait hide hidefullscreen">
                             {showHostMultiplayerGameButton && <Button className={"teal hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
                         </div>
                         {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
@@ -178,9 +188,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                     </div>
                     {isTabTutorial && <div className="tutorial-controls">
-                        { backButton }
+                        {backButton}
                         <Button icon="lightbulb" disabled={true} className="tutorial-hint" />
-                        { nextButton }
+                        {nextButton}
                     </div>}
                 </TabContent>
                 {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="icon tasks" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.tryShowTutorialTab} ariaLabel={lf("Open the tutorial tab")}>
