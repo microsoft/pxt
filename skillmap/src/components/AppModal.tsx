@@ -562,8 +562,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     handleInputRef={handleInputRef}
                     preserveValueOnBlur={true}
                     onEnterKey={onCertificateClick}
-                    title={lf("Enter a custom name to put on the certificate")}
-                    ariaLabel={lf("Enter a custom name to put on the certificate")}
+                    title={lf("Enter your name to customize the certificate")}
+                    ariaLabel={lf("Enter your name to customize the certificate")}
                 />
             }
             <div></div>
