@@ -29,7 +29,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     const [customPalettes, setCustomPalettes] = useState<CustomPalettes>(undefined);
     const [initialPalette, setInitialPalette] = useState<Palette | undefined>(undefined);
     const [currentPalette, setCurrentPalette] = useState<Palette | undefined>(undefined);
-    const [showExitModal, setShowExitModal] = useState<boolean>(false);
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
     const [nameModal, setNameModal] = useState<NameModal>(NameModal.None);
     const [invalidName, setInvalidName] = useState<boolean>(false);
@@ -99,16 +98,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     }
 
     const onModalClose = () => {
-        // check whether exiting without applied changes
-        if (isSameColors(currentPalette.colors, initialPalette.colors)) {
-            onFinalClose(false);
-        } else {
-            setShowExitModal(true);
-        }
-    }
-
-    const onExit = () => {
-        setShowExitModal(false);
         onFinalClose(false);
     }
 
@@ -236,10 +225,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
         { label: lf("Apply"), onClick: () => onFinalClose(true), className: 'green palette-apply-button', disabled: disableButtons }
     ];
 
-    const exitActions: ModalAction[] = [
-        { label: lf("Exit"), onClick: onExit, className: 'teal' }
-    ];
-
     const nameActions: ModalAction[] = [
         { label: lf("Done"), onClick: onNameDone, className: 'teal palette-done-button', disabled: invalidName }
     ];
@@ -291,9 +276,6 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             </div>
             <PaletteEditor palette={currentPalette || Arcade} onPaletteChanged={onPaletteEdit} />
         </Modal>
-        {showExitModal && <Modal title={lf("Exit Without Applying Changes?")} onClose={() => setShowExitModal(false)} actions={exitActions} className="palette-exit-modal">
-            <div>{lf("Your palette changes will be reverted.")}</div>
-        </Modal>}
         {nameModalTitle() && <Modal title={nameModalTitle()} onClose={onCloseNameModal} actions={nameActions} className="palette-name-modal">
             <Input
                 className="palette-name-input"
