@@ -427,6 +427,20 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             }
             break;
         default:
+            if (ctrlPressed && event.key === "a" || event.key === "A") {
+                event.preventDefault();
+                if (editedCursor.selection) {
+                    clearSelection(true);
+                }
+                editedCursor.selection = {
+                    startTick: 0,
+                    endTick: maxTicks,
+                    originalSong: editedSong,
+                    transpose: 0,
+                    deltaTick: 0
+                }
+                break;
+            }
             if (/^[a-g]$/i.test(event.key)) {
                 if (ctrlPressed) break;
                 event.preventDefault();
