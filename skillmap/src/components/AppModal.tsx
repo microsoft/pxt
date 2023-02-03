@@ -566,7 +566,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     ariaLabel={lf("Enter your name to customize the certificate")}
                 />
             }
-            <div></div>
         </Modal>
     }
 
