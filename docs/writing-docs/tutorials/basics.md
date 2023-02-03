@@ -277,7 +277,7 @@ Within a validation section, you may specify which validators you want to enable
 
 Currently, only one validator exists: the `BlocksExistValidator`. This validator looks at highlighted blocks in the answer key and confirms that, for each highlighted block, the user's code contains at least one block of the same type. It does *not* validate the parameters passed into the block.
 
-The only property currently available on the `BlocksExistValidator` is `Enabled`, which determines whether or not the validator runs.
+The only property currently available on the `BlocksExistValidator` is `Enabled`, which determines whether or not the validator runs. This is `true` by default whenever you specify the validator but can be set to `false` if you wish to disable it on a single step.
 
 ### Examples
 **Enable the `BlocksExistValidator` globally**
