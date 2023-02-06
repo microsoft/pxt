@@ -6,7 +6,7 @@ import '../styles/modal.css'
 
 import * as React from "react";
 import { connect } from 'react-redux';
-import { ModalType, ShareState, SkillMapState } from '../store/reducer';
+import { ModalType, PageSourceStatus, ShareState, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchNextModal, dispatchShowShareModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile, dispatchShowUserProfile, dispatchShowLoginModal } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync} from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled, getCompletionBadge, isRewardNode } from "../lib/skillMapUtils";
@@ -18,6 +18,8 @@ import { Badge } from "react-common/components/profile/Badge";
 import { Button } from "react-common/components/controls/Button";
 import { SignInModal } from "react-common/components/profile/SignInModal";
 import { Share, ShareData } from "react-common/components/share/Share";
+import { Input } from 'react-common/components/controls/Input';
+import { pdfRenderNameField, loadPdfLibAsync } from '../lib/pdfUtil';
 
 interface AppModalProps {
     type: ModalType;
@@ -33,6 +35,8 @@ interface AppModalProps {
     reward?: MapReward;
     badge?: pxt.auth.Badge;
     signedIn: boolean;
+    profile?: pxt.auth.UserProfile;
+    pageSourceState?: PageSourceStatus;
     dispatchHideModal: () => void;
     dispatchNextModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
@@ -53,6 +57,8 @@ interface AppModalState {
 }
 
 export class AppModalImpl extends React.Component<AppModalProps, AppModalState> {
+    protected textInput: HTMLInputElement | undefined;
+
     constructor (props: AppModalProps) {
         super(props);
         this.state = {};
@@ -453,13 +459,59 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     renderCertificateModal(reward: MapRewardCertificate) {
         const title = lf("Rewards");
-        const  { mapId, skillMap, activity, hasPendingModals, dispatchNextModal } = this.props;
+        const  {
+            mapId,
+            skillMap,
+            activity,
+            hasPendingModals,
+            dispatchNextModal,
+            profile,
+            signedIn,
+            pageSourceState
+        } = this.props;
+        const isApproved = pageSourceState === "approved";
+        const isApprovedPdfCert = isApproved && reward.url?.toLowerCase().endsWith(".pdf");
+
+        if (isApprovedPdfCert) {
+            // start loading pdf-lib immediately as it is a lazy dep
+            loadPdfLibAsync();
+        }
+
+        const handleNamedCert = async () => {
+            const pdfBuf = await fetch(reward.url).then((res) => res.arrayBuffer());
+            let namedPdfBuf: ArrayBuffer | undefined;
+            try {
+                namedPdfBuf = await pdfRenderNameField(pdfBuf, this.textInput?.value);
+            } catch (e) {
+                // Rendering name failed for some reason, just use empty pdf as back up.
+            }
+            const blobObj = new Blob(
+                [ namedPdfBuf || pdfBuf ],
+                { type: "application/pdf" }
+            );
+            const blobUrl = URL.createObjectURL(blobObj);
+            window.open(blobUrl, "_blank", "noopener noreferrer");
+        }
 
         const buttons: ModalAction[] = [];
 
         const onCertificateClick = () => {
-            tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
-            window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
+            tickEvent("skillmap.openCertificate", {
+                path: mapId,
+                activity: activity!.activityId,
+                addedName: !!this.textInput?.value?.trim() ? 1 : 0
+            });
+            if (isApprovedPdfCert) {
+                handleNamedCert();
+            } else {
+                window.open(reward.url || skillMap!.completionUrl);
+            }
+
+            if (hasPendingModals) {
+                dispatchNextModal();
+            } else {
+                this.handleOnClose();
+            }
         };
 
         buttons.push(
@@ -487,12 +539,32 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             )
         }
 
+        const handleInputRef = (ref: HTMLInputElement) => {
+            if (ref) this.textInput = ref;
+        }
+
+        const firstName = signedIn && profile && pxt.auth.firstName(profile);
+
         return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
             {lf("Use the button below to get your completion certificate!")}
             {reward.previewUrl &&
                 <div className="certificate-reward">
                     <img src={reward.previewUrl} alt={lf("certificate Preview")} />
                 </div>
+            }
+            {isApprovedPdfCert &&
+                <Input
+                    className="cert-name-input"
+                    placeholder={"Put your name on it!"}
+                    label={lf("Enter your name")}
+                    type="text"
+                    initialValue={firstName || undefined}
+                    handleInputRef={handleInputRef}
+                    preserveValueOnBlur={true}
+                    onEnterKey={onCertificateClick}
+                    title={lf("Enter your name to customize the certificate")}
+                    ariaLabel={lf("Enter your name to customize the certificate")}
+                />
             }
         </Modal>
     }
@@ -604,6 +676,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         hasPendingModals: state.modalQueue?.length && state.modalQueue?.length > 1,
         badge,
         signedIn: state.auth.signedIn,
+        profile: state.auth.profile,
+        pageSourceState: state.pageSourceStatus,
     } as AppModalProps
 }
 
