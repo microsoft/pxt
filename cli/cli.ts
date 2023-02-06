@@ -2089,7 +2089,7 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
                 nodeutil.cp("built/target.js", `${appRoot}/public/blb`);
             }
 
-            // todo do we through this into built/web like jquery?
+            // This will be missing when serving without a cloned / linked repo
             if (opts.includePdfLib
                 && fs.existsSync("node_modules/pxt-core/webapp/public/pdf-lib/pdf-lib.min.js")) {
                 nodeutil.cp(

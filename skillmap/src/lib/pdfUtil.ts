@@ -63,7 +63,7 @@ export async function pdfRenderNameField(pdfBuf: ArrayBuffer, name?: string) {
         const maxPxWidth = maxPercentWidth * pageWidth | 0;
         const widthAtSize10 = helveticaFont.widthOfTextAtSize(name, 10);
         const scalePerc = maxPxWidth / widthAtSize10;
-        // todo configurable? or just remove this whole thing & require nameEntryField;
+
         let offset = 15;
         const fontSize = Math.min(70, (scalePerc * 10) | 0);
         firstPage.drawText(name, {
