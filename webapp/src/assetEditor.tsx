@@ -158,7 +158,9 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         if (!e) return;
         this.editor = e;
         this.editor.init(this.state.editing, () => {}, {
-            galleryTiles: this.galleryTiles
+            galleryTiles: this.galleryTiles,
+            hideMyAssets: true,
+            hideCloseButton: true
         })
     }
 
