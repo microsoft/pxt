@@ -680,7 +680,7 @@ function getBoardDrivesAsync(): Promise<string[]> {
                             res.push(m[1] + "/");
                         }
                     }
-                );
+                    );
                 return res;
             });
     }

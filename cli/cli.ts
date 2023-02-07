@@ -1788,7 +1788,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
-    if (theme.homeScreenHero && typeof theme.homeScreenHero != "string" ) {
+    if (theme.homeScreenHero && typeof theme.homeScreenHero != "string") {
         const heroBannerCard = theme.homeScreenHero;
         if (heroBannerCard.title) targetStrings[heroBannerCard.title] = heroBannerCard.title;
         if (heroBannerCard.description) targetStrings[heroBannerCard.description] = heroBannerCard.description;
@@ -1972,7 +1972,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
 
     async function generateReactCommonCss(app: string) {
         const appFile = isPxtCore ? `react-common/styles/react-common-${app}-core.less` :
-        `node_modules/pxt-core/react-common/styles/react-common-${app}.less`;
+            `node_modules/pxt-core/react-common/styles/react-common-${app}.less`;
         await nodeutil.spawnAsync({
             cmd: "node",
             args: [
@@ -2022,7 +2022,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     for (const cssFile of files) {
         const css = await readFileAsync(`built/web/${cssFile}`, "utf8");
         const processed = await postcss([cssnano])
-                .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` });
+            .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` });
 
         await writeFileAsync(`built/web/${cssFile}`, processed.css);
 
@@ -4599,10 +4599,11 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
 function setBuildEngine() {
     const cs = pxt.appTarget.compileService
-    if (cs && cs.buildEngine) {
-        build.setThisBuild(build.buildEngines[cs.buildEngine]);
+    if (cs) {
+        const engine = cs.buildEngine || "yotta"
+        build.setThisBuild(build.buildEngines[engine]);
         if (!build.thisBuild)
-            U.userError("cannot find build engine: " + cs.buildEngine)
+            U.userError("cannot find build engine: " + engine)
     }
 }
 
