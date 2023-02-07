@@ -34,6 +34,56 @@
         pxt.setAppTarget(pxtTargetBundle);
         // TO DO: get palette info from message from vs code extension
         pxt.appTarget.runtime.palette = ["#000000","#ffffff","#ff2121","#ff93c4","#ff8135","#fff609","#249ca3","#78dc52","#003fad","#87f2ff","#8e2ec4","#a4839f","#5c406c","#e5cdc4","#91463d","#000000"];
+
+        // this get rewritten to blob URLs with SHAs while uploading to the cloud
+        // keep in sync with index.html
+        window.MonacoPaths = {
+            "vs/loader": "/blb/vs/loader.js",
+            "vs/base/worker/workerMain": "/blb/vs/base/worker/workerMain.js",
+            "vs/basic-languages/bat/bat": "/blb/vs/basic-languages/bat/bat.js",
+            "vs/basic-languages/cpp/cpp": "/blb/vs/basic-languages/cpp/cpp.js",
+            "vs/basic-languages/markdown/markdown": "/blb/vs/basic-languages/markdown/markdown.js",
+            "vs/basic-languages/python/python": "/blb/vs/basic-languages/python/python.js",
+            "vs/basic-languages/typescript/typescript": "/blb/vs/basic-languages/typescript/typescript.js",
+            "vs/editor/editor.main.css": "/blb/vs/editor/editor.main.css",
+            "vs/editor/editor.main": "/blb/vs/editor/editor.main.js",
+            "vs/editor/editor.main.nls": "/blb/vs/editor/editor.main.nls.js",
+            "vs/language/json/jsonMode": "/blb/vs/language/json/jsonMode.js",
+            "vs/language/json/jsonWorker": "/blb/vs/language/json/jsonWorker.js",
+            "vs/language/typescript/tsMode": "/blb/vs/language/typescript/tsMode.js",
+            "vs/language/typescript/tsWorker": "/blb/vs/language/typescript/tsWorker.js",
+            "lzma/lzma_worker-min.js": "/blb/lzma/lzma_worker-min.js",
+            "smoothie/smoothie_compressed.js": "/blb/smoothie/smoothie_compressed.js",
+            "pxtblockly.js": "/blb/pxtblockly.js",
+            "blockly.css": "/blb/blockly.css",
+            "rtlblockly.css": "/blb/rtlblockly.css",
+            "gifjs/gif.js": "/blb/gifjs/gif.js",
+            "qrcode/qrcode.min.js": "/blb/qrcode/qrcode.min.js",
+            "zip.js/zip.min.js": "/blb/zip.js/zip.min.js",
+            "pdf-lib/pdf-lib.min.js": "/blb/pdf-lib/pdf-lib.min.js",
+            "music-editor/apple.png": "/blb/music-editor/apple.png",
+            "music-editor/burger.png": "/blb/music-editor/burger.png",
+            "music-editor/cake.png": "/blb/music-editor/cake.png",
+            "music-editor/car.png": "/blb/music-editor/car.png",
+            "music-editor/cat.png": "/blb/music-editor/cat.png",
+            "music-editor/cherry.png": "/blb/music-editor/cherry.png",
+            "music-editor/clam.png": "/blb/music-editor/clam.png",
+            "music-editor/computer.png": "/blb/music-editor/computer.png",
+            "music-editor/crab.png": "/blb/music-editor/crab.png",
+            "music-editor/dog.png": "/blb/music-editor/dog.png",
+            "music-editor/duck.png": "/blb/music-editor/duck.png",
+            "music-editor/egg.png": "/blb/music-editor/egg.png",
+            "music-editor/explosion.png": "/blb/music-editor/explosion.png",
+            "music-editor/fish.png": "/blb/music-editor/fish.png",
+            "music-editor/ice-cream.png": "/blb/music-editor/ice-cream.png",
+            "music-editor/lemon.png": "/blb/music-editor/lemon.png",
+            "music-editor/snake.png": "/blb/music-editor/snake.png",
+            "music-editor/star.png": "/blb/music-editor/star.png",
+            "music-editor/strawberry.png": "/blb/music-editor/strawberry.png",
+            "music-editor/taco.png": "/blb/music-editor/taco.png",
+            "music-editor/bass-clef.svg": "/blb/music-editor/bass-clef.svg",
+            "music-editor/treble-clef.svg": "/blb/music-editor/treble-clef.svg",
+        }
     </script>
     <script type="text/javascript" src="/blb/pxtasseteditor.js"></script>
     <div id="asset-editor-field-div">
