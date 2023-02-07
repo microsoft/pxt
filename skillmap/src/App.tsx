@@ -21,7 +21,8 @@ import {
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
-    dispatchSetUserPreferences
+    dispatchSetUserPreferences,
+    dispatchCloseSelectLanguage
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
@@ -38,6 +39,7 @@ import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from '.
 import { Unsubscribe } from 'redux';
 import { UserProfile } from './components/UserProfile';
 import { ReadyResources, ReadyPromise } from './lib/readyResources';
+import { LanguageSelector } from '../../react-common/components/language/LanguageSelector';
 
 /* eslint-disable import/no-unassigned-import */
 import './App.css';
@@ -54,6 +56,7 @@ interface AppProps {
     signedIn: boolean;
     activityId: string;
     highContrast?: boolean;
+    showSelectLanguage: boolean;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchClearSkillMaps: () => void;
@@ -407,6 +410,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 <MakeCodeFrame forcelang={forcelang} onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
                 <UserProfile />
+                <LanguageSelector visible={this.props.showSelectLanguage} activityOpen={this.props.activityOpen} onClose={dispatchCloseSelectLanguage} />
             </div>);
     }
 
@@ -519,7 +523,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         theme: state.theme,
         signedIn: state.auth.signedIn,
         activityId: state.selectedItem?.activityId,
-        highContrast: state.auth.preferences?.highContrast
+        highContrast: state.auth.preferences?.highContrast,
+        showSelectLanguage: state.showSelectLanguage
     };
 }
 interface LocalizationUpdateOptions {
