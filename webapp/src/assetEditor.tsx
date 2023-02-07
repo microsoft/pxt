@@ -24,6 +24,7 @@ interface AssetEditorState {
 interface BaseAssetEditorRequest {
     id?: number;
     files: pxt.Map<string>;
+    palette?: string[];
 }
 
 interface OpenAssetEditorRequest extends BaseAssetEditorRequest {
@@ -106,6 +107,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
         switch (request.type) {
             case "create":
+                this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
                 const asset = this.getEmptyAsset(request.assetType);
 
@@ -120,6 +122,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 });
                 break;
             case "open":
+                this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
                 this.setState({
                     editing: this.lookupAsset(request.assetType, request.assetId)
@@ -130,6 +133,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 });
                 break;
             case "duplicate":
+                this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
                 const existing = this.lookupAsset(request.assetType, request.assetId);
                 this.setState({
@@ -271,6 +275,11 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         }
 
         return outFiles;
+    }
+
+    protected setPalette(palette: string[]) {
+        if (!palette || !Array.isArray(palette) || !palette.length) return;
+        pxt.appTarget.runtime.palette = palette.slice();
     }
 
     protected initTilemapProject(files: pxt.Map<string>) {
