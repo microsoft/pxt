@@ -110,6 +110,10 @@ _site
         "**/pxt_modules": true
     }
 }`,
+            ".vscode/extensions.json":
+            `{
+    "recommendations": ["ms-edu.pxt-vscode-web"]
+}`,
         };
 
         // override files from target
