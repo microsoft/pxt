@@ -71,6 +71,7 @@ interface AppProps {
     dispatchSetPageAlternateUrls: (urls: string[]) => void;
     dispatchSetPageTheme: (theme: SkillGraphTheme) => void;
     dispatchSetUserPreferences: (prefs: pxt.auth.UserPreferences) => void;
+    dispatchCloseSelectLanguage: () => void;
 }
 
 interface AppState {
@@ -410,7 +411,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 <MakeCodeFrame forcelang={forcelang} onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
                 <UserProfile />
-                <LanguageSelector visible={this.props.showSelectLanguage} activityOpen={this.props.activityOpen} onClose={dispatchCloseSelectLanguage} />
+                <LanguageSelector visible={this.props.showSelectLanguage} activityOpen={this.props.activityOpen} onClose={this.props.dispatchCloseSelectLanguage} />
             </div>);
     }
 
@@ -575,7 +576,8 @@ const mapDispatchToProps = {
     dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
     dispatchSetUserPreferences,
-    dispatchChangeSelectedItem
+    dispatchChangeSelectedItem,
+    dispatchCloseSelectLanguage
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);
