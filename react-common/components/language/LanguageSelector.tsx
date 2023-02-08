@@ -31,23 +31,6 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
         return defaultLanguages;
     }
 
-    // TODO thsparks - reduce duplication from webapp\src\app.tsx reloadEditor? That method also has a lot more safety in it...
-    // TODO thsparks - Also this takes the user out of the workspace if they're in it, which we probably don't want. How to avoid?
-    reloadEditor() {
-        try {
-            if (!this.props.activityOpen) {
-                location.hash = "#reload"
-            }
-            else {
-                location.hash = "#editor"
-            }
-            location.reload();
-        } catch (e) {
-            pxt.reportException(e);
-            
-        }
-    }
-
     changeLanguage(langId: string) {
         if (!pxt.Util.allLanguages[langId]) {
             return;
@@ -57,8 +40,8 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
             pxt.tickEvent(`menu.lang.changelang`, { lang: langId });
 
             pxt.BrowserUtils.setCookieLang(langId);
-            this.reloadEditor();
-            // TODO thsparks : set user preference and reload editor? (see this method in lang.tsx)
+            location.reload();
+            // TODO thsparks : set user preference? (see this method in lang.tsx)
         } else {
             pxt.tickEvent(`menu.lang.samelang`, { lang: langId });
             this.props.onClose();
@@ -82,13 +65,7 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
             <Modal
                 onClose={this.props.onClose}
                 title={lf("Select Language")}
-                className="language-selector-modal"
-                // TODO thsparks : Close if not needed
-                // allowResetFocus={true}
-                // closeOnDimmerClick
-                // closeOnDocumentClick
-                // closeOnEscape
-            >
+                className="language-selector-modal">
                 <div id="langmodal">
                     <div
                         id="availablelocales"
@@ -104,8 +81,7 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
                                     name={lang.localizedName}
                                     ariaLabel={lang.englishName}
                                     description={lang.englishName}
-                                    onClick={this.changeLanguage}
-                                />
+                                    onClick={this.changeLanguage}/>
                             );
                         })}
                     </div>
