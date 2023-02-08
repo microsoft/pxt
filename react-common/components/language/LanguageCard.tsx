@@ -23,12 +23,22 @@ export class LanguageCard extends React.Component<LanguageCardProps> {
 
     render() {
         const { name, ariaLabel, description } = this.props;
-        return <Button className={`language-card`} //card-selected langoption
-            title={name}
-            ariaLabel={ariaLabel}
-            role="listitem"
-            label={description}
-            onClick={this.handleClick}
-        />
+        return (
+            <Button
+                className="ui card link card-selected language-card"
+                onClick={this.handleClick}
+                role="listitem"
+                aria-label={ariaLabel}
+                title={name}
+                label={
+                <div className="language-card-container">
+                    <div className="language-card-header">{name}</div>
+                    <div className="language-card-description ui desktop only">
+                        {description}
+                    </div>
+                </div>
+                }
+            />
+        );
     }
 }

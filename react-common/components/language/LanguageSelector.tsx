@@ -82,6 +82,7 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
             <Modal
                 onClose={this.props.onClose}
                 title={lf("Select Language")}
+                className="language-selector-modal"
                 // TODO thsparks : Close if not needed
                 // allowResetFocus={true}
                 // closeOnDimmerClick
@@ -89,24 +90,32 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
                 // closeOnEscape
             >
                 <div id="langmodal">
-                    <div id="availablelocales" className="ui cards centered" role="list" aria-label={lf("List of available languages")}>
-                        {languageList.map(langId => {
+                    <div
+                        id="availablelocales"
+                        className="ui cards centered language-selector"
+                        role="list"
+                        aria-label={lf("List of available languages")}>
+                        {languageList.map((langId) => {
                             const lang = pxt.Util.allLanguages[langId];
-                            return <LanguageCard
-                                key={langId}
-                                langId={langId}
-                                name={lang.localizedName}
-                                ariaLabel={lang.englishName}
-                                description={lang.englishName}
-                                onClick={this.changeLanguage}
-                            />
-                        }
-                        )}
+                            return (
+                                <LanguageCard
+                                    key={langId}
+                                    langId={langId}
+                                    name={lang.localizedName}
+                                    ariaLabel={lang.englishName}
+                                    description={lang.englishName}
+                                    onClick={this.changeLanguage}
+                                />
+                            );
+                        })}
                     </div>
-                    {targetTheme.crowdinProject ?
+                    {targetTheme.crowdinProject ? (
                         <div className="ui" id="langmodalfooter">
-                            <Link aria-label={lf("How do I add a new language?")} href="/translate"target="_blank">{lf("How do I add a new language?")}</Link>
-                        </div> : undefined}
+                            <Link aria-label={lf("How do I add a new language?")} href="/translate" target="_blank">
+                                {lf("How do I add a new language?")}
+                            </Link>
+                        </div>
+                    ) : undefined}
                 </div>
             </Modal>
         );
