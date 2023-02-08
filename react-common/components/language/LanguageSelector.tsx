@@ -11,6 +11,7 @@ let initialLang: string;
 interface LanguageSelectorProps {
     visible: boolean;
     activityOpen: boolean;
+    onLanguageChanged: (newLang: string) => void;
     onClose: () => void;
 }
 
@@ -31,19 +32,15 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
         return defaultLanguages;
     }
 
-    changeLanguage(langId: string) {
-        if (!pxt.Util.allLanguages[langId]) {
+    changeLanguage(newLang: string) {
+        if (!pxt.Util.allLanguages[newLang]) {
             return;
         }
 
-        if (langId !== initialLang) {
-            pxt.tickEvent(`menu.lang.changelang`, { lang: langId });
-
-            pxt.BrowserUtils.setCookieLang(langId);
-            location.reload();
-            // TODO thsparks : set user preference? (see this method in lang.tsx)
+        if (newLang !== initialLang) {
+            this.props.onLanguageChanged(newLang);
         } else {
-            pxt.tickEvent(`menu.lang.samelang`, { lang: langId });
+            pxt.tickEvent(`menu.lang.samelang`, { lang: newLang });
             this.props.onClose();
         }
     }

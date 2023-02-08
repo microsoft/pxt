@@ -90,6 +90,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     constructor(props: any) {
         super(props);
+        this.changeLanguage = this.changeLanguage.bind(this);
+
         this.state = {
             cloudSyncCheckHasFinished: false,
             badgeSyncLock: false
@@ -391,6 +393,12 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
     }
 
+    changeLanguage(langId: string) {
+        pxt.tickEvent(`skillmap.menu.lang.changelang`, { lang: langId });
+        pxt.BrowserUtils.setCookieLang(langId);
+        authClient.setLanguagePreference(langId).then(() => location.reload());
+    }
+
     render() {
         const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
         const { error, showingSyncLoader, forcelang } = this.state;
@@ -411,7 +419,12 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 <MakeCodeFrame forcelang={forcelang} onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
                 <UserProfile />
-                <LanguageSelector visible={this.props.showSelectLanguage} activityOpen={this.props.activityOpen} onClose={this.props.dispatchCloseSelectLanguage} />
+                <LanguageSelector
+                    visible={this.props.showSelectLanguage}
+                    activityOpen={this.props.activityOpen}
+                    onLanguageChanged={this.changeLanguage}
+                    onClose={this.props.dispatchCloseSelectLanguage}
+                />
             </div>);
     }
 
