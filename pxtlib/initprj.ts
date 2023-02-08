@@ -80,6 +80,7 @@ node_modules
 yotta_modules
 yotta_targets
 pxt_modules
+.pxt
 _site
 *.db
 *.tgz
@@ -88,6 +89,7 @@ _site
 `,
             ".vscode/settings.json":
                 `{
+    "explorer.excludeGitIgnore": true,
     "editor.formatOnType": true,
     "files.autoSave": "afterDelay",
     "files.watcherExclude": {
