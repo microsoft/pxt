@@ -28,7 +28,7 @@ export class LanguageCard extends React.Component<LanguageCardProps> {
                 className="ui card link card-selected language-card"
                 onClick={this.handleClick}
                 role="listitem"
-                aria-label={ariaLabel}
+                ariaLabel={ariaLabel}
                 title={name}
                 label={
                 <div className="language-card-container">
