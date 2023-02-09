@@ -80,6 +80,7 @@ node_modules
 yotta_modules
 yotta_targets
 pxt_modules
+.pxt
 _site
 *.db
 *.tgz
@@ -96,7 +97,8 @@ _site
         "**/node_modules/**": true,
         "**/yotta_modules/**": true,
         "**/yotta_targets": true,
-        "**/pxt_modules/**": true
+        "**/pxt_modules/**": true,
+        "**/.pxt/**": true
     },
     "files.associations": {
         "*.blocks": "html",
@@ -107,7 +109,12 @@ _site
         "**/node_modules": true,
         "**/yotta_modules": true,
         "**/yotta_targets": true,
-        "**/pxt_modules": true
+        "**/pxt_modules": true,
+        "**/.pxt": true
+    },
+    "files.exclude": {
+        "**/pxt_modules": true,
+        "**/.pxt": true
     }
 }`,
             ".vscode/extensions.json":
