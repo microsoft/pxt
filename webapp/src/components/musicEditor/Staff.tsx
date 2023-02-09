@@ -1,6 +1,6 @@
 import * as React from "react";
 import { classList } from "../../../../react-common/components/util";
-import { addPlaybackStateListener, addTickListener, removePlaybackStateListener, removeTickListener, tickToMs } from "./playback";
+import { addPlaybackStateListener, addTickListener, removePlaybackStateListener, removeTickListener } from "./playback";
 import { BASS_CLEF_HEIGHT, BASS_CLEF_TOP, beatToX, CLEF_HEIGHT, CLEF_WIDTH, rowY, STAFF_END_WIDTH, STAFF_GRID_TICK_HEIGHT, STAFF_HEADER_FONT_SIZE, STAFF_HEADER_HEIGHT, STAFF_HEADER_OFFSET, tickToX, workspaceWidth, WORKSPACE_HEIGHT } from "./svgConstants";
 import { resolveImageURL } from "./utils";
 
@@ -16,7 +16,7 @@ export const Staff = (props: StaffProps) => {
     let playbackHead: SVGGElement;
 
     React.useEffect(() => {
-        const tickTime = tickToMs(beatsPerMinute, ticksPerBeat, 1);
+        const tickTime = pxsim.music.tickToMs(beatsPerMinute, ticksPerBeat, 1);
         const tickDistance = tickToX(ticksPerBeat, 2) - tickToX(ticksPerBeat, 1);
         let playbackHeadPosition = 0;
         let isPlaying = false;

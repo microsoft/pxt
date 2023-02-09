@@ -1,4 +1,4 @@
-import { isPlaying, playNoteAsync, startPlaybackAsync, stopPlayback, tickToMs } from "./playback";
+import { isPlaying, startPlaybackAsync, stopPlayback } from "./playback";
 import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLength, findNextNoteEvent, findNoteEventAtTick, findPreviousNoteEvent, findSelectedRange, isBassClefNote, moveSelectedNotes, noteToRow, removeNoteAtRowFromTrack, removeNoteEventFromTrack, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes } from "./utils";
 
 /**
@@ -121,7 +121,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
 
     const playNoteEvent = (ev: pxt.assets.music.NoteEvent) => {
         for (const note of ev.notes) {
-            playNoteAsync(note.note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, ev.endTick - ev.startTick));
+            pxsim.music.playNoteAsync(note.note, instrument, pxsim.music.tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, ev.endTick - ev.startTick));
         }
     }
 
@@ -184,7 +184,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 const newEvent = findNoteEventAtTick(editedSong, cursor.track, cursor.tick);
                 editedCursor.noteGroupIndex = newEvent.notes.findIndex(n => n.note === newNote.note);
 
-                playNoteAsync(newNote.note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));
+                pxsim.music.playNoteAsync(newNote.note, instrument, pxsim.music.tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));
             }
             break;
 
@@ -248,7 +248,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                 const newEvent = findNoteEventAtTick(editedSong, cursor.track, cursor.tick);
                 editedCursor.noteGroupIndex = newEvent.notes.findIndex(n => n.note === newNote.note);
 
-                playNoteAsync(newNote.note, instrument, tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));            }
+                pxsim.music.playNoteAsync(newNote.note, instrument, pxsim.music.tickToMs(editedSong.beatsPerMinute, song.ticksPerBeat, newEvent.endTick - newEvent.startTick));            }
             break;
 
         case "ArrowLeft":
@@ -423,7 +423,7 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
                     noteEventAtCursor.endTick
                 );
 
-                playNoteAsync(newNote.note, instrument, tickToMs(editedSong.beatsPerMinute, editedSong.ticksPerBeat, cursor.gridTicks));
+                pxsim.music.playNoteAsync(newNote.note, instrument, pxsim.music.tickToMs(editedSong.beatsPerMinute, editedSong.ticksPerBeat, cursor.gridTicks));
             }
             break;
         default:
