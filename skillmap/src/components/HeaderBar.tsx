@@ -56,15 +56,19 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             })
         }
 
-        items.push({
-            id: "language",
-            title: lf("Language"),
-            label: lf("Language"),
-            onClick: () => {
-                tickEvent("skillmap.language");
-                this.props.dispatchShowSelectLanguage();
-            }
-        })
+        // We hide the language option when activities are open to avoid
+        // reloading the workspace and losing unsaved work.
+        if (!this.props.activityOpen) {
+            items.push({
+                id: "language",
+                title: lf("Language"),
+                label: lf("Language"),
+                onClick: () => {
+                    tickEvent("skillmap.language");
+                    this.props.dispatchShowSelectLanguage();
+                }
+            });
+        }
 
         if (this.props.showReportAbuse) {
             items.push({
