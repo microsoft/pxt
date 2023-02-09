@@ -3,10 +3,8 @@ import { Link } from "../controls/Link";
 import { Modal } from "../controls/Modal";
 import { LanguageCard } from "./LanguageCard";
 
-// TODO thsparks : reduce duplication with lang.tsx.
 
 const defaultLanguages = ["en"];
-let initialLang: string;
 
 interface LanguageSelectorProps {
     visible: boolean;
@@ -21,10 +19,6 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
         this.changeLanguage = this.changeLanguage.bind(this);
     }
 
-    setInitialLang(lang: string) {
-        initialLang = pxt.Util.normalizeLanguageCode(lang)[0];
-    }
-
     languageList(): string[] {
         if (pxt.appTarget.appTheme.selectLanguage && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.length) {
             return pxt.appTarget.appTheme.availableLocales;
@@ -37,12 +31,8 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
             return;
         }
 
-        if (newLang !== initialLang) {
-            this.props.onLanguageChanged(newLang);
-        } else {
-            pxt.tickEvent(`menu.lang.samelang`, { lang: newLang });
-            this.props.onClose();
-        }
+        this.props.onLanguageChanged(newLang);
+        this.props.onClose();
     }
 
     render() {
@@ -52,12 +42,6 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
 
         const targetTheme = pxt.appTarget.appTheme;
         const languageList = this.languageList();
-        // TODO thsparks : Remove or figure out : const modalSize = languageList.length > 4 ? "large" : "small";
-        const translateTheEditor =
-            !pxt.BrowserUtils.isIE() &&
-            !pxt.shell.isReadOnly() &&
-            !pxt.BrowserUtils.isPxtElectron() &&
-            pxt.appTarget.appTheme.crowdinProject;
 
         return (
             <Modal
