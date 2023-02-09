@@ -18,6 +18,7 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
                 listener(sequencer.currentTick());
             }
         });
+        sequencer.setVolume(100);
     }
 
     sequencer.start(song, loop);
