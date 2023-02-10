@@ -1,7 +1,7 @@
 import * as React from "react";
 import { EditControls } from "./EditControls";
 import { CursorState, handleKeyboardEvent } from "./keyboardNavigation";
-import { isPlaying, playDrumAsync, playNoteAsync, tickToMs, updatePlaybackSongAsync, stopPlayback } from "./playback";
+import { isPlaying, updatePlaybackSongAsync, stopPlayback } from "./playback";
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
@@ -247,7 +247,7 @@ export const MusicEditor = (props: MusicEditorProps) => {
                     true
                 );
 
-                playNoteAsync(newNote.note, instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, clickedEvent.endTick - clickedEvent.startTick))
+                pxsim.music.playNoteAsync(newNote.note, instrument, pxsim.music.tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, clickedEvent.endTick - clickedEvent.startTick))
             }
             else {
                 updateSong(
@@ -268,10 +268,10 @@ export const MusicEditor = (props: MusicEditorProps) => {
             updateSong(unselectAllNotes(addNoteToTrack(currentSong, selectedTrack, note, coord.tick, coord.tick + noteLength)), true)
 
             if (isDrumTrack) {
-                playDrumAsync(track.drums[note.note]);
+                pxsim.music.playDrumAsync(track.drums[note.note]);
             }
             else {
-                playNoteAsync(note.note, instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, gridTicks))
+                pxsim.music.playNoteAsync(note.note, instrument, pxsim.music.tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, gridTicks))
             }
         }
         else {
@@ -481,10 +481,10 @@ export const MusicEditor = (props: MusicEditorProps) => {
         const t = currentSong.tracks[newTrack];
 
         if (t.drums) {
-            playDrumAsync(t.drums[0]);
+            pxsim.music.playDrumAsync(t.drums[0]);
         }
         else {
-            playNoteAsync(rowToNote(t.instrument.octave, 6, false, !!t.drums).note, t.instrument, tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, currentSong.ticksPerBeat / 2));
+            pxsim.music.playNoteAsync(rowToNote(t.instrument.octave, 6, false, !!t.drums).note, t.instrument, pxsim.music.tickToMs(currentSong.beatsPerMinute, currentSong.ticksPerBeat, currentSong.ticksPerBeat / 2));
         }
         setSelectedTrack(newTrack);
         if (cursor) setCursor({ ...cursor, track: newTrack });

@@ -227,6 +227,7 @@ namespace pxsim {
         let audio: HTMLAudioElement;
 
         const channels: Channel[] = []
+        let stopAllListeners: (() => void)[] = [];
 
         // All other nodes get connected to this node which is connected to the actual
         // destination. Used for muting
@@ -284,12 +285,21 @@ namespace pxsim {
         export function stopAll() {
             stopTone();
             muteAllChannels();
+
+            for (const handler of stopAllListeners) {
+                handler();
+            }
         }
 
         export function stop() {
             stopTone();
             clearVca();
         }
+
+        export function onStopAll(handler: () => void) {
+            stopAllListeners.push(handler);
+        }
+
         function clearVca() {
             if (_vca) {
                 try {
