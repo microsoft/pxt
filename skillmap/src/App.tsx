@@ -421,7 +421,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 <UserProfile />
                 <LanguageSelector
                     visible={this.props.showSelectLanguage}
-                    activityOpen={this.props.activityOpen}
                     onLanguageChanged={this.changeLanguage}
                     onClose={this.props.dispatchCloseSelectLanguage}
                 />

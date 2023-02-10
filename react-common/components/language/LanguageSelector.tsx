@@ -8,7 +8,6 @@ const defaultLanguages = ["en"];
 
 interface LanguageSelectorProps {
     visible: boolean;
-    activityOpen: boolean;
     onLanguageChanged: (newLang: string) => void;
     onClose: () => void;
 }
