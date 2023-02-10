@@ -436,7 +436,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         continue;
                     }
 
-                    const isAdvanced = bi?.attributes?.advanced;
+                    const isAdvanced = bi?.attributes?.advanced || ns === "arrays";
                     inlineBlock.classList.add("clickable");
                     inlineBlock.tabIndex = 0;
                     inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);
