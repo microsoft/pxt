@@ -7,7 +7,6 @@ import { LanguageCard } from "./LanguageCard";
 const defaultLanguages = ["en"];
 
 interface LanguageSelectorProps {
-    visible: boolean;
     onLanguageChanged: (newLang: string) => void;
     onClose: () => void;
 }
@@ -35,10 +34,6 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
     }
 
     render() {
-        if (!this.props.visible) {
-            return null;
-        }
-
         const targetTheme = pxt.appTarget.appTheme;
         const languageList = this.languageList();
 

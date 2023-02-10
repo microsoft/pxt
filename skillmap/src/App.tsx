@@ -419,11 +419,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 <MakeCodeFrame forcelang={forcelang} onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
                 <UserProfile />
-                <LanguageSelector
-                    visible={this.props.showSelectLanguage}
+                {this.props.showSelectLanguage && <LanguageSelector
                     onLanguageChanged={this.changeLanguage}
                     onClose={this.props.dispatchCloseSelectLanguage}
-                />
+                />}
             </div>);
     }
 
