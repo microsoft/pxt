@@ -21,7 +21,8 @@ import {
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
-    dispatchSetUserPreferences
+    dispatchSetUserPreferences,
+    dispatchCloseSelectLanguage
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
@@ -38,6 +39,7 @@ import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from '.
 import { Unsubscribe } from 'redux';
 import { UserProfile } from './components/UserProfile';
 import { ReadyResources, ReadyPromise } from './lib/readyResources';
+import { LanguageSelector } from '../../react-common/components/language/LanguageSelector';
 
 /* eslint-disable import/no-unassigned-import */
 import './App.css';
@@ -54,6 +56,7 @@ interface AppProps {
     signedIn: boolean;
     activityId: string;
     highContrast?: boolean;
+    showSelectLanguage: boolean;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchClearSkillMaps: () => void;
@@ -68,6 +71,7 @@ interface AppProps {
     dispatchSetPageAlternateUrls: (urls: string[]) => void;
     dispatchSetPageTheme: (theme: SkillGraphTheme) => void;
     dispatchSetUserPreferences: (prefs: pxt.auth.UserPreferences) => void;
+    dispatchCloseSelectLanguage: () => void;
 }
 
 interface AppState {
@@ -86,6 +90,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     constructor(props: any) {
         super(props);
+        this.changeLanguage = this.changeLanguage.bind(this);
+
         this.state = {
             cloudSyncCheckHasFinished: false,
             badgeSyncLock: false
@@ -387,6 +393,12 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
     }
 
+    changeLanguage(langId: string) {
+        pxt.tickEvent(`skillmap.menu.lang.changelang`, { lang: langId });
+        pxt.BrowserUtils.setCookieLang(langId);
+        authClient.setLanguagePreference(langId).then(() => location.reload());
+    }
+
     render() {
         const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
         const { error, showingSyncLoader, forcelang } = this.state;
@@ -407,6 +419,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 <MakeCodeFrame forcelang={forcelang} onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
                 <UserProfile />
+                {this.props.showSelectLanguage && <LanguageSelector
+                    onLanguageChanged={this.changeLanguage}
+                    onClose={this.props.dispatchCloseSelectLanguage}
+                />}
             </div>);
     }
 
@@ -519,7 +535,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         theme: state.theme,
         signedIn: state.auth.signedIn,
         activityId: state.selectedItem?.activityId,
-        highContrast: state.auth.preferences?.highContrast
+        highContrast: state.auth.preferences?.highContrast,
+        showSelectLanguage: state.showSelectLanguage
     };
 }
 interface LocalizationUpdateOptions {
@@ -570,7 +587,8 @@ const mapDispatchToProps = {
     dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
     dispatchSetUserPreferences,
-    dispatchChangeSelectedItem
+    dispatchChangeSelectedItem,
+    dispatchCloseSelectLanguage
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

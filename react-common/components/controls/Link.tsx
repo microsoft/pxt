@@ -4,6 +4,7 @@ import { classList, ContainerProps } from "../util";
 export interface LinkProps extends ContainerProps {
     href: string;
     target?: "_self" | "_blank" | "_parent" | "_top";
+    tabIndex?: number;
 }
 
 export const Link = (props: LinkProps) => {
@@ -13,7 +14,8 @@ export const Link = (props: LinkProps) => {
         ariaLabel,
         href,
         target,
-        children
+        children,
+        tabIndex
     } = props;
 
     const classes = classList(
@@ -29,6 +31,7 @@ export const Link = (props: LinkProps) => {
             href={href}
             target={target}
             rel={target === "_blank" ? "noopener noreferrer" : ""}
+            tabIndex={tabIndex ?? 0}
             >
             {children}
         </a>

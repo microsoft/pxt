@@ -5,7 +5,7 @@ import * as React from "react";
 
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal,
-    dispatchShowUserProfile, dispatchSetUserPreferences } from '../actions/dispatch';
+    dispatchShowUserProfile, dispatchSetUserPreferences, dispatchShowSelectLanguage } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -30,6 +30,7 @@ interface HeaderBarProps {
     dispatchShowLoginModal: () => void;
     dispatchShowUserProfile: () => void;
     dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
+    dispatchShowSelectLanguage: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -53,6 +54,20 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                     })
                 }
             })
+        }
+
+        // We hide the language option when activities are open to avoid
+        // reloading the workspace and losing unsaved work.
+        if (!this.props.activityOpen) {
+            items.push({
+                id: "language",
+                title: lf("Language"),
+                label: lf("Language"),
+                onClick: () => {
+                    tickEvent("skillmap.language");
+                    this.props.dispatchShowSelectLanguage();
+                }
+            });
         }
 
         if (this.props.showReportAbuse) {
@@ -257,7 +272,8 @@ const mapDispatchToProps = {
     dispatchShowResetUserModal,
     dispatchShowLoginModal,
     dispatchShowUserProfile,
-    dispatchSetUserPreferences
+    dispatchSetUserPreferences,
+    dispatchShowSelectLanguage
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);
