@@ -19,7 +19,7 @@ export class LanguageSelector extends React.Component<LanguageSelectorProps> {
     }
 
     languageList(): string[] {
-        if (pxt.appTarget.appTheme.selectLanguage && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.length) {
+        if (pxt.appTarget.appTheme.selectLanguage && pxt.appTarget.appTheme.availableLocales?.length) {
             return pxt.appTarget.appTheme.availableLocales;
         }
         return defaultLanguages;
