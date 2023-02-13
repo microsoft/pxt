@@ -429,11 +429,14 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     } else if (/^variables?$/i.test(ns)) {
                         ns = "variables";
                         color = pxt.toolbox.getNamespaceColor(ns);
+                    } else if (/^arrays?$/i.test(ns)) {
+                        ns = "arrays";
+                        color = pxt.toolbox.getNamespaceColor(ns);
                     } else if (bi?.kind !== pxtc.SymbolKind.Module){
                         continue;
                     }
 
-                    const isAdvanced = bi?.attributes?.advanced;
+                    const isAdvanced = bi?.attributes?.advanced || ns === "arrays";
                     inlineBlock.classList.add("clickable");
                     inlineBlock.tabIndex = 0;
                     inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);

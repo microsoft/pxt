@@ -412,6 +412,8 @@ function ciAsync() {
         fs.writeFileSync(npmrc, cfg)
     }
 
+    process.env["PXT_ENV"] = "production";
+
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
     const masterOrReleaseBranchRx = /^(master|v\d+\.\d+\.\d+)$/;
