@@ -15,6 +15,8 @@ import { addGameToKioskAsync } from "./Kiosk";
 import { pushNotificationMessage } from "../Notification";
 import { classList } from "../util";
 
+const vscodeDevUrl = "https://insiders.vscode.dev/makecode/"
+
 export interface ShareInfoProps {
     projectName: string;
     description?: string;
@@ -89,6 +91,19 @@ export const ShareInfo = (props: ShareInfoProps) => {
         let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
+        else setShareState("share")
+    }
+
+    const handlePublishInVscodeClick = async () => {
+        setShareState("publishing");
+        let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
+        setShareData(publishedShareData);
+        if (!publishedShareData?.error) {
+            setShareState("publish");
+
+            pxt.tickEvent(`share.openInVscode`);
+            window.open(vscodeDevUrl + publishedShareData.url.split("/").pop(), "_blank");
+        }
         else setShareState("share")
     }
 
@@ -372,7 +387,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 {kind === "vscode" && <Button className="primary share-publish-button"
                                         title={lf("Open in VS Code")}
                                         label={lf("Open in VS Code")}
-                                        onClick={handlePublishClick} />
+                                        onClick={handlePublishInVscodeClick} />
                                 }
                             </>
                             }
