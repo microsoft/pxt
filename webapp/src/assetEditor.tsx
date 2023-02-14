@@ -164,8 +164,15 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         })
     }
 
+    handleKeydown = (e: KeyboardEvent) => {
+        if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
+            this.callbackOnDoneClick();
+        }
+    }
+
     componentDidMount() {
         window.addEventListener("message", this.handleMessage, null);
+        window.addEventListener("keydown", this.handleKeydown, null);
         this.sendEvent({
             type: "event",
             kind: "ready"
@@ -175,6 +182,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     componentWillUnmount() {
         window.removeEventListener("message", this.handleMessage, null);
+        window.removeEventListener("keydown", this.handleKeydown, null);
     }
 
     callbackOnDoneClick = () => {
