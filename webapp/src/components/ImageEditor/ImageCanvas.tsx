@@ -94,7 +94,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         const isPortrait = !imageState || (imageState.bitmap.height > imageState.bitmap.width);
         const showResizeHandles = !this.props.isTilemap && this.props.tool == ImageEditorTool.Marquee;
 
-        return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} onContextMenu={this.preventContextMenu}>
+        return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} onContextMenu={this.preventContextMenu} tabIndex={0}>
             <div className="paint-container">
                 {!this.props.lightMode && <canvas ref="paint-surface-bg" className="paint-surface" />}
                 <canvas ref="paint-surface" className="paint-surface main" />
@@ -201,9 +201,10 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         this.hasInteracted = true
         if (this.isPanning()) return;
 
-        if (document.activeElement instanceof HTMLElement) {
+        if (document.activeElement instanceof HTMLElement && document.activeElement !== this.refs["canvas-bounds"]) {
             document.activeElement.blur();
         }
+        (this.refs["canvas-bounds"] as HTMLDivElement).focus();
 
         if (this.isColorSelect()) {
             this.selectCanvasColor(coord, isRightClick);
