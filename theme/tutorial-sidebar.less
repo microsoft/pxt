@@ -563,7 +563,7 @@
     top: unset;
     right: unset;
     bottom: 5.5rem;
-    left: 23rem;
+    left: @simulatorWidth + 1rem;
     max-width: 60%;
     min-width: 18.75rem;
     max-height: 70%;
@@ -687,6 +687,15 @@
         }
     }
 }
+
+
+/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
+@media only screen and (max-width: @largestSmallMonitor) {
+    .tutorial-validation-error-container {
+        left: @simulatorWidthSmall + 1rem;
+    }
+}
+
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
