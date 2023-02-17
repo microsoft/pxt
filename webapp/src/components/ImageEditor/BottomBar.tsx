@@ -32,6 +32,7 @@ export interface BottomBarProps {
     isTilemap?: boolean;
 
     onDoneClick?: () => void;
+    hideDoneButton?: boolean;
 }
 
 export interface BottomBarState {
@@ -64,7 +65,8 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             resizeDisabled,
             singleFrame,
             onDoneClick,
-            assetName
+            assetName,
+            hideDoneButton
         } = this.props;
 
         const { assetNameMessage } = this.state;
@@ -164,14 +166,14 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         toggle={true}
                     />
                 </div>
-                <div role="button"
+                {!hideDoneButton && <div role="button"
                     className={`image-editor-confirm`}
                     title={lf("Done")}
                     tabIndex={0}
                     onClick={onDoneClick}
                     onKeyDown={fireClickOnlyOnEnter}>
                         {lf("Done")}
-                </div>
+                </div>}
             </div>
         );
     }

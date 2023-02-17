@@ -226,7 +226,9 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 ref={this.refHandler}
                 singleFrame={this.state.editing.type !== "animation"}
                 isMusicEditor={this.state.editing.type === "song"}
-                doneButtonCallback={this.callbackOnDoneClick} />
+                doneButtonCallback={this.callbackOnDoneClick}
+                hideDoneButton={true}
+            />
         }
 
         return <div></div>
