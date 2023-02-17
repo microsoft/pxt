@@ -170,6 +170,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         }
     }
 
+    pollingInterval: number;
     componentDidMount() {
         window.addEventListener("message", this.handleMessage, null);
         window.addEventListener("keydown", this.handleKeydown, null);
@@ -178,11 +179,38 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             kind: "ready"
         });
         tickAssetEditorEvent("asset-editor-shown");
+        this.pollingInterval = setInterval(this.pollForUpdates, 200);
+        // TODO: one of these? Probably would need it to directly save
+        // & send up message instead of sending a 'save now' type msg
+        // window.addEventListener("unload", this.pollForUpdates)
     }
 
     componentWillUnmount() {
         window.removeEventListener("message", this.handleMessage, null);
         window.removeEventListener("keydown", this.handleKeydown, null);
+        window.clearInterval(this.pollingInterval);
+    }
+
+    pollForUpdates = () => {
+        const currAsset = this.editor?.getValue();
+        if (!currAsset)
+            return;
+        this.tilemapProject.updateAsset(currAsset);
+    }
+
+    componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<AssetEditorState>, snapshot?: any): void {
+        if (!!prevState?.editing && prevState.editing !== this.state.editing) {
+            this.tilemapProject.removeChangeListener(
+                prevState.editing.type,
+                this.callbackOnDoneClick
+            );
+        }
+        if (this.state?.editing) {
+            this.tilemapProject.addChangeListener(
+                this.state.editing,
+                this.callbackOnDoneClick
+            );
+        }
     }
 
     callbackOnDoneClick = () => {
