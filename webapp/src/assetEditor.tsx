@@ -73,9 +73,9 @@ interface DuplicateAssetEditorResponse extends BaseAssetEditorResponse {
 
 type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
 
-interface AssetEditorDoneClickedEvent {
+interface AssetEditorRequestSaveEvent {
     type: "event";
-    kind: "done-clicked"
+    kind: "done-clicked";
 }
 
 interface AssetEditorReadyEvent {
@@ -83,8 +83,7 @@ interface AssetEditorReadyEvent {
     kind: "ready";
 }
 
-type AssetEditorEvent = AssetEditorDoneClickedEvent | AssetEditorReadyEvent;
-
+type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
 
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
     private editor: ImageFieldEditor<pxt.Asset>;
@@ -166,7 +165,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     handleKeydown = (e: KeyboardEvent) => {
         if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
-            this.callbackOnDoneClick();
+            this.sendSaveRequest();
         }
     }
 
@@ -202,18 +201,18 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         if (!!prevState?.editing && prevState.editing !== this.state.editing) {
             this.tilemapProject.removeChangeListener(
                 prevState.editing.type,
-                this.callbackOnDoneClick
+                this.sendSaveRequest
             );
         }
         if (this.state?.editing) {
             this.tilemapProject.addChangeListener(
                 this.state.editing,
-                this.callbackOnDoneClick
+                this.sendSaveRequest
             );
         }
     }
 
-    callbackOnDoneClick = () => {
+    sendSaveRequest = () => {
         this.sendEvent({
             type: "event",
             kind: "done-clicked"
@@ -226,7 +225,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 ref={this.refHandler}
                 singleFrame={this.state.editing.type !== "animation"}
                 isMusicEditor={this.state.editing.type === "song"}
-                doneButtonCallback={this.callbackOnDoneClick}
+                doneButtonCallback={this.sendSaveRequest}
                 hideDoneButton={true}
             />
         }
