@@ -332,6 +332,31 @@ namespace pxtblockly {
         return Object.keys(all).map(key => all[key]).filter(t => !!t);
     }
 
+    export function getTilesReferencedByTilesets(workspace: Blockly.Workspace) {
+        let all: pxt.Map<pxt.Tile> = {};
+
+        const project = pxt.react.getTilemapProject();
+
+        const allTiles = getAllBlocksWithTilesets(workspace);
+        for (const tilesetField of allTiles) {
+            const value = tilesetField.ref.getValue();
+            const match = /^\s*assets\s*\.\s*tile\s*`([^`]*)`\s*$/.exec(value);
+
+            if (match) {
+                const tile = project.lookupAssetByName(pxt.AssetType.Tile, match[1]);
+
+                if (tile && !all[tile.id]) {
+                    all[tile.id] = tile;
+                }
+            }
+            else if (!all[value]) {
+                all[value] = project.resolveTile(value);
+            }
+        }
+
+        return Object.keys(all).map(key => all[key]).filter(t => !!t);
+    }
+
     export function getTemporaryAssets(workspace: Blockly.Workspace, type: pxt.AssetType) {
         switch (type) {
             case pxt.AssetType.Image:
