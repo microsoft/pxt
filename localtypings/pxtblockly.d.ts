@@ -130,4 +130,6 @@ declare class WorkspaceSearch {
     protected addEvent_(node: Element, name: string, thisObject: Object, func: Function): void;
     open(): void;
     close(): void;
+    previous(): void;
+    next(): void;
 }
