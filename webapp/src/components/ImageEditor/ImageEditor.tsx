@@ -35,6 +35,7 @@ export interface ImageEditorProps {
     onTileEditorOpenClose?: (open: boolean) => void;
     nested?: boolean;
     lightMode?: boolean;
+    hideDoneButton?: boolean;
 }
 
 export interface ImageEditorState {
@@ -74,7 +75,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     render(): JSX.Element {
-        const { singleFrame, lightMode } = this.props;
+        const { singleFrame, lightMode, hideDoneButton } = this.props;
         const instanceStore = this.getStore();
 
         const { tileToEdit, editingTile, alert } = this.state;
@@ -90,7 +91,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                         <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} />
                         {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
                     </div>
-                    <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} />
+                    <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} hideDoneButton={!!hideDoneButton} />
                     {alert && alert.title && <Alert title={alert.title} text={alert.text} options={alert.options} />}
                 </div>
             </Provider>

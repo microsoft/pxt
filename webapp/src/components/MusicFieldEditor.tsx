@@ -6,6 +6,7 @@ import { MusicEditor } from "./musicEditor/MusicEditor";
 
 interface MusicFieldEditorProps {
     onDoneClicked: () => void;
+    hideDoneButton?: boolean;
 }
 
 interface MusicFieldEditorState {
@@ -34,7 +35,8 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
                     onSongChanged={this.onSongChanged}
                     onAssetNameChanged={this.onAssetNameChanged}
                     editRef={this.state.editRef}
-                    onDoneClicked={onDoneClicked} />
+                    onDoneClicked={onDoneClicked}
+                    hideDoneButton={this.props.hideDoneButton} />
             }
         </div>
     }

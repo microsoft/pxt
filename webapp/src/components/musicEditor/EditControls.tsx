@@ -7,10 +7,11 @@ export interface EditControlsProps {
     assetName: string;
     onAssetNameChanged: (newName: string) => void;
     onDoneClicked: () => void;
+    hideDoneButton?: boolean;
 }
 
 export const EditControls = (props: EditControlsProps) => {
-    const { onAssetNameChanged, onDoneClicked, assetName } = props;
+    const { onAssetNameChanged, onDoneClicked, assetName, hideDoneButton } = props;
     const [editName, setEditName] = React.useState<string>();
     const [nameError, setNameError] = React.useState<string>();
 
@@ -54,10 +55,10 @@ export const EditControls = (props: EditControlsProps) => {
             initialValue={assetName || editName}
             onBlur={handleNameEdit}
             onEnterKey={handleNameEdit} />
-        <Button
+        {!hideDoneButton && <Button
             className="green"
             title={lf("Done")}
             label={lf("Done")}
-            onClick={onDoneClicked} />
+            onClick={onDoneClicked} />}
     </div>
 }
