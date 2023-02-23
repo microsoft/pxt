@@ -14,6 +14,7 @@ export interface MusicEditorProps {
     onAssetNameChanged: (newName: string) => void;
     onDoneClicked: () => void;
     editRef: number;
+    hideDoneButton?: boolean;
 }
 
 interface DragState {
@@ -29,7 +30,7 @@ interface DragState {
 }
 
 export const MusicEditor = (props: MusicEditorProps) => {
-    const { asset, onSongChanged, savedUndoStack, onAssetNameChanged, editRef, onDoneClicked } = props;
+    const { asset, onSongChanged, savedUndoStack, onAssetNameChanged, editRef, onDoneClicked, hideDoneButton} = props;
     const [selectedTrack, setSelectedTrack] = React.useState(0);
     const [gridResolution, setGridResolution] = React.useState<GridResolution>("1/8");
     const [currentSong, setCurrentSong] = React.useState(asset.song);
@@ -592,7 +593,8 @@ export const MusicEditor = (props: MusicEditorProps) => {
         <EditControls
             assetName={asset.meta.displayName}
             onAssetNameChanged={onAssetNameChanged}
-            onDoneClicked={onDoneClicked} />
+            onDoneClicked={onDoneClicked}
+            hideDoneButton={hideDoneButton}/>
     </div>
 }
 
