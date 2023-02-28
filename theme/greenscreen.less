@@ -17,8 +17,9 @@
         background-color: @greenScreenColor !important;
     }
     .videoContainer video {
-        min-width:100%;
-        min-height:100%;
+        max-width:100%;
+        max-height:100%;
+        object-fit: cover;
     }
     .videoContainer video.flipx {
         transform: scaleX(-1);
@@ -26,11 +27,15 @@
 
     #maineditor, #editorSidebar, .blocklyToolboxDiv, svg.blocklySvg,
     .monaco-editor, .monaco-editor .margin, .monaco-editor .monaco-editor-background,
-    .monacoToolboxDiv {
+    .monacoToolboxDiv, #editorSidebar .tab-tutorial.active, .tab-tutorial.tab-content {
         background-image: none !important;
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
+    }
+
+    .toolbox-title {
+        background-color: @white;
     }
 
     .monaco-editor .lines-content, .monaco-editor .view-line, .monaco-editor .view-lines {
