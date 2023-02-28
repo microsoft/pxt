@@ -3157,6 +3157,22 @@ namespace pxt.blocks {
             });
         }
 
+        /**
+         * onKeyDown_ is a private method in WorkspaceSearch, overwrite it to allow searching backwards.
+         * https://github.com/microsoft/pxt-arcade/issues/5716
+         */
+        onKeyDown_(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                this.close();
+            } else if (e.key === 'Enter') {
+                if (e.shiftKey) {
+                    this.previous();
+                } else {
+                    this.next();
+                }
+            }
+        }
+
         protected highlightSearchGroup_(blocks: Blockly.BlockSvg[]) {
             blocks.forEach((block) => {
                 const blockPath = block.pathObject.svgPath;
