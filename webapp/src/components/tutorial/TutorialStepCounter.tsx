@@ -32,7 +32,6 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
 
     const handleNextStep = () => {
         const step = Math.min(currentStep + 1, totalSteps - 1);
-        pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: 0, isStepCounter: 1 }, { interactiveConsent: true });
         setTutorialStep(step);
     }
 

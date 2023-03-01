@@ -8,6 +8,7 @@ interface TutorialValidationErrorMessageProps {
     validationFailures: CodeValidationResult[];
     tutorialId: string;
     currentStep: number;
+    attemptsWithError: number;
 }
 
 export function TutorialValidationErrorMessage(
@@ -20,6 +21,7 @@ export function TutorialValidationErrorMessage(
             pxt.tickEvent("codevalidation.showhint", {
                 tutorial: props.tutorialId,
                 step: props.currentStep,
+                attemptsWithError: props.attemptsWithError,
             });
             setShowHint(true);
         }
