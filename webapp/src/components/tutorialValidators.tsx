@@ -33,17 +33,7 @@ abstract class CodeValidatorBase implements CodeValidator {
     execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
         if (!this.enabled) return Promise.resolve(defaultResult);
 
-        const result = this.executeInternal(options);
-
-        if (!result) {
-            pxt.tickEvent(`codevalidation.detectederror`, {
-                validator: this.name,
-                tutorial: options.tutorialOptions?.tutorial,
-                step: options.tutorialOptions?.tutorialStep,
-            });
-        }
-
-        return result;
+        return this.executeInternal(options);
     }
 
     protected abstract executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
