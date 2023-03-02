@@ -417,12 +417,29 @@
     display: block !important;
 }
 
+.sim-panel-wrapper {
+    width: var("--sim-wraper-width");
+    overflow: auto;
+    transition: background-color 2s ease, outline 0.2s ease;
+
+    :hover {
+        background-color: rgba(206, 255, 245, 0.3); // tutorialHintBackgroundColor w/ opacity.
+        outline: @tutorialHintForegroundColor 1px solid;
+    }
+}
+
 .tab-simulator .simPanel {
     height: 100%;
     padding: 1rem 0.5rem 1rem 1rem;
     overflow-x: hidden;
     overflow-y: scroll;
     &.ui.items { margin-top: 0; }
+
+    // Prevent inheritance from sim-panel-wrapper:hover props.
+    :hover {
+        background-color: transparent;
+        outline: none;
+    }
 }
 
 // Mini sim is visible when tab is hidden

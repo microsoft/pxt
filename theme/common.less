@@ -1673,7 +1673,7 @@ p.ui.font.small {
 
 #root.miniSim:not(.fullscreensim) {
     /* Layout */
-    .simPanel.ui.items {
+    .sim-panel-wrapper {
         position: fixed;
         padding: 0;
         margin: 1em 1em 0;
@@ -1685,9 +1685,11 @@ p.ui.font.small {
         height: auto;
         min-width: inherit;
         max-width: inherit;
-        background: transparent !important;
-        overflow: visible;
         z-index: 20;
+    }
+    .simPanel.ui.items {
+        background: transparent;
+        overflow: visible;
     }
     .simPanel .simtoolbar > .buttons {
         > .debug-button {
