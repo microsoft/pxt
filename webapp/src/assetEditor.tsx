@@ -24,6 +24,7 @@ interface AssetEditorState {
 interface BaseAssetEditorRequest {
     id?: number;
     files: pxt.Map<string>;
+    palette?: string[];
 }
 
 interface OpenAssetEditorRequest extends BaseAssetEditorRequest {
@@ -72,9 +73,9 @@ interface DuplicateAssetEditorResponse extends BaseAssetEditorResponse {
 
 type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
 
-interface AssetEditorDoneClickedEvent {
+interface AssetEditorRequestSaveEvent {
     type: "event";
-    kind: "done-clicked"
+    kind: "done-clicked";
 }
 
 interface AssetEditorReadyEvent {
@@ -82,8 +83,7 @@ interface AssetEditorReadyEvent {
     kind: "ready";
 }
 
-type AssetEditorEvent = AssetEditorDoneClickedEvent | AssetEditorReadyEvent;
-
+type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
 
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
     private editor: ImageFieldEditor<pxt.Asset>;
@@ -106,6 +106,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
         switch (request.type) {
             case "create":
+                this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
                 const asset = this.getEmptyAsset(request.assetType);
 
@@ -120,6 +121,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 });
                 break;
             case "open":
+                this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
                 this.setState({
                     editing: this.lookupAsset(request.assetType, request.assetId)
@@ -130,6 +132,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 });
                 break;
             case "duplicate":
+                this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
                 const existing = this.lookupAsset(request.assetType, request.assetId);
                 this.setState({
@@ -154,24 +157,62 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         if (!e) return;
         this.editor = e;
         this.editor.init(this.state.editing, () => {}, {
-            galleryTiles: this.galleryTiles
+            galleryTiles: this.galleryTiles,
+            hideMyAssets: true,
+            hideCloseButton: true
         })
     }
 
+    handleKeydown = (e: KeyboardEvent) => {
+        if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
+            this.sendSaveRequest();
+        }
+    }
+
+    pollingInterval: number;
     componentDidMount() {
         window.addEventListener("message", this.handleMessage, null);
+        window.addEventListener("keydown", this.handleKeydown, null);
         this.sendEvent({
             type: "event",
             kind: "ready"
         });
         tickAssetEditorEvent("asset-editor-shown");
+        this.pollingInterval = setInterval(this.pollForUpdates, 200);
+        // TODO: one of these? Probably would need it to directly save
+        // & send up message instead of sending a 'save now' type msg
+        // window.addEventListener("unload", this.pollForUpdates)
     }
 
     componentWillUnmount() {
         window.removeEventListener("message", this.handleMessage, null);
+        window.removeEventListener("keydown", this.handleKeydown, null);
+        window.clearInterval(this.pollingInterval);
     }
 
-    callbackOnDoneClick = () => {
+    pollForUpdates = () => {
+        const currAsset = this.editor?.getValue();
+        if (!currAsset)
+            return;
+        this.tilemapProject.updateAsset(currAsset);
+    }
+
+    componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<AssetEditorState>, snapshot?: any): void {
+        if (!!prevState?.editing && prevState.editing !== this.state.editing) {
+            this.tilemapProject.removeChangeListener(
+                prevState.editing.type,
+                this.sendSaveRequest
+            );
+        }
+        if (this.state?.editing) {
+            this.tilemapProject.addChangeListener(
+                this.state.editing,
+                this.sendSaveRequest
+            );
+        }
+    }
+
+    sendSaveRequest = () => {
         this.sendEvent({
             type: "event",
             kind: "done-clicked"
@@ -184,7 +225,9 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 ref={this.refHandler}
                 singleFrame={this.state.editing.type !== "animation"}
                 isMusicEditor={this.state.editing.type === "song"}
-                doneButtonCallback={this.callbackOnDoneClick} />
+                doneButtonCallback={this.sendSaveRequest}
+                hideDoneButton={true}
+            />
         }
 
         return <div></div>
@@ -271,6 +314,11 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         }
 
         return outFiles;
+    }
+
+    protected setPalette(palette: string[]) {
+        if (!palette || !Array.isArray(palette) || !palette.length) return;
+        pxt.appTarget.runtime.palette = palette.slice();
     }
 
     protected initTilemapProject(files: pxt.Map<string>) {
