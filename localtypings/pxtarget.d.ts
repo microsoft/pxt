@@ -198,6 +198,7 @@ declare namespace pxt {
         thumbnails?: boolean; // attach screenshots/thumbnail to published scripts
         importing?: boolean; // import url dialog
         embedding?: boolean;
+        showBadges?: boolean; // show badges in user profile
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
         maxFileSize?: number; // maximum file size in bytes

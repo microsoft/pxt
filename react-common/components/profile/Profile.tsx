@@ -20,6 +20,7 @@ export const Profile = (props: ProfileProps) => {
     const { user, signOut, deleteProfile, onClickedEmail, notification, checkedEmail, showModalAsync } = props;
     const userProfile = user?.profile || { idp: {} };
     const userBadges = user?.preferences?.badges || { badges: [] };
+    const showBadges = pxt.appTarget?.cloud?.showBadges || false;
 
     const onBadgeClick = (badge: pxt.auth.Badge) => {
         showModalAsync({
@@ -38,10 +39,10 @@ export const Profile = (props: ProfileProps) => {
     return <div className="user-profile">
         <UserPane profile={userProfile} onSignOutClick={signOut} onDeleteProfileClick={deleteProfile} notification={notification}
                   emailChecked={checkedEmail} onEmailCheckClick={onClickedEmail}/>
-        <BadgeList
+        {showBadges && <BadgeList
             availableBadges={pxt.appTarget.defaultBadges || []}
             userState={userBadges}
             onBadgeClick={onBadgeClick}
-        />
+        />}
     </div>
 }
