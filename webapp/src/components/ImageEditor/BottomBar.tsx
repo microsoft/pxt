@@ -7,6 +7,7 @@ import { IconButton } from "./Button";
 import { fireClickOnlyOnEnter } from "./util";
 import { isNameTaken } from "../../assets";
 import { obtainShortcutLock, releaseShortcutLock } from "./keyboardShortcuts";
+import { classList } from "../../../../react-common/components/util";
 
 export interface BottomBarProps {
     dispatchChangeImageDimensions: (dimensions: [number, number]) => void;
@@ -118,7 +119,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         toggle={!onionSkinEnabled}
                     />
                 </div> }
-                { cursorLocation && !resizeDisabled && <div className="image-editor-seperator"/> }
+                { !resizeDisabled && <div className={classList("image-editor-seperator", !cursorLocation && "transparent")}/> }
                 <div className="image-editor-coordinate-preview">
                     {cursorLocation && `${cursorLocation[0]}, ${cursorLocation[1]}`}
                 </div>
@@ -249,8 +250,8 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     protected handleAssetNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         let errorMessage = null;
 
-        const trimmedName = event.target.value.trim(); // validate using the trimmed name
-        const name = event.target.value;               // but don't trim the state otherwise they won't be able to type spaces
+        const name = event.target.value || "";      // don't trim the state otherwise they won't be able to type spaces
+        const trimmedName = name.trim();            // validate using the trimmed name
 
         if (!pxt.validateAssetName(trimmedName)) {
             errorMessage = lf("Names may only contain letters, numbers, '-', '_', and space");
@@ -265,10 +266,12 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     protected handleAssetNameBlur = () => {
         const { dispatchChangeAssetName, assetName } = this.props;
 
-        let newName = this.state.assetName.trim();
+        if (this.state.assetName) {
+            let newName = this.state.assetName.trim();
 
-        if (newName !== assetName && pxt.validateAssetName(newName) && !isNameTaken(newName)) {
-            dispatchChangeAssetName(newName);
+            if (newName !== assetName && pxt.validateAssetName(newName) && !isNameTaken(newName)) {
+                dispatchChangeAssetName(newName);
+            }
         }
         this.setState({ assetName: null, assetNameMessage: null });
         this.setShortcutsEnabled(true);
