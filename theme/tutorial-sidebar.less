@@ -638,7 +638,7 @@
 *******************************/
 
 /* Desktop Only */
-@media only screen and (min-width: @largestTabletScreen) {
+@media only screen and (min-width: @topInstructionSwitchWidth) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
         #editortools {
             width: calc(100% - @simulatorWidth);
@@ -699,9 +699,15 @@
     }
 }
 
-
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
+    #editorSidebar {
+        top: @mobileMenuHeight;
+    }
+}
+
+/* Top-View Instructions */
+@media only screen and (max-width: @topInstructionSwitchWidth) {
     #root.tabTutorial,
     #root.headless.tabTutorial {
         #maineditor > .full-abs {
@@ -709,7 +715,6 @@
         }
 
         #editorSidebar {
-            top: @mobileMenuHeight;
             height: @defaultTutorialHeight;
             width: 100%;
             border-right: 0;

@@ -4663,7 +4663,7 @@ export class ProjectView
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
                 const sidebarEl = document?.getElementById("editorSidebar");
-                if (sidebarEl && pxt.BrowserUtils.isTabletSize()) {
+                if (sidebarEl && pxt.BrowserUtils.isTabletSize() || (theEditor.isTutorial() && pxt.appTarget.appTheme.topInstructionTutorialLayout)) {
                     this.setState({ editorOffset: sidebarEl.offsetHeight + "px" });
                 } else {
                     this.setState({ editorOffset: undefined });
@@ -4873,6 +4873,7 @@ export class ProjectView
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
+        const topInstructionsTutorial = pxt.appTarget.appTheme.topInstructionTutorialLayout;
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
@@ -4982,6 +4983,7 @@ export class ProjectView
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
                     tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
+                    topInstructionsTutorial={topInstructionsTutorial}
                     onTutorialStepChange={this.setTutorialStep}
                     onTutorialComplete={this.completeTutorialAsync}
                     setEditorOffset={this.setEditorOffset} />

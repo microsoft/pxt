@@ -332,6 +332,7 @@
 @tutorialSegmentBackground: #f8f8f9;
 @tutorialSegmentColor: @textColor;
 @tutorialSimframeMargin: -2rem;
+@topInstructionSwitchWidth: @largestTabletScreen;
 
 /*-------------------
     Banner

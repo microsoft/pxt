@@ -468,6 +468,7 @@ declare namespace pxt {
         songEditor?: boolean; // enable the song asset type and field editor
         multiplayer?: boolean; // enable multiplayer features
         shareToKiosk?: boolean; // enable sharing to a kiosk
+        topInstructionTutorialLayout?: boolean; // Enable tutorial layout with the instructions on top
     }
 
     interface DownloadDialogTheme {

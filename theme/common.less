@@ -1942,6 +1942,15 @@ p.ui.font.small {
     }
 }
 
+@media only screen and (max-width: @topInstructionSwitchWidth) {
+    #editorSidebar {
+        min-width: unset;
+        max-width: unset;
+        width: 0;
+        padding: 0;
+    }
+}
+
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
     /* Logo */
@@ -1981,11 +1990,6 @@ p.ui.font.small {
         }
     }
 
-    #editorSidebar {
-        min-width: unset;
-        max-width: unset;
-        width: 0;
-        padding: 0;
     }
 
     #root.collapsedEditorTools #editortools .left .buttons:first-child {

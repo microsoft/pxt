@@ -31,6 +31,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     simSerialActive?: boolean;
     deviceSerialActive?: boolean;
     tutorialOptions?: pxt.tutorial.TutorialOptions;
+    topInstructionsTutorial?: boolean;
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
     setEditorOffset?: () => void;
@@ -72,7 +73,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected tryShowSimulatorTab = () => {
         const isTabTutorial = this.props.tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const includeSimulatorTab = !isTabTutorial && hasSimulator;
+        const includeSimulatorTab = (!isTabTutorial || this.props.topInstructionsTutorial) && hasSimulator;
         if (includeSimulatorTab) {
             this.showSimulatorTab();
         }
