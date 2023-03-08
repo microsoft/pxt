@@ -16,7 +16,6 @@ import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 import { fireClickOnEnter } from "./util";
 
 interface SidepanelState {
-    activeTab?: string;
     height?: number;
 }
 
@@ -40,9 +39,6 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     handleHardwareDebugClick: () => void;
     handleFullscreenButtonClick: () => void;
 }
-
-const TUTORIAL_TAB = "tab-tutorial";
-const SIMULATOR_TAB = "tab-simulator";
 
 export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected simPanelRef: HTMLDivElement;
@@ -81,7 +77,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected showSimulatorTab = () => {
         this.props.showMiniSim(false);
-        this.setState({ activeTab: SIMULATOR_TAB, height: undefined });
+        // this.setState({ activeTab: SIMULATOR_TAB, height: undefined });
         simulator.driver.focus();
     }
 
@@ -94,7 +90,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected showTutorialTab = () => {
         this.props.showMiniSim(true);
-        this.setState({ activeTab: TUTORIAL_TAB });
+        // this.setState({ activeTab: TUTORIAL_TAB });
     }
 
     protected handleSimSerialClick = () => {
@@ -148,13 +144,14 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
-        const { activeTab, height } = this.state;
+        const { height } = this.state;
 
         const isTabTutorial = tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
+        const topInstructions = pxt.appTarget.appTheme.topInstructionTutorialLayout;
         const isLockedEditor = pxt.appTarget.appTheme.lockedEditor;
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const includeSimulatorTab = !isTabTutorial && hasSimulator
-        const marginHeight = includeSimulatorTab ? "6.5rem" : "3rem";
+        const includeSimulatorTab = (!isTabTutorial || topInstructions) && hasSimulator
+        const marginHeight = "3rem"; // Simplify, add to height directly, probably just set in css now that it's constant.
         const showOpenInVscodeButton = parent.isJavaScriptActive();
 
         const backButton = <Button icon="arrow circle left" text={lf("Back")} onClick={this.tryShowTutorialTab} />;
@@ -162,39 +159,32 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
-                <TabContent disabled={!includeSimulatorTab} name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.tryShowSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
-                    <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
-                        <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
-                        {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
-                            <SimulatorPresenceBar />
-                        </div>}
-                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulatorTab} />
-                        {showKeymap && <keymap.Keymap parent={parent} />}
-                        <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
-                        </div>
-                        <div className="ui item grid centered portrait hide hidefullscreen">
-                            {showOpenInVscodeButton && <Button className={"teal hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
-                        </div>
-                        <div className="ui item grid centered portrait hide hidefullscreen">
-                            {showHostMultiplayerGameButton && <Button className={"teal hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
-                        </div>
-                        {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                            <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
-                            <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
-                        </div>}
-
-                        {showFileList && <filelist.FileList parent={parent} />}
-                        {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
-                    </div>
-                    {isTabTutorial && <div className="tutorial-controls">
-                        {backButton}
-                        <Button icon="lightbulb" disabled={true} className="tutorial-hint" />
-                        {nextButton}
+            <div id="editorSidebar" style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
+                <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
+                    <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
+                    {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
+                        <SimulatorPresenceBar />
                     </div>}
-                </TabContent>
-                {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="icon tasks" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.tryShowTutorialTab} ariaLabel={lf("Open the tutorial tab")}>
+                    <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulatorTab} />
+                    {showKeymap && <keymap.Keymap parent={parent} />}
+                    <div className="ui item portrait hide hidefullscreen">
+                        {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
+                    </div>
+                    <div className="ui item grid centered portrait hide hidefullscreen">
+                        {showOpenInVscodeButton && <Button className={"teal hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
+                    </div>
+                    <div className="ui item grid centered portrait hide hidefullscreen">
+                        {showHostMultiplayerGameButton && <Button className={"teal hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
+                    </div>
+                    {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
+                        <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
+                        <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
+                    </div>}
+
+                    {showFileList && <filelist.FileList parent={parent} />}
+                    {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
+                </div>
+                {tutorialOptions && <div>
                     <TutorialContainer
                         parent={parent}
                         tutorialId={tutorialOptions.tutorial}
@@ -208,8 +198,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         onTutorialStepChange={onTutorialStepChange}
                         onTutorialComplete={onTutorialComplete}
                         setParentHeight={this.setComponentHeight} />
-                </TabContent>}
-            </TabPane>
+                </div>}
+            </div>
         </div>
     }
 }
