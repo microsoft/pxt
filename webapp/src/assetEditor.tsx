@@ -123,8 +123,12 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             case "open":
                 this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
+                const toOpen = this.lookupAsset(request.assetType, request.assetId);
+                if (toOpen.type === pxt.AssetType.Tilemap) {
+                    pxt.sprite.addMissingTilemapTilesAndReferences(this.tilemapProject, toOpen);
+                }
                 this.setState({
-                    editing: this.lookupAsset(request.assetType, request.assetId)
+                    editing: toOpen
                 });
                 this.sendResponse({
                     id: request.id,
@@ -412,6 +416,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             case pxt.AssetType.Tilemap:
                 const tilemap = asset as pxt.ProjectTilemap;
                 tilemap.data = project.blankTilemap(16, 16, 16);
+                pxt.sprite.addMissingTilemapTilesAndReferences(project, tilemap);
+                break;
             case pxt.AssetType.Animation:
                 const animation = asset as pxt.Animation;
                 animation.frames = [new pxt.sprite.Bitmap(16, 16).data()];
