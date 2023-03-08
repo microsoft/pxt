@@ -18,6 +18,7 @@ import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util
 import { Unsubscribe, Action } from 'redux';
 import { createNewImageAsset, getNewInternalID } from '../../assets';
 import { AssetEditorCore } from '../ImageFieldEditor';
+import { classList } from '../../../../react-common/components/util';
 
 export const LIGHT_MODE_TRANSPARENT = "#dedede";
 
@@ -84,7 +85,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return <div className="image-editor-outer">
             <Provider store={instanceStore}>
-                <div className={`image-editor ${editingTile ? "editing-tile" : ""}`}>
+                <div className={classList("image-editor", editingTile && "editing-tile", hideDoneButton && "hide-done-button")}>
                     <TopBar singleFrame={singleFrame} />
                     <div className="image-editor-content">
                         <SideBar lightMode={lightMode} />
