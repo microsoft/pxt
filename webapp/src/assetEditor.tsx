@@ -191,10 +191,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     pollForUpdates = () => {
-        const currAsset = this.editor?.getValue();
-        if (!currAsset)
-            return;
-        this.tilemapProject.updateAsset(currAsset);
+        if (this.state.editing) this.updateAsset();
     }
 
     componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<AssetEditorState>, snapshot?: any): void {
@@ -250,7 +247,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         }
     }
 
-    protected saveProjectFiles() {
+    protected updateAsset() {
         const currentValue = this.editor.getValue();
         if (this.state.isEmptyAsset) {
             const name = currentValue.meta?.displayName;
@@ -281,6 +278,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         else {
             this.tilemapProject.updateAsset(currentValue);
         }
+    }
+
+    protected saveProjectFiles() {
+        this.updateAsset();
 
         const assetJRes = pxt.inflateJRes(this.tilemapProject.getProjectAssetsJRes());
         const tileJRes = pxt.inflateJRes(this.tilemapProject.getProjectTilesetJRes());
