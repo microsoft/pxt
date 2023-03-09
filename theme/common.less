@@ -1906,6 +1906,10 @@ p.ui.font.small {
         top: 4px;
         position: relative;
     }
+
+    .topInstructions .sidebarContainer {
+        left: @simulatorWidth;
+    }
 }
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
@@ -1914,6 +1918,10 @@ p.ui.font.small {
     .sidebarContainer, #downloadArea {
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
+    }
+
+    .topInstructions .sidebarContainer {
+        left: @simulatorWidthSmall;
     }
 
     #boardview.headless-sim {
@@ -1946,7 +1954,6 @@ p.ui.font.small {
     .topInstructions .sidebarContainer {
         min-width: unset;
         max-width: unset;
-        // width: 0; TODO thsparks : Calc this to avoid sim sidebar?
         padding: 0;
     }
 }

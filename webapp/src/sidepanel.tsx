@@ -164,7 +164,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                 </div>
             </div>
-            {tutorialOptions && <div className={this.props.topInstructionsTutorial ? "topInstructions" : ""} style={tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined}>
+            {tutorialOptions && <div className={this.props.topInstructionsTutorial ? "topInstructions" : ""}>
                 <div id="tutorialWrapper" className="sidebarContainer" style={tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined}>
                     <TutorialContainer
                         parent={parent}
