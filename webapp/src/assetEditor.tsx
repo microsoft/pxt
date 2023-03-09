@@ -123,8 +123,12 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             case "open":
                 this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
+                const toOpen = this.lookupAsset(request.assetType, request.assetId);
+                if (toOpen.type === pxt.AssetType.Tilemap) {
+                    pxt.sprite.addMissingTilemapTilesAndReferences(this.tilemapProject, toOpen);
+                }
                 this.setState({
-                    editing: this.lookupAsset(request.assetType, request.assetId)
+                    editing: toOpen
                 });
                 this.sendResponse({
                     id: request.id,
@@ -191,10 +195,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     pollForUpdates = () => {
-        const currAsset = this.editor?.getValue();
-        if (!currAsset)
-            return;
-        this.tilemapProject.updateAsset(currAsset);
+        if (this.state.editing) this.updateAsset();
     }
 
     componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<AssetEditorState>, snapshot?: any): void {
@@ -250,7 +251,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         }
     }
 
-    protected saveProjectFiles() {
+    protected updateAsset() {
         const currentValue = this.editor.getValue();
         if (this.state.isEmptyAsset) {
             const name = currentValue.meta?.displayName;
@@ -281,6 +282,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         else {
             this.tilemapProject.updateAsset(currentValue);
         }
+    }
+
+    protected saveProjectFiles() {
+        this.updateAsset();
 
         const assetJRes = pxt.inflateJRes(this.tilemapProject.getProjectAssetsJRes());
         const tileJRes = pxt.inflateJRes(this.tilemapProject.getProjectTilesetJRes());
@@ -411,6 +416,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             case pxt.AssetType.Tilemap:
                 const tilemap = asset as pxt.ProjectTilemap;
                 tilemap.data = project.blankTilemap(16, 16, 16);
+                pxt.sprite.addMissingTilemapTilesAndReferences(project, tilemap);
+                break;
             case pxt.AssetType.Animation:
                 const animation = asset as pxt.Animation;
                 animation.frames = [new pxt.sprite.Bitmap(16, 16).data()];
