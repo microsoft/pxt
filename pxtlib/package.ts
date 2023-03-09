@@ -1345,7 +1345,8 @@ namespace pxt {
                 mimeType,
                 tilemapTile: v.tilemapTile,
                 displayName: v.displayName,
-                tileset: v.tileset
+                tileset: v.tileset,
+                tags: v.tags
             }
         }
 
