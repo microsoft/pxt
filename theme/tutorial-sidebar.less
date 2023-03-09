@@ -909,7 +909,11 @@
     }
 }
 
-.desktopOnly-mixin {
+/*******************************
+        Media Adjustments
+*******************************/
+
+@media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
         #editortools {
             width: calc(100% - @simulatorWidth);
@@ -960,22 +964,10 @@
             }
         }
     }
-}
 
-
-/*******************************
-        Media Adjustments
-*******************************/
-
-/* Desktop Only */
-@media only screen and (min-width: @topInstructionSwitchWidth) {
     .topInstructions {
-        .desktopOnly-mixin();
+        .topViewInstruction-mixin();
     }
-}
-
-@media only screen and (min-width: @largestTabletScreen) {
-    .desktopOnly-mixin();
 }
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
@@ -991,12 +983,6 @@
 
     .sidebarContainer {
         top: @mobileMenuHeight;
-    }
-}
-
-@media only screen and (max-width: @topInstructionSwitchWidth) {
-    .topInstructions {
-        .topViewInstruction-mixin();
     }
 }
 
