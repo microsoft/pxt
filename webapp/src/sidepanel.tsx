@@ -9,14 +9,12 @@ import * as simtoolbar from "./simtoolbar";
 import * as simulator from "./simulator";
 
 import { Button } from "./sui";
-import { TabContent } from "./components/core/TabContent";
-import { TabPane } from "./components/core/TabPane";
 import { SimulatorPresenceBar } from "./components/SimulatorPresenceBar"
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 import { fireClickOnEnter } from "./util";
 
 interface SidepanelState {
-    height?: number;
+    tutorialParentHeight?: number;
 }
 
 interface SidepanelProps extends pxt.editor.ISettingsProps {
@@ -54,7 +52,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             || (this.props.inHome && !props.inHome && props.tutorialOptions)
             || (this.props.tutorialOptions?.tutorial && props.tutorialOptions?.tutorial
                 && this.props.tutorialOptions.tutorial !== props.tutorialOptions.tutorial)) {
-            this.showTutorialTab();
+            // this.showTutorialTab();
         } else if (!this.props.inHome && props.inHome
             || (this.props.tutorialOptions && !props.tutorialOptions)) {
             this.showSimulatorTab();
@@ -62,7 +60,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
-        if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
+        if ((this.state.tutorialParentHeight || state.tutorialParentHeight) && this.state.tutorialParentHeight != state.tutorialParentHeight) this.props.setEditorOffset();
     }
 
 
@@ -79,18 +77,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.props.showMiniSim(false);
         // this.setState({ activeTab: SIMULATOR_TAB, height: undefined });
         simulator.driver.focus();
-    }
-
-    protected tryShowTutorialTab = () => {
-        const isTabTutorial = this.props.tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
-        if (isTabTutorial) {
-            this.showTutorialTab();
-        }
-    }
-
-    protected showTutorialTab = () => {
-        this.props.showMiniSim(true);
-        // this.setState({ activeTab: TUTORIAL_TAB });
     }
 
     protected handleSimSerialClick = () => {
@@ -124,8 +110,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
-    protected setComponentHeight = (height?: number) => {
-        if (height != this.state.height) this.setState({ height });
+    protected setTutorialParentHeight = (height?: number) => {
+        if (height != this.state.tutorialParentHeight) this.setState({ tutorialParentHeight: height });
     }
 
     onHostMultiplayerGameClick = (evt: any) => {
@@ -144,22 +130,15 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
-        const { height } = this.state;
+        const { tutorialParentHeight: height } = this.state;
 
-        const isTabTutorial = tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
-        const topInstructions = pxt.appTarget.appTheme.topInstructionTutorialLayout;
-        const isLockedEditor = pxt.appTarget.appTheme.lockedEditor;
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const includeSimulatorTab = (!isTabTutorial || topInstructions) && hasSimulator
         const marginHeight = "3rem"; // Simplify, add to height directly, probably just set in css now that it's constant.
         const showOpenInVscodeButton = parent.isJavaScriptActive();
 
-        const backButton = <Button icon="arrow circle left" text={lf("Back")} onClick={this.tryShowTutorialTab} />;
-        const nextButton = <Button icon="arrow circle right" text={lf("Next")} onClick={this.tryShowTutorialTab} />;
-
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
+            <div id="editorSidebar" className="sidebarContainer">
                 <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                     <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
                     {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
@@ -184,7 +163,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     {showFileList && <filelist.FileList parent={parent} />}
                     {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                 </div>
-                {tutorialOptions && <div>
+            </div>
+            {tutorialOptions && <div className={this.props.topInstructionsTutorial ? "topInstructions" : ""} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
+                <div className="sidebarContainer" style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
                     <TutorialContainer
                         parent={parent}
                         tutorialId={tutorialOptions.tutorial}
@@ -197,9 +178,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         preferredEditor={tutorialOptions.metadata?.preferredEditor}
                         onTutorialStepChange={onTutorialStepChange}
                         onTutorialComplete={onTutorialComplete}
-                        setParentHeight={this.setComponentHeight} />
-                </div>}
-            </div>
+                        setParentHeight={this.setTutorialParentHeight} />
+                </div>
+            </div>}
         </div>
     }
 }
