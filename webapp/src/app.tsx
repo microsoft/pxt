@@ -4662,9 +4662,9 @@ export class ProjectView
     setEditorOffset() {
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
-                const sidebarEl = document?.getElementById("editorSidebar");
-                if (sidebarEl && pxt.BrowserUtils.isTabletSize() || (theEditor.isTutorial() && pxt.appTarget.appTheme.topInstructionTutorialLayout)) {
-                    this.setState({ editorOffset: sidebarEl.offsetHeight + "px" });
+                const tutorialEl = document?.getElementById("tutorialWrapper");
+                if (tutorialEl && (pxt.BrowserUtils.isTabletSize() || pxt.appTarget.appTheme.topInstructionTutorialLayout)) {
+                    this.setState({ editorOffset: tutorialEl.offsetHeight + "px" });
                 } else {
                     this.setState({ editorOffset: undefined });
                 }

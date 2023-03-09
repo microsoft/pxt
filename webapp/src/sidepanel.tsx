@@ -130,7 +130,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
-        const { tutorialParentHeight: height } = this.state;
+        const { tutorialParentHeight } = this.state;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const marginHeight = "3rem"; // Simplify, add to height directly, probably just set in css now that it's constant.
@@ -164,8 +164,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                 </div>
             </div>
-            {tutorialOptions && <div className={this.props.topInstructionsTutorial ? "topInstructions" : ""} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
-                <div className="sidebarContainer" style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
+            {tutorialOptions && <div className={this.props.topInstructionsTutorial ? "topInstructions" : ""} style={tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined}>
+                <div id="tutorialWrapper" className="sidebarContainer" style={tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined}>
                     <TutorialContainer
                         parent={parent}
                         tutorialId={tutorialOptions.tutorial}
