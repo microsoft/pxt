@@ -913,13 +913,29 @@
         Media Adjustments
 *******************************/
 
-@media only screen and (min-width: @largestTabletScreen) {
+@media only screen and (min-width: @largestSmallMonitor) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
         #editortools {
             width: calc(100% - @simulatorWidth);
             left: unset;
             right: 0;
         }
+    }
+}
+
+
+@media only screen and (min-width: @largestTabletScreen) and (max-width: @largestSmallMonitor) {
+    #root.tabTutorial:not(.fullscreensim, .greenscreen) {
+        #editortools {
+            width: calc(100% - @simulatorWidthSmall);
+            left: unset;
+            right: 0;
+        }
+    }
+}
+
+@media only screen and (min-width: @largestTabletScreen) {
+    #root.tabTutorial:not(.fullscreensim, .greenscreen) {
         .sidebarContainer {
             bottom: 0;
         }
