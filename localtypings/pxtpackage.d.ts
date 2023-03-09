@@ -205,6 +205,7 @@ declare namespace pxt {
         displayName?: string;
         tilemapTile?: boolean;
         tileset?: string[];
+        tags?: string[];
     }
 
     type SnippetOutputType = 'blocks'
