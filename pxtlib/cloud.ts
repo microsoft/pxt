@@ -73,9 +73,9 @@ namespace pxt.cloud {
         ["localEdits"]: {
             value: "localEdits",
             icon: "cloud-saving-b",
-            tooltip: lf("Saving project to the cloud..."),
-            shortStatus: lf("saving..."),
-            longStatus: lf("Saving to cloud..."),
+            tooltip: lf("Project has local changes and will save to cloud soon."),
+            shortStatus: lf(""),
+            longStatus: lf(""),
             indicator: "*"
         },
     };
