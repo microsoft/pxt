@@ -135,6 +135,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const marginHeight = "3rem"; // Simplify, add to height directly, probably just set in css now that it's constant.
         const showOpenInVscodeButton = parent.isJavaScriptActive();
+        const tutorialContainerClassName = `sidebarContainer${this.props.topInstructionsTutorial ? " topInstructions" : ""}`;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
@@ -164,8 +165,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                 </div>
             </div>
-            {tutorialOptions && <div className={this.props.topInstructionsTutorial ? "topInstructions" : ""}>
-                <div id="tutorialWrapper" className="sidebarContainer" style={tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined}>
+            {tutorialOptions &&
+                <div
+                    id="tutorialWrapper"
+                    className={tutorialContainerClassName}
+                    style={tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined}>
                     <TutorialContainer
                         parent={parent}
                         tutorialId={tutorialOptions.tutorial}
@@ -179,8 +183,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         onTutorialStepChange={onTutorialStepChange}
                         onTutorialComplete={onTutorialComplete}
                         setParentHeight={this.setTutorialParentHeight} />
-                </div>
-            </div>}
+                </div>}
         </div>
     }
 }
