@@ -721,18 +721,6 @@
     }
 
     /*******************************
-            Tutorial Controls
-    *******************************/
-
-    .tutorial-controls {
-        padding-top: 0;
-    }
-
-    .tutorial-container > .ui.button i.icon {
-        margin-bottom: 0.5rem!important;
-    }
-
-    /*******************************
             Tutorial Hint
     *******************************/
 
@@ -748,9 +736,8 @@
     }
 
     .tutorial-hint .tutorial-callout-button.ui.button {
-        color: @tutorialPrimaryColor;
-        background: @tutorialSecondaryColor;
-        margin: 1rem;
+        color: @tutorialSecondaryColor;
+        background: @tutorialPrimaryColor;
 
         &.disabled {
             display: none;
@@ -984,6 +971,13 @@
 
     .topInstructions {
         .topViewInstruction-mixin();
+        
+        .tutorial-callout {
+            right: unset;
+            top: 20rem;
+            bottom: unset;
+            left: unset;
+        }
     }
 }
 
@@ -1000,6 +994,18 @@
 
     .sidebarContainer {
         top: @mobileMenuHeight;
+    }
+
+    .tutorial-hint .tutorial-callout-button.ui.button {
+        margin: 1rem;
+    }
+
+    .tutorial-controls {
+        padding-top: 0;
+    }
+
+    .tutorial-container > .ui.button i.icon {
+        margin-bottom: 0.5rem!important;
     }
 }
 

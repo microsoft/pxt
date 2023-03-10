@@ -135,7 +135,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const marginHeight = "3rem"; // Simplify, add to height directly, probably just set in css now that it's constant.
         const showOpenInVscodeButton = parent.isJavaScriptActive();
-        const tutorialContainerClassName = `sidebarContainer${this.props.topInstructionsTutorial ? " topInstructions" : ""}`;
+        const tutorialContainerClassName = `sidebarContainer tab-tutorial${this.props.topInstructionsTutorial ? " topInstructions" : ""}`;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
