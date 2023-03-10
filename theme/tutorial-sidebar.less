@@ -934,9 +934,10 @@
     }
 }
 
+/* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
-        .sidebarContainer {
+        .sidebarContainer:not(.topInstructions) {
             bottom: 0;
         }
 
@@ -944,13 +945,13 @@
             display: none;
         }
     }
-    .tutorial-container .tutorial-step-counter {
+    .sidebarContainer:not(.topInstructions) > .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
             display: none;
         }
     }
 
-    .tutorial-step-label {
+    .sidebarContainer:not(.topInstructions) > .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
         margin-bottom: 1.5rem;
