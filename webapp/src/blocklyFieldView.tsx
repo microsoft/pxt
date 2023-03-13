@@ -46,6 +46,10 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     constructor(protected contentDiv: HTMLDivElement, protected inContainer: boolean, protected useFlex?: boolean) {
     }
 
+    isVisible() {
+        return this.visible;
+    }
+
     injectElement(element: JSX.Element) {
         ReactDOM.render(element, this.contentDiv);
     }
@@ -248,7 +252,16 @@ export function init() {
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
                 break;
             case "soundeffect-editor":
-                current.injectElement(<SoundEffectEditor onClose={options.onClose} onSoundChange={options.onSoundChange} initialSound={options.initialSound} useMixerSynthesizer={options.useMixerSynthesizer} />)
+                current.injectElement(
+                    <SoundEffectEditor
+                        onClose={() => {
+                            if (options.onClose) options.onClose();
+                            dismissIfVisible();
+                        }}
+                        onSoundChange={options.onSoundChange}
+                        initialSound={options.initialSound}
+                        useMixerSynthesizer={options.useMixerSynthesizer} />
+                )
                 break;
             case "music-editor":
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} isMusicEditor={true} />)
@@ -266,7 +279,7 @@ export function init() {
         return project;
     }
 
-    pxt.react.isFieldEditorViewVisible = () => !!current;
+    pxt.react.isFieldEditorViewVisible = () => !!(current && current.isVisible());
 }
 
 export function dismissIfVisible() {

@@ -18,6 +18,7 @@ import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util
 import { Unsubscribe, Action } from 'redux';
 import { createNewImageAsset, getNewInternalID } from '../../assets';
 import { AssetEditorCore } from '../ImageFieldEditor';
+import { classList } from '../../../../react-common/components/util';
 
 export const LIGHT_MODE_TRANSPARENT = "#dedede";
 
@@ -35,6 +36,7 @@ export interface ImageEditorProps {
     onTileEditorOpenClose?: (open: boolean) => void;
     nested?: boolean;
     lightMode?: boolean;
+    hideDoneButton?: boolean;
 }
 
 export interface ImageEditorState {
@@ -74,7 +76,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     render(): JSX.Element {
-        const { singleFrame, lightMode } = this.props;
+        const { singleFrame, lightMode, hideDoneButton } = this.props;
         const instanceStore = this.getStore();
 
         const { tileToEdit, editingTile, alert } = this.state;
@@ -83,14 +85,14 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return <div className="image-editor-outer">
             <Provider store={instanceStore}>
-                <div className={`image-editor ${editingTile ? "editing-tile" : ""}`}>
+                <div className={classList("image-editor", editingTile && "editing-tile", hideDoneButton && "hide-done-button")}>
                     <TopBar singleFrame={singleFrame} />
                     <div className="image-editor-content">
                         <SideBar lightMode={lightMode} />
                         <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} />
                         {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
                     </div>
-                    <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} />
+                    <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} hideDoneButton={!!hideDoneButton} />
                     {alert && alert.title && <Alert title={alert.title} text={alert.text} options={alert.options} />}
                 </div>
             </Provider>

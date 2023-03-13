@@ -16,6 +16,7 @@ export interface ImageFieldEditorProps {
     singleFrame: boolean;
     isMusicEditor?: boolean;
     doneButtonCallback?: () => void;
+    hideDoneButton?: boolean;
 }
 
 interface ToggleOption extends BasicEditorToggleItem {
@@ -170,14 +171,16 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                     {this.props.isMusicEditor ?
                         <MusicFieldEditor
                             ref="image-editor"
-                            onDoneClicked={this.onDoneClick} /> :
+                            onDoneClicked={this.onDoneClick}
+                            hideDoneButton={this.props.hideDoneButton} /> :
                         <ImageEditor
                             ref="image-editor"
                             singleFrame={this.props.singleFrame}
                             onDoneClicked={this.onDoneClick}
                             onTileEditorOpenClose={this.onTileEditorOpenClose}
                             lightMode={this.lightMode}
-                            />
+                            hideDoneButton={this.props.hideDoneButton}
+                        />
                     }
                     <ImageEditorGallery
                         items={filteredAssets}

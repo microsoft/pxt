@@ -36,6 +36,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         preferredEditor, tutorialOptions, onTutorialStepChange, onTutorialComplete,
         setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
+    const [ stepErrorAttemptCount, setStepErrorAttemptCount ] = React.useState(0);
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
     const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
@@ -90,6 +91,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         contentDiv.scrollTo(0, 0);
         contentDiv.querySelector(".tutorial-step-content")?.focus();
         setShowScrollGradient(contentDiv.scrollHeight > contentDiv.offsetHeight);
+        setStepErrorAttemptCount(0);
 
         onTutorialStepChange(currentStep);
         if (showNext) setHideModal(false);
@@ -109,7 +111,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const markdown = steps[visibleStep].headerContentMd;
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
-    const validateTutorialStep = async () => {
+    const validateTutorialStep = async (isStepCounter: boolean = false) => {
         let validators: pxt.Map<CodeValidator> = {};
 
         currentStepInfo.localValidationConfig?.validatorsMetadata?.forEach(v => validators[v.validatorType] = GetValidator(v));
@@ -132,12 +134,17 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
         setValidationFailures(failedResults);
         if (failedResults.length == 0) {
-            tutorialStepNext();
+            tutorialStepNext(isStepCounter);
         } else {
+            // Use errAttempts below instead of stepErrorAttemptCount since state update is async
+            // and may not complete before the tickEvent is called.
+            let errAttempts = stepErrorAttemptCount + 1;
+            setStepErrorAttemptCount(errAttempts);
             pxt.tickEvent("codevalidation.stopnext", {
                 tutorial: tutorialId,
                 step: currentStep,
                 errorCount: failedResults.length,
+                attemptsWithError: errAttempts,
             });
         }
     };
@@ -146,6 +153,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         pxt.tickEvent("codevalidation.continueanyway", {
             tutorial: tutorialId,
             step: currentStep,
+            attemptsWithError: stepErrorAttemptCount,
         });
         tutorialStepNext();
     };
@@ -155,6 +163,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         pxt.tickEvent("codevalidation.popupclose", {
             tutorial: tutorialId,
             step: currentStep,
+            attemptsWithError: stepErrorAttemptCount,
         });
     };
 
@@ -163,15 +172,26 @@ export function TutorialContainer(props: TutorialContainerProps) {
         // If going backwards, user could be trying to fix something from a previous step and this message could be annoying/confusing.
         // If going forwards multiple steps, then the user has fully skipped entire steps, so validation doesn't make much sense.
         if (step == currentStep + 1) {
-            validateTutorialStep();
+            validateTutorialStep(true);
         } else {
             setCurrentStep(step);
         }
     }
 
-    const tutorialStepNext = () => {
+    const tutorialStepNext = (isStepCounter: boolean = false) => {
         const step = Math.min(currentStep + 1, props.steps.length - 1);
-        pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: isModal ? 1 : 0, validationErrors: validationFailures?.length ?? 0 }, { interactiveConsent: true });
+        pxt.tickEvent(
+            "tutorial.next",
+            {
+                tutorial: tutorialId,
+                step: step,
+                isModal: isModal ? 1 : 0,
+                validationErrors: validationFailures?.length ?? 0,
+                attemptsWithError: stepErrorAttemptCount,
+                isStepCounter: isStepCounter ? 1 : 0,
+            },
+            { interactiveConsent: true }
+        );
         if (validationFailures.length > 0) {
             setValidationFailures([]);
         }
@@ -184,7 +204,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         setCurrentStep(step);
     }
 
-    const onModalClose = showNext ? tutorialStepNext : () => setHideModal(true);
+    const onModalClose = showNext ? () => tutorialStepNext() : () => setHideModal(true);
 
     const tutorialContentScroll = () => {
         const contentDiv = contentRef?.current;
@@ -210,7 +230,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const nextButtonLabel = lf("Go to the next step of the tutorial.");
     const nextButton = showDone
         ? <Button icon="check circle" title={doneButtonLabel} ariaLabel={doneButtonLabel} text={lf("Done")} onClick={onTutorialComplete} />
-        : <Button icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!showNext} text={lf("Next")} onClick={validateTutorialStep} />;
+        : <Button icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!showNext} text={lf("Next")} onClick={() => validateTutorialStep()} />;
 
     const stepCounter = <TutorialStepCounter
         tutorialId={tutorialId}
@@ -224,20 +244,28 @@ export function TutorialContainer(props: TutorialContainerProps) {
     return <div className="tutorial-container">
         {!isHorizontal && stepCounter}
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
-            {isHorizontal ? stepCounter : <div className="tutorial-step-label">
-                {name && <span className="tutorial-step-title">{name}</span>}
-                <span className="tutorial-step-number">{lf("Step {0} of {1}", visibleStep + 1, steps.length)}</span>
-            </div>}
-            {showImmersiveReader && <ImmersiveReaderButton ref={immReaderRef} content={markdown} tutorialOptions={tutorialOptions} />}
-            {title && <div className="tutorial-title">{title}</div>}
-            <MarkedContent className="no-select tutorial-step-content" tabIndex={0} markdown={markdown} parent={parent}/>
-            <div className="tutorial-controls">
-                {hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
-                { nextButton }
+            <div className={"tutorial-content-bkg"}>
+                {isHorizontal ? stepCounter : <div className="tutorial-step-label">
+                    {name && <span className="tutorial-step-title">{name}</span>}
+                    <span className="tutorial-step-number">{lf("Step {0} of {1}", visibleStep + 1, steps.length)}</span>
+                </div>}
+                {showImmersiveReader && <ImmersiveReaderButton ref={immReaderRef} content={markdown} tutorialOptions={tutorialOptions} />}
+                {title && <div className="tutorial-title">{title}</div>}
+                <MarkedContent className="no-select tutorial-step-content" tabIndex={0} markdown={markdown} parent={parent}/>
+                <div className="tutorial-controls">
+                    {hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
+                    { nextButton }
+                </div>
             </div>
         </div>
         {validationFailures.length > 0 &&
-            <TutorialValidationErrorMessage onContinueClicked={handleTutorialContinueAnyway} onReturnClicked={handleTutorialClose} validationFailures={validationFailures} tutorialId={tutorialId} currentStep={currentStep} />}
+            <TutorialValidationErrorMessage
+                onContinueClicked={handleTutorialContinueAnyway}
+                onReturnClicked={handleTutorialClose}
+                validationFailures={validationFailures}
+                tutorialId={tutorialId}
+                currentStep={currentStep}
+                attemptsWithError={stepErrorAttemptCount} />}
         {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode &&
             <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}

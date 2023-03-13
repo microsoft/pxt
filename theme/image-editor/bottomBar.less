@@ -22,6 +22,7 @@
     height: 100%;
     line-height: 2rem;
     color: var(--sidebar-label-color);
+    width: 5rem;
 }
 
 .image-editor-undo-redo {
@@ -54,6 +55,12 @@
 .image-editor-change-name {
     position: relative;
     width: 20rem;
+}
+
+.image-editor.hide-done-button .image-editor-change-name {
+    flex-grow: 1;
+    width: unset;
+    max-width: 15rem;
 }
 
 .image-editor-change-name .image-editor-input {
@@ -99,6 +106,10 @@
     margin-top: 0.5rem;
 }
 
+.image-editor-seperator.transparent {
+    opacity: 0;
+}
+
 .image-editor-zoom-controls {
     display: flex;
     flex-direction: row;
@@ -106,7 +117,7 @@
 
 
 @media only screen and (max-width: @largestMobileScreen) {
-    .image-editor-change-name {
+    .image-editor:not(.hide-done-button) .image-editor-change-name {
         display: none;
     }
 }

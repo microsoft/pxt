@@ -1547,7 +1547,7 @@ p.ui.font.small {
 }
 
 .cloudstatusarea {
-    color: @teal;
+    color: @cloudStatusColor;
     align-self: center;
     display: flex;
 
@@ -1564,7 +1564,7 @@ p.ui.font.small {
     }
 
     .ui.loader:after {
-        border-top-color: @teal;
+        border-top-color: @cloudStatusColor;
     }
 }
 
@@ -1721,7 +1721,7 @@ p.ui.font.small {
             width: 10rem;
         }
         .simPanel .simtoolbar {
-            margin: 0.5em 0;
+            margin: 1rem 0;
             width: 3rem;
             float: right;
         }
@@ -1755,6 +1755,7 @@ p.ui.font.small {
         display:inline-block;
         width: 10rem;
         margin-right:0.5rem;
+        margin-bottom: 1rem;
         padding-bottom: 81.96% !important;
     }
     div.simframe:not(:first-child) {
@@ -2067,6 +2068,18 @@ p.ui.font.small {
     }
     #root #editordropdown .menu .item .text {
         display: inline-block!important;
+    }
+
+    #root.miniSim:not(.fullscreensim) {
+        div.simframe {
+            margin-bottom: -0.4rem
+        }
+        
+        &:not(.headless):not(.sandbox) {
+            .simPanel .simtoolbar {
+                margin-bottom: -0.2rem;
+            }
+        }
     }
 }
 

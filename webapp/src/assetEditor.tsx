@@ -73,9 +73,9 @@ interface DuplicateAssetEditorResponse extends BaseAssetEditorResponse {
 
 type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
 
-interface AssetEditorDoneClickedEvent {
+interface AssetEditorRequestSaveEvent {
     type: "event";
-    kind: "done-clicked"
+    kind: "done-clicked";
 }
 
 interface AssetEditorReadyEvent {
@@ -83,8 +83,7 @@ interface AssetEditorReadyEvent {
     kind: "ready";
 }
 
-type AssetEditorEvent = AssetEditorDoneClickedEvent | AssetEditorReadyEvent;
-
+type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
 
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
     private editor: ImageFieldEditor<pxt.Asset>;
@@ -124,8 +123,12 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             case "open":
                 this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
+                const toOpen = this.lookupAsset(request.assetType, request.assetId);
+                if (toOpen.type === pxt.AssetType.Tilemap) {
+                    pxt.sprite.addMissingTilemapTilesAndReferences(this.tilemapProject, toOpen);
+                }
                 this.setState({
-                    editing: this.lookupAsset(request.assetType, request.assetId)
+                    editing: toOpen
                 });
                 this.sendResponse({
                     id: request.id,
@@ -164,20 +167,53 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         })
     }
 
+    handleKeydown = (e: KeyboardEvent) => {
+        if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
+            this.sendSaveRequest();
+        }
+    }
+
+    pollingInterval: number;
     componentDidMount() {
         window.addEventListener("message", this.handleMessage, null);
+        window.addEventListener("keydown", this.handleKeydown, null);
         this.sendEvent({
             type: "event",
             kind: "ready"
         });
         tickAssetEditorEvent("asset-editor-shown");
+        this.pollingInterval = setInterval(this.pollForUpdates, 200);
+        // TODO: one of these? Probably would need it to directly save
+        // & send up message instead of sending a 'save now' type msg
+        // window.addEventListener("unload", this.pollForUpdates)
     }
 
     componentWillUnmount() {
         window.removeEventListener("message", this.handleMessage, null);
+        window.removeEventListener("keydown", this.handleKeydown, null);
+        window.clearInterval(this.pollingInterval);
     }
 
-    callbackOnDoneClick = () => {
+    pollForUpdates = () => {
+        if (this.state.editing) this.updateAsset();
+    }
+
+    componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<AssetEditorState>, snapshot?: any): void {
+        if (!!prevState?.editing && prevState.editing !== this.state.editing) {
+            this.tilemapProject.removeChangeListener(
+                prevState.editing.type,
+                this.sendSaveRequest
+            );
+        }
+        if (this.state?.editing) {
+            this.tilemapProject.addChangeListener(
+                this.state.editing,
+                this.sendSaveRequest
+            );
+        }
+    }
+
+    sendSaveRequest = () => {
         this.sendEvent({
             type: "event",
             kind: "done-clicked"
@@ -190,7 +226,9 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 ref={this.refHandler}
                 singleFrame={this.state.editing.type !== "animation"}
                 isMusicEditor={this.state.editing.type === "song"}
-                doneButtonCallback={this.callbackOnDoneClick} />
+                doneButtonCallback={this.sendSaveRequest}
+                hideDoneButton={true}
+            />
         }
 
         return <div></div>
@@ -213,7 +251,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         }
     }
 
-    protected saveProjectFiles() {
+    protected updateAsset() {
         const currentValue = this.editor.getValue();
         if (this.state.isEmptyAsset) {
             const name = currentValue.meta?.displayName;
@@ -244,6 +282,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         else {
             this.tilemapProject.updateAsset(currentValue);
         }
+    }
+
+    protected saveProjectFiles() {
+        this.updateAsset();
 
         const assetJRes = pxt.inflateJRes(this.tilemapProject.getProjectAssetsJRes());
         const tileJRes = pxt.inflateJRes(this.tilemapProject.getProjectTilesetJRes());
@@ -374,6 +416,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             case pxt.AssetType.Tilemap:
                 const tilemap = asset as pxt.ProjectTilemap;
                 tilemap.data = project.blankTilemap(16, 16, 16);
+                pxt.sprite.addMissingTilemapTilesAndReferences(project, tilemap);
+                break;
             case pxt.AssetType.Animation:
                 const animation = asset as pxt.Animation;
                 animation.frames = [new pxt.sprite.Bitmap(16, 16).data()];

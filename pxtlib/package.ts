@@ -58,6 +58,11 @@ namespace pxt {
                 const packagesConfig = await pxt.packagesConfigAsync()
                 const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is whitelisted
                 return gitRepo ? await pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag, packagesConfig) : null
+            } else if (fullVers.startsWith("workspace:")) {
+                // It's a local package
+                const projId = fullVers.slice("workspace:".length);
+                // TODO: Fetch pxt.json from the workspace project
+                return null;
             } else {
                 // If it's not from GH, assume it's a bundled package
                 // TODO: Add logic for shared packages if we enable that
@@ -432,7 +437,7 @@ namespace pxt {
                         });
                     }
                     // Also check for conflicts for all the specified package's dependencies (recursively)
-                    return Object.keys(pkgCfg.dependencies).reduce((soFar, pkgDep) => {
+                    return Object.keys(pkgCfg?.dependencies ?? {}).reduce((soFar, pkgDep) => {
                         return soFar
                             .then(() => this.findConflictsAsync(pkgDep, pkgCfg.dependencies[pkgDep]))
                             .then((childConflicts) => conflicts.push.apply(conflicts, childConflicts));
@@ -1340,7 +1345,8 @@ namespace pxt {
                 mimeType,
                 tilemapTile: v.tilemapTile,
                 displayName: v.displayName,
-                tileset: v.tileset
+                tileset: v.tileset,
+                tags: v.tags
             }
         }
 
