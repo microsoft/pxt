@@ -95,6 +95,7 @@ namespace pxt.editor {
         screenshoting?: boolean;
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
+        onboarding?: boolean;
     }
 
     export interface EditorState {
@@ -349,6 +350,8 @@ namespace pxt.editor {
         startActivity(options: StartActivityOptions): void;
         showLightbox(): void;
         hideLightbox(): void;
+        showOnboarding(): void;
+        hideOnboarding(): void;
         showKeymap(show: boolean): void;
         toggleKeymap(): void;
 

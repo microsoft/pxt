@@ -74,6 +74,7 @@ import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { CodeCardView } from "./codecard";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
+import { EditorTour } from "./components/onboarding/EditorTour";
 
 pxsim.util.injectPolyphils();
 
@@ -182,7 +183,8 @@ export class ProjectView
             collapseEditorTools: simcfg.headless,
             simState: pxt.editor.SimState.Stopped,
             autoRun: this.autoRunOnStart(),
-            isMultiplayerGame: false
+            isMultiplayerGame: false,
+            onboarding: false
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -191,6 +193,7 @@ export class ProjectView
         this.hidePackageDialog = this.hidePackageDialog.bind(this);
         this.hwDebug = this.hwDebug.bind(this);
         this.hideLightbox = this.hideLightbox.bind(this);
+        this.hideOnboarding = this.hideOnboarding.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
@@ -4776,6 +4779,18 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             Onboarding           /////////////
+    ///////////////////////////////////////////////////////////
+
+    hideOnboarding() {
+        this.setState({ onboarding: false });
+    }
+
+    showOnboarding() {
+        this.setState({ onboarding: true });
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             Key map              /////////////
     ///////////////////////////////////////////////////////////
 
@@ -5015,6 +5030,7 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
+                {this.state.onboarding && <EditorTour onClose={this.hideOnboarding} />}
             </div>
         );
     }

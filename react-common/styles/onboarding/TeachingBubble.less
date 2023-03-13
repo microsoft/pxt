@@ -1,0 +1,70 @@
+.teaching-bubble-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: @modalDimmerZIndex;
+}
+
+.teaching-bubble-cutout {
+    position: fixed;
+    z-index: @modalDimmerZIndex;
+    box-shadow: 0 0 0 99999px @modalOverlayColor;
+    border-radius: 0.5rem;
+}
+
+.teaching-bubble {
+    position: fixed;
+    max-width: 25rem;
+    min-width: 18.75rem;
+    background: @blue;
+    color: @white;
+    box-shadow: 0 0rem 0.5rem;
+    border-radius: 0.5rem;
+    padding: 1rem 1rem 0.5rem;
+    z-index: @modalDimmerZIndex;
+}
+
+.teaching-bubble-arrow {
+    position: fixed;
+    width: 0;
+    height: 0;
+    z-index: @modalDimmerZIndex + 1;
+    color: @blue;
+}
+
+.teaching-bubble-content > p {
+    margin: 0;
+}
+
+.teaching-bubble-footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    .teaching-bubble-steps {
+        color: @lightGrey;
+    }
+
+    .common-button {
+        color: @blue;
+        padding: .25rem .5rem;
+    }
+}
+
+.teaching-bubble-close.common-button {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    padding: 0.5rem 0 0.25rem 0;
+    background: transparent;
+    color: @white;
+    margin: 0;
+    i.right {
+        opacity: 1;
+        font-size: 1.3rem;
+        margin: 0;
+    }
+}
