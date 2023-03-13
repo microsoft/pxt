@@ -26,7 +26,7 @@ export interface TeachingBubbleProps extends ContainerProps {
     totalSteps: number;
     onClose: () => void;
     parentElement?: Element;
-    activeTarget?: boolean;
+    activeTarget?: boolean; // if true, the target is clickable
     onNext: () => void;
     onBack: () => void;
 }
@@ -46,17 +46,12 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         stepNumber,
         totalSteps,
         parentElement,
-        activeTarget // if true, the target is clickable
+        activeTarget
     } = props;
 
-    const hasPrevious = stepNumber > 1;
-    const hasNext = stepNumber < totalSteps;
-    const hasSteps = totalSteps > 1;
     const margin = 10;
-    const color = "#3454d1"
     const transparentBorder = `${margin}px solid transparent`;
-    const opaqueBorder = `${margin}px solid ${color}`;
-    // const opaqueBorder = `${margin}px solid`;
+    const opaqueBorder = `${margin}px solid`;
     let bubble: HTMLElement;
     let bubbleArrow: HTMLElement;
     let bubbleBounds: DOMRect;
@@ -69,21 +64,25 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
 
     useEffect(() => {
         positionBubbleAndCutout();
+        window.addEventListener("resize", positionBubbleAndCutout);
+        return () => {
+            window.removeEventListener("resize", positionBubbleAndCutout);
+        }
     }, [stepNumber]);
 
-    // useEffect(() => {
-    //     window.addEventListener("resize", positionBubbleAndCutout);
-    //     return () => {
-    //         window.removeEventListener("resize", positionBubbleAndCutout);
-    //     }
-    // }, []);
+    useEffect(() => {
+        if (!hasSteps) {
+            const footer = document.querySelector(".teaching-bubble-footer") as HTMLElement;
+            footer.style.flexDirection = "row-reverse";
+        }
+    }, []);
 
     const positionBubbleAndCutout = () => {
         bubble = document.getElementById(id);
         bubbleArrow = document.querySelector(".teaching-bubble-arrow") as HTMLElement;
         bubbleArrow.style.border = "none";
-        // bubbleArrow.style.border = undefined;
         bubbleBounds = bubble.getBoundingClientRect();
+        // To Do: check that targetContent.targetQuery is a valid selector
         targetElement = document.querySelector(targetContent.targetQuery) as HTMLElement;
         if (!targetElement) {
             // display bubble in center of screen
@@ -219,6 +218,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     const backLabel = lf("Back");
     const nextLabel = lf("Next");
     const confirmLabel = lf("Got it");
+    const finishLabel = lf("Finish");
+    const hasPrevious = stepNumber > 1;
+    const hasNext = stepNumber < totalSteps;
+    const hasSteps = totalSteps > 1;
 
     const classes = classList(
         "teaching-bubble-container",
@@ -251,24 +254,31 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                     </div>}
                     <div className="teaching-bubble-navigation">
                         {hasPrevious && <Button
-                            className="back-button"
+                            className="secondary-button"
                             onClick={onBack}
                             title={backLabel}
                             ariaLabel={backLabel}
                             label={backLabel}
                         />}
                         {hasNext && <Button
-                            className="next-button"
+                            className="primary-button"
                             onClick={onNext}
                             title={nextLabel}
                             ariaLabel={nextLabel}
                             label={nextLabel}
                         />}
+                        {!hasNext && <Button
+                            className="primary-button"
+                            onClick={onClose}
+                            title={finishLabel}
+                            ariaLabel={finishLabel}
+                            label={finishLabel}
+                        />}
                     </div>
                 </div>}
                 {(!hasSteps) && <div className="teaching-bubble-footer">
                     <Button
-                        className="confirm-button"
+                        className="primary-button"
                         onClick={onClose}
                         title={confirmLabel}
                         ariaLabel={confirmLabel}
