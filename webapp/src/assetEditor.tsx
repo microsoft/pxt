@@ -437,7 +437,16 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     protected getEmptyAsset(type: pxt.AssetType): pxt.Asset {
         const project = pxt.react.getTilemapProject();
-        const asset = { type, id: "", internalID: 0, meta: { displayName: pxt.getDefaultAssetDisplayName(type) } } as pxt.Asset;
+
+        const defaultName = pxt.getDefaultAssetDisplayName(type);
+        let newName = defaultName;
+        let index = 0;
+
+        while (project.isNameTaken(type, newName)) {
+            newName = defaultName + (index++);
+        }
+
+        const asset = { type, id: "", internalID: 0, meta: { displayName: newName } } as pxt.Asset;
         switch (type) {
             case pxt.AssetType.Image:
             case pxt.AssetType.Tile:
