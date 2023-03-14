@@ -1602,7 +1602,8 @@ namespace pxt {
                 const songJres: Partial<JRes> = {
                     data: pxt.assets.music.encodeSongToHex(asset.song),
                     mimeType: SONG_MIME_TYPE,
-                    displayName: asset.meta.displayName
+                    displayName: asset.meta.displayName,
+                    namespace: pxt.sprite.SONG_NAMESPACE + "."
                 };
                 if (tags?.length)
                     songJres.tags = tags;
