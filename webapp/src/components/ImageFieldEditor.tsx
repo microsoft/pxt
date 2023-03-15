@@ -17,6 +17,7 @@ export interface ImageFieldEditorProps {
     isMusicEditor?: boolean;
     doneButtonCallback?: () => void;
     hideDoneButton?: boolean;
+    includeSpecialTagsInFilter?: boolean;
 }
 
 interface ToggleOption extends BasicEditorToggleItem {
@@ -93,7 +94,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             this.updateGalleryAssets();
         }
 
-        const specialTags = ["tile", "dialog", "background"];
+        const specialTags = this.props.includeSpecialTagsInFilter ? [] : ["tile", "dialog", "background"];
         let allTags: string[] = [];
         let filteredAssets: pxt.Asset[] = [];
         switch (currentView) {
@@ -319,6 +320,9 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         // lf("Transportation")
         // lf("Swamp")
         // lf("Sports")
+        // lf("Background")
+        // lf("tile")
+        // lf("dialog")
 
         if (this.galleryAssets) {
             filterAssets.forEach( (asset) => {
