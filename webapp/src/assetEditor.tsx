@@ -230,6 +230,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 isMusicEditor={this.state.editing.type === "song"}
                 doneButtonCallback={this.sendSaveRequest}
                 hideDoneButton={true}
+                includeSpecialTagsInFilter={true}
             />
         }
 
@@ -362,22 +363,27 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         this.inflatedJres = {};
         this.commentAttrs = {};
 
-        for (const filename of Object.keys(files)) {
-            if (!filename.endsWith(".jres")) {
-                const comments = parseCommentAttrsFromTs(files[filename]);
+        for (const fileName of Object.keys(files).filter(file => !file.endsWith(".jres"))) {
+            const comments = parseCommentAttrsFromTs(files[fileName]);
 
-                for (const id of Object.keys(comments)) {
-                    this.commentAttrs[id] = comments[id];
-                }
-                continue;
+            for (const id of Object.keys(comments)) {
+                this.commentAttrs[id] = comments[id];
             }
+        }
 
+        for (const filename of Object.keys(files).filter(file => file.endsWith(".jres"))) {
             const isGallery = filename.indexOf("pxt_modules") !== -1 || filename.indexOf("node_modules") !== -1;
 
             const inflated = pxt.inflateJRes(JSON.parse(files[filename]));
             this.inflatedJres[filename] = inflated;
 
             for (const id of Object.keys(inflated)) {
+                if (this.commentAttrs[id]?.tags) {
+                    const tags = this.commentAttrs[id].tags.split(" ").filter(el => !!el);
+                    if (tags.length) {
+                        inflated[id].tags = tags;
+                    }
+                }
                 if (inflated[id].mimeType === pxt.TILEMAP_MIME_TYPE || inflated[id].tilemapTile) {
                     if (isGallery) {
                         galleryTilemaps[id] = inflated[id];
@@ -407,12 +413,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 const comments = this.commentAttrs[tile.id];
                 if (!comments) return undefined;
 
-                const splitTags = (comments.tags || "")
-                    .split(" ")
-                    .filter(el => !!el)
-                    .map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase());
+                const splitTags = tile.meta.tags
+                    ?.map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase());
 
-                if (splitTags.indexOf("tile") === -1) return undefined;
+                if (!splitTags || splitTags.indexOf("tile") === -1) return undefined;
 
 
                 return {
