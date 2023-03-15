@@ -230,6 +230,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 isMusicEditor={this.state.editing.type === "song"}
                 doneButtonCallback={this.sendSaveRequest}
                 hideDoneButton={true}
+                includeSpecialTagsInFilter={true}
             />
         }
 
