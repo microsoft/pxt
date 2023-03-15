@@ -1158,6 +1158,26 @@ namespace pxt {
             }
         }
 
+        clone() {
+            const clone = new TilemapProject();
+            clone.committedState = cloneSnapshot(this.committedState);
+            clone.state = cloneSnapshot(this.state);
+            clone.gallery = cloneSnapshot(this.gallery);
+            clone.extensionTileSets = this.extensionTileSets?.map(t => ({
+                ...t,
+                tileSets: t.tileSets.map(ts => ({
+                    ...ts,
+                    tiles: ts.tiles.map(tl => cloneAsset(tl))
+                }))
+            }));
+            clone.needsRebuild = this.needsRebuild;
+            clone.nextID = this.nextID;
+            clone.nextInternalID = this.nextInternalID;
+            clone.undoStack = this.undoStack.map(u => cloneSnapshotDiff(u));
+            clone.redoStack = this.undoStack.map(r => cloneSnapshotDiff(r));
+            return clone;
+        }
+
         protected generateImage(entry: JRes, type: AssetType.Image): ProjectImage;
         protected generateImage(entry: JRes, type: AssetType.Tile): Tile;
         protected generateImage(entry: JRes, type: AssetType.Image | AssetType.Tile): ProjectImage | Tile {
@@ -1508,6 +1528,35 @@ namespace pxt {
         }
     }
 
+    function cloneSnapshot(toClone: AssetSnapshot) {
+        return {
+            revision: toClone.revision,
+            tilemaps: toClone.tilemaps.clone(),
+            images: toClone.images.clone(),
+            animations: toClone.animations.clone(),
+            songs: toClone.songs.clone(),
+            tiles: toClone.tiles.clone()
+        }
+    }
+
+    function cloneSnapshotDiff(toClone: AssetSnapshotDiff): AssetSnapshotDiff {
+        return {
+            ...toClone,
+            animations: cloneAssetCollectionDiff(toClone.animations),
+            tiles: cloneAssetCollectionDiff(toClone.tiles),
+            images: cloneAssetCollectionDiff(toClone.images),
+            tilemaps: cloneAssetCollectionDiff(toClone.tilemaps),
+            songs: cloneAssetCollectionDiff(toClone.songs)
+        }
+    }
+
+    function cloneAssetCollectionDiff<U extends Asset>(toClone: AssetCollectionDiff<U>): AssetCollectionDiff<U> {
+        return {
+            ...toClone,
+            before: toClone.before.map(entry => cloneAsset(entry)),
+            after: toClone.after.map(entry => cloneAsset(entry)),
+        }
+    }
 
     function addAssetToJRes(asset: Asset, allJRes: pxt.Map<Partial<JRes> | string>): void {
         // Get the last part of the fully qualified name
@@ -1553,7 +1602,8 @@ namespace pxt {
                 const songJres: Partial<JRes> = {
                     data: pxt.assets.music.encodeSongToHex(asset.song),
                     mimeType: SONG_MIME_TYPE,
-                    displayName: asset.meta.displayName
+                    displayName: asset.meta.displayName,
+                    namespace: pxt.sprite.SONG_NAMESPACE + "."
                 };
                 if (tags?.length)
                     songJres.tags = tags;
