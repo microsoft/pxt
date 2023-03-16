@@ -48,6 +48,10 @@
     height: 100%;
 }
 
+.tab-tutorial {
+    height: unset;
+}
+
 .tutorial-content {
     flex: 1;
     padding: 0;
@@ -932,13 +936,13 @@
             display: none;
         }
     }
-    .sidebarContainer:not(.topInstructions) > .tutorial-container .tutorial-step-counter {
+    .sidebarContainer:not(.topInstructions) .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
             display: none;
         }
     }
 
-    .sidebarContainer:not(.topInstructions) > .tutorial-step-label {
+    .sidebarContainer:not(.topInstructions) .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
         margin-bottom: 1.5rem;
