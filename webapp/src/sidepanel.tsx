@@ -139,18 +139,17 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const { tutorialParentHeight } = this.state;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const marginHeight = "3rem"; // Simplify, add to height directly, probably just set in css now that it's constant.
         const showOpenInVscodeButton = parent.isJavaScriptActive();
 
         // TODO thsparks : Rename tab-* classes since it's no longer tab-based.
 
         const simContainerClassName = `tab-simulator tab-content${this.props.tutorialSimSidebar ? "" : " hidden"}`;
         const tutorialContainerClassName = `sidebarContainer tab-content tab-tutorial${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
-        const tutorialHeightStyle = tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined;
+        const tutorialHeightStyle = tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + 3rem)` } : undefined;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="sidebarContainer tab-container" style={/* TODO thsparks - may need to apply this on tablet view regardless of flag */ !this.props.tutorialSimSidebar ? tutorialHeightStyle : undefined}>
+            <div id="editorSidebar" className="sidebarContainer tab-container" style={!this.props.tutorialSimSidebar ? tutorialHeightStyle : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
