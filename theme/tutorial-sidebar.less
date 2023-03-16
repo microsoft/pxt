@@ -638,11 +638,12 @@
     padding: 0;
 }
 
-/************************************
-        Instruction at the Top Layout (tablet & sim-sidebar views)
-************************************/
+/*************************************
+        Instruction at the Top Layout
+        (tablet & sim-sidebar views)
+*************************************/
 
-.topInstructions {
+.topInstructionsSettings {
     #root.tabTutorial,
     #root.headless.tabTutorial {
         #maineditor > .full-abs {
@@ -652,9 +653,12 @@
         .sidebarContainer {
             height: @defaultTutorialHeight;
             width: 100%;
-            border-right: 0;
-            border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
         }
+    }
+
+    .sidebarContainer {
+        border-right: 0;
+        border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
     }
 
     .tab-tutorial.tab-content {
@@ -928,7 +932,7 @@
 /* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
-        .sidebarContainer:not(.tutorialSimSidebar) {
+        .sidebarContainer:not(.topInstructions) {
             bottom: 0;
         }
 
@@ -936,13 +940,13 @@
             display: none;
         }
     }
-    .sidebarContainer:not(.tutorialSimSidebar) .tutorial-container .tutorial-step-counter {
+    .sidebarContainer:not(.topInstructions) .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
             display: none;
         }
     }
 
-    .sidebarContainer:not(.tutorialSimSidebar) .tutorial-step-label {
+    .sidebarContainer:not(.topInstructions) .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
         margin-bottom: 1.5rem;
@@ -973,8 +977,8 @@
         }
     }
 
-    .tutorialSimSidebar {
-        .topInstructions();
+    .topInstructionsWrapper {
+        .topInstructionsSettings();
         
         .tutorial-callout {
             right: unset;
@@ -994,7 +998,7 @@
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    .topInstructions();
+    .topInstructionsSettings();
 
     .sidebarContainer {
         top: @mobileMenuHeight;

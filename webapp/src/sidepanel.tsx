@@ -144,8 +144,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         // TODO thsparks : Rename tab-* classes since it's no longer tab-based.
 
-        const simContainerClassName = `tab-simulator tab-content${this.props.tutorialSimSidebar ? "" : " hidden"}`
-        const tutorialContainerClassName = `sidebarContainer tab-content tab-tutorial${this.props.tutorialSimSidebar ? " tutorialSimSidebar" : ""}`;
+        const simContainerClassName = `tab-simulator tab-content${this.props.tutorialSimSidebar ? "" : " hidden"}`;
+        const tutorialContainerClassName = `sidebarContainer tab-content tab-tutorial${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
         const tutorialHeightStyle = tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined;
 
         return <div id="simulator" className="simulator">
@@ -179,24 +179,23 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 </div>
             </div>
             {tutorialOptions &&
-                <div
-                    id="tutorialWrapper"
-                    className={tutorialContainerClassName}
-                    style={tutorialHeightStyle}>
-                    <TutorialContainer
-                        parent={parent}
-                        tutorialId={tutorialOptions.tutorial}
-                        name={tutorialOptions.tutorialName}
-                        steps={tutorialOptions.tutorialStepInfo}
-                        currentStep={tutorialOptions.tutorialStep}
-                        tutorialOptions={tutorialOptions}
-                        hideIteration={tutorialOptions.metadata?.hideIteration}
-                        hasTemplate={!!tutorialOptions.templateCode}
-                        preferredEditor={tutorialOptions.metadata?.preferredEditor}
-                        tutorialSimSidebar={this.props.tutorialSimSidebar}
-                        onTutorialStepChange={onTutorialStepChange}
-                        onTutorialComplete={onTutorialComplete}
-                        setParentHeight={this.setTutorialParentHeight} />
+                <div id="tutorialWrapper" className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""} style={tutorialHeightStyle}>
+                    <div className={tutorialContainerClassName} style={tutorialHeightStyle}>
+                        <TutorialContainer
+                            parent={parent}
+                            tutorialId={tutorialOptions.tutorial}
+                            name={tutorialOptions.tutorialName}
+                            steps={tutorialOptions.tutorialStepInfo}
+                            currentStep={tutorialOptions.tutorialStep}
+                            tutorialOptions={tutorialOptions}
+                            hideIteration={tutorialOptions.metadata?.hideIteration}
+                            hasTemplate={!!tutorialOptions.templateCode}
+                            preferredEditor={tutorialOptions.metadata?.preferredEditor}
+                            tutorialSimSidebar={this.props.tutorialSimSidebar}
+                            onTutorialStepChange={onTutorialStepChange}
+                            onTutorialComplete={onTutorialComplete}
+                            setParentHeight={this.setTutorialParentHeight} />
+                    </div>
                 </div>}
         </div>
     }
