@@ -4654,10 +4654,6 @@ export class ProjectView
         return this.state.tutorialOptions != undefined;
     }
 
-    shouldUseTopInstructions(): boolean {
-        return pxt.appTarget.appTheme.topInstructionTutorialLayout && !pxt.BrowserUtils.isTabletSize();
-    }
-
     onTutorialLoaded() {
         pxt.tickEvent("tutorial.editorLoaded")
         this.postTutorialLoaded();
@@ -4667,7 +4663,7 @@ export class ProjectView
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
                 const tutorialEl = document?.getElementById("tutorialWrapper");
-                if (tutorialEl && (pxt.BrowserUtils.isTabletSize() || pxt.appTarget.appTheme.topInstructionTutorialLayout)) {
+                if (tutorialEl && (pxt.BrowserUtils.isTabletSize() || pxt.appTarget.appTheme.tutorialSimSidebarLayout)) {
                     this.setState({ editorOffset: tutorialEl.offsetHeight + "px" });
                 } else {
                     this.setState({ editorOffset: undefined });
@@ -4877,7 +4873,7 @@ export class ProjectView
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
-        const topInstructionsTutorial = this.shouldUseTopInstructions();
+        const tutorialSimSidebar = pxt.appTarget.appTheme.tutorialSimSidebarLayout && !pxt.BrowserUtils.isTabletSize();
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
@@ -4987,7 +4983,7 @@ export class ProjectView
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
                     tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
-                    topInstructionsTutorial={topInstructionsTutorial}
+                    tutorialSimSidebar={tutorialSimSidebar}
                     onTutorialStepChange={this.setTutorialStep}
                     onTutorialComplete={this.completeTutorialAsync}
                     setEditorOffset={this.setEditorOffset} />
@@ -5801,7 +5797,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // Check to see if we should show the mini simulator (<= tablet size)
-            if (!theEditor.isTutorial() || pxt.appTarget.appTheme.topInstructionTutorialLayout || pxt.BrowserUtils.useOldTutorialLayout()) {
+            if (!theEditor.isTutorial() || pxt.appTarget.appTheme.tutorialSimSidebarLayout || pxt.BrowserUtils.useOldTutorialLayout()) {
                 if (pxt.BrowserUtils.isTabletSize()) {
                     theEditor.showMiniSim(true);
                 } else {

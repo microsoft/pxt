@@ -28,7 +28,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     simSerialActive?: boolean;
     deviceSerialActive?: boolean;
     tutorialOptions?: pxt.tutorial.TutorialOptions;
-    topInstructionsTutorial?: boolean;
+    tutorialSimSidebar?: boolean;
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
     setEditorOffset?: () => void;
@@ -44,7 +44,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     constructor(props: SidepanelProps) {
         super(props);
 
-        if(!props.topInstructionsTutorial) {
+        if(!props.tutorialSimSidebar) {
             this.props.showMiniSim(true);
             // TODO thsparks : also adds hidden to tab-simulator, which feels like it should be grouped with this.
         }
@@ -73,7 +73,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected tryShowSimulatorTab = () => {
         const isTabTutorial = this.props.tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const includeSimulatorTab = (!isTabTutorial || this.props.topInstructionsTutorial) && hasSimulator;
+        const includeSimulatorTab = (!isTabTutorial || this.props.tutorialSimSidebar) && hasSimulator;
         if (includeSimulatorTab) {
             this.showSimulatorTab();
         }
@@ -144,13 +144,13 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         // TODO thsparks : Rename tab-* classes since it's no longer tab-based.
 
-        const simContainerClassName = `tab-simulator tab-content${this.props.topInstructionsTutorial ? "" : " hidden"}`
-        const tutorialContainerClassName = `sidebarContainer tab-content tab-tutorial${this.props.topInstructionsTutorial ? " topInstructions" : ""}`;
+        const simContainerClassName = `tab-simulator tab-content${this.props.tutorialSimSidebar ? "" : " hidden"}`
+        const tutorialContainerClassName = `sidebarContainer tab-content tab-tutorial${this.props.tutorialSimSidebar ? " tutorialSimSidebar" : ""}`;
         const tutorialHeightStyle = tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="sidebarContainer tab-container" style={/* TODO thsparks - may need to apply this on tablet view regardless of flag */ !this.props.topInstructionsTutorial ? tutorialHeightStyle : undefined}>
+            <div id="editorSidebar" className="sidebarContainer tab-container" style={/* TODO thsparks - may need to apply this on tablet view regardless of flag */ !this.props.tutorialSimSidebar ? tutorialHeightStyle : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -193,7 +193,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         hideIteration={tutorialOptions.metadata?.hideIteration}
                         hasTemplate={!!tutorialOptions.templateCode}
                         preferredEditor={tutorialOptions.metadata?.preferredEditor}
-                        topInstructions={this.props.topInstructionsTutorial}
+                        tutorialSimSidebar={this.props.tutorialSimSidebar}
                         onTutorialStepChange={onTutorialStepChange}
                         onTutorialComplete={onTutorialComplete}
                         setParentHeight={this.setTutorialParentHeight} />

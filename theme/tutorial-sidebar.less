@@ -639,10 +639,10 @@
 }
 
 /************************************
-        Top-View Instruction Layout
+        Instruction at the Top Layout (tablet & sim-sidebar views)
 ************************************/
 
-.topViewInstruction-mixin {
+.topInstructions {
     #root.tabTutorial,
     #root.headless.tabTutorial {
         #maineditor > .full-abs {
@@ -928,7 +928,7 @@
 /* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
-        .sidebarContainer:not(.topInstructions) {
+        .sidebarContainer:not(.tutorialSimSidebar) {
             bottom: 0;
         }
 
@@ -936,13 +936,13 @@
             display: none;
         }
     }
-    .sidebarContainer:not(.topInstructions) .tutorial-container .tutorial-step-counter {
+    .sidebarContainer:not(.tutorialSimSidebar) .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
             display: none;
         }
     }
 
-    .sidebarContainer:not(.topInstructions) .tutorial-step-label {
+    .sidebarContainer:not(.tutorialSimSidebar) .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
         margin-bottom: 1.5rem;
@@ -973,8 +973,8 @@
         }
     }
 
-    .topInstructions {
-        .topViewInstruction-mixin();
+    .tutorialSimSidebar {
+        .topInstructions();
         
         .tutorial-callout {
             right: unset;
@@ -994,7 +994,7 @@
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    .topViewInstruction-mixin();
+    .topInstructions();
 
     .sidebarContainer {
         top: @mobileMenuHeight;
