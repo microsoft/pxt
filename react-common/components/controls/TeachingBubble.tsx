@@ -50,17 +50,6 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     } = props;
 
     const margin = 10;
-    const transparentBorder = `${margin}px solid transparent`;
-    const opaqueBorder = `${margin}px solid`;
-    let bubble: HTMLElement;
-    let bubbleArrow: HTMLElement;
-    let bubbleBounds: DOMRect;
-    let targetElement: HTMLElement;
-    let targetBounds: DOMRect;
-    let top: number;
-    let left: number;
-    let arrowTop: number;
-    let arrowLeft: number;
 
     useEffect(() => {
         positionBubbleAndCutout();
@@ -70,32 +59,25 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         }
     }, [stepNumber]);
 
-    useEffect(() => {
-        if (!hasSteps) {
-            const footer = document.querySelector(".teaching-bubble-footer") as HTMLElement;
-            footer.style.flexDirection = "row-reverse";
-        }
-    }, []);
-
     const positionBubbleAndCutout = () => {
-        bubble = document.getElementById(id);
-        bubbleArrow = document.querySelector(".teaching-bubble-arrow") as HTMLElement;
+        const bubble = document.getElementById(id);
+        const bubbleArrow = document.querySelector(".teaching-bubble-arrow") as HTMLElement;
         bubbleArrow.style.border = "none";
-        bubbleBounds = bubble.getBoundingClientRect();
+        const bubbleBounds = bubble.getBoundingClientRect();
         // To Do: check that targetContent.targetQuery is a valid selector
-        targetElement = document.querySelector(targetContent.targetQuery) as HTMLElement;
+        const targetElement = document.querySelector(targetContent.targetQuery) as HTMLElement;
         if (!targetElement) {
             // display bubble in center of screen
-            updatePosition(bubble, `${(window.innerHeight - bubbleBounds.height) / 2}px`, `${(window.innerWidth - bubbleBounds.width) / 2}px`);
+            updatePosition(bubble, (window.innerHeight - bubbleBounds.height) / 2, (window.innerWidth - bubbleBounds.width) / 2);
             clearCutout();
             return;
         }
-        targetBounds = targetElement.getBoundingClientRect();
-        setPosition();
-        setCutout();
+        const targetBounds = targetElement.getBoundingClientRect();
+        setPosition(targetBounds, bubble, bubbleBounds, bubbleArrow);
+        setCutout(targetBounds, targetElement);
     }
 
-    const setCutout = () => {
+    const setCutout = (targetBounds: DOMRect, targetElement: HTMLElement) => {
         const cutout = document.querySelector(".teaching-bubble-cutout") as HTMLElement;
         let cutoutTop = targetBounds.top;
         let cutoutLeft = targetBounds.left;
@@ -140,7 +122,60 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         cutout.style.height = "0px";
     }
 
-    const setPosition = () => {
+    const setPosition = (targetBounds: DOMRect, bubble: HTMLElement, bubbleBounds: DOMRect, bubbleArrow: HTMLElement) => {
+        const transparentBorder = `${margin}px solid transparent`;
+        const opaqueBorder = `${margin}px solid`;
+
+        const positionAbove = () => {
+            const top = targetBounds.top - bubbleBounds.height - margin;
+            const left = targetBounds.left - (bubbleBounds.width - targetBounds.width) / 2;
+            const arrowTop = top + bubbleBounds.height;
+            const arrowLeft = targetBounds.left + (targetBounds.width - margin) / 2;
+            bubbleArrow.style.borderLeft = transparentBorder;
+            bubbleArrow.style.borderRight = transparentBorder;
+            bubbleArrow.style.borderTop = opaqueBorder;
+            checkAndUpdatePosition(bubble, top, left, bubbleArrow, arrowTop, arrowLeft);
+        }
+
+        const positionBelow = () => {
+            const top = targetBounds.bottom + margin;
+            const left = targetBounds.left - (bubbleBounds.width - targetBounds.width) / 2;
+            const arrowTop = top - margin;
+            const arrowLeft = targetBounds.left + (targetBounds.width - margin) / 2;
+            bubbleArrow.style.borderLeft = transparentBorder;
+            bubbleArrow.style.borderRight = transparentBorder;
+            bubbleArrow.style.borderBottom = opaqueBorder;
+            checkAndUpdatePosition(bubble, top, left, bubbleArrow, arrowTop, arrowLeft);
+        }
+
+        const positionLeft = () => {
+            const top = targetBounds.top - (bubbleBounds.height - targetBounds.height) / 2;
+            const left = targetBounds.left - margin;
+            const arrowTop = top + (bubbleBounds.height - margin) / 2;
+            const arrowLeft = targetBounds.left - margin;
+            bubbleArrow.style.borderLeft = opaqueBorder;
+            bubbleArrow.style.borderTop = transparentBorder;
+            bubbleArrow.style.borderBottom = transparentBorder;
+            checkAndUpdatePosition(bubble, top, left, bubbleArrow, arrowTop, arrowLeft);
+        }
+
+        const positionRight = () => {
+            const top = targetBounds.top - (bubbleBounds.height - targetBounds.height) / 2;
+            const left = targetBounds.right + margin;
+            const arrowTop = top + (bubbleBounds.height - margin) / 2;
+            const arrowLeft = targetBounds.right;
+            bubbleArrow.style.borderRight = opaqueBorder;
+            bubbleArrow.style.borderTop = transparentBorder;
+            bubbleArrow.style.borderBottom = transparentBorder;
+            checkAndUpdatePosition(bubble, top, left, bubbleArrow, arrowTop, arrowLeft);
+        }
+
+        const positionCenter = () => {
+            const top = (targetBounds.height - bubbleBounds.height) / 2 + targetBounds.top;
+            const left = (targetBounds.width - bubbleBounds.width) / 2 + targetBounds.left;
+            checkAndUpdatePosition(bubble, top, left);
+        }
+
         switch (targetContent.location) {
             case Location.Above:
                 positionAbove();
@@ -156,72 +191,29 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 break;
             default:
                 positionCenter();
-
         }
+    }
+
+    const checkAndUpdatePosition = (bubble: HTMLElement, top: number, left: number, bubbleArrow?: HTMLElement, arrowTop?: number, arrowLeft?: number) => {
         if (top < 10) top = 10;
         if (left < 10) left = 10;
-        updatePosition(bubble, top + "px", left + "px");
-        updatePosition(bubbleArrow, arrowTop + "px", arrowLeft + "px");
+        updatePosition(bubble, top, left);
+        if (!bubbleArrow || !arrowTop || !arrowLeft) return;
+        updatePosition(bubbleArrow, arrowTop, arrowLeft);
     }
 
-    const positionAbove = () => {
-        top = targetBounds.top - bubbleBounds.height - margin;
-        left = targetBounds.left - (bubbleBounds.width - targetBounds.width) / 2;
-        arrowTop = top + bubbleBounds.height;
-        arrowLeft = targetBounds.left + (targetBounds.width - margin) / 2;
-        bubbleArrow.style.borderLeft = transparentBorder;
-        bubbleArrow.style.borderRight = transparentBorder;
-        bubbleArrow.style.borderTop = opaqueBorder;
+    const updatePosition = (element: HTMLElement, top: number, left: number) => {
+        element.style.top = top + "px";
+        element.style.left = left + "px";
     }
 
-    const positionBelow = () => {
-        top = targetBounds.bottom + margin;
-        left = targetBounds.left - (bubbleBounds.width - targetBounds.width) / 2;
-        arrowTop = top - margin;
-        arrowLeft = targetBounds.left + (targetBounds.width - margin) / 2;
-        bubbleArrow.style.borderLeft = transparentBorder;
-        bubbleArrow.style.borderRight = transparentBorder;
-        bubbleArrow.style.borderBottom = opaqueBorder;
-    }
-
-    const positionLeft = () => {
-        top = targetBounds.top - (bubbleBounds.height - targetBounds.height) / 2;
-        left = targetBounds.left - margin;
-        arrowTop = top + (bubbleBounds.height - margin) / 2;
-        arrowLeft = targetBounds.left - margin;
-        bubbleArrow.style.borderLeft = opaqueBorder;
-        bubbleArrow.style.borderTop = transparentBorder;
-        bubbleArrow.style.borderBottom = transparentBorder;
-    }
-
-    const positionRight = () => {
-        top = targetBounds.top - (bubbleBounds.height - targetBounds.height) / 2;
-        left = targetBounds.right + margin;
-        arrowTop = top + (bubbleBounds.height - margin) / 2;
-        arrowLeft = targetBounds.right;
-        bubbleArrow.style.borderRight = opaqueBorder;
-        bubbleArrow.style.borderTop = transparentBorder;
-        bubbleArrow.style.borderBottom = transparentBorder;
-    }
-
-    const positionCenter = () => {
-        top = (targetBounds.height - bubbleBounds.height) / 2 + targetBounds.top;
-        left = (targetBounds.width - bubbleBounds.width) / 2 + targetBounds.left;
-    }
-
-    const updatePosition = (element: HTMLElement, top: string, left: string) => {
-        element.style.top = top;
-        element.style.left = left;
-    }
-
-    const closeLabel = lf("Close");
-    const backLabel = lf("Back");
-    const nextLabel = lf("Next");
-    const confirmLabel = lf("Got it");
-    const finishLabel = lf("Finish");
     const hasPrevious = stepNumber > 1;
     const hasNext = stepNumber < totalSteps;
     const hasSteps = totalSteps > 1;
+    const closeLabel = lf("Close");
+    const backLabel = lf("Back");
+    const nextLabel = lf("Next");
+    const finishLabel = hasSteps ? lf("Finish") : lf("Got it")
 
     const classes = classList(
         "teaching-bubble-container",
@@ -229,8 +221,8 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     );
 
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
-        <div className="teaching-bubble-cutout"></div>
-        <div className="teaching-bubble-arrow"></div>
+        <div className="teaching-bubble-cutout" />
+        <div className="teaching-bubble-arrow" />
         <div id={id}
             className="teaching-bubble"
             role={role || "dialog"}
@@ -248,8 +240,8 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             <div className="teaching-bubble-content">
                 <strong>{targetContent.title}</strong>
                 <p>{targetContent.description}</p>
-                {hasSteps && <div className="teaching-bubble-footer">
-                    {stepNumber && totalSteps && <div className="teaching-bubble-steps">
+                <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
+                    {hasSteps && <div className="teaching-bubble-steps">
                         {stepNumber} of {totalSteps}
                     </div>}
                     <div className="teaching-bubble-navigation">
@@ -275,16 +267,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                             label={finishLabel}
                         />}
                     </div>
-                </div>}
-                {(!hasSteps) && <div className="teaching-bubble-footer">
-                    <Button
-                        className="primary-button"
-                        onClick={onClose}
-                        title={confirmLabel}
-                        ariaLabel={confirmLabel}
-                        label={confirmLabel}
-                    />
-                </div>}
+                </div>
             </div>
         </div>
     </FocusTrap>, parentElement || document.body)
