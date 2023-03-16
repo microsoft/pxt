@@ -146,10 +146,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         const simContainerClassName = `tab-simulator tab-content${this.props.topInstructionsTutorial ? "" : " hidden"}`
         const tutorialContainerClassName = `sidebarContainer tab-content tab-tutorial${this.props.topInstructionsTutorial ? " topInstructions" : ""}`;
+        const tutorialHeightStyle = tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="sidebarContainer tab-container">
+            <div id="editorSidebar" className="sidebarContainer tab-container" style={!this.props.topInstructionsTutorial ? tutorialHeightStyle : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -181,7 +182,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 <div
                     id="tutorialWrapper"
                     className={tutorialContainerClassName}
-                    style={tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + ${marginHeight})` } : undefined}>
+                    style={tutorialHeightStyle}>
                     <TutorialContainer
                         parent={parent}
                         tutorialId={tutorialOptions.tutorial}
