@@ -22,6 +22,7 @@ interface TutorialContainerProps {
     preferredEditor?: string;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
+    topInstructions?: boolean;
 
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
@@ -39,7 +40,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const [ stepErrorAttemptCount, setStepErrorAttemptCount ] = React.useState(0);
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
-    const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">(pxt.appTarget.appTheme.topInstructionTutorialLayout ? "horizontal" : "vertical");
+    const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">(props.topInstructions ? "horizontal" : "vertical");
     const [ validationFailures, setValidationFailures ] = React.useState([]);
     const contentRef = React.useRef(undefined);
     const immReaderRef = React.useRef(undefined);
@@ -52,7 +53,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
-            if (pxt.BrowserUtils.isTabletSize() || pxt.appTarget.appTheme.topInstructionTutorialLayout) {
+            if (pxt.BrowserUtils.isTabletSize() || props.topInstructions) {
                 setLayout("horizontal");
             } else {
                 setLayout("vertical");

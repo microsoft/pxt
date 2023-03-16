@@ -4654,6 +4654,10 @@ export class ProjectView
         return this.state.tutorialOptions != undefined;
     }
 
+    shouldUseTopInstructions(): boolean {
+        return pxt.appTarget.appTheme.topInstructionTutorialLayout && !pxt.BrowserUtils.isTabletSize();
+    }
+
     onTutorialLoaded() {
         pxt.tickEvent("tutorial.editorLoaded")
         this.postTutorialLoaded();
@@ -4873,7 +4877,7 @@ export class ProjectView
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
-        const topInstructionsTutorial = pxt.appTarget.appTheme.topInstructionTutorialLayout;
+        const topInstructionsTutorial = this.shouldUseTopInstructions();
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
@@ -5797,13 +5801,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // Check to see if we should show the mini simulator (<= tablet size)
-            if (!theEditor.isTutorial() || pxt.BrowserUtils.useOldTutorialLayout()) {
+            if (!theEditor.isTutorial() || pxt.appTarget.appTheme.topInstructionTutorialLayout || pxt.BrowserUtils.useOldTutorialLayout()) {
                 if (pxt.BrowserUtils.isTabletSize()) {
                     theEditor.showMiniSim(true);
                 } else {
                     theEditor.showMiniSim(false);
                 }
-            } else if (theEditor.isTutorial()) {
+            }
+
+            if (theEditor.isTutorial() && !pxt.BrowserUtils.useOldTutorialLayout()) {
                 // For the tabbed tutorial, set the editor offset
                 theEditor.setEditorOffset();
             }

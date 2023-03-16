@@ -193,6 +193,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         hideIteration={tutorialOptions.metadata?.hideIteration}
                         hasTemplate={!!tutorialOptions.templateCode}
                         preferredEditor={tutorialOptions.metadata?.preferredEditor}
+                        topInstructions={this.props.topInstructionsTutorial}
                         onTutorialStepChange={onTutorialStepChange}
                         onTutorialComplete={onTutorialComplete}
                         setParentHeight={this.setTutorialParentHeight} />
