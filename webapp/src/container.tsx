@@ -26,6 +26,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 // lf("Reference")
 // lf("Support")
 // lf("Hardware")
+// lf("Tour")
 
 function openTutorial(parent: pxt.editor.IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
@@ -38,6 +39,11 @@ function openTutorial(parent: pxt.editor.IProjectView, path: string) {
 function openDocs(parent: pxt.editor.IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
     parent.setSideDoc(path);
+}
+
+function startTour(parent: pxt.editor.IProjectView) {
+    pxt.tickEvent(`tour`);
+    parent.showOnboarding();
 }
 
 function renderDocItems(parent: pxt.editor.IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
@@ -55,6 +61,11 @@ function getDocsLanguageItem(editor: DocsMenuEditorName, parent: pxt.editor.IPro
     return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={pxt.Util.rlf(editor)} text={pxt.Util.rlf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
 }
 
+function getTourItem(parent: pxt.editor.IProjectView, cls: string = ""): JSX.Element {
+    const path = "/tour";
+    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Tour")} text={lf("Tour")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={startTour} />
+}
+
 type DocsMenuEditorName = "Blocks" | "JavaScript" | "Python";
 interface DocsMenuProps extends ISettingsProps {
     editor: DocsMenuEditorName;
@@ -66,6 +77,7 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
+            {(this.props.editor === "Blocks") && targetTheme.editorTour && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
         </sui.DropdownMenu>
