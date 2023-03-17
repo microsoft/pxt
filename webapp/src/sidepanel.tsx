@@ -140,15 +140,15 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const showOpenInVscodeButton = parent.isJavaScriptActive();
 
-        // TODO thsparks : I think the sidebarContent class could be fully removed.
+        // TODO thsparks : Rename tutorialContainer to tutorialContainerOuter? To reduce confusion with tutorial-container.
 
-        const simContainerClassName = `simulatorContainer sidebarContent${this.props.tutorialSimSidebar ? "" : " hidden"}`;
-        const tutorialContainerClassName = `sidebarContainer sidebarContent tutorialContainer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
+        const simContainerClassName = `simulatorContainer ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
+        const tutorialContainerClassName = `sidebarContainer tutorialContainer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
         const tutorialHeightStyle = tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + 3rem)` } : undefined;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="sidebarContainer sidebarContent" style={!this.props.tutorialSimSidebar ? tutorialHeightStyle : undefined}>
+            <div id="editorSidebar" className="sidebarContainer" style={!this.props.tutorialSimSidebar ? tutorialHeightStyle : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />

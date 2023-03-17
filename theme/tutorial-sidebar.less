@@ -33,7 +33,7 @@
     background-color: @white;
 }
 
-.tutorialContainer.sidebarContent {
+.tutorialContainer {
     background-color: @white;
 }
 
@@ -417,7 +417,7 @@
         Simulator Container
 *******************************/
 
-.simulatorContainer.sidebarContent.hidden {
+.simulatorContainer.hidden {
     display: block !important;
 }
 
@@ -431,7 +431,7 @@
 
 // Mini sim is visible when tab is hidden
 #root.tabTutorial {
-    &:not(.fullscreensim) .simulatorContainer.sidebarContent.hidden {
+    &:not(.fullscreensim) .simulatorContainer.hidden {
         height: 0;
         padding: 0;
 
@@ -471,7 +471,7 @@
             }
         }
     }
-    .simulatorContainer.sidebarContent:not(.hidden) {
+    .simulatorContainer:not(.hidden) {
         .simPanel {
             height: calc(100% - @tutorialControlsOffset);
 
@@ -479,7 +479,7 @@
         }
     }
 
-    &.collapsedEditorTools:not(.fullscreensim) .simulatorContainer.sidebarContent.hidden .simPanel{
+    &.collapsedEditorTools:not(.fullscreensim) .simulatorContainer.hidden .simPanel{
         .fullscreen-button, .tutorial.mute-button { display: none !important; }
     }
 
@@ -661,7 +661,7 @@
         border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
     }
 
-    .tutorialContainer.sidebarContent {
+    .tutorialContainer {
         padding-top: 0;
     }
 
