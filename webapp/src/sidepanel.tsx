@@ -14,7 +14,7 @@ import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 import { fireClickOnEnter } from "./util";
 
 interface SidepanelState {
-    tutorialParentHeight?: number;
+    height?: number;
 }
 
 interface SidepanelProps extends pxt.editor.ISettingsProps {
@@ -57,30 +57,29 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             || (this.props.inHome && !props.inHome && props.tutorialOptions)
             || (this.props.tutorialOptions?.tutorial && props.tutorialOptions?.tutorial
                 && this.props.tutorialOptions.tutorial !== props.tutorialOptions.tutorial)) {
-            // this.showTutorialTab();
+            this.props.showMiniSim(true);
         } else if (!this.props.inHome && props.inHome
             || (this.props.tutorialOptions && !props.tutorialOptions)) {
-            this.showSimulatorTab();
+            this.showSimulator();
         }
     }
 
     componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
-        if ((this.state.tutorialParentHeight || state.tutorialParentHeight) && this.state.tutorialParentHeight != state.tutorialParentHeight) this.props.setEditorOffset();
+        if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
     }
 
 
-    protected tryShowSimulatorTab = () => {
+    protected tryShowSimulator = () => {
         const isTabTutorial = this.props.tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const includeSimulatorTab = (!isTabTutorial || this.props.tutorialSimSidebar) && hasSimulator;
-        if (includeSimulatorTab) {
-            this.showSimulatorTab();
+        const includeSimulator = (!isTabTutorial || this.props.tutorialSimSidebar) && hasSimulator;
+        if (includeSimulator) {
+            this.showSimulator();
         }
     }
 
-    protected showSimulatorTab = () => {
+    protected showSimulator = () => {
         this.props.showMiniSim(false);
-        // this.setState({ activeTab: SIMULATOR_TAB, height: undefined });
         simulator.driver.focus();
     }
 
@@ -97,7 +96,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if (!tutorialOptions || pxt.BrowserUtils.useOldTutorialLayout()) {
             handleFullscreenButtonClick();
         } else {
-            this.tryShowSimulatorTab();
+            this.tryShowSimulator();
         }
     }
 
@@ -115,8 +114,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
-    protected setTutorialParentHeight = (height?: number) => {
-        if (height != this.state.tutorialParentHeight) this.setState({ tutorialParentHeight: height });
+    protected setComponentHeight = (height?: number) => {
+        if (height != this.state.height) this.setState({ height: height });
     }
 
     onHostMultiplayerGameClick = (evt: any) => {
@@ -135,7 +134,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
-        const { tutorialParentHeight } = this.state;
+        const { height: tutorialParentHeight } = this.state;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const showOpenInVscodeButton = parent.isJavaScriptActive();
@@ -153,7 +152,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
                             <SimulatorPresenceBar />
                         </div>}
-                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulatorTab} />
+                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
@@ -190,7 +189,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                             tutorialSimSidebar={this.props.tutorialSimSidebar}
                             onTutorialStepChange={onTutorialStepChange}
                             onTutorialComplete={onTutorialComplete}
-                            setParentHeight={this.setTutorialParentHeight} />
+                            setParentHeight={this.setComponentHeight} />
                     </div>
                 </div>}
         </div>
