@@ -140,10 +140,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const showOpenInVscodeButton = parent.isJavaScriptActive();
 
-        // TODO thsparks : Rename tutorialContainer to tutorialContainerOuter? To reduce confusion with tutorial-container.
-
         const simContainerClassName = `simulatorContainer ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
-        const tutorialContainerClassName = `sidebarContainer tutorialContainer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
+        const outerTutorialContainerClassName = `sidebarContainer tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
         const tutorialHeightStyle = tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + 3rem)` } : undefined;
 
         return <div id="simulator" className="simulator">
@@ -178,7 +176,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             </div>
             {tutorialOptions &&
                 <div id="tutorialWrapper" className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""} style={tutorialHeightStyle}>
-                    <div className={tutorialContainerClassName} style={tutorialHeightStyle}>
+                    <div className={outerTutorialContainerClassName} style={tutorialHeightStyle}>
                         <TutorialContainer
                             parent={parent}
                             tutorialId={tutorialOptions.tutorial}

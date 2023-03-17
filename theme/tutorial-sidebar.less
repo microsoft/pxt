@@ -29,11 +29,11 @@
         Tutorial Tab
 *******************************/
 
-.sidebarContainer .tutorialContainer.active {
+.sidebarContainer .tutorial-container-outer.active {
     background-color: @white;
 }
 
-.tutorialContainer {
+.tutorial-container-outer {
     background-color: @white;
 }
 
@@ -48,7 +48,7 @@
     height: 100%;
 }
 
-.tutorialContainer {
+.tutorial-container-outer {
     height: unset;
 }
 
@@ -278,7 +278,7 @@
 }
 
 // Overrides, largely using old tutorial hint CSS
-.tutorialContainer {
+.tutorial-container-outer {
     .tutorial-callout {
         position: fixed;
         top: unset;
@@ -661,7 +661,7 @@
         border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
     }
 
-    .tutorialContainer {
+    .tutorial-container-outer {
         padding-top: 0;
     }
 
@@ -753,7 +753,7 @@
     }
 
     // Overrides
-    .tutorialContainer:not(.topInstructions) {
+    .tutorial-container-outer:not(.topInstructions) {
         .tutorial-callout {
             right: 1.6rem;
             bottom: unset;
