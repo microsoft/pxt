@@ -29,11 +29,11 @@
         Tutorial Tab
 *******************************/
 
-.sidebarContainer .tab-tutorial.active {
+.sidebarContainer .tutorialContainer.active {
     background-color: @white;
 }
 
-.tab-tutorial.tab-content {
+.tutorialContainer.sidebarContent {
     background-color: @white;
 }
 
@@ -48,7 +48,7 @@
     height: 100%;
 }
 
-.tab-tutorial {
+.tutorialContainer {
     height: unset;
 }
 
@@ -278,7 +278,7 @@
 }
 
 // Overrides, largely using old tutorial hint CSS
-.tab-tutorial {
+.tutorialContainer {
     .tutorial-callout {
         position: fixed;
         top: unset;
@@ -414,14 +414,14 @@
 
 
 /*******************************
-        Simulator Tab
+        Simulator Container
 *******************************/
 
-.tab-simulator.tab-content.hidden {
+.simulatorContainer.sidebarContent.hidden {
     display: block !important;
 }
 
-.tab-simulator .simPanel {
+.simulatorContainer .simPanel {
     height: 100%;
     padding: 1rem 0.5rem 1rem 1rem;
     overflow-x: hidden;
@@ -431,7 +431,7 @@
 
 // Mini sim is visible when tab is hidden
 #root.tabTutorial {
-    &:not(.fullscreensim) .tab-simulator.tab-content.hidden {
+    &:not(.fullscreensim) .simulatorContainer.sidebarContent.hidden {
         height: 0;
         padding: 0;
 
@@ -471,7 +471,7 @@
             }
         }
     }
-    .tab-simulator.tab-content:not(.hidden) {
+    .simulatorContainer.sidebarContent:not(.hidden) {
         .simPanel {
             height: calc(100% - @tutorialControlsOffset);
 
@@ -479,7 +479,7 @@
         }
     }
 
-    &.collapsedEditorTools:not(.fullscreensim) .tab-simulator.tab-content.hidden .simPanel{
+    &.collapsedEditorTools:not(.fullscreensim) .simulatorContainer.sidebarContent.hidden .simPanel{
         .fullscreen-button, .tutorial.mute-button { display: none !important; }
     }
 
@@ -661,7 +661,7 @@
         border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
     }
 
-    .tab-tutorial.tab-content {
+    .tutorialContainer.sidebarContent {
         padding-top: 0;
     }
 
@@ -687,7 +687,7 @@
             Exit Tutorial
     *******************************/
 
-    .tab-simulator.hidden .tutorial-exit {
+    .simulatorContainer.hidden .tutorial-exit {
         // Shift in tutorial tab to make space for step counter
         right: @tutorialTabletStepCounterWidth;
         margin-right: 0;
@@ -753,7 +753,7 @@
     }
 
     // Overrides
-    .tab-tutorial:not(.topInstructions) {
+    .tutorialContainer:not(.topInstructions) {
         .tutorial-callout {
             right: 1.6rem;
             bottom: unset;
@@ -799,7 +799,7 @@
     /*******************************
             Simulator Tab
     *******************************/
-    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) {
+    #root.tabTutorial:not(.fullscreensim) .simulatorContainer:not(.hidden) {
         .simPanel {
             display: flex;
             position: relative;
@@ -955,7 +955,7 @@
     /* Short Deskstop Only */
     @media (max-height: @tallEditorBreakpoint) {
         #root.tabTutorial:not(.fullscreensim) {
-            .tab-simulator:not(.hidden) {
+            .simulatorContainer:not(.hidden) {
                 .simPanel {
                     height: calc(100% - @tutorialControlsOffset);
                     min-height: @tutorialSimulatorMinHeight;
@@ -1046,7 +1046,7 @@
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) .simPanel {
+    #root.tabTutorial:not(.fullscreensim) .simulatorContainer:not(.hidden) .simPanel {
         #simulators {
             width: 16rem;
         }
