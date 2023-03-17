@@ -18,6 +18,7 @@ import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util
 import { Unsubscribe, Action } from 'redux';
 import { createNewImageAsset, getNewInternalID } from '../../assets';
 import { AssetEditorCore } from '../ImageFieldEditor';
+import { classList } from '../../../../react-common/components/util';
 
 export const LIGHT_MODE_TRANSPARENT = "#dedede";
 
@@ -84,7 +85,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return <div className="image-editor-outer">
             <Provider store={instanceStore}>
-                <div className={`image-editor ${editingTile ? "editing-tile" : ""}`}>
+                <div className={classList("image-editor", editingTile && "editing-tile", hideDoneButton && "hide-done-button")}>
                     <TopBar singleFrame={singleFrame} />
                     <div className="image-editor-content">
                         <SideBar lightMode={lightMode} />
@@ -220,7 +221,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         const state = this.getStore().getState();
         const tilemapState = state.store.present as TilemapState;
         const { floating, overlayLayers, layerOffsetX, layerOffsetY } = tilemapState.tilemap;
-        const layers = applyBitmapData(overlayLayers[0], floating && floating.overlayLayers && floating.overlayLayers[0], layerOffsetX, layerOffsetY);
+        const layers = applyBitmapData(pxt.sprite.Bitmap.fromData(overlayLayers[0]).copy().data(), floating && floating.overlayLayers && floating.overlayLayers[0], layerOffsetX, layerOffsetY);
 
         const out = new pxt.sprite.TilemapData(imageStateToTilemap(tilemapState.tilemap), tilemapState.tileset, layers);
         out.deletedTiles = state.editor.deletedTiles;
