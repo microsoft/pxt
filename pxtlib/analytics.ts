@@ -89,17 +89,12 @@ namespace pxt.analytics {
 
     function consoleLogTick(id: string, data: Map<string | number>, opts: TelemetryEventOptions) {
         const query = Util.parseQueryString(window.location.href);
-
-        // Optionally specify consoletickfilter to limit which ticks get printed.
-        if (!query["consoletickfilter"] || id.startsWith(query["consoletickfilter"])) {
-            const tickInfo = `${id} ${data ? JSON.stringify(data) : "<no data>"} ${opts ? JSON.stringify(opts) : "<no opts>"}`;
-
-            if (query["consoleticks"] == "1" || query["consoleticks"] == "full") {
-                const timestamp = new Date().toLocaleTimeString(undefined, { hour12: false });
-                console.log(`${timestamp} - Tick - ${tickInfo}`);
-            } else if (query["consoleticks"] == "2" || query["consoleticks"] == "short") {
-                console.log(tickInfo);
-            }
+        const tickInfo = `${id} ${data ? JSON.stringify(data) : "<no data>"} ${opts ? JSON.stringify(opts) : "<no opts>"}`;
+        if (query["consoleticks"] == "1" || query["consoleticks"] == "full") {
+            const timestamp = new Date().toLocaleTimeString(undefined, { hour12: false });
+            console.log(`${timestamp} - Tick - ${tickInfo}`);
+        } else if (query["consoleticks"] == "2" || query["consoleticks"] == "short") {
+            console.log(tickInfo);
         }
     }
 }
