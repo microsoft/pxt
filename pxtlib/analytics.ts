@@ -33,6 +33,13 @@ namespace pxt.analytics {
 
         const te = pxt.tickEvent;
         pxt.tickEvent = function (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions): void {
+            // Log tick to console if "consoleticks" url param is present.
+            // We do this simple check first (rather than the full parse) to minimize overhead when it's not present, which is most of the time.
+            if(window && /consoleticks=/.test(window.location.href))
+            {
+                consoleLogTick(id, data, opts);
+            }
+
             if (te) te(id, data, opts);
 
             if (opts?.interactiveConsent) pxt.setInteractiveConsent(true);
@@ -78,5 +85,21 @@ namespace pxt.analytics {
                 pxt.aiTrackException(err, 'error', props);
             }
         };
+    }
+
+    function consoleLogTick(id: string, data: Map<string | number>, opts: TelemetryEventOptions) {
+        const query = Util.parseQueryString(window.location.href);
+
+        // Optionally specify consoletickfilter to limit which ticks get printed.
+        if (!query["consoletickfilter"] || id.startsWith(query["consoletickfilter"])) {
+            const tickInfo = `${id} ${data ? JSON.stringify(data) : "<no data>"} ${opts ? JSON.stringify(opts) : "<no opts>"}`;
+
+            if (query["consoleticks"] == "1" || query["consoleticks"] == "full") {
+                const timestamp = new Date().toLocaleTimeString(undefined, { hour12: false });
+                console.log(`${timestamp} - Tick - ${tickInfo}`);
+            } else if (query["consoleticks"] == "2" || query["consoleticks"] == "short") {
+                console.log(tickInfo);
+            }
+        }
     }
 }
