@@ -213,11 +213,13 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     const closeLabel = lf("Close");
     const backLabel = lf("Back");
     const nextLabel = lf("Next");
-    const finishLabel = hasSteps ? lf("Finish") : lf("Got it")
+    const finishLabel = hasSteps ? lf("Finish") : lf("Got it");
+    const inHighContrastMode = document.getElementById("root").classList.contains("hc");
 
     const classes = classList(
         "teaching-bubble-container",
-        className
+        className,
+        inHighContrastMode ? "hc" : ""
     );
 
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
