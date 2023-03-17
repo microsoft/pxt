@@ -55,18 +55,18 @@ pre {
     position: relative;
 }
 
-.sidebarContainer,
+.sidebar-container,
 #maineditor,
 #sidedocs {
   position: absolute;
   bottom: 0rem;
 }
 
-.sidebarContainer, #maineditor, #sidedocs {
+.sidebar-container, #maineditor, #sidedocs {
     top: @mainMenuHeight;
 }
 
-.hideMenuBar:not(.headless) .sidebarContainer,
+.hideMenuBar:not(.headless) .sidebar-container,
     .hideMenuBar #maineditor,
     .hideMenuBar #sidedocs {
     top: 0 !important;
@@ -159,7 +159,7 @@ pre {
     border: unset;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, .sidebarContainer {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, .sidebar-container {
     bottom: @editorToolsCollapsedHeight;
 }
 
@@ -169,7 +169,7 @@ pre {
 .hideEditorToolbar #serialEditor,
 .hideEditorToolbar #githubEditor,
 .hideEditorToolbar #assetEditor,
-.hideEditorToolbar .sidebarContainer {
+.hideEditorToolbar .sidebar-container {
     bottom: 0rem !important;
 }
 
@@ -187,13 +187,13 @@ pre {
 #simulator {
     height: 100%;
 }
-.sidebarContainer, #downloadArea {
+.sidebar-container, #downloadArea {
     min-width: @simulatorWidth;
     max-width: @simulatorWidth;
     left: 0;
 }
 
-.sidebarContainer {
+.sidebar-container {
     overflow: hidden;
     margin-top: 0;
     margin-bottom: 0;
@@ -213,7 +213,7 @@ pre {
 }
 
 
-.sidebarContainer .simtoolbar {
+.sidebar-container .simtoolbar {
     -webkit-transition: opacity 0.2s; /* Safari */
     -moz-transition: opacity 0.2s; /* Mozilla */
     -webkit-transition-timing-function: linear; /* Mozilla */
@@ -243,7 +243,7 @@ pre {
     background-color: transparent !important;
 }
 
-.sidebarContainer .filemenu {
+.sidebar-container .filemenu {
     direction: ltr;
     width: 100%;
     margin: 0;
@@ -673,7 +673,7 @@ div.simframe > iframe {
     z-index: 1000;
 }
 
-.notificationBannerVisible .sidebarContainer,
+.notificationBannerVisible .sidebar-container,
 .notificationBannerVisible #maineditor,
 .notificationBannerVisible #sidedocs {
     top: calc(@mainMenuHeight + @bannerHeight);
@@ -1209,7 +1209,7 @@ Field editors
 @sidebarSecondaryColor: @blue;
 @sidbarActiveTabIconColor: @sidebarSecondaryColor;
 
-.sidebarContainer {
+.sidebar-container {
     border-right: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
 
     .tab-navigation {
@@ -1310,7 +1310,7 @@ p.ui.font.small {
         display:none !important; // hide desktop simulator toggle
     }
 
-    .hideEditorToolbar .sidebarContainer {
+    .hideEditorToolbar .sidebar-container {
         display:none !important;
     }
 
@@ -1493,7 +1493,7 @@ p.ui.font.small {
 }
 
 #root.headless.collapsedEditorTools {
-    .sidebarContainer {
+    .sidebar-container {
         position: absolute;
         width: auto;
         top: auto;
@@ -1502,7 +1502,7 @@ p.ui.font.small {
         min-width: inherit;
         max-width: inherit;
 
-        .simulatorContainer {
+        .simulator-container {
             display: none;
         }
     }
@@ -1513,7 +1513,7 @@ p.ui.font.small {
 }
 
 #root.headless:not(.collapsedEditorTools) {
-    .sidebarContainer {
+    .sidebar-container {
         left: 0;
         z-index: 40;
     }
@@ -1876,7 +1876,7 @@ p.ui.font.small {
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .collapsedEditorTools:not(.headless):not(.tabTutorial) .sidebarContainer {
+    .collapsedEditorTools:not(.headless):not(.tabTutorial) .sidebar-container {
         min-width: 21px;
         width: 21px;
         padding: 0;
@@ -1915,7 +1915,7 @@ p.ui.font.small {
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
 @media only screen and (max-width: @largestSmallMonitor) {
     /* Layout */
-    .sidebarContainer, #downloadArea {
+    .sidebar-container, #downloadArea {
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
     }
@@ -1997,7 +1997,7 @@ p.ui.font.small {
         }
     }
 
-    .sidebarContainer {
+    .sidebar-container {
         min-width: unset;
         max-width: unset;
         width: 0;
@@ -2183,7 +2183,7 @@ p.ui.font.small {
     #maineditor {
         top: @thinMenuHeight;
     }
-    .sidebarContainer {
+    .sidebar-container {
         top: @thinMenuHeight;
     }
 }
@@ -2377,7 +2377,7 @@ button.ui.button.hostmultiplayergame-button {
     display: none;
 }
 
-#root.tabTutorial:not(.fullscreensim):not(.collapsedEditorTools) .simulatorContainer.hidden .simPanel > .multiplayer-presence {
+#root.tabTutorial:not(.fullscreensim):not(.collapsedEditorTools) .simulator-container.hidden .simPanel > .multiplayer-presence {
     display: block;
     position: fixed;
     bottom: 7rem;

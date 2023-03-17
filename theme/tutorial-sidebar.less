@@ -29,7 +29,7 @@
         Tutorial Tab
 *******************************/
 
-.sidebarContainer .tutorial-container-outer.active {
+.sidebar-container .tutorial-container-outer.active {
     background-color: @white;
 }
 
@@ -417,11 +417,11 @@
         Simulator Container
 *******************************/
 
-.simulatorContainer.hidden {
+.simulator-container.hidden {
     display: block !important;
 }
 
-.simulatorContainer .simPanel {
+.simulator-container .simPanel {
     height: 100%;
     padding: 1rem 0.5rem 1rem 1rem;
     overflow-x: hidden;
@@ -431,7 +431,7 @@
 
 // Mini sim is visible when tab is hidden
 #root.tabTutorial {
-    &:not(.fullscreensim) .simulatorContainer.hidden {
+    &:not(.fullscreensim) .simulator-container.hidden {
         height: 0;
         padding: 0;
 
@@ -471,7 +471,7 @@
             }
         }
     }
-    .simulatorContainer:not(.hidden) {
+    .simulator-container:not(.hidden) {
         .simPanel {
             height: calc(100% - @tutorialControlsOffset);
 
@@ -479,7 +479,7 @@
         }
     }
 
-    &.collapsedEditorTools:not(.fullscreensim) .simulatorContainer.hidden .simPanel{
+    &.collapsedEditorTools:not(.fullscreensim) .simulator-container.hidden .simPanel{
         .fullscreen-button, .tutorial.mute-button { display: none !important; }
     }
 
@@ -493,7 +493,7 @@
 *******************************/
 
 .tabTutorial.tutorial-embed {
-    .sidebarContainer, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+    .sidebar-container, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
         top: 0;
     }
     .simView #boardview {
@@ -506,7 +506,7 @@
 *******************************/
 
 #root.headless.tabTutorial {
-    .sidebarContainer {
+    .sidebar-container {
         position: relative;
         display: block !important;
         width: @simulatorWidth;
@@ -525,7 +525,7 @@
 }
 
 #root.headless.tabTutorial.hideMenuBar {
-    .sidebarContainer {
+    .sidebar-container {
         top: 0;
         height: 100%;
     }
@@ -650,13 +650,13 @@
             top: @defaultTutorialHeight;
         }
 
-        .sidebarContainer {
+        .sidebar-container {
             height: @defaultTutorialHeight;
             width: 100%;
         }
     }
 
-    .sidebarContainer {
+    .sidebar-container {
         border-right: 0;
         border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
     }
@@ -687,7 +687,7 @@
             Exit Tutorial
     *******************************/
 
-    .simulatorContainer.hidden .tutorial-exit {
+    .simulator-container.hidden .tutorial-exit {
         // Shift in tutorial tab to make space for step counter
         right: @tutorialTabletStepCounterWidth;
         margin-right: 0;
@@ -799,7 +799,7 @@
     /*******************************
             Simulator Tab
     *******************************/
-    #root.tabTutorial:not(.fullscreensim) .simulatorContainer:not(.hidden) {
+    #root.tabTutorial:not(.fullscreensim) .simulator-container:not(.hidden) {
         .simPanel {
             display: flex;
             position: relative;
@@ -861,14 +861,14 @@
 
     #root.headless.tabTutorial.collapsedEditorTools {
         #maineditor { left: 0; }
-        .sidebarContainer { width: 100%; }
+        .sidebar-container { width: 100%; }
 
         .tutorial-top-bar {
            right: 4rem;
         }
 
-        .sidebarContainer .immersive-reader-button.ui.item,
-        .sidebarContainer .immersive-reader-button.ui.item:focus{
+        .sidebar-container .immersive-reader-button.ui.item,
+        .sidebar-container .immersive-reader-button.ui.item:focus{
             background-image: @immersiveReaderIcon;
         }
         .tutorial-step-counter {
@@ -932,7 +932,7 @@
 /* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
-        .sidebarContainer:not(.topInstructions) {
+        .sidebar-container:not(.topInstructions) {
             bottom: 0;
         }
 
@@ -940,13 +940,13 @@
             display: none;
         }
     }
-    .sidebarContainer:not(.topInstructions) .tutorial-container .tutorial-step-counter {
+    .sidebar-container:not(.topInstructions) .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
             display: none;
         }
     }
 
-    .sidebarContainer:not(.topInstructions) .tutorial-step-label {
+    .sidebar-container:not(.topInstructions) .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
         margin-bottom: 1.5rem;
@@ -955,7 +955,7 @@
     /* Short Deskstop Only */
     @media (max-height: @tallEditorBreakpoint) {
         #root.tabTutorial:not(.fullscreensim) {
-            .simulatorContainer:not(.hidden) {
+            .simulator-container:not(.hidden) {
                 .simPanel {
                     height: calc(100% - @tutorialControlsOffset);
                     min-height: @tutorialSimulatorMinHeight;
@@ -1000,7 +1000,7 @@
 @media only screen and (max-width: @largestTabletScreen) {
     .topInstructionsSettings();
 
-    .sidebarContainer {
+    .sidebar-container {
         top: @mobileMenuHeight;
     }
 
@@ -1021,7 +1021,7 @@
 @media only screen and (min-width: @largestMobileScreen) and (max-height: @tallEditorBreakpoint) {
     #root.tabTutorial,
     #root.headless.tabTutorial {
-        .sidebarContainer {
+        .sidebar-container {
             top: @thinMenuHeight;
         }
     }
@@ -1046,7 +1046,7 @@
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    #root.tabTutorial:not(.fullscreensim) .simulatorContainer:not(.hidden) .simPanel {
+    #root.tabTutorial:not(.fullscreensim) .simulator-container:not(.hidden) .simPanel {
         #simulators {
             width: 16rem;
         }
