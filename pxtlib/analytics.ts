@@ -35,7 +35,7 @@ namespace pxt.analytics {
         pxt.tickEvent = function (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions): void {
             // Log tick to console if "consoleticks" url param is present.
             // We do this simple check first (rather than the full parse) to minimize overhead when it's not present, which is most of the time.
-            if(window && /consoleticks=/.test(window.location.href))
+            if (window && /consoleticks=/.test(window.location.href))
             {
                 consoleLogTick(id, data, opts);
             }
