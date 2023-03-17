@@ -1909,6 +1909,9 @@ p.ui.font.small {
 
     .topInstructions {
         left: @simulatorWidth;
+        min-width: unset;
+        max-width: unset;
+        padding: 0;
     }
 }
 
@@ -1922,6 +1925,8 @@ p.ui.font.small {
 
     .topInstructions {
         left: @simulatorWidthSmall;
+        min-width: unset;
+        max-width: unset;
     }
 
     #boardview.headless-sim {
@@ -1947,14 +1952,6 @@ p.ui.font.small {
 @media only screen and (min-width: @tabletBreakpoint) {
     .ui.phone.hide {
         display: none;
-    }
-}
-
-@media only screen and (min-width: @largestTabletScreen) {
-    .topInstructions {
-        min-width: unset;
-        max-width: unset;
-        padding: 0;
     }
 }
 
