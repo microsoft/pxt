@@ -134,18 +134,18 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
-        const { height: tutorialParentHeight } = this.state;
+        const { height } = this.state;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const showOpenInVscodeButton = parent.isJavaScriptActive();
 
         const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
         const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
-        const tutorialHeightStyle = tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + 3rem)` } : undefined;
+        const editorSidebarHeight = height ? { height: `calc(${height}px + 3rem)` } : undefined;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? tutorialHeightStyle : undefined}>
+            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? editorSidebarHeight : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -174,8 +174,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 </div>
             </div>
             {tutorialOptions &&
-                <div id="tutorialWrapper" className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""} style={tutorialHeightStyle}>
-                    <div className={outerTutorialContainerClassName} style={tutorialHeightStyle}>
+                <div className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""}>
+                    <div id="tutorialWrapper" className={outerTutorialContainerClassName} style={editorSidebarHeight}>
                         <TutorialContainer
                             parent={parent}
                             tutorialId={tutorialOptions.tutorial}
