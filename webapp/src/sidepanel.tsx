@@ -141,12 +141,12 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const showOpenInVscodeButton = parent.isJavaScriptActive();
 
         const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
-        const outerTutorialContainerClassName = `sidebar-container tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
+        const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
         const tutorialHeightStyle = tutorialParentHeight ? { height: `calc(${tutorialParentHeight}px + 3rem)` } : undefined;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="sidebar-container" style={!this.props.tutorialSimSidebar ? tutorialHeightStyle : undefined}>
+            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? tutorialHeightStyle : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />

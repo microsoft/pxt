@@ -29,7 +29,7 @@
         Tutorial Tab
 *******************************/
 
-.sidebar-container .tutorial-container-outer.active {
+.editor-sidebar .tutorial-container-outer.active {
     background-color: @white;
 }
 
@@ -493,7 +493,7 @@
 *******************************/
 
 .tabTutorial.tutorial-embed {
-    .sidebar-container, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+    .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
         top: 0;
     }
     .simView #boardview {
@@ -506,7 +506,7 @@
 *******************************/
 
 #root.headless.tabTutorial {
-    .sidebar-container {
+    .editor-sidebar {
         position: relative;
         display: block !important;
         width: @simulatorWidth;
@@ -525,7 +525,7 @@
 }
 
 #root.headless.tabTutorial.hideMenuBar {
-    .sidebar-container {
+    .editor-sidebar {
         top: 0;
         height: 100%;
     }
@@ -650,13 +650,13 @@
             top: @defaultTutorialHeight;
         }
 
-        .sidebar-container {
+        .editor-sidebar {
             height: @defaultTutorialHeight;
             width: 100%;
         }
     }
 
-    .sidebar-container {
+    .editor-sidebar {
         border-right: 0;
         border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
     }
@@ -861,14 +861,14 @@
 
     #root.headless.tabTutorial.collapsedEditorTools {
         #maineditor { left: 0; }
-        .sidebar-container { width: 100%; }
+        .editor-sidebar { width: 100%; }
 
         .tutorial-top-bar {
            right: 4rem;
         }
 
-        .sidebar-container .immersive-reader-button.ui.item,
-        .sidebar-container .immersive-reader-button.ui.item:focus{
+        .editor-sidebar .immersive-reader-button.ui.item,
+        .editor-sidebar .immersive-reader-button.ui.item:focus{
             background-image: @immersiveReaderIcon;
         }
         .tutorial-step-counter {
@@ -932,7 +932,7 @@
 /* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
-        .sidebar-container:not(.topInstructions) {
+        .editor-sidebar:not(.topInstructions) {
             bottom: 0;
         }
 
@@ -940,13 +940,13 @@
             display: none;
         }
     }
-    .sidebar-container:not(.topInstructions) .tutorial-container .tutorial-step-counter {
+    .editor-sidebar:not(.topInstructions) .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
             display: none;
         }
     }
 
-    .sidebar-container:not(.topInstructions) .tutorial-step-label {
+    .editor-sidebar:not(.topInstructions) .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
         margin-bottom: 1.5rem;
@@ -1000,7 +1000,7 @@
 @media only screen and (max-width: @largestTabletScreen) {
     .topInstructionsSettings();
 
-    .sidebar-container {
+    .editor-sidebar {
         top: @mobileMenuHeight;
     }
 
@@ -1021,7 +1021,7 @@
 @media only screen and (min-width: @largestMobileScreen) and (max-height: @tallEditorBreakpoint) {
     #root.tabTutorial,
     #root.headless.tabTutorial {
-        .sidebar-container {
+        .editor-sidebar {
             top: @thinMenuHeight;
         }
     }
