@@ -22,6 +22,7 @@ interface TutorialContainerProps {
     preferredEditor?: string;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
+    tutorialSimSidebar?: boolean;
 
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
@@ -39,7 +40,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const [ stepErrorAttemptCount, setStepErrorAttemptCount ] = React.useState(0);
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
-    const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
+    const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">(props.tutorialSimSidebar ? "horizontal" : "vertical");
     const [ validationFailures, setValidationFailures ] = React.useState([]);
     const contentRef = React.useRef(undefined);
     const immReaderRef = React.useRef(undefined);
@@ -52,7 +53,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
-            if (pxt.BrowserUtils.isTabletSize()) {
+            if (pxt.BrowserUtils.isTabletSize() || props.tutorialSimSidebar) {
                 setLayout("horizontal");
             } else {
                 setLayout("vertical");
