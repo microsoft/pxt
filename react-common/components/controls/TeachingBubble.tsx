@@ -270,5 +270,5 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 </div>
             </div>
         </div>
-    </FocusTrap>, parentElement || document.body)
+    </FocusTrap>, parentElement || document.getElementById("root") || document.body)
 }
