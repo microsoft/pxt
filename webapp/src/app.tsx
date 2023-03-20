@@ -5554,20 +5554,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
-    pxt.options.debug = /dbg=1/i.test(window.location.href);
-    if (pxt.options.debug)
+
+    const optsQuery = Util.parseQueryString(window.location.href.toLowerCase());
+    if (optsQuery["dbg"] == "1")
         pxt.debug = console.debug;
-    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
+    pxt.options.light = optsQuery["light"] == "1" || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
     if (pxt.options.light) {
         pxsim.U.addClass(document.body, 'light');
     }
-    const wsPortMatch = /wsport=(\d+)/i.exec(window.location.href);
-    if (wsPortMatch) {
-        pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
-        pxt.BrowserUtils.changeHash(window.location.hash.replace(wsPortMatch[0], ""));
+    if (optsQuery["wsport"]) {
+        pxt.options.wsPort = parseInt(optsQuery["wsport"]) || 3233;
+        pxt.BrowserUtils.changeHash(window.location.hash.replace(`wsport=${optsQuery["wsport"]}`, ""));
     } else {
         pxt.options.wsPort = 3233;
     }
+    if (optsQuery["consoleticks"] == "1" || optsQuery["consoleticks"] == "verbose") {
+        pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Verbose;
+    } else if (optsQuery["consoleticks"] == "2" || optsQuery["consoleticks"] == "short") {
+        pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Short;
+    }
+
     pxt.perf.measureStart("setAppTarget");
     pkg.setupAppTarget((window as any).pxtTargetBundle);
 

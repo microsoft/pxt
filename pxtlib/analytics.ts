@@ -10,6 +10,13 @@ namespace pxt.analytics {
     const defaultMeasures: Map<number> = {};
     let enabled = false;
 
+    export enum ConsoleTickOptions {
+        Off,
+        Short,
+        Verbose
+    };
+    export var consoleTicks: ConsoleTickOptions = ConsoleTickOptions.Off;
+
     export function addDefaultProperties(props: Map<string | number>) {
         Object.keys(props).forEach(k => {
             if (typeof props[k] == "string") {
@@ -35,9 +42,11 @@ namespace pxt.analytics {
         pxt.tickEvent = function (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions): void {
             // Log tick to console if "consoleticks" url param is present.
             // We do this simple check first (rather than the full parse) to minimize overhead when it's not present, which is most of the time.
-            if(window && /consoleticks=/.test(window.location.href))
+            if(consoleTicks != ConsoleTickOptions.Off)
             {
-                consoleLogTick(id, data, opts);
+                const prefix = consoleTicks == ConsoleTickOptions.Short ? "" : `${new Date().toLocaleTimeString(undefined, { hour12: false })} - Tick - `;
+                const tickInfo = `${id} ${data ? JSON.stringify(data) : "<no data>"} ${opts ? JSON.stringify(opts) : "<no opts>"}`;
+                console.log(prefix + tickInfo);
             }
 
             if (te) te(id, data, opts);
@@ -85,16 +94,5 @@ namespace pxt.analytics {
                 pxt.aiTrackException(err, 'error', props);
             }
         };
-    }
-
-    function consoleLogTick(id: string, data: Map<string | number>, opts: TelemetryEventOptions) {
-        const query = Util.parseQueryString(window.location.href);
-        const tickInfo = `${id} ${data ? JSON.stringify(data) : "<no data>"} ${opts ? JSON.stringify(opts) : "<no opts>"}`;
-        if (query["consoleticks"] == "1" || query["consoleticks"] == "full") {
-            const timestamp = new Date().toLocaleTimeString(undefined, { hour12: false });
-            console.log(`${timestamp} - Tick - ${tickInfo}`);
-        } else if (query["consoleticks"] == "2" || query["consoleticks"] == "short") {
-            console.log(tickInfo);
-        }
     }
 }
