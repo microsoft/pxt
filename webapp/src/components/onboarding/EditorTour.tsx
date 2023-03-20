@@ -67,5 +67,6 @@ export const EditorTour = (props: EditorTourProps) => {
             stepNumber={currentStep + 1}
             totalSteps={EditorContent.length}
             onClose={onClose}
+            parentElement={document.getElementById("root")}
         />
 };
