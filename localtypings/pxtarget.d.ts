@@ -469,6 +469,7 @@ declare namespace pxt {
         multiplayer?: boolean; // enable multiplayer features
         shareToKiosk?: boolean; // enable sharing to a kiosk
         editorTour?: boolean; // enable the editor tour
+        tutorialSimSidebarLayout?: boolean; // Enable tutorial layout with the sim in the sidebar (desktop only)
     }
 
     interface DownloadDialogTheme {
