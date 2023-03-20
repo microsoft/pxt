@@ -42,7 +42,7 @@ namespace pxt.analytics {
         pxt.tickEvent = function (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions): void {
             // Log tick to console if "consoleticks" url param is present.
             // We do this simple check first (rather than the full parse) to minimize overhead when it's not present, which is most of the time.
-            if(consoleTicks != ConsoleTickOptions.Off)
+            if (consoleTicks != ConsoleTickOptions.Off)
             {
                 const prefix = consoleTicks == ConsoleTickOptions.Short ? "" : `${new Date().toLocaleTimeString(undefined, { hour12: false })} - Tick - `;
                 const tickInfo = `${id} ${data ? JSON.stringify(data) : "<no data>"} ${opts ? JSON.stringify(opts) : "<no opts>"}`;
