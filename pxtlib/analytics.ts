@@ -15,7 +15,7 @@ namespace pxt.analytics {
         Short,
         Verbose
     };
-    export var consoleTicks: ConsoleTickOptions = ConsoleTickOptions.Off;
+    export let consoleTicks: ConsoleTickOptions = ConsoleTickOptions.Off;
 
     export function addDefaultProperties(props: Map<string | number>) {
         Object.keys(props).forEach(k => {
