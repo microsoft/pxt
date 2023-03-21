@@ -168,12 +168,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             const top = cutoutBounds.top - bubbleBounds.height - margin;
             const left = cutoutBounds.left - (bubbleBounds.width - cutoutBounds.width) / 2;
             tryFit.above = true;
-            if (bubbleFits(bubbleBounds, top, left)) {
-                updatePosition(bubble, top, left);
-            } else {
-                reposition();
-                return;
-            }
+            if (!updatedBubblePosition(top, left)) return;
             const arrowTop = top + bubbleBounds.height;
             const arrowLeft = cutoutBounds.left + (cutoutBounds.width - margin) / 2;
             bubbleArrow.style.borderLeft = transparentBorder;
@@ -186,12 +181,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             const top = cutoutBounds.bottom + margin;
             const left = cutoutBounds.left - (bubbleBounds.width - cutoutBounds.width) / 2;
             tryFit.below = true;
-            if (bubbleFits(bubbleBounds, top, left)) {
-                updatePosition(bubble, top, left);
-            } else {
-                reposition();
-                return;
-            }
+            if (!updatedBubblePosition(top, left)) return;
             const arrowTop = top - margin;
             const arrowLeft = cutoutBounds.left + (cutoutBounds.width - margin) / 2;
             bubbleArrow.style.borderLeft = transparentBorder;
@@ -204,12 +194,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             const top = cutoutBounds.top - (bubbleBounds.height - cutoutBounds.height) / 2;
             const left = cutoutBounds.left - bubbleBounds.width - margin;
             tryFit.left = true;
-            if (bubbleFits(bubbleBounds, top, left)) {
-                updatePosition(bubble, top, left);
-            } else {
-                reposition();
-                return;
-            }
+            if (!updatedBubblePosition(top, left)) return;
             const arrowTop = top + (bubbleBounds.height - margin) / 2;
             const arrowLeft = cutoutBounds.left - margin;
             bubbleArrow.style.borderLeft = opaqueBorder;
@@ -222,12 +207,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             const top = cutoutBounds.top - (bubbleBounds.height - cutoutBounds.height) / 2;
             const left = cutoutBounds.right + margin;
             tryFit.right = true;
-            if (bubbleFits(bubbleBounds, top, left)) {
-                updatePosition(bubble, top, left);
-            } else {
-                reposition();
-                return;
-            }
+            if (!updatedBubblePosition(top, left)) return;
             const arrowTop = top + (bubbleBounds.height - margin) / 2;
             const arrowLeft = cutoutBounds.right;
             bubbleArrow.style.borderRight = opaqueBorder;
@@ -239,11 +219,17 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         const positionCenter = () => {
             const top = (cutoutBounds.height - bubbleBounds.height) / 2 + cutoutBounds.top;
             const left = (cutoutBounds.width - bubbleBounds.width) / 2 + cutoutBounds.left;
+            updatedBubblePosition(top, left);
+        }
+
+        const updatedBubblePosition = (top: number, left: number): boolean => {
             if (bubbleFits(bubbleBounds, top, left)) {
                 updatePosition(bubble, top, left);
             } else {
                 reposition();
+                return false;
             }
+            return true;
         }
 
         const reposition = () => {
