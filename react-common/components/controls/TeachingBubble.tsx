@@ -223,8 +223,9 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         }
 
         const updatedBubblePosition = (top: number, left: number): boolean => {
-            if (bubbleFits(bubbleBounds, top, left)) {
-                updatePosition(bubble, top, left);
+            const [adjTop, adjLeft] = bubbleFits(cutoutBounds, bubbleBounds, top, left);
+            if (adjTop && adjLeft) {
+                updatePosition(bubble, adjTop, adjLeft);
             } else {
                 reposition();
                 return false;
@@ -264,12 +265,28 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         }
     }
 
-    const bubbleFits = (bubbleBounds: DOMRect, top: number, left: number): boolean => {
+    const bubbleFits = (cutoutBounds: CutoutBounds, bubbleBounds: DOMRect, top: number, left: number): [number, number] => {
         if (top < margin) top = margin;
         if (left < margin) left = margin;
         const right = left + bubbleBounds.width;
         const bottom = top + bubbleBounds.height;
-        return right < window.innerWidth && bottom < window.innerHeight;
+        if (right < window.innerWidth - margin && bottom < window.innerHeight - margin) return [top, left];
+        if (right > window.innerWidth) {
+            left -= right - window.innerWidth + margin;
+        }
+        if (bottom > window.innerHeight) {
+            top -= bottom - window.innerHeight + margin;
+        }
+        if (collision(cutoutBounds, bubbleBounds, top, left)) return [null, null];
+        return [top, left];
+    }
+
+    const collision = (cutoutBounds: CutoutBounds, bubbleBounds: DOMRect, top: number, left: number): boolean => {
+        const hCheck1 = left < cutoutBounds.left + cutoutBounds.width;
+        const hCheck2 = left + bubbleBounds.width > cutoutBounds.left;
+        const vCheck1 = top < cutoutBounds.top + cutoutBounds.height;
+        const vCheck2 = top + bubbleBounds.height > cutoutBounds.top;
+        return hCheck1 && hCheck2 && vCheck1 && vCheck2;
     }
 
     const positionCenterScreen = (bubble: HTMLElement, bubbleBounds: DOMRect) => {
