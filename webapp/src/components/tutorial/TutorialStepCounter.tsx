@@ -5,6 +5,8 @@ interface TutorialStepCounterProps {
     currentStep: number;
     totalSteps: number;
     title?: string;
+    customNext?: JSX.Element; // TODO thsparks : This feels weird, but alternative (I can think of) is to duplicate a bunch of next/done logic from TutorialContainer, so maybe this is preferable?
+    isHorizontal?: boolean;
     setTutorialStep: (step: number) => void;
 }
 
@@ -65,14 +67,16 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
                     label={stepNum === currentStep ? `${stepNum + 1}` : undefined}
                 />
             })}
-            <Button
-                disabled={currentStep == totalSteps - 1}
-                className="square-button"
-                leftIcon="icon right chevron"
-                onClick={handleNextStep}
-                aria-label={nextButtonLabel}
-                title={nextButtonLabel}
-            />
+            {
+                props.customNext ??
+                <Button
+                    disabled={currentStep == totalSteps - 1}
+                    className="square-button"
+                    leftIcon="icon right chevron"
+                    onClick={handleNextStep}
+                    aria-label={nextButtonLabel}
+                    title={nextButtonLabel} />
+            }
         </div>
     </div>
 }

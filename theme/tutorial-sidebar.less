@@ -257,8 +257,8 @@
 
 .tutorial-hint.ui.button,
 .tutorial-hint .ui.button {
-    height: 3.2rem;
-    width: 3.2rem;
+    height: 3rem;
+    width: 3rem;
     margin: 0;
     border-radius: 50%;
     font-size: @tutorialTitleFontSize;
@@ -639,7 +639,7 @@
         (tablet & sim-sidebar views)
 *************************************/
 
-.topInstructionsSettings {
+.topInstructionsSettings() {
     #root.tabTutorial,
     #root.headless.tabTutorial {
         #maineditor > .full-abs {
@@ -650,6 +650,10 @@
             height: @defaultTutorialHeight;
             width: 100%;
         }
+    }
+
+    .tutorial-step-label {
+        display: none;
     }
 
     .editor-sidebar {
@@ -668,10 +672,6 @@
     .tutorial-content {
         margin: 0;
         padding-bottom: 0;
-    }
-
-    .tutorial-content-bkg {
-        padding: 0 1rem;
     }
 
     .tutorial-replace-code + .tutorial-scroll-gradient,
@@ -705,7 +705,6 @@
     /*******************************
             Step Counter
     *******************************/
-
     .tutorial-step-counter {
         display: flex;
         flex-direction: row;
@@ -716,12 +715,25 @@
         padding-right: 0;
         column-gap: 1rem;
         margin-bottom: .5rem;
+        border-bottom: unset;
+        padding: unset;
+        margin-left: auto;
+
+        .ui.button {
+            margin: 0;
+            padding: 0.75rem;
+        }
     }
 
     .tutorial-step-bubbles {
-        flex: 1;
-        max-width: 20rem;
-        min-width: 13rem;
+        min-width: 30rem;
+    }
+
+    .common-button.square-button {
+        margin: 0;
+        border: unset;
+        color: @tutorialSecondaryColor !important;
+        background: @tutorialPrimaryColor;
     }
 
     /*******************************
@@ -996,6 +1008,10 @@
 @media only screen and (max-width: @largestTabletScreen) {
     .topInstructionsSettings();
 
+    .tutorial-step-bubbles {
+        min-width: 25rem;
+    }
+
     .editor-sidebar {
         top: @mobileMenuHeight;
     }
@@ -1068,6 +1084,14 @@
     }
     .tutorial-title {
         max-width: 100%;
+    }
+
+    .tutorial-step-bubbles {
+        min-width: 20rem;
+
+        .ui.button > .ui.text {
+            display: none;
+        }
     }
 
     /*******************************

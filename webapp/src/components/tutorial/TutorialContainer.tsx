@@ -238,6 +238,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         currentStep={visibleStep}
         totalSteps={steps.length}
         title={name}
+        customNext={isHorizontal ? nextButton : undefined}
         setTutorialStep={handleStepCounterSetStep} />;
     const hasHint = !!hintMarkdown;
 
@@ -246,7 +247,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         {!isHorizontal && stepCounter}
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
             <div className={"tutorial-content-bkg"}>
-                {isHorizontal ? stepCounter : <div className="tutorial-step-label">
+                {!isHorizontal && <div className="tutorial-step-label">
                     {name && <span className="tutorial-step-title">{name}</span>}
                     <span className="tutorial-step-number">{lf("Step {0} of {1}", visibleStep + 1, steps.length)}</span>
                 </div>}
@@ -255,7 +256,8 @@ export function TutorialContainer(props: TutorialContainerProps) {
                 <MarkedContent className="no-select tutorial-step-content" tabIndex={0} markdown={markdown} parent={parent}/>
                 <div className="tutorial-controls">
                     {hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
-                    { nextButton }
+                    {isHorizontal && stepCounter}
+                    {!isHorizontal && nextButton}
                 </div>
             </div>
         </div>
