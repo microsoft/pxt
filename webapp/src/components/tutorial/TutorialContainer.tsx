@@ -238,8 +238,9 @@ export function TutorialContainer(props: TutorialContainerProps) {
         currentStep={visibleStep}
         totalSteps={steps.length}
         title={name}
-        customNext={isHorizontal ? nextButton : undefined}
-        setTutorialStep={handleStepCounterSetStep} />;
+        isHorizontal={isHorizontal}
+        setTutorialStep={handleStepCounterSetStep}
+        onDone={onTutorialComplete} />;
     const hasHint = !!hintMarkdown;
 
 

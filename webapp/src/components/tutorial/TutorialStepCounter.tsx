@@ -5,9 +5,9 @@ interface TutorialStepCounterProps {
     currentStep: number;
     totalSteps: number;
     title?: string;
-    customNext?: JSX.Element; // TODO thsparks : This feels weird, but alternative (I can think of) is to duplicate a bunch of next/done logic from TutorialContainer, so maybe this is preferable?
     isHorizontal?: boolean;
     setTutorialStep: (step: number) => void;
+    onDone: () => void;
 }
 
 export function TutorialStepCounter(props: TutorialStepCounterProps) {
@@ -39,7 +39,27 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
 
     const stepButtonLabelText = (step: number) => lf("Go to step {0} of {1}", step + 1, totalSteps);
     const backButtonLabel = lf("Go to the previous step of the tutorial.");
-    const nextButtonLabel = lf("Go to the next step of the tutorial.");
+
+    const lastStep = currentStep == totalSteps - 1;
+    const nextButtonTitle = lastStep ? lf("Finish the tutorial.") : lf("Go to the next step of the tutorial.");
+    const nextButtonAction = lastStep ? props.onDone : handleNextStep;
+
+    const nextButton = props.isHorizontal ? (
+        <Button
+            className="ui button counter-next-button"
+            leftIcon={`icon ${lastStep ? "check" : "arrow circle right"}`}
+            onClick={nextButtonAction}
+            aria-label={nextButtonTitle}
+            title={nextButtonTitle}
+            label={lf("Next")} />
+    ) : (
+        <Button
+            className="square-button"
+            leftIcon={`icon ${lastStep ? "check" : "right chevron"}`}
+            onClick={nextButtonAction}
+            aria-label={nextButtonTitle}
+            title={nextButtonTitle} />
+    );
 
     return <div className="tutorial-step-counter">
         <div className="tutorial-step-label">
@@ -50,7 +70,7 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
             <Button
                 disabled={currentStep == 0}
                 className="square-button"
-                leftIcon="icon left chevron"
+                leftIcon={`icon ${props.isHorizontal ? "arrow circle left" : "left chevron"}`}
                 onClick={handlePreviousStep}
                 aria-label={backButtonLabel}
                 title={backButtonLabel}
@@ -67,16 +87,7 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
                     label={stepNum === currentStep ? `${stepNum + 1}` : undefined}
                 />
             })}
-            {
-                props.customNext ??
-                <Button
-                    disabled={currentStep == totalSteps - 1}
-                    className="square-button"
-                    leftIcon="icon right chevron"
-                    onClick={handleNextStep}
-                    aria-label={nextButtonLabel}
-                    title={nextButtonLabel} />
-            }
+            {nextButton}
         </div>
     </div>
 }
