@@ -140,6 +140,20 @@
 }
 
 /*******************************
+        Header Bar
+*******************************/
+
+.tutorial-header-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .ui.item {
+        padding: 0.2rem !important;
+    }
+}
+
+/*******************************
          Step Counter
 *******************************/
 
@@ -1104,6 +1118,10 @@
         .counter-next-button .common-button-label {
             display: none;
         }
+    }
+
+    .tutorial-header-label .tutorial-header-step-label {
+        display: none !important;
     }
 
     /*******************************
