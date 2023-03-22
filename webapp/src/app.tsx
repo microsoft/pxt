@@ -4665,9 +4665,9 @@ export class ProjectView
     setEditorOffset() {
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
-                const sidebarEl = document?.getElementById("editorSidebar");
-                if (sidebarEl && pxt.BrowserUtils.isTabletSize()) {
-                    this.setState({ editorOffset: sidebarEl.offsetHeight + "px" });
+                const tutorialEl = document?.getElementById("tutorialWrapper");
+                if (tutorialEl && (pxt.BrowserUtils.isTabletSize() || pxt.appTarget.appTheme.tutorialSimSidebarLayout)) {
+                    this.setState({ editorOffset: tutorialEl.offsetHeight + "px" });
                 } else {
                     this.setState({ editorOffset: undefined });
                 }
@@ -4888,6 +4888,7 @@ export class ProjectView
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
+        const tutorialSimSidebar = pxt.appTarget.appTheme.tutorialSimSidebarLayout && !pxt.BrowserUtils.isTabletSize();
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
@@ -4997,6 +4998,7 @@ export class ProjectView
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
                     tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
+                    tutorialSimSidebar={tutorialSimSidebar}
                     onTutorialStepChange={this.setTutorialStep}
                     onTutorialComplete={this.completeTutorialAsync}
                     setEditorOffset={this.setEditorOffset} />
@@ -5552,20 +5554,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
-    pxt.options.debug = /dbg=1/i.test(window.location.href);
-    if (pxt.options.debug)
+
+    const optsQuery = Util.parseQueryString(window.location.href.toLowerCase());
+    if (optsQuery["dbg"] == "1")
         pxt.debug = console.debug;
-    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
+    pxt.options.light = optsQuery["light"] == "1" || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
     if (pxt.options.light) {
         pxsim.U.addClass(document.body, 'light');
     }
-    const wsPortMatch = /wsport=(\d+)/i.exec(window.location.href);
-    if (wsPortMatch) {
-        pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
-        pxt.BrowserUtils.changeHash(window.location.hash.replace(wsPortMatch[0], ""));
+    if (optsQuery["wsport"]) {
+        pxt.options.wsPort = parseInt(optsQuery["wsport"]) || 3233;
+        pxt.BrowserUtils.changeHash(window.location.hash.replace(`wsport=${optsQuery["wsport"]}`, ""));
     } else {
         pxt.options.wsPort = 3233;
     }
+    if (optsQuery["consoleticks"] == "1" || optsQuery["consoleticks"] == "verbose") {
+        pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Verbose;
+    } else if (optsQuery["consoleticks"] == "2" || optsQuery["consoleticks"] == "short") {
+        pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Short;
+    }
+
     pxt.perf.measureStart("setAppTarget");
     pkg.setupAppTarget((window as any).pxtTargetBundle);
 
@@ -5811,13 +5819,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // Check to see if we should show the mini simulator (<= tablet size)
-            if (!theEditor.isTutorial() || pxt.BrowserUtils.useOldTutorialLayout()) {
+            if (!theEditor.isTutorial() || pxt.appTarget.appTheme.tutorialSimSidebarLayout || pxt.BrowserUtils.useOldTutorialLayout()) {
                 if (pxt.BrowserUtils.isTabletSize()) {
                     theEditor.showMiniSim(true);
                 } else {
                     theEditor.showMiniSim(false);
                 }
-            } else if (theEditor.isTutorial()) {
+            }
+
+            if (theEditor.isTutorial() && !pxt.BrowserUtils.useOldTutorialLayout()) {
                 // For the tabbed tutorial, set the editor offset
                 theEditor.setEditorOffset();
             }
