@@ -160,8 +160,8 @@ namespace pxt.auth {
                 callbackState,
                 callbackPathname: window.location.pathname,
                 idp,
+                persistent
             };
-            await pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_LOGIN_STATE_KEY, loginState);
 
             // Redirect to the login endpoint.
             const loginUrl = pxt.Util.stringifyQueryString('/api/auth/login', {
@@ -169,10 +169,12 @@ namespace pxt.auth {
                 provider: idp,
                 persistent,
                 redirect_uri: `${window.location.origin}${window.location.pathname}?authcallback=1&state=${loginState.key}`
-            })
+            });
             const apiResult = await this.apiAsync<LoginResponse>(loginUrl);
 
             if (apiResult.success) {
+                loginState.authCodeVerifier = apiResult.resp.authCodeVerifier;
+                await pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_LOGIN_STATE_KEY, loginState);
                 pxt.tickEvent('auth.login.start', { 'provider': idp });
                 window.location.href = apiResult.resp.loginUrl;
             } else {
@@ -186,16 +188,26 @@ namespace pxt.auth {
         public async logoutAsync(continuationHash?: string) {
             if (!hasIdentity()) { return; }
 
+            this.clearState();
+
+            return await AuthClient.staticLogoutAsync(continuationHash);
+        }
+
+        /**
+         * Sign out the user and clear the auth token cookie.
+         */
+        public static async staticLogoutAsync(continuationHash?: string) {
+            if (!hasIdentity()) { return; }
+
             pxt.tickEvent('auth.logout');
 
             // backend will clear the cookie token and pass back the provider logout endpoint.
-            await this.apiAsync('/api/auth/logout');
+            await AuthClient.staticApiAsync('/api/auth/logout');
 
             // Clear csrf token so we can no longer make authenticated requests.
             await pxt.storage.shared.delAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY);
 
             // Update state and UI to reflect logged out state.
-            this.clearState();
             const hash = continuationHash ? continuationHash.startsWith('#') ? continuationHash : `#${continuationHash}` : "";
 
             // Redirect to home screen, or skillmap home screen
@@ -526,11 +538,15 @@ namespace pxt.auth {
                 .then(() => this.onStateCleared());
         }
 
-        /*protected*/ async apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
+        /*protected*/ async apiAsync<T = any>(url: string, data?: any, method?: string, authToken?: string): Promise<ApiResult<T>> {
+            return await AuthClient.staticApiAsync(url, data, method, authToken);
+        }
+
+        static async staticApiAsync<T = any>(url: string, data?: any, method?: string, authToken?: string): Promise<ApiResult<T>> {
             const headers: pxt.Map<string> = {};
-            const csrfToken = await pxt.storage.shared.getAsync<string>(AUTH_CONTAINER, CSRF_TOKEN_KEY);
-            if (csrfToken) {
-                headers["authorization"] = `mkcd ${csrfToken}`;
+            authToken = authToken || (await pxt.storage.shared.getAsync<string>(AUTH_CONTAINER, CSRF_TOKEN_KEY));
+            if (authToken) {
+                headers["authorization"] = `mkcd ${authToken}`;
             }
             headers[X_PXT_TARGET] = pxt.appTarget?.id;
 
@@ -552,7 +568,7 @@ namespace pxt.auth {
             }).catch(async (e) => {
                 if (!/logout/.test(url) && e.statusCode == 401) {
                     // 401/Unauthorized. logout now.
-                    await this.logoutAsync();
+                    await AuthClient.staticLogoutAsync();
                 }
                 return {
                     statusCode: e.statusCode,
@@ -583,10 +599,13 @@ namespace pxt.auth {
         callbackState: CallbackState;
         callbackPathname: string;
         idp: pxt.IdentityProviderId;
+        authCodeVerifier?: string;
+        persistent: boolean;
     };
 
     type LoginResponse = {
         loginUrl: string;
+        authCodeVerifier: string;
     };
 
     export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
@@ -631,6 +650,15 @@ namespace pxt.auth {
             if (!authToken) {
                 pxt.debug("Missing authToken in auth callback.")
                 break;
+            }
+
+            // If this auth request was assigned an auth code, claim it now. This will set
+            // the required auth cookie in this domain (for cross-domain authentication).
+            if (loginState.authCodeVerifier) {
+                const otacCheckUrl = pxt.Util.stringifyQueryString('/api/otac/check', {
+                    persistent: loginState.persistent,
+                });
+                await AuthClient.staticApiAsync(otacCheckUrl, null, null, loginState.authCodeVerifier);
             }
 
             // Store csrf token in local storage. It is ok to do this even when
