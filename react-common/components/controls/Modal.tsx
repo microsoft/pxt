@@ -127,5 +127,5 @@ export const Modal = (props: ModalProps) => {
                 </div>
             }
         </div>
-    </FocusTrap>, parentElement || document.body)
+    </FocusTrap>, parentElement || document.getElementById("root") || document.body)
 }
