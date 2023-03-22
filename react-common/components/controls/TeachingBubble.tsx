@@ -13,6 +13,15 @@ export enum Location {
     Center
 }
 
+export interface CutoutBounds {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+    width: number;
+    height: number;
+}
+
 export interface TargetContent {
     title: string;
     description: string;
@@ -50,6 +59,12 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     } = props;
 
     const margin = 10;
+    const tryFit = {
+        above: false,
+        below: false,
+        left: false,
+        right: false
+    }
 
     useEffect(() => {
         positionBubbleAndCutout();
@@ -67,18 +82,18 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         // To Do: check that targetContent.targetQuery is a valid selector
         const targetElement = document.querySelector(targetContent.targetQuery) as HTMLElement;
         if (!targetElement) {
-            // display bubble in center of screen
-            updatePosition(bubble, (window.innerHeight - bubbleBounds.height) / 2, (window.innerWidth - bubbleBounds.width) / 2);
+            positionCenterScreen(bubble, bubbleBounds);
             clearCutout();
             return;
         }
         const targetBounds = targetElement.getBoundingClientRect();
-        setPosition(targetBounds, bubble, bubbleBounds, bubbleArrow);
-        setCutout(targetBounds, targetElement);
+        const cutoutBounds = getCutoutBounds(targetBounds, targetElement);
+        setCutout(cutoutBounds);
+        setPosition(cutoutBounds, bubble, bubbleBounds, bubbleArrow);
+
     }
 
-    const setCutout = (targetBounds: DOMRect, targetElement: HTMLElement) => {
-        const cutout = document.querySelector(".teaching-bubble-cutout") as HTMLElement;
+    const getCutoutBounds = (targetBounds: DOMRect, targetElement: HTMLElement): CutoutBounds => {
         let cutoutTop = targetBounds.top;
         let cutoutLeft = targetBounds.left;
         let cutoutWidth = targetBounds.width;
@@ -104,10 +119,25 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 cutoutWidth += margin - paddingRight;
             }
         }
-        cutout.style.top = `${cutoutTop}px`;
-        cutout.style.left = `${cutoutLeft}px`;
-        cutout.style.width = `${cutoutWidth}px`;
-        cutout.style.height = `${cutoutHeight}px`;
+        const cutoutRight = cutoutLeft + cutoutWidth;
+        const cutoutBottom = cutoutTop + cutoutHeight;
+        const cutoutBounds: CutoutBounds = {
+            top: cutoutTop,
+            bottom: cutoutBottom,
+            left: cutoutLeft,
+            right: cutoutRight,
+            width: cutoutWidth,
+            height: cutoutHeight
+        }
+        return cutoutBounds;
+    }
+
+    const setCutout = (cutoutBounds: CutoutBounds) => {
+        const cutout = document.querySelector(".teaching-bubble-cutout") as HTMLElement;
+        cutout.style.top = `${cutoutBounds.top}px`;
+        cutout.style.left = `${cutoutBounds.left}px`;
+        cutout.style.width = `${cutoutBounds.width}px`;
+        cutout.style.height = `${cutoutBounds.height}px`;
 
         if (activeTarget) {
             cutout.style.pointerEvents = "none";
@@ -122,58 +152,99 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         cutout.style.height = "0px";
     }
 
-    const setPosition = (targetBounds: DOMRect, bubble: HTMLElement, bubbleBounds: DOMRect, bubbleArrow: HTMLElement) => {
+    const resetTryFit = () => {
+        tryFit.above = false;
+        tryFit.below = false;
+        tryFit.left = false;
+        tryFit.right = false;
+    }
+
+    const setPosition = (cutoutBounds: CutoutBounds, bubble: HTMLElement, bubbleBounds: DOMRect, bubbleArrow: HTMLElement) => {
+        resetTryFit();
         const transparentBorder = `${margin}px solid transparent`;
         const opaqueBorder = `${margin}px solid`;
 
         const positionAbove = () => {
-            const top = targetBounds.top - bubbleBounds.height - margin;
-            const left = targetBounds.left - (bubbleBounds.width - targetBounds.width) / 2;
+            const top = cutoutBounds.top - bubbleBounds.height - margin;
+            const left = cutoutBounds.left - (bubbleBounds.width - cutoutBounds.width) / 2;
+            tryFit.above = true;
+            if (!updatedBubblePosition(top, left)) return;
             const arrowTop = top + bubbleBounds.height;
-            const arrowLeft = targetBounds.left + (targetBounds.width - margin) / 2;
+            const arrowLeft = cutoutBounds.left + (cutoutBounds.width - margin) / 2;
             bubbleArrow.style.borderLeft = transparentBorder;
             bubbleArrow.style.borderRight = transparentBorder;
             bubbleArrow.style.borderTop = opaqueBorder;
-            checkAndUpdatePosition(bubble, top, left, bubbleArrow, arrowTop, arrowLeft);
+            updatePosition(bubbleArrow, arrowTop, arrowLeft);
         }
 
         const positionBelow = () => {
-            const top = targetBounds.bottom + margin;
-            const left = targetBounds.left - (bubbleBounds.width - targetBounds.width) / 2;
+            const top = cutoutBounds.bottom + margin;
+            const left = cutoutBounds.left - (bubbleBounds.width - cutoutBounds.width) / 2;
+            tryFit.below = true;
+            if (!updatedBubblePosition(top, left)) return;
             const arrowTop = top - margin;
-            const arrowLeft = targetBounds.left + (targetBounds.width - margin) / 2;
+            const arrowLeft = cutoutBounds.left + (cutoutBounds.width - margin) / 2;
             bubbleArrow.style.borderLeft = transparentBorder;
             bubbleArrow.style.borderRight = transparentBorder;
             bubbleArrow.style.borderBottom = opaqueBorder;
-            checkAndUpdatePosition(bubble, top, left, bubbleArrow, arrowTop, arrowLeft);
+            updatePosition(bubbleArrow, arrowTop, arrowLeft);
         }
 
         const positionLeft = () => {
-            const top = targetBounds.top - (bubbleBounds.height - targetBounds.height) / 2;
-            const left = targetBounds.left - margin;
+            const top = cutoutBounds.top - (bubbleBounds.height - cutoutBounds.height) / 2;
+            const left = cutoutBounds.left - bubbleBounds.width - margin;
+            tryFit.left = true;
+            if (!updatedBubblePosition(top, left)) return;
             const arrowTop = top + (bubbleBounds.height - margin) / 2;
-            const arrowLeft = targetBounds.left - margin;
+            const arrowLeft = cutoutBounds.left - margin;
             bubbleArrow.style.borderLeft = opaqueBorder;
             bubbleArrow.style.borderTop = transparentBorder;
             bubbleArrow.style.borderBottom = transparentBorder;
-            checkAndUpdatePosition(bubble, top, left, bubbleArrow, arrowTop, arrowLeft);
+            updatePosition(bubbleArrow, arrowTop, arrowLeft);
         }
 
         const positionRight = () => {
-            const top = targetBounds.top - (bubbleBounds.height - targetBounds.height) / 2;
-            const left = targetBounds.right + margin;
+            const top = cutoutBounds.top - (bubbleBounds.height - cutoutBounds.height) / 2;
+            const left = cutoutBounds.right + margin;
+            tryFit.right = true;
+            if (!updatedBubblePosition(top, left)) return;
             const arrowTop = top + (bubbleBounds.height - margin) / 2;
-            const arrowLeft = targetBounds.right;
+            const arrowLeft = cutoutBounds.right;
             bubbleArrow.style.borderRight = opaqueBorder;
             bubbleArrow.style.borderTop = transparentBorder;
             bubbleArrow.style.borderBottom = transparentBorder;
-            checkAndUpdatePosition(bubble, top, left, bubbleArrow, arrowTop, arrowLeft);
+            updatePosition(bubbleArrow, arrowTop, arrowLeft);
         }
 
         const positionCenter = () => {
-            const top = (targetBounds.height - bubbleBounds.height) / 2 + targetBounds.top;
-            const left = (targetBounds.width - bubbleBounds.width) / 2 + targetBounds.left;
-            checkAndUpdatePosition(bubble, top, left);
+            const top = (cutoutBounds.height - bubbleBounds.height) / 2 + cutoutBounds.top;
+            const left = (cutoutBounds.width - bubbleBounds.width) / 2 + cutoutBounds.left;
+            updatedBubblePosition(top, left);
+        }
+
+        const updatedBubblePosition = (top: number, left: number): boolean => {
+            const [adjTop, adjLeft] = bubbleFits(cutoutBounds, bubbleBounds, top, left);
+            if (adjTop && adjLeft) {
+                updatePosition(bubble, adjTop, adjLeft);
+            } else {
+                reposition();
+                return false;
+            }
+            return true;
+        }
+
+        const reposition = () => {
+            if (!tryFit.above) {
+                positionAbove();
+            } else if (!tryFit.below) {
+                positionBelow();
+            } else if (!tryFit.left) {
+                positionLeft();
+            } else if (!tryFit.right) {
+                positionRight();
+            } else {
+                positionCenterScreen(bubble, bubbleBounds);
+            }
         }
 
         switch (targetContent.location) {
@@ -194,15 +265,37 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         }
     }
 
-    const checkAndUpdatePosition = (bubble: HTMLElement, top: number, left: number, bubbleArrow?: HTMLElement, arrowTop?: number, arrowLeft?: number) => {
-        if (top < 10) top = 10;
-        if (left < 10) left = 10;
-        updatePosition(bubble, top, left);
-        if (!bubbleArrow || !arrowTop || !arrowLeft) return;
-        updatePosition(bubbleArrow, arrowTop, arrowLeft);
+    const bubbleFits = (cutoutBounds: CutoutBounds, bubbleBounds: DOMRect, top: number, left: number): [number, number] => {
+        if (top < margin) top = margin;
+        if (left < margin) left = margin;
+        const right = left + bubbleBounds.width;
+        const bottom = top + bubbleBounds.height;
+        if (right < window.innerWidth - margin && bottom < window.innerHeight - margin) return [top, left];
+        if (right > window.innerWidth) {
+            left -= right - window.innerWidth + margin;
+        }
+        if (bottom > window.innerHeight) {
+            top -= bottom - window.innerHeight + margin;
+        }
+        if (collision(cutoutBounds, bubbleBounds, top, left)) return [null, null];
+        return [top, left];
+    }
+
+    const collision = (cutoutBounds: CutoutBounds, bubbleBounds: DOMRect, top: number, left: number): boolean => {
+        const hCheck1 = left < cutoutBounds.left + cutoutBounds.width;
+        const hCheck2 = left + bubbleBounds.width > cutoutBounds.left;
+        const vCheck1 = top < cutoutBounds.top + cutoutBounds.height;
+        const vCheck2 = top + bubbleBounds.height > cutoutBounds.top;
+        return hCheck1 && hCheck2 && vCheck1 && vCheck2;
+    }
+
+    const positionCenterScreen = (bubble: HTMLElement, bubbleBounds: DOMRect) => {
+        updatePosition(bubble, (window.innerHeight - bubbleBounds.height) / 2, (window.innerWidth - bubbleBounds.width) / 2);
     }
 
     const updatePosition = (element: HTMLElement, top: number, left: number) => {
+        if (top < margin) top = margin;
+        if (left < margin) left = margin;
         element.style.top = top + "px";
         element.style.left = left + "px";
     }
@@ -213,7 +306,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     const closeLabel = lf("Close");
     const backLabel = lf("Back");
     const nextLabel = lf("Next");
-    const finishLabel = hasSteps ? lf("Finish") : lf("Got it")
+    const finishLabel = hasSteps ? lf("Finish") : lf("Got it");
 
     const classes = classList(
         "teaching-bubble-container",
@@ -270,5 +363,5 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 </div>
             </div>
         </div>
-    </FocusTrap>, parentElement || document.body)
+    </FocusTrap>, parentElement || document.getElementById("root") || document.body)
 }
