@@ -51,7 +51,7 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
             onClick={nextButtonAction}
             aria-label={nextButtonTitle}
             title={nextButtonTitle}
-            label={lf("Next")} />
+            label={lastStep ? lf("Done") : lf("Next")} />
     ) : (
         <Button
             className="square-button"
