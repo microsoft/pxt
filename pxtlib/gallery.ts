@@ -12,6 +12,7 @@ namespace pxt.gallery {
         filesOverride: pxt.Map<string>;
         dependencies: pxt.Map<string>;
         features?: string[];
+        simTheme?: Partial<pxt.PackageConfig>;
     }
 
     export function parsePackagesFromMarkdown(md: string): pxt.Map<string> {
@@ -63,6 +64,15 @@ namespace pxt.gallery {
 
         return {};
     }
+    export function parseSimThemeJSON(md: string): Partial<pxt.PackageConfig> {
+        const pm = /```simtheme\s+((.|\s)+?)\s*```/i.exec(md);
+
+        if (pm) {
+            return pxt.tutorial.parseSimThemeJson(pm[1]);
+        }
+
+        return {};
+    }
 
     export function parseExampleMarkdown(name: string, md: string): GalleryProject {
         if (!md) return undefined;
@@ -75,6 +85,7 @@ namespace pxt.gallery {
         const source = m[2];
         const features = parseFeaturesFromMarkdown(md);
         const jres = parseJResFromMarkdown(md);
+        const simTheme = parseSimThemeJSON(md);
 
         const prj: GalleryProject = {
             name,
@@ -85,7 +96,8 @@ namespace pxt.gallery {
             dependencies,
             features,
             snippetType,
-            source
+            source,
+            simTheme
         };
 
         prj.filesOverride = {
@@ -97,6 +109,7 @@ namespace pxt.gallery {
             prj.filesOverride[pxt.TILEMAP_JRES] = jres.jres;
             prj.filesOverride[pxt.TILEMAP_CODE] = jres.ts;
         }
+
         return prj;
     }
 

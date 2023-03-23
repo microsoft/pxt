@@ -2826,6 +2826,15 @@ export class ProjectView
         if (options.preferredEditor)
             cfg.preferredEditor = options.preferredEditor;
 
+        if (options.simTheme || options.tutorial?.simTheme) {
+            const theming = options.simTheme || options.tutorial?.simTheme;
+            if (theming.theme) {
+                cfg.theme = theming.theme;
+            }
+            if (theming.palette) {
+                cfg.palette = theming.palette;
+            }
+        }
         if (options.languageRestriction) {
             let filesToDrop = /\.(blocks)$/;
             if (options.languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly) {
