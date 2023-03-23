@@ -44,7 +44,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     constructor(props: SidepanelProps) {
         super(props);
 
-        if(!props.tutorialSimSidebar) {
+        if(props.tutorialOptions?.tutorial && !props.tutorialSimSidebar) {
             this.props.showMiniSim(true);
         }
     }
