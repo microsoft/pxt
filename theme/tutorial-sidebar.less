@@ -29,12 +29,12 @@
         Tutorial Tab
 *******************************/
 
-.editor-sidebar .tutorial-container-outer.active {
+#simulator .editor-sidebar .tutorial-container-outer.active {
     background-color: @white;
 }
 
 .tutorial-container-outer {
-    background-color: @white;
+    background-color: @white !important;
 }
 
 .tutorial-content-bkg {
@@ -140,6 +140,20 @@
 }
 
 /*******************************
+        Header Bar
+*******************************/
+
+.tutorial-header-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .ui.item {
+        padding: 0.2rem !important;
+    }
+}
+
+/*******************************
          Step Counter
 *******************************/
 
@@ -229,7 +243,6 @@
     justify-content: space-between;
     flex-wrap: wrap;
     margin-bottom: 1rem;
-    padding-top: 1rem;
 
     .ui.button {
         margin: 0 1rem;
@@ -257,8 +270,8 @@
 
 .tutorial-hint.ui.button,
 .tutorial-hint .ui.button {
-    height: 3.2rem;
-    width: 3.2rem;
+    height: 3rem;
+    width: 3rem;
     margin: 0;
     border-radius: 50%;
     font-size: @tutorialTitleFontSize;
@@ -489,7 +502,7 @@
 *******************************/
 
 .tabTutorial.tutorial-embed {
-    .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+    #simulator .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
         top: 0;
     }
     .simView #boardview {
@@ -502,7 +515,7 @@
 *******************************/
 
 #root.headless.tabTutorial {
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         position: relative;
         display: block !important;
         width: @simulatorWidth;
@@ -521,7 +534,7 @@
 }
 
 #root.headless.tabTutorial.hideMenuBar {
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         top: 0;
         height: 100%;
     }
@@ -639,25 +652,29 @@
         (tablet & sim-sidebar views)
 *************************************/
 
-.topInstructionsSettings {
+.topInstructionsSettings() {
     #root.tabTutorial,
     #root.headless.tabTutorial {
         #maineditor > .full-abs {
             top: @defaultTutorialHeight;
         }
 
-        .editor-sidebar {
+        #simulator .editor-sidebar {
             height: @defaultTutorialHeight;
             width: 100%;
         }
     }
 
-    .editor-sidebar {
+    .tutorial-step-label {
+        display: none;
+    }
+
+    #simulator .editor-sidebar {
         border-right: 0;
         border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
     }
 
-    .tutorial-container-outer {
+    #simulator .tutorial-container-outer {
         padding-top: 0;
     }
 
@@ -668,10 +685,6 @@
     .tutorial-content {
         margin: 0;
         padding-bottom: 0;
-    }
-
-    .tutorial-content-bkg {
-        padding: 0 1rem;
     }
 
     .tutorial-replace-code + .tutorial-scroll-gradient,
@@ -705,23 +718,37 @@
     /*******************************
             Step Counter
     *******************************/
-
     .tutorial-step-counter {
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
-        padding-left: 0;
-        padding-right: 0;
+        padding: 1rem 0 0 0;
         column-gap: 1rem;
         margin-bottom: .5rem;
+        border-bottom: unset;
+        margin-left: auto;
+
+        .ui.button {
+            margin: 0;
+            padding: 0.65rem;
+
+            .right {
+                margin-left: 0;
+            }
+        }
     }
 
     .tutorial-step-bubbles {
-        flex: 1;
-        max-width: 20rem;
-        min-width: 13rem;
+        min-width: 30rem;
+    }
+
+    .common-button.square-button {
+        margin: 0;
+        border: unset;
+        color: @white !important;
+        background: @tutorialPrimaryColor;
     }
 
     /*******************************
@@ -740,7 +767,7 @@
     }
 
     .tutorial-hint .tutorial-callout-button.ui.button {
-        color: @tutorialSecondaryColor;
+        color: @white;
         background: @tutorialPrimaryColor;
 
         &.disabled {
@@ -857,14 +884,14 @@
 
     #root.headless.tabTutorial.collapsedEditorTools {
         #maineditor { left: 0; }
-        .editor-sidebar { width: 100%; }
+        #simulator .editor-sidebar { width: 100%; }
 
         .tutorial-top-bar {
            right: 4rem;
         }
 
-        .editor-sidebar .immersive-reader-button.ui.item,
-        .editor-sidebar .immersive-reader-button.ui.item:focus{
+        #simulator .editor-sidebar .immersive-reader-button.ui.item,
+        #simulator .editor-sidebar .immersive-reader-button.ui.item:focus{
             background-image: @immersiveReaderIcon;
         }
         .tutorial-step-counter {
@@ -928,7 +955,7 @@
 /* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
-        .editor-sidebar:not(.topInstructions) {
+        #simulator .editor-sidebar:not(.topInstructions) {
             bottom: 0;
         }
 
@@ -936,18 +963,24 @@
             display: none;
         }
     }
-    .editor-sidebar:not(.topInstructions) .tutorial-container .tutorial-step-counter {
+    #simulator .editor-sidebar:not(.topInstructions) .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
             display: none;
         }
     }
 
-    .editor-sidebar:not(.topInstructions) .tutorial-step-label {
+    #simulator .editor-sidebar:not(.topInstructions) .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
         margin-bottom: 1.5rem;
     }
 
+    .tutorial-container-outer:not(.topInstructions) {
+        .tutorial-controls {
+            padding-top: 1rem;
+        }
+    }
+    
     /* Short Deskstop Only */
     @media (max-height: @tallEditorBreakpoint) {
         #root.tabTutorial:not(.fullscreensim) {
@@ -996,16 +1029,16 @@
 @media only screen and (max-width: @largestTabletScreen) {
     .topInstructionsSettings();
 
-    .editor-sidebar {
+    .tutorial-step-bubbles {
+        min-width: 25rem;
+    }
+
+    #simulator .editor-sidebar {
         top: @mobileMenuHeight;
     }
 
     .tutorial-hint .tutorial-callout-button.ui.button {
         margin: 1rem;
-    }
-
-    .tutorial-controls {
-        padding-top: 0;
     }
 
     .tutorial-container > .ui.button i.icon {
@@ -1017,7 +1050,7 @@
 @media only screen and (min-width: @largestMobileScreen) and (max-height: @tallEditorBreakpoint) {
     #root.tabTutorial,
     #root.headless.tabTutorial {
-        .editor-sidebar {
+        #simulator .editor-sidebar {
             top: @thinMenuHeight;
         }
     }
@@ -1068,6 +1101,27 @@
     }
     .tutorial-title {
         max-width: 100%;
+    }
+
+    .tutorial-step-bubbles {
+        min-width: 20rem;
+
+        .ui.button {
+            padding: 0.5rem;
+
+            .right {
+                padding: 0;
+                margin: 0;
+            }
+        }
+
+        .counter-next-button .common-button-label {
+            display: none;
+        }
+    }
+
+    .tutorial-header-label .tutorial-header-step-label {
+        display: none !important;
     }
 
     /*******************************

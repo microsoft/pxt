@@ -55,18 +55,18 @@ pre {
     position: relative;
 }
 
-.editor-sidebar,
+#simulator .editor-sidebar,
 #maineditor,
 #sidedocs {
   position: absolute;
   bottom: 0rem;
 }
 
-.editor-sidebar, #maineditor, #sidedocs {
+#simulator .editor-sidebar, #maineditor, #sidedocs {
     top: @mainMenuHeight;
 }
 
-.hideMenuBar:not(.headless) .editor-sidebar,
+.hideMenuBar:not(.headless) #simulator .editor-sidebar,
     .hideMenuBar #maineditor,
     .hideMenuBar #sidedocs {
     top: 0 !important;
@@ -159,7 +159,7 @@ pre {
     border: unset;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, .editor-sidebar {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simulator .editor-sidebar {
     bottom: @editorToolsCollapsedHeight;
 }
 
@@ -169,7 +169,7 @@ pre {
 .hideEditorToolbar #serialEditor,
 .hideEditorToolbar #githubEditor,
 .hideEditorToolbar #assetEditor,
-.hideEditorToolbar .editor-sidebar {
+.hideEditorToolbar #simulator .editor-sidebar {
     bottom: 0rem !important;
 }
 
@@ -187,14 +187,15 @@ pre {
 #simulator {
     height: 100%;
 }
-.editor-sidebar, #downloadArea {
+#simulator .editor-sidebar, #downloadArea {
     min-width: @simulatorWidth;
     max-width: @simulatorWidth;
     left: 0;
 }
 
-.editor-sidebar {
-    overflow: hidden;
+#simulator .editor-sidebar {
+    overflow-x: hidden;
+    overflow-y: auto;
     margin-top: 0;
     margin-bottom: 0;
     right: 0;
@@ -213,7 +214,7 @@ pre {
 }
 
 
-.editor-sidebar .simtoolbar {
+#simulator .editor-sidebar .simtoolbar {
     -webkit-transition: opacity 0.2s; /* Safari */
     -moz-transition: opacity 0.2s; /* Mozilla */
     -webkit-transition-timing-function: linear; /* Mozilla */
@@ -243,9 +244,9 @@ pre {
     background-color: transparent !important;
 }
 
-.editor-sidebar .filemenu {
+#simulator .editor-sidebar .filemenu {
     direction: ltr;
-    width: 100%;
+    width: 100% !important;
     margin: 0;
     margin-top: 1rem;
 }
@@ -673,7 +674,7 @@ div.simframe > iframe {
     z-index: 1000;
 }
 
-.notificationBannerVisible .editor-sidebar,
+.notificationBannerVisible #simulator .editor-sidebar,
 .notificationBannerVisible #maineditor,
 .notificationBannerVisible #sidedocs {
     top: calc(@mainMenuHeight + @bannerHeight);
@@ -1209,7 +1210,7 @@ Field editors
 @sidebarSecondaryColor: @blue;
 @sidbarActiveTabIconColor: @sidebarSecondaryColor;
 
-.editor-sidebar {
+#simulator .editor-sidebar {
     border-right: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
 
     .tab-navigation {
@@ -1310,7 +1311,7 @@ p.ui.font.small {
         display:none !important; // hide desktop simulator toggle
     }
 
-    .hideEditorToolbar .editor-sidebar {
+    .hideEditorToolbar #simulator .editor-sidebar {
         display:none !important;
     }
 
@@ -1415,6 +1416,9 @@ p.ui.font.small {
         display: none !important;
         z-index: -10 !important;
     }
+    #tutorialWrapper {
+        display: none;
+    }
     .sandboxfooter {
         z-index: @sandboxFooterZIndex;
         bottom: 1rem;
@@ -1493,7 +1497,7 @@ p.ui.font.small {
 }
 
 #root.headless.collapsedEditorTools {
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         position: absolute;
         width: auto;
         top: auto;
@@ -1513,7 +1517,7 @@ p.ui.font.small {
 }
 
 #root.headless:not(.collapsedEditorTools) {
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         left: 0;
         z-index: 40;
     }
@@ -1876,7 +1880,7 @@ p.ui.font.small {
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .collapsedEditorTools:not(.headless):not(.tabTutorial) .editor-sidebar {
+    .collapsedEditorTools:not(.headless):not(.tabTutorial) #simulator .editor-sidebar {
         min-width: 21px;
         width: 21px;
         padding: 0;
@@ -1907,7 +1911,7 @@ p.ui.font.small {
         position: relative;
     }
 
-    .topInstructions {
+    #simulator .topInstructions {
         left: @simulatorWidth;
         min-width: unset;
         max-width: unset;
@@ -1918,12 +1922,12 @@ p.ui.font.small {
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
 @media only screen and (max-width: @largestSmallMonitor) {
     /* Layout */
-    .editor-sidebar, #downloadArea {
+    #simulator .editor-sidebar, #downloadArea {
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
     }
 
-    .topInstructions {
+    #simulator .topInstructions {
         left: @simulatorWidthSmall;
         min-width: unset;
         max-width: unset;
@@ -1994,7 +1998,7 @@ p.ui.font.small {
         }
     }
 
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         min-width: unset;
         max-width: unset;
         width: 0;
@@ -2180,7 +2184,7 @@ p.ui.font.small {
     #maineditor {
         top: @thinMenuHeight;
     }
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         top: @thinMenuHeight;
     }
 }
