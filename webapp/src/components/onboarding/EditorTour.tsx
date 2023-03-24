@@ -57,14 +57,14 @@ export const EditorTour = (props: EditorTourProps) => {
 
     useEffect(() => {
         stepStartTime.current = Date.now();
-    },[currentStep]);
+    }, [currentStep]);
 
     const getTourDuration = () => {
-       return ((Date.now() - tourStartTime.current)/1000).toFixed(1) + "s"
+        return ((Date.now() - tourStartTime.current) / 1000).toFixed(1) + "s";
     }
 
     const getStepDuration = () => {
-        return ((Date.now() - stepStartTime.current)/1000).toFixed(1) + "s"
+        return ((Date.now() - stepStartTime.current) / 1000).toFixed(1) + "s";
     }
 
     const data = () => ({
@@ -96,12 +96,12 @@ export const EditorTour = (props: EditorTourProps) => {
     }
 
     return <TeachingBubble id="teachingBubble"
-            targetContent={EditorContent[currentStep]}
-            onNext={onNext}
-            onBack={onBack}
-            stepNumber={currentStep + 1}
-            totalSteps={EditorContent.length}
-            onClose={onExit}
-            onFinish={onFinish}
-        />
+        targetContent={EditorContent[currentStep]}
+        onNext={onNext}
+        onBack={onBack}
+        stepNumber={currentStep + 1}
+        totalSteps={EditorContent.length}
+        onClose={onExit}
+        onFinish={onFinish}
+    />
 };
