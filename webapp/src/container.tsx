@@ -42,7 +42,7 @@ function openDocs(parent: pxt.editor.IProjectView, path: string) {
 }
 
 function startTour(parent: pxt.editor.IProjectView) {
-    pxt.tickEvent(`tour`);
+    pxt.tickEvent(`tour.start`, { origin: "help-menu" });
     parent.showOnboarding();
 }
 

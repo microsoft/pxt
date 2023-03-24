@@ -38,6 +38,7 @@ export interface TeachingBubbleProps extends ContainerProps {
     activeTarget?: boolean; // if true, the target is clickable
     onNext: () => void;
     onBack: () => void;
+    onFinish: () => void;
 }
 
 export const TeachingBubble = (props: TeachingBubbleProps) => {
@@ -52,6 +53,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         onClose,
         onNext,
         onBack,
+        onFinish,
         stepNumber,
         totalSteps,
         parentElement,
@@ -354,7 +356,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                         />}
                         {!hasNext && <Button
                             className="primary-button"
-                            onClick={onClose}
+                            onClick={onFinish}
                             title={finishLabel}
                             ariaLabel={finishLabel}
                             label={finishLabel}
