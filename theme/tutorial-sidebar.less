@@ -29,12 +29,12 @@
         Tutorial Tab
 *******************************/
 
-.editor-sidebar .tutorial-container-outer.active {
+#simulator .editor-sidebar .tutorial-container-outer.active {
     background-color: @white;
 }
 
 .tutorial-container-outer {
-    background-color: @white;
+    background-color: @white !important;
 }
 
 .tutorial-content-bkg {
@@ -502,7 +502,7 @@
 *******************************/
 
 .tabTutorial.tutorial-embed {
-    .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+    #simulator .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
         top: 0;
     }
     .simView #boardview {
@@ -515,7 +515,7 @@
 *******************************/
 
 #root.headless.tabTutorial {
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         position: relative;
         display: block !important;
         width: @simulatorWidth;
@@ -534,7 +534,7 @@
 }
 
 #root.headless.tabTutorial.hideMenuBar {
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         top: 0;
         height: 100%;
     }
@@ -659,7 +659,7 @@
             top: @defaultTutorialHeight;
         }
 
-        .editor-sidebar {
+        #simulator .editor-sidebar {
             height: @defaultTutorialHeight;
             width: 100%;
         }
@@ -669,12 +669,12 @@
         display: none;
     }
 
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         border-right: 0;
         border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
     }
 
-    .tutorial-container-outer {
+    #simulator .tutorial-container-outer {
         padding-top: 0;
     }
 
@@ -884,14 +884,14 @@
 
     #root.headless.tabTutorial.collapsedEditorTools {
         #maineditor { left: 0; }
-        .editor-sidebar { width: 100%; }
+        #simulator .editor-sidebar { width: 100%; }
 
         .tutorial-top-bar {
            right: 4rem;
         }
 
-        .editor-sidebar .immersive-reader-button.ui.item,
-        .editor-sidebar .immersive-reader-button.ui.item:focus{
+        #simulator .editor-sidebar .immersive-reader-button.ui.item,
+        #simulator .editor-sidebar .immersive-reader-button.ui.item:focus{
             background-image: @immersiveReaderIcon;
         }
         .tutorial-step-counter {
@@ -955,7 +955,7 @@
 /* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
-        .editor-sidebar:not(.topInstructions) {
+        #simulator .editor-sidebar:not(.topInstructions) {
             bottom: 0;
         }
 
@@ -963,13 +963,13 @@
             display: none;
         }
     }
-    .editor-sidebar:not(.topInstructions) .tutorial-container .tutorial-step-counter {
+    #simulator .editor-sidebar:not(.topInstructions) .tutorial-container .tutorial-step-counter {
         .tutorial-step-label {
             display: none;
         }
     }
 
-    .editor-sidebar:not(.topInstructions) .tutorial-step-label {
+    #simulator .editor-sidebar:not(.topInstructions) .tutorial-step-label {
         font-size: 1rem;
         justify-content: space-between;
         margin-bottom: 1.5rem;
@@ -1033,7 +1033,7 @@
         min-width: 25rem;
     }
 
-    .editor-sidebar {
+    #simulator .editor-sidebar {
         top: @mobileMenuHeight;
     }
 
@@ -1050,7 +1050,7 @@
 @media only screen and (min-width: @largestMobileScreen) and (max-height: @tallEditorBreakpoint) {
     #root.tabTutorial,
     #root.headless.tabTutorial {
-        .editor-sidebar {
+        #simulator .editor-sidebar {
             top: @thinMenuHeight;
         }
     }
