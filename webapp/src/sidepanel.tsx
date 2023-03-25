@@ -44,7 +44,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     constructor(props: SidepanelProps) {
         super(props);
 
-        if(!props.tutorialSimSidebar) {
+        if(props.tutorialOptions?.tutorial && !props.tutorialSimSidebar) {
             this.props.showMiniSim(true);
         }
     }
@@ -141,7 +141,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
         const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
-        const editorSidebarHeight = height ? { height: `calc(${height}px + 3rem)` } : undefined;
+        const editorSidebarHeight = height ? { height: `calc(${height}px + 0.5rem)` } : undefined;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}

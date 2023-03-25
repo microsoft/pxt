@@ -36,6 +36,7 @@ interface OpenAssetEditorRequest extends BaseAssetEditorRequest {
 interface CreateAssetEditorRequest extends BaseAssetEditorRequest {
     type: "create";
     assetType: pxt.AssetType;
+    displayName?: string;
 }
 
 interface SaveAssetEditorRequest extends BaseAssetEditorRequest {
@@ -110,7 +111,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             case "create":
                 this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
-                const asset = this.getEmptyAsset(request.assetType);
+                const asset = this.getEmptyAsset(request.assetType, request.displayName);
 
                 this.setState({
                     editing: asset,
@@ -439,10 +440,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         return undefined;
     }
 
-    protected getEmptyAsset(type: pxt.AssetType): pxt.Asset {
+    protected getEmptyAsset(type: pxt.AssetType, displayName?: string): pxt.Asset {
         const project = pxt.react.getTilemapProject();
 
-        const defaultName = pxt.getDefaultAssetDisplayName(type);
+        const defaultName = displayName || pxt.getDefaultAssetDisplayName(type);
         let newName = defaultName;
         let index = 0;
 
