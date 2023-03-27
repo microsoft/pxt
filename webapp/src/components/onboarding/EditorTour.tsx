@@ -38,9 +38,9 @@ const Download: TargetContent = {
 };
 
 const EditorContent: TargetContent[] = [
-    Simulator,
     Toolbox,
     Workspace,
+    Simulator,
     Share,
     Download,
 ];
