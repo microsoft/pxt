@@ -67,37 +67,30 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
-        if (
-            (this.state.height || state.height) &&
-            this.state.height != state.height
-        )
-            this.props.setEditorOffset();
+        if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
     }
 
     protected tryShowSimulator = () => {
-        const isTabTutorial =
-            this.props.tutorialOptions?.tutorial &&
-            !pxt.BrowserUtils.useOldTutorialLayout();
+        const isTabTutorial = this.props.tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const includeSimulator =
-            (!isTabTutorial || this.props.tutorialSimSidebar) && hasSimulator;
+        const includeSimulator = (!isTabTutorial || this.props.tutorialSimSidebar) && hasSimulator;
         if (includeSimulator) {
             this.showSimulator();
         }
-    };
+    }
 
     protected showSimulator = () => {
         this.props.showMiniSim(false);
         simulator.driver.focus();
-    };
+    }
 
     protected handleSimSerialClick = () => {
         this.props.openSerial(true);
-    };
+    }
 
     protected handleDeviceSerialClick = () => {
         this.props.openSerial(false);
-    };
+    }
 
     protected handleSimOverlayClick = () => {
         const { tutorialOptions, handleFullscreenButtonClick } = this.props;
@@ -106,7 +99,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         } else {
             this.tryShowSimulator();
         }
-    };
+    }
 
     protected handleSimPanelRef = (c: HTMLDivElement) => {
         this.simPanelRef = c;
@@ -115,222 +108,91 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 const scrollVisible = c.scrollHeight > c.clientHeight;
                 if (scrollVisible)
                     this.simPanelRef?.classList.remove("invisibleScrollbar");
-                else this.simPanelRef?.classList.add("invisibleScrollbar");
-            });
+                else
+                    this.simPanelRef?.classList.add("invisibleScrollbar");
+            })
             observer.observe(c);
         }
-    };
+    }
 
     protected setComponentHeight = (height?: number) => {
         if (height != this.state.height) this.setState({ height: height });
-    };
+    }
 
     onHostMultiplayerGameClick = (evt: any) => {
         evt.preventDefault();
         pxt.tickEvent("sidepanel.hostmultiplayergame");
         this.props.parent.showShareDialog(undefined, "multiplayer");
-    };
+    }
 
     onOpenInVSCodeClick = (evt: any) => {
         evt.preventDefault();
         pxt.tickEvent("sidepanel.openinvscode");
         this.props.parent.showShareDialog(undefined, "vscode");
-    };
+    }
 
     renderCore() {
-        const {
-            parent,
-            inHome,
-            showKeymap,
-            showSerialButtons,
-            showFileList,
-            showFullscreenButton,
-            showHostMultiplayerGameButton,
-            collapseEditorTools,
-            simSerialActive,
-            deviceSerialActive,
-            tutorialOptions,
-            handleHardwareDebugClick,
-            onTutorialStepChange,
-            onTutorialComplete,
-        } = this.props;
+        const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
+            collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
+            handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
         const { height } = this.state;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const showOpenInVscodeButton = parent.isJavaScriptActive();
 
-        const simContainerClassName = `simulator-container ${
-            this.props.tutorialSimSidebar ? "" : " hidden"
-        }`;
-        const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${
-            this.props.tutorialSimSidebar ? " topInstructions" : ""
-        }`;
-        const editorSidebarHeight = height
-            ? { height: `calc(${height}px + 0.5rem)` }
-            : undefined;
+        const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
+        const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
+        const editorSidebarHeight = height ? { height: `calc(${height}px + 0.5rem)` } : undefined;
 
-        return (
-            <div id="simulator" className="simulator">
-                {!hasSimulator && (
-                    <div
-                        id="boardview"
-                        className="headless-sim"
-                        role="region"
-                        aria-label={lf("Simulator")}
-                        tabIndex={-1}
-                    />
-                )}
-                <div
-                    id="editorSidebar"
-                    className="editor-sidebar"
-                    style={
-                        !this.props.tutorialSimSidebar
-                            ? editorSidebarHeight
-                            : undefined
-                    }
-                >
-                    <div className={simContainerClassName}>
-                        <div
-                            className={`ui items simPanel ${
-                                showHostMultiplayerGameButton
-                                    ? "multiplayer-preview"
-                                    : ""
-                            }`}
-                            ref={this.handleSimPanelRef}
-                        >
-                            <div
-                                id="boardview"
-                                className="ui vertical editorFloat"
-                                role="region"
-                                aria-label={lf("Simulator")}
-                                tabIndex={inHome ? -1 : 0}
-                            />
-                            {showHostMultiplayerGameButton && (
-                                <div className="ui item grid centered portrait multiplayer-presence">
-                                    <SimulatorPresenceBar />
-                                </div>
-                            )}
-                            <simtoolbar.SimulatorToolbar
-                                parent={parent}
-                                collapsed={collapseEditorTools}
-                                simSerialActive={simSerialActive}
-                                devSerialActive={deviceSerialActive}
-                                showSimulatorSidebar={this.tryShowSimulator}
-                            />
-                            {showKeymap && <keymap.Keymap parent={parent} />}
-                            <div className="ui item portrait hide hidefullscreen">
-                                {pxt.options.debug && (
-                                    <Button
-                                        key="hwdebugbtn"
-                                        className="teal"
-                                        icon="xicon chip"
-                                        text={"Dev Debug"}
-                                        onClick={handleHardwareDebugClick}
-                                    />
-                                )}
-                            </div>
-                            <div className="ui item grid centered portrait hide hidefullscreen">
-                                {showOpenInVscodeButton && (
-                                    <Button
-                                        className={
-                                            "teal hostmultiplayergame-button"
-                                        }
-                                        icon={"icon share"}
-                                        text={lf("Open in VS Code")}
-                                        ariaLabel={lf(
-                                            "Open in Visual Studio Code for Web"
-                                        )}
-                                        onClick={this.onOpenInVSCodeClick}
-                                    />
-                                )}
-                            </div>
-                            <div className="ui item grid centered portrait hide hidefullscreen">
-                                {showHostMultiplayerGameButton && (
-                                    <Button
-                                        className={
-                                            "teal hostmultiplayergame-button"
-                                        }
-                                        icon={"xicon multiplayer"}
-                                        text={lf("Host multiplayer game")}
-                                        ariaLabel={lf("Host multiplayer game")}
-                                        onClick={
-                                            this.onHostMultiplayerGameClick
-                                        }
-                                    />
-                                )}
-                            </div>
-                            {showSerialButtons && (
-                                <div
-                                    id="serialPreview"
-                                    className="ui editorFloat portrait hide hidefullscreen"
-                                >
-                                    <serialindicator.SerialIndicator
-                                        ref="simIndicator"
-                                        isSim={true}
-                                        onClick={this.handleSimSerialClick}
-                                        parent={parent}
-                                    />
-                                    <serialindicator.SerialIndicator
-                                        ref="devIndicator"
-                                        isSim={false}
-                                        onClick={this.handleDeviceSerialClick}
-                                        parent={parent}
-                                    />
-                                </div>
-                            )}
-
-                            {showFileList && (
-                                <filelist.FileList parent={parent} />
-                            )}
-                            {showFullscreenButton && (
-                                <div
-                                    id="miniSimOverlay"
-                                    role="button"
-                                    title={lf("Open in fullscreen")}
-                                    onClick={this.handleSimOverlayClick}
-                                />
-                            )}
+        return <div id="simulator" className="simulator">
+            {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
+            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? editorSidebarHeight : undefined}>
+                <div className={simContainerClassName}>
+                    <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
+                        <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
+                        {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
+                            <SimulatorPresenceBar />
+                        </div>}
+                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
+                        {showKeymap && <keymap.Keymap parent={parent} />}
+                        <div className="ui item portrait hide hidefullscreen">
+                            {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
                         </div>
+                        <div className="ui item grid centered portrait hide hidefullscreen">
+                            {showOpenInVscodeButton && <Button className={"teal hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
+                        </div>
+                        <div className="ui item grid centered portrait hide hidefullscreen">
+                            {showHostMultiplayerGameButton && <Button className={"teal hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
+                        </div>
+                        {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
+                            <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
+                            <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
+                        </div>}
+
+                        {showFileList && <filelist.FileList parent={parent} />}
+                        {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                     </div>
                 </div>
-                {tutorialOptions && (
-                    <div
-                        className={
-                            this.props.tutorialSimSidebar
-                                ? "topInstructionsWrapper"
-                                : ""
-                        }
-                    >
-                        <div
-                            id="tutorialWrapper"
-                            className={outerTutorialContainerClassName}
-                            style={editorSidebarHeight}
-                        >
-                            <TutorialContainer
-                                parent={parent}
-                                tutorialId={tutorialOptions.tutorial}
-                                name={tutorialOptions.tutorialName}
-                                steps={tutorialOptions.tutorialStepInfo}
-                                currentStep={tutorialOptions.tutorialStep}
-                                tutorialOptions={tutorialOptions}
-                                hideIteration={
-                                    tutorialOptions.metadata?.hideIteration
-                                }
-                                hasTemplate={!!tutorialOptions.templateCode}
-                                preferredEditor={
-                                    tutorialOptions.metadata?.preferredEditor
-                                }
-                                tutorialSimSidebar={
-                                    this.props.tutorialSimSidebar
-                                }
-                                onTutorialStepChange={onTutorialStepChange}
-                                onTutorialComplete={onTutorialComplete}
-                                setParentHeight={this.setComponentHeight}
-                            />
-                        </div>
-                    </div>
-                )}
             </div>
-        );
+            {tutorialOptions &&
+                <div className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""}>
+                    <div id="tutorialWrapper" className={outerTutorialContainerClassName} style={editorSidebarHeight}>
+                        <TutorialContainer
+                            parent={parent}
+                            tutorialId={tutorialOptions.tutorial}
+                            name={tutorialOptions.tutorialName}
+                            steps={tutorialOptions.tutorialStepInfo}
+                            currentStep={tutorialOptions.tutorialStep}
+                            tutorialOptions={tutorialOptions}
+                            hideIteration={tutorialOptions.metadata?.hideIteration}
+                            hasTemplate={!!tutorialOptions.templateCode}
+                            preferredEditor={tutorialOptions.metadata?.preferredEditor}
+                            tutorialSimSidebar={this.props.tutorialSimSidebar}
+                            onTutorialStepChange={onTutorialStepChange}
+                            onTutorialComplete={onTutorialComplete}
+                            setParentHeight={this.setComponentHeight} />
+                    </div>
+                </div>}
+        </div>
     }
 }
