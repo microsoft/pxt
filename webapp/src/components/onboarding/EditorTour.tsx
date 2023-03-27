@@ -20,6 +20,7 @@ const Workspace: TargetContent = {
     title: lf("Workspace"),
     description: lf("The workspace is where you will build your micro:bit program by dragging blocks from the toolbox and snapping them together."),
     targetQuery: "#blocksEditor", // includes the toolbox
+    sansQuery: ".blocklyToolboxDiv",
     location: Location.Center,
 };
 

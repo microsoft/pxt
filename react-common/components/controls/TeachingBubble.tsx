@@ -27,6 +27,7 @@ export interface TargetContent {
     description: string;
     targetQuery: string;
     location: Location;
+    sansQuery?: string; // Use this to exclude an element from the cutout
 }
 
 export interface TeachingBubbleProps extends ContainerProps {
@@ -100,6 +101,12 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         let cutoutLeft = targetBounds.left;
         let cutoutWidth = targetBounds.width;
         let cutoutHeight = targetBounds.height;
+        if (targetContent.sansQuery) { // TO DO - take care of cases when sansElement is not to the left of targetElement
+            const sansElement = document.querySelector(targetContent.sansQuery) as HTMLElement;
+            const sansBounds = sansElement.getBoundingClientRect();
+            cutoutLeft = targetBounds.left + sansBounds.width;
+            cutoutWidth = targetBounds.width - sansBounds.width;
+        }
         // make cutout bigger if no padding and not centered
         if (targetContent.location !== Location.Center) {
             const paddingTop = parseFloat(window.getComputedStyle(targetElement).paddingTop);
@@ -137,9 +144,9 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     const setCutout = (cutoutBounds: CutoutBounds) => {
         const cutout = document.querySelector(".teaching-bubble-cutout") as HTMLElement;
         cutout.style.top = `${cutoutBounds.top}px`;
+        cutout.style.height = `${cutoutBounds.height}px`;
         cutout.style.left = `${cutoutBounds.left}px`;
         cutout.style.width = `${cutoutBounds.width}px`;
-        cutout.style.height = `${cutoutBounds.height}px`;
 
         if (activeTarget) {
             cutout.style.pointerEvents = "none";
