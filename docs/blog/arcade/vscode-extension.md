@@ -21,7 +21,7 @@ Here's a look at a game project opened in the MakeCode Arcade Extension:
 
 Check out the brief video tour:
 
-https://youtu.be/R-s-ro8qTUs
+https://youtu.be/EpHsJfztiPU
 
 We are shipping this as a "Preview" because we know there are some improvements we want to make, including an online version with [vscode.dev](https://insiders.vscode.dev/makecode), support for non-named assets, debugging and a bunch of other fixes. To get started, see this brief [setup page](https://arcade.makecode.com/vscode).
 
