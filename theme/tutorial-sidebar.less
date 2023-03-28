@@ -669,6 +669,13 @@
         display: none;
     }
 
+    .tutorial-hint.ui.button,
+    .tutorial-hint .ui.button {
+        height: 2.5rem;
+        width: 2.5rem;
+        font-size: 1.1em;
+    }
+
     #simulator .editor-sidebar {
         border-right: 0;
         border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
@@ -724,9 +731,8 @@
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
-        padding: 1rem 0 0 0;
+        padding: 0 0;
         column-gap: 1rem;
-        margin-bottom: .5rem;
         border-bottom: unset;
         margin-left: auto;
 
@@ -764,6 +770,7 @@
         align-items: center;
         margin: 0;
         margin-top: 0.5rem;
+        padding: 1rem 0 0 0;
 
         > .ui.button {
             width: unset;
