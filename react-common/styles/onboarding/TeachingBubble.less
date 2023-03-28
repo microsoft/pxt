@@ -9,8 +9,10 @@
 
 .teaching-bubble-cutout,
 .teaching-bubble,
-.teaching-bubble-arrow {
-    transition: all 0.75s ease 0s;
+.teaching-bubble-arrow,
+.teaching-bubble-arrow-outline {
+    transition-property: top, left;
+    transition-duration: 0.75s;
 }
 
 .teaching-bubble-cutout {
@@ -26,7 +28,7 @@
     min-width: 18.75rem;
     background: @blue;
     color: @white;
-    box-shadow: 0 0rem 0.5rem;
+    box-shadow: 0 0 0 0.1rem;
     border-radius: 0.5rem;
     padding: 1rem 1rem 0.5rem;
     z-index: @modalDimmerZIndex;
@@ -38,6 +40,14 @@
     height: 0;
     z-index: @modalDimmerZIndex + 1;
     color: @blue;
+}
+
+.teaching-bubble-arrow-outline {
+    position: fixed;
+    width: 0;
+    height: 0;
+    z-index: @modalDimmerZIndex;
+    color: @white;
 }
 
 .teaching-bubble-content {

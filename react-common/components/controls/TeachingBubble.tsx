@@ -62,6 +62,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     } = props;
 
     const margin = 10;
+    const outlineOffset = 2.5;
     const tryFit = {
         above: false,
         below: false,
@@ -81,6 +82,8 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         const bubble = document.getElementById(id);
         const bubbleArrow = document.querySelector(".teaching-bubble-arrow") as HTMLElement;
         bubbleArrow.style.border = "none";
+        const bubbleArrowOutline = document.querySelector(".teaching-bubble-arrow-outline") as HTMLElement;
+        bubbleArrowOutline.style.border = "none";
         const bubbleBounds = bubble.getBoundingClientRect();
         // To Do: check that targetContent.targetQuery is a valid selector
         const targetElement = document.querySelector(targetContent.targetQuery) as HTMLElement;
@@ -92,7 +95,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         const targetBounds = targetElement.getBoundingClientRect();
         const cutoutBounds = getCutoutBounds(targetBounds, targetElement);
         setCutout(cutoutBounds);
-        setPosition(cutoutBounds, bubble, bubbleBounds, bubbleArrow);
+        setPosition(cutoutBounds, bubble, bubbleBounds, bubbleArrow, bubbleArrowOutline);
 
     }
 
@@ -168,10 +171,12 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         tryFit.right = false;
     }
 
-    const setPosition = (cutoutBounds: CutoutBounds, bubble: HTMLElement, bubbleBounds: DOMRect, bubbleArrow: HTMLElement) => {
+    const setPosition = (cutoutBounds: CutoutBounds, bubble: HTMLElement, bubbleBounds: DOMRect, bubbleArrow: HTMLElement, bubbleArrowOutline: HTMLElement) => {
         resetTryFit();
         const transparentBorder = `${margin}px solid transparent`;
         const opaqueBorder = `${margin}px solid`;
+        const transparentOutline = `${margin + outlineOffset}px solid transparent`;
+        const opaqueOutline = `${margin + outlineOffset}px solid`;
 
         const positionAbove = () => {
             const top = cutoutBounds.top - bubbleBounds.height - margin;
@@ -184,6 +189,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             bubbleArrow.style.borderRight = transparentBorder;
             bubbleArrow.style.borderTop = opaqueBorder;
             updatePosition(bubbleArrow, arrowTop, arrowLeft);
+            bubbleArrowOutline.style.borderLeft = transparentOutline;
+            bubbleArrowOutline.style.borderRight = transparentOutline;
+            bubbleArrowOutline.style.borderTop = opaqueOutline;
+            updatePosition(bubbleArrowOutline, arrowTop, arrowLeft - outlineOffset);
         }
 
         const positionBelow = () => {
@@ -197,6 +206,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             bubbleArrow.style.borderRight = transparentBorder;
             bubbleArrow.style.borderBottom = opaqueBorder;
             updatePosition(bubbleArrow, arrowTop, arrowLeft);
+            bubbleArrowOutline.style.borderLeft = transparentOutline;
+            bubbleArrowOutline.style.borderRight = transparentOutline;
+            bubbleArrowOutline.style.borderBottom = opaqueOutline;
+            updatePosition(bubbleArrowOutline, arrowTop - outlineOffset, arrowLeft - outlineOffset);
         }
 
         const positionLeft = () => {
@@ -210,6 +223,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             bubbleArrow.style.borderTop = transparentBorder;
             bubbleArrow.style.borderBottom = transparentBorder;
             updatePosition(bubbleArrow, arrowTop, arrowLeft);
+            bubbleArrowOutline.style.borderLeft = opaqueOutline;
+            bubbleArrowOutline.style.borderTop = transparentOutline;
+            bubbleArrowOutline.style.borderBottom = transparentOutline;
+            updatePosition(bubbleArrowOutline, arrowTop - outlineOffset, arrowLeft);
         }
 
         const positionRight = () => {
@@ -223,6 +240,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             bubbleArrow.style.borderTop = transparentBorder;
             bubbleArrow.style.borderBottom = transparentBorder;
             updatePosition(bubbleArrow, arrowTop, arrowLeft);
+            bubbleArrowOutline.style.borderRight = opaqueOutline;
+            bubbleArrowOutline.style.borderTop = transparentOutline;
+            bubbleArrowOutline.style.borderBottom = transparentOutline;
+            updatePosition(bubbleArrowOutline, arrowTop - outlineOffset, arrowLeft - outlineOffset);
         }
 
         const positionCenter = () => {
@@ -325,6 +346,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
         <div className="teaching-bubble-cutout" />
         <div className="teaching-bubble-arrow" />
+        <div className="teaching-bubble-arrow-outline" />
         <div id={id}
             className="teaching-bubble"
             role={role || "dialog"}
