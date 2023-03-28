@@ -1,7 +1,7 @@
 namespace pxt.cloud {
     export type DevBackendType = "default" | "prod" | "staging" | "localhost";
 
-    const DEV_BACKEND_PROD = "https://www.makecode.com";
+    const DEV_BACKEND_PROD = "https://makecode.com";
     const DEV_BACKEND_STAGING = "https://staging.pxt.io";
     const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
 
