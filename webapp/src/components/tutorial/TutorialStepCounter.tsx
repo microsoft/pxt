@@ -56,7 +56,7 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
         <Button
             disabled={currentStep == 0}
             className="square-button"
-            leftIcon="left chevron"
+            leftIcon="icon left chevron"
             onClick={handlePreviousStep}
             aria-label={backButtonLabel}
             title={backButtonLabel} />
