@@ -44,7 +44,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     constructor(props: SidepanelProps) {
         super(props);
 
-        if(props.tutorialOptions?.tutorial && !props.tutorialSimSidebar) {
+        if (props.tutorialOptions?.tutorial && !props.tutorialSimSidebar) {
             this.props.showMiniSim(true);
         }
     }
@@ -53,13 +53,15 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         // This is necessary because we are not properly mounting and
         // unmounting the component as we enter/exit the editor. We
         // instead manually reset the state as we transition.
-        if ((!this.props.tutorialOptions && props.tutorialOptions)
-            || (this.props.inHome && !props.inHome && props.tutorialOptions)
-            || (this.props.tutorialOptions?.tutorial && props.tutorialOptions?.tutorial
-                && this.props.tutorialOptions.tutorial !== props.tutorialOptions.tutorial)) {
+        if (!props.tutorialSimSidebar
+            && ((!this.props.tutorialOptions && props.tutorialOptions)
+                    || (this.props.inHome && !props.inHome && props.tutorialOptions)
+                    || (this.props.tutorialOptions?.tutorial && props.tutorialOptions?.tutorial && this.props.tutorialOptions.tutorial !== props.tutorialOptions.tutorial))) {
             this.props.showMiniSim(true);
-        } else if (!this.props.inHome && props.inHome
-            || (this.props.tutorialOptions && !props.tutorialOptions)) {
+        } else if (
+            (!this.props.inHome && props.inHome) ||
+            (this.props.tutorialOptions && !props.tutorialOptions)
+        ) {
             this.showSimulator();
         }
     }
@@ -67,7 +69,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
         if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
     }
-
 
     protected tryShowSimulator = () => {
         const isTabTutorial = this.props.tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
