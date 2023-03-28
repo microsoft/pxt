@@ -65,7 +65,7 @@ namespace pxt.gallery {
         return {};
     }
     export function parseSimThemeJSON(md: string): Partial<pxt.PackageConfig> {
-        const pm = /```simtheme\s+((.|\s)+?)\s*```/i.exec(md);
+        const pm = /```simtheme\s+([\s\S]*?)```/i.exec(md);
 
         if (pm) {
             return pxt.tutorial.parseSimThemeJson(pm[1]);
