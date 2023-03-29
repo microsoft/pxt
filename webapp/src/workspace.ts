@@ -116,9 +116,9 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
     implType = "mem";
 }
 
-export function getHeaders(withDeleted = false, filterByEditorType = true) {
+export function getHeaders(withDeleted = false, filterByEditorType = true, cloudUserIdOverride?: string) {
     maybeSyncHeadersAsync();
-    const cloudUserId = auth.userProfile()?.id;
+    const cloudUserId = cloudUserIdOverride ?? auth.userProfile()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
         // Filter deleted projects
         (withDeleted || !h.isDeleted) &&

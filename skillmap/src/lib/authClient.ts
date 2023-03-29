@@ -16,13 +16,12 @@ class AuthClient extends pxt.auth.AuthClient {
         // Show a notification?
         return Promise.resolve();
     }
-    protected onUserProfileChanged(): Promise<void> {
-        const state = this.getState();
-        if (state.profile) {
+    protected async onUserProfileChanged(): Promise<void> {
+        const state = await pxt.auth.getUserStateAsync();
+        if (state?.profile) {
             pxt.auth.generateUserProfilePicDataUrl(state.profile);
         }
         store.dispatch(dispatchSetUserProfile(state.profile));
-        return Promise.resolve();
     }
     protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         // TODO: Dispatch individual preference fields individually (if changed): language, highContrast, etc.

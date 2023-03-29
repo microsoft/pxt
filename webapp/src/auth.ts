@@ -1,6 +1,7 @@
 import * as core from "./core";
 import * as data from "./data";
 import * as cloud from "./cloud";
+import * as workspace from "./workspace";
 
 /**
  * Virtual API keys
@@ -36,9 +37,10 @@ export class Component<TProps, TState> extends data.Component<TProps, TState> {
 
 class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
-        const state = this.getState();
+        const state = await pxt.auth.getUserStateAsync();
         core.infoNotification(lf("Signed in: {0}", pxt.auth.userName(state.profile)));
-        await cloud.syncAsync();
+        if (!!workspace.getWorkspaceType())
+            await cloud.syncAsync();
         pxt.storage.setLocal(HAS_USED_CLOUD, "true");
     }
     protected onSignedOut(): Promise<void> {
@@ -49,11 +51,10 @@ class AuthClient extends pxt.auth.AuthClient {
         core.errorNotification(lf("Sign in failed. Something went wrong."));
         return Promise.resolve();
     }
-    protected onUserProfileChanged(): Promise<void> {
-        const state = this.getState();
-        pxt.auth.generateUserProfilePicDataUrl(state.profile);
+    protected async onUserProfileChanged(): Promise<void> {
+        const state = await pxt.auth.getUserStateAsync();
+        pxt.auth.generateUserProfilePicDataUrl(state?.profile);
         data.invalidate("auth:*");
-        return Promise.resolve();
     }
     protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         for (const op of diff) {
@@ -66,43 +67,42 @@ class AuthClient extends pxt.auth.AuthClient {
         return Promise.resolve();
     }
     protected async onProfileDeleted(userId: string): Promise<void> {
-        // Convert cloud-saved projects to local projects.
-        await cloud.convertCloudToLocal(userId);
+        try {
+            // Convert cloud-saved projects to local projects.
+            await cloud.convertCloudToLocal(userId);
+        } catch {
+            pxt.tickEvent('auth.profile.cloudToLocalFailed');
+        }
     }
-    protected onStateLoaded(): Promise<void> {
-        const state = this.getState();
+    protected async onStateLoaded(): Promise<void> {
+        const state = await pxt.auth.getUserStateAsync();
         pxt.auth.generateUserProfilePicDataUrl(state.profile);
         data.invalidate("auth:*");
         data.invalidate("user-pref:*");
-        return Promise.resolve();
     }
-    protected onApiError(err: any): Promise<void> {
+    protected async onApiError(err: any): Promise<void> {
         core.handleNetworkError(err);
-        return Promise.resolve();
     }
-    protected onStateCleared(): Promise<void> {
+    protected async onStateCleared(): Promise<void> {
         data.invalidate("auth:*");
         //data.invalidate("user-prefs:*"); // Should we invalidate this? Or would it be jarring visually?
-        return Promise.resolve();
     }
 
     public static authApiHandler(p: string): pxt.auth.UserProfile | boolean | string {
-        const cli = pxt.auth.client();
-        if (cli) {
-            const field = data.stripProtocol(p);
-            const state = cli.getState();
-            switch (field) {
-                case FIELD_USER_PROFILE: return { ...state.profile };
-                case FIELD_LOGGED_IN: return cli.hasUserId();
-            }
+        const field = data.stripProtocol(p);
+        const state = pxt.auth.cachedUserState;
+        const hasToken = pxt.auth.cachedHasAuthToken;
+        switch (field) {
+            case FIELD_USER_PROFILE: return hasToken ? { ...state?.profile } : null;
+            case FIELD_LOGGED_IN: return hasToken && state?.profile != null;
         }
         return null;
     }
 
     public static userPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string {
         const cli = pxt.auth.client();
-        if (cli) {
-            const state = cli.getState();
+        const state = pxt.auth.cachedUserState;
+        if (cli && state) {
             if (!state.preferences) {
                 cli.initialUserPreferencesAsync().then(() => { });
             }
@@ -120,8 +120,8 @@ class AuthClient extends pxt.auth.AuthClient {
 
     private static internalUserPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string {
         const cli = pxt.auth.client();
-        if (cli) {
-            const state = cli.getState();
+        const state = pxt.auth.cachedUserState;
+        if (cli && state) {
             const field = data.stripProtocol(path);
             switch (field) {
                 case FIELD_USER_PREFERENCES: return { ...state.preferences };

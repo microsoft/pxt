@@ -2,7 +2,7 @@ import { userSignedInAsync, setUserProfileAsync } from "../epics";
 
 class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
-        await userSignedInAsync(this.firstName()!);
+        await userSignedInAsync((await this.firstNameAsync())!);
     }
     protected async onSignedOut(): Promise<void> {
         await setUserProfileAsync(undefined);
@@ -11,8 +11,8 @@ class AuthClient extends pxt.auth.AuthClient {
         return Promise.resolve();
     }
     protected async onUserProfileChanged(): Promise<void> {
-        const state = this.getState();
-        if (state.profile) {
+        const state = await pxt.auth.getUserStateAsync();
+        if (state?.profile) {
             pxt.auth.generateUserProfilePicDataUrl(state.profile);
         }
         await setUserProfileAsync(state.profile);
@@ -30,8 +30,8 @@ class AuthClient extends pxt.auth.AuthClient {
         return Promise.resolve();
     }
 
-    public firstName(): string | undefined {
-        const state = this.getState();
+    public async firstNameAsync(): Promise<string | undefined> {
+        const state = await pxt.auth.getUserStateAsync();
         return pxt.auth.firstName(state?.profile!);
     }
 }
@@ -89,6 +89,5 @@ export async function loginAsync(
 }
 
 export async function authTokenAsync(): Promise<string | undefined> {
-    const cli = await clientAsync();
-    return await cli?.authTokenAsync();
+    return await pxt.auth.getAuthTokenAsync();
 }
