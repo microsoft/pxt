@@ -13,13 +13,12 @@ class AuthClient extends pxt.auth.AuthClient {
     protected onSignInFailed(): Promise<void> {
         return Promise.resolve();
     }
-    protected onUserProfileChanged(): Promise<void> {
-        const state = this.getState();
-        if (state.profile) {
+    protected async onUserProfileChanged(): Promise<void> {
+        const state = await pxt.auth.getUserStateAsync();
+        if (state?.profile) {
             pxt.auth.generateUserProfilePicDataUrl(state.profile);
+            store.dispatch(authStore.setUserProfile(state.profile));
         }
-        store.dispatch(authStore.setUserProfile(state.profile));
-        return Promise.resolve();
     }
     protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         return Promise.resolve();
@@ -27,7 +26,8 @@ class AuthClient extends pxt.auth.AuthClient {
     protected onStateCleared(): Promise<void> {
         return Promise.resolve();
     }
-    protected async onProfileDeleted(userId: string): Promise<void> {
+    protected onProfileDeleted(userId: string): Promise<void> {
+        return Promise.resolve();
     }
     protected onApiError(err: any): Promise<void> {
         return Promise.resolve();

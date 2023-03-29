@@ -7,7 +7,7 @@ import { BadgeInfo } from "./BadgeInfo";
 import { CheckboxStatus } from "../util";
 
 export interface ProfileProps {
-    user: pxt.auth.State;
+    user: pxt.auth.UserState;
     signOut: () => void;
     deleteProfile: () => void;
     checkedEmail: CheckboxStatus;
