@@ -877,6 +877,14 @@
         border: 1px solid @HCtextColor;
     }
 
+    #simulator .editor-sidebar:not(.topInstructions) {
+        border-right: 1px solid @HCtextColor;
+    }
+
+    #simulator .topInstructionsWrapper .editor-sidebar {
+        border-bottom: 1px solid @HCtextColor;
+    }
+
     #simulator .editor-sidebar .tab-navigation {
         color: @HCtextColor;
         background-color: @HCbackground;
@@ -918,6 +926,12 @@
         }
     }
 
+    // Tutorial tablet mode
+    @media only screen and (max-width: @largestTabletScreen) {
+        .editor-sidebar {
+            border-bottom: 1px solid @HCtextColor;
+        }
+    }
 
     /* Modals */
     .ui.modal {
