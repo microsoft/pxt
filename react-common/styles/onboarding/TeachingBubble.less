@@ -7,6 +7,14 @@
     z-index: @modalDimmerZIndex;
 }
 
+.teaching-bubble-cutout,
+.teaching-bubble,
+.teaching-bubble-arrow,
+.teaching-bubble-arrow-outline {
+    transition-property: top, left;
+    transition-duration: 0.75s;
+}
+
 .teaching-bubble-cutout {
     position: fixed;
     z-index: @modalDimmerZIndex;
@@ -20,9 +28,9 @@
     min-width: 18.75rem;
     background: @blue;
     color: @white;
-    box-shadow: 0 0rem 0.5rem;
+    box-shadow: 0 0 0 0.1rem;
     border-radius: 0.5rem;
-    padding: 1rem 1rem 0.5rem;
+    padding: 1rem;
     z-index: @modalDimmerZIndex;
 }
 
@@ -34,29 +42,46 @@
     color: @blue;
 }
 
-.teaching-bubble-content > p {
-    margin: .25rem 0;
+.teaching-bubble-arrow-outline {
+    position: fixed;
+    width: 0;
+    height: 0;
+    z-index: @modalDimmerZIndex;
+    color: @white;
+}
+
+.teaching-bubble-content {
+    font-size: 1.1rem;
+
+    p {
+        margin: .25rem 0 .5rem;
+    }
 }
 
 .teaching-bubble-footer {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
+
     .teaching-bubble-steps {
         font-size: .9rem;
+        color: @lightGrey
     }
+
     .common-button {
         color: @blue;
         padding: .25rem .5rem;
         margin: 0;
         border: .1rem solid @white;
+
         &.secondary-button {
             margin-right: .5rem;
             color: @white;
             background: @blue;
         }
     }
+
     &.no-steps {
         flex-direction: row-reverse;
     }
@@ -70,6 +95,7 @@
     background: transparent;
     color: @white;
     margin: 0;
+
     i.right {
         opacity: 1;
         font-size: 1.3rem;
@@ -81,20 +107,24 @@
  *                 High Contrast                    *
  ****************************************************/
 
- .high-contrast, .hc {
+.high-contrast,
+.hc {
     .teaching-bubble {
         background: @highContrastBackgroundColor;
         color: @highContrastTextColor;
         border: solid @highContrastTextColor;
-        .teaching-bubble-navigation > .common-button {
+
+        .teaching-bubble-navigation>.common-button {
             color: @highContrastTextColor;
             border: solid @highContrastTextColor;
         }
     }
+
     .teaching-bubble-arrow {
         color: @highContrastTextColor;
     }
+
     .teaching-bubble-cutout {
         border: 0.25rem solid @highContrastHighlightColor;
     }
- }
+}
