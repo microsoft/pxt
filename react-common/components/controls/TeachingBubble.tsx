@@ -96,7 +96,6 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         const cutoutBounds = getCutoutBounds(targetBounds, targetElement);
         setCutout(cutoutBounds);
         setPosition(cutoutBounds, bubble, bubbleBounds, bubbleArrow, bubbleArrowOutline);
-
     }
 
     const getCutoutBounds = (targetBounds: DOMRect, targetElement: HTMLElement): CutoutBounds => {
@@ -172,6 +171,8 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     }
 
     const setPosition = (cutoutBounds: CutoutBounds, bubble: HTMLElement, bubbleBounds: DOMRect, bubbleArrow: HTMLElement, bubbleArrowOutline: HTMLElement) => {
+        bubbleArrowOutline.style.opacity = "1";
+        bubbleArrow.style.opacity = "1";
         resetTryFit();
         const transparentBorder = `${margin}px solid transparent`;
         const opaqueBorder = `${margin}px solid`;
@@ -250,6 +251,11 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             const top = (cutoutBounds.height - bubbleBounds.height) / 2 + cutoutBounds.top;
             const left = (cutoutBounds.width - bubbleBounds.width) / 2 + cutoutBounds.left;
             updatedBubblePosition(top, left);
+            // update arrow position to be centered and then transparent to improve animation appearance
+            updatePosition(bubbleArrow, top + bubbleBounds.height / 2, left + bubbleBounds.width / 2);
+            updatePosition(bubbleArrowOutline, top + bubbleBounds.height / 2, left + bubbleBounds.width / 2);
+            bubbleArrowOutline.style.opacity = "0";
+            bubbleArrow.style.opacity = "0";
         }
 
         const updatedBubblePosition = (top: number, left: number): boolean => {
