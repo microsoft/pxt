@@ -454,8 +454,9 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
         }
 
         async function syncOneDown(remote: Header): Promise<void> {
-            const projShorthand = shortName(remote);
+            if (!remote?.id) return;
             try {
+                const projShorthand = shortName(remote);
                 const local = workspace.getHeader(remote.id);
                 if (!local) {
                     if (!remote.isDeleted) {
@@ -500,7 +501,7 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
         errors = [];
 
         const elapsed = U.nowSeconds() - syncStart;
-        pxt.tickEvent(`identity.sync.finished`, { elapsed, provider: pxt.auth.identityProviderId() })
+        pxt.tickEvent(`identity.sync.finished`, { elapsed, provider: pxt.auth.identityProviderId(pxt.auth.cachedUserState?.profile) })
 
         data.invalidate("headers:");
 
@@ -527,7 +528,7 @@ export function forceReloadForCloudSync() {
 export async function convertCloudToLocal(userId: string) {
     if (userId) {
         const localCloudHeaders = workspace
-            .getHeaders(false/*withDeleted*/, false/*filterByEditorType*/)
+            .getHeaders(false/*withDeleted*/, false/*filterByEditorType*/, userId /*cloudUserIdOverride*/)
             .filter(h => h.cloudUserId && h.cloudUserId === userId);
         const tasks: Promise<void>[] = [];
         localCloudHeaders.forEach((h) => {

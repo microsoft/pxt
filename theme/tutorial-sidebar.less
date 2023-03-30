@@ -669,6 +669,12 @@
         display: none;
     }
 
+    .tutorial-callout-button.ui.button {
+        height: 2.5rem;
+        width: 2.5rem;
+        font-size: 1.1em;
+    }
+
     #simulator .editor-sidebar {
         border-right: 0;
         border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
@@ -724,9 +730,8 @@
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
-        padding: 1rem 0 0 0;
+        padding: 0 0;
         column-gap: 1rem;
-        margin-bottom: .5rem;
         border-bottom: unset;
         margin-left: auto;
 
@@ -734,9 +739,13 @@
             margin: 0;
             padding: 0.65rem;
 
-            .right {
+            .icon {
                 margin-left: 0;
             }
+        }
+        
+        .counter-previous-button .icon {
+            margin: 0;
         }
     }
 
@@ -760,6 +769,7 @@
         align-items: center;
         margin: 0;
         margin-top: 0.5rem;
+        padding: 1rem 0 0 0;
 
         > .ui.button {
             width: unset;
@@ -778,9 +788,9 @@
     // Overrides
     .tutorial-container-outer:not(.topInstructions) {
         .tutorial-callout {
-            right: 1.6rem;
             bottom: unset;
             left: unset;
+            top: 15rem;
             max-width: 80%;
             transform: translateY(15px);
         }
@@ -1011,7 +1021,7 @@
         
         .tutorial-callout {
             right: unset;
-            top: 20rem;
+            top: 15rem;
             bottom: unset;
             left: unset;
         }
@@ -1035,10 +1045,6 @@
 
     #simulator .editor-sidebar {
         top: @mobileMenuHeight;
-    }
-
-    .tutorial-hint .tutorial-callout-button.ui.button {
-        margin: 1rem;
     }
 
     .tutorial-container > .ui.button i.icon {

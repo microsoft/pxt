@@ -41,7 +41,8 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
     private signInAsync = async (provider: pxt.AppCloudProvider, rememberMe: boolean): Promise<void> => {
         pxt.tickEvent(`identity.loginClick`, { provider: provider.name, rememberMe: rememberMe.toString() });
         await auth.loginAsync(provider.id, rememberMe, {
-            hash: this.state.continuationHash
+            hash: this.state.continuationHash,
+            params: pxt.Util.parseQueryString(window.location.search)
         });
     }
 
