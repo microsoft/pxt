@@ -2410,7 +2410,7 @@ export class ProjectView
             .then(hd => this.loadHeaderAsync(hd, editorState));
     }
 
-    importTutorialAsync(md: string) {
+    importTutorialAsync(md: string, srcHeaderId?: string) {
         try {
             const { options, editor } = pxt.tutorial.getTutorialOptions(md, "untitled", "untitled", "", false);
             const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
@@ -2420,7 +2420,8 @@ export class ProjectView
                 name: "untitled",
                 tutorial: options,
                 preferredEditor: editor,
-                dependencies
+                dependencies,
+                extensionUnderTest: srcHeaderId
             });
         }
         catch (e) {

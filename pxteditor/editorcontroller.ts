@@ -268,6 +268,7 @@ namespace pxt.editor {
         action: "importtutorial";
         // markdown to load
         markdown: string;
+        headerId?: string;
     }
 
     export interface EditorMessageOpenHeaderRequest extends EditorMessageRequest {
@@ -516,7 +517,7 @@ namespace pxt.editor {
                                 case "importtutorial": {
                                     const load = data as EditorMessageImportTutorialRequest;
                                     return Promise.resolve()
-                                        .then(() => projectView.importTutorialAsync(load.markdown));
+                                        .then(() => projectView.importTutorialAsync(load.markdown, load.headerId));
                                 }
                                 case "proxytosim": {
                                     const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
