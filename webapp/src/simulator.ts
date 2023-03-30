@@ -329,7 +329,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         autoRun,
         ipc: isIpcRenderer,
         dependencies,
-        activePlayer: playerNumber
+        activePlayer: playerNumber,
+        theme: pkg.config.theme,
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
