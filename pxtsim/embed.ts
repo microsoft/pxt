@@ -28,6 +28,7 @@ namespace pxsim {
         single?: boolean;
         traceDisabled?: boolean;
         activePlayer?: 1 | 2 | 3 | 4 | undefined;
+        theme?: string | pxt.Map<string>;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
