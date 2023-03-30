@@ -33,7 +33,7 @@ const Share: TargetContent = {
 
 const Download: TargetContent = {
     title: lf("Download"),
-    description: lf("Download your program to the micro:bit."),
+    description: lf("Download your program onto the micro:bit."),
     targetQuery: "#downloadArea",
     location: Location.Above,
 };
