@@ -72,8 +72,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
 
     useEffect(() => {
         positionBubbleAndCutout();
-        (document.querySelector(".teaching-bubble-container") as HTMLElement).focus();
         window.addEventListener("resize", positionBubbleAndCutout);
+        if (stepNumber === totalSteps) {
+            (document.querySelector(".primary-button") as HTMLElement).focus();
+        }
         return () => {
             window.removeEventListener("resize", positionBubbleAndCutout);
         }
@@ -369,10 +371,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 rightIcon="fas fa-times-circle"
             />
             <div className="teaching-bubble-content">
-                <strong>{targetContent.title}</strong>
-                <p>{targetContent.description}</p>
+                <strong aria-live="polite">{targetContent.title}</strong>
+                <p aria-live="polite">{targetContent.description}</p>
                 <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
-                    {hasSteps && <div className="teaching-bubble-steps">
+                    {hasSteps && <div className="teaching-bubble-steps" aria-live="polite">
                         {stepNumber} of {totalSteps}
                     </div>}
                     <div className="teaching-bubble-navigation">
