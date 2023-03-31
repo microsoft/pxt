@@ -72,6 +72,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
 
     useEffect(() => {
         positionBubbleAndCutout();
+        (document.querySelector(".teaching-bubble-container") as HTMLElement).focus();
         window.addEventListener("resize", positionBubbleAndCutout);
         return () => {
             window.removeEventListener("resize", positionBubbleAndCutout);
