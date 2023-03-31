@@ -32,6 +32,16 @@
     border-radius: 0.5rem;
     padding: 1rem;
     z-index: @modalDimmerZIndex;
+
+    .common-button {
+
+        &:focus {
+            outline: .1rem solid @white;
+        }
+        &:focus::after {
+            outline: none;
+        }
+    }
 }
 
 .teaching-bubble-arrow {
