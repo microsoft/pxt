@@ -73,9 +73,6 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     useEffect(() => {
         positionBubbleAndCutout();
         window.addEventListener("resize", positionBubbleAndCutout);
-        if (stepNumber === totalSteps) {
-            (document.querySelector(".primary-button") as HTMLElement).focus();
-        }
         return () => {
             window.removeEventListener("resize", positionBubbleAndCutout);
         }
