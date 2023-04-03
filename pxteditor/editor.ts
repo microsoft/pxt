@@ -118,6 +118,7 @@ namespace pxt.editor {
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
         extensionUnderTest?: string; // workspace id of the extension under test
         skillmapProject?: boolean;
+        simTheme?: Partial<pxt.PackageConfig>;
     }
 
     export interface ExampleImportOptions {

@@ -10,7 +10,17 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
-        const { code, templateCode, editor, language, jres, assetJson, customTs, tutorialValidationRulesStr } = computeBodyMetadata(body);
+        const {
+            code,
+            templateCode,
+            editor,
+            language,
+            jres,
+            assetJson,
+            customTs,
+            tutorialValidationRulesStr,
+            simThemeJson
+        } = computeBodyMetadata(body);
 
         // parses tutorial rules string into a map of rules and enablement flag
         let tutorialValidationRules: pxt.Map<boolean>;
@@ -31,6 +41,7 @@ namespace pxt.tutorial {
         }
 
         const assetFiles = parseAssetJson(assetJson);
+        const simTheme = parseSimThemeJson(simThemeJson);
         const globalBlockConfig = parseTutorialBlockConfig("global", tutorialmd);
         const globalValidationConfig = parseTutorialValidationConfig("global", tutorialmd);
 
@@ -56,12 +67,13 @@ namespace pxt.tutorial {
             customTs,
             tutorialValidationRules,
             globalBlockConfig,
-            globalValidationConfig
+            globalValidationConfig,
+            simTheme
         };
     }
 
     export function getMetadataRegex(): RegExp {
-        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|tutorialValidationRules|requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi;
+        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|tutorialValidationRules|requiredTutorialBlock|simtheme)\s*\n([\s\S]*?)\n```/gmi;
     }
 
     function computeBodyMetadata(body: string) {
@@ -76,6 +88,7 @@ namespace pxt.tutorial {
         let idx = 0;
         let assetJson: string;
         let customTs: string;
+        let simThemeJson: string;
         let tutorialValidationRulesStr: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         body
@@ -114,6 +127,9 @@ namespace pxt.tutorial {
                     case "assetjson":
                         assetJson = m2;
                         break;
+                    case "simtheme":
+                        simThemeJson = m2;
+                        break;
                     case "customts":
                         customTs = m2;
                         m2 = "";
@@ -127,8 +143,18 @@ namespace pxt.tutorial {
                 return "";
             });
         // default to blocks
-        editor = editor || pxt.BLOCKS_PROJECT_NAME
-        return { code, templateCode, editor, language, jres, assetJson, customTs, tutorialValidationRulesStr }
+        editor = editor || pxt.BLOCKS_PROJECT_NAME;
+        return {
+            code,
+            templateCode,
+            editor,
+            language,
+            jres,
+            assetJson,
+            customTs,
+            tutorialValidationRulesStr,
+            simThemeJson
+        };
 
         function checkTutorialEditor(expected: string) {
             if (editor && editor != expected) {
@@ -374,7 +400,7 @@ ${code}
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
         if (!str) return str;
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|customts|blockconfig\.local|blockconfig\.global|validation\.local|validation\.global)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|simtheme|customts|blockconfig\.local|blockconfig\.global|validation\.local|validation\.global)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
 
@@ -464,7 +490,8 @@ ${code}
             customTs: tutorialInfo.customTs,
             tutorialValidationRules: tutorialInfo.tutorialValidationRules,
             globalBlockConfig: tutorialInfo.globalBlockConfig,
-            globalValidationConfig: tutorialInfo.globalValidationConfig
+            globalValidationConfig: tutorialInfo.globalValidationConfig,
+            simTheme: tutorialInfo.simTheme,
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };
@@ -521,5 +548,19 @@ ${code}
             [pxt.IMAGES_JRES]: files[pxt.IMAGES_JRES],
             [pxt.IMAGES_CODE]: files[pxt.IMAGES_CODE]
         }
+    }
+
+    export function parseSimThemeJson(json: string): Partial<pxt.PackageConfig> {
+        const pxtJson = pxt.Util.jsonTryParse(json);
+        if (!pxtJson) return undefined;
+
+        const res: Partial<pxt.PackageConfig> = {};
+        if (pxtJson.theme) {
+            res.theme = pxtJson.theme;
+        }
+        if (pxtJson.palette) {
+            res.palette = pxtJson.palette;
+        }
+        return res;
     }
 }
