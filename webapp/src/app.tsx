@@ -5613,6 +5613,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         await auth.loginCallbackAsync(query);
     }
 
+    // Handle logins that start via query parameter (for now, this is only Clever)
+    if (query["authlogin"]) {
+        await auth.loginAsync("clever", true); // This should not be hard coded
+    }
+
     await auth.initAsync();
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
