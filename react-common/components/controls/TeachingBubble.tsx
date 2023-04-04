@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Button } from "./Button";
+import { Confetti } from "../animations/Confetti";
 import { ContainerProps, classList } from "../util";
 import { FocusTrap } from "./FocusTrap";
 import { useEffect } from "react";
@@ -350,6 +351,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     );
 
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
+        {stepNumber === totalSteps && <Confetti />}
         <div className="teaching-bubble-cutout" />
         <div className="teaching-bubble-arrow" />
         <div className="teaching-bubble-arrow-outline" />
