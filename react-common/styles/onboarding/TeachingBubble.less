@@ -7,19 +7,23 @@
     z-index: @modalDimmerZIndex;
 }
 
+.teaching-bubble-cutout {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: @modalDimmerZIndex;
+    box-shadow: 0 0 0 99999px @modalOverlayColor;
+    border-radius: 0.5rem;
+}
+
 .teaching-bubble-cutout,
 .teaching-bubble,
 .teaching-bubble-arrow,
 .teaching-bubble-arrow-outline {
     transition-property: top, left, width, height;
     transition-duration: 0.5s;
-}
-
-.teaching-bubble-cutout {
-    position: fixed;
-    z-index: @modalDimmerZIndex;
-    box-shadow: 0 0 0 99999px @modalOverlayColor;
-    border-radius: 0.5rem;
 }
 
 .teaching-bubble {
