@@ -100,13 +100,8 @@ export const EditorTour = (props: EditorTourProps) => {
     }
 
     const onFinish = () => {
-        if (currentStep < EditorContent.length - 1) {
-            pxt.tickEvent("tour.finish", data());
-            setCurrentStep(currentStep + 1);
-        } else { // Congrats modal
-            pxt.tickEvent("tour.congrats", data());
-            onClose();
-        }
+        pxt.tickEvent("tour.finish", data());
+        onClose();
     }
 
     return <TeachingBubble id="teachingBubble"

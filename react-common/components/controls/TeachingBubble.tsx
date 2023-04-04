@@ -348,12 +348,12 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     }
 
     const hasPrevious = stepNumber > 1;
-    const hasNext = stepNumber < totalSteps;
+    const hasNext = stepNumber < totalSteps + 1;
     const hasSteps = totalSteps > 1;
     const closeLabel = lf("Close");
     const backLabel = lf("Back");
     const nextLabel = lf("Next");
-    const finishLabel = hasSteps ? stepNumber > totalSteps ? lf("Done") : lf("Finish") : lf("Got it");
+    const finishLabel = hasSteps ? lf("Finish") : lf("Got it");
 
     const classes = classList(
         "teaching-bubble-container",
