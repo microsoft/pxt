@@ -73,11 +73,21 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
 
     useEffect(() => {
         positionBubbleAndCutout();
+        setStepsVisibility();
         window.addEventListener("resize", positionBubbleAndCutout);
         return () => {
             window.removeEventListener("resize", positionBubbleAndCutout);
         }
     }, [stepNumber]);
+
+    const setStepsVisibility = () => {
+        const steps = document.querySelector(".teaching-bubble-steps") as HTMLElement;
+        if (stepNumber > totalSteps || totalSteps === 1) {
+            steps.style.visibility = "hidden";
+        } else {
+            steps.style.visibility = "visible";
+        }
+    }
 
     const positionBubbleAndCutout = () => {
         const bubble = document.getElementById(id);
@@ -343,7 +353,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     const closeLabel = lf("Close");
     const backLabel = lf("Back");
     const nextLabel = lf("Next");
-    const finishLabel = hasSteps ? lf("Finish") : lf("Got it");
+    const finishLabel = hasSteps ? stepNumber > totalSteps ? lf("Done") : lf("Finish") : lf("Got it");
 
     const classes = classList(
         "teaching-bubble-container",
@@ -351,7 +361,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     );
 
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
-        {stepNumber === totalSteps && <Confetti />}
+        {stepNumber === totalSteps + 1 && <Confetti />}
         <div className="teaching-bubble-cutout" />
         <div className="teaching-bubble-arrow" />
         <div className="teaching-bubble-arrow-outline" />
