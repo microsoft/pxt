@@ -2150,7 +2150,7 @@ namespace pxt.blocks {
                 xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
                 if (Blockly.Blocks['variables_change'] || Blockly.Blocks['variables_set']) {
-                    xmlList.unshift(createFlyoutGroupLabel("Your Variables"));
+                    xmlList.unshift(createFlyoutGroupLabel(lf("Your Variables")));
                 }
 
                 if (Blockly.Blocks['variables_change']) {
@@ -2634,7 +2634,7 @@ namespace pxt.blocks {
             if (elems.length > 1) {
                 let returnBlock = mkReturnStatementBlock();
                 // Add divider
-                elems.splice(1, 0, createFlyoutGroupLabel("Your Functions"));
+                elems.splice(1, 0, createFlyoutGroupLabel(lf("Your Functions")));
                 // Insert after the "make a function" button
                 elems.splice(1, 0, returnBlock as HTMLElement);
             }
