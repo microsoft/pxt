@@ -368,29 +368,29 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 rightIcon="fas fa-times-circle"
             />
             <div className="teaching-bubble-content">
-                <strong>{targetContent.title}</strong>
-                <p>{targetContent.description}</p>
+                <strong aria-live="polite">{targetContent.title}</strong>
+                <p aria-live="polite">{targetContent.description}</p>
                 <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
-                    {hasSteps && <div className="teaching-bubble-steps">
+                    {hasSteps && <div className="teaching-bubble-steps" aria-live="polite">
                         {stepNumber} of {totalSteps}
                     </div>}
                     <div className="teaching-bubble-navigation">
                         {hasPrevious && <Button
-                            className="secondary-button"
+                            className="blue"
                             onClick={onBack}
                             title={backLabel}
                             ariaLabel={backLabel}
                             label={backLabel}
                         />}
                         {hasNext && <Button
-                            className="primary-button"
+                            className="blue inverted"
                             onClick={onNext}
                             title={nextLabel}
                             ariaLabel={nextLabel}
                             label={nextLabel}
                         />}
                         {!hasNext && <Button
-                            className="primary-button"
+                            className="blue inverted"
                             onClick={onFinish}
                             title={finishLabel}
                             ariaLabel={finishLabel}
