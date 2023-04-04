@@ -16,6 +16,7 @@ import { Modal, ModalAction } from 'react-common/components/controls/Modal';
 import { jsxLF } from "react-common/components/util";
 import { Badge } from "react-common/components/profile/Badge";
 import { Button } from "react-common/components/controls/Button";
+import { Confetti } from "react-common/components/animations/Confetti";
 import { SignInModal } from "react-common/components/profile/SignInModal";
 import { Share, ShareData } from "react-common/components/share/Share";
 import { Input } from 'react-common/components/controls/Input';
@@ -194,17 +195,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         return modalActions;
     }
 
-    renderConfetti() {
-        const density = 100;
-        return Array(density).fill(0).map((el, i) => {
-            const style = {
-                animationDelay: `${0.1 * (i % density)}s`,
-                left: `${1 * (Math.floor(Math.random() * density))}%`
-            }
-            return <div key={i} style={style} className={`confetti ${Math.random() > 0.5 ? "reverse" : ""} color-${Math.floor(Math.random() * 9)}`} />
-        })
-    }
-
     renderCompletionModal() {
         const  { skillMap, type, activity, userState, pageSourceUrl, dispatchNextModal, reward, mapId } = this.props;
         if (!type || !skillMap) return <div />
@@ -228,7 +218,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const shouldShowShare = previousState && previousState.headerId;
         const showMultiplayerShare = shouldShowShare && (activity as MapCompletionNode).showMultiplayerShare;
 
-        return <div className="confetti-container">
+        return <Confetti>
             <Modal title={completionModalTitle} actions={this.getCompletionActions(node.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
                 <Button
@@ -254,8 +244,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                         onClick={this.handleMultiplayerShareClick} />
                 }
             </Modal>
-            {this.renderConfetti()}
-        </div>
+        </Confetti>
     }
 
     renderRestartWarning() {
@@ -451,10 +440,9 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         if (reward?.type === "certificate") modal = this.renderCertificateModal(reward);
         else if (reward?.type === "completion-badge") modal = this.renderBadgeModal(reward);
 
-        return <div className="confetti-container">
+        return <Confetti>
             {modal}
-            {this.renderConfetti()}
-        </div>
+        </Confetti>
     }
 
     renderCertificateModal(reward: MapRewardCertificate) {

@@ -1,8 +1,14 @@
 import * as React from "react";
 
-export const Confetti = () => {
+export interface ConfettiProps {
+    children?: React.ReactNode;
+}
+
+export const Confetti = (props: ConfettiProps) => {
+    const { children } = props;
     const density = 100;
     return <div className="confetti-container">
+        {children}
         {Array(density).fill(0).map((el, i) => {
             const style = {
                 animationDelay: `${0.1 * (i % density)}s`,
