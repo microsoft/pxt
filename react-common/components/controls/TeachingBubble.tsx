@@ -126,7 +126,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 width: cutoutWidth,
                 height: cutoutHeight
             }
-            // check that cutout interects with sansElement
+            // check that cutout intersects with sansElement
             if (collision(tempBounds, sansBounds)) {
                 if (targetContent.sansLocation === Location.Left) {
                     cutoutLeft = targetBounds.left + sansBounds.width;
