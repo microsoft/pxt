@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Button } from "./Button";
+import { Confetti } from "../animations/Confetti";
 import { ContainerProps, classList } from "../util";
 import { FocusTrap } from "./FocusTrap";
 import { useEffect } from "react";
@@ -72,11 +73,21 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
 
     useEffect(() => {
         positionBubbleAndCutout();
+        setStepsVisibility();
         window.addEventListener("resize", positionBubbleAndCutout);
         return () => {
             window.removeEventListener("resize", positionBubbleAndCutout);
         }
     }, [stepNumber]);
+
+    const setStepsVisibility = () => {
+        const steps = document.querySelector(".teaching-bubble-steps") as HTMLElement;
+        if (stepNumber > totalSteps || totalSteps === 1) {
+            steps.style.visibility = "hidden";
+        } else {
+            steps.style.visibility = "visible";
+        }
+    }
 
     const positionBubbleAndCutout = () => {
         const bubble = document.getElementById(id);
@@ -337,7 +348,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     }
 
     const hasPrevious = stepNumber > 1;
-    const hasNext = stepNumber < totalSteps;
+    const hasNext = stepNumber < totalSteps + 1;
     const hasSteps = totalSteps > 1;
     const closeLabel = lf("Close");
     const backLabel = lf("Back");
@@ -350,6 +361,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     );
 
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
+        {stepNumber === totalSteps + 1 && <Confetti />}
         <div className="teaching-bubble-cutout" />
         <div className="teaching-bubble-arrow" />
         <div className="teaching-bubble-arrow-outline" />

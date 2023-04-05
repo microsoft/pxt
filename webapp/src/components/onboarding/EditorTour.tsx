@@ -38,12 +38,20 @@ const Download: TargetContent = {
     location: Location.Above,
 };
 
+const Congrats: TargetContent = {
+    title: lf("Congratulations!"),
+    description: lf("You've completed the editor tour! {0} Happy coding!", "🤩🏆🤩"),
+    targetQuery: "#root",
+    location: Location.Center,
+};
+
 const EditorContent: TargetContent[] = [
     Toolbox,
     Workspace,
     Simulator,
     Share,
     Download,
+    Congrats
 ];
 
 export interface EditorTourProps {
@@ -101,7 +109,7 @@ export const EditorTour = (props: EditorTourProps) => {
         onNext={onNext}
         onBack={onBack}
         stepNumber={currentStep + 1}
-        totalSteps={EditorContent.length}
+        totalSteps={EditorContent.length - 1}
         onClose={onExit}
         onFinish={onFinish}
     />
