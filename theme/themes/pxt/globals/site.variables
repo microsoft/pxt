@@ -180,7 +180,7 @@
 @sidebarTutorialColor: @lightGrey;
 
 @homeScreenBackground: #ecf0f1;
-@cloudCardBackground: #58AFBA;
+@cloudCardBackground: @grey;
 
 /*-------------------
    Full screen
