@@ -29,6 +29,7 @@ export interface TargetContent {
     targetQuery: string;
     location: Location;
     sansQuery?: string; // Use this to exclude an element from the cutout
+    sansLocation?: Location; // relative location of element to exclude
 }
 
 export interface TeachingBubbleProps extends ContainerProps {
@@ -114,11 +115,29 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         let cutoutLeft = targetBounds.left;
         let cutoutWidth = targetBounds.width;
         let cutoutHeight = targetBounds.height;
-        if (targetContent.sansQuery) { // TO DO - take care of cases when sansElement is not to the left of targetElement
+        if (targetContent.sansQuery) { // TO DO - take care of cases when sansElement is not to the left or below
             const sansElement = document.querySelector(targetContent.sansQuery) as HTMLElement;
             const sansBounds = sansElement.getBoundingClientRect();
-            cutoutLeft = targetBounds.left + sansBounds.width;
-            cutoutWidth = targetBounds.width - sansBounds.width;
+            const tempBounds: CutoutBounds = {
+                top: cutoutTop,
+                bottom: cutoutTop + cutoutHeight,
+                left: cutoutLeft,
+                right: cutoutLeft + cutoutWidth,
+                width: cutoutWidth,
+                height: cutoutHeight
+            }
+            // check that cutout interects with sansElement
+            if (collision(tempBounds, sansBounds)) {
+                if (targetContent.sansLocation === Location.Left) {
+                    cutoutLeft = targetBounds.left + sansBounds.width;
+                    cutoutWidth = targetBounds.width - sansBounds.width;
+                } else if (targetContent.sansLocation === Location.Below) {
+                    cutoutHeight = targetBounds.height - sansBounds.height;
+                    if (tempBounds.bottom > window.innerHeight) {
+                        cutoutHeight -= tempBounds.bottom - window.innerHeight;
+                    }
+                }
+            }
         }
         // make cutout bigger if no padding and not centered
         if (targetContent.location !== Location.Center) {
@@ -328,11 +347,11 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         return [top, left];
     }
 
-    const collision = (cutoutBounds: CutoutBounds, bubbleBounds: DOMRect, top: number, left: number): boolean => {
-        const hCheck1 = left < cutoutBounds.left + cutoutBounds.width;
-        const hCheck2 = left + bubbleBounds.width > cutoutBounds.left;
-        const vCheck1 = top < cutoutBounds.top + cutoutBounds.height;
-        const vCheck2 = top + bubbleBounds.height > cutoutBounds.top;
+    const collision = (cutoutBounds: CutoutBounds, bubbleBounds: DOMRect, top?: number, left?: number): boolean => {
+        const hCheck1 = (left || bubbleBounds.left) < cutoutBounds.left + cutoutBounds.width;
+        const hCheck2 = (left || bubbleBounds.left) + bubbleBounds.width > cutoutBounds.left;
+        const vCheck1 = (top || bubbleBounds.top) < cutoutBounds.top + cutoutBounds.height;
+        const vCheck2 = (top || bubbleBounds.top) + bubbleBounds.height > cutoutBounds.top;
         return hCheck1 && hCheck2 && vCheck1 && vCheck2;
     }
 
