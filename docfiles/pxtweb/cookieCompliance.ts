@@ -152,7 +152,7 @@ namespace pxt {
 
     export function aiTrackEvent(id: string, data?: any, measures?: any) {
         if (!eventLogger) {
-            eventLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackEvent(a, b, c));
+            eventLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackEvent({name: a, properties: b, measurements: c}));
         }
         eventLogger.track(id, data, measures);
     }
