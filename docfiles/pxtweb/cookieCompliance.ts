@@ -152,14 +152,25 @@ namespace pxt {
 
     export function aiTrackEvent(id: string, data?: any, measures?: any) {
         if (!eventLogger) {
-            eventLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackEvent({name: a, properties: b, measurements: c}));
+            eventLogger = new TelemetryQueue((a, b, c) =>
+                (window as any).appInsights.trackEvent({
+                    name: a,
+                    properties: b,
+                    measurements: c,
+                })
+            );
         }
         eventLogger.track(id, data, measures);
     }
 
     export function aiTrackException(err: any, kind?: string, props?: any) {
         if (!exceptionLogger) {
-            exceptionLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackException({exception: a, properties: b ? {...c, ["kind"]: b} : c}));
+            exceptionLogger = new TelemetryQueue((a, b, c) =>
+                (window as any).appInsights.trackException({
+                    exception: a,
+                    properties: b ? { ...c, ["kind"]: b } : c,
+                })
+            );
         }
         exceptionLogger.track(err, kind, props);
     }
