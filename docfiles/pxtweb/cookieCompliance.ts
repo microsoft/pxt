@@ -159,7 +159,7 @@ namespace pxt {
 
     export function aiTrackException(err: any, kind?: string, props?: any) {
         if (!exceptionLogger) {
-            exceptionLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackException(a, b, c));
+            exceptionLogger = new TelemetryQueue((a, b, c) => (window as any).appInsights.trackException({exception: a, properties: b ? {...c, ["kind"]: b} : c}));
         }
         exceptionLogger.track(err, kind, props);
     }
