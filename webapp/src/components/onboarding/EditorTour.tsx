@@ -12,9 +12,7 @@ const Simulator: TargetContent = {
 const Toolbox: TargetContent = {
     title: lf("Toolbox"),
     description: lf("Drag out blocks of code from the Toolbox categories into the Workspace."),
-    targetQuery: "#blocksEditorToolbox",
-    sansQuery: "#projectNameArea",
-    sansLocation: Location.Below,
+    targetQuery: ".blocklyToolboxDiv",
     location: Location.Right,
 };
 
