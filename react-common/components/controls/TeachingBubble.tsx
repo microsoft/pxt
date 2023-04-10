@@ -348,10 +348,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     }
 
     const collision = (cutoutBounds: CutoutBounds, bubbleBounds: DOMRect, top?: number, left?: number): boolean => {
-        const hCheck1 = (left || bubbleBounds.left) < cutoutBounds.left + cutoutBounds.width;
-        const hCheck2 = (left || bubbleBounds.left) + bubbleBounds.width > cutoutBounds.left;
-        const vCheck1 = (top || bubbleBounds.top) < cutoutBounds.top + cutoutBounds.height;
-        const vCheck2 = (top || bubbleBounds.top) + bubbleBounds.height > cutoutBounds.top;
+        const hCheck1 = (left ?? bubbleBounds.left) < cutoutBounds.left + cutoutBounds.width;
+        const hCheck2 = (left ?? bubbleBounds.left) + bubbleBounds.width > cutoutBounds.left;
+        const vCheck1 = (top ?? bubbleBounds.top) < cutoutBounds.top + cutoutBounds.height;
+        const vCheck2 = (top ?? bubbleBounds.top) + bubbleBounds.height > cutoutBounds.top;
         return hCheck1 && hCheck2 && vCheck1 && vCheck2;
     }
 
