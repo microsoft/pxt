@@ -5558,6 +5558,10 @@ function filenameForEditor(editor: string): string {
     }
 }
 
+function isValidIdentityProvider(provider: string) {
+    return pxt.ValidIdentityProviders.includes(provider);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     pxt.perf.recordMilestone(`DOM loaded`)
 
@@ -5614,8 +5618,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Handle logins that start via query parameter (for now, this is only Clever)
-    if (query["authlogin"]) {
-        await auth.loginAsync("clever", true); // This should not be hard coded
+    if (query["authlogin"] && isValidIdentityProvider(query["authlogin"])) {
+        await auth.loginAsync(query["authlogin"] as pxt.IdentityProviderId, true); // This should not be hard coded
     }
 
     await auth.initAsync();
