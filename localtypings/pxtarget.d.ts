@@ -206,8 +206,7 @@ declare namespace pxt {
         cloudProviders?: pxt.Map<AppCloudProvider>;
     }
 
-    const ValidIdentityProviders = ["makecode", "microsoft", "google", "github", "clever"];
-    type IdentityProviderId = (typeof ValidIdentityProviders)[number];
+    type IdentityProviderId = "makecode" | "microsoft" | "google" | "github" | "clever";
 
     interface AppCloudProvider {
         id: IdentityProviderId;
