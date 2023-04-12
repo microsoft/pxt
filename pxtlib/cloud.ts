@@ -6,7 +6,7 @@ namespace pxt.cloud {
     const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
 
     type BackendUrls = typeof DEV_BACKEND_PROD | typeof DEV_BACKEND_STAGING | typeof DEV_BACKEND_LOCALHOST;
-    export const DEV_BACKEND: BackendUrls = DEV_BACKEND_LOCALHOST;
+    export const DEV_BACKEND: BackendUrls = DEV_BACKEND_STAGING;
 
     export function devBackendType(): DevBackendType {
         if (DEV_BACKEND === DEV_BACKEND_PROD) return "prod";
