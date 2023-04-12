@@ -383,7 +383,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const text = inlineBlock.innerText;
                 const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
                 if (mbtn) {
-                    const mtxt = /^(([^\:]*?)[\:])?(.*)$/.exec(mbtn[2]);
+                    const mtxt =/^(([^:.]*?)[:.])?(.*)$/.exec(mbtn[2]);
                     const txt = mtxt[3].trim();
                     const isInlineButton = mbtn[1].length == 1;
                     const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
