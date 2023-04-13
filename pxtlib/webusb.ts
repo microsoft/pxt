@@ -1,5 +1,14 @@
 namespace pxt.usb {
 
+    /**
+     * For local testing of WebUSB, be sure to (temporarily)
+     * enable the browser command line flag `--disable-webusb-security`
+     * to allow localhost (non-https) access to the APIs.
+     * If possible it might be easiest to download a separate canary build
+     * for chrome / edge to run.
+     * https://chromium.googlesource.com/playground/chromium-org-site/+/refs/heads/main/for-testers/command-line-flags.md
+     */
+
     export class USBError extends Error {
         constructor(msg: string) {
             super(msg)

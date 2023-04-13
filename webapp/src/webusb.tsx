@@ -16,22 +16,33 @@ function resolveFirmwareUrl(): string {
     return undefined;
 }
 
+let userPrefersDownloadFlag = false;
+
 type ConfirmAsync = (options: core.PromptOptions) => Promise<number>;
 
-export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: ConfirmAsync) {
+export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: ConfirmAsync, implicitlyCalled?: boolean) {
     if (pxt.appTarget.appTheme.downloadDialogTheme) {
-        return webUsbPairThemedDialogAsync(pairAsync, confirmAsync);
+        return webUsbPairThemedDialogAsync(pairAsync, confirmAsync, implicitlyCalled);
     }
     else {
         return webUsbPairLegacyDialogAsync(pairAsync, confirmAsync);
     }
 }
 
-export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: ConfirmAsync): Promise<number> {
+export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: ConfirmAsync, implicitlyCalled?: boolean): Promise<number> {
     const boardName = getBoardName();
 
-    if (!await showConnectDeviceDialogAsync(confirmAsync)) return 0;
-    if (!await showPickWebUSBDeviceDialogAsync(confirmAsync)) return 0;
+    if (!implicitlyCalled) {
+        clearUserPrefersDownloadFlag();
+    }
+
+    const notPairedResult = () => userPrefersDownloadFlag ? pxt.commands.WebUSBPairResult.UserRejected : pxt.commands.WebUSBPairResult.Failed;
+
+
+    if (!await showConnectDeviceDialogAsync(confirmAsync))
+        return notPairedResult();
+    if (!await showPickWebUSBDeviceDialogAsync(confirmAsync))
+        return notPairedResult();
 
     core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName))
 
@@ -52,12 +63,16 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         await showConnectionSuccessAsync(confirmAsync);
     }
     else {
-        const tryAgain = await showConnectionFailureAsync(confirmAsync);
+        const tryAgain = await showConnectionFailureAsync(confirmAsync, implicitlyCalled);
 
         if (tryAgain) await webUsbPairThemedDialogAsync(pairAsync, confirmAsync);
     }
 
-    return paired ? 1 : 0;
+    if (paired) {
+        return pxt.commands.WebUSBPairResult.Success;
+    } else {
+        return notPairedResult();
+    }
 }
 
 function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
@@ -119,7 +134,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     const parts = connectDeviceText.split(/\{\d\}/);
     const textElements: (JSX.Element | string)[] = [];
 
-    let renderedNames = deviceNames.map(dName => <span className="download-device-name">'{dName}'</span>)
+    let renderedNames = deviceNames.map(dName => <span key={dName} className="download-device-name">'{dName}'</span>)
 
     while (renderedNames.length) {
         textElements.push(parts.shift());
@@ -220,7 +235,7 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
 }
 
 
-function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
+function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadFileButton?: boolean) {
     const boardName = getBoardName();
 
     let firmwareText: string;
@@ -275,13 +290,21 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
         lf("Connect failed"),
         'downloaddialog.button.webusbfailed',
         theme().troubleshootWebUSBHelpURL,
-        "exclamation triangle purple"
+        "exclamation triangle purple",
+        showDownloadFileButton,
     );
 }
 
-
-
-function showPairStepAsync(confirmAsync: ConfirmAsync, jsxd: () => JSX.Element, buttonLabel: string, header: string, tick: string, help?: string, headerIcon?: string) {
+function showPairStepAsync(
+    confirmAsync: ConfirmAsync,
+    jsxd: () => JSX.Element,
+    buttonLabel: string,
+    header: string,
+    tick: string,
+    help?: string,
+    headerIcon?: string,
+    showDownloadAsFileButton?: boolean,
+) {
     let tryAgain = false;
 
     return confirmAsync({
@@ -294,6 +317,16 @@ function showPairStepAsync(confirmAsync: ConfirmAsync, jsxd: () => JSX.Element, 
         bigHelpButton: !!help,
         headerIcon: headerIcon ? headerIcon + " header-inline-icon" : undefined,
         buttons: [
+            showDownloadAsFileButton ? {
+                label: lf("Download as file"),
+                className: "secondary",
+                onclick: () => {
+                    pxt.tickEvent("downloaddialog.button.webusb.preferdownload");
+                    userPrefersDownloadFlag = true;
+                    tryAgain = false;
+                    core.hideDialog();
+                }
+            } : undefined,
             {
                 label: buttonLabel,
                 className: "primary",
@@ -388,7 +421,7 @@ export function webUsbPairLegacyDialogAsync(pairAsync: () => Promise<boolean>, c
                                 })
                                 .then(paired => {
                                     if (paired || failedOnce) {
-                                        resolve(paired ? 1 : 0)
+                                        resolve(paired ? pxt.commands.WebUSBPairResult.Success : pxt.commands.WebUSBPairResult.Failed)
                                     } else {
                                         failedOnce = true;
                                         // allow dialog to fully close, then reopen
@@ -426,7 +459,18 @@ export function renderUnpairDialog() {
     </p>
         <img className="ui image centered medium" src={"./static/webusb/unpair.gif"} alt={lf("A gif showing how to unpair the {0}", boardName)} />
     </div>
+
+    // TODO: show usb forget here
     const helpUrl = pxt.appTarget.appTheme.usbDocs
         && (pxt.appTarget.appTheme.usbDocs + "/webusb#unpair");
     return { header, jsx, helpUrl };
+}
+
+
+export function clearUserPrefersDownloadFlag() {
+    userPrefersDownloadFlag = false;
+}
+
+export function userPrefersDownloadFlagSet() {
+    return userPrefersDownloadFlag;
 }

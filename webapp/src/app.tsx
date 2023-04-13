@@ -4272,6 +4272,7 @@ export class ProjectView
         dialogs.showResetDialogAsync().then(r => {
             if (!r) return Promise.resolve();
             dialogs.clearDontShowDownloadDialogFlag();
+            webusb.clearUserPrefersDownloadFlag();
             return this.resetWorkspace();
         });
     }

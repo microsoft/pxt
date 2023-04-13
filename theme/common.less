@@ -1593,15 +1593,19 @@ p.ui.font.small {
     position: relative;
     margin-top: 1.5rem;
 
-    .ui.purple.ribbon.large.label {
+    .ui.purple.ribbon.label {
         position: absolute;
         left: -1.2rem;
         top: -1rem;
+        padding-left: 1.5rem;
     }
 
-    a {
-        color: #4C309D;
-        cursor: pointer;
+    > .content {
+        padding-top: .25rem;
+    }
+
+    a.ui.button {
+        margin-top: .5rem;
     }
 }
 
@@ -2091,7 +2095,7 @@ p.ui.font.small {
         div.simframe {
             margin-bottom: -0.4rem
         }
-        
+
         &:not(.headless):not(.sandbox) {
             .simPanel .simtoolbar {
                 margin-bottom: -0.2rem;

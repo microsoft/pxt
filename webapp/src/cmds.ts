@@ -447,12 +447,19 @@ export function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfConnecte
     return reconnectPromise;
 }
 
-export function pairAsync(): Promise<void> {
+export function pairAsync(implicitlyCalled?: boolean): Promise<void> {
     pxt.tickEvent("cmds.pair")
-    return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
+    return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync, implicitlyCalled)
         .then(res => {
-            if (res) return maybeReconnectAsync();
-            else return core.infoNotification("Oops, no device was paired.")
+            switch (res) {
+                case pxt.commands.WebUSBPairResult.Success:
+                    return maybeReconnectAsync();
+                case pxt.commands.WebUSBPairResult.Failed:
+                    return core.infoNotification("Oops, no device was paired.")
+                case pxt.commands.WebUSBPairResult.UserRejected:
+                    // User exited pair flow intentionally
+                    return;
+            }
         });
 }
 

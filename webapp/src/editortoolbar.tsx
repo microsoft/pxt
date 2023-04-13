@@ -10,6 +10,7 @@ import * as auth from "./auth";
 import * as identity from "./identity";
 import { ProjectView } from "./app";
 import { clearDontShowDownloadDialogFlag } from "./dialogs";
+import { userPrefersDownloadFlagSet } from "./webusb";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -184,8 +185,16 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     }
 
-    protected onDownloadButtonClick = () => {
+    protected onDownloadButtonClick = async () => {
         pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        if (pxt.appTarget.appTheme?.preferWebUSBDownload
+            && pxt.usb.isEnabled
+            && !userPrefersDownloadFlagSet()
+            && !pxt.packetio.isConnected()
+            && !pxt.packetio.isConnecting()
+        ) {
+            await cmds.pairAsync(true);
+        }
         this.compile();
     }
 
