@@ -75,6 +75,7 @@ namespace pxsim {
         queryParameters?: string;
         mpRole?: "server" | "client";
         activePlayer?: 1 | 2 | 3 | 4 | undefined;
+        theme?: string | pxt.Map<string>;
     }
 
     export interface HwDebugger {
@@ -669,6 +670,7 @@ namespace pxsim {
                 single: opts.single,
                 dependencies: opts.dependencies,
                 activePlayer: opts.activePlayer,
+                theme: opts.theme,
             }
             this.start();
         }

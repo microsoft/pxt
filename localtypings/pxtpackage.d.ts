@@ -91,6 +91,7 @@ declare namespace pxt {
         disablesVariants?: string[]; // don't build these variants, when this extension is enabled
         utf8?: boolean; // force compilation with UTF8 enabled
         disableTargetTemplateFiles?: boolean; // do not override target template files when commiting to github
+        theme?: string | pxt.Map<string>;
     }
 
     interface PackageExtension {

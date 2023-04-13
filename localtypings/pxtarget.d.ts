@@ -1116,6 +1116,7 @@ declare namespace pxt.tutorial {
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
+        simTheme?: Partial<pxt.PackageConfig>;
     }
 
     interface TutorialMetadata {
@@ -1235,6 +1236,7 @@ declare namespace pxt.tutorial {
         templateLoaded?: boolean; // if the template code has been loaded once, we skip
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig // concatenated 'validation.global' sections. Contains validation config applicable to all steps
+        simTheme?: Partial<pxt.PackageConfig>;
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
