@@ -2979,14 +2979,12 @@ ${output}</xml>`;
                     }
 
                     const tag = unwrapNode((e as ts.TaggedTemplateExpression).tag);
-
-                    if (tag.kind !== SK.Identifier) {
-                        return Util.lf("Tagged template literals must use an identifier as the tag");
-                    }
-
                     const tagText = tag.getText();
-                    if (tagText.trim() != tagName.trim()) {
-                        return Util.lf("Function only supports template literals with tag '{0}'", tagName);
+
+                    const possibleTags = tagName.split(";").map(t => t.trim());
+
+                    if (possibleTags.indexOf(tagText) === -1) {
+                        return Util.lf("Function only supports template literals with tag '{0}'", possibleTags.join(", "));
                     }
 
                     const template = (e as ts.TaggedTemplateExpression).template;
