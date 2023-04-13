@@ -484,7 +484,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         let mdPaths = Object.keys(files).filter(f => f.match(mdRegex));
         const tutorialInfo: pxt.Map<pxt.BuiltTutorialInfo> = {};
         for (let path of mdPaths) {
-            const parsed = pxt.tutorial.parseTutorial(files[path]);
+            const parsed = await pxt.tutorial.parseTutorialAsync(files[path]);
             const hash = pxt.BrowserUtils.getTutorialCodeHash(parsed.code);
             const tutorialBlocks = await tutorial.getUsedBlocksAsync(parsed.code, path, parsed.language, true);
             if (tutorialBlocks) {

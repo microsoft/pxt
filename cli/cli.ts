@@ -5697,7 +5697,7 @@ function checkFileSize(files: string[]): number {
     return maxSize;
 }
 
-function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
+async function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
@@ -5908,7 +5908,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             }
         }
         if (targetConfig && targetConfig.galleries) {
-            Object.keys(targetConfig.galleries).forEach(k => {
+            for (const k of Object.keys(targetConfig.galleries)) {
                 pxt.log(`gallery ${k}`);
                 const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
                 let gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
@@ -5919,108 +5919,111 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                 }
                 let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
                 pxt.debug(`found ${gallery.length} galleries`);
-                gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
-                    pxt.debug(`card ${card.shortName || card.name}`);
-                    switch (card.cardType) {
-                        case "tutorial": {
-                            let urls = [card.url]
-                            if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
-                            for (let url of urls) {
-                                const pathedUrl = path.join(url)
-                                if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
-                                    return;
-                                const tutorialMd = nodeutil.resolveMd(docsRoot, url);
-                                if (!tutorialMd) {
-                                    pxt.log(`unable to resolve ${url}`)
-                                    broken++;
-                                    continue;
-                                }
-                                const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
+                for (const gal of gallery) {
+                    for (let cardIndex = 0; cardIndex < gal.cards.length; cardIndex++) {
+                        const card = gal.cards[cardIndex];
+                        pxt.debug(`card ${card.shortName || card.name}`);
+                        switch (card.cardType) {
+                            case "tutorial": {
+                                let urls = [card.url]
+                                if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
+                                for (let url of urls) {
+                                    const pathedUrl = path.join(url)
+                                    if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
+                                        return;
+                                    const tutorialMd = nodeutil.resolveMd(docsRoot, url);
+                                    if (!tutorialMd) {
+                                        pxt.log(`unable to resolve ${url}`)
+                                        broken++;
+                                        continue;
+                                    }
+                                    const tutorial = await pxt.tutorial.parseTutorialAsync(tutorialMd);
+                                    const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                    pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
 
-                                let extraFiles: Map<string> = null;
+                                    let extraFiles: Map<string> = null;
 
-                                if (tutorial.jres) {
-                                    extraFiles = {
-                                        [pxt.TILEMAP_JRES]: tutorial.jres,
-                                        [pxt.TILEMAP_CODE]: pxt.emitTilemapsFromJRes(JSON.parse(tutorial.jres))
-                                    };
+                                    if (tutorial.jres) {
+                                        extraFiles = {
+                                            [pxt.TILEMAP_JRES]: tutorial.jres,
+                                            [pxt.TILEMAP_CODE]: pxt.emitTilemapsFromJRes(JSON.parse(tutorial.jres))
+                                        };
+                                    }
+
+                                    // Handles tilemaps, spritekinds
+                                    if (tutorial.code.some(tut => tut.indexOf("namespace") !== -1)
+                                        // Handles ```python``` snippets
+                                        || (tutorial.language == "python")) {
+                                        tutorial.steps
+                                            .filter(step => !!step.contentMd)
+                                            .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-step${stepIndex}`, step.contentMd)
+                                                .forEach((snippet, snippetIndex) => {
+                                                    snippet.packages = pkgs;
+                                                    snippet.extraFiles = extraFiles;
+                                                    const indexInStep = snippetIndex ? `-${snippetIndex}` : "";
+                                                    addSnippet(
+                                                        snippet,
+                                                        `tutorial/${card.name}-${indexInStep}step`,
+                                                        stepIndex,
+                                                        url + (indexInStep)
+                                                    )
+                                                })
+                                            );
+                                    }
+                                    else {
+                                        addSnippet(<CodeSnippet>{
+                                            name: card.name,
+                                            code: tutorial.code.join("\n"),
+                                            type: "blocks",
+                                            ext: "ts",
+                                            packages: pkgs,
+                                            extraFiles: extraFiles
+                                        }, "tutorial" + gal.name, cardIndex, url);
+                                    }
                                 }
 
-                                // Handles tilemaps, spritekinds
-                                if (tutorial.code.some(tut => tut.indexOf("namespace") !== -1)
-                                    // Handles ```python``` snippets
-                                    || (tutorial.language == "python")) {
-                                    tutorial.steps
-                                        .filter(step => !!step.contentMd)
-                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-step${stepIndex}`, step.contentMd)
-                                            .forEach((snippet, snippetIndex) => {
-                                                snippet.packages = pkgs;
-                                                snippet.extraFiles = extraFiles;
-                                                const indexInStep = snippetIndex ? `-${snippetIndex}` : "";
-                                                addSnippet(
-                                                    snippet,
-                                                    `tutorial/${card.name}-${indexInStep}step`,
-                                                    stepIndex,
-                                                    url + (indexInStep)
-                                                )
-                                            })
-                                        );
-                                }
-                                else {
+                                break;
+                            }
+                            case "example": {
+                                let urls = [card.url]
+                                if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
+                                for (let url of urls) {
+                                    const pathedUrl = path.join(url)
+                                    if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
+                                        return;
+                                    const exMd = nodeutil.resolveMd(docsRoot, url);
+                                    if (!exMd) {
+                                        pxt.log(`unable to resolve ${url}`)
+                                        broken++;
+                                        continue;
+                                    }
+                                    const prj = await pxt.gallery.parseExampleMarkdownAsync(card.name, exMd);
+                                    const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                    pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
+
+                                    let extraFiles: Map<string> = undefined;
+
+                                    if (prj.filesOverride[pxt.TILEMAP_CODE] && prj.filesOverride[pxt.TILEMAP_JRES]) {
+                                        extraFiles = {
+                                            [pxt.TILEMAP_CODE]: prj.filesOverride[pxt.TILEMAP_CODE],
+                                            [pxt.TILEMAP_JRES]: prj.filesOverride[pxt.TILEMAP_JRES]
+                                        };
+                                    }
                                     addSnippet(<CodeSnippet>{
                                         name: card.name,
-                                        code: tutorial.code.join("\n"),
+                                        code: prj.filesOverride[pxt.MAIN_TS],
                                         type: "blocks",
                                         ext: "ts",
-                                        packages: pkgs,
-                                        extraFiles: extraFiles
-                                    }, "tutorial" + gal.name, cardIndex, url);
+                                        extraFiles,
+                                        packages: pkgs
+                                    }, `example/${url}`, 0, url);
                                 }
+                                break;
                             }
-
-                            break;
-                        }
-                        case "example": {
-                            let urls = [card.url]
-                            if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
-                            for (let url of urls) {
-                                const pathedUrl = path.join(url)
-                                if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
-                                    return;
-                                const exMd = nodeutil.resolveMd(docsRoot, url);
-                                if (!exMd) {
-                                    pxt.log(`unable to resolve ${url}`)
-                                    broken++;
-                                    continue;
-                                }
-                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
-
-                                let extraFiles: Map<string> = undefined;
-
-                                if (prj.filesOverride[pxt.TILEMAP_CODE] && prj.filesOverride[pxt.TILEMAP_JRES]) {
-                                    extraFiles = {
-                                        [pxt.TILEMAP_CODE]: prj.filesOverride[pxt.TILEMAP_CODE],
-                                        [pxt.TILEMAP_JRES]: prj.filesOverride[pxt.TILEMAP_JRES]
-                                    };
-                                }
-                                addSnippet(<CodeSnippet>{
-                                    name: card.name,
-                                    code: prj.filesOverride[pxt.MAIN_TS],
-                                    type: "blocks",
-                                    ext: "ts",
-                                    extraFiles,
-                                    packages: pkgs
-                                }, `example/${url}`, 0, url);
-                            }
-                            break;
                         }
                     }
-                }));
-            })
+                }
+            }
         }
     }
 
@@ -6067,7 +6070,7 @@ function cacheUsedBlocksAsync() {
         })
 }
 
-function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
+async function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     const mdPaths: string[] = [];
     const mdRegex = /\.md$/;
@@ -6089,7 +6092,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
         if (!md) {
             pxt.log(`error resolving tutorial markdown at ${path}`);
         }
-        const tutorial = pxt.tutorial.parseTutorial(md) as TutorialInfo;
+        const tutorial = await pxt.tutorial.parseTutorialAsync(md) as TutorialInfo;
         const pkgs: pxt.Map<string> = { "blocksprj": "*" };
         pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(md) || {});
         tutorial.pkgs = pkgs;

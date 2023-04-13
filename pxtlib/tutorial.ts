@@ -2,7 +2,7 @@ namespace pxt.tutorial {
     const _h2Regex = /^##[^#](.*)$([\s\S]*?)(?=^##[^#]|$(?![\r\n]))/gmi;
     const _h3Regex = /^###[^#](.*)$([\s\S]*?)(?=^###[^#]|$(?![\r\n]))/gmi;
 
-    export function parseTutorial(tutorialmd: string): TutorialInfo {
+    export async function parseTutorialAsync(tutorialmd: string): Promise<TutorialInfo> {
         const { metadata, body } = parseTutorialMetadata(tutorialmd);
         const { steps, activities } = parseTutorialMarkdown(body, metadata);
         const title = parseTutorialTitle(body);
@@ -40,7 +40,7 @@ namespace pxt.tutorial {
             diffify(steps, activities);
         }
 
-        const assetFiles = parseAssetJson(assetJson);
+        const assetFiles = await parseAssetJsonAsync(assetJson);
         const simTheme = parseSimThemeJson(simThemeJson);
         const globalBlockConfig = parseTutorialBlockConfig("global", tutorialmd);
         const globalValidationConfig = parseTutorialValidationConfig("global", tutorialmd);
@@ -464,8 +464,8 @@ ${code}
         }
     }
 
-    export function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string } {
-        const tutorialInfo = pxt.tutorial.parseTutorial(md);
+    export async function getTutorialOptionsAsync(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): Promise<{ options: pxt.tutorial.TutorialOptions, editor: string }> {
+        const tutorialInfo = await pxt.tutorial.parseTutorialAsync(md);
         if (!tutorialInfo)
             throw new Error(lf("Invalid tutorial format"));
 
@@ -537,10 +537,21 @@ ${code}
     }
 
 
-    export function parseAssetJson(json: string): pxt.Map<string> {
+    export async function parseAssetJsonAsync(json: string): Promise<pxt.Map<string>> {
         if (!json) return undefined;
 
-        const files: pxt.Map<string> = JSON.parse(json);
+        let files: pxt.Map<string>;
+
+        try {
+            files = JSON.parse(json);
+        }
+        catch (e) {
+            // base64 encoded
+            const base64 = json.split("\n").map(line => line.trim()).join("");
+            const bytes = pxt.U.stringToUint8Array(ts.pxtc.decodeBase64(base64));
+            const decompressed = await pxt.lzmaDecompressAsync(bytes);
+            files = JSON.parse(JSON.parse(decompressed).source);
+        }
 
         return {
             [pxt.TILEMAP_JRES]: files[pxt.TILEMAP_JRES],

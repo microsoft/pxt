@@ -2410,9 +2410,9 @@ export class ProjectView
             .then(hd => this.loadHeaderAsync(hd, editorState));
     }
 
-    importTutorialAsync(md: string) {
+    async importTutorialAsync(md: string) {
         try {
-            const { options, editor } = pxt.tutorial.getTutorialOptions(md, "untitled", "untitled", "", false);
+            const { options, editor } = await pxt.tutorial.getTutorialOptionsAsync(md, "untitled", "untitled", "", false);
             const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
             this.hintManager.clearViewedHints();
 
@@ -2899,65 +2899,65 @@ export class ProjectView
         return Promise.resolve();
     }
 
-    importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
+    async importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
         const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
         this.loadingExample = true;
-        return this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor)
-            .then(r => {
-                const { filename, md, features, autoChooseBoard: autoChooseBoardMeta } = (r || {});
-                const autoChooseBoard = !prj && autoChooseBoardMeta;
-                const example = !!md && pxt.gallery.parseExampleMarkdown(filename, md);
-                if (!example)
-                    throw new Error(lf("Example not found or invalid format"))
-                const opts: pxt.editor.ProjectCreationOptions = example;
-                if (prj) opts.prj = prj;
-                if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
-                    return this.createProjectAsync(opts)
-                        .then(() => {
-                            return this.loadBlocklyAsync()
-                                .then(compiler.getBlocksAsync)
-                                .then(blocksInfo => compiler.decompileAsync(pxt.MAIN_TS, blocksInfo))
+        try {
+            const r = await this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor);
+            const { filename, md, features, autoChooseBoard: autoChooseBoardMeta } = (r || {});
+            const autoChooseBoard = !prj && autoChooseBoardMeta;
+            const example = !!md && await pxt.gallery.parseExampleMarkdownAsync(filename, md);
+            if (!example)
+                throw new Error(lf("Example not found or invalid format"))
+            const opts: pxt.editor.ProjectCreationOptions = example;
+            if (prj) opts.prj = prj;
+            if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
+                return this.createProjectAsync(opts)
+                    .then(() => {
+                        return this.loadBlocklyAsync()
+                            .then(compiler.getBlocksAsync)
+                            .then(blocksInfo => compiler.decompileAsync(pxt.MAIN_TS, blocksInfo))
+                            .then(resp => {
+                                pxt.debug(`example decompilation: ${resp.success}`)
+                                if (resp.success) {
+                                    this.overrideBlocksFile(resp.outfiles[pxt.MAIN_BLOCKS])
+                                }
+                            })
+                            .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
+                    });
+            } else {
+                if (!loadBlocks) {
+                    opts.languageRestriction = pxt.editor.LanguageRestriction.NoBlocks;
+                }
+                opts.preferredEditor = preferredEditor;
+                return this.createProjectAsync(opts)
+                    .then(() => {
+                        // convert js to py as needed
+                        if (preferredEditor == pxt.PYTHON_PROJECT_NAME && example.snippetType !== "python") {
+                            return compiler.getApisInfoAsync() // ensure compiled
+                                .then(() => compiler.pyDecompileAsync(pxt.MAIN_TS))
                                 .then(resp => {
                                     pxt.debug(`example decompilation: ${resp.success}`)
                                     if (resp.success) {
-                                        this.overrideBlocksFile(resp.outfiles[pxt.MAIN_BLOCKS])
+                                        this.overrideTypescriptFile(resp.outfiles[pxt.MAIN_PY])
                                     }
                                 })
                                 .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
-                        });
-                } else {
-                    if (!loadBlocks) {
-                        opts.languageRestriction = pxt.editor.LanguageRestriction.NoBlocks;
-                    }
-                    opts.preferredEditor = preferredEditor;
-                    return this.createProjectAsync(opts)
-                        .then(() => {
-                            // convert js to py as needed
-                            if (preferredEditor == pxt.PYTHON_PROJECT_NAME && example.snippetType !== "python") {
-                                return compiler.getApisInfoAsync() // ensure compiled
-                                    .then(() => compiler.pyDecompileAsync(pxt.MAIN_TS))
-                                    .then(resp => {
-                                        pxt.debug(`example decompilation: ${resp.success}`)
-                                        if (resp.success) {
-                                            this.overrideTypescriptFile(resp.outfiles[pxt.MAIN_PY])
-                                        }
-                                    })
-                                    .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
-                            }
-                            return Promise.resolve();
-                        })
-                }
-            })
-            .catch(e => {
-                core.warningNotification(lf("Please check your internet connection and check the example is valid."));
-                pxt.reportException(e);
-                return Promise.reject(e);
-            })
-            .finally(() => {
-                this.loadingExample = false;
-                core.hideLoading("changingcode")
-            })
+                        }
+                        return Promise.resolve();
+                    })
+            }
+        }
+        catch (e) {
+            core.warningNotification(lf("Please check your internet connection and check the example is valid."));
+            pxt.reportException(e);
+            return Promise.reject(e);
+        }
+        finally {
+            this.loadingExample = false;
+            core.hideLoading("changingcode")
+        }
     }
 
     switchTypeScript() {
@@ -4488,7 +4488,7 @@ export class ProjectView
         }
     }
 
-    private startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string, previousHeaderId?: string, carryoverCode?: boolean): Promise<void> {
+    private async startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string, previousHeaderId?: string, carryoverCode?: boolean): Promise<void> {
         // custom tick for recipe or tutorial "completion". recipes use links in the markdown to
         // progress, so we track when a user "exits" a recipe by loading a new one
         if (this.state.header?.tutorial?.tutorial) {
@@ -4502,47 +4502,49 @@ export class ProjectView
         // make sure we are in the editor
         recipe = recipe && !!this.state.header;
 
-        return this.loadActivityFromMarkdownAsync(tutorialId, tutorialTitle, editorProjectName)
-            .then(r => {
-                const { filename, dependencies, temporary, reportId, autoChooseBoard, features, md } = (r || {});
-                if (!md)
-                    throw new Error(lf("Tutorial {0} not found", tutorialId));
+        try {
+            const r = await this.loadActivityFromMarkdownAsync(tutorialId, tutorialTitle, editorProjectName);
+            const { filename, dependencies, temporary, reportId, autoChooseBoard, features, md } = (r || {});
+            if (!md)
+                throw new Error(lf("Tutorial {0} not found", tutorialId));
 
-                const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
-                this.hintManager.clearViewedHints();
+            const { options, editor: parsedEditor } = await pxt.tutorial.getTutorialOptionsAsync(md, tutorialId, filename, reportId, !!recipe);
+            this.hintManager.clearViewedHints();
 
-                options.mergeCarryoverCode = carryoverCode;
-                options.mergeHeaderId = previousHeaderId;
+            options.mergeCarryoverCode = carryoverCode;
+            options.mergeHeaderId = previousHeaderId;
 
-                // pick tutorial editor
-                const editor = editorProjectName || parsedEditor;
+            // pick tutorial editor
+            const editor = editorProjectName || parsedEditor;
 
-                // start a tutorial within the context of an existing program
-                if (recipe) {
-                    const header = pkg.mainEditorPkg().header;
-                    header.tutorial = options;
-                    header.tutorialCompleted = undefined;
-                    return this.loadHeaderAsync(header);
-                }
+            // start a tutorial within the context of an existing program
+            if (recipe) {
+                const header = pkg.mainEditorPkg().header;
+                header.tutorial = options;
+                header.tutorialCompleted = undefined;
+                return this.loadHeaderAsync(header);
+            }
 
-                return this.createProjectAsync({
-                    name: filename,
-                    tutorial: options,
-                    preferredEditor: editor,
-                    dependencies,
-                    temporary: temporary,
-                    skillmapProject: pxt.BrowserUtils.isSkillmapEditor()
-                })
-                    .then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve())
-                    .then(() => this.postTutorialProgress())
+            return this.createProjectAsync({
+                name: filename,
+                tutorial: options,
+                preferredEditor: editor,
+                dependencies,
+                temporary: temporary,
+                skillmapProject: pxt.BrowserUtils.isSkillmapEditor()
             })
-            .catch((e) => {
-                pxt.reportException(e, { tutorialId });
-                core.warningNotification(lf("Please check your internet connection and check the tutorial is valid."));
-                // go home if possible
-                this.openHome();
-            })
-            .finally(() => core.hideLoading("tutorial"));
+                .then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve())
+                .then(() => this.postTutorialProgress())
+        }
+        catch (e) {
+            pxt.reportException(e, { tutorialId });
+            core.warningNotification(lf("Please check your internet connection and check the tutorial is valid."));
+            // go home if possible
+            this.openHome();
+        }
+        finally {
+            core.hideLoading("tutorial")
+        }
     }
 
     async startActivity(opts: pxt.editor.StartActivityOptions) {
@@ -4698,9 +4700,14 @@ export class ProjectView
 
     private saveTutorialTemplateAsync() {
         return pkg.mainEditorPkg().buildAssetsAsync()
-            .then(() => pkg.mainPkg.saveToJsonAsync())
-            .then(project => {
-                pxt.BrowserUtils.browserDownloadText(project.source, pkg.genFileName(".assets.mkcd"))
+            .then(() => this.exportAsync())
+            .then(base64 => {
+                const lines: string[] = [];
+                const LINE_LENGTH = 100;
+                for (let index = 0; index < base64.length; index += LINE_LENGTH) {
+                    lines.push(base64.substring(index, Math.min(index + LINE_LENGTH, base64.length)));
+                }
+                pxt.BrowserUtils.browserDownloadText(lines.join("\n"), pkg.genFileName(".assets.mkcd"))
             })
     }
 

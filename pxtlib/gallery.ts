@@ -55,11 +55,11 @@ namespace pxt.gallery {
         return undefined;
     }
 
-    export function parseTemplateProjectJSON(md: string): pxt.Map<string> {
+    export async function parseTemplateProjectJSONAsync(md: string): Promise<pxt.Map<string>> {
         const pm = /```assetjson\s+((.|\s)+?)\s*```/i.exec(md);
 
         if (pm) {
-            return pxt.tutorial.parseAssetJson(pm[1]);
+            return pxt.tutorial.parseAssetJsonAsync(pm[1]);
         }
 
         return {};
@@ -74,7 +74,7 @@ namespace pxt.gallery {
         return {};
     }
 
-    export function parseExampleMarkdown(name: string, md: string): GalleryProject {
+    export async function parseExampleMarkdownAsync(name: string, md: string): Promise<GalleryProject> {
         if (!md) return undefined;
 
         const m = /```(blocks?|typescript|python|spy|sim)\s+((.|\s)+?)\s*```/i.exec(md);
@@ -102,7 +102,7 @@ namespace pxt.gallery {
 
         prj.filesOverride = {
             ...prj.filesOverride,
-            ...parseTemplateProjectJSON(md)
+            ...(await parseTemplateProjectJSONAsync(md))
         }
 
         if (jres) {

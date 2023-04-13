@@ -1134,7 +1134,7 @@ namespace pxt.runner {
         })
     }
 
-    function readAssetJson(options: ClientRenderOptions) {
+    async function readAssetJsonAsync(options: ClientRenderOptions) {
         let assetJson: string;
         let tilemapJres: string;
         if (options.jresClass) {
@@ -1152,11 +1152,11 @@ namespace pxt.runner {
             });
         }
 
-        options.assetJSON = mergeAssetJson(assetJson, tilemapJres);
+        options.assetJSON = await mergeAssetJsonAsync(assetJson, tilemapJres);
 
-        function mergeAssetJson(assetJSON: string, tilemapJres: string) {
+        async function mergeAssetJsonAsync(assetJSON: string, tilemapJres: string) {
             if (!assetJSON && !tilemapJres) return undefined;
-            const mergedJson = pxt.tutorial.parseAssetJson(assetJSON) || {};
+            const mergedJson = await pxt.tutorial.parseAssetJsonAsync(assetJSON) || {};
             if (tilemapJres) {
                 const parsedTmapJres = JSON.parse(tilemapJres);
                 mergedJson[pxt.TILEMAP_JRES] = JSON.stringify(parsedTmapJres);
@@ -1291,14 +1291,14 @@ namespace pxt.runner {
         });
     }
 
-    export function renderAsync(options?: ClientRenderOptions): Promise<void> {
+    export async function renderAsync(options?: ClientRenderOptions): Promise<void> {
         pxt.analytics.enable(pxt.Util.userLanguage());
         if (!options) options = defaultClientRenderOptions();
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
-        readAssetJson(options);
+        await readAssetJsonAsync(options);
 
         renderQueue = [];
         renderGhost(options);
