@@ -188,6 +188,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     protected onDownloadButtonClick = async () => {
         pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         if (pxt.appTarget.appTheme?.preferWebUSBDownload
+            && pxt.appTarget?.compile?.webUSB
             && pxt.usb.isEnabled
             && !userPrefersDownloadFlagSet()
             && !pxt.packetio.isConnected()
