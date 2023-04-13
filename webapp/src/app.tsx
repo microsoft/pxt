@@ -5615,7 +5615,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Handle logins that start via query parameter (for now, this is only Clever)
     if (query["authlogin"]) {
-        await auth.loginAsync(query["authlogin"] as pxt.IdentityProviderId, true);
+        await auth.loginAsync("clever", true);
     }
 
     await auth.initAsync();
