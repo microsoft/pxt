@@ -105,6 +105,7 @@ declare namespace pxt {
         cacheusedblocksdirs?: string[]; // list of /docs subfolders for parsing and caching used block ids (for tutorial loading)
         blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
         defaultBadges?: pxt.auth.Badge[];
+        noSimShims?: boolean; // skip check for simshims and only build from cpp / user level typescript.
     }
 
     interface BrowserOptions {

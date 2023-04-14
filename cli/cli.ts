@@ -3940,6 +3940,9 @@ function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise
 
 function simshimAsync() {
     pxt.debug("looking for shim annotations in the simulator.")
+    if (pxt.appTarget.noSimShims) {
+        return Promise.resolve();
+    }
     if (!fs.existsSync(path.join(simDir(), "tsconfig.json"))) {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
