@@ -245,6 +245,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     function addLocal(hd: pxt.workspace.Header) {
+        pxt.tickEvent("extensions.local");
         workspace.getTextAsync(hd.id)
             .then(files => {
                 let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
@@ -255,15 +256,24 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     function installExtension(scr: ExtensionMeta) {
         switch (scr.type) {
             case ExtensionType.Bundled:
-                pxt.tickEvent("packages.bundled", { name: scr.name });
+                pxt.tickEvent("extensions.bundled", { name: scr.name });
                 props.hideExtensions();
                 addDepIfNoConflict(scr.pkgConfig, "*");
                 break;
             case ExtensionType.Github:
+                pxt.tickEvent("extensions.github", {
+                    name: scr.repo.fullName,
+                    slug: scr.repo.slug.toLowerCase(),
+                    tag: scr.repo.tag,
+                    fileName: scr.repo.fileName
+                });
                 props.hideExtensions();
                 addGithubPackage(scr);
                 break;
             case ExtensionType.ShareScript:
+                pxt.tickEvent("extensions.sharescript", {
+                    name: scr.scriptInfo.id //This is share script as extension, so safe to assume it is public
+                });
                 props.hideExtensions();
                 addShareUrlExtension(scr.scriptInfo);
                 break;
@@ -271,7 +281,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     function importExtension() {
-        pxt.tickEvent("extensions.import", undefined, { interactiveConsent: true });
+        pxt.tickEvent("extensions.importfile", undefined, { interactiveConsent: true });
         props.hideExtensions()
         props.importExtensionCallback()
     }
