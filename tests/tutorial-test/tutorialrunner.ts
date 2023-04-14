@@ -28,18 +28,18 @@ describe("tutorial test cases", () => {
     };
 
     filenames.forEach(filename => {
-        it("should correctly parse " + path.basename(filename), () => {
-            tutorialTest(filename)
+        it("should correctly parse " + path.basename(filename), async () => {
+            await tutorialTestAsync(filename)
         });
     });
 });
 
-function tutorialTest(filename: string) {
+async function tutorialTestAsync(filename: string) {
     const input = fs.readFileSync(filename, "utf8");
     const basename = path.basename(filename).slice(0, -3) + ".json";
     const baselinePath = path.join(baselineDir, basename);
 
-    let info = pxt.tutorial.parseTutorial(input);
+    let info = await pxt.tutorial.parseTutorialAsync(input);
     let baseline;
     try {
         baseline = JSON.parse(fs.readFileSync(baselinePath, "utf8"));
