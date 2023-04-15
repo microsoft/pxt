@@ -10,6 +10,7 @@ import * as cloudsync from "./cloudsync";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util";
+import { pairAsync } from "./cmds";
 
 let dontShowDownloadFlag = false;
 
@@ -744,7 +745,7 @@ export function renderBrowserDownloadInstructions(saveonly?: boolean) {
 
     const onPairClicked = () => {
         core.hideDialog();
-        pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync);
+        pairAsync();
     }
 
     const onCheckboxClicked = (value: boolean) => {
