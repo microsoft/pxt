@@ -336,7 +336,7 @@ function showPairStepAsync(
                     tryAgain = true;
                 }
             }
-        ]
+        ].filter(el => !!el)
     })
     .then(() => tryAgain)
 }
