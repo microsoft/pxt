@@ -48,9 +48,14 @@ export function excludeCloudMetadataFields(h: Header): Header {
     return excludeMetadataFields(h, cloudMetadataFields);
 }
 
-async function listAsync(): Promise<Header[]> {
+async function listAsync(hdrs?: Header[]): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
-        const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
+        const params: pxt.Map<string> = {};
+        if (hdrs?.length) {
+            params["projectIds"] = hdrs.map(h => h.id).join(",");
+        }
+        const url = pxt.Util.stringifyQueryString("/api/user/project", params);
+        const result = await auth.apiAsync<CloudProject[]>(url);
         if (result.success) {
             const syncTime = U.nowSeconds()
             const userId = auth.userProfile()?.id;
@@ -390,14 +395,9 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
         pxt.tickEvent(`identity.sync.start`)
         const agoStr = (t: number) => `${syncStart - t} seconds ago`
 
-        // Fetch all cloud headers
-        let remoteHeaders = await listAsync();
+        // Fetch all cloud headers (or just the ones we need to sync)
+        const remoteHeaders = await listAsync(!fullSync ? opts.hdrs : undefined);
 
-        // If not doing a full sync, filter to headers that already exist locally.
-        // TODO: Support passing a set of header ids to listAsync. Requires backend change.
-        if (!fullSync) {
-            remoteHeaders = remoteHeaders.filter(remote => localCloudHeaders.some(local => local.id === remote.id));
-        }
         const numDiff = remoteHeaders.length - localCloudHeaders.length
         if (numDiff !== 0) {
             pxt.debug(`${Math.abs(numDiff)} ${numDiff > 0 ? 'more' : 'fewer'} projects found in the cloud.`);
