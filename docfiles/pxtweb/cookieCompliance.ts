@@ -190,7 +190,7 @@ namespace pxt {
 
         if (typeof pxtConfig === "undefined" || !pxtConfig) return;
 
-        const telemetryItem = envelope.data.baseData;
+        const telemetryItem = envelope.baseData;
         telemetryItem.properties = telemetryItem.properties || {};
         telemetryItem.properties["target"] = pxtConfig.targetId;
         telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')

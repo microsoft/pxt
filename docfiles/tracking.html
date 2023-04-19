@@ -18,7 +18,7 @@
         window.appInsights=appInsights;
         appInsights.queue.push(function () {
             appInsights.context.addTelemetryInitializer(function (envelope) {
-                var telemetryItem = envelope.data.baseData;
+                var telemetryItem = envelope.baseData;
                 telemetryItem.properties = telemetryItem.properties || {};
                 telemetryItem.properties["cookie"] = isProduction;
                 if (typeof pxtConfig === "undefined" || !pxtConfig || !pxtConfig.targetId) {
@@ -50,7 +50,13 @@
         var location = window.location.toString();
         // Use generic title for script share page, otherwise use current page title
         var pageTitle = isScriptPage(location) ? "Share Page" : null;
-        appInsights.trackPageView(pageTitle, scrubUrl(location), {urlReferrer: scrubUrl(document.referrer.toString())});
+        appInsights.trackPageView({
+            name: pageTitle,
+            uri: scrubUrl(location),
+            properties: {
+                urlReferrer: scrubUrl(document.referrer.toString())
+            }
+        });
 
         var scriptIdRegex = /(?:S?\d{5}-\d{5}-\d{5}-\d{5})|(?:_[0-9a-zA-Z]{12})/g;
         // Check if the current page contains a share URL
