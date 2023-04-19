@@ -441,6 +441,7 @@ declare namespace pxt {
         experimentalHw?: boolean; // enable experimental hardware
         // recipes?: boolean; // inlined tutorials - deprecated
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
+        preferWebUSBDownload?: boolean; // default to webusb over normal browser download when available
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean; // prompt user to name project when creating new one

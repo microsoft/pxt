@@ -1,4 +1,10 @@
 namespace pxt.commands {
+    export enum WebUSBPairResult {
+        Failed = 0,
+        Success = 1,
+        UserRejected = 2,
+    }
+
     export interface RecompileOptions {
         recompile: boolean;
         useVariants: string[];
@@ -29,7 +35,7 @@ namespace pxt.commands {
     export let showProgramTooLargeErrorAsync: (variants: string[], confirmAsync: (options: any) => Promise<number>) => Promise<RecompileOptions>;
     export let saveProjectAsync: (project: pxt.cpp.HexFile) => Promise<void> = undefined;
     export let electronDeployAsync: (r: ts.pxtc.CompileResult) => Promise<void> = undefined; // A pointer to the Electron deploy function, so that targets can access it in their extension.ts
-    export let webUsbPairDialogAsync: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number> = undefined;
+    export let webUsbPairDialogAsync: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<WebUSBPairResult>, implicitlyCalled?: boolean) => Promise<WebUSBPairResult> = undefined;
     export let onTutorialCompleted: () => void = undefined;
     export let workspaceLoadedAsync: () => Promise<void> = undefined;
 }
