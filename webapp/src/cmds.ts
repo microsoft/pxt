@@ -14,10 +14,6 @@ function log(msg: string) {
 }
 
 let extensionResult: pxt.editor.ExtensionResult;
-// This can be overidden by the extension result
-pxt.commands.renderBrowserDownloadInstructions = dialogs.renderBrowserDownloadInstructions;
-pxt.commands.renderIncompatibleHardwareDialog = dialogs.renderIncompatibleHardwareDialog;
-
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
@@ -314,6 +310,9 @@ function applyExtensionResult() {
     if (res.renderBrowserDownloadInstructions) {
         log(`extension upload renderBrowserDownloadInstructions`);
         pxt.commands.renderBrowserDownloadInstructions = res.renderBrowserDownloadInstructions;
+    } else {
+        // default
+        pxt.commands.renderBrowserDownloadInstructions = dialogs.renderBrowserDownloadInstructions;
     }
     if (res.renderUsbPairDialog) {
         log(`extension renderUsbPairDialog`)
@@ -322,6 +321,9 @@ function applyExtensionResult() {
     if (res.renderIncompatibleHardwareDialog) {
         log(`extension renderIncompatibleHardwareDialog`)
         pxt.commands.renderIncompatibleHardwareDialog = res.renderIncompatibleHardwareDialog;
+    } else {
+        // default
+        pxt.commands.renderIncompatibleHardwareDialog = dialogs.renderIncompatibleHardwareDialog;
     }
     if (res.showUploadInstructionsAsync) {
         log(`extension upload instructions async`);
