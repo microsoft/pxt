@@ -5616,8 +5616,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     await auth.initAsync();
 
     // Handle logins that start via query parameter (for now, this is only Clever)
-    if (query["authlogin"]) {
-        await auth.loginAsync("clever", true);
+    const autoLogin = query["autologin"] as pxt.IdentityProviderId;
+    if (autoLogin) {
+        await auth.loginAsync(autoLogin, true);
     }
 
     cloud.init(); // depends on auth.init() and workspace.ts's top level
