@@ -8,6 +8,12 @@
             src: "https://js.monitor.azure.com/scripts/b/ai.2.min.js", // The SDK URL Source
             onInit: function (sdk) {
                 sdk.addTelemetryInitializer(function (envelope) {   // TODO thsparks : Make sure this gets called.
+                    // App Insights automatically sends a page view event on setup, but we send our own later with additional properties.
+                    // This stops the automatic event from firing, so we don't end up with duplicate page view events.
+                    if(envelope.baseType == "PageviewData" && !envelope.baseData.properties) {
+                        return false;
+                    }
+
                     var telemetryItem = envelope.baseData;
                     telemetryItem.properties = telemetryItem.properties || {};
                     telemetryItem.properties["cookie"] = isProduction;
