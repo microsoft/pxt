@@ -1,5 +1,6 @@
 <script type="text/javascript" src="/doccdn/pxtweb.js"></script>
 <script type="text/javascript">
+    debugger;
     window.loadAppInsights = function (includeCookie) {
         //Backend will patch / + doccdn + / with CDN url and the check that URL ends with the sha would pass
         var isProduction = includeCookie && (/[0-9a-f]{40}\/ai\.2\.min\.js$/.test("/doccdn/ai.2.min.js"));
@@ -17,7 +18,7 @@
         });
         window.appInsights=appInsights;
         appInsights.queue.push(function () {
-            appInsights.context.addTelemetryInitializer(function (envelope) {
+            appInsights.context.addTelemetryInitializer(function (envelope) {   // TODO thsparks : Make sure this gets called.
                 var telemetryItem = envelope.baseData;
                 telemetryItem.properties = telemetryItem.properties || {};
                 telemetryItem.properties["cookie"] = isProduction;
