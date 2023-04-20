@@ -1027,19 +1027,38 @@ namespace pxt {
                 }
             }
 
-            for (const tm of getTilemaps(pack.parseJRes())) {
-                this.state.tilemaps.add({
-                    internalID: this.getNewInternalId(),
-                    type: AssetType.Tilemap,
-                    id: tm.id,
-                    meta: {
-                        // For tilemaps, use the id as the display name for backwards compat
-                        displayName: tm.displayName || tm.id,
-                        package: pack.id
-                    },
-                    data: decodeTilemap(tm, id => this.resolveTile(id))
-                })
+            for (const dep of allPackages) {
+                const isProject = dep.id === "this";
+                for (const tm of getTilemaps(dep.parseJRes())) {
+                    if (isProject) {
+                        this.state.tilemaps.add({
+                            internalID: this.getNewInternalId(),
+                            type: AssetType.Tilemap,
+                            id: tm.id,
+                            meta: {
+                                // For tilemaps, use the id as the display name for backwards compat
+                                displayName: tm.displayName || tm.id,
+                                package: pack.id
+                            },
+                            data: decodeTilemap(tm, id => this.resolveTile(id))
+                        });
+                    }
+                    else {
+                        this.gallery.tilemaps.add({
+                            internalID: this.getNewInternalId(),
+                            type: AssetType.Tilemap,
+                            id: tm.id,
+                            meta: {
+                                // For tilemaps, use the id as the display name for backwards compat
+                                displayName: tm.displayName || tm.id,
+                                package: pack.id
+                            },
+                            data: decodeTilemap(tm, id => this.gallery.tiles.getByID(id))
+                        });
+                    }
+                }
             }
+
 
             this.committedState = this.cloneState();
             this.undoStack = [];
@@ -1458,6 +1477,9 @@ namespace pxt {
                     if (entry.namespace.endsWith(".")) {
                         outJRes[varName].namespace += ".";
                     }
+                }
+                if (outJRes[varName].tileset) {
+                    outJRes[varName].tileset = entry.tileset.map(t => idMapping[t] || t);
                 }
             }
         }
