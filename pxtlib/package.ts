@@ -167,6 +167,7 @@ namespace pxt {
             const config = JSON.parse(JSON.stringify(this.config)) as pxt.PackageConfig;
             config.files = config.files.filter(f => f.endsWith(".jres"));
             config.files.push("gallery.ts");
+            config.dependencies = {};
             this.config = config;
             this.saveConfig();
 
@@ -269,7 +270,7 @@ namespace pxt {
         }
 
         isAssetPack() {
-            return this.level !== 0 && !!this.config?.assetPack;
+            return this.level > 0 && !!this.config?.assetPack;
         }
 
         private resolveVersionAsync() {
