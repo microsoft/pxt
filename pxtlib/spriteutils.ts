@@ -248,10 +248,10 @@ namespace pxt.sprite {
         }
     }
 
-    export function encodeTilemap(t: TilemapData, fileType: "typescript" | "python"): string {
+    export function encodeTilemap(t: TilemapData, fileType: "typescript" | "python", idMap?: {[index: string]: string}): string {
         if (!t) return `null`;
 
-        return `tiles.createTilemap(${tilemapToTilemapLiteral(t.tilemap)}, ${bitmapToImageLiteral(Bitmap.fromData(t.layers), fileType)}, [${t.tileset.tiles.map(tile => encodeTile(tile, fileType))}], ${tileWidthToTileScale(t.tileset.tileWidth)})`
+        return `tiles.createTilemap(${tilemapToTilemapLiteral(t.tilemap)}, ${bitmapToImageLiteral(Bitmap.fromData(t.layers), fileType)}, [${t.tileset.tiles.map(tile => encodeTile(tile, fileType, idMap))}], ${tileWidthToTileScale(t.tileset.tileWidth)})`
     }
 
     export function decodeTilemap(literal: string, fileType: "typescript" | "python", proj: TilemapProject): TilemapData {
@@ -546,7 +546,10 @@ namespace pxt.sprite {
         return tileset ? tileset.split(",").filter(t => !!t.trim()).map(t => decodeTile(t, proj)) : [];
     }
 
-    function encodeTile(tile: Tile, fileType: "typescript" | "python") {
+    function encodeTile(tile: Tile, fileType: "typescript" | "python", idMap?: {[index: string]: string}) {
+        if (idMap && idMap[tile.id]) {
+            return idMap[tile.id];
+        }
         return tile.id;
     }
 
