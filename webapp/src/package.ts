@@ -671,7 +671,7 @@ class Host
                     epkg.files[filename] = new File(epkg, filename, contents);
                 }
                 else {
-                    throw Util.oops("trying to nonexistent write " + module + " / " + filename)
+                    throw Util.oops("trying to write file not listed in pxt.json " + module + " / " + filename)
                 }
             }
             else {
