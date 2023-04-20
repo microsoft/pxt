@@ -58,6 +58,21 @@ namespace pxt {
                 const packagesConfig = await pxt.packagesConfigAsync()
                 const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is whitelisted
                 return gitRepo ? await pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag, packagesConfig) : null
+            } else if (fullVers.startsWith("workspace:")) {
+                // It's a local package
+                const projId = fullVers.slice("workspace:".length);
+                // TODO: Fetch pxt.json from the workspace project
+                return null;
+            } else if (fullVers.startsWith("pub:")) {
+                const id = fullVers.slice("pub:".length);
+                try {
+                    const files = await Cloud.downloadScriptFilesAsync(id);
+                    return JSON.parse(files[CONFIG_NAME]);
+                }
+                catch (e) {
+                    pxt.log(`Unable to fetch files for published script '${fullVers}'`);
+                    return null;
+                }
             } else {
                 // If it's not from GH, assume it's a bundled package
                 // TODO: Add logic for shared packages if we enable that
@@ -81,8 +96,9 @@ namespace pxt {
         public ignoreTests = false;
         public cppOnly = false;
         public installedVersion: string; // resolve version
+        protected assetPackFiles: pxt.Map<string>;
 
-        constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
+        constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package, public depName: string) {
             if (addedBy) {
                 this.level = addedBy.level + 1
             }
@@ -122,32 +138,75 @@ namespace pxt {
                     : undefined;
         }
 
-        commonDownloadAsync(): Promise<Map<string>> {
+        async commonDownloadAsync(): Promise<Map<string>> {
             const proto = this.verProtocol()
+            let files: Map<string>;
+
             if (proto == "pub") {
-                return Cloud.downloadScriptFilesAsync(this.verArgument())
+                files = await Cloud.downloadScriptFilesAsync(this.verArgument())
             } else if (proto == "github") {
-                return pxt.packagesConfigAsync()
-                    .then(config => pxt.github.downloadPackageAsync(this.verArgument(), config))
-                    .then(resp => resp.files)
+                const config = await pxt.packagesConfigAsync();
+                const resp = await pxt.github.downloadPackageAsync(this.verArgument(), config)
+                files = resp.files;
             } else if (proto == "embed") {
-                const resp = pxt.getEmbeddedScript(this.verArgument())
-                return Promise.resolve(resp)
+                files = pxt.getEmbeddedScript(this.verArgument())
             } else if (proto == "pkg") {
                 // the package source is serialized in a file in the package itself
                 const src = this.parent || this; // fall back to current package if no parent
                 const pkgFilesSrc = src.readFile(this.verArgument());
-                const pkgFilesJson = ts.pxtc.Util.jsonTryParse(pkgFilesSrc) as Map<string>;
+                const pkgFilesJson = U.jsonTryParse(pkgFilesSrc) as Map<string>;
                 if (!pkgFilesJson)
                     pxt.log(`unable to find ${this.verArgument()}`)
-                return Promise.resolve(pkgFilesJson)
-            } else return Promise.resolve(null as Map<string>)
+                files = pkgFilesJson
+            }
+
+            return files;
+        }
+
+        writeAssetPackFiles() {
+            const config = JSON.parse(JSON.stringify(this.config)) as pxt.PackageConfig;
+            config.files = config.files.filter(f => f.endsWith(".jres"));
+            config.files.push("gallery.ts");
+            config.dependencies = {};
+            this.config = config;
+            this.saveConfig();
+
+            let galleryTS = "";
+            for (const file of config.files) {
+                const content = this.readFile(file);
+                const parsed = U.jsonTryParse(content);
+
+                if (parsed) {
+                    const [jres, ts] = pxt.emitGalleryDeclarations(parsed, this.getNamespaceName());
+                    this.writeFile(file, JSON.stringify(jres, null, 4));
+                    galleryTS += ts;
+                }
+            }
+            this.writeFile("gallery.ts", galleryTS);
+        }
+
+        protected getNamespaceName() {
+            let child: Package = this;
+            let parent = child.addedBy[0];
+            const parts: string[] = [];
+
+            while (parent && parent !== child) {
+                if (child.depName) parts.push(child.depName);
+                child = parent;
+                parent = child.addedBy[0];
+            }
+
+            return parts.reverse().map(n => ts.pxtc.escapeIdentifier(n)).join(".");
         }
 
         host() { return this.parent._host }
 
         readFile(fn: string) {
             return this.host().readFile(this, fn)
+        }
+
+        writeFile(fn: string, content: string) {
+            this.host().writeFile(this, fn, content, true);
         }
 
         readGitJson(): pxt.github.GitJson {
@@ -210,6 +269,10 @@ namespace pxt {
             return allres
         }
 
+        isAssetPack() {
+            return this.level > 0 && !!this.config?.assetPack;
+        }
+
         private resolveVersionAsync() {
             let v = this._verspec
 
@@ -256,6 +319,10 @@ namespace pxt {
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
                             this.loadConfig();
+
+                            if (this.isAssetPack()) {
+                                this.writeAssetPackFiles();
+                            }
                             pxt.debug(`installed ${this.id} /${verNo}`)
                         })
 
@@ -745,7 +812,7 @@ namespace pxt {
                             mod.addedBy.push(from)
                         }
                     } else {
-                        let mod = new Package(id, ver, from.parent, from)
+                        let mod = new Package(id, ver, from.parent, from, id)
                         if (isCpp)
                             mod.cppOnly = true
                         from.parent.deps[id] = mod
@@ -932,7 +999,7 @@ namespace pxt {
         private _jres: Map<JRes>;
 
         constructor(public _host: Host) {
-            super("this", "file:.", null, null)
+            super("this", "file:.", null, null, null)
             this.parent = this
             this.addedBy = [this]
             this.level = 0

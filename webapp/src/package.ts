@@ -497,12 +497,12 @@ export class EditorPackage {
         return this.filterFiles(f => f.getName() == name)[0]
     }
 
-    buildAssetsAsync() {
-        if (!this.tilemapProject?.needsRebuild) return Promise.resolve();
+    async buildAssetsAsync() {
+        if (!this.tilemapProject?.needsRebuild) return;
         this.tilemapProject.needsRebuild = false;
 
-        return this.buildTilemapsAsync()
-            .then(() => this.buildImagesAsync())
+        await this.buildTilemapsAsync();
+        await this.buildImagesAsync();
     }
 
     buildTilemapsAsync() {
@@ -665,7 +665,18 @@ class Host
             // only write config writes
             let epkg = getEditorPkg(module)
             let file = epkg.files[filename];
-            file.setContentAsync(contents, force);
+
+            if (!file) {
+                if (module.config.files.indexOf(filename) !== -1) {
+                    epkg.files[filename] = new File(epkg, filename, contents);
+                }
+                else {
+                    throw Util.oops("trying to write file not listed in pxt.json " + module + " / " + filename)
+                }
+            }
+            else {
+                file.setContentAsync(contents, force);
+            }
             return;
         }
         throw Util.oops("trying to write " + module + " / " + filename)
