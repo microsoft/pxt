@@ -269,7 +269,7 @@ namespace pxt {
         }
 
         isAssetPack() {
-            return !!this.config?.assetPack;
+            return this.level !== 0 && !!this.config?.assetPack;
         }
 
         private resolveVersionAsync() {
