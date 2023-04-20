@@ -188,7 +188,13 @@ namespace pxt {
     function telemetryInitializer(envelope: any) {
         const pxtConfig = (window as any).pxtConfig;
 
-        if (typeof pxtConfig === "undefined" || !pxtConfig) return;
+        // App Insights automatically sends a page view event on setup, but we send our own later with additional properties.
+        // This stops the automatic event from firing, so we don't end up with duplicate page view events.
+        if(envelope.baseType == "PageviewData" && !envelope.baseData.properties) {
+            return false;
+        }
+
+        if (typeof pxtConfig === "undefined" || !pxtConfig) return true;
 
         const telemetryItem = envelope.baseData;
         telemetryItem.properties = telemetryItem.properties || {};
@@ -219,6 +225,8 @@ namespace pxt {
         // of only setting it to true for production sites where interactive consent has been obtained
         // so that we don't break legacy queries
         telemetryItem.properties["cookie"] = interactiveConsent && isProduction;
+
+        return true;
     }
 
     export function setInteractiveConsent(enabled: boolean) {
