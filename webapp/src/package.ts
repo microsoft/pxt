@@ -457,8 +457,6 @@ export class EditorPackage {
         let lst = Util.values(this.files)
         if (!pxt.options.debug)
             lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && f.name != pxt.SERIAL_EDITOR_FILE && f.name != pxt.PALETTES_FILE)
-        if (this.ksPkg?.config?.assetPack && this.ksPkg?.level !== 0)
-            lst = lst.filter(f => f.getExtension() === "jres" || f.name === "gallery.ts")
         lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
         return lst
     }
@@ -500,8 +498,6 @@ export class EditorPackage {
     }
 
     async buildAssetsAsync() {
-        // await this.buildDependencyAssetsAsync();
-
         if (!this.tilemapProject?.needsRebuild) return;
         this.tilemapProject.needsRebuild = false;
 
@@ -550,45 +546,6 @@ export class EditorPackage {
                 compiler.refreshLanguageServiceApisInfo();
             });
     }
-
-    // async buildDependencyAssetsAsync() {
-    //     for (const dep of this.pkgAndDeps()) {
-    //         if (dep.getKsPkg()?.config?.assetPack) {
-    //             if (dep.files["gallery.ts"]) continue;
-    //             let out = "";
-    //             const jres = dep.filterFiles(f => f.getExtension() === "jres" && f.epkg === dep);
-    //             const namespaceName = dep.getNamespaceName();
-    //             for (const file of jres) {
-    //                 const parsed = JSON.parse(file.content);
-    //                 const [updatedJres, ts] = pxt.emitGalleryDeclarations(parsed, namespaceName);
-    //                 out += ts;
-    //                 await dep.setContentAsync(file.name, JSON.stringify(updatedJres, null, 4));
-    //             }
-
-    //             if (out) {
-    //                 await dep.setContentAsync("gallery.ts", out);
-    //             }
-    //         }
-    //     }
-    // }
-
-    // protected getNamespaceName() {
-    //     let child = this.getKsPkg();
-    //     let parent = child.parent;
-    //     const parts: string[] = [];
-
-    //     while (parent && parent !== child) {
-    //         for (const key of Object.keys(parent.deps)) {
-    //             if (parent.deps[key] === child) {
-    //                 parts.push(key)
-    //             }
-    //         }
-    //         child = parent;
-    //         parent = child.parent;
-    //     }
-
-    //     return parts.reverse().map(n => ts.pxtc.escapeIdentifier(n)).join(".");
-    // }
 
     cacheTranspile(fromLanguage: pxtc.CodeLang, fromText: string, toLanguage: pxtc.CodeLang, toText: string) {
         this.transpileCache.push({
