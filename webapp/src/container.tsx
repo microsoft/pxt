@@ -124,7 +124,7 @@ export interface SettingsMenuState {
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
-
+    dropdown: sui.DropdownMenu;
     constructor(props: SettingsMenuProps) {
         super(props);
         this.state = {
@@ -149,6 +149,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
+        this.hide = this.hide.bind(this);
     }
 
     showExitAndSaveDialog() {
@@ -247,8 +248,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.printCode();
     }
 
+    hide() {
+        this.dropdown?.hide();
+    }
+
     signOutGithub() {
         pxt.tickEvent("menu.github.signout");
+        this.hide();
         const githubProvider = cloudsync.githubProvider();
         if (githubProvider) {
             githubProvider.logout();
@@ -306,7 +312,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {showHome && <sui.Item className="mobile only inherit" role="menuitem" icon="home" title={lf("Home")} text={lf("Home")} ariaLabel={lf("Home screen")} onClick={this.showExitAndSaveDialog} />}
             {showShare && <sui.Item className="mobile only inherit" role="menuitem" icon="share alternate" title={lf("Publish your game to create a shareable link")} text={lf("Share")} ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
             {(showHome || showShare) && <div className="ui divider mobile only inherit" />}
