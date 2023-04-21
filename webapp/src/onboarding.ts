@@ -42,7 +42,7 @@ export async function parseTourStepsAsync(name: string): Promise<pxt.tour.Bubble
         if (step.headerKind === "double" && step.attributes && step.attributes.title && step.attributes.description && step.attributes.location && step.attributes.highlight) {
             const title = step.attributes.title;
             const description = step.attributes.description;
-            let location = getLocation(step.attributes.location);
+            let location = getLocation(step.attributes.location.toLowerCase());
             let querySelector = getTargetMap(step.attributes.highlight.toLowerCase());
             if (!querySelector) {
                 querySelector = { targetQuery: "#root" };
