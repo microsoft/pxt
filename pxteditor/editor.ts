@@ -95,7 +95,7 @@ namespace pxt.editor {
         screenshoting?: boolean;
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
-        onboarding?: boolean;
+        onboarding?: pxt.tour.BubbleStep[];
     }
 
     export interface EditorState {

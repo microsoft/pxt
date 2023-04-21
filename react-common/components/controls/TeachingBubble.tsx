@@ -6,13 +6,6 @@ import { ContainerProps, classList } from "../util";
 import { FocusTrap } from "./FocusTrap";
 import { useEffect } from "react";
 
-export enum Location {
-    Above,
-    Below,
-    Left,
-    Right,
-    Center
-}
 
 export interface CutoutBounds {
     top: number;
@@ -23,17 +16,8 @@ export interface CutoutBounds {
     height: number;
 }
 
-export interface TargetContent {
-    title: string;
-    description: string;
-    targetQuery: string;
-    location: Location;
-    sansQuery?: string; // Use this to exclude an element from the cutout
-    sansLocation?: Location; // relative location of element to exclude
-}
-
 export interface TeachingBubbleProps extends ContainerProps {
-    targetContent: TargetContent;
+    targetContent: pxt.tour.BubbleStep;
     stepNumber: number;
     totalSteps: number;
     onClose: () => void;
@@ -128,10 +112,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             }
             // check that cutout intersects with sansElement
             if (collision(tempBounds, sansBounds)) {
-                if (targetContent.sansLocation === Location.Left) {
+                if (targetContent.sansLocation === pxt.tour.BubbleLocation.Left) {
                     cutoutLeft = targetBounds.left + sansBounds.width;
                     cutoutWidth = targetBounds.width - sansBounds.width;
-                } else if (targetContent.sansLocation === Location.Below) {
+                } else if (targetContent.sansLocation === pxt.tour.BubbleLocation.Below) {
                     cutoutHeight = targetBounds.height - sansBounds.height;
                     if (tempBounds.bottom > window.innerHeight) {
                         cutoutHeight -= tempBounds.bottom - window.innerHeight;
@@ -140,7 +124,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             }
         }
         // make cutout bigger if no padding and not centered
-        if (targetContent.location !== Location.Center) {
+        if (targetContent.location !== pxt.tour.BubbleLocation.Center) {
             const paddingTop = parseFloat(window.getComputedStyle(targetElement).paddingTop);
             const paddingRight = parseFloat(window.getComputedStyle(targetElement).paddingRight);
             const paddingBottom = parseFloat(window.getComputedStyle(targetElement).paddingBottom);
@@ -314,16 +298,16 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         }
 
         switch (targetContent.location) {
-            case Location.Above:
+            case pxt.tour.BubbleLocation.Above:
                 positionAbove();
                 break;
-            case Location.Below:
+            case pxt.tour.BubbleLocation.Below:
                 positionBelow();
                 break;
-            case Location.Left:
+            case pxt.tour.BubbleLocation.Left:
                 positionLeft();
                 break;
-            case Location.Right:
+            case pxt.tour.BubbleLocation.Right:
                 positionRight();
                 break;
             default:
