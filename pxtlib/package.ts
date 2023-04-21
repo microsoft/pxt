@@ -649,7 +649,7 @@ namespace pxt {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id + ", did you forget to run `pxt install`?")
             } else {
-                await this.parseConfig(str);
+                this.parseConfig(str);
             }
 
             // if we are installing this script, we haven't yet downloaded the config
@@ -686,7 +686,7 @@ namespace pxt {
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0) {
-                    await this.patchCorePackage();
+                    this.patchCorePackage();
                 }
                 if (this.config.compileServiceVariant) {
                     pxt.setAppTargetVariant(this.config.compileServiceVariant)
