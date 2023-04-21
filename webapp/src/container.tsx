@@ -249,6 +249,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     signOutGithub() {
         pxt.tickEvent("menu.github.signout");
+        (document.querySelector(".more-dropdown-menuitem") as HTMLElement).blur();
         const githubProvider = cloudsync.githubProvider();
         if (githubProvider) {
             githubProvider.logout();
