@@ -168,6 +168,7 @@ namespace pxt {
             config.files = config.files.filter(f => f.endsWith(".jres"));
             config.files.push("gallery.ts");
             config.dependencies = {};
+            config.assetPack = true;
             this.config = config;
             this.saveConfig();
 
@@ -635,10 +636,9 @@ namespace pxt {
             return dependencies;
         }
 
-        loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
-            if (this.isLoaded) return Promise.resolve();
+        async loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
+            if (this.isLoaded) return;
 
-            let initPromise = Promise.resolve()
 
             if (this.level == 0 && !pxt.appTarget.multiVariants)
                 pxt.setAppTargetVariant(null)
@@ -649,42 +649,49 @@ namespace pxt {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id + ", did you forget to run `pxt install`?")
             } else {
-                initPromise = initPromise.then(() => this.parseConfig(str))
+                await this.parseConfig(str);
             }
 
             // if we are installing this script, we haven't yet downloaded the config
             // do upgrade later
             if (this.level == 0 && !isInstall) {
-                initPromise = initPromise.then(() => this.upgradePackagesAsync().then(() => { }))
+                await this.upgradePackagesAsync();
             }
 
-            if (isInstall)
-                initPromise = initPromise.then(() => this.downloadAsync())
+            if (isInstall) {
+                await this.downloadAsync();
+                if (this.level !== 0 && !this.isAssetPack()) {
+                    for (const parent of this.addedBy) {
+                        if (parent.config.assetPacks?.[this.id]) {
+                            this.writeAssetPackFiles();
+                            break;
+                        }
+                    }
+                }
+            }
 
             // we are installing the script, and we've download the original version and we haven't upgraded it yet
             // do upgrade and reload as needed
             if (this.level == 0 && isInstall) {
-                initPromise = initPromise.then(() => this.upgradePackagesAsync())
-                    .then(fixes => {
-                        if (fixes) {
-                            // worst case scenario with double load
-                            Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
-                            pxt.log(`upgraded, downloading again`);
-                            pxt.debug(fixes);
-                            return this.downloadAsync();
-                        }
-                        // nothing to do here
-                        else return Promise.resolve();
-                    })
+                const fixes = await this.upgradePackagesAsync();
+
+                if (fixes) {
+                    // worst case scenario with double load
+                    Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
+                    pxt.log(`upgraded, downloading again`);
+                    pxt.debug(fixes);
+                    await this.downloadAsync();
+                }
             }
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
-                if (this.level == 0)
-                    initPromise = initPromise.then(() => this.patchCorePackage());
-                initPromise = initPromise.then(() => {
-                    if (this.config.compileServiceVariant)
-                        pxt.setAppTargetVariant(this.config.compileServiceVariant)
-                    if (this.config.files.indexOf("board.json") < 0) return
+                if (this.level == 0) {
+                    await this.patchCorePackage();
+                }
+                if (this.config.compileServiceVariant) {
+                    pxt.setAppTargetVariant(this.config.compileServiceVariant)
+                }
+                if (this.config.files.indexOf("board.json") >= 0) {
                     const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
                     def.id = this.config.name;
                     appTarget.appTheme.boardName = def.boardName || lf("board");
@@ -705,7 +712,7 @@ namespace pxt {
                         vis.image = expandPkg(vis.image)
                         vis.outlineImage = expandPkg(vis.outlineImage)
                     }
-                })
+                }
             }
 
             const handleVerMismatch = (mod: Package, ver: string) => {
@@ -812,7 +819,7 @@ namespace pxt {
                             mod.addedBy.push(from)
                         }
                     } else {
-                        let mod = new Package(id, ver, from.parent, from, id)
+                        mod = new Package(id, ver, from.parent, from, id)
                         if (isCpp)
                             mod.cppOnly = true
                         from.parent.deps[id] = mod
@@ -823,63 +830,50 @@ namespace pxt {
                 }
             }
 
-            return initPromise
-                .then(() => loadDepsRecursive(null, this))
-                .then(() => {
-                    // get paletter config loading deps, so the more higher level packages take precedence
-                    if (this.config.palette && appTarget.runtime) {
-                        appTarget.runtime.palette = U.clone(this.config.palette);
-                        if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
-                    }
-                    // get screen size loading deps, so the more higher level packages take precedence
-                    if (this.config.screenSize && appTarget.runtime)
-                        appTarget.runtime.screenSize = U.clone(this.config.screenSize);
+            await loadDepsRecursive(null, this);
 
-                    if (this.level === 0) {
-                        // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
-                        const mainTs = this.readFile(pxt.MAIN_TS);
-                        if (!mainTs) return Promise.resolve(null);
+            // get paletter config loading deps, so the more higher level packages take precedence
+            if (this.config.palette && appTarget.runtime) {
+                appTarget.runtime.palette = U.clone(this.config.palette);
+                if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
+            }
+            // get screen size loading deps, so the more higher level packages take precedence
+            if (this.config.screenSize && appTarget.runtime)
+                appTarget.runtime.screenSize = U.clone(this.config.screenSize);
 
-                        const missingPackages = this.getMissingPackages(this.config, mainTs);
-                        let didAddPackages = false;
-                        return Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
-                            return addPackagesPromise
-                                .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
-                                .then((conflicts) => {
-                                    if (conflicts.length) {
-                                        const conflictNames = conflicts.map((c) => c.pkg0.id).join(", ");
-                                        const settingNames = conflicts.map((c) => c.settingName).filter((s) => !!s).join(", ");
-                                        pxt.log(`skipping missing package ${missing} because it conflicts with the following packages: ${conflictNames} (conflicting settings: ${settingNames})`);
-                                        return Promise.resolve(null);
-                                    } else {
-                                        pxt.log(`adding missing package ${missing}`);
-                                        didAddPackages = true;
-                                        this.config.dependencies[missing] = "*"
-                                        const addDependency: Map<string> = {};
-                                        addDependency[missing] = missingPackages[missing];
-                                        return loadDepsRecursive(addDependency, this);
-                                    }
-                                });
-                        }, Promise.resolve(null))
-                            .then(() => {
-                                if (didAddPackages) {
-                                    this.saveConfig();
-                                    this.validateConfig();
-                                }
-                                return Promise.resolve(null);
-                            });
+            if (this.level === 0) {
+                // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
+                const mainTs = this.readFile(pxt.MAIN_TS);
+                if (mainTs) {
+                    const missingPackages = this.getMissingPackages(this.config, mainTs);
+                    let didAddPackages = false;
+                    for (const missing of Object.keys(missingPackages)) {
+                        const conflicts = await this.findConflictsAsync(missing, missingPackages[missing]);
+                        if (conflicts.length) {
+                            const conflictNames = conflicts.map((c) => c.pkg0.id).join(", ");
+                            const settingNames = conflicts.map((c) => c.settingName).filter((s) => !!s).join(", ");
+                            pxt.log(`skipping missing package ${missing} because it conflicts with the following packages: ${conflictNames} (conflicting settings: ${settingNames})`);
+                            continue;
+                        } else {
+                            pxt.log(`adding missing package ${missing}`);
+                            didAddPackages = true;
+                            this.config.dependencies[missing] = "*"
+                            const addDependency: Map<string> = {};
+                            addDependency[missing] = missingPackages[missing];
+                            await loadDepsRecursive(addDependency, this);
+                        }
                     }
-                    return Promise.resolve(null);
-                })
-                .then<any>(() => {
-                    if (this.level != 0)
-                        return Promise.resolve()
-                    return Promise.all(U.values(this.parent.deps).map(pkg =>
-                        loadDepsRecursive(null, pkg, true)))
-                })
-                .then(() => {
-                    pxt.debug(`  installed ${this.id}`)
-                });
+
+                    if (didAddPackages) {
+                        this.saveConfig();
+                        this.validateConfig();
+                    }
+                }
+
+                await Promise.all(U.values(this.parent.deps).map(pkg => loadDepsRecursive(null, pkg, true)));
+            }
+
+            pxt.debug(`  installed ${this.id}`);
         }
 
         static depWarnings: Map<boolean> = {}
