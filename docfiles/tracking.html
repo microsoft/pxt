@@ -1,6 +1,5 @@
 <script type="text/javascript" src="/doccdn/pxtweb.js"></script>
 <script type="text/javascript">
-    debugger;
     window.loadAppInsights = function (includeCookie) {
         //Backend will patch / + doccdn + / with CDN url and the check that URL ends with the sha would pass
         var isProduction = includeCookie && (/[0-9a-f]{40}\/ai\.2\.min\.js$/.test("/doccdn/ai.2.min.js"));
