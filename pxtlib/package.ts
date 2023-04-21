@@ -853,7 +853,6 @@ namespace pxt {
                             const conflictNames = conflicts.map((c) => c.pkg0.id).join(", ");
                             const settingNames = conflicts.map((c) => c.settingName).filter((s) => !!s).join(", ");
                             pxt.log(`skipping missing package ${missing} because it conflicts with the following packages: ${conflictNames} (conflicting settings: ${settingNames})`);
-                            continue;
                         } else {
                             pxt.log(`adding missing package ${missing}`);
                             didAddPackages = true;
