@@ -81,13 +81,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         const bubbleArrowOutline = document.querySelector(".teaching-bubble-arrow-outline") as HTMLElement;
         bubbleArrowOutline.style.border = "none";
         const bubbleBounds = bubble.getBoundingClientRect();
-        // To Do: check that targetContent.targetQuery is a valid selector
         const targetElement = document.querySelector(targetContent.targetQuery) as HTMLElement;
-        if (!targetElement) {
-            positionCenterScreen(bubble, bubbleBounds);
-            clearCutout();
-            return;
-        }
         const targetBounds = targetElement.getBoundingClientRect();
         const cutoutBounds = getCutoutBounds(targetBounds, targetElement);
         setCutout(cutoutBounds);

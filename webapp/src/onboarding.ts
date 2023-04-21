@@ -42,11 +42,16 @@ export async function parseTourStepsAsync(name: string): Promise<pxt.tour.Bubble
         if (step.headerKind === "double" && step.attributes && step.attributes.title && step.attributes.description && step.attributes.location && step.attributes.highlight) {
             const title = step.attributes.title;
             const description = step.attributes.description;
-            const location = getLocation(step.attributes.location);
-            const querySelector = getTargetMap(step.attributes.highlight.toLowerCase());
-            const targetQuery = querySelector.targetQuery ?? undefined;
-            const sansQuery = querySelector.sansQuery ?? undefined;
-            const sansLocation = querySelector.sansLocation ?? undefined;
+            let location = getLocation(step.attributes.location);
+            let querySelector = getTargetMap(step.attributes.highlight.toLowerCase());
+            if (!querySelector) {
+                querySelector = { targetQuery: "#root" };
+                location = pxt.tour.BubbleLocation.Center;
+                console.log(`Tour steps: "${step.attributes.highlight}" is not a valid element to highlight!`);
+            }
+            const targetQuery = querySelector?.targetQuery ?? undefined;
+            const sansQuery = querySelector?.sansQuery ?? undefined;
+            const sansLocation = querySelector?.sansLocation ?? undefined;
             const targetContent: pxt.tour.BubbleStep = { title, description, location, targetQuery, sansQuery, sansLocation };
             EditorContent.push(targetContent);
         }
