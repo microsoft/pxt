@@ -12,7 +12,7 @@ namespace pxt {
     }
 
     export function getSectionsFromMarkdownMetadata(text: string): MarkdownSection[] {
-        const lines = text.split("\n");
+        const lines = text.split(/\r?\n/);
 
         let sections: MarkdownSection[] = [];
         let currentSection: MarkdownSection | null = null;

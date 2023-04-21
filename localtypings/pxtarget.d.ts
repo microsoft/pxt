@@ -470,7 +470,9 @@ declare namespace pxt {
         songEditor?: boolean; // enable the song asset type and field editor
         multiplayer?: boolean; // enable multiplayer features
         shareToKiosk?: boolean; // enable sharing to a kiosk
-        editorTour?: boolean; // enable the editor tour
+        tours?: {
+            editor?: string // path to markdown file for the editor tour steps
+        }
         tutorialSimSidebarLayout?: boolean; // Enable tutorial layout with the sim in the sidebar (desktop only)
     }
 
@@ -1248,6 +1250,24 @@ declare namespace pxt.tutorial {
         id: string;
         // number of steps completed
         steps: number;
+    }
+}
+
+declare namespace pxt.tour {
+    interface BubbleStep {
+        title: string;
+        description: string;
+        targetQuery: string;
+        location: BubbleLocation;
+        sansQuery?: string; // Use this to exclude an element from the cutout
+        sansLocation?: BubbleLocation; // relative location of element to exclude
+    }
+    const enum BubbleLocation {
+        Above,
+        Below,
+        Left,
+        Right,
+        Center
     }
 }
 

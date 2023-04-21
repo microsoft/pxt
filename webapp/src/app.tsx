@@ -74,7 +74,8 @@ import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { CodeCardView } from "./codecard";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
-import { EditorTour } from "./components/onboarding/EditorTour";
+import { Tour } from "./components/onboarding/Tour";
+import { parseTourStepsAsync } from "./onboarding";
 
 pxsim.util.injectPolyphils();
 
@@ -184,7 +185,7 @@ export class ProjectView
             simState: pxt.editor.SimState.Stopped,
             autoRun: this.autoRunOnStart(),
             isMultiplayerGame: false,
-            onboarding: false
+            onboarding: undefined
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -4793,11 +4794,13 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     hideOnboarding() {
-        this.setState({ onboarding: false });
+        this.setState({ onboarding: undefined });
     }
 
-    showOnboarding() {
-        this.setState({ onboarding: true });
+    async showOnboarding() {
+        const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
+        this.setState({ onboarding: tourSteps })
+
     }
 
     ///////////////////////////////////////////////////////////
@@ -5042,7 +5045,7 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
-                {this.state.onboarding && <EditorTour onClose={this.hideOnboarding} />}
+                {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
             </div>
         );
     }
