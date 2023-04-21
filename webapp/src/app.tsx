@@ -4798,11 +4798,8 @@ export class ProjectView
     }
 
     async showOnboarding() {
-        core.showLoading("loadingtour", lf("loading tour..."));
-        // const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
-        await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
-            .then(tourSteps => this.setState({ onboarding: tourSteps }))
-            .finally(() => core.hideLoading("loadingtour"));
+        const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
+        this.setState({ onboarding: tourSteps })
 
     }
 
