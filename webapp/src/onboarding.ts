@@ -49,9 +49,9 @@ export async function parseTourStepsAsync(name: string): Promise<pxt.tour.Bubble
                 location = pxt.tour.BubbleLocation.Center;
                 console.log(`Tour steps: "${step.attributes.highlight}" is not a valid element to highlight!`);
             }
-            const targetQuery = querySelector?.targetQuery ?? undefined;
-            const sansQuery = querySelector?.sansQuery ?? undefined;
-            const sansLocation = querySelector?.sansLocation ?? undefined;
+            const targetQuery = querySelector.targetQuery;
+            const sansQuery = querySelector.sansQuery ?? undefined;
+            const sansLocation = querySelector.sansLocation ?? undefined;
             const targetContent: pxt.tour.BubbleStep = { title, description, location, targetQuery, sansQuery, sansLocation };
             EditorContent.push(targetContent);
         }
