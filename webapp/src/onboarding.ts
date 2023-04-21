@@ -31,8 +31,8 @@ function getTargetMap(target: string): querySelector {
 }
 
 export async function loadTourStepsAsync(name: string): Promise<pxt.MarkdownSection[]> {
-    return pxt.Cloud.markdownAsync(name)
-        .then(md => pxt.getSectionsFromMarkdownMetadata(md));
+    const md = await pxt.Cloud.markdownAsync(name);
+    return pxt.getSectionsFromMarkdownMetadata(md);
 }
 
 export async function parseTourStepsAsync(name: string): Promise<pxt.tour.BubbleStep[]> {
