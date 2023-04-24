@@ -5615,7 +5615,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await auth.initAsync();
 
-    // Handle logins that start via query parameter (for now, this is only Clever)
+    // Trigger the login process if autologin is specified. Required for Clever.
     const autoLogin = query["autologin"] as pxt.IdentityProviderId;
     if (autoLogin) {
         await auth.loginAsync(autoLogin, true);
