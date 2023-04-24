@@ -1433,6 +1433,20 @@ namespace pxt {
             let blockIdentity: string;
             let value: string;
             const varName = idMapping[getId(key)].split(".").pop();
+            let tags: string[] = entry.tags;
+
+            if (!tags) {
+                tags = [];
+                if (varName.toLowerCase().indexOf("background") !== -1) {
+                    tags.push("background");
+                }
+                if (varName.toLowerCase().indexOf("dialog") !== -1) {
+                    tags.push("dialog");
+                }
+                if (entry.tilemapTile) {
+                    tags.push("tile");
+                }
+            }
 
             if (mimeType === IMAGE_MIME_TYPE) {
                 value = "image.ofBuffer(hex\`\`)"
@@ -1462,6 +1476,7 @@ namespace pxt {
 
             out += `${indent}//% fixedInstance jres whenUsed\n`
             if (blockIdentity)  out += `${indent}//% blockIdentity=${blockIdentity}\n`
+            if (tags.length) out += `${indent}//% tags="${tags.join(" ")}"\n`
             out += `${indent}export const ${varName} = ${value};\n`
 
             if (typeof entry === "string") {
@@ -1470,7 +1485,8 @@ namespace pxt {
             else {
                 outJRes[varName] = {
                     ...entry,
-                    id: idMapping[getId(key)]
+                    id: idMapping[getId(key)],
+                    tags
                 };
                 if (entry.namespace) {
                     outJRes[varName].namespace = namespaceName
