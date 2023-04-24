@@ -385,21 +385,21 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                     </div>}
                     <div className="teaching-bubble-navigation">
                         {hasPrevious && <Button
-                            className="blue"
+                            className="primary"
                             onClick={onBack}
                             title={backLabel}
                             ariaLabel={backLabel}
                             label={backLabel}
                         />}
                         {hasNext && <Button
-                            className="blue inverted"
+                            className="primary inverted"
                             onClick={onNext}
                             title={nextLabel}
                             ariaLabel={nextLabel}
                             label={nextLabel}
                         />}
                         {!hasNext && <Button
-                            className="blue inverted"
+                            className="primary inverted"
                             onClick={onFinish}
                             title={finishLabel}
                             ariaLabel={finishLabel}
