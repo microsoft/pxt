@@ -33,7 +33,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         pxt.github.token = undefined;
         super.logout();
 
-        window.location.href = "https://github.com/logout";
+        window.open("https://github.com/logout", '_blank');
     }
 
     hasToken(): boolean {

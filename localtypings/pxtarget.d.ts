@@ -105,6 +105,7 @@ declare namespace pxt {
         cacheusedblocksdirs?: string[]; // list of /docs subfolders for parsing and caching used block ids (for tutorial loading)
         blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
         defaultBadges?: pxt.auth.Badge[];
+        noSimShims?: boolean; // skip check for simshims and only build from cpp / user level typescript.
     }
 
     interface BrowserOptions {
@@ -206,7 +207,7 @@ declare namespace pxt {
         cloudProviders?: pxt.Map<AppCloudProvider>;
     }
 
-    type IdentityProviderId = "makecode" | "microsoft" | "google" | "github";
+    type IdentityProviderId = "makecode" | "microsoft" | "google" | "github" | "clever";
 
     interface AppCloudProvider {
         id: IdentityProviderId;
@@ -440,6 +441,7 @@ declare namespace pxt {
         experimentalHw?: boolean; // enable experimental hardware
         // recipes?: boolean; // inlined tutorials - deprecated
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
+        preferWebUSBDownload?: boolean; // default to webusb over normal browser download when available
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean; // prompt user to name project when creating new one
@@ -468,7 +470,9 @@ declare namespace pxt {
         songEditor?: boolean; // enable the song asset type and field editor
         multiplayer?: boolean; // enable multiplayer features
         shareToKiosk?: boolean; // enable sharing to a kiosk
-        editorTour?: boolean; // enable the editor tour
+        tours?: {
+            editor?: string // path to markdown file for the editor tour steps
+        }
         tutorialSimSidebarLayout?: boolean; // Enable tutorial layout with the sim in the sidebar (desktop only)
     }
 
@@ -1246,6 +1250,24 @@ declare namespace pxt.tutorial {
         id: string;
         // number of steps completed
         steps: number;
+    }
+}
+
+declare namespace pxt.tour {
+    interface BubbleStep {
+        title: string;
+        description: string;
+        targetQuery: string;
+        location: BubbleLocation;
+        sansQuery?: string; // Use this to exclude an element from the cutout
+        sansLocation?: BubbleLocation; // relative location of element to exclude
+    }
+    const enum BubbleLocation {
+        Above,
+        Below,
+        Left,
+        Right,
+        Center
     }
 }
 

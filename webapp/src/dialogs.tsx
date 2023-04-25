@@ -10,6 +10,7 @@ import * as cloudsync from "./cloudsync";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util";
+import { pairAsync } from "./cmds";
 
 let dontShowDownloadFlag = false;
 
@@ -744,7 +745,7 @@ export function renderBrowserDownloadInstructions(saveonly?: boolean) {
 
     const onPairClicked = () => {
         core.hideDialog();
-        pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync);
+        pairAsync();
     }
 
     const onCheckboxClicked = (value: boolean) => {
@@ -771,8 +772,8 @@ export function renderBrowserDownloadInstructions(saveonly?: boolean) {
                                         </div>
                                         {webUSBSupported &&
                                             <div className="download-callout">
-                                                <label className="ui purple ribbon large label">{lf("New!")}</label>
-                                                <div className="ui two column grid">
+                                                <label className="ui purple ribbon label">{lf("Want faster downloads?")}</label>
+                                                <div className="ui two column grid content">
                                                     <div className="icon-align three wide column">
                                                         <div />
                                                         <i className="icon big usb" />
@@ -780,8 +781,7 @@ export function renderBrowserDownloadInstructions(saveonly?: boolean) {
                                                     </div>
                                                     <div className="thirteen wide column">
                                                         {lf("Download your code faster by pairing with web usb!")}
-                                                        <br />
-                                                        <strong><a onClick={onPairClicked}>{lf("Pair now")}</a></strong>
+                                                        <a className="ui button purple" onClick={onPairClicked}>{lf("Pair now")}</a>
                                                     </div>
                                                 </div>
                                             </div>

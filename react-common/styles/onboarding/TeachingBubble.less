@@ -30,8 +30,8 @@
     position: fixed;
     max-width: 25rem;
     min-width: 18.75rem;
-    background: @blue;
-    color: @white;
+    background: @teachingBubbleBackgroundColor;
+    color: @teachingBubbleTextColor;
     box-shadow: 0 0 0 0.1rem;
     border-radius: 0.5rem;
     padding: 1rem;
@@ -40,10 +40,10 @@
     .common-button {
 
         &:focus {
-            outline: .1rem solid @white;
+            outline: .1rem solid @teachingBubbleTextColor;
             filter: grayscale(.15) brightness(.85) contrast(1.3);
         }
-        &.blue:focus::after, &:focus::after {
+        &.primary:focus::after, &:focus::after {
             outline: none;
         }
     }
@@ -54,7 +54,7 @@
     width: 0;
     height: 0;
     z-index: @modalDimmerZIndex + 1;
-    color: @blue;
+    color: @teachingBubbleBackgroundColor;
 }
 
 .teaching-bubble-arrow-outline {
@@ -62,7 +62,7 @@
     width: 0;
     height: 0;
     z-index: @modalDimmerZIndex;
-    color: @white;
+    color: @teachingBubbleTextColor;
 }
 
 .teaching-bubble-content {
@@ -81,16 +81,20 @@
 
     .teaching-bubble-steps {
         font-size: .9rem;
-        color: @lightGrey
+        color: @teachingBubbleStepsColor;
     }
 
-    .common-button.blue {
+    .common-button.primary {
         padding: .25rem .5rem;
         margin: 0 .5rem 0 0;
-        border: .1rem solid @white;
+        border: .1rem solid @teachingBubbleTextColor;
+        background: @teachingBubbleBackgroundColor;
+        color: @teachingBubbleTextColor;
 
         &.inverted {
             margin-right: 0;
+            background: @teachingBubbleTextColor;
+            color: @teachingBubbleBackgroundColor;
         }
     }
 
@@ -105,7 +109,7 @@
     top: 0.5rem;
     padding: 0.5rem 0 0.25rem 0;
     background: transparent;
-    color: @white;
+    color: @teachingBubbleTextColor;
     margin: 0;
 
     i.right {

@@ -14,10 +14,6 @@ function log(msg: string) {
 }
 
 let extensionResult: pxt.editor.ExtensionResult;
-// This can be overidden by the extension result
-pxt.commands.renderBrowserDownloadInstructions = dialogs.renderBrowserDownloadInstructions;
-pxt.commands.renderIncompatibleHardwareDialog = dialogs.renderIncompatibleHardwareDialog;
-
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
@@ -314,6 +310,9 @@ function applyExtensionResult() {
     if (res.renderBrowserDownloadInstructions) {
         log(`extension upload renderBrowserDownloadInstructions`);
         pxt.commands.renderBrowserDownloadInstructions = res.renderBrowserDownloadInstructions;
+    } else {
+        // default
+        pxt.commands.renderBrowserDownloadInstructions = dialogs.renderBrowserDownloadInstructions;
     }
     if (res.renderUsbPairDialog) {
         log(`extension renderUsbPairDialog`)
@@ -322,6 +321,9 @@ function applyExtensionResult() {
     if (res.renderIncompatibleHardwareDialog) {
         log(`extension renderIncompatibleHardwareDialog`)
         pxt.commands.renderIncompatibleHardwareDialog = res.renderIncompatibleHardwareDialog;
+    } else {
+        // default
+        pxt.commands.renderIncompatibleHardwareDialog = dialogs.renderIncompatibleHardwareDialog;
     }
     if (res.showUploadInstructionsAsync) {
         log(`extension upload instructions async`);
@@ -447,12 +449,19 @@ export function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfConnecte
     return reconnectPromise;
 }
 
-export function pairAsync(): Promise<void> {
+export function pairAsync(implicitlyCalled?: boolean): Promise<void> {
     pxt.tickEvent("cmds.pair")
-    return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
+    return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync, implicitlyCalled)
         .then(res => {
-            if (res) return maybeReconnectAsync();
-            else return core.infoNotification("Oops, no device was paired.")
+            switch (res) {
+                case pxt.commands.WebUSBPairResult.Success:
+                    return maybeReconnectAsync();
+                case pxt.commands.WebUSBPairResult.Failed:
+                    return core.infoNotification("Oops, no device was paired.")
+                case pxt.commands.WebUSBPairResult.UserRejected:
+                    // User exited pair flow intentionally
+                    return;
+            }
         });
 }
 
