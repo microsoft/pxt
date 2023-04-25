@@ -355,6 +355,7 @@ namespace pxt.editor {
         hideOnboarding(): void;
         showKeymap(show: boolean): void;
         toggleKeymap(): void;
+        signOutGithub(): void;
 
         showReportAbuse(): void;
         showLanguagePicker(): void;

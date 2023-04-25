@@ -275,12 +275,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
-        const githubProvider = cloudsync.githubProvider();
-        if (githubProvider) {
-            githubProvider.logout();
-            this.props.parent.forceUpdate();
-            core.infoNotification(lf("Signed out from GitHub"))
-        }
+        this.props.parent.signOutGithub();
     }
 
     renderCore() {
@@ -300,7 +295,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
                 <div className="avatar" role="presentation">
                     <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
                 </div>
-                {lf("Unlink GitHub")}
+                {lf("Disconnect GitHub")}
             </div>}
             {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
