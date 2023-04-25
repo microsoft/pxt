@@ -784,7 +784,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         {!isBlocksMode && isOwner &&
                             <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.slug}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
-                        {user && <sui.Button className="ui button" icon="fas fa-sign-out-alt" text={lf("Disconnect GitHub")} title={lf("Log out of GitHub")} onClick={this.handleSignoutGithub} onKeyDown={fireClickOnEnter} />}
                     </div>
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
@@ -806,7 +805,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                     {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    <div></div>
+                    <div>
+                        {user && <sui.Button className="ui button" icon="fas fa-sign-out-alt" text={lf("Disconnect GitHub")} title={lf("Log out of GitHub")} textClass="landscape only" onClick={this.handleSignoutGithub} onKeyDown={fireClickOnEnter} />}
+                    </div>
                 </div>
             </div>
         )
