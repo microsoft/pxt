@@ -103,13 +103,13 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
         </div>
     );
 
-    return showPairStepAsync(
+    return showPairStepAsync({
         confirmAsync,
         jsxd,
-        lf("Next"),
-        lf("Connect your {0}…", boardName),
-        'downloaddialog.button.connectusb'
-    );
+        buttonLabel: lf("Next"),
+        header: lf("Connect your {0}…", boardName),
+        tick: "downloaddialog.button.connectusb",
+    });
 }
 
 function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
@@ -183,13 +183,13 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
         </div>
     );
 
-    return showPairStepAsync(
+    return showPairStepAsync({
         confirmAsync,
         jsxd,
-        lf("Next"),
-        lf("Connect your {0}…", boardName),
-        'downloaddialog.button.pickusbdevice'
-    );
+        buttonLabel: lf("Next"),
+        header: lf("Connect your {0}…", boardName),
+        tick: "downloaddialog.button.pickusbdevice",
+    });
 }
 
 function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
@@ -223,15 +223,15 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
         </div>
     );
 
-    return showPairStepAsync(
+    return showPairStepAsync({
         confirmAsync,
         jsxd,
-        lf("Done"),
-        lf("Connected to {0}", boardName),
-        'downloaddialog.button.webusbsuccess',
-        undefined,
-        "large circle check purple"
-    );
+        buttonLabel: lf("Done"),
+        header: lf("Connected to {0}", boardName),
+        tick: "downloaddialog.button.webusbsuccess",
+        help: undefined,
+        headerIcon: "large circle check purple",
+    });
 }
 
 
@@ -283,62 +283,76 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadFile
     );
 
 
-    return showPairStepAsync(
+    return showPairStepAsync({
         confirmAsync,
         jsxd,
-        lf("Try Again"),
-        lf("Connect failed"),
-        'downloaddialog.button.webusbfailed',
-        theme().troubleshootWebUSBHelpURL,
-        "exclamation triangle purple",
-        showDownloadFileButton,
-    );
+        buttonLabel: lf("Try Again"),
+        header: lf("Connect failed"),
+        tick: "downloaddialog.button.webusbfailed",
+        help: theme().troubleshootWebUSBHelpURL,
+        headerIcon: "exclamation triangle purple",
+        showDownloadAsFileButton: showDownloadFileButton,
+    });
 }
 
-function showPairStepAsync(
-    confirmAsync: ConfirmAsync,
-    jsxd: () => JSX.Element,
-    buttonLabel: string,
-    header: string,
-    tick: string,
-    help?: string,
-    headerIcon?: string,
-    showDownloadAsFileButton?: boolean,
-) {
+async function showPairStepAsync({
+    confirmAsync,
+    jsxd,
+    buttonLabel,
+    header,
+    tick,
+    help,
+    headerIcon,
+    showDownloadAsFileButton,
+}: {
+    confirmAsync: ConfirmAsync;
+    jsxd: () => JSX.Element;
+    buttonLabel: string;
+    header: string;
+    tick: string;
+    help?: string;
+    headerIcon?: string;
+    showDownloadAsFileButton?: boolean;
+}) {
     let tryAgain = false;
 
-    return confirmAsync({
+    const buttons = [
+        {
+            label: buttonLabel,
+            className: "primary",
+            onclick: () => {
+                pxt.tickEvent(tick);
+                core.hideDialog();
+                tryAgain = true;
+            },
+        }
+    ];
+    if (showDownloadAsFileButton) {
+        buttons.unshift({
+            label: lf("Download as file"),
+            className: "secondary",
+            onclick: () => {
+                pxt.tickEvent("downloaddialog.button.webusb.preferdownload");
+                userPrefersDownloadFlag = true;
+                tryAgain = false;
+                core.hideDialog();
+            },
+        });
+    }
+
+    await confirmAsync({
         header,
         jsxd,
         hasCloseIcon: true,
         hideAgree: true,
-        className: 'downloaddialog',
+        className: "downloaddialog",
         helpUrl: help,
         bigHelpButton: !!help,
         headerIcon: headerIcon ? headerIcon + " header-inline-icon" : undefined,
-        buttons: [
-            showDownloadAsFileButton ? {
-                label: lf("Download as file"),
-                className: "secondary",
-                onclick: () => {
-                    pxt.tickEvent("downloaddialog.button.webusb.preferdownload");
-                    userPrefersDownloadFlag = true;
-                    tryAgain = false;
-                    core.hideDialog();
-                }
-            } : undefined,
-            {
-                label: buttonLabel,
-                className: "primary",
-                onclick: () => {
-                    pxt.tickEvent(tick)
-                    core.hideDialog();
-                    tryAgain = true;
-                }
-            }
-        ].filter(el => !!el)
-    })
-    .then(() => tryAgain)
+        buttons,
+    });
+
+    return tryAgain;
 }
 
 export function webUsbPairLegacyDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: ConfirmAsync): Promise<number> {
