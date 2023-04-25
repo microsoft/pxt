@@ -18,7 +18,7 @@
                     telemetryItem.properties["cookie"] = isProduction;
                     if (typeof pxtConfig === "undefined" || !pxtConfig || !pxtConfig.targetId) {
                         telemetryItem.properties["target"] = "@targetid@";
-                        return;
+                        return true;
                     }
                     telemetryItem.properties["target"] = pxtConfig.targetId;
                     telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
@@ -40,6 +40,7 @@
                         telemetryItem.properties["PxtTargetVersion"] = pxtElectron.versions.pxtTargetVersion;
                         telemetryItem.properties["PxtElectronIsProd"] = pxtElectron.versions.isProd;
                     }
+                    return true;
                 });
             },
             cfg: {
