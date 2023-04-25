@@ -173,13 +173,18 @@ namespace pxt.crowdin {
                 pxt.log(`create new translation file: ${filename}`)
                 return uploadAsync("add-file", {})
             }
-            else if (code == 404 && errorData.error && errorData.error.code == 17) {
+            else if (code == 404 && errorData.error?.code == 17) {
                 return createDirectoryAsync(branch, prj, key, filename.replace(/\/[^\/]+$/, ""), incr)
                     .then(() => startAsync())
-            } else if (!errorData.success && errorData.error && errorData.error.code == 53) {
+            } else if (!errorData.success && errorData.error?.code == 53) {
                 // file is being updated
                 pxt.log(`${filename} being updated, waiting 5s and retry...`)
                 return U.delay(5000) // wait 5s and try again
+                    .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
+            } else if (code == 429 && errorData.error?.code == 55) {
+                // Too many concurrent requests
+                pxt.log(`Maximum concurrent requests reached, waiting 10s and retry...`)
+                return U.delay(10 * 1000) // wait 10s and try again
                     .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
             } else if (code == 200 || errorData.success) {
                 // something crowdin reports 500 with success=true
