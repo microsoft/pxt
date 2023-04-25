@@ -180,12 +180,6 @@ export function TutorialContainer(props: TutorialContainerProps) {
     }
 
     const tutorialStepNext = (isStepCounter: boolean = false) => {
-        pxt.reportError("Some test error string", "Some test error message", { ["ErrProp1"]: 1, ["ErrProp2"]: "two"});
-        pxt.reportException(new Error("Some test exception"), { ["ExProp1"]: 1, ["ExProp2"]: "two"});
-        pxt.aiTrackException("Test exception no kind, with props", undefined, { ["TestProp1"]: 1, ["TestProp2"]: "two"})
-        pxt.aiTrackException("Test exception with kind, no props", 'TestKind', undefined)
-        pxt.aiTrackException("Test exception no kind, no props", undefined, undefined)
-
         const step = Math.min(currentStep + 1, props.steps.length - 1);
         pxt.tickEvent(
             "tutorial.next",
