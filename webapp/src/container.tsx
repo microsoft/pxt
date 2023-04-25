@@ -255,12 +255,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     signOutGithub() {
         pxt.tickEvent("menu.github.signout");
         this.hide();
-        const githubProvider = cloudsync.githubProvider();
-        if (githubProvider) {
-            githubProvider.logout();
-            this.props.parent.forceUpdate();
-            core.infoNotification(lf("Signed out from GitHub..."))
-        }
+        this.props.parent.signOutGithub();
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: SettingsMenuProps) {
@@ -335,7 +330,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
                 <div className="avatar" role="presentation">
                     <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
                 </div>
-                {lf("Unlink GitHub")}
+                {lf("Disconnect GitHub")}
             </div> : undefined}
             {showCenterDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}

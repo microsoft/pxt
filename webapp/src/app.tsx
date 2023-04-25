@@ -4351,6 +4351,15 @@ export class ProjectView
         });
     }
 
+    signOutGithub() {
+        const githubProvider = cloudsync.githubProvider();
+        if (githubProvider) {
+            githubProvider.logout();
+            this.forceUpdate();
+            core.infoNotification(lf("Signed out from GitHub"))
+        }
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Tutorials            /////////////
     ///////////////////////////////////////////////////////////

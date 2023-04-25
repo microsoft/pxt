@@ -55,6 +55,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handleBranchClick = this.handleBranchClick.bind(this);
         this.handleGithubError = this.handleGithubError.bind(this);
         this.handlePullRequest = this.handlePullRequest.bind(this);
+        this.handleSignoutGithub = this.handleSignoutGithub.bind(this);
     }
 
     clearCacheDiff(cachePrefix?: string, f?: DiffFile) {
@@ -737,6 +738,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         return diffFiles;
     }
 
+    private async handleSignoutGithub() {
+        pxt.tickEvent("github.signout");
+        this.props.parent.signOutGithub();
+    }
+
     renderCore(): JSX.Element {
         const gs = this.getGitJson();
         if (!gs)
@@ -778,6 +784,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         {!isBlocksMode && isOwner &&
                             <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.slug}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
+                        {user && <sui.Button className="ui button" icon="fas fa-sign-out-alt" text={lf("Disconnect GitHub")} title={lf("Log out of GitHub")} onClick={this.handleSignoutGithub} onKeyDown={fireClickOnEnter} />}
                     </div>
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
