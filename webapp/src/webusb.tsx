@@ -60,7 +60,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
     }
 
     if (paired) {
-        await showConnectionSuccessAsync(confirmAsync);
+        await showConnectionSuccessAsync(confirmAsync, implicitlyCalled);
     }
     else {
         const tryAgain = await showConnectionFailureAsync(confirmAsync, implicitlyCalled);
@@ -121,12 +121,10 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
                 <div className="ui">
                     <div className="content">
                         <div className="description">
-                            <div>
-                                {lf("We recommend pairing for easy downloads.")}
-                            </div>
-                            <div>
-                                {lf("Press 'Pair' below and select your device from the browser pop-up.")}
-                            </div>
+                            {lf("We recommend pairing for easy downloads.")}
+                            <br/>
+                            <br/>
+                            {lf("Press 'Pair' below and select your device from the browser pop-up.")}
                         </div>
                     </div>
                 </div>
@@ -153,7 +151,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
     });
 }
 
-function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
+function showConnectionSuccessAsync(confirmAsync: ConfirmAsync, willTriggerDownloadOnClose: boolean) {
     const boardName = getBoardName();
     const connectionImage = theme().connectionSuccessImage;
     const columns = connectionImage ? "two" : "one";
@@ -187,7 +185,7 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
     return showPairStepAsync({
         confirmAsync,
         jsxd,
-        buttonLabel: lf("Done"),
+        buttonLabel: willTriggerDownloadOnClose ? lf("Download") : lf("Done"),
         header: lf("Connected to {0}", boardName),
         tick: "downloaddialog.button.webusbsuccess",
         help: undefined,
