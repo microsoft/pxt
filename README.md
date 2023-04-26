@@ -70,6 +70,11 @@ Then install the `pxt` command line tool (only need to do it once):
 npm install -g pxt
 ```
 
+Then install `gulp` (only need to do it once):
+```
+npm install -g gulp
+```
+
 After this you can run `pxt` from anywhere within the build tree.
 
 To start the local web server, run `pxt serve` from within the root
