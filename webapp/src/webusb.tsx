@@ -201,46 +201,10 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync, willTriggerDownl
 function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFileButton?: boolean) {
     const boardName = getBoardName();
 
-    let firmwareText: string;
-
-    if (theme().minimumFirmwareVersion) {
-        firmwareText = lf("Make sure your {0} firmware is version {1} or above.", boardName, theme().minimumFirmwareVersion);
-    }
-    else {
-        firmwareText = lf("Make sure your {0} has the latest firmware.", boardName);
-    }
-
-    const checkCableImage = theme().checkUSBCableImage || theme().connectDeviceImage;
-    const firmwareImage = theme().checkFirmwareVersionImage;
-
     const jsxd = () => (
         <div>
             <div className="ui content download-troubleshoot-header">
                 {lf("We couldn't find your {0}. Here's a few ways to fix that:", boardName)}
-            </div>
-            <div className="download-troubleshoot">
-                <div className="download-column">
-                    {checkCableImage &&
-                        <div className="download-row image-row">
-                            <img alt={lf("Image connecting {0} to a computer", boardName)} src={checkCableImage} />
-                        </div>
-                    }
-                    <div className="download-row">
-                    {lf("Check the USB cable connecting your {0} to your computer.", boardName)}
-                    </div>
-                </div>
-                <div className="download-column">
-                    { firmwareImage &&
-                        <div className="download-row image-row">
-                            <img alt={lf("Image depicting the firmware of {0}", boardName)} src={firmwareImage} />
-                        </div>
-                    }
-                    <div className="download-row">
-                        {firmwareText}
-                        <br/>
-                        <a target="_blank" href={theme().firmwareHelpURL} rel="noopener noreferrer">{lf("Learn more about firmware.", boardName)}</a>
-                    </div>
-                </div>
             </div>
         </div>
     );
@@ -251,7 +215,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFi
         jsxd,
         buttonLabel: lf("Try Again"),
         buttonIcon: pxt.appTarget?.appTheme?.downloadDialogTheme?.deviceIcon,
-        header: lf("Connect failed"),
+        header: lf("Failed to connect"),
         tick: "downloaddialog.button.webusbfailed",
         help: theme().troubleshootWebUSBHelpURL,
         headerIcon: "exclamation triangle purple",
