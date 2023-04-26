@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as core from "./core";
 import * as cmds from "./cmds";
+import { ModalButton } from "./sui";
 
 function resolveFirmwareUrl(): string {
     const boardid = pxt.appTarget?.simulator?.boardDefinition?.id;
@@ -104,6 +105,7 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
         confirmAsync,
         jsxd,
         buttonLabel: lf("Next"),
+        buttonIcon: pxt.appTarget?.appTheme?.downloadDialogTheme?.deviceIcon,
         header: lf("1. Connect your {0} to your computer", boardName),
         tick: "downloaddialog.button.connectusb",
     });
@@ -145,6 +147,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
         confirmAsync,
         jsxd,
         buttonLabel: lf("Pair"),
+        buttonIcon: pxt.appTarget?.appTheme?.downloadDialogTheme?.deviceIcon,
         showDownloadAsFileButton,
         header: lf("2. Pair your {0} to your browser", boardName),
         tick: "downloaddialog.button.pickusbdevice",
@@ -186,6 +189,7 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync, willTriggerDownl
         confirmAsync,
         jsxd,
         buttonLabel: willTriggerDownloadOnClose ? lf("Download") : lf("Done"),
+        buttonIcon: pxt.appTarget.appTheme.downloadDialogTheme?.deviceSuccessIcon,
         header: lf("Connected to {0}", boardName),
         tick: "downloaddialog.button.webusbsuccess",
         help: undefined,
@@ -246,6 +250,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFi
         confirmAsync,
         jsxd,
         buttonLabel: lf("Try Again"),
+        buttonIcon: pxt.appTarget?.appTheme?.downloadDialogTheme?.deviceIcon,
         header: lf("Connect failed"),
         tick: "downloaddialog.button.webusbfailed",
         help: theme().troubleshootWebUSBHelpURL,
@@ -258,6 +263,7 @@ interface PairStepOptions {
     confirmAsync: ConfirmAsync;
     jsxd: () => JSX.Element;
     buttonLabel: string;
+    buttonIcon?: string;
     header: string;
     tick: string;
     help?: string;
@@ -270,6 +276,7 @@ async function showPairStepAsync({
     confirmAsync,
     jsxd,
     buttonLabel,
+    buttonIcon,
     header,
     tick,
     help,
@@ -279,10 +286,12 @@ async function showPairStepAsync({
 }: PairStepOptions) {
     let tryAgain = false;
 
-    const buttons = [
+    const buttons: ModalButton[] = [
         {
             label: buttonLabel,
             className: "primary",
+            icon: buttonIcon,
+            labelPosition: "left",
             onclick: () => {
                 pxt.tickEvent(tick);
                 core.hideDialog();
@@ -290,10 +299,13 @@ async function showPairStepAsync({
             },
         }
     ];
+
     if (showDownloadAsFileButton) {
         buttons.unshift({
             label: lf("Download as file"),
             className: "secondary",
+            icon: pxt.appTarget.appTheme.downloadIcon || "xicon file-download",
+            labelPosition: "left",
             onclick: () => {
                 pxt.tickEvent("downloaddialog.button.webusb.preferdownload");
                 userPrefersDownloadFlag = true;

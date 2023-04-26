@@ -1576,9 +1576,14 @@ p.ui.font.small {
         Download dialogs
 *******************************/
 
-.ui.modal .actions .dialog-help-large {
+.ui.modal .actions .dialog-help-large,
+.downloaddialog.ui.modal .actions .icon.help {
     float: left;
     margin-left: 4px;
+}
+
+.downloaddialog.ui.modal .actions .icon-and-text.icon~.ui.text {
+    margin-left: 0 !important;
 }
 
 .ui.modal .actions .left-action {
