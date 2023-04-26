@@ -20,12 +20,11 @@
         window.appInsights=appInsights;
 
         var location = window.location.toString();
-        // Use generic title for script share page, otherwise use current page title
-        var pageTitle = isScriptPage(location) ? "Share Page" : null;
         appInsights.trackPageView({
-            name: pageTitle,
-            uri: scrubUrl(location),
+            name: window.location.hostname,
+            uri: window.location.origin,
             properties: {
+                url: scrubUrl(location),
                 urlReferrer: scrubUrl(document.referrer.toString())
             }
         });
