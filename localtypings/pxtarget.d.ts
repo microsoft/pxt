@@ -484,7 +484,6 @@ declare namespace pxt {
         deviceSuccessIcon?: string;
         downloadMenuHelpURL?: string;
         downloadHelpURL?: string;
-        firmwareHelpURL?: string;
         troubleshootWebUSBHelpURL?: string;
         incompatibleHardwareHelpURL?: string;
 
@@ -492,9 +491,14 @@ declare namespace pxt {
         connectDeviceImage?: string;
         selectDeviceImage?: string;
         connectionSuccessImage?: string;
-        checkFirmwareVersionImage?: string;
-        checkUSBCableImage?: string;
         incompatibleHardwareImage?: string;
+
+        // The following fields used to be displayed, but students
+        // found the dialog confusing / hard to use; now we redirect
+        // them to help docs instead if pairing fails for step by step instructions.
+        // checkFirmwareVersionImage?: string;
+        // checkUSBCableImage?: string;
+        // firmwareHelpURL?: string;
     }
 
     interface SocialOptions {

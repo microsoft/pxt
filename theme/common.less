@@ -236,7 +236,7 @@ pre {
     margin-left: auto;
 }
 
-#editortools .download-button.icon-and-text {
+#editortools .download-button {
     text-align: center;
 }
 
@@ -1576,9 +1576,14 @@ p.ui.font.small {
         Download dialogs
 *******************************/
 
-.ui.modal .actions .dialog-help-large {
+.ui.modal .actions .dialog-help-large,
+.downloaddialog.ui.modal .actions .icon.help {
     float: left;
     margin-left: 4px;
+}
+
+.downloaddialog.ui.modal .actions .icon-and-text.icon~.ui.text {
+    margin-left: -0.5em !important;
 }
 
 .ui.modal .actions .left-action {
@@ -1626,6 +1631,11 @@ p.ui.font.small {
     display: inline;
 }
 
+.downloaddialog .content .webusb-connect-image {
+    padding: 0 !important;
+    margin: 0 auto;
+}
+
 .download-dialog-image img {
     max-height: 200px;
     object-fit: contain;
@@ -1636,6 +1646,10 @@ p.ui.font.small {
     display: flex;
     height: 100%;
     align-items: center;
+}
+
+.downloaddialog .actions .approve.secondary {
+    float: left;
 }
 
 #downloadArea button .icon.xicon {

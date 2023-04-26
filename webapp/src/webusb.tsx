@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as core from "./core";
 import * as cmds from "./cmds";
+import { ModalButton } from "./sui";
 
 function resolveFirmwareUrl(): string {
     const boardid = pxt.appTarget?.simulator?.boardDefinition?.id;
@@ -41,7 +42,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
 
     if (!await showConnectDeviceDialogAsync(confirmAsync))
         return notPairedResult();
-    if (!await showPickWebUSBDeviceDialogAsync(confirmAsync))
+    if (!await showPickWebUSBDeviceDialogAsync(confirmAsync, implicitlyCalled))
         return notPairedResult();
 
     core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName))
@@ -60,7 +61,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
     }
 
     if (paired) {
-        await showConnectionSuccessAsync(confirmAsync);
+        await showConnectionSuccessAsync(confirmAsync, implicitlyCalled);
     }
     else {
         const tryAgain = await showConnectionFailureAsync(confirmAsync, implicitlyCalled);
@@ -78,10 +79,15 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
 function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     const connectDeviceImage = theme().connectDeviceImage;
     const boardName = getBoardName();
-    const columns = connectDeviceImage ? "two" : "one";
 
     const jsxd = () => (
-        <div className={`ui ${columns} column grid padded download-dialog`}>
+        connectDeviceImage
+            ? <img
+                alt={lf("Image connecting {0} to a computer", boardName)}
+                className="ui medium rounded image webusb-connect-image"
+                src={connectDeviceImage}
+            />
+            : <div className={`ui one column grid padded download-dialog`}>
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -91,71 +97,22 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
                     </div>
                 </div>
             </div>
-            {connectDeviceImage &&
-                <div className="column">
-                    <div className="ui">
-                        <div className="image download-dialog-image">
-                            <img alt={lf("Image connecting {0} to a computer", boardName)} className="ui medium rounded image" src={connectDeviceImage} />
-                        </div>
-                    </div>
-                </div>
-            }
         </div>
     );
 
-    return showPairStepAsync(
+    return showPairStepAsync({
+        hideClose: true,
         confirmAsync,
         jsxd,
-        lf("Next"),
-        lf("Connect your {0}…", boardName),
-        'downloaddialog.button.connectusb'
-    );
+        buttonLabel: lf("Next"),
+        buttonIcon: pxt.appTarget?.appTheme?.downloadDialogTheme?.deviceIcon,
+        header: lf("1. Connect your {0} to your computer", boardName),
+        tick: "downloaddialog.button.connectusb",
+    });
 }
 
-function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
+function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloadAsFileButton?: boolean) {
     const boardName = getBoardName();
-
-    let deviceNames = theme().webUSBDeviceNames;
-    if (!deviceNames || !deviceNames.length) deviceNames = [boardName];
-
-    // Here we intentionally pass dummy in the arguments for {1}, {2}, and {3} so that
-    // we can apply styling below
-    let connectDeviceText: string;
-    if (deviceNames.length === 1 || deviceNames.length > 3) {
-        connectDeviceText = lf("Pair your {0} to the computer by selecting {1} from the popup that appears after you press the 'Next' button below.", boardName, "{1}");
-    }
-    else if (deviceNames.length === 2) {
-        connectDeviceText = lf("Pair your {0} to the computer by selecting {1} or {2} from the popup that appears after you press the 'Next' button below.", boardName, "{1}", "{2}");
-    }
-    else if (deviceNames.length === 3) {
-        connectDeviceText = lf("Pair your {0} to the computer by selecting {1}, {2}, or {3} from the popup that appears after you press the 'Next' button below.", boardName, "{1}", "{2}", "{3}");
-    }
-
-    const parts = connectDeviceText.split(/\{\d\}/);
-    const textElements: (JSX.Element | string)[] = [];
-
-    let renderedNames = deviceNames.map(dName => <span key={dName} className="download-device-name">'{dName}'</span>)
-
-    while (renderedNames.length) {
-        textElements.push(parts.shift());
-
-        // If we have more device names then we do remaining slots (e.g. a bad translation
-        // or the very unlikely scenario where there are more than 3), then just put the
-        // rest in a comma separated list
-        if (renderedNames.length > 1 && parts.length === 1)  {
-            for (let i = 0; i < renderedNames.length; i++) {
-                textElements.push(renderedNames[i]);
-                if (i < renderedNames.length - 1) {
-                    textElements.push(", ");
-                }
-            }
-            renderedNames = [];
-        }
-        else {
-            textElements.push(renderedNames.shift());
-        }
-    }
-    textElements.push(...parts);
 
     const selectDeviceImage = theme().selectDeviceImage;
     const columns = selectDeviceImage ? "two" : "one";
@@ -166,7 +123,10 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
                 <div className="ui">
                     <div className="content">
                         <div className="description">
-                            {textElements}
+                            {lf("We recommend pairing for easy downloads.")}
+                            <br/>
+                            <br/>
+                            {lf("Press 'Pair' below and select your device from the browser pop-up.")}
                         </div>
                     </div>
                 </div>
@@ -183,16 +143,18 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
         </div>
     );
 
-    return showPairStepAsync(
+    return showPairStepAsync({
         confirmAsync,
         jsxd,
-        lf("Next"),
-        lf("Connect your {0}…", boardName),
-        'downloaddialog.button.pickusbdevice'
-    );
+        buttonLabel: lf("Pair"),
+        buttonIcon: pxt.appTarget?.appTheme?.downloadDialogTheme?.deviceIcon,
+        showDownloadAsFileButton,
+        header: lf("2. Pair your {0} to your browser", boardName),
+        tick: "downloaddialog.button.pickusbdevice",
+    });
 }
 
-function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
+function showConnectionSuccessAsync(confirmAsync: ConfirmAsync, willTriggerDownloadOnClose: boolean) {
     const boardName = getBoardName();
     const connectionImage = theme().connectionSuccessImage;
     const columns = connectionImage ? "two" : "one";
@@ -223,122 +185,114 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
         </div>
     );
 
-    return showPairStepAsync(
+    return showPairStepAsync({
         confirmAsync,
         jsxd,
-        lf("Done"),
-        lf("Connected to {0}", boardName),
-        'downloaddialog.button.webusbsuccess',
-        undefined,
-        "large circle check purple"
-    );
+        buttonLabel: willTriggerDownloadOnClose ? lf("Download") : lf("Done"),
+        buttonIcon: pxt.appTarget.appTheme.downloadDialogTheme?.deviceSuccessIcon,
+        header: lf("Connected to {0}", boardName),
+        tick: "downloaddialog.button.webusbsuccess",
+        help: undefined,
+        headerIcon: "large circle check purple",
+    });
 }
 
 
-function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadFileButton?: boolean) {
+function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFileButton?: boolean) {
     const boardName = getBoardName();
-
-    let firmwareText: string;
-
-    if (theme().minimumFirmwareVersion) {
-        firmwareText = lf("Make sure your {0} firmware is version {1} or above.", boardName, theme().minimumFirmwareVersion);
-    }
-    else {
-        firmwareText = lf("Make sure your {0} has the latest firmware.", boardName);
-    }
-
-    const checkCableImage = theme().checkUSBCableImage || theme().connectDeviceImage;
-    const firmwareImage = theme().checkFirmwareVersionImage;
 
     const jsxd = () => (
         <div>
             <div className="ui content download-troubleshoot-header">
                 {lf("We couldn't find your {0}. Here's a few ways to fix that:", boardName)}
             </div>
-            <div className="download-troubleshoot">
-                <div className="download-column">
-                    {checkCableImage &&
-                        <div className="download-row image-row">
-                            <img alt={lf("Image connecting {0} to a computer", boardName)} src={checkCableImage} />
-                        </div>
-                    }
-                    <div className="download-row">
-                    {lf("Check the USB cable connecting your {0} to your computer.", boardName)}
-                    </div>
-                </div>
-                <div className="download-column">
-                    { firmwareImage &&
-                        <div className="download-row image-row">
-                            <img alt={lf("Image depicting the firmware of {0}", boardName)} src={firmwareImage} />
-                        </div>
-                    }
-                    <div className="download-row">
-                        {firmwareText}
-                        <br/>
-                        <a target="_blank" href={theme().firmwareHelpURL} rel="noopener noreferrer">{lf("Learn more about firmware.", boardName)}</a>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 
 
-    return showPairStepAsync(
+    return showPairStepAsync({
         confirmAsync,
         jsxd,
-        lf("Try Again"),
-        lf("Connect failed"),
-        'downloaddialog.button.webusbfailed',
-        theme().troubleshootWebUSBHelpURL,
-        "exclamation triangle purple",
-        showDownloadFileButton,
-    );
+        buttonLabel: lf("Try Again"),
+        buttonIcon: pxt.appTarget?.appTheme?.downloadDialogTheme?.deviceIcon,
+        header: lf("Failed to connect"),
+        tick: "downloaddialog.button.webusbfailed",
+        help: theme().troubleshootWebUSBHelpURL,
+        headerIcon: "exclamation triangle purple",
+        showDownloadAsFileButton,
+    });
 }
 
-function showPairStepAsync(
-    confirmAsync: ConfirmAsync,
-    jsxd: () => JSX.Element,
-    buttonLabel: string,
-    header: string,
-    tick: string,
-    help?: string,
-    headerIcon?: string,
-    showDownloadAsFileButton?: boolean,
-) {
+interface PairStepOptions {
+    confirmAsync: ConfirmAsync;
+    jsxd: () => JSX.Element;
+    buttonLabel: string;
+    buttonIcon?: string;
+    header: string;
+    tick: string;
+    help?: string;
+    headerIcon?: string;
+    showDownloadAsFileButton?: boolean;
+    hideClose?: boolean;
+}
+
+async function showPairStepAsync({
+    confirmAsync,
+    jsxd,
+    buttonLabel,
+    buttonIcon,
+    header,
+    tick,
+    help,
+    headerIcon,
+    showDownloadAsFileButton,
+    hideClose,
+}: PairStepOptions) {
     let tryAgain = false;
 
-    return confirmAsync({
+    const buttons: ModalButton[] = [
+        {
+            label: buttonLabel,
+            className: "primary",
+            icon: buttonIcon,
+            labelPosition: "left",
+            onclick: () => {
+                pxt.tickEvent(tick);
+                core.hideDialog();
+                tryAgain = true;
+            },
+        }
+    ];
+
+    if (showDownloadAsFileButton) {
+        buttons.unshift({
+            label: lf("Download as file"),
+            className: "secondary",
+            icon: pxt.appTarget.appTheme.downloadIcon || "xicon file-download",
+            labelPosition: "left",
+            onclick: () => {
+                pxt.tickEvent("downloaddialog.button.webusb.preferdownload");
+                userPrefersDownloadFlag = true;
+                tryAgain = false;
+                core.hideDialog();
+            },
+        });
+    }
+
+    await confirmAsync({
         header,
         jsxd,
-        hasCloseIcon: true,
+        hasCloseIcon: !hideClose,
+        hideCancel: hideClose,
         hideAgree: true,
-        className: 'downloaddialog',
+        className: "downloaddialog",
         helpUrl: help,
         bigHelpButton: !!help,
         headerIcon: headerIcon ? headerIcon + " header-inline-icon" : undefined,
-        buttons: [
-            showDownloadAsFileButton ? {
-                label: lf("Download as file"),
-                className: "secondary",
-                onclick: () => {
-                    pxt.tickEvent("downloaddialog.button.webusb.preferdownload");
-                    userPrefersDownloadFlag = true;
-                    tryAgain = false;
-                    core.hideDialog();
-                }
-            } : undefined,
-            {
-                label: buttonLabel,
-                className: "primary",
-                onclick: () => {
-                    pxt.tickEvent(tick)
-                    core.hideDialog();
-                    tryAgain = true;
-                }
-            }
-        ].filter(el => !!el)
-    })
-    .then(() => tryAgain)
+        buttons,
+    });
+
+    return tryAgain;
 }
 
 export function webUsbPairLegacyDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: ConfirmAsync): Promise<number> {
