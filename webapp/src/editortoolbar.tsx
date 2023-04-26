@@ -187,10 +187,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     protected onDownloadButtonClick = async () => {
         pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        if (pxt.appTarget.appTheme?.preferWebUSBDownload
-            && pxt.appTarget?.compile?.webUSB
-            && pxt.usb.isEnabled
-            && !userPrefersDownloadFlagSet()
+        if (this.shouldShowPairingDialogOnDownload()
             && !pxt.packetio.isConnected()
             && !pxt.packetio.isConnecting()
         ) {
@@ -220,6 +217,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         window.open(pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL);
     }
 
+    protected shouldShowPairingDialogOnDownload = () => {
+        return pxt.appTarget.appTheme.preferWebUSBDownload
+            && pxt.appTarget?.compile?.webUSB
+            && pxt.usb.isEnabled
+            && !userPrefersDownloadFlagSet();
+    }
+
     protected getCompileButton(view: View): JSX.Element[] {
         const collapsed = true; // TODO: Cleanup this
         const targetTheme = pxt.appTarget.appTheme;
@@ -241,14 +245,15 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const packetioConnected = !!this.getData("packetio:connected");
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = this.getData("packetio:icon") as string;
+        const hideFileDownloadIcon = view === View.Computer && this.shouldShowPairingDialogOnDownload();
+        const fileDownloadIcon = targetTheme.downloadIcon || "xicon file-download";
 
         const successIcon = (packetioConnected && pxt.appTarget.appTheme.downloadDialogTheme?.deviceSuccessIcon)
             || "xicon file-download-check";
         const downloadIcon = (!!packetioConnecting && "ping " + packetioIcon)
             || (compileState === "success" && successIcon)
             || (!!packetioConnected && packetioIcon)
-            || targetTheme.downloadIcon
-            || "xicon file-download";
+            || (!hideFileDownloadIcon && fileDownloadIcon);
 
         let downloadButtonClasses = "left attached ";
         const downloadButtonIcon = "ellipsis";
