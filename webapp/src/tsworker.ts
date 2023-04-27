@@ -91,7 +91,7 @@ const worker: monaco.languages.typescript.CustomTSWebWorkerFactory = (TSWorkerCl
                                 const parsed = parseCommentString(comments);
                                 let weight = 0;
 
-                                if (parsed.shim === "TD_ID") {
+                                if (parsed.shim === "TD_ID" || parsed.hidden || parsed.deprecated) {
                                     // These entries are filtered out below
                                     this.weightCache[qName][entry.name] = "hidden";
                                     return;
