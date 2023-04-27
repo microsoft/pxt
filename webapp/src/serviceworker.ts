@@ -95,7 +95,6 @@ function initWebappServiceWorker() {
         `/blb/gifjs/gif.js`,
 
         // ai
-        `/blb/ai.0.js`,
         `/blb/ai.2.min.js`,
 
         // target
