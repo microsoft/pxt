@@ -474,6 +474,7 @@ declare namespace pxt {
             editor?: string // path to markdown file for the editor tour steps
         }
         tutorialSimSidebarLayout?: boolean; // Enable tutorial layout with the sim in the sidebar (desktop only)
+        showOpenInVscode?: boolean; // show the open in VS Code button
     }
 
     interface DownloadDialogTheme {

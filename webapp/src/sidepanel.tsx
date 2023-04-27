@@ -138,7 +138,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const { height } = this.state;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const showOpenInVscodeButton = parent.isJavaScriptActive();
+        const showOpenInVscodeButton = parent.isJavaScriptActive() && pxt.appTarget?.appTheme?.showOpenInVscode;
 
         const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
         const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
