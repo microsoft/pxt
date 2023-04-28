@@ -38,16 +38,16 @@
         // Scrub potential PII from the URL.
         function scrubUrl(url) {
             debugger;
-            if(!url) return url;
+            if (!url) return url;
 
             var scrubbedUrl = new URL(url.toLocaleLowerCase().replace(window.scriptIdRegex, "xxxxx-xxxxx-xxxxx-xxxxx"));
 
             // Just as a precaution, strip any suspicious query parameters.
             let blockedParamKeywords = ["username", "password", "token", "pwd"];
             let searchParams = Array.from(scrubbedUrl.searchParams.keys());
-            for(let param of searchParams) {
+            for (let param of searchParams) {
                 console.log(param);
-                if(blockedParamKeywords.some(k => param.indexOf(k) != -1)) {
+                if (blockedParamKeywords.some(k => param.indexOf(k) != -1)) {
                     scrubbedUrl.searchParams.delete(param);
                 }
             }
