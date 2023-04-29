@@ -1,6 +1,5 @@
 <script type="text/javascript" src="/doccdn/pxtweb.js"></script>
 <script type="text/javascript">
-    window.scriptIdRegex = /(?:S?\d{5}-\d{5}-\d{5}-\d{5})|(?:_[0-9a-zA-Z]{12})/g;
     window.loadAppInsights = function (includeCookie) {
         //Backend will patch / + doccdn + / with CDN url and the check that URL ends with the sha would pass
         var isProduction = includeCookie && (/[0-9a-f]{40}\/ai\.2\.min\.js$/.test("/doccdn/ai.2.min.js"));
@@ -65,21 +64,17 @@
             }
         });
 
-        // Check if the current page contains a share URL
-        function isScriptPage(url) {
-            return !!url.match(window.scriptIdRegex);
-        }
-
         // Scrub potential PII from the URL.
         function scrubUrl(url) {
             if (!url) return url;
 
-            var scrubbedUrl = new URL(url.toLocaleLowerCase().replace(window.scriptIdRegex, "xxxxx-xxxxx-xxxxx-xxxxx"));
+            var scriptIdRegex = /(?:S?\d{5}-\d{5}-\d{5}-\d{5})|(?:_[0-9a-zA-Z]{12})/g;
+            var scrubbedUrl = new URL(url.toLocaleLowerCase().replace(scriptIdRegex, "xxxxx-xxxxx-xxxxx-xxxxx"));
 
             // Just as a precaution, strip any suspicious query parameters.
-            let blockedParamKeywords = ["username", "password", "token", "pwd"];
-            let searchParams = Array.from(scrubbedUrl.searchParams.keys());
-            for (let param of searchParams) {
+            var blockedParamKeywords = ["username", "password", "token", "pwd"];
+            var searchParams = Array.from(scrubbedUrl.searchParams.keys());
+            for (var param of searchParams) {
                 if (blockedParamKeywords.some(k => param.indexOf(k) != -1)) {
                     scrubbedUrl.searchParams.delete(param);
                 }
