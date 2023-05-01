@@ -52,20 +52,13 @@ ${lf("This repository can be added as an **extension** in MakeCode.")}
 * ${lf("click on **Extensions** under the gearwheel menu")}
 * ${lf("search for **https://github.com/@REPO@** and import")}
 
-## ${lf("Edit this project")} ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
+## ${lf("Edit this project")}
 
 ${lf("To edit this repository in MakeCode.")}
 
 * ${lf("open [@HOMEURL@](@HOMEURL@)")}
 * ${lf("click on **Import** then click on **Import URL**")}
 * ${lf("paste **https://github.com/@REPO@** and click import")}
-
-## ${lf("Blocks preview")}
-
-${lf("This image shows the blocks code from the last commit in master.")}
-${lf("This image may take a few minutes to refresh.")}
-
-![${lf("A rendered view of the blocks")}](https://github.com/@REPO@/raw/master/.github/makecode/blocks.png)
 
 #### ${lf("Metadata (used for search, rendering)")}
 
