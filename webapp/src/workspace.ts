@@ -889,8 +889,6 @@ export interface CommitOptions {
     blocksDiffScreenshotAsync?: () => Promise<string>;
 }
 
-const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
-const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
 const BINARY_JS_PATH = "assets/js/binary.js";
 const VERSION_TXT_PATH = "assets/version.txt";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
@@ -916,22 +914,6 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
 
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
-
-    // add screenshots
-    let blocksDiffSha: string;
-    if (options
-        && treeUpdate.tree.find(e => e.path == pxt.MAIN_BLOCKS)) {
-        if (options.blocksScreenshotAsync) {
-            const png = await options.blocksScreenshotAsync();
-            if (png)
-                await addToTree(BLOCKS_PREVIEW_PATH, png);
-        }
-        if (options.blocksDiffScreenshotAsync) {
-            const png = await options.blocksDiffScreenshotAsync();
-            if (png)
-                blocksDiffSha = await addToTree(BLOCKSDIFF_PREVIEW_PATH, png);
-        }
-    }
 
     // add compiled javascript to be run in github pages
     if (pxt.appTarget.appTheme.githubCompiledJs
@@ -977,13 +959,6 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         return commitId
     } else {
         data.invalidate("gh-commits:*"); // invalid any cached commits
-        // if we created a block preview, add as comment
-        if (blocksDiffSha) {
-            await pxt.github.postCommitComment(
-                parsed.slug,
-                commitId,
-                `![${lf("Difference between blocks")}](https://raw.githubusercontent.com/${pxt.github.join(parsed.slug, commitId, parsed.fileName, BLOCKSDIFF_PREVIEW_PATH)}`);
-        }
 
         await githubUpdateToAsync(hd, {
             repo: gitjson.repo,

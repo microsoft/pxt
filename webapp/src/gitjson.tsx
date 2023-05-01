@@ -686,16 +686,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 - [ ] ${lf("reviewer approves or requests changes")}
 - [ ] ${lf("apply requested changes if any")}
 - [ ] ${lf("merge once approved")}
-`; // TODO
-            /*
-                        `
-            ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.github/makecode/blocks.png)
-
-            ${lf("This image shows the blocks code from the last commit in this pull request.")}
-            ${lf("This image may take a few minutes to refresh.")}
-
-            `
-            */
+`;
             const id = await pxt.github.createPRFromBranchAsync(gh.slug, "master", gh.tag, title, msg);
             data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
             core.infoNotification(lf("Pull request created successfully!", id));
