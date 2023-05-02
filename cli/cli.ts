@@ -1495,16 +1495,16 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
 
     const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
     let isNodeModule = false;
-    if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
+    if (outputName && tsConfig.compilerOptions.outFile !== `../built/${outputName}.js`) {
         // Special case to support target sim as an NPM package
         if (/^node_modules[\/\\]+pxt-.*?-sim$/.test(p)) {
             // Allow the out dir be inside the folder being built, and manually copy the result to ./built afterwards
-            if (tsConfig.compilerOptions.out !== `./built/${outputName}.js`) {
-                U.userError(`${p}/tsconfig.json expected compilerOptions.out:"./built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+            if (tsConfig.compilerOptions.outFile !== `./built/${outputName}.js`) {
+                U.userError(`${p}/tsconfig.json expected compilerOptions.outFile:"./built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
             }
             isNodeModule = true;
         } else {
-            U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+            U.userError(`${p}/tsconfig.json expected compilerOptions.outFile:"../built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
         }
     }
 
@@ -1521,17 +1521,17 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
     }).then(() => {
         if (tsConfig.prepend) {
             let files: string[] = tsConfig.prepend
-            files.push(tsConfig.compilerOptions.out)
+            files.push(tsConfig.compilerOptions.outFile)
             let s = ""
             for (let f of files) {
                 s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
             }
-            fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.out), s)
+            fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.outFile), s)
         }
 
         if (isNodeModule) {
-            const content = fs.readFileSync(path.resolve(p, tsConfig.compilerOptions.out), "utf8");
-            fs.writeFileSync(path.resolve("built", path.basename(tsConfig.compilerOptions.out)), content);
+            const content = fs.readFileSync(path.resolve(p, tsConfig.compilerOptions.outFile), "utf8");
+            fs.writeFileSync(path.resolve("built", path.basename(tsConfig.compilerOptions.outFile)), content);
         }
     })
 }
@@ -1553,7 +1553,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
 
     const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
     if (outputName && tsConfig.compilerOptions.outDir !== `../built/${outputName}`) {
-        U.userError(`${p}/tsconfig.json expected compilerOptions.ourDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
+        U.userError(`${p}/tsconfig.json expected compilerOptions.outDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
     }
 
     if (!fs.existsSync("node_modules/typescript")) {
