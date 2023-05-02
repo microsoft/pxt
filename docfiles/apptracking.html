@@ -29,14 +29,23 @@
             }
         });
 
-        var scriptIdRegex = /(?:S?\d{5}-\d{5}-\d{5}-\d{5})|(?:_[0-9a-zA-Z]{12})/g;
-        // Check if the current page contains a share URL
-        function isScriptPage(url) {
-            return !!url.match(scriptIdRegex);
-        }
-        // Scrub the key (if any) from the URL.
+        // Scrub potential PII from the URL.
         function scrubUrl(url) {
-            return url.replace(scriptIdRegex, "xxxxx-xxxxx-xxxxx-xxxxx");
+            if (!url) return url;
+
+            var scriptIdRegex = /(?:S?\d{5}-\d{5}-\d{5}-\d{5})|(?:_[0-9a-zA-Z]{12})/g;
+            var scrubbedUrl = new URL(url.toLocaleLowerCase().replace(scriptIdRegex, "xxxxx-xxxxx-xxxxx-xxxxx"));
+
+            // Just as a precaution, strip any suspicious query parameters.
+            var blockedParamKeywords = ["username", "password", "token", "pwd"];
+            var searchParams = Array.from(scrubbedUrl.searchParams.keys());
+            for (var param of searchParams) {
+                if (blockedParamKeywords.some(k => param.indexOf(k) != -1)) {
+                    scrubbedUrl.searchParams.delete(param);
+                }
+            }
+
+            return scrubbedUrl.toString();
         }
 
         return isProduction;
