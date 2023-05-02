@@ -210,7 +210,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFi
                 {lf("We couldn't find your {0}.", boardName)}
                 <br />
                 <br />
-                {lf("Click \"{0}\" for more info, \"{1}\" to try to pair again, or \"{2}\" for drag and drop pairing.", helpText, tryAgainText, downloadAsFileText)}
+                {lf("Click \"{0}\" for more info, \"{1}\" to retry pairing, or \"{2}\" for drag-and-drop pairing.", helpText, tryAgainText, downloadAsFileText)}
             </div>
         </div>
     );
