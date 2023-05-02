@@ -1,6 +1,5 @@
 // Place your settings in this file to overwrite default and user settings.
 {
-    "file.autoSave": "on",
     "files.watcherExclude": {
         "**/.git/objects/**": true,
         "**/built/**": true,
@@ -18,6 +17,8 @@
     },
     "typescript.tsdk": "node_modules/typescript/lib",
     "editor.formatOnType": false,
+    "editor.formatOnPaste": false,
+    "editor.formatOnSave": false,
     "tslint.enable": true,
     "tslint.rulesDirectory": "node_modules/tslint-microsoft-contrib",
     "files.associations": {
