@@ -781,7 +781,7 @@ export function renderBrowserDownloadInstructions(saveonly?: boolean) {
                                                     </div>
                                                     <div className="thirteen wide column">
                                                         {lf("Download your code faster by pairing with web usb!")}
-                                                        <a className="ui button purple" onClick={onPairClicked}>{lf("Pair now")}</a>
+                                                        <a className="ui button purple" onClick={onPairClicked}>{lf("Pair Now")}</a>
                                                     </div>
                                                 </div>
                                             </div>

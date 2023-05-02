@@ -110,7 +110,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         className: 'downloaddialog',
         buttons: [
             downloadAgain && {
-                label: userDownload ? lf("Download") : lf("Download again"),
+                label: userDownload ? lf("Download") : lf("Download Again"),
                 className: userDownload ? "primary" : "lightgrey",
                 urlButton: true,
                 url,

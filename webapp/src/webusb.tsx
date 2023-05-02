@@ -200,11 +200,17 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync, willTriggerDownl
 
 function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFileButton?: boolean) {
     const boardName = getBoardName();
+    const tryAgainText = lf("Try Again");
+    const helpText = lf("Help");
+    const downloadAsFileText = lf("Download as File");
 
     const jsxd = () => (
         <div>
             <div className="ui content download-troubleshoot-header">
-                {lf("We couldn't find your {0}. Here's a few ways to fix that:", boardName)}
+                {lf("We couldn't find your {0}.", boardName)}
+                <br />
+                <br />
+                {lf("Click \"{0}\" for more info, \"{1}\" to retry pairing, or \"{2}\" for drag-and-drop flashing.", helpText, tryAgainText, downloadAsFileText)}
             </div>
         </div>
     );
@@ -213,7 +219,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFi
     return showPairStepAsync({
         confirmAsync,
         jsxd,
-        buttonLabel: lf("Try Again"),
+        buttonLabel: tryAgainText,
         buttonIcon: pxt.appTarget?.appTheme?.downloadDialogTheme?.deviceIcon,
         header: lf("Failed to connect"),
         tick: "downloaddialog.button.webusbfailed",
@@ -266,7 +272,7 @@ async function showPairStepAsync({
 
     if (showDownloadAsFileButton) {
         buttons.unshift({
-            label: lf("Download as file"),
+            label: lf("Download as File"),
             className: "secondary",
             icon: pxt.appTarget.appTheme.downloadIcon || "xicon file-download",
             labelPosition: "left",
