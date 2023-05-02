@@ -5,7 +5,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "declaration": true,
-        "out": "../built/pxtsim.js",
+        "outFile": "../built/pxtsim.js",
         "newLine": "LF",
         "sourceMap": false,
         "moduleResolution": "node",

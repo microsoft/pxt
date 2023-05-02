@@ -6,7 +6,7 @@
         "noImplicitThis": true,
         "strictNullChecks": true,
         "declaration": true,
-        "out": "../built/pxtpy.js",
+        "outFile": "../built/pxtpy.js",
         "newLine": "LF",
         "sourceMap": false,
         "lib": [
