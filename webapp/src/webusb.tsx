@@ -66,7 +66,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
     else {
         const tryAgain = await showConnectionFailureAsync(confirmAsync, implicitlyCalled);
 
-        if (tryAgain) await webUsbPairThemedDialogAsync(pairAsync, confirmAsync, implicitlyCalled);
+        if (tryAgain) return webUsbPairThemedDialogAsync(pairAsync, confirmAsync, implicitlyCalled);
     }
 
     if (paired) {
