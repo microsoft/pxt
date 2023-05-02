@@ -202,7 +202,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFi
     const boardName = getBoardName();
     const tryAgainText = lf("Try Again");
     const helpText = lf("Help");
-    const downloadAsFileText = lf("Download as file");
+    const downloadAsFileText = lf("Download as File");
 
     const jsxd = () => (
         <div>
@@ -272,7 +272,7 @@ async function showPairStepAsync({
 
     if (showDownloadAsFileButton) {
         buttons.unshift({
-            label: lf("Download as file"),
+            label: lf("Download as File"),
             className: "secondary",
             icon: pxt.appTarget.appTheme.downloadIcon || "xicon file-download",
             labelPosition: "left",
