@@ -120,17 +120,13 @@ namespace pxt.auth {
 
     export async function getUserStateAsync(): Promise<Readonly<UserState>> {
         let userState: UserState;
-        if (await hasAuthTokenAsync()) {
-            try { userState = await pxt.storage.shared.getAsync(AUTH_CONTAINER, AUTH_USER_STATE_KEY); } catch {}
-        }
+        try { userState = await pxt.storage.shared.getAsync(AUTH_CONTAINER, AUTH_USER_STATE_KEY); } catch { userState = {}; }
         cachedUserState = userState;
         return userState;
     }
     async function setUserStateAsync(state: UserState): Promise<void> {
-        if (await hasAuthTokenAsync()) {
-            cachedUserState = { ...state };
-            return await pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_USER_STATE_KEY, state);
-        }
+        cachedUserState = { ...state };
+        return await pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_USER_STATE_KEY, state);
     }
     async function delUserStateAsync(): Promise<void> {
         cachedUserState = undefined;
