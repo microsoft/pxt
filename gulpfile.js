@@ -191,7 +191,7 @@ function compileTsProject(dirname, destination, useOutdir, filename) {
     let opts = useOutdir ? {
         outDir: path.resolve(destination)
     } : {
-            out: path.resolve(destination, path.basename(filename || dirname) + ".js")
+            outFile: path.resolve(destination, path.basename(filename || dirname) + ".js")
         };
 
     let configPath = path.join(dirname, "tsconfig.json");
