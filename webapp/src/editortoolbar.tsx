@@ -11,6 +11,7 @@ import * as identity from "./identity";
 import { ProjectView } from "./app";
 import { clearDontShowDownloadDialogFlag } from "./dialogs";
 import { userPrefersDownloadFlagSet } from "./webusb";
+import { dialogAsync } from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -208,6 +209,32 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         this.props.parent.pairAsync();
     }
 
+    protected onCannotPairClick = async () => {
+        pxt.tickEvent("editortools.pairunsupported", undefined, { interactiveConsent: true });
+        const reasonUnsupported = await pxt.usb.getReasonUnavailable();
+        let modalBody: string;
+        switch (reasonUnsupported) {
+            case "security":
+                modalBody = lf("WebUSB appears to have been disabled by browser policy; check your browser's policy page at chrome://policy for more info.");
+                break;
+            case "oldwindows":
+                modalBody = lf("WebUSB is not available on Windows devices with versions below 8.1.");
+                break;
+            case "electron":
+                modalBody = lf("WebUSB is not supported in electron.");
+                break;
+            case "notimpl":
+                modalBody = lf("WebUSB is not supported by this browser; please check for updates.");
+                break;
+        }
+
+        dialogAsync({
+            header: lf("WebUSB unavailable"),
+            body: modalBody,
+            hasCloseIcon: true,
+        });
+    }
+
     protected onDisconnectClick = () => {
         cmds.showDisconnectAsync();
     }
@@ -241,7 +268,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
 
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
-        const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
+        const editorSupportsWebUSB = pxt.appTarget?.compile?.webUSB;
+        const webUSBSupported = pxt.usb.isEnabled && editorSupportsWebUSB;
+        const showUsbNotSupportedHint = editorSupportsWebUSB && !pxt.usb.isEnabled && (pxt.BrowserUtils.isChromiumEdge() || pxt.BrowserUtils.isChrome());
         const packetioConnected = !!this.getData("packetio:connected");
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = this.getData("packetio:icon") as string;
@@ -302,6 +331,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         el.push(
             <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
                 {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onPairClick} />}
+                {showUsbNotSupportedHint && <sui.Item role="menuitem" icon={"exclamation triangle"} text={lf("Cannot Connect Device")} tabIndex={-1} onClick={this.onCannotPairClick} />}
                 {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                 {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                 <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
