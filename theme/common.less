@@ -2338,15 +2338,17 @@ div.simframe.ui.embed {
     -ms-interpolation-mode: nearest-neighbor;
 }
 
-.ui.menu .logged-in-dropdown {
-    justify-content: center;
+.ui.menu .item.logged-in-dropdown {
+    padding-right: .25rem;
+    width: auto !important; // override .menu @largestMobileScreen breakpoint in menu.overrides
 }
 
 .ui.menu .item.sign-in-dropdown {
-    padding-right: .2rem;
+    padding-right: .25rem;
+    width: auto !important; // override .menu @largestMobileScreen breakpoint in menu.overrides
 }
 
-div.signin-button {
+.ui.menu .signin-button {
     display: flex;
     align-items: center;
     background-color: @homeScreenBackground;
@@ -2356,6 +2358,10 @@ div.signin-button {
     padding: 0 .6rem;
     font-family: @segoeUIFont;
     font-weight: 500;
+
+    .icon {
+        margin: 0 !important; // override .menu @largestMobileScreen breakpoint in menu.overrides
+    }
 
     .text {
         margin-right: .5rem;
