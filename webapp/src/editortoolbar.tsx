@@ -11,7 +11,7 @@ import * as identity from "./identity";
 import { ProjectView } from "./app";
 import { clearDontShowDownloadDialogFlag } from "./dialogs";
 import { userPrefersDownloadFlagSet } from "./webusb";
-import { dialogAsync } from "./core";
+import { dialogAsync, hideDialog } from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -232,6 +232,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             header: lf("WebUSB unavailable"),
             body: modalBody,
             hasCloseIcon: true,
+            buttons: [
+                {
+                    label: lf("Okay"),
+                    className: "primary",
+                    onclick: hideDialog
+                }
+            ]
         });
     }
 

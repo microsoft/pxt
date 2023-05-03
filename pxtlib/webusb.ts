@@ -524,7 +524,7 @@ namespace pxt.usb {
     export async function checkAvailableAsync() {
         if (_available !== undefined) return;
 
-        pxt.debug(`webusb: checking availability`)
+        pxt.debug(`webusb: checking availability`);
         // not supported by editor, cut short
         if (!pxt.appTarget?.compile?.webUSB) {
             _available = false;
