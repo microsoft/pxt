@@ -668,9 +668,16 @@ export async function duplicateAsync(h: Header, newName?: string): Promise<Heade
 
     delete newHdr._rev;
     delete (newHdr as any)._id;
+    // Clear github metadata
     delete newHdr.githubCurrent;
     delete newHdr.githubId;
     delete newHdr.githubTag;
+    // Clear publish metadata
+    delete newHdr.pubVersions;
+    delete newHdr.pubPermalink;
+    delete newHdr.anonymousSharePreference;
+    newHdr.pubId = "";
+    newHdr.pubCurrent = false;
 
     if (newHdr.cloudVersion) {
         pxt.tickEvent(`identity.duplicatingCloudProject`);
