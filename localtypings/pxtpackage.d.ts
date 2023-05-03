@@ -92,6 +92,8 @@ declare namespace pxt {
         utf8?: boolean; // force compilation with UTF8 enabled
         disableTargetTemplateFiles?: boolean; // do not override target template files when commiting to github
         theme?: string | pxt.Map<string>;
+        assetPack?: boolean; // if set to true, only the assets of this project will be imported when added as an extension (no code)
+        assetPacks?: Map<boolean>; // a map of dependency id to boolean that indicates which dependencies should be imported as asset packs
     }
 
     interface PackageExtension {

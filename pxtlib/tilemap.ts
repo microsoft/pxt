@@ -1027,19 +1027,38 @@ namespace pxt {
                 }
             }
 
-            for (const tm of getTilemaps(pack.parseJRes())) {
-                this.state.tilemaps.add({
-                    internalID: this.getNewInternalId(),
-                    type: AssetType.Tilemap,
-                    id: tm.id,
-                    meta: {
-                        // For tilemaps, use the id as the display name for backwards compat
-                        displayName: tm.displayName || tm.id,
-                        package: pack.id
-                    },
-                    data: decodeTilemap(tm, id => this.resolveTile(id))
-                })
+            for (const dep of allPackages) {
+                const isProject = dep.id === "this";
+                for (const tm of getTilemaps(dep.parseJRes())) {
+                    if (isProject) {
+                        this.state.tilemaps.add({
+                            internalID: this.getNewInternalId(),
+                            type: AssetType.Tilemap,
+                            id: tm.id,
+                            meta: {
+                                // For tilemaps, use the id as the display name for backwards compat
+                                displayName: tm.displayName || tm.id,
+                                package: pack.id
+                            },
+                            data: decodeTilemap(tm, id => this.resolveTile(id))
+                        });
+                    }
+                    else {
+                        this.gallery.tilemaps.add({
+                            internalID: this.getNewInternalId(),
+                            type: AssetType.Tilemap,
+                            id: tm.id,
+                            meta: {
+                                // For tilemaps, use the id as the display name for backwards compat
+                                displayName: tm.displayName || tm.id,
+                                package: pack.id
+                            },
+                            data: decodeTilemap(tm, id => this.gallery.tiles.getByID(id))
+                        });
+                    }
+                }
             }
+
 
             this.committedState = this.cloneState();
             this.undoStack = [];
@@ -1348,6 +1367,142 @@ namespace pxt {
         }
 
         return res;
+    }
+
+    export function emitGalleryDeclarations(jres: pxt.Map<JRes>, namespaceName: string): [pxt.Map<JRes>, string] {
+        const entries = Object.keys(jres);
+
+        const indent = "    ";
+        let out = "";
+
+        const takenNames: {[index: string]: boolean} = {};
+        const idMapping: {[index: string]: string} = {};
+
+        const outJRes: pxt.Map<JRes> = {};
+
+        const getId = (key: string) => {
+            let ns = jres[key].namespace || jres["*"].namespace;
+            const id = jres[key].id || key;
+
+            if (ns) {
+                if (ns.endsWith(".")) {
+                    ns = ns.slice(0, ns.length - 1);
+                }
+
+                if (!id.startsWith(ns + ".")) {
+                    return ns + "." + id;
+                }
+            }
+
+            return id;
+        }
+
+        if (jres["*"]) {
+            outJRes["*"] = {
+                ...jres["*"],
+                namespace: namespaceName
+            };
+        }
+
+        // First do a pass to generate new qualified names for each asset
+        for (const key of entries) {
+            if (key === "*") continue;
+
+            const entry = jres[key];
+            const id = getId(key);
+            let varName = ts.pxtc.escapeIdentifier(entry.displayName || id.split(".").pop());
+
+            if (takenNames[varName]) {
+                const base = varName;
+                let index = 2;
+                while (takenNames[varName]) {
+                    varName = base + index;
+                    index++;
+                }
+            }
+            takenNames[varName] = true;
+            idMapping[id] = namespaceName + "." + varName
+        }
+
+        // Now actually generate the TS
+        for (const key of entries) {
+            if (key === "*") continue;
+
+            const entry = jres[key];
+            let mimeType = entry.mimeType || jres["*"]?.mimeType;
+            let blockIdentity: string;
+            let value: string;
+            const varName = idMapping[getId(key)].split(".").pop();
+            let tags: string[] = entry.tags;
+
+            if (!tags) {
+                tags = [];
+                if (varName.toLowerCase().indexOf("background") !== -1) {
+                    tags.push("background");
+                }
+                if (varName.toLowerCase().indexOf("dialog") !== -1) {
+                    tags.push("dialog");
+                }
+                if (entry.tilemapTile) {
+                    tags.push("tile");
+                }
+            }
+
+            if (mimeType === IMAGE_MIME_TYPE) {
+                value = "image.ofBuffer(hex\`\`)"
+
+                if (entry.tilemapTile) {
+                    blockIdentity = "images._tile"
+                }
+                else {
+                    blockIdentity = "images._image"
+                }
+            }
+            else if (mimeType === ANIMATION_MIME_TYPE) {
+                const am = decodeAnimation(entry);
+                value = `[${
+                    am.frames.map(f =>
+                        pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(f), "typescript")
+                    ).join(",")
+                }]`;
+            }
+            else if (mimeType === TILEMAP_MIME_TYPE) {
+                const tm = decodeTilemap(entry);
+                value = pxt.sprite.encodeTilemap(tm, "typescript", idMapping);
+            }
+            else if (mimeType === SONG_MIME_TYPE) {
+                value = `hex\`${entry.data}\``;
+            }
+
+            out += `${indent}//% fixedInstance jres whenUsed\n`
+            if (blockIdentity)  out += `${indent}//% blockIdentity=${blockIdentity}\n`
+            if (tags.length) out += `${indent}//% tags="${tags.join(" ")}"\n`
+            out += `${indent}export const ${varName} = ${value};\n`
+
+            if (typeof entry === "string") {
+                outJRes[varName] = entry;
+            }
+            else {
+                outJRes[varName] = {
+                    ...entry,
+                    id: idMapping[getId(key)],
+                    tags
+                };
+                if (entry.namespace) {
+                    outJRes[varName].namespace = namespaceName
+                    if (entry.namespace.endsWith(".")) {
+                        outJRes[varName].namespace += ".";
+                    }
+                }
+                if (outJRes[varName].tileset) {
+                    outJRes[varName].tileset = entry.tileset.map(t => idMapping[t] || t);
+                }
+            }
+        }
+
+        const warning = lf("Auto-generated code. Do not edit.");
+
+        return [outJRes, `// ${warning}\nnamespace ${namespaceName} {\n${out}\n}\n// ${warning}\n`]
     }
 
     export function emitTilemapsFromJRes(jres: pxt.Map<JRes>) {
