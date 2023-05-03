@@ -367,6 +367,7 @@ namespace pxt.blocks {
                             parentInput = document.createElement("value");
                             parentInput.setAttribute("name", param.definitionName);
                             parent.appendChild(parentInput);
+                            break;
                         }
                     }
                 }
