@@ -342,11 +342,35 @@ namespace pxt.blocks {
             const parentFn = info.blocksById[fn.attributes.toolboxParent];
 
             if (parentFn) {
-                parent = createToolboxBlock(info, parentFn, pxt.blocks.compileInfo(parentFn));
+                const parentInfo = pxt.blocks.compileInfo(parentFn);
+                parent = createToolboxBlock(info, parentFn, parentInfo);
 
-                parentInput = fn.attributes.toolboxParentArgument ?
-                    parent.querySelector(`value[name=${fn.attributes.toolboxParentArgument}]`) :
-                    parent.querySelector(`value`);
+                if (fn.attributes.toolboxParentArgument) {
+                    parentInput = parent.querySelector(`value[name=${fn.attributes.toolboxParentArgument}]`);
+
+                    if (!parentInput && parentInfo.parameters.some(p => p.definitionName === fn.attributes.toolboxParentArgument)) {
+                        // The input is valid, it just doesn't have a shadow block specified in the parent function. Create
+                        // a new input and add it to the parent block
+                        parentInput = document.createElement("value");
+                        parentInput.setAttribute("name", fn.attributes.toolboxParentArgument);
+                        parent.appendChild(parentInput);
+                    }
+                }
+                else {
+                    parentInput = parent.querySelector("value");
+
+                    if (!parentInput) {
+                        // try looking for the first parameter that isn't a field
+                        for (const param of parentInfo.parameters) {
+                            if (parent.querySelector(`field[name=${param.definitionName}]`)) continue;
+
+                            parentInput = document.createElement("value");
+                            parentInput.setAttribute("name", param.definitionName);
+                            parent.appendChild(parentInput);
+                            break;
+                        }
+                    }
+                }
 
                 if (parentInput) {
                     while (parentInput.firstChild) parentInput.removeChild(parentInput.firstChild);
