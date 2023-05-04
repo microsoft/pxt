@@ -577,7 +577,7 @@ namespace pxt.usb {
         // check security
         try {
             // iframes must specify allow="usb" in order to support WebUSB
-            await _usb.getDevices()
+            await _usb.getDevices();
         } catch (e) {
             return "security";
         }
