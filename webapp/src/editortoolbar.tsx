@@ -215,7 +215,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         let modalBody: string;
         switch (reasonUnsupported) {
             case "security":
-                modalBody = lf("WebUSB appears to have been disabled by browser policy; check your browser's policy page at chrome://policy for more info.");
+                modalBody = lf("WebUSB appears to have been disabled by browser policy; check with your technical adminstrator for details.");
                 break;
             case "oldwindows":
                 modalBody = lf("WebUSB is not available on Windows devices with versions below 8.1.");
