@@ -229,7 +229,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         dialogAsync({
-            header: lf("WebUSB unavailable"),
+            header: lf("Cannot Connect Device"),
             body: modalBody,
             hasCloseIcon: true,
             buttons: [
