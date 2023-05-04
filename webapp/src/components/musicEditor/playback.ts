@@ -2,7 +2,7 @@ let sequencer: pxsim.music.Sequencer;
 let playbackStateListeners: ((state: "play" | "loop" | "stop") => void)[] = [];
 let onTickListeners: ((tick: number) => void)[] = [];
 
-export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: boolean) {
+export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: boolean, ticks?: number) {
     if (!sequencer) {
         sequencer = new pxsim.music.Sequencer();
         await sequencer.initAsync();
@@ -21,7 +21,7 @@ export async function startPlaybackAsync(song: pxt.assets.music.Song, loop: bool
         sequencer.setVolume(100);
     }
 
-    sequencer.start(song, loop);
+    sequencer.startFrom(song, loop, ticks);
 }
 
 export function isPlaying() {
