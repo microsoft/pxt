@@ -946,8 +946,7 @@ function uploadedArtFileCdnUrl(fn: string): string {
     if (!fn || /^(https?|data):/.test(fn)) return fn; // nothing to do
 
     fn = fn.replace(/^\.?\/*/, "/")
-    const cdnBlobUrl =  "@cdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
-    // console.log(`uploading art file ${fn} to ${cdnBlobUrl}`);
+    const cdnBlobUrl = "@cdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
     return cdnBlobUrl;
 }
 
