@@ -15,7 +15,7 @@ export const Badge = (props: BadgeProps) => {
         onClick(badge);
     })
 
-    const image = (disabled && badge.lockedImage) || badge.image;
+    const image = pxt.BrowserUtils.patchCdn((disabled && badge.lockedImage) || badge.image);
     const alt = disabled ? pxt.U.lf("Locked '{0}' badge", badge.title) : badge.title;
 
     return (
