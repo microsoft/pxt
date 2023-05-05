@@ -1151,6 +1151,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const hasCategories = (forceHasCategories != undefined) ? forceHasCategories :
             (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories :
                 this.showCategories);
+
+        const gridOptions = blocklyOptions?.grid as any;
+        if (gridOptions?.image?.path) {
+            gridOptions.image.path = pxt.BrowserUtils.patchCdn(gridOptions.image.path);
+        }
+
         blocklyOptions.hasCategories = hasCategories;
         blocklyOptions.renderer = "pxt";
         if (!hasCategories) this.showCategories = false;
