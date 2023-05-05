@@ -957,9 +957,9 @@ function gitHash(buf: Buffer) {
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
-    let targetConfig = readLocalPxTarget();
-    let defaultLocale = targetConfig.appTheme.defaultLocale;
-    let hexCache = path.join("built", "hexcache");
+    const targetConfig = readLocalPxTarget();
+    const defaultLocale = targetConfig.appTheme.defaultLocale;
+    const hexCache = path.join("built", "hexcache");
     let hexFiles: string[] = [];
 
     if (fs.existsSync(hexCache)) {
@@ -1065,7 +1065,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         }
     }
 
-    let replFiles = [
+    const replFiles = [
         "index.html",
         "embed.js",
         "run.html",
@@ -1090,7 +1090,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     // expandHtml is manually called on these files before upload
     // runs <!-- @include --> substitutions, fills in locale, etc
-    let expandFiles = [
+    const expandFiles = [
         "index.html",
         "skillmap.html",
         "authcode.html",
@@ -1103,22 +1103,22 @@ function uploadCoreAsync(opts: UploadOptions) {
         return urls.map(url => encodeURIComponent(url)).join(";")
     }
 
-    let uplReqs: Map<BlobReq> = {}
+    const uplReqs: Map<BlobReq> = {}
+    const uglify = opts.minify ? require("uglify-js") : undefined;
 
-    let uploadFileAsync = (p: string) => {
-        let rdf: Promise<Buffer> = null
+    const uploadFileAsync = async (p: string) => {
+        let rdata: Buffer = null
         if (opts.fileContent) {
             let s = U.lookup(opts.fileContent, p)
             if (s != null)
-                rdf = Promise.resolve(Buffer.from(s, "utf8"))
+                rdata = Buffer.from(s, "utf8");
         }
-        if (!rdf) {
+        if (!rdata) {
             if (!fs.existsSync(p))
                 return undefined;
-            rdf = readFileAsync(p)
+            rdata = await readFileAsync(p)
         }
 
-        const uglify = opts.minify ? require("uglify-js") : undefined;
 
         let fileName = uploadFileName(p)
         let mime = U.getMime(p)
@@ -1128,115 +1128,110 @@ function uploadCoreAsync(opts: UploadOptions) {
 
         let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
         let content = ""
-        let data: Buffer;
-        return rdf.then((rdata: Buffer) => {
-            data = rdata;
-            if (isText) {
-                content = data.toString("utf8")
-                if (expandFiles.indexOf(fileName) >= 0) {
-                    if (!opts.localDir) {
-                        let m = pxt.appTarget.appTheme as Map<string>
-                        for (let k of Object.keys(m)) {
-                            if (/CDN$/.test(k))
-                                m[k.slice(0, k.length - 3)] = m[k]
+        let data = rdata;
+        if (isText) {
+            content = data.toString("utf8")
+            if (expandFiles.indexOf(fileName) >= 0) {
+                if (!opts.localDir) {
+                    let m = pxt.appTarget.appTheme as Map<string>
+                    for (let k of Object.keys(m)) {
+                        if (/CDN$/.test(k))
+                            m[k.slice(0, k.length - 3)] = m[k]
+                    }
+                }
+                content = server.expandHtml(content)
+            }
+
+            if (/^sim/.test(fileName) || /^workerConfig/.test(fileName)) {
+                // just force blobs for everything in simulator manifest
+                content = content.replace(/\/(cdn|sim)\//g, "/blb/")
+            }
+
+            if (minified) {
+                const res = uglify.minify(content);
+                if (!res.error) {
+                    content = res.code;
+                }
+                else {
+                    pxt.log(`        Could not minify ${fileName} ${res.error}`)
+                }
+            }
+
+            if (replFiles.indexOf(fileName) >= 0) {
+                for (let from of Object.keys(replacements)) {
+                    content = U.replaceAll(content, from, replacements[from])
+                }
+                if (opts.localDir) {
+                    data = Buffer.from(content, "utf8")
+                } else {
+                    // save it for developer inspection
+                    fs.writeFileSync("built/uploadrepl/" + fileName, content)
+                }
+            } else if (fileName == "target.json" || fileName == "target.js") {
+                let isJs = fileName == "target.js"
+                if (isJs) content = content.slice(targetJsPrefix.length)
+                let trg: pxt.TargetBundle = JSON.parse(content)
+                if (opts.localDir) {
+                    for (let e of trg.appTheme.docMenu)
+                        if (e.path[0] == "/") {
+                            e.path = opts.localDir + "docs" + e.path;
+                        }
+                    trg.appTheme.homeUrl = opts.localDir
+                    // patch icons in bundled packages
+                    Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                        const res = trg.bundledpkgs[pkgid];
+                        // path config before storing
+                        const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                        if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
+                        res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+                    })
+                    data = Buffer.from((isJs ? targetJsPrefix : '') + nodeutil.stringify(trg), "utf8")
+                } else {
+                    if (trg.simulator
+                        && trg.simulator.boardDefinition
+                        && trg.simulator.boardDefinition.visual) {
+                        let boardDef = trg.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+                        if (boardDef.image) {
+                            boardDef.image = uploadArtFile(boardDef.image);
+                            if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
                         }
                     }
-                    content = server.expandHtml(content)
+                    // patch icons in bundled packages
+                    Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                        const res = trg.bundledpkgs[pkgid];
+                        // path config before storing
+                        const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                        if (config.icon) config.icon = uploadArtFile(config.icon);
+                        res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+                    })
+                    content = nodeutil.stringify(trg);
+                    if (isJs)
+                        content = targetJsPrefix + content
                 }
-
-                if (/^sim/.test(fileName) || /^workerConfig/.test(fileName)) {
-                    // just force blobs for everything in simulator manifest
-                    content = content.replace(/\/(cdn|sim)\//g, "/blb/")
-                }
-
-                if (minified) {
-                    const res = uglify.minify(content);
-                    if (!res.error) {
-                        content = res.code;
-                    }
-                    else {
-                        pxt.log(`        Could not minify ${fileName} ${res.error}`)
-                    }
-                }
-
-                if (replFiles.indexOf(fileName) >= 0) {
-                    for (let from of Object.keys(replacements)) {
-                        content = U.replaceAll(content, from, replacements[from])
-                    }
-                    if (opts.localDir) {
-                        data = Buffer.from(content, "utf8")
-                    } else {
-                        // save it for developer inspection
-                        fs.writeFileSync("built/uploadrepl/" + fileName, content)
-                    }
-                } else if (fileName == "target.json" || fileName == "target.js") {
-                    let isJs = fileName == "target.js"
-                    if (isJs) content = content.slice(targetJsPrefix.length)
-                    let trg: pxt.TargetBundle = JSON.parse(content)
-                    if (opts.localDir) {
-                        for (let e of trg.appTheme.docMenu)
-                            if (e.path[0] == "/") {
-                                e.path = opts.localDir + "docs" + e.path;
-                            }
-                        trg.appTheme.homeUrl = opts.localDir
-                        // patch icons in bundled packages
-                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
-                            const res = trg.bundledpkgs[pkgid];
-                            // path config before storing
-                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                            if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
-                            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
-                        })
-                        data = Buffer.from((isJs ? targetJsPrefix : '') + nodeutil.stringify(trg), "utf8")
-                    } else {
-                        if (trg.simulator
-                            && trg.simulator.boardDefinition
-                            && trg.simulator.boardDefinition.visual) {
-                            let boardDef = trg.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
-                            if (boardDef.image) {
-                                boardDef.image = uploadArtFile(boardDef.image);
-                                if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
-                            }
-                        }
-                        // patch icons in bundled packages
-                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
-                            const res = trg.bundledpkgs[pkgid];
-                            // path config before storing
-                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                            if (config.icon) config.icon = uploadArtFile(config.icon);
-                            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
-                        })
-                        content = nodeutil.stringify(trg);
-                        if (isJs)
-                            content = targetJsPrefix + content
-                    }
-                }
-            } else {
-                content = data.toString("base64")
             }
-            return Promise.resolve()
-        }).then(() => {
+        } else {
+            content = data.toString("base64")
+        }
 
-            if (opts.localDir) {
-                U.assert(!!opts.builtPackaged);
-                let fn = path.join(opts.builtPackaged, opts.localDir, fileName)
-                nodeutil.mkdirP(path.dirname(fn))
-                return minified ? writeFileAsync(fn, content) : writeFileAsync(fn, data)
-            }
+        if (opts.localDir) {
+            U.assert(!!opts.builtPackaged);
+            let fn = path.join(opts.builtPackaged, opts.localDir, fileName)
+            nodeutil.mkdirP(path.dirname(fn))
+            return minified ? writeFileAsync(fn, content) : writeFileAsync(fn, data)
+        }
 
-            let req = {
-                encoding: isText ? "utf8" : "base64",
-                content,
-                hash: "",
-                filename: fileName,
-                size: 0
-            }
-            let buf = Buffer.from(req.content, req.encoding)
-            req.size = buf.length
-            req.hash = gitHash(buf)
-            uplReqs[fileName] = req
-            return Promise.resolve()
-        })
+        let req = {
+            encoding: isText ? "utf8" : "base64",
+            content,
+            hash: "",
+            filename: fileName,
+            size: 0
+        }
+
+        let buf = Buffer.from(req.content, req.encoding)
+        req.size = buf.length
+        req.hash = gitHash(buf)
+        uplReqs[fileName] = req
     }
 
     // only keep the last version of each uploadFileName()
