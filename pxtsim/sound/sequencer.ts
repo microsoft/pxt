@@ -68,13 +68,17 @@ namespace pxsim.music {
         }
 
         start(song: pxt.assets.music.Song, loop?: boolean) {
+            this.startFrom(song, loop, 0);
+        }
+
+        startFrom(song: pxt.assets.music.Song, loop?: boolean, tick?: number) {
             if (this._state !== "stop") this.stop();
 
             if (loop !== undefined) {
                 this.shouldLoop = loop;
             }
 
-            this._currentTick = 0;
+            this._currentTick = tick ?? 0;
             this.currentlyPlaying = song;
             this.metronome.start(tickToMs(song.beatsPerMinute, song.ticksPerBeat, 1));
             this._state = this.shouldLoop ? "loop" : "play";

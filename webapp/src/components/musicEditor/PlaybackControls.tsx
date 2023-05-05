@@ -52,14 +52,14 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
     }
 
     const onPlayClick = () => {
-        startPlaybackAsync(song, false);
+        startPlaybackAsync(song, false, 0);
         setState("play")
     }
 
     const onLoopClick = () => {
         if (isLooping()) return;
         else if (isPlaying()) setLooping(true);
-        else startPlaybackAsync(song, true);
+        else startPlaybackAsync(song, true, 0);
         setState("loop")
     }
 

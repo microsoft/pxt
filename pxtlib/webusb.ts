@@ -524,26 +524,45 @@ namespace pxt.usb {
     export async function checkAvailableAsync() {
         if (_available !== undefined) return;
 
-        pxt.debug(`webusb: checking availability`)
+        pxt.debug(`webusb: checking availability`);
         // not supported by editor, cut short
         if (!pxt.appTarget?.compile?.webUSB) {
             _available = false;
             return;
         }
 
-        if (pxt.BrowserUtils.isElectron()) {
-            pxt.debug(`webusb: off, electron`)
-            pxt.tickEvent('webusb.off', { 'reason': 'electron' })
-            _available = false;
+        const failureReason = await getReasonUnavailable();
+        if (!failureReason) {
+            _available = true;
             return;
+        }
+
+        _available = false;
+        pxt.tickEvent("webusb.off", { 'reason': failureReason });
+        switch (failureReason) {
+            case "electron":
+                pxt.debug(`webusb: off, electron`);
+                break;
+            case "notimpl":
+                pxt.debug(`webusb: off, not implemented by browser`);
+                break;
+            case "oldwindows":
+                pxt.debug(`webusb: off, older windows version`);
+                break;
+            case "security":
+                pxt.debug(`webusb: off, security exception`);
+                break;
+        }
+    }
+
+    export async function getReasonUnavailable(): Promise<"electron" | "notimpl" | "oldwindows" | "security" | undefined> {
+        if (pxt.BrowserUtils.isElectron()) {
+            return "electron";
         }
 
         const _usb = (navigator as any).usb;
         if (!_usb) {
-            pxt.debug(`webusb: off, not impl`)
-            pxt.tickEvent('webusb.off', { 'reason': 'notimpl' })
-            _available = false
-            return
+            return "notimpl";
         }
 
         // Windows versions:
@@ -552,26 +571,18 @@ namespace pxt.usb {
         // as it requires signed INF files.
         let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
         if (m && parseFloat(m[1]) < 6.3) {
-            pxt.debug(`webusb: off, older windows version`)
-            pxt.tickEvent('webusb.off', { 'reason': 'oldwindows' })
-            _available = false;
-            return;
+            return "oldwindows";
         }
 
         // check security
         try {
             // iframes must specify allow="usb" in order to support WebUSB
-            await _usb.getDevices()
+            await _usb.getDevices();
         } catch (e) {
-            pxt.debug(`webusb: off, security exception`)
-            pxt.tickEvent('webusb.off', { 'reason': 'security' })
-            _available = false;
-            return;
+            return "security";
         }
 
-        // yay!
-        _available = true;
-        return
+        return undefined;
     }
 
     export function isAvailable() {

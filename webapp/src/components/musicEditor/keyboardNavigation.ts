@@ -73,6 +73,8 @@ import { addNoteToTrack, applySelection, deleteSelectedNotes, editNoteEventLengt
  * playback:
  *     start playback from beginning:
  *         space
+ *     start playback from cursor:
+ *         shift + space
  *     stop playback:
  *         space (while playing)
  *     loop playback:
@@ -379,11 +381,14 @@ export function handleKeyboardEvent(song: pxt.assets.music.Song, cursor: CursorS
             break;
         case "Spacebar":
         case " ":
+            event.preventDefault();
             if (isPlaying()) {
                 stopPlayback();
             }
-            else {
-                startPlaybackAsync(song, ctrlPressed);
+            else if(shiftPressed) {
+                startPlaybackAsync(song, ctrlPressed, cursor?.tick);
+            } else {
+                startPlaybackAsync(song, ctrlPressed, 0);
             }
             break;
         case "j":
