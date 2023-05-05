@@ -686,11 +686,7 @@ namespace pxt.auth {
 
     export function identityProviders(): pxt.AppCloudProvider[] {
         return Object.keys(pxt.appTarget?.cloud?.cloudProviders || {})
-            .map(id => {
-                const provider = pxt.appTarget.cloud.cloudProviders[id];
-                provider.icon = pxt.BrowserUtils.patchCdn(provider.icon);
-                return provider;
-            })
+            .map(id => pxt.appTarget.cloud.cloudProviders[id])
             .filter(prov => prov.identity)
             .sort((a, b) => a.order - b.order);
     }

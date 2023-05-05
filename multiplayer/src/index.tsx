@@ -40,8 +40,8 @@ window.addEventListener("DOMContentLoaded", () => {
     if (pxt.options.debug)
         pxt.debug = console.debug;
 
-    pxt.setAppTarget(bundle);
     pxt.setupWebConfig((window as any).pxtConfig || pxt.webConfig);
+    pxt.setAppTarget(bundle);
     // todo: handle this better?
     if (pxt.BrowserUtils.isLocalHostDev()) {
         // patch webconfig to refer to pxt serve instead of multiplayer serve

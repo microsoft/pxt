@@ -1764,18 +1764,7 @@ function getGalleryUrl(props: pxt.GalleryProps | string): string {
 }
 
 function replaceStaticImagesInJsonBlob(cfg: any, staticAssetHandler: (fileLocation: string) => string): any {
-    if (Array.isArray(cfg)) {
-        return cfg.map(el => replaceStaticImagesInJsonBlob(el, staticAssetHandler));
-    } else if (typeof cfg === "object") {
-        for (const key of Object.keys(cfg)) {
-            cfg[key] = replaceStaticImagesInJsonBlob(cfg[key], staticAssetHandler);
-        }
-        return cfg;
-    } else if (typeof cfg === "string" && /^\.?\/static\/.+\.(png|gif|jpeg|jpg|svg|mp4)$/i.test(cfg)) {
-        return staticAssetHandler(cfg);
-    } else {
-        return cfg;
-    }
+    return pxt.replaceStringsInJsonBlob(cfg, /^\.?\/static\/.+\.(png|gif|jpeg|jpg|svg|mp4)$/i, staticAssetHandler);
 }
 
 function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {

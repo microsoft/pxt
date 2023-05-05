@@ -162,6 +162,26 @@ namespace pxt {
         return _bundledcoresvgs[id];
     }
 
+
+    export function replaceStringsInJsonBlob(blobPart: any, matcher: RegExp, matchHandler: (matchingString: string) => string): any {
+        if (Array.isArray(blobPart)) {
+            return blobPart.map(el => replaceStringsInJsonBlob(el, matcher, matchHandler));
+        } else if (typeof blobPart === "object") {
+            for (const key of Object.keys(blobPart)) {
+                blobPart[key] = replaceStringsInJsonBlob(blobPart[key], matcher, matchHandler);
+            }
+            return blobPart;
+        } else if (typeof blobPart === "string" && matcher.test(blobPart)) {
+            return matchHandler(blobPart);
+        } else {
+            return blobPart;
+        }
+    }
+
+    function replaceCdnUrlsInJsonBlob(cfg: any): any {
+        return replaceStringsInJsonBlob(cfg, /^@cdnUrl@/i, m => pxt.BrowserUtils.patchCdn(m));
+    }
+
     function patchAppTarget() {
         // patch-up the target
         let comp = appTarget.compile
@@ -190,25 +210,9 @@ namespace pxt {
             if (cs.yottaTarget && !cs.yottaBinary)
                 cs.yottaBinary = "pxt-microbit-app-combined.hex"
         }
-        // patch logo locations
-        const theme = appTarget.appTheme;
-        if (theme) {
-            Object.keys(theme as any as Map<string>)
-                .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
-                .forEach(k => (theme as any)[k] = pxt.BrowserUtils.patchCdn((theme as any)[k]));
-        }
 
-        // patching simulator images
-        const sim = appTarget.simulator;
-        if (sim
-            && sim.boardDefinition
-            && sim.boardDefinition.visual) {
-            let boardDef = sim.boardDefinition.visual as pxsim.BoardImageDefinition;
-            if (boardDef.image) {
-                boardDef.image = pxt.BrowserUtils.patchCdn(boardDef.image)
-                if (boardDef.outlineImage) boardDef.outlineImage = pxt.BrowserUtils.patchCdn(boardDef.outlineImage)
-            }
-        }
+        // patch cdn url locations
+        appTarget = replaceCdnUrlsInJsonBlob(appTarget);
 
         // patch icons in bundled packages
         Object.keys(appTarget.bundledpkgs).forEach(pkgid => {

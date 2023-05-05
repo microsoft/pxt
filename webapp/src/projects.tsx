@@ -444,7 +444,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
         const heroBanner: pxt.CodeCard = targetTheme.homeScreenHero && {
             ...(heroCard ?? {}),
-            imageUrl: pxt.BrowserUtils.patchCdn(heroBannerImg || heroCard?.imageUrl),
+            imageUrl: heroBannerImg || heroCard?.imageUrl,
             description: heroCard?.description && pxt.U.rlf(heroCard.description),
             name: heroCard?.name && pxt.U.rlf(heroCard.name),
             buttonLabel: heroCard?.buttonLabel && pxt.U.rlf(heroCard.buttonLabel),
