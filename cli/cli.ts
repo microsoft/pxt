@@ -973,7 +973,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     }
 
     const targetUsedImages: pxt.Map<string> = {};
-    replaceStaticImagesInJsonBlob(targetConfig, fn => {
+    const cdnCachedAppTheme = replaceStaticImagesInJsonBlob(readLocalPxTarget(), fn => {
         const fp = path.join("docs", fn);
         if (!targetUsedImages[fn] && !opts.fileList.includes(fp)) {
             opts.fileList.push(fp);
@@ -981,8 +981,8 @@ function uploadCoreAsync(opts: UploadOptions) {
 
         targetUsedImages[fn] = uploadedArtFileCdnUrl(fn);
 
-        return fn;
-    })
+        return targetUsedImages[fn];
+    }).appTheme;
 
     const targetImagePaths = Object.keys(targetUsedImages);
     const targetImagesHashed = Object.values(targetUsedImages);
@@ -1148,10 +1148,10 @@ function uploadCoreAsync(opts: UploadOptions) {
                     let m = pxt.appTarget.appTheme as Map<string>
                     for (let k of Object.keys(m)) {
                         if (/CDN$/.test(k))
-                            m[k.slice(0, k.length - 3)] = m[k]
+                            m[k.slice(0, k.length - 3)] = m[k];
                     }
                 }
-                content = server.expandHtml(content)
+                content = server.expandHtml(content, undefined, cdnCachedAppTheme);
             }
 
             if (/^sim/.test(fileName) || /^workerConfig/.test(fileName)) {
