@@ -942,11 +942,13 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         })
 }
 
-function uploadArtFile(fn: string): string {
+function uploadedArtFileCdnUrl(fn: string): string {
     if (!fn || /^(https?|data):/.test(fn)) return fn; // nothing to do
 
     fn = fn.replace(/^\.?\/*/, "/")
-    return "@cdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
+    const cdnBlobUrl =  "@cdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
+    // console.log(`uploading art file ${fn} to ${cdnBlobUrl}`);
+    return cdnBlobUrl;
 }
 
 function gitHash(buf: Buffer) {
@@ -970,16 +972,26 @@ function uploadCoreAsync(opts: UploadOptions) {
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
 
-    let logos = (targetConfig.appTheme as any as Map<string>);
-    let targetImages = Object.keys(logos)
-        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]));
-    let targetImagesHashed = pxt.Util.unique(targetImages.map(k => uploadArtFile(logos[k])), url => url);
+    const targetUsedImages: pxt.Map<string> = {};
+    replaceStaticImagesInJsonBlob(targetConfig, fn => {
+        const fp = path.join("docs", fn);
+        if (!targetUsedImages[fn] && !opts.fileList.includes(fp)) {
+            opts.fileList.push(fp);
+        }
+
+        targetUsedImages[fn] = uploadedArtFileCdnUrl(fn);
+
+        return fn;
+    })
+
+    const targetImagePaths = Object.keys(targetUsedImages);
+    const targetImagesHashed = Object.values(targetUsedImages);
 
     let targetEditorJs = "";
-    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
+    if (pxt.appTarget.appTheme?.extendEditor)
         targetEditorJs = "@commitCdnUrl@editor.js";
     let targetFieldEditorsJs = "";
-    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors)
+    if (pxt.appTarget.appTheme?.extendFieldEditors)
         targetFieldEditorsJs = "@commitCdnUrl@fieldeditors.js";
 
     let replacements: Map<string> = {
@@ -1037,8 +1049,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             "multiplayerUrl": opts.localDir + "multiplayer.html",
             "isStatic": true,
         }
-        const targetImagePaths = targetImages.map(k =>
-            `${opts.localDir}${path.join('./docs', logos[k])}`);
+        const targetImageLocalPaths = targetImagePaths.map(k =>
+            `${opts.localDir}${path.join('./docs', k)}`);
 
         replacements = {
             "/embed.js": opts.localDir + "embed.js",
@@ -1057,8 +1069,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@cachedHexFilesEncoded@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
             "@targetFieldEditorsJs@": targetFieldEditorsJs ? `${opts.localDir}fieldeditors.js` : "",
-            "@targetImages@": targetImages.length ? targetImagePaths.join('\n') : '',
-            "@targetImagesEncoded@": targetImages.length ? encodeURLs(targetImagePaths) : ''
+            "@targetImages@": targetImagePaths.length ? targetImageLocalPaths.join('\n') : '',
+            "@targetImagesEncoded@": targetImagePaths.length ? encodeURLs(targetImageLocalPaths) : ''
         }
         if (!opts.noAppCache) {
             replacements["data-manifest=\"\""] = `manifest="${opts.localDir}release.manifest"`;
@@ -1187,26 +1199,27 @@ function uploadCoreAsync(opts: UploadOptions) {
                     })
                     data = Buffer.from((isJs ? targetJsPrefix : '') + nodeutil.stringify(trg), "utf8")
                 } else {
-                    if (trg.simulator
-                        && trg.simulator.boardDefinition
-                        && trg.simulator.boardDefinition.visual) {
+                    if (trg.simulator?.boardDefinition?.visual) {
                         let boardDef = trg.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
                         if (boardDef.image) {
-                            boardDef.image = uploadArtFile(boardDef.image);
-                            if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
+                            boardDef.image = uploadedArtFileCdnUrl(boardDef.image);
+                            if (boardDef.outlineImage) boardDef.outlineImage = uploadedArtFileCdnUrl(boardDef.outlineImage);
                         }
                     }
                     // patch icons in bundled packages
                     Object.keys(trg.bundledpkgs).forEach(pkgid => {
                         const res = trg.bundledpkgs[pkgid];
-                        // path config before storing
+                        // patch config before storing
                         const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                        if (config.icon) config.icon = uploadArtFile(config.icon);
+                        if (config.icon) config.icon = uploadedArtFileCdnUrl(config.icon);
                         res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
                     })
                     content = nodeutil.stringify(trg);
                     if (isJs)
                         content = targetJsPrefix + content
+
+                    // save it for developer inspection
+                    fs.writeFileSync("built/uploadrepl/" + fileName, content)
                 }
             }
         } else {
@@ -1698,7 +1711,7 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
         const fn = `/static/icons/android-chrome-${sz}x${sz}.png`;
         if (fs.existsSync(path.join('docs', fn))) {
             webmanifest.icons.push({
-                "src": uploadArtFile(fn),
+                "src": uploadedArtFileCdnUrl(fn),
                 "sizes": `${sz}x${sz}`,
                 "types": `image/png`
             })
@@ -1751,25 +1764,37 @@ function getGalleryUrl(props: pxt.GalleryProps | string): string {
     return typeof props === "string" ? props : props.url
 }
 
+function replaceStaticImagesInJsonBlob(cfg: any, staticAssetHandler: (fileLocation: string) => string): any {
+    if (Array.isArray(cfg)) {
+        return cfg.map(el => replaceStaticImagesInJsonBlob(el, staticAssetHandler));
+    } else if (typeof cfg === "object") {
+        for (const key of Object.keys(cfg)) {
+            cfg[key] = replaceStaticImagesInJsonBlob(cfg[key], staticAssetHandler);
+        }
+        return cfg;
+    } else if (typeof cfg === "string" && /^\.?\/static\/.+\.(png|gif|jpeg|jpg|svg|mp4)$/i.test(cfg)) {
+        return staticAssetHandler(cfg);
+    } else {
+        return cfg;
+    }
+}
+
 function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
     cfg.appTheme.name = cfg.name
     cfg.appTheme.description = cfg.description
 
-    let logos = (cfg.appTheme as any as Map<string>);
     if (packaged) {
-        Object.keys(logos)
-            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
-            .forEach(k => {
-                logos[k] = path.join('./docs', logos[k]).replace(/\\/g, "/");
-            })
+        cfg = replaceStaticImagesInJsonBlob(
+            cfg,
+            fn => path.join('./docs', fn).replace(/\\/g, "/")
+        );
     } else if (!localDir) {
-        Object.keys(logos)
-            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
-            .forEach(k => {
-                logos[k] = uploadArtFile(logos[k]);
-            })
+        cfg = replaceStaticImagesInJsonBlob(
+            cfg,
+            fn => uploadedArtFileCdnUrl(fn)
+        );
     }
 
     if (!cfg.appTheme.htmlDocIncludes)
@@ -2191,7 +2216,7 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                         }
                     });
                     if (newProject.config.icon)
-                        newProject.config.icon = uploadArtFile(newProject.config.icon);
+                        newProject.config.icon = uploadedArtFileCdnUrl(newProject.config.icon);
                 } else {
                     newProject.files[relativePath] = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
                 }

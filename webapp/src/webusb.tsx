@@ -77,7 +77,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
 }
 
 function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
-    const connectDeviceImage = theme().connectDeviceImage;
+    const connectDeviceImage = pxt.BrowserUtils.patchCdn(theme().connectDeviceImage);
     const boardName = getBoardName();
 
     const jsxd = () => (
@@ -114,7 +114,7 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
 function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloadAsFileButton?: boolean) {
     const boardName = getBoardName();
 
-    const selectDeviceImage = theme().selectDeviceImage;
+    const selectDeviceImage =  pxt.BrowserUtils.patchCdn(theme().selectDeviceImage);
     const columns = selectDeviceImage ? "two" : "one";
 
     const jsxd = () => (
@@ -156,7 +156,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
 
 function showConnectionSuccessAsync(confirmAsync: ConfirmAsync, willTriggerDownloadOnClose: boolean) {
     const boardName = getBoardName();
-    const connectionImage = theme().connectionSuccessImage;
+    const connectionImage =  pxt.BrowserUtils.patchCdn(theme().connectionSuccessImage);
     const columns = connectionImage ? "two" : "one";
 
     const jsxd = () => (
