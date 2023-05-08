@@ -1151,6 +1151,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const hasCategories = (forceHasCategories != undefined) ? forceHasCategories :
             (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories :
                 this.showCategories);
+
         blocklyOptions.hasCategories = hasCategories;
         blocklyOptions.renderer = "pxt";
         if (!hasCategories) this.showCategories = false;
