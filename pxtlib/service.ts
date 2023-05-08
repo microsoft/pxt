@@ -798,8 +798,9 @@ namespace ts.pxtc {
             const bParam = b.actualNameToParam[aParam.actualName];
             if (!bParam
                 || aParam.type != bParam.type
-                || aParam.shadowBlockId != bParam.shadowBlockId) {
-                pxt.debug(`Parameter ${aParam.actualName} type or shadow block does not match after localization`);
+                || aParam.shadowBlockId != bParam.shadowBlockId
+                || aParam.definitionName != bParam.definitionName) {
+                pxt.debug(`Parameter ${aParam.actualName} type, shadow block, or definition name does not match after localization`);
                 return false;
             }
         }
