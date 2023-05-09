@@ -1697,8 +1697,8 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
         "icons": [],
         "scope": "/",
         "start_url": "/",
-        "display": "standalone",
-        "orientation": "landscape"
+        "display": "fullscreen",
+        "orientation": "any"
     }
     if (cfg.appTheme) {
         if (cfg.appTheme.accentColor)
@@ -1719,7 +1719,11 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     let diskManifest: any = {}
     if (fs.existsSync("webmanifest.json"))
         diskManifest = nodeutil.readJson("webmanifest.json")
-    U.jsonCopyFrom(webmanifest, diskManifest)
+    U.jsonCopyFrom(webmanifest, diskManifest);
+    // webmanifest = replaceStaticImagesInJsonBlob(
+    //     webmanifest,
+    //     fn => uploadedArtFileCdnUrl(fn)
+    // );
     return webmanifest;
 }
 
