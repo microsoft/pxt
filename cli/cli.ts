@@ -1720,10 +1720,6 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     if (fs.existsSync("webmanifest.json"))
         diskManifest = nodeutil.readJson("webmanifest.json")
     U.jsonCopyFrom(webmanifest, diskManifest);
-    // webmanifest = replaceStaticImagesInJsonBlob(
-    //     webmanifest,
-    //     fn => uploadedArtFileCdnUrl(fn)
-    // );
     return webmanifest;
 }
 
