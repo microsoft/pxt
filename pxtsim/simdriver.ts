@@ -422,7 +422,6 @@ namespace pxsim {
 
         private postMessageCore(frame: HTMLIFrameElement, msg: SimulatorMessage) {
             const origin = U.isLocalHostDev() ? "*" : frame.dataset["origin"];
-            // wait to send message here if not yet ready
             frame.contentWindow.postMessage(msg, origin);
         }
 
