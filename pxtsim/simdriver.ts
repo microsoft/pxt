@@ -407,7 +407,7 @@ namespace pxsim {
             }
         }
 
-        protected deferredMessages: SimulatorMessage[];
+        protected deferredMessages: [HTMLIFrameElement, SimulatorMessage][];
         protected postDeferrableMessage(frame: HTMLIFrameElement, msg: SimulatorMessage) {
             const frameStarted = !frame.dataset["loading"];
             if (frameStarted) {
@@ -416,7 +416,7 @@ namespace pxsim {
                 if (!this.deferredMessages) {
                     this.deferredMessages = [];
                 }
-                this.deferredMessages.push(msg);
+                this.deferredMessages.push([frame, msg]);
             }
         }
 
@@ -769,10 +769,13 @@ namespace pxsim {
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
                         delete frame.dataset["loading"];
-                        this.deferredMessages?.forEach(msg => {
-                            this.postMessageCore(frame, msg);
-                        });
-                        this.deferredMessages = undefined;
+                        this.deferredMessages
+                            ?.filter(defMsg => defMsg[0] === frame)
+                            ?.forEach(defMsg => {
+                                const [_, msg] = defMsg;
+                                this.postMessageCore(frame, msg);
+                            });
+                        this.deferredMessages = this.deferredMessages?.filter(defMsg => defMsg[0] !== frame);
                     }
                     if (this.options.onSimulatorReady)
                         this.options.onSimulatorReady();
