@@ -382,7 +382,7 @@ export async function initAsync() {
 
     // check if webUSB is available and usable
     if ((pxt.appTarget?.compile?.isNative || pxt.appTarget?.compile?.hasHex) && !pxt.BrowserUtils.isPxtElectron()) {
-        // TODO: web USB is currently disabled in electron app, but should be supported.
+        // TODO: WebUSB is currently disabled in electron app, but should be supported.
         if (pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
