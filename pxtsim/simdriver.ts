@@ -314,6 +314,8 @@ namespace pxsim {
 
             if (frameID) frames = frames.filter(f => f.id === frameID);
 
+            let isDeferrableBroadcastMessage = false;
+
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
                 // if the editor is hosted in a multi-editor setting
@@ -367,6 +369,7 @@ namespace pxsim {
                                 this.startFrame(messageFrame);
                             }
                         } else {
+                            isDeferrableBroadcastMessage = true;
                             // start secondary frame if needed
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                             if (mkcdFrames.length < 2) {
@@ -391,12 +394,29 @@ namespace pxsim {
                 if (!frame.contentWindow) continue;
 
                 // finally, send the message
-                this.postMessageCore(frame, msg);
+                if (isDeferrableBroadcastMessage) {
+                    this.postDeferrableMessage(frame, msg);
+                } else {
+                    this.postMessageCore(frame, msg);
+                }
 
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
                     && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
                     break;
+            }
+        }
+
+        protected deferredMessages: [HTMLIFrameElement, SimulatorMessage][];
+        protected postDeferrableMessage(frame: HTMLIFrameElement, msg: SimulatorMessage) {
+            const frameStarted = !frame.dataset["loading"];
+            if (frameStarted) {
+                this.postMessageCore(frame, msg);
+            } else {
+                if (!this.deferredMessages) {
+                    this.deferredMessages = [];
+                }
+                this.deferredMessages.push([frame, msg]);
             }
         }
 
@@ -443,6 +463,7 @@ namespace pxsim {
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
             frame.dataset['origin'] = new URL(furl).origin || "*";
+            frame.dataset['loading'] = "true";
             if (this._runOptions?.autofocus) frame.setAttribute("autofocus", "true");
 
             wrapper.appendChild(frame);
@@ -508,6 +529,7 @@ namespace pxsim {
             this._runOptions = undefined; // forget about program
             this._currentRuntime = undefined;
             this.runId = undefined;
+            this.deferredMessages = undefined;
         }
 
         public mute(mute: boolean) {
@@ -746,6 +768,14 @@ namespace pxsim {
                         this.startFrame(frame);
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
+                        delete frame.dataset["loading"];
+                        this.deferredMessages
+                            ?.filter(defMsg => defMsg[0] === frame)
+                            ?.forEach(defMsg => {
+                                const [_, msg] = defMsg;
+                                this.postMessageCore(frame, msg);
+                            });
+                        this.deferredMessages = this.deferredMessages?.filter(defMsg => defMsg[0] !== frame);
                     }
                     if (this.options.onSimulatorReady)
                         this.options.onSimulatorReady();
