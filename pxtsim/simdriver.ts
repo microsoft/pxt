@@ -314,6 +314,8 @@ namespace pxsim {
 
             if (frameID) frames = frames.filter(f => f.id === frameID);
 
+            let isDeferrableBroadcastMessage = false;
+
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
                 // if the editor is hosted in a multi-editor setting
@@ -367,6 +369,7 @@ namespace pxsim {
                                 this.startFrame(messageFrame);
                             }
                         } else {
+                            isDeferrableBroadcastMessage = true;
                             // start secondary frame if needed
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                             if (mkcdFrames.length < 2) {
@@ -391,7 +394,11 @@ namespace pxsim {
                 if (!frame.contentWindow) continue;
 
                 // finally, send the message
-                this.postMessageCore(frame, msg);
+                if (isDeferrableBroadcastMessage) {
+                    this.postDeferrableMessage(frame, msg);
+                } else {
+                    this.postMessageCore(frame, msg);
+                }
 
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
@@ -400,8 +407,22 @@ namespace pxsim {
             }
         }
 
+        protected deferredMessages: SimulatorMessage[];
+        protected postDeferrableMessage(frame: HTMLIFrameElement, msg: SimulatorMessage) {
+            const frameStarted = !frame.dataset["loading"];
+            if (frameStarted) {
+                this.postMessageCore(frame, msg);
+            } else {
+                if (!this.deferredMessages) {
+                    this.deferredMessages = [];
+                }
+                this.deferredMessages.push(msg);
+            }
+        }
+
         private postMessageCore(frame: HTMLIFrameElement, msg: SimulatorMessage) {
             const origin = U.isLocalHostDev() ? "*" : frame.dataset["origin"];
+            // wait to send message here if not yet ready
             frame.contentWindow.postMessage(msg, origin);
         }
 
@@ -443,6 +464,7 @@ namespace pxsim {
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
             frame.dataset['origin'] = new URL(furl).origin || "*";
+            frame.dataset['loading'] = "false";
             if (this._runOptions?.autofocus) frame.setAttribute("autofocus", "true");
 
             wrapper.appendChild(frame);
@@ -508,6 +530,7 @@ namespace pxsim {
             this._runOptions = undefined; // forget about program
             this._currentRuntime = undefined;
             this.runId = undefined;
+            this.deferredMessages = undefined;
         }
 
         public mute(mute: boolean) {
@@ -746,6 +769,11 @@ namespace pxsim {
                         this.startFrame(frame);
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
+                        delete frame.dataset["loading"];
+                        this.deferredMessages?.forEach(msg => {
+                            this.postMessageCore(frame, msg);
+                        });
+                        this.deferredMessages = undefined;
                     }
                     if (this.options.onSimulatorReady)
                         this.options.onSimulatorReady();
