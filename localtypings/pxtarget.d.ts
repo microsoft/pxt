@@ -841,6 +841,8 @@ declare namespace ts.pxtc {
         locs?: pxt.Map<string>;
         toolboxParent?: string; // The ID of a block that will wrap this block in the toolbox. Useful for having multiple instances of the same parent block with different child shadows
         toolboxParentArgument?: string; // Used with toolboxParent. The name of the arg that this block should be inserted into as a shadow
+        duplicateWithToolboxParent?: string; // The ID of an additional block that will be created, which wraps this block in the toolbox. The original (unwrapped) block will also remain in the toolbox.
+        duplicateWithToolboxParentArgument?: string; // Used with duplicateWithToolboxParent. The name of the arg that this block should be inserted into as a shadow.
 
         // On namepspace
         subcategories?: string[];
