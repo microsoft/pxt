@@ -42,6 +42,16 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const [preferredExts, setPreferredExts] = useState<(ExtensionMeta & EmptyCard)[]>([])
     const [extensionTags, setExtensionTags] = useState(new Map<string, string[]>())
 
+
+    const onSearchBarChange = (newValue: string) => {
+        setSearchFor(newValue || "");
+    }
+
+    const onSearchBarChangeDebounced: (newValue: string) => void = React.useMemo(
+        () => pxt.Util.debounce(onSearchBarChange, 1000),
+        []
+    );
+
     useEffect(() => {
         updateExtensionTags();
         updatePreferredExts();
@@ -492,10 +502,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const categoryNames = getCategoryNames();
 
-    const onSearchBarChange = (newValue: string) => {
-        setSearchFor(newValue || "");
-    }
-
     return (
         <Modal
             title={lf("Extensions")}
@@ -517,7 +523,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         ariaLabel={lf("Search or enter project URL...")}
                         initialValue={searchFor}
                         onEnterKey={onSearchBarChange}
-                        onBlur={onSearchBarChange}
+                        onChange={onSearchBarChangeDebounced}
                         icon="fas fa-search"
                     />
                     <div className="extension-tags">
