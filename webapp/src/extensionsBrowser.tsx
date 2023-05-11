@@ -521,9 +521,9 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     <Input
                         placeholder={lf("Search or enter project URL...")}
                         ariaLabel={lf("Search or enter project URL...")}
-                        initialValue={searchFor}
                         onEnterKey={onSearchBarChange}
                         onChange={onSearchBarChangeDebounced}
+                        preserveValueOnBlur={true}
                         icon="fas fa-search"
                     />
                     <div className="extension-tags">
