@@ -47,11 +47,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         setSearchFor(newValue || "");
     }
 
-    const onSearchBarChangeDebounced: (newValue: string) => void = React.useMemo(
-        () => pxt.Util.debounce(onSearchBarChange, 1000),
-        []
-    );
-
     useEffect(() => {
         updateExtensionTags();
         updatePreferredExts();
@@ -522,7 +517,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         placeholder={lf("Search or enter project URL...")}
                         ariaLabel={lf("Search or enter project URL...")}
                         onEnterKey={onSearchBarChange}
-                        onChange={onSearchBarChangeDebounced}
                         preserveValueOnBlur={true}
                         icon="fas fa-search"
                     />
