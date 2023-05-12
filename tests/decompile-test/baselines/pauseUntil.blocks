@@ -23,6 +23,27 @@
 <next>
 <block type="typescript_statement">
 <mutation numlines="1" error="Predicates must be inline expressions that return a value" line0="pauseUntil&#40;function&#40;&#41; &#123; let x &#61; 0&#59; return x &#62; 7 &#125;&#41;&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">a</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</block>
+</value>
+<next>
+<block type="pxt_pause_until">
+<value name="PREDICATE">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="variables_get">
+<field name="VAR">a</field>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
 </block>
 </next>
 </block>

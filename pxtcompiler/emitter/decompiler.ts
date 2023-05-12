@@ -3701,21 +3701,24 @@ ${output}</xml>`;
 
     function isOutputExpression(expr: ts.Expression): boolean {
         switch (expr.kind) {
-            case SK.BinaryExpression:
+            case SK.BinaryExpression: {
                 const tk = (expr as ts.BinaryExpression).operatorToken.kind;
                 return tk != SK.PlusEqualsToken && tk != SK.MinusEqualsToken && tk != SK.EqualsToken;
+            }
             case SK.PrefixUnaryExpression: {
-                let op = (expr as ts.PrefixUnaryExpression).operator;
+                const op = (expr as ts.PrefixUnaryExpression).operator;
                 return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
             }
             case SK.PostfixUnaryExpression: {
-                let op = (expr as ts.PostfixUnaryExpression).operator;
+                const op = (expr as ts.PostfixUnaryExpression).operator;
                 return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
             }
-            case SK.CallExpression:
+            case SK.CallExpression: {
                 const callInfo: pxtc.CallInfo = pxtc.pxtInfo(expr).callInfo
                 assert(!!callInfo);
                 return callInfo.isExpression;
+            }
+            case SK.Identifier:
             case SK.ParenthesizedExpression:
             case SK.NumericLiteral:
             case SK.StringLiteral:
