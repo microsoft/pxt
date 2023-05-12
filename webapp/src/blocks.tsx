@@ -1858,6 +1858,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setblock.appendChild(value);
                         }
                         blockXml = setblock;
+                    } else if(fn.attributes.duplicateWithToolboxParent) {
+                        const blockWithParentFn = {...fn, attributes: {...fn.attributes, toolboxParent: fn.attributes.duplicateWithToolboxParent, toolboxParentArgument: fn.attributes.duplicateWithToolboxParentArgument}};
+                        const duplicatedBlock = pxt.blocks.createToolboxBlock(this.blockInfo, blockWithParentFn, comp);
+                        return [duplicatedBlock, blockXml];
                     }
                 }
             } else {
