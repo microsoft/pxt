@@ -156,8 +156,8 @@ namespace pxsim.visuals {
 
         public screenshotAsync(width?: number): Promise<ImageData> {
             const svg = this.view.cloneNode(true) as SVGSVGElement;
-            svg.setAttribute('width', this.view.width.baseVal.value + "");
-            svg.setAttribute('height', this.view.height.baseVal.value + "");
+            svg.setAttribute('width', this.view.viewBox.baseVal.width + "");
+            svg.setAttribute('height', this.view.viewBox.baseVal.height + "");
             const xml = new XMLSerializer().serializeToString(svg);
             const data = "data:image/svg+xml,"
                 + encodeURIComponent(xml.replace(/\s+/g, ' ').replace(/"/g, "'"));
