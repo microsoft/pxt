@@ -484,15 +484,19 @@ namespace pxt.BrowserUtils {
     export function imageDataToPNG(img: ImageData, scale = 1): string {
         if (!img) return undefined;
 
-        const canvas = document.createElement("canvas")
-        canvas.width = img.width * scale
-        canvas.height = img.height * scale
-        const ctx = canvas.getContext("2d")
+        const inputCanvas = document.createElement("canvas");
+        const outputCanvas = document.createElement("canvas");
+        inputCanvas.width = img.width;
+        inputCanvas.height = img.height;
+        outputCanvas.width = img.width * scale;
+        outputCanvas.height = img.height * scale;
+        const ctx = inputCanvas.getContext("2d");
+        const outCtx = outputCanvas.getContext("2d");
         ctx.putImageData(img, 0, 0);
-        ctx.imageSmoothingEnabled = false;
-        ctx.scale(scale, scale);
-        ctx.drawImage(canvas, 0, 0);
-        return canvas.toDataURL("image/png");
+        outCtx.imageSmoothingEnabled = false;
+        outCtx.scale(scale, scale);
+        outCtx.drawImage(inputCanvas, 0, 0);
+        return outputCanvas.toDataURL("image/png");
     }
 
     const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
