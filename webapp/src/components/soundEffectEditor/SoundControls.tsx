@@ -199,6 +199,16 @@ export const SoundControls = (props: SoundControlsProps) => {
                         onEnterKey={onDurationChange}
                         treatSpaceAsEnter={true}
                         onBlur={onDurationChange}
+                        options={
+                            {
+                                [lf("100 ms")]: "100",
+                                [lf("200 ms")]: "200",
+                                [lf("500 ms")]: "500",
+                                [lf("1 second")]: "1000",
+                                [lf("2 seconds")]: "2000",
+                                [lf("5 seconds")]: "5000"
+                            }
+                        }
                     />
                 </div>
             </div>

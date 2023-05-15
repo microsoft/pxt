@@ -20,6 +20,7 @@ export interface InputProps extends ControlProps {
     treatSpaceAsEnter?: boolean;
     handleInputRef?: React.RefObject<HTMLInputElement> | ((ref: HTMLInputElement) => void);
     preserveValueOnBlur?: boolean;
+    options?: pxt.Map<string>;
 
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
@@ -52,7 +53,8 @@ export const Input = (props: InputProps) => {
         onIconClick,
         onBlur,
         handleInputRef,
-        preserveValueOnBlur
+        preserveValueOnBlur,
+        options
     } = props;
 
     const [value, setValue] = React.useState(undefined);
@@ -60,6 +62,10 @@ export const Input = (props: InputProps) => {
     const clickHandler = (evt: React.MouseEvent<any>) => {
         if (selectOnClick) {
             (evt.target as any).select()
+        }
+        if(options) {
+            // This is required to stop the dropdown from filtering based on the existing content.
+            setValue('');
         }
     }
 
@@ -101,6 +107,9 @@ export const Input = (props: InputProps) => {
             {label && <label className="common-input-label" htmlFor={id}>
                 {label}
             </label>}
+            {options && <datalist id="options-list">
+                { Object.keys(options).map(op => <option label={op} value={options[op]} />) }
+            </datalist>}
             <div className={classList("common-input-group", groupClassName)}>
                 <input
                     id={id}
@@ -123,7 +132,8 @@ export const Input = (props: InputProps) => {
                     autoCapitalize={autoComplete ? "" : "off"}
                     spellCheck={autoComplete}
                     disabled={disabled}
-                    ref={handleInputRef} />
+                    ref={handleInputRef}
+                    list={options ? "options-list" : ""} />
                 {icon && (onIconClick
                     ? <Button
                         leftIcon={icon}
