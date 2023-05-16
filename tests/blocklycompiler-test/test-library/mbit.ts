@@ -25,6 +25,16 @@ namespace basic {
     export function showString(text: string, interval?: number): void {
 
     }
+
+    /**
+     * Creates a template string
+     */
+    //% weight=75
+    //% blockId=device_build_string_literal block="create string grid"
+    //% gridLiteral=1
+    export function createTemplateGrid(leds: string): string {
+        return leds
+    }
 }
 
 
