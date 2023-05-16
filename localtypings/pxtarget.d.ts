@@ -806,6 +806,7 @@ declare namespace ts.pxtc {
         jresURL?: string;
         iconURL?: string;
         imageLiteral?: number;
+        gridLiteral?: number;
         imageLiteralColumns?: number; // optional number of columns
         imageLiteralRows?: number; // optional number of rows
         imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
