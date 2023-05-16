@@ -36,3 +36,11 @@ let a = images.createTallBigImage(`
     . . . . . .
     . # # # . #
 `)
+
+let stringGrid = images.createTemplateGrid(`
+    . . . . .
+    . . . . .
+    . . . . .
+    # # # # #
+    . . . . .
+`)
