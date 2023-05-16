@@ -1765,7 +1765,7 @@ namespace pxt.blocks {
                         attrs: fn.attributes,
                         isExtensionMethod: instance,
                         isExpression: fn.retType && fn.retType !== "void",
-                        imageLiteral: fn.attributes.imageLiteral,
+                        imageLiteral: fn.attributes.imageLiteral || fn.attributes.gridLiteral,
                         imageLiteralColumns: fn.attributes.imageLiteralColumns,
                         imageLiteralRows: fn.attributes.imageLiteralRows,
                         hasHandler: pxt.blocks.hasHandler(fn),

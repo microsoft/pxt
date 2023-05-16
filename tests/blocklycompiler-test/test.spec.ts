@@ -510,6 +510,10 @@ describe("blockly compiler", function () {
         it("should convert enums to constants when emitAsConstant is set", done => {
             blockTestAsync("enum_constants").then(done, done);
         });
+
+        it("should compile gridTemplate blocks to template strings", done => {
+            blockTestAsync("grid_template_string").then(done, done);
+        })
     });
 
     describe("compiling expandable blocks", () => {

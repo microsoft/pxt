@@ -148,6 +148,16 @@ namespace images {
     export function createTallBigImage(leds: string): Image {
         return undefined;
     }
+
+    /**
+     * Creates a template string
+     */
+    //% weight=75
+    //% blockId=device_build_string_literal block="create string grid"
+    //% gridLiteral=1
+    export function createTemplateGrid(leds: string): string {
+        return leds
+    }
 }
 
 //% color=#0078D7 weight=100
