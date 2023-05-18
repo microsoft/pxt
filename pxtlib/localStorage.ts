@@ -141,7 +141,10 @@ namespace pxt.storage.shared {
                 method: "GET",
                 allowHttpErrors: true
             });
-            if (resp.json) {
+
+            if (resp.statusCode === 204) {
+                throw new Error(`Missing ${key} not available in ${container}`);
+            } else if (resp.json) {
                 return resp.json as T;
             } else if (resp.text) {
                 return resp.text as any as T;

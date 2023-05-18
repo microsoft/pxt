@@ -304,7 +304,7 @@ async function handleApiStoreRequestAsync(req: http.IncomingMessage, res: http.S
                 res.end(val.toString());
             }
         } else {
-            res.writeHead(404);
+            res.writeHead(204);
             res.end();
         }
     } else if (meth === "POST") {
