@@ -135,7 +135,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
                 <div className="column">
                     <div className="ui">
                         <div className="image download-dialog-image">
-                            <img alt={lf("Image selecting {0} from a list of WebUSB devices", boardName)} className="ui medium rounded image" src={selectDeviceImage} />
+                            <img alt={lf("Image selecting {0} from a list of WebUSB devices", boardName)} className="ui large rounded image" src={selectDeviceImage} />
                         </div>
                     </div>
                 </div>
