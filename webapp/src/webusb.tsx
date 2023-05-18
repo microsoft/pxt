@@ -49,13 +49,18 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         const start = Date.now();
         const TRY_FOR_MS = 1500;
         core.showLoading("attempting-reconnect", lf("Attempting to reconnect automatically to your {0}", boardName));
-        await pxt.Util.promiseTimeout(TRY_FOR_MS, (async () => {
-            while (!pxt.packetio.isConnected() && pxt.packetio.isConnecting() && Date.now() < start + TRY_FOR_MS) {
-                await pxt.Util.delay(10);
-            }
-            connected = pxt.packetio.isConnected();
-        })());
-        core.hideLoading("attempting-reconnect");
+        try {
+            await pxt.Util.promiseTimeout(TRY_FOR_MS, (async () => {
+                while (!pxt.packetio.isConnected() && Date.now() < start + TRY_FOR_MS) {
+                    await pxt.Util.delay(30);
+                }
+                connected = pxt.packetio.isConnected();
+            })());
+        } catch (e) {
+            // continue pairing flow
+        } finally {
+            core.hideLoading("attempting-reconnect");
+        }
     }
 
     let paired = connected;
