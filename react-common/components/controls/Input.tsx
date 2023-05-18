@@ -120,12 +120,16 @@ export const Input = (props: InputProps) => {
 
     const optionClickHandler = (option: string) => {
         setExpanded(false);
+
         const value = options[option];
         setValue(value);
-        if (onChange) {
-            onChange(value);
+        if(onOptionSelected) { 
+            onOptionSelected(value);
         }
-        onOptionSelected(value);
+    }
+
+    const getDropdownOptionId = (option: string) => {
+        return option && Object.values(options).indexOf(option) != -1 ? `dropdown-item-${option}` : undefined;
     }
 
     return (
@@ -169,21 +173,19 @@ export const Input = (props: InputProps) => {
             {expanded &&
                 <FocusList role="listbox"
                     className="common-menu-dropdown-pane common-dropdown-shadow"
-                    // childTabStopId={selectedId} TODO thsparks
+                    childTabStopId={getDropdownOptionId(value) ?? getDropdownOptionId(Object.values(options)[0])}
                     aria-labelledby={id}
-                    useUpAndDownArrowKeys={true}
-                    
-                    // onItemReceivedFocus={onItemFocused} TODO thsparks
-                    >
+                    useUpAndDownArrowKeys={true}>
                         <ul role="presentation">
                             { Object.keys(options).map(option =>
                                 <li key={option} role="presentation">
                                     <Button
                                         title={option}
                                         label={option}
+                                        id={getDropdownOptionId(options[option])}
                                         className={classList("common-dropdown-item")}
                                         onClick={() => optionClickHandler(option)}
-                                        // ariaSelected={option.id === selectedId} TODO thsparks
+                                        ariaSelected={getDropdownOptionId(options[option]) === getDropdownOptionId(value ?? initialValue)}
                                         role="option" />
                                 </li>
                             )}
