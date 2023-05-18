@@ -2,6 +2,7 @@ import * as React from "react";
 import { classList, ControlProps } from "../util";
 
 import { Button } from "./Button";
+import { FocusList } from "./FocusList";
 
 export interface InputProps extends ControlProps {
     inputClassName?: string;
@@ -26,6 +27,7 @@ export interface InputProps extends ControlProps {
     onEnterKey?: (value: string) => void;
     onIconClick?: (value: string) => void;
     onBlur?: (value: string) => void;
+    onOptionSelected?: (value: string) => void;
 }
 
 export const Input = (props: InputProps) => {
@@ -50,6 +52,7 @@ export const Input = (props: InputProps) => {
         selectOnClick,
         onChange,
         onEnterKey,
+        onOptionSelected,
         onIconClick,
         onBlur,
         handleInputRef,
@@ -58,14 +61,18 @@ export const Input = (props: InputProps) => {
     } = props;
 
     const [value, setValue] = React.useState(undefined);
+    const [expanded, setExpanded] = React.useState(false);
+
+    let container: HTMLDivElement;
+
+    const handleContainerRef = (ref: HTMLDivElement) => {
+        if (!ref) return;
+        container = ref;
+    }
 
     const clickHandler = (evt: React.MouseEvent<any>) => {
         if (selectOnClick) {
             (evt.target as any).select()
-        }
-        if(options) {
-            // This is required to stop the dropdown from filtering based on the existing content.
-            setValue('');
         }
     }
 
@@ -91,6 +98,9 @@ export const Input = (props: InputProps) => {
 
     const iconClickHandler = () => {
         if (onIconClick) onIconClick(value);
+        if(options) {
+            setExpanded(!expanded);
+        }
     }
 
     const blurHandler = () => {
@@ -102,14 +112,27 @@ export const Input = (props: InputProps) => {
         }
     }
 
+    const containerBlurHandler = (e: React.FocusEvent) => {
+        if(expanded && !container.contains(e.relatedTarget as HTMLElement)) {
+            setExpanded(false);
+        }
+    }
+
+    const optionClickHandler = (option: string) => {
+        setExpanded(false);
+        const value = options[option];
+        setValue(value);
+        if (onChange) {
+            onChange(value);
+        }
+        onOptionSelected(value);
+    }
+
     return (
-        <div className={classList("common-input-wrapper", disabled && "disabled", className)}>
+        <div className={classList("common-input-wrapper", disabled && "disabled", className)} onBlur={containerBlurHandler} ref={handleContainerRef}>
             {label && <label className="common-input-label" htmlFor={id}>
                 {label}
             </label>}
-            {options && <datalist id="options-list">
-                { Object.keys(options).map(op => <option label={op} value={options[op]} />) }
-            </datalist>}
             <div className={classList("common-input-group", groupClassName)}>
                 <input
                     id={id}
@@ -132,11 +155,10 @@ export const Input = (props: InputProps) => {
                     autoCapitalize={autoComplete ? "" : "off"}
                     spellCheck={autoComplete}
                     disabled={disabled}
-                    ref={handleInputRef}
-                    list={options ? "options-list" : ""} />
-                {icon && (onIconClick
+                    ref={handleInputRef} />
+                {(icon || options) && (onIconClick || options
                     ? <Button
-                        leftIcon={icon}
+                        leftIcon={icon || (expanded ? "fas fa-chevron-up" : "fas fa-chevron-down")}
                         title={iconTitle}
                         disabled={disabled}
                         onClick={iconClickHandler} />
@@ -144,6 +166,30 @@ export const Input = (props: InputProps) => {
                         className={icon}
                         aria-hidden={true} />)}
             </div>
+            {expanded &&
+                <FocusList role="listbox"
+                    className="common-menu-dropdown-pane common-dropdown-shadow"
+                    // childTabStopId={selectedId} TODO thsparks
+                    aria-labelledby={id}
+                    useUpAndDownArrowKeys={true}
+                    
+                    // onItemReceivedFocus={onItemFocused} TODO thsparks
+                    >
+                        <ul role="presentation">
+                            { Object.keys(options).map(option =>
+                                <li key={option} role="presentation">
+                                    <Button
+                                        title={option}
+                                        label={option}
+                                        className={classList("common-dropdown-item")}
+                                        onClick={() => optionClickHandler(option)}
+                                        // ariaSelected={option.id === selectedId} TODO thsparks
+                                        role="option" />
+                                </li>
+                            )}
+                        </ul>
+                </FocusList>
+            }
         </div>
     );
 }

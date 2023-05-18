@@ -73,6 +73,23 @@
     margin-bottom: 0.5rem;
 }
 
+
+// TODO thsparks - move somewhere common to Input?
+.common-input-group > .common-button {
+    color: @textColor !important;
+}
+
+.common-menu-dropdown-pane {
+    width: 8rem !important; // specific to input.
+    z-index: 1;
+
+    .common-button {
+        padding: .8rem;
+        width: 100%;
+        text-align: start;
+    }
+}
+
 /****************************************************
  *                      Graphs                      *
  ****************************************************/
@@ -131,7 +148,7 @@
         justify-content: right;
 
         input {
-            width: 5rem;
+            width: 3.5rem;
         }
     }
 }
