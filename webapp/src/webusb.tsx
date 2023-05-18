@@ -42,22 +42,41 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
 
     if (!await showConnectDeviceDialogAsync(confirmAsync))
         return notPairedResult();
-    if (!await showPickWebUSBDeviceDialogAsync(confirmAsync, implicitlyCalled))
-        return notPairedResult();
 
-    core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName))
+    let connected = pxt.packetio.isConnected();
 
-    let paired: boolean;
-
-    try {
-        paired = await pairAsync();
+    if (!connected && pxt.packetio.isConnecting()) {
+        const start = Date.now();
+        const TRY_FOR_MS = 1500;
+        core.showLoading("attempting-reconnect", lf("Attempting to reconnect automatically to your {0}", boardName));
+        await pxt.Util.promiseTimeout(TRY_FOR_MS, (async () => {
+            while (!pxt.packetio.isConnected() && pxt.packetio.isConnecting() && Date.now() < start + TRY_FOR_MS) {
+                await pxt.Util.delay(10);
+            }
+            connected = pxt.packetio.isConnected();
+        })());
+        core.hideLoading("attempting-reconnect");
     }
-    catch (e) {
-        core.errorNotification(lf("Pairing error: {0}", e.message));
-        paired = false;
-    }
-    finally {
-        core.hideLoading("pair")
+
+    let paired = connected;
+
+    if (!connected) {
+        if (!await showPickWebUSBDeviceDialogAsync(confirmAsync, implicitlyCalled))
+            return notPairedResult();
+
+        core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName))
+
+
+        try {
+            paired = await pairAsync();
+        }
+        catch (e) {
+            core.errorNotification(lf("Pairing error: {0}", e.message));
+            paired = false;
+        }
+        finally {
+            core.hideLoading("pair")
+        }
     }
 
     if (paired) {
