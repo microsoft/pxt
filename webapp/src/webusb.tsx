@@ -48,7 +48,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
     if (!connected && pxt.packetio.isConnecting()) {
         const start = Date.now();
         const TRY_FOR_MS = 2500;
-        core.showLoading("attempting-reconnect", lf("Attempting to reconnect automatically to your {0}", boardName));
+        core.showLoading("attempting-reconnect", lf("Reconnecting to your {0}", boardName));
         try {
             await pxt.Util.promiseTimeout(TRY_FOR_MS, (async () => {
                 while (!pxt.packetio.isConnected() && Date.now() < start + TRY_FOR_MS) {
