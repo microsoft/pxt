@@ -52,9 +52,9 @@ export const Input = (props: InputProps) => {
         selectOnClick,
         onChange,
         onEnterKey,
-        onOptionSelected,
         onIconClick,
         onBlur,
+        onOptionSelected,
         handleInputRef,
         preserveValueOnBlur,
         options
