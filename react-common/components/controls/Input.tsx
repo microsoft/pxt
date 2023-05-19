@@ -98,6 +98,9 @@ export const Input = (props: InputProps) => {
 
     const iconClickHandler = () => {
         if (onIconClick) onIconClick(value);
+    }
+
+    const expandButtonClickHandler = () => {
         if(options) {
             setExpanded(!expanded);
         }
@@ -160,15 +163,23 @@ export const Input = (props: InputProps) => {
                     spellCheck={autoComplete}
                     disabled={disabled}
                     ref={handleInputRef} />
-                {(icon || options) && (onIconClick || options
+                {icon && (onIconClick
                     ? <Button
-                        leftIcon={icon || (expanded ? "fas fa-chevron-up" : "fas fa-chevron-down")}
+                        leftIcon={icon}
                         title={iconTitle}
                         disabled={disabled}
                         onClick={iconClickHandler} />
                     : <i
                         className={icon}
                         aria-hidden={true} />)}
+                {options && <Button
+                        leftIcon={expanded ? "fas fa-chevron-up" : "fas fa-chevron-down"}
+                        title={iconTitle}
+                        disabled={disabled}
+                        ariaHasPopup="listbox"
+                        ariaExpanded={expanded}
+                        ariaLabel={ariaLabel}
+                        onClick={expandButtonClickHandler} />}
             </div>
             {expanded &&
                 <FocusList role="listbox"
