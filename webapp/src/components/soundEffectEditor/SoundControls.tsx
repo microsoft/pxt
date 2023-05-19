@@ -112,6 +112,11 @@ export const SoundControls = (props: SoundControlsProps) => {
         });
     }
 
+    const onOptionSelected = (newValue: string) => {
+        pxt.tickEvent("soundeffect.durationSelected", { option: newValue });
+        onDurationChange(newValue);
+    }
+
     const onDurationChange = (newValue: string) => {
         const val = parseInt(newValue);
 
@@ -199,7 +204,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                         onEnterKey={onDurationChange}
                         treatSpaceAsEnter={true}
                         onBlur={onDurationChange}
-                        onOptionSelected={onDurationChange}
+                        onOptionSelected={onOptionSelected}
                         options={
                             {
                                 [lf("100 ms")]: "100",
