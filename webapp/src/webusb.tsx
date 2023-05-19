@@ -147,10 +147,13 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
                 <div className="ui">
                     <div className="content">
                         <div className="description">
-                            {lf("We recommend pairing for easy downloads.")}
-                            <br/>
-                            <br/>
-                            {lf("Press 'Pair' below and select your device from the browser pop-up.")}
+                            {lf("Press the Pair button below.")}
+                            <br />
+                            <br />
+                            {lf("A window will appear in the top of your browser.")}
+                            <br />
+                            <br />
+                            {lf("Select the {0} device and click Connect.", boardName)}
                         </div>
                     </div>
                 </div>
@@ -190,9 +193,6 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync, willTriggerDownl
                     <div className="content">
                         <div className="description">
                             {lf("Your {0} is connected! Pressing 'Download' will now automatically copy your code to your {0}.", boardName)}
-                            <br/>
-                            <br/>
-                            {lf("If you need to unpair this {0}, you can do so through the '…' menu next to the 'Download' button", boardName)}
                         </div>
                     </div>
                 </div>
