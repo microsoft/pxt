@@ -680,8 +680,10 @@ namespace pxt.blocks {
                 })
             }
         });
-        if (fn.attributes.imageLiteral) {
-            const columns = (fn.attributes.imageLiteralColumns || 5) * fn.attributes.imageLiteral;
+
+        const gridTemplateString = fn.attributes.imageLiteral || fn.attributes.gridLiteral;
+        if (gridTemplateString) {
+            const columns = (fn.attributes.imageLiteralColumns || 5) * gridTemplateString;
             const rows = fn.attributes.imageLiteralRows || 5;
             const scale = fn.attributes.imageLiteralScale;
             let ri = block.appendDummyInput();
@@ -695,7 +697,7 @@ namespace pxt.blocks {
             block.setInputsInline(true);
         }
         else {
-            block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !fn.attributes.imageLiteral));
+            block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !gridTemplateString));
         }
 
         const body = fn.parameters?.find(pr => pxtc.parameterTypeIsArrowFunction(pr));

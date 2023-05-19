@@ -304,7 +304,7 @@ async function handleApiStoreRequestAsync(req: http.IncomingMessage, res: http.S
                 res.end(val.toString());
             }
         } else {
-            res.writeHead(404);
+            res.writeHead(204);
             res.end();
         }
     } else if (meth === "POST") {
@@ -416,6 +416,7 @@ export function expandHtml(html: string, params?: pxt.Map<string>, appTheme?: px
     params["name"] = params["name"] || pxt.appTarget.appTheme.title;
     params["description"] = params["description"] || pxt.appTarget.appTheme.description;
     params["locale"] = params["locale"] || pxt.appTarget.appTheme.defaultLocale || "en"
+
 
     // page overrides
     let m = /<title>([^<>@]*)<\/title>/.exec(html)
@@ -1169,7 +1170,7 @@ export function serveAsync(options: ServeOptions) {
         }
 
         let dd = dirs
-        let mm = /^\/(cdn|parts|sim|doccdn|blb)(\/.*)/.exec(pathname)
+        let mm = /^\/(cdn|parts|sim|doccdn|blb|trgblb)(\/.*)/.exec(pathname)
         if (mm) {
             pathname = mm[2]
         } else if (U.startsWith(pathname, "/docfiles/")) {

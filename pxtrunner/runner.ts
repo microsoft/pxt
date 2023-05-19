@@ -928,10 +928,17 @@ ${linkString}
         }
     }
 
-    function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
+    async function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
-        return pxt.Cloud.markdownAsync(docid)
-            .then(md => renderMarkdownAsync(content, md, { path: docid }))
+        // if it fails on requesting, propagate failed promise
+        const md = await pxt.Cloud.markdownAsync(docid, undefined, true /** don't suppress exception **/);
+        try {
+            // just log exceptions that occur during rendering,
+            // similar to how normal docs handle them.
+            await renderMarkdownAsync(content, md, { path: docid });
+        } catch (e) {
+            console.warn(e);
+        }
     }
 
     function renderBookAsync(content: HTMLElement, summaryid: string): Promise<void> {
@@ -946,7 +953,7 @@ ${linkString}
         // start the work
         let toc: TOCMenuEntry[];
         return U.delay(100)
-            .then(() => pxt.Cloud.markdownAsync(summaryid))
+            .then(() => pxt.Cloud.markdownAsync(summaryid, undefined, true))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
@@ -958,7 +965,7 @@ ${linkString}
 
                 return U.promisePoolAsync(4, tocsp, async entry => {
                     try {
-                        const md = await pxt.Cloud.markdownAsync(entry.path);
+                        const md = await pxt.Cloud.markdownAsync(entry.path, undefined, true);
                         entry.markdown = md;
                     } catch (e) {
                         entry.markdown = `_${entry.path} failed to load._`;

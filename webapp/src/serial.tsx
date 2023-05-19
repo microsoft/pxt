@@ -183,6 +183,12 @@ export class Editor extends srceditor.Editor {
     }
 
     processEventCore(smsg: pxsim.SimulatorSerialMessage) {
+        const isClearLog = smsg.csvType === "clear";
+        if (isClearLog && this.isCsvView) {
+            this.clear();
+            return;
+        }
+
         smsg.receivedTime = smsg.receivedTime || Util.now();
         if (!!smsg.csvType) {
             this.receivedCsv = true;
@@ -231,7 +237,7 @@ export class Editor extends srceditor.Editor {
             this.appendRawCsvData(data);
             if (smsg.csvType === "headers") {
                 this.processCsvHeaders(data, receivedTime);
-            } else {
+            } else if (smsg.csvType === "row") {
                 this.processCsvRows(data, receivedTime);
             }
         } else {

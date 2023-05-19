@@ -1634,7 +1634,7 @@ ${output}</xml>`;
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
+            const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
             const nr = attributes.imageLiteralRows || 5;
             const nleds = nc * nr;
             if (nleds != leds.length) {
@@ -2076,7 +2076,7 @@ ${output}</xml>`;
                 attributes.blockId = builtin.blockId;
             }
 
-            if (attributes.imageLiteral) {
+            if (attributes.imageLiteral || attributes.gridLiteral) {
                 return getImageLiteralStatement(node, info);
             }
 
@@ -2807,7 +2807,7 @@ ${output}</xml>`;
             const comp = pxt.blocks.compileInfo(api);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
 
-            if (attributes.imageLiteral) {
+            if (attributes.imageLiteral || attributes.gridLiteral) {
                 // Image literals do not show up in the block string, so it won't be in comp
                 if (info.args.length - totalDecompilableArgs > 1) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -2819,7 +2819,7 @@ ${output}</xml>`;
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
                 const nr = attributes.imageLiteralRows || 5;
-                const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
+                const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
                 const nleds = nc * nr;
                 if (nc * nr != leds.length) {
                     return Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length);

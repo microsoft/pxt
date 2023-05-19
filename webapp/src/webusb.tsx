@@ -42,22 +42,46 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
 
     if (!await showConnectDeviceDialogAsync(confirmAsync))
         return notPairedResult();
-    if (!await showPickWebUSBDeviceDialogAsync(confirmAsync, implicitlyCalled))
-        return notPairedResult();
 
-    core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName))
+    let connected = pxt.packetio.isConnected();
 
-    let paired: boolean;
-
-    try {
-        paired = await pairAsync();
+    if (!connected && pxt.packetio.isConnecting()) {
+        const start = Date.now();
+        const TRY_FOR_MS = 2500;
+        core.showLoading("attempting-reconnect", lf("Reconnecting to your {0}", boardName));
+        try {
+            await pxt.Util.promiseTimeout(TRY_FOR_MS, (async () => {
+                while (!pxt.packetio.isConnected() && Date.now() < start + TRY_FOR_MS) {
+                    await pxt.Util.delay(30);
+                }
+                connected = pxt.packetio.isConnected();
+            })());
+        } catch (e) {
+            // continue pairing flow
+        } finally {
+            core.hideLoading("attempting-reconnect");
+        }
     }
-    catch (e) {
-        core.errorNotification(lf("Pairing error: {0}", e.message));
-        paired = false;
-    }
-    finally {
-        core.hideLoading("pair")
+
+    let paired = connected;
+
+    if (!connected) {
+        if (!await showPickWebUSBDeviceDialogAsync(confirmAsync, implicitlyCalled))
+            return notPairedResult();
+
+        core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName))
+
+
+        try {
+            paired = await pairAsync();
+        }
+        catch (e) {
+            core.errorNotification(lf("Pairing error: {0}", e.message));
+            paired = false;
+        }
+        finally {
+            core.hideLoading("pair")
+        }
     }
 
     if (paired) {
@@ -135,7 +159,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
                 <div className="column">
                     <div className="ui">
                         <div className="image download-dialog-image">
-                            <img alt={lf("Image selecting {0} from a list of WebUSB devices", boardName)} className="ui medium rounded image" src={selectDeviceImage} />
+                            <img alt={lf("Image selecting {0} from a list of WebUSB devices", boardName)} className="ui large rounded image" src={selectDeviceImage} />
                         </div>
                     </div>
                 </div>
