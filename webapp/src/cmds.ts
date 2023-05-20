@@ -72,12 +72,18 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     }
     else {
         // save does the same as download as far iOS is concerned
-        return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync, resp.saveOnly)
+        return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync, resp.saveOnly, () => hidDeployCoreAsync(resp))
             .then(() => window.URL?.revokeObjectURL(url));
     }
 }
 
-function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (options: core.PromptOptions) => Promise<number>, saveonly?: boolean): Promise<void> {
+function showUploadInstructionsAsync(
+    fn: string,
+    url: string,
+    confirmAsync: (options: core.PromptOptions) => Promise<number>,
+    saveonly?: boolean,
+    redeploy?: () => Promise<void>
+): Promise<void> {
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
 
@@ -90,7 +96,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
     const saveAs = pxt.BrowserUtils.hasSaveAs();
     const ext = pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex";
     const connect = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
-    const jsx = !userDownload && !saveAs && pxt.commands.renderBrowserDownloadInstructions && pxt.commands.renderBrowserDownloadInstructions(saveonly);
+    const jsx = !userDownload && !saveAs && pxt.commands.renderBrowserDownloadInstructions?.(saveonly, redeploy);
     const body = userDownload ? lf("Click 'Download' to open the {0} app.", pxt.appTarget.appTheme.boardName) :
         saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
             ext,
