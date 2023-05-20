@@ -3061,7 +3061,7 @@ export class ProjectView
             );
     }
 
-    pairAsync(): Promise<void> {
+    pairAsync(): Promise<boolean> {
         return cmds.pairAsync();
     }
 

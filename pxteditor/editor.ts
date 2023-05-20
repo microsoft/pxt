@@ -377,7 +377,7 @@ namespace pxt.editor {
         showPackageDialog(query?: string): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
-        pairAsync(): Promise<void>;
+        pairAsync(): Promise<boolean>;
 
         createModalClasses(classes?: string): string;
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
