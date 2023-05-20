@@ -235,7 +235,9 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
         // This is hit when we connect to an hf2 device (e.g. arcade) for the first time,
         // and need the user to select / pair one more time. see pxtlib/hf2.ts
         if (e.type === "repairbootloader") {
-            // TODO: slightly different flow vs implicit, as this is in a 'half paired' state? not sure
+            // TODO: slightly different flow vs implicit, as this is in a 'half paired' state?
+            // Ideally, we should be including this in the pairing webusb.tsx pairing dialog flow
+            // directly instead of deferring it all the way here.
             await pairAsync();
             return hidDeployCoreAsync(resp, d);
         } else if (e.message === "timeout") {
