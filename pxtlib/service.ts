@@ -389,6 +389,7 @@ namespace ts.pxtc {
             fnArgs: compileResult.usedArguments,
             parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
             usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
+            allParts: pxtc.computeUsedParts(compileResult, undefined, true),
             breakpoints: compileResult.breakpoints?.map(bp => bp.id),
         };
     }
@@ -797,8 +798,9 @@ namespace ts.pxtc {
             const bParam = b.actualNameToParam[aParam.actualName];
             if (!bParam
                 || aParam.type != bParam.type
-                || aParam.shadowBlockId != bParam.shadowBlockId) {
-                pxt.debug(`Parameter ${aParam.actualName} type or shadow block does not match after localization`);
+                || aParam.shadowBlockId != bParam.shadowBlockId
+                || aParam.definitionName != bParam.definitionName) {
+                pxt.debug(`Parameter ${aParam.actualName} type, shadow block, or definition name does not match after localization`);
                 return false;
             }
         }
@@ -881,6 +883,16 @@ namespace ts.pxtc {
                     } else if (U.endsWith(n, ".shadow")) {
                         if (!res._shadowOverrides) res._shadowOverrides = {};
                         res._shadowOverrides[n.slice(0, n.length - 7)] = v;
+                    } else if (U.endsWith(n, ".snippet")) {
+                        if (!res.paramSnippets) res.paramSnippets = {};
+                        const paramName = n.slice(0, n.length - 8);
+                        if (!res.paramSnippets[paramName]) res.paramSnippets[paramName] = {};
+                        res.paramSnippets[paramName].ts = v;
+                    } else if (U.endsWith(n, ".pySnippet")) {
+                        if (!res.paramSnippets) res.paramSnippets = {};
+                        const paramName = n.slice(0, n.length - 10);
+                        if (!res.paramSnippets[paramName]) res.paramSnippets[paramName] = {};
+                        res.paramSnippets[paramName].python = v;
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v

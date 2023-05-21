@@ -16,6 +16,8 @@ export interface ImageFieldEditorProps {
     singleFrame: boolean;
     isMusicEditor?: boolean;
     doneButtonCallback?: () => void;
+    hideDoneButton?: boolean;
+    includeSpecialTagsInFilter?: boolean;
 }
 
 interface ToggleOption extends BasicEditorToggleItem {
@@ -31,6 +33,7 @@ export interface ImageFieldEditorState {
     hideMyAssets?: boolean;
     galleryFilter: string;
     editingTile?: boolean;
+    hideCloseButton?: boolean;
 }
 
 interface ProjectGalleryItem extends pxt.sprite.GalleryItem {
@@ -79,7 +82,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     render() {
-        const { currentView, headerVisible, editingTile, hideMyAssets, filterOpen } = this.state;
+        const { currentView, headerVisible, editingTile, hideMyAssets, filterOpen, hideCloseButton } = this.state;
         const filterPanelVisible = this.state.currentView === "gallery" && filterOpen;
 
         let showHeader = headerVisible;
@@ -91,7 +94,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             this.updateGalleryAssets();
         }
 
-        const specialTags = ["tile", "dialog", "background"];
+        const specialTags = this.props.includeSpecialTagsInFilter ? [] : ["tile", "dialog", "background"];
         let allTags: string[] = [];
         let filteredAssets: pxt.Asset[] = [];
         switch (currentView) {
@@ -159,7 +162,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                         </div>
                         <div className="gallery-filter-button-label">{lf("Filter")}</div>
                     </div>
-                    {!editingTile && <div className="image-editor-close-button" role="button" onClick={this.onDoneClick}>
+                    {!editingTile && !hideCloseButton && <div className="image-editor-close-button" role="button" onClick={this.onDoneClick}>
                         <i className="ui icon close"/>
                     </div>}
                 </div>
@@ -169,14 +172,16 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                     {this.props.isMusicEditor ?
                         <MusicFieldEditor
                             ref="image-editor"
-                            onDoneClicked={this.onDoneClick} /> :
+                            onDoneClicked={this.onDoneClick}
+                            hideDoneButton={this.props.hideDoneButton} /> :
                         <ImageEditor
                             ref="image-editor"
                             singleFrame={this.props.singleFrame}
                             onDoneClicked={this.onDoneClick}
                             onTileEditorOpenClose={this.onTileEditorOpenClose}
                             lightMode={this.lightMode}
-                            />
+                            hideDoneButton={this.props.hideDoneButton}
+                        />
                     }
                     <ImageEditorGallery
                         items={filteredAssets}
@@ -249,6 +254,11 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.setState({ hideMyAssets: options.hideMyAssets });
                 didUpdate = true;
             }
+
+            if (options.hideCloseButton != undefined) {
+                this.setState({ hideCloseButton: options.hideCloseButton });
+                didUpdate = true;
+            }
         }
 
         // Always update, because we might need to remove the gallery toggle
@@ -310,6 +320,9 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         // lf("Transportation")
         // lf("Swamp")
         // lf("Sports")
+        // lf("Background")
+        // lf("tile")
+        // lf("dialog")
 
         if (this.galleryAssets) {
             filterAssets.forEach( (asset) => {
@@ -394,7 +407,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (useTags) {
             assets.forEach(a => {
                 if (!a.meta.tags && this.options) {
-                    a.meta.tags = this.blocksInfo.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
+                    a.meta.tags = this.blocksInfo?.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
                 }})
 
         // Keep tag filtering unified with pxtlib/spriteutils:filterItems

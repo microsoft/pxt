@@ -1,0 +1,7 @@
+let stringGrid = basic.createTemplateGrid(`
+    . . . . .
+    . . . . .
+    . . . . .
+    # # # # #
+    . . . . .
+`)

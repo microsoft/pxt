@@ -441,6 +441,7 @@ namespace pxt.runner {
             autofocus: simOptions.autofocus,
             queryParameters: simOptions.additionalQueryParameters,
             mpRole: simOptions.mpRole,
+            theme: mainPkg.config?.theme,
         };
         if (pxt.appTarget.simulator && !simOptions.fullScreen)
             runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio

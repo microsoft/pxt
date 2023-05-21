@@ -40,6 +40,7 @@
     * [User Tutorials](/writing-docs/user-tutorials)
     * [Skillmaps](/writing-docs/skillmaps)
     * [Routing](/writing-docs/routing)
+    * [Licensing](/writing-docs/licensing)
     * [Testing](/writing-docs/testing)
 * [Translations](/translate)
     * [Translation languages](/translate/languages)

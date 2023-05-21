@@ -522,8 +522,8 @@ code.lang-filterblocks {
 ******************************/
 // TODO (shakao) remove #mainmenu items when cleaning up
 // old tutorial code
-#editorSidebar .immersive-reader-button.ui.item,
-#editorSidebar .immersive-reader-button.ui.item:focus,
+#simulator .editor-sidebar .immersive-reader-button.ui.item,
+#simulator .editor-sidebar .immersive-reader-button.ui.item:focus,
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
     width: 2rem;
@@ -537,8 +537,8 @@ code.lang-filterblocks {
 #mainmenu .immersive-reader-button.ui.item:focus {
     background-image: @immersiveReaderLightIcon;
 }
-#editorSidebar .immersive-reader-button.ui.item,
-#editorSidebar .immersive-reader-button.ui.item:focus{
+#simulator .editor-sidebar .immersive-reader-button.ui.item,
+#simulator .editor-sidebar .immersive-reader-button.ui.item:focus{
     background-image: @immersiveReaderIcon;
 }
 
@@ -701,7 +701,7 @@ code.lang-filterblocks {
  * CSS for embedded tutorial used in the skills map
  */
 .tutorial.tutorial-embed {
-    #editorSidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+    #simulator .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
         top: @tutorialEmbedMenuHeight;
     }
     .simView #boardview {
@@ -843,7 +843,7 @@ code.lang-filterblocks {
     * CSS for embedded tutorial used in the skills map
     */
     .tutorial.tutorial-embed {
-        #editorSidebar {
+        #simulator .editor-sidebar {
             top: unset;
         }
     }

@@ -1,8 +1,9 @@
 import * as React from "react";
+import { CursorState } from "./keyboardNavigation";
 import { Note } from "./Note";
-import { addPlaybackStopListener, addTickListener, removePlaybackStopListener, removeTickListener } from "./playback";
+import { addPlaybackStateListener, addTickListener, removePlaybackStateListener, removeTickListener } from "./playback";
 import { tickToX } from "./svgConstants";
-import { isSharpNote, noteToRow } from "./utils";
+import { isBassClefNote, noteToRow } from "./utils";
 
 export interface NoteGroupProps {
     song: pxt.assets.music.Song;
@@ -10,10 +11,11 @@ export interface NoteGroupProps {
     noteEvent: pxt.assets.music.NoteEvent;
     iconURI: string;
     isDrumTrack: boolean;
+    cursor?: CursorState;
 }
 
 export const NoteGroup = (props: NoteGroupProps) => {
-    const { song, noteEvent, octave, iconURI, isDrumTrack } = props;
+    const { song, noteEvent, octave, iconURI, isDrumTrack, cursor } = props;
 
     let noteGroupRef: SVGGElement;
 
@@ -48,11 +50,11 @@ export const NoteGroup = (props: NoteGroupProps) => {
 
 
         addTickListener(onTick);
-        addPlaybackStopListener(onStop);
+        addPlaybackStateListener(onStop);
 
         return () => {
             removeTickListener(onTick);
-            removePlaybackStopListener(onStop);
+            removePlaybackStateListener(onStop);
             noteGroupRef.classList.remove(playingClass);
         }
     }, [noteEvent])
@@ -62,19 +64,23 @@ export const NoteGroup = (props: NoteGroupProps) => {
         if (ref) noteGroupRef = ref;
     }
 
-    const xOffset = tickToX(song, noteEvent.startTick)
-    const noteLength = isDrumTrack ? 0 : tickToX(song, noteEvent.endTick) - xOffset;
+    const xOffset = tickToX(song.ticksPerBeat, noteEvent.startTick)
+    const noteLength = isDrumTrack ? 0 : tickToX(song.ticksPerBeat, noteEvent.endTick) - xOffset;
+    const isCursor = cursor?.tick === noteEvent.startTick;
 
     return <g className="music-staff-note-group" transform={`translate(${xOffset}, 0)`} ref={handleNoteGroupRef}>
         {noteEvent.notes.map((note, index) => {
-            const row = isDrumTrack ? note : noteToRow(octave, note);
-            const isSharp = isDrumTrack ? false : isSharpNote(note);
+            const isBassClef = isBassClefNote(octave, note, isDrumTrack);
+            const row = noteToRow(octave, note, isDrumTrack);
             return <Note
                 key={index}
+                isBassClef={isBassClef}
                 row={row}
-                isSharp={isSharp}
+                enharmonicSpelling={note.enharmonicSpelling}
                 iconURI={iconURI}
-                length={noteLength} />
+                length={noteLength}
+                selected={noteEvent.selected}
+                cursorHighlighted={isCursor && cursor.noteGroupIndex === index} />
         }
         )}
     </g>

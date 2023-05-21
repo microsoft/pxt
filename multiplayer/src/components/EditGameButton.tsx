@@ -10,7 +10,7 @@ export default function Render() {
         ? `${pxt.webConfig.relprefix.replace(/-+$/, "")}#pub:${gameId}`
         : undefined;
 
-    function handleRemixGameClick() {
+    function handleEditGameClick() {
         if (remixUrl) {
             pxt.tickEvent("mp.remixgame", { gameId: gameId! })
             window.open(remixUrl);
@@ -20,13 +20,13 @@ export default function Render() {
     return remixUrl ? (
         <Button
             leftIcon={"fas fa-bolt"}
-            title={lf("Remix Game")}
+            title={lf("Edit Game")}
             label={
                 <div className="tw-hidden sm:tw-inline tw-m-0 tw-p-0">
-                    {lf("Remix Game")}
+                    {lf("Edit Game")}
                 </div>
             }
-            onClick={handleRemixGameClick}
+            onClick={handleEditGameClick}
             className="tw-border-2 tw-border-slate-400 tw-border-solid tw-p-2 tw-bg-slate-100 hover:tw-bg-slate-200 active:tw-bg-slate-300 tw-ease-linear tw-duration-[50ms] tw-pr-1 sm:tw-pr-3"
         />
     ) : null;

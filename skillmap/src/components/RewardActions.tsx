@@ -3,9 +3,10 @@ import { connect } from 'react-redux';
 
 import { dispatchOpenActivity, dispatchShowCompletionModal, dispatchShowLoginModal } from '../actions/dispatch';
 
-import { ActivityStatus } from '../lib/skillMapUtils';
+import { ActivityStatus, lookupPreviousCompletedActivityState } from '../lib/skillMapUtils';
 import { tickEvent } from "../lib/browserUtils";
 import { Button } from "react-common/components/controls/Button";
+import { editorUrl } from "./makecodeFrame";
 import { SkillMapState } from "../store/reducer";
 
 interface OwnProps {
@@ -13,6 +14,7 @@ interface OwnProps {
     activityId: string;
     status?: ActivityStatus;
     signedIn?: boolean;
+    previousHeaderId?: string;
 }
 
 interface DispatchProps {
@@ -35,6 +37,12 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
         }
     }
 
+    protected handlePlayGameClick = () => {
+        const { previousHeaderId, mapId, activityId } = this.props;
+        tickEvent("skillmap.play", { path: mapId || "", activity: activityId || "" });
+        window.open(`${editorUrl}#skillmapimport:${previousHeaderId}`)
+    }
+
     render() {
         const { status, signedIn, dispatchShowLoginModal } = this.props;
         if (status === "locked") return <div />
@@ -46,17 +54,26 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
                 <Button
                     tabIndex={-1}
                     ariaPosInSet={1}
-                    ariaSetSize={showSignIn ? 2 : 1}
+                    ariaSetSize={showSignIn ? 3 : 2}
                     className="primary inverted"
                     title={lf("Claim Reward")}
                     label={lf("Claim Reward")}
                     onClick={this.handleActionButtonClick}
                 />
+                <Button
+                    tabIndex={-1}
+                    ariaPosInSet={2}
+                    ariaSetSize={showSignIn ? 3 : 2}
+                    className="primary inverted"
+                    title={lf("Play your game")}
+                    label={lf("Play your game")}
+                    onClick={this.handlePlayGameClick}
+                />
                 {showSignIn &&
                     <Button
                         tabIndex={-1}
-                        ariaPosInSet={2}
-                        ariaSetSize={2}
+                        ariaPosInSet={3}
+                        ariaSetSize={3}
                         className="teal"
                         onClick={dispatchShowLoginModal}
                         label={lf("Sign in to Save")}
@@ -71,8 +88,13 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
 
+    const props = ownProps as OwnProps;
+    const map = state.maps[props.mapId];
+    const previousState = lookupPreviousCompletedActivityState(state.user, state.pageSourceUrl, map, props.activityId);
+
     return {
-        signedIn: state.auth.signedIn
+        signedIn: state.auth.signedIn,
+        previousHeaderId: previousState?.headerId
     };
 }
 

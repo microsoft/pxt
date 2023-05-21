@@ -367,11 +367,15 @@
             .card-action:hover {
                 transform: scale(1.1);
             }
+            .card-action.custom-icon i.xicon {
+                font-size: 6.5rem;
+                padding-top: 3.5rem;
+            }
             /* custom icons (override font to avoid mac/windows alignment issue) */
-            .card-action .xicon:before {
+            .card-action:not(.custom-icon) .xicon:before {
                 visibility: hidden;
             }
-            .card-action i.xicon {
+            .card-action:not(.custom-icon) i.xicon {
                 background: transparent @blocksIcon no-repeat center center;
                 background-size: 70%;
                 background-blend-mode: color-burn;

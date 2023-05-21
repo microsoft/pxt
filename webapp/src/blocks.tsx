@@ -1151,6 +1151,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const hasCategories = (forceHasCategories != undefined) ? forceHasCategories :
             (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories :
                 this.showCategories);
+
         blocklyOptions.hasCategories = hasCategories;
         blocklyOptions.renderer = "pxt";
         if (!hasCategories) this.showCategories = false;
@@ -1857,6 +1858,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setblock.appendChild(value);
                         }
                         blockXml = setblock;
+                    } else if(fn.attributes.duplicateWithToolboxParent) {
+                        const blockWithParentFn = {...fn, attributes: {...fn.attributes, toolboxParent: fn.attributes.duplicateWithToolboxParent, toolboxParentArgument: fn.attributes.duplicateWithToolboxParentArgument}};
+                        const duplicatedBlock = pxt.blocks.createToolboxBlock(this.blockInfo, blockWithParentFn, comp);
+                        return [duplicatedBlock, blockXml];
                     }
                 }
             } else {

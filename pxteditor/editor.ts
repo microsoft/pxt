@@ -54,11 +54,9 @@ namespace pxt.editor {
         sideDocsCollapsed?: boolean;
         projectName?: string;
         suppressPackageWarning?: boolean;
-
         tutorialOptions?: pxt.tutorial.TutorialOptions;
         lightbox?: boolean;
         keymap?: boolean;
-
         simState?: SimState;
         autoRun?: boolean;
         resumeOnVisibility?: boolean;
@@ -85,22 +83,19 @@ namespace pxt.editor {
         pokeUserComponent?: string;
         flashHint?: boolean;
         editorOffset?: string;
-
         print?: boolean;
         greenScreen?: boolean;
         accessibleBlocks?: boolean;
-
         home?: boolean;
         hasError?: boolean;
         cancelledDownload?: boolean;
-
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;
-
         errorListState?: ErrorListState;
-
         screenshoting?: boolean;
         extensionsVisible?: boolean;
+        isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
+        onboarding?: pxt.tour.BubbleStep[];
     }
 
     export interface EditorState {
@@ -123,6 +118,7 @@ namespace pxt.editor {
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
         extensionUnderTest?: string; // workspace id of the extension under test
         skillmapProject?: boolean;
+        simTheme?: Partial<pxt.PackageConfig>;
     }
 
     export interface ExampleImportOptions {
@@ -355,12 +351,15 @@ namespace pxt.editor {
         startActivity(options: StartActivityOptions): void;
         showLightbox(): void;
         hideLightbox(): void;
+        showOnboarding(): void;
+        hideOnboarding(): void;
         showKeymap(show: boolean): void;
         toggleKeymap(): void;
+        signOutGithub(): void;
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
-        showShareDialog(title?: string): void;
+        showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share"): void;
         showAboutDialog(): void;
 
         showLoginDialog(continuationHash?: string): void;

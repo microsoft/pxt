@@ -304,7 +304,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             });
 
         pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
-            .forEach((inlineVideo: HTMLElement) => {
+            .forEach((inlineVideo: HTMLMediaElement) => {
 
                 let player = MediaPlayer().create()
                 player.initialize(inlineVideo, inlineVideo.getAttribute("src"), /** autoPlay **/ false);
@@ -350,6 +350,18 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     pipButton.textContent = lf("Pop out video");
                     pipButton.ariaLabel = lf("Open video in picture-in-picture mode");
                     pipButton.title = pipButton.ariaLabel;
+                } else if (pxt.BrowserUtils.isFirefox()) {
+                    const pipInstructionButton = document.createElement("button");
+                    inlineVideo.parentElement.appendChild(pipInstructionButton);
+                    pipInstructionButton.addEventListener("click", () => {
+                        pxt.tickEvent("video.pip.firefoxHelp");
+                        window.open("/firefox-picture-in-picture", "_blank");
+                    });
+                    pipInstructionButton.addEventListener("keydown", e => fireClickOnEnter(e as any));
+                    pipInstructionButton.className = "common-button";
+                    pipInstructionButton.textContent = lf("Pop out video");
+                    pipInstructionButton.ariaLabel = lf("Instructions on how to open video in picture-in-picture mode");
+                    pipInstructionButton.title = pipInstructionButton.ariaLabel;
                 }
 
                 player.on(dashjs.MediaPlayer.events.PLAYBACK_STARTED,
@@ -371,7 +383,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const text = inlineBlock.innerText;
                 const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
                 if (mbtn) {
-                    const mtxt = /^(([^\:]*?)[\:])?(.*)$/.exec(mbtn[2]);
+                    const mtxt = /^(([^:.]*?)[:.])?(.*)$/.exec(mbtn[2]);
                     const txt = mtxt[3].trim();
                     const isInlineButton = mbtn[1].length == 1;
                     const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
@@ -417,11 +429,14 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     } else if (/^variables?$/i.test(ns)) {
                         ns = "variables";
                         color = pxt.toolbox.getNamespaceColor(ns);
+                    } else if (/^arrays?$/i.test(ns)) {
+                        ns = "arrays";
+                        color = pxt.toolbox.getNamespaceColor(ns);
                     } else if (bi?.kind !== pxtc.SymbolKind.Module){
                         continue;
                     }
 
-                    const isAdvanced = bi?.attributes?.advanced;
+                    const isAdvanced = bi?.attributes?.advanced || ns === "arrays";
                     inlineBlock.classList.add("clickable");
                     inlineBlock.tabIndex = 0;
                     inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);

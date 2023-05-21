@@ -26,6 +26,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 // lf("Reference")
 // lf("Support")
 // lf("Hardware")
+// lf("Tour")
 
 function openTutorial(parent: pxt.editor.IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
@@ -38,6 +39,11 @@ function openTutorial(parent: pxt.editor.IProjectView, path: string) {
 function openDocs(parent: pxt.editor.IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
     parent.setSideDoc(path);
+}
+
+function startTour(parent: pxt.editor.IProjectView) {
+    pxt.tickEvent(`tour.start`, { origin: "help-menu" });
+    parent.showOnboarding();
 }
 
 function renderDocItems(parent: pxt.editor.IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
@@ -55,6 +61,11 @@ function getDocsLanguageItem(editor: DocsMenuEditorName, parent: pxt.editor.IPro
     return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={pxt.Util.rlf(editor)} text={pxt.Util.rlf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
 }
 
+function getTourItem(parent: pxt.editor.IProjectView, cls: string = ""): JSX.Element {
+    const path = "/tour";
+    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Tour")} text={lf("Tour")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={startTour} />
+}
+
 type DocsMenuEditorName = "Blocks" | "JavaScript" | "Python";
 interface DocsMenuProps extends ISettingsProps {
     editor: DocsMenuEditorName;
@@ -66,6 +77,7 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
+            {(this.props.editor === "Blocks") && targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
         </sui.DropdownMenu>
@@ -112,7 +124,7 @@ export interface SettingsMenuState {
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
-
+    dropdown: sui.DropdownMenu;
     constructor(props: SettingsMenuProps) {
         super(props);
         this.state = {
@@ -137,6 +149,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
+        this.hide = this.hide.bind(this);
     }
 
     showExitAndSaveDialog() {
@@ -235,14 +248,14 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.printCode();
     }
 
+    hide() {
+        this.dropdown?.hide();
+    }
+
     signOutGithub() {
         pxt.tickEvent("menu.github.signout");
-        const githubProvider = cloudsync.githubProvider();
-        if (githubProvider) {
-            githubProvider.logout();
-            this.props.parent.forceUpdate();
-            core.infoNotification(lf("Signed out from GitHub..."))
-        }
+        this.hide();
+        this.props.parent.signOutGithub();
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: SettingsMenuProps) {
@@ -294,13 +307,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {showHome && <sui.Item className="mobile only inherit" role="menuitem" icon="home" title={lf("Home")} text={lf("Home")} ariaLabel={lf("Home screen")} onClick={this.showExitAndSaveDialog} />}
             {showShare && <sui.Item className="mobile only inherit" role="menuitem" icon="share alternate" title={lf("Publish your game to create a shareable link")} text={lf("Share")} ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
             {(showHome || showShare) && <div className="ui divider mobile only inherit" />}
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
-            {showPairDevice ? <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} onClick={this.pair} /> : undefined}
+            {showPairDevice ? <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} onClick={this.pair} /> : undefined}
             {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} /> : undefined}
@@ -317,7 +330,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
                 <div className="avatar" role="presentation">
                     <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
                 </div>
-                {lf("Unlink GitHub")}
+                {lf("Disconnect GitHub")}
             </div> : undefined}
             {showCenterDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}

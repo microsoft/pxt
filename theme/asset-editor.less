@@ -160,8 +160,11 @@
     }
 }
 
-.asset-editor-sidebar-controls > .common-list-item {
-    display: flex;
+.asset-editor-sidebar-controls {
+    margin: 0 .75rem;
+    .common-list-item {
+        display: flex;
+    }
 }
 
 .asset-editor-button {
@@ -235,13 +238,13 @@
 }
 
 .asset-palette-button.common-button {
-    margin: 1rem .25rem .6rem 0;
+    margin-top: 1rem;
     flex: 1;
     box-shadow: inset 0 0 0 1px rgba(34,36,38,.15), inset 0 -0.3em 0 0 rgba(34,36,38,.15);
+}
 
-    i.fas {
-        transform: rotate(90deg);
-    }
+i.fa-palette {
+    transform: rotate(90deg);
 }
 
 .palette-transparent-button.common-button {
@@ -253,7 +256,49 @@
         color: @grey;
     }
 }
-.palette-save-button.common-button.disabled.green {
+
+.palette-actions {
+    .common-button {
+        background: none;
+        border: none;
+        padding: .5rem;
+        font-size: 18px;
+        margin: 0;
+        &.disabled {
+            background: none;
+            border: none;
+            color: @grey;
+            &:focus::after {
+                outline: none;
+            }
+        }
+        .xicon.rename {
+            margin-right: 0.5rem;
+        }
+    }
+}
+
+.palette-delete-modal,
+.palette-exit-modal,
+.palette-name-modal {
+    .common-modal {
+        width: 35%;
+    }
+    .common-palette-swatch-name {
+        padding: 1rem .5rem 0 0;
+        flex-grow: 0;
+    }
+    .common-palette-color-list {
+        padding-top: 1rem;
+    }
+}
+
+.palette-apply-button.common-button.disabled.green,
+.palette-done-button.common-button.disabled.teal {
     background-color: @grey;
     color: @white;
+}
+
+.invalid-palette-name {
+    color: @red;
 }

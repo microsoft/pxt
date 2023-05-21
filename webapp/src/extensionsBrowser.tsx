@@ -42,6 +42,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const [preferredExts, setPreferredExts] = useState<(ExtensionMeta & EmptyCard)[]>([])
     const [extensionTags, setExtensionTags] = useState(new Map<string, string[]>())
 
+
+    const onSearchBarChange = (newValue: string) => {
+        setSearchFor(newValue || "");
+    }
+
     useEffect(() => {
         updateExtensionTags();
         updatePreferredExts();
@@ -139,11 +144,18 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         if (extensionTags.size > 0)
             return
         let trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
-        if (!trgConfig?.packages?.approvedRepoLib)
-            return;
+        const approvedRepos = trgConfig?.packages?.approvedRepoLib;
+        const builtinExtensions = trgConfig?.packages?.builtinExtensionsLib;
+        let allExtensions: string[] = [];
         const newMap = extensionTags;
-        Object.keys(trgConfig.packages.approvedRepoLib).forEach(repoSlug => {
-            const repoData = trgConfig.packages.approvedRepoLib[repoSlug];
+        if (!approvedRepos && !builtinExtensions)
+            return;
+        if (approvedRepos)
+            allExtensions = allExtensions.concat(Object.keys(approvedRepos));
+        if (builtinExtensions)
+            allExtensions = allExtensions.concat(Object.keys(builtinExtensions));
+        allExtensions.forEach(repoSlug => {
+            const repoData = approvedRepos?.[repoSlug] || builtinExtensions?.[repoSlug];
             repoData.tags?.forEach(tag => {
                 if (!newMap.has(tag)) {
                     newMap.set(tag, [])
@@ -238,6 +250,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     function addLocal(hd: pxt.workspace.Header) {
+        pxt.tickEvent("extensions.local");
         workspace.getTextAsync(hd.id)
             .then(files => {
                 let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
@@ -248,15 +261,24 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     function installExtension(scr: ExtensionMeta) {
         switch (scr.type) {
             case ExtensionType.Bundled:
-                pxt.tickEvent("packages.bundled", { name: scr.name });
+                pxt.tickEvent("extensions.bundled", { name: scr.name });
                 props.hideExtensions();
                 addDepIfNoConflict(scr.pkgConfig, "*");
                 break;
             case ExtensionType.Github:
+                pxt.tickEvent("extensions.github", {
+                    name: scr.repo.fullName,
+                    slug: scr.repo.slug.toLowerCase(),
+                    tag: scr.repo.tag,
+                    fileName: scr.repo.fileName
+                });
                 props.hideExtensions();
                 addGithubPackage(scr);
                 break;
             case ExtensionType.ShareScript:
+                pxt.tickEvent("extensions.sharescript", {
+                    name: scr.scriptInfo.id //This is share script as extension, so safe to assume it is public
+                });
                 props.hideExtensions();
                 addShareUrlExtension(scr.scriptInfo);
                 break;
@@ -264,7 +286,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     function importExtension() {
-        pxt.tickEvent("extensions.import", undefined, { interactiveConsent: true });
+        pxt.tickEvent("extensions.importfile", undefined, { interactiveConsent: true });
         props.hideExtensions()
         props.importExtensionCallback()
     }
@@ -475,10 +497,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const categoryNames = getCategoryNames();
 
-    const onSearchBarChange = (newValue: string) => {
-        setSearchFor(newValue || "");
-    }
-
     return (
         <Modal
             title={lf("Extensions")}
@@ -498,9 +516,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     <Input
                         placeholder={lf("Search or enter project URL...")}
                         ariaLabel={lf("Search or enter project URL...")}
-                        initialValue={searchFor}
                         onEnterKey={onSearchBarChange}
-                        onBlur={onSearchBarChange}
+                        preserveValueOnBlur={true}
                         icon="fas fa-search"
                     />
                     <div className="extension-tags">

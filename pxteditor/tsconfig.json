@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../built/pxteditor.js",
+        "outFile": "../built/pxteditor.js",
         "newLine": "LF",
         "sourceMap": false,
         "moduleResolution": "node",

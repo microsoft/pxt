@@ -1,15 +1,21 @@
 import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
+import { Checkbox } from "../../../../react-common/components/controls/Checkbox";
 import { Input } from "../../../../react-common/components/controls/Input";
 import { classList } from "../../../../react-common/components/util";
-import { addPlaybackStopListener, isLooping, isPlaying, removePlaybackStopListener, setLooping, startPlaybackAsync, stopPlayback } from "./playback";
+import { addPlaybackStateListener, isLooping, isPlaying, removePlaybackStateListener, setLooping, startPlaybackAsync, stopPlayback } from "./playback";
 
 export interface PlaybackControlsProps {
     song: pxt.assets.music.Song;
     onTempoChange: (newTempo: number) => void;
     onMeasuresChanged: (newMeasures: number) => void;
-    eraserActive: boolean;
-    onEraserClick: () => void;
+    showBassClef: boolean;
+    onBassClefCheckboxClick: (newValue: boolean) => void;
+
+    hasUndo: boolean;
+    hasRedo: boolean;
+    onUndoClick: () => void;
+    onRedoClick: () => void;
 }
 
 type PlaybackState = "stop" | "play" | "loop"
@@ -19,21 +25,25 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
         song,
         onTempoChange,
         onMeasuresChanged,
-        eraserActive,
-        onEraserClick,
+        onUndoClick,
+        onRedoClick,
+        hasUndo,
+        hasRedo,
+        showBassClef,
+        onBassClefCheckboxClick
     } = props;
 
     const [state, setState] = React.useState<PlaybackState>("stop");
 
 
     React.useEffect(() => {
-        const onStop = () => {
-            setState("stop");
+        const onStateChange = (state: PlaybackState) => {
+            setState(state);
         };
 
-        addPlaybackStopListener(onStop);
+        addPlaybackStateListener(onStateChange);
 
-        return () => removePlaybackStopListener(onStop)
+        return () => removePlaybackStateListener(onStateChange)
     }, [])
 
     const onStopClick = () => {
@@ -42,14 +52,14 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
     }
 
     const onPlayClick = () => {
-        startPlaybackAsync(song, false);
+        startPlaybackAsync(song, false, 0);
         setState("play")
     }
 
     const onLoopClick = () => {
         if (isLooping()) return;
         else if (isPlaying()) setLooping(true);
-        else startPlaybackAsync(song, true);
+        else startPlaybackAsync(song, true, 0);
         setState("loop")
     }
 
@@ -101,21 +111,34 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
                 onClick={onLoopClick} />
         </div>
         <Input
-            id="music-playback-tempo-input"
+            id="music-playback-tempo-input music-editor-label"
             label={lf("Tempo:")}
             initialValue={song.beatsPerMinute.toString()}
             onBlur={handleTempoChange}
-            onEnterKey={handleTempoChange}
-            />
-        <div className="music-playback-buttons">
+            onEnterKey={handleTempoChange} />
+        <div className="spacer"/>
+        <Checkbox
+            className="music-editor-label"
+            id="show-bass-clef"
+            label={lf("Show bass clef")}
+            isChecked={showBassClef}
+            onChange={onBassClefCheckboxClick} />
+        <div className="music-undo-redo common-button-group">
             <Button
-                className={classList("square-button", eraserActive && "green")}
-                title={eraserActive ? lf("Turn off eraser tool") : lf("Turn on eraser tool")}
-                leftIcon="fas fa-eraser"
-                onClick={onEraserClick} />
+                className="square-button purple"
+                title={lf("Undo")}
+                leftIcon="xicon undo"
+                disabled={!hasUndo}
+                onClick={onUndoClick} />
+            <Button
+                className="square-button purple"
+                title={lf("Redo")}
+                leftIcon="xicon redo"
+                disabled={!hasRedo}
+                onClick={onRedoClick} />
         </div>
         <div className="music-playback-measures">
-            <div className="music-playback-label">
+            <div className="music-editor-label">
                 {lf("Measures:")}
             </div>
             <Button

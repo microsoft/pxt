@@ -59,6 +59,12 @@
     border: 1px solid @teal;
 }
 
+.common-button.blue {
+    background: @blue;
+    color: @buttonTextColorDarkBackground;
+    border: 1px solid @blue;
+}
+
 .common-button.orange {
     background: @orange;
     color: @buttonTextColorDarkBackground;
@@ -91,6 +97,11 @@
 .common-button.teal.inverted {
     background: @buttonTextColorDarkBackground;
     color: @teal;
+}
+
+.common-button.blue.inverted {
+    background: @buttonTextColorDarkBackground;
+    color: @blue;
 }
 
 .common-button.orange.inverted {
@@ -150,7 +161,7 @@
  *                      Focus                       *
  ****************************************************/
 
-.common-button:focus::after {
+.common-button:focus-visible::after {
     content: "";
     position: absolute;
     inset: 4px;
@@ -160,20 +171,20 @@
     border-radius: 0.2em;
 }
 
-.common-button.menu-button:focus::after,
-.common-button.primary:focus::after,
-.common-button.secondary:focus::after,
-.common-button.teal:focus::after,
-.common-button.orange:focus::after,
-.common-button.red:focus::after,
-.common-button.green:focus::after,
-.common-button.facebook:focus::after,
-.common-button.twitter:focus::after,
-.common-button.discourse:focus::after {
+.common-button.menu-button:focus-visible::after,
+.common-button.primary:focus-visible::after,
+.common-button.secondary:focus-visible::after,
+.common-button.teal:focus-visible::after,
+.common-button.orange:focus-visible::after,
+.common-button.red:focus-visible::after,
+.common-button.green:focus-visible::after,
+.common-button.facebook:focus-visible::after,
+.common-button.twitter:focus-visible::after,
+.common-button.discourse:focus-visible::after {
     outline: @buttonFocusOutlineDarkBackground;
 }
 
-.common-button.inverted:focus::after {
+.common-button.inverted:focus-visible::after {
     outline: @buttonFocusOutlineLightBackground;
 }
 
@@ -231,16 +242,20 @@
     text-decoration: underline;
 }
 
-.common-button.link-button:focus::after {
+.common-button.link-button:focus-visible::after {
     outline: none;
     border: none;
     text-decoration: underline;
 }
 
-.common-button.link-button:focus {
+.common-button.link-button:focus-visible {
     outline: none;
     border: none;
     text-decoration: underline;
+}
+
+.common-button.link-button.kiosk {
+    color: @commonTextColor;
 }
 
 /****************************************************
@@ -268,9 +283,39 @@
     border-radius: 2rem;
 }
 
-.common-button.circle-button:focus::after {
+.common-button.circle-button:focus-visible::after {
     border-radius: 2rem;
 }
+
+/****************************************************
+ *                 Button Group                     *
+ ****************************************************/
+
+ .common-button-group {
+    display: flex;
+    flex-direction: row;
+
+    .common-button {
+        border-radius: 0;
+        margin: 0;
+    }
+
+    .common-button.inverted:not(:last-child) {
+        border-right: none;
+    }
+
+    .common-button:first-child {
+        border-top-left-radius: 0.2em;
+        border-bottom-left-radius: 0.2em;
+    }
+    .common-button:last-child {
+        border-top-right-radius: 0.2em;
+        border-bottom-right-radius: 0.2em;
+
+        margin: 0 0.25rem 0 0;
+    }
+ }
+
 
 /****************************************************
  *                   Social Buttons                 *

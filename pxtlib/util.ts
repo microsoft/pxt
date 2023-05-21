@@ -1219,12 +1219,12 @@ namespace ts.pxtc.Util {
         "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
         "ro": { englishName: "Romanian", localizedName: "Română" },
         "ru": { englishName: "Russian", localizedName: "Русский" },
-        "si-LK": { englishName: "Sinhala (Sri Lanka)", localizedName: "සිංහල (ශ්රී ලංකා)" },
+        "si-LK": { englishName: "Sinhala", localizedName: "සිංහල" },
         "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
         "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
-        "sr": { englishName: "Serbian", localizedName: "Srpski" },
+        "sr": { englishName: "Serbian (Latin)", localizedName: "Srpski" },
         "su": { englishName: "Sundanese", localizedName: "ᮘᮞ ᮞᮥᮔ᮪ᮓ" },
-        "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
+        "sv-SE": { englishName: "Swedish", localizedName: "Svenska" },
         "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
         "te": { englishName: "Telugu", localizedName: "తెలుగు" },
         "th": { englishName: "Thai", localizedName: "ภาษาไทย" },
@@ -1234,8 +1234,8 @@ namespace ts.pxtc.Util {
         "ur-IN": { englishName: "Urdu (India)", localizedName: "اردو (ہندوستان)" },
         "ur-PK": { englishName: "Urdu (Pakistan)", localizedName: "اردو (پاکستان)" },
         "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
-        "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
-        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁體中文" },
+        "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "中文(简体)" },
+        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "中文(繁體)" },
     };
 
     export function isLocaleEnabled(code: string): boolean {
@@ -1288,6 +1288,7 @@ namespace ts.pxtc.Util {
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
+                    pxt.analytics?.addDefaultProperties({lang: code}); //set the new language in analytics.
                     setLocalizedStrings(translations);
                 }
 
@@ -1695,6 +1696,9 @@ namespace ts.pxtc.Util {
                     },
                     snippetBlocks: {
                         ...built.snippetBlocks
+                    },
+                    highlightBlocks: {
+                        ...built.highlightBlocks
                     }
                 }
             }

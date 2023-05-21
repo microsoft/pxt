@@ -95,10 +95,34 @@ function initWebappServiceWorker() {
         `/blb/gifjs/gif.js`,
 
         // ai
-        `/blb/ai.0.js`,
+        `/blb/ai.2.min.js`,
 
         // target
         `/blb/target.js`,
+
+        // music editor icons
+        `/blb/music-editor/apple.png`,
+        `/blb/music-editor/burger.png`,
+        `/blb/music-editor/cake.png`,
+        `/blb/music-editor/car.png`,
+        `/blb/music-editor/cat.png`,
+        `/blb/music-editor/cherry.png`,
+        `/blb/music-editor/clam.png`,
+        `/blb/music-editor/computer.png`,
+        `/blb/music-editor/crab.png`,
+        `/blb/music-editor/dog.png`,
+        `/blb/music-editor/duck.png`,
+        `/blb/music-editor/egg.png`,
+        `/blb/music-editor/explosion.png`,
+        `/blb/music-editor/fish.png`,
+        `/blb/music-editor/ice-cream.png`,
+        `/blb/music-editor/lemon.png`,
+        `/blb/music-editor/snake.png`,
+        `/blb/music-editor/star.png`,
+        `/blb/music-editor/strawberry.png`,
+        `/blb/music-editor/taco.png`,
+        `/blb/music-editor/bass-clef.svg`,
+        `/blb/music-editor/treble-clef.svg`,
 
         // These macros should be replaced by the backend
         `@targetFieldEditorsJs@`,

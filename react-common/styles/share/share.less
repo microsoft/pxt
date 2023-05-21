@@ -43,7 +43,20 @@
         .common-checkbox {
             margin-bottom: 0.5rem;
         }
+
+        .project-share-error {
+            background-color: @red;
+            color: @white;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
     }
+}
+
+.hc .project-share-error {
+    background-color: @highContrastBackgroundColor !important;
+    color: @highContrastTextColor !important;
+    border: 1px solid @highContrastTextColor;
 }
 
 .project-share-title {
@@ -110,6 +123,11 @@
 }
 
 .share-host-button.common-button .xicon.multiplayer {
+    font-size: 24px;
+    margin-right: 0.5rem;
+}
+
+.xicon.kiosk {
     font-size: 24px;
     margin-right: 0.5rem;
 }

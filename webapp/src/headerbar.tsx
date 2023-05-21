@@ -75,6 +75,12 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         clearTimeout(this.longpressTimer);
     }
 
+    onPlayWithFriendsClick = (evt: any) => {
+        evt.preventDefault();
+        pxt.tickEvent("menu.playwithfriends", undefined, { interactiveConsent: true });
+        window.open(pxt.multiplayer.SHORT_LINK(), "_blank");
+    }
+
     protected getView = (): HeaderBarView => {
         const { home, debugging, tutorialOptions } = this.props.parent.state;
         if (home) {
@@ -84,7 +90,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         } else if (debugging) {
             return "debugging";
         } else if (!pxt.BrowserUtils.useOldTutorialLayout() && !!tutorialOptions?.tutorial) {
-            return "tutorial-tab"
+            return "tutorial-tab";
         } else if (!!tutorialOptions?.tutorial) {
             return "tutorial";
         } else {
@@ -131,7 +137,22 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 if (!hideIteration) return <tutorial.TutorialMenu parent={this.props.parent} />
                 break;
             case "tutorial-tab":
-                return <div />
+                if (tutorialOptions && (pxt.appTarget?.appTheme?.tutorialSimSidebarLayout || pxt.BrowserUtils.isTabletSize())) {
+                    const currentStep = tutorialOptions.tutorialStep ? tutorialOptions.tutorialStep + 1 : undefined;
+                    const totalSteps = tutorialOptions.tutorialStepInfo ? tutorialOptions.tutorialStepInfo?.length : undefined;
+                    return (
+                        <div className="tutorial-header-label">
+                            <div className="ui item tutorial-header-name-label">{tutorialOptions.tutorialName}</div>
+                            {currentStep && totalSteps && (
+                                <>
+                                    <div className="ui item tutorial-header-step-label">{" - "}</div> { /* Keeping this separate helps simplify spacing */ }
+                                    <div className="ui item tutorial-header-step-label">{lf("Step {0} of {1}", currentStep, totalSteps, totalSteps)}</div>
+                                </>
+                            )}
+                        </div>
+                    );
+                }
+                return <div />;
             case "debugging":
                 return  <sui.MenuItem className="centered" icon="large bug" name="Debug Mode" />
             case "sandbox":

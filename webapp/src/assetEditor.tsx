@@ -24,6 +24,7 @@ interface AssetEditorState {
 interface BaseAssetEditorRequest {
     id?: number;
     files: pxt.Map<string>;
+    palette?: string[];
 }
 
 interface OpenAssetEditorRequest extends BaseAssetEditorRequest {
@@ -35,6 +36,7 @@ interface OpenAssetEditorRequest extends BaseAssetEditorRequest {
 interface CreateAssetEditorRequest extends BaseAssetEditorRequest {
     type: "create";
     assetType: pxt.AssetType;
+    displayName?: string;
 }
 
 interface SaveAssetEditorRequest extends BaseAssetEditorRequest {
@@ -72,9 +74,9 @@ interface DuplicateAssetEditorResponse extends BaseAssetEditorResponse {
 
 type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
 
-interface AssetEditorDoneClickedEvent {
+interface AssetEditorRequestSaveEvent {
     type: "event";
-    kind: "done-clicked"
+    kind: "done-clicked";
 }
 
 interface AssetEditorReadyEvent {
@@ -82,21 +84,22 @@ interface AssetEditorReadyEvent {
     kind: "ready";
 }
 
-type AssetEditorEvent = AssetEditorDoneClickedEvent | AssetEditorReadyEvent;
-
+type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
 
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
     private editor: ImageFieldEditor<pxt.Asset>;
-    protected tilemapProject: pxt.TilemapProject;
+    protected saveProject: pxt.TilemapProject;
+    protected editorProject: pxt.TilemapProject;
     protected inflatedJres: pxt.Map<pxt.Map<pxt.JRes>>;
     protected commentAttrs: pxt.Map<pxtc.CommentAttrs>;
     protected files: pxt.Map<string>;
     protected galleryTiles: any[];
+    protected lastValue: pxt.Asset;
 
     constructor(props: {}) {
         super(props);
         this.state = {};
-        pxt.react.getTilemapProject = () => this.tilemapProject;
+        pxt.react.getTilemapProject = () => this.editorProject;
 
         setTelemetryFunction(tickAssetEditorEvent);
     }
@@ -106,8 +109,9 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
         switch (request.type) {
             case "create":
+                this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
-                const asset = this.getEmptyAsset(request.assetType);
+                const asset = this.getEmptyAsset(request.assetType, request.displayName);
 
                 this.setState({
                     editing: asset,
@@ -120,9 +124,14 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 });
                 break;
             case "open":
+                this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
+                const toOpen = this.lookupAsset(request.assetType, request.assetId);
+                if (toOpen.type === pxt.AssetType.Tilemap) {
+                    pxt.sprite.addMissingTilemapTilesAndReferences(this.editorProject, toOpen);
+                }
                 this.setState({
-                    editing: this.lookupAsset(request.assetType, request.assetId)
+                    editing: toOpen
                 });
                 this.sendResponse({
                     id: request.id,
@@ -130,10 +139,11 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 });
                 break;
             case "duplicate":
+                this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
                 const existing = this.lookupAsset(request.assetType, request.assetId);
                 this.setState({
-                    editing: this.tilemapProject.duplicateAsset(existing)
+                    editing: this.editorProject.duplicateAsset(existing)
                 });
                 this.sendResponse({
                     id: request.id,
@@ -154,24 +164,59 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         if (!e) return;
         this.editor = e;
         this.editor.init(this.state.editing, () => {}, {
-            galleryTiles: this.galleryTiles
+            galleryTiles: this.galleryTiles,
+            hideMyAssets: true,
+            hideCloseButton: true
         })
     }
 
+    handleKeydown = (e: KeyboardEvent) => {
+        if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
+            this.sendSaveRequest();
+        }
+    }
+
+    pollingInterval: number;
     componentDidMount() {
         window.addEventListener("message", this.handleMessage, null);
+        window.addEventListener("keydown", this.handleKeydown, null);
         this.sendEvent({
             type: "event",
             kind: "ready"
         });
         tickAssetEditorEvent("asset-editor-shown");
+        this.pollingInterval = setInterval(this.pollForUpdates, 200);
+        // TODO: one of these? Probably would need it to directly save
+        // & send up message instead of sending a 'save now' type msg
+        // window.addEventListener("unload", this.pollForUpdates)
     }
 
     componentWillUnmount() {
         window.removeEventListener("message", this.handleMessage, null);
+        window.removeEventListener("keydown", this.handleKeydown, null);
+        window.clearInterval(this.pollingInterval);
     }
 
-    callbackOnDoneClick = () => {
+    pollForUpdates = () => {
+        if (this.state.editing) this.updateAsset();
+    }
+
+    componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<AssetEditorState>, snapshot?: any): void {
+        if (!!prevState?.editing && prevState.editing !== this.state.editing) {
+            this.saveProject.removeChangeListener(
+                prevState.editing.type,
+                this.sendSaveRequest
+            );
+        }
+        if (this.state?.editing) {
+            this.saveProject.addChangeListener(
+                this.state.editing,
+                this.sendSaveRequest
+            );
+        }
+    }
+
+    sendSaveRequest = () => {
         this.sendEvent({
             type: "event",
             kind: "done-clicked"
@@ -184,7 +229,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 ref={this.refHandler}
                 singleFrame={this.state.editing.type !== "animation"}
                 isMusicEditor={this.state.editing.type === "song"}
-                doneButtonCallback={this.callbackOnDoneClick} />
+                doneButtonCallback={this.sendSaveRequest}
+                hideDoneButton={true}
+                includeSpecialTagsInFilter={true}
+            />
         }
 
         return <div></div>
@@ -207,40 +255,69 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         }
     }
 
-    protected saveProjectFiles() {
-        const currentValue = this.editor.getValue();
+    protected updateAsset() {
+        const editorAsset = this.editor.getValue();
+
+        // We have to clone the asset so that we don't break the editor
+        // by modifying it out from underneath it
+        const currentValue = pxt.cloneAsset(editorAsset);
+        if (this.lastValue && pxt.assetEquals(this.lastValue, currentValue)) {
+            return;
+        }
+        this.lastValue = pxt.cloneAsset(editorAsset);
+
+        // Clone asset doesn't clone the tilemap metadata. We need to update
+        // all of the referenced tiles, so clone it here
+        if (currentValue.type === pxt.AssetType.Tilemap && editorAsset.type === currentValue.type) {
+            currentValue.data.deletedTiles = editorAsset.data.deletedTiles?.slice();
+            currentValue.data.editedTiles = editorAsset.data.editedTiles?.slice();
+            currentValue.data.projectReferences = editorAsset.data.projectReferences?.slice();
+            currentValue.data.tileOrder = editorAsset.data.tileOrder?.slice();
+        }
+
+        // Create a clone of the tilemap project and update the asset. The clone
+        // is mostly for tilemaps; they are actually several assets (the map + tiles)
+        // and things can get weird if they are overwritten in the tilemap project
+        // while still being edited in the tilemap editor
+        this.saveProject = this.editorProject.clone();
         if (this.state.isEmptyAsset) {
             const name = currentValue.meta?.displayName;
             let newAsset: pxt.Asset;
             switch (currentValue.type) {
                 case pxt.AssetType.Image:
-                    newAsset = this.tilemapProject.createNewProjectImage(currentValue.bitmap, name); break;
+                    newAsset = this.saveProject.createNewProjectImage(currentValue.bitmap, name);
+                    break;
                 case pxt.AssetType.Tile:
-                    newAsset = this.tilemapProject.createNewTile(currentValue.bitmap, null, name); break;
+                    newAsset = this.saveProject.createNewTile(currentValue.bitmap, null, name);
+                    break;
                 case pxt.AssetType.Tilemap:
-                    const [newName, data] = this.tilemapProject.createNewTilemapFromData(currentValue.data, name);
-                    newAsset = this.tilemapProject.lookupAssetByName(pxt.AssetType.Tilemap, newName);
+                    pxt.sprite.updateTilemapReferencesFromResult(this.saveProject, currentValue);
+                    const [newName, data] = this.saveProject.createNewTilemapFromData(currentValue.data, name);
+                    newAsset = this.saveProject.lookupAssetByName(pxt.AssetType.Tilemap, newName);
                     break;
                 case pxt.AssetType.Animation:
-                    newAsset = this.tilemapProject.createNewAnimationFromData(currentValue.frames, currentValue.interval, name); break;
+                    newAsset = this.saveProject.createNewAnimationFromData(currentValue.frames, currentValue.interval, name);
+                    break;
                 case pxt.AssetType.Song:
-                    newAsset = this.tilemapProject.createNewSong(currentValue.song, name); break;
+                    newAsset = this.saveProject.createNewSong(currentValue.song, name);
+                    break;
             }
-
-            this.setState({
-                isEmptyAsset: false,
-                editing: newAsset
-            });
-            this.editor.init(this.state.editing, () => {}, {
-                galleryTiles: this.galleryTiles
-            });
         }
         else {
-            this.tilemapProject.updateAsset(currentValue);
+            if (currentValue.type === pxt.AssetType.Tilemap) {
+                pxt.sprite.updateTilemapReferencesFromResult(this.saveProject, currentValue);
+            }
+            this.saveProject.updateAsset(currentValue);
         }
 
-        const assetJRes = pxt.inflateJRes(this.tilemapProject.getProjectAssetsJRes());
-        const tileJRes = pxt.inflateJRes(this.tilemapProject.getProjectTilesetJRes());
+        this.sendSaveRequest();
+    }
+
+    protected saveProjectFiles() {
+        this.updateAsset();
+
+        const assetJRes = pxt.inflateJRes(this.saveProject.getProjectAssetsJRes());
+        const tileJRes = pxt.inflateJRes(this.saveProject.getProjectTilesetJRes());
 
         const newFileJRes: pxt.Map<pxt.Map<pxt.JRes>> = {};
 
@@ -273,31 +350,41 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         return outFiles;
     }
 
+    protected setPalette(palette: string[]) {
+        if (!palette || !Array.isArray(palette) || !palette.length) return;
+        pxt.appTarget.runtime.palette = palette.slice();
+    }
+
     protected initTilemapProject(files: pxt.Map<string>) {
         const projectTilemaps: pxt.Map<pxt.JRes> = {};
         const galleryTilemaps: pxt.Map<pxt.JRes> = {};
         const projectAssets: pxt.Map<pxt.JRes> = {};
         const galleryAssets: pxt.Map<pxt.JRes> = {};
-        this.tilemapProject = new pxt.TilemapProject();
+        this.editorProject = new pxt.TilemapProject();
         this.inflatedJres = {};
         this.commentAttrs = {};
 
-        for (const filename of Object.keys(files)) {
-            if (!filename.endsWith(".jres")) {
-                const comments = parseCommentAttrsFromTs(files[filename]);
+        for (const fileName of Object.keys(files).filter(file => !file.endsWith(".jres"))) {
+            const comments = parseCommentAttrsFromTs(files[fileName]);
 
-                for (const id of Object.keys(comments)) {
-                    this.commentAttrs[id] = comments[id];
-                }
-                continue;
+            for (const id of Object.keys(comments)) {
+                this.commentAttrs[id] = comments[id];
             }
+        }
 
+        for (const filename of Object.keys(files).filter(file => file.endsWith(".jres"))) {
             const isGallery = filename.indexOf("pxt_modules") !== -1 || filename.indexOf("node_modules") !== -1;
 
             const inflated = pxt.inflateJRes(JSON.parse(files[filename]));
             this.inflatedJres[filename] = inflated;
 
             for (const id of Object.keys(inflated)) {
+                if (this.commentAttrs[id]?.tags) {
+                    const tags = this.commentAttrs[id].tags.split(" ").filter(el => !!el);
+                    if (tags.length) {
+                        inflated[id].tags = tags;
+                    }
+                }
                 if (inflated[id].mimeType === pxt.TILEMAP_MIME_TYPE || inflated[id].tilemapTile) {
                     if (isGallery) {
                         galleryTilemaps[id] = inflated[id];
@@ -317,22 +404,20 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             }
         }
 
-        this.tilemapProject.loadAssetsJRes(galleryAssets, true);
-        this.tilemapProject.loadAssetsJRes(projectAssets);
-        this.tilemapProject.loadTilemapJRes(galleryTilemaps, false, true);
-        this.tilemapProject.loadTilemapJRes(projectTilemaps);
+        this.editorProject.loadAssetsJRes(galleryAssets, true);
+        this.editorProject.loadAssetsJRes(projectAssets);
+        this.editorProject.loadTilemapJRes(galleryTilemaps, false, true);
+        this.editorProject.loadTilemapJRes(projectTilemaps);
 
-        this.galleryTiles = this.tilemapProject.getGalleryAssets(pxt.AssetType.Tile)
+        this.galleryTiles = this.editorProject.getGalleryAssets(pxt.AssetType.Tile)
             .map(tile => {
                 const comments = this.commentAttrs[tile.id];
                 if (!comments) return undefined;
 
-                const splitTags = (comments.tags || "")
-                    .split(" ")
-                    .filter(el => !!el)
-                    .map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase());
+                const splitTags = tile.meta.tags
+                    ?.map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase());
 
-                if (splitTags.indexOf("tile") === -1) return undefined;
+                if (!splitTags || splitTags.indexOf("tile") === -1) return undefined;
 
 
                 return {
@@ -342,7 +427,9 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                     tags: splitTags
                 };
             })
-            .filter(gt => !!gt)
+            .filter(gt => !!gt);
+
+        this.saveProject = this.editorProject.clone();
     }
 
     protected locateFileForAsset(assetId: string) {
@@ -353,9 +440,18 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         return undefined;
     }
 
-    protected getEmptyAsset(type: pxt.AssetType): pxt.Asset {
+    protected getEmptyAsset(type: pxt.AssetType, displayName?: string): pxt.Asset {
         const project = pxt.react.getTilemapProject();
-        const asset = { type, id: "", internalID: 0, meta: { displayName: pxt.getDefaultAssetDisplayName(type) } } as pxt.Asset;
+
+        const defaultName = displayName || pxt.getDefaultAssetDisplayName(type);
+        let newName = defaultName;
+        let index = 0;
+
+        while (project.isNameTaken(type, newName)) {
+            newName = defaultName + (index++);
+        }
+
+        const asset = { type, id: "", internalID: 0, meta: { displayName: newName } } as pxt.Asset;
         switch (type) {
             case pxt.AssetType.Image:
             case pxt.AssetType.Tile:
@@ -363,6 +459,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             case pxt.AssetType.Tilemap:
                 const tilemap = asset as pxt.ProjectTilemap;
                 tilemap.data = project.blankTilemap(16, 16, 16);
+                pxt.sprite.addMissingTilemapTilesAndReferences(project, tilemap);
+                break;
             case pxt.AssetType.Animation:
                 const animation = asset as pxt.Animation;
                 animation.frames = [new pxt.sprite.Bitmap(16, 16).data()];
@@ -377,13 +475,13 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     protected lookupAsset(type: pxt.AssetType, id: string) {
-        const res = this.tilemapProject.lookupAsset(type, id);
+        const res = this.saveProject.lookupAsset(type, id);
 
         if (res) return res;
 
         const idParts = id.split(".")
 
-        return this.tilemapProject.lookupAsset(type, idParts[idParts.length - 1]);
+        return this.saveProject.lookupAsset(type, idParts[idParts.length - 1]);
     }
 }
 

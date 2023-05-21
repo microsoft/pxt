@@ -5,7 +5,9 @@ interface TutorialStepCounterProps {
     currentStep: number;
     totalSteps: number;
     title?: string;
+    isHorizontal?: boolean;
     setTutorialStep: (step: number) => void;
+    onDone: () => void;
 }
 
 export function TutorialStepCounter(props: TutorialStepCounterProps) {
@@ -32,13 +34,14 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
 
     const handleNextStep = () => {
         const step = Math.min(currentStep + 1, totalSteps - 1);
-        pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: 0, isStepCounter: 1 }, { interactiveConsent: true });
         setTutorialStep(step);
     }
 
     const stepButtonLabelText = (step: number) => lf("Go to step {0} of {1}", step + 1, totalSteps);
     const backButtonLabel = lf("Go to the previous step of the tutorial.");
-    const nextButtonLabel = lf("Go to the next step of the tutorial.");
+
+    const lastStep = currentStep == totalSteps - 1;
+    const nextButtonTitle = lastStep ? lf("Finish the tutorial.") : lf("Go to the next step of the tutorial.");
 
     return <div className="tutorial-step-counter">
         <div className="tutorial-step-label">
@@ -48,12 +51,11 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
         <div className="tutorial-step-bubbles">
             <Button
                 disabled={currentStep == 0}
-                className="square-button"
-                leftIcon="icon left chevron"
+                className={props.isHorizontal ? "ui button counter-previous-button" : "square-button"}
+                leftIcon={`icon ${props.isHorizontal ? "arrow circle left" : "left chevron"}`}
                 onClick={handlePreviousStep}
                 aria-label={backButtonLabel}
-                title={backButtonLabel}
-            />
+                title={backButtonLabel} />
             {stepsToShow.map(stepNum => {
                 const isCurrentStep = stepNum === currentStep;
                 return <Button
@@ -67,13 +69,12 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
                 />
             })}
             <Button
-                disabled={currentStep == totalSteps - 1}
-                className="square-button"
-                leftIcon="icon right chevron"
-                onClick={handleNextStep}
-                aria-label={nextButtonLabel}
-                title={nextButtonLabel}
-            />
+                className={props.isHorizontal ? "ui button counter-next-button" : "square-button"}
+                leftIcon={`icon ${lastStep ? "check" : props.isHorizontal ? "arrow circle right" : "right chevron"}`}
+                onClick={lastStep ? props.onDone : handleNextStep}
+                aria-label={nextButtonTitle}
+                title={nextButtonTitle}
+                label={props.isHorizontal ? lastStep ? lf("Done") : lf("Next") : ""} />
         </div>
     </div>
 }

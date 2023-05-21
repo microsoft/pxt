@@ -180,7 +180,7 @@
 @sidebarTutorialColor: @lightGrey;
 
 @homeScreenBackground: #ecf0f1;
-@cloudCardBackground: #58AFBA;
+@cloudCardBackground: @grey;
 
 /*-------------------
    Full screen
@@ -331,6 +331,7 @@
 
 @tutorialSegmentBackground: #f8f8f9;
 @tutorialSegmentColor: @textColor;
+@tutorialSimframeMargin: -2rem;
 
 /*-------------------
     Banner
@@ -405,3 +406,15 @@
 ----------------------------*/
 @extensionTagBackgroundColor: #AAAAAA;
 @extensionTagColor: #444444;
+
+/*---------------------------
+   Cloud Status
+----------------------------*/
+@cloudStatusColor: @grey;
+
+/*---------------------------
+   Teaching Bubble
+----------------------------*/
+@teachingBubbleBackgroundColor: @blue;
+@teachingBubbleTextColor: @white;
+@teachingBubbleStepsColor: @lightGrey;

@@ -1,5 +1,21 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade Extension for Visual Studio Code](/blog/arcade/vscode-extension)
+
+March 24th, 2023 by [Jaqster](https://github.com/jaqster)
+
+What?! You heard that right. Now, for more experienced MakeCoders, you can take your MakeCode Arcade games to the next level with Visual Studio Code!
+
+**[Continue reading this blog post](/blog/arcade/vscode-extension)**
+
+## [MakeCode Arcade 2023 Update](/blog/arcade/update-jan-2023)
+
+January 30th, 2023 by [Jaqster](https://github.com/jaqster)
+
+To start off the year right, we’ve got some great updates to MakeCode Arcade that will make playing games even more fun with multiplayer and Kiosk mode! We also have lots of other goodies packed into this release...
+
+**[Continue reading this blog post](/blog/arcade/update-jan-2023)**
+
 ## [Computer Science Education Week 2022](/blog/csed-week/csed-week-2022)
 
 November 14th, 2022 by [Jaqster](https://github.com/jaqster)

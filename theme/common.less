@@ -55,18 +55,18 @@ pre {
     position: relative;
 }
 
-#editorSidebar,
+#simulator .editor-sidebar,
 #maineditor,
 #sidedocs {
   position: absolute;
   bottom: 0rem;
 }
 
-#editorSidebar, #maineditor, #sidedocs {
+#simulator .editor-sidebar, #maineditor, #sidedocs {
     top: @mainMenuHeight;
 }
 
-.hideMenuBar:not(.headless) #editorSidebar,
+.hideMenuBar:not(.headless) #simulator .editor-sidebar,
     .hideMenuBar #maineditor,
     .hideMenuBar #sidedocs {
     top: 0 !important;
@@ -159,7 +159,7 @@ pre {
     border: unset;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editorSidebar {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simulator .editor-sidebar {
     bottom: @editorToolsCollapsedHeight;
 }
 
@@ -169,7 +169,7 @@ pre {
 .hideEditorToolbar #serialEditor,
 .hideEditorToolbar #githubEditor,
 .hideEditorToolbar #assetEditor,
-.hideEditorToolbar #editorSidebar {
+.hideEditorToolbar #simulator .editor-sidebar {
     bottom: 0rem !important;
 }
 
@@ -187,17 +187,18 @@ pre {
 #simulator {
     height: 100%;
 }
-#editorSidebar, #downloadArea {
+#simulator .editor-sidebar, #downloadArea {
     min-width: @simulatorWidth;
     max-width: @simulatorWidth;
     left: 0;
 }
 
-#editorSidebar {
-    overflow: hidden;
+#simulator .editor-sidebar {
+    overflow-x: hidden;
+    overflow-y: auto;
     margin-top: 0;
     margin-bottom: 0;
-    width: 100%;
+    right: 0;
     background-color: @filelistBackgroundColor;
     z-index: @filelistZIndex;
 }
@@ -213,7 +214,7 @@ pre {
 }
 
 
-#editorSidebar .simtoolbar {
+#simulator .editor-sidebar .simtoolbar {
     -webkit-transition: opacity 0.2s; /* Safari */
     -moz-transition: opacity 0.2s; /* Mozilla */
     -webkit-transition-timing-function: linear; /* Mozilla */
@@ -235,7 +236,7 @@ pre {
     margin-left: auto;
 }
 
-#editortools .download-button.icon-and-text {
+#editortools .download-button {
     text-align: center;
 }
 
@@ -243,9 +244,9 @@ pre {
     background-color: transparent !important;
 }
 
-#editorSidebar .filemenu {
+#simulator .editor-sidebar .filemenu {
     direction: ltr;
-    width: 100%;
+    width: 100% !important;
     margin: 0;
     margin-top: 1rem;
 }
@@ -673,7 +674,7 @@ div.simframe > iframe {
     z-index: 1000;
 }
 
-.notificationBannerVisible #editorSidebar,
+.notificationBannerVisible #simulator .editor-sidebar,
 .notificationBannerVisible #maineditor,
 .notificationBannerVisible #sidedocs {
     top: calc(@mainMenuHeight + @bannerHeight);
@@ -1209,7 +1210,7 @@ Field editors
 @sidebarSecondaryColor: @blue;
 @sidbarActiveTabIconColor: @sidebarSecondaryColor;
 
-#editorSidebar {
+#simulator .editor-sidebar {
     border-right: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
 
     .tab-navigation {
@@ -1310,7 +1311,7 @@ p.ui.font.small {
         display:none !important; // hide desktop simulator toggle
     }
 
-    .hideEditorToolbar #editorSidebar {
+    .hideEditorToolbar #simulator .editor-sidebar {
         display:none !important;
     }
 
@@ -1415,6 +1416,9 @@ p.ui.font.small {
         display: none !important;
         z-index: -10 !important;
     }
+    #tutorialWrapper {
+        display: none;
+    }
     .sandboxfooter {
         z-index: @sandboxFooterZIndex;
         bottom: 1rem;
@@ -1428,6 +1432,13 @@ p.ui.font.small {
         left: auto;
         right: auto;
         display: block !important;
+    }
+    .simPanel .multiplayer-presence {
+        position: fixed;
+        bottom: 4rem;
+    }
+    .simPanel.multiplayer-preview #simulators {
+        height: calc(100% - 1.5rem);
     }
     #simulators {
         position: relative;
@@ -1486,7 +1497,7 @@ p.ui.font.small {
 }
 
 #root.headless.collapsedEditorTools {
-    #editorSidebar {
+    #simulator .editor-sidebar {
         position: absolute;
         width: auto;
         top: auto;
@@ -1495,7 +1506,7 @@ p.ui.font.small {
         min-width: inherit;
         max-width: inherit;
 
-        .tab-simulator {
+        .simulator-container {
             display: none;
         }
     }
@@ -1506,7 +1517,7 @@ p.ui.font.small {
 }
 
 #root.headless:not(.collapsedEditorTools) {
-    #editorSidebar {
+    #simulator .editor-sidebar {
         left: 0;
         z-index: 40;
     }
@@ -1532,12 +1543,15 @@ p.ui.font.small {
     }
 }
 
-#projectNameArea input {
-    font-size: 0.95rem;
+#editortools #projectNameArea {
+    padding: 1rem 0;
+    input {
+        font-size: 0.95rem;
+    }
 }
 
 .cloudstatusarea {
-    color: @teal;
+    color: @cloudStatusColor;
     align-self: center;
     display: flex;
 
@@ -1554,7 +1568,7 @@ p.ui.font.small {
     }
 
     .ui.loader:after {
-        border-top-color: @teal;
+        border-top-color: @cloudStatusColor;
     }
 }
 
@@ -1562,9 +1576,14 @@ p.ui.font.small {
         Download dialogs
 *******************************/
 
-.ui.modal .actions .dialog-help-large {
+.ui.modal .actions .dialog-help-large,
+.downloaddialog.ui.modal .actions .icon.help {
     float: left;
     margin-left: 4px;
+}
+
+.downloaddialog.ui.modal .actions .icon-and-text.icon~.ui.text {
+    margin-left: -0.5em !important;
 }
 
 .ui.modal .actions .left-action {
@@ -1579,15 +1598,19 @@ p.ui.font.small {
     position: relative;
     margin-top: 1.5rem;
 
-    .ui.purple.ribbon.large.label {
+    .ui.purple.ribbon.label {
         position: absolute;
-        left: -1.2rem;
+        left: -1rem;
         top: -1rem;
+        padding-left: 1.5rem;
     }
 
-    a {
-        color: #4C309D;
-        cursor: pointer;
+    > .content {
+        padding-top: .25rem;
+    }
+
+    a.ui.button {
+        margin-top: .5rem;
     }
 }
 
@@ -1608,6 +1631,11 @@ p.ui.font.small {
     display: inline;
 }
 
+.downloaddialog .content .webusb-connect-image {
+    padding: 0 !important;
+    margin: 0 auto;
+}
+
 .download-dialog-image img {
     max-height: 200px;
     object-fit: contain;
@@ -1618,6 +1646,10 @@ p.ui.font.small {
     display: flex;
     height: 100%;
     align-items: center;
+}
+
+.downloaddialog .actions .approve.secondary {
+    float: left;
 }
 
 #downloadArea button .icon.xicon {
@@ -1711,7 +1743,7 @@ p.ui.font.small {
             width: 10rem;
         }
         .simPanel .simtoolbar {
-            margin: 0.5em 0;
+            margin: 1rem 0;
             width: 3rem;
             float: right;
         }
@@ -1745,6 +1777,7 @@ p.ui.font.small {
         display:inline-block;
         width: 10rem;
         margin-right:0.5rem;
+        margin-bottom: 1rem;
         padding-bottom: 81.96% !important;
     }
     div.simframe:not(:first-child) {
@@ -1865,7 +1898,7 @@ p.ui.font.small {
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .collapsedEditorTools:not(.headless):not(.tabTutorial) #editorSidebar {
+    .collapsedEditorTools:not(.headless):not(.tabTutorial) #simulator .editor-sidebar {
         min-width: 21px;
         width: 21px;
         padding: 0;
@@ -1895,14 +1928,27 @@ p.ui.font.small {
         top: 4px;
         position: relative;
     }
+
+    #simulator .topInstructions {
+        left: @simulatorWidth;
+        min-width: unset;
+        max-width: unset;
+        padding: 0;
+    }
 }
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
 @media only screen and (max-width: @largestSmallMonitor) {
     /* Layout */
-    #editorSidebar, #downloadArea {
+    #simulator .editor-sidebar, #downloadArea {
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
+    }
+
+    #simulator .topInstructions {
+        left: @simulatorWidthSmall;
+        min-width: unset;
+        max-width: unset;
     }
 
     #boardview.headless-sim {
@@ -1970,7 +2016,7 @@ p.ui.font.small {
         }
     }
 
-    #editorSidebar {
+    #simulator .editor-sidebar {
         min-width: unset;
         max-width: unset;
         width: 0;
@@ -2058,6 +2104,18 @@ p.ui.font.small {
     #root #editordropdown .menu .item .text {
         display: inline-block!important;
     }
+
+    #root.miniSim:not(.fullscreensim) {
+        div.simframe {
+            margin-bottom: -0.4rem
+        }
+
+        &:not(.headless):not(.sandbox) {
+            .simPanel .simtoolbar {
+                margin-bottom: -0.2rem;
+            }
+        }
+    }
 }
 
 @media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
@@ -2144,7 +2202,7 @@ p.ui.font.small {
     #maineditor {
         top: @thinMenuHeight;
     }
-    #editorSidebar {
+    #simulator .editor-sidebar {
         top: @thinMenuHeight;
     }
 }
@@ -2280,39 +2338,138 @@ div.simframe.ui.embed {
     -ms-interpolation-mode: nearest-neighbor;
 }
 
-.ui.menu .logged-in-dropdown {
-    justify-content: center;
+.ui.menu .item.logged-in-dropdown {
+    padding-right: .25rem;
+    width: auto !important; // override .menu @largestMobileScreen breakpoint in menu.overrides
 }
 
 .ui.menu .item.sign-in-dropdown {
-    padding-left: 0rem;
-    padding-right: .3rem;
-    justify-content: center;
+    padding-right: .25rem;
+    width: auto !important; // override .menu @largestMobileScreen breakpoint in menu.overrides
 }
 
-div.signin-button {
+.ui.menu .signin-button {
     display: flex;
     align-items: center;
     background-color: @homeScreenBackground;
     color: black;
     border-radius: 6px;
     height: 3rem;
-    padding: .6rem;
+    padding: 0 .6rem;
     font-family: @segoeUIFont;
     font-weight: 500;
+
+    .icon {
+        margin: 0 !important; // override .menu @largestMobileScreen breakpoint in menu.overrides
+    }
 
     .text {
         margin-right: .5rem;
     }
+
+    &:focus {
+        border: 3px solid #fff;
+        outline: 1px ridge #000;
+    }
 }
 
-div.signin-button:hover {
-    transform: scale(1.1);
+button.ui.button.hostmultiplayergame-button {
+    display: inline-flex;
+    align-items: center;
+
+    .text {
+        font-weight: normal;
+    }
+    .icon.xicon.multiplayer {
+        font-size: 24px;
+        margin-top: 0.25rem !important;
+    }
 }
 
-div.signin-button:focus {
-    border: 3px solid #fff;
-    outline: 1px ridge #000;
+#root {
+    --multiplayer-presence-icon-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%23FF0000'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+    --multiplayer-presence-icon-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%230038FF'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+    --multiplayer-presence-icon-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%23FF9A14'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+    --multiplayer-presence-icon-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%234DA64D'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+}
+
+#root:not(.fullscreensim) .multiplayer-presence {
+    margin: 0;
+    margin-bottom: -.5rem;
+}
+
+.miniSim:not(.fullscreensim):not(.tabTutorial) .multiplayer-presence {
+    display: none;
+}
+
+#root.tabTutorial:not(.fullscreensim):not(.collapsedEditorTools) .simulator-container.hidden .simPanel > .multiplayer-presence {
+    display: block;
+    position: fixed;
+    bottom: 7rem;
+    right: 16.5rem;
+    width: 4rem;
+
+    .sim-presence-bar {
+        flex-direction: column;
+    }
+}
+
+.sim-presence-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+    gap: 1rem;
+    padding: 0;
+
+    .sim-presence-bar-player {
+        border-radius: 3rem;
+        height: 2.5rem;
+        width: 2.5rem;
+        padding: 0.2rem;
+        border: 2px solid;
+
+        image-rendering: optimizeSpeed;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: optimize-contrast;
+        image-rendering: pixelated;
+        -ms-interpolation-mode: nearest-neighbor;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 75%;
+
+        &.player-1 {
+            border-color: #FF0000;
+            // TODO: what to use for background color? just leave as default white?
+            // background-color: #FF00001A;
+            // !importants here as we have to override hc nulling background properties
+            background-image: var(--multiplayer-presence-icon-1) !important;
+        }
+        &.player-2 {
+            border-color: #0038FF;
+            // background-color: #0038FF1A;
+            background-image: var(--multiplayer-presence-icon-2) !important;
+        }
+        &.player-3 {
+            border-color: #FF9A14;
+            // background-color: #FF9A141A;
+            background-image: var(--multiplayer-presence-icon-3) !important;
+        }
+        &.player-4 {
+            border-color: #4DA64D;
+            // background-color: #4DA64D1A;
+            background-image: var(--multiplayer-presence-icon-4) !important;
+        }
+    }
+}
+
+// win the specificity fight with hc mode
+#root.hc .sim-presence-bar .sim-presence-bar-player {
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 75% !important;
 }
 
 /* Profile dialog */

@@ -409,8 +409,8 @@ export function lookupDocFile(name: string) {
     return null
 }
 
-export function expandHtml(html: string, params?: pxt.Map<string>) {
-    let theme = U.flatClone(pxt.appTarget.appTheme)
+export function expandHtml(html: string, params?: pxt.Map<string>, appTheme?: pxt.AppTheme) {
+    let theme = U.flatClone(appTheme || pxt.appTarget.appTheme)
     html = expandDocTemplateCore(html)
     params = params || {};
     params["name"] = params["name"] || pxt.appTarget.appTheme.title;

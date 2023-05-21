@@ -29,13 +29,17 @@
         Tutorial Tab
 *******************************/
 
-#editorSidebar .tab-tutorial.active {
+#simulator .editor-sidebar .tutorial-container-outer.active {
     background-color: @white;
 }
 
-.tab-tutorial.tab-content {
-    padding-top: 0.5rem;
+.tutorial-container-outer {
+    background-color: @white !important;
+}
+
+.tutorial-content-bkg {
     background-color: @white;
+    padding: 0.5rem 1rem;
 }
 
 .tutorial-container {
@@ -46,8 +50,7 @@
 
 .tutorial-content {
     flex: 1;
-    padding: 0 1rem;
-    margin-top: .5rem;
+    padding: 0;
     margin-bottom: 0;
     overflow-x: hidden;
     overflow-y: auto;
@@ -137,13 +140,27 @@
 }
 
 /*******************************
+        Header Bar
+*******************************/
+
+.tutorial-header-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .ui.item {
+        padding: 0.2rem !important;
+    }
+}
+
+/*******************************
          Step Counter
 *******************************/
 
 .tutorial-step-counter {
-    padding: 0 1rem;
-    padding-bottom: 0.5rem;
+    padding: 0.5rem 1rem;
     border-bottom: 2px solid @tutorialGrayOffset;
+    background: @white;
 }
 
 .tutorial-step-label {
@@ -226,7 +243,6 @@
     justify-content: space-between;
     flex-wrap: wrap;
     margin-bottom: 1rem;
-    padding-top: 1rem;
 
     .ui.button {
         margin: 0 1rem;
@@ -236,7 +252,6 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        width: 7rem;
     }
 
     > .ui.button:last-child {
@@ -255,8 +270,8 @@
 
 .tutorial-hint.ui.button,
 .tutorial-hint .ui.button {
-    height: 3.2rem;
-    width: 3.2rem;
+    height: 3rem;
+    width: 3rem;
     margin: 0;
     border-radius: 50%;
     font-size: @tutorialTitleFontSize;
@@ -272,7 +287,7 @@
 }
 
 // Overrides, largely using old tutorial hint CSS
-.tab-tutorial {
+.tutorial-container-outer {
     .tutorial-callout {
         position: fixed;
         top: unset;
@@ -408,14 +423,14 @@
 
 
 /*******************************
-        Simulator Tab
+        Simulator Container
 *******************************/
 
-.tab-simulator.tab-content.hidden {
+.simulator-container.hidden {
     display: block !important;
 }
 
-.tab-simulator .simPanel {
+.simulator-container .simPanel {
     height: 100%;
     padding: 1rem 0.5rem 1rem 1rem;
     overflow-x: hidden;
@@ -425,7 +440,7 @@
 
 // Mini sim is visible when tab is hidden
 #root.tabTutorial {
-    &:not(.fullscreensim) .tab-simulator.tab-content.hidden {
+    &:not(.fullscreensim) .simulator-container.hidden {
         height: 0;
         padding: 0;
 
@@ -449,7 +464,7 @@
         #boardview #simulators {
             justify-content: flex-end;
             .simframe {
-                margin-right: -2rem;
+                margin-right: @tutorialSimframeMargin;
             }
         }
 
@@ -465,7 +480,7 @@
             }
         }
     }
-    .tab-simulator.tab-content:not(.hidden) {
+    .simulator-container:not(.hidden) {
         .simPanel {
             height: calc(100% - @tutorialControlsOffset);
 
@@ -473,7 +488,7 @@
         }
     }
 
-    &.collapsedEditorTools:not(.fullscreensim) .tab-simulator.tab-content.hidden .simPanel{
+    &.collapsedEditorTools:not(.fullscreensim) .simulator-container.hidden .simPanel{
         .fullscreen-button, .tutorial.mute-button { display: none !important; }
     }
 
@@ -487,7 +502,7 @@
 *******************************/
 
 .tabTutorial.tutorial-embed {
-    #editorSidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+    #simulator .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
         top: 0;
     }
     .simView #boardview {
@@ -500,7 +515,7 @@
 *******************************/
 
 #root.headless.tabTutorial {
-    #editorSidebar {
+    #simulator .editor-sidebar {
         position: relative;
         display: block !important;
         width: @simulatorWidth;
@@ -519,7 +534,7 @@
 }
 
 #root.headless.tabTutorial.hideMenuBar {
-    #editorSidebar {
+    #simulator .editor-sidebar {
         top: 0;
         height: 100%;
     }
@@ -556,86 +571,138 @@
     }
 }
 
-/*******************************
-        Media Adjustments
-*******************************/
+/*********************************
+        Validation
+*********************************/
+.tutorial-validation-error-container {
+    position: fixed;
+    top: unset;
+    right: unset;
+    bottom: 5.5rem;
+    left: @simulatorWidth + 1rem;
+    max-width: 60%;
+    min-width: 18.75rem;
+    max-height: 70%;
+    background: @white;
+    box-shadow: 0 0rem 0.5rem;
+    border-radius: 0.5rem;
+    z-index: 40;
+}
 
-/* Desktop Only */
-@media only screen and (min-width: @largestTabletScreen) {
-    #root.tabTutorial:not(.fullscreensim) {
-        #editortools {
-            width: calc(100% - @simulatorWidth);
-            left: unset;
-            right: 0;
-        }
-        #editorSidebar {
-            bottom: 0;
-        }
+.tutorial-validation-error-body {
+    display: flex;
+    flex-direction: row;
+    padding: 2rem 2rem 2rem 0.5rem;
+}
 
-        .cloudstatusarea .cloudtext {
-            display: none;
-        }
-    }
-    .tutorial-container .tutorial-step-counter {
-        .tutorial-step-label {
-            display: none;
-        }
-    }
+.tutorial-validation-error-hint {
+    padding: 1.5rem;
+}
 
-    .tutorial-step-label {
-        font-size: 1rem;
-        justify-content: space-between;
-        margin-bottom: 1.5rem;
-    }
+.tutorial-validation-error-inner {
+    display: flex;
+    flex-direction: column;
+}
 
-    /* Short Deskstop Only */
-    @media (max-height: @tallEditorBreakpoint) {
-        #root.tabTutorial:not(.fullscreensim) {
-            .tab-simulator:not(.hidden) {
-                .simPanel {
-                    height: calc(100% - @tutorialControlsOffset);
-                    min-height: @tutorialSimulatorMinHeight;
-                }
-                #boardview {
-                    height: calc(100% - @tutorialBoardviewOffset);
-                    min-height: @tutorialSimulatorMinHeight;
-                }
-                #simulators {
-                    height: 100%;
-                    min-height: @tutorialSimulatorMinHeight;
-                }
-                .simframe {
-                    padding-bottom: unset !important;
-                    height: 100%;
-                    min-height: @tutorialSimulatorMinHeight;
-                }
-            }
-        }
+.tutorial-validation-error-emoji {
+    padding: 0.5rem 1rem 0 0.2rem;
+    width: 6rem;
+}
+
+.tutorial-validation-error-controls {
+    display: flex;
+    justify-content: right;
+    margin: 0;
+    margin-top: 0.5rem;
+
+    > .common-button {
+        width: unset;
     }
 }
 
-/* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
+.tutorial-validation-error-close.common-button {
+    position: absolute;
+    right: 0.6rem;
+    top: 0.8rem;
+    padding: 0 !important;
+
+    i.right {
+        opacity: 1;
+        font-size: 1.3rem;
+        margin: 0 !important;
+    }
+}
+
+.tutorial-validation-answer-key-hint {
+    max-height: 50vh;
+    overflow: auto;
+    padding-right: 2rem;
+}
+
+/* Remove border around blocks in the hint */
+.tutorial-validation-answer-key-hint .lang-blocks .segment.raised {
+    border: none;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+/*************************************
+        Top-Instruction Layout
+        (tablet & sim-sidebar views)
+*************************************/
+
+.topInstructionsSettings() {
     #root.tabTutorial,
     #root.headless.tabTutorial {
         #maineditor > .full-abs {
             top: @defaultTutorialHeight;
         }
 
-        #editorSidebar {
-            top: @mobileMenuHeight;
+        #simulator .editor-sidebar {
             height: @defaultTutorialHeight;
             width: 100%;
-            border-right: 0;
-            border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
-        }
-
-        .tutorial-content {
-            padding-top: .5rem;
         }
     }
 
-    .tab-tutorial.tab-content {
+    .tutorial-title {
+        margin-bottom: 0.2rem;
+    }
+
+    .tutorial-content-bkg {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: .5rem 1rem 0.7rem 1rem;
+
+        .tutorial-step-content {
+            margin-right: 1.5rem;
+        }
+
+        .immersive-reader-button {
+            position: absolute;
+            top: 0.3rem;
+            right: 1rem;
+        }
+    }
+
+    .tutorial-step-label {
+        display: none;
+    }
+
+    .tutorial-callout-button.ui.button {
+        height: 2.5rem;
+        width: 2.5rem;
+        font-size: 1.1em;
+    }
+
+    .editor-sidebar {
+        border-right: 0;
+        border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+    }
+
+    .tutorial-container-outer {
         padding-top: 0;
     }
 
@@ -645,7 +712,6 @@
 
     .tutorial-content {
         margin: 0;
-        padding: 1rem;
         padding-bottom: 0;
     }
 
@@ -658,7 +724,7 @@
             Exit Tutorial
     *******************************/
 
-    .tab-simulator.hidden .tutorial-exit {
+    .simulator-container.hidden .tutorial-exit {
         // Shift in tutorial tab to make space for step counter
         right: @tutorialTabletStepCounterWidth;
         margin-right: 0;
@@ -680,35 +746,40 @@
     /*******************************
             Step Counter
     *******************************/
-
     .tutorial-step-counter {
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
-        padding-left: 0;
-        padding-right: 0;
+        padding: 0 0;
         column-gap: 1rem;
-        margin-bottom: .5rem;
+        border-bottom: unset;
+        margin-left: auto;
+
+        .ui.button {
+            margin: 0;
+            padding: 0.65rem;
+
+            .icon {
+                margin-left: 0;
+            }
+        }
+        
+        .counter-previous-button .icon {
+            margin: 0;
+        }
     }
 
     .tutorial-step-bubbles {
-        flex: 1;
-        max-width: 20rem;
-        min-width: 13rem;
+        min-width: 30rem;
     }
 
-    /*******************************
-            Tutorial Controls
-    *******************************/
-
-    .tutorial-controls {
-        padding-top: 0;
-    }
-
-    .tutorial-container > .ui.button i.icon {
-        margin-bottom: 0.5rem!important;
+    .common-button.square-button {
+        margin: 0;
+        border: unset;
+        color: @white !important;
+        background: @tutorialPrimaryColor;
     }
 
     /*******************************
@@ -720,6 +791,7 @@
         align-items: center;
         margin: 0;
         margin-top: 0.5rem;
+        padding: 0.7rem 0 0 0;
 
         > .ui.button {
             width: unset;
@@ -727,9 +799,8 @@
     }
 
     .tutorial-hint .tutorial-callout-button.ui.button {
-        color: @tutorialPrimaryColor;
-        background: @tutorialSecondaryColor;
-        margin: 1rem;
+        color: @white;
+        background: @tutorialPrimaryColor;
 
         &.disabled {
             display: none;
@@ -737,11 +808,11 @@
     }
 
     // Overrides
-    .tab-tutorial {
+    .tutorial-container-outer:not(.topInstructions) {
         .tutorial-callout {
-            right: 1.6rem;
             bottom: unset;
             left: unset;
+            top: 15rem;
             max-width: 80%;
             transform: translateY(15px);
         }
@@ -783,7 +854,7 @@
     /*******************************
             Simulator Tab
     *******************************/
-    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) {
+    #root.tabTutorial:not(.fullscreensim) .simulator-container:not(.hidden) {
         .simPanel {
             display: flex;
             position: relative;
@@ -845,14 +916,14 @@
 
     #root.headless.tabTutorial.collapsedEditorTools {
         #maineditor { left: 0; }
-        #editorSidebar { width: 100%; }
+        #simulator .editor-sidebar { width: 100%; }
 
         .tutorial-top-bar {
            right: 4rem;
         }
 
-        #editorSidebar .immersive-reader-button.ui.item,
-        #editorSidebar .immersive-reader-button.ui.item:focus{
+        #simulator .editor-sidebar .immersive-reader-button.ui.item,
+        #simulator .editor-sidebar .immersive-reader-button.ui.item:focus{
             background-image: @immersiveReaderIcon;
         }
         .tutorial-step-counter {
@@ -877,13 +948,137 @@
     .tutorial-title {
         max-width: calc(100% - 10rem);
     }
+
+    /*******************************
+        Validation
+    *******************************/
+
+    .tutorial-validation-error-container {
+        right: 1rem;
+        left: unset;
+    }
+}
+
+/*******************************
+        Media Adjustments
+*******************************/
+
+@media only screen and (min-width: @largestSmallMonitor) {
+    #root.tabTutorial:not(.fullscreensim, .greenscreen) {
+        #editortools {
+            width: calc(100% - @simulatorWidth);
+            left: unset;
+            right: 0;
+        }
+    }
+}
+
+
+@media only screen and (min-width: @largestTabletScreen) and (max-width: @largestSmallMonitor) {
+    #root.tabTutorial:not(.fullscreensim, .greenscreen) {
+        #editortools {
+            width: calc(100% - @simulatorWidthSmall);
+            left: unset;
+            right: 0;
+        }
+    }
+}
+
+/* Desktop Only */
+@media only screen and (min-width: @largestTabletScreen) {
+    #root.tabTutorial:not(.fullscreensim, .greenscreen) {
+        #simulator .editor-sidebar:not(.topInstructions) {
+            bottom: 0;
+        }
+
+        .cloudstatusarea .cloudtext {
+            display: none;
+        }
+    }
+    #simulator .editor-sidebar:not(.topInstructions) .tutorial-container .tutorial-step-counter {
+        .tutorial-step-label {
+            display: none;
+        }
+    }
+
+    #simulator .editor-sidebar:not(.topInstructions) .tutorial-step-label {
+        font-size: 1rem;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .tutorial-container-outer:not(.topInstructions) {
+        .tutorial-controls {
+            padding-top: 1rem;
+        }
+    }
+    
+    /* Short Deskstop Only */
+    @media (max-height: @tallEditorBreakpoint) {
+        #root.tabTutorial:not(.fullscreensim) {
+            .simulator-container:not(.hidden) {
+                .simPanel {
+                    height: calc(100% - @tutorialControlsOffset);
+                    min-height: @tutorialSimulatorMinHeight;
+                }
+                #boardview {
+                    height: calc(100% - @tutorialBoardviewOffset);
+                    min-height: @tutorialSimulatorMinHeight;
+                }
+                #simulators {
+                    height: 100%;
+                    min-height: @tutorialSimulatorMinHeight;
+                }
+                .simframe {
+                    padding-bottom: unset !important;
+                    height: 100%;
+                    min-height: @tutorialSimulatorMinHeight;
+                }
+            }
+        }
+    }
+
+    .topInstructionsWrapper {
+        .topInstructionsSettings();
+        
+        .tutorial-callout {
+            right: unset;
+            top: 15rem;
+            bottom: unset;
+            left: unset;
+        }
+    }
+}
+
+/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
+@media only screen and (max-width: @largestSmallMonitor) {
+    .tutorial-validation-error-container {
+        left: @simulatorWidthSmall + 1rem;
+    }
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    .topInstructionsSettings();
+
+    .tutorial-step-bubbles {
+        min-width: 25rem;
+    }
+
+    #simulator .editor-sidebar {
+        top: @mobileMenuHeight;
+    }
+
+    .tutorial-container > .ui.button i.icon {
+        margin-bottom: 0.5rem!important;
+    }
 }
 
 /* thin tablet header */
 @media only screen and (min-width: @largestMobileScreen) and (max-height: @tallEditorBreakpoint) {
     #root.tabTutorial,
     #root.headless.tabTutorial {
-        #editorSidebar {
+        #simulator .editor-sidebar {
             top: @thinMenuHeight;
         }
     }
@@ -908,7 +1103,7 @@
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) .simPanel {
+    #root.tabTutorial:not(.fullscreensim) .simulator-container:not(.hidden) .simPanel {
         #simulators {
             width: 16rem;
         }
@@ -934,5 +1129,58 @@
     }
     .tutorial-title {
         max-width: 100%;
+    }
+
+    .tutorial-step-bubbles {
+        min-width: 20rem;
+
+        .ui.button {
+            padding: 0.5rem;
+
+            .right {
+                padding: 0;
+                margin: 0;
+            }
+        }
+
+        .counter-next-button .common-button-label {
+            display: none;
+        }
+    }
+
+    .tutorial-header-label .tutorial-header-step-label {
+        display: none !important;
+    }
+
+    /*******************************
+        Validation
+    *******************************/
+
+    .tutorial-validation-error-container {
+        max-width: unset;
+        min-width: unset;
+        right: 2.5%;
+        width: 95%;
+        bottom: 1rem;
+    }
+
+    .tutorial-validation-error-body {
+        padding: 1.2rem 1rem 1rem 1rem;
+    }
+
+    .tutorial-validation-error-emoji {
+        display: none;
+    }
+
+    .tutorial-validation-error-controls {
+        justify-content: left;
+
+        > .common-button {
+            padding: .8rem 0.8rem 0.8rem 0.25rem;
+        }
+    }
+
+    .tutorial-validation-error-close.common-button {
+        right: 0.3rem;
     }
 }

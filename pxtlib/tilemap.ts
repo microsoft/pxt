@@ -17,6 +17,7 @@ namespace pxt {
         tags?: string[];
         blockIDs?: string[];
         temporaryInfo?: TemporaryAssetInfo;
+        package?: string;
     }
 
     export interface TemporaryAssetInfo {
@@ -368,6 +369,7 @@ namespace pxt {
         }
 
         public createNewImage(width = 16, height = 16) {
+            this.onChange();
             const id = this.generateNewID(AssetType.Image);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
@@ -383,6 +385,7 @@ namespace pxt {
         }
 
         public createNewAnimation(width = 16, height = 16) {
+            this.onChange();
             const id = this.generateNewID(AssetType.Animation);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
@@ -398,6 +401,7 @@ namespace pxt {
         }
 
         public createNewAnimationFromData(frames: pxt.sprite.BitmapData[], interval = 500, displayName?: string) {
+            this.onChange();
             const id = this.generateNewID(AssetType.Animation);
 
             const newAnimation: Animation = {
@@ -987,6 +991,7 @@ namespace pxt {
                 const images = this.readImages(dep.parseJRes(), isProject);
 
                 for (const image of images) {
+                    image.meta.package = dep.id;
                     if (image.type === AssetType.Tile) {
                         if (isProject) {
                             this.state.tiles.add(image);
@@ -1022,18 +1027,39 @@ namespace pxt {
                 }
             }
 
-            for (const tm of getTilemaps(pack.parseJRes())) {
-                this.state.tilemaps.add({
-                    internalID: this.getNewInternalId(),
-                    type: AssetType.Tilemap,
-                    id: tm.id,
-                    meta: {
-                        // For tilemaps, use the id as the display name for backwards compat
-                        displayName: tm.displayName || tm.id
-                    },
-                    data: decodeTilemap(tm, id => this.resolveTile(id))
-                })
+            for (const dep of allPackages) {
+                const isProject = dep.id === "this";
+                for (const tm of getTilemaps(dep.parseJRes())) {
+                    if (isProject) {
+                        this.state.tilemaps.add({
+                            internalID: this.getNewInternalId(),
+                            type: AssetType.Tilemap,
+                            id: tm.id,
+                            meta: {
+                                // For tilemaps, use the id as the display name for backwards compat
+                                displayName: tm.displayName || tm.id,
+                                package: pack.id
+                            },
+                            data: decodeTilemap(tm, id => this.resolveTile(id))
+                        });
+                    }
+                    else {
+                        this.gallery.tilemaps.add({
+                            internalID: this.getNewInternalId(),
+                            type: AssetType.Tilemap,
+                            id: tm.id,
+                            meta: {
+                                // For tilemaps, use the id as the display name for backwards compat
+                                displayName: tm.displayName || tm.id,
+                                package: pack.id
+                            },
+                            data: decodeTilemap(tm, id => this.gallery.tiles.getByID(id))
+                        });
+                    }
+                }
             }
+
+
             this.committedState = this.cloneState();
             this.undoStack = [];
             this.redoStack = [];
@@ -1151,6 +1177,26 @@ namespace pxt {
             }
         }
 
+        clone() {
+            const clone = new TilemapProject();
+            clone.committedState = cloneSnapshot(this.committedState);
+            clone.state = cloneSnapshot(this.state);
+            clone.gallery = cloneSnapshot(this.gallery);
+            clone.extensionTileSets = this.extensionTileSets?.map(t => ({
+                ...t,
+                tileSets: t.tileSets.map(ts => ({
+                    ...ts,
+                    tiles: ts.tiles.map(tl => cloneAsset(tl))
+                }))
+            }));
+            clone.needsRebuild = this.needsRebuild;
+            clone.nextID = this.nextID;
+            clone.nextInternalID = this.nextInternalID;
+            clone.undoStack = this.undoStack.map(u => cloneSnapshotDiff(u));
+            clone.redoStack = this.undoStack.map(r => cloneSnapshotDiff(r));
+            return clone;
+        }
+
         protected generateImage(entry: JRes, type: AssetType.Image): ProjectImage;
         protected generateImage(entry: JRes, type: AssetType.Tile): Tile;
         protected generateImage(entry: JRes, type: AssetType.Image | AssetType.Tile): ProjectImage | Tile {
@@ -1159,7 +1205,8 @@ namespace pxt {
                 type: type,
                 id: entry.id,
                 meta: {
-                    displayName: entry.displayName
+                    displayName: entry.displayName,
+                    tags: entry.tags,
                 },
                 jresData: entry.data,
                 bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
@@ -1172,7 +1219,8 @@ namespace pxt {
                 type: AssetType.Song,
                 id: entry.id,
                 meta: {
-                    displayName: entry.displayName
+                    displayName: entry.displayName,
+                    tags: entry.tags
                 },
                 song: pxt.assets.music.decodeSongFromHex(entry.data)
             }
@@ -1193,7 +1241,8 @@ namespace pxt {
                     internalID: this.getNewInternalId(),
                     type: AssetType.Animation,
                     meta: {
-                        displayName: entry.displayName
+                        displayName: entry.displayName,
+                        tags: entry.tags
                     },
                     id: entry.id,
                     frames: [],
@@ -1318,6 +1367,142 @@ namespace pxt {
         }
 
         return res;
+    }
+
+    export function emitGalleryDeclarations(jres: pxt.Map<JRes>, namespaceName: string): [pxt.Map<JRes>, string] {
+        const entries = Object.keys(jres);
+
+        const indent = "    ";
+        let out = "";
+
+        const takenNames: {[index: string]: boolean} = {};
+        const idMapping: {[index: string]: string} = {};
+
+        const outJRes: pxt.Map<JRes> = {};
+
+        const getId = (key: string) => {
+            let ns = jres[key].namespace || jres["*"].namespace;
+            const id = jres[key].id || key;
+
+            if (ns) {
+                if (ns.endsWith(".")) {
+                    ns = ns.slice(0, ns.length - 1);
+                }
+
+                if (!id.startsWith(ns + ".")) {
+                    return ns + "." + id;
+                }
+            }
+
+            return id;
+        }
+
+        if (jres["*"]) {
+            outJRes["*"] = {
+                ...jres["*"],
+                namespace: namespaceName
+            };
+        }
+
+        // First do a pass to generate new qualified names for each asset
+        for (const key of entries) {
+            if (key === "*") continue;
+
+            const entry = jres[key];
+            const id = getId(key);
+            let varName = ts.pxtc.escapeIdentifier(entry.displayName || id.split(".").pop());
+
+            if (takenNames[varName]) {
+                const base = varName;
+                let index = 2;
+                while (takenNames[varName]) {
+                    varName = base + index;
+                    index++;
+                }
+            }
+            takenNames[varName] = true;
+            idMapping[id] = namespaceName + "." + varName
+        }
+
+        // Now actually generate the TS
+        for (const key of entries) {
+            if (key === "*") continue;
+
+            const entry = jres[key];
+            let mimeType = entry.mimeType || jres["*"]?.mimeType;
+            let blockIdentity: string;
+            let value: string;
+            const varName = idMapping[getId(key)].split(".").pop();
+            let tags: string[] = entry.tags;
+
+            if (!tags) {
+                tags = [];
+                if (varName.toLowerCase().indexOf("background") !== -1) {
+                    tags.push("background");
+                }
+                if (varName.toLowerCase().indexOf("dialog") !== -1) {
+                    tags.push("dialog");
+                }
+                if (entry.tilemapTile) {
+                    tags.push("tile");
+                }
+            }
+
+            if (mimeType === IMAGE_MIME_TYPE) {
+                value = "image.ofBuffer(hex\`\`)"
+
+                if (entry.tilemapTile) {
+                    blockIdentity = "images._tile"
+                }
+                else {
+                    blockIdentity = "images._image"
+                }
+            }
+            else if (mimeType === ANIMATION_MIME_TYPE) {
+                const am = decodeAnimation(entry);
+                value = `[${
+                    am.frames.map(f =>
+                        pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(f), "typescript")
+                    ).join(",")
+                }]`;
+            }
+            else if (mimeType === TILEMAP_MIME_TYPE) {
+                const tm = decodeTilemap(entry);
+                value = pxt.sprite.encodeTilemap(tm, "typescript", idMapping);
+            }
+            else if (mimeType === SONG_MIME_TYPE) {
+                value = `hex\`${entry.data}\``;
+            }
+
+            out += `${indent}//% fixedInstance jres whenUsed\n`
+            if (blockIdentity)  out += `${indent}//% blockIdentity=${blockIdentity}\n`
+            if (tags.length) out += `${indent}//% tags="${tags.join(" ")}"\n`
+            out += `${indent}export const ${varName} = ${value};\n`
+
+            if (typeof entry === "string") {
+                outJRes[varName] = entry;
+            }
+            else {
+                outJRes[varName] = {
+                    ...entry,
+                    id: idMapping[getId(key)],
+                    tags
+                };
+                if (entry.namespace) {
+                    outJRes[varName].namespace = namespaceName
+                    if (entry.namespace.endsWith(".")) {
+                        outJRes[varName].namespace += ".";
+                    }
+                }
+                if (outJRes[varName].tileset) {
+                    outJRes[varName].tileset = entry.tileset.map(t => idMapping[t] || t);
+                }
+            }
+        }
+
+        const warning = lf("Auto-generated code. Do not edit.");
+
+        return [outJRes, `// ${warning}\nnamespace ${namespaceName} {\n${out}\n}\n// ${warning}\n`]
     }
 
     export function emitTilemapsFromJRes(jres: pxt.Map<JRes>) {
@@ -1498,29 +1683,66 @@ namespace pxt {
         }
     }
 
+    function cloneSnapshot(toClone: AssetSnapshot) {
+        return {
+            revision: toClone.revision,
+            tilemaps: toClone.tilemaps.clone(),
+            images: toClone.images.clone(),
+            animations: toClone.animations.clone(),
+            songs: toClone.songs.clone(),
+            tiles: toClone.tiles.clone()
+        }
+    }
+
+    function cloneSnapshotDiff(toClone: AssetSnapshotDiff): AssetSnapshotDiff {
+        return {
+            ...toClone,
+            animations: cloneAssetCollectionDiff(toClone.animations),
+            tiles: cloneAssetCollectionDiff(toClone.tiles),
+            images: cloneAssetCollectionDiff(toClone.images),
+            tilemaps: cloneAssetCollectionDiff(toClone.tilemaps),
+            songs: cloneAssetCollectionDiff(toClone.songs)
+        }
+    }
+
+    function cloneAssetCollectionDiff<U extends Asset>(toClone: AssetCollectionDiff<U>): AssetCollectionDiff<U> {
+        return {
+            ...toClone,
+            before: toClone.before.map(entry => cloneAsset(entry)),
+            after: toClone.after.map(entry => cloneAsset(entry)),
+        }
+    }
 
     function addAssetToJRes(asset: Asset, allJRes: pxt.Map<Partial<JRes> | string>): void {
         // Get the last part of the fully qualified name
         const id = asset.id.substr(asset.id.lastIndexOf(".") + 1);
+        const tags = asset.meta.tags;
 
         switch (asset.type) {
             case AssetType.Image:
                 allJRes[id] = asset.jresData;
-                if (asset.meta.displayName) {
-                    allJRes[id] = {
+                if (asset.meta.displayName || tags?.length) {
+                    const imgJres: Partial<JRes> = {
                         data: asset.jresData,
                         mimeType: IMAGE_MIME_TYPE,
-                        displayName: asset.meta.displayName
                     }
+                    if (asset.meta.displayName)
+                        imgJres.displayName = asset.meta.displayName;
+                    if (tags?.length)
+                        imgJres.tags = tags;
+                    allJRes[id] = imgJres;
                 }
                 break;
             case AssetType.Tile:
-                allJRes[id] = {
+                const tileJres: Partial<JRes> = {
                     data: asset.jresData,
                     mimeType: IMAGE_MIME_TYPE,
                     tilemapTile: true,
                     displayName: asset.meta.displayName
                 };
+                if (tags?.length)
+                    tileJres.tags = tags;
+                allJRes[id] = tileJres;
                 break;
             case AssetType.Tilemap:
                 // we include the full ID for tilemaps
@@ -1532,13 +1754,19 @@ namespace pxt {
                 allJRes[id] = serializeAnimation(asset);
                 break;
             case AssetType.Song:
-                allJRes[id] = {
+                const songJres: Partial<JRes> = {
                     data: pxt.assets.music.encodeSongToHex(asset.song),
                     mimeType: SONG_MIME_TYPE,
-                    displayName: asset.meta.displayName
+                    displayName: asset.meta.displayName,
+                    namespace: pxt.sprite.SONG_NAMESPACE + "."
                 };
+                if (tags?.length)
+                    songJres.tags = tags;
+
+                allJRes[id] = songJres;
                 break;
         }
+
     }
 
     export function assetEquals(a: Asset, b: Asset) {
@@ -1721,13 +1949,16 @@ namespace pxt {
     }
 
     function serializeAnimation(asset: Animation): JRes {
-        return {
+        const animationJres: JRes = {
             namespace: asset.id.substr(0, asset.id.lastIndexOf(".")),
             id: asset.id.substr(asset.id.lastIndexOf(".") + 1),
             mimeType: ANIMATION_MIME_TYPE,
             data: pxt.sprite.encodeAnimationString(asset.frames, asset.interval),
-            displayName: asset.meta.displayName
+            displayName: asset.meta.displayName,
         }
+        if (asset.meta.tags?.length)
+            animationJres.tags = asset.meta.tags;
+        return animationJres;
     }
 
     function decodeAnimation(jres: JRes): Animation {
@@ -1771,7 +2002,8 @@ namespace pxt {
             interval,
             frames: decodedFrames,
             meta: {
-                displayName: jres.displayName
+                displayName: jres.displayName,
+                tags: jres.tags
             }
         }
     }

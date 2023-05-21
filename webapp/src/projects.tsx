@@ -225,6 +225,7 @@ export interface ProjectSettingsMenuState {
 }
 
 export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps, ProjectSettingsMenuState> {
+    dropdown: sui.DropdownMenu;
 
     constructor(props: ProjectSettingsMenuProps) {
         super(props);
@@ -245,6 +246,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
+        this.hide();
         core.toggleHighContrast();
     }
 
@@ -275,12 +277,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
-        const githubProvider = cloudsync.githubProvider();
-        if (githubProvider) {
-            githubProvider.logout();
-            this.props.parent.forceUpdate();
-            core.infoNotification(lf("Signed out from GitHub"))
-        }
+        this.props.parent.signOutGithub();
+    }
+
+    hide() {
+        this.dropdown?.hide();
     }
 
     renderCore() {
@@ -292,7 +293,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
             {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
             {githubUser && <div className="ui divider"></div>}
@@ -300,7 +301,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
                 <div className="avatar" role="presentation">
                     <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
                 </div>
-                {lf("Unlink GitHub")}
+                {lf("Disconnect GitHub")}
             </div>}
             {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
@@ -735,6 +736,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             youTubeId={selectedElement.youTubeId}
                             youTubePlaylistId={selectedElement.youTubePlaylistId}
                             buttonLabel={selectedElement.buttonLabel}
+                            actionIcon={selectedElement.actionIcon}
                             scr={selectedElement}
                             onClick={this.props.onClick}
                             cardType={selectedElement.cardType}
@@ -864,6 +866,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     youTubeId?: string;
     youTubePlaylistId?: string;
     buttonLabel?: string;
+    actionIcon?: string;
     url?: string;
     scr?: pxt.CodeCard;
     onClick: (scr: any, action?: pxt.CodeCardAction) => void;
@@ -917,32 +920,36 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
     }
 
-    protected getActionIcon(onClick: any, type: pxt.CodeCardType, editor?: pxt.CodeCardEditorType): JSX.Element {
+    protected getActionIcon(onClick: any, type: pxt.CodeCardType, editor?: pxt.CodeCardEditorType, actionIcon?: string): JSX.Element {
         const { youTubeId, youTubePlaylistId } = this.props;
         let icon = "file text";
-        switch (type) {
-            case "tutorial":
-            case "example":
-                icon = "xicon blocks"
-                if (editor) icon = `xicon ${editor}`;
-                break;
-            case "codeExample":
-                icon = `xicon ${editor || "js"}`;
-                break;
-            case "sharedExample":
-                icon = "pencil"
-                if (editor) icon = `xicon ${editor}`;
-                break;
-            case "forumUrl":
-                icon = "comments"
-                break;
-            case "forumExample":
-                icon = "pencil"
-                break;
-            case "template":
-            default:
-                if (youTubeId || youTubePlaylistId) icon = "youtube";
-                break;
+        if (actionIcon) {
+            icon = actionIcon;
+        } else {
+            switch (type) {
+                case "tutorial":
+                case "example":
+                    icon = "xicon blocks"
+                    if (editor) icon = `xicon ${editor}`;
+                    break;
+                case "codeExample":
+                    icon = `xicon ${editor || "js"}`;
+                    break;
+                case "sharedExample":
+                    icon = "pencil"
+                    if (editor) icon = `xicon ${editor}`;
+                    break;
+                case "forumUrl":
+                    icon = "comments"
+                    break;
+                case "forumExample":
+                    icon = "pencil"
+                    break;
+                case "template":
+                default:
+                    if (youTubeId || youTubePlaylistId) icon = "youtube";
+                    break;
+            }
         }
         return this.isLink(type) && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
             ? <sui.Link role="presentation" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
@@ -962,12 +969,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
     }
 
-    protected getActionCard(text: string, type: pxt.CodeCardType, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
+    protected getActionCard(text: string, type: pxt.CodeCardType, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string, actionIcon?: string): JSX.Element {
         const editor = this.getActionEditor(type, action);
         const title = this.getActionTitle(editor);
 
-        return <div className={`card-action ui items ${editor || ""}`} key={key}>
-            {this.getActionIcon(onClick, type, editor)}
+        return <div className={`card-action ui items ${editor || ""} ${actionIcon ? "custom-icon" : ""}`} key={key}>
+            {this.getActionIcon(onClick, type, editor, actionIcon)}
             {title && <div className="card-action-title">{title}</div>}
             {cardActionButton(
                 this.props,
@@ -1029,7 +1036,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     renderCore() {
         const { name, description, largeImageUrl, videoUrl,
-            youTubeId, youTubePlaylistId, buttonLabel, cardType, tags, otherActions } = this.props;
+            youTubeId, youTubePlaylistId, buttonLabel, actionIcon, cardType, tags, otherActions } = this.props;
 
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
@@ -1076,7 +1083,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             </div>
             <div className="actions column ten wide">
                 <div className="segment">
-                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
+                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true, undefined, undefined, actionIcon)}
                     {otherActions && otherActions.map((el, i) => {
                         let onClick = this.handleActionClick(el);
                         let label = el.cardType ? this.getClickLabel(el.cardType) : clickLabel;

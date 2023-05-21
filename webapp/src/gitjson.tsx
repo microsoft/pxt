@@ -55,6 +55,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handleBranchClick = this.handleBranchClick.bind(this);
         this.handleGithubError = this.handleGithubError.bind(this);
         this.handlePullRequest = this.handlePullRequest.bind(this);
+        this.handleSignoutGithub = this.handleSignoutGithub.bind(this);
     }
 
     clearCacheDiff(cachePrefix?: string, f?: DiffFile) {
@@ -492,6 +493,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 tutorialInfo[`https://github.com/${githubId.fullName}${formatPath == "README" ? "" : "/" + formatPath}`] = {
                     snippetBlocks: tutorialBlocks.snippetBlocks,
                     usedBlocks: tutorialBlocks.usedBlocks,
+                    highlightBlocks: tutorialBlocks.highlightBlocks,
                     hash
                 };
 
@@ -684,16 +686,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 - [ ] ${lf("reviewer approves or requests changes")}
 - [ ] ${lf("apply requested changes if any")}
 - [ ] ${lf("merge once approved")}
-`; // TODO
-            /*
-                        `
-            ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.github/makecode/blocks.png)
-
-            ${lf("This image shows the blocks code from the last commit in this pull request.")}
-            ${lf("This image may take a few minutes to refresh.")}
-
-            `
-            */
+`;
             const id = await pxt.github.createPRFromBranchAsync(gh.slug, "master", gh.tag, title, msg);
             data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
             core.infoNotification(lf("Pull request created successfully!", id));
@@ -734,6 +727,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             })
             .filter(df => !!df);
         return diffFiles;
+    }
+
+    private async handleSignoutGithub() {
+        pxt.tickEvent("github.signout");
+        this.props.parent.signOutGithub();
     }
 
     renderCore(): JSX.Element {
@@ -799,6 +797,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     <div></div>
+                </div>
+                <div className="ui serialHeader">
+                    <div className="rightHeader">
+                        {user && <sui.Button className="ui button" icon="fas fa-sign-out-alt" text={lf("Disconnect GitHub")} title={lf("Log out of GitHub")} onClick={this.handleSignoutGithub} onKeyDown={fireClickOnEnter} />}
+                    </div>
                 </div>
             </div>
         )

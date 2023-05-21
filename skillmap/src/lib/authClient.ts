@@ -16,13 +16,12 @@ class AuthClient extends pxt.auth.AuthClient {
         // Show a notification?
         return Promise.resolve();
     }
-    protected onUserProfileChanged(): Promise<void> {
-        const state = this.getState();
-        if (state.profile) {
+    protected async onUserProfileChanged(): Promise<void> {
+        const state = await pxt.auth.getUserStateAsync();
+        if (state?.profile) {
             pxt.auth.generateUserProfilePicDataUrl(state.profile);
         }
         store.dispatch(dispatchSetUserProfile(state.profile));
-        return Promise.resolve();
     }
     protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         // TODO: Dispatch individual preference fields individually (if changed): language, highContrast, etc.
@@ -169,6 +168,14 @@ export async function setHighContrastPrefAsync(pref: boolean): Promise<pxt.auth.
     return await patchUserPreferencesAsync({
         op: 'replace',
         path: ['highContrast'],
+        value: pref
+    }, { immediate: true })
+}
+
+export async function setLanguagePreference(pref: string): Promise<pxt.auth.SetPrefResult | undefined> {
+    return await patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['language'],
         value: pref
     }, { immediate: true })
 }

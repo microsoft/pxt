@@ -342,11 +342,35 @@ namespace pxt.blocks {
             const parentFn = info.blocksById[fn.attributes.toolboxParent];
 
             if (parentFn) {
-                parent = createToolboxBlock(info, parentFn, pxt.blocks.compileInfo(parentFn));
+                const parentInfo = pxt.blocks.compileInfo(parentFn);
+                parent = createToolboxBlock(info, parentFn, parentInfo);
 
-                parentInput = fn.attributes.toolboxParentArgument ?
-                    parent.querySelector(`value[name=${fn.attributes.toolboxParentArgument}]`) :
-                    parent.querySelector(`value`);
+                if (fn.attributes.toolboxParentArgument) {
+                    parentInput = parent.querySelector(`value[name=${fn.attributes.toolboxParentArgument}]`);
+
+                    if (!parentInput && parentInfo.parameters.some(p => p.definitionName === fn.attributes.toolboxParentArgument)) {
+                        // The input is valid, it just doesn't have a shadow block specified in the parent function. Create
+                        // a new input and add it to the parent block
+                        parentInput = document.createElement("value");
+                        parentInput.setAttribute("name", fn.attributes.toolboxParentArgument);
+                        parent.appendChild(parentInput);
+                    }
+                }
+                else {
+                    parentInput = parent.querySelector("value");
+
+                    if (!parentInput) {
+                        // try looking for the first parameter that isn't a field
+                        for (const param of parentInfo.parameters) {
+                            if (parent.querySelector(`field[name=${param.definitionName}]`)) continue;
+
+                            parentInput = document.createElement("value");
+                            parentInput.setAttribute("name", param.definitionName);
+                            parent.appendChild(parentInput);
+                            break;
+                        }
+                    }
+                }
 
                 if (parentInput) {
                     while (parentInput.firstChild) parentInput.removeChild(parentInput.firstChild);
@@ -656,8 +680,10 @@ namespace pxt.blocks {
                 })
             }
         });
-        if (fn.attributes.imageLiteral) {
-            const columns = (fn.attributes.imageLiteralColumns || 5) * fn.attributes.imageLiteral;
+
+        const gridTemplateString = fn.attributes.imageLiteral || fn.attributes.gridLiteral;
+        if (gridTemplateString) {
+            const columns = (fn.attributes.imageLiteralColumns || 5) * gridTemplateString;
             const rows = fn.attributes.imageLiteralRows || 5;
             const scale = fn.attributes.imageLiteralScale;
             let ri = block.appendDummyInput();
@@ -671,7 +697,7 @@ namespace pxt.blocks {
             block.setInputsInline(true);
         }
         else {
-            block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !fn.attributes.imageLiteral));
+            block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !gridTemplateString));
         }
 
         const body = fn.parameters?.find(pr => pxtc.parameterTypeIsArrowFunction(pr));
@@ -2150,7 +2176,7 @@ namespace pxt.blocks {
                 xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
                 if (Blockly.Blocks['variables_change'] || Blockly.Blocks['variables_set']) {
-                    xmlList.unshift(createFlyoutGroupLabel("Your Variables"));
+                    xmlList.unshift(createFlyoutGroupLabel(lf("Your Variables")));
                 }
 
                 if (Blockly.Blocks['variables_change']) {
@@ -2634,7 +2660,7 @@ namespace pxt.blocks {
             if (elems.length > 1) {
                 let returnBlock = mkReturnStatementBlock();
                 // Add divider
-                elems.splice(1, 0, createFlyoutGroupLabel("Your Functions"));
+                elems.splice(1, 0, createFlyoutGroupLabel(lf("Your Functions")));
                 // Insert after the "make a function" button
                 elems.splice(1, 0, returnBlock as HTMLElement);
             }
@@ -3155,6 +3181,22 @@ namespace pxt.blocks {
                     this.close()
                 }
             });
+        }
+
+        /**
+         * onKeyDown_ is a private method in WorkspaceSearch, overwrite it to allow searching backwards.
+         * https://github.com/microsoft/pxt-arcade/issues/5716
+         */
+        onKeyDown_(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                this.close();
+            } else if (e.key === 'Enter') {
+                if (e.shiftKey) {
+                    this.previous();
+                } else {
+                    this.next();
+                }
+            }
         }
 
         protected highlightSearchGroup_(blocks: Blockly.BlockSvg[]) {

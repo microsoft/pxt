@@ -20,6 +20,8 @@ import {
     HTTP_INTERNAL_SERVER_ERROR,
     HTTP_IM_A_TEAPOT,
     SimKey,
+    IconMessage,
+    IconType,
 } from "../types";
 import {
     notifyGameDisconnected,
@@ -32,6 +34,7 @@ import {
     gameOverAsync,
     pauseGameAsync as epic_pauseGameAsync,
     resumeGameAsync as epic_resumeGameAsync,
+    setCustomIconAsync,
 } from "../epics";
 import { simDriver } from "./simHost";
 
@@ -57,12 +60,10 @@ class GameClient {
     screen: Buffer | undefined;
     clientRole: ClientRole | undefined;
     gameOverReason: GameOverReason | undefined;
+    receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
     paused: boolean = false;
 
     constructor() {
-        this.recvMessageWithJoinTimeout =
-            this.recvMessageWithJoinTimeout.bind(this);
-        this.recvMessageAsync = this.recvMessageAsync.bind(this);
     }
 
     destroy() {
@@ -75,17 +76,17 @@ class GameClient {
     private sendMessage(msg: Protocol.Message | Buffer) {
         if (msg instanceof Buffer) {
             this.sock?.send(msg, {}, (err: any) => {
-                if (err) console.log("Error sending message", err);
+                if (err) pxt.log("Error sending message. " + err.toString());
             });
         } else {
             const payload = JSON.stringify(msg);
             this.sock?.send(payload, {}, (err: any) => {
-                if (err) console.log("Error sending message", err);
+                if (err) pxt.log("Error sending message. " + err.toString());
             });
         }
     }
 
-    private async recvMessageAsync(payload: string | ArrayBuffer) {
+    private recvMessageAsync = async (payload: string | ArrayBuffer) => {
         if (payload instanceof ArrayBuffer) {
             //-------------------------------------------------
             // Handle binary message
@@ -99,6 +100,8 @@ class GameClient {
                     return await this.recvInputMessageAsync(reader);
                 case Protocol.Binary.MessageType.Audio:
                     return await this.recvAudioMessageAsync(reader);
+                case Protocol.Binary.MessageType.Icon:
+                    return await this.recvIconMessageAsync(reader);
             }
         } else if (typeof payload === "string") {
             //-------------------------------------------------
@@ -130,26 +133,18 @@ class GameClient {
         }
     }
 
-    private async recvMessageWithJoinTimeout(
+    private recvMessageWithJoinTimeout = async (
         payload: string | Buffer,
         resolve: () => void
-    ) {
+    ) => {
         try {
             if (typeof payload === "string") {
                 const msg = JSON.parse(payload) as Protocol.Message;
-                await this.recvMessageAsync(payload);
                 if (msg.type === "joined") {
                     // We've joined the game. Replace this handler with a direct call to recvMessageAsync
                     if (this.sock) {
-                        this.sock.removeAllListeners("message");
-                        this.sock.on("message", async payload => {
-                            try {
-                                await this.recvMessageAsync(payload);
-                            } catch (e) {
-                                console.error("Error processing message", e);
-                                destroyGameClient();
-                            }
-                        });
+                        this.sock.removeListener("message", this.receivedJoinMessageInTimeHandler);
+                        this.receivedJoinMessageInTimeHandler = undefined;
                     }
                     resolve();
                 }
@@ -173,27 +168,34 @@ class GameClient {
             });
             this.sock.binaryType = "arraybuffer";
             this.sock.on("open", () => {
-                console.log("socket opened");
-                this.sock?.on("message", async payload => {
+                pxt.debug("socket opened");
+                this.receivedJoinMessageInTimeHandler = async payload => {
                     await this.recvMessageWithJoinTimeout(payload, () => {
                         clearTimeout(joinTimeout);
                         resolve();
                     });
+                }
+                this.sock?.on("message", this.receivedJoinMessageInTimeHandler);
+                this.sock?.on("message", async payload => {
+                    try {
+                        await this.recvMessageAsync(payload);
+                    } catch (e) {
+                        console.error("Error processing message", e);
+                        destroyGameClient();
+                    }
                 });
                 this.sock?.on("close", () => {
-                    console.log("socket disconnected");
+                    pxt.debug("socket disconnected");
                     notifyGameDisconnected(this.gameOverReason);
                     clearTimeout(joinTimeout);
                     resolve();
                 });
 
-                setTimeout(() => {
-                    this.sendMessage({
-                        type: "connect",
-                        ticket,
-                        version: Protocol.VERSION,
-                    } as Protocol.ConnectMessage);
-                }, 500); // TODO: Why is a short delay necessary here? The socket doesn't seem ready to send messages immediately.
+                this.sendMessage({
+                    type: "connect",
+                    ticket,
+                    version: Protocol.VERSION,
+                } as Protocol.ConnectMessage);
             });
         });
     }
@@ -307,7 +309,7 @@ class GameClient {
     }
 
     private async recvJoinedMessageAsync(msg: Protocol.JoinedMessage) {
-        console.log(
+        pxt.debug(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
         const { gameMode, gamePaused, shareCode, role } = msg;
@@ -321,24 +323,24 @@ class GameClient {
     }
 
     private async recvStartGameMessageAsync(msg: Protocol.StartGameMessage) {
-        console.log("Server said start game");
+        pxt.debug("Server said start game");
         await setGameModeAsync("playing", this.paused);
     }
 
     private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
-        console.log("Server sent presence");
+        pxt.debug("Server sent presence");
         await setPresenceAsync(msg.presence);
     }
 
     private async recvReactionMessageAsync(msg: Protocol.ReactionMessage) {
-        console.log("Server sent reaction");
+        pxt.debug("Server sent reaction");
         await setReactionAsync(msg.clientId!, msg.index);
     }
 
     private async recvPlayerJoinedMessageAsync(
         msg: Protocol.PlayerJoinedMessage
     ) {
-        console.log("Server sent player joined");
+        pxt.debug("Server sent player joined");
         if (this.clientRole === "host") {
             await this.sendCurrentScreenAsync(); // Workaround for server sometimes not sending the current screen to new players. Needs debugging.
         }
@@ -346,23 +348,23 @@ class GameClient {
     }
 
     private async recvPlayerLeftMessageAsync(msg: Protocol.PlayerLeftMessage) {
-        console.log("Server sent player joined");
+        pxt.debug("Server sent player joined");
         await playerLeftAsync(msg.clientId);
     }
 
     private async recvGameOverMessageAsync(msg: Protocol.GameOverMessage) {
-        console.log("Server sent game over");
+        pxt.debug("Server sent game over");
         await gameOverAsync(msg.reason);
     }
 
     private async recvPauseGameMessageAsync(msg: Protocol.PauseGameMessage) {
-        console.log("Server sent pause game");
+        pxt.debug("Server sent pause game");
         this.paused = true;
         await epic_pauseGameAsync();
     }
 
     private async recvResumeGameMessageAsync(msg: Protocol.ResumeGameMessage) {
-        console.log("Server sent resume game");
+        pxt.debug("Server sent resume game");
         this.paused = false;
         await epic_resumeGameAsync();
     }
@@ -375,7 +377,7 @@ class GameClient {
         if (!isDelta) {
             // We must wait for the first non-delta screen to arrive before we can apply diffs.
             this.screen = screen;
-            //console.log("Received non-delta screen");
+            //pxt.debug("Received non-delta screen");
         } else if (this.screen) {
             // Apply delta to existing screen to get new screen
             xorInPlace(this.screen, screen);
@@ -428,6 +430,37 @@ class GameClient {
         });
     }
 
+    private async recvIconMessageAsync(reader: SmartBuffer) {
+        const { iconType, iconSlot, iconBuffer } =
+            Protocol.Binary.unpackIconMessage(reader);
+
+        if (iconType === IconType.Player && iconSlot >= 1 && iconSlot <= 4) {
+        } else if (
+            iconType === IconType.Reaction &&
+            iconSlot >= 1 &&
+            iconSlot <= 6
+        ) {
+        } else {
+            // unhandled icon type or invalid slot, ignore.
+            return;
+        }
+
+        if (iconBuffer) {
+            const unzipped = await gunzipAsync(iconBuffer);
+            const iconPalette = unzipped.slice(0, PALETTE_BUFFER_SIZE);
+            const iconImage = unzipped.slice(PALETTE_BUFFER_SIZE);
+            const iconPngDataUri = pxt.convertUint8BufferToPngUri(
+                iconPalette,
+                iconImage
+            );
+
+            setCustomIconAsync(iconType, iconSlot, iconPngDataUri);
+        } else {
+            // clear this value from overrides list if set
+            setCustomIconAsync(iconType, iconSlot);
+        }
+    }
+
     private postToSimFrame(msg: SimMultiplayer.Message) {
         simDriver()?.postMessage(msg);
     }
@@ -456,11 +489,33 @@ class GameClient {
         this.sendMessage(buffer);
     }
 
+    public async sendIconAsync(
+        type: IconType,
+        slot: number,
+        palette: Uint8Array | undefined,
+        img: Uint8Array | undefined
+    ) {
+        let zippedIconBuffer: Buffer | undefined;
+
+        if (palette && img) {
+            const iconDataBuf = Buffer.concat([palette, img]);
+            zippedIconBuffer = await gzipAsync(iconDataBuf);
+        }
+
+        const msgBuffer = Protocol.Binary.packIconMessage(
+            type,
+            slot,
+            zippedIconBuffer
+        );
+
+        this.sendMessage(msgBuffer);
+    }
+
     public async sendScreenUpdateAsync(
         image: Uint8Array,
         palette: Uint8Array | undefined
     ) {
-        const DELTAS_ENABLED = false;
+        const DELTAS_ENABLED = true;
 
         const buffers: Buffer[] = [];
         buffers.push(Buffer.from(image));
@@ -507,7 +562,7 @@ class GameClient {
         }
     }
 
-    private async sendCurrentScreenAsync() {
+    public async sendCurrentScreenAsync() {
         if (this.screen) {
             const zippedData = await gzipAsync(this.screen);
             const buffer = Protocol.Binary.packCompressedScreenMessage(
@@ -634,11 +689,24 @@ export async function sendAudioAsync(
     await gameClient?.sendAudioAsync(instruction, soundbuf);
 }
 
+export async function sendIconAsync(
+    iconType: IconType,
+    slot: number,
+    palette: Uint8Array,
+    icon: Uint8Array
+) {
+    await gameClient?.sendIconAsync(iconType, slot, palette, icon);
+}
+
 export async function sendScreenUpdateAsync(
     img: Uint8Array,
     palette: Uint8Array
 ) {
     await gameClient?.sendScreenUpdateAsync(img, palette);
+}
+
+export async function sendCurrentScreenAsync() {
+    await gameClient?.sendCurrentScreenAsync();
 }
 
 export function kickPlayer(clientId: string) {
@@ -793,6 +861,7 @@ namespace Protocol {
             Input = 1,
             CompressedScreen = 3,
             Audio = 4,
+            Icon = 5,
         }
 
         // Input
@@ -871,6 +940,38 @@ namespace Protocol {
             return {
                 instruction,
                 soundbuf,
+            };
+        }
+
+        // Icon
+        export function packIconMessage(
+            iconType: IconType,
+            iconSlot: number,
+            iconBuffer?: Buffer
+        ): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.Icon);
+            writer.writeUInt8(iconType);
+            writer.writeUInt8(iconSlot);
+            if (iconBuffer) {
+                writer.writeBuffer(iconBuffer);
+            }
+            return writer.toBuffer();
+        }
+        export function unpackIconMessage(reader: SmartBuffer): IconMessage {
+            // `type` field has already been read
+            const iconType = reader.readUInt8();
+            const iconSlot = reader.readUInt8();
+            let iconBuffer: Buffer | undefined;
+            let iconPalette: Buffer | undefined;
+            if (reader.remaining()) {
+                iconBuffer = reader.readBuffer();
+            }
+
+            return {
+                iconType,
+                iconSlot,
+                iconBuffer,
             };
         }
     }

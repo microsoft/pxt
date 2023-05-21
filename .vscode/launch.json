@@ -52,7 +52,7 @@
 			"stopOnEntry": false,
 			"args": [
 				"checkdocs",
-				"--re", 
+				"--re",
 				"adafruit"
 			],
 			"cwd": "${workspaceRoot}/../pxt-maker",
@@ -137,7 +137,8 @@
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": [
-				"buildsprites", "space"
+				"buildsprites",
+				"space"
 			],
 			"cwd": "${workspaceRoot}/../pxt-32/libs/device",
 			"runtimeExecutable": null,
@@ -230,7 +231,7 @@
 			"console": "integratedTerminal",
 			"sourceMaps": false,
 			"outFiles": []
-		},		
+		},
 		{
 			"name": "Attach",
 			"type": "node",

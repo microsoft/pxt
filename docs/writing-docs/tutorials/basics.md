@@ -267,6 +267,33 @@ Gray blocks will be generated when not all datatypes are known (e.g. `mySprite` 
 If you don't see an error message, try adding the `dbg=1` URL parameter and reload. This will output some information about each blockconfig to the console, and should provide a clue about what is failing.
 
 
+## Code Validation (`validation.local` and `validation.global` sections)
+
+If you want to enable code validation in your tutorial, you can do so by adding a validation section. As with [`blockconfig` above](#reconfiguring-blocks-in-the-toolbox-blockconfiglocal-and-blockconfigglobal-sections), there are two types of sections: `validation.global` and `validation.local`. Global can be anywhere in the markdown and applies to all steps in the tutorial. Local must appear within a specific step, and applies only to that step. Local takes precedence over global.
+
+Within a validation section, you may specify which validators you want to enable and properties for those validators using the same syntax we use for writing Skillmaps (see [skillmap structure](..\skillmaps.md#skillmap-structure)).
+
+### Validators
+
+Currently, only one validator exists: the `BlocksExistValidator`. This validator looks at [highlighted blocks](../snippets.md#highlight) in the answer key and confirms that, for each highlighted block, the user's code contains at least one block of the same type. It does *not* validate the parameters passed into the block.
+
+The only property currently available on the `BlocksExistValidator` is `Enabled`, which determines whether or not the validator runs. This is `true` by default whenever you specify the validator but can be set to `false` if you wish to disable it on a single step.
+
+### Examples
+**Enable the `BlocksExistValidator` globally**
+````
+```validation.global
+# BlocksExistValidator
+```
+````
+
+**Disable the `BlocksExistValidator` on a single step, if it has been enabled globally**
+````
+```validation.local
+# BlocksExistValidator
+* Enabled: false
+```
+````
 ## Accordion/hidden hints
 If you want to provide extra information without having to divert the coder's attention, you can include content in an "accordion" style hint control. 
 

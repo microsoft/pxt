@@ -88,6 +88,12 @@ namespace pxtblockly {
                     editorKind = "tilemap-editor";
                     const project = pxt.react.getTilemapProject();
                     pxt.sprite.addMissingTilemapTilesAndReferences(project, this.asset);
+
+                    for (const tile of getTilesReferencedByTilesets(this.sourceBlock_.workspace)) {
+                        if (this.asset.data.projectReferences.indexOf(tile.id) === -1) {
+                            this.asset.data.projectReferences.push(tile.id);
+                        }
+                    }
                     break;
                 case pxt.AssetType.Song:
                     editorKind = "music-editor";

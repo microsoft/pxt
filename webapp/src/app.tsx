@@ -74,6 +74,8 @@ import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { CodeCardView } from "./codecard";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
+import { Tour } from "./components/onboarding/Tour";
+import { parseTourStepsAsync } from "./onboarding";
 
 pxsim.util.injectPolyphils();
 
@@ -181,7 +183,9 @@ export class ProjectView
             // don't start collapsed in mobile since we can go fullscreen now
             collapseEditorTools: simcfg.headless,
             simState: pxt.editor.SimState.Stopped,
-            autoRun: this.autoRunOnStart()
+            autoRun: this.autoRunOnStart(),
+            isMultiplayerGame: false,
+            onboarding: undefined
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -190,6 +194,7 @@ export class ProjectView
         this.hidePackageDialog = this.hidePackageDialog.bind(this);
         this.hwDebug = this.hwDebug.bind(this);
         this.hideLightbox = this.hideLightbox.bind(this);
+        this.hideOnboarding = this.hideOnboarding.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
@@ -250,6 +255,24 @@ export class ProjectView
             }
             else if (msg.type === "thumbnail") {
                 if (this.shareEditor) this.shareEditor.setThumbnailFrames((msg as pxsim.SimulatorAutomaticThumbnailMessage).frames);
+            } else if (msg.type === "multiplayer") {
+                const multiplayerMessage = msg as pxsim.multiplayer.Message;
+                if (multiplayerMessage.content === "Icon"
+                    && multiplayerMessage.iconType === pxsim.multiplayer.IconType.Player
+                ) {
+                    const { palette, icon, slot } = multiplayerMessage;
+                    this.handleSetPresenceIcon(slot, palette, icon?.data);
+                }
+            } else if (msg.type === "toplevelcodefinished") {
+                if (pxt.appTarget?.appTheme?.multiplayer) {
+                    const playerOneConnectedMsg: pxsim.multiplayer.ConnectionMessage = {
+                        type: "multiplayer",
+                        content: "Connection",
+                        slot: 1,
+                        connected: true,
+                    };
+                    simulator.driver.postMessage(playerOneConnectedMsg);
+                }
             }
         }, false);
     }
@@ -313,6 +336,35 @@ export class ProjectView
             core.handleNetworkError(e);
         } finally {
             core.hideLoading("addextensions")
+        }
+    }
+
+    handleSetPresenceIcon = (slot: number, palette?: Uint8Array, icon?: Uint8Array) => {
+        slot = slot | 0;
+        if (slot < 1 || slot > 4)
+            return;
+
+        const root = document.getElementById("root");
+
+        const slotCssVarName = `--multiplayer-presence-icon-${slot}`;
+
+        if (!palette || !icon) {
+            root.style.removeProperty(slotCssVarName);
+            return;
+        } else {
+            const iconPngDataUri = pxt.convertUint8BufferToPngUri(
+                palette,
+                icon,
+            );
+            if (!iconPngDataUri) {
+                // failed to parse icon, bail out
+                return;
+            }
+            const asUrl = `url("${iconPngDataUri}")`;
+            root.style.setProperty(
+                slotCssVarName,
+                asUrl
+            );
         }
     }
 
@@ -1523,8 +1575,8 @@ export class ProjectView
 
         if (this.shareEditor) {
             this.shareEditor.setThumbnailFrames(undefined);
-            this.shareEditor.setIsMultiplayer(false);
         }
+        this.setState({ isMultiplayerGame: false });
 
         const checkAsync = this.tryCheckTargetVersionAsync(h.targetVersion);
         if (checkAsync)
@@ -1680,7 +1732,8 @@ export class ProjectView
                     projectName: h.name,
                     currFile: file,
                     sideDocsLoadUrl: '',
-                    debugging: false
+                    debugging: false,
+                    isMultiplayerGame: false
                 })
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
@@ -2774,6 +2827,15 @@ export class ProjectView
         if (options.preferredEditor)
             cfg.preferredEditor = options.preferredEditor;
 
+        if (options.simTheme || options.tutorial?.simTheme) {
+            const theming = options.simTheme || options.tutorial?.simTheme;
+            if (theming.theme) {
+                cfg.theme = theming.theme;
+            }
+            if (theming.palette) {
+                cfg.palette = theming.palette;
+            }
+        }
         if (options.languageRestriction) {
             let filesToDrop = /\.(blocks)$/;
             if (options.languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly) {
@@ -3131,13 +3193,11 @@ export class ProjectView
             try {
                 const resp = await compiler.compileAsync({ native: true, forceEmit: true });
                 this.editor.setDiagnostics(this.editorFile, state);
-                if (this.shareEditor) {
-                    if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
-                        this.shareEditor.setIsMultiplayer(true);
-                    }
-                    else {
-                        this.shareEditor.setIsMultiplayer(false);
-                    }
+                if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
+                    this.setState({ isMultiplayerGame: true });
+                }
+                else {
+                    this.setState({ isMultiplayerGame: false });
                 }
 
                 if (!saveOnly) {
@@ -3695,13 +3755,11 @@ export class ProjectView
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
 
-                    if (this.shareEditor) {
-                        if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
-                            this.shareEditor.setIsMultiplayer(true);
-                        }
-                        else {
-                            this.shareEditor.setIsMultiplayer(false);
-                        }
+                    if (resp.usedParts && resp.usedParts.indexOf("multiplayer") !== -1) {
+                        this.setState({ isMultiplayerGame: true });
+                    }
+                    else {
+                        this.setState({ isMultiplayerGame: false });
                     }
 
                     if (resp.outfiles[pxtc.BINARY_JS]) {
@@ -3709,14 +3767,16 @@ export class ProjectView
                             pxt.debug(`sim: run`)
 
                             const hc = data.getData<boolean>(auth.HIGHCONTRAST)
-                            simulator.run(pkg.mainPkg, opts.debug, resp, {
-                                mute: this.state.mute,
-                                highContrast: hc,
-                                light: pxt.options.light,
-                                clickTrigger: opts.clickTrigger,
-                                storedState: pkg.mainEditorPkg().getSimState(),
-                                autoRun: this.state.autoRun
-                            }, opts.trace)
+                            if (!pxt.react.isFieldEditorViewVisible?.()) {
+                                simulator.run(pkg.mainPkg, opts.debug, resp, {
+                                    mute: this.state.mute,
+                                    highContrast: hc,
+                                    light: pxt.options.light,
+                                    clickTrigger: opts.clickTrigger,
+                                    storedState: pkg.mainEditorPkg().getSimState(),
+                                    autoRun: this.state.autoRun
+                                }, opts.trace)
+                            }
                             this.blocksEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);
                             this.textEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);
                             if (!cancellationToken.isCancelled()) {
@@ -4160,8 +4220,8 @@ export class ProjectView
         this.profileDialog.show(location);
     }
 
-    showShareDialog(title?: string) {
-        this.shareEditor.show(title);
+    showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share") {
+        this.shareEditor.show(title, kind);
     }
 
     showLanguagePicker() {
@@ -4213,6 +4273,7 @@ export class ProjectView
         dialogs.showResetDialogAsync().then(r => {
             if (!r) return Promise.resolve();
             dialogs.clearDontShowDownloadDialogFlag();
+            webusb.clearUserPrefersDownloadFlag();
             return this.resetWorkspace();
         });
     }
@@ -4288,6 +4349,15 @@ export class ProjectView
             }).then(() => this.saveProjectNameAsync())
                 .then(() => true);
         });
+    }
+
+    signOutGithub() {
+        const githubProvider = cloudsync.githubProvider();
+        if (githubProvider) {
+            githubProvider.logout();
+            this.forceUpdate();
+            core.infoNotification(lf("Signed out from GitHub"))
+        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -4615,9 +4685,9 @@ export class ProjectView
     setEditorOffset() {
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
-                const sidebarEl = document?.getElementById("editorSidebar");
-                if (sidebarEl && pxt.BrowserUtils.isTabletSize()) {
-                    this.setState({ editorOffset: sidebarEl.offsetHeight + "px" });
+                const tutorialEl = document?.getElementById("tutorialWrapper");
+                if (tutorialEl && (pxt.BrowserUtils.isTabletSize() || pxt.appTarget.appTheme.tutorialSimSidebarLayout)) {
+                    this.setState({ editorOffset: tutorialEl.offsetHeight + "px" });
                 } else {
                     this.setState({ editorOffset: undefined });
                 }
@@ -4729,6 +4799,20 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             Onboarding           /////////////
+    ///////////////////////////////////////////////////////////
+
+    hideOnboarding() {
+        this.setState({ onboarding: undefined });
+    }
+
+    async showOnboarding() {
+        const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
+        this.setState({ onboarding: tourSteps })
+
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             Key map              /////////////
     ///////////////////////////////////////////////////////////
 
@@ -4826,20 +4910,19 @@ export class ProjectView
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
+        const tutorialSimSidebar = pxt.appTarget.appTheme.tutorialSimSidebarLayout && !pxt.BrowserUtils.isTabletSize();
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen, accessibleBlocks } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const flyoutOnly = this.state.editorState?.hasCategories === false || (inTutorial && tutorialOptions.metadata?.flyoutOnly);
-
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial);
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
-
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isTabTutorial;
         const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
@@ -4847,11 +4930,10 @@ export class ProjectView
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const editorOffset = ((inTutorialExpanded || isTabTutorial) && this.state.editorOffset) ? { top: this.state.editorOffset } : undefined;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
-
+        const isMultiplayerSupported = targetTheme.multiplayer;
+        const isMultiplayerGame = this.state.isMultiplayerGame;
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
-
         const isApp = cmds.isNativeHost() || pxt.BrowserUtils.isElectron();
-
         const hc = this.getData<boolean>(auth.HIGHCONTRAST)
 
         let rootClassList = [
@@ -4888,7 +4970,7 @@ export class ProjectView
             this.editor != this.blocksEditor ? "editorlang-text" : "",
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
-            pxt.appTarget.appTheme.embeddedTutorial ? "tutorial-embed" : ""
+            pxt.appTarget.appTheme.embeddedTutorial ? "tutorial-embed" : "",
         ];
         this.rootClasses = rootClassList;
         const rootClasses = sui.cx(rootClassList);
@@ -4929,17 +5011,16 @@ export class ProjectView
                     showSerialButtons={useSerialEditor}
                     showFileList={showFileList}
                     showFullscreenButton={!isHeadless}
-
+                    showHostMultiplayerGameButton={isMultiplayerSupported && isMultiplayerGame}
                     collapseEditorTools={this.state.collapseEditorTools}
                     simSerialActive={this.state.simSerialActive}
                     devSerialActive={this.state.deviceSerialActive}
-
                     showMiniSim={this.showMiniSim}
                     openSerial={this.openSerial}
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
-
                     tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
+                    tutorialSimSidebar={tutorialSimSidebar}
                     onTutorialStepChange={this.setTutorialStep}
                     onTutorialComplete={this.completeTutorialAsync}
                     setEditorOffset={this.setEditorOffset} />
@@ -4973,6 +5054,7 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
+                {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
             </div>
         );
     }
@@ -5079,7 +5161,7 @@ function getsrc() {
 }
 
 function enableAnalytics() {
-    pxt.analytics.enable();
+    pxt.analytics.enable(pxt.Util.userLanguage());
     pxt.editor.enableControllerAnalytics();
 
     const stats: pxt.Map<string | number> = {}
@@ -5494,22 +5576,32 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
-    pxt.options.debug = /dbg=1/i.test(window.location.href);
-    if (pxt.options.debug)
+
+    const optsQuery = Util.parseQueryString(window.location.href.toLowerCase());
+    if (optsQuery["dbg"] == "1")
         pxt.debug = console.debug;
-    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
+    pxt.options.light = optsQuery["light"] == "1" || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
     if (pxt.options.light) {
         pxsim.U.addClass(document.body, 'light');
     }
-    const wsPortMatch = /wsport=(\d+)/i.exec(window.location.href);
-    if (wsPortMatch) {
-        pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
-        pxt.BrowserUtils.changeHash(window.location.hash.replace(wsPortMatch[0], ""));
+    if (optsQuery["wsport"]) {
+        pxt.options.wsPort = parseInt(optsQuery["wsport"]) || 3233;
+        pxt.BrowserUtils.changeHash(window.location.hash.replace(`wsport=${optsQuery["wsport"]}`, ""));
     } else {
         pxt.options.wsPort = 3233;
     }
+    if (optsQuery["consoleticks"] == "1" || optsQuery["consoleticks"] == "verbose") {
+        pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Verbose;
+    } else if (optsQuery["consoleticks"] == "2" || optsQuery["consoleticks"] == "short") {
+        pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Short;
+    }
+
     pxt.perf.measureStart("setAppTarget");
     pkg.setupAppTarget((window as any).pxtTargetBundle);
+
+    // DO NOT put any async code before this line! The serviceworker must be initialized before
+    // the window load event fires
+    appcache.init(() => theEditor.reloadEditor());
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
     pxt.perf.measureEnd("setAppTarget");
 
@@ -5535,11 +5627,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     await auth.initAsync();
+
+    // Trigger the login process if autologin is specified. Required for Clever.
+    const autoLogin = query["autologin"] as pxt.IdentityProviderId;
+    if (autoLogin) {
+        await auth.loginAsync(autoLogin, true);
+    }
+
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();
     hash = parseHash();
-    appcache.init(() => theEditor.reloadEditor());
     blocklyFieldView.init();
 
     pxt.react.getTilemapProject = () => {
@@ -5750,13 +5848,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // Check to see if we should show the mini simulator (<= tablet size)
-            if (!theEditor.isTutorial() || pxt.BrowserUtils.useOldTutorialLayout()) {
+            if (!theEditor.isTutorial() || pxt.appTarget.appTheme.tutorialSimSidebarLayout || pxt.BrowserUtils.useOldTutorialLayout()) {
                 if (pxt.BrowserUtils.isTabletSize()) {
                     theEditor.showMiniSim(true);
                 } else {
                     theEditor.showMiniSim(false);
                 }
-            } else if (theEditor.isTutorial()) {
+            }
+
+            if (theEditor.isTutorial() && !pxt.BrowserUtils.useOldTutorialLayout()) {
                 // For the tabbed tutorial, set the editor offset
                 theEditor.setEditorOffset();
             }

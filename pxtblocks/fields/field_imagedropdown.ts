@@ -138,6 +138,11 @@ namespace pxtblockly {
             }
         }
 
+        doValueUpdate_(newValue: any): void {
+            (this as any).selectedOption_ = undefined;
+            super.doValueUpdate_(newValue);
+        }
+
         /**
          * Callback for when a button is clicked inside the drop-down.
          * Should be bound to the FieldIconMenu.

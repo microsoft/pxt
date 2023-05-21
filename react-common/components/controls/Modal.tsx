@@ -21,6 +21,7 @@ export interface ModalAction {
 
 export interface ModalProps extends ContainerProps {
     title: string;
+    leftIcon?: string;
     helpUrl?: string
     ariaDescribedBy?: string;
     actions?: ModalAction[];
@@ -40,6 +41,7 @@ export const Modal = (props: ModalProps) => {
         ariaDescribedBy,
         role,
         title,
+        leftIcon,
         helpUrl,
         actions,
         onClose,
@@ -79,6 +81,7 @@ export const Modal = (props: ModalProps) => {
                     </div>
                 }
                 <div id="modal-title" className="common-modal-title">
+                    {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
                     {title}
                 </div>
                 {fullscreen && helpUrl &&
@@ -124,5 +127,5 @@ export const Modal = (props: ModalProps) => {
                 </div>
             }
         </div>
-    </FocusTrap>, parentElement || document.body)
+    </FocusTrap>, parentElement || document.getElementById("root") || document.body)
 }

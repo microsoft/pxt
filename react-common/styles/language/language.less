@@ -1,0 +1,32 @@
+.language-selector-modal > .common-modal {
+    width: 80%;
+    max-width: 60rem;
+}
+.language-selector {
+    display: flex;
+    flex-wrap: wrap;
+    max-height: 80vh;
+    overflow: auto;
+    margin-bottom: 0 !important;
+}
+.language-card-container {
+    padding: 1rem;
+}
+.language-card-header {
+    color: #4c4ca6;
+    font-weight: 700;
+    font-size: 1.3em;
+    line-height: 1.3em;
+    text-align: start;
+}
+.language-card-description {
+    text-align: start;
+    margin-top: 0.4rem;
+}
+
+/* Mobile + Tablet */
+@media only screen and (max-width: @largestTabletScreen) {
+    .language-selector-modal > .common-modal {
+        width: 95%;
+    }
+}

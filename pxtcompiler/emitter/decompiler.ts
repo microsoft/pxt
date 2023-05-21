@@ -1634,7 +1634,7 @@ ${output}</xml>`;
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
+            const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
             const nr = attributes.imageLiteralRows || 5;
             const nleds = nc * nr;
             if (nleds != leds.length) {
@@ -2076,7 +2076,7 @@ ${output}</xml>`;
                 attributes.blockId = builtin.blockId;
             }
 
-            if (attributes.imageLiteral) {
+            if (attributes.imageLiteral || attributes.gridLiteral) {
                 return getImageLiteralStatement(node, info);
             }
 
@@ -2807,7 +2807,7 @@ ${output}</xml>`;
             const comp = pxt.blocks.compileInfo(api);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
 
-            if (attributes.imageLiteral) {
+            if (attributes.imageLiteral || attributes.gridLiteral) {
                 // Image literals do not show up in the block string, so it won't be in comp
                 if (info.args.length - totalDecompilableArgs > 1) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -2819,7 +2819,7 @@ ${output}</xml>`;
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
                 const nr = attributes.imageLiteralRows || 5;
-                const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
+                const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
                 const nleds = nc * nr;
                 if (nc * nr != leds.length) {
                     return Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length);
@@ -2979,14 +2979,12 @@ ${output}</xml>`;
                     }
 
                     const tag = unwrapNode((e as ts.TaggedTemplateExpression).tag);
-
-                    if (tag.kind !== SK.Identifier) {
-                        return Util.lf("Tagged template literals must use an identifier as the tag");
-                    }
-
                     const tagText = tag.getText();
-                    if (tagText.trim() != tagName.trim()) {
-                        return Util.lf("Function only supports template literals with tag '{0}'", tagName);
+
+                    const possibleTags = tagName.split(";").map(t => t.trim());
+
+                    if (possibleTags.indexOf(tagText) === -1) {
+                        return Util.lf("Function only supports template literals with tag '{0}'", possibleTags.join(", "));
                     }
 
                     const template = (e as ts.TaggedTemplateExpression).template;
@@ -3703,21 +3701,24 @@ ${output}</xml>`;
 
     function isOutputExpression(expr: ts.Expression): boolean {
         switch (expr.kind) {
-            case SK.BinaryExpression:
+            case SK.BinaryExpression: {
                 const tk = (expr as ts.BinaryExpression).operatorToken.kind;
                 return tk != SK.PlusEqualsToken && tk != SK.MinusEqualsToken && tk != SK.EqualsToken;
+            }
             case SK.PrefixUnaryExpression: {
-                let op = (expr as ts.PrefixUnaryExpression).operator;
+                const op = (expr as ts.PrefixUnaryExpression).operator;
                 return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
             }
             case SK.PostfixUnaryExpression: {
-                let op = (expr as ts.PostfixUnaryExpression).operator;
+                const op = (expr as ts.PostfixUnaryExpression).operator;
                 return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
             }
-            case SK.CallExpression:
+            case SK.CallExpression: {
                 const callInfo: pxtc.CallInfo = pxtc.pxtInfo(expr).callInfo
                 assert(!!callInfo);
                 return callInfo.isExpression;
+            }
+            case SK.Identifier:
             case SK.ParenthesizedExpression:
             case SK.NumericLiteral:
             case SK.StringLiteral:

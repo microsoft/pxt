@@ -29,6 +29,7 @@ export interface SkillMapState {
     theme: SkillGraphTheme;
     auth: AuthState;
     readyResources?: ReadyResources;
+    showSelectLanguage?: boolean;
 }
 
 export interface EditorViewState {
@@ -395,6 +396,17 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     signedIn: !!action.profile?.id
                 }
             };
+        case actions.SHOW_SELECT_LANGUAGE:
+            return {
+                ...state,
+                showSelectLanguage: true
+            };
+        case actions.HIDE_SELECT_LANGUAGE: {
+            return {
+                ...state,
+                showSelectLanguage: false
+            }
+        }
         case actions.SET_USER_PREFERENCES:
             return {
                 ...state,

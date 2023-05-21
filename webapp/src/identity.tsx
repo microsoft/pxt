@@ -41,7 +41,8 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
     private signInAsync = async (provider: pxt.AppCloudProvider, rememberMe: boolean): Promise<void> => {
         pxt.tickEvent(`identity.loginClick`, { provider: provider.name, rememberMe: rememberMe.toString() });
         await auth.loginAsync(provider.id, rememberMe, {
-            hash: this.state.continuationHash
+            hash: this.state.continuationHash,
+            params: pxt.Util.parseQueryString(window.location.search)
         });
     }
 
@@ -62,6 +63,8 @@ type UserMenuState = {
 };
 
 export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
+    dropdown: sui.DropdownMenu;
+
     constructor(props: UserMenuProps) {
         super(props);
         this.state = {
@@ -93,17 +96,19 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
 
     handleUnlinkGitHubClicked = () => {
         pxt.tickEvent("menu.github.signout");
-        const githubProvider = cloudsync.githubProvider();
-        if (githubProvider) {
-            githubProvider.logout();
-            this.props.parent.forceUpdate();
-            core.infoNotification(lf("Signed out from GitHub..."))
-        }
+        this.hide();
+        this.props.parent.signOutGithub();
     }
 
     avatarPicUrl(): string {
         const user = this.getUserProfile();
         return user?.idp?.pictureUrl ?? user?.idp?.picture?.dataUrl;
+    }
+
+    hide() {
+        if (this.dropdown) {
+            this.dropdown.hide();
+        }
     }
 
     renderCore() {
@@ -143,6 +148,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                 titleContent={loggedIn ? signedInElem : signedOutElem}
                 tabIndex={loggedIn ? 0 : -1}
                 onClick={this.handleDropdownClicked}
+                ref={ref => this.dropdown = ref}
             >
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
@@ -151,7 +157,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                         <div className="icon avatar" role="presentation">
                             <img className="circular image" src={githubUser.photo} alt={lf("User picture")} />
                         </div>
-                        <span>{lf("Unlink GitHub")}</span>
+                        <span>{lf("Disconnect GitHub")}</span>
                     </sui.Item>
                     : undefined}
                 {githubUser && <div className="ui divider"></div>}

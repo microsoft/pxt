@@ -1,0 +1,49 @@
+.confetti-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 100;
+}
+
+.confetti {
+    width: 10px;
+    height: 10px;
+    background-color: #249ca3;
+    position: absolute;
+    left: 50%;
+    top: -15px;
+    animation: confetti 2.5s linear -2s infinite;
+    transform-origin: left top;
+    z-index: 110;
+}
+
+.confetti.reverse {
+    animation: confetti-reverse 2.5s linear -2s infinite;
+}
+
+.color-0 { background-color: #ff2121; }
+.color-1 { background-color: #ff93c4; }
+.color-2 { background-color: #ff8135; }
+.color-3 { background-color: #fff609; }
+.color-4 { background-color: #249ca3; }
+.color-5 { background-color: #78dc52; }
+.color-6 { background-color: #003fad; }
+.color-7 { background-color: #87f2ff; }
+.color-8 { background-color: #8e2ec4; }
+
+@keyframes confetti {
+    0% { transform: rotateZ(15deg) rotateY(0deg) translate(0,0); }
+    25% { transform: rotateZ(5deg) rotateY(360deg) translate(-1vw,20vh); }
+    50% { transform: rotateZ(15deg) rotateY(720deg) translate(1vw,50vh); }
+    75% { transform: rotateZ(5deg) rotateY(1080deg) translate(-1vw,80vh); }
+    100% { transform: rotateZ(15deg) rotateY(1440deg) translate(1vw,110vh); }
+}
+
+@keyframes confetti-reverse {
+    0% { transform: rotateZ(5deg) rotateY(0deg) translate(0,0); }
+    25% { transform: rotateZ(15deg) rotateY(360deg) translate(1vw,20vh); }
+    50% { transform: rotateZ(5deg) rotateY(720deg) translate(-1vw,50vh); }
+    75% { transform: rotateZ(15deg) rotateY(1080deg) translate(1vw,80vh); }
+    100% { transform: rotateZ(5deg) rotateY(1440deg) translate(-1vw,110vh); }
+}

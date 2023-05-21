@@ -12,7 +12,7 @@ import App from "./App";
 import { AppStateProvider } from "./state/AppStateContext";
 
 function enableAnalytics() {
-    pxt.analytics.enable();
+    pxt.analytics.enable(pxt.Util.userLanguage());
 
     const stats: pxt.Map<string | number> = {};
     if (typeof window !== "undefined") {
@@ -36,8 +36,12 @@ function enableAnalytics() {
 window.addEventListener("DOMContentLoaded", () => {
     const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 
-    pxt.setAppTarget(bundle);
+    pxt.options.debug = /dbg=1/i.test(window.location.href);
+    if (pxt.options.debug)
+        pxt.debug = console.debug;
+
     pxt.setupWebConfig((window as any).pxtConfig || pxt.webConfig);
+    pxt.setAppTarget(bundle);
     // todo: handle this better?
     if (pxt.BrowserUtils.isLocalHostDev()) {
         // patch webconfig to refer to pxt serve instead of multiplayer serve
