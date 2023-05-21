@@ -12,7 +12,7 @@ export default function Render() {
 
     function handleEditGameClick() {
         if (remixUrl) {
-            pxt.tickEvent("mp.remixgame");
+            pxt.tickEvent("mp.editgame");
             window.open(remixUrl);
         }
     }
