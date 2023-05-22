@@ -101,7 +101,7 @@ export const Input = (props: InputProps) => {
     }
 
     const expandButtonClickHandler = () => {
-        if(options) {
+        if (options) {
             setExpanded(!expanded);
         }
     }
@@ -116,7 +116,7 @@ export const Input = (props: InputProps) => {
     }
 
     const containerBlurHandler = (e: React.FocusEvent) => {
-        if(expanded && !container.contains(e.relatedTarget as HTMLElement)) {
+        if (expanded && !container.contains(e.relatedTarget as HTMLElement)) {
             setExpanded(false);
         }
     }
@@ -126,7 +126,7 @@ export const Input = (props: InputProps) => {
 
         const value = options[option];
         setValue(value);
-        if(onOptionSelected) { 
+        if (onOptionSelected) { 
             onOptionSelected(value);
         }
     }
