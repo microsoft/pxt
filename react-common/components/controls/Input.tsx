@@ -90,13 +90,22 @@ export const Input = (props: InputProps) => {
         }
     }
 
-    const enterKeyHandler = (e: React.KeyboardEvent) => {
+    const keyDownHandler = (e: React.KeyboardEvent) => {
         const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
         if (charCode === /*enter*/13 || props.treatSpaceAsEnter && charCode === /*space*/32) {
             if (onEnterKey) {
                 e.preventDefault();
                 onEnterKey(value);
             }
+        } else if (options && expanded && e.key === "ArrowDown") {
+            document.getElementById(getDropdownOptionId(Object.values(options)[0]))?.focus();
+            e.preventDefault();
+            e.stopPropagation();
+        } else if (options && expanded && e.key === "ArrowUp") {
+            const optionVals = Object.values(options);
+            document.getElementById(getDropdownOptionId(optionVals[optionVals.length - 1]))?.focus();
+            e.preventDefault();
+            e.stopPropagation();
         }
     }
 
@@ -161,7 +170,7 @@ export const Input = (props: InputProps) => {
                     readOnly={!!readOnly}
                     onClick={clickHandler}
                     onChange={changeHandler}
-                    onKeyDown={enterKeyHandler}
+                    onKeyDown={keyDownHandler}
                     onBlur={blurHandler}
                     autoComplete={autoComplete ? "" : "off"}
                     autoCorrect={autoComplete ? "" : "off"}
