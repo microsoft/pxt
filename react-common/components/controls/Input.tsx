@@ -74,6 +74,10 @@ export const Input = (props: InputProps) => {
         if (selectOnClick) {
             (evt.target as any).select()
         }
+
+        if (options && !expanded) {
+            setExpanded(true);
+        }
     }
 
     const changeHandler = (e: React.ChangeEvent<any>) => {
@@ -129,6 +133,8 @@ export const Input = (props: InputProps) => {
         if (onOptionSelected) { 
             onOptionSelected(value);
         }
+
+        document.getElementById(id)?.focus();
     }
 
     const getDropdownOptionId = (option: string) => {

@@ -199,6 +199,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                         {pxt.U.lf("Duration (ms)")}
                     </div>
                     <Input
+                        id="sound-duration-input"
                         initialValue={sound.duration + ""}
                         className="sound-duration-input"
                         onEnterKey={onDurationChange}
