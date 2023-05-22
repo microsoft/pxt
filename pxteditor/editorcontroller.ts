@@ -574,7 +574,7 @@ namespace pxt.editor {
                                         .then(() => projectView.printCode());
                                 }
                                 case "pair": {
-                                    return projectView.pairAsync();
+                                    return projectView.pairAsync().then(() => {});
                                 }
                                 case "info": {
                                     return Promise.resolve()

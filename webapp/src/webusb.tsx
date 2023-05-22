@@ -21,7 +21,7 @@ let userPrefersDownloadFlag = false;
 
 type ConfirmAsync = (options: core.PromptOptions) => Promise<number>;
 
-export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: ConfirmAsync, implicitlyCalled?: boolean) {
+export async function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: ConfirmAsync, implicitlyCalled?: boolean) {
     if (pxt.appTarget.appTheme.downloadDialogTheme) {
         return webUsbPairThemedDialogAsync(pairAsync, confirmAsync, implicitlyCalled);
     }
@@ -58,30 +58,62 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
             })());
         } catch (e) {
             // continue pairing flow
-        } finally {
-            core.hideLoading("attempting-reconnect");
         }
+        core.hideLoading("attempting-reconnect");
     }
 
     let paired = connected;
 
+
     if (!connected) {
-        if (!await showPickWebUSBDeviceDialogAsync(confirmAsync, implicitlyCalled))
+        // TODO: consider watching .isConnected while showPickWebUSB runs,
+        // and hiding the dialog automatically if connection occurs
+        // while the modal is still up.
+        const webUsbInstrDialogRes = await showPickWebUSBDeviceDialogAsync(confirmAsync, implicitlyCalled);
+        connected = pxt.packetio.isConnected();
+        if (connected) {
+            // plugged in underneath previous dialog, continue;
+        } else if (!webUsbInstrDialogRes) {
             return notPairedResult();
+        } else {
+            core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName))
 
-        core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName))
+            let errMessage: any;
+            try {
+                paired = await pairAsync();
+            } catch (e) {
+                errMessage = e.message;
+            }
+            core.hideLoading("pair");
 
-
-        try {
-            paired = await pairAsync();
+            if (pxt.packetio.isConnected()) {
+                // user connected previously paired device &&
+                // exitted browser pair dialog without reselecting it;
+                // this is fine.
+                paired = true;
+            } else if (errMessage) {
+                // error occured in catch, throw now that we know pairing
+                // didn't happen underneath this dialog flow
+                core.errorNotification(lf("Pairing error: {0}", errMessage));
+                paired = false;
+            }
         }
-        catch (e) {
-            core.errorNotification(lf("Pairing error: {0}", e.message));
+    }
+
+
+    if (paired && !pxt.packetio.isConnected()) {
+        // Confirm connection is valid (not e.g. being controlled by another tab).
+        core.showLoading("attempting-connection", lf("Connecting to your {0}", boardName));
+        try {
+            paired = await cmds.maybeReconnectAsync(
+                false /** pairIfDeviceNotFound **/,
+                true /** skipIfConnected **/,
+            );
+        } catch (e) {
+            // Error while attempting connection
             paired = false;
         }
-        finally {
-            core.hideLoading("pair")
-        }
+        core.hideLoading("attempting-connection");
     }
 
     if (paired) {

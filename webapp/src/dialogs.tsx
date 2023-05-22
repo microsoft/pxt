@@ -737,15 +737,17 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
     });
 }
 
-export function renderBrowserDownloadInstructions(saveonly?: boolean) {
+export function renderBrowserDownloadInstructions(saveonly?: boolean, redeploy?: () => Promise<void>) {
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
     const fileExtension = pxt.appTarget.compile?.useUF2 ? ".uf2" : ".hex";
     const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
 
-    const onPairClicked = () => {
+    const onPairClicked = async () => {
         core.hideDialog();
-        pairAsync();
+        const successfulPairing = await pairAsync(true);
+        if (redeploy && successfulPairing)
+            await redeploy();
     }
 
     const onCheckboxClicked = (value: boolean) => {
