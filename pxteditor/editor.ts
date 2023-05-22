@@ -239,7 +239,7 @@ namespace pxt.editor {
         exportAsync(): Promise<string>;
 
         newEmptyProject(name?: string, documentation?: string, preferredEditor?: string): void;
-        newProject(options?: ProjectCreationOptions): void;
+        newProject(options?: ProjectCreationOptions, isFirstProject?: boolean): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;

@@ -2787,13 +2787,18 @@ export class ProjectView
         })
     }
 
-    newProject(options: ProjectCreationOptions = {}) {
+    newProject(options: ProjectCreationOptions = {}, isFirstProject?: boolean) {
         pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
         return this.createProjectAsync(options)
             .then(() => this.autoChooseBoardAsync())
             .then(() => Util.delay(500))
-            .finally(() => core.hideLoading("newproject"));
+            .finally(() => {
+                core.hideLoading("newproject");
+                if (isFirstProject) {
+                    this.showOnboarding();
+                }
+            });
     }
 
     async createProjectAsync(options: ProjectCreationOptions): Promise<void> {
