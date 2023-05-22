@@ -88,7 +88,7 @@ export const ThumbnailRecorder = (props: ThumbnailRecorderProps) => {
     const targetTheme = pxt.appTarget.appTheme;
     const screenshotLabel = targetTheme.simScreenshotKey ? lf("Screenshot ({0})", targetTheme.simScreenshotKey) : lf("Screenshot");
     const startRecordingLabel = targetTheme.simGifKey ? lf("Record ({0})", targetTheme.simGifKey) : lf("Record");
-    const stopRecordingLabel = lf("Stop recording ({0})", targetTheme.simGifKey);
+    const stopRecordingLabel = targetTheme.simGifKey ? lf("Stop recording ({0})", targetTheme.simGifKey): lf("Stop recording");
     const renderingLabel = lf("Rendering...");
 
     let recordLabel: string;
