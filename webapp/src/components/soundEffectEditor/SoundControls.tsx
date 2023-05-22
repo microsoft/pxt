@@ -112,6 +112,11 @@ export const SoundControls = (props: SoundControlsProps) => {
         });
     }
 
+    const onOptionSelected = (newValue: string) => {
+        pxt.tickEvent("soundeffect.durationSelected", { option: newValue });
+        onDurationChange(newValue);
+    }
+
     const onDurationChange = (newValue: string) => {
         const val = parseInt(newValue);
 
@@ -194,11 +199,24 @@ export const SoundControls = (props: SoundControlsProps) => {
                         {pxt.U.lf("Duration (ms)")}
                     </div>
                     <Input
+                        id="sound-duration-input"
                         initialValue={sound.duration + ""}
                         className="sound-duration-input"
                         onEnterKey={onDurationChange}
                         treatSpaceAsEnter={true}
                         onBlur={onDurationChange}
+                        onOptionSelected={onOptionSelected}
+                        ariaLabel={pxt.U.lf("Duration (milliseconds)")}
+                        options={
+                            {
+                                [pxt.U.lf("100 ms")]: "100",
+                                [pxt.U.lf("200 ms")]: "200",
+                                [pxt.U.lf("500 ms")]: "500",
+                                [pxt.U.lf("1 second")]: "1000",
+                                [pxt.U.lf("2 seconds")]: "2000",
+                                [pxt.U.lf("5 seconds")]: "5000"
+                            }
+                        }
                     />
                 </div>
             </div>
