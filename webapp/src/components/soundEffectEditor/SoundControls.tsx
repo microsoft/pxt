@@ -206,6 +206,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                         treatSpaceAsEnter={true}
                         onBlur={onDurationChange}
                         onOptionSelected={onOptionSelected}
+                        ariaLabel={pxt.U.lf("Duration (milliseconds)")}
                         options={
                             {
                                 [lf("100 ms")]: "100",
