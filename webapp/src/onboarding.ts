@@ -25,6 +25,9 @@ function getTargetMap(target: string): querySelector {
         },
         "everything" : {
             targetQuery: "#root",
+        },
+        "nothing" : {
+            targetQuery: "nothing",
         }
     }
     return targetMap[target];
