@@ -1236,6 +1236,10 @@ __flash_checksums:
         // is disabled, another variant may be set up
         hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo())
         assembleAndPatch(src, bin, opts, cres)
+        if (!cres.builtVariants) {
+            cres.builtVariants = [];
+        }
+        cres.builtVariants.push(opts.extinfo?.appVariant);
 
         const otherVariants = opts0.otherMultiVariants || []
         if (otherVariants.length)
@@ -1247,6 +1251,7 @@ __flash_checksums:
                     localOpts.target = other.target
                     hexfile.setupFor(localOpts.target, localOpts.extinfo)
                     assembleAndPatch(src, bin, localOpts, cres)
+                    cres.builtVariants.push(other.extinfo?.appVariant);
                 }
             } finally {
                 hexfile.setupFor(opts0.target, opts0.extinfo)
