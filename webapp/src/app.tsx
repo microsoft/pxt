@@ -2795,7 +2795,7 @@ export class ProjectView
             .then(() => Util.delay(500))
             .finally(() => {
                 core.hideLoading("newproject");
-                if (options?.firstProject) {
+                if (options?.firstProject && pxt.appTarget.appTheme?.tours?.editor) {
                     this.showOnboarding();
                 }
             });
