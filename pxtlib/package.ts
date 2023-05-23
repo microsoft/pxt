@@ -1235,7 +1235,11 @@ namespace pxt {
                 !opts.target.isNative
 
             if (!noFileEmbed) {
-                const files = await this.filesToBePublishedAsync(true)
+                // Include packages when it won't influence flash size.
+                const files = await this.filesToBePublishedAsync(
+                    true,
+                    !appTarget.compile.useUF2
+                );
                 const headerString = JSON.stringify({
                     name: this.config.name,
                     comment: this.config.description,
@@ -1302,24 +1306,56 @@ namespace pxt {
             return cfg;
         }
 
-        filesToBePublishedAsync(allowPrivate = false) {
+        async filesToBePublishedAsync(allowPrivate = false, packExternalExtensions = false) {
             const files: Map<string> = {};
-            return this.loadAsync()
-                .then(() => {
-                    if (!allowPrivate && !this.config.public)
-                        U.userError('Only packages with "public":true can be published')
-                    const cfg = this.prepareConfigToBePublished();
-                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
-                    for (let f of this.getFiles()) {
-                        // already stored
-                        if (f == pxt.CONFIG_NAME) continue;
-                        let str = this.readFile(f)
-                        if (str == null)
-                            U.userError("referenced file missing: " + f)
-                        files[f] = str
+            await this.loadAsync();
+            if (!allowPrivate && !this.config.public)
+                U.userError('Only packages with "public":true can be published')
+            const cfg = this.prepareConfigToBePublished();
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+
+            for (let f of this.getFiles()) {
+                // already stored
+                if (f == pxt.CONFIG_NAME) continue;
+                let str = this.readFile(f)
+                if (str == null)
+                    U.userError("referenced file missing: " + f)
+                files[f] = str
+            }
+
+            if (packExternalExtensions) {
+                const packDeps = (p: Package) => {
+                    // package in current resolved version for use as backup
+                    // e.g. loading hexfile back into editor when offline
+                    const depsToPack = p.resolvedDependencies()
+                        .filter(dep => {
+                            switch (dep.verProtocol()) {
+                                case "github":
+                                case "pub":
+                                    return true;
+                                default:
+                                    return false;
+                            }
+                        });
+                    for (const dep of depsToPack) {
+                        // todo; swap this over to just one json blob under files,
+                        // not keyed off -backup.json, to make extracting / hiding more obvious. key goes in pxtlib/main.ts
+                        if (files[`${dep._verspec}-backup.json`])
+                            continue;
+                        const packed: Map<string> = {}
+                        for (const toPack of dep.getFiles()) {
+                            packed[toPack] = dep.readFile(toPack);
+                        }
+                        packed[pxt.CONFIG_NAME] = JSON.stringify(dep.config);
+
+                        files[`${dep._verspec}-backup.json`] = JSON.stringify(packed);
+                        packDeps(dep);
                     }
-                    return U.sortObjectFields(files)
-                })
+                }
+
+                packDeps(this);
+            }
+            return U.sortObjectFields(files);
         }
 
         saveToJsonAsync(): Promise<pxt.cpp.HexFile> {
