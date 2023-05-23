@@ -614,16 +614,16 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return headers;
     }
 
-    newProject(isFirstProject?: boolean) {
+    newProject(firstProject?: boolean) {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
         if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
             this.props.parent.askForProjectCreationOptionsAsync()
                 .then(projectSettings => {
                     const { name, languageRestriction } = projectSettings
-                    this.props.parent.newProject({ name, languageRestriction }, isFirstProject);
+                    this.props.parent.newProject({ name, languageRestriction, firstProject });
                 })
         } else {
-            this.props.parent.newProject({}, isFirstProject);
+            this.props.parent.newProject({ firstProject });
         }
     }
 
