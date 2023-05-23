@@ -4953,6 +4953,7 @@ export class ProjectView
             inTutorialExpanded && !isTabTutorial ? 'tutorialExpanded' : '',
             isTabTutorial ? 'tabTutorial' : '',
             isSidebarTutorial ? 'sidebarTutorial' : '',
+            tutorialSimSidebar ? 'tutorialSimSidebar' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
