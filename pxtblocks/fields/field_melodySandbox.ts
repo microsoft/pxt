@@ -375,7 +375,7 @@ namespace pxtblockly {
             if (s.parentBlock_) {
                 const p = s.parentBlock_;
                 for (const input of p.inputList) {
-                    if (input.name === "tempo") {
+                    if (input.name === "tempo" || input.name === "bpm") {
                         const tempoBlock = input.connection.targetBlock();
                         if (tempoBlock) {
                             if (blockToEditor)
