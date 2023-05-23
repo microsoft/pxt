@@ -58,7 +58,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             } else {
                 setLayout("vertical");
             }
-            setShowScrollGradient(contentRef?.current?.scrollHeight > contentRef?.current?.offsetHeight);
+            updateScrollGradient();
         });
         observer.observe(document.body)
         return () => observer.disconnect();
@@ -91,7 +91,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         const contentDiv = contentRef?.current;
         contentDiv.querySelector(".tutorial-step-content")?.focus();
         contentDiv.scrollTo(0, 0);
-        setShowScrollGradient(contentDiv.scrollHeight > contentDiv.offsetHeight);
+        updateScrollGradient();
         setStepErrorAttemptCount(0);
 
         onTutorialStepChange(currentStep);
@@ -207,7 +207,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const onModalClose = showNext ? () => tutorialStepNext() : () => setHideModal(true);
 
-    const tutorialContentScroll = () => {
+    const updateScrollGradient = () => {
         const contentDiv = contentRef?.current;
         setShowScrollGradient(contentDiv && ((contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight) > 1));
     }
@@ -246,7 +246,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     return <div className="tutorial-container">
         {!isHorizontal && stepCounter}
-        <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
+        <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={updateScrollGradient}>
             <div className={"tutorial-content-bkg"}>
                 {!isHorizontal && <div className="tutorial-step-label">
                     {name && <span className="tutorial-step-title">{name}</span>}
