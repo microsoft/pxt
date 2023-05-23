@@ -964,7 +964,7 @@
 *******************************/
 
 @media only screen and (min-width: @largestSmallMonitor) {
-    #root.tabTutorial:not(.fullscreensim, .greenscreen) {
+    #root.tabTutorial:not(.fullscreensim, .greenscreen, .tutorialSimSidebar) {
         #editortools {
             width: calc(100% - @simulatorWidth);
             left: unset;
@@ -975,7 +975,7 @@
 
 
 @media only screen and (min-width: @largestTabletScreen) and (max-width: @largestSmallMonitor) {
-    #root.tabTutorial:not(.fullscreensim, .greenscreen) {
+    #root.tabTutorial:not(.fullscreensim, .greenscreen, .tutorialSimSidebar) {
         #editortools {
             width: calc(100% - @simulatorWidthSmall);
             left: unset;
