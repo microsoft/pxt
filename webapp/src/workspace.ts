@@ -646,7 +646,8 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    return pxt.github.cacheProjectDependenciesAsync(cfg)
+
+    return pxt.github.cacheProjectDependenciesAsync(cfg, text)
         .then(() => importAsync(h, text))
         .then(() => h);
 }

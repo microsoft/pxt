@@ -439,7 +439,7 @@ namespace pxt {
     export interface Host {
         readFile(pkg: Package, filename: string, skipAdditionalFiles?: boolean): string;
         writeFile(pkg: Package, filename: string, contents: string, force?: boolean): void;
-        downloadPackageAsync(pkg: Package, deps?: string[]): Promise<void>;
+        downloadPackageAsync(pkg: Package, deps?: string[]/**, fallback?: () => void **/): Promise<void>;
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo>;
         cacheStoreAsync(id: string, val: string): Promise<void>;
         cacheGetAsync(id: string): Promise<string>; // null if not found
