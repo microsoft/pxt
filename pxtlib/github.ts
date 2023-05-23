@@ -630,7 +630,7 @@ namespace pxt.github {
         return { version, config };
     }
 
-    export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig, packagedFiles?: pxt.Map<string>): Promise<void> {
+    export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig): Promise<void> {
         const ghExtensions = Object.keys(cfg.dependencies)
             ?.filter(dep => isGithubId(cfg.dependencies[dep]));
 
@@ -641,15 +641,9 @@ namespace pxt.github {
                 ghExtensions.map(
                     async ext => {
                         const extSrc = cfg.dependencies[ext];
-                        let ghPkg: CachedPackage;
-                        let caughtError: any;
-                        try {
-                            ghPkg = await downloadPackageAsync(extSrc, pkgConfig);
-                        } catch (e) {
-                            caughtError = e;
-                        }
-                        if ((!ghPkg || caughtError) && !packagedFiles?.[`${extSrc}-backup.json`]) {
-                            throw caughtError || new Error(lf("Cannot load extension {0} from {1}", ext, extSrc));
+                        const ghPkg = await downloadPackageAsync(extSrc, pkgConfig);
+                        if (!ghPkg) {
+                            throw new Error(lf("Cannot load extension {0} from {1}", ext, extSrc));
                         }
                     }
                 )

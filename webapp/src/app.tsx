@@ -2868,7 +2868,7 @@ export class ProjectView
         }
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
-        await pxt.github.cacheProjectDependenciesAsync(cfg, files);
+        await pxt.github.cacheProjectDependenciesAsync(cfg);
 
         const hd = await workspace.installAsync({
             name: cfg.name,

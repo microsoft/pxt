@@ -456,13 +456,7 @@ export class EditorPackage {
     sortedFiles(): File[] {
         let lst = Util.values(this.files)
         if (!pxt.options.debug)
-            lst = lst.filter(f =>
-                f.name != pxt.github.GIT_JSON
-                && f.name != pxt.SIMSTATE_JSON
-                && f.name != pxt.SERIAL_EDITOR_FILE
-                && f.name != pxt.PALETTES_FILE
-                && !/(pub|github):.+-backup.json/.test(f.name)
-            );
+            lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && f.name != pxt.SERIAL_EDITOR_FILE && f.name != pxt.PALETTES_FILE)
         lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
         return lst
     }
@@ -707,7 +701,7 @@ class Host
             .then(v => v.val, e => null)
     }
 
-    downloadPackageAsync(pkg: pxt.Package, deps?: string[]/**, fallback?: () => void**/): Promise<void> {
+    downloadPackageAsync(pkg: pxt.Package): Promise<void> {
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
@@ -729,25 +723,13 @@ class Host
                     }
                 })
 
-        const handleMissingNetwork = (e: any) => {
-            // const files = fallback();
-            const files = mainPkg.readFile(`${pkg._verspec}-backup.json`);
-            if (files) {
-                epkg.setFiles(JSON.parse(files));
-            } else {
-                throw e;
-            }
-        }
-
         if (proto == "pub") {
             // make sure it sits in cache
             return workspace.getPublishedScriptAsync(pkg.verArgument())
                 .then(files => epkg.setFiles(files))
-                .catch(handleMissingNetwork);
         } else if (proto == "github") {
             return workspace.getPublishedScriptAsync(pkg.version())
                 .then(files => epkg.setFiles(files))
-                .catch(handleMissingNetwork);
         } else if (proto == "workspace") {
             return fromWorkspaceAsync(pkg.verArgument())
         } else if (proto == "file") {

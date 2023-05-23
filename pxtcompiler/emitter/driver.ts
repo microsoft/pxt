@@ -271,7 +271,6 @@ namespace ts.pxtc {
 
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, opts, res, entryPoint);
-
             res.times["compilebinary"] = U.cpuUs() - emitStart
             res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
         }

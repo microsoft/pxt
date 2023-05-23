@@ -142,35 +142,12 @@ namespace pxt {
             const proto = this.verProtocol()
             let files: Map<string>;
 
-            if (proto == "pub" || proto == "github") {
-                let caughtError: any;
-                try {
-                    if (proto == "pub") {
-                        files = await Cloud.downloadScriptFilesAsync(this.verArgument())
-                    } else {
-                        const config = await pxt.packagesConfigAsync();
-                        const resp = await pxt.github.downloadPackageAsync(this.verArgument(), config)
-                        files = resp.files;
-                    }
-                } catch (e) {
-                    caughtError = e ;
-                }
-
-                // attempt to grab from top level package if `${dep._verspec}-backup.json` defined
-                let p = this.parent;
-                while (p && p != <Package>this) {
-                    const backupFile = p.readFile(`${this._verspec}-backup.json`);
-                    if (backupFile) {
-                        files = JSON.parse(backupFile);
-                        break;
-                    }
-                    p = p.parent;
-                }
-
-                if (!files && caughtError) {
-                    // no backup found, rethrow
-                    throw caughtError || new Error("Could not download.");
-                }
+            if (proto == "pub") {
+                files = await Cloud.downloadScriptFilesAsync(this.verArgument())
+            } else if (proto == "github") {
+                const config = await pxt.packagesConfigAsync();
+                const resp = await pxt.github.downloadPackageAsync(this.verArgument(), config)
+                files = resp.files;
             } else if (proto == "embed") {
                 files = pxt.getEmbeddedScript(this.verArgument())
             } else if (proto == "pkg") {
@@ -330,70 +307,27 @@ namespace pxt {
             return Promise.resolve(v)
         }
 
-        /**
-         * strip out at beginning of hex file import
-         * push them into hex, github cache if those values are not already there
-         *      flag attached that says they're temporary / backup only
-         * treat the cache as expired by time
-         *      keep trying to fetch new one but return it in place until network is available
-         **/
-        private async downloadAsync(): Promise<void> {
-            const verNo = await this.resolveVersionAsync();
-            if (this.invalid()) {
-                pxt.debug(`skip download of invalid package ${this.id}`);
-                return undefined;
-            }
-            if (!/^embed:/.test(verNo) && this.installedVersion == verNo)
-                return undefined;
-            pxt.debug('downloading ' + verNo)
-            await this.host().downloadPackageAsync(
-                this,
-                // undefined,
-                // () => {
-                //     let p = this.parent;
-                //     while (p && p != <Package>this) {
-                //         const backupFile = p.readFile(`${this._verspec}-backup.json`);
-                //         if (backupFile) {
-                //             return JSON.parse(backupFile);
-                //         }
-                //         p = p.parent;
-                //     }
+        private downloadAsync() {
+            return this.resolveVersionAsync()
+                .then(verNo => {
+                    if (this.invalid()) {
+                        pxt.debug(`skip download of invalid package ${this.id}`);
+                        return undefined;
+                    }
+                    if (!/^embed:/.test(verNo) && this.installedVersion == verNo)
+                        return undefined;
+                    pxt.debug('downloading ' + verNo)
+                    return this.host().downloadPackageAsync(this)
+                        .then(() => {
+                            this.loadConfig();
 
-                //     return undefined;
-                // }
-            );
-            // try {
-            // } catch (e) {
-            //     let files: Map<string>;
-            //     let p = this.parent;
-            //     while (p && p != <Package>this) {
-            //         const backupFile = p.readFile(`${this._verspec}-backup.json`);
-            //         if (backupFile) {
-            //             files = JSON.parse(backupFile);
-            //             break;
-            //         }
-            //         p = p.parent;
-            //     }
+                            if (this.isAssetPack()) {
+                                this.writeAssetPackFiles();
+                            }
+                            pxt.debug(`installed ${this.id} /${verNo}`)
+                        })
 
-            //     if (files) {
-            //         // this.writeFile(pxt.CONFIG_NAME, files[pxt.CONFIG_NAME])
-            //         // for (const fname of Object.keys(files)) {
-            //         //     this.writeFile(fname, files[fname]);
-            //         // }
-            //         // this
-            //     } else {
-            //         // no backup found, rethrow
-            //         throw e;
-            //     }
-            // }
-
-            this.loadConfig();
-
-            if (this.isAssetPack()) {
-                this.writeAssetPackFiles();
-            }
-
-            pxt.debug(`installed ${this.id} /${verNo}`)
+                })
         }
 
         loadConfig() {
@@ -1406,8 +1340,6 @@ namespace pxt {
                     for (const dep of depsToPack) {
                         // todo; swap this over to just one json blob under files,
                         // not keyed off -backup.json, to make extracting / hiding more obvious. key goes in pxtlib/main.ts
-
-                        // include c++ pxtc.HexInfo as well?
                         if (files[`${dep._verspec}-backup.json`])
                             continue;
                         const packed: Map<string> = {}

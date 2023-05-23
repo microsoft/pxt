@@ -1083,7 +1083,6 @@ _stored_program: .hex ${res}
             src = asmHeader(bin) + src
         }
         if (opts.embedBlob) {
-
             bin.packedSource = packSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
             // TODO more dynamic check for source size
             if (!bin.target.noSourceInFlash && bin.packedSource.length < 40000) {
