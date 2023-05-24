@@ -639,7 +639,10 @@ namespace pxt.github {
         return { version, config };
     }
 
-    export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig, backupExtensions?: pxt.Map<pxt.Map<string>>): Promise<void> {
+    export async function cacheProjectDependenciesAsync(
+        cfg: pxt.PackageConfig,
+        backupExtensions?: pxt.Map<pxt.Map<string>>
+    ): Promise<void> {
         const ghExtensions = Object.keys(cfg.dependencies)
             ?.filter(dep => isGithubId(cfg.dependencies[dep]));
 
@@ -656,6 +659,11 @@ namespace pxt.github {
                         if (!ghPkg) {
                             throw new Error(lf("Cannot load extension {0} from {1}", ext, extSrc));
                         }
+
+                        const pkgCfg = pxt.U.jsonTryParse(ghPkg.files[pxt.CONFIG_NAME]);
+                        // todo: we don't support circular deps... right?? maybe add an inner function to
+                        // recurse & keep track of already resolved deps
+                        await cacheProjectDependenciesAsync(pkgCfg, backupExtensions);
                     }
                 )
             );
