@@ -2793,7 +2793,12 @@ export class ProjectView
         return this.createProjectAsync(options)
             .then(() => this.autoChooseBoardAsync())
             .then(() => Util.delay(500))
-            .finally(() => core.hideLoading("newproject"));
+            .finally(() => {
+                core.hideLoading("newproject");
+                if (options?.firstProject && pxt.appTarget.appTheme?.tours?.editor) {
+                    this.showOnboarding();
+                }
+            });
     }
 
     async createProjectAsync(options: ProjectCreationOptions): Promise<void> {

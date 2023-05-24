@@ -81,9 +81,21 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         const bubbleArrowOutline = document.querySelector(".teaching-bubble-arrow-outline") as HTMLElement;
         bubbleArrowOutline.style.border = "none";
         const bubbleBounds = bubble.getBoundingClientRect();
-        const targetElement = document.querySelector(targetContent.targetQuery) as HTMLElement;
-        const targetBounds = targetElement.getBoundingClientRect();
-        const cutoutBounds = getCutoutBounds(targetBounds, targetElement);
+        let cutoutBounds: CutoutBounds;
+        if (targetContent.targetQuery === "nothing") {
+            cutoutBounds = {
+                top: window.innerHeight / 2,
+                bottom: 0,
+                left: window.innerWidth / 2,
+                right: 0,
+                width: 0,
+                height: 0
+            }
+        } else {
+            const targetElement = document.querySelector(targetContent.targetQuery) as HTMLElement;
+            const targetBounds = targetElement.getBoundingClientRect();
+            cutoutBounds = getCutoutBounds(targetBounds, targetElement);
+        }
         setCutout(cutoutBounds);
         setPosition(cutoutBounds, bubble, bubbleBounds, bubbleArrow, bubbleArrowOutline);
     }
@@ -161,14 +173,6 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         if (activeTarget) {
             cutout.style.pointerEvents = "none";
         }
-    }
-
-    const clearCutout = () => {
-        const cutout = document.querySelector(".teaching-bubble-cutout") as HTMLElement;
-        cutout.style.top = "0px";
-        cutout.style.left = "0px";
-        cutout.style.width = "0px";
-        cutout.style.height = "0px";
     }
 
     const resetTryFit = () => {
