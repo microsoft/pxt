@@ -646,7 +646,21 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    return pxt.github.cacheProjectDependenciesAsync(cfg)
+    let backupExtensionFiles: pxt.Map<pxt.Map<string>>;
+    if (text[pxt.PACKAGED_EXTENSIONS]) {
+        const packagedExts: {
+            extensionText?: pxt.Map<pxt.Map<string>>,
+            hex?: pxt.Map<pxtc.HexInfo>,
+        } = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
+        backupExtensionFiles = packagedExts?.extensionText;
+        const hexInfo = packagedExts?.hex;
+        // TODO
+
+        // Do not persist into project once installed.
+        delete text[pxt.PACKAGED_EXTENSIONS];
+    }
+
+    return pxt.github.cacheProjectDependenciesAsync(cfg, backupExtensionFiles)
         .then(() => importAsync(h, text))
         .then(() => h);
 }

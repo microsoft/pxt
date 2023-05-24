@@ -122,32 +122,34 @@ class GithubDb implements pxt.github.IGithubDb {
             } // not found
         );
     }
-    loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+    async loadPackageAsync(repopath: string, tag: string, backupScriptText?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
         if (!tag) {
-          pxt.debug(`dep: default to master`)
-          tag = "master"
+            pxt.debug(`dep: default to master`)
+            tag = "master"
         }
         // don't cache master
         if (tag == "master")
-            return this.mem.loadPackageAsync(repopath, tag);
+            return this.mem.loadPackageAsync(repopath, tag, backupScriptText);
 
         const id = `pkg-${repopath}-${tag}`;
-        return this.table.getAsync(id).then(
-            entry => {
-                pxt.debug(`github offline cache hit ${id}`);
-                return entry.package as pxt.github.CachedPackage;
-            },
-            e => {
-                pxt.debug(`github offline cache miss ${id}`);
-                return this.mem.loadPackageAsync(repopath, tag)
-                    .then(p => {
-                        return this.table.forceSetAsync({
-                            id,
-                            package: p
-                        }).then(() => p, e => p);
-                    })
-            } // not found
-        );
+        try {
+            const entry = await this.table.getAsync(id);
+            pxt.debug(`github offline cache hit ${id}`);
+            // TODO: back up check here if .backupCopy to try fetch from this.mem?
+            return entry.package as pxt.github.CachedPackage;
+
+        } catch (e) {
+            pxt.debug(`github offline cache miss ${id}`);
+            const p = await this.mem.loadPackageAsync(repopath, tag, backupScriptText);
+            try {
+                await this.table.forceSetAsync({
+                    id,
+                    package: p
+                });
+            } finally {
+                return p;
+            }
+        }
     }
 }
 

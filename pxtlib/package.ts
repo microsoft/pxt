@@ -1324,6 +1324,16 @@ namespace pxt {
             }
 
             if (packExternalExtensions) {
+                let filesToEmit = false;
+                // todo throw this in a common spot
+                const packedDeps: {
+                    extensionText?: Map<Map<string>>,
+                    hex?: Map<pxtc.HexInfo>,
+                } = {
+                    extensionText: {},
+                    hex: {},
+                }
+
                 const packDeps = (p: Package) => {
                     // package in current resolved version for use as backup
                     // e.g. loading hexfile back into editor when offline
@@ -1337,23 +1347,28 @@ namespace pxt {
                                     return false;
                             }
                         });
+
                     for (const dep of depsToPack) {
-                        // todo; swap this over to just one json blob under files,
-                        // not keyed off -backup.json, to make extracting / hiding more obvious. key goes in pxtlib/main.ts
-                        if (files[`${dep._verspec}-backup.json`])
+                        if (packedDeps.extensionText[dep._verspec])
                             continue;
-                        const packed: Map<string> = {}
+                        const packed: Map<string> = {};
                         for (const toPack of dep.getFiles()) {
                             packed[toPack] = dep.readFile(toPack);
                         }
                         packed[pxt.CONFIG_NAME] = JSON.stringify(dep.config);
 
-                        files[`${dep._verspec}-backup.json`] = JSON.stringify(packed);
+                        packedDeps.extensionText[dep._verspec] = packed;
+                        filesToEmit = true;
                         packDeps(dep);
                     }
                 }
 
                 packDeps(this);
+                if (filesToEmit) {
+                    if (!Object.keys(packedDeps.hex).length)
+                        delete packedDeps["hex"];
+                    files[pxt.PACKAGED_EXTENSIONS] = JSON.stringify(packedDeps);
+                }
             }
             return U.sortObjectFields(files);
         }
