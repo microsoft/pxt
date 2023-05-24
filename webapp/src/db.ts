@@ -146,9 +146,10 @@ class GithubDb implements pxt.github.IGithubDb {
                     id,
                     package: p
                 });
-            } finally {
-                return p;
+            } catch (e) {
+                // swallow caching error
             }
+            return p;
         }
     }
 }

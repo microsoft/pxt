@@ -1332,7 +1332,7 @@ namespace pxt {
                 } = {
                     extensionText: {},
                     hex: {},
-                }
+                };
 
                 const packDeps = (p: Package) => {
                     // package in current resolved version for use as backup

@@ -652,6 +652,7 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
             extensionText?: pxt.Map<pxt.Map<string>>,
             hex?: pxt.Map<pxtc.HexInfo>,
         } = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
+
         backupExtensionFiles = packagedExts?.extensionText;
         const hexInfo = packagedExts?.hex;
         // TODO

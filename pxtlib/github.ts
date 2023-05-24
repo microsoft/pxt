@@ -646,7 +646,9 @@ namespace pxt.github {
         const ghExtensions = Object.keys(cfg.dependencies)
             ?.filter(dep => isGithubId(cfg.dependencies[dep]));
 
-        // todo: handle nested deps; recurse?
+        // need to check/cache pub: links + inject to cache?
+        // probably fine to put off from initial pass as it's a bit of an edge case?
+        // maybe extend pxt.github.cache... a bit?
         if (ghExtensions.length) {
             const pkgConfig = await pxt.packagesConfigAsync();
             // Make sure external packages load before installing header.
