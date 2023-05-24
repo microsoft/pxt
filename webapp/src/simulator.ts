@@ -330,7 +330,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         ipc: isIpcRenderer,
         dependencies,
         activePlayer: playerNumber,
-        theme: pkg.config.theme,
+        theme: pkg.config.theme || (pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.deviceVariant()),
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
