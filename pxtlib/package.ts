@@ -969,20 +969,21 @@ namespace pxt {
             const files = this.config.files;
 
             let fn = `_locales/${initialLang}/${filename}-strings.json`;
-            if (files.indexOf(fn) > -1) {
-                r = JSON.parse(this.readFile(fn)) as Map<string>;
-            }
-            else if (initialLangLowerCase) {
+            if (files.indexOf(fn) === -1){
                 fn = `_locales/${initialLangLowerCase}/${filename}-strings.json`;
-                if (files.indexOf(fn) > -1)
-                    r = JSON.parse(this.readFile(fn)) as Map<string>;
-                else if (baseLang) {
+                if (files.indexOf(fn) === -1) {
                     fn = `_locales/${baseLang}/${filename}-strings.json`;
-                    if (files.indexOf(fn) > -1) {
-                        r = JSON.parse(this.readFile(fn)) as Map<string>;
-                    }
                 }
             }
+
+            if (files.indexOf(fn) > -1) {
+                try {
+                    r = JSON.parse(this.readFile(fn));
+                } catch (e) {
+                    pxt.log(`Failed to parse ${fn}`);
+                }
+            }
+
             return r;
         }
     }
