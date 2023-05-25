@@ -969,11 +969,11 @@ namespace pxt {
             const files = this.config.files;
 
             let fn = `_locales/${initialLang}/${filename}-strings.json`;
-            if (files.indexOf(fn) === -1){
+            if (initialLangLowerCase && files.indexOf(fn) === -1) {
                 fn = `_locales/${initialLangLowerCase}/${filename}-strings.json`;
-                if (files.indexOf(fn) === -1) {
-                    fn = `_locales/${baseLang}/${filename}-strings.json`;
-                }
+            }
+            if (baseLang && files.indexOf(fn) === -1) {
+                fn = `_locales/${baseLang}/${filename}-strings.json`;
             }
 
             if (files.indexOf(fn) > -1) {
