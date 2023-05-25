@@ -23,6 +23,8 @@ namespace pxt.packetio {
         // returns a list of part ids that are not supported by the connected hardware. currently
         // only used by pxt-microbit to warn users about v2 blocks on v1 hardware
         unsupportedParts?(): string[];
+        // the variant id for the currently connected device
+        devVariant?: string;
     }
 
     export interface PacketIO {
@@ -82,6 +84,10 @@ namespace pxt.packetio {
 
     export function unsupportedParts() {
         return wrapper?.unsupportedParts ? wrapper.unsupportedParts() : [];
+    }
+
+    export function deviceVariant() {
+        return wrapper?.devVariant;
     }
 
     let disconnectPromise: Promise<void>
