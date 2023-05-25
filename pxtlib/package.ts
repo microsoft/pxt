@@ -980,7 +980,18 @@ namespace pxt {
                 try {
                     r = JSON.parse(this.readFile(fn));
                 } catch (e) {
-                    pxt.log(`Failed to parse ${fn}`);
+                    pxt.reportError("extension", "Extension localization JSON failed to parse", {
+                        fileName: fn,
+                        lang: lang,
+                        extension: this.verArgument(),
+                    });
+                    const isGithubRepo = this.verProtocol() === "github";
+                    if (isGithubRepo) {
+                        pxt.tickEvent("loc.errors.json", {
+                            repo: this.verArgument(),
+                            file: fn,
+                        });
+                    }
                 }
             }
 

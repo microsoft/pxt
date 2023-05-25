@@ -764,8 +764,13 @@ namespace ts.pxtc {
                     updateBlockDef(fn.attributes);
                     const locps = pxt.blocks.compileInfo(fn);
                     if (!hasEquivalentParameters(ps, locps)) {
-                        pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`);
-                        pxt.reportError(`loc.errors`, `invalid translations`, {
+                        pxt.reportError("loc.errors", "block has non matching arguments", {
+                            block: fn.attributes.blockId,
+                            lang: lang,
+                            originalDefinition: oldBlock,
+                            translatedBlock: fn.attributes.block,
+                        });
+                        pxt.tickEvent("loc.errors", {
                             block: fn.attributes.blockId,
                             lang: lang,
                         });
