@@ -65,6 +65,14 @@ export function TutorialContainer(props: TutorialContainerProps) {
     }, [document.body])
 
     React.useEffect(() => {
+        const parentObserver = new ResizeObserver(() => {
+            updateScrollGradient();
+         });
+         parentObserver.observe(document.querySelector("#tutorialWrapper"));
+         return () => parentObserver.disconnect();
+     });
+
+    React.useEffect(() => {
         if (isHorizontal) {
             let scrollHeight = 0;
             const children = contentRef?.current?.children ? pxt.Util.toArray(contentRef?.current?.children) : [];
