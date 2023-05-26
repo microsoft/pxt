@@ -65,11 +65,16 @@ export function TutorialContainer(props: TutorialContainerProps) {
     }, [document.body])
 
     React.useEffect(() => {
-        const parentObserver = new ResizeObserver(() => {
-            updateScrollGradient();
-         });
-         parentObserver.observe(document.querySelector("#tutorialWrapper"));
-         return () => parentObserver.disconnect();
+        const parent = document.querySelector("#tutorialWrapper");
+        if (parent) {
+            const parentObserver = new ResizeObserver(() => {
+                updateScrollGradient();
+             });
+             parentObserver.observe(parent);
+             return () => parentObserver.disconnect();
+        }
+
+        return null;
      });
 
     React.useEffect(() => {
