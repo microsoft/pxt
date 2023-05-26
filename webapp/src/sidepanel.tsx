@@ -119,7 +119,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     protected setComponentHeight = (height?: number) => {
-        if(this.state.resized) return; // Preserve user-set height.
+        if (this.state.resized) return; // Preserve user-set height.
         
         const tutorialWrapper: HTMLDivElement = document.querySelector(`#tutorialWrapper`);
         var currentHeight = tutorialWrapper?.style.getPropertyValue(this.heightVar);
@@ -197,6 +197,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         maxHeight="500px"
                         minHeight="100px"
                         heightProperty={this.heightVar}  // TODO thsparks - can this just be pushed into the div inside the container? Maybe bring back default height logic?
+                        resizeEnabled={pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar}
                         onResizeDrag={this.onResizeDrag}>
                         <TutorialContainer
                             parent={parent}

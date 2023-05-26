@@ -6,6 +6,7 @@ export interface VerticalResizeContainerProps extends ContainerProps {
     maxHeight?: string;
     heightProperty?: string;
     style?: any;
+    resizeEnabled?: boolean;
     onResizeDrag?: () => void;
     onResizeEnd?: () => void;
 }
@@ -20,10 +21,11 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         minHeight,
         maxHeight,
         heightProperty,
-        onResizeDrag,
-        onResizeEnd,
         style,
-        children
+        children,
+        resizeEnabled,
+        onResizeDrag,
+        onResizeEnd
     } = props;
 
     const RESIZABLE_BORDER_SIZE = 4;
@@ -40,7 +42,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         e.preventDefault();
         e.stopPropagation();
 
-        if(onResizeDrag) {
+        if (onResizeDrag) {
             onResizeDrag();
         }
     }
@@ -50,7 +52,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         document.removeEventListener("pointerup", cleanEvents, false);
         document.querySelector("body")?.classList.remove("cursor-resize");
         
-        if(onResizeEnd) {
+        if (onResizeEnd) {
             onResizeEnd();
         }
     }
@@ -58,6 +60,10 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
     React.useEffect(() => cleanEvents, []);
 
     const onPointerDown = (e: React.MouseEvent) => {
+        if (!resizeEnabled) {
+            return;
+        }
+
         const computedStyle = getComputedStyle(containerRef?.current);
         const containerHeight = parseInt(computedStyle.height) - parseInt(computedStyle.borderWidth);
         if (e.nativeEvent.offsetY > containerHeight - RESIZABLE_BORDER_SIZE - 4) {
@@ -70,7 +76,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
     return <div
         id={id}
         ref={containerRef}
-        className={classList("vertical-resize-container", className)}
+        className={classList(resizeEnabled ? "vertical-resize-container" : "", className)}
         aria-describedby={ariaDescribedBy}
         aria-hidden={ariaHidden}
         aria-label={ariaLabel}
