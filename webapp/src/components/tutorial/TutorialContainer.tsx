@@ -20,6 +20,7 @@ interface TutorialContainerProps {
     hideIteration?: boolean;
     hasTemplate?: boolean;
     preferredEditor?: string;
+    hasBeenResized?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
     tutorialSimSidebar?: boolean;
@@ -78,6 +79,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
      });
 
     React.useEffect(() => {
+        if (props.hasBeenResized) {
+            return;
+        }
+
         if (isHorizontal) {
             let scrollHeight = 0;
             const children = contentRef?.current?.children ? pxt.Util.toArray(contentRef?.current?.children) : [];
