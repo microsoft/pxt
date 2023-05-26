@@ -14,8 +14,8 @@ import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 import { fireClickOnEnter } from "./util";
 import { VerticalResizeContainer } from '../../react-common/components/controls/VerticalResizeContainer'
 
+// TODO thsparks : Remove if not needed
 interface SidepanelState {
-    resized?: boolean;
 }
 
 interface SidepanelProps extends pxt.editor.ISettingsProps {
@@ -113,19 +113,12 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
-    protected onResizeDrag = () => {
-        this.setState({resized: true});
-        this.props.setEditorOffset();
-    }
-
-    protected setComponentHeight = (height?: number) => {
-        if (this.state.resized) return; // Preserve user-set height.
-        
-        const tutorialWrapper: HTMLDivElement = document.querySelector(`#tutorialWrapper`);
-        var currentHeight = tutorialWrapper?.style.getPropertyValue(this.heightVar);
-        var newHeight = `${height}px`;
+    protected setComponentHeight = (height?: number) => {        
+        const wrapperEl: HTMLDivElement = document.querySelector(`#simulator`);
+        var currentHeight = wrapperEl?.style.getPropertyValue(this.heightVar);
+        var newHeight = height ? `${height}px` : undefined;
         if (currentHeight != newHeight) {
-            tutorialWrapper.style.setProperty(
+            wrapperEl.style.setProperty(
                 this.heightVar,
                 newHeight
             );
@@ -198,7 +191,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         minHeight="100px"
                         heightProperty={this.heightVar}  // TODO thsparks - can this just be pushed into the div inside the container? Maybe bring back default height logic?
                         resizeEnabled={pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar}
-                        onResizeDrag={this.onResizeDrag}>
+                        onResizeDrag={this.setComponentHeight}>
                         <TutorialContainer
                             parent={parent}
                             tutorialId={tutorialOptions.tutorial}

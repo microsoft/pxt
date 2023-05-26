@@ -4,10 +4,10 @@ import { classList, ContainerProps } from "../util";
 export interface VerticalResizeContainerProps extends ContainerProps {
     minHeight?: string;
     maxHeight?: string;
-    heightProperty?: string;
     style?: any;
     resizeEnabled?: boolean;
-    onResizeDrag?: () => void;
+    heightProperty?: string;
+    onResizeDrag?: (newSize: number) => void;
     onResizeEnd?: () => void;
 }
 
@@ -20,16 +20,15 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         ariaLabel,
         minHeight,
         maxHeight,
-        heightProperty,
         style,
         children,
         resizeEnabled,
         onResizeDrag,
         onResizeEnd
     } = props;
+    const heightProperty = props.heightProperty ? props.heightProperty : `--${id}-height`;
 
     const RESIZABLE_BORDER_SIZE = 4;
-
     const containerRef: React.MutableRefObject<HTMLDivElement> = React.useRef(undefined);
 
     const resize = (e: React.MouseEvent | MouseEvent) => {
@@ -43,7 +42,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         e.stopPropagation();
 
         if (onResizeDrag) {
-            onResizeDrag();
+            onResizeDrag(containerEl.clientHeight);
         }
     }
 
