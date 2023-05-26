@@ -16,6 +16,7 @@ import { VerticalResizeContainer } from '../../react-common/components/controls/
 
 interface SidepanelState {
     resized?: boolean;
+    height?: number;
 }
 
 interface SidepanelProps extends pxt.editor.ISettingsProps {
@@ -41,7 +42,6 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
 
 export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected simPanelRef: HTMLDivElement;
-    protected heightVar = "--instructions-height";
 
     constructor(props: SidepanelProps) {
         super(props);
@@ -49,6 +49,10 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if (props.tutorialOptions?.tutorial && !props.tutorialSimSidebar) {
             this.props.showMiniSim(true);
         }
+    }
+
+    componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
+        if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
     }
 
     UNSAFE_componentWillReceiveProps(props: SidepanelProps) {
@@ -113,25 +117,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
-    protected onResizeDrag = (newSize: number) => {
-        if (!this.state.resized) { 
-            this.setState({resized: true});
-        }
-
-        this.setComponentHeight(newSize);
-    }
-
-    protected setComponentHeight = (height?: number) => {
-        const wrapperEl: HTMLDivElement = document.querySelector(`#simulator`);
-        var currentHeight = wrapperEl?.style.getPropertyValue(this.heightVar);
-        var newHeight = height ? `${height}px` : undefined;
-        if (currentHeight != newHeight) {
-            wrapperEl.style.setProperty(
-                this.heightVar,
-                newHeight
-            );
-
-            this.props.setEditorOffset();
+    protected setComponentHeight = (height?: number, isResize?: boolean) => {
+        if(this.state.height != height || this.state.resized != isResize) {
+            this.setState({resized: this.state.resized || isResize, height: height});
         }
     }
 
@@ -157,11 +145,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
         const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
-        const editorSidebarHeight = { height: `var(${this.heightVar})` };
+        const editorSidebarHeight = `${this.state.height}px`;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? editorSidebarHeight : undefined}>
+            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -194,12 +182,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     <VerticalResizeContainer
                         id="tutorialWrapper"
                         className={outerTutorialContainerClassName}
-                        style={editorSidebarHeight}
                         maxHeight="500px"
                         minHeight="100px"
-                        heightProperty={this.heightVar}  // TODO thsparks - can this just be pushed into the div inside the container? Maybe bring back default height logic?
+                        initialHeight={editorSidebarHeight}
                         resizeEnabled={pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar}
-                        onResizeDrag={this.onResizeDrag}>
+                        onResizeDrag={newSize => this.setComponentHeight(newSize, true)}>
                         <TutorialContainer
                             parent={parent}
                             tutorialId={tutorialOptions.tutorial}
@@ -214,7 +201,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                             hasBeenResized={this.state.resized}
                             onTutorialStepChange={onTutorialStepChange}
                             onTutorialComplete={onTutorialComplete}
-                            setParentHeight={this.setComponentHeight} />
+                            setParentHeight={newSize => this.setComponentHeight(newSize, false)} />
                     </VerticalResizeContainer>
                 </div>}
         </div>

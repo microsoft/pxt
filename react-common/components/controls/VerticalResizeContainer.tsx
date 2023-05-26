@@ -4,11 +4,10 @@ import { classList, ContainerProps } from "../util";
 export interface VerticalResizeContainerProps extends ContainerProps {
     minHeight?: string;
     maxHeight?: string;
-    style?: any;
+    initialHeight?: string;
     resizeEnabled?: boolean;
-    heightProperty?: string;
     onResizeDrag?: (newSize: number) => void;
-    onResizeEnd?: () => void;
+    onResizeEnd?: (newSize: number) => void;
 }
 
 export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => {
@@ -20,30 +19,34 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         ariaLabel,
         minHeight,
         maxHeight,
-        style,
+        initialHeight,
         children,
         resizeEnabled,
         onResizeDrag,
         onResizeEnd
     } = props;
-    const heightProperty = props.heightProperty ? props.heightProperty : `--${id}-height`;
 
     const RESIZABLE_BORDER_SIZE = 4;
     const containerRef: React.MutableRefObject<HTMLDivElement> = React.useRef(undefined);
+    const heightProperty = `--${id}-height`;
+    let [hasResized, setHasResized] = React.useState(false);
 
     const resize = (e: React.MouseEvent | MouseEvent) => {
-        const containerEl: HTMLDivElement = document.querySelector(`#${id}`);
+        const containerEl: HTMLDivElement = document.querySelector(`#${id}`); // TODO thsparks : Move this out?
 
         containerEl.style.setProperty(
             heightProperty,
             `max(min(${maxHeight}, ${e.pageY - containerEl.offsetTop}px), ${minHeight})`
         );
-        e.preventDefault();
-        e.stopPropagation();
 
         if (onResizeDrag) {
             onResizeDrag(containerEl.clientHeight);
         }
+
+        setHasResized(true);
+
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     const cleanEvents = () => {
@@ -52,7 +55,8 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         document.querySelector("body")?.classList.remove("cursor-resize");
         
         if (onResizeEnd) {
-            onResizeEnd();
+            const containerEl: HTMLDivElement = document.querySelector(`#${id}`); // TODO thsparks : Move this out?
+            onResizeEnd(containerEl.clientHeight);
         }
     }
 
@@ -80,7 +84,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         aria-hidden={ariaHidden}
         aria-label={ariaLabel}
         onPointerDown={onPointerDown}
-        style={style}>
+        style={{height: hasResized ? `var(${heightProperty})` : initialHeight}}>
             {children}
     </div>
 }

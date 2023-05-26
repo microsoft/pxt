@@ -62,21 +62,15 @@ export function TutorialContainer(props: TutorialContainerProps) {
             updateScrollGradient();
         });
         observer.observe(document.body)
-        return () => observer.disconnect();
-    }, [document.body])
 
-    React.useEffect(() => {
+        // We also want to update the scroll gradient if the tutorial wrapper is resized by the user.
         const parent = document.querySelector("#tutorialWrapper");
         if (parent) {
-            const parentObserver = new ResizeObserver(() => {
-                updateScrollGradient();
-             });
-             parentObserver.observe(parent);
-             return () => parentObserver.disconnect();
+            observer.observe(parent);
         }
 
-        return null;
-     });
+        return () => observer.disconnect();
+    }, [document.body])
 
     React.useEffect(() => {
         if (props.hasBeenResized) {
