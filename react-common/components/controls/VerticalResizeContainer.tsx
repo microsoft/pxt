@@ -29,7 +29,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
     const RESIZABLE_BORDER_SIZE = 4;
     const containerRef: React.MutableRefObject<HTMLDivElement> = React.useRef(undefined);
     const heightProperty = `--${id}-height`;
-    const containerEl: HTMLDivElement = document.querySelector(`#${id}`); // TODO thsparks : Move this out?
+    const containerEl: HTMLDivElement = document.querySelector(`#${id}`);
 
     let [hasResized, setHasResized] = React.useState(false);
 
