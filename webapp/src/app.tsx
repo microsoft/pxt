@@ -3104,8 +3104,6 @@ export class ProjectView
 
     private checkWebUSBVariant = true
     checkForHwVariant() {
-        // TODO: flag to use this to not generate fat hex
-        // but iff downloading via webusb
         if (pxt.hwVariant || !pxt.hasHwVariants())
             return false // already set
         const variants = pxt.getHwVariants()
@@ -3118,9 +3116,6 @@ export class ProjectView
                 this.checkWebUSBVariant = false
                 this.checkForHwVariant()
             })
-        // if ((pxt.usb.isEnabled || pxt.appTarget.appTheme?.preferWebUSBDownload && pxt.usb.isAvailable())
-        // && pxt.appTarget.appTheme?.checkForHwVariantWebUSB
-        // && this.checkWebUSBVariant) {
         if (pxt.usb.isEnabled
             && pxt.appTarget.appTheme
             && pxt.appTarget.appTheme.checkForHwVariantWebUSB
@@ -3184,7 +3179,6 @@ export class ProjectView
             return;
         }
 
-        // todo: no restart for sim on user click 'download'?
         let simRestart = this.state.simState != pxt.editor.SimState.Stopped;
         // if we're just waiting for empty code to run, don't force restart
         if (simRestart
