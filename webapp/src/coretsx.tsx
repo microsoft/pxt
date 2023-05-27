@@ -240,8 +240,9 @@ export class LoadingDimmer extends React.Component<LoadingDimmerProps, LoadingDi
     hide() {
         this.setState({
             visible: false,
+            loadedId: undefined,
             content: undefined,
-            loadedPercentage: undefined
+            loadedPercentage: undefined,
         });
     }
 

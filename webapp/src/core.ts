@@ -76,7 +76,7 @@ export function showLoading(id: string, msg: string, percentComplete?: number) {
     initializeDimmer();
     loadingDimmer.show(
         "initializing-loader",
-        lf("Please wait")
+        lf("Please wait"),
     );
     loadingQueue.push(id);
     loadingQueueMsg[id] = {
@@ -95,7 +95,7 @@ export function updateLoadingCompletion(id: string, percentComplete: number) {
 
     msg.percentComplete = percentComplete;
     if (loadingDimmer?.currentlyLoading() === id) {
-        loadingDimmer.setPercentLoaded(percentComplete)
+        loadingDimmer.setPercentLoaded(percentComplete);
     }
 }
 
