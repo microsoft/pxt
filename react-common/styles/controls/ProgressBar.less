@@ -1,0 +1,19 @@
+
+
+.common-progressbar {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+}
+
+progress[value].common-progressbar::-webkit-progress-bar {
+    background-color: #eee;
+    border-radius: 2px;
+    border: 2px solid black;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+}
+
+progress[value].common-progressbar::-webkit-progress-value {
+    background-color: orange;
+}
