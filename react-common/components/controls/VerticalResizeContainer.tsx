@@ -29,11 +29,11 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
     const RESIZABLE_BORDER_SIZE = 4;
     const containerRef: React.MutableRefObject<HTMLDivElement> = React.useRef(undefined);
     const heightProperty = `--${id}-height`;
+    const containerEl: HTMLDivElement = document.querySelector(`#${id}`); // TODO thsparks : Move this out?
+
     let [hasResized, setHasResized] = React.useState(false);
 
     const resize = (e: React.MouseEvent | MouseEvent) => {
-        const containerEl: HTMLDivElement = document.querySelector(`#${id}`); // TODO thsparks : Move this out?
-
         containerEl.style.setProperty(
             heightProperty,
             `max(min(${maxHeight}, ${e.pageY - containerEl.offsetTop}px), ${minHeight})`
@@ -55,7 +55,6 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         document.querySelector("body")?.classList.remove("cursor-resize");
         
         if (onResizeEnd) {
-            const containerEl: HTMLDivElement = document.querySelector(`#${id}`); // TODO thsparks : Move this out?
             onResizeEnd(containerEl.clientHeight);
         }
     }
