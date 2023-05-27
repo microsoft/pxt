@@ -28,7 +28,7 @@ export const ProgressBar = (props: ProgressBarProps) => {
 
     return (
         <div className={classList("common-progressbar-wrapper", className)}>
-            {label && <label className="common-textarea-label">
+            {label && <label className="common-progressbar-label">
                 {label}
             </label>}
             <progress
