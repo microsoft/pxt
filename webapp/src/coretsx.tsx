@@ -271,9 +271,9 @@ export class LoadingDimmer extends React.Component<LoadingDimmerProps, LoadingDi
     render() {
         const { visible, content, loadedPercentage } = this.state;
         if (!visible) return <div />;
-
+        const hc = core.getHighContrastOnce();
         return <sui.Dimmer isOpen={true} active={visible} closable={false}>
-            <sui.Loader className="large main msg no-select" aria-live="assertive">
+            <sui.Loader className={`large main msg no-select ${hc ? "hc" : ""}`} aria-live="assertive">
                 {content}
                 {loadedPercentage !== undefined && <ProgressBar value={loadedPercentage} />}
             </sui.Loader>
