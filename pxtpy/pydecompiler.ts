@@ -1290,7 +1290,7 @@ namespace pxt.py {
         }
         function emitMultiLnStrLitExp(s: ts.NoSubstitutionTemplateLiteral | ts.TaggedTemplateExpression): ExpRes {
             if (ts.isNoSubstitutionTemplateLiteral(s)) {
-                return asExpRes(`"""\n${indent1(s.text.trim())}\n"""`)
+                return asExpRes(`"""${s.text.split('\n').map(x => indent1(x.trim())).join('\n')}"""`)
             }
 
             let [tag, tagSup] = emitExp(s.tag)
