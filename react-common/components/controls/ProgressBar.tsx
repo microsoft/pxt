@@ -8,7 +8,6 @@ export interface ProgressBarProps extends ControlProps {
     label?: string;
 
     ariaValueText?: string;
-    // showPercentage?: boolean
 }
 
 export const ProgressBar = (props: ProgressBarProps) => {
