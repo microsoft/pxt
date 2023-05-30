@@ -51,10 +51,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
-    componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
-        if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
-    }
-
     UNSAFE_componentWillReceiveProps(props: SidepanelProps) {
         // This is necessary because we are not properly mounting and
         // unmounting the component as we enter/exit the editor. We
@@ -70,6 +66,10 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         ) {
             this.showSimulator();
         }
+    }
+
+    componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
+        if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
     }
 
     protected tryShowSimulator = () => {
@@ -118,7 +118,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     protected setComponentHeight = (height?: number, isResize?: boolean) => {
-        if (this.state.height != height || this.state.resized != isResize) {
+        if (height != this.state.height || isResize != this.state.resized) {
             this.setState({resized: this.state.resized || isResize, height: height});
 
             this.simPanelRef.style.setProperty(
