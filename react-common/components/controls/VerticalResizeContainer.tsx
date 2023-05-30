@@ -36,7 +36,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
     const resize = (e: React.MouseEvent | MouseEvent) => {
         let heightVal = `${e.pageY - containerEl.offsetTop}px`;
         if (maxHeight) heightVal = `min(${maxHeight}, ${heightVal})`;
-        if(minHeight) heightVal = `max(${minHeight}, ${heightVal})`;
+        if (minHeight) heightVal = `max(${minHeight}, ${heightVal})`;
 
         containerEl.style.setProperty(heightProperty, heightVal);
 
