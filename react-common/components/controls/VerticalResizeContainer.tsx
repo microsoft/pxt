@@ -34,10 +34,11 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
     let [hasResized, setHasResized] = React.useState(false);
 
     const resize = (e: React.MouseEvent | MouseEvent) => {
-        containerEl.style.setProperty(
-            heightProperty,
-            `max(min(${maxHeight}, ${e.pageY - containerEl.offsetTop}px), ${minHeight})`
-        );
+        let heightVal = `${e.pageY - containerEl.offsetTop}px`;
+        if (maxHeight) heightVal = `min(${maxHeight}, ${heightVal})`;
+        if(minHeight) heightVal = `max(${minHeight}, ${heightVal})`;
+
+        containerEl.style.setProperty(heightProperty, heightVal);
 
         if (onResizeDrag) {
             onResizeDrag(containerEl.clientHeight);
@@ -49,17 +50,19 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         e.stopPropagation();
     }
 
-    const cleanEvents = () => {
+    const onPointerUp = () => {
+        // Clean resize events
         document.removeEventListener("pointermove", resize, false);
-        document.removeEventListener("pointerup", cleanEvents, false);
+        document.removeEventListener("pointerup", onPointerUp, false);
         document.querySelector("body")?.classList.remove("cursor-resize");
-        
+
+        // Notify resize end
         if (onResizeEnd) {
             onResizeEnd(containerEl.clientHeight);
         }
     }
 
-    React.useEffect(() => cleanEvents, []);
+    React.useEffect(() => onPointerUp, []);
 
     const onPointerDown = (e: React.MouseEvent) => {
         if (!resizeEnabled) {
@@ -71,7 +74,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         if (e.nativeEvent.offsetY > containerHeight - RESIZABLE_BORDER_SIZE - 4) {
             document.querySelector("body")?.classList.add("cursor-resize");
             document.addEventListener("pointermove", resize, false);
-            document.addEventListener("pointerup", cleanEvents, false);
+            document.addEventListener("pointerup", onPointerUp, false);
         }
     }
 
