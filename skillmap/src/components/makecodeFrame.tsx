@@ -9,9 +9,9 @@ import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAnd
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
-import { ShareData } from "react-common/components/share/Share";
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
-
+import { ShareData } from "react-common/components/share/Share";
+import { ProgressBar } from "react-common/components/controls/ProgressBar";
 interface MakeCodeFrameProps {
     save: boolean;
     mapId: string;
@@ -135,9 +135,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         return <div className="makecode-frame-outer" style={{ display: activityId ? "block" : "none" }}>
             <div className={`makecode-frame-loader ${showLoader ? "" : "hidden"}`}>
                 <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
-                {openingProject && <div className="makecode-frame-loader-bar">
-                    <div className="makecode-frame-loader-fill" style={{ width: loadPercent + "%" }} />
-                </div>}
+                {openingProject && <ProgressBar className="makecode-frame-loader-bar" value={loadPercent! / 100} />}
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
             <iframe className="makecode-frame" src={url} title={title} ref={this.handleFrameRef}></iframe>
@@ -166,7 +164,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     protected onMessageReceived = (event: MessageEvent) => {
         const data = event.data as pxt.editor.EditorMessageRequest;
-        if (this.state.frameState === "opening-project") this.setState({ loadPercent: Math.min((this.state.loadPercent || 0) + 4, 95) });
+        if (this.state.frameState === "opening-project") this.setState({ loadPercent: Math.min((this.state.loadPercent || 0) + 7, 95) });
 
         if (data.type === "pxteditor" && data.id && this.pendingMessages[data.id]) {
             const pending = this.pendingMessages[data.id];

@@ -31,10 +31,12 @@ progress[value].common-progressbar {
 
 progress[value].common-progressbar::-moz-progress-bar {
     background-color: var(--progress-bar-filled-color);
+    transition: width 0.5s ease-out;
 }
 
 progress[value].common-progressbar::-webkit-progress-value {
     background-color: var(--progress-bar-filled-color);
+    transition: width 0.5s ease-out;
 }
 progress[value].common-progressbar::-webkit-progress-bar {
     background-color: transparent;
