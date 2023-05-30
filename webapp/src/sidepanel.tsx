@@ -118,7 +118,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     protected setComponentHeight = (height?: number, isResize?: boolean) => {
-        if(this.state.height != height || this.state.resized != isResize) {
+        if (this.state.height != height || this.state.resized != isResize) {
             this.setState({resized: this.state.resized || isResize, height: height});
         }
     }
