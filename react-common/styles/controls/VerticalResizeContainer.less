@@ -5,6 +5,18 @@
     }
 }
 
+.horizontal-resize-container {
+    &::after {
+        content: "";
+        background-color: darken(desaturate(@editorToolsBackground, 60%), 10%);
+        position: absolute;
+        right: 0;
+        width: 4px;
+        height: 100%;
+        cursor: ew-resize;
+    }
+}
+
 .vertical-resize-container {
     &::after {
         content: "";
