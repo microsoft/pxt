@@ -20,6 +20,7 @@ interface TutorialContainerProps {
     hideIteration?: boolean;
     hasTemplate?: boolean;
     preferredEditor?: string;
+    hasBeenResized?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
     tutorialSimSidebar?: boolean;
@@ -61,10 +62,21 @@ export function TutorialContainer(props: TutorialContainerProps) {
             updateScrollGradient();
         });
         observer.observe(document.body)
+
+        // We also want to update the scroll gradient if the tutorial wrapper is resized by the user.
+        const parent = document.querySelector("#tutorialWrapper");
+        if (parent) {
+            observer.observe(parent);
+        }
+
         return () => observer.disconnect();
     }, [document.body])
 
     React.useEffect(() => {
+        if (props.hasBeenResized) {
+            return;
+        }
+
         if (isHorizontal) {
             let scrollHeight = 0;
             const children = contentRef?.current?.children ? pxt.Util.toArray(contentRef?.current?.children) : [];
