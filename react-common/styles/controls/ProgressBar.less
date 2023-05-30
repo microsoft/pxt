@@ -1,4 +1,11 @@
 
+.common-progressbar-wrapper {
+    --progress-bar-filled-color: @progressBarFilledColor;
+    --progress-bar-unfilled-color: @progressBarUnfilledColor;
+    --progress-bar-border-color: @progressBarBorder;
+    --progress-bar-border-radius: 4px;
+}
+
 .common-progressbar {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -7,16 +14,16 @@
 }
 
 progress[value].common-progressbar::-webkit-progress-bar {
-    background-color: @progressBarUnfilledColor;
-    border-radius: 4px;
-    border: 2px solid @progressBarBorder;
+    background-color: var(--progress-bar-unfilled-color);
+    border-radius: var(--progress-bar-border-radius);
+    border: 2px solid var(--progress-bar-border-color);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
     width: 100%;
     height: 100%;
 }
 
 progress[value].common-progressbar::-webkit-progress-value {
-    background-color: @progressBarFilledColor;
+    background-color: var(--progress-bar-filled-color);
 }
 
 .hc {
