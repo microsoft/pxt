@@ -2676,3 +2676,18 @@ select.ui.dropdown {
 .palette-picker-label {
     margin-right: 0.5rem;
 }
+
+// main loader progress bar
+.ui.loader.large.main .common-progressbar-wrapper {
+    margin-top: 1em;
+    width: ~"min(25rem, 50vw)";
+    height: 1em;
+
+    --progress-bar-filled-color: @white;
+    --progress-bar-unfilled-color: transparency;
+    --progress-bar-border-color: @white;
+
+    progress[value].common-progressbar {
+        border-radius: 1px;
+    }
+}

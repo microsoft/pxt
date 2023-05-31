@@ -2,6 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as core from "./core";
+import { ProgressBar } from "../../react-common/components/controls/ProgressBar";
 
 interface CoreDialogState {
     visible?: boolean;
@@ -223,6 +224,8 @@ export interface LoadingDimmerProps {
 export interface LoadingDimmerState {
     visible?: boolean;
     content?: string;
+    loadedId?: string;
+    loadedPercentage?: number;
 }
 
 export class LoadingDimmer extends React.Component<LoadingDimmerProps, LoadingDimmerState> {
@@ -235,11 +238,31 @@ export class LoadingDimmer extends React.Component<LoadingDimmerProps, LoadingDi
     }
 
     hide() {
-        this.setState({ visible: false, content: undefined });
+        this.setState({
+            visible: false,
+            loadedId: undefined,
+            content: undefined,
+            loadedPercentage: undefined,
+        });
     }
 
-    show(content: string) {
-        this.setState({ visible: true, content: content });
+    show(id: string, content: string, percentComplete?: number) {
+        this.setState({
+            visible: true,
+            loadedId: id,
+            content: content,
+            loadedPercentage: percentComplete,
+        });
+    }
+
+    setPercentLoaded(percentage: number) {
+        this.setState({
+            loadedPercentage: percentage,
+        });
+    }
+
+    currentlyLoading() {
+        return this.state.loadedId;
     }
 
     isVisible() {
@@ -247,12 +270,13 @@ export class LoadingDimmer extends React.Component<LoadingDimmerProps, LoadingDi
     }
 
     render() {
-        const { visible, content } = this.state;
+        const { visible, content, loadedPercentage } = this.state;
         if (!visible) return <div />;
-
+        const hc = core.getHighContrastOnce();
         return <sui.Dimmer isOpen={true} active={visible} closable={false}>
-            <sui.Loader className="large main msg no-select" aria-live="assertive">
+            <sui.Loader className={`large main msg no-select ${hc ? "hc" : ""}`} aria-live="assertive">
                 {content}
+                {loadedPercentage !== undefined && <ProgressBar value={loadedPercentage} />}
             </sui.Loader>
         </sui.Dimmer>;
     }

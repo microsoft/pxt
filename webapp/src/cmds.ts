@@ -222,7 +222,9 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
         const dev = await pxt.packetio.initAsync(false);
         core.showLoading(LOADING_KEY, lf("Downloading..."));
         try {
-            await dev.reflashAsync(resp)
+            await dev.reflashAsync(resp, percentageFlashed => {
+                core.updateLoadingCompletion(LOADING_KEY, percentageFlashed);
+            });
             await dev.reconnectAsync();
         } finally {
             core.hideLoading(LOADING_KEY);
