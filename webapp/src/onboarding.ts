@@ -51,6 +51,9 @@ export async function parseTourStepsAsync(name: string): Promise<pxt.tour.Bubble
                 querySelector = { targetQuery: "#root" };
                 location = pxt.tour.BubbleLocation.Center;
                 console.log(`Tour steps: "${step.attributes.highlight}" is not a valid element to highlight!`);
+            } else if (querySelector.targetQuery !== "nothing") {   // check that element is visible before adding to tour
+                const target = document.querySelector(querySelector.targetQuery) as HTMLElement;
+                if (window.getComputedStyle(target).display === "none" || target.offsetParent === null) continue;
             }
             const targetQuery = querySelector.targetQuery;
             const sansQuery = querySelector.sansQuery ?? undefined;
