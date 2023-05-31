@@ -12,10 +12,16 @@ function getTargetMap(target: string): querySelector {
         "toolbox": {
             targetQuery: ".blocklyToolboxDiv",
         },
+        "monaco toolbox": {
+            targetQuery: ".monacoToolboxDiv",
+        },
         "workspace": {
             targetQuery: "#blocksEditor", // includes the toolbox
             sansQuery: ".blocklyToolboxDiv",
             sansLocation: pxt.tour.BubbleLocation.Left
+        },
+        "monaco workspace": {
+            targetQuery: "#monacoEditorRightArea",
         },
         "share": {
             targetQuery: ".shareproject",
@@ -53,7 +59,7 @@ export async function parseTourStepsAsync(name: string): Promise<pxt.tour.Bubble
                 console.log(`Tour steps: "${step.attributes.highlight}" is not a valid element to highlight!`);
             } else if (querySelector.targetQuery !== "nothing") {   // check that element is visible before adding to tour
                 const target = document.querySelector(querySelector.targetQuery) as HTMLElement;
-                if (window.getComputedStyle(target).display === "none" || target.offsetParent === null) continue;
+                if (!target || target.offsetParent === null || window.getComputedStyle(target).display === "none") continue;
             }
             const targetQuery = querySelector.targetQuery;
             const sansQuery = querySelector.sansQuery ?? undefined;
