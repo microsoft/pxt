@@ -699,7 +699,7 @@
 
     .editor-sidebar {
         border-right: 0;
-        border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+        border-bottom: 0;
     }
 
     .tutorial-container-outer {
@@ -812,7 +812,7 @@
         .tutorial-callout {
             bottom: unset;
             left: unset;
-            top: 15rem;
+            top: var(--tutorialCalloutTop);
             max-width: 80%;
             transform: translateY(15px);
         }
@@ -1043,7 +1043,7 @@
         
         .tutorial-callout {
             right: unset;
-            top: 15rem;
+            top: var(--tutorialCalloutTop);
             bottom: unset;
             left: unset;
         }

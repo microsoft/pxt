@@ -16,7 +16,7 @@ namespace pxt.packetio {
         isConnected(): boolean
         isConnecting(): boolean
         // flash the device, does **not** reconnect
-        reflashAsync(resp: pxtc.CompileResult): Promise<void>;
+        reflashAsync(resp: pxtc.CompileResult, progressCallback?: (percentageComplete: number) => void): Promise<void>;
 
         onCustomEvent: (type: string, payload: Uint8Array) => void;
         sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void>;
