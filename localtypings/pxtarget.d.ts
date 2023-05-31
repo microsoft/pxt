@@ -495,6 +495,9 @@ declare namespace pxt {
         connectionSuccessImage?: string;
         incompatibleHardwareImage?: string;
 
+        browserUnpairImage?: string;
+        usbDeviceForgottenImage?: string;
+
         // The following fields used to be displayed, but students
         // found the dialog confusing / hard to use; now we redirect
         // them to help docs instead if pairing fails for step by step instructions.

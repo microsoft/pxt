@@ -31,6 +31,7 @@ namespace pxt.commands {
     export let renderUsbPairDialog: (firmwareUrl?: string, failedOnce?: boolean) => any /* JSX.Element */ = undefined;
     export let renderIncompatibleHardwareDialog: (unsupportedParts: string[]) => any /* JSX.Element */ = undefined;
     export let renderDisconnectDialog: () => { header: string, jsx: any, helpUrl: string }
+    export let showUsbDeviceForgottenDialog: (confirmAsync: (options: any) => Promise<number>) => Promise<void>;
     export let showUploadInstructionsAsync: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>, saveOnly?: boolean, redeploy?: () => Promise<void>) => Promise<void> = undefined;
     export let showProgramTooLargeErrorAsync: (variants: string[], confirmAsync: (options: any) => Promise<number>, saveOnly?: boolean) => Promise<RecompileOptions>;
     export let saveProjectAsync: (project: pxt.cpp.HexFile) => Promise<void> = undefined;
