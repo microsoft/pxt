@@ -1291,7 +1291,7 @@ namespace pxt.py {
         function emitMultiLnStrLitExp(s: ts.NoSubstitutionTemplateLiteral | ts.TaggedTemplateExpression): ExpRes {
             if (ts.isNoSubstitutionTemplateLiteral(s)) {
                 // manually perform indent1(), trimming existing indentation for multiline strings.
-                return asExpRes(`"""${s.text.split('\n').map(x => `${INDENT}${x.trim()}`).join('\n')}"""`)
+                return asExpRes(`"""\n${s.text.trim().split('\n').map(x => `${INDENT}${x.trim()}`).join('\n')}\n${INDENT}"""`)
             }
 
             let [tag, tagSup] = emitExp(s.tag)
