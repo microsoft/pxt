@@ -470,15 +470,19 @@ namespace pxt.BrowserUtils {
     }
 
     export function scaleImageData(img: ImageData, scale: number): ImageData {
-        const cvs = document.createElement("canvas");
-        cvs.width = img.width * scale;
-        cvs.height = img.height * scale;
-        const ctx = cvs.getContext("2d")
+        const inputCanvas = document.createElement("canvas");
+        const outputCanvas = document.createElement("canvas");
+        inputCanvas.width = img.width;
+        inputCanvas.height = img.height;
+        outputCanvas.width = img.width * scale;
+        outputCanvas.height = img.height * scale;
+        const ctx = inputCanvas.getContext("2d");
+        const outCtx = outputCanvas.getContext("2d");
         ctx.putImageData(img, 0, 0);
-        ctx.imageSmoothingEnabled = false;
-        ctx.scale(scale, scale);
-        ctx.drawImage(cvs, 0, 0);
-        return ctx.getImageData(0, 0, img.width * scale, img.height * scale);
+        outCtx.imageSmoothingEnabled = false;
+        outCtx.scale(scale, scale);
+        outCtx.drawImage(inputCanvas, 0, 0);
+        return outCtx.getImageData(0, 0, img.width * scale, img.height * scale);
     }
 
     export function imageDataToPNG(img: ImageData, scale = 1): string {
