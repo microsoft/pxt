@@ -166,6 +166,8 @@ namespace pxt.usb {
         isochronousTransferIn(endpointNumber: number, packetLengths: number[]): Promise<USBIsochronousInTransferResult>;
         isochronousTransferOut(endpointNumber: number, data: BufferSource, packetLengths: number[]): Promise<USBIsochronousOutTransferResult>;
         reset(): Promise<void>;
+        // chromium 101+
+        forget?(): Promise<void>;
     }
 
     class WebUSBHID implements pxt.packetio.PacketIO {
@@ -262,6 +264,18 @@ namespace pxt.usb {
                     this.clearDev()
                     return U.delay(500)
                 })
+        }
+
+        async forgetAsync(): Promise<boolean> {
+            if (!this.dev?.forget)
+                return false;
+            try {
+                await this.dev.forget();
+                return true;
+                // connection changed listener will handle disconnecting when access is revoked.
+            } catch (e) {
+                return false;
+            }
         }
 
         reconnectAsync() {
@@ -492,7 +506,7 @@ namespace pxt.usb {
             })
     }
 
-    async function tryGetDevicesAsync(): Promise<USBDevice[]> {
+    export async function tryGetDevicesAsync(): Promise<USBDevice[]> {
         log(`webusb: get devices`)
         try {
             const devs = await ((navigator as any).usb.getDevices() as Promise<USBDevice[]>);
@@ -511,6 +525,16 @@ namespace pxt.usb {
             _hid = new WebUSBHID();
         _hid.enable();
         return Promise.resolve(_hid);
+    }
+
+    // returns true if device has been successfully forgotten, false otherwise.
+    export async function forgetDeviceAsync(): Promise<boolean> {
+        pxt.debug(`packetio: forget webusb io`);
+        if (!_hid) {
+            // No device to forget
+            return false;
+        }
+        return _hid.forgetAsync();
     }
 
     export let isEnabled = false

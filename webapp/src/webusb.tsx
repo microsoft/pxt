@@ -470,16 +470,65 @@ function theme() {
 export function renderUnpairDialog() {
     const boardName = getBoardName();
     const header = lf("How to unpair your {0}", boardName);
-    const jsx = <div><p>
-        {lf("You can unpair your {0} if the WebUSB download is malfunctioning. Click on the lock icon and uncheck your device.", boardName)}
-    </p>
-        <img className="ui image centered medium" src={"./static/webusb/unpair.gif"} alt={lf("A gif showing how to unpair the {0}", boardName)} />
+    const unpairImg = theme().browserUnpairImage;
+    const jsx = <div>
+        <p>
+            {lf("You can unpair your {0} if the WebUSB download is malfunctioning.", boardName)}
+        </p>
+        <p>
+            {lf("Click on the icon on the left side of the address bar and uncheck your device.")}
+        </p>
+        {unpairImg && <img
+            className="ui image centered medium"
+            src={unpairImg}
+            alt={lf("A gif showing how to unpair the {0}", boardName)}
+        />}
     </div>
 
-    // TODO: show usb forget here
     const helpUrl = pxt.appTarget.appTheme.usbDocs
         && (pxt.appTarget.appTheme.usbDocs + "/webusb#unpair");
     return { header, jsx, helpUrl };
+}
+
+export async function showDeviceForgottenDialog(confirmAsync: ConfirmAsync) {
+    const boardName = getBoardName();
+    const deviceForgottenImage = theme().usbDeviceForgottenImage;
+    const columns = deviceForgottenImage ? "two" : "one";
+
+    const jsxd = () => (
+        <div className={`ui ${columns} column grid padded download-dialog`}>
+            <div className="column">
+                <div className="ui">
+                    <div className="content">
+                        <div className="description">
+                            {lf("Your {0} has been disconnected.", boardName)}
+                            <br />
+                            <br />
+                            {lf("Unplug it from your computer and disconnect any battery to fully reset it.")}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {deviceForgottenImage &&
+                <div className="column">
+                    <div className="ui">
+                        <div className="image download-dialog-image">
+                            <img alt={lf("Image of {0} being disconnected", boardName)} className="ui medium rounded image" src={deviceForgottenImage} />
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    );
+
+    await showPairStepAsync({
+        confirmAsync,
+        jsxd,
+        buttonLabel: lf("Done"),
+        header: lf("{0} disconnected", boardName),
+        tick: "downloaddialog.button.webusbforgotten",
+        help: undefined,
+    });
 }
 
 
