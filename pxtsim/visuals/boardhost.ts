@@ -156,8 +156,8 @@ namespace pxsim.visuals {
 
         public screenshotAsync(width?: number): Promise<ImageData> {
             // only clone the svg node with class="sim" so that screenshot doesn't include external parts
-            const simEl = this.view.querySelector(".sim");
-            const svg = simEl.cloneNode(true) as SVGSVGElement;
+            const simEl = this.view.classList.contains("sim") ? this.view : this.view.querySelector(".sim");
+            const svg = simEl ? simEl.cloneNode(true) as SVGSVGElement : this.view.cloneNode(true) as SVGSVGElement;
             svg.setAttribute('width', svg.viewBox.baseVal.width + "");
             svg.setAttribute('height', svg.viewBox.baseVal.height + "");
             const xml = new XMLSerializer().serializeToString(svg);
