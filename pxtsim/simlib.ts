@@ -233,6 +233,10 @@ namespace pxsim {
         // destination. Used for muting
         let destination: GainNode;
 
+        export function isAudioElementActive() {
+            return !!_vca;
+        }
+
         export let soundEventCallback: (ev: "playinstructions" | "muteallchannels", data?: Uint8Array) => void;
 
         function context(): AudioContext {
