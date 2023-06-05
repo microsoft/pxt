@@ -2326,6 +2326,11 @@ namespace pxt.py {
                 const arg = orderedArgs[0]
                 const argN = expr(arg)
                 const argT = typeOf(arg)
+                // It goes into parseInt by accident through the service.ts function map default logic.
+                // Assumption 1: It is going through neither of these functions because primType is undefined.
+                // Assumption 2: It follows a codepath that defaults to parseInt despite passing a string.
+                // Also: THe negative sign is a prefixed unary operator with one argument, the number itself.
+                //    This may be part of the issue.
                 if (argT.primType === "string") {
                     return B.mkGroup([
                         B.mkText(`parseInt`),
