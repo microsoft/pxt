@@ -297,7 +297,7 @@ namespace alarms {
     //% duration.shadow=timePicker
     //% expandableArgumentMode="toggle"
     //% sound.defl=AlarmSound.Annoy
-    //% duaration.defl=2000
+    //% duration.defl=2000
     export function alarmSound(sound?: AlarmSound, duration?: number) {
     }
 }
