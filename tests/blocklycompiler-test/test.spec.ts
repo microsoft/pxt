@@ -422,6 +422,10 @@ describe("blockly compiler", function () {
         it("should declare variable types when the initializer expression has a generic type", (done: () => void) => {
             blockTestAsync("array_type_declaration_in_set").then(done, done);
         });
+
+        it("shouldn't pollute the global primitive types when unifying variables", (done: () => void) => {
+            blockTestAsync("primitive_type_inference").then(done, done);
+        });
     });
 
     describe("compiling functions", () => {
