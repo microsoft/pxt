@@ -4768,7 +4768,7 @@ export class ProjectView
     }
 
     setHighContrast(on: boolean) {
-        return core.setHighContrast(on);;
+        return core.setHighContrast(on);
     }
 
     toggleGreenScreen() {
@@ -5611,6 +5611,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
     pxt.perf.measureEnd("setAppTarget");
 
+    let theme = pxt.appTarget.appTheme;
+    const isControllerIFrame = (theme.allowParentController || pxt.shell.isControllerMode()) && pxt.BrowserUtils.isIFrame();
+    // disable auth in iframe scenarios
+    if (isControllerIFrame)
+        pxt.auth.enableAuth(false);
     enableAnalytics()
 
     if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
@@ -5682,17 +5687,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     // github token set in cloud provider
 
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
-    const isController = pxt.shell.isControllerMode();
-    let theme = pxt.appTarget.appTheme;
+
     if (query["ws"]) workspace.setupWorkspace(query["ws"]);
-    else if ((theme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
+    else if (isControllerIFrame) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
     else if (pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     else workspace.setupWorkspace("browser");
-    // disable auth in iframe scenarios
-    if (workspace.getWorkspaceType() === "iframe")
-        pxt.auth.enableAuth(false)
+
     Promise.resolve()
         .then(async () => {
             const href = window.location.href;
