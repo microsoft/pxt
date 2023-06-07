@@ -452,6 +452,12 @@
             .simtoolbar, #miniSimOverlay { display: block; }
             .play-button { display: none !important; }
             .expand-button, .fullscreen-button, .tutorial.mute-button { display: block !important; }
+
+            display: flex;
+            align-items: flex-end;
+            aside.simtoolbar {
+                float: unset;
+            }
         }
 
         .tutorial-controls { display: none; }
@@ -470,14 +476,6 @@
 
         aside.simtoolbar {
             z-index: 5;
-        }
-
-        .simPanel {
-            display: flex;
-            align-items: flex-end;
-            aside.simtoolbar {
-                float: unset;
-            }
         }
     }
     .simulator-container:not(.hidden) {
@@ -1013,7 +1011,7 @@
         }
     }
     
-    /* Short Deskstop Only */
+    /* Short Desktop Only */
     @media (max-height: @tallEditorBreakpoint) {
         #root.tabTutorial:not(.fullscreensim) {
             .simulator-container:not(.hidden) {
@@ -1030,7 +1028,6 @@
                     min-height: @tutorialSimulatorMinHeight;
                 }
                 .simframe {
-                    padding-bottom: unset !important;
                     height: 100%;
                     min-height: @tutorialSimulatorMinHeight;
                 }
