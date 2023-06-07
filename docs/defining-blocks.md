@@ -47,20 +47,30 @@ To have a category appear under the "Advanced" section of the Block Editor toolb
 You can make your block category more organized by grouping similar or related blocks together inside [**groups**](/playground#basic-groups). When using the groups feature, blocks of the same group will appear together in the toolbox flyout and the group's label will be displayed above them.
 This makes it easier for the user to go through your available blocks.
 
-To define your groups, add the `groups` attribute to your namespace. The `groups` attribute is an array of group names. You can individually assign blocks to these groups when defining each block.
-
 > **Notes**:
->* The order in which you define your groups is the order in which the groups will appear in the toolbox flyout.
->* Blocks that are not assigned to a named group are placed in the default `others` group, which does not show a label. The `others` group can be used to decide where in the order of groups the ungrouped blocks will appear. This is based on where you place `others` in the `groups` array.
->* When assigning blocks to groups, names are case sensitive, so make sure the group names you put on your blocks are identical to the ones in your group definitions.
+>* The order in which you define your functions and the according groups is the order in which the groups will appear in the toolbox flyout. Thus if the first function is part of the `example1`-group, this will be the first group in the toolbox flyout. The order of the following functions is irrelevant, only the order of the first function of a specific group is determing the position in the flyout.
+>* Blocks that are not assigned to a named group are placed in the default `others` group, which does not show a label.
+>* When assigning blocks to groups, names are *case sensitive*, so make sure the group names you put on your blocks are identical to the ones in your group definitions.
 
 ```typescript-ignore
 /**
- * Provides access to basic micro:bit functionality.
+ * Organize your functions in groups.
  */
 //% color=190 weight=100 icon="\uf1ec" block="Basic Blocks"
-//% groups=['LED matrix', 'Control flow', 'others']
-namespace basic {
+namespace food {
+    //This function will be part of the `others`-group. 
+    //Because this is the first function, the `others`-group will be the first in the flyout.
+    //% block
+    export function banana() {
+
+    }
+    
+    //This function will be part of the `Fruits`-group. 
+    //% block
+    //% group="Fruits"
+    export function apple() {
+    }
+}
 ```
 
 ## Blocks
