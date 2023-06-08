@@ -342,7 +342,8 @@ export async function setHighContrast(on: boolean) {
 
 export async function setLanguage(lang: string) {
     pxt.BrowserUtils.setCookieLang(lang);
-    await auth.setLangaugePrefAsync(lang);
+    pxt.Util.setUserLanguage(lang);
+    await auth.setLanguagePrefAsync(lang);
 }
 
 export function resetFocus() {

@@ -7,6 +7,7 @@ namespace pxt.storage {
     }
 
     class MemoryStorage implements IStorage {
+        type: "memory";
         items: pxt.Map<string> = {};
 
         removeItem(key: string) {
@@ -24,6 +25,7 @@ namespace pxt.storage {
     }
 
     class LocalStorage implements IStorage {
+        type = "localstorage";
 
         constructor(private storageId: string) {
         }
@@ -74,9 +76,10 @@ namespace pxt.storage {
         // no local storage in sandbox mode
         if (!pxt.shell.isSandboxMode()) {
             try {
-                window.localStorage[sid] = '1';
-                let v = window.localStorage[sid];
-                supported = true;
+                const rand = pxt.Util.guidGen();
+                window.localStorage[sid] = rand;
+                const v = window.localStorage[sid];
+                supported = v === rand;
             } catch (e) { }
         }
 

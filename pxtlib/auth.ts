@@ -77,7 +77,10 @@ namespace pxt.auth {
     };
 
     let _client: AuthClient;
-    export function client(): AuthClient { return _client; }
+    export function client(): AuthClient {
+        if (authDisabled) return undefined;
+        return _client;
+    }
 
     const PREFERENCES_DEBOUNCE_MS = 1 * 1000;
     const PREFERENCES_DEBOUNCE_MAX_MS = 10 * 1000;
