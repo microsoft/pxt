@@ -13,11 +13,13 @@
 }
 
 // attach directly to progress-bar so it overrides wrapper
-.hc progress[value].common-progressbar {
-    --progress-bar-filled-color: @highContrastTextColor;
-    --progress-bar-unfilled-color: @highContrastBackgroundColor;
-    --progress-bar-border-color: @highContrastTextColor;
-    box-shadow: none;
+.hc, .high-contrast {
+    progress[value].common-progressbar {
+        --progress-bar-filled-color: @highContrastTextColor;
+        --progress-bar-unfilled-color: @highContrastBackgroundColor;
+        --progress-bar-border-color: @highContrastTextColor;
+        box-shadow: none;
+    }
 }
 
 progress[value].common-progressbar {
