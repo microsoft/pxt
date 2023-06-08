@@ -2729,14 +2729,33 @@ export class ProjectView
             if (hash && ((pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) || hash.cmd == "tutorial")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
             }
-            else if (this.state && this.state.home) {
-                location.hash = "#reload"
+            else if (this.state?.home) {
+                location.hash = "#reload";
             }
             // if in editor, reload project
-            else if (this.state && this.state.header && !this.state.header.isDeleted) {
+            else if (this.state?.header && !this.state.header.isDeleted) {
                 location.hash = "#editor"
             }
-            location.reload();
+
+            if (pxt.BrowserUtils.isIFrame() && !pxt.BrowserUtils.getCookieLang()) {
+                // Include language in the refreshed page to persist refreshes
+                // when cookies not allowed
+                const lang = pxt.Util.userLanguage();
+                const params = new URLSearchParams(location.search);
+                params.set("lang", lang);
+                const hcParamSet = !!params.get("hc");
+                const hc = !!core.getHighContrastOnce();
+                if (hc != hcParamSet) {
+                    if (hc) params.set("hc", "1");
+                    else params.delete("hc");
+                }
+                location.search = params.toString();
+                // .reload refreshes without hitting server so it loses the params,
+                // so have to navigate directly
+                location.assign(location.toString());
+            } else {
+                location.reload();
+            }
         } catch (e) {
             pxt.reportException(e);
             location.reload();
