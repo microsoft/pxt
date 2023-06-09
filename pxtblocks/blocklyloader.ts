@@ -343,6 +343,19 @@ namespace pxt.blocks {
 
             if (parentFn) {
                 const parentInfo = pxt.blocks.compileInfo(parentFn);
+
+                Object.entries(fn.attributes.paramDefl).forEach(([name, val]) => {
+                    if (name.startsWith("toolboxParent.")) {
+                        const paramName = name.substring(14);  // 14 = 'toolboxParent.'.length
+                        const param = parentInfo.parameters.filter(p => p.definitionName === paramName)[0];
+                        if(param) {
+                            // TODO thsparks : Feels like just one of these should be necessary...
+                            parentFn.attributes.paramDefl[paramName] = val;
+                            param.defaultValue = val;
+                        }
+                    }
+                });
+
                 parent = createToolboxBlock(info, parentFn, parentInfo);
 
                 if (fn.attributes.toolboxParentArgument) {
