@@ -124,10 +124,23 @@ namespace pxt.blocks {
         let _p2 = find(p2);
         assert(_p1.link == null && _p2.link == null);
 
-        if (_p1 == _p2)
+        if (_p1 == _p2) {
             return;
+        }
+        else if (isPrimitiveType(_p1)) {
+            unify(p1.type, p2.type);
+            return;
+        }
+        else if (isPrimitiveType(_p2)) {
+            unify(p1.type, p2.type);
 
-        if (_p1.childType && _p2.childType) {
+            p1.type = null;
+            p1.link = _p2;
+            _p1.link = _p2;
+            _p1.isArrayType = _p2.isArrayType;
+            return;
+        }
+        else  if (_p1.childType && _p2.childType) {
             const ct = _p1.childType;
             _p1.childType = null;
             union(ct, _p2.childType);
@@ -175,6 +188,10 @@ namespace pxt.blocks {
                 // Unification variable.
                 return mkPoint(t);
         }
+    }
+
+    function isPrimitiveType(point: Point) {
+        return point === pNumber || point === pBoolean || point === pString || point === pUnit;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
