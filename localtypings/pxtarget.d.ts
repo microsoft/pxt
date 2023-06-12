@@ -476,6 +476,7 @@ declare namespace pxt {
         tutorialSimSidebarLayout?: boolean; // Enable tutorial layout with the sim in the sidebar (desktop only)
         showOpenInVscode?: boolean; // show the open in VS Code button
         matchWebUSBDeviceInSim?: boolean; // if set, pass current device id as theme to sim when available.
+        condenseProfile?: boolean; // if set, will make the profile dialog smaller
     }
 
     interface DownloadDialogTheme {
