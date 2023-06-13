@@ -73,10 +73,11 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         connected = pxt.packetio.isConnected();
         if (connected) {
             // plugged in underneath previous dialog, continue;
+            core.hideDialog();
         } else if (!webUsbInstrDialogRes) {
             return notPairedResult();
         } else {
-            core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName))
+            core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName));
 
             let errMessage: any;
             try {
@@ -85,6 +86,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
                 errMessage = e.message;
             }
             core.hideLoading("pair");
+            core.hideDialog();
 
             if (pxt.packetio.isConnected()) {
                 // user connected previously paired device &&
@@ -210,6 +212,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
         showDownloadAsFileButton,
         header: lf("2. Pair your {0} to your browser", boardName),
         tick: "downloaddialog.button.pickusbdevice",
+        doNotHideOnAgree: true,
     });
 }
 
@@ -296,6 +299,7 @@ interface PairStepOptions {
     headerIcon?: string;
     showDownloadAsFileButton?: boolean;
     hideClose?: boolean;
+    doNotHideOnAgree?: boolean;
 }
 
 async function showPairStepAsync({
@@ -309,8 +313,17 @@ async function showPairStepAsync({
     headerIcon,
     showDownloadAsFileButton,
     hideClose,
+    doNotHideOnAgree,
 }: PairStepOptions) {
     let tryAgain = false;
+
+    /**
+     * The deferred below is only used when doNotHideOnAgree is set
+     */
+    let deferred: () => void;
+    const agreeButtonClicked = doNotHideOnAgree && new Promise((_res: (val: void) => void, rej: () => void) => {
+        deferred = _res;
+    });
 
     const buttons: ModalButton[] = [
         {
@@ -320,9 +333,12 @@ async function showPairStepAsync({
             labelPosition: "left",
             onclick: () => {
                 pxt.tickEvent(tick);
-                core.hideDialog();
                 tryAgain = true;
+                if (doNotHideOnAgree) {
+                    deferred();
+                }
             },
+            noCloseOnClick: doNotHideOnAgree,
         }
     ];
 
@@ -336,12 +352,11 @@ async function showPairStepAsync({
                 pxt.tickEvent("downloaddialog.button.webusb.preferdownload");
                 userPrefersDownloadFlag = true;
                 tryAgain = false;
-                core.hideDialog();
             },
         });
     }
 
-    await confirmAsync({
+    const dialog = confirmAsync({
         header,
         jsxd,
         hasCloseIcon: !hideClose,
@@ -353,6 +368,14 @@ async function showPairStepAsync({
         headerIcon: headerIcon ? headerIcon + " header-inline-icon" : undefined,
         buttons,
     });
+
+    if (doNotHideOnAgree) {
+        await Promise.race([agreeButtonClicked, dialog]);
+        // resolve possibly dangling promise
+        deferred?.();
+    } else {
+        await dialog;
+    }
 
     return tryAgain;
 }
