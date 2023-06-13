@@ -514,6 +514,7 @@ namespace pxt {
     export const PALETTES_FILE = "_palettes.json";
     // for packing extensions into distributables, as backup when network unavailable
     export const PACKAGED_EXTENSIONS = "_packaged-extensions.json";
+    export const PACKAGED_EXT_INFO = "_packaged-ext-info.json";
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

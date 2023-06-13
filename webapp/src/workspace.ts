@@ -656,6 +656,12 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
         // Do not persist into project once installed.
         delete text[pxt.PACKAGED_EXTENSIONS];
     }
+    if (text[pxt.PACKAGED_EXT_INFO]) {
+        const parsedExtensionInfo = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXT_INFO]);
+        // TODO: push this into cache; see pxtlib/cpp.ts, would need to mirror portion of
+        // getHexInfoAsync that compresses hex download result and pushes into storeWithLimitAsync
+        delete text[pxt.PACKAGED_EXT_INFO];
+    }
 
     return pxt.github.cacheProjectDependenciesAsync(cfg, backupExtensionFiles)
         .then(() => importAsync(h, text))

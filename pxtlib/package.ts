@@ -1220,8 +1220,7 @@ namespace pxt {
                 variants = [null]
             }
 
-
-            let ext: pxtc.ExtensionInfo = null
+            let ext: pxtc.ExtensionInfo = null;
             for (let v of variants) {
                 if (ext)
                     pxt.debug(`building for ${v}`)
@@ -1252,6 +1251,11 @@ namespace pxt {
                     true,
                     !appTarget.compile.useUF2
                 );
+                if (opts.target.isNative && opts.extinfo.hexinfo) {
+                    // todo trim down to relevant portion of extinfo?
+                    // hexfile + hash + whatever is needed for /cpp.ts
+                    files[pxt.PACKAGED_EXT_INFO] = JSON.stringify(opts.extinfo);
+                }
                 const headerString = JSON.stringify({
                     name: this.config.name,
                     comment: this.config.description,
@@ -1261,7 +1265,9 @@ namespace pxt {
                     editor: this.getPreferredEditor(),
                     targetVersions: pxt.appTarget.versions
                 })
-                const programText = JSON.stringify(files)
+
+                const programText = JSON.stringify(files);
+
                 const buf = await lzmaCompressAsync(headerString + programText)
                 if (buf) {
                     opts.embedMeta = JSON.stringify({
@@ -1272,7 +1278,7 @@ namespace pxt {
                         eURL: pxt.appTarget.appTheme.embedUrl,
                         eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
                         pxtTarget: appTarget.id,
-                    })
+                    });
                     opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
                 }
             }
