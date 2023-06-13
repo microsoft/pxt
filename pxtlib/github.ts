@@ -265,8 +265,8 @@ namespace pxt.github {
 
                 pxt.log(`Downloading ${repopath}/${tag} -> ${sha}`);
                 const pkg = await downloadTextAsync(repopath, sha, pxt.CONFIG_NAME);
-                current.files[pxt.CONFIG_NAME] = pkg
-                const cfg: pxt.PackageConfig = JSON.parse(pkg)
+                current.files[pxt.CONFIG_NAME] = pkg;
+                const cfg: pxt.PackageConfig = JSON.parse(pkg);
                 await U.promiseMapAll(
                     pxt.allPkgFiles(cfg).slice(1),
                     async fn => {
@@ -643,6 +643,18 @@ namespace pxt.github {
         cfg: pxt.PackageConfig,
         backupExtensions?: pxt.Map<pxt.Map<string>>
     ): Promise<void> {
+        return cacheProjectDependenciesAsyncCore(
+            cfg,
+            {} /** resolved */,
+            backupExtensions
+        );
+    }
+
+    async function cacheProjectDependenciesAsyncCore(
+        cfg: pxt.PackageConfig,
+        checked: pxt.Map<boolean>,
+        backupExtensions?: pxt.Map<pxt.Map<string>>
+    ): Promise<void> {
         const ghExtensions = Object.keys(cfg.dependencies)
             ?.filter(dep => isGithubId(cfg.dependencies[dep]));
 
@@ -656,6 +668,9 @@ namespace pxt.github {
                 ghExtensions.map(
                     async ext => {
                         const extSrc = cfg.dependencies[ext];
+                        if (checked[extSrc])
+                            return;
+                        checked[extSrc] = true;
                         const backup = backupExtensions?.[extSrc];
                         const ghPkg = await downloadPackageAsync(extSrc, pkgConfig, backup);
                         if (!ghPkg) {
@@ -663,9 +678,7 @@ namespace pxt.github {
                         }
 
                         const pkgCfg = pxt.U.jsonTryParse(ghPkg.files[pxt.CONFIG_NAME]);
-                        // todo: we don't support circular deps... right?? maybe add an inner function to
-                        // recurse & keep track of already resolved deps
-                        await cacheProjectDependenciesAsync(pkgCfg, backupExtensions);
+                        await cacheProjectDependenciesAsyncCore(pkgCfg, checked, backupExtensions);
                     }
                 )
             );
