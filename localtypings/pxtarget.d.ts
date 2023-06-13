@@ -477,6 +477,7 @@ declare namespace pxt {
         showOpenInVscode?: boolean; // show the open in VS Code button
         matchWebUSBDeviceInSim?: boolean; // if set, pass current device id as theme to sim when available.
         condenseProfile?: boolean; // if set, will make the profile dialog smaller
+        cloudProfileIcon?: string; // the file path for added imagery on smaller profile dialogs
     }
 
     interface DownloadDialogTheme {

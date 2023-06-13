@@ -22,6 +22,7 @@ export const Profile = (props: ProfileProps) => {
     const userBadges = user?.preferences?.badges || { badges: [] };
     const showBadges = pxt.appTarget?.cloud?.showBadges || false;
     const profileSmall = pxt.appTarget.appTheme?.condenseProfile;
+    const profileIcon = pxt.appTarget.appTheme?.cloudProfileIcon;
 
     const onBadgeClick = (badge: pxt.auth.Badge) => {
         showModalAsync({
@@ -47,9 +48,21 @@ export const Profile = (props: ProfileProps) => {
         />}
 
         {profileSmall &&
-            <div>
-               Now that you're logged in, your projects will be automatically saved to the cloud so you can
-                access them from any device! Learn more at Cloud Sync or Identity or Privacy
+            <div className="profile-info-container">
+                <p className="profile-info">
+                    {lf("Now that you're logged in, your projects will be automatically saved to the cloud so you can access them from any device! ")}
+                    {lf("Learn more at ")}
+                    <a href="https://arcade.makecode.com/identity/cloud-sync" target="_blank" rel="noopener noreferrer" tabIndex={0}>{lf("Cloud Sync ")}</a>
+                    {lf("or ")}
+                    <a href="https://makecode.com/privacy-faq" target="_blank" rel="noopener noreferrer" tabIndex={0}>{lf("Privacy ")}</a>
+                    {lf("or ")}
+                    <a href="https://arcade.makecode.com/identity/sign-in" target="_blank" rel="noopener noreferrer" tabIndex={0}>{lf("Identity.")}</a>
+                </p>
+                {profileIcon && <img
+                    className="ui image centered medium"
+                    src={profileIcon}
+                    alt={lf("Image of microbit microcontroller surrounded by clouds")}
+                />}
             </div>
         }
     </div>
