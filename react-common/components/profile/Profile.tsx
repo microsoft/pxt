@@ -50,18 +50,12 @@ export const Profile = (props: ProfileProps) => {
         {profileSmall &&
             <div className="profile-info-container">
                 <p className="profile-info">
-                    {lf("Now that you're logged in, your projects will be automatically saved to the cloud so you can access them from any device! ")}
-                    {lf("Learn more at ")}
-                    <a href="https://arcade.makecode.com/identity/cloud-sync" target="_blank" rel="noopener noreferrer" tabIndex={0}>{lf("Cloud Sync ")}</a>
-                    {lf("or ")}
-                    <a href="https://makecode.com/privacy-faq" target="_blank" rel="noopener noreferrer" tabIndex={0}>{lf("Privacy ")}</a>
-                    {lf("or ")}
-                    <a href="https://arcade.makecode.com/identity/sign-in" target="_blank" rel="noopener noreferrer" tabIndex={0}>{lf("Identity.")}</a>
+                    {lf("Now that you're logged in, your projects will be automatically saved to the cloud so you can access them from any device!")}
                 </p>
                 {profileIcon && <img
                     className="ui image centered medium"
                     src={profileIcon}
-                    alt={lf("Image of microbit microcontroller surrounded by clouds")}
+                    alt=""
                 />}
             </div>
         }
