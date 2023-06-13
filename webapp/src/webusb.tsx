@@ -77,15 +77,12 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         } else if (!webUsbInstrDialogRes) {
             return notPairedResult();
         } else {
-            core.showLoading("pair", lf("Select your {0} and press \"Connect\".", boardName));
-
             let errMessage: any;
             try {
                 paired = await pairAsync();
             } catch (e) {
                 errMessage = e.message;
             }
-            core.hideLoading("pair");
             core.hideDialog();
 
             if (pxt.packetio.isConnected()) {
