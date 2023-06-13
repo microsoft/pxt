@@ -648,14 +648,10 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
 
     let backupExtensionFiles: pxt.Map<pxt.Map<string>>;
     if (text[pxt.PACKAGED_EXTENSIONS]) {
-        const packagedExts: {
-            extensionText?: pxt.Map<pxt.Map<string>>,
-            hex?: pxt.Map<pxtc.HexInfo>,
-        } = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
-
-        backupExtensionFiles = packagedExts?.extensionText;
-        const hexInfo = packagedExts?.hex;
-        // TODO
+        backupExtensionFiles = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
+        // TODO cache hexfiles in text[pxt.PACKAGED_HEXFILE] like field?
+        // Would be necessary for full offline usage, but tricky as it
+        // also depends on target version / hex hash;
 
         // Do not persist into project once installed.
         delete text[pxt.PACKAGED_EXTENSIONS];

@@ -1336,19 +1336,8 @@ namespace pxt {
             }
 
             if (packExternalExtensions) {
-                let filesToEmit = false;
-                // todo throw this in a common spot
-                const packedDeps: {
-                    extensionText?: Map<Map<string>>,
-                    hex?: Map<pxtc.HexInfo>,
-                } = {
-                    extensionText: {},
-                    hex: {},
-                };
-
+                const packedDeps: Map<Map<string>> = {};
                 const packDeps = (p: Package) => {
-                    // package in current resolved version for use as backup
-                    // e.g. loading hexfile back into editor when offline
                     const depsToPack = p.resolvedDependencies()
                         .filter(dep => {
                             switch (dep.verProtocol()) {
@@ -1361,7 +1350,7 @@ namespace pxt {
                         });
 
                     for (const dep of depsToPack) {
-                        if (packedDeps.extensionText[dep._verspec])
+                        if (packedDeps[dep._verspec])
                             continue;
                         const packed: Map<string> = {};
                         for (const toPack of dep.getFiles()) {
@@ -1369,16 +1358,13 @@ namespace pxt {
                         }
                         packed[pxt.CONFIG_NAME] = JSON.stringify(dep.config);
 
-                        packedDeps.extensionText[dep._verspec] = packed;
-                        filesToEmit = true;
+                        packedDeps[dep._verspec] = packed;
                         packDeps(dep);
                     }
                 }
 
                 packDeps(this);
-                if (filesToEmit) {
-                    if (!Object.keys(packedDeps.hex).length)
-                        delete packedDeps["hex"];
+                if (Object.keys(packedDeps).length) {
                     files[pxt.PACKAGED_EXTENSIONS] = JSON.stringify(packedDeps);
                 }
             }
