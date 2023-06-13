@@ -233,7 +233,7 @@ export async function setHighContrastPrefAsync(highContrast: boolean): Promise<v
     }
 }
 
-export async function setLangaugePrefAsync(lang: string): Promise<void> {
+export async function setLanguagePrefAsync(lang: string): Promise<void> {
     const cli = await clientAsync();
     if (cli) {
         await cli.patchUserPreferencesAsync({

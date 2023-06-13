@@ -12,8 +12,10 @@ import { Button } from "./sui";
 import { SimulatorPresenceBar } from "./components/SimulatorPresenceBar"
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 import { fireClickOnEnter } from "./util";
+import { VerticalResizeContainer } from '../../react-common/components/controls/VerticalResizeContainer'
 
 interface SidepanelState {
+    resized?: boolean;
     height?: number;
 }
 
@@ -115,8 +117,15 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
-    protected setComponentHeight = (height?: number) => {
-        if (height != this.state.height) this.setState({ height: height });
+    protected setComponentHeight = (height?: number, isResize?: boolean) => {
+        if (height != this.state.height || isResize != this.state.resized) {
+            this.setState({resized: this.state.resized || isResize, height: height});
+
+            this.simPanelRef.style.setProperty(
+                "--tutorialCalloutTop",
+                `${height}px`
+            );
+        }
     }
 
     onHostMultiplayerGameClick = (evt: any) => {
@@ -135,18 +144,17 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
-        const { height } = this.state;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const showOpenInVscodeButton = parent.isJavaScriptActive() && pxt.appTarget?.appTheme?.showOpenInVscode;
 
         const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
         const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
-        const editorSidebarHeight = height ? { height: `calc(${height}px + 0.5rem)` } : undefined;
+        const editorSidebarHeight = `${this.state.height}px`;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? editorSidebarHeight : undefined}>
+            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -176,7 +184,14 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             </div>
             {tutorialOptions &&
                 <div className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""}>
-                    <div id="tutorialWrapper" className={outerTutorialContainerClassName} style={editorSidebarHeight}>
+                    <VerticalResizeContainer
+                        id="tutorialWrapper"
+                        className={outerTutorialContainerClassName}
+                        maxHeight="500px"
+                        minHeight="100px"
+                        initialHeight={editorSidebarHeight}
+                        resizeEnabled={pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar}
+                        onResizeDrag={newSize => this.setComponentHeight(newSize, true)}>
                         <TutorialContainer
                             parent={parent}
                             tutorialId={tutorialOptions.tutorial}
@@ -188,10 +203,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                             hasTemplate={!!tutorialOptions.templateCode}
                             preferredEditor={tutorialOptions.metadata?.preferredEditor}
                             tutorialSimSidebar={this.props.tutorialSimSidebar}
+                            hasBeenResized={this.state.resized}
                             onTutorialStepChange={onTutorialStepChange}
                             onTutorialComplete={onTutorialComplete}
-                            setParentHeight={this.setComponentHeight} />
-                    </div>
+                            setParentHeight={newSize => this.setComponentHeight(newSize, false)} />
+                    </VerticalResizeContainer>
                 </div>}
         </div>
     }

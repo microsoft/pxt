@@ -570,7 +570,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.closeDetail = this.closeDetail.bind(this);
         this.closeDetailOnEscape = this.closeDetailOnEscape.bind(this);
         this.reload = this.reload.bind(this);
-        this.newProject = this.newProject.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
     }
@@ -615,16 +614,16 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return headers;
     }
 
-    newProject() {
+    newProject(firstProject?: boolean) {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
         if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
             this.props.parent.askForProjectCreationOptionsAsync()
                 .then(projectSettings => {
                     const { name, languageRestriction } = projectSettings
-                    this.props.parent.newProject({ name, languageRestriction });
+                    this.props.parent.newProject({ name, languageRestriction, firstProject });
                 })
         } else {
-            this.props.parent.newProject({});
+            this.props.parent.newProject({ firstProject });
         }
     }
 
@@ -755,9 +754,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headersToShow = headers
                 .filter(h => !h.tutorial?.metadata?.hideIteration)
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
+            const isFirstProject = (!headers || headers?.length == 0);
             return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
                 {showNewProject && <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
-                    onClick={this.newProject} onKeyDown={fireClickOnEnter} >
+                    onClick={() => this.newProject(isFirstProject)} onKeyDown={fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>

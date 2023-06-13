@@ -222,7 +222,9 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
         const dev = await pxt.packetio.initAsync(false);
         core.showLoading(LOADING_KEY, lf("Downloading..."));
         try {
-            await dev.reflashAsync(resp)
+            await dev.reflashAsync(resp, percentageFlashed => {
+                core.updateLoadingCompletion(LOADING_KEY, percentageFlashed);
+            });
             await dev.reconnectAsync();
         } finally {
             core.hideLoading(LOADING_KEY);
@@ -421,6 +423,7 @@ export async function initAsync() {
         log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
         pxt.commands.renderDisconnectDialog = webusb.renderUnpairDialog;
+        pxt.commands.showUsbDeviceForgottenDialog = webusb.showDeviceForgottenDialog;
     } else if (hidbridge.shouldUse()) {
         log(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
@@ -491,12 +494,18 @@ export async function pairAsync(implicitlyCalled?: boolean): Promise<boolean> {
 
 }
 
-export function showDisconnectAsync(): Promise<void> {
-    if (pxt.commands.renderDisconnectDialog) {
+export async function showDisconnectAsync(): Promise<void> {
+    if (await pxt.usb.forgetDeviceAsync()) {
+        await pxt.commands.showUsbDeviceForgottenDialog(core.confirmAsync);
+    } else if (pxt.commands.renderDisconnectDialog) {
         const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
-        return core.dialogAsync({ header, jsx, helpUrl, hasCloseIcon: true });
+        await core.dialogAsync({
+            header,
+            jsx,
+            helpUrl,
+            hasCloseIcon: true
+        });
     }
-    return Promise.resolve();
 }
 
 export function disconnectAsync(): Promise<void> {

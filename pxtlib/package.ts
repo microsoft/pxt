@@ -969,20 +969,32 @@ namespace pxt {
             const files = this.config.files;
 
             let fn = `_locales/${initialLang}/${filename}-strings.json`;
-            if (files.indexOf(fn) > -1) {
-                r = JSON.parse(this.readFile(fn)) as Map<string>;
-            }
-            else if (initialLangLowerCase) {
+            if (initialLangLowerCase && files.indexOf(fn) === -1) {
                 fn = `_locales/${initialLangLowerCase}/${filename}-strings.json`;
-                if (files.indexOf(fn) > -1)
-                    r = JSON.parse(this.readFile(fn)) as Map<string>;
-                else if (baseLang) {
-                    fn = `_locales/${baseLang}/${filename}-strings.json`;
-                    if (files.indexOf(fn) > -1) {
-                        r = JSON.parse(this.readFile(fn)) as Map<string>;
+            }
+            if (baseLang && files.indexOf(fn) === -1) {
+                fn = `_locales/${baseLang}/${filename}-strings.json`;
+            }
+
+            if (files.indexOf(fn) > -1) {
+                try {
+                    r = JSON.parse(this.readFile(fn));
+                } catch (e) {
+                    pxt.reportError("extension", "Extension localization JSON failed to parse", {
+                        fileName: fn,
+                        lang: lang,
+                        extension: this.verArgument(),
+                    });
+                    const isGithubRepo = this.verProtocol() === "github";
+                    if (isGithubRepo) {
+                        pxt.tickEvent("loc.errors.json", {
+                            repo: this.verArgument(),
+                            file: fn,
+                        });
                     }
                 }
             }
+
             return r;
         }
     }

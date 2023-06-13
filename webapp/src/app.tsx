@@ -2729,14 +2729,33 @@ export class ProjectView
             if (hash && ((pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) || hash.cmd == "tutorial")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
             }
-            else if (this.state && this.state.home) {
-                location.hash = "#reload"
+            else if (this.state?.home) {
+                location.hash = "#reload";
             }
             // if in editor, reload project
-            else if (this.state && this.state.header && !this.state.header.isDeleted) {
+            else if (this.state?.header && !this.state.header.isDeleted) {
                 location.hash = "#editor"
             }
-            location.reload();
+
+            if (pxt.BrowserUtils.isIFrame() && !pxt.BrowserUtils.getCookieLang()) {
+                // Include language in the refreshed page to persist refreshes
+                // when cookies not allowed
+                const lang = pxt.Util.userLanguage();
+                const params = new URLSearchParams(location.search);
+                params.set("lang", lang);
+                const hcParamSet = !!params.get("hc");
+                const hc = !!core.getHighContrastOnce();
+                if (hc != hcParamSet) {
+                    if (hc) params.set("hc", "1");
+                    else params.delete("hc");
+                }
+                location.search = params.toString();
+                // .reload refreshes without hitting server so it loses the params,
+                // so have to navigate directly
+                location.assign(location.toString());
+            } else {
+                location.reload();
+            }
         } catch (e) {
             pxt.reportException(e);
             location.reload();
@@ -2793,7 +2812,12 @@ export class ProjectView
         return this.createProjectAsync(options)
             .then(() => this.autoChooseBoardAsync())
             .then(() => Util.delay(500))
-            .finally(() => core.hideLoading("newproject"));
+            .finally(() => {
+                core.hideLoading("newproject");
+                if (options?.firstProject && pxt.appTarget.appTheme?.tours?.editor) {
+                    this.showOnboarding();
+                }
+            });
     }
 
     async createProjectAsync(options: ProjectCreationOptions): Promise<void> {
@@ -3216,7 +3240,7 @@ export class ProjectView
 
                     if (noHexFileDiagnostic?.code === 9283 /*program too large*/ && pxt.commands.showProgramTooLargeErrorAsync) {
                         pxt.tickEvent("compile.programTooLargeDialog");
-                        const res = await pxt.commands.showProgramTooLargeErrorAsync(pxt.appTarget.multiVariants, core.confirmAsync);
+                        const res = await pxt.commands.showProgramTooLargeErrorAsync(pxt.appTarget.multiVariants, core.confirmAsync, saveOnly);
                         if (res?.recompile) {
                             pxt.tickEvent("compile.programTooLargeDialog.recompile");
                             const oldVariants = pxt.appTarget.multiVariants;
@@ -4763,7 +4787,7 @@ export class ProjectView
     }
 
     setHighContrast(on: boolean) {
-        return core.setHighContrast(on);;
+        return core.setHighContrast(on);
     }
 
     toggleGreenScreen() {
@@ -4953,6 +4977,7 @@ export class ProjectView
             inTutorialExpanded && !isTabTutorial ? 'tutorialExpanded' : '',
             isTabTutorial ? 'tabTutorial' : '',
             isSidebarTutorial ? 'sidebarTutorial' : '',
+            tutorialSimSidebar ? 'tutorialSimSidebar' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
@@ -5605,6 +5630,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
     pxt.perf.measureEnd("setAppTarget");
 
+    let theme = pxt.appTarget.appTheme;
+    const isControllerIFrame = (theme.allowParentController || pxt.shell.isControllerMode()) && pxt.BrowserUtils.isIFrame();
+    // disable auth in iframe scenarios
+    if (isControllerIFrame)
+        pxt.auth.enableAuth(false);
     enableAnalytics()
 
     if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
@@ -5676,17 +5706,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     // github token set in cloud provider
 
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
-    const isController = pxt.shell.isControllerMode();
-    let theme = pxt.appTarget.appTheme;
+
     if (query["ws"]) workspace.setupWorkspace(query["ws"]);
-    else if ((theme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
+    else if (isControllerIFrame) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
     else if (pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     else workspace.setupWorkspace("browser");
-    // disable auth in iframe scenarios
-    if (workspace.getWorkspaceType() === "iframe")
-        pxt.auth.enableAuth(false)
+
     Promise.resolve()
         .then(async () => {
             const href = window.location.href;

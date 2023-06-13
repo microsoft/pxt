@@ -119,6 +119,7 @@ namespace pxt.editor {
         extensionUnderTest?: string; // workspace id of the extension under test
         skillmapProject?: boolean;
         simTheme?: Partial<pxt.PackageConfig>;
+        firstProject?: boolean;
     }
 
     export interface ExampleImportOptions {

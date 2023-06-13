@@ -219,6 +219,10 @@ namespace pxsim.codal.music {
         cancelled: false
     };
 
+    export function isSoundExpPlaying(): boolean {
+        return playing;
+    }
+
     export function __playSoundExpression(notes: string, waitTillDone: boolean): void {
         if (!soundQueue) soundQueue = [];
 

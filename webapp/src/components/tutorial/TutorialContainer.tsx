@@ -20,6 +20,7 @@ interface TutorialContainerProps {
     hideIteration?: boolean;
     hasTemplate?: boolean;
     preferredEditor?: string;
+    hasBeenResized?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
     tutorialSimSidebar?: boolean;
@@ -58,13 +59,24 @@ export function TutorialContainer(props: TutorialContainerProps) {
             } else {
                 setLayout("vertical");
             }
-            setShowScrollGradient(contentRef?.current?.scrollHeight > contentRef?.current?.offsetHeight);
+            updateScrollGradient();
         });
         observer.observe(document.body)
+
+        // We also want to update the scroll gradient if the tutorial wrapper is resized by the user.
+        const parent = document.querySelector("#tutorialWrapper");
+        if (parent) {
+            observer.observe(parent);
+        }
+
         return () => observer.disconnect();
     }, [document.body])
 
     React.useEffect(() => {
+        if (props.hasBeenResized) {
+            return;
+        }
+
         if (isHorizontal) {
             let scrollHeight = 0;
             const children = contentRef?.current?.children ? pxt.Util.toArray(contentRef?.current?.children) : [];
@@ -91,7 +103,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         const contentDiv = contentRef?.current;
         contentDiv.querySelector(".tutorial-step-content")?.focus();
         contentDiv.scrollTo(0, 0);
-        setShowScrollGradient(contentDiv.scrollHeight > contentDiv.offsetHeight);
+        updateScrollGradient();
         setStepErrorAttemptCount(0);
 
         onTutorialStepChange(currentStep);
@@ -207,7 +219,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const onModalClose = showNext ? () => tutorialStepNext() : () => setHideModal(true);
 
-    const tutorialContentScroll = () => {
+    const updateScrollGradient = () => {
         const contentDiv = contentRef?.current;
         setShowScrollGradient(contentDiv && ((contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight) > 1));
     }
@@ -246,7 +258,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     return <div className="tutorial-container">
         {!isHorizontal && stepCounter}
-        <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={tutorialContentScroll}>
+        <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={updateScrollGradient}>
             <div className={"tutorial-content-bkg"}>
                 {!isHorizontal && <div className="tutorial-step-label">
                     {name && <span className="tutorial-step-title">{name}</span>}

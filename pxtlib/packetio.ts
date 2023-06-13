@@ -16,13 +16,15 @@ namespace pxt.packetio {
         isConnected(): boolean
         isConnecting(): boolean
         // flash the device, does **not** reconnect
-        reflashAsync(resp: pxtc.CompileResult): Promise<void>;
+        reflashAsync(resp: pxtc.CompileResult, progressCallback?: (percentageComplete: number) => void): Promise<void>;
 
         onCustomEvent: (type: string, payload: Uint8Array) => void;
         sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void>;
         // returns a list of part ids that are not supported by the connected hardware. currently
         // only used by pxt-microbit to warn users about v2 blocks on v1 hardware
         unsupportedParts?(): string[];
+        // the variant id for the currently connected device
+        devVariant?: string;
     }
 
     export interface PacketIO {
@@ -82,6 +84,10 @@ namespace pxt.packetio {
 
     export function unsupportedParts() {
         return wrapper?.unsupportedParts ? wrapper.unsupportedParts() : [];
+    }
+
+    export function deviceVariant() {
+        return wrapper?.devVariant;
     }
 
     let disconnectPromise: Promise<void>

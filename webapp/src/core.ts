@@ -21,11 +21,16 @@ export type Component<S, T> = data.Component<S, T>;
 ////////////       Loading spinner            /////////////
 ///////////////////////////////////////////////////////////
 
+interface LoadingSection {
+    displayText: string,
+    percentComplete?: number;
+}
+
 let dimmerInitialized = false;
 let loadingDimmer: coretsx.LoadingDimmer;
 
 let loadingQueue: string[] = [];
-let loadingQueueMsg: pxt.Map<string> = {};
+let loadingQueueMsg: pxt.Map<LoadingSection> = {};
 
 export function isLoading() {
     return loadingDimmer && loadingDimmer.isVisible();
@@ -64,22 +69,45 @@ export function killLoadingQueue() {
     }
 }
 
-export function showLoading(id: string, msg: string) {
+export function showLoading(id: string, msg: string, percentComplete?: number) {
     pxt.debug("showloading: " + id);
     if (loadingQueueMsg[id]) return; // already loading?
     pxt.perf.recordMilestone(`loading started #${id}`)
     initializeDimmer();
-    loadingDimmer.show(lf("Please wait"));
+    loadingDimmer.show(
+        "initializing-loader",
+        lf("Please wait"),
+    );
     loadingQueue.push(id);
-    loadingQueueMsg[id] = msg;
+    loadingQueueMsg[id] = {
+        displayText: msg,
+        percentComplete,
+    };
     displayNextLoading();
+}
+
+export function updateLoadingCompletion(id: string, percentComplete: number) {
+    const msg = loadingQueueMsg[id];
+    if (!msg) {
+        pxt.debug("Loading not in queue, disregard: " + id);
+        return;
+    }
+
+    msg.percentComplete = percentComplete;
+    if (loadingDimmer?.currentlyLoading() === id) {
+        loadingDimmer.setPercentLoaded(percentComplete);
+    }
 }
 
 function displayNextLoading() {
     if (!loadingQueue.length) return;
     const id = loadingQueue[loadingQueue.length - 1]; // get last item
     const msg = loadingQueueMsg[id];
-    loadingDimmer.show(msg);
+    loadingDimmer.show(
+        id,
+        msg.displayText,
+        msg.percentComplete,
+    );
 }
 
 function initializeDimmer() {
@@ -314,7 +342,8 @@ export async function setHighContrast(on: boolean) {
 
 export async function setLanguage(lang: string) {
     pxt.BrowserUtils.setCookieLang(lang);
-    await auth.setLangaugePrefAsync(lang);
+    pxt.Util.setUserLanguage(lang);
+    await auth.setLanguagePrefAsync(lang);
 }
 
 export function resetFocus() {

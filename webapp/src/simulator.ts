@@ -295,7 +295,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
     const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;
     const dependencies: pxt.Map<string> = {}
-    for(const dep of pkg.sortedDeps())
+    for (const dep of pkg.sortedDeps())
         dependencies[dep.id] = dep.version()
 
     const playerNumber = allParts && allParts.indexOf("multiplayer") >= 0 ? 1 : undefined;
@@ -306,6 +306,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
             root?.style?.removeProperty(cssVar);
         }
     }
+
+    const theme = pkg.config.theme || (pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.isConnected() && pxt.packetio.deviceVariant());
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
@@ -330,7 +332,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         ipc: isIpcRenderer,
         dependencies,
         activePlayer: playerNumber,
-        theme: pkg.config.theme,
+        theme: theme,
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
