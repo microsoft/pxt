@@ -21,6 +21,8 @@ export const Profile = (props: ProfileProps) => {
     const userProfile = user?.profile || { idp: {} };
     const userBadges = user?.preferences?.badges || { badges: [] };
     const showBadges = pxt.appTarget?.cloud?.showBadges || false;
+    const profileSmall = pxt.appTarget.appTheme?.condenseProfile;
+    const profileIcon = pxt.appTarget.appTheme?.cloudProfileIcon;
 
     const onBadgeClick = (badge: pxt.auth.Badge) => {
         showModalAsync({
@@ -44,5 +46,18 @@ export const Profile = (props: ProfileProps) => {
             userState={userBadges}
             onBadgeClick={onBadgeClick}
         />}
+
+        {profileSmall &&
+            <div className="profile-info-container">
+                <p className="profile-info">
+                    {lf("Now that you're logged in, your projects will be automatically saved to the cloud so you can access them from any device!")}
+                </p>
+                {profileIcon && <img
+                    className="ui image centered medium"
+                    src={profileIcon}
+                    alt=""
+                />}
+            </div>
+        }
     </div>
 }

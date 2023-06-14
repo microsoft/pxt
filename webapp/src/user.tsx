@@ -114,8 +114,10 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
 
         const { emailSelected } = this.state;
 
+        const makeSmall = pxt.appTarget?.appTheme?.condenseProfile;
+
         return (
-            <sui.Modal isOpen={this.state.visible} className="ui profiledialog" size="fullscreen"
+            <sui.Modal isOpen={this.state.visible} className="ui profiledialog" size={ makeSmall ? "small" : "fullscreen" }
                 onClose={this.hide} dimmer={true}
                 closeIcon={true} header={profile?.idp?.displayName}
                 closeOnDimmerClick={false}
