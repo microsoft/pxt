@@ -810,7 +810,7 @@
         .tutorial-callout {
             bottom: unset;
             left: unset;
-            top: var(--tutorialCalloutTop);
+            top: unset;
             max-width: 80%;
             transform: translateY(15px);
         }
@@ -1033,6 +1033,15 @@
                 }
             }
         }
+
+        .topInstructionsWrapper {
+            .tutorial-callout {
+                right: unset;
+                top: unset !important;
+                bottom: @editorToolsCollapsedHeight + 0.2rem !important;
+                left: unset;
+            }
+        }
     }
 
     .topInstructionsWrapper {
@@ -1040,7 +1049,7 @@
         
         .tutorial-callout {
             right: unset;
-            top: var(--tutorialCalloutTop);
+            top: unset; //var(--tutorialCalloutTop);
             bottom: unset;
             left: unset;
         }

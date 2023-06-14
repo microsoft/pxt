@@ -120,11 +120,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected setComponentHeight = (height?: number, isResize?: boolean) => {
         if (height != this.state.height || isResize != this.state.resized) {
             this.setState({resized: this.state.resized || isResize, height: height});
-
-            this.simPanelRef.style.setProperty(
-                "--tutorialCalloutTop",
-                `${height}px`
-            );
         }
     }
 
