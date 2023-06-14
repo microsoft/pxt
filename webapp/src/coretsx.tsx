@@ -109,7 +109,11 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         buttons.forEach(btn => {
             const onclick = btn.onclick;
             btn.onclick = () => {
-                this.close(onclick ? onclick() : 0);
+                if (!btn.noCloseOnClick) {
+                    this.close(onclick ? onclick() : 0);
+                } else {
+                    onclick?.();
+                }
             }
             if (!btn.className) btn.className = "approve positive";
             if (btn.approveButton) this.okButton = btn;

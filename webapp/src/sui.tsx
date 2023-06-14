@@ -1134,6 +1134,7 @@ export interface ModalButton {
     approveButton?: boolean;
     labelPosition?: "left" | "right";
     ariaLabel?: string;
+    noCloseOnClick?: boolean;
 }
 
 export interface ModalProps extends ReactModal.Props {
