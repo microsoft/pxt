@@ -120,11 +120,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected setComponentHeight = (height?: number, isResize?: boolean) => {
         if (height != this.state.height || isResize != this.state.resized) {
             this.setState({resized: this.state.resized || isResize, height: height});
-
-            this.simPanelRef.style.setProperty(
-                "--tutorialCalloutTop",
-                `${height}px`
-            );
         }
     }
 
@@ -191,7 +186,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         minHeight="100px"
                         initialHeight={editorSidebarHeight}
                         resizeEnabled={pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar}
-                        onResizeDrag={newSize => this.setComponentHeight(newSize, true)}>
+                        onResizeDrag={newSize => this.setComponentHeight(newSize, true)}
+                        onResizeEnd={newSize => pxt.tickEvent("tutorial.resizeInstructions", {newSize: newSize})}>
                         <TutorialContainer
                             parent={parent}
                             tutorialId={tutorialOptions.tutorial}
