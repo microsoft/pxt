@@ -13,7 +13,32 @@ interface TutorialCalloutProps extends React.PropsWithChildren<{}> {
 export function TutorialCallout(props: TutorialCalloutProps) {
     const { children, className, buttonIcon, buttonLabel } = props;
     const [ visible, setVisible ] = React.useState(false);
+    const [ maxHeight, setMaxHeight ] = React.useState("unset");
+    const [ top, setTop ] = React.useState("unset");
+    const [ bottom, setBottom ] = React.useState("unset");
     const popupRef = React.useRef<HTMLDivElement>(null);
+    const contentRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        function checkSize() {
+            const editorToolsHeight = document.getElementById("editortools")?.clientHeight || 0;
+            if(contentRef.current?.getBoundingClientRect().bottom > window.innerHeight - editorToolsHeight - 10) {
+                setTop("unset");
+                setBottom(`${editorToolsHeight - 10}px`);
+                setMaxHeight("90vh");
+            }
+        }
+
+        const observer = new ResizeObserver(() => {
+            window.requestAnimationFrame(checkSize)
+        });
+
+        observer.observe(document.body);
+        if (contentRef.current) observer.observe(contentRef.current);
+
+        checkSize();
+        return () => observer.disconnect();
+    });
 
     const captureEvent = (e: any) => {
         e.preventDefault();
@@ -57,7 +82,7 @@ export function TutorialCallout(props: TutorialCalloutProps) {
             ariaLabel={buttonTitle}
             disabled={!children}
             onClick={children ? handleButtonClick : undefined} />
-        {visible && <div className={`tutorial-callout no-select`} onClick={captureEvent}>
+        {visible && <div ref={contentRef} className={`tutorial-callout no-select`} onClick={captureEvent} style={{top: top, bottom: bottom, maxHeight: maxHeight}}> {/*top: top, bottom: bottom, maxHeight: maxHeight*/}
             <Button icon="close" className="tutorial-callout-close" onClick={closeCallout} />
             {children}
         </div>}
