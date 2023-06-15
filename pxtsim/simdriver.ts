@@ -757,6 +757,19 @@ namespace pxsim {
             return true;
         }
 
+        private handleDeferredMessages(frame: HTMLIFrameElement) {
+            if (frame.dataset["loading"]) {
+                delete frame.dataset["loading"];
+                this.deferredMessages
+                    ?.filter(defMsg => defMsg[0] === frame)
+                    ?.forEach(defMsg => {
+                        const [_, msg] = defMsg;
+                        this.postMessageCore(frame, msg);
+                    });
+                this.deferredMessages = this.deferredMessages?.filter(defMsg => defMsg[0] !== frame);
+            }
+        }
+
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             switch (msg.type || '') {
                 case 'ready': {
@@ -768,14 +781,7 @@ namespace pxsim {
                         this.startFrame(frame);
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
-                        delete frame.dataset["loading"];
-                        this.deferredMessages
-                            ?.filter(defMsg => defMsg[0] === frame)
-                            ?.forEach(defMsg => {
-                                const [_, msg] = defMsg;
-                                this.postMessageCore(frame, msg);
-                            });
-                        this.deferredMessages = this.deferredMessages?.filter(defMsg => defMsg[0] !== frame);
+                        this.handleDeferredMessages(frame);
                     }
                     if (this.options.onSimulatorReady)
                         this.options.onSimulatorReady();
@@ -790,6 +796,7 @@ namespace pxsim {
                             switch (stmsg.state) {
                                 case "running":
                                     this.setState(SimulatorState.Running);
+                                    this.handleDeferredMessages(frame);
                                     break;
                                 case "killed":
                                     this.setState(SimulatorState.Stopped);

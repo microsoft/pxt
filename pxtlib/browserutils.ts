@@ -190,10 +190,6 @@ namespace pxt.BrowserUtils {
         return typeof window != "undefined" && !!(window as any).PointerEvent;
     }
 
-    export function hasSaveAs(): boolean {
-        return isEdge() || isIE() || isFirefox();
-    }
-
     export function os(): string {
         if (isWindows()) return "windows";
         else if (isMac()) return "mac";
