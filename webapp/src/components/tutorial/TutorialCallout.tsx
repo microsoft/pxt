@@ -21,7 +21,7 @@ export function TutorialCallout(props: TutorialCalloutProps) {
 
     React.useEffect(() => {
         function checkSize() {
-            const lowerBuffer = document.getElementById("editortools")?.clientHeight || 0 + 30;
+            const lowerBuffer = (document.getElementById("editortools")?.clientHeight ?? 0) + 30;
             if (contentRef.current?.getBoundingClientRect().bottom > window.innerHeight - lowerBuffer) {
                 setTop("unset");
                 setBottom(`${lowerBuffer}px`);
