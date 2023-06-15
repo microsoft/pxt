@@ -393,10 +393,13 @@ export async function initAsync() {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
             pxt.packetio.mkPacketIOAsync = pxt.usb.mkWebUSBHIDPacketIOAsync;
-        } else if (!pxt.appTarget?.compile?.disableHIDBridge && pxt.BrowserUtils.isLocalHost()) {
-            log(`enabled hid bridge (webusb disabled)`);
+        } else {
+            log(`webusb disabled`);
             pxt.usb.setEnabled(false);
-            pxt.packetio.mkPacketIOAsync = hidbridge.mkHIDBridgePacketIOAsync;
+            if (!pxt.appTarget?.compile?.disableHIDBridge && pxt.BrowserUtils.isLocalHost()) {
+                log(`enabled hid bridge`);
+                pxt.packetio.mkPacketIOAsync = hidbridge.mkHIDBridgePacketIOAsync;
+            }
         }
     }
 
