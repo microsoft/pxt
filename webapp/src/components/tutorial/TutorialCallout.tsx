@@ -84,7 +84,7 @@ export function TutorialCallout(props: TutorialCalloutProps) {
             ariaLabel={buttonTitle}
             disabled={!children}
             onClick={children ? handleButtonClick : undefined} />
-        {visible && <div ref={contentRef} className={`tutorial-callout no-select`} onClick={captureEvent} style={{top: top, bottom: bottom, maxHeight: maxHeight}}> {/*top: top, bottom: bottom, maxHeight: maxHeight*/}
+        {visible && <div ref={contentRef} className={`tutorial-callout no-select`} onClick={captureEvent} style={{top: top, bottom: bottom, maxHeight: maxHeight}}>
             <Button icon="close" className="tutorial-callout-close" onClick={closeCallout} />
             {children}
         </div>}
