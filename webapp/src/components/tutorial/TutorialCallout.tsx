@@ -21,16 +21,18 @@ export function TutorialCallout(props: TutorialCalloutProps) {
 
     React.useEffect(() => {
         function checkSize() {
-            const editorToolsHeight = document.getElementById("editortools")?.clientHeight || 0;
-            if(contentRef.current?.getBoundingClientRect().bottom > window.innerHeight - editorToolsHeight - 10) {
+            const lowerBuffer = document.getElementById("editortools")?.clientHeight || 0 + 30;
+            if (contentRef.current?.getBoundingClientRect().bottom > window.innerHeight - lowerBuffer) {
                 setTop("unset");
-                setBottom(`${editorToolsHeight - 10}px`);
+                setBottom(`${lowerBuffer}px`);
                 setMaxHeight("90vh");
+            } else {
+                setBottom("unset");
             }
         }
 
         const observer = new ResizeObserver(() => {
-            window.requestAnimationFrame(checkSize)
+            window.requestAnimationFrame(checkSize);
         });
 
         observer.observe(document.body);
