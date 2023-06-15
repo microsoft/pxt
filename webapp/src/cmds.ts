@@ -93,17 +93,12 @@ function showUploadInstructionsAsync(
     const userDownload = pxt.BrowserUtils.isBrowserDownloadWithinUserContext();
     const downloadAgain = !pxt.BrowserUtils.isIE() && !pxt.BrowserUtils.isEdge();
     const helpUrl = pxt.appTarget.appTheme.usbDocs;
-    const saveAs = pxt.BrowserUtils.hasSaveAs();
     const ext = pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex";
-    const connect = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
-    const jsx = !userDownload && !saveAs && pxt.commands.renderBrowserDownloadInstructions?.(saveonly, redeploy);
+    const jsx = !userDownload && pxt.commands.renderBrowserDownloadInstructions?.(saveonly, redeploy);
     const body = userDownload ? lf("Click 'Download' to open the {0} app.", pxt.appTarget.appTheme.boardName) :
-        saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
+        !jsx && lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
             ext,
-            boardDriveName, boardName)
-            : !jsx && lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
-                ext,
-                boardDriveName, boardName);
+            boardDriveName, boardName);
     const timeout = pxt.BrowserUtils.isBrowserDownloadWithinUserContext() ? 0 : 10000;
     return confirmAsync({
         header: userDownload ? lf("Download ready...") : lf("Download completed..."),
@@ -398,7 +393,7 @@ export async function initAsync() {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
             pxt.packetio.mkPacketIOAsync = pxt.usb.mkWebUSBHIDPacketIOAsync;
-        } else if (!pxt.appTarget?.compile?.disableHIDBridge) {
+        } else if (!pxt.appTarget?.compile?.disableHIDBridge && pxt.BrowserUtils.isLocalHost()) {
             log(`enabled hid bridge (webusb disabled)`);
             pxt.usb.setEnabled(false);
             pxt.packetio.mkPacketIOAsync = hidbridge.mkHIDBridgePacketIOAsync;
