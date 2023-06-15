@@ -186,7 +186,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         minHeight="100px"
                         initialHeight={editorSidebarHeight}
                         resizeEnabled={pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar}
-                        onResizeDrag={newSize => this.setComponentHeight(newSize, true)}>
+                        onResizeDrag={newSize => this.setComponentHeight(newSize, true)}
+                        onResizeEnd={newSize => pxt.tickEvent("tutorial.resizeInstructions", {newSize: newSize})}>
                         <TutorialContainer
                             parent={parent}
                             tutorialId={tutorialOptions.tutorial}
