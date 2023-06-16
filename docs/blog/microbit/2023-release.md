@@ -2,7 +2,7 @@
 
 **Posted on June 19, 2023 by [Jaqster](https://github.com/jaqster)**
 
-School’s out for many in the Northern Hemisphere, which means that it’s time for our annual release! Here’s the list of new or updated features in this release:
+School’s out for many in the Northern Hemisphere, which means that it’s time for our next annual release! Here’s the list of new or updated features in this release:
 
 ## Getting Started Tour
 
@@ -12,7 +12,7 @@ This feature is near and dear to my heart – I had filed an issue for this way 
 
 ## Sign in
 
-One of the great things about MakeCode is that it’s super accessible and a one-click-to-code experience (okay, two clicks). We wanted to keep it open and accessible, but we’ve gotten feedback from many educators that keeping track of student projects, especially on shared computers can be a pain. So, we’ve added an option to sign in with a Microsoft or Google account. This will save your projects to the cloud – allowing you to access them from any computer, and keeping them separate from the local browser-cached projects. Signing in isn’t required, but if you do, you’ll have the additional peace of mind knowing your projects are safe and sound in the cloud. Please note that Microsoft takes student data privacy very seriously – if you have any questions about this, please consult [Microsoft’s Privacy policies](https://privacy.microsoft.com), or the [MakeCode Privacy FAQ]( https://makecode.com/privacy-faq).
+One of the great things about MakeCode is that it’s super accessible and is a one-click-to-code experience (okay, two clicks). We wanted to keep it open and accessible, but we’ve gotten feedback from many educators that keeping track of student projects, especially on shared computers can be a pain. So, we’ve added an option to sign in with a Microsoft or Google account. This will save your projects to the cloud – allowing you to access them from any computer, keeping them separate from the local browser-cached projects. Signing in isn’t required, but if you do, you’ll have the additional peace of mind knowing your projects are safe and sound in the cloud. Please note that Microsoft takes student data privacy very seriously – if you have any questions about this, please consult [Microsoft’s Privacy policies](https://privacy.microsoft.com), or the [MakeCode Privacy FAQ]( https://makecode.com/privacy-faq).
 
 ![Sign-in sequence](/static/blog/microbit/2023-release/sign-in.gif)
 
@@ -26,13 +26,13 @@ You’ll notice that these links look a little different from the normal share l
 
 ![New share link dialog](/static/blog/microbit/2023-release/share-link.png)
 
-In general, you may notice these Share windows look slightly different – we’ve added a couple new features here as well. There’s more places to share to – including Microsoft Teams, Google Classroom, WhatsApp and more. You can also create a screenshot or gif animation of your project to share by selecting "Update project thumbnail"
+In general, you may notice these Share windows look slightly different – we’ve added a couple new features here as well. There are more places to share to – including Microsoft Teams, Google Classroom, WhatsApp and more. You can also create a screenshot or gif animation of your project to share by selecting "Update project thumbnail"
 
 ![New share thumbnail dialog](/static/blog/microbit/2023-release/share-thumbnail.png)
 
 ## Download Flow
 
-We are excited about a new browser technology that allows you to pair a USB device to your browser window – it’s called "WebUSB" and is supported by Chrome and Edge browsers. Gone are the days of file drag-and-drop! If you are using Chrome or Edge, you’ll notice a slightly different flow when you click the Download button the first time. And once you pair your micro:bit, clicking Download will automatically download your project directly to the micro:bit!
+We are excited about a new browser technology that allows you to pair a USB device to your browser window – it’s called "WebUSB" and is supported by Chrome and Edge browsers. Gone are the days of file drag-and-drop! If you're using Chrome or Edge, you’ll notice a slightly different flow when you click the Download button the first time. And once you pair your micro:bit, clicking Download will automatically download your project directly to the micro:bit!
 
 ![Code download dialog flow](/static/blog/microbit/2023-release/download-flow.gif)
 
@@ -48,7 +48,7 @@ We are cautiously starting to add more validation rules and auto-assessment capa
 
 ![Code validation in tutorials](/static/blog/microbit/2023-release/code-validation.gif)
 
-## Audio Recording & Playback Extension
+## Audio Recording and Playback Extension
 
 There is a new extension available in the extension gallery called "audio-recording" which will allow you to record short audio clips and play them back. This extension will only work on the micro:bit v2.
 
@@ -65,6 +65,8 @@ You may notice some slight changes to the Music category blocks. We’ve done so
 We also added a "Sound is Playing" block to help distinguish between sounds coming from the micro:bit and the environment.
 
 !['Sound is playing' block share thumbnail dialog](/static/blog/microbit/2023-release/sound-is-playing.png)
+
+## Enjoy the new release!
 
 Thank you to everyone who has logged bugs, translated and suggested new features throughout the year! Any new bugs you find in this release, please log them in [GitHub](https://github.com/Microsoft/pxt-microbit/issues).
 
