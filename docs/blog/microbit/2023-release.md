@@ -20,15 +20,15 @@ One of the great things about MakeCode is that it’s super accessible and a one
 
 An additional benefit of signing in is the ability to create a persistent share link for your projects. This means that you can create one link to a project, publish it to your students or include it in curriculum, and for any subsequent changes you make to the project, you can keep the same link.
 
-<Share.png>
+![New share project dialog](/static/blog/microbit/2023-release/share.png)
 
 You’ll notice that these links look a little different from the normal share links - they all start with an 'S'.
 
-<ShareLink.png>
+![New share link dialog](/static/blog/microbit/2023-release/share-link.png)
 
 In general, you may notice these Share windows look slightly different – we’ve added a couple new features here as well. There’s more places to share to – including Microsoft Teams, Google Classroom, WhatsApp and more. You can also create a screenshot or gif animation of your project to share by selecting "Update project thumbnail"
 
-<ShareThumbnail.png>
+![New share thumbnail dialog](/static/blog/microbit/2023-release/share-thumbnail.png)
 
 ## Download Flow
 
@@ -52,9 +52,9 @@ We are cautiously starting to add more validation rules and auto-assessment capa
 
 There is a new extension available in the extension gallery called "audio-recording" which will allow you to record short audio clips and play them back. This extension will only work on the micro:bit v2.
 
-<AudioExt.png>
+![Audio extenstion card](/static/blog/microbit/2023-release/audio-ext.png)
 
-<AudioBlocks.png>
+![New audio blocks](/static/blog/microbit/2023-release/audio-blocks.png)
 
 ## Music Category Clean-up
 
@@ -64,7 +64,7 @@ You may notice some slight changes to the Music category blocks. We’ve done so
 
 We also added a "Sound is Playing" block to help distinguish between sounds coming from the micro:bit and the environment.
 
-<SoundisPlaying.png>
+!['Sound is playing' block share thumbnail dialog](/static/blog/microbit/2023-release/sound-is-playing.png)
 
 Thank you to everyone who has logged bugs, translated and suggested new features throughout the year! Any new bugs you find in this release, please log them in [GitHub](https://github.com/Microsoft/pxt-microbit/issues).
 
