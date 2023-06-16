@@ -5,7 +5,7 @@ As an educational product at Microsoft, student data privacy is very important t
 ## 1. What information does MakeCode collect and what do you do with it?
 
 MakeCode collects anonymized product telemetry data (like what browser is being used, or if a button is clicked on the web page) that is used to understand product usage behavior and ultimately helps us improve key features in the product.  There is no personally identifiable information attached to product telemetry data.  For more details on the type of telemetry collected, see [MakeCode Telemetry](https://makecode.com/telemetry). 
-Some users may optionally choose to sign into MakeCode with a Microsoft Account – see more information on [MakeCode Sign In](https://arcade.makecode.com/identity/sign-in).  You can learn more about how to access and control your personal data with your Microsoft Account in [Microsoft’s Privacy Statement](https://privacy.microsoft.com/en-us/privacystatement).
+Some users may optionally choose to sign into MakeCode with a Microsoft or Google Account – see more information on [MakeCode Sign In](https://arcade.makecode.com/identity/sign-in).  You can learn more about how to access and control your personal data with your Microsoft Account in [Microsoft’s Privacy Statement](https://privacy.microsoft.com/en-us/privacystatement).
 
 ## 2. Are you COPPA compliant?
 
@@ -14,7 +14,7 @@ Yes, MakeCode aligns with the guidance provided in the [Children's Online Privac
 ## 3. For students who do Sign In, is Parental Consent required?
 
 Depending on where you live, local laws might require us to obtain parental or guardian consent under a certain age before you can use a Microsoft product or service.
-No matter where you live, your parent or guardian can create a Microsoft Family group. This lets them decide what you are allowed to do using your account. Depending on the laws where you live, they can also see, edit, or delete the personal data we collect from you. Learn more about [Microsoft Family settings and controls](https://account.microsoft.com/family/about). 
+No matter where you live, your parent or guardian can create a Microsoft or Google Family group. This lets them decide what you are allowed to do using your account. Depending on the laws where you live, they can also see, edit, or delete the personal data we collect from you. Learn more about [Microsoft Family settings and controls](https://account.microsoft.com/family/about). 
 
 For students signing in using a school account, the school controls student access to MakeCode.
 
