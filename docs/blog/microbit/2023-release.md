@@ -22,17 +22,17 @@ An additional benefit of signing in is the ability to create a persistent share 
 
 <Share.png>
 
-You’ll notice that these links look a little different from the normal share links - they all start with an ‘S’.
+You’ll notice that these links look a little different from the normal share links - they all start with an 'S'.
 
 <ShareLink.png>
 
-In general, you may notice these Share windows look slightly different – we’ve added a couple new features here as well. There’s more places to share to – including Microsoft Teams, Google Classroom, WhatsApp and more. You can also create a screenshot or gif animation of your project to share by selecting “Update project thumbnail”
+In general, you may notice these Share windows look slightly different – we’ve added a couple new features here as well. There’s more places to share to – including Microsoft Teams, Google Classroom, WhatsApp and more. You can also create a screenshot or gif animation of your project to share by selecting "Update project thumbnail"
 
 <ShareThumbnail.png>
 
 ## Download Flow
 
-We are excited about a new browser technology that allows you to pair a USB device to your browser window – it’s called “WebUSB” and is supported by Chrome and Edge browsers. Gone are the days of file drag-and-drop! If you are using Chrome or Edge, you’ll notice a slightly different flow when you click the Download button the first time. And once you pair your micro:bit, clicking Download will automatically download your project directly to the micro:bit!
+We are excited about a new browser technology that allows you to pair a USB device to your browser window – it’s called "WebUSB" and is supported by Chrome and Edge browsers. Gone are the days of file drag-and-drop! If you are using Chrome or Edge, you’ll notice a slightly different flow when you click the Download button the first time. And once you pair your micro:bit, clicking Download will automatically download your project directly to the micro:bit!
 
 <DownloadFlow.gif>
 
@@ -50,7 +50,7 @@ We are cautiously starting to add more validation rules and auto-assessment capa
 
 ## Audio Recording & Playback Extension
 
-There is a new extension available in the extension gallery called “audio-recording” which will allow you to record short audio clips and play them back. This extension will only work on the micro:bit v2.
+There is a new extension available in the extension gallery called "audio-recording" which will allow you to record short audio clips and play them back. This extension will only work on the micro:bit v2.
 
 <AudioExt.png>
 
@@ -58,17 +58,17 @@ There is a new extension available in the extension gallery called “audio-reco
 
 ## Music Category Clean-up
 
-You may notice some slight changes to the Music category blocks. We’ve done some work to clean-up and standardize these API’s to all use the “Play” terminology with a play mode property (until done, in background or looping).
+You may notice some slight changes to the Music category blocks. We’ve done some work to clean-up and standardize these API’s to all use the "Play" terminology with a play mode property (until done, in background or looping).
 
 <MusicBlocks.gif>
 
-We also added a “Sound is Playing” block to help distinguish between sounds coming from the micro:bit and the environment.
+We also added a "Sound is Playing" block to help distinguish between sounds coming from the micro:bit and the environment.
 
 <SoundisPlaying.png>
 
-Thank you to everyone who has logged bugs, translated and suggested new features throughout the year! Any new bugs you find in this release, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues
+Thank you to everyone who has logged bugs, translated and suggested new features throughout the year! Any new bugs you find in this release, please log them in [GitHub](https://github.com/Microsoft/pxt-microbit/issues).
 
-Any other comments, suggestions, and feedback, please participate in the micro:bit community on Slack: https://tech.microbit.org/get-involved/where-to-find or the MakeCode Forum https://forum.makecode.com. And please let us know what you think of this year’s updates on Twitter @MSMakeCode.
+Any other comments, suggestions, and feedback, please participate in the micro:bit community on [Slack](https://tech.microbit.org/get-involved/where-to-find) or the [MakeCode Forum](https://forum.makecode.com). And please let us know what you think of this year’s updates on Twitter [@MSMakeCode](https://twitter.com/MSMakeCode).
 
 Happy Making and Coding!
 
