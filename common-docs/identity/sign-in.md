@@ -1,13 +1,5 @@
 # Online Accounts and MakeCode
 
-### ~ hint
-
-#### Sign in with MakeCode Arcade
-
-**Note**: This feature is only available in [**MakeCode Arcade**](https://arcade.makecode.com).
-
-### ~
-
 ## What is a Online Account?
 
 An online account is a user account with a provider of online services such as Microsoft or Google. MakeCode allows you to sign in using an account with either Microsoft or Google.
@@ -22,7 +14,7 @@ Google accounts are for sign-in access to Google's services such as GMail, YouTu
 
 ## How does it work in MakeCode?
 
-A number of new features are coming that will only be available to signed-in users. These features need to know your identity so they can do things for you like store data in the cloud, and connect you to other users. The first of these features is one we're calling [Cloud Sync](/identity/cloud-sync). With Cloud Sync, when you're signed into MakeCode, we'll store your projects in the cloud where they're accessible from anywhere.
+A number of new features are coming that will only be available to signed-in users. These features need to know your identity so they can do things for you like store data in the cloud, and connect you to other users. The first of these features is one we're calling [Cloud Sync](/identity/cloud-sync). With Cloud Sync, when you're signed into MakeCode, we'll store your projects in the cloud where they're accessible from anywhere.  [Multiplayer](https://arcade.makecode.com/--multiplayer) is another feature in MakeCode Arcade which is only availabled to signed-in users.
 
 Click the sign in button in the upper right corner to log into MakeCode.
 
@@ -42,7 +34,7 @@ No. Sign in only if you want to take advantage of features like Cloud Sync.
 
 ## Does it cost money?
 
-Nope! Creating an MSA account is free. Using MakeCode is also free. As a reminder, MSA accounts work across a range of Microsoft products and services, so you can use it outside MakeCode. Some of these products and services may not be free (Minecraft Marketplace content, for example), but this is outside the MakeCode ecosystem.
+Nope! Creating a Microsoft or Google account is free. Using MakeCode is also free. As a reminder, Microsoft accounts work across a range of Microsoft products and services, so you can use it outside MakeCode. Some of these products and services may not be free (Minecraft Marketplace content, for example), but this is outside the MakeCode ecosystem.
 
 ## What will other users see?
 
@@ -54,17 +46,17 @@ It is possible! Do you play Minecraft, game on an Xbox, subscribe to Office 365,
 
 ## Does this mean I have to create a new email address?
 
-No. You can create an MSA using your current email address if it is not hosted by Microsoft (e.g.: Gmail, Yahoo Mail, and others). When creating your MSA account, just enter your existing email address.
+No. You can create a Microsoft or Google account using your current email address.
 
-Create a Microsoft Account using your current email address here https://account.microsoft.com/account.
+Find out more about creating a Microsoft Account using your current email address here: https://account.microsoft.com/account.
 
 ## Can I use my school or work account?
 
-If your school or employer's email system is managed by Microsoft Azure Active Directory, then generally it should work in MakeCode subject to restrictions put in place by your IT dept.
+If your school or employer's email system is managed by Microsoft or Google, then generally it should work in MakeCode subject to restrictions put in place by your IT department.
 
 ## When I sign in, what information does MakeCode collect about me?
 
-The privacy and safety of our users is very important to us. Microsoft MakeCode adheres to Microsoft's Privacy Policy https://makecode.com/privacy. We do not collect or use personal data beyond that needed to operate and support MakeCode features and services.
+The privacy and safety of our users is very important to us. Microsoft MakeCode adheres to [Microsoft's Privacy Policies](https://makecode.com/privacy). We do not collect or use personal data beyond that needed to operate and support MakeCode features and services. Read the [MakeCode Privacy Frequently Asked Questions](https://makecode.com/privacy-faq) page for more information.
 
 ## How can I completely remove my data and profile information?
 
@@ -76,4 +68,4 @@ No. At the time you delete your profile, all of your cloud saved projects are ex
 
 ## How does this work with GitHub?
 
-GitHub provides a source code repository for your projects to help with version control (learn more here https://arcade.makecode.com/github). You can still sign into MakeCode with a Microsoft Account and use Cloud Sync to store your projects in the cloud, even while using GitHub.
+GitHub provides a source code repository for your projects to help with version control (learn more here https://arcade.makecode.com/github). You can still sign into MakeCode with a Microsoft or Google Account and use Cloud Sync to store your projects in the cloud, even while using GitHub.
