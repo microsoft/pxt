@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode micro:bit 2023 Release!](/blog/microbit/2023-release)
+
+June 19th, 2023 by [Jaqster](https://github.com/jaqster)
+
+School’s out for many in the Northern Hemisphere, which means that it’s time again for our annual release! Here’s the list of new or updated features in this release.
+
+**[Continue reading this blog post](/blog/microbit/2023-release)**
+
 ## [MakeCode Arcade Extension for Visual Studio Code](/blog/arcade/vscode-extension)
 
 March 24th, 2023 by [Jaqster](https://github.com/jaqster)

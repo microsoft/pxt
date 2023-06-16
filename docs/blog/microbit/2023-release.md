@@ -2,7 +2,7 @@
 
 **Posted on June 19, 2023 by [Jaqster](https://github.com/jaqster)**
 
-School’s out for many in the Northern Hemisphere, which means that it’s time for our next annual release! Here’s the list of new or updated features in this release:
+School’s out for many in the Northern Hemisphere, which means that it’s time again for our annual release! Here’s the list of new or updated features in this release:
 
 ## Getting Started Tour
 
