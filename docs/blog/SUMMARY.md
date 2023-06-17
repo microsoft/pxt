@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode micro:bit 2023 Release!](/blog/microbit/2023-release)
     * [MakeCode Arcade Extension for Visual Studio Code](/blog/arcade/vscode-extension)
     * [MakeCode Arcade 2023 Update](/blog/arcade/update-jan-2023)
     * [Computer Science Education Week 2022](/blog/csed-week/csed-week-2022)
