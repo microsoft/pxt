@@ -1,7 +1,5 @@
 # Cloud Synchronization in MakeCode
 
-**Note**: This feature only available in [**MakeCode Arcade**](https://arcade.makecode.com).
-
 ## What is Cloud Sync?
 
 Cloud Synchronization, or Cloud Sync, is a feature available to signed in users that lets MakeCode save your projects in the cloud, where they're available anywhere you can sign in to MakeCode.
