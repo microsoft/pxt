@@ -1761,6 +1761,12 @@ namespace pxsim {
         }
     }
 
+    export function setParentMuteState(state: "muted" | "unmuted" | "disabled") {
+        Runtime.postMessage({
+            type: "setmutebuttonstate",
+            state
+        } as SetMuteButtonStateMessage)
+    }
 
     export class PerfCounter {
         start = 0;

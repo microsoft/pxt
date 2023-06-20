@@ -42,6 +42,12 @@ namespace pxt.editor {
         Expanded = "errorListExpanded"
     }
 
+    export enum MuteState {
+        Muted = "muted",
+        Unmuted = "unmuted",
+        Disabled = "disabled"
+    }
+
     export interface IAppProps { }
     export interface IAppState {
         active?: boolean; // is this tab visible at all
@@ -69,7 +75,7 @@ namespace pxt.editor {
         showParts?: boolean;
         fullscreen?: boolean;
         showMiniSim?: boolean;
-        mute?: boolean;
+        mute?: MuteState;
         embedSimView?: boolean;
         editorPosition?: {
             lineNumber: number;
@@ -300,7 +306,7 @@ namespace pxt.editor {
         toggleTrace(intervalSpeed?: number): void;
         setTrace(enabled: boolean, intervalSpeed?: number): void;
         toggleMute(): void;
-        setMute(on: boolean): void;
+        setMute(state: MuteState): void;
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
