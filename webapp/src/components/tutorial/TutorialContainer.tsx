@@ -41,7 +41,6 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const [ stepErrorAttemptCount, setStepErrorAttemptCount ] = React.useState(0);
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
-    const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">(props.tutorialSimSidebar ? "horizontal" : "vertical");
     const [ validationFailures, setValidationFailures ] = React.useState([]);
     const contentRef = React.useRef(undefined);
     const immReaderRef = React.useRef(undefined);
@@ -50,17 +49,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const showNext = currentStep !== steps.length - 1;
     const showDone = !showNext && !pxt.appTarget.appTheme.lockedEditor && !hideIteration;
     const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
-    const isHorizontal = layout === "horizontal";
+    const isHorizontal = props.tutorialSimSidebar || pxt.BrowserUtils.isTabletSize();
 
     React.useEffect(() => {
-        const observer = new ResizeObserver(() => {
-            if (pxt.BrowserUtils.isTabletSize() || props.tutorialSimSidebar) {
-                setLayout("horizontal");
-            } else {
-                setLayout("vertical");
-            }
-            updateScrollGradient();
-        });
+        const observer = new ResizeObserver(updateScrollGradient);
         observer.observe(document.body)
 
         // We also want to update the scroll gradient if the tutorial wrapper is resized by the user.
