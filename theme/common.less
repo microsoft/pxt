@@ -1471,6 +1471,21 @@ p.ui.font.small {
     }
 }
 
+.sandbox {
+    .simPanel .simtoolbar {
+        // position: fixed;
+        // bottom: 4rem;
+        // left: auto;
+        // right: auto;
+        // display: block !important;
+        display: none;
+    }
+
+    // .simtoolbar .ui.button {
+    //     font-size: 1.7rem;
+    // }
+}
+
 /***********************************
    Headless Simtoolbar (Minecraft)
 ************************************/
@@ -1693,7 +1708,7 @@ p.ui.font.small {
            Mini sim view
 *******************************/
 
-#root.miniSim:not(.fullscreensim) {
+#root.miniSim:not(.fullscreensim, .sandbox) { // todo thsparks : check for other places fullscreensim is excluded and also exclude sandbox?
     /* Layout */
     .simPanel.ui.items {
         position: fixed;
@@ -2105,7 +2120,7 @@ p.ui.font.small {
         display: inline-block!important;
     }
 
-    #root.miniSim:not(.fullscreensim) {
+    #root.miniSim:not(.fullscreensim, .sandbox) {
         div.simframe {
             margin-bottom: -0.4rem
         }
@@ -2171,6 +2186,17 @@ p.ui.font.small {
     .fullscreensim .simtoolbar .ui.button {
         font-size: 1rem;
     }
+
+    // .sandbox {
+    //     .simPanel .simtoolbar {
+    //         bottom: 1rem;
+    //     }
+    
+    //     .simtoolbar .ui.button {
+    //         font-size: 1rem;
+    //     }
+    // }
+
     .collapsedEditorTools #mobiletogglesim {
         bottom: @editorToolsCollapsedMobileHeight;
     }
@@ -2393,12 +2419,12 @@ button.ui.button.hostmultiplayergame-button {
     --multiplayer-presence-icon-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%234DA64D'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
 }
 
-#root:not(.fullscreensim) .multiplayer-presence {
+#root:not(.fullscreensim, .sandbox) .multiplayer-presence {
     margin: 0;
     margin-bottom: -.5rem;
 }
 
-.miniSim:not(.fullscreensim):not(.tabTutorial) .multiplayer-presence {
+.miniSim:not(.fullscreensim, .sandbox):not(.tabTutorial) .multiplayer-presence {
     display: none;
 }
 
