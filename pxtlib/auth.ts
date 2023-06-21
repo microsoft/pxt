@@ -7,6 +7,8 @@ namespace pxt.auth {
     const AUTH_LOGIN_STATE_KEY = "login-state"; // stored in local storage.
     const AUTH_USER_STATE_KEY = "user-state"; // stored in local storage.
     const X_PXT_TARGET = "x-pxt-target"; // header passed in auth rest calls.
+    const AUTH_DISPOSITION = "auth-disposition"; // hint whether to prompt user or try SSO first.
+    const DISPOSITION_INTERACTIVE = "interactive";
 
     export type ApiResult<T> = {
         resp: T;
@@ -112,6 +114,15 @@ namespace pxt.auth {
         cachedHasAuthToken = false;
         return await pxt.storage.shared.delAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY);
     }
+    async function setAuthDispositionAsync(disposition: string | undefined): Promise<void> {
+        if (disposition)
+            return await pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_DISPOSITION, disposition);
+        else
+            return await pxt.storage.shared.delAsync(AUTH_CONTAINER, AUTH_DISPOSITION);
+    }
+    async function getAuthDispositionAsync(): Promise<string | undefined> {
+        try { return await pxt.storage.shared.getAsync(AUTH_CONTAINER, AUTH_DISPOSITION); } catch { return undefined; }
+    }
 
     //
     // Local storage of user state (profile and preferences).
@@ -187,17 +198,21 @@ namespace pxt.auth {
                 persistent
             };
 
+            // Disposition determines whether or not the user will be prompted to select an account.
+            const disposition = await getAuthDispositionAsync();
+
             // Redirect to the login endpoint.
             const loginUrl = pxt.Util.stringifyQueryString('/api/auth/login', {
                 response_type: "token",
                 provider: idp,
                 persistent,
-                redirect_uri: `${window.location.origin}${window.location.pathname}?authcallback=1&state=${loginState.key}`
+                redirect_uri: `${window.location.origin}${window.location.pathname}?authcallback=1&state=${loginState.key}`,
+                prompt: disposition === DISPOSITION_INTERACTIVE ? "select_account" : "silent"
             });
             const apiResult = await this.apiAsync<LoginResponse>(loginUrl);
 
             if (apiResult.success) {
-                loginState.authCodeVerifier = apiResult.resp.authCodeVerifier;
+                loginState.authCodeVerifier = apiResult.resp.authCodeVerifier; // will be undefined unless configured for the target
                 await pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_LOGIN_STATE_KEY, loginState);
                 pxt.tickEvent('auth.login.start', { 'provider': idp });
                 window.location.href = apiResult.resp.loginUrl;
@@ -212,11 +227,9 @@ namespace pxt.auth {
         public async logoutAsync(continuationHash?: string) {
             if (!hasIdentity()) { return; }
 
-            // Clear local auth state so we can no longer make authenticated requests.
-            await this.clearAuthStateAsync();
-
             await AuthClient.staticLogoutAsync(continuationHash);
 
+            try { await this.onStateCleared(); } catch {}
             try { await this.onSignedOut(); } catch {}
         }
 
@@ -228,18 +241,41 @@ namespace pxt.auth {
 
             pxt.tickEvent('auth.logout');
 
-            // Tell backend to clear the http-only auth cookie. Ignore errors here, we want to clear local state even if the backend rejects this request.
-            try { await AuthClient.staticApiAsync('/api/auth/logout'); } catch {}
+            // Indicate the next signin should be interactive.
+            // Use case: SSO signed in with the wrong account. User wants to sign in with a different account.
+            await setAuthDispositionAsync(DISPOSITION_INTERACTIVE);
+
+            continuationHash = continuationHash ? continuationHash.startsWith('#') ? continuationHash : `#${continuationHash}` : "";
+            const clientRedirect = `${window.location.origin}${window.location.pathname}${window.location.search}${continuationHash}`;
+
+            // Tell backend to clear the http-only auth cookie.
+            let logoutUri = "";
+            try {
+                const uri = pxt.Util.stringifyQueryString('/api/auth/logout', {
+                    redirect_uri: clientRedirect,
+                    authcallback: '1'
+                });
+                const apiResult = await AuthClient.staticApiAsync<LogoutResponse>(uri);
+                if (apiResult.success) {
+                    logoutUri = apiResult.resp.logoutUrl;
+                }
+            } catch {
+                // Ignore errors.
+            }
 
             // Clear local auth state so we can no longer make authenticated requests.
             await delAuthTokenAsync();
             await delUserStateAsync();
 
-            // Redirect to home screen
             if (pxt.BrowserUtils.hasWindow()) {
-                const hash = continuationHash ? continuationHash.startsWith('#') ? continuationHash : `#${continuationHash}` : "";
-                window.location.href = `${window.location.origin}${window.location.pathname}${window.location.search}${hash}`;
-                location.reload();
+                if (logoutUri) {
+                    // Redirect to logout endpoint
+                    window.location.href = logoutUri;
+                } else {
+                    // Redirect to home screen
+                    window.location.href = clientRedirect;
+                    location.reload();
+                }
             }
         }
 
@@ -617,6 +653,10 @@ namespace pxt.auth {
         authCodeVerifier: string;
     };
 
+    type LogoutResponse = {
+        logoutUrl?: string;
+    };
+
     export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
         let loginState: LoginState;
         let callbackState: CallbackState = { ...NilCallbackState };
@@ -675,6 +715,9 @@ namespace pxt.auth {
             // without its cookie-based counterpart. When "Remember me" is false,
             // the cookie is not persisted.
             await setAuthTokenAsync(authToken);
+
+            // Clear auth disposition. Next auth request will try silent SSO first.
+            await setAuthDispositionAsync(undefined);
 
             pxt.tickEvent('auth.login.success', { 'provider': loginState.idp });
         } while (false);
