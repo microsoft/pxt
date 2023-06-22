@@ -7,8 +7,7 @@ namespace pxt.auth {
     const AUTH_LOGIN_STATE_KEY = "login-state"; // stored in local storage.
     const AUTH_USER_STATE_KEY = "user-state"; // stored in local storage.
     const X_PXT_TARGET = "x-pxt-target"; // header passed in auth rest calls.
-    const AUTH_DISPOSITION = "auth-disposition"; // hint whether to prompt user or try SSO first.
-    const DISPOSITION_INTERACTIVE = "interactive";
+    const INTERACTIVE_LOGIN_UNTIL = "interactive-login-until"; // hint whether to prompt user or try SSO first.
 
     export type ApiResult<T> = {
         resp: T;
@@ -97,31 +96,31 @@ namespace pxt.auth {
     // Preference hasAuthTokenAsync() over taking a dependency on this cached value.
     export let cachedHasAuthToken = false;
 
+    async function setLocalStorageValueAsync(key: string, value: string | undefined): Promise<void> {
+        if (!!value)
+            return await pxt.storage.shared.setAsync(AUTH_CONTAINER, key, value);
+        else
+            return await pxt.storage.shared.delAsync(AUTH_CONTAINER, key);
+    }
+    async function getLocalStorageValueAsync(key: string): Promise<string | undefined> {
+        try { return await pxt.storage.shared.getAsync(AUTH_CONTAINER, key); } catch { return undefined; }
+    }
+
     export async function getAuthTokenAsync(): Promise<string> {
-        let token: string;
-        try { token = await pxt.storage.shared.getAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY); } catch {}
+        const token = await getLocalStorageValueAsync(CSRF_TOKEN_KEY);
         cachedHasAuthToken = !!token;
         return token;
     }
     async function setAuthTokenAsync(token: string): Promise<void> {
         cachedHasAuthToken = !!token;
-        return await pxt.storage.shared.setAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY, token);
+        return await setLocalStorageValueAsync(CSRF_TOKEN_KEY, token);
     }
     export async function hasAuthTokenAsync(): Promise<boolean> {
         return !!(await getAuthTokenAsync());
     }
     async function delAuthTokenAsync(): Promise<void> {
         cachedHasAuthToken = false;
-        return await pxt.storage.shared.delAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY);
-    }
-    async function setAuthDispositionAsync(disposition: string | undefined): Promise<void> {
-        if (disposition)
-            return await pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_DISPOSITION, disposition);
-        else
-            return await pxt.storage.shared.delAsync(AUTH_CONTAINER, AUTH_DISPOSITION);
-    }
-    async function getAuthDispositionAsync(): Promise<string | undefined> {
-        try { return await pxt.storage.shared.getAsync(AUTH_CONTAINER, AUTH_DISPOSITION); } catch { return undefined; }
+        return await setLocalStorageValueAsync(CSRF_TOKEN_KEY, undefined);
     }
 
     //
@@ -198,8 +197,9 @@ namespace pxt.auth {
                 persistent
             };
 
-            // Disposition determines whether or not the user will be prompted to select an account.
-            const disposition = await getAuthDispositionAsync();
+            // Should the user be prompted to interactively login, or can we try to silently login?
+            const interactiveUntil = parseInt(await getLocalStorageValueAsync(INTERACTIVE_LOGIN_UNTIL));
+            const interactiveLogin = (interactiveUntil || 0) > Date.now();
 
             // Redirect to the login endpoint.
             const loginUrl = pxt.Util.stringifyQueryString('/api/auth/login', {
@@ -207,7 +207,7 @@ namespace pxt.auth {
                 provider: idp,
                 persistent,
                 redirect_uri: `${window.location.origin}${window.location.pathname}?authcallback=1&state=${loginState.key}`,
-                prompt: disposition === DISPOSITION_INTERACTIVE ? "select_account" : "silent"
+                prompt: interactiveLogin ? "select_account" : "silent"
             });
             const apiResult = await this.apiAsync<LoginResponse>(loginUrl);
 
@@ -241,9 +241,9 @@ namespace pxt.auth {
 
             pxt.tickEvent('auth.logout');
 
-            // Indicate the next signin should be interactive.
+            // Indicate that for the next minute, signin should be interactive.
             // Use case: SSO signed in with the wrong account. User wants to sign in with a different account.
-            await setAuthDispositionAsync(DISPOSITION_INTERACTIVE);
+            await setLocalStorageValueAsync(INTERACTIVE_LOGIN_UNTIL, (Date.now() + 60000).toString());
 
             continuationHash = continuationHash ? continuationHash.startsWith('#') ? continuationHash : `#${continuationHash}` : "";
             const clientRedirect = `${window.location.origin}${window.location.pathname}${window.location.search}${continuationHash}`;
@@ -716,8 +716,8 @@ namespace pxt.auth {
             // the cookie is not persisted.
             await setAuthTokenAsync(authToken);
 
-            // Clear auth disposition. Next auth request will try silent SSO first.
-            await setAuthDispositionAsync(undefined);
+            // Clear interactive login flag. Next auth request will try silent SSO first.
+            await setLocalStorageValueAsync(INTERACTIVE_LOGIN_UNTIL, undefined);
 
             pxt.tickEvent('auth.login.success', { 'provider': loginState.idp });
         } while (false);
