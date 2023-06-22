@@ -275,6 +275,11 @@ namespace pxsim {
         color: string;
     }
 
+    export interface SetMuteButtonStateMessage extends SimulatorMessage {
+        type: "setmutebuttonstate";
+        state: "muted" | "unmuted" | "disabled";
+    }
+
     export namespace multiplayer {
         type MessageBase = {
             type: "multiplayer";
