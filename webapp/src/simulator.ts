@@ -13,6 +13,7 @@ interface SimulatorConfig {
     onStateChanged(state: pxsim.SimulatorState): void;
     onSimulatorReady(): void;
     setState(key: string, value: any): void;
+    onMuteButtonStateChange(state: pxt.editor.MuteState): void;
     editor: string;
 }
 
@@ -232,6 +233,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onTopLevelCodeEnd: () => {
             postSimEditorEvent("toplevelfinished");
         },
+        onMuteButtonStateChange: cfg.onMuteButtonStateChange,
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
         nestedEditorSim,

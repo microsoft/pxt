@@ -278,6 +278,10 @@ namespace pxsim {
                 ctx.resume();
         }
 
+        export function isMuted() {
+            return _mute;
+        }
+
         function stopTone() {
             setCurrentToneGain(0);
             _frequency = 0;

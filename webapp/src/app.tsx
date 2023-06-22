@@ -1093,6 +1093,7 @@ export class ProjectView
             },
             onSimulatorReady: () => {
             },
+            onMuteButtonStateChange: state => this.setMute(state),
             setState: (k, v) => {
                 pkg.mainEditorPkg().setSimState(k, v)
             },
@@ -3555,12 +3556,26 @@ export class ProjectView
     }
 
     toggleMute() {
-        this.setMute(!this.state.mute);
+        switch (this.state.mute) {
+            case pxt.editor.MuteState.Muted:
+                this.setMute(pxt.editor.MuteState.Unmuted);
+                break;
+            case pxt.editor.MuteState.Unmuted:
+                this.setMute(pxt.editor.MuteState.Muted);
+                break;
+        }
     }
 
-    setMute(on: boolean) {
-        simulator.mute(on);
-        this.setState({ mute: on });
+    setMute(mute: pxt.editor.MuteState) {
+        switch (mute) {
+            case pxt.editor.MuteState.Muted:
+                simulator.mute(true);
+                break;
+            case pxt.editor.MuteState.Unmuted:
+                simulator.mute(false);
+                break;
+        }
+        this.setState({ mute });
     }
 
     openInstructions() {
@@ -3736,7 +3751,7 @@ export class ProjectView
             && pxt.appTarget.simulator
             && !!pxt.appTarget.simulator.emptyRunCode
             && !this.isBlocksEditor();
-        if (this.firstRun && pxt.BrowserUtils.isSafari()) this.setMute(true);
+        if (this.firstRun && pxt.BrowserUtils.isSafari()) this.setMute(pxt.editor.MuteState.Disabled);
 
         pxt.debug(`sim: start run (autorun ${this.state.autoRun}, first ${this.firstRun})`)
         this.firstRun = false
@@ -3793,7 +3808,7 @@ export class ProjectView
                             const hc = data.getData<boolean>(auth.HIGHCONTRAST)
                             if (!pxt.react.isFieldEditorViewVisible?.()) {
                                 simulator.run(pkg.mainPkg, opts.debug, resp, {
-                                    mute: this.state.mute,
+                                    mute: this.state.mute === pxt.editor.MuteState.Muted,
                                     highContrast: hc,
                                     light: pxt.options.light,
                                     clickTrigger: opts.clickTrigger,

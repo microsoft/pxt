@@ -12,6 +12,7 @@ namespace pxsim {
         onSimulatorReady?: () => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
         onTopLevelCodeEnd?: () => void;
+        onMuteButtonStateChange?: (state: "muted" | "unmuted" | "disabled") => void;
         simUrl?: string;
         stoppedClass?: string;
         invalidatedClass?: string;
@@ -827,6 +828,7 @@ namespace pxsim {
                 }
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
+                case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
                 default:
                     this.postMessage(msg, source);
                     break;

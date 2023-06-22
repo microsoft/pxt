@@ -23,7 +23,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         // iOS requires interactive consent to use audio
         if (pxt.BrowserUtils.isIOS())
-            this.props.parent.setMute(true);
+            this.props.parent.setMute(pxt.editor.MuteState.Disabled);
 
         this.toggleMute = this.toggleMute.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
@@ -90,7 +90,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
     }
 
     renderCore() {
-        const { collapsed, devSerialActive, parent, simSerialActive, showSimulatorSidebar } = this.props;
+        const { collapsed, devSerialActive, parent, simSerialActive } = this.props;
 
         const parentState = parent.state;
         if (!parentState.currFile || parentState.home) return <div />
@@ -105,14 +105,12 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isStarting = simState == pxt.editor.SimState.Starting;
         const isSimulatorPending = simState == pxt.editor.SimState.Pending;
         const isFullscreen = parentState.fullscreen;
-        const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inCodeEditor = parent.isBlocksActive() || parent.isJavaScriptActive() || parent.isPythonActive();
 
         const run = true;
         const restart = run && !simOpts.hideRestart;
-        // We hide debug button in Monaco because it's not implemented yet.
         const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE();
         const debugging = parentState.debugging;
         // we need to escape full screen from a tutorial!
@@ -130,7 +128,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const debugTooltip = lf("Toggle debug mode");
         const keymapTooltip = lf("View simulator keyboard shortcuts");
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
-        const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
         const collapseIconTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const simSerialTooltip = lf("Open simulator console");
@@ -145,7 +142,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
-                {audio && isTabTutorial && <sui.Button key='mutebtn' className={`hidefullscreen tutorial mute-button`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} />}
+                {audio && isTabTutorial && <MuteButton onClick={this.toggleMute} state={parent.state.mute} />}
                 {collapse && <sui.Button
                     className={`expand-button portrait only editortools-btn hidefullscreen`}
                     icon={`${collapsed ? 'play' : 'stop'}`}
@@ -153,7 +150,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 />}
             </div>
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
-                {audio && <sui.Button key='mutebtn' className={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} />}
+                {audio && <MuteButton onClick={this.toggleMute} state={parent.state.mute} />}
                 {simOpts.keymap && <sui.Button key='keymap' className="keymap-button" icon="keyboard" title={keymapTooltip} onClick={parent.toggleKeymap} />}
             </div>}
             {showSerialEditorSection && <div className={`ui item tiny buttons full-screen-console`}>
@@ -214,4 +211,32 @@ export class PlayButton extends sui.StatelessUIElement<PlayButtonProps> {
 
         return <sui.Button disabled={!runControlsEnabled} key='runbtn' className={`play-button ${this.props.className || ""} ${(isRunning) ? "stop" : "play"}`} icon={(isRunning) ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} />
     }
+}
+
+interface MuteButtonProps {
+    onClick: () => void;
+    state: pxt.editor.MuteState;
+}
+
+const MuteButton = ({onClick, state}: MuteButtonProps) => {
+    let tooltip: string;
+
+    switch (state) {
+        case pxt.editor.MuteState.Muted:
+            tooltip = lf("Unmute audio");
+            break;
+        case pxt.editor.MuteState.Unmuted:
+            tooltip = lf("Mute audio");
+            break;
+        case pxt.editor.MuteState.Disabled:
+            tooltip = lf("Click inside the simulator to enable audio");
+            break;
+    }
+
+    return <sui.Button
+        className={`mute-button ${state === pxt.editor.MuteState.Muted ? 'red' : ''}`}
+        icon={`${state !== pxt.editor.MuteState.Unmuted  ? 'volume off' : 'volume up'}`}
+        disabled={state === pxt.editor.MuteState.Disabled}
+        title={tooltip}
+        onClick={onClick} />;
 }
