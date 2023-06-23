@@ -71,7 +71,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
 
         const computedStyle = getComputedStyle(containerRef?.current);
         const containerHeight = parseInt(computedStyle.height) - parseInt(computedStyle.borderWidth);
-        if (e.nativeEvent.offsetY > containerHeight - RESIZABLE_BORDER_SIZE - 4) {
+        if (e.nativeEvent.offsetY < containerHeight && e.nativeEvent.offsetY > containerHeight - RESIZABLE_BORDER_SIZE - 4) {
             document.querySelector("body")?.classList.add("cursor-resize");
             document.addEventListener("pointermove", resize, false);
             document.addEventListener("pointerup", onPointerUp, false);
