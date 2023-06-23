@@ -39,7 +39,7 @@
                 } else {
                     data = {};
                 }
-                window.appInsights.trackEvent(id, data, measures);
+                window.appInsights.trackEvent({name: id, properties: data, measurements: measures});
             }
         }
     }
