@@ -90,7 +90,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
         const shareUrlData = await fetchShareUrlDataAsync(searchFor);
         if (shareUrlData) {
-            parsedExt?.unshift(parseShareScript(shareUrlData));
+            parsedExt.unshift(parseShareScript(shareUrlData));
         }
 
         addExtensionsToPool(parsedExt)
