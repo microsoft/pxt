@@ -185,7 +185,8 @@ export class ProjectView
             simState: pxt.editor.SimState.Stopped,
             autoRun: this.autoRunOnStart(),
             isMultiplayerGame: false,
-            onboarding: undefined
+            onboarding: undefined,
+            mute: pxt.editor.MuteState.Unmuted,
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
