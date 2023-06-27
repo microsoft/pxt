@@ -79,7 +79,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         setSearchComplete(false)
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
         const exts = await fetchGithubDataAsync([searchFor])
-        const parsedExt = exts.map(repo => parseGithubRepo(repo))
+        const parsedExt = exts?.map(repo => parseGithubRepo(repo)) ?? [];
         //Search bundled extensions as well
         fetchBundled().forEach(e => {
             if (e.name.toLowerCase().indexOf(searchFor.toLowerCase()) > -1) {

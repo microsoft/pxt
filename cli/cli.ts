@@ -2390,7 +2390,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         }
 
         // For the projects, we need to save the base HEX file to the offline HEX cache
-        if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+        if (isPrj && pxt.appTarget.compile?.hasHex) {
             if (!pkgOptions) {
                 pxt.debug(`Failed to extract native image for project ${dirname}`);
                 return;
@@ -2417,26 +2417,26 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             // We want to cache a hex file for each of the native packages in case they are added to a project.
             // This won't cover the whole matrix, but handles the common case of projects that add one extra
             // extension in the offline app.
-            const allDeps = pkg.sortedDeps(true).map(dep => path.resolve(path.join(dirname, dep.verArgument())))
+            const allDeps = pkg.sortedDeps(true)
+                .map(dep => path.resolve(path.join(dirname, dep.verArgument())))
                 .map(dep => path.resolve(dep).replace(/---.*/, "")); // keep path format (/ vs \\) consistent, trim --- suffix to avoid duplicate imports.
             const config = nodeutil.readPkgConfig(dirname);
             const host = pkg.host() as Host;
 
             const pkgsToBuildWith = packageDirs.filter(dirname => !allDeps.some(el => el.indexOf(dirname.replace(/---.*/, "")) !== -1));
-
-            pxt.log(`Dependencies of pkg: ${allDeps}`);
-            pxt.log(`Attemping to bundle necessary hexfiles to compile with: ${pkgsToBuildWith}`);
+            pxt.log(`Dependencies of base pkgs: ${allDeps.map(el => path.basename(el)).join(", ")}`);
             for (const extraPackage of pkgsToBuildWith) {
+                const extraPathBaseName = path.basename(extraPackage);
                 process.chdir(path.join(rootDir, dirname));
                 const deps: pxt.Map<string> = {
                     ...config.dependencies,
-                    extra: "file:" + path.relative(path.resolve("."), extraPackage)
+                    [extraPathBaseName]: "file:" + path.relative(path.resolve("."), extraPackage)
                 }
                 host.fileOverrides["pxt.json"] = JSON.stringify({
                     ...config,
                     dependencies: deps
                 })
-                pxt.log(`Building hex cache for ${pkg.config.name} with dependencies:`)
+                pxt.log(`Building hex cache for ${extraPathBaseName} with dependencies:`)
                 console.dir(deps);
                 mainPkg = new pxt.MainPackage(host);
 
@@ -2455,7 +2455,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                                 pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
                             } else {
                                 nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
-                                pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                                pxt.log(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                             }
                         }
                     }
