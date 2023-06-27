@@ -142,7 +142,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
-                {audio && isTabTutorial && <MuteButton onClick={this.toggleMute} state={parent.state.mute} />}
+                {audio && isTabTutorial && <MuteButton onClick={this.toggleMute} state={parent.state.mute} className="hidefullscreen tutorial"/>}
                 {collapse && <sui.Button
                     className={`expand-button portrait only editortools-btn hidefullscreen`}
                     icon={`${collapsed ? 'play' : 'stop'}`}
@@ -216,9 +216,10 @@ export class PlayButton extends sui.StatelessUIElement<PlayButtonProps> {
 interface MuteButtonProps {
     onClick: () => void;
     state: pxt.editor.MuteState;
+    className?: string;
 }
 
-const MuteButton = ({onClick, state}: MuteButtonProps) => {
+const MuteButton = ({onClick, state, className}: MuteButtonProps) => {
     let tooltip: string;
 
     switch (state) {
@@ -234,7 +235,7 @@ const MuteButton = ({onClick, state}: MuteButtonProps) => {
     }
 
     return <sui.Button
-        className={`mute-button ${state === pxt.editor.MuteState.Muted ? 'red' : ''}`}
+        className={`${className || ''} mute-button ${state === pxt.editor.MuteState.Muted ? 'red' : ''}`}
         icon={`${state !== pxt.editor.MuteState.Unmuted  ? 'volume off' : 'volume up'}`}
         disabled={state === pxt.editor.MuteState.Disabled}
         title={tooltip}
