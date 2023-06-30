@@ -32,7 +32,7 @@ namespace pxtblockly {
                         // Update the values of all existing field instances
                         const allFields = getAllFields(ws, field => field instanceof FieldKind
                             && field.getValue() === oldName
-                            && field.opts.blockId === this.opts.blockId);
+                            && field.opts.name === this.opts.name);
                         for (const field of allFields) {
                             field.ref.setValue(newName);
                         }
@@ -51,7 +51,7 @@ namespace pxtblockly {
 
                 const uses = getAllFields(ws, field => field instanceof FieldKind
                     && field.getValue() === varName
-                    && field.opts.blockId === this.opts.blockId);
+                    && field.opts.name === this.opts.name);
 
                 if (uses.length > 1) {
                     Blockly.confirm(lf("Delete {0} uses of the \"{1}\" {2}?", uses.length, varName, this.opts.memberName), response => {
