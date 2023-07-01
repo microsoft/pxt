@@ -30,11 +30,11 @@ namespace pxtblockly {
                     lf("Rename '{0}':", oldName),
                     newName => {
                         // Update the values of all existing field instances
-                        const allFields = getAllFields(ws, field => field instanceof FieldKind);
+                        const allFields = getAllFields(ws, field => field instanceof FieldKind
+                            && field.getValue() === oldName
+                            && field.opts.name === this.opts.name);
                         for (const field of allFields) {
-                            if (field.ref.getValue() === oldName) {
-                                field.ref.setValue(newName)
-                            }
+                            field.ref.setValue(newName);
                         }
                     }
                 );
@@ -49,7 +49,9 @@ namespace pxtblockly {
                     return;
                 }
 
-                const uses = getAllFields(ws, field => field instanceof FieldKind && field.getValue() === varName);
+                const uses = getAllFields(ws, field => field instanceof FieldKind
+                    && field.getValue() === varName
+                    && field.opts.name === this.opts.name);
 
                 if (uses.length > 1) {
                     Blockly.confirm(lf("Delete {0} uses of the \"{1}\" {2}?", uses.length, varName, this.opts.memberName), response => {
