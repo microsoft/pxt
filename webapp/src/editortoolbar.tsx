@@ -277,7 +277,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const editorSupportsWebUSB = pxt.appTarget?.compile?.webUSB;
         const webUSBSupported = pxt.usb.isEnabled && editorSupportsWebUSB;
-        const showUsbNotSupportedHint = editorSupportsWebUSB && !pxt.usb.isEnabled && (pxt.BrowserUtils.isChromiumEdge() || pxt.BrowserUtils.isChrome());
+        const showUsbNotSupportedHint = editorSupportsWebUSB
+            && !pxt.usb.isEnabled
+            && !pxt.BrowserUtils.isPxtElectron()
+            && (pxt.BrowserUtils.isChromiumEdge() || pxt.BrowserUtils.isChrome());
         const packetioConnected = !!this.getData("packetio:connected");
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = this.getData("packetio:icon") as string;
