@@ -195,9 +195,6 @@ namespace pxt {
         }
 
         if (envelope.baseType == "PageviewPerformanceData") {
-            if (!envelope.baseData.properties) {
-                return false;
-            }
             const pageName = envelope.baseData.name;
             envelope.baseData.name = window.location.origin;
             if (!envelope.baseData.properties) {

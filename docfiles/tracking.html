@@ -14,9 +14,6 @@
                     }
 
                     if (envelope.baseType == "PageviewPerformanceData") {
-                        if (!envelope.baseData.properties) {
-                            return false;
-                        }
                         var pageName = envelope.baseData.name;
                         envelope.baseData.name = window.location.origin;
                         if (!envelope.baseData.properties) {
