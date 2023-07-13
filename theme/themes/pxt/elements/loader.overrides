@@ -21,7 +21,7 @@
 }
 
 .ui.loader.main.msft:after {
-  background: transparent @loaderMsftImage no-repeat center center;
+  background-image: @loaderMsftImage;
   background-size: 99%;
 }
 
