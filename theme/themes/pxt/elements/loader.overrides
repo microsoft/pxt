@@ -22,7 +22,7 @@
 
 .ui.loader.main.msft:after {
   background-image: @loaderMsftImage;
-  background-size: 99%;
+  background-size: 99%; // Must be less than 100% to avoid being cut off
 }
 
 .ui.loader.avatar:after {
