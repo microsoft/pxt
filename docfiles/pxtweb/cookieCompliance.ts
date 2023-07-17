@@ -196,6 +196,16 @@ namespace pxt {
             return false;
         }
 
+        if (envelope.baseType == "PageviewPerformanceData") {
+            const pageName = envelope.baseData.name;
+            envelope.baseData.name = window.location.origin;
+            if (!envelope.baseData.properties) {
+                envelope.baseData.properties = {};
+            }
+            envelope.baseData.properties.pageName = pageName;
+            // no url scrubbing for webapp (no share url, etc)
+        }
+
         if (typeof pxtConfig === "undefined" || !pxtConfig) return true;
 
         const telemetryItem = envelope.baseData;
