@@ -22,8 +22,9 @@
                         envelope.baseData.properties.pageName = pageName;
                         var scrubbedUrl = scrubUrl(envelope.baseData.uri);
                         envelope.baseData.uri = scrubbedUrl;
+                        var toUrl = new URL(scrubbedUrl);
+                        envelope.baseData.properties.pathName = toUrl ? toUrl.pathname : "";
                         if (envelope.ext && envelope.ext.trace) {
-                            var toUrl = new URL(scrubbedUrl);
                             envelope.ext.trace.name = toUrl ? toUrl.pathname : "";
                         }
                     }

@@ -201,6 +201,7 @@ namespace pxt {
                 envelope.baseData.properties = {};
             }
             envelope.baseData.properties.pageName = pageName;
+            envelope.baseData.properties.pathName = window.location.pathname;
             // no url scrubbing for webapp (no share url, etc)
         }
 
