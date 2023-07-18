@@ -854,7 +854,7 @@ function scriptPageTestAsync(id: string) {
                 filepath: "/" + id
             })
             return html
-        })
+        });
 }
 
 // use http://localhost:3232/pkg/microsoft/pxt-neopixel for testing
@@ -1143,6 +1143,7 @@ export function serveAsync(options: ServeOptions) {
         if (!!pxt.Cloud.parseScriptId(pathname)) {
             scriptPageTestAsync(pathname)
                 .then(sendHtml)
+                .catch(() => error(404, "Script not found"));
             return
         }
 
