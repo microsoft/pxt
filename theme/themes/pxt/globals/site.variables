@@ -111,6 +111,10 @@
 
 @loaderImageUrl: "../docs/static/loader.svg";
 @loaderImage: data-uri(@loaderImageUrl);
+@loaderImageSize: 100%;
+
+@loaderMsftImageUrl: "../docs/static/orglogowide.png";
+@loaderMsftImage: data-uri(@loaderMsftImageUrl);
 
 @includePoweredByLogos: false;
 @poweredBySmallUrl: "../docs/static/logo/Powered-By-Microsoft-logo-small.png";
