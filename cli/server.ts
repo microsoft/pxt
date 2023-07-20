@@ -825,7 +825,7 @@ function certificateTestAsync(): Promise<string> {
 
 // use http://localhost:3232/45912-50568-62072-42379 for testing
 function scriptPageTestAsync(id: string) {
-    return Cloud.privateGetAsync(id)
+    return Cloud.privateGetAsync(pxt.Cloud.parseScriptId(id))
         .then((info: Cloud.JsonScript) => {
             // if running against old cloud, infer 'thumb' field
             // can be removed after new cloud deployment
@@ -854,7 +854,7 @@ function scriptPageTestAsync(id: string) {
                 filepath: "/" + id
             })
             return html
-        })
+        });
 }
 
 // use http://localhost:3232/pkg/microsoft/pxt-neopixel for testing
@@ -1140,9 +1140,10 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (/^\/(\d\d\d\d[\d-]+)$/.test(pathname)) {
-            scriptPageTestAsync(pathname.slice(1))
+        if (!!pxt.Cloud.parseScriptId(pathname)) {
+            scriptPageTestAsync(pathname)
                 .then(sendHtml)
+                .catch(() => error(404, "Script not found"));
             return
         }
 
