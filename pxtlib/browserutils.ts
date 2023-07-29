@@ -166,7 +166,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function isTabletSize(): boolean {
-        return window?.innerWidth < pxt.BREAKPOINT_TABLET;
+        return window?.innerWidth <= pxt.BREAKPOINT_TABLET;
     }
 
     export function isComputerSize(): boolean {
