@@ -1,6 +1,6 @@
 # Translating markdown
 
-All of the documenation pages for MakeCode are written in markdown. The markdown files for these pages are sent to Crowdin as part of the content available to translate. To have more interactive elements be present in the document pages, MakeCode uses an extended form of markdown to define and represent these elements. This includes code snippets, embedded simulators, clickable link cards, tutorial directives, and more.
+All of the documentation pages for MakeCode are written in markdown. The markdown files for these pages are sent to Crowdin as part of the content available to translate. To have more interactive elements be present in the document pages, MakeCode uses an extended form of markdown to define and represent these elements. This includes code snippets, embedded simulators, clickable link cards, tutorial directives, and more.
 
 These extended markdown elements remain in the documents when they're uploaded to Crowdin. Most of the time these elements need to be with the document but they don't get translated. This can sometimes cause confusion for translators who may not know that a markdown extension should be left alone and not translated like the rest of the core text strings in the document. In this document we point out which of these extended markdown elements you can leave untranslated.
 
