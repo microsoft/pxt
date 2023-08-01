@@ -170,7 +170,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function isComputerSize(): boolean {
-        return window?.innerWidth >= pxt.BREAKPOINT_TABLET;
+        return window?.innerWidth > pxt.BREAKPOINT_TABLET;
     }
 
     export function noSharedLocalStorage(): boolean {
