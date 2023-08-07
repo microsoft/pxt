@@ -17,7 +17,7 @@ const isWin32 = os.platform() === "win32";
 
 const clean = () => rimraf("built").then(() => rimraf("temp"));
 const update = () => exec("git pull", true).then(() => exec("npm install", true))
-
+const noop = () => Promise.resolve();
 
 /** onlineline */
 const onlinelearning = () => {
@@ -654,6 +654,26 @@ const copyMultiplayerHtml = () => rimraf("webapp/public/multiplayer.html")
 const multiplayer = gulp.series(cleanMultiplayer, buildMultiplayer, gulp.series(copyMultiplayerCss, copyMultiplayerJs, copyMultiplayerHtml));
 
 /********************************************************
+                 Webapp build wrappers
+*********************************************************/
+
+const shouldBuildWebapps = () => (process.argv.indexOf("--no-webapps") === -1);
+
+const maybeUpdateWebappStrings = () => {
+    if (!shouldBuildWebapps()) return noop;
+    return gulp.parallel(
+        updateSkillMapStrings,
+        updateAuthcodeStrings,
+        updateMultiplayerStrings,
+    );
+};
+
+const maybeBuildWebapps = () => {
+    if (!shouldBuildWebapps()) return noop;
+    return gulp.parallel(skillmap, authcode, multiplayer);
+}
+
+/********************************************************
                  Tests and Linting
 *********************************************************/
 
@@ -739,12 +759,8 @@ function testTask(testFolder, testFile) {
 }
 
 const buildAll = gulp.series(
-    gulp.parallel(
-        updatestrings,
-        updateSkillMapStrings,
-        updateAuthcodeStrings,
-        updateMultiplayerStrings,
-    ),
+    updatestrings,
+    maybeUpdateWebappStrings(),
     copyTypescriptServices,
     copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
@@ -756,7 +772,7 @@ const buildAll = gulp.series(
     targetjs,
     reactCommon,
     gulp.parallel(buildcss, buildSVGIcons),
-    gulp.parallel(skillmap, authcode, multiplayer),
+    maybeBuildWebapps(),
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
