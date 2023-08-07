@@ -93,6 +93,13 @@ If you are working on the CLI exclusively,
 gulp watchCli
 ```
 
+If you don't need to build the suite of associated webapps (skillmap, multiplayer, etc.), you can skip them and speed up your build a bit:
+
+```
+gulp --no-webapps
+```
+
+
 ### Icons
 
 There are a number of custom icons (to use in addition
