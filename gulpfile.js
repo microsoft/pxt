@@ -668,7 +668,7 @@ const maybeUpdateWebappStrings = () => {
     );
 };
 
-function maybeBuildWebapps() {
+const maybeBuildWebapps = () => {
     if (!shouldBuildWebapps()) return noop;
     return gulp.parallel(skillmap, authcode, multiplayer);
 }
