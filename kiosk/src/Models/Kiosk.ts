@@ -39,9 +39,6 @@ export class Kiosk {
     async downloadGameListAsync(): Promise<void> {
         if (!this.clean) {
             let url = configData.GameDataUrl;
-            if (configData.Debug) {
-                url = `/static/kiosk/${url}`;
-            }
     
             const response = await fetch(url);
             if (!response.ok) {
