@@ -5,7 +5,7 @@ import configData from "../config.json"
 import "../Kiosk.css";
 import AddGameButton from "./AddGameButton";
 import {QRCodeSVG} from 'qrcode.react';
-import { generateKioskCodeAsync, getGameCodeAsync } from "../BackendRequests";
+import { generateKioskCodeAsync, getGameCodesAsync } from "../BackendRequests";
 import { isLocal, tickEvent } from "../browserUtils";
 import { GameData } from "../Models/GameData";
 import KioskNotification from "./KioskNotification";
@@ -23,7 +23,20 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
     const generatingKioskCode = useRef(false);
     const kioskCodeNextGenerationTime = useRef(0);
     const nextSafePollTime = useRef(0);
-    const kioskTimeOutInMinutes = 30;
+    const kioskCodeUrl = "/kiosk";
+    const kioskTimeOutInMinutes = getKioskCodeDuration();
+
+    function getKioskCodeDuration(): number {
+        const kioskCodeTime = localStorage.getItem("codeDuration");
+        if (kioskCodeTime) {
+            return parseInt(kioskCodeTime);
+        } else if (kiosk.time) {
+            const kioskTime = parseInt(kiosk.time);
+            return (kioskTime > 240 ? 240 : kioskTime) * 60;
+        } else {
+            return 30;
+        }
+    }
 
     const updateLoop = () => {
         if (!menuButtonSelected && kiosk.gamepadManager.isDownPressed()) {
@@ -51,17 +64,8 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
         return true;
     }
 
-    const getGameNames = (gameList: GameData[]): string[] => {
-        const gameNames = [];
-        for (const game of gameList) {
-            gameNames.push(game.name);
-        }
-        return gameNames;
-    }
-
-    const displayGamesAdded = (addedGames: GameData[]): void => {
-        const gameNames = getGameNames(addedGames);
-        const games = gameNames.join(", ");
+    const displayGamesAdded = (addedGames: string[]): void => {
+        const games = addedGames.join(", ");
         const notification = `${games} added!`
         setNotifyContent(notification);
         setNotify(true);
@@ -92,7 +96,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
             clearTimeout(pollTimer);
             pollTimer = setTimeout(async () => {
                 try {
-                    const gameCodes = await getGameCodeAsync(kioskCode);
+                    const gameCodes = await getGameCodesAsync(kioskCode);
                     if (gameCodes) {
                         const justAddedGames = await kiosk.saveNewGamesAsync(gameCodes);
                         if (justAddedGames.length) {
@@ -104,6 +108,9 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                     }
                 } catch (error: any) {
                     clearTimeout(pollTimer);
+                    localStorage.removeItem("kioskCodeEnd");
+                    localStorage.removeItem("currentKioskCode");
+                    localStorage.removeItem("codeDuration");
                     setKioskCode("");
                     setRenderQRCode(false);
                 }
@@ -128,17 +135,43 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
             let newKioskCode: string;
             try {
                 generatingKioskCode.current = true;
-                newKioskCode = await generateKioskCodeAsync();
-                kioskCodeNextGenerationTime.current = Date.now() + generatedCodeDuration;
+                if (kiosk.time) {
+                    newKioskCode = await generateKioskCodeAsync(kioskTimeOutInMinutes);
+                } else {
+                    newKioskCode = await generateKioskCodeAsync();
+                }
                 setKioskCode(newKioskCode);
+
+                kioskCodeNextGenerationTime.current = Date.now() + generatedCodeDuration;
+                localStorage.setItem("kioskCodeEnd", kioskCodeNextGenerationTime.current.toString());
+                localStorage.setItem("currentKioskCode", newKioskCode);
+                localStorage.setItem("codeDuration", kioskTimeOutInMinutes.toString());
             } catch (error) {
                 setRenderQRCode(false);
             }
             generatingKioskCode.current = false;
         }
 
+
         if (!generatingKioskCode.current && renderQRCode) {
-            if (!kioskCode) {
+            const kioskCodeEndTime = localStorage.getItem("kioskCodeEnd");
+            if (kioskCodeEndTime) {
+                const endTime = parseInt(kioskCodeEndTime);
+                const timeElapsed = endTime - Date.now();
+                if (timeElapsed > 0) {
+                    kioskCodeNextGenerationTime.current = endTime;
+                    const storedKioskCode = localStorage.getItem("currentKioskCode");
+                    if (storedKioskCode) {
+                        setKioskCode(storedKioskCode);
+                    }
+                } else {
+                    localStorage.removeItem("kioskCodeEnd");
+                    localStorage.removeItem("currentKioskCode");
+                    localStorage.removeItem("codeDuration");
+                    generateKioskCode();
+                }
+            }
+            else if (!kioskCode) {
                 generateKioskCode();
             } else {
                 const timeElapsed = kioskCodeNextGenerationTime.current - Date.now();
@@ -146,6 +179,9 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                 codeGenerationTimer = setTimeout(() => {
                     setKioskCode("");
                     setRenderQRCode(false);
+                    localStorage.removeItem("kioskCodeEnd");
+                    localStorage.removeItem("currentKioskCode");
+                    localStorage.removeItem("codeDuration");
                 }, time)
             }
         }
@@ -157,7 +193,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
 
     const qrDivContent = () => {
         if (renderQRCode && kioskCode) {
-            const kioskUrl = `/kiosk/#add-game:${kioskCode}`;
+            const kioskUrl = `${kioskCodeUrl}#add-game:${kioskCode}`;
             return (
                 <div className="innerQRCodeContent">
                     <h3>{kioskTimeOutInMinutes} minute Kiosk ID</h3>
@@ -188,7 +224,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                     <ol>
                         <li>Use your mobile device to scan the QR code</li>
                         <li>Use the new page to scan or enter your game's share code</li>
-                        <li>If the game is uploaded successfully, your game will be launched here</li>
+                        <li>If your game is uploaded successfully, it will be added to the game list</li>
                     </ol>
                 </div>
 

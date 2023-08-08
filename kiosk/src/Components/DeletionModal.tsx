@@ -18,7 +18,7 @@ const DeletionModal: React.FC<IProps> = ({ kiosk, active, changeFocus }) => {
         const userAddedGames = kiosk.getAllAddedGames();
         const gameId = kiosk.selectedGame?.id!;
         if (gameId in userAddedGames) {
-            delete userAddedGames[gameId];
+            userAddedGames[gameId].deleted = true;
             localStorage.setItem(addedGamesLocalStorageKey, JSON.stringify(userAddedGames));
             kiosk.games.splice(kiosk.selectedGameIndex!, 1);
         }
