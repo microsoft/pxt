@@ -1,0 +1,10 @@
+{
+  "short_name": "MakeCode Arcade Kiosk",
+  "name": "MakeCode Arcade Kiosk",
+  "icons": [
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

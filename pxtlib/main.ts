@@ -392,6 +392,7 @@ namespace pxt {
         skillmapUrl?: string; // "/beta---skillmap"
         authcodeUrl?: string; // "/beta---authcode"
         multiplayerUrl?: string; // "/beta---multiplayer"
+        kioskUrl?: string; // "/beta---kiosk"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }

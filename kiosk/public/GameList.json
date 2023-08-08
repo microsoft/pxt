@@ -1,0 +1,112 @@
+{
+  "games": [
+    {
+      "id": "_Y8VUmcHYsdsy",
+      "name": "GalgaMulti",
+      "description": "Controlling a starship, both players will destroy the Galga forces, while avoiding enemies. Each player has 3 lives, game ends once a player runs out of lives.",
+      "highScoreMode": "SingleAscending"
+    },
+    {
+      "id": "32777-59846-95775-11055",
+      "name": "Secure the river!",
+      "description": "This is a cooperative game where both players share lives. You must defeat skeletons, collect hearts and avoid the ducks and fishes.",
+      "highScoreMode": "SingleAscending"
+    },
+    {
+      "id": "39705-92830-48491-01106",
+      "name": "Strawberry Slam",
+      "description": "Two strawberries battle it out in the kitchen to be the Shortcake Star!",
+      "highScoreMode": "SingleAscending"
+    },
+    {
+      "id": "13412-17300-80986-88577",
+      "name": "TicTacTwo!",
+      "description": "Ultimate battle between cats and dogs! The player who succeeds in placing three of their marks in a horizontal, vertical, or diagonal row is the winner as the best pet.",
+      "highScoreMode": "None"
+    },
+    {
+      "id": "69052-09321-39220-20264",
+      "name": "Blocky Boss Battle",
+      "description": "A test of reflexes! Avoid the blue stingers while sending fireballs at the boss!",
+      "highScoreMode": "SingleAscending"
+    },
+    {
+      "id": "07573-63879-62644-28924",
+      "name": "Asphodel follows directions",
+      "description": "Place arrows along the path to help Asphodel the witch find their way",
+      "highScoreMode": "None"
+    },
+    {
+      "id": "24832-19682-40817-54648",
+      "name": "Pigeon: Deliverance",
+      "description": "Fly through the dangerous rooftops and ledges of New York City delivering messages!",
+      "highScoreMode": "None"
+    },
+    {
+      "id": "19410-44885-95661-59850",
+      "name": "Save the Forest",
+      "description": "Fly your plane over the forest spraying water to put out the fires!",
+      "highScoreMode": "None"
+    },
+    {
+      "id": "96744-30917-11312-43375",
+      "name": "Falling Duck",
+      "description": "Fly through the sky avoiding obstacles",
+      "highScoreMode": "None"
+    },
+    {
+      "id": "50225-04801-24334-14778",
+      "name": "Space Destroyer",
+      "description": "Use the lasers on your spaceship to shoot falling asteroids!",
+      "highScoreMode": "SingleAscending"
+    },
+    {
+      "id": "27640-75402-47530-91242",
+      "name": "Hot Air Balloon",
+      "description": "Navigate your hot air balloon through the mountains avoiding birds and spaceships",
+      "highScoreMode": "SingleAscending"
+    },
+    {
+      "id": "91201-59331-72477-53174",
+      "name": "Bunny Hop!",
+      "description": "Help your bunny hop over obstacles as they run through the forest",
+      "highScoreMode": "SingleAscending"
+    },
+    {
+      "id": "91782-54072-13194-99228",
+      "name": "Caterpillar",
+      "description": "Eat the leaves to grow, but watch out for walls!",
+      "highScoreMode": "SingleAscending"
+    },
+    {
+      "id": "14111-27578-89085-17056",
+      "name": "Jewel Raider",
+      "description": "Adventure through levels collecting jewels and avoiding obstacles!",
+      "highScoreMode": "None"
+    },
+    {
+      "id": "21784-44427-92956-37509",
+      "name": "Mouse Adventure",
+      "description": "Go on a mouse adventure in a haunted castle, battling bad guys, avoiding obstacles and collecting keys!",
+      "highScoreMode": "None"
+    },
+    {
+      "id": "86980-49044-76449-93183",
+      "name": "Stack the Goats",
+      "description": "Build a tower of goats!",
+      "highScoreMode": "None"
+    },
+    {
+      "id": "02651-16710-47798-38995",
+      "name": "Cave Explorer",
+      "description": "Explore multiple levels of caves deep within the earth, but watch out for those cave caterpillars!",
+      "highScoreMode": "None"
+    },
+    {
+      "id": "99776-77448-58171-80239",
+      "name": "Kickoff!",
+      "description": "Time to practice your football throwing game! Coordinate plays and avoid defenders",
+      "highScoreMode": "None"
+    }
+  ]
+}
