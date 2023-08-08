@@ -100,6 +100,7 @@
   "devDependencies": {
     "@microsoft/eslint-plugin-sdl": "^0.1.5",
     "@types/chai": "4.0.6",
+    "@types/event-emitter": "^0.3.3",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
     "@types/jquery": "3.3.29",
@@ -123,6 +124,7 @@
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jsx-a11y": "^6.4.1",
     "eslint-plugin-react": "^7.23.1",
+    "event-emitter": "^0.3.5",
     "fuse.js": "3.2.0",
     "gulp": "4.0.0",
     "gulp-concat": "2.6.1",

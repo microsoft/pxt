@@ -205,6 +205,15 @@ namespace pxsim {
             U.assert(themes && themes.length > 0)
             this.themes = themes;
         }
+        public samMessageToTarget(message:pxsim.SimulatorMessage): void {
+            const frame = this.simFrames()[0];
+            if (!frame) return undefined;
+
+            this.postMessageCore(frame, {
+                type: message.type,
+                value: message.value,
+            });
+        }
 
         public startRecording(width?: number): void {
             const frame = this.simFrames()[0];
@@ -731,6 +740,8 @@ namespace pxsim {
 
             this.setState(SimulatorState.Running);
             this.setTraceInterval(this.traceInterval);
+            frame.contentWindow.postMessage({type:'samlabs'}, "*");
+
         }
 
         // ensure _currentRuntime is ready
@@ -829,6 +840,9 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
+                // case 'samlabs':
+                //     this.postMessage(msg, source);
+                //     break;
                 default:
                     this.postMessage(msg, source);
                     break;
