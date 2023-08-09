@@ -32,7 +32,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
             return parseInt(kioskCodeTime);
         } else if (kiosk.time) {
             const kioskTime = parseInt(kiosk.time);
-            return Math.min(240, Math.max(kioskTime, 0.5)) * 60;
+            return (kioskTime > 240 ? 240 : kioskTime) * 60;
         } else {
             return 30;
         }
@@ -193,7 +193,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
 
     const qrDivContent = () => {
         if (renderQRCode && kioskCode) {
-            const kioskUrl = `${window.location.origin}${kioskCodeUrl}#add-game:${kioskCode}`;
+            const kioskUrl = `${kioskCodeUrl}#add-game:${kioskCode}`;
             return (
                 <div className="innerQRCodeContent">
                     <h3>{kioskTimeOutInMinutes} minute Kiosk ID</h3>

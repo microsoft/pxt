@@ -158,7 +158,7 @@ const GameList: React.FC<IProps> = ({ kiosk, addButtonSelected, deleteButtonSele
                     return (
                         <SwiperSlide key={game.id}>
                             <GameSlide highScores={gameHighScores} addButtonSelected={addButtonSelected}
-                                deleteButtonSelected={deleteButtonSelected} game={game} locked={kiosk.locked}/>
+                                deleteButtonSelected={deleteButtonSelected} game={game} />
                         </SwiperSlide>
                     )
                 })}

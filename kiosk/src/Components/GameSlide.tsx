@@ -9,14 +9,12 @@ interface IProps {
     addButtonSelected: boolean;
     deleteButtonSelected: boolean;
     game: GameData;
-    locked: boolean;
 }
 const GameSlide: React.FC<IProps> = (
     {   highScores,
         addButtonSelected,
         deleteButtonSelected,
         game,
-        locked
     }) => {
     const buttonSelected = addButtonSelected || deleteButtonSelected;
     const carouselSelected = buttonSelected ? "unselected" : "selected";
@@ -40,7 +38,6 @@ const GameSlide: React.FC<IProps> = (
                     </div>
                 }
                 { game.userAdded &&
-                    !locked &&
                     <DeleteButton focused={deleteButtonSelected} />
                 }
             </div>
