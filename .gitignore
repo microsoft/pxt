@@ -5,6 +5,7 @@ webapp/public/closure-library
 webapp/public/skillmap.html
 webapp/public/authcode.html
 webapp/public/multiplayer.html
+webapp/public/kiosk.html
 localtypings/blockly.d.ts
 node_modules
 *.sw?

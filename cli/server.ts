@@ -25,6 +25,11 @@ let packagedDir = ""
 let localHexCacheDir = path.join("built", "hexcache");
 let serveOptions: ServeOptions;
 
+const webappNames = [
+    "kiosk"
+    // TODO: Add other webapp names here: "multiplayer", "skillmap", "authcode"
+];
+
 function setupDocfilesdirs() {
     docfilesdirs = [
         "docfiles",
@@ -987,7 +992,8 @@ export function serveAsync(options: ServeOptions) {
             }
         }
 
-        let pathname = decodeURI(url.parse(req.url).pathname);
+        let uri = url.parse(req.url);
+        let pathname = decodeURI(uri.pathname);
         const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query);
         const htmlParams: pxt.Map<string> = {};
         if (opts["lang"] || opts["forcelang"])
@@ -1008,6 +1014,48 @@ export function serveAsync(options: ServeOptions) {
         let elts = pathname.split("/").filter(s => !!s)
         if (elts.some(s => s[0] == ".")) {
             return error(400, "Bad path :-(\n")
+        }
+
+        // Strip leading version number
+        if (elts.length && /^v\d+/.test(elts[0])) {
+            elts.shift();
+        }
+
+        // Rebuild pathname without leading version number
+        pathname = "/" + elts.join("/");
+
+        const expandWebappHtml = (appname: string, html: string) => {
+            // Expand templates
+            html = expandHtml(html);
+            // Rewrite application resource references
+            html = html.replace(/src="(\/static\/js\/[^"]*)"/, (m, f) => `src="/${appname}${f}"`);
+            html = html.replace(/src="(\/static\/css\/[^"]*)"/, (m, f) => `src="/${appname}${f}"`);
+            return html;
+        };
+
+        const serveWebappFile = (webappName: string, webappPath: string) => {
+            const webappUri = url.parse(`http://localhost:3000/${webappPath}${uri.search || ""}`);
+            http.get(webappUri, r => {
+                let body = "";
+                r.on("data", (chunk) => {
+                    body += chunk;
+                });
+                r.on("end", () => {
+                    if (!webappPath || webappPath === "index.html") {
+                        body = expandWebappHtml(webappName, body);
+                    }
+                    res.writeHead(200);
+                    res.write(body);
+                    res.end();
+                });
+            });
+        };
+
+        const webappIdx = webappNames.findIndex(s => new RegExp(`^-{0,3}${s}$`).test(elts[0] || ''));
+        if (webappIdx >= 0) {
+            const webappName = webappNames[webappIdx];
+            const webappPath = pathname.split("/").slice(2).join('/'); // remove /<webappName>/ from path
+            return serveWebappFile(webappName, webappPath);
         }
 
         if (elts[0] == "api") {

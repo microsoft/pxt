@@ -361,6 +361,7 @@ function pxtFileList(pref: string) {
         .concat(nodeutil.allFiles(pref + "built/web/skillmap", { maxDepth: 4 }))
         .concat(nodeutil.allFiles(pref + "built/web/authcode", { maxDepth: 4 }))
         .concat(nodeutil.allFiles(pref + "built/web/multiplayer", { maxDepth: 4 }))
+        .concat(nodeutil.allFiles(pref + "built/web/kiosk", { maxDepth: 4 }))
 }
 
 function semverCmp(a: string, b: string) {
@@ -456,7 +457,8 @@ function ciAsync() {
                             .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
                             .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
                             .then(() => crowdin.execCrowdinAsync("upload", "built/authcode-strings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/multiplayer-strings.json"));
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/multiplayer-strings.json"))
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/kiosk-strings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                     if (uploadDocs || uploadApiStrings)
@@ -1046,6 +1048,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "skillmapUrl": opts.localDir + "skillmap.html",
             "authcodeUrl": opts.localDir + "authcode.html",
             "multiplayerUrl": opts.localDir + "multiplayer.html",
+            "kioskUrl": opts.localDir + "kiosk.html",
             "isStatic": true,
         }
         const targetImageLocalPaths = targetImagePaths.map(k =>
@@ -1098,6 +1101,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "skillmap.html",
         "authcode.html",
         "multiplayer.html",
+        "kiosk.html",
     ]
 
     // expandHtml is manually called on these files before upload
@@ -1107,6 +1111,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "skillmap.html",
         "authcode.html",
         "multiplayer.html",
+        "kiosk.html",
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
@@ -2000,7 +2005,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         await writeFileAsync(`built/web/react-common-${app}.css`, appCss, "utf8");
     }
 
-    // Generate react-common css for skillmap, authcode, and multiplayer
+    // Generate react-common css for skillmap, authcode, and multiplayer (but not kiosk yet)
     await Promise.all([
         generateReactCommonCss("skillmap"),
         generateReactCommonCss("authcode"),
@@ -2028,7 +2033,13 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     });
 
     const rtlcss = require("rtlcss");
-    const files = ["semantic.css", "blockly.css", "react-common-skillmap.css", "react-common-authcode.css", "react-common-multiplayer.css"];
+    const files = [
+        "semantic.css",
+        "blockly.css",
+        "react-common-skillmap.css",
+        "react-common-authcode.css",
+        "react-common-multiplayer.css"
+    ];
 
     for (const cssFile of files) {
         const css = await readFileAsync(`built/web/${cssFile}`, "utf8");

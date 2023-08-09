@@ -1,0 +1,94 @@
+{
+    "GameDataUrl": "/kiosk-data/GameList.json",
+    "PlayUrlRoot": "https://arcade.makecode.com/stable/---run",
+    "EnterHighScoreDelayMilli": 3000,
+    "EnterHighScorePoll": 100,
+    "HighScoresToKeep": 10,
+    "HighScoreInitialsLength": 3,
+    "HighScoreInitialAllowedCharacters": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "GamepadPollLoopMilli": 150,
+    "GamepadCacheMilli": 50,
+    "GamepadAButtonPin": 0,
+    "GamepadBButtonPin": 1,
+    "GamepadEscapeButtonPin": 9,
+    "GamepadResetButtonPin": 10,
+    "GamepadMenuButtonPin": 11,
+    "GamepadLeftRightAxis": 0,
+    "GamepadLeftRightThreshold": 0.5,
+    "GamepadUpDownAxis": 1,
+    "GamepadUpDownThreshold": 0.5,
+    "KeyboardAButtonKeys": [
+        [
+            "Z",
+            " "
+        ],
+        [
+            "U"
+        ]
+    ],
+    "KeyboardBButtonKeys": [
+        [
+            "X",
+            "Enter"
+        ],
+        [
+            "O"
+        ]
+    ],
+    "KeyboardEscapeButtonKeys": [
+        [
+            "Esc",
+            "Escape"
+        ]
+    ],
+    "KeyboardMenuButtonKeys": [
+        [
+            "1"
+        ]
+    ],
+    "KeyboardResetButtonKeys": [
+        [
+            "2"
+        ]
+    ],
+    "KeyboardLeftKeys": [
+        [
+            "Left",
+            "ArrowLeft",
+            "A"
+        ],
+        [
+            "J"
+        ]
+    ],
+    "KeyboardRightKeys": [
+        [
+            "Right",
+            "ArrowRight",
+            "D"
+        ],
+        [
+            "L"
+        ]
+    ],
+    "KeyboardUpKeys": [
+        [
+            "Up",
+            "ArrowUp",
+            "W"
+        ],
+        [
+            "I"
+        ]
+    ],
+    "KeyboardDownKeys": [
+        [
+            "Down",
+            "ArrowDown",
+            "S"
+        ],
+        [
+            "K"
+        ]
+    ]
+}
