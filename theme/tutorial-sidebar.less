@@ -514,8 +514,6 @@
 
 #root.headless.tabTutorial {
     #simulator .editor-sidebar {
-        position: relative;
-        display: block !important;
         width: @simulatorWidth;
         height: calc(~'100%' - @mainMenuHeight);
         top: @mainMenuHeight;
@@ -658,6 +656,7 @@
         }
 
         #simulator .editor-sidebar {
+            display: block !important;
             height: @defaultTutorialHeight;
             width: 100%;
         }
