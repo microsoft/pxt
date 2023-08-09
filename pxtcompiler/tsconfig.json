@@ -5,7 +5,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "declaration": true,
-        "out": "../built/pxtcompiler.js",
+        "outFile": "../built/pxtcompiler.js",
         "newLine": "LF",
         "sourceMap": false,
         "lib": [
