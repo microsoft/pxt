@@ -200,7 +200,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                     <h1 className="kioskCode">{kioskCode}</h1>
                     <QRCodeSVG value={kioskUrl} />
                     <div className="kioskLink">
-                        <a target="_blank" onClick={kioskLinkClicked} href={kioskUrl}>{kioskUrl}</a>
+                        <a target="_blank" rel="noopener noreferrer" onClick={kioskLinkClicked} href={kioskUrl}>{kioskUrl}</a>
                     </div>
 
                 </div>
