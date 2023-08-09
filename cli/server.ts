@@ -1051,7 +1051,7 @@ export function serveAsync(options: ServeOptions) {
             });
         };
 
-        const webappIdx = webappNames.findIndex(s => new RegExp(`^\/-{0,3}${s}`).test(pathname));
+        const webappIdx = webappNames.findIndex(s => new RegExp(`^-{0,3}${s}$`).test(elts[0] || ''));
         if (webappIdx >= 0) {
             const webappName = webappNames[webappIdx];
             const webappPath = pathname.split("/").slice(2).join('/'); // remove /<webappName>/ from path
