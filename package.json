@@ -40,6 +40,8 @@
     "built/web/authcode/js/*.js",
     "built/web/multiplayer/css/*.css",
     "built/web/multiplayer/js/*.js",
+    "built/web/kiosk/css/*.css",
+    "built/web/kiosk/js/*.js",
     "pxtcompiler/ext-typescript/lib/lib.d.ts",
     "pxtcompiler/ext-typescript/lib/typescript.js",
     "pxtcompiler/ext-typescript/lib/typescriptServices.d.ts",
