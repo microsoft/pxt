@@ -375,7 +375,7 @@ export async function simulateAsync(
             driver.run(js, runOptions);
         }
         if (msg.command == "setstate") {
-            if (msg.stateKey && msg.stateValue != null) {
+            if (msg.stateKey) {
                 setStoredState(runOpts, msg.stateKey, msg.stateValue);
             }
         }
