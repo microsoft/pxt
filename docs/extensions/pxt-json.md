@@ -100,48 +100,6 @@ with respect to the `pxt.json` in `additionalFilePath`.
 The `additionalFilePath` is recursive or multi-level - the `pxt.json` in the referenced directory
 might have another `additionalFilePath` and it will work as expected.
 
-### Setting constants for DAL config - yotta
-
-Constants defined to form part of the `config.h` file for the the DAL platform used in the build are set in the `"yotta"` section. The `config` type is either `codal` or `microbit-dal`:
-
-CODAL example:
-
-```json
-    "yotta": {
-        "config": {
-            "codal": {
-                "component_count": 64,
-                "dmesg_buffer_size": 1024
-            }
-        }
-    }
-```
-
-micro:bit DAL example:
-
-```json
-    "yotta": {
-        "config": {
-            "microbit-dal": {
-                "bluetooth": {
-                    "enabled": 1
-                }
-            }
-        }
-    }
-```
-
-If not referring to a specific DAL platform, define simple `cpp` constants like this:
-
-```json
-    "yotta": {
-        "config": {
-            "DEVICE_USB": 1,
-            "DEVICE_MOUSE": 1
-        }
-    }
-```
-
 ## Test files
 
 The files listed under `testFiles` are only included when the extension is compiled
@@ -226,3 +184,45 @@ C++ code doesn't change and re-compilation (and thus cloud round-trip) is not re
 
 [adafruit]: https://github.com/microsoft/pxt-adafruit
 [common-packages]: https://github.com/microsoft/pxt-common-packages
+
+## Setting C++ constants for DAL config - yotta
+
+Constants defined to form part of the `config.h` file for the the DAL platform used in the build are set in the `"yotta"` section. The `config` type is either `codal` or `microbit-dal`:
+
+CODAL example:
+
+```json
+    "yotta": {
+        "config": {
+            "codal": {
+                "component_count": 64,
+                "dmesg_buffer_size": 1024
+            }
+        }
+    }
+```
+
+micro:bit DAL example:
+
+```json
+    "yotta": {
+        "config": {
+            "microbit-dal": {
+                "bluetooth": {
+                    "enabled": 1
+                }
+            }
+        }
+    }
+```
+
+If not referring to a specific DAL platform, define simple `cpp` constants like this:
+
+```json
+    "yotta": {
+        "config": {
+            "DEVICE_USB": 1,
+            "DEVICE_MOUSE": 1
+        }
+    }
+```
