@@ -686,8 +686,10 @@ namespace pxt.blocks {
             const columns = (fn.attributes.imageLiteralColumns || 5) * gridTemplateString;
             const rows = fn.attributes.imageLiteralRows || 5;
             const scale = fn.attributes.imageLiteralScale;
+            const onColor = fn.attributes.gridLiteralOnColor;
+            const offColor = fn.attributes.gridLiteralOffColor;
             let ri = block.appendDummyInput();
-            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows, scale }), "LEDS");
+            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows, scale, onColor, offColor }), "LEDS");
         }
 
         if (fn.attributes.inlineInputMode === "external") {
