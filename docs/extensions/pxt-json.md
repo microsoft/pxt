@@ -5,11 +5,13 @@ is described by the `pxt.json` file. To show a real example, here is the [pxt.js
 
 The `pxt.json` is described by the interface `PackageConfig` in [pxtpackage.d.ts](https://github.com/microsoft/pxt/blob/master/localtypings/pxtpackage.d.ts#L15-L43):
 
-## ~ hint
+### ~ hint
+
+#### Package terminology
 
 **Packages** are now referred to as **extensions**. The use of the _package_ name in identifiers implies _extension_.
 
-## ~
+### ~
 
 ```typescript-ignore
 interface PackageConfig {
@@ -182,3 +184,47 @@ C++ code doesn't change and re-compilation (and thus cloud round-trip) is not re
 
 [adafruit]: https://github.com/microsoft/pxt-adafruit
 [common-packages]: https://github.com/microsoft/pxt-common-packages
+
+## Setting C++ constants for DAL config - yotta
+
+Constants defined to form part of the `config.h` file for the the DAL platform used in the build are set in the `"yotta"` section. The `config` type is either `codal` or `microbit-dal`:
+
+CODAL example:
+
+```json
+    "yotta": {
+        "config": {
+            "codal": {
+                "component_count": 64,
+                "dmesg_buffer_size": 1024
+            }
+        }
+    }
+```
+
+micro:bit DAL example:
+
+```json
+    "yotta": {
+        "config": {
+            "microbit-dal": {
+                "bluetooth": {
+                    "enabled": 1
+                }
+            }
+        }
+    }
+```
+
+If not referring to a specific DAL platform, define simple `cpp` constants like this:
+
+```json
+    "yotta": {
+        "config": {
+            "DEVICE_USB": 1,
+            "DEVICE_MOUSE": 1
+        }
+    }
+```
+
+See this [sample repo](https://github.com/lancaster-university/microbit-samples) for `config.json` examples of setting various hardware device constants.
