@@ -227,4 +227,4 @@ If not referring to a specific DAL platform, define simple `cpp` constants like 
     }
 ```
 
-See this [sample repo](https://github.com/lancaster-university/microbit-samples) for `config.json` examples of various hardware types.
+See this [sample repo](https://github.com/lancaster-university/microbit-samples) for `config.json` examples of setting various hardware device constants.
