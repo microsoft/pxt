@@ -5,11 +5,13 @@ is described by the `pxt.json` file. To show a real example, here is the [pxt.js
 
 The `pxt.json` is described by the interface `PackageConfig` in [pxtpackage.d.ts](https://github.com/microsoft/pxt/blob/master/localtypings/pxtpackage.d.ts#L15-L43):
 
-## ~ hint
+### ~ hint
+
+#### Package terminology
 
 **Packages** are now referred to as **extensions**. The use of the _package_ name in identifiers implies _extension_.
 
-## ~
+### ~
 
 ```typescript-ignore
 interface PackageConfig {
@@ -97,6 +99,48 @@ with respect to the `pxt.json` in `additionalFilePath`.
 
 The `additionalFilePath` is recursive or multi-level - the `pxt.json` in the referenced directory
 might have another `additionalFilePath` and it will work as expected.
+
+### Setting constants for DAL config - yotta
+
+Constants defined to form part of the `config.h` file for the the DAL platform used in the build are set in the `"yotta"` section. The `config` type is either `codal` or `microbit-dal`:
+
+CODAL example:
+
+```json
+    "yotta": {
+        "config": {
+            "codal": {
+                "component_count": 64,
+                "dmesg_buffer_size": 1024
+            }
+        }
+    }
+```
+
+micro:bit DAL example:
+
+```json
+    "yotta": {
+        "config": {
+            "microbit-dal": {
+                "bluetooth": {
+                    "enabled": 1
+                }
+            }
+        }
+    }
+```
+
+Without reference a specific DAL platform, define simple `cpp` constants like this:
+
+```json
+    "yotta": {
+        "config": {
+            "DEVICE_USB": 1,
+            "DEVICE_MOUSE": 1
+        }
+    }
+```
 
 ## Test files
 
