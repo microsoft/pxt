@@ -131,7 +131,7 @@ micro:bit DAL example:
     }
 ```
 
-Without reference a specific DAL platform, define simple `cpp` constants like this:
+If not referring to a specific DAL platform, define simple `cpp` constants like this:
 
 ```json
     "yotta": {
