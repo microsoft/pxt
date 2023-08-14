@@ -465,7 +465,6 @@ declare namespace pxt {
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
         immersiveReader?: boolean; // enables the immersive reader for tutorials
-        tutorialCodeValidation?: boolean; // Enable code validation for tutorials
         downloadDialogTheme?: DownloadDialogTheme;
         songEditor?: boolean; // enable the song asset type and field editor
         multiplayer?: boolean; // enable multiplayer features
@@ -1153,16 +1152,6 @@ declare namespace pxt.tutorial {
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
         autoexpandOff?: boolean; // INTERNAL TESTING ONLY
         preferredEditor?: string; // preferred editor for opening the tutorial
-        tutorialCodeValidation?: boolean; // enable tutorial validation for this tutorial
-    }
-
-    interface TutorialRuleStatus {
-        ruleName: string;
-        ruleTurnOn: boolean;
-        ruleStatus?: boolean;
-        ruleMessage?: string;
-        isStrict?: boolean;
-        blockIds?: string[];
     }
 
     interface TutorialBlockConfigEntry {
@@ -1210,10 +1199,6 @@ declare namespace pxt.tutorial {
         title?: string;
         activity?: number;
         contentMd?: string;
-
-        // Validation
-        requiredBlockMd?: string;
-        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
 
         // Old
         headerContentMd?: string;

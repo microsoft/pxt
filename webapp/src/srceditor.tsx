@@ -148,7 +148,4 @@ export class Editor implements pxt.editor.IEditor {
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         core.warningNotification(lf("Program Error: {0}", exception?.exceptionMessage));
     }
-
-    // Validates user code at this tutorial step
-    validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) { }
 }
