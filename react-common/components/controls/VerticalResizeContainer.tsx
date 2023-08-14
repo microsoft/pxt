@@ -86,7 +86,7 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         aria-hidden={ariaHidden}
         aria-label={ariaLabel}
         onPointerDown={onPointerDown}
-        style={{height: hasResized ? `var(${heightProperty})` : initialHeight}}>
+        style={{height: resizeEnabled && hasResized ? `var(${heightProperty})` : initialHeight}}>
             {children}
     </div>
 }
