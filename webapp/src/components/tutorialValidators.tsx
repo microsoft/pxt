@@ -7,10 +7,10 @@ import CodeValidatorMetadata = pxt.tutorial.CodeValidatorMetadata;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 import CodeValidationExecuteOptions = pxt.tutorial.CodeValidationExecuteOptions;
 
-const defaultResult: CodeValidationResult = {
+const defaultResult: () => CodeValidationResult = () => ({
     isValid: true,
     hint: null,
-};
+});
 
 export function GetValidator(metadata: CodeValidatorMetadata): CodeValidator {
     switch(metadata.validatorType.toLowerCase()) {
@@ -30,8 +30,8 @@ abstract class CodeValidatorBase implements CodeValidator {
         this.enabled = properties["enabled"]?.toLowerCase() != "false"; // Default to true
     }
 
-    execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
-        if (!this.enabled) return Promise.resolve(defaultResult);
+    async execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
+        if (!this.enabled) return defaultResult();
 
         return this.executeInternal(options);
     }
@@ -45,17 +45,17 @@ export class BlocksExistValidator extends CodeValidatorBase {
     async executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
         let missingBlocks: string[] = [];
         let disabledBlocks: string[] = [];
-        const {parent, tutorialOptions} = options;
-        const stepInfo = tutorialOptions.tutorialStepInfo
-            ? tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep]
-            : null;
+
+        const { parent, tutorialOptions } = options;
+        const stepInfo = tutorialOptions.tutorialStepInfo?.[tutorialOptions.tutorialStep];
+
         if (!stepInfo) {
-            return defaultResult;
+            return defaultResult();
         }
 
         const editor = getBlocksEditor()?.editor;
         if (!editor) {
-            return defaultResult;
+            return defaultResult();
         }
 
         const userBlocks = editor.getAllBlocks(false /* ordered */);
@@ -64,7 +64,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
 
         const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
         if (!allHighlightedBlocks) {
-            return defaultResult;
+            return defaultResult();
         }
 
         const stepHash = getTutorialStepHash(tutorialOptions);
@@ -109,16 +109,10 @@ export class BlocksExistValidator extends CodeValidatorBase {
     }
 }
 
-function getTutorialHighlightedBlocks(tutorial: TutorialOptions, step: TutorialStepInfo): Promise<pxt.Map<pxt.Map<number>> | undefined> {
-    return pxt.BrowserUtils.tutorialInfoDbAsync().then((db) =>
-        db.getAsync(tutorial.tutorial, tutorial.tutorialCode).then((entry) => {
-            if (entry?.highlightBlocks) {
-                return Promise.resolve(entry.highlightBlocks);
-            } else {
-                return Promise.resolve(undefined);
-            }
-        })
-    );
+async function getTutorialHighlightedBlocks(tutorial: TutorialOptions, step: TutorialStepInfo): Promise<pxt.Map<pxt.Map<number>> | undefined> {
+    const db = await pxt.BrowserUtils.tutorialInfoDbAsync();
+    const entry = await db.getAsync(tutorial.tutorial, tutorial.tutorialCode);
+    return entry?.highlightBlocks;
 }
 
 function getTutorialStepHash(tutorial: TutorialOptions): string {
