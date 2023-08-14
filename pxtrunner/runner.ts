@@ -391,7 +391,7 @@ namespace pxt.runner {
                 simDriver.run(js, runOptions);
             }
             if (msg.command == "setstate") {
-                if (msg.stateKey && msg.stateValue) {
+                if (msg.stateKey) {
                     setStoredState(simOptions.id, msg.stateKey, msg.stateValue)
                 }
             }
@@ -549,7 +549,7 @@ namespace pxt.runner {
             return
         }
 
-        if (value)
+        if (value != null)
             storedState[key] = value
         else
             delete storedState[key]

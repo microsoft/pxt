@@ -253,7 +253,7 @@ function setStoredState(runOpts: RunOptions, key: string, value: any) {
     const id = runOpts.id;
     let storedState: pxt.Map<string> = getStoredState(runOpts);
 
-    if (value) storedState[key] = value;
+    if (value != null) storedState[key] = value;
     else delete storedState[key];
 
     try {
@@ -375,7 +375,7 @@ export async function simulateAsync(
             driver.run(js, runOptions);
         }
         if (msg.command == "setstate") {
-            if (msg.stateKey && msg.stateValue) {
+            if (msg.stateKey) {
                 setStoredState(runOpts, msg.stateKey, msg.stateValue);
             }
         }
