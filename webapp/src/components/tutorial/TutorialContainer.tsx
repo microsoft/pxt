@@ -85,7 +85,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         } else {
             setParentHeight();
         }
-    })
+    }, [props.hasBeenResized, document.body])
 
     React.useEffect(() => {
         setCurrentStep(props.currentStep);
