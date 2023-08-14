@@ -453,7 +453,6 @@ ${code}
             jres: tutorialInfo.jres,
             assetFiles: tutorialInfo.assetFiles,
             customTs: tutorialInfo.customTs,
-            tutorialValidationRules: tutorialInfo.tutorialValidationRules,
             globalBlockConfig: tutorialInfo.globalBlockConfig,
             globalValidationConfig: tutorialInfo.globalValidationConfig,
             simTheme: tutorialInfo.simTheme,
