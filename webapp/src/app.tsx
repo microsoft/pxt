@@ -77,6 +77,7 @@ import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import Microbit from "./SAMLabsDevices/Microbit";
+import DCMotor from "./SAMLabsDevices/DCMotor";
 
 pxsim.util.injectPolyphils();
 
@@ -275,10 +276,19 @@ export class ProjectView
                     };
                     simulator.driver.postMessage(playerOneConnectedMsg);
                 }
+            }else if (msg.type === "createDCMotor") {
+                this.checkIfDeviceExists(ev.data.id, DCMotor);
             } else if (msg.type === "createMicrobit") {
-                new Microbit();
+                this.checkIfDeviceExists(ev.data.id, Microbit);
             }
         }, false);
+    }
+
+    private checkIfDeviceExists(id: string, device:any): void {
+        if(device.hasInstanceWithId(id)){
+            return;
+        }
+        new device(id);
     }
 
     /**

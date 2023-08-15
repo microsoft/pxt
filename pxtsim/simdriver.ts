@@ -740,7 +740,6 @@ namespace pxsim {
 
             this.setState(SimulatorState.Running);
             this.setTraceInterval(this.traceInterval);
-            frame.contentWindow.postMessage({type:'samlabs'}, "*");
 
         }
 
@@ -840,9 +839,6 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
-                // case 'samlabs':
-                //     this.postMessage(msg, source);
-                //     break;
                 default:
                     this.postMessage(msg, source);
                     break;

@@ -34,10 +34,12 @@ class Controller extends eventEmitter {
     _temperature;
     _ledMatrix;
     _characteristics;
+    _namePrefix
     constructor() {
         super();
         this._connected = false;
         this._device = null;
+        this._namePrefix = "BBC";
         this._characteristics = {
             ledText: {
                 writeValue: (value) =>
@@ -301,11 +303,11 @@ class Controller extends eventEmitter {
                     "gattserverdisconnected",
                     this.disconnect
                 );
-                console.log("BLUETOOTH connected");
                 this.emit("connected");
                 callback();
             })
             .catch((err) => {
+                this.emit("bluetoothError");
                 if (err.code === 8) {
                     callback();
                 } else {
@@ -567,10 +569,8 @@ class Controller extends eventEmitter {
         var value = new Uint8Array(event.target.value.buffer)[0];
         if (value === 0) {
             this._aPressed = false;
-            console.log("A released")
             this.emit("AReleased");
         } else if (value === 1) {
-            console.log("A pressed")
             this._aPressed = true;
             this.emit("APressed");
         } else if (value === 2) {

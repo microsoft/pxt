@@ -154,6 +154,7 @@ declare namespace pxsim {
     export interface SimulatorMessage {
         type: string;
         value?: any;
+        id?: any;
         // who created this message
         source?: string;
     }
