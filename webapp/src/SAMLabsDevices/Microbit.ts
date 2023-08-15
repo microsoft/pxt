@@ -68,25 +68,25 @@ class Microbit {
         return Microbit.instances.has(id);
     }
     onAButtonDown = () => {
-        simulator.driver.postMessage({ type: "AButtonDown" } );
+        simulator.driver.samMessageToTarget({ type:`${this.assignedName} AButtonDown`} );
     }
     onAButtonUp = () => {
-        simulator.driver.postMessage({ type: "AButtonUp" } );
+        simulator.driver.samMessageToTarget({ type: `${this.assignedName} AButtonUp`} );
     }
     onBButtonDown = () => {
-        simulator.driver.postMessage({ type: "BButtonDown" } );
+        simulator.driver.samMessageToTarget({ type: `${this.assignedName} BButtonDown` } );
     }
     onBButtonUp = () => {
-        simulator.driver.postMessage({ type: "BButtonUp" } );
+        simulator.driver.samMessageToTarget({ type: `${this.assignedName} BButtonUp` } );
     }
     onTemperatureChanged = () => {
-        simulator.driver.postMessage({ type: "temperatureChanged",value:{
+        simulator.driver.samMessageToTarget({ type: `${this.assignedName} temperatureChanged`,value:{
                 temperature: this.Controller._temperature,
                 isTemperatureChanged: this.Controller._isTemperatureChanged
             } } );
     }
     onAccelerometerChanged = () => {
-        simulator.driver.samMessageToTarget({ type: "accelerometerChanged" ,value:{
+        simulator.driver.samMessageToTarget({ type: `${this.assignedName} accelerometerChanged` ,value:{
                 x: this.Controller._xAccel,
                 y: this.Controller._yAccel,
                 z: this.Controller._zAccel
