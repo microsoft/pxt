@@ -541,6 +541,11 @@ ${code}
         return pxt.BrowserUtils.getTutorialCodeHash(codeSnippets);
     }
 
+    /** TODO: if this gets exported, we probably want to consider generalizing to 'parseMarkdownSnippets'
+     * that returns { snippetName: string[] }; e.g.
+     * { "blocks": ["block snippet 1", "block snippet 2"], "package": ["deplist 1"] }
+     * need to cover getMetadataRegex + stripHiddenSnippets types, maybe more if any happen to be around.
+     **/
     function getBlockSnippetCode(mdSnippet: string): string[] {
         let hintCode: string[] = [];
 

@@ -24,8 +24,8 @@ abstract class CodeValidatorBase implements CodeValidator {
     enabled: boolean;
     abstract name: string;
 
-    constructor(properties: {[index: string]: string}) {
-        this.enabled = properties["enabled"]?.toLowerCase() != "false"; // Default to true
+    constructor(properties: pxt.tutorial.CodeValidatorBaseProperties) {
+        this.enabled = properties.enabled?.toLowerCase() != "false"; // Default to true
     }
 
     async execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {

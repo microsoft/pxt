@@ -1178,9 +1178,13 @@ declare namespace pxt.tutorial {
         execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
     }
 
+    interface CodeValidatorBaseProperties {
+        enabled?: string;
+    }
+
     interface CodeValidatorMetadata {
         validatorType: string;
-        properties: pxt.Map<string>;
+        properties: CodeValidatorBaseProperties;
     }
 
     interface CodeValidationConfig {
