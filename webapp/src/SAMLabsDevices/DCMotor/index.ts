@@ -19,6 +19,9 @@ class DCMotor{
             if (ev.data.type === `${this.assignedName} connect`) {
                 this.Controller.connect(()=>{});
             }
+            if (ev.data.type === `${this.assignedName} disconnect`) {
+                this.Controller.disconnect();
+            }
             if (ev.data.type === `setDCMotorSpeed for ${this.assignedName}`) {
                 this.Controller.setSpeed(ev.data.value);
             }
@@ -36,6 +39,9 @@ class DCMotor{
         })
         this.Controller.on('bluetoothError',()=>{
             simulator.driver.samMessageToTarget({ type: `${this.assignedName} bluetoothConnectionErr`} );
+        })
+        this.Controller.on('disconnected',()=>{
+            simulator.driver.samMessageToTarget({ type: `${this.assignedName} bluetoothDisconnected`} );
         })
     }
     static hasInstanceWithId(id: string ) {

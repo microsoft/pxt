@@ -24,7 +24,9 @@ class Microbit {
             if (ev.data.type === `${this.assignedName} connect`) {
                 this.Controller.connect();
             }
-
+            if (ev.data.type === `${this.assignedName} disconnect`) {
+                this.Controller.disconnect();
+            }
             if (ev.data.type === `${this.assignedName} ledDisplayWord`) {
                 this.Controller.displayText(ev.data.value);
             }
@@ -50,6 +52,9 @@ class Microbit {
         })
         this.Controller.on('bluetoothError',()=>{
             simulator.driver.samMessageToTarget({ type: `${this.assignedName} bluetoothConnectionErr`} );
+        })
+        this.Controller.on('disconnected',()=>{
+            simulator.driver.samMessageToTarget({ type: `${this.assignedName} bluetoothDisconnected`} );
         })
         this.Controller.on("APressed", this.onAButtonDown);
         this.Controller.on("AReleased", this.onAButtonUp);

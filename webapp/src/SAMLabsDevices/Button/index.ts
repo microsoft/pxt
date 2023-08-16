@@ -19,18 +19,22 @@ class Button{
             if (ev.data.type === `${this.assignedName} connect`) {
                 this.Controller.connect(()=>{});
             }
+            if (ev.data.type === `${this.assignedName} disconnect`) {
+                this.Controller.disconnect();
+            }
             if (ev.data.type === `setButtonColor for ${this.assignedName}`) {
                 this.Controller.setColor(ev.data.value);
             }
-
-
-
         }, false);
+
         this.Controller.on('connected',()=>{
             simulator.driver.samMessageToTarget({ type: `${this.assignedName} bluetoothConnected`} );
         })
         this.Controller.on('bluetoothError',()=>{
             simulator.driver.samMessageToTarget({ type: `${this.assignedName} bluetoothConnectionErr`} );
+        })
+        this.Controller.on('disconnected',()=>{
+            simulator.driver.samMessageToTarget({ type: `${this.assignedName} bluetoothDisconnected`} );
         })
         this.Controller.on('pressed',()=>{
             simulator.driver.samMessageToTarget({ type: `${this.assignedName} buttonPressed`} );
