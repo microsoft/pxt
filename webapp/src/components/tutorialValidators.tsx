@@ -13,7 +13,7 @@ const defaultResult: () => CodeValidationResult = () => ({
 });
 
 export function GetValidator(metadata: CodeValidatorMetadata): CodeValidator {
-    switch(metadata.validatorType.toLowerCase()) {
+    switch (metadata.validatorType.toLowerCase()) {
         case "blocksexistvalidator":
             return new BlocksExistValidator(metadata.properties);
         default:
@@ -43,9 +43,6 @@ export class BlocksExistValidator extends CodeValidatorBase {
     name = "blocksexistvalidator";
 
     async executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
-        let missingBlocks: string[] = [];
-        let disabledBlocks: string[] = [];
-
         const { parent, tutorialOptions } = options;
         const stepInfo = tutorialOptions.tutorialStepInfo?.[tutorialOptions.tutorialStep];
 
@@ -58,10 +55,6 @@ export class BlocksExistValidator extends CodeValidatorBase {
             return defaultResult();
         }
 
-        const userBlocks = editor.getAllBlocks(false /* ordered */);
-        const userBlocksEnabledByType = new Map<string, boolean>(); // Key = type, value = enabled
-        userBlocks?.forEach(b => userBlocksEnabledByType.set(b.type, userBlocksEnabledByType.get(b.type) || b.isEnabled()));
-
         const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
         if (!allHighlightedBlocks) {
             return defaultResult();
@@ -69,18 +62,14 @@ export class BlocksExistValidator extends CodeValidatorBase {
 
         const stepHash = getTutorialStepHash(tutorialOptions);
         const stepHighlights = allHighlightedBlocks[stepHash];
-        const highlightedBlockKeys = stepHighlights ? Object.keys(stepHighlights) : [];
 
-        for (let i: number = 0; i < highlightedBlockKeys.length; i++) {
-            let tutorialBlockKey = highlightedBlockKeys[i];
-            const isEnabled = userBlocksEnabledByType.get(tutorialBlockKey);
-            if (isEnabled === undefined) {
-                // user did not use a specific block
-                missingBlocks.push(tutorialBlockKey);
-            } else if (!isEnabled) {
-                disabledBlocks.push(tutorialBlockKey);
-            }
-        }
+        const {
+            missingBlocks,
+            disabledBlocks,
+        } = pxt.blocks.validateBlocksExist({
+            usedBlocks: editor.getAllBlocks(false /* ordered */),
+            requiredBlockCounts: stepHighlights,
+        });
 
         let isValid = true;
         let errorDescription: string;
