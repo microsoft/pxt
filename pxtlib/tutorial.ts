@@ -527,4 +527,32 @@ ${code}
         }
         return res;
     }
+
+    export async function getTutorialHighlightedBlocks(tutorial: TutorialOptions): Promise<pxt.Map<pxt.Map<number>> | undefined> {
+        const db = await pxt.BrowserUtils.tutorialInfoDbAsync();
+        const entry = await db.getAsync(tutorial.tutorial, tutorial.tutorialCode);
+        return entry?.highlightBlocks;
+    }
+
+    export function getTutorialStepHash(tutorial: TutorialOptions): string {
+        const { tutorialStepInfo, tutorialStep } = tutorial;
+        const body = tutorialStepInfo[tutorialStep].hintContentMd;
+        const codeSnippets = getBlockSnippetCode(body);
+        return pxt.BrowserUtils.getTutorialCodeHash(codeSnippets);
+    }
+
+    function getBlockSnippetCode(mdSnippet: string): string[] {
+        let hintCode: string[] = [];
+
+        mdSnippet?.replace(/((?!.)\s)+/g, "\n")
+            .replace(
+                /``` *(block|blocks)\s*\n([\s\S]*?)\n```/gim,
+                function (m0, m1, m2) {
+                    hintCode.push(`{\n${m2}\n}`);
+                    return "";
+                }
+            );
+
+        return hintCode;
+    }
 }

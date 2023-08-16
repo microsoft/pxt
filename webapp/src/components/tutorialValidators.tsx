@@ -1,7 +1,5 @@
 import { MarkedContent } from "../marked";
 import { getBlocksEditor } from "../app";
-import TutorialOptions = pxt.tutorial.TutorialOptions;
-import TutorialStepInfo = pxt.tutorial.TutorialStepInfo;
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidatorMetadata = pxt.tutorial.CodeValidatorMetadata;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
@@ -55,12 +53,12 @@ export class BlocksExistValidator extends CodeValidatorBase {
             return defaultResult();
         }
 
-        const allHighlightedBlocks = await getTutorialHighlightedBlocks(tutorialOptions, stepInfo);
+        const allHighlightedBlocks = await pxt.tutorial.getTutorialHighlightedBlocks(tutorialOptions);
         if (!allHighlightedBlocks) {
             return defaultResult();
         }
 
-        const stepHash = getTutorialStepHash(tutorialOptions);
+        const stepHash = pxt.tutorial.getTutorialStepHash(tutorialOptions);
         const stepHighlights = allHighlightedBlocks[stepHash];
 
         const {
@@ -96,28 +94,4 @@ export class BlocksExistValidator extends CodeValidatorBase {
             hint: isValid ? undefined : blockImages,
         }
     }
-}
-
-async function getTutorialHighlightedBlocks(tutorial: TutorialOptions, step: TutorialStepInfo): Promise<pxt.Map<pxt.Map<number>> | undefined> {
-    const db = await pxt.BrowserUtils.tutorialInfoDbAsync();
-    const entry = await db.getAsync(tutorial.tutorial, tutorial.tutorialCode);
-    return entry?.highlightBlocks;
-}
-
-function getTutorialStepHash(tutorial: TutorialOptions): string {
-    const { tutorialStepInfo, tutorialStep } = tutorial;
-    const body = tutorialStepInfo[tutorialStep].hintContentMd;
-    let hintCode = "";
-    if (body != undefined) {
-        body.replace(/((?!.)\s)+/g, "\n")
-            .replace(
-                /``` *(block|blocks)\s*\n([\s\S]*?)\n```/gim,
-                function (m0, m1, m2) {
-                    hintCode = `{\n${m2}\n}`;
-                    return "";
-                }
-            );
-    }
-
-    return pxt.BrowserUtils.getTutorialCodeHash([hintCode]);
 }
