@@ -204,7 +204,6 @@ class BaseController extends EventEmitter {
                 this._device.addEventListener('gattserverdisconnected', () => {
                     this.disconnect()
                 })
-                console.log('connected and heres the color',this._getDefaultDeviceColor())
                 this.emit('connected')
                 this.emit('batteryLevelChange', batteryLevel)
                 this.setColor(this._getDefaultDeviceColor())
