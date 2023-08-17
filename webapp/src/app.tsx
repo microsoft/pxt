@@ -4658,7 +4658,7 @@ export class ProjectView
                         return this.loadHeaderAsync(curr);
                     }).finally(() => {
                         core.hideLoading("leavingtutorial")
-                        if (this.state.collapseEditorTools) {
+                        if (this.state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
                             this.expandSimulator();
                         }
                         this.postTutorialProgress();
