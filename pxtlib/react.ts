@@ -9,6 +9,7 @@ namespace pxt.react {
         restorePersistentData(value: any): void;
     }
 
-    export let getFieldEditorView: <U>(fieldEditorId: string, value: U, options: any) => FieldEditorView<U>;
+    export let isFieldEditorViewVisible: () => boolean;
+    export let getFieldEditorView: <U>(fieldEditorId: string, value: U, options: any, container?: HTMLDivElement) => FieldEditorView<U>;
     export let getTilemapProject: () => TilemapProject;
 }

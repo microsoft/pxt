@@ -115,7 +115,6 @@ namespace ts.pxtc.service {
         const fileType = python ? "python" : "typescript";
 
         let snippetPrefix = fn.namespace;
-        let isInstance = false;
         let addNamespace = false;
         let namespaceToUse = "";
         let functionCount = 0;
@@ -147,12 +146,19 @@ namespace ts.pxtc.service {
             return getParameterDefault(decl.parameters[0]);
         }
 
+        const element = fn as pxtc.SymbolInfo;
+        const params = pxt.blocks.compileInfo(element);
+
         const blocksById = blocksInfo.blocksById
 
         // TODO: move out of getSnippet for general reuse
-
+        const blockParameters = attrs._def?.parameters
+            .filter(param => !!params.definitionNameToParam[param.name])
+            .map(param => params.definitionNameToParam[param.name].actualName) || [];
         const includedParameters = decl.parameters ? decl.parameters
-            .filter(param => !param.initializer && !param.questionToken) : []
+            // Only keep required parameters and parameters included in the blockdef
+            .filter(param => (!param.initializer && !param.questionToken)
+                || (blockParameters.indexOf(param.name.getText()) >= 0)) : []
 
         const args = includedParameters
             .map(getParameterDefault)
@@ -164,10 +170,14 @@ namespace ts.pxtc.service {
                     isLiteral: true
                 }) as SnippetNode)
 
-        const element = fn as pxtc.SymbolInfo;
         if (element.attributes.block) {
             if (element.attributes.defaultInstance) {
                 snippetPrefix = element.attributes.defaultInstance;
+                if (python && snippetPrefix)
+                    snippetPrefix = U.snakify(snippetPrefix);
+            }
+            else if (params.thisParameter?.shadowBlockId === "variables_get") {
+                snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
                 if (python && snippetPrefix)
                     snippetPrefix = U.snakify(snippetPrefix);
             }
@@ -217,11 +227,8 @@ namespace ts.pxtc.service {
                     if (namespaceToUse) {
                         addNamespace = true;
                     }
-
-                    isInstance = true;
                 }
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
-                    const params = pxt.blocks.compileInfo(element);
                     if (params.thisParameter) {
                         let varName: string = undefined
                         if (params.thisParameter.definitionName) {
@@ -233,7 +240,6 @@ namespace ts.pxtc.service {
                         if (python && snippetPrefix)
                             snippetPrefix = U.snakify(snippetPrefix);
                     }
-                    isInstance = true;
                 }
                 else if (nsInfo.kind === pxtc.SymbolKind.Class) {
                     return undefined;
@@ -245,6 +251,7 @@ namespace ts.pxtc.service {
         let snippet: SnippetNode[];
         if (preDefinedSnippet) {
             snippet = [preDefinedSnippet];
+            snippetPrefix = undefined;
         } else {
             snippet = [fnName];
             if (args?.length || element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Function || element.kind == pxtc.SymbolKind.Class) {
@@ -288,6 +295,14 @@ namespace ts.pxtc.service {
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
+            const override = attrs.paramSnippets?.[name];
+            if (override) {
+                if (python) {
+                    if (override.python) return override.python;
+                }
+                else if (override.ts) return override.ts;
+            }
+
             // check for explicit default in the attributes
             const paramDefl = attrs?.paramDefl?.[name]
             if (paramDefl) {
@@ -313,7 +328,7 @@ namespace ts.pxtc.service {
                 }
                 const type = checker?.getTypeAtLocation(param);
                 const typeSymbol = getPxtSymbolFromTsSymbol(type?.symbol, apis, checker);
-                if (typeSymbol?.attributes.fixedInstances && python) {
+                if ((typeSymbol?.attributes.fixedInstances || typeSymbol?.attributes.emitAsConstant) && python) {
                     return pxt.Util.snakify(paramDefl);
                 }
                 if (python) {

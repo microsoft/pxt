@@ -1,63 +1,3 @@
-.modal-overlay {
-    position: fixed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--modal-overlay-color);
-    z-index: var(--modal-dimmer-zindex);
-}
-
-.modal {
-    background-color: var(--body-background-color);
-    width: 50%;
-    max-width: 40rem;
-    padding: 1.5rem;
-}
-
-.modal-header {
-    display: flex;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.modal-header i.icon {
-    font-size: 1.2rem;
-    line-height: 1.2rem;
-    margin: 0;
-    cursor: pointer;
-}
-
-.modal-body {
-    min-height: 4rem;
-    max-height: 12rem;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 1rem;
-}
-
-.modal-button {
-    border: 1px solid var(--active-color);
-
-    width: 8rem;
-    padding: 0.5rem;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    text-transform: uppercase;
-}
-
-.modal-button:hover {
-    background-color: var(--hover-color);
-}
-
 /* SHARE MODAL */
 .share-disclaimer {
     box-shadow: inset 0 0 0 1px #a9d5de, 0 0 0 0 transparent;
@@ -75,72 +15,134 @@
     margin-bottom: 1.5rem;
 }
 
-.share-loader .ui.loader {
-    margin-right: 0.15rem;
+.share-loader .common-spinner {
+    margin-right: 0.5rem;
 }
 
-.share-loader .ui.loader,
-.share-loader .ui.loader:before,
-.share-loader .ui.loader:after {
-    height: 1.2rem;
-    width: 1.2rem;
+.share-loader span {
+    height: 20px;
 }
 
 .share-input {
-    display: flex;
     margin: 1rem 0rem;
 }
 
-.share-input input {
-    flex: 1;
-    padding: 0 0.5rem;
-    font: var(--body-font-family);
-    outline: none;
-    border: 1px solid var(--inactive-color);
-    border-right-width: 0px;
+/* DELETE PROFILE MODAL */
+.delete .checkbox {
+    padding-top: 1rem;
 }
 
-.share-copy {
-    padding: 0.5rem 1.5rem;
-    background-color: var(--primary-color);
-    color: var(--white);
-    cursor: pointer;
+/* PROFILE DIALOG */
+/* Most of this CSS is copied from the webapp in commons.less */
+.profiledialog .ui.card {
+    margin: 0;
+    margin-right: 14px;
+    margin-bottom: 14px;
+    border-radius: 0;
+    color: black;
+    border: 1px solid black !important;
+    background-color: white;
 }
 
-/* COMPLETION CONFETTI */
-.confetti-container {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+.profiledialog button {
+    margin: 0;
+}
+
+.profiledialog label.title {
+    font-weight: bold;
+}
+
+.profiledialog p.value {
+    text-overflow: ellipsis;
+    white-space: nowrap;
     overflow: hidden;
-    z-index: 100;
 }
 
-.confetti {
-    width: 10px;
-    height: 10px;
-    background-color: #249ca3;
-    position: absolute;
-    left: 50%;
-    top: -15px;
-    animation: confetti 2.5s linear -2s infinite;
-    transform-origin: left top;
-    z-index: 110;
+.profiledialog p.description {
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
-.confetti.reverse {
-    animation: confetti-reverse 2.5s linear -2s infinite;
+.profiledialog div.header-text {
+    font-size: 20px;
+    white-space: nowrap;
+    grid-row-start: 1;
+    grid-row-end: 1;
+    grid-column-start: 1;
+    grid-column-end: 2;
+    justify-self: start;
 }
 
-.color-0 { background-color: #ff2121; }
-.color-1 { background-color: #ff93c4; }
-.color-2 { background-color: #ff8135; }
-.color-3 { background-color: #fff609; }
-.color-4 { background-color: #249ca3; }
-.color-5 { background-color: #78dc52; }
-.color-6 { background-color: #003fad; }
-.color-7 { background-color: #87f2ff; }
-.color-8 { background-color: #8e2ec4; }
+.profiledialog div.profile-pic {
+    grid-row-start: 1;
+    grid-row-end: 1;
+    grid-column-start: 2;
+    grid-column-end: 2;
+    justify-self: end;
+}
+.profiledialog .ui.card.panel {
+    width: fit-content;
+    min-width: 350px;
+    max-width: 500px;
+    padding: 14px;
+    display: inline-grid;
+    row-gap: 20px;
+    grid-template-rows: auto;
+    grid-template-columns: auto;
+}
+
+.profiledialog .ui.card.panel div.row {
+    grid-row-start: auto;
+    grid-row-end: auto;
+    grid-column-start: 1;
+    grid-column-end: 2;
+    justify-self: start;
+    max-width: 100%;
+}
+
+.profiledialog .ui.card.panel div.row-span-two {
+    grid-row-start: auto;
+    grid-row-end: auto;
+    grid-column-start: 1;
+    grid-column-end: 3;
+    justify-self: start;
+    max-width: 100%;
+}
+
+/* CERTIFICATE MODAL */
+.certificate-reward {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1rem
+}
+
+.certificate-reward img {
+    max-width: 50%;
+}
+
+/* BADGE MODAL */
+.badge-modal-image {
+    margin-top: 1rem;
+}
+
+/* COMPLETION MODAL */
+.completion-reward {
+    margin: 1rem 0;
+    width: 100%;
+}
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .confetti {
+    display: none;
+}
+
+.high-contrast .common-modal-container.sign-in .icon.cloud-user {
+    filter: invert();
+}
 
 @keyframes confetti {
     0% { transform: rotateZ(15deg) rotateY(0deg) translate(0,0); }

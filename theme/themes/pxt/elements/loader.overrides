@@ -3,7 +3,7 @@
 *******************************/
 
 
-.ui.loader.main:before, 
+.ui.loader.main:before,
 .ui.loader.avatar:before {
    border: none;
    border-radius: 0px;
@@ -15,9 +15,14 @@
   box-shadow: none;
   border-radius: 0px;
   background: transparent @loaderImage no-repeat center center;
-  background-size: 100%;
+  background-size: @loaderImageSize;
  -webkit-animation: @loaderAnimation @loaderSpeed infinite linear;
  animation: @loaderAnimation @loaderSpeed infinite linear;
+}
+
+.ui.loader.main.msft:after {
+  background-image: @loaderMsftImage;
+  background-size: 99%; // Must be less than 100% to avoid being cut off
 }
 
 .ui.loader.avatar:after {

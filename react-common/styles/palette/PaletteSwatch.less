@@ -1,0 +1,46 @@
+.common-palette-swatch {
+    display: flex;
+    flex-direction: row;
+}
+
+.common-palette-color-list {
+    display: flex;
+    flex-direction: row;
+    :last-child {
+        border: 1px solid #000;
+    }
+}
+
+.common-palette-color {
+    width: 1rem;
+    height: 1rem;
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    border-left: 1px solid #000;
+}
+
+.common-palette-swatch-name {
+    flex-grow: 1;
+    padding-right: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 12rem;
+}
+
+.common-palette-picker > .common-dropdown > .common-button .common-button-label .common-palette-color-list {
+    display: none;
+}
+
+.common-palette-picker > .common-dropdown > .common-button .common-button-flex {
+    display: flex;
+}
+
+.common-palette-picker > .common-dropdown > .common-menu-dropdown-pane {
+    max-height: 35rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    ul > li > .common-button.common-dropdown-item {
+        padding: .75rem;
+    }
+}

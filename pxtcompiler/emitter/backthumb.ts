@@ -331,6 +331,7 @@ _numops_fromInt:
                 // this make sure to set the Z flag correctly
                 r += `
 .section code
+.object _pxt_helper_cmp_${op}
 _cmp_${op}:
     lsls r2, r0, #31
     beq .boxed

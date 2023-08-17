@@ -1,0 +1,73 @@
+.music-playback-controls {
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+
+    .common-input-wrapper {
+        display: flex;
+        flex-direction: row;
+
+        .common-input-label {
+            padding-right: 0.5rem;
+            font-size: 18px;
+            font-weight: 700;
+            user-select: none;
+        }
+
+        .common-input-group {
+            max-width: 3rem;
+        }
+    }
+
+    & > .common-input-wrapper {
+        margin-right: 0.5rem;
+    }
+
+    .common-checkbox {
+        margin-right: 1rem;
+    }
+
+    .spacer {
+        flex-grow: 1;
+    }
+}
+
+.music-undo-redo  {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-right: 0.5rem;
+
+    .square-button {
+        background-color: @music-editor-header-color;
+        color: white;
+
+        &.disabled {
+            color: white;
+            background-color: @music-editor-header-color;
+            opacity: 0.5;
+        }
+    }
+}
+
+.music-playback-buttons {
+    margin-right: 0.5rem;
+}
+
+.music-playback-measures {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .common-button.menu-button {
+        color: black;
+        height: 2rem;
+        padding: 0.1rem;
+
+        i.fas {
+            margin: 0;
+        }
+    }
+}

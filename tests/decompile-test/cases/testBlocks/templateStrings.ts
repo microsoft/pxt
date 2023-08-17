@@ -11,6 +11,8 @@ declare interface Fixed {
     whatever(): void;
 }
 
+function hex(lits: any, ...args: any[]): Buffer { return null }
+
 //% shim=@f4 helper=image::ofBuffer
 //% groups=["0.","1#","2T","3t","4N","5n","6G","7g","8","9","aAR","bBP","cCp","dDO","eEY","fFW"]
 function img(lits: any, ...args: any[]): Image { return null }
@@ -129,4 +131,22 @@ namespace template {
     export function _animationFrames(frames: Image[]) {
         return frames
     }
+}
+
+namespace music {
+    //% blockId=music_song_field_editor
+    //% block="song $song"
+    //% song.fieldEditor=musiceditor
+    //% song.fieldOptions.decompileLiterals=true
+    //% song.fieldOptions.taggedTemplate="hex;assets.song"
+    //% song.fieldOptions.decompileIndirectFixedInstances="true"
+    //% song.fieldOptions.decompileArgumentAsString="true"
+    export function createSong(song: Buffer): Buffer {
+        return song
+    }
+}
+
+namespace assets {
+    //% pyConvertToTaggedTemplate
+    export function song(lits: any, ...args: any[]): Buffer { return null }
 }

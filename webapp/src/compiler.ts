@@ -169,6 +169,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                 opts.trace = true;
             }
             opts.computeUsedSymbols = true;
+            opts.computeUsedParts = true;
             if (options.forceEmit)
                 opts.forceEmit = true;
             if (/test=1/i.test(window.location.href))
@@ -181,9 +182,10 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
 
             // keep the assembly file - it is only generated when user hits "Download"
             // and is usually overwritten by the autorun very quickly, so it's impossible to see it
-            let prevasm = outpkg.files[pxtc.BINARY_ASM]
-            if (prevasm && !resp.outfiles[pxtc.BINARY_ASM]) {
-                resp.outfiles[pxtc.BINARY_ASM] = prevasm.content
+            for (const file of Object.keys(outpkg.files)) {
+                if (file.endsWith(".asm") && !resp.outfiles[file]) {
+                    resp.outfiles[file] = outpkg.files[file].content;
+                }
             }
 
             // add metadata about current build
@@ -292,13 +294,17 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
 }
 
 // TS -> blocks, load blocs before calling this api
-export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: {
+    snippetMode?: boolean,
+    generateSourceMap?: boolean
+}): Promise<pxtc.CompileResult> {
     const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.fileSystem[pxt.MAIN_TS] = code;
             opts.fileSystem[pxt.MAIN_BLOCKS] = "";
             opts.snippetMode = (dopts && dopts.snippetMode) || false;
+            opts.generateSourceMap = dopts?.generateSourceMap;
 
             if (opts.sourceFiles.indexOf(pxt.MAIN_TS) === -1) {
                 opts.sourceFiles.push(pxt.MAIN_TS);
@@ -496,19 +502,18 @@ export function refreshLanguageServiceApisInfo() {
     refreshApis = true;
 }
 
-export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
-    return ensureApisInfoAsync()
-        .then(() => {
-            searchFor.localizedApis = cachedApis;
-            searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
-            return workerOpAsync("apiSearch", {
-                search: searchFor,
-                blocks: blocksOptions()
-            });
-        });
+export async function apiSearchAsync(searchFor: pxtc.service.SearchOptions): Promise<pxtc.service.SearchInfo[]> {
+    await waitForFirstTypecheckAsync();
+    await ensureApisInfoAsync();
+    searchFor.localizedApis = cachedApis;
+    searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
+    return workerOpAsync("apiSearch", {
+        search: searchFor,
+        blocks: blocksOptions()
+    });
 }
 
-export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions) {
+export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions): Promise<pxtc.service.ProjectSearchInfo[]> {
     return ensureApisInfoAsync()
         .then(() => {
             return workerOpAsync("projectSearch", { projectSearch: searchFor });
@@ -541,6 +546,7 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
 
 export function typecheckAsync() {
     const epkg = pkg.mainEditorPkg();
+    const isFirstTypeCheck = !firstTypecheck;
     let p = epkg.buildAssetsAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync())
         .then(opts => {
@@ -549,9 +555,14 @@ export function typecheckAsync() {
         })
         .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
         .then(r => setDiagnostics("typecheck", r.diagnostics, r.sourceMap))
-        .then(ensureApisInfoAsync)
+        .then(() => {
+            if (isFirstTypeCheck) {
+                refreshLanguageServiceApisInfo();
+            }
+            return ensureApisInfoAsync();
+        })
         .catch(catchUserErrorAndSetDiags(null))
-    if (!firstTypecheck) firstTypecheck = p;
+    if (isFirstTypeCheck) firstTypecheck = p;
     return p;
 }
 
@@ -692,18 +703,20 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     for (const used of usedPackageInfo) {
         if (!used) continue;
-        const { info, dirname } = used;
+        let { info, dirname } = used;
+
+        const byQName = U.cloneApis(info.apis.byQName);
 
         // reinclude the pkg the api originates from, which is trimmed during compression
-        for (const api of Object.keys(info.apis.byQName)) {
-            info.apis.byQName[api].pkg = dirname;
+        for (const api of Object.keys(byQName)) {
+            byQName[api].pkg = dirname;
 
             // We had a bug where we were caching the translated language code and it broke translations.
             // make sure we clear it on any old cached entries from before the bug was fixed
-            delete info.apis.byQName[api].attributes._translatedLanguageCode;
-        }
+            delete byQName[api].attributes._translatedLanguageCode;
 
-        pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
+            result.byQName[api] = byQName[api];
+        }
     }
 
     result.jres = pkg.mainPkg.getJRes() || {};

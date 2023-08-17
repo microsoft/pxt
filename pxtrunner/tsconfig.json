@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../built/pxtrunner.js",
+        "outFile": "../built/pxtrunner.js",
         "newLine": "LF",
         "sourceMap": false,
         "lib": [

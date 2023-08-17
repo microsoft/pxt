@@ -42,6 +42,12 @@ namespace pxt.editor {
         Expanded = "errorListExpanded"
     }
 
+    export enum MuteState {
+        Muted = "muted",
+        Unmuted = "unmuted",
+        Disabled = "disabled"
+    }
+
     export interface IAppProps { }
     export interface IAppState {
         active?: boolean; // is this tab visible at all
@@ -54,11 +60,9 @@ namespace pxt.editor {
         sideDocsCollapsed?: boolean;
         projectName?: string;
         suppressPackageWarning?: boolean;
-
         tutorialOptions?: pxt.tutorial.TutorialOptions;
         lightbox?: boolean;
         keymap?: boolean;
-
         simState?: SimState;
         autoRun?: boolean;
         resumeOnVisibility?: boolean;
@@ -70,7 +74,8 @@ namespace pxt.editor {
         showBlocks?: boolean;
         showParts?: boolean;
         fullscreen?: boolean;
-        mute?: boolean;
+        showMiniSim?: boolean;
+        mute?: MuteState;
         embedSimView?: boolean;
         editorPosition?: {
             lineNumber: number;
@@ -83,21 +88,20 @@ namespace pxt.editor {
         bannerVisible?: boolean;
         pokeUserComponent?: string;
         flashHint?: boolean;
-
+        editorOffset?: string;
         print?: boolean;
         greenScreen?: boolean;
         accessibleBlocks?: boolean;
-
         home?: boolean;
         hasError?: boolean;
         cancelledDownload?: boolean;
-
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;
-
         errorListState?: ErrorListState;
-
         screenshoting?: boolean;
+        extensionsVisible?: boolean;
+        isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
+        onboarding?: pxt.tour.BubbleStep[];
     }
 
     export interface EditorState {
@@ -120,6 +124,8 @@ namespace pxt.editor {
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
         extensionUnderTest?: string; // workspace id of the extension under test
         skillmapProject?: boolean;
+        simTheme?: Partial<pxt.PackageConfig>;
+        firstProject?: boolean;
     }
 
     export interface ExampleImportOptions {
@@ -190,6 +196,18 @@ namespace pxt.editor {
         photo?: string;
     }
 
+    export interface ShareData {
+        url: string;
+        embed: {
+            code?: string;
+            editor?: string;
+            simulator?: string;
+            url?: string;
+        }
+        qr?: string;
+        error?: any;
+    }
+
     export type Activity = "tutorial" | "recipe" | "example";
 
     export interface IProjectView {
@@ -223,6 +241,7 @@ namespace pxt.editor {
         openProjectByHeaderIdAsync(headerId: string): Promise<void>;
         overrideTypescriptFile(text: string): void;
         overrideBlocksFile(text: string): void;
+        resetTutorialTemplateCode(keepAssets: boolean): Promise<void>;
 
         exportAsync(): Promise<string>;
 
@@ -253,6 +272,7 @@ namespace pxt.editor {
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
         openHome(): void;
+        unloadProjectAsync(home?: boolean): Promise<void>;
         setTutorialStep(step: number): void;
         setTutorialInstructionsExpanded(value: boolean): void;
         exitTutorial(): void;
@@ -265,8 +285,11 @@ namespace pxt.editor {
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
         setHintSeen(step: number): void;
+        setEditorOffset(): void;
 
-        anonymousPublishAsync(screenshotUri?: string): Promise<string>;
+        anonymousPublishHeaderByIdAsync(headerId: string, projectName?: string): Promise<ShareData>;
+        publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string>;
+        publishAsync (name: string, screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData>;
 
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
@@ -283,7 +306,7 @@ namespace pxt.editor {
         toggleTrace(intervalSpeed?: number): void;
         setTrace(enabled: boolean, intervalSpeed?: number): void;
         toggleMute(): void;
-        setMute(on: boolean): void;
+        setMute(state: MuteState): void;
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
@@ -315,6 +338,7 @@ namespace pxt.editor {
         renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
 
         toggleHighContrast(): void;
+        setHighContrast(on: boolean): void;
         toggleGreenScreen(): void;
         toggleAccessibleBlocks(): void;
         setAccessibleBlocks(enabled: boolean): void;
@@ -334,12 +358,15 @@ namespace pxt.editor {
         startActivity(options: StartActivityOptions): void;
         showLightbox(): void;
         hideLightbox(): void;
+        showOnboarding(): void;
+        hideOnboarding(): void;
         showKeymap(show: boolean): void;
         toggleKeymap(): void;
+        signOutGithub(): void;
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
-        showShareDialog(title?: string): void;
+        showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share"): void;
         showAboutDialog(): void;
         showTurnBackTimeDialogAsync(): Promise<void>;
 
@@ -358,7 +385,7 @@ namespace pxt.editor {
         showPackageDialog(query?: string): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
-        pairAsync(): Promise<void>;
+        pairAsync(): Promise<boolean>;
 
         createModalClasses(classes?: string): string;
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
@@ -370,6 +397,13 @@ namespace pxt.editor {
 
         openNewTab(header: pxt.workspace.Header, dependent: boolean): void;
         createGitHubRepositoryAsync(): Promise<void>;
+        saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined>;
+        requestProjectCloudStatus(headerIds: string[]): Promise<void>;
+        convertCloudProjectsToLocal(userId: string): Promise<void>;
+        setLanguageRestrictionAsync(restriction: pxt.editor.LanguageRestriction): Promise<void>;
+        hasHeaderBeenPersistentShared(): boolean;
+        getSharePreferenceForHeader(): boolean;
+        saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
     }
 
     export interface IHexFileImporter {
@@ -423,6 +457,7 @@ namespace pxt.editor {
         renderUsbPairDialog?: (firmwareUrl?: string, failedOnce?: boolean) => any /* JSX.Element */;
         renderIncompatibleHardwareDialog?: (unsupportedParts: string[]) => any /* JSX.Element */;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
+        showProgramTooLargeErrorAsync?: (variants: string[], confirmAsync: (options: any) => Promise<number>) => Promise<pxt.commands.RecompileOptions>;
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
         webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;

@@ -118,6 +118,24 @@ namespace pxsim {
             return output;
         }
 
+        // Returns a function, that, as long as it continues to be invoked, will only
+        // trigger every N milliseconds. If `immediate` is passed, trigger the
+        // function on the leading edge, instead of the trailing.
+        export function throttle(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
+            let timeout: any;
+            return function (this: any) {
+                let context = this;
+                let args = arguments;
+                let later = function () {
+                    timeout = null;
+                    if (!immediate) func.apply(context, args);
+                };
+                let callNow = immediate && !timeout;
+                if (!timeout) timeout = setTimeout(later, wait);
+                if (callNow) func.apply(context, args);
+            };
+        }
+
         export function promiseMapAll<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
             return Promise.all(values.map(v => mapper(v)));
         }
@@ -237,6 +255,14 @@ namespace pxsim {
 
             }
             return res;
+        }
+
+        export function toUTF8Array(s: string) {
+            return (new TextEncoder()).encode(s);
+        }
+
+        export function fromUTF8Array(s: Uint8Array) {
+            return (new TextDecoder()).decode(s);
         }
 
         export function isPxtElectron(): boolean {
@@ -491,6 +517,7 @@ namespace pxsim {
 
         kill() {
             super.kill();
+            pxsim.codal.music.__stopSoundExpressions();
             AudioContextManager.stopAll();
         }
     }
@@ -756,6 +783,12 @@ namespace pxsim {
         perfElapsed = 0
         perfStack = 0
 
+
+        lastInteractionTime: number;
+        lastThumbnailTime: number;
+        thumbnailRecordingIntervalRef: number;
+        thumbnailFrames: ImageData[];
+
         public refCountingDebug = false;
         private refObjId = 1;
 
@@ -980,19 +1013,16 @@ namespace pxsim {
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
-        static postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
+        static async postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
             const b = runtime && runtime.board;
-            const p = b
-                ? b.screenshotAsync().catch(e => {
-                    console.debug(`screenshot failed`);
-                    return undefined;
-                })
-                : Promise.resolve(undefined);
-            return p.then(img => Runtime.postMessage({
+            if (!b) return undefined;
+
+            const img = await b.screenshotAsync();
+            Runtime.postMessage({
                 type: "screenshot",
                 data: img,
                 delay: opts && opts.delay
-            } as SimulatorScreenshotMessage));
+            } as SimulatorScreenshotMessage)
         }
 
         static requestToggleRecording() {
@@ -1052,17 +1082,8 @@ namespace pxsim {
             this.board.screenshotAsync(this.recordingWidth)
                 .then(imageData => {
                     // check for duplicate images
-                    if (this.recordingLastImageData && imageData
-                        && this.recordingLastImageData.data.byteLength == imageData.data.byteLength) {
-                        const d0 = this.recordingLastImageData.data;
-                        const d1 = imageData.data;
-                        const n = d0.byteLength;
-                        let i = 0;
-                        for (i = 0; i < n; ++i)
-                            if (d0[i] != d1[i])
-                                break;
-                        if (i == n) // same, don't send update
-                            return;
+                    if (this.recordingLastImageData && isImageDataEqual(this.recordingLastImageData, imageData)) {
+                        return;
                     }
                     this.recordingLastImageData = imageData;
                     Runtime.postMessage(<SimulatorScreenshotMessage>{
@@ -1709,8 +1730,43 @@ namespace pxsim {
                 return ts.totalRuntime > elapsed;
             })
         }
+
+        registerUserInteraction() {
+            this.lastInteractionTime = Date.now();
+
+            if (this.thumbnailRecordingIntervalRef || this.lastThumbnailTime && this.lastInteractionTime - this.lastThumbnailTime < 1000) return;
+            this.thumbnailFrames = [];
+
+            this.thumbnailRecordingIntervalRef = setInterval(async () => {
+                const imageData = await this.board.screenshotAsync();
+
+                if (this.thumbnailFrames.length && isImageDataEqual(imageData, this.thumbnailFrames[this.thumbnailFrames.length - 1])) {
+                    return;
+                }
+
+                this.thumbnailFrames.push(imageData);
+
+                if (Date.now() - this.lastInteractionTime > 10000 || this.thumbnailFrames.length > 30) {
+                    clearInterval(this.thumbnailRecordingIntervalRef);
+                    this.thumbnailRecordingIntervalRef = undefined;
+
+                    this.lastThumbnailTime = Date.now();
+
+                    Runtime.postMessage({
+                        type: "thumbnail",
+                        frames: this.thumbnailFrames
+                    } as SimulatorAutomaticThumbnailMessage)
+                }
+            }, 66) as any
+        }
     }
 
+    export function setParentMuteState(state: "muted" | "unmuted" | "disabled") {
+        Runtime.postMessage({
+            type: "setmutebuttonstate",
+            state
+        } as SetMuteButtonStateMessage)
+    }
 
     export class PerfCounter {
         start = 0;
@@ -1721,4 +1777,13 @@ namespace pxsim {
         constructor(public name: string) { }
     }
 
+    function isImageDataEqual(d0: ImageData, d1: ImageData) {
+        if (d0.data.byteLength !== d1.data.byteLength) return false;
+        const n = d0.data.byteLength;
+        let i = 0;
+        for (i = 0; i < n; ++i)
+            if (d0.data[i] != d1.data[i])
+                break;
+        return i === n;
+    }
 }

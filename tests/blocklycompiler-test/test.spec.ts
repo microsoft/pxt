@@ -322,6 +322,10 @@ describe("blockly compiler", function () {
         it("should handle non-number inputs in logic operators", (done: () => void) => {
             blockTestAsync("logic_non_numeric").then(done, done);
         });
+
+        it("should handle literals being compared", (done: () => void) => {
+            blockTestAsync("compare_literals").then(done, done);
+        });
     });
 
     describe("compiling math", () => {
@@ -418,6 +422,10 @@ describe("blockly compiler", function () {
         it("should declare variable types when the initializer expression has a generic type", (done: () => void) => {
             blockTestAsync("array_type_declaration_in_set").then(done, done);
         });
+
+        it("shouldn't pollute the global primitive types when unifying variables", (done: () => void) => {
+            blockTestAsync("primitive_type_inference").then(done, done);
+        });
     });
 
     describe("compiling functions", () => {
@@ -480,6 +488,10 @@ describe("blockly compiler", function () {
         it("should handle an array of empty arrays as array argument", (done: () => void) => {
             blockTestAsync("array_parameter_empty_arrays").then(done, done);
         })
+
+        it("should perform type inference on array arguments", (done: () => void) => {
+            blockTestAsync("array_parameter_type_inference").then(done, done);
+        })
     });
 
     describe("compiling special blocks", () => {
@@ -502,6 +514,10 @@ describe("blockly compiler", function () {
         it("should convert enums to constants when emitAsConstant is set", done => {
             blockTestAsync("enum_constants").then(done, done);
         });
+
+        it("should compile gridTemplate blocks to template strings", done => {
+            blockTestAsync("grid_template_string").then(done, done);
+        })
     });
 
     describe("compiling expandable blocks", () => {

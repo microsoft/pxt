@@ -26,7 +26,7 @@ namespace language {
     }
 
     /**
-     * This is a statement block with a parameter
+     * This is a statement block with two parameters
      */
     //% block
     export function statementWith2Arguments(arg1: number,

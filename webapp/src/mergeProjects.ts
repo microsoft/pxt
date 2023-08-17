@@ -181,7 +181,7 @@ function mergeJRES(previous: string, next: string) {
     return JSON.stringify(nextParsed);
 }
 
-function appendTemporaryAssets(blocks: string, assets: string) {
+export function appendTemporaryAssets(blocks: string, assets: string) {
     if (!blocks) return assets;
 
     let jres = pxt.U.jsonTryParse(assets) as pxt.Map<Partial<pxt.JRes> | string> || {};

@@ -232,6 +232,10 @@ class FileGithubDb implements pxt.github.IGithubDb {
             })
     }
 
+    latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
+        return this.db.latestVersionAsync(repopath, config)
+    }
+
     loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
         return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
     }
@@ -248,49 +252,6 @@ function searchAsync(...query: string[]) {
             for (let r of res) {
                 console.log(`${r.fullName}: ${r.description}`)
             }
-        })
-}
-
-function pkginfoAsync(repopath: string) {
-    let parsed = pxt.github.parseRepoId(repopath)
-    if (!parsed) {
-        console.log('Unknown repo');
-        return Promise.resolve();
-    }
-
-    const pkgInfo = (cfg: pxt.PackageConfig, tag?: string) => {
-        pxt.log(`name: ${cfg.name}`)
-        pxt.log(`description: ${cfg.description}`)
-        if (pxt.appTarget.appTheme)
-            pxt.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
-    }
-
-    return pxt.packagesConfigAsync()
-        .then(config => {
-            const status = pxt.github.repoStatus(parsed, config);
-            pxt.log(`github org: ${parsed.owner}`);
-            if (parsed.tag) pxt.log(`github tag: ${parsed.tag}`);
-            pxt.log(`package status: ${status == pxt.github.GitRepoStatus.Approved ? "approved" : status == pxt.github.GitRepoStatus.Banned ? "banned" : "neutral"}`)
-            if (parsed.tag)
-                return pxt.github.downloadPackageAsync(repopath, config)
-                    .then(pkg => {
-                        let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.CONFIG_NAME])
-                        pkgInfo(cfg, parsed.tag)
-                        pxt.debug(`size: ${JSON.stringify(pkg.files).length}`)
-                    })
-
-            return pxt.github.pkgConfigAsync(parsed.fullName)
-                .then(cfg => {
-                    pkgInfo(cfg)
-                    return pxt.github.listRefsAsync(repopath)
-                        .then(tags => {
-                            pxt.log("tags: " + tags.join(", "))
-                            return pxt.github.listRefsAsync(repopath, "heads")
-                        })
-                        .then(heads => {
-                            pxt.log("branches: " + heads.join(", "))
-                        })
-                })
         })
 }
 
@@ -394,11 +355,13 @@ function onlyExts(files: string[], exts: string[]) {
 
 function pxtFileList(pref: string) {
     return nodeutil.allFiles(pref + "webapp/public")
-        .concat(onlyExts(nodeutil.allFiles(pref + "built/web", 1), [".js", ".css"]))
-        .concat(nodeutil.allFiles(pref + "built/web/fonts", 1))
-        .concat(nodeutil.allFiles(pref + "built/web/vs", 4))
-        .concat(nodeutil.allFiles(pref + "built/web/skillmap", 4))
-
+        .concat(onlyExts(nodeutil.allFiles(pref + "built/web", { maxDepth: 1 }), [".js", ".css"]))
+        .concat(nodeutil.allFiles(pref + "built/web/fonts", { maxDepth: 1 }))
+        .concat(nodeutil.allFiles(pref + "built/web/vs", { maxDepth: 4 }))
+        .concat(nodeutil.allFiles(pref + "built/web/skillmap", { maxDepth: 4 }))
+        .concat(nodeutil.allFiles(pref + "built/web/authcode", { maxDepth: 4 }))
+        .concat(nodeutil.allFiles(pref + "built/web/multiplayer", { maxDepth: 4 }))
+        .concat(nodeutil.allFiles(pref + "built/web/kiosk", { maxDepth: 4 }))
 }
 
 function semverCmp(a: string, b: string) {
@@ -450,6 +413,8 @@ function ciAsync() {
         fs.writeFileSync(npmrc, cfg)
     }
 
+    process.env["PXT_ENV"] = "production";
+
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
     const masterOrReleaseBranchRx = /^(master|v\d+\.\d+\.\d+)$/;
@@ -470,6 +435,9 @@ function ciAsync() {
     pxt.log(`upload api strings: ${uploadApiStrings}`);
     pxt.log(`upload docs: ${uploadDocs}`);
 
+    lintJSONInDirectory(path.resolve("."));
+    lintJSONInDirectory(path.resolve("docs"));
+
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
         return nodeutil.runNpmAsync("publish");
@@ -487,7 +455,10 @@ function ciAsync() {
                         p = p
                             .then(() => buildWebStringsAsync())
                             .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"));
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/authcode-strings.json"))
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/multiplayer-strings.json"))
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/kiosk-strings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                     if (uploadDocs || uploadApiStrings)
@@ -522,6 +493,22 @@ function ciAsync() {
                     return Promise.resolve();
                 }
             });
+    }
+}
+
+function lintJSONInDirectory(dir: string) {
+    for (const file of fs.readdirSync(dir)) {
+        const fullPath = path.join(dir, file);
+        if (file.endsWith(".json")) {
+            const contents = fs.readFileSync(fullPath, "utf8");
+            try {
+                JSON.parse(contents)
+            }
+            catch (e) {
+                console.log("Could not parse " + fullPath)
+                process.exit(1);
+            }
+        }
     }
 }
 
@@ -715,7 +702,7 @@ function targetFileList() {
     let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
         .concat(nodeutil.allFiles(path.join(simDir(), "public")));
     if (simDir() != "sim")
-        lst = lst.concat(nodeutil.allFiles(path.join("sim", "public"), 5, true))
+        lst = lst.concat(nodeutil.allFiles(path.join("sim", "public"), { maxDepth: 5, allowMissing: true }))
     pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
     return lst;
 }
@@ -863,7 +850,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     if (U.startsWith(label, tid + "/"))
         label = label.slice(tid.length + 1)
     if (!/^v\d/.test(label)) {
-        console.log('label is not a version; skipping release upload');
+        console.log(`label "${label}" is not a version; skipping release upload`);
         return Promise.resolve();
     }
     let repoUrl = process.env["PXT_RELEASE_REPO"]
@@ -957,11 +944,12 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         })
 }
 
-function uploadArtFile(fn: string): string {
+function uploadedArtFileCdnUrl(fn: string): string {
     if (!fn || /^(https?|data):/.test(fn)) return fn; // nothing to do
 
     fn = fn.replace(/^\.?\/*/, "/")
-    return "@cdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
+    const cdnBlobUrl = "@cdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
+    return cdnBlobUrl;
 }
 
 function gitHash(buf: Buffer) {
@@ -972,9 +960,9 @@ function gitHash(buf: Buffer) {
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
-    let targetConfig = readLocalPxTarget();
-    let defaultLocale = targetConfig.appTheme.defaultLocale;
-    let hexCache = path.join("built", "hexcache");
+    const targetConfig = readLocalPxTarget();
+    const defaultLocale = targetConfig.appTheme.defaultLocale;
+    const hexCache = path.join("built", "hexcache");
     let hexFiles: string[] = [];
 
     if (fs.existsSync(hexCache)) {
@@ -985,16 +973,26 @@ function uploadCoreAsync(opts: UploadOptions) {
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
 
-    let logos = (targetConfig.appTheme as any as Map<string>);
-    let targetImages = Object.keys(logos)
-        .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]));
-    let targetImagesHashed = pxt.Util.unique(targetImages.map(k => uploadArtFile(logos[k])), url => url);
+    const targetUsedImages: pxt.Map<string> = {};
+    const cdnCachedAppTheme = replaceStaticImagesInJsonBlob(readLocalPxTarget(), fn => {
+        const fp = path.join("docs", fn);
+        if (!targetUsedImages[fn] && !opts.fileList.includes(fp)) {
+            opts.fileList.push(fp);
+        }
+
+        targetUsedImages[fn] = uploadedArtFileCdnUrl(fn);
+
+        return targetUsedImages[fn];
+    }).appTheme;
+
+    const targetImagePaths = Object.keys(targetUsedImages);
+    const targetImagesHashed = Object.values(targetUsedImages);
 
     let targetEditorJs = "";
-    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
+    if (pxt.appTarget.appTheme?.extendEditor)
         targetEditorJs = "@commitCdnUrl@editor.js";
     let targetFieldEditorsJs = "";
-    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors)
+    if (pxt.appTarget.appTheme?.extendFieldEditors)
         targetFieldEditorsJs = "@commitCdnUrl@fieldeditors.js";
 
     let replacements: Map<string> = {
@@ -1048,10 +1046,13 @@ function uploadCoreAsync(opts: UploadOptions) {
             "multiUrl": opts.localDir + "multi.html",
             "asseteditorUrl": opts.localDir + "asseteditor.html",
             "skillmapUrl": opts.localDir + "skillmap.html",
+            "authcodeUrl": opts.localDir + "authcode.html",
+            "multiplayerUrl": opts.localDir + "multiplayer.html",
+            "kioskUrl": opts.localDir + "kiosk.html",
             "isStatic": true,
         }
-        const targetImagePaths = targetImages.map(k =>
-            `${opts.localDir}${path.join('./docs', logos[k])}`);
+        const targetImageLocalPaths = targetImagePaths.map(k =>
+            `${opts.localDir}${path.join('./docs', k)}`);
 
         replacements = {
             "/embed.js": opts.localDir + "embed.js",
@@ -1059,6 +1060,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "/doccdn/": opts.localDir,
             "/sim/": opts.localDir,
             "/blb/": opts.localDir,
+            "/trgblb/": opts.localDir,
             "@monacoworkerjs@": `${opts.localDir}monacoworker.js`,
             "@gifworkerjs@": `${opts.localDir}gifjs/gif.worker.js`,
             "@workerjs@": `${opts.localDir}worker.js`,
@@ -1070,15 +1072,15 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@cachedHexFilesEncoded@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
             "@targetFieldEditorsJs@": targetFieldEditorsJs ? `${opts.localDir}fieldeditors.js` : "",
-            "@targetImages@": targetImages.length ? targetImagePaths.join('\n') : '',
-            "@targetImagesEncoded@": targetImages.length ? encodeURLs(targetImagePaths) : ''
+            "@targetImages@": targetImagePaths.length ? targetImageLocalPaths.join('\n') : '',
+            "@targetImagesEncoded@": targetImagePaths.length ? encodeURLs(targetImageLocalPaths) : ''
         }
         if (!opts.noAppCache) {
             replacements["data-manifest=\"\""] = `manifest="${opts.localDir}release.manifest"`;
         }
     }
 
-    let replFiles = [
+    const replFiles = [
         "index.html",
         "embed.js",
         "run.html",
@@ -1096,14 +1098,20 @@ function uploadCoreAsync(opts: UploadOptions) {
         "workerConfig.js",
         "multi.html",
         "asseteditor.html",
-        "skillmap.html"
+        "skillmap.html",
+        "authcode.html",
+        "multiplayer.html",
+        "kiosk.html",
     ]
 
     // expandHtml is manually called on these files before upload
     // runs <!-- @include --> substitutions, fills in locale, etc
-    let expandFiles = [
+    const expandFiles = [
         "index.html",
-        "skillmap.html"
+        "skillmap.html",
+        "authcode.html",
+        "multiplayer.html",
+        "kiosk.html",
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
@@ -1112,22 +1120,22 @@ function uploadCoreAsync(opts: UploadOptions) {
         return urls.map(url => encodeURIComponent(url)).join(";")
     }
 
-    let uplReqs: Map<BlobReq> = {}
+    const uplReqs: Map<BlobReq> = {}
+    const uglify = opts.minify ? require("uglify-js") : undefined;
 
-    let uploadFileAsync = (p: string) => {
-        let rdf: Promise<Buffer> = null
+    const uploadFileAsync = async (p: string) => {
+        let rdata: Buffer = null
         if (opts.fileContent) {
             let s = U.lookup(opts.fileContent, p)
             if (s != null)
-                rdf = Promise.resolve(Buffer.from(s, "utf8"))
+                rdata = Buffer.from(s, "utf8");
         }
-        if (!rdf) {
+        if (!rdata) {
             if (!fs.existsSync(p))
                 return undefined;
-            rdf = readFileAsync(p)
+            rdata = await readFileAsync(p)
         }
 
-        const uglify = opts.minify ? require("uglify-js") : undefined;
 
         let fileName = uploadFileName(p)
         let mime = U.getMime(p)
@@ -1137,115 +1145,111 @@ function uploadCoreAsync(opts: UploadOptions) {
 
         let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
         let content = ""
-        let data: Buffer;
-        return rdf.then((rdata: Buffer) => {
-            data = rdata;
-            if (isText) {
-                content = data.toString("utf8")
-                if (expandFiles.indexOf(fileName) >= 0) {
-                    if (!opts.localDir) {
-                        let m = pxt.appTarget.appTheme as Map<string>
-                        for (let k of Object.keys(m)) {
-                            if (/CDN$/.test(k))
-                                m[k.slice(0, k.length - 3)] = m[k]
+        let data = rdata;
+        if (isText) {
+            content = data.toString("utf8")
+            if (expandFiles.indexOf(fileName) >= 0) {
+                if (!opts.localDir) {
+                    let m = pxt.appTarget.appTheme as Map<string>
+                    for (let k of Object.keys(m)) {
+                        if (/CDN$/.test(k))
+                            m[k.slice(0, k.length - 3)] = m[k];
+                    }
+                }
+                content = server.expandHtml(content, undefined, cdnCachedAppTheme);
+            }
+
+            if (/^sim/.test(fileName) || /^workerConfig/.test(fileName)) {
+                // just force blobs for everything in simulator manifest
+                content = content.replace(/\/(cdn|sim)\//g, "/blb/")
+            }
+
+            if (minified) {
+                const res = uglify.minify(content);
+                if (!res.error) {
+                    content = res.code;
+                }
+                else {
+                    pxt.log(`        Could not minify ${fileName} ${res.error}`)
+                }
+            }
+
+            if (replFiles.indexOf(fileName) >= 0) {
+                for (let from of Object.keys(replacements)) {
+                    content = U.replaceAll(content, from, replacements[from])
+                }
+                if (opts.localDir) {
+                    data = Buffer.from(content, "utf8")
+                } else {
+                    // save it for developer inspection
+                    fs.writeFileSync("built/uploadrepl/" + fileName, content)
+                }
+            } else if (fileName == "target.json" || fileName == "target.js") {
+                let isJs = fileName == "target.js"
+                if (isJs) content = content.slice(targetJsPrefix.length)
+                let trg: pxt.TargetBundle = JSON.parse(content)
+                if (opts.localDir) {
+                    for (let e of trg.appTheme.docMenu)
+                        if (e.path[0] == "/") {
+                            e.path = opts.localDir + "docs" + e.path;
+                        }
+                    trg.appTheme.homeUrl = opts.localDir
+                    // patch icons in bundled packages
+                    Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                        const res = trg.bundledpkgs[pkgid];
+                        // path config before storing
+                        const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                        if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
+                        res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+                    })
+                    data = Buffer.from((isJs ? targetJsPrefix : '') + nodeutil.stringify(trg), "utf8")
+                } else {
+                    if (trg.simulator?.boardDefinition?.visual) {
+                        let boardDef = trg.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+                        if (boardDef.image) {
+                            boardDef.image = uploadedArtFileCdnUrl(boardDef.image);
+                            if (boardDef.outlineImage) boardDef.outlineImage = uploadedArtFileCdnUrl(boardDef.outlineImage);
                         }
                     }
-                    content = server.expandHtml(content)
-                }
+                    // patch icons in bundled packages
+                    Object.keys(trg.bundledpkgs).forEach(pkgid => {
+                        const res = trg.bundledpkgs[pkgid];
+                        // patch config before storing
+                        const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                        if (config.icon) config.icon = uploadedArtFileCdnUrl(config.icon);
+                        res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+                    })
+                    content = nodeutil.stringify(trg);
+                    if (isJs)
+                        content = targetJsPrefix + content
 
-                if (/^sim/.test(fileName) || /^workerConfig/.test(fileName)) {
-                    // just force blobs for everything in simulator manifest
-                    content = content.replace(/\/(cdn|sim)\//g, "/blb/")
+                    // save it for developer inspection
+                    fs.writeFileSync("built/uploadrepl/" + fileName, content)
                 }
-
-                if (minified) {
-                    const res = uglify.minify(content);
-                    if (!res.error) {
-                        content = res.code;
-                    }
-                    else {
-                        pxt.log(`        Could not minify ${fileName} ${res.error}`)
-                    }
-                }
-
-                if (replFiles.indexOf(fileName) >= 0) {
-                    for (let from of Object.keys(replacements)) {
-                        content = U.replaceAll(content, from, replacements[from])
-                    }
-                    if (opts.localDir) {
-                        data = Buffer.from(content, "utf8")
-                    } else {
-                        // save it for developer inspection
-                        fs.writeFileSync("built/uploadrepl/" + fileName, content)
-                    }
-                } else if (fileName == "target.json" || fileName == "target.js") {
-                    let isJs = fileName == "target.js"
-                    if (isJs) content = content.slice(targetJsPrefix.length)
-                    let trg: pxt.TargetBundle = JSON.parse(content)
-                    if (opts.localDir) {
-                        for (let e of trg.appTheme.docMenu)
-                            if (e.path[0] == "/") {
-                                e.path = opts.localDir + "docs" + e.path;
-                            }
-                        trg.appTheme.homeUrl = opts.localDir
-                        // patch icons in bundled packages
-                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
-                            const res = trg.bundledpkgs[pkgid];
-                            // path config before storing
-                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                            if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
-                            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
-                        })
-                        data = Buffer.from((isJs ? targetJsPrefix : '') + nodeutil.stringify(trg), "utf8")
-                    } else {
-                        if (trg.simulator
-                            && trg.simulator.boardDefinition
-                            && trg.simulator.boardDefinition.visual) {
-                            let boardDef = trg.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
-                            if (boardDef.image) {
-                                boardDef.image = uploadArtFile(boardDef.image);
-                                if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
-                            }
-                        }
-                        // patch icons in bundled packages
-                        Object.keys(trg.bundledpkgs).forEach(pkgid => {
-                            const res = trg.bundledpkgs[pkgid];
-                            // path config before storing
-                            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                            if (config.icon) config.icon = uploadArtFile(config.icon);
-                            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
-                        })
-                        content = nodeutil.stringify(trg);
-                        if (isJs)
-                            content = targetJsPrefix + content
-                    }
-                }
-            } else {
-                content = data.toString("base64")
             }
-            return Promise.resolve()
-        }).then(() => {
+        } else {
+            content = data.toString("base64")
+        }
 
-            if (opts.localDir) {
-                U.assert(!!opts.builtPackaged);
-                let fn = path.join(opts.builtPackaged, opts.localDir, fileName)
-                nodeutil.mkdirP(path.dirname(fn))
-                return minified ? writeFileAsync(fn, content) : writeFileAsync(fn, data)
-            }
+        if (opts.localDir) {
+            U.assert(!!opts.builtPackaged);
+            let fn = path.join(opts.builtPackaged, opts.localDir, fileName)
+            nodeutil.mkdirP(path.dirname(fn))
+            return minified ? writeFileAsync(fn, content) : writeFileAsync(fn, data)
+        }
 
-            let req = {
-                encoding: isText ? "utf8" : "base64",
-                content,
-                hash: "",
-                filename: fileName,
-                size: 0
-            }
-            let buf = Buffer.from(req.content, req.encoding)
-            req.size = buf.length
-            req.hash = gitHash(buf)
-            uplReqs[fileName] = req
-            return Promise.resolve()
-        })
+        let req = {
+            encoding: isText ? "utf8" : "base64",
+            content,
+            hash: "",
+            filename: fileName,
+            size: 0
+        }
+
+        let buf = Buffer.from(req.content, req.encoding)
+        req.size = buf.length
+        req.hash = gitHash(buf)
+        uplReqs[fileName] = req
     }
 
     // only keep the last version of each uploadFileName()
@@ -1290,7 +1294,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
     let prev = process.cwd()
     let folders = pxt.appTarget.bundleddirs;
     if (includeProjects) {
-        let projects = nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true).filter(f => /prj$/.test(f));
+        let projects = nodeutil.allFiles("libs", { maxDepth: 1, includeDirs: true }).filter(f => /prj$/.test(f));
         folders = folders.concat(projects);
     }
 
@@ -1405,14 +1409,16 @@ export function ghpPushAsync(builtPackaged: string, minify = false) {
         .then(() => ghpGitAsync("push"))
 }
 
-function maxMTimeAsync(dirs: string[]) {
+async function maxMTimeAsync(dirs: string[], maxDepth: number) {
     let max = 0
-    return U.promiseMapAll(dirs, dn => readDirAsync(dn)
-        .then(files => U.promiseMapAll(files, fn => statAsync(path.join(dn, fn))
-            .then(st => {
-                max = Math.max(st.mtime.getTime(), max)
-            }))))
-        .then(() => max)
+    await U.promiseMapAll(dirs, async dir => {
+        const files = nodeutil.allFiles(dir, { allowMissing: true, maxDepth });
+        await U.promiseMapAll(files, async file => {
+            const st = await statAsync(file);
+            max = Math.max(st.mtime.getTime(), max);
+        });
+    });
+    return max;
 }
 
 export interface BuildTargetOptions {
@@ -1480,7 +1486,7 @@ function buildEditorExtensionAsync(dirname: string, optionName: string) {
         else
             p = buildFolderAsync(dirname, true, dirname);
         return p.then(() => {
-            const prepends = nodeutil.allFiles(path.join(dirname, "prepend"), 1, true)
+            const prepends = nodeutil.allFiles(path.join(dirname, "prepend"), { maxDepth: 1, allowMissing: true })
                 .filter(f => /\.js$/.test(f));
             if (prepends && prepends.length) {
                 const editorjs = path.join("built", dirname + ".js");
@@ -1502,16 +1508,16 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
 
     const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
     let isNodeModule = false;
-    if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
+    if (outputName && tsConfig.compilerOptions.outFile !== `../built/${outputName}.js`) {
         // Special case to support target sim as an NPM package
         if (/^node_modules[\/\\]+pxt-.*?-sim$/.test(p)) {
             // Allow the out dir be inside the folder being built, and manually copy the result to ./built afterwards
-            if (tsConfig.compilerOptions.out !== `./built/${outputName}.js`) {
-                U.userError(`${p}/tsconfig.json expected compilerOptions.out:"./built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+            if (tsConfig.compilerOptions.outFile !== `./built/${outputName}.js`) {
+                U.userError(`${p}/tsconfig.json expected compilerOptions.outFile:"./built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
             }
             isNodeModule = true;
         } else {
-            U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+            U.userError(`${p}/tsconfig.json expected compilerOptions.outFile:"../built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
         }
     }
 
@@ -1528,17 +1534,17 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
     }).then(() => {
         if (tsConfig.prepend) {
             let files: string[] = tsConfig.prepend
-            files.push(tsConfig.compilerOptions.out)
+            files.push(tsConfig.compilerOptions.outFile)
             let s = ""
             for (let f of files) {
                 s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
             }
-            fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.out), s)
+            fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.outFile), s)
         }
 
         if (isNodeModule) {
-            const content = fs.readFileSync(path.resolve(p, tsConfig.compilerOptions.out), "utf8");
-            fs.writeFileSync(path.resolve("built", path.basename(tsConfig.compilerOptions.out)), content);
+            const content = fs.readFileSync(path.resolve(p, tsConfig.compilerOptions.outFile), "utf8");
+            fs.writeFileSync(path.resolve("built", path.basename(tsConfig.compilerOptions.outFile)), content);
         }
     })
 }
@@ -1560,7 +1566,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
 
     const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
     if (outputName && tsConfig.compilerOptions.outDir !== `../built/${outputName}`) {
-        U.userError(`${p}/tsconfig.json expected compilerOptions.ourDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
+        U.userError(`${p}/tsconfig.json expected compilerOptions.outDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
     }
 
     if (!fs.existsSync("node_modules/typescript")) {
@@ -1697,8 +1703,8 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
         "icons": [],
         "scope": "/",
         "start_url": "/",
-        "display": "standalone",
-        "orientation": "landscape"
+        "display": "fullscreen",
+        "orientation": "any"
     }
     if (cfg.appTheme) {
         if (cfg.appTheme.accentColor)
@@ -1710,7 +1716,7 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
         const fn = `/static/icons/android-chrome-${sz}x${sz}.png`;
         if (fs.existsSync(path.join('docs', fn))) {
             webmanifest.icons.push({
-                "src": uploadArtFile(fn),
+                "src": uploadedArtFileCdnUrl(fn),
                 "sizes": `${sz}x${sz}`,
                 "types": `image/png`
             })
@@ -1719,7 +1725,7 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     let diskManifest: any = {}
     if (fs.existsSync("webmanifest.json"))
         diskManifest = nodeutil.readJson("webmanifest.json")
-    U.jsonCopyFrom(webmanifest, diskManifest)
+    U.jsonCopyFrom(webmanifest, diskManifest);
     return webmanifest;
 }
 
@@ -1763,25 +1769,26 @@ function getGalleryUrl(props: pxt.GalleryProps | string): string {
     return typeof props === "string" ? props : props.url
 }
 
+function replaceStaticImagesInJsonBlob(cfg: any, staticAssetHandler: (fileLocation: string) => string): any {
+    return pxt.replaceStringsInJsonBlob(cfg, /^\.?\/static\/.+\.(png|gif|jpeg|jpg|svg|mp4|ico)$/i, staticAssetHandler);
+}
+
 function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
     cfg.appTheme.name = cfg.name
     cfg.appTheme.description = cfg.description
 
-    let logos = (cfg.appTheme as any as Map<string>);
     if (packaged) {
-        Object.keys(logos)
-            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
-            .forEach(k => {
-                logos[k] = path.join('./docs', logos[k]).replace(/\\/g, "/");
-            })
+        cfg = replaceStaticImagesInJsonBlob(
+            cfg,
+            fn => path.join('./docs', fn).replace(/\\/g, "/")
+        );
     } else if (!localDir) {
-        Object.keys(logos)
-            .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]))
-            .forEach(k => {
-                logos[k] = uploadArtFile(logos[k]);
-            })
+        cfg = replaceStaticImagesInJsonBlob(
+            cfg,
+            fn => uploadedArtFileCdnUrl(fn)
+        );
     }
 
     if (!cfg.appTheme.htmlDocIncludes)
@@ -1797,7 +1804,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
-    if (theme.homeScreenHero && typeof theme.homeScreenHero != "string" ) {
+    if (theme.homeScreenHero && typeof theme.homeScreenHero != "string") {
         const heroBannerCard = theme.homeScreenHero;
         if (heroBannerCard.title) targetStrings[heroBannerCard.title] = heroBannerCard.title;
         if (heroBannerCard.description) targetStrings[heroBannerCard.description] = heroBannerCard.description;
@@ -1910,88 +1917,164 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     pxt.log(`target-strings.json built`)
 }
 
-function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
-    const forceRedbuild = parsed && parsed.flags["force"] || false;
-    if (!fs.existsSync(path.join("theme", "style.less")) ||
-        !fs.existsSync(path.join("theme", "theme.config")))
-        return Promise.resolve();
+function lessFilePaths() {
+    return [
+        "node_modules/semantic-ui-less",
+        "node_modules/pxt-core/theme",
+        "theme/foo/bar",
+        "theme",
+        "node_modules/pxt-core/react-common/styles",
+        "react-common/styles",
+        "node_modules/@fortawesome",
+        "node_modules/pxt-core/node_modules/@fortawesome"
+    ];
+}
 
-    let dirty = !fs.existsSync("built/web/semantic.css");
-    if (!dirty) {
-        const csstime = fs.statSync("built/web/semantic.css").mtime;
-        dirty = nodeutil.allFiles("theme")
-            .map(f => fs.statSync(f))
-            .some(stat => stat.mtime > csstime);
+async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
+    if (!fs.existsSync(path.join("theme", "style.less")) || !fs.existsSync(path.join("theme", "theme.config"))) {
+        return;
     }
 
-    if (!dirty && !forceRedbuild) return Promise.resolve();
-
-    let pkg = readJson("package.json")
+    const pkg = readJson("package.json");
+    const isPxtCore = pkg["name"] === "pxt-core";
 
     nodeutil.mkdirP(path.join("built", "web"));
     const lessPath = require.resolve('less');
     const lessCPath = path.join(path.dirname(lessPath), '/bin/lessc');
-    return nodeutil.spawnAsync({
+    const lessIncludePaths = lessFilePaths().join(":");
+
+    // Build semantic css
+    await nodeutil.spawnAsync({
         cmd: "node",
-        args: [lessCPath, "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
-    }).then(() => {
-        const fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
-        const url = "url(data:application/font-woff;charset=utf-8;base64,"
-            + fontFile.toString("base64") + ") format('woff')"
-        let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
-        semCss = semCss.replace('src: url("fonts/icons.eot");', "")
-            .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
-        return semCss;
-    }).then((semCss) => {
-        // Append icons.css to semantic.css (custom pxt icons)
-        const iconsFile = (pkg["name"] == "pxt-core") ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
-        const iconsCss = fs.readFileSync(iconsFile, "utf-8");
-        semCss = semCss + "\n" + iconsCss;
-        nodeutil.writeFileSync('built/web/semantic.css', semCss);
-    }).then(() => {
-        // generate blockly css
-        if (!fs.existsSync(path.join("theme", "blockly.less")))
-            return Promise.resolve();
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: [lessCPath, "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
-        })
-    }).then(() => {
-        // run postcss with autoprefixer and rtlcss
-        pxt.debug("running postcss");
-        const postcss = require('postcss');
-        const browserList = [
-            "Chrome >= 38",
-            "Firefox >= 31",
-            "Edge >= 12",
-            "ie >= 11",
-            "Safari >= 9",
-            "Opera >= 21",
-            "iOS >= 9",
-            "ChromeAndroid >= 59",
-            "FirefoxAndroid >= 55"
+        args: [
+            lessCPath,
+            "theme/style.less",
+            "built/web/semantic.css",
+            "--include-path=" + lessIncludePaths
         ]
-        const cssnano = require('cssnano')({
-            zindex: false,
-            autoprefixer: { browsers: browserList, add: true }
-        });
-        const rtlcss = require('rtlcss');
-        const files = ['semantic.css', 'blockly.css']
-        files.forEach(cssFile => {
-            fs.readFile(`built/web/${cssFile}`, "utf8", (err, css) => {
-                postcss([cssnano])
-                    .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
-                        fs.writeFile(`built/web/${cssFile}`, result.css, (err2) => {
-                            // process rtl css
-                            postcss([rtlcss])
-                                .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    nodeutil.writeFileSync(`built/web/rtl${cssFile}`, result2.css, { encoding: "utf8" });
-                                });
-                        });
-                    });
-            })
-        });
     })
+    let fontAwesomeSource = "node_modules/@fortawesome/fontawesome-free/webfonts/";
+    if (!fs.existsSync(fontAwesomeSource)) {
+        fontAwesomeSource = "node_modules/pxt-core/" + fontAwesomeSource;
+    }
+
+    // Inline all of our icon fonts
+    let semCss = await readFileAsync('built/web/semantic.css', "utf8");
+    semCss = await linkFontAsync("icons", semCss);
+    semCss = await linkFontAsync("outline-icons", semCss);
+    semCss = await linkFontAsync("brand-icons", semCss);
+    semCss = await linkFontAsync("fa-solid-900", semCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+    semCss = await linkFontAsync("fa-regular-400", semCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+
+    // Append icons.css to semantic.css (custom pxt icons)
+    const iconsFile = isPxtCore ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
+    const iconsCss = await readFileAsync(iconsFile, "utf8");
+
+    semCss = semCss + "\n" + iconsCss;
+    nodeutil.writeFileSync('built/web/semantic.css', semCss);
+
+    // Generate blockly css
+    if (fs.existsSync(path.join("theme", "blockly.less"))) {
+        await nodeutil.spawnAsync({
+            cmd: "node",
+            args: [
+                lessCPath,
+                "theme/blockly.less",
+                "built/web/blockly.css",
+                "--include-path=" + lessIncludePaths
+            ]
+        });
+    }
+
+    async function generateReactCommonCss(app: string) {
+        const appFile = isPxtCore ? `react-common/styles/react-common-${app}-core.less` :
+            `node_modules/pxt-core/react-common/styles/react-common-${app}.less`;
+        await nodeutil.spawnAsync({
+            cmd: "node",
+            args: [
+                lessCPath,
+                appFile,
+                `built/web/react-common-${app}.css`,
+                "--include-path=" + lessIncludePaths
+            ]
+        });
+
+        let appCss = await readFileAsync(`built/web/react-common-${app}.css`, "utf8");
+        appCss = await linkFontAsync("fa-solid-900", appCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+        appCss = await linkFontAsync("fa-regular-400", appCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+        await writeFileAsync(`built/web/react-common-${app}.css`, appCss, "utf8");
+    }
+
+    // Generate react-common css for skillmap, authcode, and multiplayer (but not kiosk yet)
+    await Promise.all([
+        generateReactCommonCss("skillmap"),
+        generateReactCommonCss("authcode"),
+        generateReactCommonCss("multiplayer")
+    ]);
+
+    // Run postcss with autoprefixer and rtlcss
+    pxt.debug("running postcss");
+    const postcss = require('postcss');
+    const browserList = [
+        "Chrome >= 38",
+        "Firefox >= 31",
+        "Edge >= 12",
+        "ie >= 11",
+        "Safari >= 9",
+        "Opera >= 21",
+        "iOS >= 9",
+        "ChromeAndroid >= 59",
+        "FirefoxAndroid >= 55"
+    ];
+
+    const cssnano = require("cssnano")({
+        zindex: false,
+        autoprefixer: { browsers: browserList, add: true }
+    });
+
+    const rtlcss = require("rtlcss");
+    const files = [
+        "semantic.css",
+        "blockly.css",
+        "react-common-skillmap.css",
+        "react-common-authcode.css",
+        "react-common-multiplayer.css"
+    ];
+
+    for (const cssFile of files) {
+        const css = await readFileAsync(`built/web/${cssFile}`, "utf8");
+        const processed = await postcss([cssnano])
+            .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` });
+
+        await writeFileAsync(`built/web/${cssFile}`, processed.css);
+
+        const processedRtl = await postcss([rtlcss])
+            .process(processed.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` });
+
+        await writeFileAsync(`built/web/rtl${cssFile}`, processedRtl.css, "utf8");
+    }
+
+    if (!isPxtCore) {
+        // This is just to support the local skillmap/cra-app serve for development
+        nodeutil.cp("built/web/react-common-skillmap.css", "node_modules/pxt-core/skillmap/public/blb");
+        nodeutil.cp("built/web/react-common-authcode.css", "node_modules/pxt-core/authcode/public/blb");
+        nodeutil.cp("built/web/react-common-multiplayer.css", "node_modules/pxt-core/multiplayer/public/blb");
+        nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/skillmap/public/blb");
+        nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/authcode/public/blb");
+        nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/multiplayer/public/blb");
+    }
+}
+
+async function linkFontAsync(font: string, semCss: string, sourceDir = "node_modules/semantic-ui-less/themes/default/assets/fonts/", refDir = "fonts\\/") {
+    const fontFile = await readFileAsync(sourceDir + font + ".woff")
+    const url = "url(data:application/font-woff;charset=utf-8;base64,"
+        + fontFile.toString("base64") + ") format('woff')"
+    const r = new RegExp(`src:.*url\\((?:"|')${refDir + font}\\.woff.*`, "g")
+
+    semCss = semCss.replace('src: url("' + refDir + font + '.eot");', "")
+        .replace('src: url(' + refDir + font + '.eot);', "")
+        .replace(r, "src: " + url + ";")
+    return semCss;
 }
 
 function buildWebStringsAsync() {
@@ -2001,38 +2084,98 @@ function buildWebStringsAsync() {
     return Promise.resolve()
 }
 
-function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
+function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, opts?: {
+    copyAssets?: boolean,
+    includePxtSim?: boolean,
+    // this requires pxt serve to have completed before serving app, as it relies on
+    // packing of pxtarget in buildTargetCoreAsync (mainly the chunk in the forEachBundledPkgAsync)
+    expandedPxtTarget?: boolean,
+    includePdfLib?: boolean,
+}) {
+    opts = opts || {
+        copyAssets: true
+    };
     // local serve
-    const skillmapRoot = "node_modules/pxt-core/skillmap";
+    const appRoot = `node_modules/pxt-core/${app}`;
     const docsPath = parsed.flags["docs"];
-    return rimrafAsync(`${skillmapRoot}/public/blb`, {})
-        .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
-        .then(() => rimrafAsync(`${skillmapRoot}/public/docs`, {}))
-        .then(() => rimrafAsync(`${skillmapRoot}/public/static`, {}))
+    return rimrafAsync(`${appRoot}/public/blb`, {})
+        .then(() => rimrafAsync(`${appRoot}/build/assets`, {}))
+        .then(() => rimrafAsync(`${appRoot}/public/docs`, {}))
+        .then(() => rimrafAsync(`${appRoot}/public/static`, {}))
         .then(() => {
-            // read pxtarget.json, save into 'pxtTargetBundle' global variable
-            let cfg = readLocalPxTarget();
-            nodeutil.writeFileSync(`${skillmapRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
-            nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
-            nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
-            nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${skillmapRoot}/public/blb`);
+            if (!opts.expandedPxtTarget) {
+                // read pxtarget.json, save into 'pxtTargetBundle' global variable
+                let cfg = readLocalPxTarget();
+                nodeutil.writeFileSync(`${appRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+            } else {
+                nodeutil.cp("built/target.js", `${appRoot}/public/blb`);
+            }
 
-            // copy 'assets' over from docs/static
-            nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
+            // This will be missing when serving without a cloned / linked repo
+            if (opts.includePdfLib
+                && fs.existsSync("node_modules/pxt-core/webapp/public/pdf-lib/pdf-lib.min.js")) {
+                nodeutil.cp(
+                    "node_modules/pxt-core/webapp/public/pdf-lib/pdf-lib.min.js",
+                    `${appRoot}/public/blb/pdf-lib`
+                );
+            }
+
+            nodeutil.cp("targetconfig.json", `${appRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
+            if (opts.includePxtSim) {
+                nodeutil.cp("node_modules/pxt-core/built/pxtsim.js", `${appRoot}/public/blb`);
+                nodeutil.cp("node_modules/pxt-core/built/web/worker.js", `${appRoot}/public/blb`);
+                nodeutil.cp("node_modules/pxt-core/built/web/pxtworker.js", `${appRoot}/public/blb`);
+            }
+            nodeutil.cp("built/web/semantic.css", `${appRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${appRoot}/public/blb`);
+            nodeutil.cp(`node_modules/pxt-core/built/web/react-common-${app}.css`, `${appRoot}/public/blb`);
+
+            if (opts.copyAssets) {
+                // copy 'assets' over from docs/static
+                nodeutil.cpR(`docs/static/${app}/assets`, `${appRoot}/public/assets`);
+            }
 
             if (docsPath) {
                 // copy docs over from specified path
-                nodeutil.cpR(`docs/${docsPath}`, `${skillmapRoot}/public/docs/${docsPath}`);
-                nodeutil.cpR(`docs/static/${docsPath}`, `${skillmapRoot}/public/static/${docsPath}`);
+                nodeutil.cpR(`docs/${docsPath}`, `${appRoot}/public/docs/${docsPath}`);
+                nodeutil.cpR(`docs/static/${docsPath}`, `${appRoot}/public/static/${docsPath}`);
             }
 
             return nodeutil.spawnAsync({
                 cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
                 args: ["run-script", "start"],
-                cwd: skillmapRoot,
+                cwd: appRoot,
                 shell: true
             })
         });
+}
+
+function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
+    return buildReactAppAsync(
+        "skillmap",
+        parsed,
+        {
+            includePdfLib: true,
+            copyAssets: true
+        }
+    );
+}
+
+function buildAuthcodeAsync(parsed: commandParser.ParsedCommand) {
+    return buildReactAppAsync("authcode", parsed, { copyAssets: false });
+}
+
+function buildMultiplayerAsync(parsed: commandParser.ParsedCommand) {
+    return buildReactAppAsync(
+        "multiplayer",
+        parsed,
+        {
+            copyAssets: false,
+            includePxtSim: true,
+            expandedPxtTarget: true
+        }
+    );
 }
 
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
@@ -2041,7 +2184,7 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
         pxt.JAVASCRIPT_PROJECT_NAME
     ];
 
-    nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true)
+    nodeutil.allFiles("libs", { maxDepth: 1, includeDirs: true })
         .filter((f) => {
             return defaultProjects.indexOf(path.basename(f)) !== -1;
         })
@@ -2073,7 +2216,7 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                         }
                     });
                     if (newProject.config.icon)
-                        newProject.config.icon = uploadArtFile(newProject.config.icon);
+                        newProject.config.icon = uploadedArtFileCdnUrl(newProject.config.icon);
                 } else {
                     newProject.files[relativePath] = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
                 }
@@ -2180,6 +2323,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
+    pxt.reloadAppTargetVariant();
     dirsToWatch = cfg.bundleddirs.slice()
     if (pxt.appTarget.id != "core") {
         if (fs.existsSync("theme")) {
@@ -2209,7 +2353,8 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let coreDependencies: string[];
     const corepkg = "libs/" + pxt.appTarget.corepkg;
 
-    const packageDirs = pxt.appTarget.bundleddirs.map(dir => path.resolve(dir));
+    // use staticpkgdirs if defined, otherwise fall back to bundledirs
+    const packageDirs = (pxt.appTarget.staticpkgdirs?.extensions || pxt.appTarget.bundleddirs).map(dir => path.resolve(dir));
     const rootDir = process.cwd();
 
     await buildWebStringsAsync();
@@ -2256,7 +2401,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         }
 
         // For the projects, we need to save the base HEX file to the offline HEX cache
-        if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+        if (isPrj && pxt.appTarget.compile?.hasHex) {
             if (!pkgOptions) {
                 pxt.debug(`Failed to extract native image for project ${dirname}`);
                 return;
@@ -2278,23 +2423,32 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             }
 
             if (!options.packaged) return;
+            if (pxt.appTarget.staticpkgdirs && pxt.appTarget.staticpkgdirs.base.indexOf(dirname) === -1) return;
 
             // We want to cache a hex file for each of the native packages in case they are added to a project.
             // This won't cover the whole matrix, but handles the common case of projects that add one extra
             // extension in the offline app.
-            const allDeps = pkg.sortedDeps(true).map(dep => path.resolve(path.join(dirname, dep.verArgument())));
+            const allDeps = pkg.sortedDeps(true)
+                .map(dep => path.resolve(path.join(dirname, dep.verArgument())))
+                .map(dep => path.resolve(dep).replace(/---.*/, "")); // keep path format (/ vs \\) consistent, trim --- suffix to avoid duplicate imports.
             const config = nodeutil.readPkgConfig(dirname);
             const host = pkg.host() as Host;
 
-            for (const extraPackage of packageDirs.filter(dirname => allDeps.indexOf(dirname) == -1)) {
+            const pkgsToBuildWith = packageDirs.filter(dirname => !allDeps.some(el => el.indexOf(dirname.replace(/---.*/, "")) !== -1));
+            pxt.log(`Dependencies of base pkgs: ${allDeps.map(el => path.basename(el)).join(", ")}`);
+            for (const extraPackage of pkgsToBuildWith) {
+                const extraPathBaseName = path.basename(extraPackage);
                 process.chdir(path.join(rootDir, dirname));
+                const deps: pxt.Map<string> = {
+                    ...config.dependencies,
+                    [extraPathBaseName]: "file:" + path.relative(path.resolve("."), extraPackage)
+                }
                 host.fileOverrides["pxt.json"] = JSON.stringify({
                     ...config,
-                    dependencies: {
-                        ...config.dependencies,
-                        extra: "file:" + path.relative(path.resolve("."), extraPackage)
-                    }
+                    dependencies: deps
                 })
+                pxt.log(`Building hex cache for ${extraPathBaseName} with dependencies:`)
+                console.dir(deps);
                 mainPkg = new pxt.MainPackage(host);
 
                 try {
@@ -2312,7 +2466,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                                 pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
                             } else {
                                 nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
-                                pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                                pxt.log(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                             }
                         }
                     }
@@ -2320,6 +2474,8 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 catch (e) {
                     // We're not being smart and verifying that the packages are actually compatible, so
                     // we might get some errors. Ignore them and keep going.
+                    // -- This will likely happen if you have any packages listed that have hw specific versions,
+                    // e.g. serial && serial---linux
                     pxt.debug(`Unable to cache hex for project ${dirname} with '${extraPackage}'`);
                 }
             }
@@ -2449,7 +2605,7 @@ function targetCrowdinBranch(): string {
     return theme ? theme.crowdinBranch : undefined;
 }
 
-function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
+function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promise<void> {
     let currMtime = Date.now()
     return f()
         .then(dirs => {
@@ -2457,7 +2613,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
             pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
                 U.delay(1000)
-                    .then(() => maxMTimeAsync(dirs))
+                    .then(() => maxMTimeAsync(dirs, maxDepth))
                     .then(num => {
                         if (num > currMtime) {
                             currMtime = num
@@ -2485,7 +2641,7 @@ function buildFailed(msg: string, e: any) {
     console.log("")
 }
 
-function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
+async function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
     if (fs.existsSync("pxt.json") &&
         !(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
@@ -2501,17 +2657,41 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
         simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
     }
 
-    return buildAndWatchAsync(() => buildCommonSimAsync()
-        .catch(e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => internalBuildTargetAsync({ localDir: true, rebundle }))
-        .catch(e => buildFailed("target build failed: " + e.message, e))
-        .then(() => {
-            let toWatch = dirsToWatch.slice();
-            if (hasCommonPackages) {
-                toWatch = toWatch.concat(simDirectories);
-            }
-            return toWatch.filter(d => fs.existsSync(d));
-        }));
+    const buildTarget = async () => {
+        let currentlyBuilding = "common sim";
+        try {
+            await buildCommonSimAsync();
+            currentlyBuilding = "target";
+            await internalBuildTargetAsync({ localDir: true, rebundle });
+        } catch (e) {
+            buildFailed(`${currentlyBuilding} build failed: ${e?.message}`, e);
+        }
+
+        let toWatch = dirsToWatch.slice();
+        if (hasCommonPackages) {
+            toWatch = toWatch.concat(simDirectories);
+        }
+        return toWatch.filter(d => fs.existsSync(d));
+    }
+
+    const lessFiles = lessFilePaths().filter(p => fs.existsSync(p));
+    // css build already occurs midway through internalBuildTargetAsync, so skip first rerun
+    let skipFirstCssBuild = true;
+    const buildCss = async () => {
+        if (skipFirstCssBuild) {
+            skipFirstCssBuild = false;
+        } else {
+            console.log("rebuilding css");
+            await buildSemanticUIAsync();
+            console.log("css build complete");
+        }
+        return lessFiles;
+    };
+
+    // some of the watched targets for buildTarget include nested built files,
+    // such as libs/game/_locales/*, so can't just grab subdirectories
+    await buildAndWatchAsync(buildTarget, 1);
+    await buildAndWatchAsync(buildCss, 6);
 }
 
 function buildCommonSimAsync() {
@@ -2550,7 +2730,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
     docFolders.push("docs");
 
     for (const docFolder of docFolders) {
-        for (const f of nodeutil.allFiles(docFolder, 8)) {
+        for (const f of nodeutil.allFiles(docFolder, { maxDepth: 8 })) {
             pxt.log(`rendering ${f}`)
             const pathUnderDocs = f.slice(docFolder.length + 1);
             let outputFile = path.join(dst, "docs", pathUnderDocs);
@@ -3018,7 +3198,7 @@ function installPackageNameAsync(packageName: string): Promise<void> {
         return pxt.packagesConfigAsync()
             .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.slug, config))
                 .then(tag => { parsed.tag = tag })
-                .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
+                .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag, config))
                 .then(cfg => mainPkg.loadAsync(true)
                     .then(() => {
                         let ver = pxt.github.stringifyRepo(parsed)
@@ -3780,6 +3960,9 @@ function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise
 
 function simshimAsync() {
     pxt.debug("looking for shim annotations in the simulator.")
+    if (pxt.appTarget.noSimShims) {
+        return Promise.resolve();
+    }
     if (!fs.existsSync(path.join(simDir(), "tsconfig.json"))) {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
@@ -4194,12 +4377,6 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             return;
         }
 
-        if (++codeSnippetCount % 40 == 0) {
-            // clean up cache every once in a while to speed up / clear up mem
-            // TODO probably this should be handled in the service host as it does become a perf concern
-            cleanService();
-        }
-
         const isPy = snippet.ext === "py";
         const inFiles: pxt.Map<string> = {
             [pxt.MAIN_TS]: isPy ? "" : snippet.code,
@@ -4447,10 +4624,11 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
 function setBuildEngine() {
     const cs = pxt.appTarget.compileService
-    if (cs && cs.buildEngine) {
-        build.setThisBuild(build.buildEngines[cs.buildEngine]);
+    if (cs) {
+        const engine = cs.buildEngine || "yotta"
+        build.setThisBuild(build.buildEngines[engine]);
         if (!build.thisBuild)
-            U.userError("cannot find build engine: " + cs.buildEngine)
+            U.userError("cannot find build engine: " + engine)
     }
 }
 
@@ -4924,7 +5102,7 @@ function buildJResSpritesDirectoryAsync(dir: string) {
 
     let ts = `namespace ${metaInfo.star.namespace} {\n`
 
-    for (let fn of nodeutil.allFiles(dir, 1)) {
+    for (let fn of nodeutil.allFiles(dir, { maxDepth: 1 })) {
         fn = fn.replace(/\\/g, "/")
         let m = /(.*\/)(.*)\.png$/i.exec(fn)
         if (!m) continue
@@ -5548,6 +5726,12 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     const docsRoot = nodeutil.targetDir;
     const docsTemplate = server.expandDocFileTemplate("docs.html")
     pxt.log(`checking docs`);
+    const ignoredFoldersKey = ".checkdocs-ignore";
+    const ignoredFolders = nodeutil.allFiles("docs", { includeHiddenFiles: true })
+        .filter(el => el.endsWith(ignoredFoldersKey))
+        .map(el => path.dirname(path.join(el.substring(4))) + path.sep);
+    if (ignoredFolders.length)
+        pxt.log(`Ignoring folders [${ignoredFolders.join(", ")}]`);
 
     const noTOCs: string[] = [];
     const todo: string[] = [];
@@ -5558,13 +5742,13 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     const existingSnippets: pxt.Map<boolean> = {};
     let snippets: CodeSnippet[] = [];
 
-    const maxFileSize = checkFileSize(nodeutil.allFiles("docs", 10, true, true, ".ignorelargefiles"));
+    const maxFileSize = checkFileSize(nodeutil.allFiles("docs", { maxDepth: 10, allowMissing: true, includeDirs: true, ignoredFileMarker: ".ignorelargefiles" }));
     if (!pxt.appTarget.ignoreDocsErrors
         && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (5000000)))
         U.userError(`files too big in docs folder`);
 
     // scan and fix image links
-    nodeutil.allFiles("docs")
+    nodeutil.allFiles("docs", { ignoredFileMarker: ignoredFoldersKey })
         .filter(f => /\.md/.test(f))
         .forEach(f => {
             let md = fs.readFileSync(f, { encoding: "utf8" });
@@ -5622,6 +5806,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             urls[url] = isResource
                 ? nodeutil.fileExistsSync(path.join(docsRoot, "docs", url))
                 : nodeutil.resolveMd(docsRoot, url);
+            const pathedUrl = path.join(url)
+            if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
+                return;
             if (!isResource && urls[url])
                 todo.push(url);
         }
@@ -5641,7 +5828,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     }
 
     // check over TOCs
-    nodeutil.allFiles("docs", 5).filter(f => /SUMMARY\.md$/.test(f))
+    nodeutil.allFiles("docs", { maxDepth: 5, ignoredFileMarker: ignoredFoldersKey })
+        .filter(f => /SUMMARY\.md$/.test(f))
         .forEach(summaryFile => {
             const summaryPath = path.join(path.dirname(summaryFile), 'SUMMARY').replace(/^docs[\/\\]/, '');
             pxt.log(`looking for ${summaryPath}`);
@@ -5681,7 +5869,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     if (targetDirs) {
         targetDirs.forEach(dir => {
             pxt.log(`looking for markdown files in ${dir}`);
-            nodeutil.allFiles(path.join("docs", dir), 3).filter(f => mdRegex.test(f))
+            nodeutil.allFiles(path.join("docs", dir), { maxDepth: 3, ignoredFileMarker: ".checkdocs-ignore" })
+                .filter(f => mdRegex.test(f))
                 .forEach(md => {
                     pushUrl(md.slice(5).replace(mdRegex, ""), true);
                 });
@@ -5734,6 +5923,13 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     // test targetconfig
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+        if (targetConfig?.packages?.approvedRepoLib) {
+            for (const repoSlug of Object.keys(targetConfig.packages.approvedRepoLib)) {
+                if (repoSlug !== repoSlug.toLocaleLowerCase()) {
+                    U.userError(`targetconfig.json: repo slugs in approvedRepoLib must be lowercased.\n\tError: ${repoSlug}`);
+                }
+            }
+        }
         if (targetConfig && targetConfig.galleries) {
             Object.keys(targetConfig.galleries).forEach(k => {
                 pxt.log(`gallery ${k}`);
@@ -5753,6 +5949,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             let urls = [card.url]
                             if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
+                                const pathedUrl = path.join(url)
+                                if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
+                                    return;
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, url);
                                 if (!tutorialMd) {
                                     pxt.log(`unable to resolve ${url}`)
@@ -5810,6 +6009,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             let urls = [card.url]
                             if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
+                                const pathedUrl = path.join(url)
+                                if (ignoredFolders.some(el => pathedUrl.startsWith(el)))
+                                    return;
                                 const exMd = nodeutil.resolveMd(docsRoot, url);
                                 if (!exMd) {
                                     pxt.log(`unable to resolve ${url}`)
@@ -5861,7 +6063,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
 async function upgradeCardsAsync(): Promise<void> {
     const docsRoot = nodeutil.targetDir;
     // markdowns with cards
-    const mds = nodeutil.allFiles(docsRoot, 10, false, false)
+    const mds = nodeutil.allFiles(docsRoot, { maxDepth: 10 })
         .filter(fn => /\.md$/.test(fn))
         .map(fn => ({ filename: fn, content: nodeutil.readText(fn) }))
         .filter(f => /```codecard/.test(f.content));
@@ -5897,7 +6099,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     if (targetDirs) {
         targetDirs.forEach(dir => {
             pxt.log(`looking for tutorial markdown in ${dir}`);
-            nodeutil.allFiles(path.join("docs", dir), 3).filter(f => mdRegex.test(f))
+            nodeutil.allFiles(path.join("docs", dir), { maxDepth: 3 }).filter(f => mdRegex.test(f))
                 .forEach(md => {
                     mdPaths.push(md.slice(5).replace(mdRegex, ""));
                 });
@@ -5969,7 +6171,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
                     const decompiled = pxtc.decompileSnippets(pxtc.getTSProgram(opts), opts, false);
                     if (decompiled?.length > 0) {
                         // scrape block IDs matching <block type="block_id">
-                        let builtInfo: pxt.BuiltTutorialInfo = builtTututorialInfo[hash] || { usedBlocks: {}, snippetBlocks: {} };
+                        let builtInfo: pxt.BuiltTutorialInfo = builtTututorialInfo[hash] || { usedBlocks: {}, snippetBlocks: {}, highlightBlocks: {} };
                         const blockIdRegex = /<\s*block(?:[^>]*)? type="([^ ]*)"/ig;
                         for (let i = 0; i < decompiled.length; i++) {
                             const blocksXml = decompiled[i];
@@ -5978,6 +6180,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
                                 if (!builtInfo.snippetBlocks[snippetHash]) builtInfo.snippetBlocks[snippetHash] = {};
                                 builtInfo.snippetBlocks[snippetHash][m1] = 1;
                                 builtInfo.usedBlocks[m1] = 1;
+                                //TODO: Fill builtInfo.HighlightedBlocks
                                 return m0;
                             })
                         }
@@ -6101,7 +6304,7 @@ function webstringsJson() {
 
 function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     let prereqs: string[] = [];
-    dirs.forEach(dir => prereqs = prereqs.concat(nodeutil.allFiles(dir, 20)));
+    dirs.forEach(dir => prereqs = prereqs.concat(nodeutil.allFiles(dir, { maxDepth: 20 })));
 
     let errCnt = 0;
     let translationStrings: pxt.Map<string> = {}
@@ -6302,7 +6505,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
-            .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
+            .map(ghrepo => ghrepo.fullName).concat(Object.keys(packages.approvedRepoLib || {})))
         .then(fullnames => {
             // remove dups
             fullnames = U.unique(fullnames, f => f.toLowerCase());
@@ -6836,7 +7039,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "build required css files",
         flags: {
             force: {
-                description: "force re-compile of less files"
+                description: "deprecated; now on by default"
             }
         }
     }, buildSemanticUIAsync);
@@ -6857,6 +7060,40 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, buildSkillMapAsync);
+
+    p.defineCommand({
+        name: "buildauthcode",
+        aliases: ["authcode"],
+        advanced: true,
+        help: "Serves the authcode webapp",
+        flags: {
+            serve: {
+                description: "Serve the authcode app locally after building (npm start)"
+            },
+            docs: {
+                description: "Path to local docs folder to copy into authcode",
+                type: "string",
+                argument: "docs"
+            }
+        }
+    }, buildAuthcodeAsync);
+
+    p.defineCommand({
+        name: "buildmultiplayer",
+        aliases: ["multiplayer", "mp"],
+        advanced: true,
+        help: "Serves the multiplayer webapp",
+        flags: {
+            serve: {
+                description: "Serve the multiplayer app locally after building (npm start)"
+            },
+            docs: {
+                description: "Path to local docs folder to copy into multiplayer",
+                type: "string",
+                argument: "docs"
+            }
+        }
+    }, buildMultiplayerAsync)
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 

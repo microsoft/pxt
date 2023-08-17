@@ -2,7 +2,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "serve",
+			"name": "pxt serve (microbit)",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
@@ -12,6 +12,28 @@
 				"--rebundle"
 			],
 			"cwd": "${workspaceRoot}/../pxt-microbit",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "pxt serve (arcade)",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"serve",
+				"--rebundle"
+			],
+			"cwd": "${workspaceRoot}/../pxt-arcade",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"
@@ -52,7 +74,7 @@
 			"stopOnEntry": false,
 			"args": [
 				"checkdocs",
-				"--re", 
+				"--re",
 				"adafruit"
 			],
 			"cwd": "${workspaceRoot}/../pxt-maker",
@@ -137,7 +159,8 @@
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": [
-				"buildsprites", "space"
+				"buildsprites",
+				"space"
 			],
 			"cwd": "${workspaceRoot}/../pxt-32/libs/device",
 			"runtimeExecutable": null,
@@ -230,7 +253,7 @@
 			"console": "integratedTerminal",
 			"sourceMaps": false,
 			"outFiles": []
-		},		
+		},
 		{
 			"name": "Attach",
 			"type": "node",

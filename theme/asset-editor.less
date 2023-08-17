@@ -10,6 +10,7 @@
     height: 100%;
     border-right: 1px solid @assetSidebarBorder;
     overflow-y: auto;
+    z-index: 1;
 }
 
 .asset-editor-sidebar-info {
@@ -159,31 +160,19 @@
     }
 }
 
+.asset-editor-sidebar-controls {
+    margin: 0 .75rem;
+    .common-list-item {
+        display: flex;
+    }
+}
+
 .asset-editor-button {
-    padding: .7em 2em .85em;
-    text-align: center;
-    background-color: @assetSidebarButton;
-    font-size: 1rem;
+    flex: 1;
     box-shadow: inset 0 0 0 1px rgba(34,36,38,.15), inset 0 -0.3em 0 0 rgba(34,36,38,.15);
-    cursor: pointer;
 }
 
-.asset-editor-button.disabled,
-.asset-editor-button.disabled:hover {
-    color: darken(@assetSidebarButtonHover, 20%);
-    background-color: @assetSidebarButtonHover;
-    cursor: not-allowed;
-}
-
-.asset-editor-button:hover {
-    background-color: @assetSidebarButtonHover;
-}
-
-.asset-editor-button[data-tooltip]:hover:after {
-    z-index: @sidedocZIndex;
-}
-
-.create-new {
+.create-new.common-button {
     color: @white;
     background-color: @green;
     font-weight: 700;
@@ -191,7 +180,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border-width: 0;
+    margin: 1rem 0 0 1rem;
 
     i.icon {
         margin: 0;
@@ -201,12 +190,10 @@
     background-color: darken(@green, 10%);
 }
 
-.delete-asset {
-    margin: 0.5rem;
-    text-align: center;
-    font-size: 0.9rem;
-    cursor: pointer;
-    opacity: 0.9;
+.create-new.disabled,
+.create-new.disabled:hover {
+    cursor: not-allowed;
+    background-color: @assetUnselected;
 }
 
 .asset-editor-create-options {
@@ -216,7 +203,7 @@
     justify-content: space-around;
 }
 
-.asset-editor-create-button {
+.asset-editor-create-button.common-button {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -233,14 +220,85 @@
         background-color: darken(@assetTypeButton, 5%);
     }
 
-    i {
+    i.icon {
         font-size: 4rem;
         line-height: 4rem;
         margin: 1rem;
     }
 
+    .common-button-flex {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
 }
 
 .image-editor-open #tutorialcard {
     z-index: @blocklyDropdownDivZIndex + 1
+}
+
+.asset-palette-button.common-button {
+    margin-top: 1rem;
+    flex: 1;
+    box-shadow: inset 0 0 0 1px rgba(34,36,38,.15), inset 0 -0.3em 0 0 rgba(34,36,38,.15);
+}
+
+i.fa-palette {
+    transform: rotate(90deg);
+}
+
+.palette-transparent-button.common-button {
+    background: none;
+    border: none;
+    &.disabled {
+        background: none;
+        border: none;
+        color: @grey;
+    }
+}
+
+.palette-actions {
+    .common-button {
+        background: none;
+        border: none;
+        padding: .5rem;
+        font-size: 18px;
+        margin: 0;
+        &.disabled {
+            background: none;
+            border: none;
+            color: @grey;
+            &:focus::after {
+                outline: none;
+            }
+        }
+        .xicon.rename {
+            margin-right: 0.5rem;
+        }
+    }
+}
+
+.palette-delete-modal,
+.palette-exit-modal,
+.palette-name-modal {
+    .common-modal {
+        width: 35%;
+    }
+    .common-palette-swatch-name {
+        padding: 1rem .5rem 0 0;
+        flex-grow: 0;
+    }
+    .common-palette-color-list {
+        padding-top: 1rem;
+    }
+}
+
+.palette-apply-button.common-button.disabled.green,
+.palette-done-button.common-button.disabled.teal {
+    background-color: @grey;
+    color: @white;
+}
+
+.invalid-palette-name {
+    color: @red;
 }

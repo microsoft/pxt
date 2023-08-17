@@ -1,5 +1,14 @@
 namespace pxt.usb {
 
+    /**
+     * For local testing of WebUSB, be sure to (temporarily)
+     * enable the browser command line flag `--disable-webusb-security`
+     * to allow localhost (non-https) access to the APIs.
+     * If possible it might be easiest to download a separate canary build
+     * for chrome / edge to run.
+     * https://chromium.googlesource.com/playground/chromium-org-site/+/refs/heads/main/for-testers/command-line-flags.md
+     */
+
     export class USBError extends Error {
         constructor(msg: string) {
             super(msg)
@@ -157,6 +166,8 @@ namespace pxt.usb {
         isochronousTransferIn(endpointNumber: number, packetLengths: number[]): Promise<USBIsochronousInTransferResult>;
         isochronousTransferOut(endpointNumber: number, data: BufferSource, packetLengths: number[]): Promise<USBIsochronousOutTransferResult>;
         reset(): Promise<void>;
+        // chromium 101+
+        forget?(): Promise<void>;
     }
 
     class WebUSBHID implements pxt.packetio.PacketIO {
@@ -253,6 +264,18 @@ namespace pxt.usb {
                     this.clearDev()
                     return U.delay(500)
                 })
+        }
+
+        async forgetAsync(): Promise<boolean> {
+            if (!this.dev?.forget)
+                return false;
+            try {
+                await this.dev.forget();
+                return true;
+                // connection changed listener will handle disconnecting when access is revoked.
+            } catch (e) {
+                return false;
+            }
         }
 
         reconnectAsync() {
@@ -483,7 +506,7 @@ namespace pxt.usb {
             })
     }
 
-    async function tryGetDevicesAsync(): Promise<USBDevice[]> {
+    export async function tryGetDevicesAsync(): Promise<USBDevice[]> {
         log(`webusb: get devices`)
         try {
             const devs = await ((navigator as any).usb.getDevices() as Promise<USBDevice[]>);
@@ -504,6 +527,16 @@ namespace pxt.usb {
         return Promise.resolve(_hid);
     }
 
+    // returns true if device has been successfully forgotten, false otherwise.
+    export async function forgetDeviceAsync(): Promise<boolean> {
+        pxt.debug(`packetio: forget webusb io`);
+        if (!_hid) {
+            // No device to forget
+            return false;
+        }
+        return _hid.forgetAsync();
+    }
+
     export let isEnabled = false
 
     export function setEnabled(v: boolean) {
@@ -515,26 +548,45 @@ namespace pxt.usb {
     export async function checkAvailableAsync() {
         if (_available !== undefined) return;
 
-        pxt.debug(`webusb: checking availability`)
+        pxt.debug(`webusb: checking availability`);
         // not supported by editor, cut short
         if (!pxt.appTarget?.compile?.webUSB) {
             _available = false;
             return;
         }
 
-        if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT()) {
-            pxt.debug(`webusb: off, electron or winrt`)
-            pxt.tickEvent('webusb.off', { 'reason': 'electronwinrt' })
-            _available = false;
+        const failureReason = await getReasonUnavailable();
+        if (!failureReason) {
+            _available = true;
             return;
+        }
+
+        _available = false;
+        pxt.tickEvent("webusb.off", { 'reason': failureReason });
+        switch (failureReason) {
+            case "electron":
+                pxt.debug(`webusb: off, electron`);
+                break;
+            case "notimpl":
+                pxt.debug(`webusb: off, not implemented by browser`);
+                break;
+            case "oldwindows":
+                pxt.debug(`webusb: off, older windows version`);
+                break;
+            case "security":
+                pxt.debug(`webusb: off, security exception`);
+                break;
+        }
+    }
+
+    export async function getReasonUnavailable(): Promise<"electron" | "notimpl" | "oldwindows" | "security" | undefined> {
+        if (pxt.BrowserUtils.isElectron()) {
+            return "electron";
         }
 
         const _usb = (navigator as any).usb;
         if (!_usb) {
-            pxt.debug(`webusb: off, not impl`)
-            pxt.tickEvent('webusb.off', { 'reason': 'notimpl' })
-            _available = false
-            return
+            return "notimpl";
         }
 
         // Windows versions:
@@ -543,26 +595,18 @@ namespace pxt.usb {
         // as it requires signed INF files.
         let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
         if (m && parseFloat(m[1]) < 6.3) {
-            pxt.debug(`webusb: off, older windows version`)
-            pxt.tickEvent('webusb.off', { 'reason': 'oldwindows' })
-            _available = false;
-            return;
+            return "oldwindows";
         }
 
         // check security
         try {
             // iframes must specify allow="usb" in order to support WebUSB
-            await _usb.getDevices()
+            await _usb.getDevices();
         } catch (e) {
-            pxt.debug(`webusb: off, security exception`)
-            pxt.tickEvent('webusb.off', { 'reason': 'security' })
-            _available = false;
-            return;
+            return "security";
         }
 
-        // yay!
-        _available = true;
-        return
+        return undefined;
     }
 
     export function isAvailable() {

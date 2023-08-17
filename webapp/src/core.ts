@@ -8,6 +8,9 @@ import * as sui from "./sui";
 import * as coretsx from "./coretsx";
 import * as auth from "./auth";
 
+
+import { pushNotificationMessage } from "../../react-common/components/Notification";
+
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
@@ -18,11 +21,16 @@ export type Component<S, T> = data.Component<S, T>;
 ////////////       Loading spinner            /////////////
 ///////////////////////////////////////////////////////////
 
+interface LoadingSection {
+    displayText: string,
+    percentComplete?: number;
+}
+
 let dimmerInitialized = false;
 let loadingDimmer: coretsx.LoadingDimmer;
 
 let loadingQueue: string[] = [];
-let loadingQueueMsg: pxt.Map<string> = {};
+let loadingQueueMsg: pxt.Map<LoadingSection> = {};
 
 export function isLoading() {
     return loadingDimmer && loadingDimmer.isVisible();
@@ -61,22 +69,45 @@ export function killLoadingQueue() {
     }
 }
 
-export function showLoading(id: string, msg: string) {
+export function showLoading(id: string, msg: string, percentComplete?: number) {
     pxt.debug("showloading: " + id);
     if (loadingQueueMsg[id]) return; // already loading?
     pxt.perf.recordMilestone(`loading started #${id}`)
     initializeDimmer();
-    loadingDimmer.show(lf("Please wait"));
+    loadingDimmer.show(
+        "initializing-loader",
+        lf("Please wait"),
+    );
     loadingQueue.push(id);
-    loadingQueueMsg[id] = msg;
+    loadingQueueMsg[id] = {
+        displayText: msg,
+        percentComplete,
+    };
     displayNextLoading();
+}
+
+export function updateLoadingCompletion(id: string, percentComplete: number) {
+    const msg = loadingQueueMsg[id];
+    if (!msg) {
+        pxt.debug("Loading not in queue, disregard: " + id);
+        return;
+    }
+
+    msg.percentComplete = percentComplete;
+    if (loadingDimmer?.currentlyLoading() === id) {
+        loadingDimmer.setPercentLoaded(percentComplete);
+    }
 }
 
 function displayNextLoading() {
     if (!loadingQueue.length) return;
     const id = loadingQueue[loadingQueue.length - 1]; // get last item
     const msg = loadingQueueMsg[id];
-    loadingDimmer.show(msg);
+    loadingDimmer.show(
+        id,
+        msg.displayText,
+        msg.percentComplete,
+    );
 }
 
 function initializeDimmer() {
@@ -109,7 +140,7 @@ export function cancelAsyncLoading(id: string) {
 ///////////////////////////////////////////////////////////
 
 function showNotificationMsg(kind: string, msg: string) {
-    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrastOnce() });
+    pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrastOnce() });
 }
 
 export function errorNotification(msg: string) {
@@ -172,6 +203,7 @@ export interface DialogOptions {
     confirmationText?: string;      // Display a text input the user must type to confirm.
     confirmationCheckbox?: string;  // Display a checkbox the user must check to confirm.
     confirmationGranted?: boolean;
+    onClose?: () => void;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -305,12 +337,13 @@ export function toggleHighContrast() {
     setHighContrast(!getHighContrastOnce())
 }
 export async function setHighContrast(on: boolean) {
-    await auth.updateUserPreferencesAsync({ highContrast: on });
+    await auth.setHighContrastPrefAsync(on);
 }
 
 export async function setLanguage(lang: string) {
     pxt.BrowserUtils.setCookieLang(lang);
-    await auth.updateUserPreferencesAsync({ language: lang });
+    pxt.Util.setUserLanguage(lang);
+    await auth.setLanguagePrefAsync(lang);
 }
 
 export function resetFocus() {
@@ -334,7 +367,7 @@ export function navigateInWindow(url: string) {
 }
 
 export function findChild(c: React.Component<any, any>, selector: string): Element[] {
-    let self = ReactDOM.findDOMNode(c);
+    let self = ReactDOM.findDOMNode(c) as Element;
     if (!selector) return [self]
     return pxt.Util.toArray(self.querySelectorAll(selector));
 }

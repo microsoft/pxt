@@ -44,6 +44,10 @@ namespace pxt {
                 })
         }
 
+        latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
+            return this.db.latestVersionAsync(repopath, config)
+        }
+
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
             return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
         }

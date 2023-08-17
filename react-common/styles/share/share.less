@@ -1,0 +1,362 @@
+.sharedialog.fullscreen.common-modal-container > .common-modal > .common-modal-body {
+    padding: 0;
+}
+
+.project-share {
+    display: flex;
+    height: 100%;
+}
+
+.project-share-simulator {
+    flex: 1;
+    height: 100%;
+    background-color: @simulatorBackground;
+
+    #shareLoanedSimulator {
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .simframe {
+        padding-bottom: 56.25%!important;
+    }
+}
+
+
+.project-share-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex: 1;
+
+    .project-share-content {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+
+        .name-input .common-input-group {
+            height: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .common-checkbox {
+            margin-bottom: 0.5rem;
+        }
+
+        .project-share-error {
+            background-color: @red;
+            color: @white;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+    }
+}
+
+.hc .project-share-error {
+    background-color: @highContrastBackgroundColor !important;
+    color: @highContrastTextColor !important;
+    border: 1px solid @highContrastTextColor;
+}
+
+.project-share-title {
+    margin-bottom: 1rem;
+}
+
+.project-share-label {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+#project-share-dropdown {
+    color: @primaryColor;
+}
+
+.project-share-thumbnail {
+    display: flex;
+    flex-direction: column;
+    min-width: 15rem;
+    align-items: center;
+    margin-right: 1rem;
+
+    .project-thumbnail-placeholder,
+    img {
+        margin: 0.3rem 0;
+        width: 15rem;
+        height: 11.25rem;
+        background-color: rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+    }
+
+    .project-thumbnail-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .common-spinner {
+            width: 5rem;
+            height: 5rem;
+        }
+    }
+}
+
+.fullscreen {
+    .project-share > div {
+        padding: 2rem;
+    }
+
+    .project-share-info {
+        flex: unset;
+        width: 28rem;
+    }
+}
+
+.share-publish-button {
+    height: 3rem;
+    margin-right: 1rem;
+
+    .common-spinner {
+        display: inline-block;
+    }
+}
+
+.share-host-button.common-button .xicon.multiplayer {
+    font-size: 24px;
+    margin-right: 0.5rem;
+}
+
+.xicon.kiosk {
+    font-size: 24px;
+    margin-right: 0.5rem;
+}
+
+.project-share-publish-actions {
+    flex-grow: 1;
+    justify-content: end;
+    display: flex;
+    align-items: end;
+}
+
+
+/////////////////////////////////////////
+//           Embed                     //
+/////////////////////////////////////////
+
+.project-share-actions {
+    display: flex;
+    flex-direction: row;
+    margin-top: 1rem;
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.project-share-social {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.project-share-text {
+    margin-bottom: 1rem;
+}
+
+.common-button.menu-button.project-qrcode img {
+    height: 5rem;
+}
+
+.common-button.menu-button.project-qrcode:focus::after {
+    outline: @buttonFocusOutlineLightBackground;
+}
+
+.project-share-data .common-input-attached-button .common-button {
+    width: 10rem;
+    padding: .8rem 1rem .95rem;
+}
+
+.qrcode-image {
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+
+.qrcode-modal-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .qrcode-image {
+        height: 20rem;
+    }
+}
+
+/////////////////////////////////////////
+//           Gif Recorder              //
+/////////////////////////////////////////
+
+.gif-recorder-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .thumbnail-controls {
+        display: flex;
+        flex-direction: column;
+        padding: 0 4rem;
+        height: 100%;
+
+        .thumbnail-preview {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            align-items: center;
+            justify-content: center;
+
+            & > div {
+                padding-bottom: 1rem;
+            }
+
+            .thumbnail-image,
+            .thumbnail-placeholder {
+                display: flex;
+                background-color: rgba(0, 0, 0, 0.05);
+                width: 15rem;
+                height: 12.25rem;
+            }
+        }
+
+        .thumbnail-actions {
+            display: flex;
+            flex-direction: row;
+            align-items: end;
+            justify-content: end;
+        }
+    }
+}
+
+.gif-recorder-sim-embed {
+    flex-grow: 1;
+    padding-right: 1rem;
+
+    .simframe {
+        padding-bottom: 56.25%!important;
+    }
+}
+
+.gif-recorder-sim {
+    flex-grow: 1;
+}
+
+.gif-recorder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: @segoeUIFont;
+}
+
+.gif-recorder-label,
+.thumbnail-label {
+    margin-bottom: 0.5rem;
+    font-family: @segoeUIFont;
+}
+
+.gif-recorder-actions {
+    display: flex;
+    width: 100%;
+
+    .common-button {
+        padding-left: 0;
+        padding-right: 0;
+        flex: 1;
+    }
+}
+
+.thumbnail-image,
+.thumbnail-placeholder {
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.05);
+    width: 24.5rem;
+    height: 18.375rem;
+}
+
+.thumbnail-header {
+    display: flex;
+    flex-direction: row;
+
+    .project-share-label {
+        flex-grow: 1;
+    }
+
+    .common-button.link-button {
+        margin-bottom: 0.5rem;
+    }
+}
+
+
+/////////////////////////////////////////
+//               Mobile                //
+/////////////////////////////////////////
+
+#root.miniSim:not(.fullscreensim) .gif-recorder-sim div.simframe {
+    width: 100%;
+}
+
+@media @tabletAndBelow {
+    .gif-recorder-content .thumbnail-controls {
+        padding: 0 2rem;
+    }
+}
+
+@media @mobileAndBelow {
+    .project-share-info, .gif-recorder-content {
+        flex-direction: column;
+    }
+
+    .gif-recorder-sim {
+        width: 100%;
+    }
+
+    .gif-recorder-actions {
+        width: 100%;
+
+        .spacer {
+            flex-grow: 1;
+        }
+    }
+
+    .gif-recorder-actions .common-button:not(.mobile-only) {
+        width: 3rem;
+        height: 3rem;
+        overflow: hidden;
+        padding: 0;
+
+        i, i.fas, i.far {
+            margin: 0;
+        }
+
+        .common-button-label {
+            display: none;
+        }
+    }
+
+    .gif-recorder-content {
+        &.has-uri {
+            .gif-recorder-sim {
+                display: none;
+            }
+        }
+
+        &:not(.has-uri) {
+            .thumbnail-controls {
+                display: none;
+            }
+        }
+    }
+}

@@ -305,7 +305,7 @@ namespace pxt.docs {
         params["orgtitle"] = "MakeCode";
 
         const docsLogo = theme.docsLogo && U.htmlEscape(theme.docsLogo);
-        const orgLogo = (theme.organizationLogo || theme.organizationWideLogo) && U.htmlEscape(theme.organizationLogo || theme.organizationWideLogo);
+        const orgLogo = (theme.organizationWideLogo || theme.organizationLogo) && U.htmlEscape(theme.organizationWideLogo || theme.organizationLogo);
         const orglogomobile = theme.organizationLogo && U.htmlEscape(theme.organizationLogo)
         params["targetlogo"] = docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${docsLogo}" />` : ""
         params["orglogo"] = orgLogo ? `<img aria-hidden="true" role="presentation" class="ui image" src="${orgLogo}" />` : ""
@@ -418,13 +418,46 @@ namespace pxt.docs {
 
     export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
-            let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
-            if (title) {
-                out += ' title="' + title + '"';
+            const endpointName="makecodeprodmediaeastus-usea";
+            if (href.startsWith("youtube:")) {
+                let out = '<div class="tutorial-video-embed"><iframe class="yt-embed" src="https://www.youtube.com/embed/' + href.split(":").pop()
+                    + '" title="' + text + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
+                return out;
+
+            } else if (href.startsWith("azuremedia:")) {
+
+                let videoID = href.split(":")[1];
+                const flagsSplit = videoID.split("?");
+                let startTime: string;
+                let endTime: string;
+
+                if (flagsSplit[1]) {
+                    videoID = flagsSplit[0];
+                    const passedParameters = flagsSplit[1];
+                    startTime = /start(?:time)?=(\d+)/i.exec(passedParameters)?.[1];
+                    endTime = /end(?:time)?=(\d+)/i.exec(passedParameters)?.[1];
+                }
+                const url = new URL(`https://${endpointName}.streaming.media.azure.net/${videoID}/manifest(format=mpd-time-csf).mpd`)
+                if (startTime) {
+                    url.hash = `t=${startTime}`;
+                    url.searchParams.append("startTime", startTime);
+                }
+                if (endTime) {
+                    url.searchParams.append("endTime", endTime);
+                }
+                let out = `<div class="tutorial-video-embed"><video class="ams-embed" controls src="${url.toString()}" /></div>`;
+                return out;
+
+            } else {
+                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
+                if (title) {
+                    out += ' title="' + title + '"';
+                }
+                out += ' loading="lazy"';
+                out += (this as any).options.xhtml ? '/>' : '>';
+                return out;
             }
-            out += ' loading="lazy"';
-            out += (this as any).options.xhtml ? '/>' : '>';
-            return out;
+
         }
         renderer.listitem = function (text: string): string {
             const m = /^\s*\[( |x)\]/i.exec(text);
@@ -437,12 +470,16 @@ namespace pxt.docs {
             if (m) {
                 text = m[1]
                 id = m[2]
-            } else {
-                id = raw.toLowerCase().replace(/[^\w]+/g, '-')
             }
             // remove tutorial macros
             if (text)
                 text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
+            // remove brackets for hiding step title
+            if (text.match(/\{([\s\S]+)\}/))
+                text = text.match(/\{([\s\S]+)\}/)[1].trim()
+            if (id === "") {
+                id = text.toLowerCase().replace(/[^\w]+/g, '-')
+            }
             return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
         }
     }

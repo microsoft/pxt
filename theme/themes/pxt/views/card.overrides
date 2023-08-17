@@ -195,6 +195,10 @@ a.ui.card:focus,
     .ui.image ~ .content {
         height: 3rem;
     }
+
+    .ui.image ~ .content.tall {
+        height: 4rem;
+    }
 }
 
 .setExampleCardFullHeight() when (@exampleCardFullHeight) {

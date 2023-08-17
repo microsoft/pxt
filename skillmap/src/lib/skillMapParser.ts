@@ -1,20 +1,15 @@
 
 /// <reference path="./skillMap.d.ts" />
+import MarkdownSection = pxt.MarkdownSection;
 
 const testMap = ``
-
-interface MarkdownSection {
-    headerKind: "single" | "double" | "triple";
-    header: string;
-    attributes: {[index: string]: string};
-}
 
 export function test() {
     return parseSkillMap(testMap);
 }
 
 export function parseSkillMap(text: string): { maps: SkillMap[], metadata?: PageMetadata } {
-    const sections = getSectionsFromText(text);
+    const sections = pxt.getSectionsFromMarkdownMetadata(text);
     if (!sections?.length) error(`Cannot parse content: ${text}`)
 
     const parsed: SkillMap[] = [];
@@ -38,73 +33,6 @@ export function parseSkillMap(text: string): { maps: SkillMap[], metadata?: Page
     }
 
     return { maps: parsed, metadata };
-}
-
-function getSectionsFromText(text: string) {
-    const lines = text.split("\n");
-
-    let sections: MarkdownSection[] = [];
-    let currentSection: MarkdownSection | null = null;
-
-    let currentKey: string | null = null;
-    let currentValue: string | null = null;
-
-    for (const line of lines) {
-        if (!line.trim()) {
-            if (currentValue) {
-                currentValue += "\n";
-            }
-            continue;
-        }
-
-        if (line.startsWith("#")) {
-            const headerMatch = /^(#+)\s*(.+)$/.exec(line);
-
-            if (headerMatch) {
-                pushSection();
-
-                currentSection = {
-                    headerKind: headerMatch[1].length === 1 ? "single" :
-                        (headerMatch[1].length === 2 ? "double" : "triple"),
-                    header: headerMatch[2],
-                    attributes: {}
-                }
-                currentKey = null;
-                currentValue = null;
-                continue;
-            }
-        }
-
-        if (currentSection) {
-            const keyMatch = /^[*-]\s+(?:([^:]+):)?(.*)$/.exec(line);
-
-            if (keyMatch) {
-                if (keyMatch[1]) {
-                    if (currentKey && currentValue) {
-                        currentSection.attributes[currentKey] = currentValue.trim();
-                    }
-                    currentKey = keyMatch[1].toLowerCase();
-                    currentValue = keyMatch[2];
-                }
-                else if (currentKey) {
-                    currentValue += keyMatch[2];
-                }
-            }
-        }
-    }
-
-    pushSection();
-
-    return sections;
-
-    function pushSection() {
-        if (currentSection) {
-            if (currentKey && currentValue) {
-                currentSection.attributes[currentKey] = currentValue.trim();
-            }
-            sections.push(currentSection);
-        }
-    }
 }
 
 function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection[]) {
@@ -149,7 +77,11 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
     return result as SkillMap;
 
     function checkForLoopsRecursive(root: MapNode, visited: {[index: string]: boolean} = {}) {
-        if (visited[root.activityId]) error(`Loop in map '${result.mapId}' detected`);
+        if (visited[root.activityId]) {
+            console.warn(`Loop in map '${result.mapId}' detected`);
+            return;
+        }
+
         visited[root.activityId] = true;
         reachable[root.activityId] = true;
 
@@ -225,7 +157,7 @@ function inflateMapNode(section: MarkdownSection): MapNode {
     }
 
     if (section.attributes.kind === "reward" || section.attributes.kind === "completion") {
-        return inflateMapReward(section, base as Partial<MapReward>);
+        return inflateMapReward(section, base as Partial<MapRewardNode>);
     } else if (section.attributes.kind === "layout") {
         return inflateMapLayout(section, base as Partial<MapLayoutNode>);
     } else {
@@ -243,23 +175,134 @@ function inflateMapLayout(section: MarkdownSection, base: Partial<MapLayoutNode>
     return result as MapLayoutNode;
 }
 
-function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): MapReward {
-    const result: Partial<MapReward> = {
+function inflateMapReward(section: MarkdownSection, base: Partial<MapRewardNode>): MapRewardNode {
+    const result: Partial<MapRewardNode> = {
         ...base,
         kind: (section.attributes.kind || "reward") as any,
-        url: section.attributes.url
     };
 
     if (section.attributes["type"]) {
         const type = section.attributes["type"].toLowerCase();
         switch (type) {
             case "certificate":
-                result.type = type;
+                if (!result.rewards) result.rewards = [];
+                result.rewards?.push({
+                    type: "certificate",
+                    url: section.attributes["url"]
+                })
                 break;
         }
     }
 
-    return result as MapReward;
+    if (section.listAttributes?.["actions"]) {
+        const parsedActions: MapCompletionAction[] = [];
+        const actions = section.listAttributes["actions"].items.filter(a => typeof a === "string") as string[];
+        for (const action of actions) {
+            let [kind, ...rest] = action.split(":");
+            const valueMatch = /\s*\[\s*(.*)\s*\](?:\(([^\s]+)\))?/gi.exec(rest.join(":"));
+            const label = valueMatch?.[1];
+            const link = valueMatch?.[2];
+            switch (kind) {
+                case "activity":
+                    parsedActions.push({kind: "activity", label, activityId: link });
+                    break;
+                case "map":
+                    if (link) {
+                        let prefix = validGithubUrl(link) ? "github" : (validDocsUrl(link) ? "docs" : undefined);
+                        if (!prefix) error(`URL: ${link} must be to Github or MakeCode documentation`);
+                        parsedActions.push({ kind: "map", label, url: `#${prefix}:${link}` });
+                    }
+                    break;
+                case "tutorial":
+                    if (link) {
+                        if (!validGithubUrl(link) && !validDocsUrl(link)) error(`URL: ${link} must be to Github or MakeCode documentation`);
+                        parsedActions.push({ kind: "tutorial", label, url: `/#tutorial:${link}` });
+                    }
+                    break;
+                case "docs":
+                    if (link) {
+                        let docsUrl = (link.startsWith("/") ? "" : "/") + link;
+                        if (!validDocsUrl(docsUrl)) error(`URL: ${docsUrl} must be to MakeCode documentation`);
+                        parsedActions.push({ kind: "docs", label, url: docsUrl });
+                    }
+                    break;
+                case "editor":
+                    parsedActions.push({ kind: "editor", label });
+                    break;
+            }
+        }
+        if (parsedActions.length) result.actions = parsedActions;
+    }
+
+    if (section.listAttributes?.["rewards"]) {
+        const parsedRewards: MapReward[] = [];
+        const rewards = section.listAttributes["rewards"];
+        for (const reward of rewards.items) {
+            if (typeof reward === "string") {
+                let [kind, ...value] = reward.split(":");
+
+                switch (kind) {
+                    case "certificate":
+                        parsedRewards.push({
+                            type: "certificate",
+                            url: value.join(":").trim()
+                        });
+                        break;
+                    case "completion-badge":
+                        parsedRewards.push({
+                            type: "completion-badge",
+                            imageUrl: value.join(":").trim()
+                        });
+                        break;
+                }
+            }
+            else {
+                if (reward.key === "certificate") {
+                    const props = reward.items.filter(i => typeof i === "string") as string[]
+                    const cert: Partial<MapRewardCertificate> = {
+                        type: "certificate",
+                    };
+
+                    for (const prop of props) {
+                        let [kind, ...value] = prop.split(":");
+
+                        if (kind === "url") cert.url = value.join(":").trim();
+                        if (kind === "previewurl" || kind === "preview") cert.previewUrl = value.join(":").trim();
+                    }
+
+                    if (!cert.url) error(`Certificate in activity ${section.header} is missing url attribute`);
+                    parsedRewards.push(cert as MapRewardCertificate);
+                }
+                else if (reward.key === "completion-badge") {
+                    const props = reward.items.filter(i => typeof i === "string") as string[]
+                    const badge: Partial<MapCompletionBadge> = {
+                        type: "completion-badge",
+                    };
+
+                    for (const prop of props) {
+                        let [kind, ...value] = prop.split(":");
+
+                        if (kind === "imageurl" || kind === "image") badge.imageUrl = value.join(":").trim();
+                        if (kind === "displayname" || kind === "name") badge.displayName = value.join(":").trim();
+                    }
+
+                    if (!badge.imageUrl) error(`completion-badge in activity ${section.header} is missing imageurl attribute`);
+                    parsedRewards.push(badge as MapCompletionBadge);
+                }
+            }
+        }
+
+        const priority = ["completion-badge", "certificate"];
+        parsedRewards.sort((a, b) => priority.indexOf(a.type) - priority.indexOf(b.type));
+
+        if (parsedRewards.length) result.rewards = parsedRewards;
+    }
+
+    if ((result as any as MapCompletionNode).kind === "completion") {
+        (result as any as MapCompletionNode).showMultiplayerShare = isTrue(section.attributes["showmultiplayershare"]);
+    }
+
+    return result as MapRewardNode;
 }
 
 function inflateActivity(section: MarkdownSection, base: Partial<MapActivity>): MapActivity {
@@ -380,17 +423,25 @@ function getContrastingColor(color: string) {
     }
 }
 
+function validGithubUrl(url: string) {
+    return url.match(/^(https?:\/\/)?(www\.)?github\.com\//gi);
+}
+
+function validDocsUrl(url: string) {
+    return url.indexOf(".") < 0;
+}
+
 function cleanInfoUrl(url?: string) {
     // No info URL provided
     if (!url) return undefined;
 
     // Valid URL to Github (eg a README)
-    if (url.match(/^(https?:\/\/)?(www\.)?github\.com\//gi)) return url.replace(/\?[\s\S]+$/gi, "");
+    if (validGithubUrl(url)) return url.replace(/\?[\s\S]+$/gi, "");
 
     // Valid URL to MakeCode docs
-    if (url.indexOf(".") < 0) return `${url.startsWith("/") ? "" : "/"}${url}`;
+    if (validDocsUrl(url)) return `${url.startsWith("/") ? "" : "/"}${url}`;
 
-    error("Educator info URL must be to Github or MakeCode documentation")
+    error(`URL: ${url} must be to Github or MakeCode documentation`);
 }
 
 function parseList(list: string, includeDuplicates = false, separator = ",") {
@@ -408,6 +459,3 @@ function parseList(list: string, includeDuplicates = false, separator = ",") {
 function error(message: string): never {
     throw(message);
 }
-
-
-

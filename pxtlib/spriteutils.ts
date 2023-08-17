@@ -9,6 +9,8 @@ namespace pxt.sprite {
     export const IMAGE_PREFIX = "image";
     export const ANIMATION_NAMESPACE = "myAnimations";
     export const ANIMATION_PREFIX = "anim";
+    export const SONG_NAMESPACE = "mySongs"
+    export const SONG_PREFIX = "song";
 
     export interface Coord {
         x: number,
@@ -246,10 +248,10 @@ namespace pxt.sprite {
         }
     }
 
-    export function encodeTilemap(t: TilemapData, fileType: "typescript" | "python"): string {
+    export function encodeTilemap(t: TilemapData, fileType: "typescript" | "python", idMap?: {[index: string]: string}): string {
         if (!t) return `null`;
 
-        return `tiles.createTilemap(${tilemapToTilemapLiteral(t.tilemap)}, ${bitmapToImageLiteral(Bitmap.fromData(t.layers), fileType)}, [${t.tileset.tiles.map(tile => encodeTile(tile, fileType))}], ${tileWidthToTileScale(t.tileset.tileWidth)})`
+        return `tiles.createTilemap(${tilemapToTilemapLiteral(t.tilemap)}, ${bitmapToImageLiteral(Bitmap.fromData(t.layers), fileType)}, [${t.tileset.tiles.map(tile => encodeTile(tile, fileType, idMap))}], ${tileWidthToTileScale(t.tileset.tileWidth)})`
     }
 
     export function decodeTilemap(literal: string, fileType: "typescript" | "python", proj: TilemapProject): TilemapData {
@@ -326,6 +328,20 @@ namespace pxt.sprite {
 
         return;
     }
+
+    export function isEmptyTilemap(t: TilemapData) {
+        const tiles = t.tileset.tiles;
+        const tilemap = t.tilemap;
+        const transparency =  tiles[0].id;
+
+        for (let x = 0; x < tilemap.width; x++) {
+            for (let y = 0; y < tilemap.height; y++) {
+                if (tiles[tilemap.get(x, y)].id !== transparency) return false;
+            }
+        }
+        return true;
+    }
+
 
     export function computeAverageColor(bitmap: Bitmap, colors: string[]): string {
         const parsedColors = colors.map(colorStringToRGB);
@@ -530,7 +546,10 @@ namespace pxt.sprite {
         return tileset ? tileset.split(",").filter(t => !!t.trim()).map(t => decodeTile(t, proj)) : [];
     }
 
-    function encodeTile(tile: Tile, fileType: "typescript" | "python") {
+    function encodeTile(tile: Tile, fileType: "typescript" | "python", idMap?: {[index: string]: string}) {
+        if (idMap && idMap[tile.id]) {
+            return idMap[tile.id];
+        }
         return tile.id;
     }
 
@@ -824,7 +843,7 @@ namespace pxt.sprite {
         buf[offset + 1] = (value >> 8) & 0xff;
     }
 
-    function colorStringToRGB(color: string) {
+    export function colorStringToRGB(color: string) {
         const parsed = parseColorString(color);
         return [_r(parsed), _g(parsed), _b(parsed)]
     }

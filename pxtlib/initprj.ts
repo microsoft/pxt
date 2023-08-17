@@ -52,20 +52,13 @@ ${lf("This repository can be added as an **extension** in MakeCode.")}
 * ${lf("click on **Extensions** under the gearwheel menu")}
 * ${lf("search for **https://github.com/@REPO@** and import")}
 
-## ${lf("Edit this project")} ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
+## ${lf("Edit this project")}
 
 ${lf("To edit this repository in MakeCode.")}
 
 * ${lf("open [@HOMEURL@](@HOMEURL@)")}
 * ${lf("click on **Import** then click on **Import URL**")}
 * ${lf("paste **https://github.com/@REPO@** and click import")}
-
-## ${lf("Blocks preview")}
-
-${lf("This image shows the blocks code from the last commit in master.")}
-${lf("This image may take a few minutes to refresh.")}
-
-![${lf("A rendered view of the blocks")}](https://github.com/@REPO@/raw/master/.github/makecode/blocks.png)
 
 #### ${lf("Metadata (used for search, rendering)")}
 
@@ -80,6 +73,7 @@ node_modules
 yotta_modules
 yotta_targets
 pxt_modules
+.pxt
 _site
 *.db
 *.tgz
@@ -96,7 +90,8 @@ _site
         "**/node_modules/**": true,
         "**/yotta_modules/**": true,
         "**/yotta_targets": true,
-        "**/pxt_modules/**": true
+        "**/pxt_modules/**": true,
+        "**/.pxt/**": true
     },
     "files.associations": {
         "*.blocks": "html",
@@ -107,109 +102,18 @@ _site
         "**/node_modules": true,
         "**/yotta_modules": true,
         "**/yotta_targets": true,
-        "**/pxt_modules": true
+        "**/pxt_modules": true,
+        "**/.pxt": true
+    },
+    "files.exclude": {
+        "**/pxt_modules": true,
+        "**/.pxt": true
     }
 }`,
-            ".github/workflows/makecode.yml": `name: MakeCode
-
-on: [push]
-
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [14.x]
-
-    steps:
-      - uses: actions/checkout@v1
-      - name: Use Node.js $\{{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: $\{{ matrix.node-version }}
-      - name: npm install
-        run: |
-          npm install -g pxt
-          pxt target @TARGET@
-      - name: build
-        run: |
-          pxt install
-          pxt build --cloud
-        env:
-          CI: true
-`,
-            ".github/workflows/cfg-check.yml": `name: Check pxt.json
-
-on:
-  push:
-    branches:
-      - 'master'
-      - 'main'
-
-jobs:
-  check-cfg:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [14.x]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js $\{{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: $\{{ matrix.node-version }}
-      - name: npm install
-        run: |
-          npm install -g pxt
-          pxt target @TARGET@
-      - name: Checkout current state
-        run: |
-          git checkout -- .
-          git clean -fd
-      - name: Fix files listed in config if necessary
-        run: pxt checkpkgcfg
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
-        continue-on-error: true
-        with:
-          title: 'Removing missing files from pxt.json'
-          commit-message: 'Removing missing files from pxt.json'
-          delete-branch: true
-`,
-            ".vscode/tasks.json":
-                `
-// A task runner that calls the MakeCode (PXT) compiler
-{
-    "version": "2.0.0",
-    "tasks": [{
-        "label": "pxt deploy",
-        "type": "shell",
-        "command": "pxt deploy --local",
-        "group": "build",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt build",
-        "type": "shell",
-        "command": "pxt build --local",
-        "group": "build",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt install",
-        "type": "shell",
-        "command": "pxt install",
-        "group": "build",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt clean",
-        "type": "shell",
-        "command": "pxt clean",
-        "group": "test",
-        "problemMatcher": [ "$tsc" ]
-    }]
-}
-`
+            ".vscode/extensions.json":
+            `{
+    "recommendations": ["ms-edu.pxt-vscode-web"]
+}`,
         };
 
         // override files from target

@@ -16,6 +16,7 @@ namespace pxt {
         MMap = 10, // linux, mostly ev3
         BoxedString_SkipList = 11, // used by VM bytecode representation only
         BoxedString_ASCII = 12, // ditto
+        ZPin = 13,
         User0 = 16,
     }
 }
@@ -182,7 +183,9 @@ namespace pxt.HF2 {
     }
 
     export class Wrapper implements pxt.packetio.PacketIOWrapper {
+        private initialized = false;
         private cmdSeq = U.randomUint32();
+
         constructor(public readonly io: pxt.packetio.PacketIO) {
             let frames: Uint8Array[] = []
             io.onDeviceConnectionChanged = connect =>
@@ -267,8 +270,10 @@ namespace pxt.HF2 {
 
         onSerial = (buf: Uint8Array, isStderr: boolean) => { };
         onCustomEvent = (type: string, payload: Uint8Array) => { };
+        onConnectionChanged = () => { };
 
         private resetState() {
+            this.initialized = false
             this.lock = new U.PromiseQueue()
             this.info = null
             this.infoRaw = null
@@ -292,6 +297,14 @@ namespace pxt.HF2 {
                 else
                     return Promise.resolve() // ignore
             return Promise.reject(new Error("invalid custom event type"))
+        }
+
+        isConnected(): boolean {
+            return this.io.isConnected() && this.initialized
+        }
+
+        isConnecting(): boolean {
+            return this.io.isConnecting() || (this.io.isConnected() && !this.initialized)
         }
 
         reconnectAsync(): Promise<void> {
@@ -522,8 +535,10 @@ namespace pxt.HF2 {
         }
 
         private initAsync() {
-            if (this.rawMode)
+            if (this.rawMode) {
+                this.initialized = true
                 return Promise.resolve()
+            }
 
             return Promise.resolve()
                 .then(() => this.talkAsync(HF2_CMD_BININFO))
@@ -537,7 +552,7 @@ namespace pxt.HF2 {
                     return this.talkAsync(HF2_CMD_INFO)
                 })
                 .then(buf => {
-                    this.infoRaw = U.fromUTF8(U.uint8ArrayToString(buf));
+                    this.infoRaw = pxt.Util.fromUTF8Array(buf);
                     pxt.debug("Info: " + this.infoRaw)
                     let info = {} as any
                     ("Header: " + this.infoRaw).replace(/^([\w\-]+):\s*([^\n\r]*)/mg,
@@ -559,13 +574,16 @@ namespace pxt.HF2 {
                         }
                     log(`Board-ID: ${this.info.BoardID} v${this.info.Parsed.Version} f${this.info.Parsed.Features}`)
                 })
-                .then(() => this.talkAsync(HF2_CMD_JDS_CONFIG, new Uint8Array([1])).then(() => {
-                    this.jacdacAvailable = true
-                }, _err => {
-                    this.jacdacAvailable = false
-                }))
+                .then(() => this.talkAsync(HF2_CMD_JDS_CONFIG, new Uint8Array([1]))
+                    .then(() => {
+                        this.jacdacAvailable = true
+                    }, _err => {
+                        this.jacdacAvailable = false
+                    }))
                 .then(() => {
                     this.reconnectTries = 0
+                    this.initialized = true
+                    this.io.onConnectionChanged()
                 })
         }
 

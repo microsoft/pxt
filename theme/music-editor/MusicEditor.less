@@ -1,0 +1,40 @@
+@import "EditControls";
+@import "Note";
+@import "NoteGroup";
+@import "PlaybackControls";
+@import "ScrollableWorkspace";
+@import "Staff";
+@import "Track";
+@import "TrackSelector";
+@import "Workspace";
+
+@music-editor-background-color: #fff;
+@music-editor-header-color: #e30fc0;
+@music-editor-header-border-color: #c10da3;
+
+.music-field-editor {
+    height: 100%;
+    position: relative;
+}
+
+.music-editor {
+    background: @music-editor-background-color;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.music-asset-editor {
+    .gallery-editor-header {
+        background-color: @music-editor-header-color;
+        border: 2px solid @music-editor-header-border-color;
+        border-bottom: none;
+    }
+}
+
+.music-editor-label {
+    padding-right: 0.5rem;
+    font-size: 18px;
+    font-weight: 700;
+    user-select: none;
+}

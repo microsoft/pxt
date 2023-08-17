@@ -13,7 +13,7 @@ import * as projects from "./projects";
 import * as tutorial from "./tutorial";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
-type HeaderBarView = "home" | "editor" | "tutorial" | "debugging" | "sandbox";
+type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox";
 const LONGPRESS_DURATION = 750;
 
 export class HeaderBar extends data.Component<ISettingsProps, {}> {
@@ -75,6 +75,12 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         clearTimeout(this.longpressTimer);
     }
 
+    onPlayWithFriendsClick = (evt: any) => {
+        evt.preventDefault();
+        pxt.tickEvent("menu.playwithfriends", undefined, { interactiveConsent: true });
+        window.open(pxt.multiplayer.SHORT_LINK(), "_blank");
+    }
+
     protected getView = (): HeaderBarView => {
         const { home, debugging, tutorialOptions } = this.props.parent.state;
         if (home) {
@@ -83,6 +89,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             return "sandbox";
         } else if (debugging) {
             return "debugging";
+        } else if (!pxt.BrowserUtils.useOldTutorialLayout() && !!tutorialOptions?.tutorial) {
+            return "tutorial-tab";
         } else if (!!tutorialOptions?.tutorial) {
             return "tutorial";
         } else {
@@ -128,6 +136,23 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 if (activityName) return <div className="ui item">{activityName}</div>
                 if (!hideIteration) return <tutorial.TutorialMenu parent={this.props.parent} />
                 break;
+            case "tutorial-tab":
+                if (tutorialOptions && (pxt.appTarget?.appTheme?.tutorialSimSidebarLayout || pxt.BrowserUtils.isTabletSize())) {
+                    const currentStep = tutorialOptions.tutorialStep ? tutorialOptions.tutorialStep + 1 : undefined;
+                    const totalSteps = tutorialOptions.tutorialStepInfo ? tutorialOptions.tutorialStepInfo?.length : undefined;
+                    return (
+                        <div className="tutorial-header-label">
+                            <div className="ui item tutorial-header-name-label">{tutorialOptions.tutorialName}</div>
+                            {currentStep && totalSteps && (
+                                <>
+                                    <div className="ui item tutorial-header-step-label">{" - "}</div> { /* Keeping this separate helps simplify spacing */ }
+                                    <div className="ui item tutorial-header-step-label">{lf("Step {0} of {1}", currentStep, totalSteps, totalSteps)}</div>
+                                </>
+                            )}
+                        </div>
+                    );
+                }
+                return <div />;
             case "debugging":
                 return  <sui.MenuItem className="centered" icon="large bug" name="Debug Mode" />
             case "sandbox":
@@ -160,12 +185,19 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 if (!targetTheme.hideEmbedEdit) return <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} />
                 break;
             case "tutorial":
+            case "tutorial-tab":
                 const tutorialButtons = [];
                 if (tutorialOptions?.tutorialReportId) {
-                    tutorialButtons.push(<sui.ButtonMenuItem key="tutorial-report" className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} />)
+                    const reportTutorialLabel = lf("Unapproved Content");
+                    tutorialButtons.push(<sui.Item key="tutorial-report" role="menuitem" icon="exclamation triangle"
+                        className="report-tutorial-btn link-button icon-and-text" textClass="landscape only"
+                        text={reportTutorialLabel} ariaLabel={reportTutorialLabel} onClick={this.showReportAbuse} />);
                 }
-                if (!targetTheme.lockedEditor && !tutorialOptions?.metadata?.hideIteration) {
-                    tutorialButtons.push(<sui.ButtonMenuItem key="tutorial-exit" className="exit-tutorial-btn" role="menuitem" icon="sign out" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />)
+                if (!targetTheme.lockedEditor && !tutorialOptions?.metadata?.hideIteration && (view !== "tutorial-tab" || pxt.appTarget.simulator?.headless)) {
+                    const exitTutorialLabel = lf("Exit tutorial");
+                    tutorialButtons.push(<sui.Item key="tutorial-exit" role="menuitem" icon="sign out large"
+                        className="exit-tutorial-btn link-button icon-and-text" textClass="landscape only"
+                        text={exitTutorialLabel} ariaLabel={exitTutorialLabel} onClick={this.exitTutorial} />);
                 }
 
                 if (!!tutorialButtons.length) return tutorialButtons;
@@ -181,6 +213,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         switch (view){
             case "home":
                 return <projects.ProjectSettingsMenu parent={this.props.parent} />
+            case "tutorial-tab":
             case "editor":
                 return <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} showShare={!!header} />
             default:
@@ -200,8 +233,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const activeEditor = this.props.parent.isPythonActive() ? "Python"
             : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
-        const showHomeButton = view === "editor" && !targetTheme.lockedEditor && !isController;
-        const showShareButton = view === "editor" && header && pxt.appTarget.cloud?.sharing && !isController;
+        const showHomeButton = (view === "editor" || view === "tutorial-tab") && !targetTheme.lockedEditor && !isController;
+        const showShareButton = (view === "editor" || view === "tutorial-tab") && header && pxt.appTarget.cloud?.sharing && !isController;
         const showHelpButton = view === "editor" && targetTheme.docMenu?.length;
 
         // Approximate each tutorial step to be 22 px
@@ -222,11 +255,11 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             </div>}
             <div className="right menu">
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
-                {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobPile hide" : ""}`} role="menuitem" icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
-                {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" ariaLabel={lf("Share Project")} icon="share alternate large" onClick={this.showShareDialog} />}
+                {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobile hide" : ""}`} role="menuitem" title={lf("Home")} icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
+                {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" title={lf("Publish your game to create a shareable link")} icon="share alternate large" ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
                 {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}
                 {this.getSettingsMenu(view)}
-                {hasIdentity && (view === "home" || view === "editor") && <identity.UserMenu parent={this.props.parent} />}
+                {hasIdentity && (view === "home" || view === "editor" || view === "tutorial-tab") && <identity.UserMenu parent={this.props.parent} />}
             </div>
         </div>
     }

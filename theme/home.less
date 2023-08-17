@@ -36,7 +36,7 @@
             z-index: @homeScreenZIndex+2 !important;
         }
     }
-    .getting-started-segment {
+    .ui.segment.getting-started-segment {
         border: 0;
         margin-top: -2.1rem !important;
         margin-bottom: 2.1rem !important;
@@ -57,9 +57,9 @@
             text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
         }
     }
-    .getting-started-segment.hero {
-        -webkit-transition: background-image 0.2s ease-in;
-        transition: background-image 0.2s ease-in;
+    .ui.segment.getting-started-segment.hero {
+        -webkit-transition: background-image 0.5s ease-in;
+        transition: background-image 0.5s ease-in;
         overflow: hidden;
 
         .hero-banner-contents {
@@ -94,7 +94,7 @@
         }
 
         .dots button {
-            transition: background-color 0.2s;
+            transition: background-color 0.5s;
             border: 2px solid @heroBannerDotOutlineColor;
             margin-right: 1.25rem;
 
@@ -126,7 +126,7 @@
         min-height: 100%;
         background: @homeScreenBackground;
     }
-    .gallerysegment {
+    .ui.segment.gallerysegment {
         background: none;
         border: none;
         box-shadow: none;
@@ -290,9 +290,9 @@
             border-radius: 0.5rem;
             background-color: @primaryColor;
         }
-        .actions {
+        .ui.grid.stackable .actions {
             padding-right: 4rem !important;
-            position: absolute;
+            position: relative;
             bottom: 0;
             text-align: right;
 
@@ -367,11 +367,15 @@
             .card-action:hover {
                 transform: scale(1.1);
             }
+            .card-action.custom-icon i.xicon {
+                font-size: 6.5rem;
+                padding-top: 3.5rem;
+            }
             /* custom icons (override font to avoid mac/windows alignment issue) */
-            .card-action .xicon:before {
+            .card-action:not(.custom-icon) .xicon:before {
                 visibility: hidden;
             }
-            .card-action i.xicon {
+            .card-action:not(.custom-icon) i.xicon {
                 background: transparent @blocksIcon no-repeat center center;
                 background-size: 70%;
                 background-blend-mode: color-burn;
@@ -420,7 +424,7 @@
     }
 }
 
-.scriptmanager, .projectsdialog {
+.scriptmanager .ui.cards, .projectsdialog {
     .ui.card {
         margin-right: 5px;
         border-radius: @homeCardBorderRadius;
@@ -429,6 +433,10 @@
         background-color: @homeCardBackgroundColor;
         .ui.image, .ui.imagewrapper, .content {
             border-radius: @homeCardImageBorderRadius !important;
+            .tags {
+                color:#717171;
+                font-size: 1rem;
+            }
         }
         .header {
             color: @homeCardHeaderColor;
@@ -531,7 +539,7 @@
 @media only screen and (max-width: @largestTabletScreen) {
     /* Carousel */
     .projectsdialog {
-        .getting-started-segment {
+        .ui.segment.getting-started-segment {
             background-position: left center;
             height: 250px;
             .getting-started {
@@ -604,7 +612,7 @@
 @media only screen and (max-width: @largestMobileScreen) {
     /* Carousel */
     .projectsdialog {
-        .getting-started-segment {
+        .ui.segment.getting-started-segment {
             height: 10rem;
             margin-bottom: 0.5rem !important;
             .getting-started-header {
@@ -653,19 +661,12 @@
     }
 
     .projectsdialog {
-        .ui.card, .ui.cards>.card {
-            width: 9rem;
-            height: 9rem;
-        }
         .ui.card.buttoncard {
             .content {
                 padding: 1rem;
             }
             .header {
                 font-size: 12pt !important;
-            }
-            i.icon.huge {
-                font-size: 3rem;
             }
         }
         .ui.card.example {
@@ -681,6 +682,12 @@
             .ui.image~.content {
                 height: 2.4rem;
                 padding: 0.7rem;
+            }
+            .ui.image~.content.tall {
+                height: 3rem;
+                .tags {
+                    font-size: .8rem;
+                }
             }
         }
         .ui.card.file {
@@ -810,7 +817,7 @@
                 height: 220px;
             }
         }
-        .getting-started-segment {
+        .ui.segment.getting-started-segment {
             margin-top: -3.1rem!important;
             margin-bottom: 0rem!important;
             height: 168px;

@@ -6,7 +6,6 @@ namespace pxtblockly {
 
         initView() {
             super.initView();
-            this.initVariables();
         }
 
         onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
@@ -14,6 +13,62 @@ namespace pxtblockly {
             if (value === "CREATE") {
                 promptAndCreateKind(this.sourceBlock_.workspace, this.opts, lf("New {0}:", this.opts.memberName),
                     newName => newName && this.setValue(newName));
+            }
+            else if (value === "RENAME") {
+                const ws = this.sourceBlock_.workspace;
+                const toRename = ws.getVariable(this.value_, kindType(this.opts.name))
+                const oldName = toRename.name;
+
+                if (this.opts.initialMembers.indexOf(oldName) !== -1) {
+                    Blockly.alert(lf("The built-in {0} '{1}' cannot be renamed. Try creating a new kind instead!", this.opts.memberName, oldName));
+                    return;
+                }
+
+                promptAndRenameKind(
+                    ws,
+                    { ...this.opts, toRename },
+                    lf("Rename '{0}':", oldName),
+                    newName => {
+                        // Update the values of all existing field instances
+                        const allFields = getAllFields(ws, field => field instanceof FieldKind
+                            && field.getValue() === oldName
+                            && field.opts.name === this.opts.name);
+                        for (const field of allFields) {
+                            field.ref.setValue(newName);
+                        }
+                    }
+                );
+            }
+            else if (value === "DELETE") {
+                const ws = this.sourceBlock_.workspace;
+                const toDelete = ws.getVariable(this.value_, kindType(this.opts.name));
+                const varName = toDelete.name;
+
+                if (this.opts.initialMembers.indexOf(varName) !== -1) {
+                    Blockly.alert(lf("The built-in {0} '{1}' cannot be deleted.", this.opts.memberName, varName));
+                    return;
+                }
+
+                const uses = getAllFields(ws, field => field instanceof FieldKind
+                    && field.getValue() === varName
+                    && field.opts.name === this.opts.name);
+
+                if (uses.length > 1) {
+                    Blockly.confirm(lf("Delete {0} uses of the \"{1}\" {2}?", uses.length, varName, this.opts.memberName), response => {
+                        if (!response) return;
+                        Blockly.Events.setGroup(true);
+                        for (const use of uses) {
+                            use.block.dispose(true);
+                        }
+                        ws.deleteVariableById(toDelete.getId());
+                        this.setValue(this.opts.initialMembers[0]);
+                        Blockly.Events.setGroup(false);
+                    });
+                }
+                else {
+                    ws.deleteVariableById(toDelete.getId());
+                    this.setValue(this.opts.initialMembers[0]);
+                }
             }
             else {
                 super.onItemSelected_(menu, menuItem);
@@ -26,6 +81,11 @@ namespace pxtblockly {
             return super.doClassValidation_(value);
         }
 
+        getOptions(opt_useCache?: boolean) {
+            this.initVariables();
+            return super.getOptions(opt_useCache);
+        }
+
         private initVariables() {
             if (this.sourceBlock_ && this.sourceBlock_.workspace) {
                 const ws = this.sourceBlock_.workspace;
@@ -36,7 +96,7 @@ namespace pxtblockly {
                     }
                 });
 
-                if (this.getValue() === "CREATE") {
+                if (this.getValue() === "CREATE" || this.getValue() === "RENAME" || this.getValue() === "DELETE") {
                     if (this.opts.initialMembers.length) {
                         this.setValue(this.opts.initialMembers[0]);
                     }
@@ -50,7 +110,7 @@ namespace pxtblockly {
             const res: string[][] = [];
 
             const that = this as FieldKind;
-            if (that.sourceBlock_ && that.sourceBlock_.workspace) {
+            if (that.sourceBlock_ && that.sourceBlock_.workspace && !that.sourceBlock_.isInFlyout) {
                 const options = that.sourceBlock_.workspace.getVariablesOfType(kindType(opts.name));
                 options.forEach(model => {
                     res.push([model.name, model.name]);
@@ -62,12 +122,17 @@ namespace pxtblockly {
 
 
             res.push([lf("Add a new {0}...", opts.memberName), "CREATE"]);
+            res.push([undefined, "SEPARATOR"]);
+            res.push([lf("Rename {0}...", opts.memberName), "RENAME"]);
+            res.push([lf("Delete {0}...", opts.memberName), "DELETE"]);
 
             return res;
         }
     }
 
-    function promptAndCreateKind(ws: Blockly.Workspace, opts: pxtc.KindInfo, message: string, cb: (newValue: string) => void) {
+    type PromptFunction<U extends pxtc.KindInfo> = (ws: Blockly.Workspace, opts: U, message: string, cb: (newValue: string) => void) => void;
+
+    function promptForName<U extends pxtc.KindInfo>(ws: Blockly.Workspace, opts: U, message: string, cb: (newValue: string) => void, prompt: PromptFunction<U>) {
         Blockly.prompt(message, null, response => {
             if (response) {
                 let nameIsValid = false;
@@ -82,13 +147,13 @@ namespace pxtblockly {
 
                 if (!nameIsValid) {
                     Blockly.alert(lf("Names must start with a letter and can only contain letters, numbers, '$', and '_'."),
-                        () => promptAndCreateKind(ws, opts, message, cb));
+                        () => promptForName(ws, opts, message, cb, prompt));
                     return;
                 }
 
-                if (pxt.blocks.isReservedWord(response)) {
+                if (pxt.blocks.isReservedWord(response) || response === "CREATE" || response === "RENAME" || response === "DELETE") {
                     Blockly.alert(lf("'{0}' is a reserved word and cannot be used.", response),
-                        () => promptAndCreateKind(ws, opts, message, cb));
+                        () => promptForName(ws, opts, message, cb, prompt));
                     return;
                 }
 
@@ -97,19 +162,40 @@ namespace pxtblockly {
                     const name = existing[i];
                     if (name === response) {
                         Blockly.alert(lf("A {0} named '{1}' already exists.", opts.memberName, response),
-                            () => promptAndCreateKind(ws, opts, message, cb));
+                            () => promptForName(ws, opts, message, cb, prompt));
                         return;
                     }
                 }
 
                 if (response === opts.createFunctionName) {
                     Blockly.alert(lf("'{0}' is a reserved name.", opts.createFunctionName),
-                        () => promptAndCreateKind(ws, opts, message, cb));
+                        () => promptForName(ws, opts, message, cb, prompt));
                 }
 
-                cb(createVariableForKind(ws, opts, response));
+                cb(response);
             }
         }, { placeholder: opts.promptHint });
+    }
+
+    function promptAndCreateKind(ws: Blockly.Workspace, opts: pxtc.KindInfo, message: string, cb: (newValue: string) => void) {
+        const responseHandler = (response: string) => {
+            cb(createVariableForKind(ws, opts, response));
+        };
+
+        promptForName(ws, opts, message, responseHandler, promptAndCreateKind);
+    }
+
+    interface RenameOptions extends pxtc.KindInfo {
+        toRename: Blockly.VariableModel;
+    }
+
+    function promptAndRenameKind(ws: Blockly.Workspace, opts: RenameOptions, message: string, cb: (newValue: string) => void) {
+        const responseHandler = (response: string) => {
+            ws.getVariableMap().renameVariable(opts.toRename, response);
+            cb(response);
+        };
+
+        promptForName(ws, opts, message, responseHandler, promptAndRenameKind);
     }
 
 

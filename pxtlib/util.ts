@@ -215,6 +215,16 @@ namespace ts.pxtc.Util {
         return arr
     }
 
+    export function arrayEquals<U>(a: U[], b: U[], compare: (c: U, d: U) => boolean = (c, d) => c === d) {
+        if (a == b) return true;
+        if (!a && b || !b && a || a.length !== b.length) return false;
+
+        for (let i = 0; i < a.length; i++) {
+            if (!compare(a[i], b[i])) return false;
+        }
+        return true;
+    }
+
     export function iterMap<T>(m: pxt.Map<T>, f: (k: string, v: T) => void) {
         Object.keys(m).forEach(k => f(k, m[k]))
     }
@@ -471,6 +481,21 @@ namespace ts.pxtc.Util {
         let r: pxt.Map<boolean> = {}
         arr.forEach(e => { r[f(e)] = true })
         return r
+    }
+
+    export function deepCopy(src: any) {
+        if (typeof src !== "object" || src === null) {
+            return src;
+        }
+
+        const dst = Array.isArray(src) ? [] : {} as any;
+
+        for (const key in src) {
+            const value = src[key];
+            dst[key] = deepCopy(value);
+        }
+
+        return dst;
     }
 
     export interface ArrayLike<T> {
@@ -778,11 +803,11 @@ namespace ts.pxtc.Util {
     }
 
     export function escapeForRegex(str: string) {
-        return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+        return str?.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     }
 
     export function stripUrlProtocol(str: string) {
-        return str.replace(/.*?:\/\//g, "");
+        return str?.replace(/.*?:\/\//g, "");
     }
 
     export function normalizePath(path: string) {
@@ -1154,6 +1179,7 @@ namespace ts.pxtc.Util {
         "bn": { englishName: "Bengali", localizedName: "বাংলা" },
         "ca": { englishName: "Catalan", localizedName: "Català" },
         "cs": { englishName: "Czech", localizedName: "Čeština" },
+        "cy": { englishName: "Welsh", localizedName: "Cymraeg" },
         "da": { englishName: "Danish", localizedName: "Dansk" },
         "de": { englishName: "German", localizedName: "Deutsch" },
         "el": { englishName: "Greek", localizedName: "Ελληνικά" },
@@ -1193,12 +1219,12 @@ namespace ts.pxtc.Util {
         "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
         "ro": { englishName: "Romanian", localizedName: "Română" },
         "ru": { englishName: "Russian", localizedName: "Русский" },
-        "si-LK": { englishName: "Sinhala (Sri Lanka)", localizedName: "සිංහල (ශ්රී ලංකා)" },
+        "si-LK": { englishName: "Sinhala", localizedName: "සිංහල" },
         "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
         "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
-        "sr": { englishName: "Serbian", localizedName: "Srpski" },
+        "sr": { englishName: "Serbian (Latin)", localizedName: "Srpski" },
         "su": { englishName: "Sundanese", localizedName: "ᮘᮞ ᮞᮥᮔ᮪ᮓ" },
-        "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
+        "sv-SE": { englishName: "Swedish", localizedName: "Svenska" },
         "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
         "te": { englishName: "Telugu", localizedName: "తెలుగు" },
         "th": { englishName: "Thai", localizedName: "ภาษาไทย" },
@@ -1208,8 +1234,8 @@ namespace ts.pxtc.Util {
         "ur-IN": { englishName: "Urdu (India)", localizedName: "اردو (ہندوستان)" },
         "ur-PK": { englishName: "Urdu (Pakistan)", localizedName: "اردو (پاکستان)" },
         "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
-        "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
-        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁体中文" },
+        "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "中文(简体)" },
+        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "中文(繁體)" },
     };
 
     export function isLocaleEnabled(code: string): boolean {
@@ -1262,6 +1288,7 @@ namespace ts.pxtc.Util {
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
+                    pxt.analytics?.addDefaultProperties({lang: code}); //set the new language in analytics.
                     setLocalizedStrings(translations);
                 }
 
@@ -1609,6 +1636,154 @@ namespace ts.pxtc.Util {
         }
         return url
     }
+    export function cloneTargetBundle(target: pxt.TargetBundle) {
+        target = {
+            ...target
+        };
+
+        const apiInfo = target.apiInfo;
+        delete target.apiInfo;
+
+        const bundleddirs = target.bundleddirs;
+        delete target.bundleddirs;
+
+        const bundledpkgs = target.bundledpkgs;
+        delete target.bundledpkgs;
+
+        const tutorialInfo = target.tutorialInfo;
+        delete target.tutorialInfo;
+
+        const res = clone(target);
+
+        if (apiInfo) {
+            res.apiInfo = {};
+            for (const key of Object.keys(apiInfo)) {
+                const apis = apiInfo[key].apis;
+
+                res.apiInfo[key] = {
+                    sha: apiInfo[key].sha,
+                    apis: {
+                        jres: { ...apis.jres },
+                        byQName: cloneApis(apis.byQName)
+                    }
+                }
+            }
+        }
+
+        if (bundleddirs) {
+            res.bundleddirs = [...bundleddirs]
+        }
+
+        if (bundledpkgs) {
+            res.bundledpkgs = {};
+            for (const key of Object.keys(bundledpkgs)) {
+                res.bundledpkgs[key] = {
+                    ...bundledpkgs[key]
+                };
+            }
+        }
+
+        if (tutorialInfo) {
+            res.tutorialInfo = {};
+
+            for (const key of Object.keys(tutorialInfo)) {
+                const built = tutorialInfo[key];
+
+                res.tutorialInfo[key] = {
+                    hash: built.hash,
+                    usedBlocks: {
+                        ...built.usedBlocks
+                    },
+                    snippetBlocks: {
+                        ...built.snippetBlocks
+                    },
+                    highlightBlocks: {
+                        ...built.highlightBlocks
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+
+    export function cloneApis(byQName: pxt.Map<pxtc.SymbolInfo>) {
+        const res: pxt.Map<pxtc.SymbolInfo> = {};
+
+        for (const key of Object.keys(byQName)) {
+            res[key] = cloneSymbolInfo(byQName[key]);
+        }
+
+        return res;
+    }
+
+    export function cloneSymbolInfo(sym: pxtc.SymbolInfo): pxtc.SymbolInfo {
+        return {
+            // FIXME: This is a little dangerous, because we do edit the symbol attributes in some places
+            // for localization. However, most of those edits are to top-level properties and only edits
+            // to child objects matter so it *should* be fine
+            attributes: {
+                ...sym.attributes
+            },
+
+            parameters: sym.parameters?.map(cloneParameterDesc),
+            extendsTypes: sym.extendsTypes ? [...sym.extendsTypes] : undefined,
+            pkgs: sym.pkgs ? [...sym.pkgs] : undefined,
+            combinedProperties: sym.combinedProperties ? [...sym.combinedProperties] : undefined,
+
+            name: sym.name,
+            namespace: sym.namespace,
+            fileName: sym.fileName,
+            kind: sym.kind,
+            retType: sym.retType,
+            isInstance: sym.isInstance,
+            isContextual: sym.isContextual,
+            qName: sym.qName,
+            pkg: sym.pkg,
+            snippet: sym.snippet,
+            snippetName: sym.snippetName,
+            snippetWithMarkers: sym.snippetWithMarkers,
+            pySnippet: sym.pySnippet,
+            pySnippetName: sym.pySnippetName,
+            pySnippetWithMarkers: sym.pySnippetWithMarkers,
+            blockFields: sym.blockFields,
+            isReadOnly: sym.isReadOnly,
+            pyName: sym.pyName,
+            pyQName: sym.pyQName,
+            snippetAddsDefinitions: sym.snippetAddsDefinitions,
+        }
+    }
+
+    function cloneParameterDesc(param: pxtc.ParameterDesc): pxtc.ParameterDesc {
+        return {
+            name: param.name,
+            description: param.description,
+            type: param.type,
+            pyTypeString: param.pyTypeString,
+            initializer: param.initializer,
+            default: param.default,
+            properties: param.properties?.map(clonePropertyDesc),
+            handlerParameters: param.handlerParameters?.map(clonePropertyDesc),
+            options: param.options ? U.clone(param.options) : undefined,
+            isEnum: param.isEnum
+        }
+    }
+
+    function clonePropertyDesc(prop: pxtc.PropertyDesc): pxtc.PropertyDesc {
+        return {
+            name: prop.name,
+            type: prop.type
+        }
+    }
+
+
+    export function toUTF8Array(s: string) {
+        return (new TextEncoder()).encode(s);
+    }
+
+    export function fromUTF8Array(s: Uint8Array) {
+        return (new TextDecoder()).decode(s);
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {
@@ -1802,6 +1977,396 @@ namespace ts.pxtc.BrowserImpl {
     }
 
     export function sha256string(s: string) {
-        return sha256buffer(Util.stringToUint8Array(Util.toUTF8(s)))
+        pxt.perf.measureStart("sha256buffer")
+        const res = sha256buffer(Util.toUTF8Array(s));
+        pxt.perf.measureEnd("sha256buffer")
+        return res;
     }
+}
+
+namespace ts.pxtc.jsonPatch {
+    export type AddOperation = {
+        op: 'add',
+        path: (string | number)[];
+        value: string | number | boolean | object;
+    };
+
+    export type ReplaceOperation = {
+        op: 'replace',
+        path: (string | number)[];
+        value: string | number | boolean | object;
+    };
+
+    export type RemoveOperation = {
+        op: 'remove',
+        path: (string | number)[];
+    };
+
+    export type PatchOperation = AddOperation | ReplaceOperation | RemoveOperation;
+
+    interface Ops {
+        add(obj: any, key: string | number, value: any): void;
+        replace(obj: any, key: string | number, value: any): void;
+        remove(obj: any, key: string | number): void;
+    }
+
+    const objOps: Ops = {
+        add: (obj: any, key: string | number, value: any) => {
+            if (typeof obj !== 'object') throw new Error("jsonPatch: expected object type");
+            if (key in obj) throw new Error(`jsonPatch: object already contains key ${key}`);
+            obj[key] = value;
+        },
+        replace: (obj: any, key: string | number, value: any) => {
+            if (typeof obj !== 'object') throw new Error("jsonPatch: expected object type");
+            obj[key] = value;
+        },
+        remove: (obj: any, key: string | number) => {
+            if (typeof obj !== 'object') throw new Error("jsonPatch: expected object type");
+            delete obj[key];
+        },
+    }
+
+    const arrOps: Ops = {
+        add: (arr: any, key: string | number, value: any) => {
+            if (!Array.isArray(arr)) throw new Error("jsonPatch: expected array type");
+            if (key in arr) throw new Error(`jsonPatch: key ${key} already exists in array`);
+            if (typeof key === 'number') {
+                if (key === Math.floor(key)) {
+                    arr.splice(key, 0, value);
+                    return;
+                }
+            }
+            (arr as any)[key] = value;
+        },
+        replace: (arr: any, key: string | number, value: any) => {
+            if (!Array.isArray(arr)) throw new Error("jsonPatch: expected array type");
+            if (typeof key === 'number') {
+                if (key === Math.floor(key)) {
+                    arr.splice(key, 1, value);
+                    return;
+                }
+            }
+            (arr as any)[key] = value;
+        },
+        remove: (arr: any, key: string | number) => {
+            if (!Array.isArray(arr)) throw new Error("jsonPatch: expected array type");
+            if (typeof key === 'number') {
+                if (key === Math.floor(key)) {
+                    arr.splice(key, 1);
+                    return;
+                }
+            }
+            delete (arr as any)[key];
+        },
+    }
+
+    /**
+     * Returns the diff of two objects as a set of change operations, following the
+     * "JSON Patch" format: https://datatracker.ietf.org/doc/html/rfc6902 (with a
+     * small difference to the way paths are encoded).
+     */
+    export function diff(oldObj: any, newObj: any): PatchOperation[] {
+        const diff: {
+            add: AddOperation[]; remove: RemoveOperation[]; replace: ReplaceOperation[];
+        } = {
+            add: [], remove: [], replace: []
+        };
+
+        function _resolveKey(refObj: any, key: string): string | number {
+            if (!Array.isArray(refObj)) return key;
+            const nkey = Number.parseFloat(key);
+            return Number.isNaN(nkey) ? key : nkey;
+        }
+
+        function _diff(oldObj: any, newObj: any, basePath: (string | number)[]) {
+            if (Object.is(oldObj, newObj)) { return; }
+            newObj = newObj || {};
+            oldObj = oldObj || {};
+
+            for (let baseKey of Object.keys(oldObj)) {
+                if (!(baseKey in newObj)) {
+                    const key = _resolveKey(oldObj, baseKey);
+                    // key exists in oldObj but not in newObj -> remove op
+                    diff.remove.push({
+                        op: 'remove',
+                        path: basePath.concat(key)
+                    });
+                }
+            }
+
+            for (const baseKey of Object.keys(newObj)) {
+                const oldVal = oldObj[baseKey];
+                const newVal = newObj[baseKey];
+                const key = _resolveKey(newObj, baseKey);
+                if (!(key in oldObj)) {
+                    if (newObj[key] !== undefined) {
+                        // key exists in newObj but not in oldObj -> add op
+                        if (basePath.length) {
+                            diff.add.push({
+                                op: 'add',
+                                path: basePath,
+                                value: Array.isArray(newObj) ? [] : {}
+                            });
+                        }
+                        diff.add.push({
+                            op: 'add',
+                            path: basePath.concat(key),
+                            value: newVal
+                        });
+                    }
+                } else if (typeof oldVal !== 'object' && typeof newVal !== 'object' && oldVal !== newVal) {
+                    // Leaf nodes of same type with differing values -> replace op
+                    diff.replace.push({
+                        op: 'replace',
+                        path: basePath.concat(key),
+                        value: newVal
+                    });
+                } else if (typeof oldVal !== typeof newVal || Array.isArray(oldVal) !== Array.isArray(newVal)) {
+                    // Type changed -> replace op
+                    diff.replace.push({
+                        op: 'replace',
+                        path: basePath.concat(key),
+                        value: newVal
+                    });
+                } else {
+                    // Recurse
+                    _diff(oldVal, newVal, basePath.concat(key));
+                }
+            }
+        }
+
+        _diff(oldObj, newObj, []);
+
+        return [...diff.remove.reverse(), ...diff.replace, ...diff.add.sort((a, b) => a.path.length - b.path.length)];
+    }
+
+    /**
+     * Applies a set of JSON Patch operations to the object.
+     */
+    export function patchInPlace(obj: any, ops: PatchOperation[]): void {
+        if (!obj || typeof obj !== 'object') {
+            throw new Error("jsonPatch: Must be an object or an array.");
+        }
+        for (const op of ops) {
+            const path = op.path.slice();
+            const lastKey: (string | number) = path.pop();
+            if (lastKey == null) {
+                throw new Error("jsonPatch: missing last key");
+            }
+            let parent = obj;
+            // Find parent object of lastKey
+            let currKey = path.shift();
+            while (currKey != null) {
+                if (!(currKey in parent)) {
+                    throw new Error(`jsonPatch: missing parent element ${currKey}`);
+                }
+                parent = parent[currKey];
+                currKey = path.shift();
+            }
+            if (Array.isArray(parent) && typeof lastKey !== 'number') {
+                throw new Error(`jsonPatch: expected numeric index for array object`);
+            }
+            const ops = Array.isArray(parent) ? arrOps : objOps;
+            if (op.op === 'remove') {
+                ops.remove(parent, lastKey);
+            } else if (op.op === 'add' && !(lastKey in parent)) {
+                ops.add(parent, lastKey, op.value);
+            } else if (op.op === 'replace') {
+                ops.replace(parent, lastKey, op.value);
+            }
+        }
+    }
+
+    export function opsAreEqual(a: PatchOperation, b: PatchOperation): boolean {
+        return (a.op === b.op && U.arrayEquals(a.path, b.path));
+    }
+}
+
+namespace ts.pxtc.jsonPatch.tests {
+    export function diffTests() {
+        const tests: {
+            comment: string;
+            obja: any;
+            objb: any;
+            expected: ts.pxtc.jsonPatch.PatchOperation[]
+        }[] = [
+                {
+                    comment: "test 1",
+                    obja: { a: 4, b: 5 },
+                    objb: { a: 3, b: 5 },
+                    expected: [
+                        { op: "replace", path: ['a'], value: 3 }
+                    ]
+                },
+                {
+                    comment: "test 2",
+                    obja: { a: 3, b: 5 },
+                    objb: { a: 4, c: 5 },
+                    expected: [
+                        { op: "remove", path: ['b'] },
+                        { op: "replace", path: ['a'], value: 4 },
+                        { op: "add", path: ['c'], value: 5 }
+                    ]
+                },
+                {
+                    comment: "test 3",
+                    obja: { a: 4, b: [1, 2, 3] },
+                    objb: { a: 3, b: [1, 2, 4] },
+                    expected: [
+                        { op: "replace", path: ['a'], value: 3 },
+                        { op: "replace", path: ['b', 2], value: 4 }
+                    ]
+                },
+                {
+                    comment: "test 4",
+                    obja: { a: 3, b: [1, 2, 4] },
+                    objb: { a: 3, b: [1, 2, 4, 5] },
+                    expected: [
+                        { op: "add", path: ['b'], value: [] },
+                        { op: "add", path: ['b', 3], value: 5 }
+                    ]
+                },
+                {
+                    comment: "test 5",
+                    obja: { a: 4, b: { c: 3 } },
+                    objb: { a: 4, b: { c: 4 } },
+                    expected: [
+                        { op: "replace", path: ['b', 'c'], value: 4 }
+                    ]
+                },
+                {
+                    comment: "test 6",
+                    obja: { a: 4, b: { c: 4 } },
+                    objb: { a: 5, b: { d: 4 } },
+                    expected: [
+                        { op: "remove", path: ['b', 'c'] },
+                        { op: "replace", path: ['a'], value: 5 },
+                        { op: "add", path: ['b'], value: {} },
+                        { op: "add", path: ['b', 'd'], value: 4 }
+                    ]
+                },
+                {
+                    comment: "test 7",
+                    obja: { a: 4, b: [2, "foo"] },
+                    objb: { a: 4, b: [2, "foo", ["this", "that"]] },
+                    expected: [
+                        { op: "add", path: ['b'], value: [] },
+                        { op: "add", path: ['b', 2], value: ["this", "that"] }
+                    ]
+                }
+            ];
+
+        for (const test of tests) {
+            console.log(test.comment);
+            const patches = ts.pxtc.jsonPatch.diff(test.obja, test.objb);
+            if (deepEqual(patches, test.expected)) {
+                console.log("succeeded");
+            } else {
+                console.error("FAILED");
+                console.log("got", patches);
+                console.log("exp", test.expected);
+            }
+        }
+    }
+
+    export function patchTests() {
+        const tests: {
+            comment: string;
+            obj: any;
+            patches: ts.pxtc.jsonPatch.PatchOperation[];
+            expected: any;
+            validate?: (obj: any) => boolean;
+        }[] = [
+                {
+                    comment: "test 1",
+                    obj: { a: "foo", b: [4, 11] },
+                    patches: [
+                        { op: "remove", path: ['b'] },
+                        { op: "replace", path: ['a'], value: 4 },
+                        { op: "add", path: ['c'], value: 5 }
+                    ],
+                    expected: { a: 4, c: 5 }
+                },
+                {
+                    comment: "test 2",
+                    obj: { a: 4, b: [1, 2, 3] },
+                    patches: [
+                        { op: "replace", path: ['a'], value: 3 },
+                        { op: "replace", path: ['b', 2], value: 4 },
+                        { op: "add", path: ['b', 3], value: 9 }
+                    ],
+                    expected: { a: 3, b: [1, 2, 4, 9] }
+                },
+                {
+                    comment: "test 3",
+                    obj: { a: 4, b: { c: 3 } },
+                    patches: [
+                        { op: "replace", path: ['a'], value: 5 },
+                        { op: "remove", path: ['b', 'c'] },
+                        { op: "add", path: ['b', 'd'], value: 4 }
+                    ],
+                    expected: { a: 5, b: { d: 4 } }
+                },
+                {
+                    comment: "test 4",
+                    obj: { a: 4 },
+                    patches: [
+                        { op: "add", path: ['b'], value: [] },
+                        { op: "add", path: ['b', 0], value: "foo" },
+                        { op: "add", path: ['b', 1], value: "bar" }
+                    ],
+                    expected: { a: 4, b: ["foo", "bar"] },
+                    validate: (obj: any): boolean => {
+                        return obj['b'] && obj['b'].forEach;
+                    }
+                }
+            ];
+
+        for (const test of tests) {
+            console.log(test.comment);
+            ts.pxtc.jsonPatch.patchInPlace(test.obj, test.patches);
+            const equal = deepEqual(test.obj, test.expected);
+            const succeeded = equal && test.validate ? test.validate(test.obj) : true;
+            if (succeeded) {
+                console.log("succeeded");
+            } else if (test.expected) {
+                console.error("FAILED");
+                console.log("got", test.obj);
+                console.log("exp", test.expected);
+            }
+        }
+    }
+
+    function deepEqual(a: any, b: any): boolean {
+        if (a === b) { return true; }
+
+        if (a && b && typeof a === 'object' && typeof b === 'object') {
+            const arrA = Array.isArray(a);
+            const arrB = Array.isArray(b);
+
+            if (arrA && arrB) {
+                if (a.length !== b.length) { return false; }
+                for (let i = 0; i < a.length; ++i) {
+                    if (!deepEqual(a[i], b[i])) { return false; }
+                }
+                return true;
+            }
+
+            if (arrA !== arrB) { return false; }
+
+            const keysA = Object.keys(a);
+
+            if (keysA.length !== Object.keys(b).length) { return false; }
+
+            for (const key of keysA) {
+                if (!b.hasOwnProperty(key)) { return false; }
+                if (!deepEqual(a[key], b[key])) { return false; }
+            }
+
+            return true;
+        }
+
+        // True if both are NaN, false otherwise
+        return a !== a && b !== b;
+    };
 }

@@ -26,6 +26,7 @@ namespace ts.pxtc {
     export const BINARY_ELF = "binary.elf";
     export const BINARY_PXT64 = "binary.pxt64";
     export const BINARY_ESP = "binary.bin";
+    export const BINARY_SRCMAP = "binary.srcmap";
 
     export const NATIVE_TYPE_THUMB = "thumb";
     export const NATIVE_TYPE_VM = "vm";
@@ -247,6 +248,7 @@ namespace ts.pxtc {
         blockSourceMap?: pxt.blocks.BlockSourceInterval[]; // mappings id,start,end
         usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
         usedArguments?: pxt.Map<string[]>;
+        usedParts?: string[];
         needsFullRecompile?: boolean;
         // client options
         saveOnly?: boolean;
@@ -257,6 +259,7 @@ namespace ts.pxtc {
         configData?: ConfigEntry[];
         sourceMap?: SourceInterval[];
         globalNames?: pxt.Map<SymbolInfo>;
+        builtVariants?: string[];
     }
 
     export interface Breakpoint extends LocationInfo {
@@ -338,24 +341,23 @@ namespace ts.pxtc {
         endingToken?: string;
     }
 
-    export function computeUsedParts(resp: CompileResult, filter?: "onlybuiltin" | "ignorebuiltin"): string[] {
-        if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
+    export function computeUsedParts(resp: CompileResult, filter?: "onlybuiltin" | "ignorebuiltin", force = false): string[] {
+        if (!resp.usedSymbols || !pxt.appTarget.simulator || (!force && !pxt.appTarget.simulator.parts))
             return [];
 
+        const parseParts = (partsRaw: string, ps: string[]) => {
+            if (partsRaw) {
+                const partsSplit = partsRaw.split(/[ ,]+/g);
+                ps.push(...partsSplit.filter(p => !!p && ps.indexOf(p) < 0))
+             }
+        }
+
         let parts: string[] = [];
+        let hiddenParts: string[] = [];
         Object.keys(resp.usedSymbols).forEach(symbol => {
-            let info = resp.usedSymbols[symbol]
-            if (info && info.attributes.parts) {
-                let partsRaw = info.attributes.parts;
-                if (partsRaw) {
-                    let partsSplit = partsRaw.split(/[ ,]+/);
-                    partsSplit.forEach(p => {
-                        if (0 < p.length && parts.indexOf(p) < 0) {
-                            parts.push(p);
-                        }
-                    });
-                }
-            }
+            const info = resp.usedSymbols[symbol]
+            parseParts(info?.attributes.parts, parts)
+            parseParts(info?.attributes.hiddenParts, hiddenParts)
         });
 
         if (filter) {
@@ -368,6 +370,9 @@ namespace ts.pxtc {
                 }
             }
         }
+
+        // apply hidden parts filter
+        parts = parts.filter(p => hiddenParts.indexOf(p) < 0)
 
         //sort parts (so breadboarding layout is stable w.r.t. code ordering)
         parts.sort();
@@ -385,6 +390,8 @@ namespace ts.pxtc {
             fnArgs: compileResult.usedArguments,
             parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
             usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
+            allParts: pxtc.computeUsedParts(compileResult, undefined, true),
+            breakpoints: compileResult.breakpoints?.map(bp => bp.id),
         };
     }
 
@@ -655,7 +662,13 @@ namespace ts.pxtc {
             const left = param.substr(0, dotIdx)
             let right = param.substr(dotIdx + 1)
             right = U.snakify(right).toUpperCase();
-            return `${left}.${right}`
+
+            if (left) {
+                return `${left}.${right}`
+            }
+            else {
+                return right;
+            }
         }
         return param;
     }
@@ -751,8 +764,13 @@ namespace ts.pxtc {
                     updateBlockDef(fn.attributes);
                     const locps = pxt.blocks.compileInfo(fn);
                     if (!hasEquivalentParameters(ps, locps)) {
-                        pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`);
-                        pxt.reportError(`loc.errors`, `invalid translations`, {
+                        pxt.reportError("loc.errors", "block has non matching arguments", {
+                            block: fn.attributes.blockId,
+                            lang: lang,
+                            originalDefinition: oldBlock,
+                            translatedBlock: fn.attributes.block,
+                        });
+                        pxt.tickEvent("loc.errors", {
                             block: fn.attributes.blockId,
                             lang: lang,
                         });
@@ -786,8 +804,9 @@ namespace ts.pxtc {
             const bParam = b.actualNameToParam[aParam.actualName];
             if (!bParam
                 || aParam.type != bParam.type
-                || aParam.shadowBlockId != bParam.shadowBlockId) {
-                pxt.debug(`Parameter ${aParam.actualName} type or shadow block does not match after localization`);
+                || aParam.shadowBlockId != bParam.shadowBlockId
+                || aParam.definitionName != bParam.definitionName) {
+                pxt.debug(`Parameter ${aParam.actualName} type, shadow block, or definition name does not match after localization`);
                 return false;
             }
         }
@@ -815,7 +834,7 @@ namespace ts.pxtc {
         return r;
     }
 
-    const numberAttributes = ["weight", "imageLiteral", "topblockWeight"]
+    const numberAttributes = ["weight", "imageLiteral", "topblockWeight", "inlineInputModeLimit"]
     const booleanAttributes = [
         "advanced",
         "handlerStatement",
@@ -830,7 +849,8 @@ namespace ts.pxtc {
         "topblock",
         "callInDebugger",
         "duplicateShadowOnDrag",
-        "argsNullable"
+        "argsNullable",
+        "compileHiddenArguments"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -869,6 +889,16 @@ namespace ts.pxtc {
                     } else if (U.endsWith(n, ".shadow")) {
                         if (!res._shadowOverrides) res._shadowOverrides = {};
                         res._shadowOverrides[n.slice(0, n.length - 7)] = v;
+                    } else if (U.endsWith(n, ".snippet")) {
+                        if (!res.paramSnippets) res.paramSnippets = {};
+                        const paramName = n.slice(0, n.length - 8);
+                        if (!res.paramSnippets[paramName]) res.paramSnippets[paramName] = {};
+                        res.paramSnippets[paramName].ts = v;
+                    } else if (U.endsWith(n, ".pySnippet")) {
+                        if (!res.paramSnippets) res.paramSnippets = {};
+                        const paramName = n.slice(0, n.length - 10);
+                        if (!res.paramSnippets[paramName]) res.paramSnippets[paramName] = {};
+                        res.paramSnippets[paramName].python = v;
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v
@@ -1358,7 +1388,7 @@ namespace ts.pxtc {
                 if (len >= 0) {
                     fnbuf = fnbuf.slice(0, len)
                 }
-                filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
+                filename = U.fromUTF8Array(fnbuf);
                 fileSize = wordAt(28)
             }
 
@@ -1584,7 +1614,7 @@ namespace ts.pxtc {
                     for (let i = 32; i < 32 + 256; ++i)
                         currBlock[i] = 0xff
                     if (f.filename) {
-                        U.memcpy(currBlock, 32 + 256, U.stringToUint8Array(U.toUTF8(f.filename)))
+                        U.memcpy(currBlock, 32 + 256, U.toUTF8Array(f.filename))
                     }
                     f.blocks.push(currBlock)
                     f.ptrs.push(needAddr)
@@ -1636,6 +1666,7 @@ namespace ts.pxtc.service {
         search?: SearchOptions;
         format?: FormatOptions;
         blocks?: BlocksOptions;
+        extensions?: ExtensionsOptions;
         projectSearch?: ProjectSearchOptions;
         snippet?: SnippetOptions;
         runtime?: pxt.RuntimeOptions;
@@ -1657,6 +1688,26 @@ namespace ts.pxtc.service {
     export interface FormatOptions {
         input: string;
         pos: number;
+    }
+
+
+    export enum ExtensionType {
+        Bundled = 1,
+        Github = 2,
+        ShareScript = 3,
+    }
+
+    export interface ExtensionMeta {
+        name: string,
+        fullName?: string,
+        description?: string,
+        imageUrl?: string,
+        type?: ExtensionType
+        learnMoreUrl?: string;
+
+        pkgConfig?: pxt.PackageConfig; // Added if the type is Bundled
+        repo?: pxt.github.GitRepo; //Added if the type is Github VVN TODO ADD THIS
+        scriptInfo?: pxt.Cloud.JsonScript
     }
 
     export interface SearchInfo {
@@ -1684,5 +1735,8 @@ namespace ts.pxtc.service {
 
     export interface BlocksOptions {
         bannedCategories?: string[];
+    }
+    export interface ExtensionsOptions {
+        srcs: ExtensionMeta[];
     }
 }

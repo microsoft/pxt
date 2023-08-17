@@ -28,18 +28,21 @@ class Gizmo {
     }
 
     /**
-     * Set the Gizmo widget to inactive
-     * @param active set on (true) or off (false), eg: true
+     * Set the Gizmo widget to active
+     * @param active set on (true) or off (false)
      */
-    //% block="turn %Widgets(gizmo) %active"
+    //% block="turn $this to $active"
+    //% this.defl=gizmo
+    //% this.shadow=variables_get
     //% active.shadow=toggleOnOff
+    //% active.defl=true
     setActive(active: boolean) {
         this._active = active;
     }
 }
 
 /**
- * Widget namespace using en external class
+ * Widget namespace using an external class
  */
 //% color="#FF8000"
 namespace Widgets {

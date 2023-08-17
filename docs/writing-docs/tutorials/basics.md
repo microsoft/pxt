@@ -168,6 +168,150 @@ forever(function() {
 ```
 ````
 
+## Reconfiguring blocks in the toolbox (`blockconfig.local` and `blockconfig.global` sections)
+
+If you want to change the default parameters on an existing block as it appears in the toolbox, use a blockconfig section. A blockconfig contains a JavaScript snippet that defines one or more functions or operations along with their default arguments.
+
+There are two kinds of blockconfig sections: `blockconfig.local` and `blockconfig.global`. The global blockconfig can appear anywhere in the tutorial markdown, and the customizations it contains are applied globally, i.e. to all tutorial steps. Local blockconfigs must appear within a tutorial step, and apply to that step only. Local blockconfigs take precedence over global ones.
+
+### Limitations
+
+* Declaring custom assets is not supported yet. This means you will not be able to set a custom image on sprite creation, for example. We are thinking through how to support this, and it may come in the future!
+* `blockconfig.local` sections have a performance impact on the toolbox. They aren't able to take advantage of previously cached toolbox contents and must regenerate it each time.
+
+### Examples
+
+**Set the default background color to green. Apply globally**
+
+````
+```blockconfig.global
+scene.setBackgroundColor(7)
+```
+````
+
+**When Player sprite overlaps with Food. Apply to the current tutorial step only**
+````
+### {Step 3}
+
+```blockconfig.local
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+})
+```
+````
+
+**When Player sprite overlaps with Food, with embedded code snippet**
+````
+```blockconfig.global
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+    info.changeScoreBy(1)
+})
+```
+````
+
+**Creating an Enemy sprite**
+````
+```blockconfig.global
+let myEnemy = sprites.create(img``, SpriteKind.Enemy)
+```
+````
+
+> **Note the empty image.** blockconfigs don't yet work with custom assets (images, tilemaps, etc)!
+
+**Change default sprite position to the center of the screen**
+````
+```blockconfig.global
+let mySprite: Sprite = null
+mySprite.setPosition(80, 60)
+```
+````
+
+> Note here the declaration of `mySprite`. Variables used in the snippet must be declared so the decompiler can resolve the datatypes.
+
+**Place sprite in random location**
+````
+```blockconfig.global
+let mySprite: Sprite = null
+mySprite.setPosition(randint(0, scene.screenWidth()), randint(0, scene.screenHeight()))
+```
+````
+
+**Change random number range**
+````
+```blockconfig.global
+randint(-10, 10)
+```
+````
+
+**Multiple reconfigured blocks in a single blockconfig**
+````
+```blockconfig.global
+randint(-10, 10)
+let mySprite: Sprite = null
+mySprite = sprites.create(img``, SpriteKind.Enemy)
+mySprite.setPosition(randint(0, scene.screenWidth()), randint(0, scene.screenHeight()))
+```
+````
+
+### Troubleshooting blockconfigs
+
+If your reconfigured block isn't showing up in the toolbox, look for errors like this one in the debug console:
+
+`Failed to resolve block config for tutorial`
+
+Followed by a more detailed error message. The most common error you're likely to see is:
+
+`Block config decompiled to gray block`
+
+Gray blocks will be generated when not all datatypes are known (e.g. `mySprite` used, but not declared), or when a function name is misspelled.
+
+If you don't see an error message, try adding the `dbg=1` URL parameter and reload. This will output some information about each blockconfig to the console, and should provide a clue about what is failing.
+
+
+## Code Validation (`validation.local` and `validation.global` sections)
+
+If you want to enable code validation in your tutorial, you can do so by adding a validation section. As with [`blockconfig` above](#reconfiguring-blocks-in-the-toolbox-blockconfiglocal-and-blockconfigglobal-sections), there are two types of sections: `validation.global` and `validation.local`. Global can be anywhere in the markdown and applies to all steps in the tutorial. Local must appear within a specific step, and applies only to that step. Local takes precedence over global.
+
+Within a validation section, you may specify which validators you want to enable and properties for those validators using the same syntax we use for writing Skillmaps (see [skillmap structure](..\skillmaps.md#skillmap-structure)).
+
+### Validators
+
+Currently, only one validator exists: the `BlocksExistValidator`. This validator looks at [highlighted blocks](../snippets.md#highlight) in the answer key and confirms that, for each highlighted block, the user's code contains at least one block of the same type. It does *not* validate the parameters passed into the block.
+
+The only property currently available on the `BlocksExistValidator` is `Enabled`, which determines whether or not the validator runs. This is `true` by default whenever you specify the validator but can be set to `false` if you wish to disable it on a single step.
+
+### Examples
+**Enable the `BlocksExistValidator` globally**
+````
+```validation.global
+# BlocksExistValidator
+```
+````
+
+**Disable the `BlocksExistValidator` on a single step, if it has been enabled globally**
+````
+```validation.local
+# BlocksExistValidator
+* Enabled: false
+```
+````
+## Accordion/hidden hints
+If you want to provide extra information without having to divert the coder's attention, you can include content in an "accordion" style hint control. 
+
+### ~ hint
+If you want your hint to display by default when a step is encountered see [Explicit Hints](/writing-docs/tutorials/control-options#explicit-hints).
+### ~
+
+### ~ hint
+Nested accordion hints are not currently supported.
+### ~
+
+```
+~hint This content is hidden until the user clicks here.
+  - :blank: Bullet 1
+  - :mouse pointer: Bullet 2
+hint~
+```
+
 ## Testing
 
 If you are writing a third-party tutorial, please see the [User Tutorials](/writing-docs/user-tutorials) documentation for information on how to preview and share your tutorials.

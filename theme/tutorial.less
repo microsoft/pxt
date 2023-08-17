@@ -169,7 +169,8 @@ body#docs.tutorial {
 }
 
 #tutorialcard .tutorialmessage .content p,
-.tutorialhint p {
+.tutorialhint p,
+.tutorial-callout p {
     line-height: 1.4em !important;
     color: @tutorialSegmentColor;
 }
@@ -220,15 +221,25 @@ body#docs.tutorial {
     width: 100%;
 }
 
+.ui.modal {
+    .ams-embed, .yt-embed {
+        height: 30rem;
+        width: 80%;
+        max-height: 50vh;
+    }
+}
+
 @media only screen and (min-height: 400px) {
     .hintdialog .ui.segment .blocklyPreview,
-    .tutorialhint .ui.segment .blocklyPreview {
+    .tutorialhint .ui.segment .blocklyPreview,
+    .tutorial-callout .ui.segment .blocklyPreview {
         max-height: 45vh;
     }
 }
 
 @media only screen and (max-height: 800px) {
-    .tutorialhint img {
+    .tutorialhint img,
+    .tutorial-callout img {
         max-height: 30vh;
     }
 }
@@ -253,6 +264,13 @@ span.docs.inlineblock {
     color: @white;
     font-family: @blocklyFont !important;
     font-size: 1em !important;
+    &.clickable {
+        cursor: pointer;
+
+        &:hover, &:focus {
+            opacity: .8;
+        }
+    }
 }
 
 code.lang-filterblocks {
@@ -358,7 +376,8 @@ code.lang-filterblocks {
     }
 }
 
-.tutorialhint {
+.tutorialhint,
+.tutorial-callout {
     position: absolute;
     max-width: 100%;
     min-width: 300px;
@@ -372,7 +391,8 @@ code.lang-filterblocks {
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
 }
 
-.tutorialhint:before {
+.tutorialhint:before,
+.tutorial-callout:before {
     content: ' ';
     position: absolute;
     width: 0;
@@ -385,16 +405,20 @@ code.lang-filterblocks {
     transform: rotateZ(-135deg);
 }
 
-.tutorialhint > div {
+.tutorialhint > .hint-content,
+.tutorial-callout > .hint-content {
     max-height: 60vh;
     overflow: auto;
+    padding-right: 2rem;
 }
 
-.tutorialhint.hidden {
+.tutorialhint.hidden,
+.tutorial-callout.hidden {
     display: none;
 }
 
-.tutorialhint .lang-blocks .segment.raised {
+.tutorialhint .lang-blocks .segment.raised,
+.tutorial-callout .lang-blocks .segment.raised {
     border: none;
     background: none;
     box-shadow: none;
@@ -496,15 +520,26 @@ code.lang-filterblocks {
 /******************************
     Immersive Reader button
 ******************************/
+// TODO (shakao) remove #mainmenu items when cleaning up
+// old tutorial code
+#simulator .editor-sidebar .immersive-reader-button.ui.item,
+#simulator .editor-sidebar .immersive-reader-button.ui.item:focus,
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
-    background-image: @immersiveReaderLightIcon;
     width: 2rem;
     height: 2rem;
     background-repeat: no-repeat;
     background-size: 80%;
     background-position: center;
     border-radius: .2em!important;
+}
+#mainmenu .immersive-reader-button.ui.item,
+#mainmenu .immersive-reader-button.ui.item:focus {
+    background-image: @immersiveReaderLightIcon;
+}
+#simulator .editor-sidebar .immersive-reader-button.ui.item,
+#simulator .editor-sidebar .immersive-reader-button.ui.item:focus{
+    background-image: @immersiveReaderIcon;
 }
 
 #mainmenu .immersive-reader-button:focus,
@@ -513,7 +548,7 @@ code.lang-filterblocks {
     filter: brightness(0.8);
 }
 
-.modals .immersive-reader-button {
+.modals .ui.button.immersive-reader-button {
     background-image: @immersiveReaderIcon;
     width: 2rem;
     height: 2.8rem;
@@ -529,8 +564,8 @@ code.lang-filterblocks {
     margin-left: 0!important;
 }
 
-.modals .immersive-reader-button:hover,
-.modals .immersive-reader-button:focus {
+.modals .ui.button.immersive-reader-button:hover,
+.modals .ui.button.immersive-reader-button:focus {
     box-shadow: none;
     background-image: @immersiveReaderIcon;
     background-repeat: no-repeat;
@@ -666,7 +701,7 @@ code.lang-filterblocks {
  * CSS for embedded tutorial used in the skills map
  */
 .tutorial.tutorial-embed {
-    #filelist, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+    #simulator .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
         top: @tutorialEmbedMenuHeight;
     }
     .simView #boardview {
@@ -808,7 +843,7 @@ code.lang-filterblocks {
     * CSS for embedded tutorial used in the skills map
     */
     .tutorial.tutorial-embed {
-        #filelist {
+        #simulator .editor-sidebar {
             top: unset;
         }
     }

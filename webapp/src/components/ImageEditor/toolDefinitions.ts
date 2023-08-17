@@ -274,8 +274,10 @@ export class EditState {
         return col >= 0 && col < this.floating.image.width && row >= 0 && row < this.floating.image.height;
     }
 
-    setFloatingLayer(floatingImage: pxt.sprite.Bitmap, offset?: { layerOffsetX: number, layerOffsetY: number }) {
-        this.mergeFloatingLayer();
+    setFloatingLayer(floatingImage: pxt.sprite.Bitmap, offset?: { layerOffsetX: number, layerOffsetY: number }, merge?: boolean) {
+        if (merge) {
+            this.mergeFloatingLayer();
+        }
 
         this.floating = { image: floatingImage };
         this.layerOffsetX = offset?.layerOffsetX ?? 0;
@@ -299,8 +301,11 @@ export class EditState {
 export abstract class Edit {
     protected startCol: number;
     protected startRow: number;
+    protected startX: number;
+    protected startY: number;
     isStarted: boolean;
     showPreview: boolean;
+    originalImage: pxt.sprite.Bitmap
 
     constructor (protected canvasWidth: number, protected canvasHeight: number, public color: number, protected toolWidth: number) {
     }
@@ -319,10 +324,12 @@ export abstract class Edit {
     }
 
 
-    start(cursorCol: number, cursorRow: number, state: EditState) {
+    start(cursorCol: number, cursorRow: number, cursorX: number, cursorY: number, state: EditState) {
         this.isStarted = true;
         this.startCol = cursorCol;
         this.startRow = cursorRow;
+        this.startX = cursorX;
+        this.startY = cursorY;
     }
 
     drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
@@ -638,7 +645,7 @@ export class FillEdit extends Edit {
     protected row: number;
     showPreview = true;
 
-    start(col: number, row: number, state: EditState) {
+    start(col: number, row: number, cursorX: number, cursorY: number, state: EditState) {
         this.isStarted = true;
         this.col = col;
         this.row = row;
@@ -686,17 +693,52 @@ export class FillEdit extends Edit {
 
 export class MarqueeEdit extends SelectionEdit {
     protected isMove = false;
+    protected isResize = false;
     showPreview = false;
 
     protected startOffsetX: number;
     protected startOffsetY: number;
+    protected anchorCol: number;
+    protected anchorRow: number;
 
-    start(cursorCol: number, cursorRow: number, state: EditState) {
+    start(cursorCol: number, cursorRow: number, cursorX: number, cursorY: number, state: EditState) {
         this.isStarted = true;
         this.startCol = cursorCol;
         this.startRow = cursorRow;
+
+        const div = document.elementFromPoint(cursorX, cursorY)
+
         if (state.floating && state.floating.image) {
-            if (state.inFloatingLayer(cursorCol, cursorRow)) {
+            if (div && div.className == "image-editor-floating-layer-corner") {
+                this.isResize = true;
+                this.startOffsetX = state.layerOffsetX;
+                this.startOffsetY = state.layerOffsetY;
+                let farthestCorner = undefined;
+                let farthestCornerDistance = 0;
+                const corners = document.getElementsByClassName("image-editor-floating-layer-corner")
+                for (let i = 0; i < corners.length; i++) {
+                    let distance = Math.sqrt(Math.pow(corners[i].getBoundingClientRect().x - cursorX, 2) + Math.pow(corners[i].getBoundingClientRect().y - cursorY, 2))
+                    if (distance > farthestCornerDistance) {
+                        farthestCornerDistance = distance;
+                        farthestCorner = corners[i];
+                    }
+                }
+                const surfaces = document.getElementsByClassName("paint-surface")
+                let canvas: HTMLCanvasElement;
+                for (let i = 0; i < surfaces.length; i++) {
+                    if (surfaces[i].className.includes('main')) {
+                        canvas = surfaces[i] as HTMLCanvasElement
+                    }
+                }
+                const canvasLeft = canvas.getBoundingClientRect().left;
+                const canvasTop = canvas.getBoundingClientRect().top;
+                const canvasWidth = canvas.getBoundingClientRect().width;
+                const canvasHeight = canvas.getBoundingClientRect().height;
+                this.anchorCol = ((farthestCorner.getBoundingClientRect().x - canvasLeft) / canvasWidth) * this.canvasWidth;
+                this.anchorRow = ((farthestCorner.getBoundingClientRect().y - canvasTop) / canvasHeight) * this.canvasHeight;
+                if (!this.originalImage)
+                    this.originalImage = state.floating.image.copy();
+            } else if (state.inFloatingLayer(cursorCol, cursorRow)) {
                 this.isMove = true;
                 this.startOffsetX = state.layerOffsetX;
                 this.startOffsetY = state.layerOffsetY;
@@ -709,6 +751,19 @@ export class MarqueeEdit extends SelectionEdit {
     }
 
     protected doEditCore(state: EditState): void {
+        function resize(bitmap: pxt.sprite.Bitmap, newWidth: number, newHeight: number): pxt.sprite.Bitmap {
+            const image = new pxt.sprite.Bitmap(newWidth, newHeight, 0, 0)
+            for (let x = 0; x < newWidth; x++) {
+                for (let y = 0; y < newHeight; y++) {
+                    const nnX = Math.floor(((x / newWidth) * bitmap.width))
+                    const nnY = Math.floor((( y / newHeight) * bitmap.height))
+
+                    const nearestNeighborColor = bitmap.get(nnX, nnY)
+                    image.set(x, y, nearestNeighborColor)
+                }
+            }
+            return image;
+        }
         const tl = this.topLeft();
         const br = this.bottomRight();
 
@@ -716,13 +771,17 @@ export class MarqueeEdit extends SelectionEdit {
             if (this.isMove) {
                 state.layerOffsetX = this.startOffsetX + this.endCol - this.startCol;
                 state.layerOffsetY = this.startOffsetY + this.endRow - this.startRow;
-            }
-            else {
+            } else if (this.isResize) {
+                const resizedWidth = Math.round(Math.abs(this.anchorCol - this.endCol))
+                const resizedHeight = Math.round(Math.abs(this.anchorRow - this.endRow))
+                const resizedImage = resize(this.originalImage, resizedWidth, resizedHeight)
+                state.setFloatingLayer(resizedImage, {layerOffsetX: Math.round(Math.min(this.anchorCol, this.endCol)),
+                        layerOffsetY: Math.round(Math.min(this.anchorRow, this.endRow))}, false);
+            } else {
                 state.mergeFloatingLayer();
                 state.copyToLayer(tl.x, tl.y, br.x - tl.x + 1, br.y - tl.y + 1, true);
             }
-        }
-        else if (!this.isMove) {
+        } else if (!this.isMove) {
             state.mergeFloatingLayer();
         }
     }
@@ -827,4 +886,41 @@ export function flipEdit(image: EditState, vertical: boolean, isTilemap: boolean
             dest.set(x, y, src.get(src.width - x - 1, y))
         }
     }
+}
+
+export function outlineEdit(image: EditState, color: number) {
+    const source = image.floating?.image ? image.floating : image;
+    const out = image.copy();
+
+    const newImage = image?.floating?.image ? out.floating.image : out.image;
+
+    for (let x = 0; x < source.image.width; x++) {
+        for (let y = 0; y < source.image.height; y++) {
+            if (source.image.get(x, y) === 0) {
+                if (source.image.get(x - 1, y) !== 0 || source.image.get(x, y - 1) !== 0 ||
+                    source.image.get(x + 1, y) !== 0 || source.image.get(x, y + 1) !== 0) {
+                    newImage.set(x, y, color);
+                }
+            }
+        }
+    }
+
+    return out;
+}
+
+export function replaceColorEdit(image: EditState, fromColor: number, toColor: number) {
+    const source = image.floating?.image ? image.floating : image;
+    const out = image.copy();
+
+    const newImage = image?.floating?.image ? out.floating.image : out.image;
+
+    for (let x = 0; x < source.image.width; x++) {
+        for (let y = 0; y < source.image.height; y++) {
+            if (source.image.get(x, y) === fromColor) {
+                newImage.set(x, y, toColor);
+            }
+        }
+    }
+
+    return out;
 }

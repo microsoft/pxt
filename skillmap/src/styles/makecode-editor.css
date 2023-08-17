@@ -36,18 +36,38 @@
  }
 
 .makecode-frame-loader-bar {
-    border: 1px solid var(--black);
+    --progress-bar-filled-color: var(--primary-color);
+    --progress-bar-unfilled-color: transparency;
+    --progress-bar-border-color: var(--black);
     width: 10rem;
     height: 1.5rem;
     margin-bottom: 1rem;
 }
-
-.makecode-frame-loader-fill {
-    background-color: var(--primary-color);
-    height: 100%;
-    width: 1rem;
-    transition: width 0.5s ease-out;
+.makecode-frame-loader-bar progress.common-progressbar {
+    border-width: 1px;
+    border-radius: 1px;
 }
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .makecode-frame-loader,
+.high-contrast .makecode-frame-loader-bar {
+  background-color: var(--high-contrast-background);
+  border-color: var(--high-contrast-text);
+}
+
+.high-contrast .makecode-frame-loader img {
+  filter: grayscale(100%) brightness(60%) contrast(400%);
+  animation: none;
+  -webkit-animation: none;
+}
+
+.high-contrast .makecode-frame-loader-fill {
+  background-color: var(--high-contrast-text);
+}
+
 
  @-webkit-keyframes loader-pxt {
    0% {

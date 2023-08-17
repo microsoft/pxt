@@ -8,7 +8,7 @@
     <script type="text/javascript">
     if(/[&?]translate=1/.test(window.location.href)) {
 		var _jipt = [];
-        _jipt.push(['project', 'kindscript']);
+        _jipt.push(['project', 'makecode']);
         _jipt.push(['escape', function() {
             window.location.href = window.location.href.replace(/[$\?]translate=1/, '');
         }]);
@@ -34,7 +34,7 @@
 
 <body class="main">
     <div id='loading' class="ui active dimmer">
-        <div class="ui large main loader"></div>
+        <div class="ui large main loader msft"></div>
     </div>
 
     <div id='custom-content'>
@@ -84,7 +84,7 @@
         };
 
         // this get rewritten to blob URLs with SHAs while uploading to the cloud
-        // keep in sync with release.manifest
+        // keep in sync with release.manifest and asseteditor.html
         window.MonacoPaths = {
             "vs/loader": "/blb/vs/loader.js",
             "vs/base/worker/workerMain": "/blb/vs/base/worker/workerMain.js",
@@ -106,7 +106,31 @@
             "blockly.css": "/blb/blockly.css",
             "rtlblockly.css": "/blb/rtlblockly.css",
             "gifjs/gif.js": "/blb/gifjs/gif.js",
-            "qrcode/qrcode.min.js": "/blb/qrcode/qrcode.min.js"
+            "qrcode/qrcode.min.js": "/blb/qrcode/qrcode.min.js",
+            "zip.js/zip.min.js": "/blb/zip.js/zip.min.js",
+            "pdf-lib/pdf-lib.min.js": "/blb/pdf-lib/pdf-lib.min.js",
+            "music-editor/apple.png": "/blb/music-editor/apple.png",
+            "music-editor/burger.png": "/blb/music-editor/burger.png",
+            "music-editor/cake.png": "/blb/music-editor/cake.png",
+            "music-editor/car.png": "/blb/music-editor/car.png",
+            "music-editor/cat.png": "/blb/music-editor/cat.png",
+            "music-editor/cherry.png": "/blb/music-editor/cherry.png",
+            "music-editor/clam.png": "/blb/music-editor/clam.png",
+            "music-editor/computer.png": "/blb/music-editor/computer.png",
+            "music-editor/crab.png": "/blb/music-editor/crab.png",
+            "music-editor/dog.png": "/blb/music-editor/dog.png",
+            "music-editor/duck.png": "/blb/music-editor/duck.png",
+            "music-editor/egg.png": "/blb/music-editor/egg.png",
+            "music-editor/explosion.png": "/blb/music-editor/explosion.png",
+            "music-editor/fish.png": "/blb/music-editor/fish.png",
+            "music-editor/ice-cream.png": "/blb/music-editor/ice-cream.png",
+            "music-editor/lemon.png": "/blb/music-editor/lemon.png",
+            "music-editor/snake.png": "/blb/music-editor/snake.png",
+            "music-editor/star.png": "/blb/music-editor/star.png",
+            "music-editor/strawberry.png": "/blb/music-editor/strawberry.png",
+            "music-editor/taco.png": "/blb/music-editor/taco.png",
+            "music-editor/bass-clef.svg": "/blb/music-editor/bass-clef.svg",
+            "music-editor/treble-clef.svg": "/blb/music-editor/treble-clef.svg",
         }
     </script>
 </body>

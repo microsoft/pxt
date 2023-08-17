@@ -5,7 +5,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "declaration": true,
-        "out": "../built/pxtcompiler.js",
+        "outFile": "../built/pxtcompiler.js",
         "newLine": "LF",
         "sourceMap": false,
         "lib": [
@@ -18,7 +18,8 @@
         "types": [
             "fuse"
         ],
-        "incremental": true
+        "incremental": true,
+        "skipLibCheck": true
     },
     "exclude": [
         "ext-typescript/lib/lib.d.ts"

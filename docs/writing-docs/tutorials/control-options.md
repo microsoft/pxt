@@ -85,6 +85,14 @@ game.onUpdateInterval(1000, function () {
 ```
 ````
 
+For a "blank" template that only contains the `on start` block (in targets like Minecraft, which has two default blocks on the workspace) simply make a template block with an empty comment:
+
+````
+```template
+//
+```
+````
+
 You can include **1** template in a tutorial. Place the template section either at the beginning of the document or at the end so as to not clutter the sequence of tutorial steps.
 
 ### Ghost blocks

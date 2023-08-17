@@ -37,7 +37,7 @@ interface MapFinishedPrerequisite {
 
 type MapNodeKind = "activity" | "reward" | "completion" | "layout";
 
-type MapNode = MapActivity | MapReward | MapCompletionNode | MapLayoutNode
+type MapNode = MapActivity | MapRewardNode | MapCompletionNode | MapLayoutNode
 
 interface BaseNode {
     kind: MapNodeKind;
@@ -68,16 +68,36 @@ interface MapActivity extends BaseNode {
     allowCodeCarryover?: boolean;
 }
 
-type MapRewardType = "certificate";
+type MapReward = MapRewardCertificate | MapCompletionBadge;
 
-interface MapReward extends BaseNode {
-    kind: "reward";
-    type: MapRewardType;
+interface MapRewardCertificate {
+    type: "certificate";
     url: string;
+    previewUrl?: string;
 }
 
-interface MapCompletionNode extends MapReward {
+interface MapCompletionBadge {
+    type: "completion-badge";
+    imageUrl: string;
+    displayName?: string;
+}
+
+interface MapRewardNode extends BaseNode {
+    kind: "reward";
+    rewards: MapReward[];
+    actions: MapCompletionAction[];
+}
+
+interface MapCompletionNode extends MapRewardNode {
     kind: "completion";
+    showMultiplayerShare?: boolean;
+}
+
+interface MapCompletionAction {
+    kind: "activity" | "map" | "docs" | "editor" | "tutorial";
+    label?: string;
+    activityId?: string;
+    url?: string;
 }
 
 interface MapLayoutNode extends BaseNode {

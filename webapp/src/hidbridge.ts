@@ -42,23 +42,19 @@ function onOOB(v: OOB) {
     }
 }
 
-function init() {
+export function shouldUse() {
+    let serial = pxt.appTarget.serial
+    return serial && serial.useHF2 && (pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken);
+}
+
+export function mkHIDBridgePacketIOAsync(): Promise<pxt.packetio.PacketIO> {
     if (!iface) {
         if (!pxt.BrowserUtils.isLocalHost() || !Cloud.localToken)
-            return;
+            return Promise.resolve(undefined);
         pxt.debug('initializing hid pipe');
         iface = pxt.worker.makeWebSocket(
             `ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/hid`, onOOB)
     }
-}
-
-export function shouldUse() {
-    let serial = pxt.appTarget.serial
-    return serial && serial.useHF2 && (pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
-}
-
-export function mkHIDBridgePacketIOAsync(): Promise<pxt.packetio.PacketIO> {
-    init()
     let raw = false
     if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
         raw = true

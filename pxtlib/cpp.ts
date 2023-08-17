@@ -272,7 +272,7 @@ namespace pxt.cpp {
             }
 
             for (const fn of pkg.getFiles()) {
-                if (["Makefile", "sdkconfig.defaults", "CMakeLists.txt"].indexOf(fn) >= 0) {
+                if (["Makefile", "sdkconfig.defaults", "CMakeLists.txt"].indexOf(fn) >= 0 || U.endsWith(fn, ".mk")) {
                     res.generatedFiles["/" + fn] = pkg.host().readFile(pkg, fn)
                 }
             }
@@ -1055,6 +1055,7 @@ namespace pxt.cpp {
             })
             res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
             pxt.debug(`codal.json: ${res.generatedFiles["/codal.json"]}`);
+            res.codal = codalJson
         } else if (isPlatformio) {
             const iniLines = compileService.platformioIni.slice()
             // TODO merge configjson
@@ -1375,7 +1376,7 @@ namespace pxt.hexloader {
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let retry = 0;
                                 const delay = 8000; // ms
-                                const maxWait = 120000; // ms
+                                const maxWait = 300000; // ms
                                 const startTry = U.now();
                                 const tryGet = () => {
                                     retry++;

@@ -1,0 +1,133 @@
+:root {
+  --black: #000;
+  --white: #fff;
+
+  --primary-color: #E77038;
+  --secondary-color: #ffeb9a;
+  --tertiary-color: #E77038;
+
+  --header-height: 4rem;
+  --header-padding-top: 1rem;
+
+  --body-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--body-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(180deg, rgba(24,47,64,1) 0%, rgba(255,255,255,1) 73%);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.common-button {
+  font-family: var(--body-font-family);
+}
+.common-button.primary {
+  background: var(--primary-color);
+  color: #fff;
+  border: 1px solid var(--primary-color);
+}
+.common-button.secondary {
+  background: var(--secondary-color);
+  color: #fff;
+  border: 1px solid var(--secondary-color);
+}
+.common-button.tertiary {
+  background: var(--tertiary-color);
+  color: #fff;
+  border: 1px solid var(--tertiary-color);
+}
+
+img.pixel-art-image {
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;
+
+  object-fit: contain;
+  height: auto;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+#root > div {
+  width: 100%;
+  height: 100%;
+}
+
+.app-container {
+  height: 100%;
+  width: 100%;
+}
+
+@keyframes reaction-fly-up {
+  0% {
+    transform: translateY(0);
+    scale: 1.25;
+    opacity: 0;
+  }
+  7% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-200px);
+    scale: 2.5;
+    opacity: 0;
+  }
+}
+
+@keyframes reaction-fly-left {
+  to {
+    transform: translateX(-200px);
+  }
+}
+
+@keyframes reaction-fly-right {
+  to {
+    transform: translateX(200px);
+  }
+}
+
+@keyframes reaction-rotate-left {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-30deg);
+  }
+  75% {
+    transform: rotate(30deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes reaction-rotate-right {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(30deg);
+  }
+  75% {
+    transform: rotate(-30deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}

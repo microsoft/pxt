@@ -6,6 +6,7 @@
     <title>MakeCode Skill Map</title>
     <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
     <link rel="stylesheet" href="/blb/icons.css" type="text/css">
+    <link rel="stylesheet" href="/blb/react-common-skillmap.css" type="text/css">
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -23,6 +24,11 @@
     <script>
       // This line gets patched up by the cloud
       var pxtConfig = null;
+
+      // this get rewritten to blob URLs with SHAs while uploading to the cloud
+      window.MonacoPaths = {
+          "pdf-lib/pdf-lib.min.js": "/blb/pdf-lib/pdf-lib.min.js"
+      }
     </script>
 
     <!-- begin usabilla live embed code -->

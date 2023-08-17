@@ -121,8 +121,10 @@ export async function resolveExtensionUrl(pkg: pxt.Package) {
         && extension.localUrl;
     if (debug) {
         url = "http://localhost:3232/extension.html";
+        trusted = true;
     } else if (localDebug) {
         url = extension.localUrl;
+        trusted = true;
     }
     // ALL EDITOR EXTENSIONS MUST NOW BE IN THE APPROVED LIST
     else if (extension.url

@@ -111,11 +111,16 @@
         var highContrast = !!/hc(?:[:=])1/i.exec(window.location.href);
         var light = !!/light(?:[:=])1/i.exec(window.location.href);
         var fullScreen = !!/fullscreen(?:[:=])1/i.exec(window.location.href);
+        var autofocus = !!/autofocus(?:[:=])1/i.exec(window.location.href);
         var deps = /deps(?:[:=])([^&?]+)/i.exec(window.location.href);
         var prebuiltSimJs = /prebuilt(?:[:=])1/i.test(window.location.href);
         var single = !!/single(?:[:=])1/i.test(window.location.href);
-
+        var hideSimButtons = !!/hideSimButtons(?:[:=])1/i.test(window.location.href);
+        var server = !!/server(?:[:=])1/i.test(window.location.href);
+        var mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
+        var additionalSimParams = /simParams(?:[:=])([^&?]+)/i.exec(window.location.href)?.[1];
+        var sendBuilt = !!/sendBuilt(?:[:=])1/i.test(window.location.href);
         var codeFromData = undefined;
         var assetJsonFromData = undefined;
         try {
@@ -129,7 +134,14 @@
         }
         var code = codeFromData || (codeFromSrc ? codeFromSrc[1] : undefined);
 
-        if (!id && !code && !debugSim) {
+
+        if (additionalSimParams) {
+            additionalSimParams = decodeURIComponent(additionalSimParams);
+            if (!/^[a-z0-9=\-:&]+$/i.test(additionalSimParams)) {
+                additionalSimParams = undefined;
+            }
+        }
+        if (!id && !code && !debugSim && !server) {
             console.error("missing id or code");
             loading.textContent = 'Oops, wrong arguments...';
             return;
@@ -159,10 +171,65 @@
         initAppCache();
 
         window.addEventListener('message', msg => {
-            if (typeof window !== 'undefined' && window.parent !== window
-                    && msg.data && msg.data.type == "messagepacket") {
-                // propagate message packets to parent frames
-                window.parent.postMessage(msg.data, "*");
+            var data = msg.data;
+            if (typeof window !== 'undefined' && window.parent !== window && data) {
+                if (data.type == "messagepacket") {
+                    // propagate message packets to parent frames
+                    window.parent.postMessage(msg.data, "*");
+                }
+                else if (data.type == "simulator" && data.command == "setstate") {
+                    // propagate message packets to parent frames
+                    window.parent.postMessage(msg.data, "*");
+                }
+                else if (mpRole && data.type === "multiplayer") {
+                    // propagate message packets to parent frames
+                    window.parent.postMessage(msg.data, "*");
+                }
+                else if (server && data.type === "builtjs") {
+                    var options = {
+                        id: id ? id[1] : undefined,
+                        code: code ? decodeURIComponent(code) : undefined,
+                        assets: assetJsonFromData ? decodeURIComponent(assetJsonFromData) : undefined,
+                        highContrast: highContrast,
+                        light: light,
+                        fullScreen: fullScreen,
+                        dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined,
+                        builtJsInfo: data,
+                        single: single,
+                        hideSimButtons: hideSimButtons,
+                        autofocus: autofocus,
+                        additionalQueryParameters: additionalSimParams
+                    };
+                    pxt.runner.simulateAsync(sims, options).then(function() {
+                        $(loading).remove();
+                    })
+                }
+                else if (server && data.type === "simulateproject") {
+                    var files = typeof data.project === "string" ? JSON.parse(data.project) : data.project;
+                    ksRunnerReady(() => {
+                        const deps = JSON.parse(files["pxt.json"]).dependencies
+                        prebuiltCodePromise.then(builtSimJs => {
+                            var options = {
+                                code: files["main.ts"],
+                                assets: JSON.stringify(files),
+                                dependencies: Object.keys(deps).map(v => v + "=" + deps[v]),
+                                highContrast: highContrast,
+                                light: light,
+                                fullScreen: fullScreen,
+                                builtJsInfo: builtSimJs,
+                                single: single,
+                                hideSimButtons: hideSimButtons,
+                                autofocus: autofocus,
+                                additionalQueryParameters: additionalSimParams
+                            };
+                            console.log('simulating project')
+                            pxt.runner.simulateAsync(sims, options).then(function() {
+                                console.log('simulator started for project...')
+                                $(loading).remove();
+                            })
+                        });
+                    })
+                }
             }
         });
 
@@ -183,6 +250,7 @@
             var theme = pxt.appTarget.appTheme;
             document.title = theme.title;
             if (footer) pxt.runner.initFooter(document.getElementById('footer'), id);
+            if (server) return;
             if (hex) {
                 console.log('compiling script to hex')
                 pxt.runner.generateHexFileAsync(options).then(function(hex) {
@@ -207,10 +275,16 @@
                         fullScreen: fullScreen,
                         dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined,
                         builtJsInfo: builtSimJs,
-                        single: single
+                        single: single,
+                        hideSimButtons: hideSimButtons,
+                        autofocus: autofocus,
+                        additionalQueryParameters: additionalSimParams
                     };
                     console.log('simulating script')
-                    pxt.runner.simulateAsync(sims, options).then(function() {
+                    pxt.runner.simulateAsync(sims, options).then(function(value) {
+                        if (sendBuilt) {
+                            window.parent.postMessage(value, "*");
+                        }
                         console.log('simulator started...')
                         $(loading).remove();
                     })

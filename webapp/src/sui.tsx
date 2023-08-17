@@ -6,6 +6,7 @@ import * as ReactTooltip from 'react-tooltip';
 import * as data from "./data";
 import * as core from "./core";
 import * as auth from "./auth";
+import { fireClickOnEnter } from "./util";
 
 export const appElement = document.getElementById('content');
 
@@ -14,7 +15,7 @@ export interface UiProps {
     iconClass?: string;
     text?: string;
     textClass?: string;
-    children?: any;
+    children?: React.ReactNode;
     className?: string;
     role?: string;
     title?: string;
@@ -46,14 +47,6 @@ export function genericContent(props: UiProps) {
     ]
     if (props.icon && props.rightIcon) retVal = retVal.reverse();
     return retVal;
-}
-
-export function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>): void {
-    const charCode = core.keyCodeFromEvent(e);
-    if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
-        e.preventDefault();
-        (e.currentTarget as HTMLElement).click();
-    }
 }
 
 export class UIElement<T, S> extends data.Component<T, S> {
@@ -374,6 +367,7 @@ export interface ExpandableMenuProps {
     title?: string;
     onShow?: () => void;
     onHide?: () => void;
+    children?: React.ReactNode;
 }
 
 export interface ExpandableMenuState {
@@ -737,7 +731,7 @@ export class Input extends data.Component<InputProps, InputState> {
     copy() {
         this.setState({ copied: false });
         const p = this.props
-        const el = ReactDOM.findDOMNode(this);
+        const el = ReactDOM.findDOMNode(this) as Element;
 
         if (!p.lines || p.lines == 1) {
             const inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
@@ -880,7 +874,7 @@ export interface IconProps extends UiProps {
     onKeyDown?: () => void;
 }
 
-export const Icon: React.StatelessComponent<IconProps> = (props: IconProps) => {
+export const Icon: React.FunctionComponent<IconProps> = (props: IconProps) => {
     const { icon, className, onClick, onKeyDown, children, ...rest } = props;
     return <i className={`icon ${icon} ${className ? className : ''}`}
         onClick={onClick}
@@ -1140,6 +1134,7 @@ export interface ModalButton {
     approveButton?: boolean;
     labelPosition?: "left" | "right";
     ariaLabel?: string;
+    noCloseOnClick?: boolean;
 }
 
 export interface ModalProps extends ReactModal.Props {
@@ -1167,6 +1162,7 @@ export interface ModalProps extends ReactModal.Props {
 
     helpUrl?: string;
     headerActions?: JSX.Element[];
+    actions?: JSX.Element[];
     buttons?: ModalButton[];
     onPositionChanged?: Function;
     allowResetFocus?: boolean;
@@ -1333,9 +1329,10 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             <div id={this.id + 'desc'} className={`${longer ? 'scrolling' : ''} ${headerActions ? 'has-actions' : ''} content`}>
                 {children}
             </div>
-            {!isFullscreen && this.props.buttons && this.props.buttons.length > 0 ?
+            {!isFullscreen && (this.props.actions && this.props.actions.length || this.props.buttons && this.props.buttons.length) ?
                 <div className="actions">
-                    {this.props.buttons.map(action =>
+                    {this.props.actions?.map((action, i) => <div key={`action_left_${i}`} className="left-action">{action}</div>)}
+                    {this.props.buttons?.map(action =>
                         action.url ?
                             <Link
                                 key={`action_${action.label}`}

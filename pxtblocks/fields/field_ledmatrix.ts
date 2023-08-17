@@ -233,7 +233,8 @@ namespace pxtblockly {
         }
 
         private getOpacity(x: number, y: number) {
-            return this.cellState[x][y] ? '1.0' : '0.2';
+            const offOpacity = this.offColor ? '1.0': '0.2';
+            return this.cellState[x][y] ? '1.0' : offOpacity;
         }
 
         private updateCell(x: number, y: number) {
@@ -258,7 +259,7 @@ namespace pxtblockly {
 
         render_() {
             if (!this.visible_) {
-                this.size_.width = 0;
+                this.markDirty();
                 return;
             }
 

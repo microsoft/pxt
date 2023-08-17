@@ -20,6 +20,8 @@ export class Editor implements pxt.editor.IEditor {
     }
     simStateChanged() { }
 
+    onPageVisibilityChanged(isVisible: boolean) {}
+
     /*******************************
      Methods called before loadFile
       this.editor may be undefined

@@ -53,9 +53,17 @@ namespace pxt.editor {
         | "setscale"
         | "startactivity"
         | "saveproject"
+        | "unloadproject"
+        | "shareproject"
+        | "savelocalprojectstocloud"
+        | "projectcloudstatus"
+        | "requestprojectcloudstatus"
+        | "convertcloudprojectstolocal"
+        | "setlanguagerestriction"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
+        | "sethighcontrast" // EditorMessageSetHighContrastRequest
         | "togglegreenscreen"
         | "settracestate" //
         | "setsimulatorfullscreen" // EditorMessageSimulatorFullScreenRequest
@@ -102,7 +110,8 @@ namespace pxt.editor {
 
     export type EditorMessageTutorialEventRequest = EditorMessageTutorialProgressEventRequest |
         EditorMessageTutorialCompletedEventRequest |
-        EditorMessageTutorialLoadedEventRequest;
+        EditorMessageTutorialLoadedEventRequest |
+        EditorMessageTutorialExitEventRequest;
 
     export interface EditorMessageTutorialProgressEventRequest extends EditorMessageRequest {
         action: "tutorialevent";
@@ -124,6 +133,13 @@ namespace pxt.editor {
     export interface EditorMessageTutorialLoadedEventRequest extends EditorMessageRequest {
         action: "tutorialevent";
         tutorialEvent: "loaded";
+        tutorialId: string;
+        projectHeaderId: string;
+    }
+
+    export interface EditorMessageTutorialExitEventRequest extends EditorMessageRequest {
+        action: "tutorialevent";
+        tutorialEvent: "exit";
         tutorialId: string;
         projectHeaderId: string;
     }
@@ -222,6 +238,32 @@ namespace pxt.editor {
         searchBar?: boolean;
     }
 
+    export interface EditorMessageSaveLocalProjectsToCloud extends EditorMessageRequest {
+        action: "savelocalprojectstocloud";
+        headerIds: string[];
+    }
+
+    export interface EditorMessageSaveLocalProjectsToCloudResponse extends EditorMessageResponse {
+        action: "savelocalprojectstocloud";
+        headerIdMap?: pxt.Map<string>;
+    }
+
+    export interface EditorMessageProjectCloudStatus extends EditorMessageRequest {
+        action: "projectcloudstatus";
+        headerId: string;
+        status: pxt.cloud.CloudStatus;
+    }
+
+    export interface EditorMessageRequestProjectCloudStatus extends EditorMessageRequest {
+        action: "requestprojectcloudstatus";
+        headerIds: string[];
+    }
+
+    export interface EditorMessageConvertCloudProjectsToLocal extends EditorMessageRequest {
+        action: "convertcloudprojectstolocal";
+        userId: string;
+    }
+
     export interface EditorMessageImportTutorialRequest extends EditorMessageRequest {
         action: "importtutorial";
         // markdown to load
@@ -285,10 +327,16 @@ namespace pxt.editor {
         enabled: boolean;
     }
 
+    export interface EditorMessageSetHighContrastRequest extends EditorMessageRequest {
+        action: "sethighcontrast";
+        on: boolean;
+    }
+
     export interface EditorMessageStartActivity extends EditorMessageRequest {
         action: "startactivity";
         activityType: "tutorial" | "example" | "recipe";
         path: string;
+        title?: string;
         previousProjectHeaderId?: string;
         carryoverPreviousCode?: boolean;
     }
@@ -316,6 +364,22 @@ namespace pxt.editor {
 
     export interface EditorSimulatorTickEvent extends EditorMessageEventRequest {
         type: "pxtsim";
+    }
+
+    export interface EditorShareRequest extends EditorMessageRequest {
+        action: "shareproject";
+        headerId: string;
+        projectName: string;
+    }
+
+    export interface EditorShareResponse extends EditorMessageRequest {
+        action: "shareproject";
+        script: Cloud.JsonScript;
+    }
+
+    export interface EditorSetLanguageRestriction extends EditorMessageRequest {
+        action: "setlanguagerestriction";
+        restriction: pxt.editor.LanguageRestriction;
     }
 
     const pendingRequests: pxt.Map<{
@@ -385,6 +449,7 @@ namespace pxt.editor {
                                 case "hidesimulator": return Promise.resolve().then(() => projectView.collapseSimulator());
                                 case "showsimulator": return Promise.resolve().then(() => projectView.expandSimulator());
                                 case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
+                                case "unloadproject": return Promise.resolve().then(() => projectView.unloadProjectAsync());
                                 case "saveproject": return projectView.saveProjectAsync();
                                 case "redo": return Promise.resolve()
                                     .then(() => {
@@ -442,6 +507,7 @@ namespace pxt.editor {
                                         .then(() => projectView.startActivity({
                                             activity: msg.activityType,
                                             path: tutorialPath,
+                                            title: msg.title,
                                             editor: editorProjectName,
                                             previousProjectHeaderId: msg.previousProjectHeaderId,
                                             carryoverPreviousCode: msg.carryoverPreviousCode
@@ -494,6 +560,11 @@ namespace pxt.editor {
                                     return Promise.resolve()
                                         .then(() => projectView.toggleHighContrast());
                                 }
+                                case "sethighcontrast": {
+                                    const hcmsg = data as EditorMessageSetHighContrastRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.setHighContrast(hcmsg.on));
+                                }
                                 case "togglegreenscreen": {
                                     return Promise.resolve()
                                         .then(() => projectView.toggleGreenScreen());
@@ -503,7 +574,7 @@ namespace pxt.editor {
                                         .then(() => projectView.printCode());
                                 }
                                 case "pair": {
-                                    return projectView.pairAsync();
+                                    return projectView.pairAsync().then(() => {});
                                 }
                                 case "info": {
                                     return Promise.resolve()
@@ -514,6 +585,39 @@ namespace pxt.editor {
                                                 availableLocales: pxt.appTarget.appTheme.availableLocales
                                             }
                                         });
+                                }
+                                case "shareproject": {
+                                    const msg = data as EditorShareRequest;
+                                    return projectView.anonymousPublishHeaderByIdAsync(msg.headerId, msg.projectName)
+                                        .then(scriptInfo => {
+                                            resp = scriptInfo;
+                                        });
+                                }
+                                case "savelocalprojectstocloud": {
+                                    const msg = data as EditorMessageSaveLocalProjectsToCloud;
+                                    return projectView.saveLocalProjectsToCloudAsync(msg.headerIds)
+                                        .then(guidMap => {
+                                            resp = <EditorMessageSaveLocalProjectsToCloudResponse>{
+                                                headerIdMap: guidMap
+                                            };
+                                        })
+                                }
+                                case "requestprojectcloudstatus": {
+                                    // Responses are sent as separate "projectcloudstatus" messages.
+                                    const msg = data as EditorMessageRequestProjectCloudStatus;
+                                    return projectView.requestProjectCloudStatus(msg.headerIds);
+                                }
+                                case "convertcloudprojectstolocal": {
+                                    const msg = data as EditorMessageConvertCloudProjectsToLocal;
+                                    return projectView.convertCloudProjectsToLocal(msg.userId);
+                                }
+                                case "setlanguagerestriction": {
+                                    const msg = data as EditorSetLanguageRestriction;
+                                    if (msg.restriction === "no-blocks") {
+                                        console.warn("no-blocks language restriction is not supported");
+                                        throw new Error("no-blocks language restriction is not supported")
+                                    }
+                                    return projectView.setLanguageRestrictionAsync(msg.restriction);
                                 }
                             }
                             return Promise.resolve();

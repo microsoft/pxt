@@ -108,16 +108,20 @@ namespace pxt.Cloud {
     }
 
     export function downloadScriptFilesAsync(id: string): Promise<Map<string>> {
-        return privateRequestAsync({ url: id + "/text", forceLiveEndpoint: true }).then(resp => {
+        return privateRequestAsync({
+            url: id + "/text" + (id.startsWith("S") ? `?time=${Date.now()}` : ""),
+            forceLiveEndpoint: true,
+        }).then(resp => {
             return JSON.parse(resp.text)
         })
     }
 
-    // 1h check on markdown content if not on development server
-    const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
-    // 1w check don't use cached version and wait for new content
-    const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
-    export async function markdownAsync(docid: string, locale?: string): Promise<string> {
+    export async function markdownAsync(docid: string, locale?: string, propagateExceptions?: boolean): Promise<string> {
+        // 1h check on markdown content if not on development server
+        const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
+        // 1w check don't use cached version and wait for new content
+        const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
+
         locale = locale || pxt.Util.userLanguage();
         const branch = "";
 
@@ -133,8 +137,12 @@ namespace pxt.Cloud {
                     return r.md;
                 }
                 return entry.md;
-            } catch {
-                return ""; // no translation
+            } catch (e) {
+                if (propagateExceptions) {
+                    throw e;
+                } else {
+                    return ""; // no translation
+                }
             }
         };
 
@@ -182,8 +190,8 @@ namespace pxt.Cloud {
         } else {
             url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
         }
-        if (!packaged && locale != "en") {
-            url += `&lang=${encodeURIComponent(locale)}`
+        if (locale != "en") {
+            url += `${packaged ? "?" : "&"}lang=${encodeURIComponent(locale)}`
         }
         if (pxt.BrowserUtils.isLocalHost() && !pxt.Util.liveLocalizationEnabled()) {
             return localRequestAsync(url).then(resp => {
@@ -232,7 +240,7 @@ namespace pxt.Cloud {
 
     export function parseScriptId(uri: string): string {
         const target = pxt.appTarget;
-        if (!uri || !target.appTheme || !target.cloud || !target.cloud.sharing) return undefined;
+        if (!uri || !target.appTheme || !target.cloud?.sharing) return undefined;
 
         let domains = ["makecode.com"];
         if (target.appTheme.embedUrl)
@@ -240,16 +248,15 @@ namespace pxt.Cloud {
         if (target.appTheme.shareUrl)
             domains.push(target.appTheme.shareUrl);
         domains = Util.unique(domains, d => d).map(d => Util.escapeForRegex(Util.stripUrlProtocol(d).replace(/\/$/, '')).toLowerCase());
-        const rx = `^((https:\/\/)?(?:${domains.join('|')})\/)?(?:v[0-9]+\/)?(api\/oembed\?url=.*%2F([^&]*)&.*?|([a-z0-9\-_]+))$`;
-        const m = new RegExp(rx, 'i').exec(uri.trim());
-        const scriptid = m && (!m[1] || domains.indexOf(Util.escapeForRegex(m[1].replace(/https:\/\//, '').replace(/\/$/, '')).toLowerCase()) >= 0) && (m[3] || m[4]) ? (m[3] ? m[3] : m[4]) : null
+        const domainCheck = `(?:(?:https:\/\/)?(?:${domains.join('|')})\/)`;
+        const versionRefCheck = "(?:v[0-9]+\/)";
+        const oembedCheck = "api\/oembed\\?url=.*%2F([^&#]*)&.*";
+        const sharePageCheck = "\/?([a-z0-9\\-_]+)(?:[#?&].*)?";
+        const scriptIdCheck = `^${domainCheck}?${versionRefCheck}?(?:(?:${oembedCheck})|(?:${sharePageCheck}))$`;
+        const m = new RegExp(scriptIdCheck, 'i').exec(uri.trim());
+        const scriptid = m?.[1] /** oembed res **/ || m?.[2] /** share page res **/;
 
-        if (!scriptid) return undefined;
-
-        if (scriptid[0] == "_" && scriptid.length == 13)
-            return scriptid;
-
-        if (scriptid.length == 23 && /^[0-9\-]+$/.test(scriptid))
+        if (/^(_.{12}|S?[0-9\-]{23})$/.test(scriptid))
             return scriptid;
 
         return undefined;

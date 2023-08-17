@@ -52,21 +52,34 @@ namespace pxt {
                 && json;
         }
 
-        static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
-            return Promise.resolve().then(() => {
-                if (pxt.github.isGithubId(fullVers)) {
-                    const repoInfo = pxt.github.parseRepoId(fullVers);
-                    return pxt.packagesConfigAsync()
-                        .then(config => pxt.github.repoAsync(repoInfo.fullName, config))    // Make sure repo exists and is whitelisted
-                        .then(gitRepo => gitRepo ? pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag) : null);
-                } else {
-                    // If it's not from GH, assume it's a bundled package
-                    // TODO: Add logic for shared packages if we enable that
-                    const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
-                    const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
-                    return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
+        static async getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
+            if (pxt.github.isGithubId(fullVers)) {
+                const repoInfo = pxt.github.parseRepoId(fullVers);
+                const packagesConfig = await pxt.packagesConfigAsync()
+                const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is whitelisted
+                return gitRepo ? await pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag, packagesConfig) : null
+            } else if (fullVers.startsWith("workspace:")) {
+                // It's a local package
+                const projId = fullVers.slice("workspace:".length);
+                // TODO: Fetch pxt.json from the workspace project
+                return null;
+            } else if (fullVers.startsWith("pub:")) {
+                const id = fullVers.slice("pub:".length);
+                try {
+                    const files = await Cloud.downloadScriptFilesAsync(id);
+                    return JSON.parse(files[CONFIG_NAME]);
                 }
-            });
+                catch (e) {
+                    pxt.log(`Unable to fetch files for published script '${fullVers}'`);
+                    return null;
+                }
+            } else {
+                // If it's not from GH, assume it's a bundled package
+                // TODO: Add logic for shared packages if we enable that
+                const updatedRef = pxt.patching.upgradePackageReference(pkgTargetVersion, id, fullVers);
+                const bundledPkg = pxt.appTarget.bundledpkgs[updatedRef];
+                return JSON.parse(bundledPkg[CONFIG_NAME]) as pxt.PackageConfig;
+            }
         }
 
         static corePackages(): pxt.PackageConfig[] {
@@ -83,8 +96,9 @@ namespace pxt {
         public ignoreTests = false;
         public cppOnly = false;
         public installedVersion: string; // resolve version
+        protected assetPackFiles: pxt.Map<string>;
 
-        constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
+        constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package, public depName: string) {
             if (addedBy) {
                 this.level = addedBy.level + 1
             }
@@ -124,32 +138,76 @@ namespace pxt {
                     : undefined;
         }
 
-        commonDownloadAsync(): Promise<Map<string>> {
+        async commonDownloadAsync(): Promise<Map<string>> {
             const proto = this.verProtocol()
+            let files: Map<string>;
+
             if (proto == "pub") {
-                return Cloud.downloadScriptFilesAsync(this.verArgument())
+                files = await Cloud.downloadScriptFilesAsync(this.verArgument())
             } else if (proto == "github") {
-                return pxt.packagesConfigAsync()
-                    .then(config => pxt.github.downloadPackageAsync(this.verArgument(), config))
-                    .then(resp => resp.files)
+                const config = await pxt.packagesConfigAsync();
+                const resp = await pxt.github.downloadPackageAsync(this.verArgument(), config)
+                files = resp.files;
             } else if (proto == "embed") {
-                const resp = pxt.getEmbeddedScript(this.verArgument())
-                return Promise.resolve(resp)
+                files = pxt.getEmbeddedScript(this.verArgument())
             } else if (proto == "pkg") {
                 // the package source is serialized in a file in the package itself
                 const src = this.parent || this; // fall back to current package if no parent
                 const pkgFilesSrc = src.readFile(this.verArgument());
-                const pkgFilesJson = ts.pxtc.Util.jsonTryParse(pkgFilesSrc) as Map<string>;
+                const pkgFilesJson = U.jsonTryParse(pkgFilesSrc) as Map<string>;
                 if (!pkgFilesJson)
                     pxt.log(`unable to find ${this.verArgument()}`)
-                return Promise.resolve(pkgFilesJson)
-            } else return Promise.resolve(null as Map<string>)
+                files = pkgFilesJson
+            }
+
+            return files;
+        }
+
+        writeAssetPackFiles() {
+            const config = JSON.parse(JSON.stringify(this.config)) as pxt.PackageConfig;
+            config.files = config.files.filter(f => f.endsWith(".jres"));
+            config.files.push("gallery.ts");
+            config.dependencies = {};
+            config.assetPack = true;
+            this.config = config;
+            this.saveConfig();
+
+            let galleryTS = "";
+            for (const file of config.files) {
+                const content = this.readFile(file);
+                const parsed = U.jsonTryParse(content);
+
+                if (parsed) {
+                    const [jres, ts] = pxt.emitGalleryDeclarations(parsed, this.getNamespaceName());
+                    this.writeFile(file, JSON.stringify(jres, null, 4));
+                    galleryTS += ts;
+                }
+            }
+            this.writeFile("gallery.ts", galleryTS);
+        }
+
+        protected getNamespaceName() {
+            let child: Package = this;
+            let parent = child.addedBy[0];
+            const parts: string[] = [];
+
+            while (parent && parent !== child) {
+                if (child.depName) parts.push(child.depName);
+                child = parent;
+                parent = child.addedBy[0];
+            }
+
+            return parts.reverse().map(n => ts.pxtc.escapeIdentifier(n)).join(".");
         }
 
         host() { return this.parent._host }
 
         readFile(fn: string) {
             return this.host().readFile(this, fn)
+        }
+
+        writeFile(fn: string, content: string) {
+            this.host().writeFile(this, fn, content, true);
         }
 
         readGitJson(): pxt.github.GitJson {
@@ -212,6 +270,10 @@ namespace pxt {
             return allres
         }
 
+        isAssetPack() {
+            return this.level > 0 && !!this.config?.assetPack;
+        }
+
         private resolveVersionAsync() {
             let v = this._verspec
 
@@ -258,6 +320,10 @@ namespace pxt {
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
                             this.loadConfig();
+
+                            if (this.isAssetPack()) {
+                                this.writeAssetPackFiles();
+                            }
                             pxt.debug(`installed ${this.id} /${verNo}`)
                         })
 
@@ -422,7 +488,7 @@ namespace pxt {
                                     // if newversion does not have tag, it's ok
                                     // note: we are upgrade major versions as well
                                     || (ghNew.tag && pxt.semver.strcmp(ghCurrent.tag, ghNew.tag) < 0)) {
-                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})",
+                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (added: {1}, adding: {2})",
                                         depPkg.id,
                                         depPkg._verspec,
                                         version));
@@ -434,7 +500,7 @@ namespace pxt {
                         });
                     }
                     // Also check for conflicts for all the specified package's dependencies (recursively)
-                    return Object.keys(pkgCfg.dependencies).reduce((soFar, pkgDep) => {
+                    return Object.keys(pkgCfg?.dependencies ?? {}).reduce((soFar, pkgDep) => {
                         return soFar
                             .then(() => this.findConflictsAsync(pkgDep, pkgCfg.dependencies[pkgDep]))
                             .then((childConflicts) => conflicts.push.apply(conflicts, childConflicts));
@@ -458,7 +524,7 @@ namespace pxt {
                     conflicts.forEach((c) => {
                         additionalConflicts.push.apply(additionalConflicts, allAncestors(c.pkg0).map((anc) => {
                             const confl = new cpp.PkgConflictError(c.isVersionConflict ?
-                                lf("a dependency of {0} has a version mismatch with extension {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
+                                lf("a dependency of {0} has a version mismatch with extension {1} (added: {1}, adding: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
                                 lf("conflict on yotta setting {0} between extensions {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
                             confl.pkg0 = anc;
                             return confl;
@@ -570,10 +636,9 @@ namespace pxt {
             return dependencies;
         }
 
-        loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
-            if (this.isLoaded) return Promise.resolve();
+        async loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
+            if (this.isLoaded) return;
 
-            let initPromise = Promise.resolve()
 
             if (this.level == 0 && !pxt.appTarget.multiVariants)
                 pxt.setAppTargetVariant(null)
@@ -584,42 +649,49 @@ namespace pxt {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id + ", did you forget to run `pxt install`?")
             } else {
-                initPromise = initPromise.then(() => this.parseConfig(str))
+                this.parseConfig(str);
             }
 
             // if we are installing this script, we haven't yet downloaded the config
             // do upgrade later
             if (this.level == 0 && !isInstall) {
-                initPromise = initPromise.then(() => this.upgradePackagesAsync().then(() => { }))
+                await this.upgradePackagesAsync();
             }
 
-            if (isInstall)
-                initPromise = initPromise.then(() => this.downloadAsync())
+            if (isInstall) {
+                await this.downloadAsync();
+                if (this.level !== 0 && !this.isAssetPack()) {
+                    for (const parent of this.addedBy) {
+                        if (parent.config.assetPacks?.[this.id]) {
+                            this.writeAssetPackFiles();
+                            break;
+                        }
+                    }
+                }
+            }
 
             // we are installing the script, and we've download the original version and we haven't upgraded it yet
             // do upgrade and reload as needed
             if (this.level == 0 && isInstall) {
-                initPromise = initPromise.then(() => this.upgradePackagesAsync())
-                    .then(fixes => {
-                        if (fixes) {
-                            // worst case scenario with double load
-                            Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
-                            pxt.log(`upgraded, downloading again`);
-                            pxt.debug(fixes);
-                            return this.downloadAsync();
-                        }
-                        // nothing to do here
-                        else return Promise.resolve();
-                    })
+                const fixes = await this.upgradePackagesAsync();
+
+                if (fixes) {
+                    // worst case scenario with double load
+                    Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
+                    pxt.log(`upgraded, downloading again`);
+                    pxt.debug(fixes);
+                    await this.downloadAsync();
+                }
             }
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
-                if (this.level == 0)
-                    initPromise = initPromise.then(() => this.patchCorePackage());
-                initPromise = initPromise.then(() => {
-                    if (this.config.compileServiceVariant)
-                        pxt.setAppTargetVariant(this.config.compileServiceVariant)
-                    if (this.config.files.indexOf("board.json") < 0) return
+                if (this.level == 0) {
+                    this.patchCorePackage();
+                }
+                if (this.config.compileServiceVariant) {
+                    pxt.setAppTargetVariant(this.config.compileServiceVariant)
+                }
+                if (this.config.files.indexOf("board.json") >= 0) {
                     const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
                     def.id = this.config.name;
                     appTarget.appTheme.boardName = def.boardName || lf("board");
@@ -640,7 +712,7 @@ namespace pxt {
                         vis.image = expandPkg(vis.image)
                         vis.outlineImage = expandPkg(vis.outlineImage)
                     }
-                })
+                }
             }
 
             const handleVerMismatch = (mod: Package, ver: string) => {
@@ -656,15 +728,24 @@ namespace pxt {
                         // this may be an issue if the user does not create releases
                         // and pulls from master
                         const modtag = modid?.tag || mod.config?.version;
+                        const vertag = verid.tag
+
+                        // if there is no tag on the current dependency,
+                        // assume same as existing module version if any
+                        if (modtag && !vertag) {
+                            pxt.debug(`unversioned ${ver}, using ${modtag}`)
+                            return
+                        }
+
                         const c = pxt.semver.strcmp(modtag, verid.tag);
                         if (c == 0) {
                             // turns out to be the same versions
                             pxt.debug(`resolved version are ${modtag}`)
                             return;
                         }
-                        else if (c < 0) {
-                            // already loaded version of dependencies is greater
-                            // than current version, use it instead
+                        else if (c > 0) {
+                            // already loaded version of dependencies (modtag) is greater
+                            // than current version (ver), use it instead
                             pxt.debug(`auto-upgraded ${ver} to ${modtag}`)
                             return;
                         }
@@ -694,6 +775,30 @@ namespace pxt {
                     pxt.debug(`dep: load ${from.id}.${id}${isCpp ? "++" : ""}: ${ver}`)
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
+
+                    // for github references, make sure the version is compatible with previously
+                    // loaded references, regardless of the id
+                    const ghver = github.parseRepoId(ver)
+                    if (ghver?.slug) {
+                        // let's start by resolving the maximum version
+                        // number of the parent repo already loaded
+                        const repoVersions = Object.values(from.parent.deps)
+                            .map(p =>  github.parseRepoId(p._verspec))
+                            .filter(v => v?.slug === ghver.slug)
+                            .map(v => v.tag)
+                        const repoVersion = repoVersions
+                            .reduce((v1, v2) => semver.strcmp(v1, v2) > 0 ? v1 : v2, "0.0.0")
+                        pxt.debug(`dep: common repo ${ghver.slug} version found ${repoVersion}`)
+                        if (semver.strcmp(repoVersion, "0.0.0") > 0) {
+                            // now let's check if we have a higher version to use
+                            if (!ghver.tag || semver.strcmp(repoVersion, ghver.tag) > 0) {
+                                pxt.debug(`dep: upgrade from ${ghver.tag} to ${repoVersion}`)
+                                ghver.tag = repoVersion
+                                ver = github.stringifyRepo(ghver, true)
+                            }
+                        }
+                    }
+
                     let mod = from.resolveDep(id)
                     if (mod) {
                         // check if the current dependecy matches the ones
@@ -714,7 +819,7 @@ namespace pxt {
                             mod.addedBy.push(from)
                         }
                     } else {
-                        let mod = new Package(id, ver, from.parent, from)
+                        mod = new Package(id, ver, from.parent, from, id)
                         if (isCpp)
                             mod.cppOnly = true
                         from.parent.deps[id] = mod
@@ -725,63 +830,49 @@ namespace pxt {
                 }
             }
 
-            return initPromise
-                .then(() => loadDepsRecursive(null, this))
-                .then(() => {
-                    // get paletter config loading deps, so the more higher level packages take precedence
-                    if (this.config.palette && appTarget.runtime) {
-                        appTarget.runtime.palette = U.clone(this.config.palette);
-                        if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
-                    }
-                    // get screen size loading deps, so the more higher level packages take precedence
-                    if (this.config.screenSize && appTarget.runtime)
-                        appTarget.runtime.screenSize = U.clone(this.config.screenSize);
+            await loadDepsRecursive(null, this);
 
-                    if (this.level === 0) {
-                        // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
-                        const mainTs = this.readFile(pxt.MAIN_TS);
-                        if (!mainTs) return Promise.resolve(null);
+            // get paletter config loading deps, so the more higher level packages take precedence
+            if (this.config.palette && appTarget.runtime) {
+                appTarget.runtime.palette = U.clone(this.config.palette);
+                if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
+            }
+            // get screen size loading deps, so the more higher level packages take precedence
+            if (this.config.screenSize && appTarget.runtime)
+                appTarget.runtime.screenSize = U.clone(this.config.screenSize);
 
-                        const missingPackages = this.getMissingPackages(this.config, mainTs);
-                        let didAddPackages = false;
-                        return Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
-                            return addPackagesPromise
-                                .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
-                                .then((conflicts) => {
-                                    if (conflicts.length) {
-                                        const conflictNames = conflicts.map((c) => c.pkg0.id).join(", ");
-                                        const settingNames = conflicts.map((c) => c.settingName).filter((s) => !!s).join(", ");
-                                        pxt.log(`skipping missing package ${missing} because it conflicts with the following packages: ${conflictNames} (conflicting settings: ${settingNames})`);
-                                        return Promise.resolve(null);
-                                    } else {
-                                        pxt.log(`adding missing package ${missing}`);
-                                        didAddPackages = true;
-                                        this.config.dependencies[missing] = "*"
-                                        const addDependency: Map<string> = {};
-                                        addDependency[missing] = missingPackages[missing];
-                                        return loadDepsRecursive(addDependency, this);
-                                    }
-                                });
-                        }, Promise.resolve(null))
-                            .then(() => {
-                                if (didAddPackages) {
-                                    this.saveConfig();
-                                    this.validateConfig();
-                                }
-                                return Promise.resolve(null);
-                            });
+            if (this.level === 0) {
+                // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
+                const mainTs = this.readFile(pxt.MAIN_TS);
+                if (mainTs) {
+                    const missingPackages = this.getMissingPackages(this.config, mainTs);
+                    let didAddPackages = false;
+                    for (const missing of Object.keys(missingPackages)) {
+                        const conflicts = await this.findConflictsAsync(missing, missingPackages[missing]);
+                        if (conflicts.length) {
+                            const conflictNames = conflicts.map((c) => c.pkg0.id).join(", ");
+                            const settingNames = conflicts.map((c) => c.settingName).filter((s) => !!s).join(", ");
+                            pxt.log(`skipping missing package ${missing} because it conflicts with the following packages: ${conflictNames} (conflicting settings: ${settingNames})`);
+                        } else {
+                            pxt.log(`adding missing package ${missing}`);
+                            didAddPackages = true;
+                            this.config.dependencies[missing] = "*"
+                            const addDependency: Map<string> = {};
+                            addDependency[missing] = missingPackages[missing];
+                            await loadDepsRecursive(addDependency, this);
+                        }
                     }
-                    return Promise.resolve(null);
-                })
-                .then<any>(() => {
-                    if (this.level != 0)
-                        return Promise.resolve()
-                    return Promise.all(U.values(this.parent.deps).map(pkg =>
-                        loadDepsRecursive(null, pkg, true)))
-                })
-                .then(() => {
-                    pxt.debug(`  installed ${this.id}`)
-                });
+
+                    if (didAddPackages) {
+                        this.saveConfig();
+                        this.validateConfig();
+                    }
+                }
+
+                await Promise.all(U.values(this.parent.deps).map(pkg => loadDepsRecursive(null, pkg, true)));
+            }
+
+            pxt.debug(`  installed ${this.id}`);
         }
 
         static depWarnings: Map<boolean> = {}
@@ -878,20 +969,32 @@ namespace pxt {
             const files = this.config.files;
 
             let fn = `_locales/${initialLang}/${filename}-strings.json`;
-            if (files.indexOf(fn) > -1) {
-                r = JSON.parse(this.readFile(fn)) as Map<string>;
-            }
-            else if (initialLangLowerCase) {
+            if (initialLangLowerCase && files.indexOf(fn) === -1) {
                 fn = `_locales/${initialLangLowerCase}/${filename}-strings.json`;
-                if (files.indexOf(fn) > -1)
-                    r = JSON.parse(this.readFile(fn)) as Map<string>;
-                else if (baseLang) {
-                    fn = `_locales/${baseLang}/${filename}-strings.json`;
-                    if (files.indexOf(fn) > -1) {
-                        r = JSON.parse(this.readFile(fn)) as Map<string>;
+            }
+            if (baseLang && files.indexOf(fn) === -1) {
+                fn = `_locales/${baseLang}/${filename}-strings.json`;
+            }
+
+            if (files.indexOf(fn) > -1) {
+                try {
+                    r = JSON.parse(this.readFile(fn));
+                } catch (e) {
+                    pxt.reportError("extension", "Extension localization JSON failed to parse", {
+                        fileName: fn,
+                        lang: lang,
+                        extension: this.verArgument(),
+                    });
+                    const isGithubRepo = this.verProtocol() === "github";
+                    if (isGithubRepo) {
+                        pxt.tickEvent("loc.errors.json", {
+                            repo: this.verArgument(),
+                            file: fn,
+                        });
                     }
                 }
             }
+
             return r;
         }
     }
@@ -901,7 +1004,7 @@ namespace pxt {
         private _jres: Map<JRes>;
 
         constructor(public _host: Host) {
-            super("this", "file:.", null, null)
+            super("this", "file:.", null, null, null)
             this.parent = this
             this.addedBy = [this]
             this.level = 0
@@ -1129,6 +1232,9 @@ namespace pxt {
                 if (ext) {
                     opts.otherMultiVariants.push(etarget)
                 } else {
+                    etarget.target.isNative = opts.target.isNative;
+                    opts.target = etarget.target;
+
                     ext = einfo
                     opts.otherMultiVariants = []
                 }
@@ -1289,7 +1395,7 @@ namespace pxt {
                 v = { data: v } as any
             }
             let ns = v.namespace || base.namespace || ""
-            if (ns) ns += "."
+            if (ns && !ns.endsWith(".")) ns += "."
             let id = v.id || ns + k
             let icon = v.icon
             let mimeType = v.mimeType || base.mimeType
@@ -1306,7 +1412,8 @@ namespace pxt {
                 mimeType,
                 tilemapTile: v.tilemapTile,
                 displayName: v.displayName,
-                tileset: v.tileset
+                tileset: v.tileset,
+                tags: v.tags
             }
         }
 

@@ -601,6 +601,58 @@ ${output}</xml>`;
             return undefined;
         }
 
+        function getCallKey(statement: ExpressionStatement) {
+            const call = statement.expression as CallExpression;
+            const callInfo = pxtInfo(call).callInfo;
+            const attributes = attrs(callInfo);
+
+            if (attributes.blockAllowMultiple) return undefined;
+            if (attributes.blockHandlerKey) return attributes.blockHandlerKey;
+
+            const args = callInfo.args.filter(arg => !isArrowFunction(arg) && !isFunctionExpression(arg)).map(arg => getArgKeyRecursive(arg)).join("$$");
+            return attributes.blockId + "-" + args;
+        }
+
+        // custom function to get the key for an argument. we do this instead of simply calling getText() because this
+        // handles whitespace and certain passthrough nodes like parenthesized expressions
+        function getArgKeyRecursive(n: ts.Expression): string {
+            if (!n) return "";
+
+            switch (n.kind) {
+                case SK.ParenthesizedExpression:
+                case SK.AsExpression:
+                    return getArgKeyRecursive((n as ts.ParenthesizedExpression).expression);
+                case SK.Identifier:
+                    return (n as ts.Identifier).text;
+                case SK.StringLiteral:
+                case SK.FirstTemplateToken:
+                case SK.NoSubstitutionTemplateLiteral:
+                    return `"${(n as ts.StringLiteral).text}"`
+                case SK.NumericLiteral:
+                    return (n as ts.LiteralExpression).text;
+                case SK.TrueKeyword:
+                    return "true";
+                case SK.FalseKeyword:
+                    return "false";
+                case SK.BinaryExpression:
+                    return `{${getArgKeyRecursive((n as ts.BinaryExpression).left)}${(n as ts.BinaryExpression).operatorToken.getText()}${getArgKeyRecursive((n as ts.BinaryExpression).right)}}`
+                case SK.PrefixUnaryExpression:
+                    return (n as ts.PrefixUnaryExpression).operator + getArgKeyRecursive((n as ts.PrefixUnaryExpression).operand)
+                case SK.PropertyAccessExpression:
+                    return getArgKeyRecursive((n as ts.PropertyAccessExpression).expression) + "." + getArgKeyRecursive((n as ts.PropertyAccessExpression).name)
+                case SK.ArrayLiteralExpression:
+                    return `[${(n as ts.ArrayLiteralExpression).elements.map(e => getArgKeyRecursive(e))}]`
+                case SK.ElementAccessExpression:
+                    return `${(n as ts.ElementAccessExpression).expression}[${(n as ts.ElementAccessExpression).argumentExpression}]`;
+                case SK.TaggedTemplateExpression:
+                    return `${getArgKeyRecursive((n as ts.TaggedTemplateExpression).tag)}\`${(n as ts.TaggedTemplateExpression).template.getText()}\``;
+                case SK.CallExpression:
+                    return `${getArgKeyRecursive((n as ts.CallExpression).expression)}(${(n as ts.CallExpression).arguments.map(getArgKeyRecursive).join(",")})`
+                default:
+                    return n.getText();
+            }
+        }
+
         function countBlock() {
             emittedBlocks++;
             if (emittedBlocks > MAX_BLOCKS) {
@@ -748,31 +800,7 @@ ${output}</xml>`;
         function emitValueNode(n: ValueNode) {
             write(`<value name="${n.name}">`)
 
-            let emitShadowOnly = false;
-
-            if (n.value.kind === "expr") {
-                const value = n.value as ExpressionNode;
-                if (value.type === numberType && n.shadowType === minmaxNumberType) {
-                    value.type = minmaxNumberType;
-                    value.fields[0].name = 'SLIDER';
-                    value.mutation = n.shadowMutation;
-                }
-                emitShadowOnly = value.type === n.shadowType;
-                if (!emitShadowOnly) {
-                    switch (value.type) {
-                        case "math_number":
-                        case "math_number_minmax":
-                        case "math_integer":
-                        case "math_whole_number":
-                        case "logic_boolean":
-                        case "text":
-                            emitShadowOnly = !n.shadowType;
-                            break
-                    }
-                }
-            }
-
-            if (emitShadowOnly) {
+            if (shouldEmitShadowOnly(n)) {
                 emitOutputNode(n.value, true);
             }
             else {
@@ -899,6 +927,8 @@ ${output}</xml>`;
                         return getTaggedTemplateExpression(n as ts.TaggedTemplateExpression);
                     case SK.CallExpression:
                         return getStatementBlock(n, undefined, undefined, true) as any;
+                    case SK.AsExpression:
+                        return getOutputBlock((n as ts.AsExpression).expression);
                     default:
                         error(n, Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]));
                         break;
@@ -1288,6 +1318,111 @@ ${output}</xml>`;
             return undefined;
         }
 
+        /**
+         * We split up comments according to the following rules:
+         *      1. If the comment is not top-level:
+         *          a. Combine it with all comments for the following statement
+         *          b. If there is no following statement in the current block, group it with the previous statement
+         *          c. If there are no statements inside the block, group it with the parent block
+         *          d. If trailing the same line as the statement, group it with the comments for that statement
+         *      2. If the comment is top-level:
+         *          b. If the comment is followed by an empty line, it becomes a workspace comment
+         *          c. If the comment is followed by a multi-line comment, it becomes a workspace comment
+         *          a. If the comment is a single-line comment, combine it with the next single-line comment
+         *          d. If the comment is not followed with an empty line, group it with the next statement or event
+         *          e. All other comments are workspace comments
+         *
+         * The below function gathers any comments associated to the Node, and attaches them
+         * to the StatementNode.
+         */
+        function getNodeComments(commented: Node, stmt: StatementNode) {
+            let comments: Comment[] = [];
+            let current: Comment;
+            for (let i = 0; i < commentMap.length; i++) {
+                current = commentMap[i];
+                if (!current.owner && current.start >= commented.pos && current.end <= commented.end) {
+                    current.owner = commented;
+                    current.ownerStatement = stmt;
+                    comments.push(current);
+                }
+
+                if (current.start > commented.end) break;
+            }
+
+            if (current && current.isTrailingComment) {
+                const endLine = ts.getLineAndCharacterOfPosition(file, commented.end);
+                const commentLine = ts.getLineAndCharacterOfPosition(file, current.start);
+
+                if (endLine.line === commentLine.line) {
+                    // If the comment is trailing and on the same line as the statement, it probably belongs
+                    // to this statement. Remove it from any statement it's already assigned to and any workspace
+                    // comments
+                    if (current.ownerStatement) {
+                        current.ownerStatement.comment.splice(current.ownerStatement.comment.indexOf(current), 1);
+
+                        for (const wsComment of workspaceComments) {
+                            wsComment.comment.splice(wsComment.comment.indexOf(current), 1)
+                        }
+                    }
+                    current.owner = commented;
+                    current.ownerStatement = stmt;
+                    comments.push(current);
+                }
+            }
+
+            if (comments.length) {
+                const wsCommentRefs: string[] = [];
+
+                if (isTopLevelComment(commented)) {
+                    let currentWorkspaceComment: Comment[] = [];
+
+                    const localWorkspaceComments: Comment[][] = [];
+
+                    comments.forEach((comment, index) => {
+                        let beforeStatement = comment.owner && comment.start < comment.owner.getStart();
+                        if (comment.kind === CommentKind.MultiLine && beforeStatement) {
+                            if (currentWorkspaceComment.length) {
+                                localWorkspaceComments.push(currentWorkspaceComment);
+                                currentWorkspaceComment = [];
+                            }
+                            if (index != comments.length - 1) {
+                                localWorkspaceComments.push([comment]);
+                                return;
+                            }
+                        }
+
+                        currentWorkspaceComment.push(comment);
+
+                        if (comment.followedByEmptyLine && beforeStatement) {
+                            localWorkspaceComments.push(currentWorkspaceComment);
+                            currentWorkspaceComment = [];
+                        }
+                    });
+
+                    comments = currentWorkspaceComment;
+
+                    localWorkspaceComments.forEach(comment => {
+                        const refId = getCommentRef();
+
+                        wsCommentRefs.push(refId);
+                        workspaceComments.push({ comment, refId });
+                    });
+                }
+
+                // Attach comments to StatementNode
+                if (stmt) {
+                    if (wsCommentRefs.length) {
+                        if (stmt.data) stmt.data += ";" + wsCommentRefs.join(";")
+                        else stmt.data = wsCommentRefs.join(";")
+                    }
+                    if (comments && comments.length) {
+                        if (stmt.comment) stmt.comment = stmt.comment.concat(comments);
+                        else stmt.comment = comments;
+                    }
+                }
+            }
+        }
+
         function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false, topLevel = false): StatementNode {
             const node = n as ts.Node;
             let stmt: StatementNode;
@@ -1394,7 +1529,7 @@ ${output}</xml>`;
             }
 
             if (!skipComments) {
-                getComments(parent || node);
+                getNodeComments(parent || node, stmt);
             }
 
             return stmt;
@@ -1404,108 +1539,6 @@ ${output}</xml>`;
                     return getStatementBlock(next.shift(), next, undefined, false, topLevel);
                 }
                 return undefined;
-            }
-
-            /**
-             * We split up comments according to the following rules:
-             *      1. If the comment is not top-level:
-             *          a. Combine it with all comments for the following statement
-             *          b. If there is no following statement in the current block, group it with the previous statement
-             *          c. If there are no statements inside the block, group it with the parent block
-             *          d. If trailing the same line as the statement, group it with the comments for that statement
-             *      2. If the comment is top-level:
-             *          b. If the comment is followed by an empty line, it becomes a workspace comment
-             *          c. If the comment is followed by a multi-line comment, it becomes a workspace comment
-             *          a. If the comment is a single-line comment, combine it with the next single-line comment
-             *          d. If the comment is not followed with an empty line, group it with the next statement or event
-             *          e. All other comments are workspace comments
-             */
-
-            function getComments(commented: Node) {
-                let comments: Comment[] = [];
-                let current: Comment;
-                for (let i = 0; i < commentMap.length; i++) {
-                    current = commentMap[i];
-                    if (!current.owner && current.start >= commented.pos && current.end <= commented.end) {
-                        current.owner = commented;
-                        current.ownerStatement = stmt;
-                        comments.push(current);
-                    }
-
-                    if (current.start > commented.end) break;
-                }
-
-                if (current && current.isTrailingComment) {
-                    const endLine = ts.getLineAndCharacterOfPosition(file, commented.end);
-                    const commentLine = ts.getLineAndCharacterOfPosition(file, current.start);
-
-                    if (endLine.line === commentLine.line) {
-                        // If the comment is trailing and on the same line as the statement, it probably belongs
-                        // to this statement. Remove it from any statement it's already assigned to and any workspace
-                        // comments
-                        if (current.ownerStatement) {
-                            current.ownerStatement.comment.splice(current.ownerStatement.comment.indexOf(current), 1);
-
-                            for (const wsComment of workspaceComments) {
-                                wsComment.comment.splice(wsComment.comment.indexOf(current), 1)
-                            }
-                        }
-                        current.owner = commented;
-                        current.ownerStatement = stmt;
-                        comments.push(current);
-                    }
-                }
-
-                if (comments.length) {
-                    const wsCommentRefs: string[] = [];
-
-                    if (isTopLevelComment(commented)) {
-                        let currentWorkspaceComment: Comment[] = [];
-
-                        const localWorkspaceComments: Comment[][] = [];
-
-                        comments.forEach((comment, index) => {
-                            let beforeStatement = comment.owner && comment.start < comment.owner.getStart();
-                            if (comment.kind === CommentKind.MultiLine && beforeStatement) {
-                                if (currentWorkspaceComment.length) {
-                                    localWorkspaceComments.push(currentWorkspaceComment);
-                                    currentWorkspaceComment = [];
-                                }
-                                if (index != comments.length - 1) {
-                                    localWorkspaceComments.push([comment]);
-                                    return;
-                                }
-                            }
-
-                            currentWorkspaceComment.push(comment);
-
-                            if (comment.followedByEmptyLine && beforeStatement) {
-                                localWorkspaceComments.push(currentWorkspaceComment);
-                                currentWorkspaceComment = [];
-                            }
-                        });
-
-                        comments = currentWorkspaceComment;
-
-                        localWorkspaceComments.forEach(comment => {
-                            const refId = getCommentRef();
-
-                            wsCommentRefs.push(refId);
-                            workspaceComments.push({ comment, refId });
-                        });
-                    }
-
-                    if (stmt) {
-                        if (wsCommentRefs.length) {
-                            if (stmt.data) stmt.data += ";" + wsCommentRefs.join(";")
-                            else stmt.data = wsCommentRefs.join(";")
-                        }
-                        if (comments && comments.length) {
-                            if (stmt.comment) stmt.comment = stmt.comment.concat(comments);
-                            else stmt.comment = comments;
-                        }
-                    }
-                }
             }
         }
 
@@ -1601,7 +1634,7 @@ ${output}</xml>`;
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
+            const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
             const nr = attributes.imageLiteralRows || 5;
             const nleds = nc * nr;
             if (nleds != leds.length) {
@@ -1924,11 +1957,13 @@ ${output}</xml>`;
                 r.mutationChildren = [];
                 n.parameters.forEach(p => {
                     const paramName = p.name.getText();
+                    let type = normalizeType(p.type.getText());
+                    if (pxt.U.endsWith(type, "[]")) type = "Array";
                     r.mutationChildren.push({
                         nodeName: "arg",
                         attributes: {
                             name: paramName,
-                            type: p.type.getText(),
+                            type,
                             id: env.functionParamIds[name][paramName]
                         }
                     });
@@ -2015,11 +2050,14 @@ ${output}</xml>`;
                             env.declaredFunctions[name].parameters.forEach((p, i) => {
                                 const paramName = p.name.getText();
                                 const argId = env.functionParamIds[name][paramName];
+                                let type = normalizeType(p.type.getText());
+                                if (pxt.U.endsWith(type, "[]")) type = "Array";
+
                                 r.mutationChildren.push({
                                     nodeName: "arg",
                                     attributes: {
                                         name: paramName,
-                                        type: p.type.getText(),
+                                        type: type,
                                         id: argId
                                     }
                                 });
@@ -2038,7 +2076,7 @@ ${output}</xml>`;
                 attributes.blockId = builtin.blockId;
             }
 
-            if (attributes.imageLiteral) {
+            if (attributes.imageLiteral || attributes.gridLiteral) {
                 return getImageLiteralStatement(node, info);
             }
 
@@ -2131,7 +2169,6 @@ ${output}</xml>`;
                 switch (e.kind) {
                     case SK.FunctionExpression:
                     case SK.ArrowFunction:
-                        let expBody = (e as ArrowFunction | FunctionExpression).body;
                         const m = getDestructuringMutation(e as ArrowFunction);
                         let mustPopLocalScope = false;
                         if (m) {
@@ -2262,7 +2299,30 @@ ${output}</xml>`;
 
             if (optionalCount) {
                 if (!r.mutation) r.mutation = {};
-                r.mutation["_expanded"] = optionalCount.toString();
+
+                if (attributes.compileHiddenArguments) {
+                    // Only expand the optional arguments that do not map to shadow blocks
+                    let nonOptional = 0;
+                    let expandCount = 0;
+
+                    for (const arg of args) {
+                        const aName = U.htmlEscape(arg.param.definitionName);
+                        const input = r.inputs.find(i => i.name === aName);
+
+                        if (!arg.param.isOptional) {
+                            nonOptional++;
+                        }
+                        else if (input && !shouldEmitShadowOnly(input)) {
+                            expandCount = Math.max(arg.param.definitionIndex - nonOptional + 1, expandCount)
+                        }
+                    }
+
+                    r.mutation["_expanded"] =  expandCount.toString();
+                }
+                else {
+                    r.mutation["_expanded"] = optionalCount.toString();
+                }
+
             }
 
             return r;
@@ -2361,16 +2421,32 @@ ${output}</xml>`;
                 }
             }
 
-            eventStatements.map(n => getStatementBlock(n, undefined, undefined, false, topLevel)).forEach(emitStatementNode);
+            const compiledEvents: StatementNode[] = [];
+            const keyMap: {[index: string]: boolean} = {};
+            for (const statement of eventStatements) {
+                const key = statement.kind === SK.FunctionDeclaration ? undefined : getCallKey(statement as ExpressionStatement);
+
+                if (key && keyMap[key]) {
+                    // Pass false for topLevel to force a grey block
+                    compiledEvents.push(getStatementBlock(statement, undefined, undefined, false, false))
+                }
+                else {
+                    keyMap[key] = true;
+                    compiledEvents.push(getStatementBlock(statement, undefined, undefined, false, topLevel))
+                }
+            }
+
+            compiledEvents.forEach(emitStatementNode);
 
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
-                const stmtNode = blockStatements.shift();
-                const stmt = getStatementBlock(stmtNode, blockStatements, parent, false, topLevel);
+                const blockNode = blockStatements.shift();
+                const stmt = getStatementBlock(blockNode, blockStatements, parent, false, topLevel);
                 if (emitOnStart) {
                     // Preserve any variable edeclarations that were never used
-                    let current = stmt;
-                    let currentNode: ts.Node = stmtNode;
+                    // stmt and blockNode will not yet align if there was an auto-declared variable.
+                    let currentStmtNode = stmt;
+                    let currentBlockNode: ts.Node = blockNode;
                     autoDeclarations.forEach(([name, node]) => {
                         if (varUsages[name] === ReferenceType.InBlocksOnly) {
                             return;
@@ -2384,18 +2460,24 @@ ${output}</xml>`;
                             v = getTypeScriptStatementBlock(node, "let ");
                         }
                         else {
-                            v = getVariableSetOrChangeBlock(stmtNode, (node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
+                            v = getVariableSetOrChangeBlock(blockNode, (node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
                         }
-                        v.next = current;
-                        current = v;
-                        currentNode = node;
+
+                        // Auto-declared variables were not previously inserted into the stmt linked-list.
+                        // Insert auto-declared 'v' as the currentStmtNode.
+                        v.next = currentStmtNode;
+                        currentStmtNode = v;
+                        currentBlockNode = node;
+
+                        // Attach to currentStmtNode any associated comments
+                        getNodeComments(currentBlockNode.parent, currentStmtNode);
                     });
 
-                    if (current) {
-                        const r = mkStmt(ts.pxtc.ON_START_TYPE, currentNode);
+                    if (currentStmtNode) {
+                        const r = mkStmt(ts.pxtc.ON_START_TYPE, currentBlockNode);
                         r.handlers = [{
                             name: "HANDLER",
-                            statement: current
+                            statement: currentStmtNode
                         }];
                         return r;
                     }
@@ -2677,7 +2759,7 @@ ${output}</xml>`;
                     if (alias) {
                         info.decompilerBlockAlias = env.aliasBlocks[info.qName];
                     }
-                    else {
+                    else if (!env.opts.snippetMode) {
                         return Util.lf("No output expressions as statements");
                     }
                 }
@@ -2725,7 +2807,7 @@ ${output}</xml>`;
             const comp = pxt.blocks.compileInfo(api);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
 
-            if (attributes.imageLiteral) {
+            if (attributes.imageLiteral || attributes.gridLiteral) {
                 // Image literals do not show up in the block string, so it won't be in comp
                 if (info.args.length - totalDecompilableArgs > 1) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -2737,7 +2819,7 @@ ${output}</xml>`;
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
                 const nr = attributes.imageLiteralRows || 5;
-                const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
+                const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
                 const nleds = nc * nr;
                 if (nc * nr != leds.length) {
                     return Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length);
@@ -2897,14 +2979,12 @@ ${output}</xml>`;
                     }
 
                     const tag = unwrapNode((e as ts.TaggedTemplateExpression).tag);
-
-                    if (tag.kind !== SK.Identifier) {
-                        return Util.lf("Tagged template literals must use an identifier as the tag");
-                    }
-
                     const tagText = tag.getText();
-                    if (tagText.trim() != tagName.trim()) {
-                        return Util.lf("Function only supports template literals with tag '{0}'", tagName);
+
+                    const possibleTags = tagName.split(";").map(t => t.trim());
+
+                    if (possibleTags.indexOf(tagText) === -1) {
+                        return Util.lf("Function only supports template literals with tag '{0}'", possibleTags.join(", "));
                     }
 
                     const template = (e as ts.TaggedTemplateExpression).template;
@@ -3002,7 +3082,8 @@ ${output}</xml>`;
                             return Util.lf("Function parameters must declare a type");
                         }
 
-                        if (env.opts.allowedArgumentTypes.indexOf(normalizeType(type)) === -1) {
+                        const normalized = normalizeType(type);
+                        if (env.opts.allowedArgumentTypes.indexOf(normalized) === -1 && !U.endsWith(normalized, "[]")) {
                             return Util.lf("Only types that can be added in blocks can be used for function arguments");
                         }
                     }
@@ -3315,6 +3396,8 @@ ${output}</xml>`;
                 return checkStatement(n, env, true, undefined);
             case SK.TaggedTemplateExpression:
                 return checkTaggedTemplateExpression(n as ts.TaggedTemplateExpression, env);
+            case SK.AsExpression:
+                return checkAsExpression(n as ts.AsExpression);
 
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
@@ -3424,6 +3507,34 @@ ${output}</xml>`;
 
         // The compiler will have already caught any invalid tags or templates
         return undefined;
+    }
+
+    function checkAsExpression(n: ts.AsExpression) {
+        // The only time we allow casts to decompile is in the very special case where someone has
+        // written a program comparing two string, boolean, or numeric literals in blocks and
+        // converted to text. e.g. 3 == 5 or true != false
+        if (n.type.getText().trim() === "any" && (ts.isStringOrNumericLiteral(n.expression) ||
+            n.expression.kind === SK.TrueKeyword || n.expression.kind === SK.FalseKeyword)) {
+            const [parent] = getParent(n);
+
+            if (parent.kind === SK.BinaryExpression) {
+                switch ((parent as ts.BinaryExpression).operatorToken.kind) {
+                    case SK.EqualsEqualsToken:
+                    case SK.EqualsEqualsEqualsToken:
+                    case SK.ExclamationEqualsToken:
+                    case SK.ExclamationEqualsEqualsToken:
+                    case SK.LessThanToken:
+                    case SK.LessThanEqualsToken:
+                    case SK.GreaterThanToken:
+                    case SK.GreaterThanEqualsToken:
+                        return undefined;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        return Util.lf("Casting not supported in blocks");
     }
 
     function getParent(node: Node): [Node, Node] {
@@ -3590,21 +3701,24 @@ ${output}</xml>`;
 
     function isOutputExpression(expr: ts.Expression): boolean {
         switch (expr.kind) {
-            case SK.BinaryExpression:
+            case SK.BinaryExpression: {
                 const tk = (expr as ts.BinaryExpression).operatorToken.kind;
                 return tk != SK.PlusEqualsToken && tk != SK.MinusEqualsToken && tk != SK.EqualsToken;
+            }
             case SK.PrefixUnaryExpression: {
-                let op = (expr as ts.PrefixUnaryExpression).operator;
+                const op = (expr as ts.PrefixUnaryExpression).operator;
                 return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
             }
             case SK.PostfixUnaryExpression: {
-                let op = (expr as ts.PostfixUnaryExpression).operator;
+                const op = (expr as ts.PostfixUnaryExpression).operator;
                 return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
             }
-            case SK.CallExpression:
+            case SK.CallExpression: {
                 const callInfo: pxtc.CallInfo = pxtc.pxtInfo(expr).callInfo
                 assert(!!callInfo);
                 return callInfo.isExpression;
+            }
+            case SK.Identifier:
             case SK.ParenthesizedExpression:
             case SK.NumericLiteral:
             case SK.StringLiteral:
@@ -3831,5 +3945,33 @@ ${output}</xml>`;
                 current.owner = node;
             }
         }
+    }
+
+    function shouldEmitShadowOnly(n: ValueNode) {
+        let emitShadowOnly = false;
+
+        if (n.value.kind === "expr") {
+            const value = n.value as ExpressionNode;
+            if (value.type === numberType && n.shadowType === minmaxNumberType) {
+                value.type = minmaxNumberType;
+                value.fields[0].name = 'SLIDER';
+                value.mutation = n.shadowMutation;
+            }
+            emitShadowOnly = value.type === n.shadowType;
+            if (!emitShadowOnly) {
+                switch (value.type) {
+                    case "math_number":
+                    case "math_number_minmax":
+                    case "math_integer":
+                    case "math_whole_number":
+                    case "logic_boolean":
+                    case "text":
+                        emitShadowOnly = !n.shadowType;
+                        break
+                }
+            }
+        }
+
+        return emitShadowOnly;
     }
 }

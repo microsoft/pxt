@@ -2,7 +2,8 @@
     "name": "test-package",
     "description": "Project that defines a variety of APIs for testing the TypeScript and Python language service",
     "files": [
-        "basic.ts"
+        "basic.ts",
+        "minecraft.ts"
     ],
     "public": true,
     "dependencies": {},

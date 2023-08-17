@@ -15,12 +15,14 @@ import { ProjectView } from "./app";
 import * as editortoolbar from "./editortoolbar";
 import * as ImmersiveReader from "./immersivereader";
 import * as TutorialCodeValidation from "./tutorialCodeValidation";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 interface ITutorialBlocks {
     snippetBlocks: pxt.Map<pxt.Map<number>>;
     usedBlocks: pxt.Map<number>;
+    highlightBlocks: pxt.Map<pxt.Map<number>>;
 }
 
 /**
@@ -46,7 +48,7 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
                     pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: id });
                     // populate snippets if usedBlocks are present, but snippets are not
                     if (!entry?.snippets) getUsedBlocksInternalAsync(code, id, language, db, skipCache);
-                    return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks });
+                    return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks, highlightBlocks: entry.highlightBlocks });
                 } else {
                     return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
                 }
@@ -64,6 +66,7 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
 function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<ITutorialBlocks> {
     const snippetBlocks: pxt.Map<pxt.Map<number>> = {};
     const usedBlocks: pxt.Map<number> = {};
+    const highlightBlocks: pxt.Map<pxt.Map<number>> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
@@ -78,32 +81,44 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     const blocksXml = xml[i];
                     const snippetHash = pxt.BrowserUtils.getTutorialCodeHash([code[i]]);
 
-                    headless = pxt.blocks.loadWorkspaceXml(blocksXml);
+                    headless = pxt.blocks.loadWorkspaceXml(blocksXml, false, { keepMetaComments: true });
                     if (!headless) {
                         pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
                         throw new Error("blocksXml failed to load");
                     }
-                    const allblocks = headless.getAllBlocks();
-                    snippetBlocks[snippetHash] = {}
+                    const allblocks = headless.getAllBlocks(false);
+                    snippetBlocks[snippetHash] = {};
+                    highlightBlocks[snippetHash] = {};
                     for (let bi = 0; bi < allblocks.length; ++bi) {
                         const blk = allblocks[bi];
-                        if (!blk.isShadow()) {
+                        if (blk.type == "typescript_statement") {
+                            pxt.tickEvent(`tutorial.usedblocks.greyblock`, { tutorial: id, code: code[i]?.substring(0, 2000) });
+                        } else if (!blk.isShadow()) {
                             if (!snippetBlocks[snippetHash][blk.type]) {
                                 snippetBlocks[snippetHash][blk.type] = 0;
                             }
                             snippetBlocks[snippetHash][blk.type] = snippetBlocks[snippetHash][blk.type] + 1;
                             usedBlocks[blk.type] = 1;
                         }
+
+                        const comment = blk.getCommentText();
+                        if (comment && /@highlight/.test(comment)) {
+                            if (!highlightBlocks[snippetHash][blk.type]) {
+                                highlightBlocks[snippetHash][blk.type] = 0;
+                            }
+                            highlightBlocks[snippetHash][blk.type] = highlightBlocks[snippetHash][blk.type] + 1;
+                        }
                     }
                 }
 
                 headless?.dispose();
 
-                if (pxt.options.debug)
+                if (pxt.options.debug) {
                     pxt.debug(JSON.stringify(snippetBlocks, null, 2));
+                }
 
                 try {
-                    if (db && !skipCache) db.setAsync(id, snippetBlocks, code);
+                    if (db && !skipCache) db.setAsync(id, snippetBlocks, code, highlightBlocks);
                 }
                 catch (e) {
                     // Don't fail if the indexeddb fails, but log it
@@ -114,7 +129,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                 throw new Error("Failed to decompile");
             }
 
-            return { snippetBlocks, usedBlocks };
+            return { snippetBlocks, usedBlocks, highlightBlocks };
         }).catch((e) => {
             pxt.reportException(e);
             throw new Error(`Failed to decompile tutorial`);
@@ -223,7 +238,7 @@ export class TutorialMenuItemLink extends data.Component<TutorialMenuItemLinkPro
 
     renderCore() {
         const { className, ariaLabel, index } = this.props;
-        return <a className={className} role="menuitem" aria-label={ariaLabel} tabIndex={0} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
+        return <a className={className} role="menuitem" aria-label={ariaLabel} tabIndex={0} onClick={this.handleClick} onKeyDown={fireClickOnEnter}>
             {this.props.children}
         </a>;
     }
@@ -263,13 +278,13 @@ export class TutorialStepCircle extends data.Component<ITutorialMenuProps, {}> {
 
         return <div id="tutorialsteps" className={`ui item ${this.props.className}`}>
             <div className="ui item" role="menubar">
-                <sui.Button role="button" icon={`${isRtl ? 'right' : 'left'} chevron`} disabled={!hasPrev} className={`prevbutton left ${!hasPrev ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.handlePrevClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button role="button" icon={`${isRtl ? 'right' : 'left'} chevron`} disabled={!hasPrev} className={`prevbutton left ${!hasPrev ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.handlePrevClick} onKeyDown={fireClickOnEnter} />
                 <span className="step-label" key={'tutorialStep' + currentStep}>
                     <sui.ProgressCircle progress={currentStep + 1} steps={tutorialStepInfo.length} stroke={4.5} />
                     <span className={`ui circular label blue selected ${!tutorialReady ? 'disabled' : ''}`}
                         aria-label={lf("You are currently at tutorial step {0}.")}>{tutorialStep + 1}</span>
                 </span>
-                <sui.Button role="button" icon={`${isRtl ? 'left' : 'right'} chevron`} disabled={!hasNext} rightIcon className={`nextbutton right ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.handleNextClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button role="button" icon={`${isRtl ? 'left' : 'right'} chevron`} disabled={!hasNext} rightIcon className={`nextbutton right ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.handleNextClick} onKeyDown={fireClickOnEnter} />
             </div>
         </div>;
     }
@@ -597,6 +612,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             }
         }
         this.setState({ showSeeMore: show });
+        this.props.parent.setEditorOffset();
     }
 
     getCardHeight() {
@@ -722,7 +738,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
             {hasHint && this.state.showHint && !showDialog && <div className="mask" role="region" onClick={this.closeHint}></div>}
             <div className='ui buttons'>
-                {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert">
                         <div className="content">
@@ -732,22 +748,21 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     <div className="avatar-container">
                         {(!showDialog && hasHint) && <sui.Button
                             className={`ui circular label blue hintbutton hidelightbox ${this.props.pokeUser ? 'shake flash' : ''}`}
-                            icon="lightbulb outline"
+                            icon="lightbulb"
                             aria-label={tutorialAriaLabel} title={tutorialHintTooltip}
-                            onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}
+                            onClick={hintOnClick} onKeyDown={fireClickOnEnter}
                         />}
                         {(!showDialog && hasHint) && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
                         <TutorialHint ref="tutorialhint" parent={this.props.parent} />
                     </div>
-                    {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
-                    {this.state.showSeeMore && tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
-                    <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
+                    {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={fireClickOnEnter} />}
+                    {this.state.showSeeMore && tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={fireClickOnEnter} />}
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${tutorialCodeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
-                    onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                    onClick={nextOnClick} onKeyDown={fireClickOnEnter} /> : undefined}
                 {showTutorialValidationMessage &&
                     <TutorialCodeValidation.ShowValidationMessage onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.closeTutorialValidationMessage} initialVisible={this.state.showTutorialValidationMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} validationTelemetry={this.validationTelemetry} parent={this.props.parent} />}
-                {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={fireClickOnEnter} /> : undefined}
             </div>
         </div>;
     }

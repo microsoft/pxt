@@ -6,6 +6,7 @@ import * as auth from "./auth";
 import * as ImmersiveReader from '@microsoft/immersive-reader-sdk';
 
 import Cloud = pxt.Cloud;
+import { fireClickOnEnter } from "./util";
 
 export type ImmersiveReaderToken = {
     token: string;
@@ -190,7 +191,7 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
     const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
     if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
-        return pxt.Cloud.privateGetAsync("immreader").then(
+        return pxt.Cloud.privateGetAsync("immreader", true).then(
             res => {
                 pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res));
                 return res;
@@ -229,7 +230,7 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
             pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})
         },
         onPreferencesChanged: (pref: string) => {
-            auth.updateUserPreferencesAsync({reader: pref})
+            auth.setImmersiveReaderPrefAsync(pref)
         },
         preferences: userReaderPref
     }
@@ -272,7 +273,7 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
     });
 
     function testConnectionAsync(token: ImmersiveReaderToken): Promise<ImmersiveReaderToken> {
-        return pxt.Cloud.privateGetAsync("ping").then(() => {return token});
+        return pxt.Cloud.privateGetAsync("ping", true).then(() => {return token});
     }
 }
 
@@ -289,7 +290,7 @@ export class ImmersiveReaderButton extends data.Component<ImmersiveReaderProps, 
 
     render() {
         return <div className='immersive-reader-button ui item' onClick={this.buttonClickHandler}
-            aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={sui.fireClickOnEnter} tabIndex={0}
+            aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={fireClickOnEnter} tabIndex={0}
             title={lf("Launch Immersive Reader")}/>
     }
 }

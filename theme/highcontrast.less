@@ -11,6 +11,7 @@
 
 @selected: yellow;
 @disabled: #3ff23f;
+@hyperlink: #807FFF;
 
 /* Messages */
 #msg .hc {
@@ -77,6 +78,10 @@
         text-decoration: underline;
     }
 
+    ul > li {
+        color: @HCtextColor;
+    }
+
     #tutorialcard .prevbutton,
     #tutorialcard .nextbutton {
         &:hover, &:focus {
@@ -130,6 +135,11 @@
         .blocklyTreeRow:not(.blocklyTreeSelected) {
             background-color: @HCblocklyToolboxColor !important;
         }
+    }
+
+    .toolbox-title {
+        background-color: @HCbackground;
+        color: @HCtextColor;
     }
 
     #monacoEditor .monacoDraggableBlock {
@@ -204,7 +214,7 @@
     #root {
         background: @HCRootBackground !important;
     }
-    #filelist {
+    #simulator .editor-sidebar {
         background: @HCsimulatorBackground !important;
 
         #boardview {
@@ -225,6 +235,14 @@
     }
     .blocklyPath {
         stroke-width: 3px;
+    }
+
+    .cloudstatusarea {
+        color: @HCtextColor !important;
+
+        .ui.loader:after {
+            border-top-color: @HCtextColor !important;
+        }
     }
 
     /* Menu bar */
@@ -394,6 +412,12 @@
         }
     }
 
+    .signin-button {
+        background-color: @HCbackground;
+        color: @HCtextColor;
+        border: 1px solid @HCtextColor !important;
+    }
+
     /* Inputs */
     .ui.input input,
     .ui.input .input {
@@ -484,7 +508,7 @@
                 border-color: @HCtextColor;
                 border-style: solid;
             }
-            .actions {
+            .ui.grid.stackable .actions {
                 .card-action {
                     border: 2px solid @HCtextColor;
                     .button.attached i {
@@ -494,6 +518,10 @@
                 }
                 .card-action-title {
                     color: @HCtextColor;
+                }
+                .card-action:hover,
+                .card-action:focus-within {
+                    border-color: @selected;
                 }
             }
         }
@@ -525,6 +553,7 @@
         border: 2px solid @HCtextColor !important;
     }
 
+    /* banners */
     #notificationBanner {
         background: @HCbackground !important;
         border: 2px solid @HCtextColor !important;
@@ -532,6 +561,12 @@
         .header {
             color: @HCtextColor !important;
         }
+    }
+
+    .ui.message {
+        background: @HCbackground !important;
+        color: @HCtextColor !important;
+        border: 2px solid @HCtextColor !important;
     }
 
     #winAppError {
@@ -544,7 +579,7 @@
     }
 
     /* Cards */
-    .card {
+    .card:not(.icon) {
         background: @HCbackground !important;
         border: 2px solid @HCtextColor !important;
         border-radius: initial !important;
@@ -641,11 +676,25 @@
         background: @HCtextColor !important;
     }
 
+    // Serial csv
+    #serialArea #serialCsv {
+        background-color: @HCbackground !important;
+        tr {
+            background-color: @HCbackground !important;
+        }
+        td, th {
+            border-color: @HCtextColor !important;
+            color: @HCtextColor !important;
+        }
+    }
+
+
     /* Asset Editor */
     #assetEditor {
         .asset-editor-sidebar,
         .asset-editor-sidebar-preview,
-        .asset-editor-preview {
+        .asset-editor-preview,
+        .asset-editor-sidebar-temp {
             color: @HCtextColor;
             background-color: @HCbackground;
             border-color: @HCtextColor;
@@ -661,7 +710,10 @@
             border-bottom: 1px solid @HCtextColor;
         }
 
-        .asset-editor-button,
+        .common-button {
+            border: 1px solid;
+        }
+
         .asset-editor-card,
         .create-new {
             color: @HCtextColor;
@@ -674,10 +726,7 @@
             color: @HCbackground;
         }
 
-        .delete-asset {
-            border: 1px solid @red;
-        }
-
+        .asset-editor-card.selected,
         .asset-editor-gallery-tab.selected,
         .asset-editor-button:hover,
         .create-new:hover {
@@ -695,7 +744,8 @@
 
     /* Hyperlinks */
     a {
-        color: @HCtextColor !important;
+        color: @hyperlink !important;
+        text-decoration: underline !important;
     }
 
     #sidedocsbar {
@@ -720,8 +770,10 @@
 
     .ui.dropdown .menu,
     .ui.dropdown .menu > .item,
+    .ui.dropdown .menu > .item:hover,
     .ui.menu .ui.dropdown .menu,
-    .ui.menu .ui.dropdown .menu > .item {
+    .ui.menu .ui.dropdown .menu > .item,
+    .ui.menu .ui.dropdown .menu > .item:hover {
         background: @HCbackground !important;
         color: @HCtextColor !important;
 
@@ -784,16 +836,74 @@
         .tooltip:before {
             border-color: @HCtextColor transparent transparent @HCtextColor !important;
         }
+    }
 
-        .tutorialhint {
-            border-color: @HCtextColor;
-            background-color: @HCbackground;
-            color: @HCtextColor;
+    .tutorialhint, .tutorial-hint .tutorial-callout {
+        border-color: @HCtextColor;
+        background-color: @HCbackground;
+        color: @HCtextColor;
 
-            &:before {
-                border-right-color: @HCtextColor;
+        .hint-title {
+            margin: 0;
+            > span {
+                background-color: @HCbackground;
+                color: @HCtextColor;
             }
         }
+
+        &:before {
+            border-right-color: @HCtextColor;
+        }
+    }
+
+    /* Tabbed tutorial */
+
+    .tutorial-container-outer { background-color: @HCbackground; }
+    .tutorial-content-bkg { background-color: @HCbackground; }
+    .tutorial-step-counter { background-color: @HCbackground; }
+    .tutorial-scroll-gradient { display: none; }
+    .tutorial-title { color: @HCtextColor; }
+
+    .tutorial-step-counter {
+        border-color: @HCtextColor;
+    }
+    .tutorial-step-bar {
+        background-color: @HCbackground;
+        border: 1px solid @HCtextColor;
+    }
+    .tutorial-step-label { color: @HCtextColor; }
+    .tutorial-step-bar-fill { background-color: @HCtextColor; }
+    .tutorial-step-bubbles > button {
+        border: 1px solid @HCtextColor;
+    }
+
+    #simulator .editor-sidebar:not(.topInstructions) {
+        border-right: 1px solid @HCtextColor;
+    }
+
+    #simulator .topInstructionsWrapper .editor-sidebar {
+        border-bottom: 1px solid @HCtextColor;
+    }
+
+    #simulator .editor-sidebar .tab-navigation {
+        color: @HCtextColor;
+        background-color: @HCbackground;
+        border-bottom: 2px solid @HCtextColor;
+
+        .active {
+            color: @HCbackground;
+            background-color: @HCtextColor;
+        }
+
+        .tab-badge {
+            display: none;
+        }
+    }
+
+    &.tabTutorial details {
+        background-color: @HCbackground !important;
+        border: 2px solid @HCtextColor !important;
+        color: @HCtextColor !important;
     }
 
     .ui.label {
@@ -805,6 +915,23 @@
         border-color: @selected !important;
     }
 
+    .formatted-bullet {
+        background: linear-gradient(@HCtextColor, @HCtextColor) ~"no-repeat 45%/2px 100%";
+        i.icon, i.xicon {
+            color: @HCbackground;
+            background-color: @HCtextColor;
+        }
+        &:after {
+            border-color: @HCtextColor !important;
+        }
+    }
+
+    // Tutorial tablet mode
+    @media only screen and (max-width: @largestTabletScreen) {
+        .editor-sidebar {
+            border-bottom: 1px solid @HCtextColor;
+        }
+    }
 
     /* Modals */
     .ui.modal {
@@ -852,7 +979,8 @@
 
     /* immersive reader */
     .modals .ui.button.immersive-reader-button,
-    #mainmenu .immersive-reader-button.ui.item {
+    #mainmenu .immersive-reader-button.ui.item,
+    #simulator .editor-sidebar .immersive-reader-button.ui.item {
         border: 1px solid #fff!important;
         background-image: @immersiveReaderLightIcon !important;
         background-repeat: no-repeat !important;
@@ -863,7 +991,9 @@
     .modals .ui.button.immersive-reader-button:focus,
     .modals .ui.button.immersive-reader-button:hover,
     #mainmenu .immersive-reader-button.ui.item:focus,
-    #mainmenu .immersive-reader-button.ui.item:hover {
+    #mainmenu .immersive-reader-button.ui.item:hover,
+    #simulator .editor-sidebar .immersive-reader-button.ui.item:focus,
+    #simulator .editor-sidebar .immersive-reader-button.ui.item:hover {
         background-color: white !important;
         background-image: @immersiveReaderIcon !important;
         background-repeat: no-repeat !important;
@@ -888,6 +1018,20 @@
         background-color: @HCbackground !important;
         color: @HCtextColor !important;
 
+        .ui.button {
+            color: @HCtextColor !important;
+
+            &:focus, &:hover {
+                color: @HCtextColor !important;
+                border-color: @selected !important;
+                background: @HCbackground !important;
+
+                i, span {
+                    color: @HCtextColor !important;
+                }
+            }
+        }
+
         table.diffview {
             background: @HCbackground !important;
             color: @HCtextColor !important;
@@ -905,6 +1049,10 @@
                 border: 2px dotted #090 !important;
             }
         }
+    }
+
+    .ui.dropdown > .avatar > .initials {
+        background-color: @HCbackground !important;
     }
 }
 

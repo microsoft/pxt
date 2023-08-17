@@ -1,13 +1,17 @@
 import * as React from "react";
 import * as pkg from "../../package";
 import * as simulator from "../../simulator";
-import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEditorReducer';
+import { Button } from "../../../../react-common/components/controls/Button";
+import { List } from "../../../../react-common/components/controls/List";
+import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
+
+import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEditorReducerState';
 import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
+import { AssetPalette } from "./assetPalette";
 import { getBlocksEditor } from "../../app";
 
 interface AssetDetail {
@@ -19,6 +23,7 @@ interface AssetSidebarProps {
     asset?: pxt.Asset;
     isGalleryAsset?: boolean;
     showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
+    updateProject: () => void;
     dispatchChangeGalleryView: (view: GalleryView, assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchChangeSelectedAsset: (assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchUpdateUserAssets: () => void;
@@ -26,6 +31,7 @@ interface AssetSidebarProps {
 
 interface AssetSidebarState {
     showDeleteModal: boolean;
+    showPaletteModal: boolean;
     canEdit: boolean;
     canCopy: boolean;
     canDelete: boolean;
@@ -36,7 +42,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
     constructor(props: AssetSidebarProps) {
         super(props);
-        this.state = { showDeleteModal: false, canEdit: true, canCopy: true, canDelete: true };
+        this.state = { showDeleteModal: false, showPaletteModal: false, canEdit: true, canCopy: true, canDelete: true };
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: AssetSidebarProps) {
@@ -56,18 +62,18 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const asset = this.props.asset;
         const details: AssetDetail[] = [];
         if (asset) {
-            details.push({ name: lf("Type"), value: getDisplayTextForAsset(asset.type)});
+            details.push({ name: lf("Type"), value: getDisplayTextForAsset(asset.type) });
 
             switch (asset.type) {
                 case pxt.AssetType.Image:
                 case pxt.AssetType.Tile:
-                    details.push({ name: lf("Size"), value: `${asset.bitmap.width} x ${asset.bitmap.height}`});
+                    details.push({ name: lf("Size"), value: `${asset.bitmap.width} x ${asset.bitmap.height}` });
                     break;
                 case pxt.AssetType.Tilemap:
-                    details.push({ name: lf("Size"), value: `${asset.data.tilemap.width} x ${asset.data.tilemap.height}`});
+                    details.push({ name: lf("Size"), value: `${asset.data.tilemap.width} x ${asset.data.tilemap.height}` });
                     break;
                 case pxt.AssetType.Animation:
-                    details.push({ name: lf("Size"), value: `${asset.frames[0].width} x ${asset.frames[0].height}`});
+                    details.push({ name: lf("Size"), value: `${asset.frames[0].width} x ${asset.frames[0].height}` });
                     break;
             }
         }
@@ -89,30 +95,31 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        if (!result.meta.displayName && result.meta.temporaryInfo) {
+        if (!this.props.asset.meta?.displayName && result.meta.temporaryInfo) {
             getBlocksEditor().updateTemporaryAsset(result);
-
-            pkg.mainEditorPkg().lookupFile(`this/${pxt.MAIN_BLOCKS}`).setContentAsync(getBlocksEditor().getCurrentSource())
-
+            pkg.mainEditorPkg().lookupFile(`this/${pxt.MAIN_BLOCKS}`).setContentAsync(getBlocksEditor().getCurrentSource());
         }
-        else {
-            project.updateAsset(result);
-        }
+
+        if (result.meta.displayName) project.updateAsset(result);
+
         this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets().then(() => simulator.setDirty());
     }
 
     protected duplicateAssetHandler = () => {
-        pxt.tickEvent("assets.duplicate", { type: this.props.asset.type.toString(), gallery: this.props.isGalleryAsset.toString() });
+        const { isGalleryAsset } = this.props;
+        pxt.tickEvent("assets.duplicate", { type: this.props.asset.type.toString(), gallery: isGalleryAsset.toString() });
 
         const asset = this.props.asset;
-        if (!asset.meta?.displayName) asset.meta = { ...asset.meta, displayName: getDisplayNameForAsset(asset, this.props.isGalleryAsset) }
+        const displayName = asset.meta?.displayName
+            || getDisplayNameForAsset(asset, isGalleryAsset)
+            || pxt.getDefaultAssetDisplayName(asset.type);
 
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        const { type, id } = project.duplicateAsset(asset);
+        const { type, id } = project.duplicateAsset(asset, displayName);
         this.updateAssets().then(() => {
-            this.props.dispatchChangeGalleryView(GalleryView.User, type, id);
+            if (isGalleryAsset) this.props.dispatchChangeGalleryView(GalleryView.User, type, id);
         });
     }
 
@@ -146,6 +153,16 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         this.setState({ showDeleteModal: false });
     }
 
+    protected showPaletteModal = () => {
+        this.setState({ showPaletteModal: true });
+        pxt.tickEvent("palette.open");
+    }
+
+    protected hidePaletteModal = (paletteChanged: boolean) => {
+        this.setState({ showPaletteModal: false });
+        if (paletteChanged) this.props.updateProject();
+    }
+
     protected deleteAssetHandler = () => {
         pxt.tickEvent("assets.delete", { type: this.props.asset.type.toString() });
 
@@ -159,21 +176,23 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
     render() {
         const { asset, isGalleryAsset } = this.props;
-        const { showDeleteModal, canEdit, canCopy, canDelete } = this.state;
+        const { showDeleteModal, showPaletteModal, canEdit, canCopy, canDelete } = this.state;
         const details = this.getAssetDetails();
         const isNamed = asset?.meta?.displayName || isGalleryAsset;
         const name = getDisplayNameForAsset(asset, isGalleryAsset);
 
-        const actions: sui.ModalButton[] = [{ label: lf("Delete"), onclick: this.deleteAssetHandler, icon: 'trash', className: 'red' }];
+        const actions: ModalAction[] = [
+            { label: lf("Delete"), onClick: this.deleteAssetHandler, icon: 'icon trash', className: 'red' }
+        ];
 
         return <div className="asset-editor-sidebar">
-            <div className="asset-editor-sidebar-info">
+            <List className="asset-editor-sidebar-info">
                 <div>{lf("Asset Preview")}</div>
                 <div className="asset-editor-sidebar-preview">
-                    { asset && <AssetPreview asset={asset} />  }
+                    {asset && <AssetPreview asset={asset} />}
                 </div>
                 {isNamed || !asset
-                    ? <div className="asset-editor-sidebar-name">{ name }</div>
+                    ? <div className="asset-editor-sidebar-name">{name}</div>
                     : <div className="asset-editor-sidebar-temp">
                         <i className="icon exclamation triangle" />
                         <span>{lf("No asset name")}</span>
@@ -182,20 +201,54 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 {details.map(el => {
                     return <div key={el.name} className="asset-editor-sidebar-detail">{`${el.name}: ${el.value}`}</div>
                 })}
-            </div>
-            { asset && <div className="asset-editor-sidebar-controls">
-                {canEdit && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
-                <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
-                {canCopy && <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
-                {canDelete && <sui.MenuItem name={lf("Delete Asset")}
-                    className="delete-asset"
-                    dataTooltip={!canDelete ? (isGalleryAsset ? lf("Can't delete gallery item") : lf("Asset is used in your project")) : undefined}
-                    onClick={canDelete ? this.showDeleteModal : undefined}/>}
-            </div>}
+            </List>
+            <List className="asset-editor-sidebar-controls">
+                {asset && canEdit && <Button
+                    label={lf("Edit")}
+                    title={lf("Edit the selected asset")}
+                    ariaLabel={lf("Edit the selected asset")}
+                    leftIcon="icon edit"
+                    className="asset-editor-button"
+                    onClick={this.editAssetHandler} />}
+                {asset && <Button
+                    label={lf("Duplicate")}
+                    title={lf("Duplicate the selected asset")}
+                    ariaLabel={lf("Duplicate the selected asset")}
+                    leftIcon="icon copy"
+                    className="asset-editor-button"
+                    onClick={this.duplicateAssetHandler} />}
+                {asset && canCopy && <Button
+                    label={lf("Copy")}
+                    title={lf("Copy the selected asset to the clipboard")}
+                    ariaLabel={lf("Copy the selected asset to the clipboard")}
+                    leftIcon="icon paste"
+                    className="asset-editor-button"
+                    onClick={this.copyAssetHandler} />}
+                {asset && canDelete && <Button
+                    label={lf("Delete")}
+                    title={lf("Delete the selected asset")}
+                    ariaLabel={lf("Delete the selected asset")}
+                    className="asset-editor-button"
+                    leftIcon="icon trash"
+                    onClick={this.showDeleteModal} />}
+                <Button className="teal asset-palette-button"
+                    label={lf("Colors")}
+                    title={lf("Open the color palette")}
+                    ariaLabel={lf("Open the color palette")}
+                    leftIcon="fas fa-palette"
+                    onClick={this.showPaletteModal}
+                />
+            </List>
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
-            <sui.Modal className="asset-editor-delete-dialog" isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={true} dimmer={true} header={lf("Delete Asset")} buttons={actions}>
+            {showDeleteModal && <Modal
+                className="asset-editor-delete-dialog"
+                onClose={this.hideDeleteModal}
+                title={lf("Delete Asset")}
+                actions={actions}
+                parentElement={document.getElementById("root")}>
                 <div>{lf("Are you sure you want to delete {0}? Deleted assets cannot be recovered.", name)}</div>
-            </sui.Modal>
+            </Modal>}
+            {showPaletteModal && <AssetPalette onClose={this.hidePaletteModal} />}
         </div>
     }
 }
@@ -210,6 +263,8 @@ function getDisplayTextForAsset(type: pxt.AssetType) {
             return lf("Animation");
         case pxt.AssetType.Tilemap:
             return lf("Tilemap");
+        case pxt.AssetType.Song:
+            return lf("Song");
     }
 }
 
@@ -218,9 +273,10 @@ function getDisplayNameForAsset(asset: pxt.Asset, isGalleryAsset?: boolean) {
         return lf("No asset selected");
     } else if (asset?.meta?.displayName) {
         return asset.meta.displayName;
-    } else {
-        return isGalleryAsset ? asset.id.split('.').pop() : lf("Temporary asset");
+    } else if (isGalleryAsset) {
+        return asset.id.split('.').pop();
     }
+    return null;
 }
 
 function mapStateToProps(state: AssetEditorState, ownProps: any) {

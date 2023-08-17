@@ -5,6 +5,19 @@ Naming conventions provide a consistant and expected style of usage across all n
 Although not enforced, these naming conventions help keep the blocks and functions in the MakeCode editor consistent. 
 As much as possible, please try to follow these conventions and consider exceptions only when absolutely necessary. Thank you for creating MakeCode extensions!
 
+## Extension name
+
+Your extension name (defined in [pxt.json](./pxt-json.md)) must adhere to the following rules. Failure to do so may result in issues while loading your extension.
+
+* Start with a letter (lower-case).
+* Contain only the following allowed characters:
+  * Lower-case letters
+  * Numbers
+  * Dash (-)
+  * Underscore (_)
+
+In other words, it should match the following regex: `^[a-z][a-z0-9\-_]+`.
+
 ## TypeScript conventions
 
 MakeCode follows the usual TypeScript naming conventions.

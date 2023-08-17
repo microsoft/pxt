@@ -216,7 +216,7 @@ export class ProviderBase {
         // TODO: rememberme review this when implementing goog/onedrive
         const state = setOauth(ns, false);
 
-        const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
+        const providerDef = pxt.appTarget.cloud?.cloudProviders?.[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
         const r: OAuthParams = {
             client_id: providerDef.client_id,
@@ -389,7 +389,7 @@ function updateNameAsync(provider: IdentityProvider) {
             if (!info) // invalid token or info
                 return Promise.resolve();
             if (!info.initials)
-                info.initials = userInitials(info.name);
+                info.initials = U.initials(info.name);
             provider.setUser(info);
             return null
         })
@@ -459,13 +459,6 @@ export function loginCheck() {
     // notify cloud providers
     for (const impl of provs)
         impl.loginCheck();
-}
-
-export function userInitials(username: string): string {
-    if (!username) return "?";
-    // Parse the user name for user initials
-    const initials = username.match(/\b\w/g) || [];
-    return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
 }
 
 function syncApiHandler(p: string) {

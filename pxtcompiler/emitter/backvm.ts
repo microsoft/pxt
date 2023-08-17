@@ -145,8 +145,57 @@ ${info.id}_IfaceVT:
             return `0xffffffff, 0xffffffff ; -> ${vt}`
     }
 
+    function encodeSourceMap(srcmap: pxt.Map<number[]>) {
+        // magic: 0x4d435253 0x2d4e1588 0x719986aa ('SRCM' ... )
+        const res: number[] = [0x53, 0x52, 0x43, 0x4d, 0x88, 0x15, 0x4e, 0x2d, 0xaa, 0x86, 0x99, 0x71, 0x00, 0x00, 0x00, 0x00]
+        for (const fn of Object.keys(srcmap)) {
+            for (const c of U.stringToUint8Array(fn))
+                res.push(c)
+            res.push(0)
+            const arr = srcmap[fn]
+
+            let prevLn = 0
+            let prevOff = 0
+            for (let i = 0; i < arr.length; i += 3) {
+                encodeNumber(arr[i] - prevLn)
+                encodeNumber((arr[i + 1] - prevOff) >> 1)
+                encodeNumber(arr[i + 2] >> 1)
+                prevLn = arr[i]
+                prevOff = arr[i + 1]
+            }
+            res.push(0xff) // end-marker
+        }
+        res.push(0)
+        if (res.length & 1) res.push(0)
+        const res2: number[] = []
+        for (let i = 0; i < res.length; i += 2)
+            res2.push(res[i] | (res[i + 1] << 8))
+        return res2
+
+        function encodeNumber(k: number) {
+            if (0 <= k && k < 0xf0)
+                res.push(k)
+            else {
+                let mark = 0xf0
+                if (k < 0) {
+                    k = -k
+                    mark |= 0x08
+                }
+                const idx = res.length
+                res.push(null) // placeholder
+                let len = 0
+                while (k != 0) {
+                    res.push(k & 0xff)
+                    k >>>= 8
+                    len++
+                }
+                res[idx] = mark | len
+            }
+        }
+    }
+
     /* eslint-disable no-trailing-spaces */
-    export function vmEmit(bin: Binary, opts: CompileOptions) {
+    export function vmEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let vmsource = `; VM start
 _img_start:
 ${hexfile.hexPrelude()}
@@ -186,7 +235,7 @@ _start_${name}:
             address++
         }
 
-        const now = new Date()
+        const now = new Date(0) // new Date()
         let encodedName = U.toUTF8(opts.name, true)
         if (encodedName.length > 100) encodedName = encodedName.slice(0, 100)
         let encodedLength = encodedName.length + 1
@@ -270,7 +319,7 @@ _start_${name}:
         section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n")
             + "\n.word 0, 0 ; dummy entry to make sure not empty")
 
-        const cfg = bin.res.configData || []
+        const cfg = cres.configData || []
         section("configData", SectionType.ConfigData, () => cfg.map(d =>
             `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}`).join("\n")
             + "\n    .word 0, 0")
@@ -292,8 +341,29 @@ _start_${name}:
         bin.writeFile(BINARY_ASM, vmsource)
 
         let res = assemble(opts.target, bin, vmsource)
+
+        const srcmap = res.thumbFile.getSourceMap()
+        const encodedSrcMap = encodeSourceMap(srcmap)
+
         if (res.src)
-            bin.writeFile(pxtc.BINARY_ASM, res.src)
+            bin.writeFile(pxtc.BINARY_ASM, `; srcmap size: ${encodedSrcMap.length << 1} bytes\n` + res.src)
+
+        {
+            let binstring = ""
+            for (let v of res.buf)
+                binstring += String.fromCharCode(v & 0xff, v >> 8)
+            const hash = U.sha256(binstring)
+            for (let i = 0; i < 4; ++i) {
+                res.buf[16 + i] = parseInt(hash.slice(i * 4, i * 4 + 4), 16)
+            }
+            srcmap["__meta"] = {
+                name: opts.name,
+                programHash: res.buf[16] | (res.buf[16 + 1] << 16),
+                // TODO would be nice to include version number of editor...
+            } as any
+        }
+
+        bin.writeFile(pxtc.BINARY_SRCMAP, JSON.stringify(srcmap))
 
         if (pxt.options.debug) {
             let pc = res.thumbFile.peepCounts
@@ -306,13 +376,16 @@ _start_${name}:
 
         if (res.buf) {
             let binstring = ""
-            for (let v of res.buf)
+            const buf = res.buf
+            while (buf.length & 0xf) buf.push(0)
+            U.pushRange(buf, encodedSrcMap)
+            for (let v of buf)
                 binstring += String.fromCharCode(v & 0xff, v >> 8)
             binstring = ts.pxtc.encodeBase64(binstring)
 
             if (embedVTs()) {
                 bin.writeFile(pxtc.BINARY_PXT64, binstring)
-                const patched = hexfile.patchHex(bin, res.buf, false, false)[0]
+                const patched = hexfile.patchHex(bin, buf, false, !!target.useUF2)[0]
                 bin.writeFile(pxt.outputName(target), ts.pxtc.encodeBase64(patched))
             } else {
                 bin.writeFile(pxt.outputName(target), binstring)
@@ -357,7 +430,7 @@ _start_${name}:
         return resText
 
         function emitAll() {
-            writeRaw(`;\n; Proc: ${proc.getFullName()}\n;`)
+            writeRaw(`;\n; ${proc.getFullName()}\n;`)
             write(".section code")
             if (bin.procs[0] == proc) {
                 writeRaw(`; main`)

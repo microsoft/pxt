@@ -148,8 +148,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             const trgConfigFetch = this.getDataWithStatus("target-config:");
             const trgConfig = trgConfigFetch.data as pxt.TargetConfig;
 
-            if (trgConfigFetch.status === data.FetchStatus.Complete && trgConfig && trgConfig.packages && trgConfig.packages.preferredRepos) {
-                searchFor = trgConfig.packages.preferredRepos.join("|");
+            if (trgConfigFetch.status === data.FetchStatus.Complete && trgConfig?.packages?.approvedRepoLib) {
+                const approvedRepoLib = trgConfig?.packages?.approvedRepoLib;
+                const preferredRepos = approvedRepoLib && Object.keys(approvedRepoLib).filter(el => !!approvedRepoLib[el].preferred);
+                if (preferredRepos)
+                    searchFor = preferredRepos.join("|");
             }
         }
 
@@ -219,7 +222,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     handleSearch(str: string) {
-        // Hidden navigation, used to test /beta or other versions inside released UWP apps
+        // Hidden navigation, used to test /beta or other versions inside released apps
         // Secret prefix is /@, e.g.: /@beta
         const urlPathExec = /^\/@(.*)$/.exec(str);
         let urlPath = urlPathExec && urlPathExec[1];
@@ -234,10 +237,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     homeUrl += "/";
                 }
                 urlPath = urlPath.replace(/^\//, "");
-                pxt.winrt.releaseAllDevicesAsync()
-                    .then(() => {
-                        window.location.href = homeUrl + urlPath;
-                    });
+                window.location.href = homeUrl + urlPath;
             }
         }
         else {
@@ -272,12 +272,18 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     async installGh(scr: pxt.github.GitRepo) {
-        pxt.tickEvent("packages.github", { name: scr.fullName });
+        const parsed = pxt.github.parseRepoId(scr.fullName);
+        pxt.tickEvent("packages.github", {
+            name: scr.fullName,
+            slug: scr.slug.toLowerCase(),
+            tag: scr.tag,
+            fileName: parsed.fileName
+        });
         this.hide(null, this.backOnHide());
         let r: { version: string, config: pxt.PackageConfig };
         try {
             core.showLoading("downloadingpackage", lf("downloading extension..."));
-            r = await pxt.github.downloadLatestPackageAsync(scr);
+            r = await pxt.github.downloadLatestPackageAsync(scr, true /* use proxy */);
         }
         catch (e) {
             core.handleNetworkError(e);
@@ -290,7 +296,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     async addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
         try {
             this.hide(null, this.backOnHide());
-            core.showLoading("installingextension", lf("installing extension..."))
+            core.showLoading("installingextension", lf("Adding extension..."))
             const added = await pkg.mainEditorPkg()
                 .addDependencyAsync(config, version, this.state.mode == ScriptSearchMode.Boards)
             if (added)  //async

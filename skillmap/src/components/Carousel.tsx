@@ -1,5 +1,4 @@
 import * as React from "react";
-import { ComponentClass } from "react-redux";
 
 import { Item, CarouselItem } from './CarouselItem';
 
@@ -14,7 +13,7 @@ interface CarouselProps {
     items: Item[];
     selectedItem?: string;
     itemClassName?: string;
-    itemTemplate?: ((props: Item) => JSX.Element) | ComponentClass<any>;
+    itemTemplate?: ((props: Item) => JSX.Element) | React.JSXElementConstructor<any>;
     onItemSelect?: (id: string) => void;
     prependChildren?: JSX.Element[];
     appendChildren?: JSX.Element[];
@@ -84,12 +83,12 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
 
         return <div className="carousel">
             {title && <div className="carousel-title">
-                {titleIcon && <i className={`icon ${titleIcon}`} />}
+                {titleIcon && <i className={titleIcon} />}
                 <span>{title}</span>
                 {titleDecoration && <span className="carousel-subtitle">{titleDecoration}</span>}
             </div>}
             {showLeft && <div className="carousel-arrow left" onClick={this.handleLeftArrowClick} role="button">
-                <i className="icon chevron left" />
+                <i className="fas fa-chevron-left" />
             </div>}
             <div className="carousel-items">
                 <div className="carousel-items-inner" onScroll={this.handleScroll} ref={this.handleRef}>
@@ -101,7 +100,7 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
                 </div>
             </div>
             {showRight && <div className="carousel-arrow right" onClick={this.handleRightArrowClick} role="button">
-                <i className="icon chevron right" />
+                <i className="fas fa-chevron-right" />
             </div>}
         </div>
     }

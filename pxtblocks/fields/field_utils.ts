@@ -118,6 +118,61 @@ namespace pxtblockly {
         return canvas.toDataURL();
     }
 
+    export function songToDataURI(song: pxt.assets.music.Song, width: number, height: number, lightMode: boolean, maxMeasures?: number) {
+        const colors = pxt.appTarget.runtime.palette.slice();
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        let context: CanvasRenderingContext2D;
+        if (lightMode) {
+            context = canvas.getContext("2d", { alpha: false });
+            context.fillStyle = "#dedede";
+            context.fillRect(0, 0, width, height);
+        }
+        else {
+            context = canvas.getContext("2d");
+        }
+
+        const trackColors = [
+            5,  // duck
+            11, // cat
+            5,  // dog
+            4,  // fish
+            2,  // car
+            6,  // computer
+            14, // burger
+            2,  // cherry
+            5,  // lemon
+            1,  // explosion
+        ]
+
+        maxMeasures = maxMeasures || song.measures;
+
+        const cellWidth = Math.max(Math.floor(width / (song.beatsPerMeasure * maxMeasures * 2)), 1);
+        const cellsShown = Math.floor(width / cellWidth);
+
+        const cellHeight = Math.max(Math.floor(height / 12), 1);
+        const notesShown = Math.floor(height / cellHeight);
+
+        for (const track of song.tracks) {
+            for (const noteEvent of track.notes) {
+                const col = Math.floor(noteEvent.startTick / (song.ticksPerBeat / 2));
+                if (col > cellsShown) break;
+
+                for (const note of noteEvent.notes) {
+                    const row = 12 - (note.note % 12);
+                    if (row > notesShown) continue;
+
+                    context.fillStyle = colors[trackColors[track.id || song.tracks.indexOf(track)]];
+                    context.fillRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
+                }
+            }
+        }
+
+        return canvas.toDataURL();
+    }
+
     function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.legacy.LegacyTileInfo) {
         const existing = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE);
 
@@ -137,11 +192,11 @@ namespace pxtblockly {
     }
 
     export function getAllBlocksWithTilemaps(ws: Blockly.Workspace): FieldEditorReference<FieldTilemap>[] {
-        return getAllFieldsCore(ws, f => f instanceof FieldTilemap && !f.isGreyBlock);
+        return getAllFields(ws, f => f instanceof FieldTilemap && !f.isGreyBlock);
     }
 
     export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorReference<FieldTileset>[] {
-        return getAllFieldsCore(ws, f => f instanceof FieldTileset);
+        return getAllFields(ws, f => f instanceof FieldTileset);
     }
 
     export function needsTilemapUpgrade(ws: Blockly.Workspace) {
@@ -208,7 +263,7 @@ namespace pxtblockly {
         }
     }
 
-    function getAllFieldsCore<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {
+    export function getAllFields<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {
         const result: FieldEditorReference<U>[] = [];
 
         const top = ws.getTopBlocks(false);
@@ -277,16 +332,74 @@ namespace pxtblockly {
         return Object.keys(all).map(key => all[key]).filter(t => !!t);
     }
 
+    export function getTilesReferencedByTilesets(workspace: Blockly.Workspace) {
+        let all: pxt.Map<pxt.Tile> = {};
+
+        const project = pxt.react.getTilemapProject();
+
+        const allTiles = getAllBlocksWithTilesets(workspace);
+        for (const tilesetField of allTiles) {
+            const value = tilesetField.ref.getValue();
+            const match = /^\s*assets\s*\.\s*tile\s*`([^`]*)`\s*$/.exec(value);
+
+            if (match) {
+                const tile = project.lookupAssetByName(pxt.AssetType.Tile, match[1]);
+
+                if (tile && !all[tile.id]) {
+                    all[tile.id] = tile;
+                }
+            }
+            else if (!all[value]) {
+                all[value] = project.resolveTile(value);
+            }
+        }
+
+        return Object.keys(all).map(key => all[key]).filter(t => !!t);
+    }
+
     export function getTemporaryAssets(workspace: Blockly.Workspace, type: pxt.AssetType) {
         switch (type) {
             case pxt.AssetType.Image:
-                return getAllFieldsCore(workspace, field => field instanceof FieldSpriteEditor && field.isTemporaryAsset())
+                return getAllFields(workspace, field => field instanceof FieldSpriteEditor && field.isTemporaryAsset())
                     .map(f => (f.ref as unknown as FieldSpriteEditor).getAsset());
             case pxt.AssetType.Animation:
-                return getAllFieldsCore(workspace, field => field instanceof FieldAnimationEditor && field.isTemporaryAsset())
+                return getAllFields(workspace, field => field instanceof FieldAnimationEditor && field.isTemporaryAsset())
                     .map(f => (f.ref as unknown as FieldAnimationEditor).getAsset());
+            case pxt.AssetType.Song:
+                return getAllFields(workspace, field => field instanceof FieldMusicEditor && field.isTemporaryAsset())
+                    .map(f => (f.ref as unknown as FieldMusicEditor).getAsset());
 
             default: return [];
         }
+    }
+
+    export function setMelodyEditorOpen(block: Blockly.Block, isOpen: boolean) {
+        Blockly.Events.fire(new Blockly.Events.Ui(block, "melody-editor", !isOpen, isOpen));
+    }
+
+
+    export function workspaceToScreenCoordinates(ws: Blockly.WorkspaceSvg, wsCoordinates: Blockly.utils.Coordinate) {
+        // The position in pixels relative to the origin of the
+        // main workspace.
+        const scaledWS = wsCoordinates.scale(ws.scale);
+
+        // The offset in pixels between the main workspace's origin and the upper
+        // left corner of the injection div.
+        const mainOffsetPixels = ws.getOriginOffsetInPixels();
+
+        // The client coordinates offset by the injection div's upper left corner.
+        const clientOffsetPixels = Blockly.utils.Coordinate.sum(
+            scaledWS, mainOffsetPixels);
+
+
+        const injectionDiv = ws.getInjectionDiv();
+
+        // Bounding rect coordinates are in client coordinates, meaning that they
+        // are in pixels relative to the upper left corner of the visible browser
+        // window.  These coordinates change when you scroll the browser window.
+        const boundingRect = injectionDiv.getBoundingClientRect();
+
+        return new Blockly.utils.Coordinate(clientOffsetPixels.x + boundingRect.left,
+            clientOffsetPixels.y + boundingRect.top)
     }
 }

@@ -5,7 +5,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "declaration": true,
-        "out": "../built/pxtlib.js",
+        "outFile": "../built/pxtlib.js",
         "newLine": "LF",
         "sourceMap": false,
         "lib": [
@@ -20,6 +20,7 @@
             "marked",
             "web-bluetooth"
         ],
-        "incremental": true
+        "incremental": true,
+        "skipLibCheck": true
     }
 }

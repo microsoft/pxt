@@ -39,8 +39,12 @@
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 @docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
+@segoeUIFont: "Segoe UI", Tahoma, Geneva, Verdana, "Helvetica Neue", Helvetica, Arial, sans-serif;
+
 @emSize      : 14px;
 @fontSize    : 12pt;
+
+@smallFontSize    : 0.875rem;
 
 /*-------------------
    Links
@@ -107,6 +111,10 @@
 
 @loaderImageUrl: "../docs/static/loader.svg";
 @loaderImage: data-uri(@loaderImageUrl);
+@loaderImageSize: 100%;
+
+@loaderMsftImageUrl: "../docs/static/orglogowide.png";
+@loaderMsftImage: data-uri(@loaderMsftImageUrl);
 
 @includePoweredByLogos: false;
 @poweredBySmallUrl: "../docs/static/logo/Powered-By-Microsoft-logo-small.png";
@@ -176,7 +184,7 @@
 @sidebarTutorialColor: @lightGrey;
 
 @homeScreenBackground: #ecf0f1;
-@cloudCardBackground: #58AFBA;
+@cloudCardBackground: @grey;
 
 /*-------------------
    Full screen
@@ -327,6 +335,7 @@
 
 @tutorialSegmentBackground: #f8f8f9;
 @tutorialSegmentColor: @textColor;
+@tutorialSimframeMargin: -2rem;
 
 /*-------------------
     Banner
@@ -395,3 +404,21 @@
 ----------------------------*/
 @tutorialCodeValidationCorrectBackground: @green;
 @tutorialCodeValidationCorrectTextColor: @white;
+
+/*---------------------------
+   Extensions
+----------------------------*/
+@extensionTagBackgroundColor: #AAAAAA;
+@extensionTagColor: #444444;
+
+/*---------------------------
+   Cloud Status
+----------------------------*/
+@cloudStatusColor: @grey;
+
+/*---------------------------
+   Teaching Bubble
+----------------------------*/
+@teachingBubbleBackgroundColor: @blue;
+@teachingBubbleTextColor: @white;
+@teachingBubbleStepsColor: @lightGrey;

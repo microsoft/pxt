@@ -6,8 +6,6 @@
     margin: 1rem;
     z-index: var(--above-graph-zindex);
     background-color: var(--body-background-color);
-
-    border: 1px solid #000; /* TEMP */
 }
 
 /* Preview Image */
@@ -20,6 +18,7 @@
     overflow: hidden;
     text-align: center;
     background-color: var(--primary-color);
+    border: 1px solid #000;
 }
 
 .info-panel-image img {
@@ -35,6 +34,9 @@
 
 .info-panel-content {
     padding: 1rem;
+    flex-grow: 100;
+    border: 1px solid #000;
+    overflow-y: auto;
 }
 
 /* Vertical Padding */
@@ -43,7 +45,8 @@
     margin-bottom: 0.5rem;
 }
 
-.info-panel-content > .tablet-spacer {
+.info-panel-content > .tablet-spacer,
+.info-panel-content> .info-panel-tags {
     margin: 0;
 }
 
@@ -90,32 +93,38 @@
 
 .info-panel-tags {
     display: flex;
+    flex-wrap: wrap;
 }
 
 .info-panel-tags > div {
     color: var(--active-color);
     border: 1px solid var(--active-color);
     padding: 0.2rem 0.5rem;
-    margin-right: 0.5rem;
     font-size: 0.8rem;
+    margin: 0 0.5rem 0.5rem 0;
+    white-space: nowrap;
+    user-select: none;
+    border-radius: 1rem;
 }
 
 /* Buttons */
-.info-panel .action-button {
-    color: var(--active-color);
-    border: 1px solid var(--active-color);
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 1.2rem;
-    text-align: center;
-    cursor: pointer;
-    flex: 1;
-    user-select: none;
-    text-transform: uppercase;
+
+.info-panel .sign-in-button.inverted {
+    width: 100%;
+    background-color: var(--body-background-color);
 }
 
-.info-panel .action-button:hover {
-    background-color: var(--hover-color);
+.info-panel .actions {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-panel .actions .common-button {
+    margin-bottom: 0.5rem;
+}
+
+.info-panel .actions .common-button.inverted {
+    background-color: var(--body-background-color);
 }
 
 .locked.action-button,
@@ -126,6 +135,43 @@
     cursor: default;
 }
 
+/* Cloud Button */
+/* VVN TODO COLORS */
+.cloud-action {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.cloud-indicator {
+    display: flex;
+    color: #2EA9B0;
+}
+
+.cloud-indicator > .xicon {
+    margin-right: .5rem;
+}
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .info-panel-image,
+.high-contrast .info-panel-content,
+.high-contrast .info-panel-label,
+.high-contrast .info-panel-tags > div {
+    color: var(--high-contrast-text);
+    border: 1px solid var(--high-contrast-text);
+    background-color: var(--high-contrast-background);
+}
+
+.high-contrast .cloud-indicator {
+    color: var(--high-contrast-text);
+}
+
+.high-contrast .info-panel .actions .common-button {
+    background-color: var(--high-contrast-background);
+}
 
 /*******************************/
 /*****     TABLET VIEW     *****/
@@ -197,15 +243,19 @@
         row-gap: 0.5rem;
     }
 
-    .info-panel .action-button {
+    .info-panel .common-button {
         flex: 0.5;
         margin-right: 1rem;
         margin-bottom: 0;
     }
 
-    .info-panel .action-button:last-child,
-    .info-panel .grid .action-button:nth-child(2) {
+    .info-panel .common-button:last-child,
+    .info-panel .grid .common-button:nth-child(2) {
         margin-right: 0;
+    }
+
+    .info-panel .sign-in-button {
+        min-height: 3rem;
     }
 }
 

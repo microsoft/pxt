@@ -774,7 +774,7 @@ namespace pxt.runner {
                 return renderNextAsync();
             }
 
-            const m = /^\[([^\]]+)\]$/.exec(text);
+            const m = /^\[(.+)\]$/.exec(text);
             if (!m) return renderNextAsync();
 
             const code = m[1];
@@ -1251,6 +1251,19 @@ namespace pxt.runner {
         c.remove();
     }
 
+    function renderBlockConfig(options: ClientRenderOptions) {
+        function render(scope: "local" | "global") {
+            $(`code.lang-blockconfig.${scope}`).each((i, c) => {
+                let $c = $(c);
+                if (options.snippetReplaceParent)
+                    $c = $c.parent();
+                $c.remove();
+            });
+        }
+        render("local");
+        render("global");
+    }
+
     function renderSims(options: ClientRenderOptions) {
         if (!options.simulatorClass) return;
         // simulators
@@ -1279,7 +1292,7 @@ namespace pxt.runner {
     }
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
-        pxt.analytics.enable();
+        pxt.analytics.enable(pxt.Util.userLanguage());
         if (!options) options = defaultClientRenderOptions();
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
@@ -1289,6 +1302,7 @@ namespace pxt.runner {
 
         renderQueue = [];
         renderGhost(options);
+        renderBlockConfig(options);
         renderSims(options);
         renderTypeScript(options);
         renderDirectPython(options);

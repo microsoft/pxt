@@ -1,9 +1,9 @@
 
-import { Store } from 'react-redux';
-import { ImageEditorTool, ImageEditorStore, TilemapState, AnimationState } from './store/imageReducer';
-import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit} from './actions/dispatch';
+import { Store } from 'redux';
+import { ImageEditorTool, ImageEditorStore, TilemapState, AnimationState, CursorSize } from './store/imageReducer';
+import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit, dispatchChangeCursorSize} from './actions/dispatch';
 import { mainStore } from './store/imageStore';
-import { EditState, flipEdit, getEditState, rotateEdit } from './toolDefinitions';
+import { EditState, flipEdit, getEditState, outlineEdit, replaceColorEdit, rotateEdit } from './toolDefinitions';
 let store = mainStore;
 
 let lockRefs: number[] = [];
@@ -66,6 +66,13 @@ function overrideBlocklyShortcuts(event: KeyboardEvent) {
 
 function handleKeyDown(event: KeyboardEvent) {
     if (!areShortcutsEnabled()) return;
+
+    if (event.shiftKey && /^(?:Digit[1-9])|(?:Key[A-F])$/.test(event.code)) {
+        if (event.code.indexOf("Digit") == 0) outline(parseInt(event.code.substring(5)))
+        else outline(parseInt(event.code.substring(3), 16));
+        return;
+    }
+
     // Mostly copied from the photoshop shortcuts
     switch (event.key) {
         case "e":
@@ -86,6 +93,12 @@ function handleKeyDown(event: KeyboardEvent) {
             break;
         case "u":
             setTool(ImageEditorTool.Rect);
+            break;
+        case "l":
+            setTool(ImageEditorTool.Line);
+            break;
+        case "c":
+            setTool(ImageEditorTool.Circle);
             break;
         case "-":
         case "_":
@@ -110,9 +123,21 @@ function handleKeyDown(event: KeyboardEvent) {
         case "]":
             rotate(true);
             break;
+        case ">":
+            changeCursorSize(true);
+            break;
+        case "<":
+            changeCursorSize(false);
+            break;
+
     }
 
     const editorState = store.getState().editor;
+
+    if (event.shiftKey && event.code === "KeyR") {
+        replaceColor(editorState.backgroundColor, editorState.selectedColor);
+        return;
+    }
 
     if (!editorState.isTilemap && /^Digit\d$/.test(event.code)) {
         const keyAsNum = +event.code.slice(-1);
@@ -165,6 +190,26 @@ function dispatchAction(action: any) {
     store.dispatch(action);
 }
 
+function changeCursorSize(larger: boolean) {
+    let nextSize: CursorSize;
+    const currentSize = store.getState().editor.cursorSize;
+
+    switch (currentSize) {
+        case CursorSize.One:
+            nextSize = larger ? CursorSize.Three : CursorSize.One;
+            break;
+        case CursorSize.Three:
+            nextSize = larger ? CursorSize.Five : CursorSize.One;
+            break;
+        case CursorSize.Five:
+            nextSize = larger ? CursorSize.Five : CursorSize.Three;
+    }
+
+    if (currentSize !== nextSize) {
+        dispatchAction(dispatchChangeCursorSize(nextSize));
+    }
+}
+
 export function flip(vertical: boolean) {
     const [ editState, type ] = currentEditState();
     const flipped = flipEdit(editState, vertical, type === "tilemap");
@@ -175,4 +220,19 @@ export function rotate(clockwise: boolean) {
     const [ editState, type ] = currentEditState();
     const rotated = rotateEdit(editState, clockwise, type === "tilemap", type === "animation");
     dispatchAction(dispatchImageEdit(rotated.toImageState()));
+}
+
+export function outline(color: number) {
+    const [ editState, type ] = currentEditState();
+
+    if (type === "tilemap") return;
+
+    const outlined = outlineEdit(editState, color);
+    dispatchAction(dispatchImageEdit(outlined.toImageState()));
+}
+
+export function replaceColor(fromColor: number, toColor: number) {
+    const [ editState, type ] = currentEditState();
+    const replaced = replaceColorEdit(editState, fromColor, toColor);
+    dispatchAction(dispatchImageEdit(replaced.toImageState()));
 }

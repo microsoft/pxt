@@ -1,0 +1,813 @@
+/* -------- GLOBAL-ISH STYLING -------- */
+/* ----------------------------------- */
+:root {
+    --button-primary-color: #AFF1FF;
+    --main-text-color: #ffffff;
+    --qr-code-button-color: #247aa0cf;
+    --secondary-dark-color: #13455acf;
+    --high-score-color: #8AFFF8;
+    --high-score-selector-color: #ffd700;
+    --transparent-color: #11ffee00;
+    --black-color: #050505;
+    --input-outline: #e5e7eb;
+    --button-underline: #10b7e5;
+    --game-tile-outline: #AFF1FF3d;
+    --game-selected-outline: #AFF1FFaa;
+    --error-color: #ff7676;
+    --black-color-transparent: #050505ab;
+    --modalFooterBackgroundColor: #f9fafb;
+    --error-modal-transparent: #340000ab;
+
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    background-color: var(--black-color);
+    font-family: 'Press Start 2P';
+    color: var(--main-text-color);
+}
+
+.content {
+    width: 100%;
+    height: 100%;
+}
+
+h1 {
+    font-weight: 400;
+    font-size: 3.375em;
+    line-height: 3.375rem;
+    text-align: center;
+}
+
+h2 {
+    font-weight: 400;
+    font-size: 2.75em;
+    line-height: 2.75rem;
+    text-align: center;
+}
+
+.sim-embed {
+    width: 100%;
+    height: 100%;
+    top:0;
+    left: -2%;
+    position: absolute;
+}
+
+.footer {
+    position: fixed;
+    /* These numbers are relative to the size of the footer.png logo */
+    height: 6vh;
+    width: 20%;
+    left: 1.5%;
+    bottom: 0;
+    margin-bottom: 2vh;
+    background: url("footer.png");
+    background-repeat: no-repeat;
+    background-size: 100%;
+}
+
+/* -------- MAIN MENU STYLING -------- */
+/* ----------------------------------- */
+
+.mainMenu {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mainMenuHeader {
+    font-weight: 400;
+    font-size: 2.25rem;
+    color: var(--main-text-color);
+    grid-area: 1 / 2 / 2 / 4;
+}
+
+.mainMenuTopBar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr;
+    width: 100%;
+}
+
+.locked {
+    margin-left: 0;
+}
+
+.buttonUnselected {
+    border: var(--transparent-color) 0.5rem solid;
+}
+
+.kioskButton {
+    padding: 1.25vh 1em;
+    font-family: inherit;
+    letter-spacing: 0.2rem;
+    background-color: var(--button-primary-color);
+    color: var(--black-color);
+    border-radius: 0.3em;
+    border-color: var(--transparent-color);
+    border-bottom: 0.5rem var(--button-underline) solid;
+}
+
+.mainMenuButton {
+    grid-area: 1 / 4 / 2 / 5;
+    margin-top: 2rem;
+}
+
+.deleteGame {
+    position: fixed;
+    left: 75%;
+    bottom: -3rem;
+    width: 12rem;
+    height: 2rem;
+    border: none;
+    text-align: center;
+    color: var(--error-color);
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    border: var(--transparent-color) 0.25rem solid;
+}
+
+.buttonSelected {
+    border:#ffd700 0.5rem solid;
+    box-shadow: 0 0 0.4rem var(--high-score-selector-color);
+}
+
+.deleteGame svg {
+    width: 1.25rem;
+    height: 2rem;
+    fill: var(--error-color);
+}
+
+.deleteGame p {
+    display: inline;
+}
+
+.gameTile .deleted {
+    display: none;
+}
+
+.deleteSelected {
+    border:#ffd700 0.25rem solid;
+    box-shadow: 0 0 0.4rem var(--high-score-selector-color);
+}
+.swiper-slide-active .deleted {
+    animation: 1s shrink;
+}
+
+@keyframes shrink {
+    from {
+        transform: scale(1);
+        height: 100%;
+    }
+    to {
+        transform: scale(0.0001);
+        height: 0;
+    }
+}
+
+@media only screen and (max-width: 1200px) {
+    .mainMenuHeader {
+        font-weight: 400;
+        font-size: 1.75rem;
+    }
+}
+/* -------- ADDING GAME PAGE STYLING -------- */
+/* ----------------------------------- */
+
+.addInstructions h2 {
+    color: var(--button-primary-color);
+    font-size: 1.5rem;
+}
+
+.addInstructions li {
+    padding: 1em 0;
+    margin-left: 1.5rem;
+    font-size: 1rem;
+}
+
+.addInstructions {
+    display: flex;
+    flex-direction: column;
+    align-items: baseline;
+    width: 60%;
+    line-height: 200%;
+}
+
+.addGame h1 {
+    font-size: 2.25rem;
+    font-weight: 400;
+    margin: 1em 0;
+}
+
+.addGame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.innerQRCodeContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--black-color);
+    background-color: var(--button-primary-color);
+    border-radius: 0.3em;
+}
+
+.QRCodeHolder {
+    max-width: 30%;
+}
+
+.kioskLink a {
+    color: var(--black-color);
+    overflow: auto;
+    overflow-wrap: break-word;
+}
+
+.kioskLink {
+    margin: 2rem 0;
+    width: 55%;
+    text-align: center;
+    line-height: 170%;
+}
+
+.innerQRCodeContent h3 {
+    margin-bottom: -1.5rem;
+    text-align: center;
+}
+
+.innerQRCodeContent h1{
+    font-size: 2rem;
+}
+
+.addGameContent {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 95%;
+    height: 100%;
+    margin-top: 1%;
+    margin-bottom: 3%;
+}
+
+.innerQRCodeContent p {
+    line-height: 1.5rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+/* -------- QR PAGES STYLING -------- */
+/* ----------------------------------- */
+
+.scanQrPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+}
+
+.scanInstructions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.qrOption {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 95%;
+}
+
+.scanQrPage h2 {
+    font-size: 2rem;
+}
+
+.scanQrButton {
+    padding: 1.25em 1em;
+    font-family: inherit;
+    letter-spacing: 0.2rem;
+    background-color: var(--button-primary-color);
+    color: var(--black-color);
+    border-radius: 0.3em;
+    border-color: var(--transparent-color);
+    border-bottom: 0.5rem var(--button-underline) solid;
+    cursor: pointer;
+    margin-right: 1rem;
+    margin-top: 2rem;
+}
+
+.scanning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.scanQrButton:hover {
+    cursor: pointer;
+}
+
+.qrScanner-label {
+    background-color: var(--main-text-color);
+    color: var(--secondary-dark-color);
+    padding: 2vh;
+    border-radius: 1.5vh;
+}
+
+.qrScannerHolder {
+    width: 45vw;
+    height: 30vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.scanIntro {
+    overflow-wrap: break-word;
+    text-align: center;
+    line-height: 1.5rem;
+}
+
+.qrSuccess {
+    width: 100%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.5em;
+    letter-spacing: 0.25em;
+    line-height: 1.5em;
+}
+
+.linkOption {
+    border-color: var(--button-primary-color);
+    border-style: solid;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    width: 350px;
+}
+
+.linkOption label {
+    display: block;
+}
+
+.linkOption input[type=url] {
+    margin-top: 1rem;
+    border-color: var(--button-primary-color);
+    width: 67%;
+    height: 2em;
+    border-radius: 0.45em;
+    text-overflow: ellipsis;
+}
+
+.linkOption input[type=submit] {
+    margin-left: 0.25rem;
+    height: 2em;
+    border-radius: 0.45em;
+    background-color: var(--button-primary-color);
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    border-bottom: #10b7e5;
+    border-style: solid;
+    cursor: pointer;
+    color: var(--secondary-dark-color);
+}
+
+.linkError {
+    font-family: 'Share';
+    color: var(--error-color);
+}
+
+.shareHelp {
+    color: var(--main-text-color);
+    overflow: auto;
+    overflow-wrap: break-word;
+    font-family: 'Share';
+    font-size: 1.25rem;
+    margin-top: 2rem;
+}
+
+.scanTip {
+    overflow-wrap: break-word;
+    font-family: 'Share';
+    font-size: 1.25rem;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .scanQrPage h2 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 570px) {
+    .linkOption {
+        width: 80%;
+    }
+}
+
+
+/* -------- GAME LIST STYLING -------- */
+/* ----------------------------------- */
+
+.carouselWrap {
+    width: 99%;
+    height: 85vh;
+    border-radius: 1.5rem;
+}
+
+.swiper-slide-active .selected {
+    box-shadow: 0 0 2rem var(--high-score-selector-color);
+}
+
+.unselected {
+    box-shadow: none;
+}
+
+.swiper {
+    width: 100%;
+    height: 90%;
+    overflow: visible !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.swiper-wrapper {
+    padding-top: 2%;
+    padding-bottom: 2%;
+}
+
+.gameTile {
+    width: 99%;
+    height: 99%;
+
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+    border: var(--black-color) 2px solid;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr;
+    grid-column-gap: 0;
+    grid-row-gap: 0;
+    box-shadow: 0 0 1rem var(--game-tile-outline);
+}
+
+.pressStart {
+    grid-area: 1 / 2 / 2 / 3;
+    align-self: end;
+    justify-self: center;
+    background-color: var(--black-color-transparent);
+    padding: 1rem;
+    text-shadow: 1px 3px 0 var(--black-color);
+    text-align: center;
+    line-height: 115%;
+}
+
+.gameThumbnail {
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    grid-area: 1 / 1 / 2 / 5;
+}
+
+.swiper-slide-active .gameThumbnail {
+    grid-area: 1 / 1 / 2 / 4;
+}
+
+.swiper-slide-active .gameDetails {
+    padding-left: 1rem;
+    background-color: var(--black-color);
+    grid-area: 1 / 4 / 2 / 5;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(5, 1fr);
+}
+
+.gameDetails hr {
+    width: 90%;
+    margin-top: 1.5rem;
+}
+
+.gameDetails {
+    display: none;
+}
+
+.gameTitle {
+    margin-top: 2rem;
+    font-size: 1.25rem;
+    line-height: 1.5rem;
+    grid-area: 1 / 1 / 2 / 2;
+}
+
+.gameDescription {
+    font-family: 'Share';
+    font-size: 1.25em;
+    grid-area: 2 / 1 / 4 / 2;
+}
+
+.gameHighScores {
+    grid-area: 4 / 1 / 6 / 2;
+}
+
+.gameDate {
+    font-family: 'Share';
+    font-size: 1.05em;
+    grid-area: 5 / 1 / 6 / 2;
+    align-self: end;
+    margin-bottom: 2rem;
+}
+
+.gameHighScoreHeader {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    text-align: left;
+    color: var(--button-primary-color);
+
+}
+
+.gameHighScoreContent {
+    line-height: 1.25rem;
+    font-size: 0.85rem;
+}
+
+.gameHighScoreScore {
+    margin-left: 2.5rem;
+}
+
+@media only screen and (min-width: 1920px) {
+    .swiper-slide-active .gameDetails {
+        padding: 6rem 2rem;
+    }
+
+    .gameHighScoreHeader {
+        font-size: 1.15rem;
+    }
+
+    .gameHighScoreContent {
+        font-size: 0.9rem;
+    }
+}
+
+@media only screen and (max-width: 1490px) and (max-height: 715px) {
+    .gameTitle {
+        margin-top: 1.5rem;
+        font-size: 1rem;
+    }
+
+    .gameDescription {
+        font-size: 1rem;
+    }
+
+    .gameHighScoreHeader {
+        font-size: 1rem;
+    }
+
+    .gameHighScoreContent {
+        font-size: 0.75rem;
+    }
+}
+
+/* -------- HIGH SCORE STYLING -------- */
+/* ----------------------------------- */
+
+.enterHighScore {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 90%;
+}
+
+.highScoreContent {
+    display: flex;
+    flex-direction: row;
+    align-items:flex-start;
+    justify-content:right;
+    width: 90%;
+}
+
+.highScoreInstructions {
+    width: 30%;
+    line-height: 1.5em;
+    font-family: 'Share';
+    font-size: 1.25em;
+    margin-left: 10%;
+}
+
+.highScoreHighlight {
+    background-color: var(--high-score-selector-color);
+}
+
+.highScoreList {
+    font-size: 2.2em;
+    color: var(--high-score-color);
+    line-height: 1.5em;
+    height: 80%;
+    margin-top: -1.5em;
+}
+
+.highScoreInitials {
+    margin-left: -1.25rem;
+}
+
+.highScoreScore {
+    margin-left: 3.5rem;
+}
+
+.enterHighScoreText {
+    color: var(--main-text-color);
+}
+
+.highScoreInitial {
+    display: inline-block;
+    text-align: center;
+}
+
+.highScoreInitialControl {
+    color: var(--main-text-color);
+}
+
+.highScoreInitialControlSelected {
+    color: var(--high-score-selector-color);
+}
+
+.highScoreInitialsScoreSpacer {
+    width: 3.125rem;
+}
+
+.highScoreScore {
+    text-align: right;
+}
+
+/* -------- GAME OVER STYLING -------- */
+/* ----------------------------------- */
+
+.gameOverButtons {
+    display: flex;
+    width: 90%;
+    flex-direction: row;
+    align-items: center;
+    justify-content:space-evenly;
+    margin: 5%
+}
+
+.gameOverPage {
+    margin-top: 15%;
+}
+
+
+/* -------- DELETE MODAL STYLING -------- */
+/* ------------------------------------- */
+
+.common-modal-container {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    color: var(--black-color);
+    font-family: 'Share';
+}
+
+.common-modal {
+    width: 50%;
+    max-width: 40rem;
+    border-radius: .285rem;
+    overflow: hidden;
+    position: fixed;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 0.4rem var(--black-color-transparent);
+    border: 2px solid rgba(34, 36, 38, .15);
+}
+
+.common-modal-header {
+    background-color: var(--main-text-color);
+
+    display: flex;
+    font-size: 1.35rem;
+    font-weight: 600;
+    padding-left: 1.5rem;
+    border-bottom: 1px solid rgba(34, 36, 38, .15);
+    flex-shrink: 0;
+}
+
+.common-modal-title {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+}
+
+.common-modal-body {
+    background-color: var(--main-text-color);
+    min-height: 4rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.common-modal-footer {
+    background-color: var(--modalFooterBackgroundColor);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    border-top: 1px solid rgba(34, 36, 38, .15);
+}
+
+.common-modal-button {
+    font-family: 'Share';
+    margin: 0 0.25rem 0 0;
+    padding: 0.8rem 2rem 0.95rem;
+    text-transform: none;
+    text-shadow: none;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    border-radius: 0.25rem;
+    letter-spacing: 0.1rem;
+}
+
+.common-modal-button.cancel {
+    grid-column: 1 / 1;
+    background-color: var(--main-text-color);
+    border: 2px solid var(--button-primary-color);
+}
+
+.common-modal-button.confirm {
+    grid-column: 2 / 2;
+    background-color: var(--button-primary-color);
+}
+
+.common-modal-button.selected {
+    border: 2px solid var(--high-score-selector-color);
+}
+
+.common-modal-title.error {
+    background-color: var(--error-color);
+}
+
+.common-modal-container.error {
+    background-color: var(--error-modal-transparent);
+}
+
+.common-modal-button.error {
+    border: 2px solid var(--error-color);
+    background-color: var(--error-color);
+}
+
+.common-modal-button.error:hover {
+    cursor: pointer;
+}
+
+/* -------- NOTIFICATION STYLING -------- */
+/* ------------------------------------- */
+
+.notification-container {
+    position: fixed;
+    display: flex;
+    align-items: baseline;
+    justify-content: right;
+    top: 85%;
+    left: 0;
+    right: 2%;
+    bottom: 0;
+    z-index: 1000;
+    color: var(--black-color);
+    font-family: 'Share';
+}
+
+.notification-contents {
+    border-radius: .285rem;
+    overflow: hidden;
+    position: fixed;
+    padding: 0 1rem;
+    background-color: var(--button-primary-color);
+    border: 4px solid var(--high-score-selector-color);
+}

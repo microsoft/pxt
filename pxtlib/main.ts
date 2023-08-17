@@ -48,7 +48,7 @@ namespace pxt {
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
         patchAppTarget();
-        savedAppTarget = U.clone(appTarget)
+        savedAppTarget = U.cloneTargetBundle(appTarget)
     }
 
     let apiInfo: Map<PackageApiInfo>;
@@ -162,6 +162,26 @@ namespace pxt {
         return _bundledcoresvgs[id];
     }
 
+
+    export function replaceStringsInJsonBlob(blobPart: any, matcher: RegExp, matchHandler: (matchingString: string) => string): any {
+        if (Array.isArray(blobPart)) {
+            return blobPart.map(el => replaceStringsInJsonBlob(el, matcher, matchHandler));
+        } else if (typeof blobPart === "object") {
+            for (const key of Object.keys(blobPart)) {
+                blobPart[key] = replaceStringsInJsonBlob(blobPart[key], matcher, matchHandler);
+            }
+            return blobPart;
+        } else if (typeof blobPart === "string" && matcher.test(blobPart)) {
+            return matchHandler(blobPart);
+        } else {
+            return blobPart;
+        }
+    }
+
+    function replaceCdnUrlsInJsonBlob(cfg: any): any {
+        return replaceStringsInJsonBlob(cfg, /^@cdnUrl@/i, m => pxt.BrowserUtils.patchCdn(m));
+    }
+
     function patchAppTarget() {
         // patch-up the target
         let comp = appTarget.compile
@@ -173,6 +193,8 @@ namespace pxt {
         }
         if (!comp.switches)
             comp.switches = {}
+        if (comp.nativeType == pxtc.NATIVE_TYPE_VM)
+            comp.sourceMap = true
         U.jsonCopyFrom(comp.switches, savedSwitches)
         // JS ref counting currently not supported
         comp.jsRefCounting = false
@@ -188,25 +210,9 @@ namespace pxt {
             if (cs.yottaTarget && !cs.yottaBinary)
                 cs.yottaBinary = "pxt-microbit-app-combined.hex"
         }
-        // patch logo locations
-        const theme = appTarget.appTheme;
-        if (theme) {
-            Object.keys(theme as any as Map<string>)
-                .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
-                .forEach(k => (theme as any)[k] = pxt.BrowserUtils.patchCdn((theme as any)[k]));
-        }
 
-        // patching simulator images
-        const sim = appTarget.simulator;
-        if (sim
-            && sim.boardDefinition
-            && sim.boardDefinition.visual) {
-            let boardDef = sim.boardDefinition.visual as pxsim.BoardImageDefinition;
-            if (boardDef.image) {
-                boardDef.image = pxt.BrowserUtils.patchCdn(boardDef.image)
-                if (boardDef.outlineImage) boardDef.outlineImage = pxt.BrowserUtils.patchCdn(boardDef.outlineImage)
-            }
-        }
+        // patch cdn url locations
+        appTarget = replaceCdnUrlsInJsonBlob(appTarget);
 
         // patch icons in bundled packages
         Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
@@ -254,7 +260,7 @@ namespace pxt {
     export function reloadAppTargetVariant(temporary = false) {
         pxt.perf.measureStart("reloadAppTargetVariant")
         const curr = temporary ? "" : JSON.stringify(appTarget);
-        appTarget = U.clone(savedAppTarget)
+        appTarget = U.cloneTargetBundle(savedAppTarget)
         if (appTargetVariant) {
             const v = appTarget.variants && appTarget.variants[appTargetVariant];
             if (v)
@@ -384,6 +390,9 @@ namespace pxt {
         multiUrl?: string; // "/beta---multi"
         asseteditorUrl?: string; // "/beta---asseteditor"
         skillmapUrl?: string; // "/beta---skillmap"
+        authcodeUrl?: string; // "/beta---authcode"
+        multiplayerUrl?: string; // "/beta---multiplayer"
+        kioskUrl?: string; // "/beta---kiosk"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }
@@ -502,13 +511,18 @@ namespace pxt {
     export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
     export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
     export const TUTORIAL_CUSTOM_TS = "tutorial.custom.ts";
+    export const BREAKPOINT_TABLET = 991; // TODO (shakao) revisit when tutorial stuff is more settled
+    export const PALETTES_FILE = "_palettes.json";
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile
 
-        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM)
-            return trg.useESP ? ts.pxtc.BINARY_ESP : ts.pxtc.BINARY_PXT64
-        else if (trg.useUF2 && !trg.switches.rawELF)
+        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM) {
+            if (trg.useESP)
+                return trg.useUF2 ? ts.pxtc.BINARY_UF2 : ts.pxtc.BINARY_ESP
+            else
+                return ts.pxtc.BINARY_PXT64
+        } else if (trg.useUF2 && !trg.switches.rawELF)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)
             return ts.pxtc.BINARY_ELF

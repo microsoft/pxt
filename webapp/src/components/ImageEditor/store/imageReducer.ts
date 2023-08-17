@@ -87,6 +87,7 @@ export interface EditorState {
     overlayEnabled?: boolean;
     alert?: AlertInfo;
     resizeDisabled?: boolean;
+    tilesetRevision: number; // used to track changes to the tileset and invalidate the tile cache in ImageCanvas
 }
 
 export interface GalleryTile {
@@ -170,6 +171,7 @@ const initialStore: ImageEditorStore = {
         previewAnimating: false,
         onionSkinEnabled: false,
         overlayEnabled: true,
+        tilesetRevision: 0,
         isTilemap: false
     }
 }
@@ -222,10 +224,26 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
             const toOpen: pxt.Asset = action.asset;
             const gallery = action.gallery || (action.keepPast ? state.editor.tileGallery : [])
 
+            let selectedColor = -1;
+            if (toOpen.type === pxt.AssetType.Tilemap) {
+                // Add the first gallery tile to the tileset so the editor will have a default
+                // selected color. If unused, this will be trimmed when the editor is closed.
+                const tilemapData = action.asset.data as pxt.sprite.TilemapData;
+                if (pxt.sprite.isEmptyTilemap(tilemapData)) {
+                    const tiles = tilemapData.tileset.tiles as pxt.Tile[] || [];
+                    const firstTileName = (gallery as GalleryTile[]).find(t => t.tags.indexOf("forest") !== -1)?.qualifiedName;
+                    const firstTile = lookupAsset(pxt.AssetType.Tile, firstTileName) as pxt.Tile;
+                    if (firstTile && !tiles.find(t => t.id === firstTileName)) {
+                        tiles.push(firstTile);
+                    }
+                    selectedColor = tiles.indexOf(firstTile);
+                }
+            }
+
             return {
                 ...state,
                 editor: toOpen.type === pxt.AssetType.Tilemap ? {
-                    selectedColor: -1,
+                    selectedColor,
                     backgroundColor: -1,
                     isTilemap: true,
                     tilemapPalette: {
@@ -239,7 +257,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     referencedTiles: toOpen.data.projectReferences,
                     previewAnimating: false,
                     onionSkinEnabled: false,
-
+                    tilesetRevision: 0,
                     // Properties below this comment carry over if keep past is true
                     tool: action.keepPast ? state.editor.tool : initialStore.editor.tool,
                     cursorSize: action.keepPast ? state.editor.cursorSize : initialStore.editor.cursorSize,
@@ -248,6 +266,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
 
                 } : {
                     isTilemap: false,
+                    tilesetRevision: 0,
 
                     // Properties below this comment carry over if keep past is true
                     selectedColor: action.keepPast ? state.editor.selectedColor : initialStore.editor.selectedColor,
@@ -296,6 +315,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     past: state.store.past.slice(0, state.store.past.length - 1),
                     present: state.store.past[state.store.past.length - 1],
                     future: [...state.store.future, state.store.present]
+                },
+                editor: {
+                    ...state.editor,
+                    tilesetRevision: state.editor.tilesetRevision + 1
                 }
             };
         case actions.REDO_IMAGE_EDIT:
@@ -309,6 +332,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     past: [...state.store.past, state.store.present],
                     present: state.store.future[state.store.future.length - 1],
                     future: state.store.future.slice(0, state.store.future.length - 1),
+                },
+                editor: {
+                    ...state.editor,
+                    tilesetRevision: state.editor.tilesetRevision + 1
                 }
             };
         default:
@@ -481,7 +508,8 @@ const editorReducer = (state: EditorState, action: any, store: EditorStore): Edi
                 ...state,
                 deletedTiles: (state.deletedTiles || []).concat([action.id]),
                 selectedColor: action.index === state.selectedColor ? 0 : state.selectedColor,
-                backgroundColor: action.index === state.backgroundColor ? 0 : state.backgroundColor
+                backgroundColor: action.index === state.backgroundColor ? 0 : state.backgroundColor,
+                tilesetRevision: state.tilesetRevision + 1
             };
         case actions.OPEN_TILE_EDITOR:
             const editType = action.index ? "edit" : "new";
@@ -503,7 +531,8 @@ const editorReducer = (state: EditorState, action: any, store: EditorStore): Edi
                 ...state,
                 editedTiles,
                 selectedColor: action.index || (store.present as TilemapState).tileset.tiles.length,
-                editingTile: undefined
+                editingTile: undefined,
+                tilesetRevision: state.tilesetRevision + 1
             };
         case actions.SHOW_ALERT:
             tickEvent("show-alert");
@@ -696,7 +725,7 @@ function initialStateForAsset(asset: pxt.Asset, gallery: GalleryTile[]) {
         return initialTilemapStateForAsset(asset, gallery);
     }
     else {
-        return initialAnimationStateForAsset(asset);
+        return initialAnimationStateForAsset(asset as pxt.ProjectImage | pxt.Animation | pxt.Tile);
     }
 }
 

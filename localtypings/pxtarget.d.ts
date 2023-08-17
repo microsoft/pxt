@@ -22,6 +22,7 @@ declare namespace pxt {
         packages?: PackagesConfig;
         shareLinks?: ShareConfig;
         skillMap?: SkillMapConfig;
+        multiplayer?: MultiplayerConfig;
         // common galleries
         galleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
@@ -29,23 +30,29 @@ declare namespace pxt {
         windowsStoreLink?: string;
         // release manifest for the electron app
         electronManifest?: pxt.electron.ElectronManifest;
+        profileNotification?: ProfileNotification;
     }
 
     interface PackagesConfig {
         approvedOrgs?: string[];
-        approvedRepos?: string[]; // list of company/project
         releases?: pxt.Map<string[]>;  // per major version list of approved company/project#tag
         bannedOrgs?: string[];
         bannedRepos?: string[];
         allowUnapproved?: boolean;
-        preferredRepos?: string[]; // list of company/project(#tag) of packages to show by default in search
-        // format:
-        // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
-        // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
-        upgrades?: pxt.Map<string>;
+        approvedRepoLib?: pxt.Map<RepoData>;
+        builtinExtensionsLib?: pxt.Map<RepoData>;
         // list of trusted custom editor extension urls
         // that can bypass consent and send/receive messages
         approvedEditorExtensionUrls?: string[];
+    }
+
+    interface RepoData {
+        preferred?: boolean;
+        tags?: string[];
+        // format:
+        // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
+        // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
+        upgrades?: string[];
     }
 
     interface ShareConfig {
@@ -55,6 +62,17 @@ declare namespace pxt {
     interface SkillMapConfig {
         defaultPath?: string;
         pathAliases?: pxt.Map<string>; // map in the format "alias": "path"
+    }
+
+    interface MultiplayerConfig {
+        games?: MultiplayerGameCard[];
+    }
+
+    interface MultiplayerGameCard {
+        shareId: string;
+        title: string;
+        subtitle: string;
+        image?: string;
     }
 
     interface AppTarget {
@@ -86,6 +104,8 @@ declare namespace pxt {
         checkdocsdirs?: string[]; // list of /docs subfolders for checkdocs, irrespective of SUMMARY.md
         cacheusedblocksdirs?: string[]; // list of /docs subfolders for parsing and caching used block ids (for tutorial loading)
         blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
+        defaultBadges?: pxt.auth.Badge[];
+        noSimShims?: boolean; // skip check for simshims and only build from cpp / user level typescript.
     }
 
     interface BrowserOptions {
@@ -135,6 +155,7 @@ declare namespace pxt {
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
+        onStartGroup?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
@@ -170,12 +191,15 @@ declare namespace pxt {
     }
 
     interface AppCloud {
+        // specify the desired api root, https://makecode.com/api/
+        apiRoot?: string;
         workspaces?: boolean;
         packages?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
         thumbnails?: boolean; // attach screenshots/thumbnail to published scripts
         importing?: boolean; // import url dialog
         embedding?: boolean;
+        showBadges?: boolean; // show badges in user profile
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
         maxFileSize?: number; // maximum file size in bytes
@@ -183,7 +207,7 @@ declare namespace pxt {
         cloudProviders?: pxt.Map<AppCloudProvider>;
     }
 
-    type IdentityProviderId = "makecode" | "microsoft" | "google" | "github";
+    type IdentityProviderId = "makecode" | "microsoft" | "google" | "github" | "clever";
 
     interface AppCloudProvider {
         id: IdentityProviderId;
@@ -364,15 +388,15 @@ declare namespace pxt {
         blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
-        appPathNames?: string[]; // Authorized URL paths in UWP, all other paths will display a warning banner
+        appPathNames?: string[]; // Authorized URL paths in embedded apps, all other paths will display a warning banner
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
         saveInMenu?: boolean; // move save icon under gearwheel menu
         lockedEditor?: boolean; // remove default home navigation links from the editor
+        hideReplaceMyCode?: boolean; // hides the "replace my code" button for tutorials with templates in their markdown
         fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
-        appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
         browserDbPrefixes?: { [majorVersion: number]: string }; // Prefix used when storing projects in the DB to allow side-by-side projects of different major versions
         editorVersionPaths?: { [majorVersion: number]: string }; // A map of major editor versions to their corresponding paths (alpha, v1, etc.)
         experiments?: string[]; // list of experiment ids, also enables this feature
@@ -391,6 +415,7 @@ declare namespace pxt {
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
         disableAPICache?: boolean; // Disables the api cache in target.js
         sidebarTutorial?: boolean; // Move the tutorial pane to be on the left side of the screen
+        legacyTutorial?: boolean; // Use the legacy tutorial format without tabs
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
@@ -416,6 +441,7 @@ declare namespace pxt {
         experimentalHw?: boolean; // enable experimental hardware
         // recipes?: boolean; // inlined tutorials - deprecated
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
+        preferWebUSBDownload?: boolean; // default to webusb over normal browser download when available
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean; // prompt user to name project when creating new one
@@ -423,6 +449,7 @@ declare namespace pxt {
         githubEditor?: boolean; // allow editing github repositories from the editor
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
+        workspaceSearch?: boolean; // allow CTRL+F blocks workspace search
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
         tutorialBlocksDiff?: boolean; // automatically display blocks diffs in tutorials
         tutorialTextDiff?: boolean; // automatically display text diffs in tutorials
@@ -440,8 +467,17 @@ declare namespace pxt {
         immersiveReader?: boolean; // enables the immersive reader for tutorials
         tutorialCodeValidation?: boolean; // Enable code validation for tutorials
         downloadDialogTheme?: DownloadDialogTheme;
-        winAppDeprImage?: string; // Image to show on Windows App for deprecation
-        showWinAppDeprBanner?: boolean; // show banner announcing Windows App deprecation
+        songEditor?: boolean; // enable the song asset type and field editor
+        multiplayer?: boolean; // enable multiplayer features
+        shareToKiosk?: boolean; // enable sharing to a kiosk
+        tours?: {
+            editor?: string // path to markdown file for the editor tour steps
+        }
+        tutorialSimSidebarLayout?: boolean; // Enable tutorial layout with the sim in the sidebar (desktop only)
+        showOpenInVscode?: boolean; // show the open in VS Code button
+        matchWebUSBDeviceInSim?: boolean; // if set, pass current device id as theme to sim when available.
+        condenseProfile?: boolean; // if set, will make the profile dialog smaller
+        cloudProfileIcon?: string; // the file path for added imagery on smaller profile dialogs
     }
 
     interface DownloadDialogTheme {
@@ -452,7 +488,6 @@ declare namespace pxt {
         deviceSuccessIcon?: string;
         downloadMenuHelpURL?: string;
         downloadHelpURL?: string;
-        firmwareHelpURL?: string;
         troubleshootWebUSBHelpURL?: string;
         incompatibleHardwareHelpURL?: string;
 
@@ -460,9 +495,17 @@ declare namespace pxt {
         connectDeviceImage?: string;
         selectDeviceImage?: string;
         connectionSuccessImage?: string;
-        checkFirmwareVersionImage?: string;
-        checkUSBCableImage?: string;
         incompatibleHardwareImage?: string;
+
+        browserUnpairImage?: string;
+        usbDeviceForgottenImage?: string;
+
+        // The following fields used to be displayed, but students
+        // found the dialog confusing / hard to use; now we redirect
+        // them to help docs instead if pairing fails for step by step instructions.
+        // checkFirmwareVersionImage?: string;
+        // checkUSBCableImage?: string;
+        // firmwareHelpURL?: string;
     }
 
     interface SocialOptions {
@@ -494,6 +537,10 @@ declare namespace pxt {
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
+        staticpkgdirs?: {
+            base: string[];
+            extensions: string[];
+        }      // if defined, used in staticpkg as pkgs to combine with bundled dirs. Otherwise, bundled dirs will be combined with eachother.
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
         tutorialInfo?: Map<BuiltTutorialInfo>; // hash of tutorial code mapped to prebuilt info for each tutorial
@@ -503,6 +550,7 @@ declare namespace pxt {
         hash?: string;
         usedBlocks: Map<number>;
         snippetBlocks: Map<Map<number>>;
+        highlightBlocks: Map<Map<number>>;
     }
 
     interface PackageApiInfo {
@@ -574,6 +622,15 @@ declare namespace pxt {
         type: "serviceworker";
         action: "packet-io-status";
     }
+
+    interface ProfileNotification {
+        message: string;
+        title: string
+        icon: string;
+        actionText: string;
+        link: string;
+        xicon?: boolean;
+    }
 }
 
 declare namespace pxt.editor {
@@ -593,7 +650,14 @@ declare namespace pxt.editor {
         Standard = "",
         PythonOnly = "python-only",
         JavaScriptOnly = "javascript-only",
-        NoBlocks = "no-blocks"
+        BlocksOnly = "blocks-only",
+        NoBlocks = "no-blocks",
+        NoPython = "no-python",
+        NoJavaScript = "no-javascript"
+    }
+
+    // Placeholder for IProjectView defined in pxteditor.d.ts
+    interface IProjectView {
     }
 }
 
@@ -636,10 +700,12 @@ declare namespace ts.pxtc {
         useMkcd?: boolean;
         useELF?: boolean;
         useESP?: boolean;
+        sourceMap?: boolean;
         saveAsPNG?: boolean;
         noSourceInFlash?: boolean;
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
+        disableHIDBridge?: boolean; // disable hid bridge
         hexMimeType?: string;
         moveHexEof?: boolean;
         driveName?: string;
@@ -746,11 +812,15 @@ declare namespace ts.pxtc {
         jresURL?: string;
         iconURL?: string;
         imageLiteral?: number;
+        gridLiteral?: number;
+        gridLiteralOnColor?: string;
+        gridLiteralOffColor?: string;
         imageLiteralColumns?: number; // optional number of columns
         imageLiteralRows?: number; // optional number of rows
         imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
         weight?: number;
         parts?: string;
+        hiddenParts?: string; // allows an extesion to declaratively hide a part
         trackArgs?: number[];
         advanced?: boolean;
         deprecated?: boolean;
@@ -778,6 +848,11 @@ declare namespace ts.pxtc {
         topblock?: boolean;
         topblockWeight?: number;
         locs?: pxt.Map<string>;
+        toolboxParent?: string; // The ID of a block that will wrap this block in the toolbox. Useful for having multiple instances of the same parent block with different child shadows
+        toolboxParentArgument?: string; // Used with toolboxParent. The name of the arg that this block should be inserted into as a shadow
+        duplicateWithToolboxParent?: string; // The ID of an additional block that will be created, which wraps this block in the toolbox. The original (unwrapped) block will also remain in the toolbox.
+        duplicateWithToolboxParentArgument?: string; // Used with duplicateWithToolboxParent. The name of the arg that this block should be inserted into as a shadow.
+
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -797,8 +872,11 @@ declare namespace ts.pxtc {
         mutatePrefix?: string;
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
-        inlineInputMode?: string; // can be inline, external, or auto
+        inlineInputMode?: string; // can be inline (horizontal), external (vertical), auto (default), or variable (based off currently expanded number of params)
+        inlineInputModeLimit?: number; // the number of expanded arguments at which to switch from inline to external. only applies when inlineInputMode=variable and expandableArgumentsMode=enabled
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+        expandableArgumentBreaks?: string; // a comma separated list of how many arguments to reveal/hide each time + or - is pressed on a block. only applies when expandableArgumentsMode=enabled
+        compileHiddenArguments?: boolean; // if true, compiles the values in expandable arguments even when collapsed
         draggableParameters?: string; // can be reporter or variable; defaults to variable
 
 
@@ -836,6 +914,7 @@ declare namespace ts.pxtc {
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }; eg.: 12 in arg description will also go here
         paramDefl: pxt.Map<string>;
+        paramSnippets?: pxt.Map<ParamSnippet>;
         // this lists arguments that have .defl as opposed to just eg.: stuff
         explicitDefaults?: string[];
 
@@ -851,6 +930,11 @@ declare namespace ts.pxtc {
         alias?: string; // another symbol alias for this member
         pyAlias?: string; // optional python version of the alias
         blockAliasFor?: string; // qname of the function this block is an alias for
+    }
+
+    interface ParamSnippet {
+        ts?: string;
+        python?: string;
     }
 
     interface ParameterDesc {
@@ -949,6 +1033,7 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+        computeUsedParts?: boolean;
         name?: string;
         apisInfo?: ApisInfo;
         bannedCategories?: string[];
@@ -956,6 +1041,7 @@ declare namespace ts.pxtc {
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
         clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
         errorOnGreyBlocks?: boolean;
+        generateSourceMap?: boolean;
 
         otherMultiVariants?: ExtensionTarget[];
 
@@ -981,6 +1067,8 @@ declare namespace ts.pxtc {
         fnArgs?: pxt.Map<String[]>;
         parts?: string[];
         usedBuiltinParts?: string[];
+        allParts?: string[];
+        breakpoints?: number[];
     }
 
     interface UpgradePolicy {
@@ -1000,6 +1088,7 @@ declare namespace ts.pxtc {
         extensionFiles: pxt.Map<string>;
         yotta?: pxt.YottaConfig;
         platformio?: pxt.PlatformIOConfig;
+        codal?: pxt.CodalJson;
         npmDependencies?: pxt.Map<string>;
         sha: string;
         compileData: string;
@@ -1048,6 +1137,9 @@ declare namespace pxt.tutorial {
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
+        globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
+        globalValidationConfig?: CodeValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
+        simTheme?: Partial<pxt.PackageConfig>;
     }
 
     interface TutorialMetadata {
@@ -1073,20 +1165,67 @@ declare namespace pxt.tutorial {
         blockIds?: string[];
     }
 
+    interface TutorialBlockConfigEntry {
+        blockId?: string;
+        xml?: string;
+    }
+
+    interface TutorialBlockConfig {
+        md?: string;    // `blockconfig` markdown fragment
+        blocks?: TutorialBlockConfigEntry[]; // markdown fragment can contain multiple block definitions
+    }
+
+    interface CodeValidationResult {
+        isValid: Boolean;
+        hint: any;
+    }
+
+    interface CodeValidationExecuteOptions {
+        parent: pxt.editor.IProjectView;
+        tutorialOptions: TutorialOptions;
+    }
+
+    interface CodeValidator {
+        enabled: boolean;
+        execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
+    }
+
+    interface CodeValidatorMetadata {
+        validatorType: string;
+        properties: pxt.Map<string>;
+    }
+
+    interface CodeValidationConfig {
+        validatorsMetadata: CodeValidatorMetadata[];
+    }
+
     interface TutorialStepInfo {
+        // Step metadata
+        showHint?: boolean; // automatically displays hint
+        showDialog?: boolean; // no coding, displays in modal
+        resetDiff?: boolean; // reset diffify algo
+        tutorialCompleted?: boolean;
+
+        // Step content
+        title?: string;
+        activity?: number;
+        contentMd?: string;
+
+        // Validation
+        requiredBlockMd?: string;
+        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
+
+        // Old
+        headerContentMd?: string;
+        hintContentMd?: string;
         // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
         // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
 
-        showHint?: boolean; // automatically displays hint
-        showDialog?: boolean; // no coding, displays in modal
-        tutorialCompleted?: boolean;
-        contentMd?: string;
-        headerContentMd?: string;
-        hintContentMd?: string;
-        requiredBlockMd?: string;
-        activity?: number;
-        resetDiff?: boolean; // reset diffify algo
-        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
+        // concatenated `blockconfig.local` sections. Contains block configs applicable to the current step only
+        localBlockConfig?: pxt.tutorial.TutorialBlockConfig;
+
+        // concatenated 'validation.local' sections. Contains config applicable to this step only.
+        localValidationConfig?: pxt.tutorial.CodeValidationConfig;
     }
 
     interface TutorialActivityInfo {
@@ -1117,11 +1256,53 @@ declare namespace pxt.tutorial {
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
+        templateLoaded?: boolean; // if the template code has been loaded once, we skip
+        globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
+        globalValidationConfig?: CodeValidationConfig // concatenated 'validation.global' sections. Contains validation config applicable to all steps
+        simTheme?: Partial<pxt.PackageConfig>;
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
         id: string;
         // number of steps completed
         steps: number;
+    }
+}
+
+declare namespace pxt.tour {
+    interface BubbleStep {
+        title: string;
+        description: string;
+        targetQuery: string;
+        location: BubbleLocation;
+        sansQuery?: string; // Use this to exclude an element from the cutout
+        sansLocation?: BubbleLocation; // relative location of element to exclude
+    }
+    const enum BubbleLocation {
+        Above,
+        Below,
+        Left,
+        Right,
+        Center
+    }
+}
+
+declare namespace pxt.auth {
+    type BadgeType = "skillmap-completion";
+
+    type Badge = SkillmapBadge;
+
+    interface BaseBadge {
+        id: string;
+        type: BadgeType;
+        title: string;
+        image: string;
+        lockedImage?: string;
+        timestamp?: number;
+    }
+
+    interface SkillmapBadge extends BaseBadge {
+        type: "skillmap-completion";
+        sourceURL: string;
     }
 }

@@ -1,6 +1,7 @@
 import * as core from "./core";
 import * as data from "./data";
 import * as cloud from "./cloud";
+import * as workspace from "./workspace";
 
 /**
  * Virtual API keys
@@ -20,6 +21,7 @@ export const USER_PREFERENCES = `${USER_PREF_MODULE}:${FIELD_USER_PREFERENCES}`
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
+export const HAS_USED_CLOUD = "has-used-cloud"; // Key into local storage to see if this computer has logged in before
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
     public getUserProfile(): pxt.auth.UserProfile {
@@ -35,9 +37,11 @@ export class Component<TProps, TState> extends data.Component<TProps, TState> {
 
 class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
-        const state = this.getState();
-        core.infoNotification(lf("Signed in: {0}", state.profile.idp.displayName));
-        await cloud.syncAsync();
+        const state = await pxt.auth.getUserStateAsync();
+        core.infoNotification(lf("Signed in: {0}", pxt.auth.userName(state.profile)));
+        if (!!workspace.getWorkspaceType())
+            await cloud.syncAsync();
+        pxt.storage.setLocal(HAS_USED_CLOUD, "true");
     }
     protected onSignedOut(): Promise<void> {
         core.infoNotification(lf("Signed out"));
@@ -47,70 +51,77 @@ class AuthClient extends pxt.auth.AuthClient {
         core.errorNotification(lf("Sign in failed. Something went wrong."));
         return Promise.resolve();
     }
-    protected onUserProfileChanged(): Promise<void> {
-        const state = this.getState();
-        generateUserProfilePicDataUrl(state.profile);
+    protected async onUserProfileChanged(): Promise<void> {
+        const state = await pxt.auth.getUserStateAsync();
+        pxt.auth.generateUserProfilePicDataUrl(state?.profile);
         data.invalidate("auth:*");
-        return Promise.resolve();
     }
-    protected onUserPreferencesChanged(part: pxt.auth.UserPreferencePart): Promise<void> {
-        switch (part) {
-            case "language": data.invalidate(LANGUAGE); break;
-            case "high-contrast": data.invalidate(HIGHCONTRAST); break;
-            case "immersive-reader": data.invalidate(READER); break;
+    protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
+        for (const op of diff) {
+            switch (op.path.join('/')) {
+                case "language": data.invalidate(LANGUAGE); break;
+                case "highContrast": data.invalidate(HIGHCONTRAST); break;
+                case "reader": data.invalidate(READER); break;
+            }
         }
         return Promise.resolve();
     }
     protected async onProfileDeleted(userId: string): Promise<void> {
-        // Convert cloud-saved projects to local projects.
-        await cloud.convertCloudToLocal(userId);
+        try {
+            // Convert cloud-saved projects to local projects.
+            await cloud.convertCloudToLocal(userId);
+        } catch {
+            pxt.tickEvent('auth.profile.cloudToLocalFailed');
+        }
     }
-    protected onStateLoaded(): Promise<void> {
-        const state = this.getState();
-        generateUserProfilePicDataUrl(state.profile);
+    protected async onStateLoaded(): Promise<void> {
+        const state = await pxt.auth.getUserStateAsync();
+        pxt.auth.generateUserProfilePicDataUrl(state.profile);
         data.invalidate("auth:*");
         data.invalidate("user-pref:*");
-        return Promise.resolve();
     }
-    protected onApiError(err: any): Promise<void> {
+    protected async onApiError(err: any): Promise<void> {
         core.handleNetworkError(err);
-        return Promise.resolve();
     }
-    protected onStateCleared(): Promise<void> {
+    protected async onStateCleared(): Promise<void> {
         data.invalidate("auth:*");
         //data.invalidate("user-prefs:*"); // Should we invalidate this? Or would it be jarring visually?
-        return Promise.resolve();
     }
 
     public static authApiHandler(p: string): pxt.auth.UserProfile | boolean | string {
-        const cli = pxt.auth.client();
-        if (cli) {
-            const field = data.stripProtocol(p);
-            const state = cli.getState();
-            switch (field) {
-                case FIELD_USER_PROFILE: return { ...state.profile };
-                case FIELD_LOGGED_IN: return cli.hasUserId();
-            }
+        const field = data.stripProtocol(p);
+        const state = pxt.auth.cachedUserState;
+        const hasToken = pxt.auth.cachedHasAuthToken;
+        switch (field) {
+            case FIELD_USER_PROFILE: return hasToken ? { ...state?.profile } : null;
+            case FIELD_LOGGED_IN: return hasToken && state?.profile != null;
         }
         return null;
     }
 
     public static userPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string {
         const cli = pxt.auth.client();
-        if (cli) {
-            const state = cli.getState();
+        const state = pxt.auth.cachedUserState;
+        if (cli && state) {
             if (!state.preferences) {
                 cli.initialUserPreferencesAsync().then(() => { });
             }
             return AuthClient.internalUserPreferencesHandler(path);
+        } else {
+            // Identity not available, read from local storage
+            switch (path) {
+                case HIGHCONTRAST: return /^true$/i.test(pxt.storage.getLocal(HIGHCONTRAST));
+                case LANGUAGE: return pxt.storage.getLocal(LANGUAGE);
+                case READER: return pxt.storage.getLocal(READER);
+            }
         }
         return null;
     }
 
     private static internalUserPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string {
         const cli = pxt.auth.client();
-        if (cli) {
-            const state = cli.getState();
+        const state = pxt.auth.cachedUserState;
+        if (cli && state) {
             const field = data.stripProtocol(path);
             switch (field) {
                 case FIELD_USER_PREFERENCES: return { ...state.preferences };
@@ -139,25 +150,19 @@ function initVirtualApi() {
     });
 }
 
-function generateUserProfilePicDataUrl(profile: pxt.auth.UserProfile) {
-    if (profile?.idp?.picture?.encoded) {
-        const url = window.URL || window.webkitURL;
-        try {
-            // Decode the base64 image to a data URL.
-            const decoded = pxt.Util.stringToUint8Array(atob(profile.idp.picture.encoded));
-            const blob = new Blob([decoded], { type: profile.idp.picture.mimeType });
-            profile.idp.picture.dataUrl = url.createObjectURL(blob);
-        } catch { }
-    }
-}
+let authClientPromise: Promise<AuthClient>;
 
 async function clientAsync(): Promise<AuthClient | undefined> {
     if (!pxt.auth.hasIdentity()) { return undefined; }
-    let cli = pxt.auth.client();
-    if (cli) { return cli as AuthClient; }
-    cli = new AuthClient();
-    await cli.initAsync();
-    return cli as AuthClient;
+    if (authClientPromise) return authClientPromise;
+    authClientPromise = new Promise<AuthClient>(async (resolve, reject) => {
+        const cli = new AuthClient();
+        await cli.initAsync();
+        await cli.authCheckAsync();
+        await cli.initialUserPreferencesAsync();
+        resolve(cli as AuthClient);
+    });
+    return authClientPromise;
 }
 
 export function hasIdentity(): boolean {
@@ -188,26 +193,82 @@ export async function initialUserPreferencesAsync(): Promise<pxt.auth.UserPrefer
 
 export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, callbackState: pxt.auth.CallbackState = undefined): Promise<void> {
     const cli = await clientAsync();
-    return await cli?.loginAsync(idp, persistent, callbackState);
+    await cli?.loginAsync(idp, persistent, callbackState);
 }
 
 export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
-    return await pxt.auth.loginCallbackAsync(qs);
+    await pxt.auth.loginCallbackAsync(qs);
 }
 
 export async function logoutAsync(): Promise<void> {
     const cli = await clientAsync();
-    return await cli?.logoutAsync();
-}
-
-export async function updateUserPreferencesAsync(newPref: Partial<pxt.auth.UserPreferences>): Promise<void> {
-    const cli = await clientAsync();
-    return await cli?.updateUserPreferencesAsync(newPref);
+    await cli?.logoutAsync("#");
 }
 
 export async function deleteProfileAsync(): Promise<void> {
     const cli = await clientAsync();
-    return await cli?.deleteProfileAsync();
+    await cli?.deleteProfileAsync();
+}
+
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], opts: {
+    immediate?: boolean,
+    filter?: (op: pxtc.jsonPatch.PatchOperation) => boolean
+} = {}): Promise<pxt.auth.SetPrefResult> {
+    const cli = await clientAsync();
+    return await cli?.patchUserPreferencesAsync(ops, opts);
+}
+
+export async function setHighContrastPrefAsync(highContrast: boolean): Promise<void> {
+    const cli = await clientAsync();
+    if (cli) {
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['highContrast'],
+            value: highContrast
+        });
+    } else {
+        // Identity not available, save this setting locally
+        pxt.storage.setLocal(HIGHCONTRAST, highContrast.toString());
+        data.invalidate(HIGHCONTRAST);
+    }
+}
+
+export async function setLanguagePrefAsync(lang: string): Promise<void> {
+    const cli = await clientAsync();
+    if (cli) {
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['language'],
+            value: lang
+        }, { immediate: true }); // sync this change immediately, as the page is about to reload.
+    } else {
+        // Identity not available, save this setting locally
+        pxt.storage.setLocal(LANGUAGE, lang);
+        data.invalidate(LANGUAGE);
+    }
+}
+
+export async function setImmersiveReaderPrefAsync(pref: string): Promise<void> {
+    const cli = await clientAsync();
+    if (cli) {
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['reader'],
+            value: pref
+        });
+    } else {
+        // Identity not available, save this setting locally
+        pxt.storage.setLocal(READER, pref);
+        data.invalidate(READER);
+    }
+}
+
+export async function setEmailPrefAsync(pref: boolean): Promise<pxt.auth.SetPrefResult> {
+    return await patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['email'],
+        value: pref
+    }, { immediate: true })
 }
 
 export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<pxt.auth.ApiResult<T>> {

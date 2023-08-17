@@ -2,12 +2,6 @@
 
 This section describes how to annotate your MakeCode APIs to expose them in the Block Editor.
 
-```block
-let APIs = false;
-let Annotations = false;
-let Blocks = APIs && Annotations;
-```
-
 ## ~ hint
 
 Try out some blocks live in the **[Playground](https://makecode.com/playground)** to see how they work. Modify them or even create new ones!
@@ -28,9 +22,9 @@ namespace basic {
 }
 ```
 
-You can also provide a JsDoc comment, color and weight for the namespace, as well as a friendly name (in Unicode).
+You can also provide a JSDoc comment, color and weight for the namespace, as well as a friendly name (in Unicode).
 We strongly recommend carefully picking colors as it dramatically impacts
-that appearance and readability of your blocks. All blocks within the same namespace have the same color so that users can find the category easily from
+the appearance and readability of your blocks. All blocks within the same namespace have the same color so that users can find the category easily from
 samples.
 
 ```typescript-ignore
@@ -42,7 +36,7 @@ namespace basic {
     ...
 }
 ```
-* `icon` icon Unicode character from the icon font to display. The [Semantic UI](https://semantic-ui.com/elements/icon.html) icon set has been ported from Font Awesome (v4.5.6 at the time of writing), and a full list can be found at http://fontawesome.io/icons/
+* `icon` The Unicode character from the icon font to display. Any free non-brand icon from Font Awesome (v5.15.4 at the time of writing) can be used. The full list can be found https://fontawesome.com/v5/search?m=free
 * `color` should be included in a comment line starting with `//%`. The color takes a **hue** value or a HTML color.
 * `weight` determines where your category appears in the toolbox. Higher weight means it appears closer to the top.
 
@@ -56,7 +50,7 @@ This makes it easier for the user to go through your available blocks.
 To define your groups, add the `groups` attribute to your namespace. The `groups` attribute is an array of group names. You can individually assign blocks to these groups when defining each block.
 
 > **Notes**:
->* The order in which you define your groups is the order in which the groups will appear in the toolbox flyout
+>* The order in which you define your groups is the order in which the groups will appear in the toolbox flyout.
 >* Blocks that are not assigned to a named group are placed in the default `others` group, which does not show a label. The `others` group can be used to decide where in the order of groups the ungrouped blocks will appear. This is based on where you place `others` in the `groups` array.
 >* When assigning blocks to groups, names are case sensitive, so make sure the group names you put on your blocks are identical to the ones in your group definitions.
 
@@ -84,7 +78,7 @@ you can specify the `blockId` and `block` parameters.
 
 ```typescript-ignore
 //% blockId=device_show_number
-//% block="show|number %v"
+//% block="show|number $v"
 export function showNumber(v: number, interval: number = 150): void
 { }
 ```
@@ -94,7 +88,7 @@ export function showNumber(v: number, interval: number = 150): void
 * `block` contains the syntax to build the block structure (more below).
 
 Other optional attributes can also be used:
-* `blockExternalInputs=` forces `External Inputs` rendering
+* `inlineInputMode=external` forces external inputs rendering. This causes the block parameters to wrap across multiple lines instead of staying inline. See the [Inline input](#inline-input) section for more information.
 * `advanced=true` causes this block to be placed under the parent category's "More..." subcategory. Useful for hiding advanced or rarely-used blocks by default
 
 ## Block syntax
@@ -105,16 +99,14 @@ will be organized to create the block.
 ```
 block = field, { '|' field }
 field := string
-    | string `%` parameter [ `=` type ]
+    | string `$` parameter
 parameter = string
-type = string
 ```
 
-* each `field` is mapped to a field in the block editor
-* the function parameter are mapped **in order** to `%parameter` argument. The loader automatically builds
-a mapping between the block field names and the function names.
-* the block will automatically switch to external inputs when enough parameters are detected
-* Using `=type` in the block string for shadow blocks is deprecated. See "Specifying shadow blocks" for more details.
+* each `field` is mapped to a field name on the block.
+* the function parameters are mapped to the `$parameter` argument with an identical name. The loader automatically builds a mapping between the block field names and the function names.
+* the block will automatically switch to external inputs (wrapping) when there are four or more parameters.
+* the `|` indicates where to start a new line if the block is in external inputs mode. 
 
 ## Custom block localization
 
@@ -129,10 +121,10 @@ For example,
 ```typescript-ignore
 //% block="square $x"
 //% block.loc.fr="$x au carré"
-function square(x: number): number {}
+export function square(x: number): number {}
 ```
 
-You can also override the ``jsDoc`` description and parameter info.
+You can also override the ``jsdoc`` description and parameter info.
 
 ```
 jsdoc.loc.LOCALE = translated jsdoc
@@ -148,7 +140,7 @@ PARAM.loc.LOCALE = parameter jsdoc
 //% block.loc.fr="$x au carré"
 //% jsdoc.loc.fr="Calcule le carré de x"
 //% x.loc.fr="le nombre"
-function square(x: number): number {}
+export function square(x: number): number {}
 ```
 
 
@@ -173,7 +165,7 @@ for an unsupported type or to override a default shadow, use the following synta
 ```typescript-ignore
 //% block="$myParam"
 //% myParam.shadow="myShadowBlockID"
-function myFunction(myParam: number): void {}
+export function myFunction(myParam: number): void {}
 ```
 
 If an existing block definition specifies the shadow block id within the block string,
@@ -187,12 +179,10 @@ For parameters of type ``number``, you can specify a minimum, maximum, and defau
 
 ```typescript-ignore
 //% block
-//% v.min=0 v.max= 42 x.defl=25
+//% v.min=0 v.max=42 v.defl=25
 export function showNumber(v: number, interval: number = 150): void
 { }
 ```
-
->**Note**: Using ``defl`` to specify a default parameter value will take precedence over a default value given in the `eg:` portion for ``@param`` in JsDoc. See the [Docs and default values](#jsdoc) section below.
 
 **Playground examples**: [Range](https://makecode.com/playground#field-editors-range), [Default values](https://makecode.com/playground#basic-default-values)
 
@@ -209,15 +199,15 @@ To define a block that has both a reporter and a statement form, use the `blockA
 /**
 * Remove the last element from an array and return it.
 */
-//% blockId="array_pop" block="get and remove last value from %list"
-function pop(): number;
+//% blockId="array_pop" block="get and remove last value from $list"
+export function pop(): number;
 
 /**
-* Remove the last element from an array and return it.
+* Remove the last element from an array.
 */
-//% blockId="array_pop_statement" block="remove last value from %list"
+//% blockId="array_pop_statement" block="remove last value from $list"
 //% blockAliasFor="Array.pop"
-function _popStatement(): void;
+export function _popStatement(): void;
 
 ```
 
@@ -228,40 +218,55 @@ The value of `blockAliasFor` should be the fully qualified name of the source fu
 
 ## Array default values
 
-For array type parameters, set the shadow ID to "lists_create_with":
+For arrays of primitive types, the default values on the block are generated according to the array type in the function signature.
+
+```typescript-ignore
+//% block="$myParam"
+export function mySimpleFunction(myParam: number[]): void {}
+```
+
+For arrays with non-primitive or custom types, set the shadow ID to "lists_create_with" and set the default value of the parameter with the blockId for the type of elements you want the array to be populated with.
 
 ```typescript-ignore
 //% block="$myParam"
 //% myParam.shadow="lists_create_with"
-function myFunction(myParam: number[]): void {}
+//% myParam.defl="screen_image_picker"
+export function myFunction(myParam: Image[]): void {}
 ```
 
-To populate the array with blocks, set the default value of the parameter as well.
+> **Note**: The above example will only render in the Arcade editor, since that is where the Image type is supported.
 
-```typescript-ignore
-//% block="$myParam"
-//% myParam.shadow="lists_create_with"
-//% myParam.defl="inner_shadow_block"
-function myFunction(myParam: number[]): void {}
-```
-
-The above will create a block that has an array by default with "inner_shadow_blocks" inside the array.
+**Playground example**: [Array default values](https://makecode.com/playground#basic-array-default-values)
 
 ## Input formats
 
 ### Inline input
 
-To make a block with multiple parameters appear as a single line, use `inlineInputMode`. The block will expand left to right instead of wrapping the parameter input across mulitple lines.
+Blocks with four or more parameters automatically switch to `External Inputs` mode, in which the parameters wrap instead of staying inline. To make a block with multiple parameters appear as a single line, use `inlineInputMode=inline`. The block will expand left to right instead of wrapping the parameter input across mulitple lines.
 
 ```typescript-ignore
-//% block="magnitude of 3d vector at x %x and y %y and z %z"
+//% block="map $value|from low $fromLow|high $fromHigh|to low $toLow|high $toHigh"
 //% inlineInputMode=inline
+export function map(value: number,
+    fromLow: number, fromHigh: number,
+    toLow: number, toHigh: number): number {
+
+    return ((value - fromLow) * (toHigh - toLow))
+        / (fromHigh - fromLow) + toLow;
+}
+```
+
+ To force external inputs, set `inlineInputMode=external`. In the block defintion, the `|` indicates where to start a new line if the block is in external inputs mode. New lines are also started after each parameter.
+
+```typescript-ignore
+//% block="magnitude of 3d vector | at x $x and y $y and z $z"
+//% inlineInputMode=external
 export function mag3d(x: number, y: number, z: number): number {
     return Math.sqrt(x * x + y * y + z * z);
 }
 ```
 
-**Playground example**: [Inline input](https://makecode.com/playground#https://makecode.com/playground#basic-inline)
+**Playground example**: [Inline input](https://makecode.com/playground#basic-input-format)
 
 ### Expandable arguments
 
@@ -269,7 +274,7 @@ If your block has multiple parameters but some or all of them are likely to rema
 
 The portion of the block that is set to expand is separated by two field delimiters `||`. In the following example, the two optional parameters are separated from the first part of the block definition by `||`:
 
-``//% block="play an alarm sound || of %sound for %duration ms"``
+``//% block="play an alarm sound || of $sound for $duration ms"``
 
 The `expandableArgumentMode` attribute controls how the expansion for the parameters will work. It is set to `toggle` in this example which will show the block collapsed with a **(+)** icon which expands the block when clicked.
 
@@ -285,12 +290,14 @@ enum AlarmSound {
 namespace alarms {
     /**
      * Play an alarm sound for some time
-     * @param sound of the alarm to play, eg: AlarmSound.Annoy
-     * @param duration of the alarm sound, eg: 2000
+     * @param sound of the alarm to play
+     * @param duration of the alarm sound
      */
-    //% block="play an alarm sound || of %sound for %duration ms"
+    //% block="play an alarm sound || of $sound for $duration ms"
     //% duration.shadow=timePicker
     //% expandableArgumentMode="toggle"
+    //% sound.defl=AlarmSound.Annoy
+    //% duaration.defl=2000
     export function alarmSound(sound?: AlarmSound, duration?: number) {
     }
 }
@@ -302,76 +309,25 @@ These are the settings for `expandableArgumentMode`:
 * `enabled` - expand one parameter at a time for each selection (click) of the expand icon.
 * `disabled` - don't expand any parameters, keep the block collapsed. No icon is shown.
 
+**Playground example**: [Inline input](https://makecode.com/playground#basic-input-format)
+
 ## Callbacks with Parameters
 
-APIs that take in a callback function will have that callback converted into a statement input.
-If the callback in the API is designed to take in parameters, the best way to map that pattern
-to the blocks is by passing the callback a single parameter with a class type that contains
-all the other values. For example:
+APIs that take in a callback function will have that callback converted into a statement input. If the callback in the API is designed to take in parameters, those parameters can be specified on the block using the $NAME annotation (the same way function arguments are specified). For example:
 
 ```typescript-ignore
-export class ArgumentClass {
-    argumentA: number;
-    argumentB: string;
-}
-
-//% mutate=objectdestructuring
-//% mutateText="My Arguments"
-//% mutateDefaults="argumentA;argumentA,argumentB"
-// ...
-export function addSomeEventHandler((a: ArgumentClass) => void) { };
+    /**
+     * Run code when a certain kind of sprite is created
+     * @param kind
+     * @param sprite
+     */
+    //% draggableParameters="reporter"
+    //% blockId=spritesoncreated block="on created $sprite of kind $kind"
+    //% kind.defl=spritekind
+    export function onCreated(kind: number, handler: (sprite: Sprite) => void): void {
+    }
 ```
-
-In the above example, setting `mutate=objectdestructuring` will cause this API to use Blockly "mutators"
-to let users change what parameters appear in the blocks. Each parameter will be given an
-optional variable field in the block that defines a variable that can be used within the callback.
-The variable fields compile to object destructuring in the TypeScript code. For example:
-
-```typescript-ignore
-addSomeEventHandler(({argumentA, argumentB}) => {
-
-})
-```
-
-For an example of this pattern in action, see the `radio.onDataPacketReceived` block in
-the microbit target.
-
-In some cases it can be useful to change the runtime behavior of the API based on the properties selected by the
-user. To enable that behavior, create an enum with entries that have the same names as the argument object's
-properties and add an extra parameter taking in an enum array to the API. For example:
-
-```typescript-ignore
-export class ArgumentClass {
-    argumentA: number;
-    argumentB: string;
-}
-
-enum ArgNames {
-    argumentA,
-    argumentB
-}
-
-//% mutate=objectdestructuring
-//% mutateText="My Arguments"
-//% mutateDefaults="argumentA;argumentA,argumentB"
-//% mutatePropertyEnum="argNames"
-// ...
-export function addSomeEventHandler(args: ArgNames[], (a: ArgumentClass) => void) { };
-```
-
-Note the `mutatePropertyEnum` attribute added to the comment annotations. The block for this API will
-look the same as the previous example but the compiled code will also include the arguments passed:
-
-```typescript-ignore
-addSomeEventHandler([ArgNames.argumentA, ArgNames.argumentB], ({argumentA, argumentB}) => {
-
-})
-```
-
-The other attributes related to object destructuring mutators include:
-
-* `mutateText` - defines the text that appears in the top block of the Blockly mutator dialog (the dialog that appears when you click the blue gear)
-* `mutateDefaults` - defines the versions of this block that should appear in the toolbox. Block definitions are separated by semicolons and property names should be separated by commas
+In the above example, setting `draggableParameters="reporter"` makes the parameters into reporter blocks that can be dragged (and copied) from the block and used inside the event handler, like locally-scoped variables.
 
 **Playground examples**: [Functions](https://makecode.com/playground#functions), [Types of blocks](https://makecode.com/playground#basic-types), [Events](https://makecode.com/playground#events)
 
@@ -406,7 +362,7 @@ enum Delimiters {
 ```
 * a function that takes the enum as parameter and returns the according value
 ```typescript-ignore
-//% blockId="delimiter_conv" block="%del"
+//% blockId="delimiter_conv" block="$del"
 export function delimiters(del : Delimiters) : string {
     switch(del) {
         case Delimiters.NewLine: return "\n";
@@ -415,9 +371,10 @@ export function delimiters(del : Delimiters) : string {
     }
 }
 ```
-* use the enum conversion function block id (``delimiter_conv``) as the value in the ``block`` parameter of your function
+* use the enum conversion function block id (``delimiter_conv``) as the value for the shadow block of this parameter
 ```typescript-ignore
-//% blockId="read_until" block="read until %del=delimiter_conv"
+//% blockId="read_until" block="read until $del"
+//% del.shadow=delimiter_conv
 export function readUntil(del: string) : string {
     ...
 }
@@ -447,7 +404,7 @@ const IRON = Item.Iron;
 ```
 
 If the enum has a shim function, you can also set `blockIdentity` just like you can for enum members. This
-will make the decompiler will convert any instance of that constant into the block for that enum.
+will make the decompiler convert any instance of that constant into the block for that enum.
 
 ```typescript
 //% emitAsConstant
@@ -460,8 +417,8 @@ enum Item {
 namespace blocks {
     //% shim=TD_ID
     //% blockId=minecraftItem
-    //% block="item %item"
-    function item(item: Item): number;
+    //% block="item $item"
+    export function item(item: Item): number;
 }
 
 //% enumIdentity="Item.Iron"
@@ -478,17 +435,14 @@ in the generated TypeScript. To enable that behavior, set `shadowOptions.toStrin
 parameter like so:
 
 ```
-    //% blockId=console_log block="console|log %msg"
+    //% blockId=console_log block="console|log $text"
     //% text.shadowOptions.toString=true
     export function log(text: string): void {
         serial.writeString(text + "\r\n");
     }
 ```
 
-Note that the parameter is referred to using its declared name (`text`) and not the
-name in the block definition string (`msg`).
-
-**Playground examples**: [Enumerations](https://makecode.com/playground#basic-enums)
+**Playground example**: [Enumerations](https://makecode.com/playground#basic-enums)
 
 ### Creating enumerations with blocks
 
@@ -543,25 +497,21 @@ export function whatPlanet(planet: number): number{
 
 **Playground example**: [Create Enums from Blocks](https://makecode.com/playground#language-create-enums)
 
-## Docs and default values #jsdoc
+## JSDoc
 
-The JSDoc comment is automatically used as the help for the block.
+The JSDoc comment is automatically used as the tooltip for the block.
 ```typescript-ignore
 /**
  * Scroll a number on the screen. If the number fits on the screen (i.e. is a single digit), do not scroll.
- * @param interval speed of scroll; eg: 150, 100, 200, -100
+ * @param interval speed of scroll
 */
+//% block
 //% help=functions/show-number
 export function showNumber(value: number, interval: number = 150): void
 { }
 ```
 
-* If `@param` annotation is available with an `eg:` section, the first
-value is used as the shadow value.
-* An optional `help` attribute can be used to point to an specific documentation path. To define custom help for extension blocks, see [GitHub Extension Authoring](/extensions/github-authoring).
-* If the parameter has a default value (``interval`` in this case), it is **not** exposed in blocks.
-* If you want to include minimum and maximum value range for a numeric parameter, you can use square brackets with the range [min-max] after the parameter name in the `@param` annotation. It is important to include the shadow value if you are using a range.
-     - `@param` power [0-7] a value in the range 0..7, where 0 is the lowest power and 7 is the highest. `eg:` 7
+An optional `help` attribute can be used to point to a specific documentation path. To define custom help for extension blocks, see [GitHub Extension Authoring](/extensions/github-authoring).
 
 ## Objects and Instance methods
 
@@ -574,17 +524,17 @@ or with a bit of flattening (which is recommended, as flat, C-style APIs map bes
 //%
 class Message {
     ...
-    //% blockId="message_get_text" block="%this|text"
+    //% blockId="message_get_text" block="$this|text"
     public getText() { ... }
 }
 ```
 
-* when annotating an instance method, you need to specify the ``%this`` parameter in the block syntax definition. It can be called something else, eg ``%msg``.
+* when annotating an instance method, you need to specify the ``$this`` parameter in the block syntax definition.
 
 You will need to expose a factory method to create your objects as needed. For the example above, we add a function that creates the message:
 
 ```typescript-ignore
-//% blockId="create_message" block="create message|with %text"
+//% blockId="create_message" block="create message|with $text"
 export function createMessage(text: string) : Message {
     return new Message(text);
 }
@@ -592,7 +542,7 @@ export function createMessage(text: string) : Message {
 
 ### Auto-create
 
-If object has a reasonable default constructor, and it is harmless to call this
+If the object has a reasonable default constructor, and it is harmless to call this
 constructor even if the variable needs to be overwritten later, then it's useful
 to designate a parameter-less function as auto-create, like this:
 
@@ -606,7 +556,7 @@ class Image {
 }
 ```
 
-Now, when user adds a block referring to a method of `Image`, a global
+Now, when the user adds a block referring to a method of `Image`, a global
 variable will be automatically introduced and initialized with `images.emptyImage()`.
 
 In cases when the default constructor has side effects (eg., configuring a pin),
@@ -616,7 +566,7 @@ the `autoCreate` syntax should not be used.
 ### Fixed Instance Set
 
 It is sometimes the case that there is only a fixed number of instances
-of a given class. One example is object representing pins on an electronic board.
+of a given class. One example is an object representing pins on an electronic board.
 It is possible to expose these instances in a manner similar to an enum:
 
 ```typescript-ignore
@@ -624,15 +574,15 @@ It is possible to expose these instances in a manner similar to an enum:
 //% blockNamespace=pins
 class DigitalPin {
     ...
-    //% blockId=device_set_digital_pin block="digital write|pin %name|to %value"
+    //% blockId=device_set_digital_pin block="digital write|pin $this|to $value"
     digitalWrite(value: number): void { ... }
 }
 
 namespace pins {
     //% fixedInstance
-    let D0: DigitalPin;
+    export let D0: DigitalPin;
     //% fixedInstance
-    let D1: DigitalPin;
+    export let D1: DigitalPin;
 }
 ```
 
@@ -649,14 +599,14 @@ declarations.
 //% fixedInstances
 class AnalogPin extends DigitalPin {
     ...
-    //% blockId=device_set_analog_pin block="analog write|pin %name|to %value"
+    //% blockId=device_set_analog_pin block="analog write|pin $this|to $value"
     //% blockNamespace=pins
     analogWrite(value: number): void { ... }
 }
 
 namespace pins {
     //% fixedInstance
-    let A0: AnalogPin;
+    export let A0: AnalogPin;
 }
 ```
 
@@ -688,6 +638,8 @@ when it is used, even though it is initialized with something that can possibly
 have side effects. This happens automatically when there is no initializer,
 or the initializer is a simple constant, but for function calls and constructors
 you have to include `whenUsed`.
+
+**Playground example**: [Fixed instances](https://makecode.com/playground#language-fixed-instances)
 
 ### Properties
 
@@ -722,7 +674,7 @@ class Foo {
 }
 ```
 
-**Playground examples**: [Classes](https://makecode.com/playground#classes)
+**Playground example**: [Classes](https://makecode.com/playground#classes)
 
 ### Factories #factories
 
@@ -756,7 +708,7 @@ namespace Widgets {
 
 To ensure there's a valid instance of the class when the block is used, the `blockSetVariable` attribute sets a variable to the new instance. In the example above, the `blockSetVariable` attribute will automatically create an instance of `Gizmo` and set the `gizmo` variable to it. The `gizmo` variable is created if it doesn't exist already. This allows a valid instance of `Gizmo` to be created by default when the block is pulled into the editor.
 
-**Playground examples**: [Factories](https://makecode.com/playground#factories)
+**Playground example**: [Factories](https://makecode.com/playground#factories)
 
 ### Namespace attachment
 
@@ -800,7 +752,7 @@ namespace Widgets {
 }
 ```
 
-**Playground examples**: [Factories](https://makecode.com/playground#factories)
+**Playground example**: [Factories](https://makecode.com/playground#factories)
 
 The `block` attribute for `setInactive` includes a reference to the `gizmo` variable created by the `createGizmo` factory function. This matches the block with a valid instance by default.
 
@@ -808,7 +760,7 @@ The `block` attribute for `setInactive` includes a reference to the `gizmo` vari
 
 Field editors let you control how a parameter value is entered or selected. A field editor is a [shadow](#shadow-block) block that invokes the render of a selection UI element, dropdown list of items, or some other extended input method.
 
-A field editor is attached to a parameter using the `shadow` attribute with the field editor name. In this example, a function to turn an LED on or off uses the `toggleOnOff` field editor to show a switch element as a block paramter.
+A field editor is attached to a parameter using the `shadow` attribute with the field editor name. In this example, a function to turn an LED on or off uses the `toggleOnOff` field editor to show a switch element as a block parameter.
 
 ```typescript-ignore
 /**
@@ -837,14 +789,14 @@ There are ready made field editors that are built-in and available to use direct
 
 ### Custom field editor
 
-If you want to create a custom field editor for you blocks then you need to define the shadow block for it. The `blockId` is the name that is used as the parameter `shadow` attribute.
+If you want to create a custom field editor for your blocks then you need to define the shadow block for it. The `blockId` is the name that is used as the parameter `shadow` attribute.
 
 Here's an example field editor for setting the score of a tennis game:
 
 ```typescript-ignore
 /**
-  * Get the score for a tennis score
-  * @param score eg: 1
+  * Get the score for a tennis game
+  * @param score
   */
 //% blockId=tennisScore block="$score"
 //% blockHidden=true
@@ -944,4 +896,4 @@ A few tips gathered while designing various APIs for the Block Editor.
 * **Anything that snaps together will be tried by the user**: your runtime should deal with invalid input with graceful degradation rather than abrupt crashes.
 Some users will try to snap anything together - get ready for it.
 * **OO is cumbersome** in blocks: we recommend using a C-like APIs -- just function -- rather than OO classes. It maps better to blocks.
-* **Keep the number of blocks small**: there's only so much space in the toolbox. Be specific about each API you want to see in Blocks.
+* **Keep the number of blocks small**: there's only so much space in the toolbox. Be specific about each API you want to see in blocks.

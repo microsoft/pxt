@@ -8,6 +8,20 @@ import * as auth from "./auth";
 
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
+import { fireClickOnEnter } from "./util";
+import { Modal } from "../../react-common/components/controls/Modal";
+import { ProgressBar } from "./dialogs";
+
+declare const zip: any;
+
+let loadZipJsPromise: Promise<boolean>;
+export function loadZipAsync(): Promise<boolean> {
+    if (!loadZipJsPromise)
+        loadZipJsPromise = pxt.BrowserUtils.loadScriptAsync("zip.js/zip.min.js")
+            .then(() => typeof zip !== "undefined")
+            .catch(e => false)
+    return loadZipJsPromise;
+}
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -29,6 +43,13 @@ export interface ScriptManagerDialogState {
 
     sortedBy?: string;
     sortedAsc?: boolean;
+
+    download?: DownloadProgress;
+}
+
+interface DownloadProgress {
+    completed: number;
+    max: number;
 }
 
 export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps, ScriptManagerDialogState> {
@@ -126,10 +147,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         let { selected } = this.state;
         const headers = this.getSortedHeaders();
         const selectedLength = Object.keys(selected).length;
-        core.confirmDelete(selectedLength == 1 ? headers[parseInt(Object.keys(selected)[0])].name : selectedLength.toString(), () => {
+        core.confirmDelete(selectedLength == 1 ? headers.find((h) => Object.keys(selected)[0].includes(h.id)).name
+                                               : selectedLength.toString(), () => {
             const promises: Promise<void>[] = [];
             headers.forEach((header, index) => {
-                if (selected[index]) {
+                if (selected[this.getId(header)]) {
                     // Delete each selected project
                     header.isDeleted = true;
                     promises.push(workspace.forceSaveAsync(header, {}));
@@ -278,13 +300,132 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.setState({ sortedAsc: !sortedAsc });
     }
 
+    handleDownloadAsync = async () => {
+        pxt.tickEvent("scriptmanager.downloadZip", undefined, { interactiveConsent: true });
+
+        await loadZipAsync();
+
+        const { selected } = this.state;
+        const zipWriter = new zip.ZipWriter(new zip.Data64URIWriter("application/zip"));
+        const selectedHeaders = this.getSortedHeaders().filter(h => selected[this.getId(h)]);
+
+        let done = 0;
+
+        const takenNames: {[index: string]: boolean} = {};
+
+        const format = (val: number, len = 2) => {
+            let out = val + "";
+            while (out.length < len) {
+                out = "0" + out
+            }
+
+            return out.substring(0, len);
+        }
+
+        this.setState({
+            download: {
+                completed: 0,
+                max: selectedHeaders.length
+            }
+        });
+
+        const targetNickname = pxt.appTarget.nickname || pxt.appTarget.id;
+
+        for (const header of selectedHeaders) {
+            const text = await workspace.getTextAsync(header.id);
+
+            let preferredEditor = "blocksprj";
+            try {
+                const config = JSON.parse(text["pxt.json"]) as pxt.PackageConfig;
+
+                preferredEditor = config.preferredEditor || "blocksprj"
+            }
+            catch (e) {
+                // ignore invalid configs
+            }
+
+            const project: pxt.cpp.HexFile = {
+                meta: {
+                    cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
+                    targetVersions: pxt.appTarget.versions,
+                    editor: preferredEditor,
+                    name: header.name
+                },
+                source: JSON.stringify(text, null, 2)
+            };
+
+            const compressed = await pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
+
+            /* eslint-disable no-control-regex */
+            let sanitizedName = header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '');
+            sanitizedName = sanitizedName.trim().replace(/\s+/g, '-');
+            /* eslint-enable no-control-regex */
+
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
+                const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
+                sanitizedName = sanitizedName.replace(rx, '');
+            }
+
+            if (!sanitizedName) {
+                sanitizedName = "Untitled"; // do not translate to avoid unicode issues
+            }
+
+            // Include the recent use time in the filename
+            const date = new Date(header.recentUse * 1000);
+            const dateSnippet = `${date.getFullYear()}-${format(date.getMonth())}-${format(date.getDate())}`
+
+            // FIXME: handle different date formatting?
+            let fn = `${targetNickname}-${dateSnippet}-${sanitizedName}.mkcd`;
+
+            // zip.js can't handle multiple files with the same name
+            if (takenNames[fn]) {
+                let index = 2;
+                do {
+                    fn = `${targetNickname}-${dateSnippet}-${sanitizedName}${index}.mkcd`
+                    index ++;
+                } while(takenNames[fn])
+            }
+
+            takenNames[fn] = true;
+
+            await zipWriter.add(fn, new zip.Uint8ArrayReader(compressed));
+
+            // Check for cancellation
+            if (!this.state.download) return;
+
+            done++;
+            this.setState({
+                download: {
+                    completed: done,
+                    max: selectedHeaders.length
+                }
+            });
+        }
+
+        const datauri = await zipWriter.close();
+
+        const zipName = `makecode-${targetNickname}-project-download.zip`
+
+        pxt.BrowserUtils.browserDownloadDataUri(datauri, zipName);
+
+        this.setState({
+            download: null
+        });
+    }
+
+    handleDownloadProgressClose = () => {
+        this.setState({
+            download: null
+        });
+    }
+
     private getSelectedHeader() {
         const { selected } = this.state;
         const indexes = Object.keys(selected);
         if (indexes.length !== 1) return null; // Sanity check
-        const index = parseInt(indexes[0]);
-        const headers = this.getSortedHeaders();
-        return headers[index];
+        const id = Object.keys(selected)[0];
+        const headers = this.fetchLocalData()
+        return headers.find((h) => id.includes(h.id))
     }
 
     private getSortedHeaders() {
@@ -313,7 +454,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
     }
 
     renderCore() {
-        const { visible, selected, markedNew, view, searchFor, sortedBy, sortedAsc } = this.state;
+        const { visible, selected, markedNew, view, searchFor, sortedBy, sortedAsc, download } = this.state;
         if (!visible) return <div></div>;
 
         const darkTheme = pxt.appTarget.appTheme.baseTheme == 'dark';
@@ -325,7 +466,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
         const openNewTab = pxt.appTarget.appTheme.openProjectNewTab
             && !pxt.BrowserUtils.isElectron()
-            && !pxt.BrowserUtils.isUwpEdge()
             && !pxt.BrowserUtils.isIOS();
         const openDependent = openNewTab
             && pxt.appTarget.appTheme.openProjectNewDependentTab
@@ -342,8 +482,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 style={{ flexGrow: 1 }}
                 searchOnChange={true}
             />);
-            if (Object.keys(selected).length > 0) {
-                if (Object.keys(selected).length == 1) {
+
+            const numSelected = Object.keys(selected).length
+            if (numSelected > 0) {
+                if (numSelected == 1) {
                     const openBtn = <sui.Button key="edit" icon="edit outline" className="icon"
                         text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />;
                     if (!openNewTab)
@@ -361,6 +503,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
+                if (numSelected > 1) {
+                    headerActions.push(<sui.Button key="download-zip" icon="download" className="icon"
+                        text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
+                }
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
@@ -434,13 +580,13 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         <table className={`ui definition unstackable table ${darkTheme ? 'inverted' : ''}`}>
                             <thead className="full-width">
                                 <tr>
-                                    <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={selectedAll ? lf("De-select all projects") : lf("Select all projects")} style={{ cursor: 'pointer' }}>
+                                    <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={fireClickOnEnter} title={selectedAll ? lf("De-select all projects") : lf("Select all projects")} style={{ cursor: 'pointer' }}>
                                         <sui.Icon icon={`circle outline large ${selectedAll ? 'check' : ''}`} />
                                     </th>
-                                    <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Name {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
+                                    <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={fireClickOnEnter} title={lf("Sort by Name {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
                                         {lf("Name")} {sortedBy == 'name' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
                                     </th>
-                                    <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Last Modified {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
+                                    <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={fireClickOnEnter} title={lf("Sort by Last Modified {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
                                         {lf("Last Modified")} {sortedBy == 'time' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
                                     </th>
                                 </tr>
@@ -463,6 +609,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         </table>
                     </div>
                     : undefined}
+
+                {download &&
+                    <Modal title={lf("Preparing your zip file...")} onClose={this.handleDownloadProgressClose}>
+                        <ProgressBar percentage={100 * (download.completed / download.max)} />
+                    </Modal>}
             </sui.Modal>
         )
     }
@@ -487,7 +638,7 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
     }
 
     handleClick(e: any) {
-        this.props.onRowClicked(e, this.props.scr, this.props.index);
+        this.props.onRowClicked(e, this.props.scr, this.props.index, this.props.id);
     }
 
     handleCheckboxClick(e: any) {
@@ -498,7 +649,7 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
 
     renderCore() {
         const { scr, onRowClicked, onClick, selected, markedNew, children, ...rest } = this.props;
-        return <tr tabIndex={0} {...rest} onKeyDown={sui.fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
+        return <tr tabIndex={0} {...rest} onKeyDown={fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
             <td className="collapsing" onClick={this.handleCheckboxClick}>
                 <sui.Icon icon={`circle outline large ${selected ? `check green` : markedNew ? 'black' : ''}`} />
             </td>

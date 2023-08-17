@@ -2,6 +2,15 @@
 <block type="pxt-on-start">
 <statement name="HANDLER">
 <block type="variables_set">
+<field name="VAR">y</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+<next>
+<block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
 <shadow type="math_number">
@@ -90,6 +99,17 @@
 </shadow>
 </value>
 <data>0&#59;1</data>
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<comment pinned="false">Comments for variable classified as auto-declared.&#10;0</comment>
+</block>
+</next>
 <comment pinned="false">Comment</comment>
 </block>
 </next>
@@ -121,6 +141,9 @@
 </block>
 </next>
 <comment pinned="false">Single-line comment</comment>
+</block>
+</next>
+<comment pinned="false">Comments for variable classified as auto-declared.&#10;FALSE</comment>
 </block>
 </statement>
 </block>

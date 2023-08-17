@@ -93,3 +93,43 @@ declare namespace Blockly {
     class FunctionDefinitionBlock extends FunctionBlockAbstract { }
     class FunctionCallBlock extends FunctionBlockAbstract { }
 }
+
+/**
+ * Blockly Keyboard Navigation plugin
+ * Used for accessible blocks experiment
+ */
+
+declare class NavigationController {
+    init(): void;
+    addWorkspace(workspace: Blockly.WorkspaceSvg): void;
+    enable(workspace: Blockly.WorkspaceSvg): void;
+    disable(workspace: Blockly.WorkspaceSvg): void;
+    focusToolbox(workspace: Blockly.WorkspaceSvg): void;
+    navigation: Navigation;
+}
+
+declare class Navigation {
+    resetFlyout(workspace: Blockly.WorkspaceSvg, shouldHide: boolean): void;
+    setState(workspace: Blockly.WorkspaceSvg, state: BlocklyNavigationState): void;
+}
+
+declare type BlocklyNavigationState = "workspace" | "toolbox" | "flyout";
+
+/**
+ * Blockly Workspace Search plugin
+ * Used for accessible blocks experiment
+ */
+
+declare class WorkspaceSearch {
+    constructor(workspace: Blockly.WorkspaceSvg);
+    protected workspace_: Blockly.WorkspaceSvg;
+    protected htmlDiv_: HTMLDivElement;
+    protected inputElement_: HTMLInputElement;
+    init(): void;
+    protected createDom_(): void;
+    protected addEvent_(node: Element, name: string, thisObject: Object, func: Function): void;
+    open(): void;
+    close(): void;
+    previous(): void;
+    next(): void;
+}

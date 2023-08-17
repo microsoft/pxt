@@ -535,6 +535,7 @@ namespace Math {
       * For example, the absolute value of -5 is the same as the absolute value of 5.
       * @param x A numeric expression for which the absolute value is needed.
       */
+    //% blockId=math_op3
     //% help=math/abs
     export function abs(x: number): number {
         return x < 0 ? -x : x;
@@ -553,6 +554,7 @@ namespace Math {
     /**
       * Returns the larger of two supplied numeric expressions.
       */
+    //% blockId=math_op2
     //% help=math/max
     export function max(a: number, b: number): number {
         if (a >= b) return a;
@@ -562,6 +564,7 @@ namespace Math {
     /**
       * Returns the smaller of two supplied numeric expressions.
       */
+    //% blockId=math_op2
     //% help=math/min
     export function min(a: number, b: number): number {
         if (a <= b) return a;
@@ -660,13 +663,13 @@ namespace __internal {
 
     /**
      * Get the color wheel field editor
-     * @param color color, eg: #ff0000
+     * @param color color
      */
     //% blockId=colorNumberPicker block="%value"
     //% blockHidden=true
     //% shim=TD_ID colorSecondary="#FFFFFF"
     //% value.fieldEditor="colornumber" value.fieldOptions.decompileLiterals=true
-    //% value.defl='#ff0000'
+    //% value.defl='0xff0000'
     //% value.fieldOptions.colours='["#ff0000","#ff8000","#ffff00","#ff9da5","#00ff00","#b09eff","#00ffff","#007fff","#65471f","#0000ff","#7f00ff","#ff0080","#ff00ff","#ffffff","#999999","#000000"]'
     //% value.fieldOptions.columns=4 value.fieldOptions.className='rgbColorPicker'
     export function __colorNumberPicker(value: number) {

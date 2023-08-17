@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@main
       - name: Set Node.js version
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@main
         with:
-          node-version: '14.x'
+          node-version: '16.x'
       - name: npm install
         run: |
           sudo apt-get install xvfb

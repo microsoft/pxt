@@ -17,6 +17,7 @@ namespace pxt.blocks.layout {
         const newDom = Blockly.Xml.workspaceToDom(newWs, true);
         Util.toArray(oldDom.childNodes)
             .filter((n: ChildNode) => n.nodeType == Node.ELEMENT_NODE && (n as Element).localName == "block" && (<Element>n).getAttribute("disabled") == "true")
+            .filter((n: Element) => !!Blockly.Blocks[n.getAttribute("type")])
             .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
         const updatedXml = Blockly.Xml.domToText(newDom);
         return updatedXml;
@@ -148,7 +149,7 @@ namespace pxt.blocks.layout {
     export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
-                const metrics = ws.getMetrics() as Blockly.Metrics;
+                const metrics = ws.getMetrics();
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
@@ -167,7 +168,6 @@ namespace pxt.blocks.layout {
 
     export function screenshotEnabled(): boolean {
         return !BrowserUtils.isIE()
-            && !BrowserUtils.isUwpEdge(); // TODO figure out why screenshots are not working in UWP; disable for now
     }
 
     export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
@@ -241,7 +241,7 @@ namespace pxt.blocks.layout {
 
     export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
         pxt.BrowserUtils.removeClass(svg, "blocklySvg");
-        pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer");
+        pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer classic-theme");
 
         // Remove background elements
         pxt.U.toArray(svg.querySelectorAll('.blocklyMainBackground,.blocklyScrollbarBackground'))
@@ -284,7 +284,7 @@ namespace pxt.blocks.layout {
         const xmlString = serializeNode(sg)
             .replace(/^\s*<svg[^>]+>/i, '')
             .replace(/<\/svg>\s*$/i, '') // strip out svg tag
-        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${renderWidth}" height="${renderHeight}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
+        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${renderWidth}" height="${renderHeight}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer classic-theme">${xmlString}</svg>`;
         const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
 
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
@@ -298,7 +298,7 @@ namespace pxt.blocks.layout {
                     .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
                 // Custom CSS injected directly into the DOM by Blockly
                 customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLLinkElement)?.innerText || "");
-                customCss.unshift((document.getElementById(`blockly-renderer-style-pxt`) as HTMLLinkElement)?.innerText || "");
+                customCss.unshift((document.getElementById(`blockly-renderer-style-pxt-classic`) as HTMLLinkElement)?.innerText || "");
                 // CSS may contain <, > which need to be stored in CDATA section
                 const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
                 cssLink.appendChild(xsg.createCDATASection(cssString));

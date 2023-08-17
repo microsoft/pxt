@@ -4,18 +4,12 @@
   "private": true,
   "dependencies": {
     "@types/node": "8.0.53",
-    "@types/react": "16.4.7",
-    "@types/react-dom": "16.0.3",
-    "react": "16.8.3",
-    "react-dom": "16.11.0",
-    "react-redux": "5.1.1",
-    "react-scripts": "4.0.3",
-    "redux": "3.7.2",
-    "typescript": "3.7.5"
+    "react-redux": "7.2.9",
+    "redux": "4.2.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build"
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build"
   },
   "browserslist": {
     "production": [
@@ -28,5 +22,15 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/react": "file:../node_modules/@types/react",
+    "@types/react-dom": "file:../node_modules/@types/react-dom",
+    "html-webpack-plugin": "^5.5.0",
+    "node-polyfill-webpack-plugin": "^2.0.1",
+    "react-app-alias-ex": "^2.1.0",
+    "react-app-rewired": "^2.2.1",
+    "react-scripts": "^5.0.1",
+    "typescript": "4.8.3"
   }
 }

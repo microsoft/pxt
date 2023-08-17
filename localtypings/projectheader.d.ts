@@ -19,6 +19,9 @@ declare namespace pxt.workspace {
         targetVersion: string;
         pubId: string; // for published scripts
         pubCurrent: boolean; // is this exactly pubId, or just based on it
+        pubVersions?: PublishVersion[];
+        pubPermalink?: string; // permanent (persistent) share ID
+        anonymousSharePreference?: boolean; // if true, default to sharing anonymously even when logged in
         githubId?: string;
         githubTag?: string; // the release tag if any (commit.tag)
         githubCurrent?: boolean;
@@ -55,5 +58,10 @@ declare namespace pxt.workspace {
         // Other
         _rev: string; // used for idb / pouchdb revision tracking
         historyRev: string;
+    }
+
+    interface PublishVersion {
+        id: string;
+        type: "snapshot" | "permalink";
     }
 }

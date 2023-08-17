@@ -4,13 +4,14 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../../built/tests/tests.spec.js",
+        "outFile": "../../built/tests/tests.spec.js",
         "newLine": "LF",
         "types": [
             "chai",
             "mocha"
         ],
-        "sourceMap": false
+        "sourceMap": false,
+        "skipLibCheck": true
     },
     "files": [
         "test.spec.ts",

@@ -1290,7 +1290,8 @@ namespace pxt.py {
         }
         function emitMultiLnStrLitExp(s: ts.NoSubstitutionTemplateLiteral | ts.TaggedTemplateExpression): ExpRes {
             if (ts.isNoSubstitutionTemplateLiteral(s)) {
-                return asExpRes(`"""\n${indent1(s.text.trim())}\n"""`)
+                // manually perform indent1(), trimming existing indentation for multiline strings.
+                return asExpRes(`"""\n${s.text.trim().split('\n').map(x => `${INDENT}${x.trim()}`).join('\n')}\n${INDENT}"""`)
             }
 
             let [tag, tagSup] = emitExp(s.tag)
@@ -1333,6 +1334,48 @@ namespace pxt.py {
 
             return fn(s)
         }
+
+        function getParent(node: ts.Node): ts.Node | undefined {
+            if (!node.parent) {
+                return undefined;
+            }
+            else if (node.parent.kind === ts.SyntaxKind.ParenthesizedExpression) {
+                return getParent(node.parent);
+            }
+            else {
+                return node.parent;
+            }
+        }
+
+
+        function isDecompilableAsExpression(n: ts.AsExpression) {
+            // The only time we allow casts to decompile is in the very special case where someone has
+            // written a program comparing two string, boolean, or numeric literals in blocks and
+            // converted to text. e.g. 3 == 5 or true != false
+            if (n.type.getText().trim() === "any" && (ts.isNumericLiteral(n.expression) || ts.isStringLiteral(n.expression) ||
+                n.expression.kind === ts.SyntaxKind.TrueKeyword || n.expression.kind === ts.SyntaxKind.FalseKeyword)) {
+                const parent = getParent(n);
+
+                if (parent?.kind === ts.SyntaxKind.BinaryExpression) {
+                    switch ((parent as ts.BinaryExpression).operatorToken.kind) {
+                        case ts.SyntaxKind.EqualsEqualsToken:
+                        case ts.SyntaxKind.EqualsEqualsEqualsToken:
+                        case ts.SyntaxKind.ExclamationEqualsToken:
+                        case ts.SyntaxKind.ExclamationEqualsEqualsToken:
+                        case ts.SyntaxKind.LessThanToken:
+                        case ts.SyntaxKind.LessThanEqualsToken:
+                        case ts.SyntaxKind.GreaterThanToken:
+                        case ts.SyntaxKind.GreaterThanEqualsToken:
+                            return true;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return false;
+        }
+
+
         function isConstExp(s: ts.Expression): boolean {
             let isConst = (s: ts.Expression): boolean => {
                 switch (s.kind) {
@@ -1415,6 +1458,8 @@ namespace pxt.py {
                 return asExpRes(s.getText())
             if (ts.isConditionalExpression(s))
                 return emitCondExp(s)
+            if (ts.isAsExpression(s) && isDecompilableAsExpression(s))
+                return emitExp(s.expression);
 
             // TODO handle more expressions
             pxt.tickEvent("depython.todo.expression", { kind: s.kind })

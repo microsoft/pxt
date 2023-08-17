@@ -7,6 +7,7 @@
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false,
-        "incremental": true
+        "incremental": true,
+        "skipLibCheck": true
     }
 }

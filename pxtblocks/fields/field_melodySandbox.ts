@@ -82,15 +82,15 @@ namespace pxtblockly {
 
             // The webapp listens to this event and stops the simulator so that you don't get the melody
             // playing twice (once in the editor and once when the code runs in the sim)
-            Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", false, true))
+            setMelodyEditorOpen(this.sourceBlock_, true);
 
-            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
+            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => {
                 this.onEditorClose();
                 // revert all style attributes for dropdown div
                 pxt.BrowserUtils.removeClass(contentDiv, "melody-content-div");
                 pxt.BrowserUtils.removeClass(contentDiv.parentElement, "melody-editor-dropdown");
 
-                Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", true, false))
+                setMelodyEditorOpen(this.sourceBlock_, false);
             });
         }
 
@@ -306,7 +306,7 @@ namespace pxtblockly {
 
         // The height of the preview on the block itself
         protected getPreviewHeight(): number {
-            return this.constants_.FIELD_BORDER_RECT_HEIGHT;
+            return this.getConstants()?.FIELD_BORDER_RECT_HEIGHT || 16;
         }
 
         protected getDropdownBackgroundColour() {
@@ -342,6 +342,7 @@ namespace pxtblockly {
                     .at((FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * i + FieldCustomMelody.COLOR_BLOCK_X, FieldCustomMelody.COLOR_BLOCK_Y)
                     .size(FieldCustomMelody.COLOR_BLOCK_WIDTH, FieldCustomMelody.COLOR_BLOCK_HEIGHT)
                     .stroke("#898989", 1)
+                    .fill(getPlaceholderColor(pxtmelody.noteToRow(notes[i])))
                     .corners(3, 2);
 
                 pxt.BrowserUtils.addClass(cb.el, className);
@@ -374,7 +375,7 @@ namespace pxtblockly {
             if (s.parentBlock_) {
                 const p = s.parentBlock_;
                 for (const input of p.inputList) {
-                    if (input.name === "tempo") {
+                    if (input.name === "tempo" || input.name === "bpm") {
                         const tempoBlock = input.connection.targetBlock();
                         if (tempoBlock) {
                             if (blockToEditor)
@@ -820,5 +821,24 @@ namespace pxtblockly {
         if (!props.switchColor) props.switchColor = "#ffffff";
 
         return props as ToggleProps;
+    }
+
+    /**
+     * This gets the placeholder color which is embedded in the rendered svg. These are overridden
+     * by the css class we set on each rect from pxtmelody.getColorClass and will only be seen
+     * if the svg is taken without the corresponding css (e.g. in a blockly snapshot)
+     */
+    function getPlaceholderColor(row: number): string {
+        switch (row) {
+            case 0: return "#A80000"; // Middle C
+            case 1: return "#D83B01"; // Middle D
+            case 2: return "#FFB900"; // Middle E
+            case 3: return "#107C10"; // Middle F
+            case 4: return "#008272"; // Middle G
+            case 5: return "#0078D7"; // Middle A
+            case 6: return "#5C2D91"; // Middle B
+            case 7: return "#B4009E"; // Tenor C
+        }
+        return "#DCDCDC";
     }
 }

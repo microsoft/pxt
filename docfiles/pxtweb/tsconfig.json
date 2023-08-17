@@ -4,10 +4,11 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../../built/web/pxtweb.js",
+        "outFile": "../../built/web/pxtweb.js",
         "newLine": "LF",
         "sourceMap": false,
         "lib": ["dom", "dom.iterable", "scripthost", "es2018"],
-        "types": []
+        "types": [],
+        "skipLibCheck": true
     }
 }

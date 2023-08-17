@@ -77,7 +77,6 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang`, { lang: langId });
             core.setLanguage(langId)
-                .then(() => pxt.winrt.releaseAllDevicesAsync())
                 .then(() => {
                     this.props.parent.reloadEditor();
                 });

@@ -2,6 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as core from "./core";
+import { ProgressBar } from "../../react-common/components/controls/ProgressBar";
 
 interface CoreDialogState {
     visible?: boolean;
@@ -42,6 +43,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
     close(result?: any) {
         this.setState({ visible: false });
         this.resolve(result);
+        if (this.props.onClose) this.props.onClose();
     }
 
     componentDidMount() {
@@ -107,7 +109,11 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         buttons.forEach(btn => {
             const onclick = btn.onclick;
             btn.onclick = () => {
-                this.close(onclick ? onclick() : 0);
+                if (!btn.noCloseOnClick) {
+                    this.close(onclick ? onclick() : 0);
+                } else {
+                    onclick?.();
+                }
             }
             if (!btn.className) btn.className = "approve positive";
             if (btn.approveButton) this.okButton = btn;
@@ -222,6 +228,8 @@ export interface LoadingDimmerProps {
 export interface LoadingDimmerState {
     visible?: boolean;
     content?: string;
+    loadedId?: string;
+    loadedPercentage?: number;
 }
 
 export class LoadingDimmer extends React.Component<LoadingDimmerProps, LoadingDimmerState> {
@@ -234,11 +242,31 @@ export class LoadingDimmer extends React.Component<LoadingDimmerProps, LoadingDi
     }
 
     hide() {
-        this.setState({ visible: false, content: undefined });
+        this.setState({
+            visible: false,
+            loadedId: undefined,
+            content: undefined,
+            loadedPercentage: undefined,
+        });
     }
 
-    show(content: string) {
-        this.setState({ visible: true, content: content });
+    show(id: string, content: string, percentComplete?: number) {
+        this.setState({
+            visible: true,
+            loadedId: id,
+            content: content,
+            loadedPercentage: percentComplete,
+        });
+    }
+
+    setPercentLoaded(percentage: number) {
+        this.setState({
+            loadedPercentage: percentage,
+        });
+    }
+
+    currentlyLoading() {
+        return this.state.loadedId;
     }
 
     isVisible() {
@@ -246,94 +274,14 @@ export class LoadingDimmer extends React.Component<LoadingDimmerProps, LoadingDi
     }
 
     render() {
-        const { visible, content } = this.state;
+        const { visible, content, loadedPercentage } = this.state;
         if (!visible) return <div />;
-
+        const hc = core.getHighContrastOnce();
         return <sui.Dimmer isOpen={true} active={visible} closable={false}>
-            <sui.Loader className="large main msg no-select" aria-live="assertive">
+            <sui.Loader className={`large main msg no-select ${hc ? "hc" : ""}`} aria-live="assertive">
                 {content}
+                {loadedPercentage !== undefined && <ProgressBar value={loadedPercentage} />}
             </sui.Loader>
         </sui.Dimmer>;
-    }
-}
-
-
-export interface NotificationOptions {
-    kind?: string;
-    text?: string;
-    hc?: boolean;
-}
-
-export interface NotificationMessageState {
-    notifications?: pxt.Map<NotificationOptions>;
-}
-
-export interface NotificationMessageProps {
-}
-
-export class NotificationMessages extends React.Component<NotificationMessageProps, NotificationMessageState> {
-
-    constructor(props?: NotificationMessageProps) {
-        super(props);
-        this.state = {
-            notifications: {}
-        }
-    }
-
-    push(notification: NotificationOptions) {
-        const notifications = this.state.notifications;
-        const id = ts.pxtc.Util.guidGen();
-        Object.keys(notifications).filter(e => notifications[e].kind == notification.kind)
-            .forEach(previousNotification => this.remove(previousNotification));
-        notifications[id] = notification;
-        const that = this;
-        // Show for 3 seconds before removing
-        setTimeout(() => {
-            that.remove(id);
-        }, 3000);
-
-        this.setState({ notifications: notifications });
-    }
-
-    remove(id: string) {
-        const notifications = this.state.notifications;
-        if (notifications[id]) {
-            delete notifications[id];
-            this.setState({ notifications: notifications });
-        }
-    }
-
-    render() {
-        const { notifications } = this.state;
-
-        function renderNotification(id: string, notification: NotificationOptions) {
-            const { kind, text, hc } = notification;
-            let cls = 'ignored info message';
-            switch (kind) {
-                case 'err': cls = 'red inverted segment'; break;
-                case 'warn': cls = 'orange inverted segment'; break;
-                case 'info': cls = 'teal inverted segment'; break;
-                case 'compile': cls = 'ignored info message'; break;
-            }
-            return <div key={`${id}`} id={`${kind}msg`} className={`ui ${hc} ${cls}`}>{text}</div>
-        }
-
-        return <div id="msg" aria-live="polite">
-            {Object.keys(notifications).map(k => renderNotification(k, notifications[k]))}
-        </div>;
-    }
-}
-
-let notificationsInitialized = false;
-let notificationMessages: NotificationMessages;
-
-export function pushNotificationMessage(options: NotificationOptions): void {
-    if (!notificationsInitialized) {
-        notificationsInitialized = true;
-        const wrapper = document.body.appendChild(document.createElement('div'));
-        notificationMessages = ReactDOM.render(React.createElement(NotificationMessages, options), wrapper);
-        notificationMessages.push(options);
-    } else if (notificationMessages) {
-        notificationMessages.push(options);
     }
 }

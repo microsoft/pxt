@@ -179,7 +179,7 @@ export function setThisBuild(b: BuildEngine) {
 
 function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
     let buildEngine = thisBuild
-    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget
+    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget.split("@")[0]
         + "/source/" + pxt.appTarget.compileService.yottaBinary;
 
     return {
@@ -270,7 +270,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
 
     let writeFiles = () => {
-        for (let f of nodeutil.allFiles(buildEngine.buildPath + "/" + buildEngine.appPath, 8, true)) {
+        for (let f of nodeutil.allFiles(buildEngine.buildPath + "/" + buildEngine.appPath, { maxDepth: 8, allowMissing: true })) {
             let bn = f.slice(buildEngine.buildPath.length)
             bn = bn.replace(/\\/g, "/").replace(/^\//, "/")
             if (U.startsWith(bn, "/" + buildEngine.appPath + "/") && !allFiles[bn]) {
@@ -545,7 +545,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                         dn = buildEngine.buildPath + "/" + dn
                         if (U.endsWith(dn, ".h")) files.push(dn)
                         else {
-                            let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
+                            let here = nodeutil.allFiles(dn, { maxDepth: 20 }).filter(fn => U.endsWith(fn, ".h"))
                             U.pushRange(files, here)
                         }
                     }
@@ -562,7 +562,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 incPath = buildEngine.buildPath
             if (!fs.existsSync(incPath))
                 U.userError("cannot find " + incPath);
-            files = nodeutil.allFiles(incPath, 20)
+            files = nodeutil.allFiles(incPath, { maxDepth: 20 })
                 .filter(fn => U.endsWith(fn, ".h"))
                 .filter(fn => fn.indexOf("/mbed-classic/") < 0)
                 .filter(fn => fn.indexOf("/mbed-os/") < 0)
@@ -630,15 +630,15 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
         return getBoardDrivesAsync()
             .then(drives => filterDrives(drives))
             .then(drives => {
-                if (drives.length == 0) {
-                    pxt.log("cannot find any drives to deploy to");
-                    return Promise.resolve(0);
-                }
+                if (drives.length == 0)
+                    throw new Error("cannot find any drives to deploy to");
                 pxt.log(`copying ${firmwareName} to ` + drives.join(", "));
                 const writeHexFile = (drivename: string) => {
                     return writeFileAsync(path.join(drivename, firmwareName), firmware, encoding)
                         .then(() => pxt.debug("   wrote to " + drivename))
-                        .catch(() => pxt.log(`   failed writing to ${drivename}`));
+                        .catch((e: Error) => {
+                            throw new Error(`failed writing to ${drivename}; ${e.message}`);
+                        })
                 };
                 return U.promiseMapAll(drives, d => writeHexFile(d))
                     .then(() => drives.length);
@@ -680,7 +680,7 @@ function getBoardDrivesAsync(): Promise<string[]> {
                             res.push(m[1] + "/");
                         }
                     }
-                );
+                    );
                 return res;
             });
     }

@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../../built/tests/blocksrunner.js",
+        "outFile": "../../built/tests/blocksrunner.js",
         "newLine": "LF",
         "lib": [
             "dom",
@@ -16,7 +16,8 @@
             "chai",
             "mocha"
         ],
-        "sourceMap": false
+        "sourceMap": false,
+        "skipLibCheck": true
     },
     "files": [
         "blocksrunner.ts"

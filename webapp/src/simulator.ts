@@ -13,6 +13,7 @@ interface SimulatorConfig {
     onStateChanged(state: pxsim.SimulatorState): void;
     onSimulatorReady(): void;
     setState(key: string, value: any): void;
+    onMuteButtonStateChange(state: pxt.editor.MuteState): void;
     editor: string;
 }
 
@@ -45,6 +46,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     root.appendChild(debuggerDiv);
 
     const nestedEditorSim = /nestededitorsim=1/i.test(window.location.href);
+    const mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
     let parentOrigin: string = null;
     if (window.parent !== window) {
         const searchParams = new URLSearchParams(window.location.search);
@@ -231,10 +233,12 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onTopLevelCodeEnd: () => {
             postSimEditorEvent("toplevelfinished");
         },
+        onMuteButtonStateChange: cfg.onMuteButtonStateChange,
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
-        nestedEditorSim: nestedEditorSim,
-        parentOrigin: parentOrigin,
+        nestedEditorSim,
+        parentOrigin,
+        mpRole,
         messageSimulators: pxt.appTarget?.simulator?.messageSimulators
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
@@ -287,11 +291,25 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         fnArgs,
         parts,
         usedBuiltinParts,
+        allParts
     } = pxtc.buildSimJsInfo(res);
     lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
     const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;
-    const dependencies = pkg.dependencies()
+    const dependencies: pxt.Map<string> = {}
+    for (const dep of pkg.sortedDeps())
+        dependencies[dep.id] = dep.version()
+
+    const playerNumber = allParts && allParts.indexOf("multiplayer") >= 0 ? 1 : undefined;
+    if (playerNumber) {
+        const root = document.getElementById("root");
+        for (let i = 1; i <= 4; i++) {
+            const cssVar = `--multiplayer-presence-icon-${i}`;
+            root?.style?.removeProperty(cssVar);
+        }
+    }
+
+    const theme = pkg.config.theme || (pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.isConnected() && pxt.packetio.deviceVariant());
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
@@ -314,7 +332,9 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         storedState: storedState,
         autoRun,
         ipc: isIpcRenderer,
-        dependencies
+        dependencies,
+        activePlayer: playerNumber,
+        theme: theme,
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))

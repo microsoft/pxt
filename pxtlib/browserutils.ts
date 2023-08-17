@@ -1,4 +1,10 @@
+/// <reference path="../localtypings/dom.d.ts" />
+
 namespace pxt.BrowserUtils {
+
+    export function isDocumentVisible() {
+        return typeof window !== "undefined" && document.visibilityState === 'visible'
+    }
 
     export function isIFrame(): boolean {
         try {
@@ -54,29 +60,30 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /arm/i.test(navigator.platform);
     }
 
-    // Detects if we are running inside the UWP runtime (Microsoft Edge)
-    export function isUwpEdge(): boolean {
-        return typeof window !== "undefined" && !!(<any>window).Windows;
-    }
-
     /*
     Notes on browser detection
 
     Actually:             Claims to be:
-                          IE  MicrosoftEdge    Chrome  Safari  Firefox
+                          IE  MicrosoftEdge   Chrome  Safari  Firefox  NewEdge
               IE          X                           X?
     Microsoft Edge                    X       X       X
               Chrome                          X       X
               Safari                                  X       X
               Firefox                                         X
+              New Edge                        X       X                X
 
-    I allow Opera to go about claiming to be Chrome because it might as well be
+    I allow Opera to go about claiming to be Chrome because it might as well be. Same for Chromium-based Edge.
     */
 
     //Microsoft Edge lies about its user agent and claims to be Chrome, but Microsoft Edge/Version
     //is always at the end
     export function isEdge(): boolean {
         return hasNavigator() && /Edge/i.test(navigator.userAgent);
+    }
+
+    //Chromium-based Edge. Note that `isChrome()` also detects this browser, and that's ok. In most cases Chromium-Edge can be treated like Chrome. Use this method if you need to differentiate them.
+    export function isChromiumEdge(): boolean {
+        return hasNavigator() && /Edg\//i.test(navigator.userAgent);
     }
 
     //IE11 also lies about its user agent, but has Trident appear somewhere in
@@ -86,7 +93,7 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /Trident/i.test(navigator.userAgent);
     }
 
-    //Microsoft Edge and IE11 lie about being Chrome
+    //Microsoft Edge and IE11 lie about being Chrome. Chromium-based Edge ("Edgeium") will be detected as Chrome, that is ok. If you're looking for Edgeium, use `isChromiumEdge()`.
     export function isChrome(): boolean {
         return !isEdge() && !isIE() && !!navigator && (/Chrome/i.test(navigator.userAgent) || /Chromium/i.test(navigator.userAgent));
     }
@@ -136,8 +143,8 @@ namespace pxt.BrowserUtils {
         return isPxtElectron() || isIpcRenderer();
     }
 
-    // this function gets overriden when loading pxtwinrt.js
-    export let isWinRT = () => false;
+    declare let Windows: any;
+    export let isWinRT = () => typeof (Windows as any) !== "undefined";
 
     export function isLocalHost(ignoreFlags?: boolean): boolean {
         try {
@@ -152,12 +159,35 @@ namespace pxt.BrowserUtils {
         return isLocalHost() && !isElectron();
     }
 
-    export function hasPointerEvents(): boolean {
-        return typeof window != "undefined" && !!(window as any).PointerEvent;
+    export function isSkillmapEditor(): boolean {
+        try {
+            return /skill(?:s?)Map=1/.test(window.location.href);
+        } catch (e) { return false; }
     }
 
-    export function hasSaveAs(): boolean {
-        return isEdge() || isIE() || isFirefox();
+    export function isTabletSize(): boolean {
+        return window?.innerWidth <= pxt.BREAKPOINT_TABLET;
+    }
+
+    export function isComputerSize(): boolean {
+        return window?.innerWidth > pxt.BREAKPOINT_TABLET;
+    }
+
+    export function noSharedLocalStorage(): boolean {
+        try {
+            return /nosharedlocalstorage/i.test(window.location.href);
+        } catch (e) { return false; }
+    }
+
+    export function useOldTutorialLayout(): boolean {
+        if (pxt.appTarget?.appTheme?.legacyTutorial) return true;
+        try {
+            return (/tutorialview=old/.test(window.location.href));
+        } catch (e) { return false; }
+    }
+
+    export function hasPointerEvents(): boolean {
+        return typeof window != "undefined" && !!(window as any).PointerEvent;
     }
 
     export function os(): string {
@@ -436,29 +466,37 @@ namespace pxt.BrowserUtils {
     }
 
     export function scaleImageData(img: ImageData, scale: number): ImageData {
-        const cvs = document.createElement("canvas");
-        cvs.width = img.width * scale;
-        cvs.height = img.height * scale;
-        const ctx = cvs.getContext("2d")
+        const inputCanvas = document.createElement("canvas");
+        const outputCanvas = document.createElement("canvas");
+        inputCanvas.width = img.width;
+        inputCanvas.height = img.height;
+        outputCanvas.width = img.width * scale;
+        outputCanvas.height = img.height * scale;
+        const ctx = inputCanvas.getContext("2d");
+        const outCtx = outputCanvas.getContext("2d");
         ctx.putImageData(img, 0, 0);
-        ctx.imageSmoothingEnabled = false;
-        ctx.scale(scale, scale);
-        ctx.drawImage(cvs, 0, 0);
-        return ctx.getImageData(0, 0, img.width * scale, img.height * scale);
+        outCtx.imageSmoothingEnabled = false;
+        outCtx.scale(scale, scale);
+        outCtx.drawImage(inputCanvas, 0, 0);
+        return outCtx.getImageData(0, 0, img.width * scale, img.height * scale);
     }
 
     export function imageDataToPNG(img: ImageData, scale = 1): string {
         if (!img) return undefined;
 
-        const canvas = document.createElement("canvas")
-        canvas.width = img.width * scale
-        canvas.height = img.height * scale
-        const ctx = canvas.getContext("2d")
+        const inputCanvas = document.createElement("canvas");
+        const outputCanvas = document.createElement("canvas");
+        inputCanvas.width = img.width;
+        inputCanvas.height = img.height;
+        outputCanvas.width = img.width * scale;
+        outputCanvas.height = img.height * scale;
+        const ctx = inputCanvas.getContext("2d");
+        const outCtx = outputCanvas.getContext("2d");
         ctx.putImageData(img, 0, 0);
-        ctx.imageSmoothingEnabled = false;
-        ctx.scale(scale, scale);
-        ctx.drawImage(canvas, 0, 0);
-        return canvas.toDataURL("image/png");
+        outCtx.imageSmoothingEnabled = false;
+        outCtx.scale(scale, scale);
+        outCtx.drawImage(inputCanvas, 0, 0);
+        return outputCanvas.toDataURL("image/png");
     }
 
     const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
@@ -1041,14 +1079,16 @@ namespace pxt.BrowserUtils {
 
     interface TutorialInfoIndexedDbEntry {
         id: string;
+        time: number;
         hash: string;
         blocks: Map<number>;
         snippets: Map<Map<number>>;
+        highlightBlocks: Map<Map<number>>;
     }
 
     export interface ITutorialInfoDb {
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry>;
-        setAsync(filename: string, snippets: Map<Map<number>>, code: string[], branch?: string): Promise<void>;
+        setAsync(filename: string, snippets: Map<Map<number>>, code: string[], highlights: Map<Map<number>>, branch?: string): Promise<void>;
         clearAsync(): Promise<void>;
     }
 
@@ -1089,7 +1129,7 @@ namespace pxt.BrowserUtils {
 
             return this.db.getAsync<TutorialInfoIndexedDbEntry>(TutorialInfoIndexedDb.TABLE, key)
                 .then((res) => {
-                    if (res && res.hash == hash) {
+                    if (res && res.hash == hash && (Util.now() - (res.time || 0)) < 86400000) {
                         return res;
                     }
 
@@ -1099,14 +1139,14 @@ namespace pxt.BrowserUtils {
                 });
         }
 
-        setAsync(filename: string, snippets: Map<Map<number>>, code: string[], branch?: string): Promise<void> {
+        setAsync(filename: string, snippets: Map<Map<number>>, code: string[], highlights: Map<Map<number>>, branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
             const hash = getTutorialCodeHash(code);
-            return this.setWithHashAsync(filename, snippets, hash);
+            return this.setWithHashAsync(filename, snippets, hash, highlights);
         }
 
-        setWithHashAsync(filename: string, snippets: Map<Map<number>>, hash: string, branch?: string): Promise<void> {
+        setWithHashAsync(filename: string, snippets: Map<Map<number>>, hash: string, highlights: Map<Map<number>>, branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
             const blocks: Map<number> = {};
@@ -1118,9 +1158,11 @@ namespace pxt.BrowserUtils {
 
             const entry: TutorialInfoIndexedDbEntry = {
                 id: key,
+                time: Util.now(),
                 hash,
                 snippets,
-                blocks
+                blocks,
+                highlightBlocks: highlights,
             };
 
             return this.db.setAsync(TutorialInfoIndexedDb.TABLE, entry)
@@ -1246,7 +1288,10 @@ namespace pxt.BrowserUtils {
             const left = ((width / 2) - (popUpWidth / 2)) + winLeft;
             const top = ((height / 2) - (popUpHeight / 2)) + winTop;
 
-            const popupWindow = window.open(url, title, "width=" + popUpWidth + ", height=" + popUpHeight + ", top=" + top + ", left=" + left);
+            const features = "width=" + popUpWidth + ", height=" + popUpHeight + ", top=" + top + ", left=" + left;
+
+            // Current CEF version does not like when features parameter is passed and just immediately rejects.
+            const popupWindow = window.open(url, title, !pxt.BrowserUtils.isIpcRenderer() ? features : undefined);
             if (popupWindow.focus) {
                 popupWindow.focus();
             }
@@ -1254,7 +1299,7 @@ namespace pxt.BrowserUtils {
             return popupWindow;
         } catch (e) {
             // Error opening popup
-            pxt.tickEvent('pxt.popupError', { url: url, msg: e.message });
+            pxt.tickEvent('pxt.popupError', { msg: e.message });
             return null;
         }
     }
@@ -1330,5 +1375,18 @@ namespace pxt.BrowserUtils {
         if (!url) return url;
         if (/[?&]rnd=/.test(url)) return url; // already busted
         return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`
+    }
+
+    export function legacyCopyText(element: HTMLInputElement | HTMLTextAreaElement) {
+        element.focus();
+        element.setSelectionRange(0, 9999);
+
+        try {
+            const success = document.execCommand("copy");
+            pxt.debug('copy: ' + success);
+            return !!success;
+        } catch (e) {
+            return false;
+        }
     }
 }

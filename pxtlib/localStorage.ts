@@ -7,6 +7,7 @@ namespace pxt.storage {
     }
 
     class MemoryStorage implements IStorage {
+        type: "memory";
         items: pxt.Map<string> = {};
 
         removeItem(key: string) {
@@ -24,6 +25,7 @@ namespace pxt.storage {
     }
 
     class LocalStorage implements IStorage {
+        type = "localstorage";
 
         constructor(private storageId: string) {
         }
@@ -74,9 +76,10 @@ namespace pxt.storage {
         // no local storage in sandbox mode
         if (!pxt.shell.isSandboxMode()) {
             try {
-                window.localStorage[sid] = '1';
-                let v = window.localStorage[sid];
-                supported = true;
+                const rand = pxt.Util.guidGen();
+                window.localStorage[sid] = rand;
+                const v = window.localStorage[sid];
+                supported = v === rand;
             } catch (e) { }
         }
 
@@ -124,14 +127,27 @@ namespace pxt.storage.shared {
     // Specify host and port explicitly so that localhost frames not served on the default port (e.g. skillmap) can access it.
     const localhostStoreUrl = "http://localhost:3232/api/store/";
 
+    function useSharedLocalStorage(): boolean {
+        return routingEnabled && pxt.BrowserUtils.isLocalHostDev() && !pxt.BrowserUtils.noSharedLocalStorage();
+    }
+
+    function sharedStorageNamespace(): string {
+        if (pxt.BrowserUtils.isChromiumEdge()) { return "chromium-edge"; }
+        return pxt.BrowserUtils.browser();
+    }
+
     export async function getAsync<T>(container: string, key: string): Promise<T> {
-        if (routingEnabled && pxt.BrowserUtils.isLocalHostDev()) {
+        if (useSharedLocalStorage()) {
+            container += '-' + sharedStorageNamespace();
             const resp = await pxt.Util.requestAsync({
                 url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
                 method: "GET",
                 allowHttpErrors: true
             });
-            if (resp.json) {
+
+            if (resp.statusCode === 204) {
+                throw new Error(`Missing ${key} not available in ${container}`);
+            } else if (resp.json) {
                 return resp.json as T;
             } else if (resp.text) {
                 return resp.text as any as T;
@@ -155,7 +171,8 @@ namespace pxt.storage.shared {
             sval = JSON.stringify(val);
         else
             sval = val.toString();
-        if (routingEnabled && BrowserUtils.isLocalHostDev()) {
+        if (useSharedLocalStorage()) {
+            container += '-' + sharedStorageNamespace();
             const data = {
                 type: (typeof val === "object") ? "json" : "text",
                 val: sval
@@ -172,7 +189,8 @@ namespace pxt.storage.shared {
     }
 
     export async function delAsync(container: string, key: string): Promise<void> {
-        if (routingEnabled && BrowserUtils.isLocalHostDev()) {
+        if (useSharedLocalStorage()) {
+            container += '-' + sharedStorageNamespace();
             await pxt.Util.requestAsync({
                 url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
                 method: "DELETE",

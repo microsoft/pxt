@@ -3,6 +3,7 @@ import * as React from "react";
 import { SvgCoord } from '../lib/skillGraphUtils';
 
 interface GraphPathProps {
+    className?: string;
     points: SvgCoord[];
     strokeWidth: number;
     color: string;
@@ -10,7 +11,7 @@ interface GraphPathProps {
 
 export class GraphPath extends React.Component<GraphPathProps> {
     render() {
-        const { points, strokeWidth, color } = this.props;
+        const { className, points, strokeWidth, color } = this.props;
 
         let pathStart = `M 0 0`;
         let pathEnd = "";
@@ -25,7 +26,7 @@ export class GraphPath extends React.Component<GraphPathProps> {
         })
 
         return  <g transform={`translate(${points[0]!.x || 0} ${points[0]!.y || 0})`}>
-            <path stroke={color} strokeWidth={strokeWidth} d={`${pathStart} ${pathEnd}`} />
+            <path className={className} stroke={color} strokeWidth={strokeWidth} d={`${pathStart} ${pathEnd}`} />
         </g>
     }
 }

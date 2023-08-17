@@ -1,0 +1,277 @@
+.common-editor-toggle-outer {
+    position: relative;
+}
+
+.common-editor-toggle {
+    position: relative;
+    border-radius: 0.2rem;
+    border: @editorToggleBorderWidth solid @editorToggleBorderColor;
+    background: @editorToggleBackgroundColor;
+    display: flex;
+    flex-direction: row;
+}
+
+// Used in image/tilemap/animation editor
+.common-editor-toggle.slim .common-editor-toggle-item > .common-button {
+    padding: .6rem 2rem .75rem;
+}
+
+.common-editor-toggle-item {
+    z-index: 1;
+    flex: 3;
+
+    .common-menu-dropdown {
+        flex: 4;
+
+        & > .common-button {
+            padding: 0;
+            width: 100%;
+            border-left: 1px solid @editorToggleBorderColor;
+            border-right: 1px solid @editorToggleBorderColor;
+        }
+
+        .common-menu-dropdown-pane {
+            border-top: 1px solid @editorToggleBorderColor;
+        }
+    }
+
+    & > .common-button {
+        background: none;
+        color: @buttonTextColorDarkBackground;
+        transition: color .25s;
+        margin: 0;
+        width: 100%;
+    }
+
+    .common-button:focus::after {
+        outline: none;
+    }
+}
+
+.common-editor-toggle-item.common-editor-toggle-item-dropdown {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    flex: 4;
+}
+
+.common-editor-toggle-item.selected {
+    .common-menu-dropdown {
+        text-align: center;
+
+        & > .common-button {
+            border-right: none;
+            color: @buttonTextColorLightBackground;
+        }
+    }
+
+    & > .common-button {
+        color: @buttonTextColorLightBackground;
+    }
+}
+
+/*****************************************************
+ *                  Toggle Handle                    *
+ ****************************************************/
+
+ .common-editor-toggle-handle {
+    position: absolute;
+    background: white;
+    width: 33%;
+    height: 100%;
+    transition: margin-left .25s, width .25s;
+    border-radius: 0.2rem;
+    margin-left: -@editorToggleBorderWidth;
+}
+
+.common-editor-toggle {
+    /* toggle size, two items, no dropdown */
+    .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 50% }
+
+    /* toggle positioning, two items, no dropdown */
+    .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 50%; }
+
+    /* toggle positioning, three items, no dropdown */
+    .common-editor-toggle-item:nth-of-type(1).selected ~ .common-editor-toggle-handle { margin-left: 0; }
+    .common-editor-toggle-item:nth-of-type(2).selected ~ .common-editor-toggle-handle { margin-left: 33%; }
+    .common-editor-toggle-item:nth-of-type(3).selected ~ .common-editor-toggle-handle { margin-left: 67%; }
+
+    &.has-dropdown {
+        /* flex balance, two items, has dropdown (45% to non-dropdown, 55% to dropdown) */
+       .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown,
+       .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) { flex: 55 }
+       .common-editor-toggle-item:first-child:nth-last-child(3),
+       .common-editor-toggle-item-dropdown:first-child:nth-last-child(3) ~ .common-editor-toggle-item { flex: 45 }
+
+        /* toggle size, two items, has dropdown */
+        .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 45% }
+        .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle,
+        .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 55% }
+
+        /* toggle positioning, two items, first item has dropdown */
+        .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) + .selected ~ .common-editor-toggle-handle { margin-left: 55% }
+
+        /* toggle positioning, two items, second item has dropdown */
+        .common-editor-toggle-item:first-child:nth-last-child(3) + .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 45% }
+
+        /* toggle size, three items, has dropdown */
+        .common-editor-toggle-handle { width: 30% }
+        .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { width: 40%; }
+
+        /* toggle positioning, three items, has dropdown */
+        .common-editor-toggle-item:nth-of-type(2).selected ~ .common-editor-toggle-handle { margin-left: 30%; }
+        .common-editor-toggle-item:nth-of-type(3).selected ~ .common-editor-toggle-handle { margin-left: 60%; }
+
+        /* toggle positioning, three items, first item in toggle has dropdown */
+        .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 40%; }
+        .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 70%; }
+
+        /* toggle positioning, three items, second item in toggle has dropdown */
+        .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 70%; }
+    }
+}
+
+/*****************************************************
+ *                Accessibility Menu                 *
+ ****************************************************/
+
+.common-toggle-accessibility {
+    position: absolute;
+    z-index: 2;
+    width: 0px;
+    height: 0px;
+    left: 0;
+    background: white;
+
+    .common-button {
+        width: 0px;
+        height: 0px;
+        min-height: 0px;
+
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    .common-button:focus {
+        width: 100%;
+        height: 100%;
+    }
+}
+
+.common-toggle-accessibility:focus-within {
+    width: 100%;
+    height: 100%;
+}
+
+
+/*****************************************************
+ *                    Tablet View                    *
+ ****************************************************/
+
+@media @tabletAndBelow {
+    .common-editor-toggle.tablet-compact {
+        & > .common-editor-toggle-item > .common-button {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
+        & > .common-editor-toggle-item > .common-button:not(.no-icon) {
+            .common-button-label {
+                display: none;
+            }
+        }
+
+        &.has-dropdown {
+            .common-editor-toggle-item {
+                flex: 25;
+            }
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown {
+                flex: 50;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+            .common-editor-toggle-handle { width: 25%; }
+            .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { width: 50%; }
+
+            /* flex balance, two items, has dropdown (33% to non-dropdown, 67% to dropdown) */
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown,
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) { flex: 67 }
+            .common-editor-toggle-item:first-child:nth-last-child(3),
+            .common-editor-toggle-item-dropdown:first-child:nth-last-child(3) ~ .common-editor-toggle-item { flex: 33 }
+
+            /* toggle size, two items, has dropdown */
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 33% }
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle,
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 67% }
+
+            /* toggle positioning, two items, first item has dropdown */
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) + .selected ~ .common-editor-toggle-handle { margin-left: 67% }
+
+            /* toggle positioning, two items, second item has dropdown */
+            .common-editor-toggle-item:first-child:nth-last-child(3) + .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 33% }
+
+            /* toggle positioning, first item in toggle has dropdown */
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 50%; }
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 75%; }
+
+            /* toggle positioning, second item in toggle has dropdown */
+            .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 25%; }
+            .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 75%; }
+        }
+    }
+}
+
+// Same as tablet
+@media @mobileAndBelow {
+    .common-editor-toggle.mobile-compact {
+        & > .common-editor-toggle-item > .common-button {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
+        & > .common-editor-toggle-item > .common-button:not(.no-icon) {
+            .common-button-label {
+                display: none;
+            }
+        }
+
+        &.has-dropdown {
+            .common-editor-toggle-item {
+                flex: 25;
+            }
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown {
+                flex: 50;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+            .common-editor-toggle-handle { width: 25%; }
+            .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { width: 50%; }
+
+            /* flex balance, two items, has dropdown (33% to non-dropdown, 67% to dropdown) */
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown,
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) { flex: 67 }
+            .common-editor-toggle-item:first-child:nth-last-child(3),
+            .common-editor-toggle-item-dropdown:first-child:nth-last-child(3) ~ .common-editor-toggle-item { flex: 33 }
+
+            /* toggle size, two items, has dropdown */
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 33% }
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle,
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 67% }
+
+            /* toggle positioning, two items, first item has dropdown */
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) + .selected ~ .common-editor-toggle-handle { margin-left: 67% }
+
+            /* toggle positioning, two items, second item has dropdown */
+            .common-editor-toggle-item:first-child:nth-last-child(3) + .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 33% }
+
+            /* toggle positioning, first item in toggle has dropdown */
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 50%; }
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 75%; }
+
+            /* toggle positioning, second item in toggle has dropdown */
+            .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 25%; }
+            .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 75%; }
+        }
+    }
+}

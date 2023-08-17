@@ -9,11 +9,16 @@
              Layout
 *******************************/
 
+@mobileAndBelow: ~"only screen and (max-width: @{largestMobileScreen})";
+@tabletAndBelow: ~"only screen and (max-width: @{largestTabletScreen})";
+@computerAndBelow: ~"only screen and (max-width: @{largestSmallMonitor})";
+@largeMonitorAndBelow: ~"only screen and (max-width: @{largestLargeMonitor})";
+
 html {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    font-size:16px;
+    font-size: 16px!important;
 }
 
 body {
@@ -50,18 +55,18 @@ pre {
     position: relative;
 }
 
-#filelist,
+#simulator .editor-sidebar,
 #maineditor,
 #sidedocs {
   position: absolute;
   bottom: 0rem;
 }
 
-#filelist, #maineditor, #sidedocs {
+#simulator .editor-sidebar, #maineditor, #sidedocs {
     top: @mainMenuHeight;
 }
 
-.hideMenuBar:not(.headless) #filelist,
+.hideMenuBar:not(.headless) #simulator .editor-sidebar,
     .hideMenuBar #maineditor,
     .hideMenuBar #sidedocs {
     top: 0 !important;
@@ -96,7 +101,6 @@ pre {
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
 @editorToolsCollapsedMobileHeight: 3.4rem;
-@editorToolsThinHeight: 3rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -106,6 +110,7 @@ pre {
     z-index: @editorToolsZIndex;
     height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
+    border-top: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
 
     display: flex;
     justify-content: space-between;
@@ -151,9 +156,10 @@ pre {
 .transparentEditorTools #editortools {
     background-color: transparent;
     z-index: (@blocklyFlyoutZIndex)-1;
+    border: unset;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simulator .editor-sidebar {
     bottom: @editorToolsCollapsedHeight;
 }
 
@@ -163,11 +169,11 @@ pre {
 .hideEditorToolbar #serialEditor,
 .hideEditorToolbar #githubEditor,
 .hideEditorToolbar #assetEditor,
-.hideEditorToolbar #filelist {
+.hideEditorToolbar #simulator .editor-sidebar {
     bottom: 0rem !important;
 }
 
-#filelistOverlay {
+#miniSimOverlay {
     position: absolute;
     left: 0;
     top: 0;
@@ -181,31 +187,24 @@ pre {
 #simulator {
     height: 100%;
 }
-#filelist, #downloadArea {
+#simulator .editor-sidebar, #downloadArea {
     min-width: @simulatorWidth;
     max-width: @simulatorWidth;
     left: 0;
 }
 
-#filelist {
-    padding-top: 1em;
-    padding-right: ~"calc(2em - @{customScrollbarWidth})";
-    padding-bottom: 1em;
-    padding-left: 2em;
+#simulator .editor-sidebar {
     overflow-x: hidden;
+    overflow-y: auto;
     margin-top: 0;
     margin-bottom: 0;
-    width: 100%;
+    right: 0;
     background-color: @filelistBackgroundColor;
     z-index: @filelistZIndex;
-
-    // the scroll bar is always visible, but we hide it when needed
-    overflow-y: scroll;
 }
 
 .invisibleScrollbar::-webkit-scrollbar {
     background: transparent !important;
-    width: @customScrollbarWidth; // TODO: remove this when the sim breakpoint is fixed
 }
 .invisibleScrollbar::-webkit-scrollbar-thumb {
     display: none !important;
@@ -215,7 +214,7 @@ pre {
 }
 
 
-#filelist .simtoolbar {
+#simulator .editor-sidebar .simtoolbar {
     -webkit-transition: opacity 0.2s; /* Safari */
     -moz-transition: opacity 0.2s; /* Mozilla */
     -webkit-transition-timing-function: linear; /* Mozilla */
@@ -226,7 +225,6 @@ pre {
 
 #downloadArea {
     margin: unset;
-    background-color: @simulatorBackground;
 
     > div {
         margin: 0;
@@ -238,7 +236,7 @@ pre {
     margin-left: auto;
 }
 
-#editortools .download-button.icon-and-text {
+#editortools .download-button {
     text-align: center;
 }
 
@@ -246,30 +244,27 @@ pre {
     background-color: transparent !important;
 }
 
-.filemenu {
-    direction:ltr;
-}
-
-#filelist .menu {
-    width: 100%;
+#simulator .editor-sidebar .filemenu {
+    direction: ltr;
+    width: 100% !important;
     margin: 0;
     margin-top: 1rem;
 }
 
-#filelist .nested.item {
+.filemenu .nested.item {
     padding: .92857143em 1.14285714em;
     padding-left: 1rem;
 }
 
-#filelist .header.item {
+.filemenu .header.item {
     background: @filelistHeaderBackground;
 }
 
-#filelist .folder.item {
+.filemenu .folder.item {
     font-weight: bold;
 }
 
-#filelist .folderitem.item {
+.filemenu .folderitem.item {
     padding-left: 2rem;
 }
 
@@ -278,7 +273,7 @@ pre {
 }
 
 .simulator .ui.embed .icon.xicon::before {
-    transform: translateX(-77%) translateY(-120%);
+    transform: translateX(-50%) translateY(-50%);
     transition: opacity .25s ease,color .25s ease;
 }
 
@@ -499,7 +494,7 @@ div.simframe > iframe {
 
 .ui.item.logo .name,
 .ui.item.logo .name-short {
-    font-family: Segoe UI, Tahoma, Geneva, Verdana;
+    font-family: @segoeUIFont;
     font-size: 18px;
     font-weight: 700;
     color: #fff;
@@ -679,7 +674,7 @@ div.simframe > iframe {
     z-index: 1000;
 }
 
-.notificationBannerVisible #filelist,
+.notificationBannerVisible #simulator .editor-sidebar,
 .notificationBannerVisible #maineditor,
 .notificationBannerVisible #sidedocs {
     top: calc(@mainMenuHeight + @bannerHeight);
@@ -692,7 +687,7 @@ div.simframe > iframe {
 
 #notificationBanner {
     padding: 0;
-    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    font-family: @segoeUIFont;
     height: @bannerHeight;
     margin-top: 0;
     display: flex;
@@ -885,6 +880,351 @@ Field editors
 }
 
 /*******************************
+        Extensions
+*******************************/
+.extensions-browser.hide {
+    display: none;
+}
+
+@keyframes cardGradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.extension-card.loading {
+    background: @loadingAnimation;
+    background-size: 400% 400%;
+    animation: cardGradient 3s infinite alternate;
+}
+
+
+.fullscreen.extensions-browser > {
+    .common-modal > {
+        .common-modal-header {
+            height: @mainMenuHeight;
+            background-color: @mainMenuInvertedBackground;
+            z-index: 202;
+            display: flex;
+            padding-left: 0rem;
+
+            .header-left, .header-right, .header-center {
+                flex: 1
+            }
+
+            .header-left {
+                display: flex;
+                height: 100%;
+            }
+
+            .header-center {
+                color: @white;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .common-modal-body {
+            padding: 0rem;
+        }
+    }
+}
+
+@media @tabletAndBelow {
+    .fullscreen.extensions-browser > .common-modal > .common-modal-header {
+        height: @mobileMenuHeight;
+    }
+
+    .extensions-browser {
+        .extension-header > .import-button>.common-button {
+            .common-button-label {
+                display: none;
+            }
+        }
+    }
+}
+
+@media @mobileAndBelow {
+    .extensions-browser {
+        .common-modal > .common-modal-header > .common-modal-back {
+            .common-button-label {
+                display: none;
+            }
+        }
+    }
+}
+
+.extensions-browser {
+    position: absolute;
+    background-color: @white;
+    width: 100%;
+    min-height: 100%;
+    z-index: 200;
+    font-size: 1.2rem;
+
+    .extension-search-header {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        background-color: #E5E5E5;
+
+        .common-input-wrapper {
+            width: 70%;
+
+            .common-input-group {
+                height: 3rem;
+                border-radius: 500rem;
+                padding: 0.7rem 1rem;
+
+                & > i.fas.fa-search {
+                    position: relative;
+                    margin-top: 0.1rem;
+                    right: 0;
+                    bottom: 0;
+
+                    opacity: .5;
+                    transition: opacity 0.3s ease;
+                }
+            }
+
+            &:focus-within .common-input-group > i.fas.fa-search {
+                opacity: 1;
+            }
+        }
+    }
+
+    .importButton {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        padding-bottom: 3rem;
+        gap: .8rem;
+
+        .importButtonLink {
+            color: @blue;
+            cursor: pointer;
+        }
+
+        .importButtonLink:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .extension-display {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 2rem;
+        gap: .8rem;
+
+        .breadcrumbs {
+            font-family: @segoeUIFont;
+            width: 100%;
+            padding-bottom: 1.5rem;
+
+            .link {
+                color: @blue;
+                cursor: pointer;
+            }
+
+            >span {
+                padding-right: .5rem;
+            }
+
+            .common-button {
+                font-size: 1.2rem;
+                padding-right: .5rem;
+                margin-right: 0rem;
+            }
+        }
+    }
+
+    .extension-header {
+        font-family: @segoeUIFont;
+        width: 95%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+
+    .import-button>.common-button {
+        padding: .8rem 1rem .95rem;
+    }
+
+    .extension-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .8rem;
+    }
+
+    .extension-card:hover {
+        border: @blue .15rem solid;
+    }
+
+    .extension-tags {
+        display: flex;
+        gap: 1rem;
+        width: 80%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .extension-tag {
+        border: .1rem solid @extensionTagBackgroundColor;
+        padding: .6rem 1.25rem;
+        border-radius: 1.6rem;
+        cursor: pointer;
+        color: @extensionTagColor;
+        background-color: inherit;
+    }
+
+    .extension-tag:hover {
+        background-color: @extensionTagBackgroundColor;
+    }
+
+    .extension-tag.selected {
+        background-color: @blue;
+        border-color: @blue;
+        color: @white
+    }
+
+    .extension-tag:focus::after  {
+        border: .05rem;
+        border-color: @blue;
+        border-radius: 1.6rem;
+    }
+
+    .tab-header {
+        width: 100%;
+
+        .common-button {
+            border: 2px solid @white;
+        }
+
+        .common-button.selected {
+            border-bottom: 2px solid @blue;
+            font-weight: 600;
+        }
+    }
+
+    .common-modal > .common-modal-body {
+        overflow-y: auto;
+        padding: 0rem;
+    }
+    .extension-grid {
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-top: 0.5rem;
+    }
+    .ui.card {
+        height: 20rem;
+        .ui.cardimage {
+            background-color: transparent;
+            height: 11rem;
+            &.upload {
+                margin: 3em auto;
+            }
+        }
+        .content:not(.extra) {
+            .header {
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .description {
+                height: 2.8em;
+                overflow: hidden;
+            }
+            .description.long  {
+                height: 14em;
+            }
+        }
+    }
+    .ui.card.loading {
+        background: @loadingAnimation;
+        background-size: 400% 400%;
+        animation: gradient 3s infinite alternate;
+    }
+    /* Search input */
+    .ui.search {
+        margin: auto;
+    }
+
+    .ui.inline.loader {
+        margin-top: 4em;
+        :after, :before {
+            width: 4rem;
+            height: 4rem;
+        }
+    }
+}
+
+.extension-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 18rem);
+    justify-content: center;
+    gap: 1rem;
+    max-width: 95%;
+    width: 95%;
+}
+
+.import-extension-modal {
+    .common-modal-body {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+// reduce all card sizes
+@media @mobileAndBelow {
+    .extensions-browser {
+        .ui.card, .ui.cards > .card {
+            width: 9rem;
+            height: 9rem;
+
+            .ui.cardimage {
+                height: 5rem;
+                &.upload {
+                    margin: auto;
+                }
+            }
+        }
+    }
+}
+/*******************************
+        Editor Sidebar
+*******************************/
+
+@sidebarPrimaryColor: @teal;
+@sidebarSecondaryColor: @blue;
+@sidbarActiveTabIconColor: @sidebarSecondaryColor;
+
+#simulator .editor-sidebar {
+    border-right: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+
+    .tab-navigation {
+        color: @sidebarSecondaryColor;
+        background-color: @sidebarPrimaryColor;
+    }
+
+    .tab-icon.active {
+        color: @sidbarActiveTabIconColor;
+        background-color: @sidebarPrimaryColor;
+    }
+}
+
+/*******************************
         Layout Variables
 *******************************/
 
@@ -971,7 +1311,7 @@ p.ui.font.small {
         display:none !important; // hide desktop simulator toggle
     }
 
-    .hideEditorToolbar #filelist {
+    .hideEditorToolbar #simulator .editor-sidebar {
         display:none !important;
     }
 
@@ -982,10 +1322,23 @@ p.ui.font.small {
     .ui.item.logo .name-short {
         display: block;
     }
+
+    .menubar .right.menu .signin-button {
+        height: 2.5rem;
+    }
+
+    .sign-in-dropdown {
+        padding-left: .1rem;
+        padding-right: .1rem;
+    }
 }
 
 /* Mobile only */
 @media only screen and (max-width: @largestMobileScreen) {
+    .menubar .right.menu .signin-button .icon {
+        margin-left: -.2rem;
+    }
+
     .ui.mobile.only {
         display:unset !important;
     }
@@ -1006,6 +1359,10 @@ p.ui.font.small {
     .simView #boardview {
         padding-top: @thinMenuHeight;
     }
+
+    .menubar .right.menu .signin-button {
+        height: 2.5rem;
+    }
 }
 @media only screen and (min-height: @thinEditorBreakpoint) {
     .ui.thin.only {
@@ -1018,7 +1375,7 @@ p.ui.font.small {
 *******************************/
 .fullscreensim {
     /* Full screen */
-    #filelist {
+    .simPanel {
         position: fixed;
         z-index: @fullscreenZIndex;
         top:0 !important;
@@ -1030,8 +1387,9 @@ p.ui.font.small {
         max-width: 100%;
         min-width: 100%;
         height:100% !important;
+        background-color: @simulatorBackground;
     }
-    #filelistOverlay {
+    #miniSimOverlay {
         display: none;
     }
     #boardview {
@@ -1058,6 +1416,9 @@ p.ui.font.small {
         display: none !important;
         z-index: -10 !important;
     }
+    #tutorialWrapper {
+        display: none;
+    }
     .sandboxfooter {
         z-index: @sandboxFooterZIndex;
         bottom: 1rem;
@@ -1065,12 +1426,19 @@ p.ui.font.small {
     #mainmenu {
         background: transparent !important;
     }
-    #filelist .simtoolbar {
+    .simPanel .simtoolbar {
         position: fixed;
         bottom: 1rem;
         left: auto;
         right: auto;
         display: block !important;
+    }
+    .simPanel .multiplayer-presence {
+        position: fixed;
+        bottom: 4rem;
+    }
+    .simPanel.multiplayer-preview #simulators {
+        height: calc(100% - 1.5rem);
     }
     #simulators {
         position: relative;
@@ -1103,27 +1471,37 @@ p.ui.font.small {
     }
 }
 
+.sandbox .simPanel .simtoolbar {
+    display: none !important;
+}
+
 /***********************************
    Headless Simtoolbar (Minecraft)
 ************************************/
 
 #root.headless {
-    #filelist {
+    .simPanel {
         display: block;
         bottom: 0 !important;
     }
 
-    #filelist .simtoolbar.item {
+    .simPanel .simtoolbar.item {
         margin: 1rem 0;
     }
 
     i.green.icon {
         color: rgba(0,0,0,.6)!important;
     }
+
+    #boardview.headless-sim {
+        height: 100%;
+        padding: 1rem;
+        width: @simulatorWidth;
+    }
 }
 
 #root.headless.collapsedEditorTools {
-    #filelist {
+    #simulator .editor-sidebar {
         position: absolute;
         width: auto;
         top: auto;
@@ -1131,6 +1509,10 @@ p.ui.font.small {
         background: none transparent;
         min-width: inherit;
         max-width: inherit;
+
+        .simulator-container {
+            display: none;
+        }
     }
 
     #boardview, .filemenu {
@@ -1139,7 +1521,7 @@ p.ui.font.small {
 }
 
 #root.headless:not(.collapsedEditorTools) {
-    #filelist {
+    #simulator .editor-sidebar {
         left: 0;
         z-index: 40;
     }
@@ -1165,12 +1547,15 @@ p.ui.font.small {
     }
 }
 
-#projectNameArea input {
-    font-size: 0.95rem;
+#editortools #projectNameArea {
+    padding: 1rem 0;
+    input {
+        font-size: 0.95rem;
+    }
 }
 
 .cloudstatusarea {
-    color: @teal;
+    color: @cloudStatusColor;
     align-self: center;
     display: flex;
 
@@ -1187,7 +1572,7 @@ p.ui.font.small {
     }
 
     .ui.loader:after {
-        border-top-color: @teal;
+        border-top-color: @cloudStatusColor;
     }
 }
 
@@ -1195,9 +1580,18 @@ p.ui.font.small {
         Download dialogs
 *******************************/
 
-.ui.modal .actions .dialog-help-large {
+.ui.modal .actions .dialog-help-large,
+.downloaddialog.ui.modal .actions .icon.help {
     float: left;
     margin-left: 4px;
+}
+
+.downloaddialog.ui.modal .actions .icon-and-text.icon~.ui.text {
+    margin-left: -0.5em !important;
+}
+
+.ui.modal .actions .left-action {
+    float: left;
 }
 
 .download-callout {
@@ -1208,15 +1602,19 @@ p.ui.font.small {
     position: relative;
     margin-top: 1.5rem;
 
-    .ui.purple.ribbon.large.label {
+    .ui.purple.ribbon.label {
         position: absolute;
-        left: -1.2rem;
+        left: -1rem;
         top: -1rem;
+        padding-left: 1.5rem;
     }
 
-    a {
-        color: #4C309D;
-        cursor: pointer;
+    > .content {
+        padding-top: .25rem;
+    }
+
+    a.ui.button {
+        margin-top: .5rem;
     }
 }
 
@@ -1237,7 +1635,12 @@ p.ui.font.small {
     display: inline;
 }
 
-.download-dialog-image img {
+.downloaddialog .content .webusb-connect-image {
+    padding: 0 !important;
+    margin: 0 auto;
+}
+
+.download-dialog-image img:not(.large) {
     max-height: 200px;
     object-fit: contain;
 }
@@ -1247,6 +1650,10 @@ p.ui.font.small {
     display: flex;
     height: 100%;
     align-items: center;
+}
+
+.downloaddialog .actions .approve.secondary {
+    float: left;
 }
 
 #downloadArea button .icon.xicon {
@@ -1285,6 +1692,122 @@ p.ui.font.small {
     }
 }
 
+
+/*******************************
+           Mini sim view
+*******************************/
+
+#root.miniSim:not(.fullscreensim):not(.sandbox) {
+    /* Layout */
+    .simPanel.ui.items {
+        position: fixed;
+        padding: 0;
+        margin: 1em 1em 0;
+        bottom: ~"calc(5.5rem + var(--extra-mobile-sim-padding))" !important;
+        right: 0.5rem;
+        top: unset;
+        left: unset;
+        width: auto;
+        height: auto;
+        min-width: inherit;
+        max-width: inherit;
+        background: transparent !important;
+        overflow: visible;
+        z-index: 20;
+    }
+    .simPanel .simtoolbar > .buttons {
+        > .debug-button {
+            display: block !important;
+        }
+    }
+    &.collapsedEditorTools:not(.tabTutorial) .simPanel {
+        > div {
+            display: none !important;
+        }
+    }
+    &.collapsedEditorTools .simPanel {
+        aside.simtoolbar button:not(.expand-button) {
+            display: none !important;
+        }
+    }
+    #miniSimOverlay {
+        position: absolute;
+        display: block;
+        width: 10rem; /* match width of div.simframe */
+        height: 8rem;
+    }
+
+    .simPanel {
+        bottom: @editorToolsCollapsedMobileHeight;
+    }
+
+    &:not(.headless):not(.sandbox) {
+        #boardview {
+            display: inline-block;
+            width: 10rem;
+        }
+        .simPanel .simtoolbar {
+            margin: 1rem 0;
+            width: 3rem;
+            float: right;
+        }
+        .simPanel .simtoolbar > div:not(:first-child),
+        .simPanel .simtoolbar > .buttons > .button {
+            display: none;
+        }
+        .simPanel .simtoolbar > div:first-child {
+            flex-direction: column;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .simPanel .simtoolbar > div:first-child > button {
+            border-radius: 0;
+            font-size: .92857143rem;
+        }
+        #editortools .left .buttons:first-child {
+            position: absolute;
+            bottom: 0;
+        }
+    }
+    &.headless {
+        .simPanel {
+            left: 5rem!important;
+            z-index: 42!important;
+        }
+    }
+
+    /* Simulator */
+    div.simframe {
+        display:inline-block;
+        width: 10rem;
+        margin-right:0.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 81.96% !important;
+    }
+    div.simframe:not(:first-child) {
+        display:none;
+    }
+    #simulators {
+        flex-direction: row;
+        display: flex !important;
+    }
+    /* Simulator Toggle Button */
+    #mobiletogglesim,
+    .collapsedEditorTools #mobiletogglesim {
+        border-top-right-radius: 100px;
+        border-top-left-radius: 100px;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+        top: auto;
+        left: 40%;
+        width: 20%;
+        height: auto;
+        bottom: 10rem;
+    }
+    .collapsedEditorTools #mobiletogglesim {
+        bottom: @editorToolsCollapsedHeight;
+    }
+}
 
 /*******************************
         Media Adjustments
@@ -1366,7 +1889,7 @@ p.ui.font.small {
         #boardview {
             width: 6.5rem !important;
         }
-        #filelistOverlay {
+        #miniSimOverlay {
             width: 6.5rem !important;
             height: 5.5rem !important;
         }
@@ -1379,7 +1902,7 @@ p.ui.font.small {
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .collapsedEditorTools:not(.headless) #filelist {
+    .collapsedEditorTools:not(.headless):not(.tabTutorial) #simulator .editor-sidebar {
         min-width: 21px;
         width: 21px;
         padding: 0;
@@ -1392,7 +1915,7 @@ p.ui.font.small {
         background: @editorToolsBackground;
     }
 
-    .collapsedEditorTools:not(.headless) #maineditor {
+    .collapsedEditorTools:not(.headless):not(.tabTutorial) #maineditor {
         left: 21px;
     }
 
@@ -1409,14 +1932,31 @@ p.ui.font.small {
         top: 4px;
         position: relative;
     }
+
+    #simulator .topInstructions {
+        left: @simulatorWidth;
+        min-width: unset;
+        max-width: unset;
+        padding: 0;
+    }
 }
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
 @media only screen and (max-width: @largestSmallMonitor) {
     /* Layout */
-    #filelist, #downloadArea {
+    #simulator .editor-sidebar, #downloadArea {
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
+    }
+
+    #simulator .topInstructions {
+        left: @simulatorWidthSmall;
+        min-width: unset;
+        max-width: unset;
+    }
+
+    #boardview.headless-sim {
+        width: @simulatorWidthSmall;
     }
 
     #maineditor {
@@ -1428,6 +1968,10 @@ p.ui.font.small {
         top: auto;
         bottom: 2.2rem;
         margin: 0;
+    }
+
+    .ui.card .meta .date.small-screen.hide {
+        display: none;
     }
 }
 
@@ -1450,43 +1994,8 @@ p.ui.font.small {
         bottom: 2rem;
         margin: 0;
     }
-    /* Layout */
-    #filelist {
-        position:absolute;
-        padding: 0;
-        margin: 1em;
-        bottom: ~"calc(4.5rem + var(--extra-mobile-sim-padding))" !important;
-        right: 0.5rem;
-        top: unset;
-        left: unset;
-        width: auto;
-        min-width: inherit;
-        max-width: inherit;
-        background: transparent !important;
-        overflow: visible;
-        z-index: 20;
-    }
-    #filelist .simtoolbar > .buttons {
-        > .debug-button {
-            display: block !important;
-        }
-    }
-    .collapsedEditorTools #filelist {
-        > div {
-            display: none !important;
-        }
-        aside.simtoolbar button:not(.expand-button) {
-            display: none !important;
-        }
-    }
-    #filelistOverlay {
-        position: absolute;
-        display: block;
-        width: 10rem; /* match width of div.simframe */
-        height: 9rem;
-    }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor {
         bottom: @editorToolsCollapsedMobileHeight;
     }
 
@@ -1511,40 +2020,13 @@ p.ui.font.small {
         }
     }
 
-    #root:not(.fullscreensim):not(.headless):not(.sandbox) {
-        #boardview {
-            display: inline-block;
-            width: 10rem;
-        }
-        #filelist .simtoolbar {
-            margin: 0.5em 0;
-            width: 3rem;
-            float: right;
-        }
-        #filelist .simtoolbar > div:not(:first-child),
-        #filelist .simtoolbar > .buttons > .button {
-            display: none;
-        }
-        #filelist .simtoolbar > div:first-child {
-            flex-direction: column;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        #filelist .simtoolbar > div:first-child > button {
-            border-radius: 0;
-            font-size: .92857143rem;
-        }
-        #editortools .left .buttons:first-child {
-            position: absolute;
-            bottom: 0;
-        }
+    #simulator .editor-sidebar {
+        min-width: unset;
+        max-width: unset;
+        width: 0;
+        padding: 0;
     }
-    #root.headless {
-        #filelist {
-            left: 5rem!important;
-            z-index: 42!important;
-        }
-    }
+
     #root.collapsedEditorTools #editortools .left .buttons:first-child {
         bottom: auto!important; // undo bottom positioning for collapsed toolbar
     }
@@ -1573,36 +2055,7 @@ p.ui.font.small {
     .hideEditorFloats #tutorialcard.bottom {
         bottom: @editorToolsCollapsedMobileHeight;
     }
-    /* Simulator */
-    div.simframe {
-        display:inline-block;
-        width: 10rem;
-        margin-right:0.5rem;
-        padding-bottom: 81.96% !important;
-    }
-    div.simframe:not(:first-child) {
-        display:none;
-    }
-    #simulators {
-        flex-direction: row;
-        display: flex !important;
-    }
-    /* Simulator Toggle Button */
-    #mobiletogglesim,
-    .collapsedEditorTools #mobiletogglesim {
-        border-top-right-radius: 100px;
-        border-top-left-radius: 100px;
-        border-bottom-right-radius: 0;
-        border-bottom-left-radius: 0;
-        top: auto;
-        left: 40%;
-        width: 20%;
-        height: auto;
-        bottom: 10rem;
-    }
-    .collapsedEditorTools #mobiletogglesim {
-        bottom: @editorToolsCollapsedHeight;
-    }
+
     /* Hide floating editors */
     .hideEditorFloats .editorFloat {
         display:none;
@@ -1654,6 +2107,18 @@ p.ui.font.small {
     }
     #root #editordropdown .menu .item .text {
         display: inline-block!important;
+    }
+
+    #root.miniSim:not(.fullscreensim):not(.sandbox) {
+        div.simframe {
+            margin-bottom: -0.4rem
+        }
+
+        &:not(.headless):not(.sandbox) {
+            .simPanel .simtoolbar {
+                margin-bottom: -0.2rem;
+            }
+        }
     }
 }
 
@@ -1710,6 +2175,7 @@ p.ui.font.small {
     .fullscreensim .simtoolbar .ui.button {
         font-size: 1rem;
     }
+
     .collapsedEditorTools #mobiletogglesim {
         bottom: @editorToolsCollapsedMobileHeight;
     }
@@ -1741,40 +2207,12 @@ p.ui.font.small {
     #maineditor {
         top: @thinMenuHeight;
     }
-    #filelist {
+    #simulator .editor-sidebar {
         top: @thinMenuHeight;
-        padding: 0.5rem 1.5rem;
-    }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
-        bottom: @editorToolsThinHeight;
-    }
-
-
-    #editortools {
-        height: @editorToolsThinHeight;
-
-        .ui.button {
-            padding: 0.5rem;
-        }
-
-        #downloadArea,
-        #editorToolbarArea,
-        #projectNameArea,
-        input {
-            font-size: 0.8em !important;
-        }
-
-        #projectNameArea {
-            padding-left: 0;
-        }
-
-        .ui.button {
-            font-size: .92857143rem !important;
-        }
     }
 }
 
-.simView #filelist {
+.simView .simPanel {
     position: fixed;
     z-index: @fullscreenZIndex;
     top:0 !important;
@@ -1876,7 +2314,7 @@ div.simframe.ui.embed {
     }
 
     /* Not needed in triple toggle view */
-    #filelistOverlay {
+    #miniSimOverlay {
         display: none;
     }
 
@@ -1905,59 +2343,138 @@ div.simframe.ui.embed {
     -ms-interpolation-mode: nearest-neighbor;
 }
 
-/* Sign in dialog */
-.ui.modal.signindialog {
-    .content {
-        padding: 24px 20px;
-    }
-
-    div.description {
-        margin-bottom: 20px;
-    }
-
-    div.warning {
-        background-color: #F5BC5F;
-        padding: 6px;
-        margin-bottom: 20px;
-    }
-
-    div.container {
-        display: grid;
-        row-gap: 10px;
-        grid-template-rows: 36px auto;
-        grid-template-columns: auto;
-        justify-content: center;
-
-        button {
-            margin: 0;
-        }
-
-        div.prompt {
-            justify-self: center;
-        }
-
-        div.providers {
-            display: grid;
-            row-gap: 20px;
-            grid-template-rows: auto;
-            justify-content: center;
-        }
-    }
+.ui.menu .item.logged-in-dropdown {
+    padding-right: .25rem;
+    width: auto !important; // override .menu @largestMobileScreen breakpoint in menu.overrides
 }
 
-div.signin-button {
+.ui.menu .item.sign-in-dropdown {
+    padding-right: .25rem;
+    width: auto !important; // override .menu @largestMobileScreen breakpoint in menu.overrides
+}
+
+.ui.menu .signin-button {
     display: flex;
     align-items: center;
+    background-color: @homeScreenBackground;
+    color: black;
+    border-radius: 6px;
+    height: 3rem;
+    padding: 0 .6rem;
+    font-family: @segoeUIFont;
+    font-weight: 500;
+
+    .icon {
+        margin: 0 !important; // override .menu @largestMobileScreen breakpoint in menu.overrides
+    }
 
     .text {
         margin-right: .5rem;
     }
+
+    &:focus {
+        border: 3px solid #fff;
+        outline: 1px ridge #000;
+    }
 }
 
-@media only screen and (max-width: @largestTabletScreen) {
-    .menubar .right.menu .signin-button .icon {
-        margin-left: -8px;
+button.ui.button.hostmultiplayergame-button {
+    display: inline-flex;
+    align-items: center;
+
+    .text {
+        font-weight: normal;
     }
+    .icon.xicon.multiplayer {
+        font-size: 24px;
+        margin-top: 0.25rem !important;
+    }
+}
+
+#root {
+    --multiplayer-presence-icon-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%23FF0000'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+    --multiplayer-presence-icon-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%230038FF'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+    --multiplayer-presence-icon-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%23FF9A14'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+    --multiplayer-presence-icon-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' fill='%234DA64D'%3E%3Cpath d='M12.754 14.686a7 7 0 100-14 7 7 0 000 14zm-8.5 2a3.5 3.5 0 00-3.5 3.5v.5c0 2.393 1.523 4.417 3.685 5.793 2.174 1.384 5.117 2.207 8.315 2.207 3.199 0 6.141-.823 8.315-2.206 2.163-1.377 3.685-3.4 3.685-5.794v-.5a3.5 3.5 0 00-3.5-3.5h-17z'/%3E%3C/svg%3E");
+}
+
+#root:not(.fullscreensim):not(.sandbox) .multiplayer-presence {
+    margin: 0;
+    margin-bottom: -.5rem;
+}
+
+.miniSim:not(.fullscreensim):not(.sandbox):not(.tabTutorial) .multiplayer-presence {
+    display: none;
+}
+
+#root.tabTutorial:not(.fullscreensim):not(.collapsedEditorTools) .simulator-container.hidden .simPanel > .multiplayer-presence {
+    display: block;
+    position: fixed;
+    bottom: 7rem;
+    right: 16.5rem;
+    width: 4rem;
+
+    .sim-presence-bar {
+        flex-direction: column;
+    }
+}
+
+.sim-presence-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+    gap: 1rem;
+    padding: 0;
+
+    .sim-presence-bar-player {
+        border-radius: 3rem;
+        height: 2.5rem;
+        width: 2.5rem;
+        padding: 0.2rem;
+        border: 2px solid;
+
+        image-rendering: optimizeSpeed;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: optimize-contrast;
+        image-rendering: pixelated;
+        -ms-interpolation-mode: nearest-neighbor;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 75%;
+
+        &.player-1 {
+            border-color: #FF0000;
+            // TODO: what to use for background color? just leave as default white?
+            // background-color: #FF00001A;
+            // !importants here as we have to override hc nulling background properties
+            background-image: var(--multiplayer-presence-icon-1) !important;
+        }
+        &.player-2 {
+            border-color: #0038FF;
+            // background-color: #0038FF1A;
+            background-image: var(--multiplayer-presence-icon-2) !important;
+        }
+        &.player-3 {
+            border-color: #FF9A14;
+            // background-color: #FF9A141A;
+            background-image: var(--multiplayer-presence-icon-3) !important;
+        }
+        &.player-4 {
+            border-color: #4DA64D;
+            // background-color: #4DA64D1A;
+            background-image: var(--multiplayer-presence-icon-4) !important;
+        }
+    }
+}
+
+// win the specificity fight with hc mode
+#root.hc .sim-presence-bar .sim-presence-bar-player {
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 75% !important;
 }
 
 /* Profile dialog */
@@ -2049,7 +2566,7 @@ div.signin-button {
         display: inherit;
     }
 
-    #filelist .simtoolbar {
+    .editorSidebar .simtoolbar {
         position: fixed;
         bottom: 0.25em;
         left: auto;
@@ -2060,7 +2577,8 @@ div.signin-button {
     }
 }
 
-img.pixelart {
+.image.pixelart {
+    background-color: @white;
     image-rendering: auto;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
@@ -2088,6 +2606,11 @@ img.pixelart {
 #blocks-editor-field-div {
     position: absolute;
     z-index: @blocklyDropdownDivZIndex;
+
+    .sound-effect-editor {
+        max-width: 30rem;
+        margin: auto;
+    }
 }
 
 .blocks-editor-field-overlay {
@@ -2143,5 +2666,32 @@ select.ui.dropdown {
 .ui.modal.auto-save-disabled-warning {
     .header {
         background-color: #F5BC5F;
+    }
+}
+
+
+/** Project settings */
+
+.palette-picker-field {
+    display: flex;
+    align-items: center;
+}
+
+.palette-picker-label {
+    margin-right: 0.5rem;
+}
+
+// main loader progress bar
+.ui.loader.large.main .common-progressbar-wrapper {
+    margin-top: 1em;
+    width: ~"min(25rem, 50vw)";
+    height: 1em;
+
+    --progress-bar-filled-color: @white;
+    --progress-bar-unfilled-color: transparency;
+    --progress-bar-border-color: @white;
+
+    progress[value].common-progressbar {
+        border-radius: 1px;
     }
 }

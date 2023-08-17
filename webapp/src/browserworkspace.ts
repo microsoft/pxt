@@ -167,6 +167,11 @@ function resetAsync() {
     // workspace.resetAsync already clears all tables
     return Promise.resolve();
 }
+
+function loadedAsync(): Promise<void> {
+    return pxt.commands.workspaceLoadedAsync?.();
+}
+
 export const provider: WorkspaceProvider = {
     getAsync,
     setAsync,
@@ -174,5 +179,6 @@ export const provider: WorkspaceProvider = {
     listAsync,
     resetAsync,
     getHistoryAsync,
-    setHistoryAsync
+    setHistoryAsync,
+    loadedAsync
 }

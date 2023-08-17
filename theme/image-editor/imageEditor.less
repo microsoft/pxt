@@ -103,6 +103,14 @@
     flex: 1;
 }
 
+.image-editor-header-center {
+    flex: 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
 .image-editor-header-right {
     display: flex;
     justify-content: flex-end;
@@ -117,7 +125,7 @@
     flex-grow: 1;
     overflow: hidden;
     position: relative;
-    flex: 9;
+    flex: 6;
 }
 
 .image-editor-close-button {
@@ -125,169 +133,6 @@
     font-size: 1.5rem;
     line-height: 1.5rem;
     cursor: pointer;
-}
-
-// Tablet + Mobile
-@media only screen and (max-width: @largestTabletScreen) {
-    .image-editor-gallery-content {
-        flex: 4!important;
-    }
-
-    .filter-tag {
-        padding-top: .7rem!important;
-        padding-bottom: .7rem!important;
-    }
-}
-
-
-// Mobile Only
-@media only screen and (max-width: @largestMobileScreen) {
-    .image-editor-gallery-content {
-        flex: 3!important;
-    }
-
-    .image-editor-header-left {
-        display: none;
-    }
-
-    .gallery-editor-toggle {
-        margin-left: .25rem!important;
-        flex-shrink: 1;
-    }
-
-    .gallery-editor-toggle-label > span {
-        display: none;
-    }
-
-    .gallery-filter-button {
-        .gallery-filter-button-label {
-            display: none !important;
-        }
-        display: flex;
-        flex-shrink: 1;
-        width: 2em!important;
-        right: .9em!important;
-        justify-content: center!important;
-        padding: 0!important;
-    }
-
-
-    .filter-title {
-        font-size: 1.5rem!important;
-    }
-
-    .filter-subheading-row {
-        flex-direction: column!important;
-    }
-
-    .filter-panel-container {
-        margin-left: 10px!important;
-    }
-
-}
-
-.gallery-editor-toggle {
-    display: flex;
-    flex-direction: row;
-    position: relative;
-
-    height: 2.25rem;
-    line-height: 2.25rem;
-
-    background-color: #4572cf;
-    border: 2px solid #4067b3;
-    border-radius: 5px;
-    width: 24rem;
-    margin-top: 0.25rem;
-
-    margin-left: auto;
-    margin-right: auto;
-    cursor: pointer;
-}
-
-.gallery-editor-toggle.right {
-    .gallery-editor-toggle-handle {
-        /* Subtract small margin for rightmost element */
-        transform: translateX(calc(16rem - 0.2rem));
-    }
-    .gallery-editor-toggle-right {
-        color: #4B7BEC;
-    }
-}
-
-.gallery-editor-toggle.center {
-    .gallery-editor-toggle-handle {
-        transform: translateX(8rem);
-    }
-    .gallery-editor-toggle-center {
-        color: #4B7BEC;
-    }
-}
-
-.gallery-editor-toggle.left {
-    .gallery-editor-toggle-left {
-        color: #4B7BEC;
-    }
-}
-
-.gallery-editor-toggle.no-gallery {
-    width: 16rem;
-
-    .gallery-editor-toggle-handle {
-        width: 50%;
-    }
-    .gallery-editor-toggle-label {
-        flex-basis: 50%;
-    }
-}
-
-.gallery-editor-toggle.no-gallery.right {
-    .gallery-editor-toggle-handle {
-        transform: translateX(8rem);
-    }
-}
-
-// Microsoft Edge has a bug related to relative z-indices that prevents the handle
-// from appearing below the text, so instead we make the handle transparent and have the text
-// show through
-.gallery-editor-toggle.edge {
-    .gallery-editor-toggle-label, .gallery-editor-toggle-label-right, .gallery-editor-toggle-label-left, .gallery-editor-toggle-label-center {
-        color: #ffffff;
-        z-index: auto;
-    }
-    .gallery-editor-toggle-handle {
-        opacity: 0.3;
-    }
-}
-
-.gallery-editor-toggle-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-basis: 33%;
-    text-align: center;
-    color: #ffffff;
-    z-index: 1;
-    transition: color 0.3s;
-    user-select: none;
-
-    & > i {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-}
-
-.gallery-editor-toggle-handle {
-    width: 33%;
-    height: 2rem;
-    background-color: white;
-    border-radius: 5px;
-    position: absolute;
-    left: 0;
-
-    transform: translateX(0);
-    transition: transform 0.3s;
 }
 
 .gallery-editor-show-tiles {
@@ -306,7 +151,7 @@
     line-height: 2.25rem;
 }
 
-.image-editor-wrapper {
+.image-editor-wrapper:not(.music-asset-editor) {
     ::-webkit-scrollbar {
         width: @customScrollbarWidth;
     }
@@ -344,6 +189,7 @@
 
 .filter-panel-gutter {
     flex: 2;
+    max-width: 22rem;
     background-color: var(--editor-bg-color);
 }
 
@@ -354,6 +200,7 @@
     margin-left: 20px;
     padding: .5rem;
     height: 100%;
+    overflow: auto;
 }
 
 .filter-panel {
@@ -378,6 +225,8 @@
     justify-content: space-between;
     margin-bottom: .5rem;
     font-size: 1.1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .filter-subheading-button {
@@ -500,5 +349,64 @@
         .gallery-editor-toggle-handle {
             transform: translateX(3.25rem);
         }
+    }
+}
+
+// filter panel
+// Tablet + Mobile
+@media only screen and (max-width: @largestTabletScreen) {
+    .filter-panel-container {
+        margin: 0 0 0 0.5rem;
+        padding: 0 0.5rem;
+    }
+    .filter-panel {
+        margin: 0;
+        padding: 0;
+    }
+    .image-editor-gallery-content {
+        flex: 4;
+    }
+
+    .filter-title {
+        margin-bottom: 0.5rem;
+    }
+
+    .filter-tag {
+        padding-top: .5rem;
+        padding-bottom: .5rem;
+    }
+}
+
+
+// Mobile Only
+@media only screen and (max-width: @largestMobileScreen) {
+    .image-editor-gallery-content {
+        flex: 3;
+    }
+
+    .gallery-editor-toggle {
+        margin-left: .25rem;
+        flex-shrink: 1;
+    }
+
+    .gallery-editor-toggle-label > span {
+        display: none;
+    }
+
+    .gallery-filter-button {
+        .gallery-filter-button-label {
+            display: none;
+        }
+        display: flex;
+        flex-shrink: 1;
+        width: 2em;
+        right: .9em;
+        justify-content: center;
+        padding: 0;
+    }
+
+
+    .filter-title {
+        font-size: 1.5rem;
     }
 }

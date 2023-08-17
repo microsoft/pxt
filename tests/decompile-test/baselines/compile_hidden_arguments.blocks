@@ -1,0 +1,157 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="soundExpression_playSoundEffect">
+<field name="mode">SoundExpressionPlayMode.UntilDone</field>
+<value name="sound">
+<shadow type="soundExpression_createSoundEffect">
+<mutation _expanded="0" />
+<field name="waveShape">WaveShape.Sine</field>
+<field name="effect">SoundExpressionEffect.None</field>
+<field name="interpolation">InterpolationCurve.Linear</field>
+<value name="startFrequency">
+<shadow type="math_number_minmax">
+<mutation min="0" max="5000" />
+<field name="SLIDER">23</field>
+</shadow>
+</value>
+<value name="endFrequency">
+<shadow type="math_number_minmax">
+<mutation min="0" max="5000" />
+<field name="SLIDER">0</field>
+</shadow>
+</value>
+<value name="startVolume">
+<shadow type="math_number_minmax">
+<mutation min="0" max="255" />
+<field name="SLIDER">25</field>
+</shadow>
+</value>
+<value name="endVolume">
+<shadow type="math_number_minmax">
+<mutation min="0" max="255" />
+<field name="SLIDER">1</field>
+</shadow>
+</value>
+<value name="duration">
+<shadow type="math_number_minmax">
+<mutation min="1" max="9999" />
+<field name="SLIDER">50</field>
+</shadow>
+</value>
+</shadow>
+</value>
+<next>
+<block type="soundExpression_playSoundEffect">
+<field name="mode">SoundExpressionPlayMode.UntilDone</field>
+<value name="sound">
+<shadow type="soundExpression_createSoundEffect">
+<mutation _expanded="5" />
+<field name="waveShape">WaveShape.Sine</field>
+<field name="effect">SoundExpressionEffect.None</field>
+<field name="interpolation">InterpolationCurve.Linear</field>
+<value name="startFrequency">
+<shadow type="math_number_minmax">
+<mutation min="0" max="5000" />
+<field name="SLIDER">23</field>
+</shadow>
+</value>
+<value name="endFrequency">
+<shadow type="math_number_minmax">
+<mutation min="0" max="5000" />
+<field name="SLIDER">0</field>
+</shadow>
+</value>
+<value name="startVolume">
+<shadow type="math_number_minmax">
+<mutation min="0" max="255" />
+<field name="SLIDER">25</field>
+</shadow>
+</value>
+<value name="endVolume">
+<shadow type="math_number_minmax">
+<mutation min="0" max="255" />
+<field name="SLIDER">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="duration">
+<shadow type="math_number_minmax">
+<mutation min="1" max="9999" />
+<field name="SLIDER">50</field>
+</shadow>
+</value>
+</shadow>
+</value>
+<next>
+<block type="soundExpression_playSoundEffect">
+<field name="mode">SoundExpressionPlayMode.UntilDone</field>
+<value name="sound">
+<shadow type="soundExpression_createSoundEffect">
+<mutation _expanded="3" />
+<field name="waveShape">WaveShape.Sine</field>
+<field name="effect">SoundExpressionEffect.None</field>
+<field name="interpolation">InterpolationCurve.Linear</field>
+<value name="startFrequency">
+<shadow type="math_number_minmax">
+<mutation min="0" max="5000" />
+<field name="SLIDER">23</field>
+</shadow>
+</value>
+<value name="endFrequency">
+<shadow type="math_number_minmax">
+<mutation min="0" max="5000" />
+<field name="SLIDER">0</field>
+</shadow>
+</value>
+<value name="startVolume">
+<shadow type="math_number_minmax">
+<mutation min="0" max="255" />
+<field name="SLIDER">25</field>
+</shadow>
+</value>
+<value name="endVolume">
+<shadow type="math_number_minmax">
+<mutation min="0" max="255" />
+<field name="SLIDER">1</field>
+</shadow>
+</value>
+<value name="duration">
+<shadow type="math_number_minmax">
+<mutation min="1" max="9999" />
+<field name="SLIDER">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">50</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

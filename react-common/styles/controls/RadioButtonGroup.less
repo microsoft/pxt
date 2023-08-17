@@ -1,0 +1,43 @@
+.common-radio-group.common-radio-buttons {
+    display: flex;
+    flex-direction: row;
+
+    .common-radio-choice {
+        &:extend(.common-button);
+        position: relative;
+
+        padding: 0;
+        background: @radioButtonIconBackground;
+        color: @radioButtonIconColor;
+        border: 1px solid @radioButtonIconBorder;
+
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+
+        i {
+            width: 100%;
+            margin: 0;
+        }
+
+        input {
+            position: absolute;
+
+            appearance: none;
+
+            width: 100%;
+            height: 100%;
+
+            // Old versions of ios safari require the prefix AND manually
+            // overriding the border
+            -webkit-appearance: none;
+            border: none;
+        }
+    }
+
+    .common-radio-choice.selected {
+        background: @radioButtonIconBackgroundChecked;
+        color: @radioButtonIconColorChecked;
+    }
+}

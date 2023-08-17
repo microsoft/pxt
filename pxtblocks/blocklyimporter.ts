@@ -9,37 +9,55 @@ namespace pxt.blocks {
         extensions?: string[]; // currently unpopulated. list of extensions used in screenshotted projects
     }
 
+    export interface DomToWorkspaceOptions {
+        applyHideMetaComment?: boolean;
+        keepMetaComments?: boolean;
+    }
+
     /**
      * Converts a DOM into workspace without triggering any Blockly event. Returns the new block ids
      * @param dom
      * @param workspace
      */
-    export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace): string[] {
+    export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace, opts?: DomToWorkspaceOptions): string[] {
         pxt.tickEvent(`blocks.domtow`)
         let newBlockIds: string[] = [];
         try {
             Blockly.Events.disable();
             newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
-            applyMetaComments(workspace);
+            applyMetaComments(workspace, opts);
         } catch (e) {
             pxt.reportException(e);
         } finally {
             Blockly.Events.enable();
         }
-        return newBlockIds;
+        return newBlockIds.filter(id => !!workspace.getBlockById(id));
     }
 
-    function applyMetaComments(workspace: Blockly.Workspace) {
+    function applyMetaComments(workspace: Blockly.Workspace, opts?: DomToWorkspaceOptions) {
         // process meta comments
         // @highlight -> highlight block
-        workspace.getAllBlocks()
-            .filter(b => !!b.comment && b.comment instanceof Blockly.Comment)
+        workspace.getAllBlocks(false)
+            .filter(b => !!b.getCommentText())
             .forEach(b => {
-                const c = (<Blockly.Comment>b.comment).getText();
-                if (/@highlight/.test(c)) {
-                    const cc = c.replace(/@highlight/g, '').trim();
-                    b.setCommentText(cc || null);
-                    (workspace as Blockly.WorkspaceSvg).highlightBlock(b.id)
+                const initialCommentText = b.getCommentText();
+                if (/@hide/.test(initialCommentText) && opts?.applyHideMetaComment) {
+                    b.dispose(true);
+                    return;
+                }
+
+                let newCommentText = initialCommentText;
+                if (/@highlight/.test(newCommentText)) {
+                    newCommentText = newCommentText.replace(/@highlight/g, '').trim();
+                    (workspace as Blockly.WorkspaceSvg).highlightBlock?.(b.id, true)
+                }
+                if (/@collapsed/.test(newCommentText) && !b.getParent()) {
+                    newCommentText = newCommentText.replace(/@collapsed/g, '').trim();
+                    b.setCollapsed(true);
+                }
+
+                if (initialCommentText !== newCommentText && !opts?.keepMetaComments) {
+                    b.setCommentText(newCommentText || null);
                 }
             });
     }
@@ -99,7 +117,7 @@ namespace pxt.blocks {
         let xmlBlock = Blockly.Xml.textToDom(text);
         let block = Blockly.Xml.domToBlock(xmlBlock, ws) as Blockly.BlockSvg;
         if (ws.getMetrics) {
-            let metrics = ws.getMetrics() as Blockly.Metrics;
+            let metrics = ws.getMetrics();
             let blockDimensions = block.getHeightWidth();
             block.moveBy(
               metrics.viewLeft + (metrics.viewWidth / 2) - (blockDimensions.width / 2),
@@ -111,11 +129,11 @@ namespace pxt.blocks {
     /**
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
-    export function loadWorkspaceXml(xml: string, skipReport = false): Blockly.Workspace {
+    export function loadWorkspaceXml(xml: string, skipReport = false, opts?: DomToWorkspaceOptions): Blockly.Workspace {
         const workspace = new Blockly.Workspace() as Blockly.WorkspaceSvg;
         try {
             const dom = Blockly.Xml.textToDom(xml);
-            pxt.blocks.domToWorkspaceNoEvents(dom, workspace);
+            pxt.blocks.domToWorkspaceNoEvents(dom, workspace, opts);
             return workspace;
         } catch (e) {
             if (!skipReport)
@@ -314,5 +332,24 @@ namespace pxt.blocks {
                   */
             }
         })
+    }
+
+    export function validateAllReferencedBlocksExist(xml: string) {
+        pxt.U.assert(!!Blockly?.Blocks, "Called validateAllReferencedBlocksExist before initializing Blockly");
+        const dom = Blockly.Xml.textToDom(xml);
+
+        const blocks = dom.querySelectorAll("block");
+
+        for (let i = 0; i < blocks.length; i++) {
+            if (!Blockly.Blocks[blocks.item(i).getAttribute("type")]) return false;
+        }
+
+        const shadows = dom.querySelectorAll("shadow");
+
+        for (let i = 0; i < shadows.length; i++) {
+            if (!Blockly.Blocks[shadows.item(i).getAttribute("type")]) return false;
+        }
+
+        return true;
     }
 }

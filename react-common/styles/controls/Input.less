@@ -1,0 +1,157 @@
+/****************************************************
+ *                Input                             *
+ ****************************************************/
+
+.common-input-group {
+    position: relative;
+    display: flex;
+    height: 2rem;
+    align-items: stretch;
+    border-radius: 2px;
+    border: 1px solid @inputBorderColor;
+    background: @inputBackgroundColor;
+    font-size: 16px;
+}
+
+.common-input-group:focus::after,
+.common-input-group:focus-within::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border: 2px solid @inputBorderColorFocus;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+.common-input {
+    width: 100%;
+    min-width: 0;
+    padding: 0 0.5rem;
+    color: @inputTextColor;
+    border: none;
+    outline: 0;
+    background: none transparent;
+    text-overflow: ellipsis;
+}
+
+/****************************************************
+ *                Input Label                       *
+ ****************************************************/
+
+.common-input-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0.3rem 0;
+    overflow-wrap: break-word;
+}
+
+/****************************************************
+ *                Input Icon                        *
+ ****************************************************/
+
+.common-input-group {
+    & > i.fas, i.far, .icon, .xicon {
+        position: absolute;
+        bottom: 0.3rem;
+        right: 0.5rem;
+        width: 1.25rem;
+        margin-right: 0;
+        line-height: 1.25rem;
+        pointer-events: none;
+    }
+
+    & > .common-button {
+        color: @inputButtonColor;
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
+
+        &:hover {
+            color: @inputButtonColorHover;
+        }
+    }
+}
+
+.common-input.has-icon {
+    padding: 0 1.75rem 0 0.5rem;
+}
+
+/****************************************************
+ *                Disabled Input                    *
+ ****************************************************/
+
+.common-input-wrapper.disabled {
+    .common-input-group {
+        cursor: default;
+        border: 1px solid @inputBackgroundColorDisabled;
+        background: @inputBackgroundColorDisabled;
+    }
+
+    .common-input,
+    .common-input-label,
+    i {
+        color: @inputTextColorDisabled;
+    }
+}
+
+
+/****************************************************
+ *                Attached Button                   *
+ ****************************************************/
+
+.common-input-attached-button {
+    display: flex;
+    flex-direction: row;
+
+    .common-input-wrapper {
+        flex-grow: 1;
+
+        .common-input-group {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+            height: 3rem;
+        }
+    }
+
+    .common-button {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+}
+
+/****************************************************
+ *                   Dropdown                       *
+ ****************************************************/
+.common-input-group > .common-button {
+    color: @textColor !important;
+}
+
+.common-menu-dropdown-pane {
+    z-index: 1;
+
+    .common-button {
+        padding: .8rem;
+        width: 100%;
+        text-align: start;
+    }
+}
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast, .hc {
+    .common-input {
+        color: @highContrastTextColor;
+        border-color: @highContrastTextColor;
+        background-color: @highContrastBackgroundColor;
+    }
+
+    .common-input-group:focus::after,
+    .common-input-group:focus-within::after {
+        border-color: @highContrastHighlightColor;
+    }
+
+}

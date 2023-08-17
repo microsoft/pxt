@@ -8,6 +8,7 @@
     color: @blocklyToolboxText;
     overflow-x: visible;
     overflow-y: auto;
+    padding-top: 0;
     z-index: @blocklyToolboxZIndex;
     /* so blocks go over toolbox when dragging */
     -webkit-tap-highlight-color: transparent;
@@ -126,6 +127,25 @@ span.blocklyTreeLabel, text.blocklyText {
 }
 
 /*******************************
+        Toolbox Label
+*******************************/
+
+.toolbox-title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: .5rem 1rem;
+    border-bottom: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
+    user-select: none;
+}
+
+@media only screen and (max-width: @largestMobileScreen) {
+    .toolbox-title {
+        font-size: .75rem;
+        padding: 0 0.2rem;
+    }
+}
+
+/*******************************
         Toolbox search
 *******************************/
 
@@ -134,6 +154,13 @@ span.blocklyTreeLabel, text.blocklyText {
     border: 0 !important;
     border-radius: 0 !important;
 }
+
+@media only screen and (max-width: @largestMobileScreen) {
+    .blocklySearchInputField {
+        font-size: .75rem;
+    }
+}
+
 
 /*******************************
         Toolbox delete
@@ -186,6 +213,10 @@ span.blocklyTreeIcon {
     height: 100%;
     display: none;
     vertical-align: middle;
+}
+
+.blocklyTreeIcon.brandIcon {
+    font-family: 'brand-icons';
 }
 
 div.blocklyTreeIcon span {

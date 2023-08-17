@@ -13,9 +13,11 @@ This page was written using this documentation system, check it out at https://g
 ## Reference
 
 * [Macros](/writing-docs/macros)
+* [Snippets](/writing-docs/snippets)
 * [Anchors](/writing-docs/anchors)
 * [Routing](/writing-docs/routing)
 * [Tutorials](/writing-docs/tutorials)
 * [User Tutorials](/writing-docs/user-tutorials)
 * [Skillmaps](/writing-docs/skillmaps)
+* [Licensing](/writing-docs/licensing)
 * [Testing](/writing-docs/testing)

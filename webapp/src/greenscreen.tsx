@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
+import { fireClickOnEnter } from "./util";
 
 export interface WebCamProps {
     close: () => void;
@@ -19,8 +20,7 @@ function isMediaDevicesSupported(): boolean {
         && !!navigator.mediaDevices
         && !!navigator.mediaDevices.enumerateDevices
         && !!navigator.mediaDevices.getUserMedia
-        && !pxt.BrowserUtils.isElectron()
-        && !pxt.BrowserUtils.isUwpEdge();
+        && !pxt.BrowserUtils.isElectron();
 }
 
 export class WebCam extends data.Component<WebCamProps, WebCamState> {
@@ -126,7 +126,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
         const { hasPrompt, devices, userFacing } = this.state;
 
         return <div className="videoContainer">
-            <video className={userFacing ? "flipx" : ""} autoPlay playsInline ref={this.handleVideoRef} />
+            <video className={userFacing ? "flipx" : ""} autoPlay playsInline ref={this.handleVideoRef} width="100%" />
             {hasPrompt ?
                 <sui.Modal isOpen={hasPrompt} onClose={this.handleClose} closeIcon={true}
                     dimmer={true} header={lf("Choose a camera")}>
@@ -176,7 +176,7 @@ class WebCamCard extends data.Component<WebCamCardProps, {}> {
 
     renderCore() {
         const { header, icon } = this.props;
-        return <div role="button" className="ui card link" tabIndex={0} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
+        return <div role="button" className="ui card link" tabIndex={0} onClick={this.handleClick} onKeyDown={fireClickOnEnter}>
             <div className="imageicon">
                 <sui.Icon icon={`${icon} massive`} />
             </div>

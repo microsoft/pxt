@@ -148,6 +148,16 @@ namespace images {
     export function createTallBigImage(leds: string): Image {
         return undefined;
     }
+
+    /**
+     * Creates a template string
+     */
+    //% weight=75
+    //% blockId=device_build_string_literal block="create string grid"
+    //% gridLiteral=1
+    export function createTemplateGrid(leds: string): string {
+        return leds
+    }
 }
 
 //% color=#0078D7 weight=100
@@ -193,6 +203,34 @@ enum Melodies {
     Blues,
 }
 
+enum WaveShape {
+    Sine = 0,
+    Sawtooth = 1,
+    Triangle = 2,
+    Square = 3,
+    Noise = 4
+}
+
+enum InterpolationCurve {
+    Linear,
+    Curve,
+    Logarithmic
+}
+
+enum SoundExpressionEffect {
+    None = 0,
+    Vibrato = 1,
+    Tremolo = 2,
+    Warble = 3
+}
+
+enum SoundExpressionPlayMode {
+    //% block="until done"
+    UntilDone,
+    //% block="in background"
+    InBackground
+}
+
  /**
  * Generation of music tones through pin ``P0``.
  */
@@ -206,6 +244,45 @@ namespace music {
     //% blockId=device_builtin_melody block="%melody"
     //% blockHidden=true
     export function builtInMelody(melody: Melodies): number { return 0 };
+
+    //% blockId=soundExpression_playSoundEffect
+    //% block="play sound $sound $mode"
+    //% sound.shadow=soundExpression_createSoundEffect
+    //% weight=100 help=music/play-sound-effect
+    //% blockGap=8
+    //% group="micro:bit (V2)"
+    export function playSoundEffect(sound: string, mode: SoundExpressionPlayMode) {
+
+    }
+
+    //% blockId=soundExpression_createSoundEffect
+    //% help=music/create-sound-effect
+    //% block="$waveShape|| start frequency $startFrequency end frequency $endFrequency duration $duration start volume $startVolume end volume $endVolume effect $effect interpolation $interpolation"
+    //% waveShape.defl=WaveShape.Sine
+    //% waveShape.fieldEditor=soundeffect
+    //% startFrequency.defl=5000
+    //% startFrequency.min=0
+    //% startFrequency.max=5000
+    //% endFrequency.defl=0
+    //% endFrequency.min=0
+    //% endFrequency.max=5000
+    //% startVolume.defl=255
+    //% startVolume.min=0
+    //% startVolume.max=255
+    //% endVolume.defl=0
+    //% endVolume.min=0
+    //% endVolume.max=255
+    //% duration.defl=500
+    //% duration.min=1
+    //% duration.max=9999
+    //% effect.defl=SoundExpressionEffect.None
+    //% interpolation.defl=InterpolationCurve.Linear
+    //% compileHiddenArguments=true
+    //% inlineInputMode="variable"
+    //% group="micro:bit (V2)"
+    export function createSoundEffect(waveShape: WaveShape, startFrequency: number, endFrequency: number, startVolume: number, endVolume: number, duration: number, effect: SoundExpressionEffect, interpolation: InterpolationCurve): string {
+        return "";
+    }
 
 }
 

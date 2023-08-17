@@ -1,0 +1,146 @@
+.teaching-bubble-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: @modalDimmerZIndex;
+}
+
+.teaching-bubble-cutout {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: @modalDimmerZIndex;
+    box-shadow: 0 0 0 99999px @modalOverlayColor;
+    border-radius: 0.5rem;
+}
+
+.teaching-bubble-cutout,
+.teaching-bubble,
+.teaching-bubble-arrow,
+.teaching-bubble-arrow-outline {
+    transition-property: top, left, width, height;
+    transition-duration: 0.5s;
+}
+
+.teaching-bubble {
+    position: fixed;
+    max-width: 25rem;
+    min-width: 18.75rem;
+    background: @teachingBubbleBackgroundColor;
+    color: @teachingBubbleTextColor;
+    box-shadow: 0 0 0 0.1rem;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    z-index: @modalDimmerZIndex;
+
+    .common-button {
+
+        &:focus {
+            outline: .1rem solid @teachingBubbleTextColor;
+            filter: grayscale(.15) brightness(.85) contrast(1.3);
+        }
+        &.primary:focus::after, &:focus::after {
+            outline: none;
+        }
+    }
+}
+
+.teaching-bubble-arrow {
+    position: fixed;
+    width: 0;
+    height: 0;
+    z-index: @modalDimmerZIndex + 1;
+    color: @teachingBubbleBackgroundColor;
+}
+
+.teaching-bubble-arrow-outline {
+    position: fixed;
+    width: 0;
+    height: 0;
+    z-index: @modalDimmerZIndex;
+    color: @teachingBubbleTextColor;
+}
+
+.teaching-bubble-content {
+    font-size: 1.1rem;
+
+    p {
+        margin: .25rem 0 .5rem;
+    }
+}
+
+.teaching-bubble-footer {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    .teaching-bubble-steps {
+        font-size: .9rem;
+        color: @teachingBubbleStepsColor;
+    }
+
+    .common-button.primary {
+        padding: .25rem .5rem;
+        margin: 0 .5rem 0 0;
+        border: .1rem solid @teachingBubbleTextColor;
+        background: @teachingBubbleBackgroundColor;
+        color: @teachingBubbleTextColor;
+
+        &.inverted {
+            margin-right: 0;
+            background: @teachingBubbleTextColor;
+            color: @teachingBubbleBackgroundColor;
+        }
+    }
+
+    &.no-steps {
+        flex-direction: row-reverse;
+    }
+}
+
+.teaching-bubble-close.common-button {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    padding: 0.5rem 0 0.25rem 0;
+    background: transparent;
+    color: @teachingBubbleTextColor;
+    margin: 0;
+
+    i.right {
+        opacity: 1;
+        font-size: 1.3rem;
+        margin: 0;
+    }
+}
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast,
+.hc {
+    .teaching-bubble {
+        background: @highContrastBackgroundColor;
+        color: @highContrastTextColor;
+        border: solid @highContrastTextColor;
+
+        .teaching-bubble-navigation>.common-button {
+            color: @highContrastTextColor;
+            border: solid @highContrastTextColor;
+        }
+    }
+
+    .teaching-bubble-arrow {
+        color: @highContrastTextColor;
+    }
+
+    .teaching-bubble-cutout {
+        border: 0.25rem solid @highContrastHighlightColor;
+    }
+}

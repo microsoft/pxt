@@ -371,7 +371,12 @@ function cloneGraph(root: BaseNode): GraphNode {
     const clones: { [key: string]: GraphNode} = {};
 
     // Clone all nodes, assign children to cloned nodes
-    nodes.forEach(n => clones[n.activityId] = JSON.parse(JSON.stringify(n)));
+    nodes.forEach(n => {
+        let nextCopy = n.next.slice();
+        n.next.length = 0;
+        clones[n.activityId] = JSON.parse(JSON.stringify(n));
+        n.next = nextCopy;
+    });
     Object.keys(clones).forEach(cloneId => clones[cloneId].next = clones[cloneId].nextIds.map(id => clones[id] as any));
 
     return clones[root.activityId];

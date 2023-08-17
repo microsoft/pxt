@@ -4,8 +4,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
-import { FieldEditorComponent } from "./blocklyFieldView";
-import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
 import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
 
 
@@ -18,179 +16,507 @@ function init() {
     ReactDOM.render(<AssetEditor />, assetDiv);
 }
 
-type AssetType = "sprite" | "tilemap";
-
 interface AssetEditorState {
-    viewType: AssetType;
+    editing?: pxt.Asset;
+    isEmptyAsset?: boolean;
 }
 
-export interface Message {
-    data: MessageData;
-}
-export interface MessageData {
-    _fromVscode?: boolean;
-    type: string;
-    message?: string;
-    name?: string;
-    tileWidth?: number;
+interface BaseAssetEditorRequest {
+    id?: number;
+    files: pxt.Map<string>;
+    palette?: string[];
 }
 
-const DEFAULT_NAME = "tilemap_asset";
-const DEFAULT_TILE_WIDTH = 16;
+interface OpenAssetEditorRequest extends BaseAssetEditorRequest {
+    type: "open";
+    assetId: string;
+    assetType: pxt.AssetType;
+}
+
+interface CreateAssetEditorRequest extends BaseAssetEditorRequest {
+    type: "create";
+    assetType: pxt.AssetType;
+    displayName?: string;
+}
+
+interface SaveAssetEditorRequest extends BaseAssetEditorRequest {
+    type: "save";
+}
+
+interface DuplicateAssetEditorRequest extends BaseAssetEditorRequest {
+    type: "duplicate";
+    assetId: string;
+    assetType: pxt.AssetType;
+}
+
+type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
+
+interface BaseAssetEditorResponse {
+    id?: number;
+}
+
+interface OpenAssetEditorResponse extends BaseAssetEditorResponse {
+    type: "open";
+}
+
+interface CreateAssetEditorResponse extends BaseAssetEditorResponse {
+    type: "create";
+}
+
+interface SaveAssetEditorResponse extends BaseAssetEditorResponse {
+    type: "save";
+    files: pxt.Map<string>;
+}
+
+interface DuplicateAssetEditorResponse extends BaseAssetEditorResponse {
+    type: "duplicate";
+}
+
+type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
+
+interface AssetEditorRequestSaveEvent {
+    type: "event";
+    kind: "done-clicked";
+}
+
+interface AssetEditorReadyEvent {
+    type: "event";
+    kind: "ready";
+}
+
+type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
 
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
-    private editor: FieldEditorComponent<any>;
-    protected tilemapProject: pxt.TilemapProject;
-    protected tilemapName: string = DEFAULT_NAME;
-    protected tileWidth: number = DEFAULT_TILE_WIDTH;
+    private editor: ImageFieldEditor<pxt.Asset>;
+    protected saveProject: pxt.TilemapProject;
+    protected editorProject: pxt.TilemapProject;
+    protected inflatedJres: pxt.Map<pxt.Map<pxt.JRes>>;
+    protected commentAttrs: pxt.Map<pxtc.CommentAttrs>;
+    protected files: pxt.Map<string>;
+    protected galleryTiles: any[];
+    protected lastValue: pxt.Asset;
 
     constructor(props: {}) {
         super(props);
-
-        let view: AssetType = "sprite";
-        const v = /view(?:[:=])([a-zA-Z]+)/i.exec(window.location.href)
-        if (v && v[1] === "tilemap") {
-            view = "tilemap";
-        }
-        this.state = { viewType: view };
+        this.state = {};
+        pxt.react.getTilemapProject = () => this.editorProject;
 
         setTelemetryFunction(tickAssetEditorEvent);
     }
 
-    handleMessage = (msg: Message)  => {
-        if (msg.data._fromVscode) {
-            if (msg.data.type === "initialize") {
-                switch (this.state.viewType) {
-                    case "sprite":
-                        this.editor.loadJres(msg.data.message);
-                        break;
-                    case "tilemap":
-                        this.tilemapName = msg.data.name;
-                        this.tileWidth = msg.data.tileWidth;
-                        this.initTilemap(msg.data.message);
-                        break;
+    handleMessage = (msg: MessageEvent)  => {
+        const request = msg.data as AssetEditorRequest;
+
+        switch (request.type) {
+            case "create":
+                this.setPalette(request.palette);
+                this.initTilemapProject(request.files);
+                const asset = this.getEmptyAsset(request.assetType, request.displayName);
+
+                this.setState({
+                    editing: asset,
+                    isEmptyAsset: true
+                });
+
+                this.sendResponse({
+                    id: request.id,
+                    type: request.type
+                });
+                break;
+            case "open":
+                this.setPalette(request.palette);
+                this.initTilemapProject(request.files);
+                const toOpen = this.lookupAsset(request.assetType, request.assetId);
+                if (toOpen.type === pxt.AssetType.Tilemap) {
+                    pxt.sprite.addMissingTilemapTilesAndReferences(this.editorProject, toOpen);
                 }
-            } else if (msg.data.type === "update") {
-                this.sendJres();
-            }
+                this.setState({
+                    editing: toOpen
+                });
+                this.sendResponse({
+                    id: request.id,
+                    type: request.type
+                });
+                break;
+            case "duplicate":
+                this.setPalette(request.palette);
+                this.initTilemapProject(request.files);
+                const existing = this.lookupAsset(request.assetType, request.assetId);
+                this.setState({
+                    editing: this.editorProject.duplicateAsset(existing)
+                });
+                this.sendResponse({
+                    id: request.id,
+                    type: request.type
+                });
+                break;
+            case "save":
+                this.sendResponse({
+                    id: request.id,
+                    type: request.type,
+                    files: this.saveProjectFiles()
+                });
+                break;
         }
     }
 
-    postMessage(msgData: MessageData) {
-        window.parent.postMessage(msgData, "*");
-    }
-
-    refHandler = (e: FieldEditorComponent<any>) => {
+    refHandler = (e: ImageFieldEditor<pxt.Asset>) => {
+        if (!e) return;
         this.editor = e;
-        if (this.state.viewType === "tilemap") {
-            this.initTilemap();
+        this.editor.init(this.state.editing, () => {}, {
+            galleryTiles: this.galleryTiles,
+            hideMyAssets: true,
+            hideCloseButton: true
+        })
+    }
+
+    handleKeydown = (e: KeyboardEvent) => {
+        if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
+            this.sendSaveRequest();
         }
     }
 
-    initTilemap(s?: string) {
-        this.tilemapProject = new pxt.TilemapProject();
-        this.tilemapProject.loadTilemapJRes(s ? this.parseJres(s) : {});
-        let project = this.tilemapProject.getTilemap(this.tilemapName).data;
-
-        if (!project) {
-            const [ name, map ] = this.tilemapProject.createNewTilemap(this.tilemapName, this.tileWidth, 16, 16);
-            project = map;
-            this.tilemapName = name;
-        }
-
-        this.editor.init(project, this.callbackOnDoneClick);
-    }
-
-    updateTilemap() {
-        const data = this.editor.getValue() as pxt.sprite.TilemapData;
-
-        // reference pxteditor/monaco-fields/field_tilemap.ts
-        if (data.deletedTiles) {
-            for (const deleted of data.deletedTiles) {
-                this.tilemapProject.deleteTile(deleted);
-            }
-        }
-
-        if (data.editedTiles) {
-            for (const edit of data.editedTiles) {
-                const editedIndex = data.tileset.tiles.findIndex(t => t.id === edit);
-                const edited = data.tileset.tiles[editedIndex];
-
-                // New tiles start with *. We haven't created them yet so ignore
-                if (!edited || edited.id.startsWith("*")) continue;
-
-                data.tileset.tiles[editedIndex] = this.tilemapProject.updateTile(edited)
-            }
-        }
-
-        for (let i = 0; i < data.tileset.tiles.length; i++) {
-            const tile = data.tileset.tiles[i];
-
-            if (tile.id.startsWith("*")) {
-                const newTile = this.tilemapProject.createNewTile(tile.bitmap);
-                data.tileset.tiles[i] = newTile;
-            }
-            else if (!tile.jresData) {
-                data.tileset.tiles[i] = this.tilemapProject.resolveTile(tile.id);
-            }
-        }
-
-        this.tilemapProject.updateTilemap(this.tilemapName, data);
-
-    }
-
+    pollingInterval: number;
     componentDidMount() {
         window.addEventListener("message", this.handleMessage, null);
-        this.postMessage({type: "ready", message: this.state.viewType});
+        window.addEventListener("keydown", this.handleKeydown, null);
+        this.sendEvent({
+            type: "event",
+            kind: "ready"
+        });
         tickAssetEditorEvent("asset-editor-shown");
+        this.pollingInterval = setInterval(this.pollForUpdates, 200);
+        // TODO: one of these? Probably would need it to directly save
+        // & send up message instead of sending a 'save now' type msg
+        // window.addEventListener("unload", this.pollForUpdates)
     }
 
     componentWillUnmount() {
         window.removeEventListener("message", this.handleMessage, null);
+        window.removeEventListener("keydown", this.handleKeydown, null);
+        window.clearInterval(this.pollingInterval);
     }
 
-    callbackOnDoneClick = () => {
-        this.sendJres();
+    pollForUpdates = () => {
+        if (this.state.editing) this.updateAsset();
     }
 
-    sendJres() {
-        let message: string;
-        switch (this.state.viewType) {
-            case "sprite":
-                message = this.editor.getJres();
-                break;
-            case "tilemap":
-                this.updateTilemap();
-                const jres = this.tilemapProject.getProjectTilesetJRes()
-                const tilemapFiles = { jres, ts: pxt.emitTilemapsFromJRes(jres) }
-                message = JSON.stringify(tilemapFiles);
-                break;
+    componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<AssetEditorState>, snapshot?: any): void {
+        if (!!prevState?.editing && prevState.editing !== this.state.editing) {
+            this.saveProject.removeChangeListener(
+                prevState.editing.type,
+                this.sendSaveRequest
+            );
         }
-
-        this.postMessage({
-            type: "update",
-            message
-        });
+        if (this.state?.editing) {
+            this.saveProject.addChangeListener(
+                this.state.editing,
+                this.sendSaveRequest
+            );
+        }
     }
 
-    parseJres(jres: string) {
-        const allres: pxt.Map<pxt.JRes> = {}
-        let js: pxt.Map<pxt.JRes> = JSON.parse(jres)
-        pxt.inflateJRes(js, allres);
-        return allres;
+    sendSaveRequest = () => {
+        this.sendEvent({
+            type: "event",
+            kind: "done-clicked"
+        })
     }
 
     render() {
-        if (this.state.viewType === "tilemap") {
-            return <TilemapFieldEditor ref={ this.refHandler } />
+        if (this.state.editing) {
+            return <ImageFieldEditor
+                ref={this.refHandler}
+                singleFrame={this.state.editing.type !== "animation"}
+                isMusicEditor={this.state.editing.type === "song"}
+                doneButtonCallback={this.sendSaveRequest}
+                hideDoneButton={true}
+                includeSpecialTagsInFilter={true}
+            />
         }
-        return <ImageFieldEditor ref={this.refHandler} singleFrame={true} doneButtonCallback={this.callbackOnDoneClick} />
+
+        return <div></div>
     }
 
+    protected sendResponse(response: AssetEditorResponse) {
+        this.postMessage(response);
+    }
+
+    protected sendEvent(event: AssetEditorEvent) {
+        this.postMessage(event);
+    }
+
+    protected postMessage(message: any) {
+        if ((window as any).acquireVsCodeApi) {
+            (window as any).acquireVsCodeApi().postMessage(message)
+        }
+        else {
+            window.parent.postMessage(message, "*");
+        }
+    }
+
+    protected updateAsset() {
+        const editorAsset = this.editor.getValue();
+
+        // We have to clone the asset so that we don't break the editor
+        // by modifying it out from underneath it
+        const currentValue = pxt.cloneAsset(editorAsset);
+        if (this.lastValue && pxt.assetEquals(this.lastValue, currentValue)) {
+            return;
+        }
+        this.lastValue = pxt.cloneAsset(editorAsset);
+
+        // Clone asset doesn't clone the tilemap metadata. We need to update
+        // all of the referenced tiles, so clone it here
+        if (currentValue.type === pxt.AssetType.Tilemap && editorAsset.type === currentValue.type) {
+            currentValue.data.deletedTiles = editorAsset.data.deletedTiles?.slice();
+            currentValue.data.editedTiles = editorAsset.data.editedTiles?.slice();
+            currentValue.data.projectReferences = editorAsset.data.projectReferences?.slice();
+            currentValue.data.tileOrder = editorAsset.data.tileOrder?.slice();
+        }
+
+        // Create a clone of the tilemap project and update the asset. The clone
+        // is mostly for tilemaps; they are actually several assets (the map + tiles)
+        // and things can get weird if they are overwritten in the tilemap project
+        // while still being edited in the tilemap editor
+        this.saveProject = this.editorProject.clone();
+        if (this.state.isEmptyAsset) {
+            const name = currentValue.meta?.displayName;
+            let newAsset: pxt.Asset;
+            switch (currentValue.type) {
+                case pxt.AssetType.Image:
+                    newAsset = this.saveProject.createNewProjectImage(currentValue.bitmap, name);
+                    break;
+                case pxt.AssetType.Tile:
+                    newAsset = this.saveProject.createNewTile(currentValue.bitmap, null, name);
+                    break;
+                case pxt.AssetType.Tilemap:
+                    pxt.sprite.updateTilemapReferencesFromResult(this.saveProject, currentValue);
+                    const [newName, data] = this.saveProject.createNewTilemapFromData(currentValue.data, name);
+                    newAsset = this.saveProject.lookupAssetByName(pxt.AssetType.Tilemap, newName);
+                    break;
+                case pxt.AssetType.Animation:
+                    newAsset = this.saveProject.createNewAnimationFromData(currentValue.frames, currentValue.interval, name);
+                    break;
+                case pxt.AssetType.Song:
+                    newAsset = this.saveProject.createNewSong(currentValue.song, name);
+                    break;
+            }
+        }
+        else {
+            if (currentValue.type === pxt.AssetType.Tilemap) {
+                pxt.sprite.updateTilemapReferencesFromResult(this.saveProject, currentValue);
+            }
+            this.saveProject.updateAsset(currentValue);
+        }
+
+        this.sendSaveRequest();
+    }
+
+    protected saveProjectFiles() {
+        this.updateAsset();
+
+        const assetJRes = pxt.inflateJRes(this.saveProject.getProjectAssetsJRes());
+        const tileJRes = pxt.inflateJRes(this.saveProject.getProjectTilesetJRes());
+
+        const newFileJRes: pxt.Map<pxt.Map<pxt.JRes>> = {};
+
+        for (const id of Object.keys(assetJRes)) {
+            const filename = this.locateFileForAsset(id) || pxt.IMAGES_JRES;
+            if (!newFileJRes[filename]) newFileJRes[filename] = {};
+
+            newFileJRes[filename][id] = assetJRes[id];
+        }
+
+        for (const id of Object.keys(tileJRes)) {
+            const filename = this.locateFileForAsset(id) || pxt.TILEMAP_JRES;
+            if (!newFileJRes[filename]) newFileJRes[filename] = {};
+
+            newFileJRes[filename][id] = tileJRes[id];
+        }
+
+        const outFiles = {
+            ...this.files
+        };
+
+        for (const filename of Object.keys(newFileJRes)) {
+            outFiles[filename] = JSON.stringify(newFileJRes[filename], null, 4);
+            const generatedFile = filename.substring(0, filename.length - "jres".length) + "ts";
+            if (outFiles[generatedFile] || filename === pxt.IMAGES_JRES || filename === pxt.TILEMAP_JRES) {
+                outFiles[generatedFile] = pxt.emitProjectImages(newFileJRes[filename]) + "\n" + pxt.emitTilemapsFromJRes(newFileJRes[filename]);
+            }
+        }
+
+        return outFiles;
+    }
+
+    protected setPalette(palette: string[]) {
+        if (!palette || !Array.isArray(palette) || !palette.length) return;
+        pxt.appTarget.runtime.palette = palette.slice();
+    }
+
+    protected initTilemapProject(files: pxt.Map<string>) {
+        const projectTilemaps: pxt.Map<pxt.JRes> = {};
+        const galleryTilemaps: pxt.Map<pxt.JRes> = {};
+        const projectAssets: pxt.Map<pxt.JRes> = {};
+        const galleryAssets: pxt.Map<pxt.JRes> = {};
+        this.editorProject = new pxt.TilemapProject();
+        this.inflatedJres = {};
+        this.commentAttrs = {};
+
+        for (const fileName of Object.keys(files).filter(file => !file.endsWith(".jres"))) {
+            const comments = parseCommentAttrsFromTs(files[fileName]);
+
+            for (const id of Object.keys(comments)) {
+                this.commentAttrs[id] = comments[id];
+            }
+        }
+
+        for (const filename of Object.keys(files).filter(file => file.endsWith(".jres"))) {
+            const isGallery = filename.indexOf("pxt_modules") !== -1 || filename.indexOf("node_modules") !== -1;
+
+            const inflated = pxt.inflateJRes(JSON.parse(files[filename]));
+            this.inflatedJres[filename] = inflated;
+
+            for (const id of Object.keys(inflated)) {
+                if (this.commentAttrs[id]?.tags) {
+                    const tags = this.commentAttrs[id].tags.split(" ").filter(el => !!el);
+                    if (tags.length) {
+                        inflated[id].tags = tags;
+                    }
+                }
+                if (inflated[id].mimeType === pxt.TILEMAP_MIME_TYPE || inflated[id].tilemapTile) {
+                    if (isGallery) {
+                        galleryTilemaps[id] = inflated[id];
+                    }
+                    else {
+                        projectTilemaps[id] = inflated[id];
+                    }
+                }
+                else {
+                    if (isGallery) {
+                        galleryAssets[id] = inflated[id];
+                    }
+                    else {
+                        projectAssets[id] = inflated[id];
+                    }
+                }
+            }
+        }
+
+        this.editorProject.loadAssetsJRes(galleryAssets, true);
+        this.editorProject.loadAssetsJRes(projectAssets);
+        this.editorProject.loadTilemapJRes(galleryTilemaps, false, true);
+        this.editorProject.loadTilemapJRes(projectTilemaps);
+
+        this.galleryTiles = this.editorProject.getGalleryAssets(pxt.AssetType.Tile)
+            .map(tile => {
+                const comments = this.commentAttrs[tile.id];
+                if (!comments) return undefined;
+
+                const splitTags = tile.meta.tags
+                    ?.map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase());
+
+                if (!splitTags || splitTags.indexOf("tile") === -1) return undefined;
+
+
+                return {
+                    qName: tile.id,
+                    bitmap: tile.bitmap,
+                    alt: tile.id,
+                    tags: splitTags
+                };
+            })
+            .filter(gt => !!gt);
+
+        this.saveProject = this.editorProject.clone();
+    }
+
+    protected locateFileForAsset(assetId: string) {
+        for (const filename of Object.keys(this.inflatedJres)) {
+            if (this.inflatedJres[filename][assetId]) return filename;
+        }
+
+        return undefined;
+    }
+
+    protected getEmptyAsset(type: pxt.AssetType, displayName?: string): pxt.Asset {
+        const project = pxt.react.getTilemapProject();
+
+        const defaultName = displayName || pxt.getDefaultAssetDisplayName(type);
+        let newName = defaultName;
+        let index = 0;
+
+        while (project.isNameTaken(type, newName)) {
+            newName = defaultName + (index++);
+        }
+
+        const asset = { type, id: "", internalID: 0, meta: { displayName: newName } } as pxt.Asset;
+        switch (type) {
+            case pxt.AssetType.Image:
+            case pxt.AssetType.Tile:
+                (asset as pxt.ProjectImage).bitmap = new pxt.sprite.Bitmap(16, 16).data(); break
+            case pxt.AssetType.Tilemap:
+                const tilemap = asset as pxt.ProjectTilemap;
+                tilemap.data = project.blankTilemap(16, 16, 16);
+                pxt.sprite.addMissingTilemapTilesAndReferences(project, tilemap);
+                break;
+            case pxt.AssetType.Animation:
+                const animation = asset as pxt.Animation;
+                animation.frames = [new pxt.sprite.Bitmap(16, 16).data()];
+                animation.interval = 200;
+                break;
+            case pxt.AssetType.Song:
+                (asset as pxt.Song).song = pxt.assets.music.getEmptySong(2);
+                break;
+
+        }
+        return asset;
+    }
+
+    protected lookupAsset(type: pxt.AssetType, id: string) {
+        const res = this.saveProject.lookupAsset(type, id);
+
+        if (res) return res;
+
+        const idParts = id.split(".")
+
+        return this.saveProject.lookupAsset(type, idParts[idParts.length - 1]);
+    }
 }
 
 function tickAssetEditorEvent(event: string) {
     pxt.tickEvent("asset.editor", {
         action: event
     });
+}
+
+function parseCommentAttrsFromTs(contents: string) {
+    const lines = contents.split("\n");
+    const result: pxt.Map<pxtc.CommentAttrs> = {};
+
+    let currentNamespace: string;
+    let currentComments = "";
+
+    for (const line of lines) {
+        const namespaceMatch = /^namespace\s+([^\}]+)\s+\{$/.exec(line);
+        if (namespaceMatch) {
+            currentNamespace = namespaceMatch[1];
+            currentComments = "";
+            continue;
+        }
+        if (/^\s+\/\/%\s/.test(line)) {
+            currentComments += line + "\n";
+            continue;
+        }
+
+        const varMatch = /^\s*export\s+const\s+([^\s]+)\s*=/.exec(line);
+
+        if (varMatch) {
+            const id = currentNamespace + "." + varMatch[1];
+            result[id] = pxtc.parseCommentString(currentComments);
+            currentComments = "";
+        }
+    }
+    return result;
 }
