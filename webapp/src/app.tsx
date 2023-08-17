@@ -80,6 +80,7 @@ import Microbit from "./SAMLabsDevices/Microbit";
 import DCMotor from "./SAMLabsDevices/DCMotor";
 import Button from "./SAMLabsDevices/Button";
 import Slider from "./SAMLabsDevices/Slider";
+import LightSensor from "./SAMLabsDevices/LightSensor";
 
 pxsim.util.injectPolyphils();
 
@@ -278,13 +279,29 @@ export class ProjectView
                     };
                     simulator.driver.postMessage(playerOneConnectedMsg);
                 }
-            } else if (msg.type === "createButton") {
+            }  else if (msg.type === "createButton") {
                 this.checkIfDeviceExists(ev.data.id, Button);
             } else if (msg.type === "createDCMotor") {
                 this.checkIfDeviceExists(ev.data.id, DCMotor);
             } else if (msg.type === "createSlider") {
                 this.checkIfDeviceExists(ev.data.id, Slider);
-            } else if (msg.type === "createMicrobit") {
+            }else if (msg.type === "createBuzzer") {
+                this.checkIfDeviceExists(ev.data.id, Button);
+            } else if (msg.type === "createLightSensor") {
+                this.checkIfDeviceExists(ev.data.id, LightSensor);
+            } else if (msg.type === "createHeatSensor") {
+                this.checkIfDeviceExists(ev.data.id, Button);
+            } else if (msg.type === "createLED") {
+                this.checkIfDeviceExists(ev.data.id, Button);
+            } else if (msg.type === "createPressureSensor") {
+                this.checkIfDeviceExists(ev.data.id, Button);
+            } else if (msg.type === "createProximitySensor") {
+                this.checkIfDeviceExists(ev.data.id, Button);
+            }else if (msg.type === "createServoMotor") {
+                this.checkIfDeviceExists(ev.data.id, Button);
+            } else if (msg.type === "createTilt") {
+                this.checkIfDeviceExists(ev.data.id, Button);
+            }else if (msg.type === "createMicrobit") {
                 this.checkIfDeviceExists(ev.data.id, Microbit);
             }
         }, false);
