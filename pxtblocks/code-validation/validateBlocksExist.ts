@@ -16,7 +16,7 @@ namespace pxt.blocks {
             return acc;
         }, {});
 
-        for (const [requiredBlockId, requiredCount] of Object.entries(requiredBlockCounts)) {
+        for (const [requiredBlockId, requiredCount] of Object.entries(requiredBlockCounts || {})) {
             const countForBlock = userBlocksEnabledByType[requiredBlockId];
             if (countForBlock === undefined) {
                 // user did not use a specific block
@@ -36,5 +36,4 @@ namespace pxt.blocks {
             insufficientBlocks,
         }
     }
-
 }

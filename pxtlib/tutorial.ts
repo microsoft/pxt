@@ -63,7 +63,7 @@ namespace pxt.tutorial {
     }
 
     export function getMetadataRegex(): RegExp {
-        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|tutorialValidationRules|requiredTutorialBlock|simtheme)\s*\n([\s\S]*?)\n```/gmi;
+        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|simtheme)\s*\n([\s\S]*?)\n```/gmi;
     }
 
     function computeBodyMetadata(body: string) {
@@ -88,7 +88,6 @@ namespace pxt.tutorial {
                     case "blocks":
                     case "blockconfig.local":
                     case "blockconfig.global":
-                    case "requiredTutorialBlock":
                     case "filterblocks":
                         if (!checkTutorialEditor(pxt.BLOCKS_PROJECT_NAME))
                             return undefined;
@@ -122,9 +121,6 @@ namespace pxt.tutorial {
                     case "customts":
                         customTs = m2;
                         m2 = "";
-                        break;
-                    case "tutorialValidationRules":
-                        // DEPRECATED: Unused, replaced with new code validation
                         break;
                 }
                 code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
