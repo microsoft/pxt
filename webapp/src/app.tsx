@@ -82,6 +82,7 @@ import Button from "./SAMLabsDevices/Button";
 import Slider from "./SAMLabsDevices/Slider";
 import LightSensor from "./SAMLabsDevices/LightSensor";
 import Tilt from "./SAMLabsDevices/Tilt";
+import Buzzer from "./SAMLabsDevices/Buzzer";
 
 pxsim.util.injectPolyphils();
 
@@ -287,7 +288,7 @@ export class ProjectView
             } else if (msg.type === "createSlider") {
                 this.checkIfDeviceExists(ev.data.id, Slider);
             }else if (msg.type === "createBuzzer") {
-                this.checkIfDeviceExists(ev.data.id, Button);
+                this.checkIfDeviceExists(ev.data.id, Buzzer);
             } else if (msg.type === "createLightSensor") {
                 this.checkIfDeviceExists(ev.data.id, LightSensor);
             } else if (msg.type === "createHeatSensor") {
