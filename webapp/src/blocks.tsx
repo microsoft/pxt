@@ -800,14 +800,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    async validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) {
-        // Current tutorial step
-        const { tutorialStep } = tutorial;
-        const blocks = this.editor.getAllBlocks(false);
-        const tutorialRulesValidated: pxt.tutorial.TutorialRuleStatus[] = await pxt.tutorial.validate(tutorial, blocks, this.blockInfo);
-        this.parent.setTutorialCodeStatus(tutorialStep, tutorialRulesValidated);
-    }
-
     getBlocksAreaDiv() {
         return document.getElementById('blocksArea');
     }

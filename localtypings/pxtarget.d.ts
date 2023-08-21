@@ -465,7 +465,6 @@ declare namespace pxt {
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
         immersiveReader?: boolean; // enables the immersive reader for tutorials
-        tutorialCodeValidation?: boolean; // Enable code validation for tutorials
         downloadDialogTheme?: DownloadDialogTheme;
         songEditor?: boolean; // enable the song asset type and field editor
         multiplayer?: boolean; // enable multiplayer features
@@ -1136,7 +1135,6 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
-        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
         simTheme?: Partial<pxt.PackageConfig>;
@@ -1153,16 +1151,6 @@ declare namespace pxt.tutorial {
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
         autoexpandOff?: boolean; // INTERNAL TESTING ONLY
         preferredEditor?: string; // preferred editor for opening the tutorial
-        tutorialCodeValidation?: boolean; // enable tutorial validation for this tutorial
-    }
-
-    interface TutorialRuleStatus {
-        ruleName: string;
-        ruleTurnOn: boolean;
-        ruleStatus?: boolean;
-        ruleMessage?: string;
-        isStrict?: boolean;
-        blockIds?: string[];
     }
 
     interface TutorialBlockConfigEntry {
@@ -1190,9 +1178,13 @@ declare namespace pxt.tutorial {
         execute(options: CodeValidationExecuteOptions): Promise<CodeValidationResult>;
     }
 
+    interface CodeValidatorBaseProperties {
+        enabled?: string;
+    }
+
     interface CodeValidatorMetadata {
         validatorType: string;
-        properties: pxt.Map<string>;
+        properties: CodeValidatorBaseProperties;
     }
 
     interface CodeValidationConfig {
@@ -1210,10 +1202,6 @@ declare namespace pxt.tutorial {
         title?: string;
         activity?: number;
         contentMd?: string;
-
-        // Validation
-        requiredBlockMd?: string;
-        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
 
         // Old
         headerContentMd?: string;
@@ -1255,7 +1243,6 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
-        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
         templateLoaded?: boolean; // if the template code has been loaded once, we skip
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig // concatenated 'validation.global' sections. Contains validation config applicable to all steps

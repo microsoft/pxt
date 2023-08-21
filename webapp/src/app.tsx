@@ -996,9 +996,6 @@ export class ProjectView
         if (!this.editor.isIncomplete()) {
             this.saveFileAsync(); // don't wait till save is done
             this.typecheck();
-
-            // If we are in a tutorial, call the validator for that editor (blocks, TS, etc)
-            if (this.isTutorial() && pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.state.tutorialOptions);
         }
         this.markdownChangeHandler();
     }, 500, false);
@@ -1414,18 +1411,7 @@ export class ProjectView
             if (this.textEditor.giveFocusOnLoading && this.isTextEditor()) {
                 this.textEditor.editor?.focus();
             }
-            if (pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.state.tutorialOptions);
         }
-    }
-
-    setTutorialCodeStatus(step: number, status: pxt.tutorial.TutorialRuleStatus[]) {
-        const tutorialOptions = this.state.tutorialOptions;
-        const stepInfo = tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep];
-        const tutorialCodeValidationIsOn = tutorialOptions.metadata.tutorialCodeValidation;
-        if (tutorialCodeValidationIsOn) stepInfo.listOfValidationRules = status;
-
-        // Update the state with the code status, so the tutorial card can re-render
-        this.setState({ tutorialOptions: tutorialOptions });
     }
 
     protected postTutorialProgress() {

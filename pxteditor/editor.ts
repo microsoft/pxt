@@ -280,7 +280,6 @@ namespace pxt.editor {
         showTutorialHint(): void;
         isTutorial(): boolean;
         onTutorialLoaded(): void;
-        setTutorialCodeStatus(step: number, status: pxt.tutorial.TutorialRuleStatus[]): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;

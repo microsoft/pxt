@@ -400,12 +400,6 @@
 @assetTypeButton: @teal;
 
 /*---------------------------
-   Tutorial Code Validation
-----------------------------*/
-@tutorialCodeValidationCorrectBackground: @green;
-@tutorialCodeValidationCorrectTextColor: @white;
-
-/*---------------------------
    Extensions
 ----------------------------*/
 @extensionTagBackgroundColor: #AAAAAA;
