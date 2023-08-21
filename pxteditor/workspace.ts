@@ -52,8 +52,6 @@ namespace pxt.workspace {
         listAsync(): Promise<Header[]>; // called from workspace.syncAsync (including upon startup)
         getAsync(h: Header): Promise<File>;
         setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version>;
-        setHistoryAsync?: (h: Header, history: HistoryEntry[], preVer: string) => Promise<string>;
-        getHistoryAsync?: (h: Header) => Promise<HistoryEntry[]>;
         deleteAsync?: (h: Header, prevVersion: Version) => Promise<void>;
         resetAsync(): Promise<void>;
         loadedAsync?: () => Promise<void>;

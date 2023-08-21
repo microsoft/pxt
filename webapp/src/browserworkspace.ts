@@ -3,7 +3,6 @@ import * as workspace from "./workspace";
 
 let headerDb: db.Table;
 let textDb: db.Table;
-let historyDb: db.Table;
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -25,13 +24,11 @@ function migratePrefixesAsync(): Promise<void> {
         // This version does not use a prefix for storing projects, so just use default tables
         headerDb = new db.Table("header");
         textDb = new db.Table("text");
-        historyDb = new db.Table("history");
         return Promise.resolve();
     }
 
     headerDb = new db.Table(`${currentDbPrefix}-header`);
     textDb = new db.Table(`${currentDbPrefix}-text`);
-    historyDb = new db.Table(`${currentDbPrefix}-history`);
 
     return headerDb.getAllAsync()
         .then((allDbHeaders) => {
@@ -101,24 +98,6 @@ async function getAsync(h: Header): Promise<pxt.workspace.File> {
     }
 }
 
-async function getHistoryAsync(h: Header): Promise<pxt.workspace.HistoryEntry[]> {
-    try {
-        const history = await historyDb.getAsync(h.id);
-        return history.history;
-    }
-    catch (e) {
-        return undefined;
-    }
-}
-
-async function setHistoryAsync(h: Header, history: pxt.workspace.HistoryEntry[], prevVer: string): Promise<string> {
-    return await historyDb.setAsync({
-        id: h.id,
-        history,
-        _rev: prevVer
-    });
-}
-
 function setAsync(h: Header, prevVer: any, text?: ScriptText) {
     return setCoreAsync(headerDb, textDb, h, prevVer, text);
 }
@@ -178,7 +157,5 @@ export const provider: WorkspaceProvider = {
     deleteAsync,
     listAsync,
     resetAsync,
-    getHistoryAsync,
-    setHistoryAsync,
     loadedAsync
 }

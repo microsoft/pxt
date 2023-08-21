@@ -580,14 +580,18 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         const toWrite = text ? e.text : null;
 
         try {
-            if (toWrite && impl.setHistoryAsync && impl.getHistoryAsync) {
+            if (toWrite) {
                 const previous = await impl.getAsync(h);
 
                 if (previous) {
                     const diff = diffScriptText(previous.text, toWrite);
 
                     if (diff) {
-                        const history = (await impl.getHistoryAsync(h)) || [];
+                        let history: pxt.workspace.HistoryEntry[] = [];
+
+                        if (toWrite[pxt.HISTORY_FILE]) {
+                            history = JSON.parse(toWrite[pxt.HISTORY_FILE]);
+                        }
 
                         const top = history[history.length - 1];
 
@@ -599,7 +603,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                             history.push(diff);
                         }
 
-                        h.historyRev = await impl.setHistoryAsync(h, history, h.historyRev);
+                        toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
                     }
                 }
             }
@@ -644,8 +648,13 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     });
 }
 
-export function getScriptHistoryAsync(header: Header): Promise<pxt.workspace.HistoryEntry[]> {
-    return impl.getHistoryAsync ? impl.getHistoryAsync(header) : Promise.resolve(undefined);
+export async function getScriptHistoryAsync(header: Header): Promise<pxt.workspace.HistoryEntry[]> {
+    const text = await getTextAsync(header.id);
+
+    if (text?.[pxt.HISTORY_FILE]) {
+        return JSON.parse(text[pxt.HISTORY_FILE]);
+    }
+    return undefined;
 }
 
 function computePath(h: Header) {

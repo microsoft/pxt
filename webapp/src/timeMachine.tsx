@@ -80,16 +80,18 @@ export const TimeMachine = (props: TimeMachineProps) => {
             onGestureEnd(e);
         };
 
-        containerRef.current.addEventListener("pointerdown", pointerdown);
-        containerRef.current.addEventListener("pointerup", pointerup);
-        containerRef.current.addEventListener("pointermove", pointermove);
-        containerRef.current.addEventListener("pointerleave", pointerleave);
+        const container = containerRef.current;
+
+        container.addEventListener("pointerdown", pointerdown);
+        container.addEventListener("pointerup", pointerup);
+        container.addEventListener("pointermove", pointermove);
+        container.addEventListener("pointerleave", pointerleave);
 
         return () => {
-            containerRef.current.removeEventListener("pointerdown", pointerdown);
-            containerRef.current.removeEventListener("pointerup", pointerup);
-            containerRef.current.removeEventListener("pointermove", pointermove);
-            containerRef.current.removeEventListener("pointerleave", pointerleave);
+            container.removeEventListener("pointerdown", pointerdown);
+            container.removeEventListener("pointerup", pointerup);
+            container.removeEventListener("pointermove", pointermove);
+            container.removeEventListener("pointerleave", pointerleave);
         }
     }, [history, selected]);
 
