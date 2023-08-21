@@ -18,16 +18,8 @@ namespace pxt.tutorial {
             jres,
             assetJson,
             customTs,
-            tutorialValidationRulesStr,
             simThemeJson
         } = computeBodyMetadata(body);
-
-        // parses tutorial rules string into a map of rules and enablement flag
-        let tutorialValidationRules: pxt.Map<boolean>;
-        if (metadata.tutorialCodeValidation) {
-            tutorialValidationRules = pxt.Util.jsonTryParse(tutorialValidationRulesStr);
-            categorizingValidationRules(tutorialValidationRules, title);
-        }
 
         // noDiffs legacy
         if (metadata.diffs === true // enabled in tutorial
@@ -50,7 +42,6 @@ namespace pxt.tutorial {
             step.contentMd = stripHiddenSnippets(step.contentMd)
             step.headerContentMd = stripHiddenSnippets(step.headerContentMd)
             step.hintContentMd = stripHiddenSnippets(step.hintContentMd);
-            step.requiredBlockMd = stripHiddenSnippets(step.requiredBlockMd);
         });
 
         return {
@@ -65,7 +56,6 @@ namespace pxt.tutorial {
             jres,
             assetFiles,
             customTs,
-            tutorialValidationRules,
             globalBlockConfig,
             globalValidationConfig,
             simTheme
@@ -73,7 +63,7 @@ namespace pxt.tutorial {
     }
 
     export function getMetadataRegex(): RegExp {
-        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|tutorialValidationRules|requiredTutorialBlock|simtheme)\s*\n([\s\S]*?)\n```/gmi;
+        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|simtheme)\s*\n([\s\S]*?)\n```/gmi;
     }
 
     function computeBodyMetadata(body: string) {
@@ -89,7 +79,6 @@ namespace pxt.tutorial {
         let assetJson: string;
         let customTs: string;
         let simThemeJson: string;
-        let tutorialValidationRulesStr: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         body
             .replace(/((?!.)\s)+/g, "\n")
@@ -99,7 +88,6 @@ namespace pxt.tutorial {
                     case "blocks":
                     case "blockconfig.local":
                     case "blockconfig.global":
-                    case "requiredTutorialBlock":
                     case "filterblocks":
                         if (!checkTutorialEditor(pxt.BLOCKS_PROJECT_NAME))
                             return undefined;
@@ -134,9 +122,6 @@ namespace pxt.tutorial {
                         customTs = m2;
                         m2 = "";
                         break;
-                    case "tutorialValidationRules":
-                        tutorialValidationRulesStr = m2;
-                        break;
                 }
                 code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
                 idx++
@@ -152,7 +137,6 @@ namespace pxt.tutorial {
             jres,
             assetJson,
             customTs,
-            tutorialValidationRulesStr,
             simThemeJson
         };
 
@@ -275,7 +259,7 @@ ${code}
         let stepInfo: TutorialStepInfo[] = [];
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
-            let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
+            let { header, hint } = parseTutorialHint(step, metadata && metadata.explicitHints);
             const blockConfig = parseTutorialBlockConfig("local", step);
             const validationConfig = parseTutorialValidationConfig("local", step);
 
@@ -301,8 +285,6 @@ ${code}
                 info.resetDiff = true;
             if (hint)
                 info.hintContentMd = hint;
-            if (metadata.tutorialCodeValidation && requiredBlocks)
-                info.requiredBlockMd = requiredBlocks;
             stepInfo.push(info);
             return "";
         });
@@ -315,12 +297,11 @@ ${code}
         return stepInfo;
     }
 
-    function parseTutorialHint(step: string, explicitHints?: boolean, tutorialCodeValidationEnabled?: boolean): { header: string, hint: string, requiredBlocks: string } {
+    function parseTutorialHint(step: string, explicitHints?: boolean): { header: string, hint: string } {
         // remove hidden code sections
         step = stripHiddenSnippets(step);
 
         let header = step, hint;
-        let requiredBlocks: string;
 
         if (explicitHints) {
             // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
@@ -336,17 +317,9 @@ ${code}
             if (hintText && hintText.length > 2) {
                 header = hintText[1].trim();
                 hint = hintText[2].trim();
-                if (tutorialCodeValidationEnabled) {
-                    let hintSnippet = hintText[2].trim();
-                    hintSnippet = hintSnippet.replace(/``` *(requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
-                        requiredBlocks = `{\n${m2}\n}`;
-                        return "";
-                    });
-                    hint = hintSnippet;
-                }
             }
         }
-        return { header, hint, requiredBlocks };
+        return { header, hint };
     }
 
     function parseTutorialBlockConfig(scope: "local" | "global", content: string): TutorialBlockConfig {
@@ -383,18 +356,6 @@ ${code}
         });
 
         return { validatorsMetadata: sectionedMetadata };
-    }
-
-    function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {
-        const ruleNames = Object.keys(listOfRules);
-        for (let i = 0; i < ruleNames.length; i++) {
-            const setValidationRule: pxt.Map<string> = {
-                ruleName: ruleNames[i],
-                enabled: listOfRules[ruleNames[i]] ? 'true' : 'false',
-                tutorial: title,
-            };
-            pxt.tickEvent('tutorial.validation.setValidationRules', setValidationRule);
-        }
     }
 
     /* Remove hidden snippets from text */
@@ -488,7 +449,6 @@ ${code}
             jres: tutorialInfo.jres,
             assetFiles: tutorialInfo.assetFiles,
             customTs: tutorialInfo.customTs,
-            tutorialValidationRules: tutorialInfo.tutorialValidationRules,
             globalBlockConfig: tutorialInfo.globalBlockConfig,
             globalValidationConfig: tutorialInfo.globalValidationConfig,
             simTheme: tutorialInfo.simTheme,
@@ -562,5 +522,38 @@ ${code}
             res.palette = pxtJson.palette;
         }
         return res;
+    }
+
+    export async function getTutorialHighlightedBlocks(tutorial: TutorialOptions): Promise<pxt.Map<pxt.Map<number>> | undefined> {
+        const db = await pxt.BrowserUtils.tutorialInfoDbAsync();
+        const entry = await db.getAsync(tutorial.tutorial, tutorial.tutorialCode);
+        return entry?.highlightBlocks;
+    }
+
+    export function getTutorialStepHash(tutorial: TutorialOptions): string {
+        const { tutorialStepInfo, tutorialStep } = tutorial;
+        const body = tutorialStepInfo[tutorialStep].hintContentMd;
+        const codeSnippets = getBlockSnippetCode(body);
+        return pxt.BrowserUtils.getTutorialCodeHash(codeSnippets);
+    }
+
+    /** TODO: if this gets exported, we probably want to consider generalizing to 'parseMarkdownSnippets'
+     * that returns { snippetName: string[] }; e.g.
+     * { "blocks": ["block snippet 1", "block snippet 2"], "package": ["deplist 1"] }
+     * need to cover getMetadataRegex + stripHiddenSnippets types, maybe more if any happen to be around.
+     **/
+    function getBlockSnippetCode(mdSnippet: string): string[] {
+        let hintCode: string[] = [];
+
+        mdSnippet?.replace(/((?!.)\s)+/g, "\n")
+            .replace(
+                /``` *(block|blocks)\s*\n([\s\S]*?)\n```/gim,
+                function (m0, m1, m2) {
+                    hintCode.push(`{\n${m2}\n}`);
+                    return "";
+                }
+            );
+
+        return hintCode;
     }
 }
