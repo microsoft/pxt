@@ -84,7 +84,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
             errorDescription = lf("Make sure your blocks are connected to the rest of your code like this.");
         } else if (insufficientBlocks.length > 0) {
             isValid = false;
-            errorDescription = lf("Make sure you have enough blocks in your workspace. It should look like this.");
+            errorDescription = lf("Make sure you have enough blocks and that they're connected to the rest of your code. It should look like this.");
         }
 
         const blockImages = stepInfo?.hintContentMd ? (<div>
