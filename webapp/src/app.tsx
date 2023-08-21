@@ -83,6 +83,7 @@ import Slider from "./SAMLabsDevices/Slider";
 import LightSensor from "./SAMLabsDevices/LightSensor";
 import Tilt from "./SAMLabsDevices/Tilt";
 import Buzzer from "./SAMLabsDevices/Buzzer";
+import ServoMotor from "./SAMLabsDevices/ServoMotor";
 
 pxsim.util.injectPolyphils();
 
@@ -300,7 +301,7 @@ export class ProjectView
             } else if (msg.type === "createProximitySensor") {
                 this.checkIfDeviceExists(ev.data.id, Button);
             }else if (msg.type === "createServoMotor") {
-                this.checkIfDeviceExists(ev.data.id, Button);
+                this.checkIfDeviceExists(ev.data.id, ServoMotor);
             } else if (msg.type === "createTilt") {
                 this.checkIfDeviceExists(ev.data.id, Tilt);
             }else if (msg.type === "createMicrobit") {
