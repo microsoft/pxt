@@ -134,8 +134,11 @@ export class Kiosk {
         const addedGames = this.getAllAddedGames();
         const addedGamesObjs: GameData[] = Object.values(addedGames);
         for (const game of addedGamesObjs) {
-            if (!game?.deleted) {
-                this.games.push(game);
+            if (game) {
+                game.userAdded = true;
+                if (!game.deleted) {
+                    this.games.push(game);
+                }
             }
         }
     }
