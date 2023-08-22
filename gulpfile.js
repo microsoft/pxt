@@ -17,7 +17,7 @@ const isWin32 = os.platform() === "win32";
 
 const clean = () => rimraf("built").then(() => rimraf("temp"));
 const update = () => exec("git pull", true).then(() => exec("npm install", true))
-
+const noop = () => Promise.resolve();
 
 /** onlineline */
 const onlinelearning = () => {
@@ -245,6 +245,10 @@ function updateAuthcodeStrings() {
 
 function updateMultiplayerStrings() {
     return buildStrings("built/multiplayer-strings.json", ["multiplayer/src"], true);
+}
+
+function updateKioskStrings() {
+    return buildStrings("built/kiosk-strings.json", ["kiosk/src"], true);
 }
 
 // TODO: Copied from Jakefile; should be async
@@ -654,6 +658,54 @@ const copyMultiplayerHtml = () => rimraf("webapp/public/multiplayer.html")
 const multiplayer = gulp.series(cleanMultiplayer, buildMultiplayer, gulp.series(copyMultiplayerCss, copyMultiplayerJs, copyMultiplayerHtml));
 
 /********************************************************
+                      Kiosk
+*********************************************************/
+
+const kioskRoot = "kiosk";
+const kioskOut = "built/web/kiosk";
+
+const cleanKiosk = () => rimraf(kioskOut);
+
+const npmBuildKiosk = () => exec("npm run build", true, { cwd: kioskRoot });
+
+const buildKiosk = async () => await npmBuildKiosk();
+
+const copyKioskCss = () => gulp.src(`${kioskRoot}/build/static/css/*`)
+    .pipe(gulp.dest(`${kioskOut}/css`));
+
+const copyKioskJs = () => gulp.src(`${kioskRoot}/build/static/js/*`)
+    .pipe(gulp.dest(`${kioskOut}/js`));
+
+const copyKioskHtml = () => rimraf("webapp/public/kiosk.html")
+    .then(() => gulp.src(`${kioskRoot}/build/index.html`)
+                    .pipe(replace(/="\/static\//g, `="/blb/kiosk/`))
+                    .pipe(concat("kiosk.html"))
+                    .pipe(gulp.dest("webapp/public")));
+
+const kiosk = gulp.series(cleanKiosk, buildKiosk, gulp.series(copyKioskCss, copyKioskJs, copyKioskHtml));
+
+/********************************************************
+                 Webapp build wrappers
+*********************************************************/
+
+const shouldBuildWebapps = () => (process.argv.indexOf("--no-webapps") === -1);
+
+const maybeUpdateWebappStrings = () => {
+    if (!shouldBuildWebapps()) return noop;
+    return gulp.parallel(
+        updateSkillMapStrings,
+        updateAuthcodeStrings,
+        updateMultiplayerStrings,
+        updateKioskStrings,
+    );
+};
+
+const maybeBuildWebapps = () => {
+    if (!shouldBuildWebapps()) return noop;
+    return gulp.parallel(skillmap, authcode, multiplayer, kiosk);
+}
+
+/********************************************************
                  Tests and Linting
 *********************************************************/
 
@@ -739,12 +791,8 @@ function testTask(testFolder, testFile) {
 }
 
 const buildAll = gulp.series(
-    gulp.parallel(
-        updatestrings,
-        updateSkillMapStrings,
-        updateAuthcodeStrings,
-        updateMultiplayerStrings,
-    ),
+    updatestrings,
+    maybeUpdateWebappStrings(),
     copyTypescriptServices,
     copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
@@ -756,7 +804,7 @@ const buildAll = gulp.series(
     targetjs,
     reactCommon,
     gulp.parallel(buildcss, buildSVGIcons),
-    gulp.parallel(skillmap, authcode, multiplayer),
+    maybeBuildWebapps(),
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
@@ -802,6 +850,7 @@ exports.onlinelearning = onlinelearning;
 exports.skillmap = skillmap;
 exports.authcode = authcode;
 exports.multiplayer = multiplayer;
+exports.kiosk = kiosk;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.cli = gulp.series(
