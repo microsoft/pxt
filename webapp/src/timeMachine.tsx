@@ -13,14 +13,25 @@ interface State {
     editor: string;
 }
 
+interface FunctionWrapper<U> {
+    impl: U;
+}
+
+interface PendingMessage {
+    original: pxt.editor.EditorMessageRequest;
+    handler: (response: any) => void;
+}
+
 export const TimeMachine = (props: TimeMachineProps) => {
     const { onTimestampSelect, text, history } = props;
 
     const [selected, setSelected] = React.useState<State>();
+    const [importProject, setImportProject] = React.useState<FunctionWrapper<(text: pxt.workspace.ScriptText) => Promise<void>>>();
 
     const handleRef = React.useRef<HTMLDivElement>();
     const containerRef = React.useRef<HTMLDivElement>();
     const backgroundRef = React.useRef<HTMLDivElement>();
+    const iframeRef = React.useRef<HTMLIFrameElement>();
 
     React.useEffect(() => {
         let inGesture = false;
@@ -40,9 +51,9 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
             if (entry && entry.timestamp !== selected?.timestamp) {
                 const printFiles = applyUntilTimestamp(text, history, entry.timestamp);
-                window.localStorage["printjob"] = JSON.stringify(printFiles);
-
                 const config = JSON.parse(printFiles["pxt.json"]) as pxt.PackageConfig;
+
+                importProject.impl(printFiles)
 
                 setSelected({
                     timestamp: entry.timestamp,
@@ -93,15 +104,92 @@ export const TimeMachine = (props: TimeMachineProps) => {
             container.removeEventListener("pointermove", pointermove);
             container.removeEventListener("pointerleave", pointerleave);
         }
-    }, [history, selected]);
+    }, [history, selected, importProject]);
+
+    React.useEffect(() => {
+        const iframe = iframeRef.current;
+        let nextId = 1;
+        let workspaceReady: boolean;
+        const messageQueue: pxt.editor.EditorMessageRequest[] = [];
+        const pendingMessages: {[index: string]: PendingMessage} = {};
+
+        const postMessageCore = (message: pxt.editor.EditorMessageRequest | pxt.editor.EditorMessageResponse) => {
+            iframe.contentWindow!.postMessage(message, "*");
+        };
+
+        const sendMessageAsync = (message?: pxt.editor.EditorMessageRequest) => {
+            return new Promise(resolve => {
+                const sendMessageCore = (message: any) => {
+                    message.response = true;
+                    message.id = "time_machine_" + nextId++;
+                    pendingMessages[message.id] = {
+                        original: message,
+                        handler: resolve
+                    };
+                    postMessageCore(message);
+                }
+
+                if (!workspaceReady) {
+                    if (message) messageQueue.push(message);
+                }
+                else {
+                    while (messageQueue.length) {
+                        sendMessageCore(messageQueue.shift());
+                    }
+                    if (message) sendMessageCore(message);
+                }
+            });
+        };
+
+        const onMessageReceived = (event: MessageEvent) => {
+            const data = event.data as pxt.editor.EditorMessageRequest;
+
+            if (data.type === "pxteditor" && data.id && pendingMessages[data.id]) {
+                const pending = pendingMessages[data.id];
+                pending.handler(data);
+                delete pendingMessages[data.id];
+                return;
+            }
+
+            switch (data.action) {
+                case "newproject":
+                    workspaceReady = true;
+                    sendMessageAsync();
+                    break;
+                case "workspacesync":
+                    postMessageCore({
+                        type: "pxthost",
+                        id: data.id,
+                        success: true,
+                        projects: []
+                    } as pxt.editor.EditorWorkspaceSyncResponse);
+                    break;
+            }
+        };
+
+        setImportProject({
+            impl: async (project: pxt.workspace.ScriptText) => {
+                await sendMessageAsync({
+                    type: "pxteditor",
+                    action: "importproject",
+                    project: {
+                        text: project
+                    }
+                } as pxt.editor.EditorMessageImportProjectRequest)
+            }
+        });
+
+        window.addEventListener("message", onMessageReceived);
+        return () => {
+            window.removeEventListener("message", onMessageReceived);
+        };
+    }, [])
 
     const onGoPressed = React.useCallback(() => {
         onTimestampSelect(selected.timestamp);
     }, [selected, onTimestampSelect]);
 
-    const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-    const url = `${docsUrl}#preview:job:${selected?.editor}:${pxt.Util.localeInfo()}?timestamp=${selected?.timestamp}`;
-    const selectableHistory = history.slice(2);
+    const url = `${window.location.origin + window.location.pathname}?readonly=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
 
     return (
         <div className="time-machine">
@@ -111,9 +199,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 </div>
                 <div className="time-machine-timeline-slider" ref={containerRef}>
                     <div className="time-machine-timeline-slider-handle" ref={handleRef}/>
-                    <div className="time-machine-timeline-slider-background" ref={backgroundRef}>
-                        {selectableHistory.map((_, index) => <div className="time-machine-timeline-entry" key={index} />)}
-                    </div>
+                    <div className="time-machine-timeline-slider-background" ref={backgroundRef} />
                 </div>
                 <div className="time-machine-label">
                     {pxt.U.lf("Present")}
@@ -126,12 +212,13 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 />
             </div>
             <div className="time-machine-preview">
-                { selected && <iframe
+                <iframe
+                    ref={iframeRef}
                     frameBorder="0"
-                    aria-label={lf("Print preview")}
+                    aria-label={lf("Project preview")}
                     sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
-                    src={url} />
-                }
+                    src={url}
+                />
             </div>
         </div>
     );
