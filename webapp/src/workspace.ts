@@ -646,7 +646,24 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    return pxt.github.cacheProjectDependenciesAsync(cfg)
+    let backupExtensionFiles: pxt.Map<pxt.Map<string>>;
+    if (text[pxt.PACKAGED_EXTENSIONS]) {
+        backupExtensionFiles = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
+        // TODO cache hexfiles in text[pxt.PACKAGED_HEXFILE] like field?
+        // Would be necessary for full offline usage, but tricky as it
+        // also depends on target version / hex hash;
+
+        // Do not persist into project once installed.
+        delete text[pxt.PACKAGED_EXTENSIONS];
+    }
+    if (text[pxt.PACKAGED_EXT_INFO]) {
+        const parsedExtensionInfo = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXT_INFO]);
+        // TODO: push this into cache; see pxtlib/cpp.ts, would need to mirror portion of
+        // getHexInfoAsync that compresses hex download result and pushes into storeWithLimitAsync
+        delete text[pxt.PACKAGED_EXT_INFO];
+    }
+
+    return pxt.github.cacheProjectDependenciesAsync(cfg, backupExtensionFiles)
         .then(() => importAsync(h, text))
         .then(() => h);
 }

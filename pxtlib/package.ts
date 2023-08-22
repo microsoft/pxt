@@ -1220,8 +1220,7 @@ namespace pxt {
                 variants = [null]
             }
 
-
-            let ext: pxtc.ExtensionInfo = null
+            let ext: pxtc.ExtensionInfo = null;
             for (let v of variants) {
                 if (ext)
                     pxt.debug(`building for ${v}`)
@@ -1247,7 +1246,16 @@ namespace pxt {
                 !opts.target.isNative
 
             if (!noFileEmbed) {
-                const files = await this.filesToBePublishedAsync(true)
+                // Include packages when it won't influence flash size.
+                const files = await this.filesToBePublishedAsync(
+                    true,
+                    !appTarget.compile.useUF2
+                );
+                if (opts.target.isNative && opts.extinfo.hexinfo) {
+                    // todo trim down to relevant portion of extinfo?
+                    // hexfile + hash + whatever is needed for /cpp.ts
+                    files[pxt.PACKAGED_EXT_INFO] = JSON.stringify(opts.extinfo);
+                }
                 const headerString = JSON.stringify({
                     name: this.config.name,
                     comment: this.config.description,
@@ -1257,7 +1265,9 @@ namespace pxt {
                     editor: this.getPreferredEditor(),
                     targetVersions: pxt.appTarget.versions
                 })
-                const programText = JSON.stringify(files)
+
+                const programText = JSON.stringify(files);
+
                 const buf = await lzmaCompressAsync(headerString + programText)
                 if (buf) {
                     opts.embedMeta = JSON.stringify({
@@ -1268,7 +1278,7 @@ namespace pxt {
                         eURL: pxt.appTarget.appTheme.embedUrl,
                         eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
                         pxtTarget: appTarget.id,
-                    })
+                    });
                     opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
                 }
             }
@@ -1314,24 +1324,57 @@ namespace pxt {
             return cfg;
         }
 
-        filesToBePublishedAsync(allowPrivate = false) {
+        async filesToBePublishedAsync(allowPrivate = false, packExternalExtensions = false) {
             const files: Map<string> = {};
-            return this.loadAsync()
-                .then(() => {
-                    if (!allowPrivate && !this.config.public)
-                        U.userError('Only packages with "public":true can be published')
-                    const cfg = this.prepareConfigToBePublished();
-                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
-                    for (let f of this.getFiles()) {
-                        // already stored
-                        if (f == pxt.CONFIG_NAME) continue;
-                        let str = this.readFile(f)
-                        if (str == null)
-                            U.userError("referenced file missing: " + f)
-                        files[f] = str
+            await this.loadAsync();
+            if (!allowPrivate && !this.config.public)
+                U.userError('Only packages with "public":true can be published')
+            const cfg = this.prepareConfigToBePublished();
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+
+            for (let f of this.getFiles()) {
+                // already stored
+                if (f == pxt.CONFIG_NAME) continue;
+                let str = this.readFile(f)
+                if (str == null)
+                    U.userError("referenced file missing: " + f)
+                files[f] = str
+            }
+
+            if (packExternalExtensions) {
+                const packedDeps: Map<Map<string>> = {};
+                const packDeps = (p: Package) => {
+                    const depsToPack = p.resolvedDependencies()
+                        .filter(dep => {
+                            switch (dep.verProtocol()) {
+                                case "github":
+                                case "pub":
+                                    return true;
+                                default:
+                                    return false;
+                            }
+                        });
+
+                    for (const dep of depsToPack) {
+                        if (packedDeps[dep._verspec])
+                            continue;
+                        const packed: Map<string> = {};
+                        for (const toPack of dep.getFiles()) {
+                            packed[toPack] = dep.readFile(toPack);
+                        }
+                        packed[pxt.CONFIG_NAME] = JSON.stringify(dep.config);
+
+                        packedDeps[dep._verspec] = packed;
+                        packDeps(dep);
                     }
-                    return U.sortObjectFields(files)
-                })
+                }
+
+                packDeps(this);
+                if (Object.keys(packedDeps).length) {
+                    files[pxt.PACKAGED_EXTENSIONS] = JSON.stringify(packedDeps);
+                }
+            }
+            return U.sortObjectFields(files);
         }
 
         saveToJsonAsync(): Promise<pxt.cpp.HexFile> {
