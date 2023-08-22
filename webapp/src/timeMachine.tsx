@@ -206,7 +206,7 @@ function applyUntilTimestamp(text: pxt.workspace.ScriptText, history: pxt.worksp
 
     for (let i = 0; i < history.length; i++) {
         const entry = history[history.length - 1 - i];
-        currentText = workspace.applyDiff(currentText, entry, false);
+        currentText = workspace.applyDiff(currentText, entry);
         if (entry.timestamp === timestamp) break;
     }
 

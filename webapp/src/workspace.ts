@@ -14,10 +14,12 @@ import * as compiler from "./compiler"
 import * as auth from "./auth"
 import * as cloud from "./cloud"
 
-import * as diff from "diff";
+import * as dmp from "diff-match-patch";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
+
+const differ = new dmp.diff_match_patch();
 
 // Avoid importing entire crypto-js
 /* eslint-disable import/no-internal-modules */
@@ -687,8 +689,7 @@ function diffScriptText(oldVersion: pxt.workspace.ScriptText, newVersion: pxt.wo
             changes.push({
                 type: "edited",
                 filename: file,
-                forwardPatch: diff.createPatch(file, oldVersion[file], newVersion[file]),
-                backwardPatch: diff.createPatch(file, newVersion[file], oldVersion[file])
+                patch: differ.patch_make(newVersion[file], oldVersion[file])
             });
         }
     }
@@ -714,31 +715,16 @@ function diffScriptText(oldVersion: pxt.workspace.ScriptText, newVersion: pxt.wo
 }
 
 
-export function applyDiff(text: ScriptText, history: pxt.workspace.HistoryEntry, forwards: boolean) {
-    if (forwards) {
-        for (const change of history.changes) {
-            if (change.type === "added") {
-                text[change.filename] = change.value;
-            }
-            else if (change.type === "removed") {
-                delete text[change.filename]
-            }
-            else {
-                text[change.filename] = diff.applyPatch(text[change.filename], change.forwardPatch);
-            }
+export function applyDiff(text: ScriptText, history: pxt.workspace.HistoryEntry) {
+    for (const change of history.changes) {
+        if (change.type === "added") {
+            delete text[change.filename]
         }
-    }
-    else {
-        for (const change of history.changes) {
-            if (change.type === "added") {
-                delete text[change.filename]
-            }
-            else if (change.type === "removed") {
-                text[change.filename] = change.value;
-            }
-            else {
-                text[change.filename] = diff.applyPatch(text[change.filename], change.backwardPatch);
-            }
+        else if (change.type === "removed") {
+            text[change.filename] = change.value;
+        }
+        else {
+            text[change.filename] = differ.patch_apply(change.patch, text[change.filename])[0];
         }
     }
 

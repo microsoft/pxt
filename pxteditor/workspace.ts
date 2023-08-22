@@ -44,8 +44,7 @@ namespace pxt.workspace {
     export interface FileEditedChange {
         type: "edited";
         filename: string;
-        forwardPatch: any;
-        backwardPatch: any;
+        patch: any;
     }
 
     export interface WorkspaceProvider {
