@@ -18,11 +18,15 @@ interface PendingMessage {
     handler: (response: any) => void;
 }
 
+type FrameState = "loading" | "loaded" | "loading-project" | "loaded-project";
+
 export const TimeMachine = (props: TimeMachineProps) => {
     const { onTimestampSelect, text, history } = props;
 
-    const [selected, setSelected] = React.useState<number>();
+    const [selected, setSelected] = React.useState<number>(history.length - 1);
     const [importProject, setImportProject] = React.useState<FunctionWrapper<(text: pxt.workspace.ScriptText) => Promise<void>>>();
+
+    const [loading, setLoading] = React.useState<FrameState>("loading")
 
     const iframeRef = React.useRef<HTMLIFrameElement>();
 
@@ -73,8 +77,11 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
             switch (data.action) {
                 case "newproject":
-                    workspaceReady = true;
-                    sendMessageAsync();
+                    if (!workspaceReady) {
+                        workspaceReady = true;
+                        setLoading("loaded")
+                        sendMessageAsync();
+                    }
                     break;
                 case "workspacesync":
                     postMessageCore({
@@ -87,23 +94,51 @@ export const TimeMachine = (props: TimeMachineProps) => {
             }
         };
 
-        setImportProject({
-            impl: async (project: pxt.workspace.ScriptText) => {
-                await sendMessageAsync({
-                    type: "pxteditor",
-                    action: "importproject",
-                    project: {
-                        text: project
-                    }
-                } as pxt.editor.EditorMessageImportProjectRequest)
+        let pendingLoad: pxt.workspace.ScriptText;
+        let currentlyLoading = false;
+
+        const loadProject = async (project: pxt.workspace.ScriptText) => {
+            if (currentlyLoading) {
+                pendingLoad = project;
+                return;
             }
-        });
+
+            currentlyLoading = true;
+            setLoading("loading-project");
+            await sendMessageAsync({
+                type: "pxteditor",
+                action: "importproject",
+                project: {
+                    text: project
+                }
+            } as pxt.editor.EditorMessageImportProjectRequest);
+
+            currentlyLoading = false;
+
+            if (pendingLoad) {
+                loadProject(pendingLoad);
+                pendingLoad = undefined;
+                return;
+            }
+
+            setLoading("loaded-project");
+
+        };
+
+        setImportProject({ impl: loadProject });
 
         window.addEventListener("message", onMessageReceived);
         return () => {
             window.removeEventListener("message", onMessageReceived);
         };
     }, []);
+
+    React.useEffect(() => {
+        if (loading === "loaded" && importProject) {
+            const previewFiles = applyUntilTimestamp(text, history, history[history.length - 1].timestamp);
+            importProject.impl(previewFiles)
+        }
+    }, [loading, importProject, history, text]);
 
     const onSliderValueChanged = React.useCallback((newValue: number) => {
         setSelected(newValue);
@@ -150,7 +185,11 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 />
             </div>
             <div className="time-machine-preview">
+                <div>
+                    <div className="common-spinner" />
+                </div>
                 <iframe
+                    style={{ opacity: loading !== "loaded-project" ? 0 : 1 }}
                     ref={iframeRef}
                     frameBorder="0"
                     aria-label={lf("Project preview")}

@@ -138,6 +138,10 @@ export const VerticalSlider = (props: VerticalSliderProps) => {
         }
     }, [min, max, step, onValueChanged, positionHandle]);
 
+    React.useEffect(() => {
+        positionHandle(value);
+    }, [value, positionHandle])
+
     let valueText: string;
     if (typeof ariaValueText === "string") {
         valueText = ariaValueText;
