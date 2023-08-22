@@ -409,7 +409,6 @@ namespace pxsim {
                 } else {
                     this.postMessageCore(frame, msg);
                 }
-
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
                     && (<pxsim.SimulatorRecorderMessage>msg).action == "start")

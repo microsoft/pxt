@@ -84,6 +84,10 @@ import LightSensor from "./SAMLabsDevices/LightSensor";
 import Tilt from "./SAMLabsDevices/Tilt";
 import Buzzer from "./SAMLabsDevices/Buzzer";
 import ServoMotor from "./SAMLabsDevices/ServoMotor";
+import TemperatureSensor from "./SAMLabsDevices/TemperatureSensor";
+import PressureSensor from "./SAMLabsDevices/PressureSensorController.ts";
+import ProximitySensor from "./SAMLabsDevices/ProximitySensor";
+import LED from "./SAMLabsDevices/LED";
 
 pxsim.util.injectPolyphils();
 
@@ -293,13 +297,13 @@ export class ProjectView
             } else if (msg.type === "createLightSensor") {
                 this.checkIfDeviceExists(ev.data.id, LightSensor);
             } else if (msg.type === "createHeatSensor") {
-                this.checkIfDeviceExists(ev.data.id, Button);
+                this.checkIfDeviceExists(ev.data.id, TemperatureSensor);
             } else if (msg.type === "createLED") {
-                this.checkIfDeviceExists(ev.data.id, Button);
+                this.checkIfDeviceExists(ev.data.id,LED);
             } else if (msg.type === "createPressureSensor") {
-                this.checkIfDeviceExists(ev.data.id, Button);
+                this.checkIfDeviceExists(ev.data.id, PressureSensor);
             } else if (msg.type === "createProximitySensor") {
-                this.checkIfDeviceExists(ev.data.id, Button);
+                this.checkIfDeviceExists(ev.data.id, ProximitySensor);
             }else if (msg.type === "createServoMotor") {
                 this.checkIfDeviceExists(ev.data.id, ServoMotor);
             } else if (msg.type === "createTilt") {
