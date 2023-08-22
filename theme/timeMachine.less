@@ -1,42 +1,24 @@
+.ui.fullscreen.modal.time-machine-dialog > .content {
+    background-color: white;
+}
+
 .time-machine {
     display: flex;
     flex-direction: row;
     width: 100%;
     height: 100%;
     position: relative;
-    background: white;
-
-    .time-machine-list {
-        width: 10rem;
-        height: 100%;
-        overflow-y: scroll;
-
-        .time-machine-entry {
-            width: 10rem;
-            height: 4rem;
-            padding: .25rem;
-            padding-left: 1rem;
-            margin-bottom: 0.5rem;
-            line-height: 4rem;
-            border: solid 2px #dedede;
-            border-radius: 1rem;
-            vertical-align: middle;
-        }
-
-        .time-machine-entry.selected {
-            border: solid 2px #333333;
-        }
-    }
 
     .time-machine-preview {
         flex-grow: 1;
 
         iframe {
+            border: #dedede solid 1px;
+            border-radius: 0.5rem;
             height: 100%;
             width: 100%;
         }
     }
-
 
     .time-machine-timeline {
         width: 10rem;
@@ -53,39 +35,7 @@
         }
 
         .time-machine-timeline-slider {
-            position: relative;
-            width: 10rem;
             flex-grow: 1;
-        }
-
-        .time-machine-timeline-slider-handle {
-            width: 3rem;
-            position: absolute;
-            left: 2.5rem;
-            height: 1rem;
-            border: solid 2px #333333;
-            border-radius: .5rem;
-            background: #ffffff;
-            z-index: 1;
-        }
-
-        .time-machine-timeline-slider-background {
-            width: 1rem;
-            position: absolute;
-            left: 3.5rem;
-            background: #333333;
-            border-radius: .5rem;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden;
-        }
-
-        .time-machine-timeline-entry {
-            height: 2px;
-            background: #dedede;
-            width: 1rem;
         }
     }
 }

@@ -1,16 +1,12 @@
 import * as React from "react";
 import * as workspace from "./workspace";
 import { Button } from "../../react-common/components/controls/Button";
+import { VerticalSlider } from "../../react-common/components/controls/VerticalSlider";
 
 interface TimeMachineProps {
     onTimestampSelect: (timestamp: number) => void;
     text: pxt.workspace.ScriptText;
     history: pxt.workspace.HistoryEntry[];
-}
-
-interface State {
-    timestamp: number;
-    editor: string;
 }
 
 interface FunctionWrapper<U> {
@@ -25,86 +21,10 @@ interface PendingMessage {
 export const TimeMachine = (props: TimeMachineProps) => {
     const { onTimestampSelect, text, history } = props;
 
-    const [selected, setSelected] = React.useState<State>();
+    const [selected, setSelected] = React.useState<number>();
     const [importProject, setImportProject] = React.useState<FunctionWrapper<(text: pxt.workspace.ScriptText) => Promise<void>>>();
 
-    const handleRef = React.useRef<HTMLDivElement>();
-    const containerRef = React.useRef<HTMLDivElement>();
-    const backgroundRef = React.useRef<HTMLDivElement>();
     const iframeRef = React.useRef<HTMLIFrameElement>();
-
-    React.useEffect(() => {
-        let inGesture = false;
-
-        const onGestureEnd = (e: PointerEvent) => {
-            if (!inGesture) return;
-            updatePosition(e);
-            inGesture = false;
-
-            const truncatedHistory = history.slice(2);
-            const bounds = backgroundRef.current.getBoundingClientRect();
-
-            const y = e.clientY - bounds.top;
-
-            const percentage = Math.min(1, Math.max(y / bounds.height, 0));
-            const entry = truncatedHistory[Math.round(percentage * truncatedHistory.length)];
-
-            if (entry && entry.timestamp !== selected?.timestamp) {
-                const printFiles = applyUntilTimestamp(text, history, entry.timestamp);
-                const config = JSON.parse(printFiles["pxt.json"]) as pxt.PackageConfig;
-
-                importProject.impl(printFiles)
-
-                setSelected({
-                    timestamp: entry.timestamp,
-                    editor: config.preferredEditor !== pxt.BLOCKS_PROJECT_NAME ? "typescript" : "blocks"
-                });
-            }
-        }
-
-        const updatePosition = (e: PointerEvent) => {
-            if (!inGesture) return;
-            const bounds = backgroundRef.current.getBoundingClientRect();
-            const y = e.clientY - bounds.top;
-
-            const percentage = Math.min(1, Math.max(y / bounds.height, 0));
-
-            const offset = Math.round(percentage * (history.length - 2)) * (bounds.height / (history.length - 2));
-
-            handleRef.current.style.top = offset + "px";
-        };
-
-        const pointerdown = (e: PointerEvent) => {
-            inGesture = true;
-            updatePosition(e);
-        };
-
-        const pointerup = (e: PointerEvent) => {
-            onGestureEnd(e);
-        };
-
-        const pointermove = (e: PointerEvent) => {
-            updatePosition(e);
-        };
-
-        const pointerleave = (e: PointerEvent) => {
-            onGestureEnd(e);
-        };
-
-        const container = containerRef.current;
-
-        container.addEventListener("pointerdown", pointerdown);
-        container.addEventListener("pointerup", pointerup);
-        container.addEventListener("pointermove", pointermove);
-        container.addEventListener("pointerleave", pointerleave);
-
-        return () => {
-            container.removeEventListener("pointerdown", pointerdown);
-            container.removeEventListener("pointerup", pointerup);
-            container.removeEventListener("pointermove", pointermove);
-            container.removeEventListener("pointerleave", pointerleave);
-        }
-    }, [history, selected, importProject]);
 
     React.useEffect(() => {
         const iframe = iframeRef.current;
@@ -183,11 +103,24 @@ export const TimeMachine = (props: TimeMachineProps) => {
         return () => {
             window.removeEventListener("message", onMessageReceived);
         };
-    }, [])
+    }, []);
+
+    const onSliderValueChanged = React.useCallback((newValue: number) => {
+        setSelected(newValue);
+        const previewFiles = applyUntilTimestamp(text, history, history[newValue].timestamp);
+        importProject.impl(previewFiles)
+
+    }, [text, history, importProject]);
+
+    const valueText = React.useCallback((value: number) => {
+        const timestamp = history[value].timestamp;
+
+        return formatTime(timestamp);
+    }, [history]);
 
     const onGoPressed = React.useCallback(() => {
-        onTimestampSelect(selected.timestamp);
-    }, [selected, onTimestampSelect]);
+        onTimestampSelect(history[selected].timestamp);
+    }, [selected, onTimestampSelect, history]);
 
     const url = `${window.location.origin + window.location.pathname}?timeMachine=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
 
@@ -197,15 +130,20 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 <div className="time-machine-label">
                     {pxt.U.lf("Past")}
                 </div>
-                <div className="time-machine-timeline-slider" ref={containerRef}>
-                    <div className="time-machine-timeline-slider-handle" ref={handleRef}/>
-                    <div className="time-machine-timeline-slider-background" ref={backgroundRef} />
-                </div>
+                <VerticalSlider
+                    className="time-machine-timeline-slider"
+                    min={0}
+                    max={history.length - 1}
+                    step={1}
+                    value={selected || history.length - 1}
+                    ariaValueText={valueText}
+                    onValueChanged={onSliderValueChanged}
+                />
                 <div className="time-machine-label">
                     {pxt.U.lf("Present")}
                 </div>
                 <Button
-                    className="primary"
+                    className="green"
                     label={pxt.U.lf("Go")}
                     title={pxt.U.lf("Restore editor to selected version")}
                     onClick={onGoPressed}
@@ -234,4 +172,25 @@ function applyUntilTimestamp(text: pxt.workspace.ScriptText, history: pxt.worksp
     }
 
     return currentText;
+}
+
+function formatTime(time: number) {
+    const now = Date.now();
+
+    const diff = now - time;
+    const oneDay = 1000 * 60 * 60 * 24;
+
+    const date = new Date(time);
+
+    const timeString = date.toLocaleTimeString(pxt.U.userLanguage(), { timeStyle: "short" } as any);
+
+    if (diff < oneDay) {
+        return timeString;
+    }
+    else if (diff < oneDay * 2) {
+        return lf("Yesterday {0}", timeString);
+    }
+    else {
+        return date.toLocaleDateString() + " " + timeString;
+    }
 }
