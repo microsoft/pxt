@@ -56,8 +56,12 @@ namespace pxt.shell {
         return layoutType == EditorLayoutType.Sandbox;
     }
 
+    export function isTimeMachineEmbed() {
+        return /[?&]timeMachine=1/i.test(window.location.href);
+    }
+
     export function isReadOnly() {
-        return (!pxt.BrowserUtils.hasWindow() || (isSandboxMode()
+        return (!pxt.BrowserUtils.hasWindow() || isTimeMachineEmbed() || (isSandboxMode()
             && !/[?&]edit=1/i.test(window.location.href)) ||
             (isControllerMode() && editorReadonly));
     }

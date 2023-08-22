@@ -189,7 +189,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
         onTimestampSelect(selected.timestamp);
     }, [selected, onTimestampSelect]);
 
-    const url = `${window.location.origin + window.location.pathname}?readonly=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
+    const url = `${window.location.origin + window.location.pathname}?timeMachine=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
 
     return (
         <div className="time-machine">
