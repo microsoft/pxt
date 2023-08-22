@@ -104,7 +104,6 @@
   "devDependencies": {
     "@microsoft/eslint-plugin-sdl": "^0.1.5",
     "@types/chai": "4.0.6",
-    "@types/diff": "5.0.1",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
     "@types/jquery": "3.3.29",
@@ -123,7 +122,6 @@
     "@typescript-eslint/parser": "^4.20.0",
     "@vusion/webfonts-generator": "^0.7.1",
     "crypto-js": "^3.1.9-1",
-    "diff": "5.0.0",
     "envify": "4.1.0",
     "eslint": "^7.23.0",
     "eslint-plugin-import": "^2.22.1",
