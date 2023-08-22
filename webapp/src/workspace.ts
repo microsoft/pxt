@@ -589,8 +589,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                     if (diff) {
                         let history: pxt.workspace.HistoryEntry[] = [];
 
-                        if (toWrite[pxt.HISTORY_FILE]) {
-                            history = JSON.parse(toWrite[pxt.HISTORY_FILE]);
+                        if (previous.text[pxt.HISTORY_FILE]) {
+                            history = JSON.parse(previous.text[pxt.HISTORY_FILE]);
                         }
 
                         const top = history[history.length - 1];
