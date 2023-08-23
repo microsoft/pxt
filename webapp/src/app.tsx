@@ -76,6 +76,7 @@ import { CodeCardView } from "./codecard";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
+///// SAMLABS imports
 import Microbit from "./SAMLabsDevices/Microbit";
 import DCMotor from "./SAMLabsDevices/DCMotor";
 import Button from "./SAMLabsDevices/Button";
@@ -84,9 +85,15 @@ import LightSensor from "./SAMLabsDevices/LightSensor";
 import Tilt from "./SAMLabsDevices/Tilt";
 import Buzzer from "./SAMLabsDevices/Buzzer";
 import ServoMotor from "./SAMLabsDevices/ServoMotor";
+import  Cookies  from 'universal-cookie';
+import {validate} from '@samlabs/tokenutility/lib';
+///// SAMLABS End imports
+
 
 pxsim.util.injectPolyphils();
-
+///// SAMLABS cookie initialization
+const cookies = new Cookies();
+///// SAMLABS END cookie initialization
 let theEditor: ProjectView;
 let hash: { cmd: string, arg: string };
 let pendingEditorRequests: ((p: ProjectView) => void)[];
@@ -282,6 +289,7 @@ export class ProjectView
                     };
                     simulator.driver.postMessage(playerOneConnectedMsg);
                 }
+            ///// SAMLABS Bluttoth device initialization
             }  else if (msg.type === "createButton") {
                 this.checkIfDeviceExists(ev.data.id, Button);
             } else if (msg.type === "createDCMotor") {
@@ -309,7 +317,7 @@ export class ProjectView
             }
         }, false);
     }
-
+    ///// SAMLABS Uthility function
     private checkIfDeviceExists(id: string, device:any): void {
         if(device.hasInstanceWithId(id)){
             return;
@@ -5070,6 +5078,22 @@ export class ProjectView
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasIdentity = pxt.auth.hasIdentity();
+
+        ///////////////////////////////////////////////////////////
+        ////////////          SAMLABS render          /////////////
+        ///////////////////////////////////////////////////////////
+        const accessToken = cookies.get('ACCESS_TOKEN');
+        if ( !accessToken) {
+            return NoTokenView();
+        }
+        const validationResults = validate(accessToken);
+        if (!validationResults.isValid) {
+            return NoTokenView();
+        }
+        ///////////////////////////////////////////////////////////
+        ////////////          End SAMLABS render      /////////////
+        ///////////////////////////////////////////////////////////
+
         return (
             <div id='root' className={rootClasses}>
                 {this.state.extensionsVisible && <extensionsBrowser.ExtensionsBrowser hideExtensions={this.hidePackageDialog} importExtensionCallback={() => this.showImportFileDialog({ extension: true })} header={this.state.header} reloadHeaderAsync={() => { return this.reloadHeaderAsync() }} />}
@@ -5139,7 +5163,15 @@ export class ProjectView
         );
     }
 }
-
+/////SAMLABS No Token view
+function NoTokenView (){
+    return <div id="root" className="ui middle aligned center aligned grid" style={{ height: '100%', alignItems: 'center' }}>
+                <div className="ui raised segment inverted purple">
+                    <h2>{lf("Oops")}</h2>
+                    <div className="ui header">{lf("Sorry, We didnt find a SAMStudio token or your Token is expired")}</div>
+                </div>
+           </div>
+}
 function render() {
     ReactDOM.render(<ProjectView />, sui.appElement);
 }

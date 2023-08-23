@@ -31,7 +31,7 @@ export interface ModalProps extends ContainerProps {
     hideDismissButton?: boolean;
 }
 
-export const Modal = (props: ModalProps) => {
+export const Modal = (props: ModalProps): JSX.Element => {
     const {
         children,
         id,

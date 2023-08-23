@@ -242,13 +242,16 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
         return <div id="mainmenu" className={`ui borderless fixed menu ${targetTheme.invertedMenu ? `inverted` : ''} ${manyTutorialSteps ? "thin" : ""}`} role="menubar">
             <div className="left menu">
+                {/*///// SAMLABS back button*/}
+                {home && <sui.Item className={`icon`} role="menuitem" title={lf("Back to SAMStudio")} icon="no-select chevron left large" ariaLabel={lf("Back to SAMStudio")} onClick={()=>{window.location.href = 'https://example.com:3000/'}} />}
+                {/*///// SAMLABS end back button*/}
                 {isNativeHost && <sui.Item className="icon nativeback" role="menuitem" icon="chevron left large" ariaLabel={lf("Back to application")}
                     onClick={cmds.nativeHostBackAsync} onMouseDown={this.backButtonTouchStart} onMouseUp={this.backButtonTouchEnd} onMouseLeave={this.backButtonTouchEnd} />}
                 {this.getOrganizationLogo(targetTheme, highContrast, view)}
-                {view === "tutorial"
-                    // TODO: temporary place for tutorial name, we will eventually redesign the header for tutorial view
-                    ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName}/>
-                    : this.getTargetLogo(targetTheme, highContrast, view)}
+                {/*{view === "tutorial"*/}
+                {/*    // TODO: temporary place for tutorial name, we will eventually redesign the header for tutorial view*/}
+                {/*    ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName}/>*/}
+                {/*    : this.getTargetLogo(targetTheme, highContrast, view)}*/}
             </div>
             {!home && <div className="center menu">
                 {this.getCenterLabel(targetTheme, view, tutorialOptions)}
@@ -257,7 +260,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
                 {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobile hide" : ""}`} role="menuitem" title={lf("Home")} icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
                 {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" title={lf("Publish your game to create a shareable link")} icon="share alternate large" ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
-                {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}
+                {/*{showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}*/}
                 {this.getSettingsMenu(view)}
                 {hasIdentity && (view === "home" || view === "editor" || view === "tutorial-tab") && <identity.UserMenu parent={this.props.parent} />}
             </div>

@@ -28,7 +28,7 @@ export interface TeachingBubbleProps extends ContainerProps {
     onFinish: () => void;
 }
 
-export const TeachingBubble = (props: TeachingBubbleProps) => {
+export const TeachingBubble = (props: TeachingBubbleProps): JSX.Element => {
     const {
         id,
         className,
