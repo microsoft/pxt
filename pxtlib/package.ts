@@ -1197,7 +1197,6 @@ namespace pxt {
             await this.loadAsync()
 
             opts.bannedCategories = this.resolveBannedCategories();
-            opts.target.preferredEditor = this.getPreferredEditor()
             pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
 
             let variants: string[]
@@ -1240,6 +1239,8 @@ namespace pxt {
                 }
             }
             opts.extinfo = ext
+
+            opts.target.preferredEditor = this.getPreferredEditor();
 
             const noFileEmbed = appTarget.compile.shortPointers ||
                 appTarget.compile.nativeType == "vm" ||
