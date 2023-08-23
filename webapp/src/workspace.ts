@@ -674,61 +674,19 @@ function computePath(h: Header) {
 }
 
 function diffScriptText(oldVersion: pxt.workspace.ScriptText, newVersion: pxt.workspace.ScriptText): pxt.workspace.HistoryEntry {
-    const changes: pxt.workspace.FileChange[] = [];
-
-    for (const file of Object.keys(oldVersion)) {
-        if (!(file.endsWith(".ts") || file.endsWith(".jres") || file.endsWith(".py") || file.endsWith(".blocks") || file === "pxt.json")) continue;
-        if (newVersion[file] == undefined) {
-            changes.push({
-                type: "removed",
-                filename: file,
-                value: oldVersion[file]
-            });
-        }
-        else if (oldVersion[file] !== newVersion[file]) {
-            changes.push({
-                type: "edited",
-                filename: file,
-                patch: differ.patch_make(newVersion[file], oldVersion[file])
-            });
-        }
-    }
-
-    for (const file of Object.keys(newVersion)) {
-        if (!(file.endsWith(".ts") || file.endsWith(".jres") || file.endsWith(".py") || file.endsWith(".blocks") || file === "pxt.json")) continue;
-
-        if (oldVersion[file] == undefined) {
-            changes.push({
-                type: "added",
-                filename: file,
-                value: newVersion[file]
-            });
-        }
-    }
-
-    if (!changes.length) return undefined;
-
-    return {
-        timestamp: Date.now(),
-        changes
-    }
+    return pxt.workspace.diffScriptText(oldVersion, newVersion, diffText);
 }
 
+function diffText(a: string, b: string) {
+    return differ.patch_make(a, b);
+}
+
+function patchText(patch: unknown, a: string) {
+    return differ.patch_apply(patch as any, a)[0]
+}
 
 export function applyDiff(text: ScriptText, history: pxt.workspace.HistoryEntry) {
-    for (const change of history.changes) {
-        if (change.type === "added") {
-            delete text[change.filename]
-        }
-        else if (change.type === "removed") {
-            text[change.filename] = change.value;
-        }
-        else {
-            text[change.filename] = differ.patch_apply(change.patch, text[change.filename])[0];
-        }
-    }
-
-    return text;
+    return pxt.workspace.applyDiff(text, history, patchText);
 }
 
 function canCombine(oldEntry: pxt.workspace.HistoryEntry, newEntry: pxt.workspace.HistoryEntry) {

@@ -170,7 +170,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                     min={0}
                     max={history.length - 1}
                     step={1}
-                    value={selected || history.length - 1}
+                    value={selected}
                     ariaValueText={valueText}
                     onValueChanged={onSliderValueChanged}
                 />
