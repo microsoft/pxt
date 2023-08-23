@@ -23,6 +23,9 @@ class LED{
                 this.Controller.disconnect();
             }
             if (ev.data.type === `setLEDColor for ${this.assignedName}`) {
+                this.Controller.setLEDColor(ev.data.value);
+            }
+            if (ev.data.type === `setLEDDeviceBodyColor for ${this.assignedName}`) {
                 this.Controller.setColor(ev.data.value);
             }
             if (ev.data.type === `setLEDBrightness for ${this.assignedName}`) {
