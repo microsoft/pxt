@@ -205,6 +205,15 @@ namespace pxsim {
             U.assert(themes && themes.length > 0)
             this.themes = themes;
         }
+        public samMessageToTarget(message:pxsim.SimulatorMessage): void {
+            const frame = this.simFrames()[0];
+            if (!frame) return undefined;
+
+            this.postMessageCore(frame, {
+                type: message.type,
+                value: message.value,
+            });
+        }
 
         public startRecording(width?: number): void {
             const frame = this.simFrames()[0];
@@ -400,7 +409,6 @@ namespace pxsim {
                 } else {
                     this.postMessageCore(frame, msg);
                 }
-
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
                     && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
@@ -731,6 +739,7 @@ namespace pxsim {
 
             this.setState(SimulatorState.Running);
             this.setTraceInterval(this.traceInterval);
+
         }
 
         // ensure _currentRuntime is ready

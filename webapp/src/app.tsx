@@ -76,6 +76,18 @@ import { CodeCardView } from "./codecard";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
+import Microbit from "./SAMLabsDevices/Microbit";
+import DCMotor from "./SAMLabsDevices/DCMotor";
+import Button from "./SAMLabsDevices/Button";
+import Slider from "./SAMLabsDevices/Slider";
+import LightSensor from "./SAMLabsDevices/LightSensor";
+import Tilt from "./SAMLabsDevices/Tilt";
+import Buzzer from "./SAMLabsDevices/Buzzer";
+import ServoMotor from "./SAMLabsDevices/ServoMotor";
+import TemperatureSensor from "./SAMLabsDevices/TemperatureSensor";
+import PressureSensor from "./SAMLabsDevices/PressureSensorController.ts";
+import ProximitySensor from "./SAMLabsDevices/ProximitySensor";
+import LED from "./SAMLabsDevices/LED";
 
 pxsim.util.injectPolyphils();
 
@@ -219,8 +231,8 @@ export class ProjectView
     private autoRunOnStart(): boolean {
         return pxt.appTarget.simulator
             && ((pxt.options.light
-                ? !!pxt.appTarget.simulator.autoRunLight
-                : !!pxt.appTarget.simulator.autoRun)
+                    ? !!pxt.appTarget.simulator.autoRunLight
+                    : !!pxt.appTarget.simulator.autoRun)
                 || (this.firstRun && !!pxt.appTarget.simulator.emptyRunCode));
     }
 
@@ -274,8 +286,39 @@ export class ProjectView
                     };
                     simulator.driver.postMessage(playerOneConnectedMsg);
                 }
+            }  else if (msg.type === "createButton") {
+                this.checkIfDeviceExists(ev.data.id, Button);
+            } else if (msg.type === "createDCMotor") {
+                this.checkIfDeviceExists(ev.data.id, DCMotor);
+            } else if (msg.type === "createSlider") {
+                this.checkIfDeviceExists(ev.data.id, Slider);
+            }else if (msg.type === "createBuzzer") {
+                this.checkIfDeviceExists(ev.data.id, Buzzer);
+            } else if (msg.type === "createLightSensor") {
+                this.checkIfDeviceExists(ev.data.id, LightSensor);
+            } else if (msg.type === "createHeatSensor") {
+                this.checkIfDeviceExists(ev.data.id, TemperatureSensor);
+            } else if (msg.type === "createLED") {
+                this.checkIfDeviceExists(ev.data.id,LED);
+            } else if (msg.type === "createPressureSensor") {
+                this.checkIfDeviceExists(ev.data.id, PressureSensor);
+            } else if (msg.type === "createProximitySensor") {
+                this.checkIfDeviceExists(ev.data.id, ProximitySensor);
+            }else if (msg.type === "createServoMotor") {
+                this.checkIfDeviceExists(ev.data.id, ServoMotor);
+            } else if (msg.type === "createTilt") {
+                this.checkIfDeviceExists(ev.data.id, Tilt);
+            }else if (msg.type === "createMicrobit") {
+                this.checkIfDeviceExists(ev.data.id, Microbit);
             }
         }, false);
+    }
+
+    private checkIfDeviceExists(id: string, device:any): void {
+        if(device.hasInstanceWithId(id)){
+            return;
+        }
+        new device(id);
     }
 
     /**
@@ -1908,8 +1951,8 @@ export class ProjectView
                     }
                     entry.xml =
                         Blockly.Xml.domToText(block)
-                        .replace(/^<xml[^>]*>\n*/i, '')
-                        .replace(/\n*<\/xml>\n*$/i, '');
+                            .replace(/^<xml[^>]*>\n*/i, '')
+                            .replace(/\n*<\/xml>\n*$/i, '');
                     blockConfig.blocks.push(entry);
                 } catch (e) {
                     // Failed to resolve block, don't propagate exception
@@ -2005,7 +2048,7 @@ export class ProjectView
         }
 
         if (updateConfig) {
-             pkg.mainPkg.saveConfig();
+            pkg.mainPkg.saveConfig();
         }
 
         await workspace.saveAsync(header);
@@ -2246,7 +2289,7 @@ export class ProjectView
             .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
-   async importZipFileAsync(file: File, options?: pxt.editor.ImportFileOptions) {
+    async importZipFileAsync(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         pxt.tickEvent("import.zip");
 
@@ -3238,7 +3281,7 @@ export class ProjectView
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
                     const noHexFileDiagnostic = resp.diagnostics.find(diag => diag.code === 9043)
-                        || resp.diagnostics.length == 1 ? resp.diagnostics[0] : undefined;
+                    || resp.diagnostics.length == 1 ? resp.diagnostics[0] : undefined;
 
                     if (noHexFileDiagnostic?.code === 9283 /*program too large*/ && pxt.commands.showProgramTooLargeErrorAsync) {
                         pxt.tickEvent("compile.programTooLargeDialog");
@@ -3604,7 +3647,7 @@ export class ProjectView
             hasCloseIcon: true,
             size: "large",
             jsx:
-                /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
+            /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
                 <div className="ui container">
                     <div id="printcontainer" style={{ 'position': 'relative', 'height': 0, 'paddingBottom': '40%', 'overflow': 'hidden' }}>
                         <iframe
@@ -5048,23 +5091,23 @@ export class ProjectView
                     {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
                 <sidepanel.Sidepanel parent={this} inHome={inHome}
-                    showKeymap={this.state.keymap && simOpts.keymap}
-                    showSerialButtons={useSerialEditor}
-                    showFileList={showFileList}
-                    showFullscreenButton={!isHeadless}
-                    showHostMultiplayerGameButton={isMultiplayerSupported && isMultiplayerGame}
-                    collapseEditorTools={this.state.collapseEditorTools}
-                    simSerialActive={this.state.simSerialActive}
-                    devSerialActive={this.state.deviceSerialActive}
-                    showMiniSim={this.showMiniSim}
-                    openSerial={this.openSerial}
-                    handleHardwareDebugClick={this.hwDebug}
-                    handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
-                    tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
-                    tutorialSimSidebar={tutorialSimSidebar}
-                    onTutorialStepChange={this.setTutorialStep}
-                    onTutorialComplete={this.completeTutorialAsync}
-                    setEditorOffset={this.setEditorOffset} />
+                                     showKeymap={this.state.keymap && simOpts.keymap}
+                                     showSerialButtons={useSerialEditor}
+                                     showFileList={showFileList}
+                                     showFullscreenButton={!isHeadless}
+                                     showHostMultiplayerGameButton={isMultiplayerSupported && isMultiplayerGame}
+                                     collapseEditorTools={this.state.collapseEditorTools}
+                                     simSerialActive={this.state.simSerialActive}
+                                     devSerialActive={this.state.deviceSerialActive}
+                                     showMiniSim={this.showMiniSim}
+                                     openSerial={this.openSerial}
+                                     handleHardwareDebugClick={this.hwDebug}
+                                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
+                                     tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
+                                     tutorialSimSidebar={tutorialSimSidebar}
+                                     onTutorialStepChange={this.setTutorialStep}
+                                     onTutorialComplete={this.completeTutorialAsync}
+                                     setEditorOffset={this.setEditorOffset} />
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(editorOffset))}
@@ -5094,7 +5137,7 @@ export class ProjectView
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
-                    shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
+                                        shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
             </div>
         );
