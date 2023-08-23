@@ -91,16 +91,60 @@ namespace pxt.workspace {
         return header
     }
 
-    export function collapseHistory(history: HistoryEntry[], text: ScriptText, interval: number,  diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+    export interface CollapseHistoryOptions {
+        interval: number;
+        minTime?: number;
+        maxTime?: number;
+    }
+
+    export function collapseHistory(history: HistoryEntry[], text: ScriptText, options: CollapseHistoryOptions, diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
         const newHistory: HistoryEntry[] = [];
 
-        let current = text;
-        let lastTime = history[history.length - 1].timestamp;
-        let lastTimeIndex = history.length - 1;
-        let lastTimeText = {...text};
+        let current = {...text};
+        let lastTime: number = undefined;
+        let lastTimeIndex: number = undefined;
+        let lastTimeText: ScriptText = undefined;
+
+        let { interval, minTime, maxTime } = options;
+
+        if (minTime === undefined) {
+            minTime = 0;
+        }
+        if (maxTime === undefined) {
+            maxTime = history[history.length - 1].timestamp;
+        }
 
         for (let i = history.length - 1; i >= 0; i--) {
             const entry = history[i];
+
+            if (entry.timestamp > maxTime) {
+                newHistory.unshift(entry);
+                current = applyDiff(current, entry, patch);
+                continue;
+            }
+            else if (entry.timestamp < minTime) {
+                if (lastTimeIndex !== undefined) {
+                    if (lastTimeIndex - i > 1) {
+                        newHistory.unshift({
+                            timestamp: lastTime,
+                            changes: diffScriptText(current, lastTimeText, diff).changes
+                        })
+                    }
+                    else {
+                        newHistory.unshift(history[lastTimeIndex]);
+                    }
+                }
+                newHistory.unshift(entry);
+                lastTimeIndex = undefined;
+                continue;
+            }
+            else if (lastTimeIndex === undefined) {
+                lastTimeText = {...current};
+                lastTime = entry.timestamp;
+                lastTimeIndex = i;
+                current = applyDiff(current, entry, patch);
+                continue;
+            }
 
             if (lastTime - entry.timestamp > interval) {
                 if (lastTimeIndex - i > 1) {
@@ -113,10 +157,10 @@ namespace pxt.workspace {
                     newHistory.unshift(history[lastTimeIndex]);
                 }
 
+                lastTimeText = {...current}
                 current = applyDiff(current, entry, patch);
 
                 lastTimeIndex = i;
-                lastTimeText = {...current}
                 lastTime = entry.timestamp;
             }
             else {
@@ -124,14 +168,16 @@ namespace pxt.workspace {
             }
         }
 
-        if (lastTimeIndex) {
-            newHistory.unshift({
-                timestamp: lastTime,
-                changes: diffScriptText(current, lastTimeText, diff).changes
-            })
-        }
-        else {
-            newHistory.unshift(history[0]);
+        if (lastTimeIndex !== undefined) {
+            if (lastTimeIndex) {
+                newHistory.unshift({
+                    timestamp: lastTime,
+                    changes: diffScriptText(current, lastTimeText, diff).changes
+                })
+            }
+            else {
+                newHistory.unshift(history[0]);
+            }
         }
 
         return newHistory;
