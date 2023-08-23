@@ -1283,10 +1283,19 @@ export class ProjectView
     setSideFile(fn: pkg.File, line?: number) {
         let fileName = fn.name;
         let currFile = this.state.currFile.name;
+
         if (fileName != currFile && pxt.editor.isBlocks(fn)) {
-            // Going from ts -> blocks
+            // Going from ts/py -> blocks
             pxt.tickEvent("sidebar.showBlocks");
             this.openBlocks();
+        } else if (fileName.endsWith(".py") && currFile.endsWith(".ts")) {
+            // Going from ts -> py
+            pxt.tickEvent("sidebar.showPython");
+            this.openPythonAsync();
+        } else if (fileName.endsWith(".ts") && currFile.endsWith(".py")) {
+            // Going from py -> ts
+            pxt.tickEvent("sidebar.showTypescript");
+            this.openTypeScriptAsync();
         } else {
             if (this.isTextEditor() || this.isPxtJsonEditor()) {
                 this.textEditor.giveFocusOnLoading = false
