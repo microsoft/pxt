@@ -488,7 +488,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const noBlocks = languageRestriction === pxt.editor.LanguageRestriction.NoBlocks;
 
         // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
-        const pythonIsActive = parent.isPythonActive() || (parent.isBlocksActive() && pxt.shell.isPyLangPref());
+        const pythonIsActive = (parent.isPythonActive() || pxt.shell.isPyLangPref());
         const showPython = python && !tsOnly && !blocksOnly && !noPython;
         const showBlocks = !pyOnly && !tsOnly && !noBlocks && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
         const showJavaScript = !noJavaScript && !pyOnly && !blocksOnly;

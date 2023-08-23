@@ -1291,11 +1291,11 @@ export class ProjectView
         } else if (fileName.endsWith(".py") && currFile.endsWith(".ts")) {
             // Going from ts -> py
             pxt.tickEvent("sidebar.showPython");
-            this.openPythonAsync();
+            this.openPython();
         } else if (fileName.endsWith(".ts") && currFile.endsWith(".py")) {
             // Going from py -> ts
             pxt.tickEvent("sidebar.showTypescript");
-            this.openTypeScriptAsync();
+            this.openJavaScript();
         } else {
             if (this.isTextEditor() || this.isPxtJsonEditor()) {
                 this.textEditor.giveFocusOnLoading = false
