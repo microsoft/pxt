@@ -22,7 +22,7 @@ class TemperatureSensor{
             if (ev.data.type === `${this.assignedName} disconnect`) {
                 this.Controller.disconnect();
             }
-            if (ev.data.type === `setTemperatureSensorColor for ${this.assignedName}`) {
+            if (ev.data.type === `setHeatSensorColor for ${this.assignedName}`) {
                 this.Controller.setColor(ev.data.value);
             }
         }, false);
