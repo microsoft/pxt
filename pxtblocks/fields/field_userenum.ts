@@ -21,6 +21,18 @@ namespace pxtblockly {
         }
 
         doClassValidation_(value: any) {
+            // The format of the name is 10mem where "10" is the value and "mem" is the enum member
+            if (this.sourceBlock_ && this.sourceBlock_.workspace) {
+                const options = this.sourceBlock_.workspace.getVariablesOfType(this.opts.name);
+                options.some(model => {
+                    const [name, ] = parseName(model);
+                    if (name == value) {
+                        value = model.name
+                        return true
+                    }
+                    return false
+                });
+            }
             // update cached option list when adding a new kind
             if (this.opts?.initialMembers && !this.opts.initialMembers.find(el => el == value)) this.getOptions();
             return super.doClassValidation_(value);
