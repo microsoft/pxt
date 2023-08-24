@@ -4709,9 +4709,18 @@ export class ProjectView
         return this.state.tutorialOptions != undefined;
     }
 
-    onTutorialLoaded() {
-        pxt.tickEvent("tutorial.editorLoaded")
-        this.postTutorialLoaded();
+    onEditorContentLoaded() {
+        if (this.isTutorial()) {
+            pxt.tickEvent("tutorial.editorLoaded")
+            this.postTutorialLoaded();
+        }
+
+        if (window.parent && window.parent !== window && pxt.shell.isControllerMode()) {
+            pxt.editor.postHostMessageAsync({
+                action: "event",
+                tick: "editorloaded"
+            } as pxt.editor.EditorMessageEventRequest);
+        }
     }
 
     setEditorOffset() {

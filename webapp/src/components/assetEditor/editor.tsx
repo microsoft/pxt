@@ -39,7 +39,7 @@ export class AssetEditor extends Editor {
             .then(() => {
                 this.parent.forceUpdate()
                 // Do Not Remove: This is used by the skillmap
-                if (this.parent.isTutorial()) this.parent.onTutorialLoaded();
+                this.parent.onEditorContentLoaded();
             });
     }
 
