@@ -341,8 +341,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {showCenterDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
+            {targetTheme.timeMachine ? <sui.Item role="menuitem" text={lf("Turn back time...")} onClick={this.showTurnBackTimeDialog} /> : undefined}
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
-            <sui.Item role="menuitem" text={lf("Turn back time...")} onClick={this.showTurnBackTimeDialog} />
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }

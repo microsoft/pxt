@@ -581,38 +581,49 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         const toWrite = text ? e.text : null;
 
-        try {
-            if (toWrite) {
-                const previous = await impl.getAsync(h);
+        if (pxt.appTarget.appTheme.timeMachine) {
+            try {
+                if (toWrite) {
+                    const previous = await impl.getAsync(h);
 
-                if (previous) {
-                    const diff = diffScriptText(previous.text, toWrite);
+                    if (previous) {
+                        const diff = diffScriptText(previous.text, toWrite);
 
-                    if (diff) {
-                        let history: pxt.workspace.HistoryEntry[] = [];
+                        if (diff) {
+                            let history: pxt.workspace.HistoryFile;
 
-                        if (previous.text[pxt.HISTORY_FILE]) {
-                            history = JSON.parse(previous.text[pxt.HISTORY_FILE]);
+                            if (previous.text[pxt.HISTORY_FILE]) {
+                                history = JSON.parse(previous.text[pxt.HISTORY_FILE]);
+                            }
+                            else {
+                                history = {
+                                    entries: []
+                                };
+                            }
+
+                            const top = history.entries[history.entries.length - 1];
+
+                            if (top && canCombine(top, diff)) {
+                                top.timestamp = diff.timestamp;
+                                diff.changes.forEach(change => top.changes.push(change));
+                            }
+                            else {
+                                history.entries.push(diff);
+                            }
+
+                            toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
                         }
-
-                        const top = history[history.length - 1];
-
-                        if (top && canCombine(top, diff)) {
-                            top.timestamp = diff.timestamp;
-                            diff.changes.forEach(change => top.changes.push(change));
-                        }
-                        else {
-                            history.push(diff);
-                        }
-
-                        toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
                     }
                 }
             }
+            catch (e) {
+                // If this fails for some reason, the history is going to end
+                // up being corrupted. Should we switch to memory db?
+                pxt.reportException(e);
+                console.warn("Unable to update project history", e);
+            }
         }
-        catch (e) {
 
-        }
 
         try {
             ver = await impl.setAsync(h, e.version, toWrite);

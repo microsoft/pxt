@@ -22,6 +22,10 @@ namespace pxt.workspace {
         version: Version;
     }
 
+    export interface HistoryFile {
+        entries: HistoryEntry[];
+    }
+
     export interface HistoryEntry {
         timestamp: number;
         changes: FileChange[];
@@ -225,18 +229,19 @@ namespace pxt.workspace {
     }
 
     export function applyDiff(text: ScriptText, history: pxt.workspace.HistoryEntry, patch: (p: unknown, text: string) => string) {
+        const result = { ...text };
         for (const change of history.changes) {
             if (change.type === "added") {
-                delete text[change.filename]
+                delete result[change.filename]
             }
             else if (change.type === "removed") {
-                text[change.filename] = change.value;
+                result[change.filename] = change.value;
             }
             else {
-                text[change.filename] = patch(change.patch, text[change.filename]);
+                result[change.filename] = patch(change.patch, text[change.filename]);
             }
         }
 
-        return text;
+        return result;
     }
 }
