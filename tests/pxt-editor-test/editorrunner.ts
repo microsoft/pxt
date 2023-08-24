@@ -124,6 +124,24 @@ describe("history", () => {
         }
         chai.expect(text[filename]).to.equal(versions[0]);
     });
+
+    it("should handle adding and removing files", () => {
+        const v1 = { "main.ts": versions[0] };
+        const v2 = { "main.ts": versions[1], "custom.blocks": versions[2] };
+        const v3 = { "custom.blocks": versions[3] };
+
+        const history: pxt.workspace.HistoryEntry[] = [];
+        history.push(pxt.workspace.diffScriptText(v1, v2, diffText));
+        history.push(pxt.workspace.diffScriptText(v2, v3, diffText));
+
+        const res1 = pxt.workspace.applyDiff({...v3}, history.pop(), patchText);
+        chai.expect(res1["main.ts"]).to.equal(versions[1]);
+        chai.expect(res1["custom.blocks"]).to.equal(versions[2]);
+
+        const res2 = pxt.workspace.applyDiff({...res1}, history.pop(), patchText);
+        chai.expect(res2["main.ts"]).to.equal(versions[0]);
+        chai.expect(res2["custom.blocks"]).to.equal(undefined);
+    });
 })
 
 function createTestHistory() {
