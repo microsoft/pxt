@@ -59,7 +59,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn || anonymousShareByDefault);
     const [ isShowingMultiConfirmation, setIsShowingMultiConfirmation ] = React.useState(false);
 
-    const showSimulator = !!simRecorder;
+    const { simScreenshot, simGif } = pxt.appTarget.appTheme;
+    const showSimulator = (simScreenshot || simGif) && !!simRecorder;
     const showDescription = shareState !== "publish";
     let qrCodeButtonRef: HTMLButtonElement;
     let inputRef: HTMLInputElement;
