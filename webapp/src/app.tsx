@@ -5087,13 +5087,15 @@ export class ProjectView
         ///////////////////////////////////////////////////////////
         ////////////          SAMLABS render          /////////////
         ///////////////////////////////////////////////////////////
-        const accessToken = cookies.get('ACCESS_TOKEN');
-        if ( !accessToken) {
-            return NoTokenView();
-        }
-        const validationResults = validate(accessToken);
-        if (!validationResults.isValid) {
-            return NoTokenView();
+        if(!window.location.href.includes('localhost')){
+            const accessToken = cookies.get('ACCESS_TOKEN');
+            if ( !accessToken) {
+                return NoTokenView();
+            }
+            const validationResults = validate(accessToken);
+            if (!validationResults.isValid) {
+                return NoTokenView();
+            }
         }
         ///////////////////////////////////////////////////////////
         ////////////          End SAMLABS render      /////////////

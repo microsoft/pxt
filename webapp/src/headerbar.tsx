@@ -243,7 +243,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         return <div id="mainmenu" className={`ui borderless fixed menu ${targetTheme.invertedMenu ? `inverted` : ''} ${manyTutorialSteps ? "thin" : ""}`} role="menubar">
             <div className="left menu">
                 {/*///// SAMLABS back button*/}
-                {home && <sui.Item className={`icon`} role="menuitem" title={lf("Back to SAMStudio")} icon="no-select chevron left large" ariaLabel={lf("Back to SAMStudio")} onClick={()=>{window.location.href = 'https://example.com:3000/'}} />}
+                {home && <sui.Item className={`icon`} role="menuitem" title={lf("Back to SAMStudio")} icon="no-select chevron left large" ariaLabel={lf("Back to SAMStudio")} onClick={()=>{window.location.href = 'https://studio.samlabs.com/'}} />}
                 {/*///// SAMLABS end back button*/}
                 {isNativeHost && <sui.Item className="icon nativeback" role="menuitem" icon="chevron left large" ariaLabel={lf("Back to application")}
                     onClick={cmds.nativeHostBackAsync} onMouseDown={this.backButtonTouchStart} onMouseUp={this.backButtonTouchEnd} onMouseLeave={this.backButtonTouchEnd} />}
