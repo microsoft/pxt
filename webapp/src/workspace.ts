@@ -1682,8 +1682,13 @@ data.mountVirtualApi("headers", {
         return compiler.projectSearchAsync({ term: p, headers })
             .then((searchResults: pxtc.service.ProjectSearchInfo[]) => searchResults)
             .then(searchResults => {
-                let searchResultsMap = U.toDictionary(searchResults || [], h => h.id)
-                return headers.filter(h => searchResultsMap[h.id]);
+                const result: Header[] = [];
+
+                for (const header of searchResults) {
+                    result.push(headers.find(h => h.id === header.id));
+                }
+
+                return result.filter(h => !!h);
             });
     },
     expirationTime: p => 5 * 1000,
