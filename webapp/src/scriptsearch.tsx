@@ -524,6 +524,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 ariaLabel={lf("Open the next version of the editor")}
                                 role="button"
                                 key={'beta'}
+                                className="beta"
                                 icon="lab ui cardimage"
                                 iconColor="secondary"
                                 name={lf("Beta Editor")}
