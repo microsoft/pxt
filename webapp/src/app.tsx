@@ -150,6 +150,7 @@ export class ProjectView
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
     private rootClasses: string[];
+    private pendingImport: pxt.Util.DeferredPromise<void>;
 
     private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
@@ -2381,7 +2382,25 @@ export class ProjectView
         }
     }
 
-    importProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void> {
+    async importProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void> {
+        if (this.pendingImport) {
+            this.pendingImport.reject("concurrent import requests");
+        }
+
+        this.pendingImport = pxt.Util.defer<void>();
+
+        try {
+            await Promise.all([
+                this.installAndLoadProjectAsync(project, editorState),
+                this.pendingImport.promise
+            ]);
+        }
+        finally {
+            this.pendingImport = undefined;
+        }
+    }
+
+    protected async installAndLoadProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState) {
         let h: pxt.workspace.InstallHeader = project.header;
         if (!h) {
             h = {
@@ -2395,8 +2414,8 @@ export class ProjectView
             }
         }
 
-        return workspace.installAsync(h, project.text)
-            .then(hd => this.loadHeaderAsync(hd, editorState));
+        const installed = await workspace.installAsync(h, project.text);
+        await this.loadHeaderAsync(installed, editorState);
     }
 
     importTutorialAsync(md: string) {
@@ -2432,7 +2451,7 @@ export class ProjectView
                 };
                 delete project.header.tutorial;
             }
-            return this.importProjectAsync(project);
+            return this.installAndLoadProjectAsync(project);
         }
 
         // If it's not a legacy project, it should be in the local workspace.
@@ -4715,11 +4734,9 @@ export class ProjectView
             this.postTutorialLoaded();
         }
 
-        if (window.parent && window.parent !== window && pxt.shell.isControllerMode()) {
-            pxt.editor.postHostMessageAsync({
-                action: "event",
-                tick: "editorloaded"
-            } as pxt.editor.EditorMessageEventRequest);
+        if (this.pendingImport) {
+            this.pendingImport.resolve();
+            this.pendingImport = undefined;
         }
     }
 

@@ -661,7 +661,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     });
 }
 
-export async function getScriptHistoryAsync(header: Header): Promise<pxt.workspace.HistoryEntry[]> {
+export async function getScriptHistoryAsync(header: Header): Promise<pxt.workspace.HistoryFile> {
     const text = await getTextAsync(header.id);
 
     if (text?.[pxt.HISTORY_FILE]) {

@@ -36,7 +36,6 @@ export const TimeMachine = (props: TimeMachineProps) => {
         let workspaceReady: boolean;
         const messageQueue: pxt.editor.EditorMessageRequest[] = [];
         const pendingMessages: {[index: string]: PendingMessage} = {};
-        const loadId = "editor_load";
 
         const postMessageCore = (message: pxt.editor.EditorMessageRequest | pxt.editor.EditorMessageResponse) => {
             iframe.contentWindow!.postMessage(message, "*");
@@ -92,36 +91,11 @@ export const TimeMachine = (props: TimeMachineProps) => {
                         projects: []
                     } as pxt.editor.EditorWorkspaceSyncResponse);
                     break;
-                case "event":
-                    if ((data as pxt.editor.EditorMessageEventRequest).tick === "editorloaded") {
-                        if (pendingMessages[loadId]) {
-                            const pending = pendingMessages[loadId];
-                            pending.handler(data);
-                            delete pendingMessages[loadId];
-                            return;
-                        }
-                    }
             }
         };
 
         let pendingLoad: pxt.workspace.ScriptText;
         let currentlyLoading = false;
-
-        const waitForEditorLoad = async () => {
-            return new Promise<void>((resolve, reject) => {
-                const timeout = setTimeout(() => {
-                    resolve();
-                }, 5000)
-
-                pendingMessages[loadId] = {
-                    handler: () => {
-                        resolve();
-                        clearTimeout(timeout);
-                    },
-                    original: null
-                };
-            });
-        }
 
         const loadProject = async (project: pxt.workspace.ScriptText) => {
             if (currentlyLoading) {
@@ -131,15 +105,13 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
             currentlyLoading = true;
             setLoading("loading-project");
-            sendMessageAsync({
+            await sendMessageAsync({
                 type: "pxteditor",
                 action: "importproject",
                 project: {
                     text: project
                 }
             } as pxt.editor.EditorMessageImportProjectRequest);
-
-            await waitForEditorLoad();
 
             currentlyLoading = false;
 
