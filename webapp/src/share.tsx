@@ -195,9 +195,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const { visible, projectName: newProjectName, title, screenshotUri } = this.state;
         const { simScreenshot, simGif } = pxt.appTarget.appTheme;
         const hasIdentity = auth.hasIdentity() && this.isLoggedIn();
-        const light = !!pxt.options.light;
-        const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
-            && (simScreenshot || simGif);
+        const thumbnails = simScreenshot || simGif;
 
         const hasProjectBeenPersistentShared = parent.hasHeaderBeenPersistentShared();
 
@@ -209,7 +207,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         return visible
             ? <Modal
                 title={lf("Share Project")}
-                className="sharedialog wide"
+                className={`sharedialog${thumbnails ? " wide" : ""}`}
                 parentElement={document.getElementById("root") || undefined}
                 onClose={this.hide}>
                 <Share projectName={newProjectName}
