@@ -599,9 +599,10 @@ export class ProjectView
         }
 
         // switch
-        if (this.isBlocksActive()) {
+        const header = this.state.header;
+        if (this.isBlocksActive() || header.editor == pxt.BLOCKS_PROJECT_NAME) {
             this.blocksEditor.openPython();
-        } else if (this.isJavaScriptActive()) {
+        } else if (this.isJavaScriptActive() || header.editor == pxt.JAVASCRIPT_PROJECT_NAME) {
             this.openPythonAsync();
         } else {
             // make sure there's .py file
@@ -809,14 +810,15 @@ export class ProjectView
     private convertTypeScriptToPythonAsync() {
         const snap = this.editor.snapshotState();
         const fromLanguage = this.isBlocksActive() ? "blocks" : "ts";
-        const fromText = this.editorFile.content;
+        const mainFileName = this.isBlocksActive() ? pxt.MAIN_BLOCKS : pxt.MAIN_TS;
         const mainPkg = pkg.mainEditorPkg();
+        const fromText = mainPkg.files[mainFileName]?.content ?? "";
 
         let convertPromise: Promise<void>;
 
         const cached = mainPkg.getCachedTranspile(fromLanguage, fromText, "py");
         if (cached) {
-            convertPromise = this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, cached, true);
+            convertPromise = this.saveVirtualMainFileAsync(pxt.PYTHON_PROJECT_NAME, cached, true);
         }
         else {
             convertPromise = this.saveTypeScriptAsync(false)
@@ -825,7 +827,7 @@ export class ProjectView
                     if (cres && cres.success) {
                         const mainpy = cres.outfiles[pxt.MAIN_PY];
                         mainPkg.cacheTranspile(fromLanguage, fromText, "py", mainpy);
-                        return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
+                        return this.saveVirtualMainFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                     } else {
                         const e = new Error("Failed to convert to Python.")
                         pxt.reportException(e);
@@ -1284,16 +1286,17 @@ export class ProjectView
         let fileName = fn.name;
         let currFile = this.state.currFile.name;
 
+        const header = this.state.header;
         if (fileName != currFile && pxt.editor.isBlocks(fn)) {
             // Going from ts/py -> blocks
             pxt.tickEvent("sidebar.showBlocks");
             this.openBlocks();
-        } else if (fileName.endsWith(".py") && currFile.endsWith(".ts")) {
-            // Going from ts -> py
+        } else if (header.editor != pxt.PYTHON_PROJECT_NAME && fileName.endsWith(".py")) {
+            // Going from non-py -> py
             pxt.tickEvent("sidebar.showPython");
             this.openPython();
-        } else if (fileName.endsWith(".ts") && currFile.endsWith(".py")) {
-            // Going from py -> ts
+        } else if (header.editor != pxt.JAVASCRIPT_PROJECT_NAME && fileName.endsWith(".ts")) {
+            // Going from non-ts -> ts
             pxt.tickEvent("sidebar.showTypescript");
             this.openJavaScript();
         } else {
@@ -2994,10 +2997,19 @@ export class ProjectView
     }
 
     private saveVirtualFileAsync(prj: string, src: string, open: boolean): Promise<void> {
+        const fileName = this.editorFile.getVirtualFileName(prj);
+        return this.saveVirtualFileAsyncInternal(prj, src, open, fileName);
+    }
+
+    private saveVirtualMainFileAsync(prj: string, src: string, open: boolean): Promise<void> {
+        const fileName = this.getMainFileName(prj);
+        return this.saveVirtualFileAsyncInternal(prj, src, open, fileName);
+    }
+
+    private saveVirtualFileAsyncInternal(prj: string, src: string, open: boolean, fileName: string): Promise<void> {
         // language service does not like empty file
         src = src || "\n";
         const mainPkg = pkg.mainEditorPkg();
-        const fileName = this.editorFile.getVirtualFileName(prj);
         Util.assert(fileName && fileName != this.editorFile.name);
         return mainPkg.setContentAsync(fileName, src).then(() => {
             if (open) {
@@ -3005,6 +3017,17 @@ export class ProjectView
                 this.setFile(f);
             }
         });
+    }
+
+    private getMainFileName(prj: string): string {
+        switch (prj) {
+            case pxt.PYTHON_PROJECT_NAME: return pxt.MAIN_PY;
+            case pxt.JAVASCRIPT_PROJECT_NAME: return pxt.MAIN_TS;
+            case pxt.BLOCKS_PROJECT_NAME: return pxt.MAIN_BLOCKS;
+            default:
+                Util.assert(false, `Unrecognized project type ${prj}`);
+                return undefined;
+        }
     }
 
     saveTypeScriptAsync(open = false): Promise<void> {
