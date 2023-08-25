@@ -22,7 +22,7 @@ namespace pxtblockly {
 
         doClassValidation_(value: any) {
             // The format of the name is 10mem where "10" is the value and "mem" is the enum member
-            if (this.sourceBlock_ && this.sourceBlock_.workspace) {
+            if (this.sourceBlock_?.workspace) {
                 const options = this.sourceBlock_.workspace.getVariablesOfType(this.opts.name);
                 options.some(model => {
                     const [name, ] = parseName(model);
