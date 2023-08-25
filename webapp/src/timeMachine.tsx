@@ -188,6 +188,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 <div>
                     <div className="common-spinner" />
                 </div>
+                {/* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */}
                 <iframe
                     style={{ opacity: loading !== "loaded-project" ? 0 : 1 }}
                     ref={iframeRef}
@@ -196,6 +197,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                     sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
                     src={url}
                 />
+                {/* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */}
             </div>
         </div>
     );
