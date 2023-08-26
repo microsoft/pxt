@@ -768,6 +768,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         const { nameid, advancedButtonState, subns, name, icon } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         const metaColor = this.getMetaColor();
+        const hc = core.getHighContrastOnce();
 
         const invertedMultipler = appTheme.blocklyOptions
             && appTheme.blocklyOptions.toolboxOptions
@@ -776,11 +777,24 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         let treeRowStyle: React.CSSProperties = {
             paddingLeft: '0px'
         }
+        let treeIconStyle: React.CSSProperties = {
+            color: '#fff', display: 'inline-block'
+        }
         let treeRowClass = 'blocklyTreeRow';
         if (appTheme.invertedToolbox) {
             // Inverted toolbox
             treeRowStyle.backgroundColor = (metaColor || '#ddd');
             treeRowStyle.color = '#fff';
+            if (hc) {
+                treeIconStyle.color = metaColor;
+                if (nameid === "agent") {
+                    this.props.treeRow.icon = "icons/Agent_icon_orange.png"
+                }
+            } else {
+                if (nameid === "agent") {
+                    this.props.treeRow.icon = "icons/Agent_icon_white.png"
+                }
+            }
         } else {
             if (appTheme.coloredToolbox) {
                 // Colored toolbox
@@ -803,6 +817,9 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             treeRowClass += ' blocklyTreeSelected';
             if (appTheme.invertedToolbox) {
                 treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(metaColor, invertedMultipler, false)}`;
+                if (hc) {
+                    treeIconStyle.color = '#fff';
+                }
             } else {
                 treeRowStyle.backgroundColor = (metaColor || '#ddd');
             }
@@ -839,7 +856,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
-            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`} role="presentation">{iconContent}</span>
+            <span style={treeIconStyle} className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`} role="presentation">{iconContent}</span>
             <span className="blocklyTreeLabel">{rowTitle}</span>
             {hasDeleteButton ? <i className="blocklyTreeButton icon times circle" onClick={this.handleDeleteClick}/>: undefined}
         </div>
