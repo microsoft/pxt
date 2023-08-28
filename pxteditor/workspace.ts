@@ -82,7 +82,6 @@ namespace pxt.workspace {
             pubId: "",
             pubCurrent: false,
             _rev: null,
-            historyRev: null,
             id: U.guidGen(),
             recentUse: modTime,
             modificationTime: modTime,

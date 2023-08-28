@@ -7,7 +7,6 @@ import * as coretsx from "./coretsx";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
 import * as workspace from "./workspace";
-import * as codecard from "./codecard";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;

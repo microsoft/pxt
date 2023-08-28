@@ -733,15 +733,10 @@ namespace pxt.runner {
                 .then(() => {
                     switch (doctype) {
                         case "print":
-                        case "preview":
                             const data = window.localStorage["printjob"];
                             delete window.localStorage["printjob"];
                             return renderProjectFilesAsync(content, JSON.parse(data), undefined, true)
-                                .then(() => {
-                                    if (doctype === "print") {
-                                        pxsim.print(1000)
-                                    }
-                                });
+                                .then(() => pxsim.print(1000));
                         case "project":
                             return renderProjectFilesAsync(content, JSON.parse(src))
                                 .then(() => pxsim.print(1000));
@@ -774,7 +769,7 @@ namespace pxt.runner {
                         }, "*");
                 }).finally(() => {
                     $(loading).hide()
-                    if (backButton && doctype !== "preview") $(backButton).show()
+                    if (backButton) $(backButton).show()
                     $(content).show()
                 })
                 .then(() => { });
@@ -817,7 +812,7 @@ namespace pxt.runner {
         }
 
         async function renderHashAsync() {
-            let m = /^#(doc|md|tutorial|book|project|projectid|print|preview):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial|book|project|projectid|print):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 pushHistory();
 
