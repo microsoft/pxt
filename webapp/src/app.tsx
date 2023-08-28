@@ -4257,10 +4257,20 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
-    showTurnBackTimeDialogAsync() {
-        return dialogs.showTurnBackTimeDialogAsync(this.state.header, () => {
-            this.reloadHeaderAsync()
+    async showTurnBackTimeDialogAsync() {
+        let simWasRunning = this.isSimulatorRunning();
+        if (simWasRunning) {
+            this.stopSimulator();
+        }
+
+        await dialogs.showTurnBackTimeDialogAsync(this.state.header, () => {
+            this.reloadHeaderAsync();
+            simWasRunning = false;
         });
+
+        if (simWasRunning) {
+            this.startSimulator();
+        }
     }
 
     showLoginDialog(continuationHash?: string) {

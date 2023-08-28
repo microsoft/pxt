@@ -99,10 +99,8 @@ export const VerticalSlider = (props: VerticalSliderProps) => {
             if (!inGesture) return;
 
             inGesture = false;
-            if (newValue !== value) {
-                onValueChanged(newValue);
-            }
 
+            onValueChanged(newValue);
             setCurrent(undefined);
         };
 
