@@ -512,6 +512,7 @@ namespace pxsim {
 
         public stop(unload = false, starting = false) {
             this.clearDebugger();
+            this.stopSound();
             this.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
             this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
             if (unload)
@@ -519,6 +520,7 @@ namespace pxsim {
         }
 
         public suspend() {
+            this.stopSound();
             this.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
             this.setState(SimulatorState.Suspended);
         }
@@ -695,6 +697,7 @@ namespace pxsim {
                 activePlayer: opts.activePlayer,
                 theme: opts.theme,
             }
+            this.stopSound();
             this.start();
         }
 
