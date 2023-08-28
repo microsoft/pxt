@@ -372,6 +372,7 @@ export async function simulateAsync(
     driver.options.onSimulatorCommand = msg => {
         if (msg.command === "restart") {
             runOptions.storedState = getStoredState(runOpts);
+            driver.stopSound();
             driver.run(js, runOptions);
         }
         if (msg.command == "setstate") {

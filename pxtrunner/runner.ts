@@ -388,6 +388,7 @@ namespace pxt.runner {
         simDriver.options.onSimulatorCommand = msg => {
             if (msg.command === "restart") {
                 runOptions.storedState = getStoredState(simOptions.id)
+                simDriver.stopSound();
                 simDriver.run(js, runOptions);
             }
             if (msg.command == "setstate") {
