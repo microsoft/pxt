@@ -350,7 +350,6 @@ export function mute(mute: boolean) {
 
 export function stop(unload?: boolean, starting?: boolean) {
     if (!driver) return;
-    driver.stopSound();
     driver.stop(unload, starting);
 }
 

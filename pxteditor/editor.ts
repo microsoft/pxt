@@ -279,7 +279,7 @@ namespace pxt.editor {
         completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
         isTutorial(): boolean;
-        onTutorialLoaded(): void;
+        onEditorContentLoaded(): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
@@ -367,6 +367,7 @@ namespace pxt.editor {
         showLanguagePicker(): void;
         showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share"): void;
         showAboutDialog(): void;
+        showTurnBackTimeDialogAsync(): Promise<void>;
 
         showLoginDialog(continuationHash?: string): void;
         showProfileDialog(location?: string): void;

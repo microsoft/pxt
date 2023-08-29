@@ -193,7 +193,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
 
     const qrDivContent = () => {
         if (renderQRCode && kioskCode) {
-            const kioskUrl = `${kioskCodeUrl}#add-game:${kioskCode}`;
+            const kioskUrl = `${window.location.origin}${kioskCodeUrl}#add-game:${kioskCode}`;
             return (
                 <div className="innerQRCodeContent">
                     <h3>{kioskTimeOutInMinutes} minute Kiosk ID</h3>
