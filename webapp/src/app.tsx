@@ -5590,6 +5590,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     await auth.initAsync();
+
+    // Trigger the login process if autologin is specified. Required for Clever.
+    const autoLogin = query["autologin"] as pxt.IdentityProviderId;
+    if (autoLogin) {
+        await auth.loginAsync(autoLogin, true);
+    }
+
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();
