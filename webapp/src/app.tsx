@@ -3677,7 +3677,6 @@ export class ProjectView
             || this.debugOptionsChanged()) {
             this.startSimulator();
         } else {
-            simulator.driver.stopSound();
             simulator.driver.restart(); // fast restart
         }
         simulator.driver.focus()
