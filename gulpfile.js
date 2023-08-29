@@ -596,7 +596,7 @@ const runSkillmapTests = () => {
     if(isWin32) {
         command = path.resolve("node_modules/.bin/mocha.cmd") + " ./built/tests/tests/skillmapParserTests.js";
     } else {
-        command = "./node_modules/.bin/mocha ./built/tests/tests/skillmapParserTests.js"; 
+        command = "./node_modules/.bin/mocha ./built/tests/tests/skillmapParserTests.js";
     }
     return exec(command, true);
 }
@@ -727,6 +727,7 @@ const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
+const testpxteditor = testTask("pxt-editor-test", "editorrunner.js", ["built/pxteditor.js"]);
 
 const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/tests/", true);
 const runKarma = () => {
@@ -757,20 +758,28 @@ const testAll = gulp.series(
     testtutorials,
     testlanguageservice,
     karma,
-    testSkillmap
+    testSkillmap,
+    testpxteditor
 )
 
-function testTask(testFolder, testFile) {
+function testTask(testFolder, testFile, additionalFiles) {
     const buildTs = () => compileTsProject("tests/" + testFolder, "built/tests", true);
 
-    const buildTestRunner = () => gulp.src([
+    const src = [
         "pxtcompiler/ext-typescript/lib/typescript.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js",
         "built/pxtsim.js",
-        "built/tests/" + testFolder + "/" + testFile,
-    ])
+    ]
+
+    if (additionalFiles) {
+        src.push(...additionalFiles);
+    }
+
+    src.push("built/tests/" + testFolder + "/" + testFile,)
+
+    const buildTestRunner = () => gulp.src(src)
         .pipe(concat("runner.js"))
         .pipe(header(`
             "use strict";
@@ -853,6 +862,7 @@ exports.multiplayer = multiplayer;
 exports.kiosk = kiosk;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
+exports.testpxteditor = testpxteditor;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),

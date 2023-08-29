@@ -150,6 +150,7 @@ export class ProjectView
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
     private rootClasses: string[];
+    private pendingImport: pxt.Util.DeferredPromise<void>;
 
     private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
@@ -2393,7 +2394,25 @@ export class ProjectView
         }
     }
 
-    importProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void> {
+    async importProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void> {
+        if (this.pendingImport) {
+            this.pendingImport.reject("concurrent import requests");
+        }
+
+        this.pendingImport = pxt.Util.defer<void>();
+
+        try {
+            await Promise.all([
+                this.installAndLoadProjectAsync(project, editorState),
+                this.pendingImport.promise
+            ]);
+        }
+        finally {
+            this.pendingImport = undefined;
+        }
+    }
+
+    protected async installAndLoadProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState) {
         let h: pxt.workspace.InstallHeader = project.header;
         if (!h) {
             h = {
@@ -2407,8 +2426,8 @@ export class ProjectView
             }
         }
 
-        return workspace.installAsync(h, project.text)
-            .then(hd => this.loadHeaderAsync(hd, editorState));
+        const installed = await workspace.installAsync(h, project.text);
+        await this.loadHeaderAsync(installed, editorState);
     }
 
     importTutorialAsync(md: string) {
@@ -2444,7 +2463,7 @@ export class ProjectView
                 };
                 delete project.header.tutorial;
             }
-            return this.importProjectAsync(project);
+            return this.installAndLoadProjectAsync(project);
         }
 
         // If it's not a legacy project, it should be in the local workspace.
@@ -4269,6 +4288,22 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
+    async showTurnBackTimeDialogAsync() {
+        let simWasRunning = this.isSimulatorRunning();
+        if (simWasRunning) {
+            this.stopSimulator();
+        }
+
+        await dialogs.showTurnBackTimeDialogAsync(this.state.header, () => {
+            this.reloadHeaderAsync();
+            simWasRunning = false;
+        });
+
+        if (simWasRunning) {
+            this.startSimulator();
+        }
+    }
+
     showLoginDialog(continuationHash?: string) {
         this.loginDialog.show(continuationHash);
     }
@@ -4734,9 +4769,16 @@ export class ProjectView
         return this.state.tutorialOptions != undefined;
     }
 
-    onTutorialLoaded() {
-        pxt.tickEvent("tutorial.editorLoaded")
-        this.postTutorialLoaded();
+    onEditorContentLoaded() {
+        if (this.isTutorial()) {
+            pxt.tickEvent("tutorial.editorLoaded")
+            this.postTutorialLoaded();
+        }
+
+        if (this.pendingImport) {
+            this.pendingImport.resolve();
+            this.pendingImport = undefined;
+        }
     }
 
     setEditorOffset() {

@@ -1,0 +1,32 @@
+.common-vertical-slider-wrapper {
+    position: relative;
+    width: 10rem;
+}
+
+.common-vertical-slider-rail {
+    width: 1rem;
+    position: absolute;
+    left: 3.5rem;
+    background: #333333;
+    border-radius: .5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.common-vertical-slider-handle {
+    width: 3rem;
+    position: absolute;
+    left: 2.5rem;
+    height: 1rem;
+    border: solid 2px #333333;
+    border-radius: .5rem;
+    background: #ffffff;
+    z-index: 1;
+
+    &:focus-visible {
+        outline: solid 2px @inputBorderColorFocus;
+    }
+}

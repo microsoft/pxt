@@ -193,9 +193,12 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
                 && !files.some(f => f.name == localized);
             const hasDelete = deleteFiles
-                && file.name != pxt.CONFIG_NAME
-                && (usesGitHub || file.name != pxt.MAIN_TS)
-                && !file.isReadonly();
+                && (
+                    file.name != pxt.CONFIG_NAME
+                    && (usesGitHub || file.name != pxt.MAIN_TS)
+                    && !file.isReadonly()
+                    || file.name === pxt.HISTORY_FILE
+                );
             const nameStart = folder.length ? folder.length + 1 : 0;
             return (
                 <FileTreeItem

@@ -1,0 +1,62 @@
+.ui.fullscreen.modal.time-machine-dialog > .content {
+    background-color: white;
+}
+
+.time-machine {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    position: relative;
+
+    .time-machine-timeline {
+        width: 10rem;
+        height: 100%;
+        padding: 1rem;
+        position: relative;
+
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+
+        .time-machine-label {
+            margin: 1rem;
+        }
+
+        .time-machine-timeline-slider {
+            flex-grow: 1;
+        }
+    }
+}
+
+.time-machine-preview {
+    position: relative;
+    flex-grow: 1;
+    border: #dedede solid 1px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+
+    & > iframe {
+        position: relative;
+        height: 100%;
+        width: 100%;
+        transition: opacity 0.25s;
+        z-index: 1;
+    }
+
+    & > div {
+        position: absolute;
+        top: 0;
+        background: @primaryColor;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+
+        .common-spinner {
+            width: 5rem;
+            height: 5rem;
+        }
+    }
+}
