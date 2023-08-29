@@ -787,13 +787,6 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             treeRowStyle.color = '#fff';
             if (hc) {
                 treeIconStyle.color = metaColor;
-                if (nameid === "agent") {
-                    this.props.treeRow.icon = "icons/Agent_icon_orange.png"
-                }
-            } else {
-                if (nameid === "agent") {
-                    this.props.treeRow.icon = "icons/Agent_icon_white.png"
-                }
             }
         } else {
             if (appTheme.coloredToolbox) {
