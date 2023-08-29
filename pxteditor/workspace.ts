@@ -28,6 +28,7 @@ namespace pxt.workspace {
 
     export interface HistoryEntry {
         timestamp: number;
+        editorVersion: string;
         changes: FileChange[];
     }
 
@@ -104,6 +105,7 @@ namespace pxt.workspace {
         const newHistory: HistoryEntry[] = [];
 
         let current = {...text};
+        let lastVersion = pxt.appTarget?.versions?.target;
         let lastTime: number = undefined;
         let lastTimeIndex: number = undefined;
         let lastTimeText: ScriptText = undefined;
@@ -130,6 +132,7 @@ namespace pxt.workspace {
                     if (lastTimeIndex - i > 1) {
                         newHistory.unshift({
                             timestamp: lastTime,
+                            editorVersion: lastVersion,
                             changes: diffScriptText(current, lastTimeText, diff).changes
                         })
                     }
@@ -144,6 +147,8 @@ namespace pxt.workspace {
             else if (lastTimeIndex === undefined) {
                 lastTimeText = {...current};
                 lastTime = entry.timestamp;
+                lastVersion = entry.editorVersion;
+
                 lastTimeIndex = i;
                 current = applyDiff(current, entry, patch);
                 continue;
@@ -153,6 +158,7 @@ namespace pxt.workspace {
                 if (lastTimeIndex - i > 1) {
                     newHistory.unshift({
                         timestamp: lastTime,
+                        editorVersion: lastVersion,
                         changes: diffScriptText(current, lastTimeText, diff).changes
                     })
                 }
@@ -165,6 +171,7 @@ namespace pxt.workspace {
 
                 lastTimeIndex = i;
                 lastTime = entry.timestamp;
+                lastVersion = entry.editorVersion;
             }
             else {
                 current = applyDiff(current, entry, patch);
@@ -175,6 +182,7 @@ namespace pxt.workspace {
             if (lastTimeIndex) {
                 newHistory.unshift({
                     timestamp: lastTime,
+                    editorVersion: lastVersion,
                     changes: diffScriptText(current, lastTimeText, diff).changes
                 })
             }
@@ -223,6 +231,7 @@ namespace pxt.workspace {
 
         return {
             timestamp: Date.now(),
+            editorVersion: pxt.appTarget?.versions?.target,
             changes
         }
     }

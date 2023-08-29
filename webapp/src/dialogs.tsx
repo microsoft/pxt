@@ -868,9 +868,27 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
         let currentText = text;
 
         for (let i = 0; i < history.length; i++) {
-            const entry = history[history.length - 1 - i];
+            const index = history.length - 1 - i;
+            const entry = history[index];
             currentText = workspace.applyDiff(currentText, entry);
-            if (entry.timestamp === timestamp) break;
+            if (entry.timestamp === timestamp) {
+                const version = index > 0 ? history[index - 1].editorVersion : entry.editorVersion;
+
+                // Attempt to update the version in pxt.json
+                try {
+                    const config = JSON.parse(currentText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                    if (config.targetVersions) {
+                        config.targetVersions.target = version;
+                    }
+                    currentText[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+                }
+                catch (e) {
+                }
+
+                // Also set version in the header; this is what the compiler actually checks when applying upgrades
+                header.targetVersion = version;
+                break;
+            }
         }
 
         await workspace.saveAsync(header, currentText);
