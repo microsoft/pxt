@@ -491,7 +491,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         ])
 
         let index = 0;
-        // I don't think this is working.. may remove or try to fix.
         let topRowIndex = 0; // index of top-level rows for animation
         const advancedButtonState = showAdvanced ? "advancedexpanded" : "advancedcollapsed";
         return <div ref={this.handleRootElementRef} className={classes} id={`${editorname}EditorToolbox`}>
