@@ -260,6 +260,50 @@ div.blocklyTreeIcon span {
 }
 
 /*******************************
+    Inverted Toolbox
+*******************************/
+#root.hc .invertedToolbox div div {
+    div.blocklyTreeRow .blocklyTreeIcon {
+        color: var(--block-meta-color);
+    }
+
+    div.blocklyTreeRow.blocklyTreeSelected .blocklyTreeIcon {
+        color: #fff;
+    }
+}
+
+.invertedToolbox .blocklyTreeRoot div div {
+    div.blocklyTreeRow {
+        background-color: var(--block-meta-color);
+        color: #fff;
+    }
+
+    div.blocklyTreeRow.blocklyTreeSelected {
+        background-color: var(--block-meta-color);
+    }
+
+    div.blocklyTreeRow:hover {
+        background-color: var(--block-faded-color);
+        color: #fff;
+    }
+}
+
+/*******************************
+    Colored Toolbox
+*******************************/
+.coloredToolbox .blocklyTreeRoot div div {
+    div.blocklyTreeRow {
+        color: var(--block-meta-color);
+        border-left: var(--block-category-border);
+    }
+
+    div.blocklyTreeRow.blocklyTreeSelected {
+        background-color: var(--block-meta-color);
+        color: #fff;
+    }
+}
+
+/*******************************
         Media Adjustments
 *******************************/
 

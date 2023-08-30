@@ -491,6 +491,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         ])
 
         let index = 0;
+        // I don't think this is working.. may remove or try to fix.
         let topRowIndex = 0; // index of top-level rows for animation
         const advancedButtonState = showAdvanced ? "advancedexpanded" : "advancedcollapsed";
         return <div ref={this.handleRootElementRef} className={classes} id={`${editorname}EditorToolbox`}>
@@ -715,8 +716,6 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         this.state = {
         }
 
-        this.onmouseenter = this.onmouseenter.bind(this);
-        this.onmouseleave = this.onmouseleave.bind(this);
         this.handleDeleteClick = this.handleDeleteClick.bind(this);
     }
 
@@ -727,26 +726,6 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     getProperties() {
         const { treeRow } = this.props;
         return treeRow;
-    }
-
-    onmouseenter() {
-        const appTheme = pxt.appTarget.appTheme;
-        const metaColor = this.getMetaColor();
-        const invertedMultipler = appTheme.blocklyOptions
-            && appTheme.blocklyOptions.toolboxOptions
-            && appTheme.blocklyOptions.toolboxOptions.invertedMultiplier || 0.3;
-
-        if (appTheme.invertedToolbox) {
-            this.treeRow.style.backgroundColor = pxt.toolbox.fadeColor(metaColor || '#ddd', invertedMultipler, false);
-        }
-    }
-
-    onmouseleave() {
-        const appTheme = pxt.appTarget.appTheme;
-        const metaColor = this.getMetaColor();
-        if (appTheme.invertedToolbox) {
-            this.treeRow.style.backgroundColor = (metaColor || '#ddd');
-        }
     }
 
     getMetaColor() {
@@ -775,49 +754,18 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             && appTheme.blocklyOptions.toolboxOptions.invertedMultiplier || 0.3;
 
         let treeRowStyle: React.CSSProperties = {
-            paddingLeft: '0px'
-        }
-        let treeIconStyle: React.CSSProperties = {
-            color: '#fff', display: 'inline-block'
-        }
-        let treeRowClass = 'blocklyTreeRow';
-        if (appTheme.invertedToolbox) {
-            // Inverted toolbox
-            treeRowStyle.backgroundColor = (metaColor || '#ddd');
-            treeRowStyle.color = '#fff';
-            if (hc) {
-                treeIconStyle.color = metaColor;
-            }
-        } else {
-            if (appTheme.coloredToolbox) {
-                // Colored toolbox
-                treeRowStyle.color = `${metaColor}`;
-            }
-            const border = `8px solid ${metaColor}`;
-            if (isRtl) {
-                treeRowStyle.borderRight = border;
-            } else {
-                treeRowStyle.borderLeft = border;
-            }
-            if (topRowIndex && this.props.shouldAnimate) {
-                treeRowStyle.animationDelay = `${(topRowIndex * this.animationDelay) + this.baseAnimationDelay}s`;
-                treeRowClass += ' blocklyTreeAnimate';
-            }
-        }
+            paddingLeft: '0px',
+            "--block-meta-color": metaColor,
+            "--block-faded-color": pxt.toolbox.fadeColor(metaColor || '#ddd', invertedMultipler, false),
+            "--block-category-border": `8px solid ${metaColor}`
+        } as React.CSSProperties;
 
-        // Selected
-        if (selected) {
-            treeRowClass += ' blocklyTreeSelected';
-            if (appTheme.invertedToolbox) {
-                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(metaColor, invertedMultipler, false)}`;
-                if (hc) {
-                    treeIconStyle.color = '#fff';
-                }
-            } else {
-                treeRowStyle.backgroundColor = (metaColor || '#ddd');
-            }
-            treeRowStyle.color = '#fff';
-        }
+        let treeRowClass = `blocklyTreeRow${selected ? ' blocklyTreeSelected' : '' }`;
+        // left this commented out because I want to chat about it first
+            // if (topRowIndex && this.props.shouldAnimate) {
+            //     treeRowStyle.animationDelay = `${(topRowIndex * this.animationDelay) + this.baseAnimationDelay}s`;
+            //     treeRowClass += ' blocklyTreeAnimate';
+            // }
 
         // Icon
         const iconClass = `blocklyTreeIcon${subns ? 'more' : icon ? (nameid || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
@@ -845,11 +793,10 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             style={treeRowStyle} tabIndex={0}
             data-ns={dataNs}
             aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
-            onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
             onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
-            <span style={treeIconStyle} className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`} role="presentation">{iconContent}</span>
+            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`} role="presentation">{iconContent}</span>
             <span className="blocklyTreeLabel">{rowTitle}</span>
             {hasDeleteButton ? <i className="blocklyTreeButton icon times circle" onClick={this.handleDeleteClick}/>: undefined}
         </div>
