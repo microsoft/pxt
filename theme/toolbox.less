@@ -229,6 +229,14 @@ div.blocklyTreeIcon span {
 .blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
     font-family: xicon !important;
 }
+.blocklyTreeIcon.image-icon {
+    background-image: var(--image-icon-url);
+    width: 30px;
+    height: 100%;
+    background-size: 20px !important;
+    background-repeat: no-repeat !important;
+    background-position: 50% 50% !important;
+}
 
 /*******************************
       Toolbox Animation
@@ -262,7 +270,7 @@ div.blocklyTreeIcon span {
 /*******************************
     Inverted Toolbox
 *******************************/
-#root.hc .invertedToolbox div div {
+#root.hc .invertedToolbox {
     div.blocklyTreeRow .blocklyTreeIcon {
         color: var(--block-meta-color);
     }
@@ -272,7 +280,7 @@ div.blocklyTreeIcon span {
     }
 }
 
-.invertedToolbox .blocklyTreeRoot div div {
+.invertedToolbox .blocklyTreeRoot {
     div.blocklyTreeRow {
         background-color: var(--block-meta-color);
         color: #fff;
@@ -291,10 +299,10 @@ div.blocklyTreeIcon span {
 /*******************************
     Colored Toolbox
 *******************************/
-.coloredToolbox .blocklyTreeRoot div div {
+.coloredToolbox .blocklyTreeRoot {
     div.blocklyTreeRow {
         color: var(--block-meta-color);
-        border-left: var(--block-category-border);
+        border-left: 8px solid var(--block-meta-color);
     }
 
     div.blocklyTreeRow.blocklyTreeSelected {
