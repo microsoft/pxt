@@ -767,13 +767,13 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         // Icon
         let iconClass = `blocklyTreeIcon${subns ? 'more' : icon ? (nameid || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
         let iconContent = subns ? pxt.toolbox.getNamespaceIcon('more') : icon || pxt.toolbox.getNamespaceIcon('default');
+        const isImageIcon = iconContent.length > 1;  // It's probably an image icon, and not an icon code
         let iconImageStyle: React.CSSProperties = {
-            "--image-icon-url": `url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important`,
+            "--image-icon-url": isImageIcon ? `url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important`: undefined,
             display: "inline-block"
         } as React.CSSProperties;
 
-        if (iconContent.length > 1) {
-            // It's probably an image icon, and not an icon code
+        if (isImageIcon) {
             iconClass += ' image-icon';
             iconContent = undefined;
         }
