@@ -715,8 +715,6 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         this.state = {
         }
 
-        this.onmouseenter = this.onmouseenter.bind(this);
-        this.onmouseleave = this.onmouseleave.bind(this);
         this.handleDeleteClick = this.handleDeleteClick.bind(this);
     }
 
@@ -727,26 +725,6 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     getProperties() {
         const { treeRow } = this.props;
         return treeRow;
-    }
-
-    onmouseenter() {
-        const appTheme = pxt.appTarget.appTheme;
-        const metaColor = this.getMetaColor();
-        const invertedMultipler = appTheme.blocklyOptions
-            && appTheme.blocklyOptions.toolboxOptions
-            && appTheme.blocklyOptions.toolboxOptions.invertedMultiplier || 0.3;
-
-        if (appTheme.invertedToolbox) {
-            this.treeRow.style.backgroundColor = pxt.toolbox.fadeColor(metaColor || '#ddd', invertedMultipler, false);
-        }
-    }
-
-    onmouseleave() {
-        const appTheme = pxt.appTarget.appTheme;
-        const metaColor = this.getMetaColor();
-        if (appTheme.invertedToolbox) {
-            this.treeRow.style.backgroundColor = (metaColor || '#ddd');
-        }
     }
 
     getMetaColor() {
@@ -774,57 +752,29 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             && appTheme.blocklyOptions.toolboxOptions.invertedMultiplier || 0.3;
 
         let treeRowStyle: React.CSSProperties = {
-            paddingLeft: '0px'
-        }
-        let treeRowClass = 'blocklyTreeRow';
-        if (appTheme.invertedToolbox) {
-            // Inverted toolbox
-            treeRowStyle.backgroundColor = (metaColor || '#ddd');
-            treeRowStyle.color = '#fff';
-        } else {
-            if (appTheme.coloredToolbox) {
-                // Colored toolbox
-                treeRowStyle.color = `${metaColor}`;
-            }
-            const border = `8px solid ${metaColor}`;
-            if (isRtl) {
-                treeRowStyle.borderRight = border;
-            } else {
-                treeRowStyle.borderLeft = border;
-            }
-            if (topRowIndex && this.props.shouldAnimate) {
-                treeRowStyle.animationDelay = `${(topRowIndex * this.animationDelay) + this.baseAnimationDelay}s`;
-                treeRowClass += ' blocklyTreeAnimate';
-            }
-        }
+            paddingLeft: '0px',
+            "--block-meta-color": metaColor,
+            "--block-faded-color": pxt.toolbox.fadeColor(metaColor || '#ddd', invertedMultipler, false)
+        } as React.CSSProperties;
 
-        // Selected
-        if (selected) {
-            treeRowClass += ' blocklyTreeSelected';
-            if (appTheme.invertedToolbox) {
-                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(metaColor, invertedMultipler, false)}`;
-            } else {
-                treeRowStyle.backgroundColor = (metaColor || '#ddd');
-            }
-            treeRowStyle.color = '#fff';
+        let treeRowClass = `blocklyTreeRow${selected ? ' blocklyTreeSelected' : '' }`;
+
+        if (topRowIndex && this.props.shouldAnimate) {
+            treeRowStyle.animationDelay = `${(topRowIndex * this.animationDelay) + this.baseAnimationDelay}s`;
+            treeRowClass += ' blocklyTreeAnimate';
         }
 
         // Icon
-        const iconClass = `blocklyTreeIcon${subns ? 'more' : icon ? (nameid || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
+        let iconClass = `blocklyTreeIcon${subns ? 'more' : icon ? (nameid || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
         let iconContent = subns ? pxt.toolbox.getNamespaceIcon('more') : icon || pxt.toolbox.getNamespaceIcon('default');
-        let iconImageStyle: JSX.Element;
-        if (iconContent.length > 1) {
-            // It's probably an image icon, and not an icon code
-            iconImageStyle = <style>
-                {`.blocklyTreeIcon.${iconClass} {
-                    background-image: url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important;
-                    width: 30px;
-                    height: 100%;
-                    background-size: 20px !important;
-                    background-repeat: no-repeat !important;
-                    background-position: 50% 50% !important;
-                }`}
-            </style>
+        const isImageIcon = iconContent.length > 1;  // It's probably an image icon, and not an icon code
+        let iconImageStyle: React.CSSProperties = {
+            "--image-icon-url": isImageIcon ? `url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important`: undefined,
+            display: "inline-block"
+        } as React.CSSProperties;
+
+        if (isImageIcon) {
+            iconClass += ' image-icon';
             iconContent = undefined;
         }
         const rowTitle = name ? name : Util.capitalize(subns || nameid);
@@ -835,11 +785,9 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             style={treeRowStyle} tabIndex={0}
             data-ns={dataNs}
             aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
-            onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
             onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
-            {iconImageStyle}
-            <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`} role="presentation">{iconContent}</span>
+            <span style={iconImageStyle} className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`} role="presentation">{iconContent}</span>
             <span className="blocklyTreeLabel">{rowTitle}</span>
             {hasDeleteButton ? <i className="blocklyTreeButton icon times circle" onClick={this.handleDeleteClick}/>: undefined}
         </div>

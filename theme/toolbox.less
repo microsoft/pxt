@@ -229,6 +229,14 @@ div.blocklyTreeIcon span {
 .blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
     font-family: xicon !important;
 }
+.blocklyTreeIcon.image-icon {
+    background-image: var(--image-icon-url);
+    width: 30px;
+    height: 100%;
+    background-size: 20px !important;
+    background-repeat: no-repeat !important;
+    background-position: 50% 50% !important;
+}
 
 /*******************************
       Toolbox Animation
@@ -257,6 +265,50 @@ div.blocklyTreeIcon span {
 
 .blocklyTreeRow:not(.blocklyTreeSelected):focus {
     background-color: #e4e4e4;
+}
+
+/*******************************
+    Inverted Toolbox
+*******************************/
+#root.hc .invertedToolbox {
+    div.blocklyTreeRow .blocklyTreeIcon {
+        color: var(--block-meta-color);
+    }
+
+    div.blocklyTreeRow.blocklyTreeSelected .blocklyTreeIcon {
+        color: #fff;
+    }
+}
+
+.invertedToolbox .blocklyTreeRoot {
+    div.blocklyTreeRow {
+        background-color: var(--block-meta-color);
+        color: #fff;
+    }
+
+    div.blocklyTreeRow.blocklyTreeSelected {
+        background-color: var(--block-meta-color);
+    }
+
+    div.blocklyTreeRow:hover {
+        background-color: var(--block-faded-color);
+        color: #fff;
+    }
+}
+
+/*******************************
+    Colored Toolbox
+*******************************/
+.coloredToolbox .blocklyTreeRoot {
+    div.blocklyTreeRow {
+        color: var(--block-meta-color);
+        border-left: 8px solid var(--block-meta-color);
+    }
+
+    div.blocklyTreeRow.blocklyTreeSelected {
+        background-color: var(--block-meta-color);
+        color: #fff;
+    }
 }
 
 /*******************************
