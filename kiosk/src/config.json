@@ -1,6 +1,6 @@
 {
     "GameDataUrl": "/kiosk-data/GameList.json",
-    "PlayUrlRoot": "https://arcade.makecode.com/stable/---run",
+    "PlayUrlRoot": "https://arcade.makecode.com/---run",
     "EnterHighScoreDelayMilli": 3000,
     "EnterHighScorePoll": 100,
     "HighScoresToKeep": 10,
