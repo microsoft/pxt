@@ -19,31 +19,32 @@ const DeletionModal: React.FC<IProps> = ({ kiosk, active, changeFocus }) => {
         const gameId = kiosk.selectedGame?.id!;
         if (gameId in userAddedGames) {
             userAddedGames[gameId].deleted = true;
-            localStorage.setItem(addedGamesLocalStorageKey, JSON.stringify(userAddedGames));
+            localStorage.setItem(
+                addedGamesLocalStorageKey,
+                JSON.stringify(userAddedGames)
+            );
             kiosk.games.splice(kiosk.selectedGameIndex!, 1);
         }
-    }
+    };
 
     const cancelClicked = () => {
         active(false);
         changeFocus(false);
-    }
+    };
 
     const confirmClicked = () => {
         deleteGame();
         cancelClicked();
-    }
+    };
 
     const updateLoop = () => {
         if (kiosk.gamepadManager.isLeftPressed()) {
             setCancelButtonState(true);
             setConfirmButtonState(false);
-
         }
         if (kiosk.gamepadManager.isRightPressed()) {
             setCancelButtonState(false);
             setConfirmButtonState(true);
-
         }
         if (cancelButtonState && kiosk.gamepadManager.isAButtonPressed()) {
             tickEvent("kiosk.deleteGame.cancelled");
@@ -54,7 +55,7 @@ const DeletionModal: React.FC<IProps> = ({ kiosk, active, changeFocus }) => {
             tickEvent("kiosk.deleteGame.confirmed");
             confirmClicked();
         }
-    }
+    };
 
     useEffect(() => {
         let intervalId: any = null;
@@ -84,13 +85,27 @@ const DeletionModal: React.FC<IProps> = ({ kiosk, active, changeFocus }) => {
                         </p>
                     </div>
                     <div className="common-modal-footer">
-                        <button className={`common-modal-button cancel ${cancelButtonState ? "selected" : ""}`} onClick={cancelClicked}>Cancel</button>
-                        <button className={`common-modal-button confirm ${confirmButtonState ? "selected" : ""}`} onClick={confirmClicked}>Confirm</button>
+                        <button
+                            className={`common-modal-button cancel ${
+                                cancelButtonState ? "selected" : ""
+                            }`}
+                            onClick={cancelClicked}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            className={`common-modal-button confirm ${
+                                confirmButtonState ? "selected" : ""
+                            }`}
+                            onClick={confirmClicked}
+                        >
+                            Confirm
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default DeletionModal;

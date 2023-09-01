@@ -4,7 +4,7 @@ import { GameData } from "./GameData";
 import { BuiltSimJSInfo } from "./BuiltSimJsInfo";
 import { KioskState } from "./KioskState";
 import configData from "../config.json";
-import { getGameDetailsAsync } from "../BackendRequests"
+import { getGameDetailsAsync } from "../BackendRequests";
 import { tickEvent } from "../browserUtils";
 export class Kiosk {
     games: GameData[] = [];
@@ -27,7 +27,7 @@ export class Kiosk {
     private intervalId: any;
     private readonly allScoresStateKey: string = "S/all-scores";
     private lockedGameId?: string;
-    private builtGamesCache: { [gameId: string]: BuiltSimJSInfo } = { };
+    private builtGamesCache: { [gameId: string]: BuiltSimJSInfo } = {};
     private defaultGameDescription = "Made with love in MakeCode Arcade";
 
     constructor(clean: boolean, locked: boolean, time?: string) {
@@ -39,18 +39,19 @@ export class Kiosk {
     async downloadGameListAsync(): Promise<void> {
         if (!this.clean) {
             let url = configData.GameDataUrl;
-    
+
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`Unable to download game list from "${url}"`);
             }
-    
+
             try {
                 this.games = (await response.json()).games;
-                this.games.push()
-            }
-            catch (error) {
-                throw new Error(`Unable to process game list downloaded from "${url}": ${error}`);
+                this.games.push();
+            } catch (error) {
+                throw new Error(
+                    `Unable to process game list downloaded from "${url}": ${error}`
+                );
             }
         } else {
             tickEvent("kiosk.clean");
@@ -65,19 +66,21 @@ export class Kiosk {
         if (name.toLowerCase() === "untitled") {
             return "Kiosk Game";
         }
-        
+
         return name;
     }
 
     getGameDescription(desc: string) {
         if (desc.length === 0) {
-            return this.defaultGameDescription
+            return this.defaultGameDescription;
         }
-        
+
         return desc;
     }
 
-    async saveNewGamesAsync(games: { [index: string]: { [index: string]: string } }): Promise<string[]> {
+    async saveNewGamesAsync(games: {
+        [index: string]: { [index: string]: string };
+    }): Promise<string[]> {
         const allAddedGames = this.getAllAddedGames();
         let gamesToAdd: string[] = [];
         const gameIds = Object.keys(games);
@@ -85,24 +88,36 @@ export class Kiosk {
             if (!allAddedGames[gameId]) {
                 let gameName;
                 let gameDescription;
-    
+
                 try {
                     const gameDetails = await getGameDetailsAsync(gameId);
                     gameName = this.getGameName(gameDetails.name);
-                    gameDescription = this.getGameDescription(gameDetails.description);
+                    gameDescription = this.getGameDescription(
+                        gameDetails.description
+                    );
                 } catch (error) {
                     gameName = "Kiosk Game";
                     gameDescription = this.defaultGameDescription;
                 }
-    
-                const gameUploadDate = (new Date()).toLocaleString()
-                const newGame = new GameData(gameId, gameName, gameDescription, "None", games[gameId].id, gameUploadDate, true);
-    
+
+                const gameUploadDate = new Date().toLocaleString();
+                const newGame = new GameData(
+                    gameId,
+                    gameName,
+                    gameDescription,
+                    "None",
+                    games[gameId].id,
+                    gameUploadDate,
+                    true
+                );
+
                 this.games.push(newGame);
                 gamesToAdd.push(gameName);
                 allAddedGames[gameId] = newGame;
             } else if (allAddedGames[gameId]?.deleted) {
-                if (games[gameId].id !== allAddedGames[gameId].uniqueIdentifier) {
+                if (
+                    games[gameId].id !== allAddedGames[gameId].uniqueIdentifier
+                ) {
                     allAddedGames[gameId].uniqueIdentifier = games[gameId].id;
                     allAddedGames[gameId].deleted = false;
                     gamesToAdd.push(allAddedGames[gameId].name);
@@ -116,7 +131,10 @@ export class Kiosk {
         if (gamesToAdd.length) {
             this.selectGame(0);
         }
-        localStorage.setItem(this.addedGamesLocalStorageKey, JSON.stringify(allAddedGames));
+        localStorage.setItem(
+            this.addedGamesLocalStorageKey,
+            JSON.stringify(allAddedGames)
+        );
         return gamesToAdd;
     }
 
@@ -129,7 +147,7 @@ export class Kiosk {
         return allAddedGames;
     }
 
-    addNewGamesToList() : void {
+    addNewGamesToList(): void {
         // check if there are custom games to add to the game list from local storage
         const addedGames = this.getAllAddedGames();
         const addedGamesObjs: GameData[] = Object.values(addedGames);
@@ -149,16 +167,21 @@ export class Kiosk {
             // Add cases for debugging via the gamepad here.
         }
 
-        if (this.gamepadManager.isResetButtonPressed() &&
+        if (
+            this.gamepadManager.isResetButtonPressed() &&
             this.gamepadManager.isEscapeButtonPressed() &&
             this.gamepadManager.isBButtonPressed() &&
-            this.gamepadManager.isLeftPressed()) {
-                this.resetHighScores();
-                console.log("High scores reset");
-                return;
+            this.gamepadManager.isLeftPressed()
+        ) {
+            this.resetHighScores();
+            console.log("High scores reset");
+            return;
         }
 
-        if (this.gamepadManager.isEscapeButtonPressed() || this.gamepadManager.isMenuButtonPressed()) {
+        if (
+            this.gamepadManager.isEscapeButtonPressed() ||
+            this.gamepadManager.isMenuButtonPressed()
+        ) {
             if (this.state === KioskState.PlayingGame) {
                 this.escapeGame();
             } else {
@@ -175,11 +198,16 @@ export class Kiosk {
 
         this.initializePromise = this.downloadGameListAsync();
 
-        this.intervalId = setInterval(() => this.gamePadLoop(), configData.GamepadPollLoopMilli);
+        this.intervalId = setInterval(
+            () => this.gamePadLoop(),
+            configData.GamepadPollLoopMilli
+        );
 
-        window.addEventListener("message", (event) => {
+        window.addEventListener("message", event => {
             if (event.data?.js) {
-                let builtGame: BuiltSimJSInfo | undefined = this.getBuiltGame(this.launchedGame);
+                let builtGame: BuiltSimJSInfo | undefined = this.getBuiltGame(
+                    this.launchedGame
+                );
                 if (!builtGame) {
                     this.addBuiltGame(this.launchedGame, event.data);
                 } else {
@@ -206,14 +234,14 @@ export class Kiosk {
                     const parts = channel.split("-");
                     if (parts[0] === "keydown") {
                         this.gamepadManager.keyboardManager.onKeydown(parts[1]);
-                    }
-                    else {
+                    } else {
                         this.gamepadManager.keyboardManager.onKeyup(parts[1]);
                     }
                     break;
 
                 case "ready":
-                    let builtGame: BuiltSimJSInfo | undefined = this.getBuiltGame(this.launchedGame);
+                    let builtGame: BuiltSimJSInfo | undefined =
+                        this.getBuiltGame(this.launchedGame);
                     if (builtGame) {
                         this.sendBuiltGame(this.launchedGame);
                     }
@@ -246,8 +274,7 @@ export class Kiosk {
         if (gameIndex >= 0) {
             this.selectedGame = this.games[gameIndex];
             this.selectedGameIndex = gameIndex;
-        }
-        else {
+        } else {
             this.selectedGame = undefined;
         }
     }
@@ -255,42 +282,53 @@ export class Kiosk {
     exitToEnterHighScore(): void {
         const launchedGameHighs = this.getHighScores(this.launchedGame);
         const currentHighScore = this.mostRecentScores[0];
-        const lastScore = launchedGameHighs[launchedGameHighs.length - 1]?.score;
-        if (launchedGameHighs.length === configData.HighScoresToKeep 
-            && lastScore 
-            && currentHighScore < lastScore) {
-                this.exitGame(KioskState.GameOver);
-
+        const lastScore =
+            launchedGameHighs[launchedGameHighs.length - 1]?.score;
+        if (
+            launchedGameHighs.length === configData.HighScoresToKeep &&
+            lastScore &&
+            currentHighScore < lastScore
+        ) {
+            this.exitGame(KioskState.GameOver);
         } else {
             this.exitGame(KioskState.EnterHighScore);
         }
-
     }
 
     gameOver(skipHighScore?: boolean): void {
-        if (this.state !== KioskState.PlayingGame) { return; }
+        if (this.state !== KioskState.PlayingGame) {
+            return;
+        }
 
         if (this.lockedGameId) {
             this.launchGame(this.lockedGameId);
             return;
         }
 
-        if (!skipHighScore && this.mostRecentScores && this.mostRecentScores.length && (this.selectedGame!.highScoreMode !== "None")) {
+        if (
+            !skipHighScore &&
+            this.mostRecentScores &&
+            this.mostRecentScores.length &&
+            this.selectedGame!.highScoreMode !== "None"
+        ) {
             this.exitToEnterHighScore();
-        }
-        else {
+        } else {
             this.exitGame(KioskState.GameOver);
         }
     }
 
     escapeGame(): void {
-        if (this.state !== KioskState.PlayingGame || this.lockedGameId) { return; }
+        if (this.state !== KioskState.PlayingGame || this.lockedGameId) {
+            return;
+        }
         this.gamepadManager.keyboardManager.clear();
         this.exitGame(KioskState.MainMenu);
     }
 
     private exitGame(state: KioskState): void {
-        if (this.state !== KioskState.PlayingGame) { return; }
+        if (this.state !== KioskState.PlayingGame) {
+            return;
+        }
         this.navigate(state);
 
         const gamespace = document.getElementsByTagName("BODY")[0];
@@ -314,18 +352,24 @@ export class Kiosk {
         if (!allBuiltGames[gameId]) {
             allBuiltGames[gameId] = builtSimJs;
         }
-
     }
 
     sendBuiltGame(gameId: string) {
         const builtGame = this.getBuiltGame(gameId);
-        const simIframe = document.getElementsByTagName("iframe")[0] as HTMLIFrameElement;
-        simIframe?.contentWindow?.postMessage({ ...builtGame, "type": "builtjs"}, "*");
+        const simIframe = document.getElementsByTagName(
+            "iframe"
+        )[0] as HTMLIFrameElement;
+        simIframe?.contentWindow?.postMessage(
+            { ...builtGame, type: "builtjs" },
+            "*"
+        );
     }
 
     launchGame(gameId: string, preventReturningToMenu = false): void {
         this.launchedGame = gameId;
-        if (this.state === KioskState.PlayingGame) { return; }
+        if (this.state === KioskState.PlayingGame) {
+            return;
+        }
         if (preventReturningToMenu) this.lockedGameId = gameId;
         this.navigate(KioskState.PlayingGame);
 
@@ -336,14 +380,19 @@ export class Kiosk {
             gamespace.firstChild.remove();
         }
 
-        const playUrlBase = `${configData.PlayUrlRoot}?id=${gameId}&hideSimButtons=1&noFooter=1&single=1&fullscreen=1&autofocus=1`
-        let playQueryParam = this.getBuiltGame(gameId) ? "&server=1" : "&sendBuilt=1";
+        const playUrlBase = `${configData.PlayUrlRoot}?id=${gameId}&hideSimButtons=1&noFooter=1&single=1&fullscreen=1&autofocus=1`;
+        let playQueryParam = this.getBuiltGame(gameId)
+            ? "&server=1"
+            : "&sendBuilt=1";
 
         function createIFrame(src: string) {
             const iframe: HTMLIFrameElement = document.createElement("iframe");
             iframe.className = "sim-embed";
             iframe.frameBorder = "0";
-            iframe.setAttribute("sandbox", "allow-popups allow-forms allow-scripts allow-same-origin");
+            iframe.setAttribute(
+                "sandbox",
+                "allow-popups allow-forms allow-scripts allow-same-origin"
+            );
             iframe.src = src;
             return iframe;
         }
@@ -362,7 +411,8 @@ export class Kiosk {
             return {};
         }
 
-        const allHighScores: {[index: string]: HighScore[]} = JSON.parse(json);
+        const allHighScores: { [index: string]: HighScore[] } =
+            JSON.parse(json);
         return allHighScores;
     }
 
@@ -383,10 +433,15 @@ export class Kiosk {
 
         allHighScores[gameId].push(new HighScore(initials, score));
 
-        allHighScores[gameId].sort((first, second) => second.score - first.score);
+        allHighScores[gameId].sort(
+            (first, second) => second.score - first.score
+        );
         allHighScores[gameId].splice(configData.HighScoresToKeep);
 
-        localStorage.setItem(this.highScoresLocalStorageKey, JSON.stringify(allHighScores));
+        localStorage.setItem(
+            this.highScoresLocalStorageKey,
+            JSON.stringify(allHighScores)
+        );
     }
 
     resetHighScores() {

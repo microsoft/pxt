@@ -11,41 +11,43 @@ interface IProps {
     game: GameData;
     locked: boolean;
 }
-const GameSlide: React.FC<IProps> = (
-    {   highScores,
-        addButtonSelected,
-        deleteButtonSelected,
-        game,
-        locked
-    }) => {
+const GameSlide: React.FC<IProps> = ({
+    highScores,
+    addButtonSelected,
+    deleteButtonSelected,
+    game,
+    locked,
+}) => {
     const buttonSelected = addButtonSelected || deleteButtonSelected;
     const carouselSelected = buttonSelected ? "unselected" : "selected";
 
     return (
         <div className={`gameTile ${carouselSelected}`}>
-            <div className="gameThumbnail" 
-                style={{backgroundImage: `url("https://makecode.com/api/${game.id}/thumb")`}}
+            <div
+                className="gameThumbnail"
+                style={{
+                    backgroundImage: `url("https://makecode.com/api/${game.id}/thumb")`,
+                }}
             />
 
             <p className="pressStart">Press A to Start</p>
 
             <div className="gameDetails">
                 <div className="gameTitle">{game.name}</div>
-                <div className="gameDescription">{game.description} <hr/></div>
-                <HighScoresList highScores={highScores} highScoreMode={game.highScoreMode} />
-                {
-                    game.date &&
-                    <div className="gameDate">
-                        Added {game.date}
-                    </div>
-                }
-                { game.userAdded &&
-                    !locked &&
+                <div className="gameDescription">
+                    {game.description} <hr />
+                </div>
+                <HighScoresList
+                    highScores={highScores}
+                    highScoreMode={game.highScoreMode}
+                />
+                {game.date && <div className="gameDate">Added {game.date}</div>}
+                {game.userAdded && !locked && (
                     <DeleteButton focused={deleteButtonSelected} />
-                }
+                )}
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default GameSlide;

@@ -3,7 +3,7 @@ import { HighScore } from "../Models/HighScore";
 interface IProps {
     highScores: HighScore[];
     highScoreMode: string;
-  }
+}
 
 const HighScoresList: React.FC<IProps> = ({ highScores, highScoreMode }) => {
     const highScoresExist = !!highScores.length;
@@ -15,30 +15,27 @@ const HighScoresList: React.FC<IProps> = ({ highScores, highScoreMode }) => {
     return (
         <div className="gameHighScores">
             <h2 className="gameHighScoreHeader">High Scores</h2>
-            {
-                !highScoresExist && 
+            {!highScoresExist && (
                 <p className="gameHighScoreContent">None yet</p>
-            }
-            {
-                highScoresExist &&
+            )}
+            {highScoresExist && (
                 <ol className="gameHighScoreContent">
-                    {
-                        highScores.slice(0, 5).map((highScore, index) => {
-                            return (
-                                <li key={index}>
-                                    <span className="gameHighScoreInitials">{highScore.initials}</span>
-                                    <span className="gameHighScoreScore">{highScore.score}</span>
-                                </li>
-                            )   
-                        }
-
-                        )
-                    }
+                    {highScores.slice(0, 5).map((highScore, index) => {
+                        return (
+                            <li key={index}>
+                                <span className="gameHighScoreInitials">
+                                    {highScore.initials}
+                                </span>
+                                <span className="gameHighScoreScore">
+                                    {highScore.score}
+                                </span>
+                            </li>
+                        );
+                    })}
                 </ol>
-            }
-
+            )}
         </div>
     );
-}
-  
+};
+
 export default HighScoresList;

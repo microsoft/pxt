@@ -9,7 +9,7 @@ import { tickEvent } from "../browserUtils";
 import ErrorModal from "./ErrorModal";
 
 interface IProps {
-    kiosk: Kiosk
+    kiosk: Kiosk;
 }
 
 const ScanQR: React.FC<IProps> = ({ kiosk }) => {
@@ -27,36 +27,44 @@ const ScanQR: React.FC<IProps> = ({ kiosk }) => {
         tickEvent("kiosk.scanQrClicked");
         play(kiosk, kioskId!, html5QrCode!, setAddingError, setErrorDesc);
         setScannerVisible(true);
-    }
+    };
 
     const stopQrScanner = () => {
         tickEvent("kiosk.stopScanClicked");
         stopScan(html5QrCode!);
         setScannerVisible(false);
-    }
+    };
 
     const initiateQrCode = () => {
         if (qrReaderRendered.current) {
             const qrCodeReader = new Html5Qrcode("qrReader");
             setHtml5QrCode(qrCodeReader);
         }
-    }
+    };
 
     const clickHelp = () => {
         tickEvent("kiosk.helpLink");
         return true;
-    }
+    };
 
     useEffect(() => {
         tickEvent("kiosk.scanQrLoaded");
         initiateQrCode();
-    }, [])
+    }, []);
 
     const checkUrl = async () => {
-        const input = document.getElementById("kiosk-share-link") as HTMLInputElement;
+        const input = document.getElementById(
+            "kiosk-share-link"
+        ) as HTMLInputElement;
         const inputValue = input.value?.trim();
-        const shareLink = /^(https:\/\/)((arcade\.makecode\.com\/)|(makecode\.com\/))((?:S?\d{5}-\d{5}-\d{5}-\d{5})$|(?:_[a-zA-Z0-9]+)$)/i.exec(inputValue);
-        const shareCode = /(^(?:S?\d{5}-\d{5}-\d{5}-\d{5})$|^(?:_[a-zA-Z0-9]{12})$)/.exec(inputValue);
+        const shareLink =
+            /^(https:\/\/)((arcade\.makecode\.com\/)|(makecode\.com\/))((?:S?\d{5}-\d{5}-\d{5}-\d{5})$|(?:_[a-zA-Z0-9]+)$)/i.exec(
+                inputValue
+            );
+        const shareCode =
+            /(^(?:S?\d{5}-\d{5}-\d{5}-\d{5})$|^(?:_[a-zA-Z0-9]{12})$)/.exec(
+                inputValue
+            );
         let shareId;
         if (shareLink) {
             shareId = /\/([^\/]+)\/?$/.exec(inputValue)?.[1];
@@ -73,68 +81,95 @@ const ScanQR: React.FC<IProps> = ({ kiosk }) => {
             } catch (error: any) {
                 setAddingError(error.toString());
                 if (error.toString().includes("404")) {
-                    setErrorDesc("The kiosk code expired. Go back to the kiosk to make a new code.");
+                    setErrorDesc(
+                        "The kiosk code expired. Go back to the kiosk to make a new code."
+                    );
                 } else {
-                    setErrorDesc("Something went wrong. Please try again later.");
+                    setErrorDesc(
+                        "Something went wrong. Please try again later."
+                    );
                 }
             }
         } else {
             setLinkError(true);
         }
-
-    }
+    };
 
     const clearStatus = () => {
         if (linkError) {
             setLinkError(false);
         }
-    }
+    };
 
     return (
         <div className="scanQrPage">
-            <h2>Add game to<br/>Kiosk {kioskId}</h2>
+            <h2>
+                Add game to
+                <br />
+                Kiosk {kioskId}
+            </h2>
             <div className="scanInstructions">
                 <div className="qrOption">
-                    {
-                        !scannerVisible &&
-                        <button className="scanQrButton" onClick={renderQrScanner} >Scan QR code</button>
-                    }
+                    {!scannerVisible && (
+                        <button
+                            className="scanQrButton"
+                            onClick={renderQrScanner}
+                        >
+                            Scan QR code
+                        </button>
+                    )}
                     <div id="qrReader" ref={qrReaderRendered}></div>
-                    {
-                        scannerVisible &&
+                    {scannerVisible && (
                         <div className="scanning">
-                            <button className="scanQrButton" onClick={stopQrScanner} >Cancel Scan</button>
-                            <p className="scanTip">Tip: Do not use the kiosk's QR code</p>
+                            <button
+                                className="scanQrButton"
+                                onClick={stopQrScanner}
+                            >
+                                Cancel Scan
+                            </button>
+                            <p className="scanTip">
+                                Tip: Do not use the kiosk's QR code
+                            </p>
                         </div>
-                    }
+                    )}
                     <p>OR</p>
                 </div>
                 <div className="linkOption">
                     <label>Submit share link</label>
-                    <input type="url"
+                    <input
+                        type="url"
                         id="kiosk-share-link"
                         placeholder="Enter share link"
                         spellCheck={false}
                         required
                         title="Share Link"
                         onChange={clearStatus}
-                        />
+                    />
                     <input type="submit" onClick={checkUrl} />
-                    {
-                        linkError &&
-                        <p className="linkError">Incorrect format for a share link</p>
-                    }
+                    {linkError && (
+                        <p className="linkError">
+                            Incorrect format for a share link
+                        </p>
+                    )}
                 </div>
-                <a className="shareHelp" target="_blank" onClick={clickHelp} href="https://arcade.makecode.com/share">
+                <a
+                    className="shareHelp"
+                    target="_blank"
+                    onClick={clickHelp}
+                    href="https://arcade.makecode.com/share"
+                >
                     How do I get a game's share link or QR code?
                 </a>
             </div>
-            {
-                !!addingError &&
-                <ErrorModal errorType={addingError} errorDescription={errorDesc!} setShowing={setAddingError}/>
-            }
+            {!!addingError && (
+                <ErrorModal
+                    errorType={addingError}
+                    errorDescription={errorDesc!}
+                    setShowing={setAddingError}
+                />
+            )}
         </div>
-    )
-}
+    );
+};
 
 export default ScanQR;
