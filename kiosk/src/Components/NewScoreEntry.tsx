@@ -3,47 +3,53 @@ import { HighScore } from "../Models/HighScore";
 import { Kiosk } from "../Models/Kiosk";
 import { KioskState } from "../Models/KioskState";
 import HighScoreInitial from "./HighScoreInitial";
-import configData from "../config.json"
+import configData from "../config.json";
 import { tickEvent } from "../browserUtils";
 
 interface IProps {
-    kiosk: Kiosk
-  }
+    kiosk: Kiosk;
+}
 
 const NewScoreEntry: React.FC<IProps> = ({ kiosk }) => {
     const [indexChanged, setIndexChanged] = useState(false);
     const [nextIndex, setNextIndex] = useState(false);
     const [previousIndex, setPreviousIndex] = useState(false);
 
-    const [initials, setInitials] = useState(Array(configData.HighScoreInitialsLength + 1).join(configData.HighScoreInitialAllowedCharacters[0]));
+    const [initials, setInitials] = useState(
+        Array(configData.HighScoreInitialsLength + 1).join(
+            configData.HighScoreInitialAllowedCharacters[0]
+        )
+    );
     const [timesAPressed, setTimesAPressed] = useState(0);
     const [runOnce, setRunOnce] = useState(false);
     const [firstRun, setFirstRun] = useState(true);
 
     const gamepadLoop = () => {
-        if (kiosk.state !== KioskState.EnterHighScore) { return; }
+        if (kiosk.state !== KioskState.EnterHighScore) {
+            return;
+        }
 
         if (kiosk.gamepadManager.isAButtonPressed()) {
             tickEvent("kiosk.newHighScore.nextInitial");
             setIndexChanged(true);
             setNextIndex(true);
-        } 
-
-        else if (kiosk.gamepadManager.isBButtonPressed()) {
+        } else if (kiosk.gamepadManager.isBButtonPressed()) {
             tickEvent("kiosk.newHighScore.prevInitial");
             setIndexChanged(true);
             setPreviousIndex(true);
-        } 
-        else {
+        } else {
             setIndexChanged(false);
             setPreviousIndex(false);
             setNextIndex(false);
-
         }
 
         if (kiosk.gamepadManager.isEscapeButtonPressed()) {
             tickEvent("kiosk.newHighScore.defaultInitialsUsed");
-            kiosk.saveHighScore(kiosk.selectedGame!.id, initials, kiosk.mostRecentScores[0]);
+            kiosk.saveHighScore(
+                kiosk.selectedGame!.id,
+                initials,
+                kiosk.mostRecentScores[0]
+            );
             kiosk.navigate(KioskState.GameOver);
         }
     };
@@ -52,12 +58,11 @@ const NewScoreEntry: React.FC<IProps> = ({ kiosk }) => {
         let interval: any;
         let timeout: any;
         timeout = setTimeout(() => {
-            interval = setInterval(() =>
-                gamepadLoop(),
+            interval = setInterval(
+                () => gamepadLoop(),
                 configData.EnterHighScorePoll
-            )
-        }, configData.EnterHighScoreDelayMilli)
-
+            );
+        }, configData.EnterHighScoreDelayMilli);
 
         return () => {
             if (interval) {
@@ -66,7 +71,7 @@ const NewScoreEntry: React.FC<IProps> = ({ kiosk }) => {
             if (timeout) {
                 clearTimeout(timeout);
             }
-        }
+        };
     }, []);
 
     const decrementTimesPressed = () => {
@@ -76,49 +81,50 @@ const NewScoreEntry: React.FC<IProps> = ({ kiosk }) => {
             setTimesAPressed(timesAPressed - 1);
             return timesAPressed - 1;
         }
-    }
+    };
 
     const updateTimesPressed = () => {
         if (runOnce) {
             setRunOnce(false);
             return timesAPressed;
-        }
-        else if (firstRun) {
+        } else if (firstRun) {
             setFirstRun(false);
             return timesAPressed;
-        }
-        else {
+        } else {
             setRunOnce(true);
             if (nextIndex) {
                 setTimesAPressed(timesAPressed + 1);
                 return timesAPressed + 1;
-            } 
-            else if (previousIndex) {
+            } else if (previousIndex) {
                 return decrementTimesPressed();
             } else {
                 return timesAPressed;
             }
         }
-    }
+    };
 
     useEffect(() => {
         const updatedPressed = updateTimesPressed();
 
-
         if (updatedPressed >= 3) {
             setTimesAPressed(0);
             tickEvent("kiosk.newHighScore.initialsEntered");
-            kiosk.saveHighScore(kiosk.selectedGame!.id, initials, kiosk.mostRecentScores[0]);
+            kiosk.saveHighScore(
+                kiosk.selectedGame!.id,
+                initials,
+                kiosk.mostRecentScores[0]
+            );
             kiosk.navigate(KioskState.GameOver);
         }
-
     }, [indexChanged]);
 
-
     const updateInitial = (i: number, character: string) => {
-        const newInitials = `${initials.substring(0, i)}${character}${initials.substring(i + 1)}`;
+        const newInitials = `${initials.substring(
+            0,
+            i
+        )}${character}${initials.substring(i + 1)}`;
         setInitials(newInitials);
-    }
+    };
 
     const renderInitials = (): JSX.Element[] => {
         const elements = [];
@@ -126,21 +132,26 @@ const NewScoreEntry: React.FC<IProps> = ({ kiosk }) => {
         for (let lcv = 0; lcv < configData.HighScoreInitialsLength; lcv++) {
             const thisIndex = lcv;
             elements.push(
-                <HighScoreInitial kiosk={kiosk} key={lcv} isSelected={thisIndex === timesAPressed}
-                    onCharacterChanged={character => updateInitial(thisIndex, character[0])} />
+                <HighScoreInitial
+                    kiosk={kiosk}
+                    key={lcv}
+                    isSelected={thisIndex === timesAPressed}
+                    onCharacterChanged={character =>
+                        updateInitial(thisIndex, character[0])
+                    }
+                />
             );
         }
 
         return elements;
-    }
+    };
 
     return (
         <span>
             <span className="highScoreInitials">{renderInitials()}</span>
             <span className="highScoreScore">{kiosk.mostRecentScores[0]}</span>
         </span>
-
-    )
-}
+    );
+};
 
 export default NewScoreEntry;

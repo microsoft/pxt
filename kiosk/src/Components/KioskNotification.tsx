@@ -8,7 +8,11 @@ interface IProps {
     content: string;
 }
 
-const KioskNotification: React.FC<IProps> = ({ setActive, duration=5000, content }) => {
+const KioskNotification: React.FC<IProps> = ({
+    setActive,
+    duration = 5000,
+    content,
+}) => {
     useEffect(() => {
         let notificationLength = setTimeout(() => {
             setActive(false);
@@ -16,8 +20,8 @@ const KioskNotification: React.FC<IProps> = ({ setActive, duration=5000, content
 
         return () => {
             clearTimeout(notificationLength);
-        }
-    }, [])
+        };
+    }, []);
 
     return (
         <div className="notification-container">
@@ -25,7 +29,7 @@ const KioskNotification: React.FC<IProps> = ({ setActive, duration=5000, content
                 <p>{content}</p>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default KioskNotification;

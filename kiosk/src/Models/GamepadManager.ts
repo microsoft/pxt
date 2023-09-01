@@ -1,4 +1,4 @@
-import configData from "../config.json"
+import configData from "../config.json";
 import { KeyboardManager } from "./KeyboardManager";
 
 export class GamepadManager {
@@ -33,10 +33,15 @@ export class GamepadManager {
         // that get picked up as gamepads.
 
         if (this.cacheExpires <= Date.now()) {
-            this.cachedGamepads = navigator.getGamepads().filter(
-                item => item &&
-                        item.axes && item.axes.length >= this.minAxisRequired &&
-                        item.buttons && item.buttons.length >= this.minButtonPinRequired
+            this.cachedGamepads = navigator
+                .getGamepads()
+                .filter(
+                    item =>
+                        item &&
+                        item.axes &&
+                        item.axes.length >= this.minAxisRequired &&
+                        item.buttons &&
+                        item.buttons.length >= this.minButtonPinRequired
                 ) as Gamepad[];
             this.cacheExpires = Date.now() + configData.GamepadCacheMilli;
         }
@@ -45,7 +50,7 @@ export class GamepadManager {
     }
 
     validateGamepadIndex(gamepads: Gamepad[], gamepadIndex: number) {
-        if ((gamepadIndex < -1) || (gamepadIndex >= gamepads.length)) {
+        if (gamepadIndex < -1 || gamepadIndex >= gamepads.length) {
             throw new Error(`No gamepad available at index ${gamepadIndex}`);
         }
     }
@@ -54,55 +59,80 @@ export class GamepadManager {
         const gamepads: Gamepad[] = this.getGamepads();
 
         if (gamepadIndex === -1) {
-            return gamepads.some((item, index) => this.isButtonPressed(index, pinIndex));
+            return gamepads.some((item, index) =>
+                this.isButtonPressed(index, pinIndex)
+            );
         }
 
         this.validateGamepadIndex(gamepads, gamepadIndex);
-        if ((pinIndex < 0) || (pinIndex >= gamepads[gamepadIndex].buttons.length)) {
-            throw new Error(`Gamepad at index ${gamepadIndex} does not have a button at pin ${pinIndex}`);
+        if (pinIndex < 0 || pinIndex >= gamepads[gamepadIndex].buttons.length) {
+            throw new Error(
+                `Gamepad at index ${gamepadIndex} does not have a button at pin ${pinIndex}`
+            );
         }
 
         return gamepads[gamepadIndex].buttons[pinIndex].pressed;
     }
 
     isAButtonPressed(gamepadIndex: number = -1): boolean {
-        return this.keyboardManager.isAButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(gamepadIndex, configData.GamepadAButtonPin);
+        return (
+            this.keyboardManager.isAButtonPressed(gamepadIndex) ||
+            this.isButtonPressed(gamepadIndex, configData.GamepadAButtonPin)
+        );
     }
 
     isBButtonPressed(gamepadIndex: number = -1): boolean {
-        return this.keyboardManager.isBButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(gamepadIndex, configData.GamepadBButtonPin);
+        return (
+            this.keyboardManager.isBButtonPressed(gamepadIndex) ||
+            this.isButtonPressed(gamepadIndex, configData.GamepadBButtonPin)
+        );
     }
 
     isEscapeButtonPressed(gamepadIndex: number = -1): boolean {
-        return this.keyboardManager.isEscapeButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(gamepadIndex, configData.GamepadEscapeButtonPin);
+        return (
+            this.keyboardManager.isEscapeButtonPressed(gamepadIndex) ||
+            this.isButtonPressed(
+                gamepadIndex,
+                configData.GamepadEscapeButtonPin
+            )
+        );
     }
 
     isResetButtonPressed(gamepadIndex: number = -1): boolean {
-        return this.keyboardManager.isResetButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(gamepadIndex, configData.GamepadResetButtonPin);
+        return (
+            this.keyboardManager.isResetButtonPressed(gamepadIndex) ||
+            this.isButtonPressed(gamepadIndex, configData.GamepadResetButtonPin)
+        );
     }
 
     isMenuButtonPressed(gamepadIndex: number = -1): boolean {
-        return this.keyboardManager.isMenuButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(gamepadIndex, configData.GamepadMenuButtonPin);
+        return (
+            this.keyboardManager.isMenuButtonPressed(gamepadIndex) ||
+            this.isButtonPressed(gamepadIndex, configData.GamepadMenuButtonPin)
+        );
     }
 
-    isDirectionPressed(gamepadIndex: number, axisIndex: number, threshold: number): boolean {
+    isDirectionPressed(
+        gamepadIndex: number,
+        axisIndex: number,
+        threshold: number
+    ): boolean {
         const gamepads: Gamepad[] = this.getGamepads();
 
         if (gamepadIndex === -1) {
-            return gamepads.some((item, index) => this.isDirectionPressed(index, axisIndex, threshold));
+            return gamepads.some((item, index) =>
+                this.isDirectionPressed(index, axisIndex, threshold)
+            );
         }
 
         this.validateGamepadIndex(gamepads, gamepadIndex);
 
         const gamepad: Gamepad = gamepads[gamepadIndex];
 
-        if ((axisIndex < 0) || (axisIndex >= gamepad.axes.length)) {
-            throw new Error(`Gamepad at index ${gamepadIndex} does not have an axis at index ${axisIndex}`);
+        if (axisIndex < 0 || axisIndex >= gamepad.axes.length) {
+            throw new Error(
+                `Gamepad at index ${gamepadIndex} does not have an axis at index ${axisIndex}`
+            );
         }
 
         if (threshold < 0) {
@@ -113,22 +143,46 @@ export class GamepadManager {
     }
 
     isLeftPressed(gamepadIndex: number = -1) {
-        return this.keyboardManager.isLeftPressed(gamepadIndex) ||
-            this.isDirectionPressed(gamepadIndex, configData.GamepadLeftRightAxis, -configData.GamepadLeftRightThreshold);
+        return (
+            this.keyboardManager.isLeftPressed(gamepadIndex) ||
+            this.isDirectionPressed(
+                gamepadIndex,
+                configData.GamepadLeftRightAxis,
+                -configData.GamepadLeftRightThreshold
+            )
+        );
     }
 
     isRightPressed(gamepadIndex: number = -1) {
-        return this.keyboardManager.isRightPressed(gamepadIndex) ||
-            this.isDirectionPressed(gamepadIndex, configData.GamepadLeftRightAxis, configData.GamepadLeftRightThreshold);
+        return (
+            this.keyboardManager.isRightPressed(gamepadIndex) ||
+            this.isDirectionPressed(
+                gamepadIndex,
+                configData.GamepadLeftRightAxis,
+                configData.GamepadLeftRightThreshold
+            )
+        );
     }
 
     isUpPressed(gamepadIndex: number = -1) {
-        return this.keyboardManager.isUpPressed(gamepadIndex) ||
-            this.isDirectionPressed(gamepadIndex, configData.GamepadUpDownAxis, -configData.GamepadUpDownThreshold);
+        return (
+            this.keyboardManager.isUpPressed(gamepadIndex) ||
+            this.isDirectionPressed(
+                gamepadIndex,
+                configData.GamepadUpDownAxis,
+                -configData.GamepadUpDownThreshold
+            )
+        );
     }
 
     isDownPressed(gamepadIndex: number = -1) {
-        return this.keyboardManager.isDownPressed(gamepadIndex) ||
-            this.isDirectionPressed(gamepadIndex, configData.GamepadUpDownAxis, configData.GamepadUpDownThreshold);
+        return (
+            this.keyboardManager.isDownPressed(gamepadIndex) ||
+            this.isDirectionPressed(
+                gamepadIndex,
+                configData.GamepadUpDownAxis,
+                configData.GamepadUpDownThreshold
+            )
+        );
     }
 }
