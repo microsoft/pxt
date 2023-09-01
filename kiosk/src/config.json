@@ -6,7 +6,7 @@
     "HighScoresToKeep": 10,
     "HighScoreInitialsLength": 3,
     "HighScoreInitialAllowedCharacters": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    "GamepadPollLoopMilli": 150,
+    "GamepadPollLoopMilli": 50,
     "GamepadCacheMilli": 50,
     "GamepadAButtonPin": 0,
     "GamepadBButtonPin": 1,
