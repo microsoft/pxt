@@ -44,7 +44,8 @@
         border-radius: 0;
         background-repeat: no-repeat;
         background-size: cover;
-        height: 300px;
+        background-position: center;
+        height: 400px;
         .column {
             padding: 0 !important;
         }
@@ -125,6 +126,8 @@
         width: 100%;
         min-height: 100%;
         background: @homeScreenBackground;
+        display: flex;
+        flex-direction: column;
     }
     .ui.segment.gallerysegment {
         background: none;
@@ -186,7 +189,8 @@
         text-align: center;
         padding: 5px !important;
         z-index: @homeFooterZIndex;
-        position: absolute;
+        //position: absolute;
+        margin-top: auto;
         .item {
             font-size: 0.8rem !important;
             color: @homeFooterColor !important;

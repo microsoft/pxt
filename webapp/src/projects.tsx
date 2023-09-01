@@ -164,48 +164,48 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
                 </div>
             </div>
-            {Object.keys(galleries)
-                .filter(galleryName => {
-                    // hide galleries that are part of an experiment and that experiment is
-                    // not enabled
-                    const galProps = galleries[galleryName] as pxt.GalleryProps | string
-                    if (typeof galProps === "string")
-                        return true
-                    // filter categories by experiment
-                    const exp = galProps.experimentName;
-                    if (exp && !(pxt.appTarget.appTheme as any)[exp])
-                        return false; // experiment not enabled
-                    const locales = galProps.locales;
-                    if (locales && locales.indexOf(pxt.Util.userLanguage()) < 0)
-                        return false; // locale not supported
-                    // test if blocked
-                    const testUrl = galProps.testUrl || (!!galProps.youTube && "https://www.youtube.com/favicon.ico");
-                    if (testUrl) {
-                        const ping = this.getData(`ping:${testUrl.replace('@random@', Math.random().toString())}`);
-                        if (ping !== true) // still loading or can't ping
-                            return false;
-                    }
-                    // show the gallery
-                    return true;
-                })
-                .map(galleryName => {
-                    const galProps = galleries[galleryName] as pxt.GalleryProps | string
-                    const url = typeof galProps === "string" ? galProps : galProps.url
-                    const shuffle: pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;
-                    return <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
-                        <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
-                        <div className="content">
-                            <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`}
-                                key={`${galleryName}_carousel`} parent={this.props.parent}
-                                name={galleryName}
-                                path={url}
-                                onClick={this.chgGallery} setSelected={this.setSelected}
-                                shuffle={shuffle}
-                                selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
-                        </div>
-                    </div>
-                }
-                )}
+            {/*{Object.keys(galleries)*/}
+            {/*    .filter(galleryName => {*/}
+            {/*        // hide galleries that are part of an experiment and that experiment is*/}
+            {/*        // not enabled*/}
+            {/*        const galProps = galleries[galleryName] as pxt.GalleryProps | string*/}
+            {/*        if (typeof galProps === "string")*/}
+            {/*            return true*/}
+            {/*        // filter categories by experiment*/}
+            {/*        const exp = galProps.experimentName;*/}
+            {/*        if (exp && !(pxt.appTarget.appTheme as any)[exp])*/}
+            {/*            return false; // experiment not enabled*/}
+            {/*        const locales = galProps.locales;*/}
+            {/*        if (locales && locales.indexOf(pxt.Util.userLanguage()) < 0)*/}
+            {/*            return false; // locale not supported*/}
+            {/*        // test if blocked*/}
+            {/*        const testUrl = galProps.testUrl || (!!galProps.youTube && "https://www.youtube.com/favicon.ico");*/}
+            {/*        if (testUrl) {*/}
+            {/*            const ping = this.getData(`ping:${testUrl.replace('@random@', Math.random().toString())}`);*/}
+            {/*            if (ping !== true) // still loading or can't ping*/}
+            {/*                return false;*/}
+            {/*        }*/}
+            {/*        // show the gallery*/}
+            {/*        return true;*/}
+            {/*    })*/}
+            {/*    .map(galleryName => {*/}
+            {/*        const galProps = galleries[galleryName] as pxt.GalleryProps | string*/}
+            {/*        const url = typeof galProps === "string" ? galProps : galProps.url*/}
+            {/*        const shuffle: pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;*/}
+            {/*        return <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>*/}
+            {/*            <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>*/}
+            {/*            <div className="content">*/}
+            {/*                <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`}*/}
+            {/*                    key={`${galleryName}_carousel`} parent={this.props.parent}*/}
+            {/*                    name={galleryName}*/}
+            {/*                    path={url}*/}
+            {/*                    onClick={this.chgGallery} setSelected={this.setSelected}*/}
+            {/*                    shuffle={shuffle}*/}
+            {/*                    selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />*/}
+            {/*            </div>*/}
+            {/*        </div>*/}
+            {/*    }*/}
+            {/*    )}*/}
             {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter" role="contentinfo">
                 {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                 {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
