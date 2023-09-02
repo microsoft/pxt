@@ -9,6 +9,8 @@ import { generateKioskCodeAsync, getGameCodesAsync } from "../BackendRequests";
 import { isLocal, tickEvent } from "../browserUtils";
 import { GameData } from "../Models/GameData";
 import KioskNotification from "./KioskNotification";
+import { playSoundEffect } from "../Services/SoundEffectService";
+
 interface IProps {
     kiosk: Kiosk;
 }
@@ -48,6 +50,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
         if (menuButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
             tickEvent("kiosk.toMainMenu");
             kiosk.showMainMenu();
+            playSoundEffect("select");
         }
         if (!renderQRCode && kiosk.gamepadManager.isUpPressed()) {
             setMenuButtonState(false);

@@ -14,8 +14,9 @@ const url = window.location.href;
 const clean = !!/clean(?:[:=])1/.test(url);
 const locked = !!/lock(?:[:=])1/i.test(url);
 const time = /time=((?:[0-9]{1,3}))/i.exec(url)?.[1];
+const volume = /volume=(1\.?0?|0?\.\d{1,2}|\.\d{1,2})/i.exec(url)?.[1];
 
-const kioskSingleton: Kiosk = new Kiosk(clean, locked, time);
+const kioskSingleton: Kiosk = new Kiosk(clean, locked, time, volume);
 kioskSingleton.initialize().catch(error => alert(error));
 
 function App() {

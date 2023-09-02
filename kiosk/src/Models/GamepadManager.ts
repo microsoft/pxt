@@ -1,6 +1,18 @@
 import configData from "../config.json";
 import { KeyboardManager } from "./KeyboardManager";
 
+enum GamepadControl {
+    AButton,
+    BButton,
+    DPadUp,
+    DPadDown,
+    DPadLeft,
+    DPadRight,
+    MenuButton,
+    EscapeButton,
+    ResetButton,
+}
+
 export class GamepadManager {
     private cachedGamepads: Gamepad[] = [];
     private cacheExpires: number = 0;
@@ -9,6 +21,10 @@ export class GamepadManager {
     private minAxisRequired: number = 0;
 
     public keyboardManager: KeyboardManager = new KeyboardManager();
+
+    private blockingAPressed: boolean = false;
+
+    private cooldownTimers: { [key: number]: number } = {};
 
     constructor() {
         this.minButtonPinRequired = Math.max(
@@ -55,6 +71,27 @@ export class GamepadManager {
         }
     }
 
+    isCoolingDown(control: GamepadControl) {
+        return (
+            this.cooldownTimers[control] &&
+            this.cooldownTimers[control] > Date.now()
+        );
+    }
+
+    setCooldownTimer(control: GamepadControl) {
+        this.cooldownTimers[control] =
+            Date.now() + configData.GamepadCooldownMilli;
+    }
+
+    isPressedWithCooldown(control: GamepadControl, isPressed: () => any) {
+        if (this.isCoolingDown(control)) return;
+        const pressed = isPressed();
+        if (pressed) {
+            this.setCooldownTimer(control);
+        }
+        return pressed;
+    }
+
     isButtonPressed(gamepadIndex: number, pinIndex: number): boolean {
         const gamepads: Gamepad[] = this.getGamepads();
 
@@ -75,44 +112,67 @@ export class GamepadManager {
     }
 
     isAButtonPressed(gamepadIndex: number = -1): boolean {
-        return (
-            this.keyboardManager.isAButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(gamepadIndex, configData.GamepadAButtonPin)
-        );
+        return this.isPressedWithCooldown(GamepadControl.AButton, () => {
+            const pressed =
+                this.keyboardManager.isAButtonPressed(gamepadIndex) ||
+                this.isButtonPressed(
+                    gamepadIndex,
+                    configData.GamepadAButtonPin
+                );
+            if (pressed && this.blockingAPressed) {
+                return false;
+            }
+            this.blockingAPressed = false;
+            return pressed;
+        });
     }
 
     isBButtonPressed(gamepadIndex: number = -1): boolean {
-        return (
-            this.keyboardManager.isBButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(gamepadIndex, configData.GamepadBButtonPin)
+        return this.isPressedWithCooldown(
+            GamepadControl.BButton,
+            () =>
+                this.keyboardManager.isBButtonPressed(gamepadIndex) ||
+                this.isButtonPressed(gamepadIndex, configData.GamepadBButtonPin)
         );
     }
 
     isEscapeButtonPressed(gamepadIndex: number = -1): boolean {
-        return (
-            this.keyboardManager.isEscapeButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(
-                gamepadIndex,
-                configData.GamepadEscapeButtonPin
-            )
+        return this.isPressedWithCooldown(
+            GamepadControl.EscapeButton,
+            () =>
+                this.keyboardManager.isEscapeButtonPressed(gamepadIndex) ||
+                this.isButtonPressed(
+                    gamepadIndex,
+                    configData.GamepadEscapeButtonPin
+                )
         );
     }
 
     isResetButtonPressed(gamepadIndex: number = -1): boolean {
-        return (
-            this.keyboardManager.isResetButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(gamepadIndex, configData.GamepadResetButtonPin)
+        return this.isPressedWithCooldown(
+            GamepadControl.ResetButton,
+            () =>
+                this.keyboardManager.isResetButtonPressed(gamepadIndex) ||
+                this.isButtonPressed(
+                    gamepadIndex,
+                    configData.GamepadResetButtonPin
+                )
         );
     }
 
     isMenuButtonPressed(gamepadIndex: number = -1): boolean {
-        return (
-            this.keyboardManager.isMenuButtonPressed(gamepadIndex) ||
-            this.isButtonPressed(gamepadIndex, configData.GamepadMenuButtonPin)
+        return this.isPressedWithCooldown(
+            GamepadControl.MenuButton,
+            () =>
+                this.keyboardManager.isMenuButtonPressed(gamepadIndex) ||
+                this.isButtonPressed(
+                    gamepadIndex,
+                    configData.GamepadMenuButtonPin
+                )
         );
     }
 
-    isDirectionPressed(
+    private isDirectionPressed(
         gamepadIndex: number,
         axisIndex: number,
         threshold: number
@@ -143,46 +203,58 @@ export class GamepadManager {
     }
 
     isLeftPressed(gamepadIndex: number = -1) {
-        return (
-            this.keyboardManager.isLeftPressed(gamepadIndex) ||
-            this.isDirectionPressed(
-                gamepadIndex,
-                configData.GamepadLeftRightAxis,
-                -configData.GamepadLeftRightThreshold
-            )
+        return this.isPressedWithCooldown(
+            GamepadControl.DPadLeft,
+            () =>
+                this.keyboardManager.isLeftPressed(gamepadIndex) ||
+                this.isDirectionPressed(
+                    gamepadIndex,
+                    configData.GamepadLeftRightAxis,
+                    -configData.GamepadLeftRightThreshold
+                )
         );
     }
 
     isRightPressed(gamepadIndex: number = -1) {
-        return (
-            this.keyboardManager.isRightPressed(gamepadIndex) ||
-            this.isDirectionPressed(
-                gamepadIndex,
-                configData.GamepadLeftRightAxis,
-                configData.GamepadLeftRightThreshold
-            )
+        return this.isPressedWithCooldown(
+            GamepadControl.DPadRight,
+            () =>
+                this.keyboardManager.isRightPressed(gamepadIndex) ||
+                this.isDirectionPressed(
+                    gamepadIndex,
+                    configData.GamepadLeftRightAxis,
+                    configData.GamepadLeftRightThreshold
+                )
         );
     }
 
     isUpPressed(gamepadIndex: number = -1) {
-        return (
-            this.keyboardManager.isUpPressed(gamepadIndex) ||
-            this.isDirectionPressed(
-                gamepadIndex,
-                configData.GamepadUpDownAxis,
-                -configData.GamepadUpDownThreshold
-            )
+        return this.isPressedWithCooldown(
+            GamepadControl.DPadUp,
+            () =>
+                this.keyboardManager.isUpPressed(gamepadIndex) ||
+                this.isDirectionPressed(
+                    gamepadIndex,
+                    configData.GamepadUpDownAxis,
+                    -configData.GamepadUpDownThreshold
+                )
         );
     }
 
     isDownPressed(gamepadIndex: number = -1) {
-        return (
-            this.keyboardManager.isDownPressed(gamepadIndex) ||
-            this.isDirectionPressed(
-                gamepadIndex,
-                configData.GamepadUpDownAxis,
-                configData.GamepadUpDownThreshold
-            )
+        return this.isPressedWithCooldown(
+            GamepadControl.DPadRight,
+            () =>
+                this.keyboardManager.isDownPressed(gamepadIndex) ||
+                this.isDirectionPressed(
+                    gamepadIndex,
+                    configData.GamepadUpDownAxis,
+                    configData.GamepadUpDownThreshold
+                )
         );
+    }
+
+    blockAPressUntilRelease() {
+        this.blockingAPressed = true;
     }
 }

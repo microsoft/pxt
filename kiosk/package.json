@@ -10,6 +10,7 @@
     "@types/node": "^16.11.33",
     "@types/react": "^18.0.9",
     "@types/react-dom": "^18.0.3",
+    "howler": "^2.2.3",
     "html5-qrcode": "^2.2.6",
     "qrcode.react": "^3.1.0",
     "react": "^18.1.0",
@@ -45,10 +46,11 @@
     ]
   },
   "devDependencies": {
+    "@types/howler": "^2.2.8",
     "@types/qrcode": "^1.5.0",
     "html-webpack-plugin": "^5.5.0",
+    "prettier": "^2.7.1",
     "react-app-alias": "^2.2.2",
-    "react-app-rewired": "^2.2.1",
-    "prettier": "^2.7.1"
+    "react-app-rewired": "^2.2.1"
   }
 }
