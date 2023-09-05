@@ -10,7 +10,7 @@ class SoundEffectService {
     constructor() {
         this.sounds = {
             swipe: new Howl({
-                src: ["/kiosk-data/sfx/rollover4.ogg"],
+                src: ["/kiosk-data/sfx/click1.ogg"],
                 autoplay: false,
                 preload: true,
                 loop: false,
