@@ -55,12 +55,12 @@ Follow the "Test in staging environment" instructions, but get your auth token f
 
 ## Authoring UI sound effects
 
-1. Open in Arcade: https://makecode.com/_fLL0bTEvThD8
+1. Open in Arcade: https://makecode.com/_K6AfE6AWd9xV
 2. Tweak or add the desired sound
 3. Play the sound in the editor a few times while capturing the audio
    1. This Chrome extension can capture tab audio: https://github.com/arblast/Chrome-Audio-Capturer
 4. In a sound file editor, clip out the sound effect and export as .ogg
 5. Save the to /pxt/docs/kiosk-data/sfx
 6. It it's a new effect, add to Services/SoundEffectService.ts
-
+7. Re-share the above project and update the url in step 1.
 
