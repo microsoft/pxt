@@ -52,3 +52,15 @@ Debug and step through Kiosk code using the browser dev tools (F12 to open).
 
 Follow the "Test in staging environment" instructions, but get your auth token from `https://makecode.com/oauth/gettoken`.
 
+
+## Authoring UI sound effects
+
+1. Open in Arcade: https://makecode.com/_fLL0bTEvThD8
+2. Tweak or add the desired sound
+3. Play the sound in the editor a few times while capturing the audio
+   1. This Chrome extension can capture tab audio: https://github.com/arblast/Chrome-Audio-Capturer
+4. In a sound file editor, clip out the sound effect and export as .ogg
+5. Save the to /pxt/docs/kiosk-data/sfx
+6. It it's a new effect, add to Services/SoundEffectService.ts
+
+
