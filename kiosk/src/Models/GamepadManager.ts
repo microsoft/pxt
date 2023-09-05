@@ -71,8 +71,8 @@ export class GamepadManager {
         }
     }
 
-    isCoolingDown(control: GamepadControl) {
-        return (
+    isCoolingDown(control: GamepadControl): boolean {
+        return !!(
             this.cooldownTimers[control] &&
             this.cooldownTimers[control] > Date.now()
         );
@@ -83,8 +83,8 @@ export class GamepadManager {
             Date.now() + configData.GamepadCooldownMilli;
     }
 
-    isPressedWithCooldown(control: GamepadControl, isPressed: () => any) {
-        if (this.isCoolingDown(control)) return;
+    isPressedWithCooldown(control: GamepadControl, isPressed: () => boolean): boolean {
+        if (this.isCoolingDown(control)) return false;
         const pressed = isPressed();
         if (pressed) {
             this.setCooldownTimer(control);
