@@ -6,6 +6,8 @@ import { KioskState } from "./KioskState";
 import configData from "../config.json";
 import { getGameDetailsAsync } from "../BackendRequests";
 import { tickEvent } from "../browserUtils";
+import { setSoundEffectVolume } from "../Services/SoundEffectService";
+
 export class Kiosk {
     games: GameData[] = [];
     gamepadManager: GamepadManager = new GamepadManager();
@@ -30,10 +32,18 @@ export class Kiosk {
     private builtGamesCache: { [gameId: string]: BuiltSimJSInfo } = {};
     private defaultGameDescription = "Made with love in MakeCode Arcade";
 
-    constructor(clean: boolean, locked: boolean, time?: string) {
+    constructor(
+        clean: boolean,
+        locked: boolean,
+        time?: string,
+        volume?: string
+    ) {
         this.clean = clean;
         this.locked = locked;
         this.time = time;
+        setSoundEffectVolume(
+            volume ? parseFloat(volume) : configData.SoundEffectsVolume
+        );
     }
 
     async downloadGameListAsync(): Promise<void> {

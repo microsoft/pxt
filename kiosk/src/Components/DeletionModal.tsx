@@ -3,6 +3,7 @@ import { tickEvent } from "../browserUtils";
 import "../Kiosk.css";
 import { Kiosk } from "../Models/Kiosk";
 import configData from "../config.json";
+import { playSoundEffect } from "../Services/SoundEffectService";
 
 interface IProps {
     kiosk: Kiosk;
@@ -39,20 +40,30 @@ const DeletionModal: React.FC<IProps> = ({ kiosk, active, changeFocus }) => {
 
     const updateLoop = () => {
         if (kiosk.gamepadManager.isLeftPressed()) {
+            if (!cancelButtonState) {
+                playSoundEffect("switch");
+            }
             setCancelButtonState(true);
             setConfirmButtonState(false);
         }
         if (kiosk.gamepadManager.isRightPressed()) {
+            if (!confirmButtonState) {
+                playSoundEffect("switch");
+            }
             setCancelButtonState(false);
             setConfirmButtonState(true);
         }
         if (cancelButtonState && kiosk.gamepadManager.isAButtonPressed()) {
+            kiosk.gamepadManager.blockAPressUntilRelease();
             tickEvent("kiosk.deleteGame.cancelled");
+            playSoundEffect("select");
             cancelClicked();
         }
 
         if (confirmButtonState && kiosk.gamepadManager.isAButtonPressed()) {
+            kiosk.gamepadManager.blockAPressUntilRelease();
             tickEvent("kiosk.deleteGame.confirmed");
+            playSoundEffect("select");
             confirmClicked();
         }
     };
