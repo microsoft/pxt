@@ -50,9 +50,13 @@ export class Kiosk {
         if (!this.clean) {
             let url = configData.GameDataUrl;
 
-            const response = await fetch(url);
+            let response = await fetch(url);
             if (!response.ok) {
-                throw new Error(`Unable to download game list from "${url}"`);
+                response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`Unable to download game list from "${url}"`);
+                }
             }
 
             try {
