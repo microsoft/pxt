@@ -74,6 +74,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
         const notification = `${games} added!`;
         setNotifyContent(notification);
         setNotify(true);
+        playSoundEffect("notification");
     };
 
     useEffect(() => {
