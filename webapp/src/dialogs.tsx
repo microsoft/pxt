@@ -6,9 +6,11 @@ import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
+import * as workspace from "./workspace";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { TimeMachine } from "./timeMachine";
 import { fireClickOnEnter } from "./util";
 import { pairAsync } from "./cmds";
 
@@ -854,4 +856,50 @@ export function clearDontShowDownloadDialogFlag() {
 
 export function isDontShowDownloadDialogFlagSet() {
     return dontShowDownloadFlag;
+}
+
+export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, reloadHeader: () => void) {
+    const history = (await workspace.getScriptHistoryAsync(header)).entries;
+    const text = await workspace.getTextAsync(header.id);
+
+    const onTimestampSelect = async (timestamp: number) => {
+        core.hideDialog();
+
+        let currentText = text;
+
+        for (let i = 0; i < history.length; i++) {
+            const index = history.length - 1 - i;
+            const entry = history[index];
+            currentText = workspace.applyDiff(currentText, entry);
+            if (entry.timestamp === timestamp) {
+                const version = index > 0 ? history[index - 1].editorVersion : entry.editorVersion;
+
+                // Attempt to update the version in pxt.json
+                try {
+                    const config = JSON.parse(currentText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                    if (config.targetVersions) {
+                        config.targetVersions.target = version;
+                    }
+                    currentText[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+                }
+                catch (e) {
+                }
+
+                // Also set version in the header; this is what the compiler actually checks when applying upgrades
+                header.targetVersion = version;
+                break;
+            }
+        }
+
+        await workspace.saveAsync(header, currentText);
+        reloadHeader();
+    }
+
+    await core.dialogAsync({
+        header: lf("Turn back time"),
+        className: "time-machine-dialog",
+        size: "fullscreen",
+        hasCloseIcon: true,
+        jsx: <TimeMachine history={history} text={text} onTimestampSelect={onTimestampSelect} />
+    })
 }

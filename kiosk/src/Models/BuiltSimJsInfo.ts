@@ -5,6 +5,5 @@ export class BuiltSimJSInfo {
         public funArgs?: string[],
         public parts?: string[],
         public usedBuiltinParts?: string[]
-    ) {
-    }
+    ) {}
 }

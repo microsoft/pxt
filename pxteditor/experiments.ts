@@ -173,6 +173,11 @@ namespace pxt.editor.experiments {
                 name: lf("Blocks Error List"),
                 description: lf("Show an error list panel for Blocks")
             },
+            {
+                id: "timeMachine",
+                name: lf("Time Machine"),
+                description: lf("Save and restore past versions of a project")
+            },
         ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
     }
 

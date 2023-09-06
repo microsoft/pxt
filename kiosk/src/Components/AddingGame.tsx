@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Kiosk } from "../Models/Kiosk";
 import { KioskState } from "../Models/KioskState";
-import configData from "../config.json"
+import configData from "../config.json";
 import "../Kiosk.css";
 import AddGameButton from "./AddGameButton";
-import {QRCodeSVG} from 'qrcode.react';
+import { QRCodeSVG } from "qrcode.react";
 import { generateKioskCodeAsync, getGameCodesAsync } from "../BackendRequests";
 import { isLocal, tickEvent } from "../browserUtils";
 import { GameData } from "../Models/GameData";
 import KioskNotification from "./KioskNotification";
+import { playSoundEffect } from "../Services/SoundEffectService";
+
 interface IProps {
-    kiosk: Kiosk
+    kiosk: Kiosk;
 }
 
 const AddingGame: React.FC<IProps> = ({ kiosk }) => {
@@ -44,39 +46,43 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
             if (qrCodeButtonSelected) {
                 setQrButtonState(false);
             }
+            playSoundEffect("switch");
         }
         if (menuButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
             tickEvent("kiosk.toMainMenu");
             kiosk.showMainMenu();
+            playSoundEffect("select");
         }
         if (!renderQRCode && kiosk.gamepadManager.isUpPressed()) {
             setMenuButtonState(false);
             setQrButtonState(true);
+            playSoundEffect("switch");
         }
         if (qrCodeButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
             tickEvent("kiosk.newKioskCode");
             setRenderQRCode(true);
         }
-    }
+    };
 
     const kioskLinkClicked = () => {
         tickEvent("kiosk.addGameLink");
         return true;
-    }
+    };
 
     const displayGamesAdded = (addedGames: string[]): void => {
         const games = addedGames.join(", ");
-        const notification = `${games} added!`
+        const notification = `${games} added!`;
         setNotifyContent(notification);
         setNotify(true);
-    }
+        playSoundEffect("notification");
+    };
 
     useEffect(() => {
         let intervalId: any = null;
         intervalId = setInterval(() => {
             updateLoop();
         }, configData.GamepadPollLoopMilli);
-        
+
         return () => {
             if (intervalId) {
                 clearInterval(intervalId);
@@ -98,7 +104,9 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                 try {
                     const gameCodes = await getGameCodesAsync(kioskCode);
                     if (gameCodes) {
-                        const justAddedGames = await kiosk.saveNewGamesAsync(gameCodes);
+                        const justAddedGames = await kiosk.saveNewGamesAsync(
+                            gameCodes
+                        );
                         if (justAddedGames.length) {
                             displayGamesAdded(justAddedGames);
                         }
@@ -114,8 +122,8 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                     setKioskCode("");
                     setRenderQRCode(false);
                 }
-            }, timeToPoll)
-        }
+            }, timeToPoll);
+        };
 
         if (kioskCode) {
             pollForGameCode();
@@ -123,8 +131,8 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
 
         return () => {
             clearTimeout(pollTimer);
-        }
-    }, [kioskCode])
+        };
+    }, [kioskCode]);
 
     useEffect(() => {
         let codeGenerationTimer: any;
@@ -136,22 +144,30 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
             try {
                 generatingKioskCode.current = true;
                 if (kiosk.time) {
-                    newKioskCode = await generateKioskCodeAsync(kioskTimeOutInMinutes);
+                    newKioskCode = await generateKioskCodeAsync(
+                        kioskTimeOutInMinutes
+                    );
                 } else {
                     newKioskCode = await generateKioskCodeAsync();
                 }
                 setKioskCode(newKioskCode);
 
-                kioskCodeNextGenerationTime.current = Date.now() + generatedCodeDuration;
-                localStorage.setItem("kioskCodeEnd", kioskCodeNextGenerationTime.current.toString());
+                kioskCodeNextGenerationTime.current =
+                    Date.now() + generatedCodeDuration;
+                localStorage.setItem(
+                    "kioskCodeEnd",
+                    kioskCodeNextGenerationTime.current.toString()
+                );
                 localStorage.setItem("currentKioskCode", newKioskCode);
-                localStorage.setItem("codeDuration", kioskTimeOutInMinutes.toString());
+                localStorage.setItem(
+                    "codeDuration",
+                    kioskTimeOutInMinutes.toString()
+                );
             } catch (error) {
                 setRenderQRCode(false);
             }
             generatingKioskCode.current = false;
-        }
-
+        };
 
         if (!generatingKioskCode.current && renderQRCode) {
             const kioskCodeEndTime = localStorage.getItem("kioskCodeEnd");
@@ -160,7 +176,8 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                 const timeElapsed = endTime - Date.now();
                 if (timeElapsed > 0) {
                     kioskCodeNextGenerationTime.current = endTime;
-                    const storedKioskCode = localStorage.getItem("currentKioskCode");
+                    const storedKioskCode =
+                        localStorage.getItem("currentKioskCode");
                     if (storedKioskCode) {
                         setKioskCode(storedKioskCode);
                     }
@@ -170,48 +187,59 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                     localStorage.removeItem("codeDuration");
                     generateKioskCode();
                 }
-            }
-            else if (!kioskCode) {
+            } else if (!kioskCode) {
                 generateKioskCode();
             } else {
-                const timeElapsed = kioskCodeNextGenerationTime.current - Date.now();
-                const time = Math.max(Math.min(timeElapsed, generatedCodeDuration), 0);
+                const timeElapsed =
+                    kioskCodeNextGenerationTime.current - Date.now();
+                const time = Math.max(
+                    Math.min(timeElapsed, generatedCodeDuration),
+                    0
+                );
                 codeGenerationTimer = setTimeout(() => {
                     setKioskCode("");
                     setRenderQRCode(false);
                     localStorage.removeItem("kioskCodeEnd");
                     localStorage.removeItem("currentKioskCode");
                     localStorage.removeItem("codeDuration");
-                }, time)
+                }, time);
             }
         }
 
         return () => {
             clearTimeout(codeGenerationTimer);
-        }
+        };
     }, [kioskCode, renderQRCode]);
 
     const qrDivContent = () => {
         if (renderQRCode && kioskCode) {
-            const kioskUrl = `${kioskCodeUrl}#add-game:${kioskCode}`;
+            const kioskUrl = `${window.location.origin}${kioskCodeUrl}#add-game:${kioskCode}`;
             return (
                 <div className="innerQRCodeContent">
                     <h3>{kioskTimeOutInMinutes} minute Kiosk ID</h3>
                     <h1 className="kioskCode">{kioskCode}</h1>
                     <QRCodeSVG value={kioskUrl} />
                     <div className="kioskLink">
-                        <a target="_blank" rel="noopener noreferrer" onClick={kioskLinkClicked} href={kioskUrl}>{kioskUrl}</a>
+                        <a
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={kioskLinkClicked}
+                            href={kioskUrl}
+                        >
+                            {kioskUrl}
+                        </a>
                     </div>
-
                 </div>
-            )
-        }
-        else {
+            );
+        } else {
             return (
                 <div className="innerQRCodeContent">
-                    <AddGameButton selected={qrCodeButtonSelected} content="Generate new QR code" />
+                    <AddGameButton
+                        selected={qrCodeButtonSelected}
+                        content="Generate new QR code"
+                    />
                 </div>
-            )
+            );
         }
     };
 
@@ -223,23 +251,31 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                     <h2>How to upload your game</h2>
                     <ol>
                         <li>Use your mobile device to scan the QR code</li>
-                        <li>Use the new page to scan or enter your game's share code</li>
-                        <li>If your game is uploaded successfully, it will be added to the game list</li>
+                        <li>
+                            Use the new page to scan or enter your game's share
+                            code
+                        </li>
+                        <li>
+                            If your game is uploaded successfully, it will be
+                            added to the game list
+                        </li>
                     </ol>
                 </div>
 
-                <div className="QRCodeHolder">
-                    {qrDivContent()}
-                </div>
+                <div className="QRCodeHolder">{qrDivContent()}</div>
             </div>
-            <AddGameButton selected={menuButtonSelected} content="Return to menu" />
-            {
-                notify &&
-                <KioskNotification setActive={setNotify} content={notifyContent} />
-            }
+            <AddGameButton
+                selected={menuButtonSelected}
+                content="Return to menu"
+            />
+            {notify && (
+                <KioskNotification
+                    setActive={setNotify}
+                    content={notifyContent}
+                />
+            )}
         </div>
-
-    )
-}
+    );
+};
 
 export default AddingGame;

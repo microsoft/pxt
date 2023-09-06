@@ -494,7 +494,7 @@ namespace pxtblockly {
                     }
                     this.asset.meta.blockIDs.push(this.sourceBlock_.id);
                 }
-                this.setBlockData(this.asset.id);
+                this.setBlockData(this.isTemporaryAsset() ? null : this.asset.id);
             }
 
             if (!this.isTemporaryAsset()) {

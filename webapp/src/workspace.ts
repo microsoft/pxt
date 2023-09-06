@@ -14,8 +14,12 @@ import * as compiler from "./compiler"
 import * as auth from "./auth"
 import * as cloud from "./cloud"
 
+import * as dmp from "diff-match-patch";
+
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
+
+const differ = new dmp.diff_match_patch();
 
 // Avoid importing entire crypto-js
 /* eslint-disable import/no-internal-modules */
@@ -577,6 +581,50 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         const toWrite = text ? e.text : null;
 
+        if (pxt.appTarget.appTheme.timeMachine) {
+            try {
+                if (toWrite) {
+                    const previous = await impl.getAsync(h);
+
+                    if (previous) {
+                        const diff = diffScriptText(previous.text, toWrite);
+
+                        if (diff) {
+                            let history: pxt.workspace.HistoryFile;
+
+                            if (previous.text[pxt.HISTORY_FILE]) {
+                                history = JSON.parse(previous.text[pxt.HISTORY_FILE]);
+                            }
+                            else {
+                                history = {
+                                    entries: []
+                                };
+                            }
+
+                            const top = history.entries[history.entries.length - 1];
+
+                            if (top && canCombine(top, diff)) {
+                                top.timestamp = diff.timestamp;
+                                diff.changes.forEach(change => top.changes.push(change));
+                            }
+                            else {
+                                history.entries.push(diff);
+                            }
+
+                            toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
+                        }
+                    }
+                }
+            }
+            catch (e) {
+                // If this fails for some reason, the history is going to end
+                // up being corrupted. Should we switch to memory db?
+                pxt.reportException(e);
+                console.warn("Unable to update project history", e);
+            }
+        }
+
+
         try {
             ver = await impl.setAsync(h, e.version, toWrite);
         } catch (e) {
@@ -613,6 +661,15 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     });
 }
 
+export async function getScriptHistoryAsync(header: Header): Promise<pxt.workspace.HistoryFile> {
+    const text = await getTextAsync(header.id);
+
+    if (text?.[pxt.HISTORY_FILE]) {
+        return JSON.parse(text[pxt.HISTORY_FILE]);
+    }
+    return undefined;
+}
+
 function computePath(h: Header) {
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (!path)
@@ -625,6 +682,37 @@ function computePath(h: Header) {
     }
 
     return path
+}
+
+function diffScriptText(oldVersion: pxt.workspace.ScriptText, newVersion: pxt.workspace.ScriptText): pxt.workspace.HistoryEntry {
+    return pxt.workspace.diffScriptText(oldVersion, newVersion, diffText);
+}
+
+function diffText(a: string, b: string) {
+    return differ.patch_make(a, b);
+}
+
+function patchText(patch: unknown, a: string) {
+    return differ.patch_apply(patch as any, a)[0]
+}
+
+export function applyDiff(text: ScriptText, history: pxt.workspace.HistoryEntry) {
+    return pxt.workspace.applyDiff(text, history, patchText);
+}
+
+function canCombine(oldEntry: pxt.workspace.HistoryEntry, newEntry: pxt.workspace.HistoryEntry) {
+    if (newEntry.timestamp - oldEntry.timestamp > 3000) return false;
+
+    let fileNames: pxt.Map<boolean> = {};
+
+    for (const change of oldEntry.changes) {
+        fileNames[change.filename] = true;
+    }
+
+    for (const change of newEntry.changes) {
+        if (fileNames[change.filename]) return false;
+    }
+    return true;
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
@@ -1682,8 +1770,13 @@ data.mountVirtualApi("headers", {
         return compiler.projectSearchAsync({ term: p, headers })
             .then((searchResults: pxtc.service.ProjectSearchInfo[]) => searchResults)
             .then(searchResults => {
-                let searchResultsMap = U.toDictionary(searchResults || [], h => h.id)
-                return headers.filter(h => searchResultsMap[h.id]);
+                const result: Header[] = [];
+
+                for (const header of searchResults) {
+                    result.push(headers.find(h => h.id === header.id));
+                }
+
+                return result.filter(h => !!h);
             });
     },
     expirationTime: p => 5 * 1000,

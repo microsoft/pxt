@@ -11,6 +11,7 @@ import { ProjectsCodeCard } from "./projects";
 import { fireClickOnEnter } from "./util";
 import { Modal } from "../../react-common/components/controls/Modal";
 import { ProgressBar } from "./dialogs";
+import { classList } from "../../react-common/components/util";
 
 declare const zip: any;
 
@@ -429,9 +430,14 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
     }
 
     private getSortedHeaders() {
-        const { sortedBy, sortedAsc } = this.state;
+        const { sortedBy, sortedAsc, searchFor } = this.state;
         const headers = (this.fetchLocalData() || [])
             .filter(h => !h.tutorial?.metadata?.hideIteration);
+
+        // Already sorted by relevance
+        if (searchFor?.trim()) {
+            return headers;
+        }
         return headers.sort(this.getSortingFunction(sortedBy, sortedAsc))
     }
 
@@ -462,6 +468,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         let headers = this.getSortedHeaders() || [];
         headers = headers.filter(h => !h.isDeleted);
         const isSearching = false;
+        const sortedBySearch = !!searchFor?.trim();
         const hasHeaders = !searchFor ? headers.length > 0 : true;
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
         const openNewTab = pxt.appTarget.appTheme.openProjectNewTab
@@ -512,6 +519,16 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
                 title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} />)
         }
+
+        let dropdownLabel = lf("Last Modified");
+
+        if (sortedBySearch) {
+            dropdownLabel = lf("Most Relevant");
+        }
+        else if (sortedBy == "name") {
+            dropdownLabel = lf("Name");
+        }
+
         return (
             <sui.Modal isOpen={visible} className="scriptmanager" size="fullscreen"
                 onClose={this.close} dimmer={true} header={lf("My Projects")}
@@ -519,7 +536,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 {!hasHeaders ? <div className="empty-content">
-                    <h2 className={`ui center aligned header ${darkTheme ? "inverted" : ""}`}>
+                    <h2 className={classList("ui center aligned header", darkTheme && "inverted")}>
                         <div className="content">
                             {lf("It's empty in here")}
                             <div className="sub header">{lf("Go back to create a new project")}</div>
@@ -531,18 +548,42 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         <div className="sort-by">
                             <div role="menu" className="ui compact buttons">
                                 <sui.DropdownMenu
-                                    role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")}
-                                    title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}
+                                    role="menuitem"
+                                    text={dropdownLabel}
+                                    title={lf("Sort by dropdown")}
+                                    className={classList("inline button", darkTheme && "inverted")}
                                     displayLeft
+                                    disabled={sortedBySearch}
                                 >
-                                    <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={`${sortedBy != 'name' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
-                                    <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={`${sortedBy != 'time' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
+                                    <sui.Item
+                                        role="menuitem"
+                                        icon={!sortedBySearch && sortedBy == 'name' ? 'check' : undefined}
+                                        className={classList(!sortedBySearch && sortedBy != "name" && "no-icon", darkTheme && "inverted")}
+                                        text={lf("Name")}
+                                        tabIndex={-1}
+                                        onClick={this.handleSortName}
+                                    />
+                                    <sui.Item
+                                        role="menuitem"
+                                        icon={!sortedBySearch && sortedBy == 'time' ? 'check' : undefined}
+                                        className={classList(!sortedBySearch && sortedBy != "time" && "no-icon", darkTheme && "inverted")}
+                                        text={lf("Last Modified")}
+                                        tabIndex={-1}
+                                        onClick={this.handleSortTime}
+                                    />
                                 </sui.DropdownMenu>
-                                <sui.Button role="menuitem" icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))} />
+                                <sui.Button
+                                    role="menuitem"
+                                    icon={`arrow ${(sortedAsc && !sortedBySearch) ? 'up' : 'down'}`}
+                                    className={`${darkTheme ? 'inverted' : ''}`}
+                                    onClick={this.handleSwitchSortDirection}
+                                    title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))}
+                                    disabled={sortedBySearch}
+                                />
                             </div>
                         </div>
                         <div className={"ui cards"}>
-                            {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
+                            {headers.map((scr, index) => {
                                 const id = this.getId(scr);
                                 const isMarkedNew = !!markedNew[id];
                                 const isSelected = !!selected[id];
@@ -584,15 +625,15 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                         <sui.Icon icon={`circle outline large ${selectedAll ? 'check' : ''}`} />
                                     </th>
                                     <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={fireClickOnEnter} title={lf("Sort by Name {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
-                                        {lf("Name")} {sortedBy == 'name' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
+                                        {lf("Name")} {!sortedBySearch && sortedBy == 'name' && <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} />}
                                     </th>
                                     <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={fireClickOnEnter} title={lf("Sort by Last Modified {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
-                                        {lf("Last Modified")} {sortedBy == 'time' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
+                                        {lf("Last Modified")} {!sortedBySearch && sortedBy == 'time' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
+                                {headers.map((scr, index) => {
                                     const id = this.getId(scr);
                                     const isMarkedNew = !!markedNew[id];
                                     const isSelected = !!selected[id];

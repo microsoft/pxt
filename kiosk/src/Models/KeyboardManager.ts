@@ -1,23 +1,27 @@
-import configData from "../config.json"
+import configData from "../config.json";
 
 export class KeyboardManager {
-    private keyboardState: { [index: string]: boolean} = {};
+    private keyboardState: { [index: string]: boolean } = {};
 
     constructor() {
-        document.addEventListener("keydown", (e) => {
-            this.onKeydown(e.key)
+        document.addEventListener("keydown", e => {
+            this.onKeydown(e.key);
         });
-        document.addEventListener("keyup", (e) => {
+        document.addEventListener("keyup", e => {
             this.onKeyup(e.key);
         });
     }
 
     private checkPressed(gamepadIndex: number, keys: string[][]): boolean {
         if (gamepadIndex == -1) {
-            return keys.some((list) => list.some(key => this.keyboardState[key.toUpperCase()]));
+            return keys.some(list =>
+                list.some(key => this.keyboardState[key.toUpperCase()])
+            );
         }
 
-        return keys[gamepadIndex].some(key => this.keyboardState[key.toUpperCase()]);
+        return keys[gamepadIndex].some(
+            key => this.keyboardState[key.toUpperCase()]
+        );
     }
 
     isAButtonPressed(gamepadIndex: number = -1): boolean {
@@ -29,15 +33,24 @@ export class KeyboardManager {
     }
 
     isEscapeButtonPressed(gamepadIndex: number = -1): boolean {
-        return this.checkPressed(gamepadIndex, configData.KeyboardEscapeButtonKeys);
+        return this.checkPressed(
+            gamepadIndex,
+            configData.KeyboardEscapeButtonKeys
+        );
     }
 
     isResetButtonPressed(gamepadIndex: number = -1): boolean {
-        return this.checkPressed(gamepadIndex, configData.KeyboardResetButtonKeys);
+        return this.checkPressed(
+            gamepadIndex,
+            configData.KeyboardResetButtonKeys
+        );
     }
 
     isMenuButtonPressed(gamepadIndex: number = -1): boolean {
-        return this.checkPressed(gamepadIndex, configData.KeyboardMenuButtonKeys);
+        return this.checkPressed(
+            gamepadIndex,
+            configData.KeyboardMenuButtonKeys
+        );
     }
 
     isLeftPressed(gamepadIndex: number = -1): boolean {

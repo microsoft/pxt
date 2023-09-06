@@ -4,22 +4,29 @@ import ExistingScoreEntry from "./ExistingScoreEntry";
 import { useEffect } from "react";
 
 interface IProps {
-    kiosk: Kiosk
-  }
+    kiosk: Kiosk;
+}
 
 const EnterHighScore: React.FC<IProps> = ({ kiosk }) => {
     const existingHighScores = kiosk.getHighScores(kiosk.selectedGame!.id);
 
     useEffect(() => {
         if (!kiosk.mostRecentScores || !kiosk.mostRecentScores.length) {
-            throw new Error("Cannot load high score entry view without having recent scores");
+            throw new Error(
+                "Cannot load high score entry view without having recent scores"
+            );
         }
     }, []);
 
-    const aboveScores = existingHighScores.filter(item => item.score > kiosk.mostRecentScores[0]);
-    const belowScores = existingHighScores.slice(aboveScores.length, existingHighScores.length);
+    const aboveScores = existingHighScores.filter(
+        item => item.score > kiosk.mostRecentScores[0]
+    );
+    const belowScores = existingHighScores.slice(
+        aboveScores.length,
+        existingHighScores.length
+    );
 
-    return(
+    return (
         <div className="enterHighScore">
             <div className="highScoreTitle">
                 <h1>YOU GOT A HIGH SCORE!</h1>
@@ -28,19 +35,23 @@ const EnterHighScore: React.FC<IProps> = ({ kiosk }) => {
             <div className="highScoreContent">
                 <div className="highScoreList">
                     <ol>
-                        {
-                            aboveScores.map((highScore, i) =>
-                                <ExistingScoreEntry key={i} highScoreInitials={highScore.initials}
-                                    highScoreScore={highScore.score} />
-                            )
-                        }
-                        <li><NewScoreEntry kiosk={kiosk} /></li>
-                        {
-                            belowScores.map((highScore, i) =>
-                                <ExistingScoreEntry key={i} highScoreInitials={highScore.initials}
-                                    highScoreScore={highScore.score} />
-                            )
-                        }
+                        {aboveScores.map((highScore, i) => (
+                            <ExistingScoreEntry
+                                key={i}
+                                highScoreInitials={highScore.initials}
+                                highScoreScore={highScore.score}
+                            />
+                        ))}
+                        <li>
+                            <NewScoreEntry kiosk={kiosk} />
+                        </li>
+                        {belowScores.map((highScore, i) => (
+                            <ExistingScoreEntry
+                                key={i}
+                                highScoreInitials={highScore.initials}
+                                highScoreScore={highScore.score}
+                            />
+                        ))}
                     </ol>
                 </div>
 
@@ -49,11 +60,10 @@ const EnterHighScore: React.FC<IProps> = ({ kiosk }) => {
                         <li>Use up/down to scroll through the alphabet</li>
                         <li>When you find your initial, press A</li>
                     </ul>
-
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default EnterHighScore;
