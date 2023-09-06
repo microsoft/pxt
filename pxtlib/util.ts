@@ -1699,7 +1699,10 @@ namespace ts.pxtc.Util {
                     },
                     highlightBlocks: {
                         ...built.highlightBlocks
-                    }
+                    },
+                    validateBlocks: {
+                        ...built.validateBlocks
+                    },
                 }
             }
         }

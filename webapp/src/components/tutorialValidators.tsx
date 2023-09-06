@@ -39,6 +39,14 @@ abstract class CodeValidatorBase implements CodeValidator {
 
 export class BlocksExistValidator extends CodeValidatorBase {
     name = "blocksexistvalidator";
+    markers: string[];
+
+    constructor(properties: pxt.tutorial.CodeValidatorBaseProperties) {
+        super(properties);
+        if (properties.markers) {
+            this.markers = properties.markers.split(",").map(m => m.trim());
+        }
+    }
 
     async executeInternal(options: CodeValidationExecuteOptions): Promise<CodeValidationResult> {
         const { parent, tutorialOptions } = options;
@@ -53,13 +61,34 @@ export class BlocksExistValidator extends CodeValidatorBase {
             return defaultResult();
         }
 
+        if (!this.markers.includes("exists") && !this.markers.includes("highlight")) {
+            return defaultResult();
+        }
+
         const allHighlightedBlocks = await pxt.tutorial.getTutorialHighlightedBlocks(tutorialOptions);
-        if (!allHighlightedBlocks) {
+        const allValidateBlocks = await pxt.tutorial.getTutorialValidateBlocks(tutorialOptions);
+        if (!allHighlightedBlocks && !allValidateBlocks) {
             return defaultResult();
         }
 
         const stepHash = pxt.tutorial.getTutorialStepHash(tutorialOptions);
-        const stepHighlights = allHighlightedBlocks[stepHash];
+        let highlightBlocksCount: pxt.Map<number> = {};
+        let validateBlocksCount: pxt.Map<number> = {};
+
+        if (allHighlightedBlocks && this.markers.includes("highlight")) {
+            highlightBlocksCount = allHighlightedBlocks[stepHash];
+        }
+
+        if (allValidateBlocks && this.markers.includes("exists")) {
+            const stepValidateBlocks = allValidateBlocks[stepHash];
+            validateBlocksCount = pxt.tutorial.getRequiredBlockCounts(stepValidateBlocks);
+        }
+
+        // Combine the two block counts
+        const requiredBlockCounts: pxt.Map<number> = {...highlightBlocksCount};
+        for (const block in validateBlocksCount) {
+            requiredBlockCounts[block] = (requiredBlockCounts[block] || 0) + validateBlocksCount[block];
+        }
 
         const {
             missingBlocks,
@@ -67,7 +96,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
             insufficientBlocks
         } = pxt.blocks.validateBlocksExist({
             usedBlocks: editor.getAllBlocks(false /* ordered */),
-            requiredBlockCounts: stepHighlights,
+            requiredBlockCounts: requiredBlockCounts,
         });
 
         let isValid = true;

@@ -550,6 +550,7 @@ declare namespace pxt {
         usedBlocks: Map<number>;
         snippetBlocks: Map<Map<number>>;
         highlightBlocks: Map<Map<number>>;
+        validateBlocks: Map<Map<string[]>>;
     }
 
     interface PackageApiInfo {
@@ -1180,6 +1181,7 @@ declare namespace pxt.tutorial {
 
     interface CodeValidatorBaseProperties {
         enabled?: string;
+        markers?: string;
     }
 
     interface CodeValidatorMetadata {
