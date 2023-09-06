@@ -1,12 +1,12 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode Clever Integration Released!](blog/clever-release.md)
+## [MakeCode Clever Integration Released!](blog/clever-release)
 
 September 6th, 2023 by [benvillalobos](https://github.com/benvillalobos)
 
 Just in time for the fall semester, MakeCode has integrated with [Clever](https://www.clever.com/)!
 
-**[Continue reading this blog post](blog/clever-release.md)**
+**[Continue reading this blog post](blog/clever-release)**
 
 ## [MakeCode micro:bit 2023 Release!](/blog/microbit/2023-release)
 
