@@ -4,7 +4,7 @@ namespace motors {
      */
     //% block="steer $turnRatio"
     //% turnRatio.min=-200 turnRatio.max=200
-    //% turnratio.shadow=turnRatioPicker
+    //% turnRatio.shadow=turnRatioPicker
     export function steer(turnRatio: number) {
     }
 }
