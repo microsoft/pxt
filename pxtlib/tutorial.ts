@@ -550,7 +550,7 @@ ${code}
 
     export function getTutorialStepHash(tutorial: TutorialOptions): string {
         const { tutorialStepInfo, tutorialStep } = tutorial;
-        const body = tutorialStepInfo[tutorialStep].contentMd;
+        const body = tutorialStepInfo[tutorialStep].hintContentMd;
         const codeSnippets = getBlockSnippetCode(body);
         return pxt.BrowserUtils.getTutorialCodeHash(codeSnippets);
     }
