@@ -539,7 +539,7 @@ ${code}
     export function getRequiredBlockCounts(stepBlocks: pxt.Map<string[]>): pxt.Map<number> {
         if (!stepBlocks) return undefined;
         const requiredBlocks: pxt.Map<number> = {};
-        const blocks = stepBlocks["exists"];
+        const blocks = stepBlocks["validate-exists"];
         if (blocks) {
             blocks.forEach(block => {
                 requiredBlocks[block] = (requiredBlocks[block] || 0) + 1;

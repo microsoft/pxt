@@ -61,9 +61,9 @@ export class BlocksExistValidator extends CodeValidatorBase {
             return defaultResult();
         }
 
-        // if no valid markers are specified, default to "highlight"
-        if (!this.markers || (!this.markers.includes("highlight") && !this.markers.includes("exists"))) {
-            this.markers = ["highlight"];
+        // if no valid markers are specified, default to "highlight" and "validate-exists"
+        if (!this.markers || (!this.markers.includes("highlight") && !this.markers.includes("validate-exists"))) {
+            this.markers = ["highlight", "validate-exists"];
         }
 
         const allHighlightedBlocks = await pxt.tutorial.getTutorialHighlightedBlocks(tutorialOptions);
@@ -80,7 +80,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
             highlightBlocksCount = allHighlightedBlocks[stepHash];
         }
 
-        if (allValidateBlocks && this.markers.includes("exists")) {
+        if (allValidateBlocks && this.markers.includes("validate-exists")) {
             const stepValidateBlocks = allValidateBlocks[stepHash];
             validateBlocksCount = pxt.tutorial.getRequiredBlockCounts(stepValidateBlocks);
         }

@@ -110,9 +110,9 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                             }
                             highlightBlocks[snippetHash][blk.type] = highlightBlocks[snippetHash][blk.type] + 1;
                         }
-                        while (comment && /@validate-\S+/.test(comment)) {
-                            const marker = comment.match(/@validate-(\S+)/)[1];
-                            comment = comment.replace(/@validate-\S+/, "");
+                        while (comment && /@\S+/.test(comment)) {
+                            const marker = comment.match(/@(\S+)/)[1];
+                            comment = comment.replace(/@\S+/, "");
                             if (!validateBlocks[snippetHash][marker]) {
                                 validateBlocks[snippetHash][marker] = [];
                             }
