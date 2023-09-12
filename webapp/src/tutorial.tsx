@@ -22,6 +22,7 @@ interface ITutorialBlocks {
     snippetBlocks: pxt.Map<pxt.Map<number>>;
     usedBlocks: pxt.Map<number>;
     highlightBlocks: pxt.Map<pxt.Map<number>>;
+    validateBlocks: pxt.Map<pxt.Map<string[]>>;
 }
 
 /**
@@ -47,7 +48,7 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
                     pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: id });
                     // populate snippets if usedBlocks are present, but snippets are not
                     if (!entry?.snippets) getUsedBlocksInternalAsync(code, id, language, db, skipCache);
-                    return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks, highlightBlocks: entry.highlightBlocks });
+                    return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks, highlightBlocks: entry.highlightBlocks, validateBlocks: entry.validateBlocks });
                 } else {
                     return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
                 }
@@ -66,6 +67,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
     const snippetBlocks: pxt.Map<pxt.Map<number>> = {};
     const usedBlocks: pxt.Map<number> = {};
     const highlightBlocks: pxt.Map<pxt.Map<number>> = {};
+    const validateBlocks: pxt.Map<pxt.Map<string[]>> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
@@ -88,6 +90,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     const allblocks = headless.getAllBlocks(false);
                     snippetBlocks[snippetHash] = {};
                     highlightBlocks[snippetHash] = {};
+                    validateBlocks[snippetHash] = {};
                     for (let bi = 0; bi < allblocks.length; ++bi) {
                         const blk = allblocks[bi];
                         if (blk.type == "typescript_statement") {
@@ -100,12 +103,20 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                             usedBlocks[blk.type] = 1;
                         }
 
-                        const comment = blk.getCommentText();
+                        let comment = blk.getCommentText();
                         if (comment && /@highlight/.test(comment)) {
                             if (!highlightBlocks[snippetHash][blk.type]) {
                                 highlightBlocks[snippetHash][blk.type] = 0;
                             }
                             highlightBlocks[snippetHash][blk.type] = highlightBlocks[snippetHash][blk.type] + 1;
+                        }
+                        while (comment && /@\S+/.test(comment)) {
+                            const marker = comment.match(/@(\S+)/)[1];
+                            comment = comment.replace(/@\S+/, "");
+                            if (!validateBlocks[snippetHash][marker]) {
+                                validateBlocks[snippetHash][marker] = [];
+                            }
+                            validateBlocks[snippetHash][marker].push(blk.type);
                         }
                     }
                 }
@@ -117,7 +128,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                 }
 
                 try {
-                    if (db && !skipCache) db.setAsync(id, snippetBlocks, code, highlightBlocks);
+                    if (db && !skipCache) db.setAsync(id, snippetBlocks, code, highlightBlocks, validateBlocks);
                 }
                 catch (e) {
                     // Don't fail if the indexeddb fails, but log it
@@ -128,7 +139,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                 throw new Error("Failed to decompile");
             }
 
-            return { snippetBlocks, usedBlocks, highlightBlocks };
+            return { snippetBlocks, usedBlocks, highlightBlocks, validateBlocks };
         }).catch((e) => {
             pxt.reportException(e);
             throw new Error(`Failed to decompile tutorial`);

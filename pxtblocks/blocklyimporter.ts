@@ -55,6 +55,7 @@ namespace pxt.blocks {
                     newCommentText = newCommentText.replace(/@collapsed/g, '').trim();
                     b.setCollapsed(true);
                 }
+                newCommentText = newCommentText.replace(/@validate-\S+/g, '').trim();
 
                 if (initialCommentText !== newCommentText && !opts?.keepMetaComments) {
                     b.setCommentText(newCommentText || null);

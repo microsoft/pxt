@@ -494,6 +494,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     snippetBlocks: tutorialBlocks.snippetBlocks,
                     usedBlocks: tutorialBlocks.usedBlocks,
                     highlightBlocks: tutorialBlocks.highlightBlocks,
+                    validateBlocks: tutorialBlocks.validateBlocks,
                     hash
                 };
 

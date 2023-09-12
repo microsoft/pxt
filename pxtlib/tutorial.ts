@@ -466,11 +466,11 @@ ${code}
             .then(db => {
                 if (id && cachedInfo[id]) {
                     const info = cachedInfo[id];
-                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.snippetBlocks, info.hash, info.highlightBlocks);
+                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.snippetBlocks, info.hash, info.highlightBlocks, info.validateBlocks);
                 } else {
                     for (let key of Object.keys(cachedInfo)) {
                         const info = cachedInfo[key];
-                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.snippetBlocks, info.hash, info.highlightBlocks);
+                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.snippetBlocks, info.hash, info.highlightBlocks, info.validateBlocks);
                     }
                 }
             }).catch((err) => { })
@@ -528,6 +528,24 @@ ${code}
         const db = await pxt.BrowserUtils.tutorialInfoDbAsync();
         const entry = await db.getAsync(tutorial.tutorial, tutorial.tutorialCode);
         return entry?.highlightBlocks;
+    }
+
+    export async function getTutorialValidateBlocks(tutorial: TutorialOptions): Promise<pxt.Map<pxt.Map<string[]>> | undefined> {
+        const db = await pxt.BrowserUtils.tutorialInfoDbAsync();
+        const entry = await db.getAsync(tutorial.tutorial, tutorial.tutorialCode);
+        return entry?.validateBlocks;
+    }
+
+    export function getRequiredBlockCounts(stepBlocks: pxt.Map<string[]>): pxt.Map<number> {
+        if (!stepBlocks) return undefined;
+        const requiredBlocks: pxt.Map<number> = {};
+        const blocks = stepBlocks["validate-exists"];
+        if (blocks) {
+            blocks.forEach(block => {
+                requiredBlocks[block] = (requiredBlocks[block] || 0) + 1;
+            });
+        }
+        return requiredBlocks;
     }
 
     export function getTutorialStepHash(tutorial: TutorialOptions): string {
