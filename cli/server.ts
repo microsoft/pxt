@@ -26,8 +26,9 @@ let localHexCacheDir = path.join("built", "hexcache");
 let serveOptions: ServeOptions;
 
 const webappNames = [
-    "kiosk"
-    // TODO: Add other webapp names here: "multiplayer", "skillmap", "authcode"
+    "kiosk",
+    "multiplayer"
+    // TODO: Add other webapp names here: "skillmap", "authcode"
 ];
 
 function setupDocfilesdirs() {
