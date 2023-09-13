@@ -3,13 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^5.16.4",
-    "@testing-library/react": "^13.2.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.0",
     "@types/node": "^16.11.33",
-    "@types/react": "^18.0.9",
-    "@types/react-dom": "^18.0.3",
     "howler": "^2.2.3",
     "html5-qrcode": "^2.2.6",
     "qrcode.react": "^3.1.0",
@@ -17,8 +11,7 @@
     "react-dom": "^18.1.0",
     "react-scripts": "5.0.1",
     "swiper": "^8.4.4",
-    "typescript": "^4.6.4",
-    "web-vitals": "^2.1.4"
+    "typescript": "^4.6.4"
   },
   "scripts": {
     "prestart": "node ./scripts/linkfonts.js",
@@ -29,8 +22,7 @@
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "react-app"
     ]
   },
   "browserslist": {
@@ -47,6 +39,8 @@
   },
   "devDependencies": {
     "@types/howler": "^2.2.8",
+    "@types/react": "^18.0.9",
+    "@types/react-dom": "^18.0.3",
     "@types/qrcode": "^1.5.0",
     "html-webpack-plugin": "^5.5.0",
     "prettier": "^2.7.1",
