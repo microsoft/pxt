@@ -15,6 +15,19 @@ This doc assumes you have a functioning pxt development environment. Refer here 
 1. You're all set. Go forth and develop.
 
 
+## Localhost testing
+
+To test Multiplayer locally:
+
+1. Ensure your pxt repo is up to date and has been built recently.
+2. In a command shell, in the `pxt` repo, cd into the `multiplayer` folder and start the multiplayer dev server: `npm run start`. This will *not* open a browser window.
+3. In another command shell, in the `pxt-arcade` repo, start the Arcade dev server: `pxt serve --rebundle`. This will open the Arcade webapp in a browser.
+
+Requests to the `/--multiplayer` endpoint will be routed to the multiplayer dev server.
+
+Debug and step through Multiplayer client code using the browser dev tools (F12 to open).
+
+
 ### Committing changes
 
 Prior to committing code changes, run `npm run prettier` to ensure a measure of stylistic consistency. It is fine to include unrelated changes prettier makes elsewhere in the codebase when you run it.
@@ -39,7 +52,5 @@ The Tailwind CSS IntelliSense VSCode plugin is also very handy: https://marketpl
 ### Misc Notes
 * The app will hot-reload as you make code changes. Pretty neat!
 * If your css changes aren't appearing, or styles look broken, run `pxt buildcss` in the `pxt-arcade` folder and it should refresh.
-* Debugging with breakpoints is best done in the browser's developer console.
-  * Look for sources under `top/localhost:3000/static/js/<local folder path>/pxt/multiplayer/src`
 * Dependencies shared with `react-common` are sourced from the root `node_modules` folder, and are therefore not specified as production dependencies in this project's `package.json`. This is to avoid multiple instances of stateful libraries getting loaded (`react` and `react-dom`, namely).
   * This is accomplished using a workaround supplied by the `react-app-alias-ex` package.
