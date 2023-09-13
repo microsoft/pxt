@@ -2075,10 +2075,8 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         // This is just to support the local skillmap/cra-app serve for development
         nodeutil.cp("built/web/react-common-skillmap.css", "node_modules/pxt-core/skillmap/public/blb");
         nodeutil.cp("built/web/react-common-authcode.css", "node_modules/pxt-core/authcode/public/blb");
-        nodeutil.cp("built/web/react-common-multiplayer.css", "node_modules/pxt-core/multiplayer/public/blb");
         nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/skillmap/public/blb");
         nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/authcode/public/blb");
-        nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/multiplayer/public/blb");
     }
 }
 
@@ -2163,18 +2161,6 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
 
 function buildAuthcodeAsync(parsed: commandParser.ParsedCommand) {
     return buildReactAppAsync("authcode", parsed, { copyAssets: false });
-}
-
-function buildMultiplayerAsync(parsed: commandParser.ParsedCommand) {
-    return buildReactAppAsync(
-        "multiplayer",
-        parsed,
-        {
-            copyAssets: false,
-            includePxtSim: true,
-            expandedPxtTarget: true
-        }
-    );
 }
 
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
@@ -7072,23 +7058,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, buildAuthcodeAsync);
-
-    p.defineCommand({
-        name: "buildmultiplayer",
-        aliases: ["multiplayer", "mp"],
-        advanced: true,
-        help: "Serves the multiplayer webapp",
-        flags: {
-            serve: {
-                description: "Serve the multiplayer app locally after building (npm start)"
-            },
-            docs: {
-                description: "Path to local docs folder to copy into multiplayer",
-                type: "string",
-                argument: "docs"
-            }
-        }
-    }, buildMultiplayerAsync)
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
