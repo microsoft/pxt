@@ -84,6 +84,7 @@ const MainMenu: React.FC<IProps> = ({ kiosk }) => {
 
     useEffect(() => {
         // When returning from another screen, block the A button until it is released to avoid launching the selected game.
+        kiosk.gamepadManager.clear();
         kiosk.gamepadManager.blockAPressUntilRelease();
     }, []);
 
