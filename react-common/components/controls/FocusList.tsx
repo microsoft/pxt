@@ -57,6 +57,42 @@ export const FocusList = (props: FocusListProps) => {
         }
     }
 
+    const isFocusable = (e: HTMLElement) => {
+        return e.getAttribute("data-isfocusable") === "true"
+            && getComputedStyle(e).display !== "none";
+    }
+
+    const firstFocusableElement = () => {
+        return focusableElements.find(e => isFocusable(e))
+    }
+
+    const lastFocusableElement = () => {
+        for (let i = 0; i < focusableElements.length; i++) {
+            if (isFocusable(focusableElements[focusableElements.length - 1 - i])) {
+                return focusableElements[focusableElements.length - 1 - i];
+            }
+        }
+
+        return focusableElements[0];
+    }
+
+    const nextFocusableElement = (index: number, forwards: boolean) => {
+        let current: HTMLElement
+        for (let i = 1; i < focusableElements.length; i++) {
+            if (forwards) {
+                current = focusableElements[(index + i) % focusableElements.length];
+            }
+            else {
+                current = focusableElements[(index + focusableElements.length - i) % focusableElements.length];
+            }
+
+            if (isFocusable(current)) {
+                return current;
+            }
+        }
+        return focusableElements[0];
+    }
+
     const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
         if  (!focusableElements?.length) return;
 
@@ -84,31 +120,31 @@ export const FocusList = (props: FocusListProps) => {
         }
         else if (e.key === (useUpAndDownArrowKeys ? "ArrowDown" : "ArrowRight")) {
             if (index === focusableElements.length - 1 || target === focusList) {
-                focus(focusableElements[0]);
+                focus(firstFocusableElement());
             }
             else {
-                focus(focusableElements[index + 1]);
+                focus(nextFocusableElement(index, true));
             }
             e.preventDefault();
             e.stopPropagation();
         }
         else if (e.key === (useUpAndDownArrowKeys ? "ArrowUp" : "ArrowLeft")) {
             if (index === 0 || target === focusList) {
-                focus(focusableElements[focusableElements.length - 1]);
+                focus(lastFocusableElement());
             }
             else {
-                focus(focusableElements[Math.max(index - 1, 0)]);
+                focus(nextFocusableElement(index, false));
             }
             e.preventDefault();
             e.stopPropagation();
         }
         else if (e.key === "Home") {
-            focus(focusableElements[0]);
+            focus(firstFocusableElement());
             e.preventDefault();
             e.stopPropagation();
         }
         else if (e.key === "End") {
-            focus(focusableElements[focusableElements.length - 1]);
+            focus(lastFocusableElement());
             e.preventDefault();
             e.stopPropagation();
         }
