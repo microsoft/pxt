@@ -4,6 +4,7 @@ import AddGameButton from "./AddGameButton";
 import configData from "../config.json";
 import { KioskState } from "../Models/KioskState";
 import { tickEvent } from "../browserUtils";
+import { playSoundEffect } from "../Services/SoundEffectService";
 
 interface IProps {
     kiosk: Kiosk;
@@ -15,21 +16,25 @@ const GameOver: React.FC<IProps> = ({ kiosk }) => {
     const gameId = kiosk.launchedGame;
 
     const updateLoop = () => {
-        if (kiosk.gamepadManager.isLeftPressed()) {
+        if (!retryButtonSelected && kiosk.gamepadManager.isLeftPressed()) {
             setRetryButtonState(true);
             setHomeButtonState(false);
+            playSoundEffect("switch");
         }
-        if (kiosk.gamepadManager.isRightPressed()) {
+        if (!homeButtonSelected && kiosk.gamepadManager.isRightPressed()) {
             setHomeButtonState(true);
             setRetryButtonState(false);
+            playSoundEffect("switch");
         }
         if (homeButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
             tickEvent("kiosk.gameOver.mainMenu");
+            playSoundEffect("select");
             kiosk.navigate(KioskState.MainMenu);
         }
 
         if (retryButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
             tickEvent("kiosk.gameOver.retry");
+            playSoundEffect("select");
             kiosk.launchGame(gameId);
         }
     };
@@ -47,6 +52,12 @@ const GameOver: React.FC<IProps> = ({ kiosk }) => {
             }
         };
     });
+
+    useEffect(() => {
+        // When returning from another screen, block the A button until it is released to avoid launching the selected game.
+        kiosk.gamepadManager.clear();
+        kiosk.gamepadManager.blockAPressUntilRelease();
+    }, []);
 
     return (
         <div className="gameOverPage">
