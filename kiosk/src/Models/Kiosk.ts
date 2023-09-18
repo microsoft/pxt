@@ -5,7 +5,6 @@ import { BuiltSimJSInfo } from "./BuiltSimJsInfo";
 import { KioskState } from "./KioskState";
 import configData from "../config.json";
 import { getGameDetailsAsync } from "../BackendRequests";
-import { tickEvent } from "../browserUtils";
 import { setSoundEffectVolume } from "../Services/SoundEffectService";
 
 export class Kiosk {
@@ -64,7 +63,7 @@ export class Kiosk {
                 );
             }
         } else {
-            tickEvent("kiosk.clean");
+            pxt.tickEvent("kiosk.clean");
         }
 
         // the added games persist in local storage, but not the live game list

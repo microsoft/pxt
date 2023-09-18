@@ -6,7 +6,6 @@ import "../Kiosk.css";
 import AddGameButton from "./AddGameButton";
 import { QRCodeSVG } from "qrcode.react";
 import { generateKioskCodeAsync, getGameCodesAsync } from "../BackendRequests";
-import { isLocal, tickEvent } from "../browserUtils";
 import { GameData } from "../Models/GameData";
 import KioskNotification from "./KioskNotification";
 import { playSoundEffect } from "../Services/SoundEffectService";
@@ -49,7 +48,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
             playSoundEffect("switch");
         }
         if ((menuButtonSelected && kiosk.gamepadManager.isAButtonPressed()) || kiosk.gamepadManager.isBButtonPressed()) {
-            tickEvent("kiosk.toMainMenu");
+            pxt.tickEvent("kiosk.toMainMenu");
             kiosk.showMainMenu();
             playSoundEffect("select");
         }
@@ -59,14 +58,14 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
             playSoundEffect("switch");
         }
         if (qrCodeButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
-            tickEvent("kiosk.newKioskCode");
+            pxt.tickEvent("kiosk.newKioskCode");
             setRenderQRCode(true);
             playSoundEffect("select");
         }
     };
 
     const kioskLinkClicked = () => {
-        tickEvent("kiosk.addGameLink");
+        pxt.tickEvent("kiosk.addGameLink");
         return true;
     };
 

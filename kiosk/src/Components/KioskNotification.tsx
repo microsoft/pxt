@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { tickEvent } from "../browserUtils";
 import "../Kiosk.css";
 
 interface IProps {

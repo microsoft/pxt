@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Kiosk } from "../Models/Kiosk";
 import configData from "../config.json";
-import { tickEvent } from "../browserUtils";
 
 interface IProps {
     kiosk: Kiosk;
@@ -45,12 +44,12 @@ const HighScoreInitial: React.FC<IProps> = ({
             }
 
             if (kiosk.gamepadManager.isUpPressed()) {
-                tickEvent("kiosk.newHighScore.upPressed");
+                pxt.tickEvent("kiosk.newHighScore.upPressed");
                 previousInitial();
             }
 
             if (kiosk.gamepadManager.isDownPressed()) {
-                tickEvent("kiosk.newHighScore.downPressed");
+                pxt.tickEvent("kiosk.newHighScore.downPressed");
                 nextInitial();
             }
         };

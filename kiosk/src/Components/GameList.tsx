@@ -8,7 +8,6 @@ import { EffectCoverflow, Keyboard, Navigation, Pagination } from "swiper";
 import "swiper/css";
 import "swiper/css/keyboard";
 import GameSlide from "./GameSlide";
-import { tickEvent } from "../browserUtils";
 import { playSoundEffect } from "../Services/SoundEffectService";
 
 interface IProps {
@@ -73,7 +72,7 @@ const GameList: React.FC<IProps> = ({
 
         const gameId = kiosk.selectedGame?.id;
         if (gameId) {
-            tickEvent("kiosk.gameLaunched", { game: gameId });
+            pxt.tickEvent("kiosk.gameLaunched", { game: gameId });
             kiosk.launchGame(gameId);
             playSoundEffect("select");
         }
