@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { tickEvent } from "../browserUtils";
 import "../Kiosk.css";
 import { Kiosk } from "../Models/Kiosk";
 import configData from "../config.json";
@@ -55,14 +54,14 @@ const DeletionModal: React.FC<IProps> = ({ kiosk, active, changeFocus }) => {
         }
         if (cancelButtonState && kiosk.gamepadManager.isAButtonPressed()) {
             kiosk.gamepadManager.blockAPressUntilRelease();
-            tickEvent("kiosk.deleteGame.cancelled");
+            pxt.tickEvent("kiosk.deleteGame.cancelled");
             playSoundEffect("select");
             cancelClicked();
         }
 
         if (confirmButtonState && kiosk.gamepadManager.isAButtonPressed()) {
             kiosk.gamepadManager.blockAPressUntilRelease();
-            tickEvent("kiosk.deleteGame.confirmed");
+            pxt.tickEvent("kiosk.deleteGame.confirmed");
             playSoundEffect("select");
             confirmClicked();
         }

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { tickEvent } from "../browserUtils";
 import "../Kiosk.css";
 
 interface IProps {
@@ -13,7 +12,7 @@ const ErrorModal: React.FC<IProps> = ({
     setShowing,
 }) => {
     const cancelClicked = () => {
-        tickEvent("kiosk.scanError.dismissed");
+        pxt.tickEvent("kiosk.scanError.dismissed");
         setShowing("");
     };
 
