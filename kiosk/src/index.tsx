@@ -40,18 +40,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     pxt.setupWebConfig((window as any).pxtConfig || pxt.webConfig);
     pxt.setAppTarget(bundle);
-    // todo: handle this better?
-    if (pxt.BrowserUtils.isLocalHostDev()) {
-        // patch webconfig to refer to pxt serve instead of multiplayer serve
-        const wc = pxt.webConfig as any;
 
-        for (const key of Object.keys(wc)) {
-            if (wc[key]?.startsWith("/") && wc[key]?.indexOf("worker") == -1) {
-                wc[key] = `http://localhost:3232${wc[key]}`;
-            }
-        }
-        pxt.webConfig.workerjs = `/blb${pxt.webConfig.workerjs}`;
-    }
     pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
 
     enableAnalytics();
