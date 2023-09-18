@@ -5,7 +5,6 @@ import GameList from "./GameList";
 import configData from "../config.json";
 import HighScoresList from "./HighScoresList";
 import { DeleteButton } from "./DeleteButton";
-import { tickEvent } from "../browserUtils";
 import DeletionModal from "./DeletionModal";
 import { playSoundEffect } from "../Services/SoundEffectService";
 
@@ -48,7 +47,7 @@ const MainMenu: React.FC<IProps> = ({ kiosk }) => {
             (kiosk.gamepadManager.isAButtonPressed() ||
                 kiosk.gamepadManager.isBButtonPressed())
         ) {
-            tickEvent("kiosk.addGamePageLoaded");
+            pxt.tickEvent("kiosk.addGamePageLoaded");
             kiosk.launchAddGame();
             playSoundEffect("select");
         }
@@ -78,7 +77,7 @@ const MainMenu: React.FC<IProps> = ({ kiosk }) => {
                 }
             };
         } else {
-            tickEvent("kiosk.locked");
+            pxt.tickEvent("kiosk.locked");
         }
     });
 

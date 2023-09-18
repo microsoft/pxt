@@ -3,7 +3,6 @@ import { Kiosk } from "../Models/Kiosk";
 import AddGameButton from "./AddGameButton";
 import configData from "../config.json";
 import { KioskState } from "../Models/KioskState";
-import { tickEvent } from "../browserUtils";
 import { playSoundEffect } from "../Services/SoundEffectService";
 
 interface IProps {
@@ -27,13 +26,13 @@ const GameOver: React.FC<IProps> = ({ kiosk }) => {
             playSoundEffect("switch");
         }
         if (homeButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
-            tickEvent("kiosk.gameOver.mainMenu");
+            pxt.tickEvent("kiosk.gameOver.mainMenu");
             playSoundEffect("select");
             kiosk.navigate(KioskState.MainMenu);
         }
 
         if (retryButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
-            tickEvent("kiosk.gameOver.retry");
+            pxt.tickEvent("kiosk.gameOver.retry");
             playSoundEffect("select");
             kiosk.launchGame(gameId);
         }

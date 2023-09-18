@@ -1,11 +1,10 @@
 import { useEffect } from "react";
-import { tickEvent } from "../browserUtils";
 import "../Kiosk.css";
 
 const QrSuccess: React.FC<{}> = () => {
     // TODO: pass the game's title and the kiosk's id through to give more feedback to the user
     useEffect(() => {
-        tickEvent("kiosk.qrSuccessLoaded");
+        pxt.tickEvent("kiosk.qrSuccessLoaded");
     }, []);
 
     return (
