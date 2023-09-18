@@ -48,7 +48,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
             }
             playSoundEffect("switch");
         }
-        if (menuButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
+        if ((menuButtonSelected && kiosk.gamepadManager.isAButtonPressed()) || kiosk.gamepadManager.isBButtonPressed()) {
             tickEvent("kiosk.toMainMenu");
             kiosk.showMainMenu();
             playSoundEffect("select");
@@ -61,6 +61,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
         if (qrCodeButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
             tickEvent("kiosk.newKioskCode");
             setRenderQRCode(true);
+            playSoundEffect("select");
         }
     };
 

@@ -257,4 +257,9 @@ export class GamepadManager {
     blockAPressUntilRelease() {
         this.blockingAPressed = true;
     }
+
+    clear() {
+        this.keyboardManager.clear();
+        // Not possible to clear gamepad state at the moment
+    }
 }
