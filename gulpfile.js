@@ -516,16 +516,19 @@ const stripMonacoSourceMaps = () => {
     return Promise.resolve();
 }
 
-const copyMonaco = gulp.series(gulp.parallel(
-    copyMonacoBase,
-    copyMonacoEditor,
-    copyMonacoLoader,
-    copyMonacoEditorMain,
-    copyMonacoJSON,
-    copyMonacoBasicLanguages,
-    copyMonacoTypescript,
-    inlineCodiconFont
-), stripMonacoSourceMaps);
+const copyMonaco = gulp.series(
+    gulp.parallel(
+        copyMonacoBase,
+        copyMonacoEditor,
+        copyMonacoLoader,
+        copyMonacoEditorMain,
+        copyMonacoJSON,
+        copyMonacoBasicLanguages,
+        copyMonacoTypescript,
+    ),
+    inlineCodiconFont,
+    stripMonacoSourceMaps
+);
 
 
 
