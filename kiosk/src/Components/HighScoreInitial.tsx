@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
+import { useEffect, useState, useContext } from "react";
 import configData from "../config.json";
+import { AppStateContext } from "../State/AppStateContext";
+import { gamepadManager } from "../Services/GamepadManager";
 
 interface IProps {
-    kiosk: Kiosk;
     isSelected: boolean;
     onCharacterChanged: (initial: string) => void;
 }
 
 const HighScoreInitial: React.FC<IProps> = ({
-    kiosk,
     isSelected,
     onCharacterChanged,
 }) => {
+    const { state: kiosk } = useContext(AppStateContext);
     const [index, setIndex] = useState(0);
 
     const getPreviousIndex = () =>
@@ -43,12 +43,12 @@ const HighScoreInitial: React.FC<IProps> = ({
                 return;
             }
 
-            if (kiosk.gamepadManager.isUpPressed()) {
+            if (gamepadManager.isUpPressed()) {
                 pxt.tickEvent("kiosk.newHighScore.upPressed");
                 previousInitial();
             }
 
-            if (kiosk.gamepadManager.isDownPressed()) {
+            if (gamepadManager.isDownPressed()) {
                 pxt.tickEvent("kiosk.newHighScore.downPressed");
                 nextInitial();
             }

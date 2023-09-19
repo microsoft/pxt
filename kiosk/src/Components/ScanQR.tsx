@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
 import "../Kiosk.css";
 import { play, stopScan } from "./QrScanner";
-import { addGameToKioskAsync } from "../BackendRequests";
-import { KioskState } from "../Models/KioskState";
+import { addGameToKioskAsync } from "../Services/BackendRequests";
+import { KioskState } from "../Types";
 import { Html5Qrcode } from "html5-qrcode";
 import ErrorModal from "./ErrorModal";
+import { navigate } from "../Transforms/navigate";
 
-interface IProps {
-    kiosk: Kiosk;
-}
+interface IProps {}
 
-const ScanQR: React.FC<IProps> = ({ kiosk }) => {
+const ScanQR: React.FC<IProps> = ({}) => {
     const fullUrlHash = window.location.hash;
     const urlHashList = /add-game:((?:[a-zA-Z0-9]{6}))/.exec(fullUrlHash);
     const kioskId = urlHashList?.[1];
@@ -24,7 +22,7 @@ const ScanQR: React.FC<IProps> = ({ kiosk }) => {
 
     const renderQrScanner = () => {
         pxt.tickEvent("kiosk.scanQrClicked");
-        play(kiosk, kioskId!, html5QrCode!, setAddingError, setErrorDesc);
+        play(kioskId!, html5QrCode!, setAddingError, setErrorDesc);
         setScannerVisible(true);
     };
 
@@ -76,7 +74,7 @@ const ScanQR: React.FC<IProps> = ({ kiosk }) => {
             try {
                 await addGameToKioskAsync(kioskId, shareId);
                 pxt.tickEvent("kiosk.submitGameId.submitSuccess");
-                kiosk.navigate(KioskState.QrSuccess);
+                navigate(KioskState.QrSuccess);
             } catch (error: any) {
                 setAddingError(error.toString());
                 if (error.toString().includes("404")) {
