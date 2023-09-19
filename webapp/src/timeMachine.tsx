@@ -3,9 +3,12 @@ import * as workspace from "./workspace";
 import { Tree, TreeItem, TreeItemBody } from "../../react-common/components/controls/Tree";
 import { createPortal } from "react-dom";
 import { Button } from "../../react-common/components/controls/Button";
+import { hideDialog } from "./core";
+import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 
 interface TimeMachineProps {
     onTimestampSelect: (timestamp: number) => void;
+    onCopySelect: (timestamp: number) => void;
     text: pxt.workspace.ScriptText;
     history: pxt.workspace.HistoryEntry[];
 }
@@ -18,7 +21,7 @@ interface PendingMessage {
 type FrameState = "loading" | "loaded" | "loading-project" | "loaded-project";
 
 export const TimeMachine = (props: TimeMachineProps) => {
-    const { onTimestampSelect, text, history } = props;
+    const { text, history, onTimestampSelect, onCopySelect } = props;
 
     const [selected, setSelected] = React.useState<number>(history[history.length - 1]?.timestamp);
     const [loading, setLoading] = React.useState<FrameState>("loading")
@@ -147,7 +150,11 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
     const onGoPressed = React.useCallback(() => {
         onTimestampSelect(selected);
-    }, [selected, onTimestampSelect, history]);
+    }, [selected, onTimestampSelect]);
+
+    const onSaveCopySelect = React.useCallback(() => {
+        onCopySelect(selected);
+    }, [selected, onCopySelect]);
 
     const url = `${window.location.origin + window.location.pathname}?timeMachine=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
 
@@ -173,14 +180,14 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
     const sortedBuckets = Object.keys(buckets).sort((a, b) => parseInt(b) - parseInt(a));
     return createPortal(
-        <div className="time-machine">
+        <FocusTrap className="time-machine" onEscape={hideDialog}>
             <div className="time-machine-header">
-                <div>
+                <div className="time-machine-back-button">
                     <Button
                         className="menu-button"
                         label={lf("Go Back")}
                         title={lf("Go Back")}
-                        onClick={() => {}}
+                        onClick={hideDialog}
                         leftIcon="fas fa-arrow-left"
                     />
                 </div>
@@ -192,12 +199,12 @@ export const TimeMachine = (props: TimeMachineProps) => {
                         <Button
                             label={lf("Save a copy")}
                             title={lf("Save a copy")}
-                            onClick={() => {}}
+                            onClick={onSaveCopySelect}
                         />
                         <Button
                             label={lf("Restore")}
                             title={lf("Restore")}
-                            onClick={() => {}}
+                            onClick={onGoPressed}
                         />
                     </div>
                 </div>
@@ -222,31 +229,33 @@ export const TimeMachine = (props: TimeMachineProps) => {
                     <h3>
                         {lf("Version History")}
                     </h3>
-                    <Tree>
-                        {sortedBuckets.map((date, i) =>
-                            <TreeItem key={date} initiallyExpanded={i === 0}>
-                                <TreeItemBody>
-                                    {formatDate(parseInt(date))}
-                                </TreeItemBody>
-                                <Tree role="group">
-                                    {...buckets[date].sort((a, b) => b.timestamp - a.timestamp).map(entry =>
-                                        <TreeItem
-                                            key={entry.timestamp}
-                                            onClick={() => onTimeSelected(entry.timestamp)}
-                                            className={selected === entry.timestamp ?  "selected" : undefined}
-                                        >
-                                            <TreeItemBody>
-                                                {formatTime(entry.timestamp)}
-                                            </TreeItemBody>
-                                        </TreeItem>
-                                    )}
-                                </Tree>
-                            </TreeItem>
-                        )}
-                    </Tree>
+                    <div className="time-machine-tree-container">
+                        <Tree>
+                            {sortedBuckets.map((date, i) =>
+                                <TreeItem key={date} initiallyExpanded={i === 0}>
+                                    <TreeItemBody>
+                                        {formatDate(parseInt(date))}
+                                    </TreeItemBody>
+                                    <Tree role="group">
+                                        {...buckets[date].sort((a, b) => b.timestamp - a.timestamp).map(entry =>
+                                            <TreeItem
+                                                key={entry.timestamp}
+                                                onClick={() => onTimeSelected(entry.timestamp)}
+                                                className={selected === entry.timestamp ?  "selected" : undefined}
+                                            >
+                                                <TreeItemBody>
+                                                    {formatTime(entry.timestamp)}
+                                                </TreeItemBody>
+                                            </TreeItem>
+                                        )}
+                                    </Tree>
+                                </TreeItem>
+                            )}
+                        </Tree>
+                    </div>
                 </div>
             </div>
-        </div>
+        </FocusTrap>
     , document.body);
 }
 

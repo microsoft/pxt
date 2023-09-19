@@ -15,8 +15,8 @@
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
-    background-color: @primaryColor;
-    border-bottom: solid 2px darken(desaturate(@editorToolsBackground, 60%), 10%);
+    background-color: @teal;
+    flex-shrink: 0;
 
     .common-button {
         min-width: 9rem;
@@ -47,6 +47,9 @@
     .time-machine-label {
         color: white;
         margin-right: 1rem;
+        text-wrap: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
 }
 
@@ -90,13 +93,13 @@
 .time-machine-timeline {
     width: 20rem;
     height: 100%;
-    padding: 1rem;
     position: relative;
 
     border-left: solid 2px darken(desaturate(@editorToolsBackground, 60%), 10%);
 
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 
     .time-machine-timeline-slider {
         flex-grow: 1;
@@ -109,5 +112,40 @@
     .common-treeitem.selected {
         border-left: solid 2px @primaryColor;
         filter: grayscale(.15) brightness(.85) contrast(1.3);
+    }
+
+    .time-machine-tree-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding-right: 1rem;
+        padding-left: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    h3 {
+        padding-right: 1rem;
+        padding-left: 1rem;
+        padding-top: 1rem;
+    }
+}
+
+@media @tabletAndBelow {
+    .time-machine-header {
+        display: flex;
+        flex-direction: row;
+
+        .time-machine-back-button {
+            flex-grow: 1;
+        }
+    }
+
+    .time-machine-timeline {
+        width: 15rem;
+    }
+}
+
+@media @mobileAndBelow {
+    .time-machine-header {
+        height: @mobileMenuHeight;
     }
 }

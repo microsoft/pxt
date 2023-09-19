@@ -13,6 +13,7 @@ import Util = pxt.Util;
 import { TimeMachine } from "./timeMachine";
 import { fireClickOnEnter } from "./util";
 import { pairAsync } from "./cmds";
+import { invalidate } from "./data";
 
 let dontShowDownloadFlag = false;
 
@@ -862,10 +863,11 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
     const history = (await workspace.getScriptHistoryAsync(header)).entries;
     const text = await workspace.getTextAsync(header.id);
 
-    const onTimestampSelect = async (timestamp: number) => {
-        core.hideDialog();
-
-        let currentText = text;
+    const getTextAtTimestamp = (timestamp: number) => {
+        let currentText = {...text};
+        const newHeader = {
+            ...header
+        };
 
         for (let i = 0; i < history.length; i++) {
             const index = history.length - 1 - i;
@@ -886,13 +888,57 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
                 }
 
                 // Also set version in the header; this is what the compiler actually checks when applying upgrades
-                header.targetVersion = version;
+                newHeader.targetVersion = version;
                 break;
             }
         }
 
-        await workspace.saveAsync(header, currentText);
+        return [newHeader, currentText] as [pxt.workspace.Header, pxt.workspace.ScriptText];
+    }
+
+    const onTimestampSelect = async (timestamp: number) => {
+        core.hideDialog();
+
+        const [newHeader, text] = getTextAtTimestamp(timestamp);
+        header.targetVersion = newHeader.targetVersion;
+
+        await workspace.saveAsync(header, text);
         reloadHeader();
+    }
+
+    const onCopySelect = async (timestamp: number) => {
+        core.hideDialog();
+
+        const [newHeader, text] = getTextAtTimestamp(timestamp);
+
+        const newHistory: pxt.workspace.HistoryFile = {
+            entries: history.slice(0, history.findIndex(e => e.timestamp === timestamp))
+        }
+
+        if (text[pxt.HISTORY_FILE]) {
+            text[pxt.HISTORY_FILE] = JSON.stringify(newHistory);
+        }
+        const date = new Date(timestamp);
+
+        const dateString = date.toLocaleDateString(
+            pxt.U.userLanguage(),
+            {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric"
+            }
+        );
+
+        const timeString = date.toLocaleTimeString(
+            pxt.U.userLanguage(),
+            {
+                timeStyle: "short"
+            } as any
+        );
+
+        await workspace.duplicateAsync(newHeader, `${newHeader.name} ${dateString} ${timeString}`, text);
+
+        invalidate("headers:");
     }
 
     await core.dialogAsync({
@@ -900,6 +946,13 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
         className: "time-machine-dialog",
         size: "fullscreen",
         hasCloseIcon: true,
-        jsx: <TimeMachine history={history} text={text} onTimestampSelect={onTimestampSelect} />
+        jsx: (
+            <TimeMachine
+                history={history}
+                text={text}
+                onTimestampSelect={onTimestampSelect}
+                onCopySelect={onCopySelect}
+            />
+        )
     })
 }

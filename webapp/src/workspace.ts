@@ -739,8 +739,8 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
         .then(() => h);
 }
 
-export async function duplicateAsync(h: Header, newName?: string): Promise<Header> {
-    const text = await getTextAsync(h.id);
+export async function duplicateAsync(h: Header, newName?: string, newText?: ScriptText): Promise<Header> {
+    const text = newText || (await getTextAsync(h.id));
 
     if (!newName)
         newName = createDuplicateName(h);
