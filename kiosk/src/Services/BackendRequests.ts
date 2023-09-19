@@ -1,8 +1,10 @@
+import { ShareIds } from "../Types";
+
 const stagingEndpoint = "https://staging.pxt.io/api/kiosk";
 const kioskBackendEndpoint = "https://makecode.com/api/kiosk";
 const apiBackendEndpoint = "https://makecode.com/api";
 
-export const getGameCodesAsync = async (kioskCode: string) => {
+export const getGameCodesAsync = async (kioskCode: string): Promise<ShareIds> => {
     const getGameCodeUrl = `${kioskBackendEndpoint}/code/${kioskCode}`;
     let response = await fetch(getGameCodeUrl);
     if (!response.ok) {
@@ -10,12 +12,12 @@ export const getGameCodesAsync = async (kioskCode: string) => {
         e.name = "PollError";
         throw e;
     } else {
-        const gameCodeEntries = JSON.parse((await response.json())?.shareIds);
+        const gameCodeEntries = JSON.parse((await response.json())?.shareIds) as ShareIds;
         return gameCodeEntries;
     }
 };
 
-export const generateKioskCodeAsync = async (time?: number) => {
+export const generateKioskCodeAsync = async (time?: number): Promise<string> => {
     const codeGenerationUrl = `${kioskBackendEndpoint}/newcode${
         time ? `?time=${time}` : ""
     }`;

@@ -9,6 +9,7 @@ import ReactDOM from "react-dom/client";
 // eslint-disable-next-line import/no-unassigned-import
 import "./Kiosk.css";
 import App from "./App";
+import { AppStateProvider } from "./State/AppStateContext";
 
 function enableAnalytics() {
     pxt.analytics.enable(pxt.Util.userLanguage());
@@ -53,7 +54,9 @@ window.addEventListener("DOMContentLoaded", () => {
     );
     root.render(
         <React.StrictMode>
-            <App />
+            <AppStateProvider>
+                <App />
+            </AppStateProvider>
         </React.StrictMode>
     );
 });
