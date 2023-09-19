@@ -1,24 +1,26 @@
 import { ShareIds } from "../Types";
 
-const stagingEndpoint = "https://staging.pxt.io/api/kiosk";
-const kioskBackendEndpoint = "https://makecode.com/api/kiosk";
-const apiBackendEndpoint = "https://makecode.com/api";
-
-export const getGameCodesAsync = async (kioskCode: string): Promise<ShareIds> => {
-    const getGameCodeUrl = `${kioskBackendEndpoint}/code/${kioskCode}`;
+export const getGameCodesAsync = async (
+    kioskCode: string
+): Promise<ShareIds> => {
+    const getGameCodeUrl = `${pxt.Cloud.apiRoot}/kiosk/code/${kioskCode}`;
     let response = await fetch(getGameCodeUrl);
     if (!response.ok) {
         const e = new Error(response.statusText);
         e.name = "PollError";
         throw e;
     } else {
-        const gameCodeEntries = JSON.parse((await response.json())?.shareIds) as ShareIds;
+        const gameCodeEntries = JSON.parse(
+            (await response.json())?.shareIds
+        ) as ShareIds;
         return gameCodeEntries;
     }
 };
 
-export const generateKioskCodeAsync = async (time?: number): Promise<string> => {
-    const codeGenerationUrl = `${kioskBackendEndpoint}/newcode${
+export const generateKioskCodeAsync = async (
+    time?: number
+): Promise<string> => {
+    const codeGenerationUrl = `${pxt.Cloud.apiRoot}/kiosk/newcode${
         time ? `?time=${time}` : ""
     }`;
     const response = await fetch(codeGenerationUrl);
@@ -40,7 +42,7 @@ export const addGameToKioskAsync = async (
     kioskId: string | undefined,
     gameShareId: string | undefined
 ) => {
-    const updateKioskUrl = `${kioskBackendEndpoint}/updatecode`;
+    const updateKioskUrl = `${pxt.Cloud.apiRoot}/kiosk/updatecode`;
     const response: Response = await fetch(updateKioskUrl, {
         method: "POST",
         headers: {
@@ -61,7 +63,7 @@ export const addGameToKioskAsync = async (
 };
 
 export const getGameDetailsAsync = async (gameId: string) => {
-    const gameDetailsUrl = `${apiBackendEndpoint}/${gameId}`;
+    const gameDetailsUrl = `${pxt.Cloud.apiRoot}/${gameId}`;
     const response = await fetch(gameDetailsUrl);
     if (!response.ok) {
         throw new Error("Unable to fetch the game details");
