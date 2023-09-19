@@ -1,61 +1,58 @@
-import { useEffect, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
+import { useEffect, useState, useContext } from "react";
 import AddGameButton from "./AddGameButton";
 import configData from "../config.json";
-import { KioskState } from "../Models/KioskState";
+import { KioskState } from "../Types";
 import { playSoundEffect } from "../Services/SoundEffectService";
+import { AppStateContext } from "../State/AppStateContext";
+import { gamepadManager } from "../Services/GamepadManager";
+import { navigate } from "../Transforms/navigate";
+import { launchGame } from "../Transforms/launchGame";
 
-interface IProps {
-    kiosk: Kiosk;
-}
+interface IProps {}
 
-const GameOver: React.FC<IProps> = ({ kiosk }) => {
+const GameOver: React.FC<IProps> = ({}) => {
+    const { state: kiosk } = useContext(AppStateContext);
     const [homeButtonSelected, setHomeButtonState] = useState(false);
     const [retryButtonSelected, setRetryButtonState] = useState(false);
-    const gameId = kiosk.launchedGame;
-
-    const updateLoop = () => {
-        if (!retryButtonSelected && kiosk.gamepadManager.isLeftPressed()) {
-            setRetryButtonState(true);
-            setHomeButtonState(false);
-            playSoundEffect("switch");
-        }
-        if (!homeButtonSelected && kiosk.gamepadManager.isRightPressed()) {
-            setHomeButtonState(true);
-            setRetryButtonState(false);
-            playSoundEffect("switch");
-        }
-        if (homeButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
-            pxt.tickEvent("kiosk.gameOver.mainMenu");
-            playSoundEffect("select");
-            kiosk.navigate(KioskState.MainMenu);
-        }
-
-        if (retryButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
-            pxt.tickEvent("kiosk.gameOver.retry");
-            playSoundEffect("select");
-            kiosk.launchGame(gameId);
-        }
-    };
+    const gameId = kiosk.launchedGameId;
 
     useEffect(() => {
-        let intervalId: any = null;
+        const updateLoop = () => {
+            if (!retryButtonSelected && gamepadManager.isLeftPressed()) {
+                setRetryButtonState(true);
+                setHomeButtonState(false);
+                playSoundEffect("switch");
+            }
+            if (!homeButtonSelected && gamepadManager.isRightPressed()) {
+                setHomeButtonState(true);
+                setRetryButtonState(false);
+                playSoundEffect("switch");
+            }
+            if (homeButtonSelected && gamepadManager.isAButtonPressed()) {
+                pxt.tickEvent("kiosk.gameOver.mainMenu");
+                playSoundEffect("select");
+                navigate(KioskState.MainMenu);
+            }
+            if (retryButtonSelected && gamepadManager.isAButtonPressed()) {
+                pxt.tickEvent("kiosk.gameOver.retry");
+                playSoundEffect("select");
+                launchGame(gameId!);
+            }
+        };
 
-        intervalId = setInterval(() => {
+        const intervalId = setInterval(() => {
             updateLoop();
         }, configData.GamepadPollLoopMilli);
 
         return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
+            clearInterval(intervalId);
         };
-    });
+    }, [gameId, homeButtonSelected, retryButtonSelected]);
 
     useEffect(() => {
         // When returning from another screen, block the A button until it is released to avoid launching the selected game.
-        kiosk.gamepadManager.clear();
-        kiosk.gamepadManager.blockAPressUntilRelease();
+        gamepadManager.clear();
+        gamepadManager.blockAPressUntilRelease();
     }, []);
 
     return (

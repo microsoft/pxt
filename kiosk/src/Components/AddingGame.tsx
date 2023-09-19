@@ -1,20 +1,24 @@
-import { useEffect, useRef, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
-import { KioskState } from "../Models/KioskState";
+import { useEffect, useRef, useState, useContext } from "react";
 import configData from "../config.json";
 import "../Kiosk.css";
 import AddGameButton from "./AddGameButton";
 import { QRCodeSVG } from "qrcode.react";
-import { generateKioskCodeAsync, getGameCodesAsync } from "../BackendRequests";
-import { GameData } from "../Models/GameData";
+import {
+    generateKioskCodeAsync,
+    getGameCodesAsync,
+} from "../Services/BackendRequests";
 import KioskNotification from "./KioskNotification";
 import { playSoundEffect } from "../Services/SoundEffectService";
+import { AppStateContext } from "../State/AppStateContext";
+import { gamepadManager } from "../Services/GamepadManager";
+import { showMainMenu } from "../Transforms/showMainMenu";
+import { saveNewGamesAsync } from "../Transforms/saveNewGamesAsync";
+import { GameData } from "../Types";
 
-interface IProps {
-    kiosk: Kiosk;
-}
+interface IProps {}
 
-const AddingGame: React.FC<IProps> = ({ kiosk }) => {
+const AddingGame: React.FC<IProps> = ({}) => {
+    const { state: kiosk } = useContext(AppStateContext);
     const [kioskCode, setKioskCode] = useState("");
     const [renderQRCode, setRenderQRCode] = useState(true);
     const [menuButtonSelected, setMenuButtonState] = useState(false);
@@ -40,24 +44,27 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
     }
 
     const updateLoop = () => {
-        if (!menuButtonSelected && kiosk.gamepadManager.isDownPressed()) {
+        if (!menuButtonSelected && gamepadManager.isDownPressed()) {
             setMenuButtonState(true);
             if (qrCodeButtonSelected) {
                 setQrButtonState(false);
             }
             playSoundEffect("switch");
         }
-        if ((menuButtonSelected && kiosk.gamepadManager.isAButtonPressed()) || kiosk.gamepadManager.isBButtonPressed()) {
+        if (
+            (menuButtonSelected && gamepadManager.isAButtonPressed()) ||
+            gamepadManager.isBButtonPressed()
+        ) {
             pxt.tickEvent("kiosk.toMainMenu");
-            kiosk.showMainMenu();
+            showMainMenu();
             playSoundEffect("select");
         }
-        if (!renderQRCode && kiosk.gamepadManager.isUpPressed()) {
+        if (!renderQRCode && gamepadManager.isUpPressed()) {
             setMenuButtonState(false);
             setQrButtonState(true);
             playSoundEffect("switch");
         }
-        if (qrCodeButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
+        if (qrCodeButtonSelected && gamepadManager.isAButtonPressed()) {
             pxt.tickEvent("kiosk.newKioskCode");
             setRenderQRCode(true);
             playSoundEffect("select");
@@ -69,8 +76,8 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
         return true;
     };
 
-    const displayGamesAdded = (addedGames: string[]): void => {
-        const games = addedGames.join(", ");
+    const displayGamesAdded = (addedGames: GameData[]): void => {
+        const games = addedGames.map(gd => gd.name).join(", ");
         const notification = `${games} added!`;
         setNotifyContent(notification);
         setNotify(true);
@@ -104,7 +111,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                 try {
                     const gameCodes = await getGameCodesAsync(kioskCode);
                     if (gameCodes) {
-                        const justAddedGames = await kiosk.saveNewGamesAsync(
+                        const justAddedGames = await saveNewGamesAsync(
                             gameCodes
                         );
                         if (justAddedGames.length) {

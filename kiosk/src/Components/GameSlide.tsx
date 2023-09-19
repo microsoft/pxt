@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
-import { GameData } from "../Models/GameData";
-import { HighScore } from "../Models/HighScore";
-import { Kiosk } from "../Models/Kiosk";
+import { GameData, HighScore } from "../Types";
 import { DeleteButton } from "./DeleteButton";
 import HighScoresList from "./HighScoresList";
+
 interface IProps {
     highScores: HighScore[];
     addButtonSelected: boolean;

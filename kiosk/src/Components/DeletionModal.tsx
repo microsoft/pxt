@@ -1,29 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import "../Kiosk.css";
-import { Kiosk } from "../Models/Kiosk";
 import configData from "../config.json";
 import { playSoundEffect } from "../Services/SoundEffectService";
+import { AppStateContext } from "../State/AppStateContext";
+import * as Storage from "../Services/LocalStorage";
+import { removeGame } from "../Transforms/removeGame";
+import { gamepadManager } from "../Services/GamepadManager";
 
 interface IProps {
-    kiosk: Kiosk;
     active: (p: boolean) => void;
     changeFocus: (p: boolean) => void;
 }
-const DeletionModal: React.FC<IProps> = ({ kiosk, active, changeFocus }) => {
+const DeletionModal: React.FC<IProps> = ({ active, changeFocus }) => {
+    const { state: kiosk } = useContext(AppStateContext);
+
     const [cancelButtonState, setCancelButtonState] = useState(true);
     const [confirmButtonState, setConfirmButtonState] = useState(false);
     const addedGamesLocalStorageKey: string = "UserAddedGames";
 
     const deleteGame = () => {
-        const userAddedGames = kiosk.getAllAddedGames();
-        const gameId = kiosk.selectedGame?.id!;
-        if (gameId in userAddedGames) {
+        const userAddedGames = Storage.getAddedGames();
+        const gameId = kiosk.selectedGameId;
+        if (gameId && gameId in userAddedGames) {
             userAddedGames[gameId].deleted = true;
-            localStorage.setItem(
-                addedGamesLocalStorageKey,
-                JSON.stringify(userAddedGames)
-            );
-            kiosk.games.splice(kiosk.selectedGameIndex!, 1);
+            Storage.setAddedGames(userAddedGames);
+            removeGame(gameId);
         }
     };
 
@@ -38,29 +39,29 @@ const DeletionModal: React.FC<IProps> = ({ kiosk, active, changeFocus }) => {
     };
 
     const updateLoop = () => {
-        if (kiosk.gamepadManager.isLeftPressed()) {
+        if (gamepadManager.isLeftPressed()) {
             if (!cancelButtonState) {
                 playSoundEffect("switch");
             }
             setCancelButtonState(true);
             setConfirmButtonState(false);
         }
-        if (kiosk.gamepadManager.isRightPressed()) {
+        if (gamepadManager.isRightPressed()) {
             if (!confirmButtonState) {
                 playSoundEffect("switch");
             }
             setCancelButtonState(false);
             setConfirmButtonState(true);
         }
-        if (cancelButtonState && kiosk.gamepadManager.isAButtonPressed()) {
-            kiosk.gamepadManager.blockAPressUntilRelease();
+        if (cancelButtonState && gamepadManager.isAButtonPressed()) {
+            gamepadManager.blockAPressUntilRelease();
             pxt.tickEvent("kiosk.deleteGame.cancelled");
             playSoundEffect("select");
             cancelClicked();
         }
 
-        if (confirmButtonState && kiosk.gamepadManager.isAButtonPressed()) {
-            kiosk.gamepadManager.blockAPressUntilRelease();
+        if (confirmButtonState && gamepadManager.isAButtonPressed()) {
+            gamepadManager.blockAPressUntilRelease();
             pxt.tickEvent("kiosk.deleteGame.confirmed");
             playSoundEffect("select");
             confirmClicked();

@@ -1,4 +1,4 @@
-import { HighScore } from "../Models/HighScore";
+import { HighScore } from "../Types";
 
 interface IProps {
     highScores: HighScore[];

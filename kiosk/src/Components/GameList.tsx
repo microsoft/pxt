@@ -1,29 +1,42 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
-import { KioskState } from "../Models/KioskState";
+import React, {
+    useEffect,
+    useRef,
+    useState,
+    useContext,
+    useCallback,
+} from "react";
+import { KioskState } from "../Types";
 import configData from "../config.json";
 import "../Kiosk.css";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { EffectCoverflow, Keyboard, Navigation, Pagination } from "swiper";
+import {
+    Swiper as SwiperClass,
+    EffectCoverflow,
+    Keyboard,
+    Pagination,
+} from "swiper";
 import "swiper/css";
 import "swiper/css/keyboard";
 import GameSlide from "./GameSlide";
 import { playSoundEffect } from "../Services/SoundEffectService";
+import { AppStateContext } from "../State/AppStateContext";
+import { selectGameByIndex } from "../Transforms/selectGameByIndex";
+import { launchGame } from "../Transforms/launchGame";
+import { gamepadManager } from "../Services/GamepadManager";
+import { getHighScores, getSelectedGameIndex } from "../State";
 
 interface IProps {
-    kiosk: Kiosk;
     addButtonSelected: boolean;
     deleteButtonSelected: boolean;
 }
 
 const GameList: React.FC<IProps> = ({
-    kiosk,
     addButtonSelected,
     deleteButtonSelected,
 }) => {
-    const [games, setGames] = useState(kiosk.games);
+    const { state: kiosk } = useContext(AppStateContext);
     const buttonSelected = addButtonSelected || deleteButtonSelected;
-    const localSwiper = useRef<any>();
+    const localSwiper = useRef<SwiperClass>();
 
     const leftKeyEvent = (eventType: string) => {
         return new KeyboardEvent(eventType, {
@@ -47,78 +60,65 @@ const GameList: React.FC<IProps> = ({
         });
     };
 
-    const getGameIndex = () => {
-        let gameIndex = (localSwiper.current.activeIndex - 2) % games.length;
-        if (gameIndex < 0) {
-            gameIndex = games.length - 1;
-        }
-        return gameIndex;
-    };
-
-    const changeFocusedItem = () => {
-        const gameIndex = getGameIndex();
-        if (kiosk.selectedGameIndex !== gameIndex) {
-            playSoundEffect("swipe");
-        }
-        kiosk.selectGame(gameIndex);
-    };
-
-    const clickItem = () => {
-        const localSwiperIndex = getGameIndex();
-        if (localSwiperIndex !== kiosk.selectedGameIndex) {
-            kiosk.selectGame(localSwiperIndex);
-            playSoundEffect("select");
-        }
-
-        const gameId = kiosk.selectedGame?.id;
+    const clickItem = useCallback(() => {
+        const gameId = kiosk.selectedGameId;
         if (gameId) {
             pxt.tickEvent("kiosk.gameLaunched", { game: gameId });
-            kiosk.launchGame(gameId);
             playSoundEffect("select");
+            launchGame(gameId);
         }
-    };
-
-    const updateLoop = () => {
-        if (kiosk.state !== KioskState.MainMenu) {
-            return;
-        }
-
-        if (kiosk.gamepadManager.isAButtonPressed()) {
-            clickItem();
-        }
-
-        if (kiosk.gamepadManager.isLeftPressed()) {
-            document.dispatchEvent(leftKeyEvent("keydown"));
-            document.dispatchEvent(leftKeyEvent("keyup"));
-            changeFocusedItem();
-        }
-
-        if (kiosk.gamepadManager.isRightPressed()) {
-            document.dispatchEvent(rightKeyEvent("keydown"));
-            document.dispatchEvent(rightKeyEvent("keyup"));
-            changeFocusedItem();
-        }
-    };
+    }, [kiosk]);
 
     // on page load use effect
     useEffect(() => {
-        kiosk.initialize().then(() => {
-            setGames(kiosk.games);
-
-            if (!kiosk.selectedGame && kiosk.games.length) {
-                kiosk.selectGame(0);
+        if (!kiosk.selectedGameId && kiosk.allGames.length) {
+            selectGameByIndex(0);
+        } else {
+            const gameIndex = getSelectedGameIndex();
+            if (gameIndex !== undefined) {
+                localSwiper.current?.slideTo(gameIndex + 2);
             }
-
-            if (kiosk.selectedGameIndex) {
-                localSwiper.current.slideTo(kiosk.selectedGameIndex + 2);
-            }
-        });
-    }, []);
+        }
+    }, [localSwiper]);
 
     // poll for game pad input
     useEffect(() => {
+        const syncSelectedGame = () => {
+            const gameIndex = localSwiper?.current?.realIndex || 0;
+            const selectedGameIndex = getSelectedGameIndex();
+            if (
+                selectedGameIndex !== undefined &&
+                gameIndex !== selectedGameIndex
+            ) {
+                selectGameByIndex(gameIndex);
+                playSoundEffect("swipe");
+            }
+        };
+
+        const updateLoop = () => {
+            if (kiosk.kioskState !== KioskState.MainMenu) {
+                return;
+            }
+
+            if (gamepadManager.isAButtonPressed()) {
+                clickItem();
+            }
+
+            if (gamepadManager.isLeftPressed()) {
+                document.dispatchEvent(leftKeyEvent("keydown"));
+                document.dispatchEvent(leftKeyEvent("keyup"));
+                syncSelectedGame();
+            }
+
+            if (gamepadManager.isRightPressed()) {
+                document.dispatchEvent(rightKeyEvent("keydown"));
+                document.dispatchEvent(rightKeyEvent("keyup"));
+                syncSelectedGame();
+            }
+        };
+
         let intervalId: any = null;
-        if (games.length) {
+        if (kiosk.allGames.length) {
             intervalId = setInterval(() => {
                 if (!buttonSelected) {
                     updateLoop();
@@ -131,9 +131,11 @@ const GameList: React.FC<IProps> = ({
                 clearInterval(intervalId);
             }
         };
-    }, [games, buttonSelected]);
+    }, [kiosk, localSwiper, buttonSelected]);
 
-    if (!kiosk.games || !kiosk.games.length) {
+    const slideChanged = useCallback(() => {}, [localSwiper]);
+
+    if (!kiosk.allGames?.length) {
         return (
             <div>
                 <p>Currently no kiosk games</p>
@@ -148,7 +150,7 @@ const GameList: React.FC<IProps> = ({
                 loop={true}
                 slidesPerView={1.5}
                 centeredSlides={true}
-                spaceBetween={10}
+                spaceBetween={130}
                 pagination={{ type: "fraction" }}
                 onSwiper={swiper => {
                     localSwiper.current = swiper;
@@ -162,11 +164,12 @@ const GameList: React.FC<IProps> = ({
                 allowSlidePrev={!buttonSelected}
                 modules={[EffectCoverflow, Keyboard, Pagination]}
                 keyboard={{ enabled: true }}
+                onSlideChange={() => slideChanged()}
             >
-                {kiosk.games.map((game, index) => {
-                    const gameHighScores = kiosk.getHighScores(game.id);
+                {kiosk.allGames.map((game, index) => {
+                    const gameHighScores = getHighScores(game.id);
                     return (
-                        <SwiperSlide key={game.id}>
+                        <SwiperSlide key={index}>
                             <GameSlide
                                 highScores={gameHighScores}
                                 addButtonSelected={addButtonSelected}
