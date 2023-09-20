@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { AppState } from "./State";
 import { Action } from "./Actions";
 import * as Storage from "../Services/LocalStorage";
@@ -130,6 +131,54 @@ export default function reducer(state: AppState, action: Action): AppState {
                 ...state,
                 allHighScores: {},
             };
+        }
+        case "SET_KIOSK_CODE": {
+            Storage.setKioskCode(action.kioskCode, action.kioskCodeExpiration);
+            return {
+                ...state,
+                kioskCode: action.kioskCode,
+                kioskCodeExpiration: action.kioskCodeExpiration,
+            };
+        }
+        case "CLEAR_KIOSK_CODE": {
+            Storage.clearKioskCode();
+            return {
+                ...state,
+                kioskCode: undefined,
+                kioskCodeExpiration: undefined,
+            };
+        }
+        case "POST_NOTIFICATION": {
+            const notificationWithId = {
+                ...action.notification,
+                expiration: Date.now() + action.notification.duration,
+                id: nanoid(),
+            };
+            return {
+                ...state,
+                notifications: [...state.notifications, notificationWithId],
+            };
+        }
+        case "REMOVE_NOTIFICATION": {
+            const notifications = state.notifications.filter(
+                n => n.id !== action.notificationId
+            );
+            return {
+                ...state,
+                notifications,
+            };
+        }
+        case "LOAD_KIOSK_CODE": {
+            const kioskCode = Storage.getKioskCode();
+            if (kioskCode) {
+                return {
+                    ...state,
+                    kioskCode: kioskCode.code,
+                    kioskCodeExpiration: kioskCode.expiration,
+                };
+            } else {
+                return state;
+            }
         }
     }
 }

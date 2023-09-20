@@ -6,6 +6,7 @@ import { AppStateContext } from "../State/AppStateContext";
 import * as Storage from "../Services/LocalStorage";
 import { removeGame } from "../Transforms/removeGame";
 import { gamepadManager } from "../Services/GamepadManager";
+import { postNotification } from "../Transforms/postNotification";
 
 interface IProps {
     active: (p: boolean) => void;
@@ -22,9 +23,14 @@ const DeletionModal: React.FC<IProps> = ({ active, changeFocus }) => {
         const userAddedGames = Storage.getAddedGames();
         const gameId = kiosk.selectedGameId;
         if (gameId && gameId in userAddedGames) {
+            const name = userAddedGames[gameId].name;
             userAddedGames[gameId].deleted = true;
             Storage.setAddedGames(userAddedGames);
             removeGame(gameId);
+            postNotification({
+                message: `${name} deleted`,
+                duration: 5000,
+            });
         }
     };
 

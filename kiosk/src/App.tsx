@@ -8,6 +8,7 @@ import AddingGame from "./Components/AddingGame";
 import ScanQR from "./Components/ScanQR";
 import QrSuccess from "./Components/QrSuccess";
 import GameOver from "./Components/GameOver";
+import Notifications from "./Components/Notifications";
 import { useLocationHash, usePromise } from "./Hooks";
 import { launchGame } from "./Transforms/launchGame";
 import { navigate } from "./Transforms/navigate";
@@ -15,6 +16,8 @@ import { AppStateContext, AppStateReady } from "./State/AppStateContext";
 import { downloadGameListAsync } from "./Transforms/downloadGameListAsync";
 import * as Actions from "./State/Actions";
 import * as SimHost from "./Services/SimHostService";
+import * as NotificationService from "./Services/NotificationService";
+import * as AddingGames from "./Services/AddingGamesService";
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
@@ -27,8 +30,9 @@ function App() {
         if (ready) {
             // Set sound system volume.
             dispatch(Actions.setVolume(state.volume!));
-            // Load high scores from local storage.
+            // Load persistent state from local storage.
             dispatch(Actions.loadHighScores());
+            dispatch(Actions.loadKioskCode());
             // Download the game list from the server and set it in the app state.
             downloadGameListAsync().then(gameList => {
                 dispatch(Actions.setGameList(gameList));
@@ -39,6 +43,8 @@ function App() {
             });
             // Init subsystems.
             SimHost.initialize();
+            NotificationService.initialize();
+            AddingGames.initialize();
         }
     }, [ready]);
 
@@ -70,6 +76,7 @@ function App() {
                     {kioskState === KioskState.ScanQR && <ScanQR />}
                     {kioskState === KioskState.QrSuccess && <QrSuccess />}
                     {kioskState === KioskState.GameOver && <GameOver />}
+                    <Notifications />
                 </>
             ) : (
                 <></>

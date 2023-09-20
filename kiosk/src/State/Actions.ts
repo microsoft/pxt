@@ -4,6 +4,7 @@ import {
     KioskState,
     HighScore,
     HighScores,
+    Notification,
 } from "../Types";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -90,6 +91,30 @@ type ResetHighScores = ActionBase & {
     type: "RESET_HIGH_SCORES";
 };
 
+type SetKioskCode = ActionBase & {
+    type: "SET_KIOSK_CODE";
+    kioskCode: string;
+    kioskCodeExpiration: number;
+};
+
+type ClearKioskCode = ActionBase & {
+    type: "CLEAR_KIOSK_CODE";
+};
+
+type PostNotification = ActionBase & {
+    type: "POST_NOTIFICATION";
+    notification: Notification;
+};
+
+type RemoveNotification = ActionBase & {
+    type: "REMOVE_NOTIFICATION";
+    notificationId: string;
+};
+
+type LoadKioskCode = ActionBase & {
+    type: "LOAD_KIOSK_CODE";
+};
+
 /**
  * Union of all actions
  */
@@ -109,7 +134,12 @@ export type Action =
     | LoadHighScores
     | SetMostRecentScores
     | LoadUserAddedGames
-    | ResetHighScores;
+    | ResetHighScores
+    | SetKioskCode
+    | ClearKioskCode
+    | PostNotification
+    | RemoveNotification
+    | LoadKioskCode;
 
 /**
  * Action creators
@@ -196,6 +226,33 @@ const resetHighScores = (): ResetHighScores => ({
     type: "RESET_HIGH_SCORES",
 });
 
+const setKioskCode = (
+    kioskCode: string,
+    kioskCodeExpiration: number
+): SetKioskCode => ({
+    type: "SET_KIOSK_CODE",
+    kioskCode,
+    kioskCodeExpiration,
+});
+
+const clearKioskCode = (): ClearKioskCode => ({
+    type: "CLEAR_KIOSK_CODE",
+});
+
+const postNotification = (notification: Notification): PostNotification => ({
+    type: "POST_NOTIFICATION",
+    notification,
+});
+
+const removeNotification = (notificationId: string): RemoveNotification => ({
+    type: "REMOVE_NOTIFICATION",
+    notificationId,
+});
+
+const loadKioskCode = (): LoadKioskCode => ({
+    type: "LOAD_KIOSK_CODE",
+});
+
 export {
     setGameList,
     setSelectedGameId,
@@ -212,4 +269,9 @@ export {
     setMostRecentScores,
     loadUserAddedGames,
     resetHighScores,
+    setKioskCode,
+    clearKioskCode,
+    postNotification,
+    removeNotification,
+    loadKioskCode,
 };

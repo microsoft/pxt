@@ -1,4 +1,10 @@
-import { GameData, BuiltSimJSInfo, KioskState, HighScore } from "../Types";
+import {
+    GameData,
+    BuiltSimJSInfo,
+    KioskState,
+    HighScore,
+    NotificationWithId,
+} from "../Types";
 
 export type AppState = {
     kioskState: KioskState;
@@ -9,6 +15,9 @@ export type AppState = {
     lockedGameId?: string;
     builtGamesCache: { [gameId: string]: BuiltSimJSInfo };
     allHighScores: { [index: string]: HighScore[] };
+    kioskCode?: string;
+    kioskCodeExpiration?: number;
+    notifications: NotificationWithId[];
     clean: boolean;
     locked: boolean;
     time?: string;
@@ -21,6 +30,7 @@ export const initialAppState: AppState = {
     mostRecentScores: [],
     builtGamesCache: {},
     allHighScores: {},
+    notifications: [],
     clean: false,
     locked: false,
     time: "",

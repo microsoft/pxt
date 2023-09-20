@@ -1,10 +1,4 @@
-import React, {
-    useEffect,
-    useRef,
-    useState,
-    useContext,
-    useCallback,
-} from "react";
+import React, { useEffect, useRef, useContext, useCallback } from "react";
 import { KioskState } from "../Types";
 import configData from "../config.json";
 import "../Kiosk.css";

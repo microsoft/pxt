@@ -1,8 +1,20 @@
 import * as Constants from "../Constants";
 import { GameList, HighScores } from "../Types";
 
+function getValue(key: string, defaultValue?: string): string | undefined {
+    return localStorage.getItem(key) || defaultValue;
+}
+
+function setValue(key: string, val: string) {
+    localStorage.setItem(key, val);
+}
+
+function delValue(key: string) {
+    localStorage.removeItem(key);
+}
+
 function getJsonValue<T>(key: string, defaultValue?: T): T | undefined {
-    var value = localStorage.getItem(key);
+    var value = getValue(key);
     if (value) {
         return JSON.parse(value);
     }
@@ -10,11 +22,7 @@ function getJsonValue<T>(key: string, defaultValue?: T): T | undefined {
 }
 
 function setJsonValue(key: string, val: any) {
-    localStorage.setItem(key, JSON.stringify(val));
-}
-
-function delValue(key: string) {
-    localStorage.removeItem(key);
+    setValue(key, JSON.stringify(val));
 }
 
 function getAddedGames(): GameList {
@@ -37,13 +45,40 @@ function resetHighScores() {
     delValue(Constants.highScoresLocalStorageKey);
 }
 
+function setKioskCode(code: string, expiration: number) {
+    setValue(Constants.kioskCodeStorageKey, code);
+    setValue(Constants.kioskCodeExpirationStorageKey, expiration.toString());
+}
+
+function getKioskCode(): { code: string; expiration: number } | undefined {
+    const code = getValue(Constants.kioskCodeStorageKey);
+    const expiration = getValue(Constants.kioskCodeExpirationStorageKey);
+    if (code && expiration) {
+        return {
+            code,
+            expiration: parseInt(expiration),
+        };
+    }
+    return undefined;
+}
+
+function clearKioskCode() {
+    delValue(Constants.kioskCodeStorageKey);
+    delValue(Constants.kioskCodeExpirationStorageKey);
+}
+
 export {
+    getValue,
+    setValue,
+    delValue,
     getJsonValue,
     setJsonValue,
-    delValue,
     getAddedGames,
     setAddedGames,
     getHighScores,
     setHighScores,
     resetHighScores,
+    setKioskCode,
+    getKioskCode,
+    clearKioskCode,
 };
