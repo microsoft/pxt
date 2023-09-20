@@ -8,10 +8,6 @@ import { postNotification } from "../Transforms/postNotification";
 function initialize() {
     const pollOnce = async () => {
         const { state, dispatch } = stateAndDispatch();
-        if (state.kioskState === KioskState.PlayingGame) {
-            // Don't poll while playing a game.
-            return;
-        }
         if (!state.kioskCode || !state.kioskCodeExpiration) {
             // No kiosk code, don't poll.
             return;
