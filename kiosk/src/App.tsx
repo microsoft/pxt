@@ -8,6 +8,8 @@ import AddingGame from "./Components/AddingGame";
 import ScanQR from "./Components/ScanQR";
 import QrSuccess from "./Components/QrSuccess";
 import GameOver from "./Components/GameOver";
+import PlayingGame from "./Components/PlayingGame";
+import Footer from "./Components/Footer";
 import Notifications from "./Components/Notifications";
 import { useLocationHash, usePromise } from "./Hooks";
 import { launchGame } from "./Transforms/launchGame";
@@ -76,11 +78,13 @@ function App() {
                     {kioskState === KioskState.ScanQR && <ScanQR />}
                     {kioskState === KioskState.QrSuccess && <QrSuccess />}
                     {kioskState === KioskState.GameOver && <GameOver />}
+                    {kioskState === KioskState.PlayingGame && <PlayingGame />}
                     <Notifications />
                 </>
             ) : (
                 <></>
             )}
+            {kioskState !== KioskState.PlayingGame && <Footer />}
         </>
     );
 }
