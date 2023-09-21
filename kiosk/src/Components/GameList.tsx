@@ -144,7 +144,7 @@ const GameList: React.FC<IProps> = ({
                 loop={true}
                 slidesPerView={1.5}
                 centeredSlides={true}
-                spaceBetween={130}
+                spaceBetween={10}
                 pagination={{ type: "fraction" }}
                 onSwiper={swiper => {
                     localSwiper.current = swiper;
