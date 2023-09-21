@@ -19,7 +19,8 @@ import * as dmp from "diff-match-patch";
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
-const differ = new dmp.diff_match_patch();
+// 5 minutes
+const historyInterval = 1000 * 60 * 5;
 
 // Avoid importing entire crypto-js
 /* eslint-disable import/no-internal-modules */
@@ -601,11 +602,23 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                                 };
                             }
 
-                            const top = history.entries[history.entries.length - 1];
+                            let shouldCombine = false;
+                            if (history.entries.length > 1) {
+                                const currentTime = Date.now();
+                                const topTime = history.entries[history.entries.length - 1].timestamp;
+                                const prevTime = history.entries[history.entries.length - 2].timestamp;
 
-                            if (top && canCombine(top, diff)) {
-                                top.timestamp = diff.timestamp;
-                                diff.changes.forEach(change => top.changes.push(change));
+                                if (currentTime - topTime < historyInterval && topTime - prevTime < historyInterval) {
+                                    shouldCombine = true;
+                                }
+                            }
+
+                            if (shouldCombine) {
+                                // Roll back the last diff and create a new one
+                                const prevText = applyDiff(previous.text, history.entries.pop());
+
+                                const diff = diffScriptText(prevText, toWrite);
+                                history.entries.push(diff);
                             }
                             else {
                                 history.entries.push(diff);
@@ -689,30 +702,17 @@ function diffScriptText(oldVersion: pxt.workspace.ScriptText, newVersion: pxt.wo
 }
 
 function diffText(a: string, b: string) {
+    const differ = new dmp.diff_match_patch();
     return differ.patch_make(a, b);
 }
 
 function patchText(patch: unknown, a: string) {
+    const differ = new dmp.diff_match_patch();
     return differ.patch_apply(patch as any, a)[0]
 }
 
 export function applyDiff(text: ScriptText, history: pxt.workspace.HistoryEntry) {
     return pxt.workspace.applyDiff(text, history, patchText);
-}
-
-function canCombine(oldEntry: pxt.workspace.HistoryEntry, newEntry: pxt.workspace.HistoryEntry) {
-    if (newEntry.timestamp - oldEntry.timestamp > 3000) return false;
-
-    let fileNames: pxt.Map<boolean> = {};
-
-    for (const change of oldEntry.changes) {
-        fileNames[change.filename] = true;
-    }
-
-    for (const change of newEntry.changes) {
-        if (fileNames[change.filename]) return false;
-    }
-    return true;
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {

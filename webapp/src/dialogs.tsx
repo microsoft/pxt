@@ -860,59 +860,27 @@ export function isDontShowDownloadDialogFlagSet() {
 }
 
 export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, reloadHeader: () => void) {
-    const history = (await workspace.getScriptHistoryAsync(header)).entries;
     const text = await workspace.getTextAsync(header.id);
+    let history: pxt.workspace.HistoryEntry[] = [];
 
-    const getTextAtTimestamp = (timestamp: number) => {
-        let currentText = {...text};
-        const newHeader = {
-            ...header
-        };
-
-        for (let i = 0; i < history.length; i++) {
-            const index = history.length - 1 - i;
-            const entry = history[index];
-            currentText = workspace.applyDiff(currentText, entry);
-            if (entry.timestamp === timestamp) {
-                const version = index > 0 ? history[index - 1].editorVersion : entry.editorVersion;
-
-                // Attempt to update the version in pxt.json
-                try {
-                    const config = JSON.parse(currentText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                    if (config.targetVersions) {
-                        config.targetVersions.target = version;
-                    }
-                    currentText[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
-                }
-                catch (e) {
-                }
-
-                // Also set version in the header; this is what the compiler actually checks when applying upgrades
-                newHeader.targetVersion = version;
-                break;
-            }
-        }
-
-        return [newHeader, currentText] as [pxt.workspace.Header, pxt.workspace.ScriptText];
+    if (text?.[pxt.HISTORY_FILE]) {
+        history = JSON.parse(text[pxt.HISTORY_FILE]).entries;
     }
 
-    const onTimestampSelect = async (timestamp: number) => {
+    const loadProject = async (text: pxt.workspace.ScriptText, editorVersion: string) => {
         core.hideDialog();
 
-        const [newHeader, text] = getTextAtTimestamp(timestamp);
-        header.targetVersion = newHeader.targetVersion;
+        header.targetVersion = editorVersion;
 
         await workspace.saveAsync(header, text);
         reloadHeader();
     }
 
-    const onCopySelect = async (timestamp: number) => {
+    const copyProject = async (text: pxt.workspace.ScriptText, editorVersion: string, timestamp?: number) => {
         core.hideDialog();
 
-        const [newHeader, text] = getTextAtTimestamp(timestamp);
-
         const newHistory: pxt.workspace.HistoryFile = {
-            entries: history.slice(0, history.findIndex(e => e.timestamp === timestamp))
+            entries: timestamp == undefined ? history : history.slice(0, history.findIndex(e => e.timestamp === timestamp))
         }
 
         if (text[pxt.HISTORY_FILE]) {
@@ -936,6 +904,11 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
             } as any
         );
 
+        const newHeader: pxt.workspace.Header = {
+            ...header,
+            targetVersion: editorVersion
+        }
+
         await workspace.duplicateAsync(newHeader, `${newHeader.name} ${dateString} ${timeString}`, text);
 
         invalidate("headers:");
@@ -950,8 +923,8 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
             <TimeMachine
                 history={history}
                 text={text}
-                onTimestampSelect={onTimestampSelect}
-                onCopySelect={onCopySelect}
+                onProjectLoad={loadProject}
+                onProjectCopy={copyProject}
             />
         )
     })
