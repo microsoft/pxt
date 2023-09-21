@@ -256,7 +256,6 @@ h2 {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: start;
     width: 95%;
     height: 100%;
     margin-top: 1%;
