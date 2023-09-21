@@ -17,4 +17,3 @@ export function launchGame(
     if (preventReturningToMenu) dispatch(Actions.setLockedGame(gameId));
     navigate(KioskState.PlayingGame);
 }
-
