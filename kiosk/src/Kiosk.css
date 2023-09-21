@@ -197,6 +197,7 @@ h2 {
     display: flex;
     flex-direction: column;
     align-items: baseline;
+    align-self: center;
     width: 60%;
     line-height: 200%;
 }
@@ -213,7 +214,6 @@ h2 {
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 100%;
 }
 
 .innerQRCodeContent {
@@ -256,7 +256,7 @@ h2 {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    align-items: start;
     width: 95%;
     height: 100%;
     margin-top: 1%;
