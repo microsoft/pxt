@@ -15,7 +15,7 @@ export default function PlayingGame() {
                 : "&sendBuilt=1";
             return playUrlBase + playQueryParam;
         }
-    }, [gameId, kiosk.builtGamesCache]);
+    }, [gameId]);
     return (
         <iframe
             className="sim-embed"
