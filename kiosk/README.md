@@ -70,6 +70,7 @@ Follow the "Test in staging environment" instructions, but get your auth token f
    - Open a sound file editor (such as Audacity or Adobe Audition).
    - Import the downloaded audio file.
    - Edit and clip out the specific sound effect you want.
+   - Run a high-pass filter to reduce volume of low-end frequencies.
    - Export the edited audio as an .ogg file.
 
 5. Save the .ogg file to /pxt/docs/kiosk-data/sfx:
