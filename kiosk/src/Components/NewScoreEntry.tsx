@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
-import { HighScore } from "../Models/HighScore";
-import { Kiosk } from "../Models/Kiosk";
-import { KioskState } from "../Models/KioskState";
+import { useEffect, useState, useContext } from "react";
+import { KioskState } from "../Types";
 import HighScoreInitial from "./HighScoreInitial";
 import configData from "../config.json";
-import { tickEvent } from "../browserUtils";
+import { AppStateContext } from "../State/AppStateContext";
+import { gamepadManager } from "../Services/GamepadManager";
+import { navigate } from "../Transforms/navigate";
+import { saveHighScore } from "../Transforms/saveHighScore";
 
-interface IProps {
-    kiosk: Kiosk;
-}
+interface IProps {}
 
-const NewScoreEntry: React.FC<IProps> = ({ kiosk }) => {
+const NewScoreEntry: React.FC<IProps> = ({}) => {
+    const { state: kiosk } = useContext(AppStateContext);
     const [indexChanged, setIndexChanged] = useState(false);
     const [nextIndex, setNextIndex] = useState(false);
     const [previousIndex, setPreviousIndex] = useState(false);
@@ -24,37 +24,37 @@ const NewScoreEntry: React.FC<IProps> = ({ kiosk }) => {
     const [runOnce, setRunOnce] = useState(false);
     const [firstRun, setFirstRun] = useState(true);
 
-    const gamepadLoop = () => {
-        if (kiosk.state !== KioskState.EnterHighScore) {
-            return;
-        }
-
-        if (kiosk.gamepadManager.isAButtonPressed()) {
-            tickEvent("kiosk.newHighScore.nextInitial");
-            setIndexChanged(true);
-            setNextIndex(true);
-        } else if (kiosk.gamepadManager.isBButtonPressed()) {
-            tickEvent("kiosk.newHighScore.prevInitial");
-            setIndexChanged(true);
-            setPreviousIndex(true);
-        } else {
-            setIndexChanged(false);
-            setPreviousIndex(false);
-            setNextIndex(false);
-        }
-
-        if (kiosk.gamepadManager.isEscapeButtonPressed()) {
-            tickEvent("kiosk.newHighScore.defaultInitialsUsed");
-            kiosk.saveHighScore(
-                kiosk.selectedGame!.id,
-                initials,
-                kiosk.mostRecentScores[0]
-            );
-            kiosk.navigate(KioskState.GameOver);
-        }
-    };
-
     useEffect(() => {
+        const gamepadLoop = () => {
+            if (kiosk.kioskState !== KioskState.EnterHighScore) {
+                return;
+            }
+
+            if (gamepadManager.isAButtonPressed()) {
+                pxt.tickEvent("kiosk.newHighScore.nextInitial");
+                setIndexChanged(true);
+                setNextIndex(true);
+            } else if (gamepadManager.isBButtonPressed()) {
+                pxt.tickEvent("kiosk.newHighScore.prevInitial");
+                setIndexChanged(true);
+                setPreviousIndex(true);
+            } else {
+                setIndexChanged(false);
+                setPreviousIndex(false);
+                setNextIndex(false);
+            }
+
+            if (gamepadManager.isEscapeButtonPressed()) {
+                pxt.tickEvent("kiosk.newHighScore.defaultInitialsUsed");
+                saveHighScore(
+                    kiosk.selectedGameId!,
+                    initials,
+                    kiosk.mostRecentScores[0]
+                );
+                navigate(KioskState.GameOver);
+            }
+        };
+
         let interval: any;
         let timeout: any;
         timeout = setTimeout(() => {
@@ -108,13 +108,13 @@ const NewScoreEntry: React.FC<IProps> = ({ kiosk }) => {
 
         if (updatedPressed >= 3) {
             setTimesAPressed(0);
-            tickEvent("kiosk.newHighScore.initialsEntered");
-            kiosk.saveHighScore(
-                kiosk.selectedGame!.id,
+            pxt.tickEvent("kiosk.newHighScore.initialsEntered");
+            saveHighScore(
+                kiosk.selectedGameId!,
                 initials,
                 kiosk.mostRecentScores[0]
             );
-            kiosk.navigate(KioskState.GameOver);
+            navigate(KioskState.GameOver);
         }
     }, [indexChanged]);
 
@@ -133,7 +133,6 @@ const NewScoreEntry: React.FC<IProps> = ({ kiosk }) => {
             const thisIndex = lcv;
             elements.push(
                 <HighScoreInitial
-                    kiosk={kiosk}
                     key={lcv}
                     isSelected={thisIndex === timesAPressed}
                     onCharacterChanged={character =>

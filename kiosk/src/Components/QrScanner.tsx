@@ -1,12 +1,10 @@
 import "../Kiosk.css";
 import { Html5Qrcode } from "html5-qrcode";
-import { Kiosk } from "../Models/Kiosk";
-import { addGameToKioskAsync } from "../BackendRequests";
-import { KioskState } from "../Models/KioskState";
-import { tickEvent } from "../browserUtils";
+import { addGameToKioskAsync } from "../Services/BackendRequests";
+import { KioskState } from "../Types";
+import { navigate } from "../Transforms/navigate";
 
 export const play = async (
-    kiosk: Kiosk,
     kioskId: string,
     html5QrCode: Html5Qrcode,
     setAddError: (p: string) => void,
@@ -18,9 +16,9 @@ export const play = async (
         const shareId = /\/([^\/]+)\/?$/.exec(decodedText)?.[1];
         try {
             await addGameToKioskAsync(kioskId, shareId);
-            tickEvent("kiosk.gameQrScanned.success");
+            pxt.tickEvent("kiosk.gameQrScanned.success");
             await html5QrCode.stop();
-            kiosk.navigate(KioskState.QrSuccess);
+            navigate(KioskState.QrSuccess);
         } catch (error: any) {
             setAddError(error.toString());
             if (error.toString().includes("404")) {

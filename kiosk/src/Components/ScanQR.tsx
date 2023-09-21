@@ -1,18 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
 import "../Kiosk.css";
 import { play, stopScan } from "./QrScanner";
-import { addGameToKioskAsync } from "../BackendRequests";
-import { KioskState } from "../Models/KioskState";
+import { addGameToKioskAsync } from "../Services/BackendRequests";
+import { KioskState } from "../Types";
 import { Html5Qrcode } from "html5-qrcode";
-import { tickEvent } from "../browserUtils";
 import ErrorModal from "./ErrorModal";
+import { navigate } from "../Transforms/navigate";
 
-interface IProps {
-    kiosk: Kiosk;
-}
+interface IProps {}
 
-const ScanQR: React.FC<IProps> = ({ kiosk }) => {
+const ScanQR: React.FC<IProps> = ({}) => {
     const fullUrlHash = window.location.hash;
     const urlHashList = /add-game:((?:[a-zA-Z0-9]{6}))/.exec(fullUrlHash);
     const kioskId = urlHashList?.[1];
@@ -24,13 +21,13 @@ const ScanQR: React.FC<IProps> = ({ kiosk }) => {
     const [html5QrCode, setHtml5QrCode] = useState<undefined | Html5Qrcode>();
 
     const renderQrScanner = () => {
-        tickEvent("kiosk.scanQrClicked");
-        play(kiosk, kioskId!, html5QrCode!, setAddingError, setErrorDesc);
+        pxt.tickEvent("kiosk.scanQrClicked");
+        play(kioskId!, html5QrCode!, setAddingError, setErrorDesc);
         setScannerVisible(true);
     };
 
     const stopQrScanner = () => {
-        tickEvent("kiosk.stopScanClicked");
+        pxt.tickEvent("kiosk.stopScanClicked");
         stopScan(html5QrCode!);
         setScannerVisible(false);
     };
@@ -43,12 +40,12 @@ const ScanQR: React.FC<IProps> = ({ kiosk }) => {
     };
 
     const clickHelp = () => {
-        tickEvent("kiosk.helpLink");
+        pxt.tickEvent("kiosk.helpLink");
         return true;
     };
 
     useEffect(() => {
-        tickEvent("kiosk.scanQrLoaded");
+        pxt.tickEvent("kiosk.scanQrLoaded");
         initiateQrCode();
     }, []);
 
@@ -71,13 +68,13 @@ const ScanQR: React.FC<IProps> = ({ kiosk }) => {
         } else if (shareCode) {
             shareId = shareCode[1];
         }
-        tickEvent("kiosk.submitGameId.clicked", { submitVal: inputValue });
+        pxt.tickEvent("kiosk.submitGameId.clicked", { submitVal: inputValue });
         if (shareId) {
             setLinkError(false);
             try {
                 await addGameToKioskAsync(kioskId, shareId);
-                tickEvent("kiosk.submitGameId.submitSuccess");
-                kiosk.navigate(KioskState.QrSuccess);
+                pxt.tickEvent("kiosk.submitGameId.submitSuccess");
+                navigate(KioskState.QrSuccess);
             } catch (error: any) {
                 setAddingError(error.toString());
                 if (error.toString().includes("404")) {

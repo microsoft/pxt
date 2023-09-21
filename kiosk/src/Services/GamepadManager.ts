@@ -13,7 +13,7 @@ enum GamepadControl {
     ResetButton,
 }
 
-export class GamepadManager {
+class GamepadManager {
     private cachedGamepads: Gamepad[] = [];
     private cacheExpires: number = 0;
 
@@ -83,7 +83,10 @@ export class GamepadManager {
             Date.now() + configData.GamepadCooldownMilli;
     }
 
-    isPressedWithCooldown(control: GamepadControl, isPressed: () => boolean): boolean {
+    isPressedWithCooldown(
+        control: GamepadControl,
+        isPressed: () => boolean
+    ): boolean {
         if (this.isCoolingDown(control)) return false;
         const pressed = isPressed();
         if (pressed) {
@@ -257,4 +260,11 @@ export class GamepadManager {
     blockAPressUntilRelease() {
         this.blockingAPressed = true;
     }
+
+    clear() {
+        this.keyboardManager.clear();
+        // Not possible to clear gamepad state at the moment
+    }
 }
+
+export const gamepadManager = new GamepadManager();

@@ -1,14 +1,14 @@
-import { Kiosk } from "../Models/Kiosk";
 import NewScoreEntry from "./NewScoreEntry";
 import ExistingScoreEntry from "./ExistingScoreEntry";
-import { useEffect } from "react";
+import { useEffect, useContext } from "react";
+import { AppStateContext } from "../State/AppStateContext";
+import { getHighScores } from "../State";
 
-interface IProps {
-    kiosk: Kiosk;
-}
+interface IProps {}
 
-const EnterHighScore: React.FC<IProps> = ({ kiosk }) => {
-    const existingHighScores = kiosk.getHighScores(kiosk.selectedGame!.id);
+const EnterHighScore: React.FC<IProps> = ({}) => {
+    const { state: kiosk } = useContext(AppStateContext);
+    const existingHighScores = getHighScores(kiosk.selectedGameId);
 
     useEffect(() => {
         if (!kiosk.mostRecentScores || !kiosk.mostRecentScores.length) {
@@ -43,7 +43,7 @@ const EnterHighScore: React.FC<IProps> = ({ kiosk }) => {
                             />
                         ))}
                         <li>
-                            <NewScoreEntry kiosk={kiosk} />
+                            <NewScoreEntry />
                         </li>
                         {belowScores.map((highScore, i) => (
                             <ExistingScoreEntry

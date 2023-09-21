@@ -80,6 +80,7 @@
     * [Sharing projects](/share)
     * [Offline support](/offline)
     * [Save](/save)
+    * [Home page content](/homepage-content)
 
 ## Developers #devs
 

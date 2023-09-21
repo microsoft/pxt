@@ -1,65 +1,88 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useContext } from "react";
 import "./Kiosk.css";
 import "./Fonts.css";
-import { Kiosk } from "./Models/Kiosk";
 import MainMenu from "./Components/MainMenu";
-import { KioskState } from "./Models/KioskState";
+import { KioskState } from "./Types";
 import EnterHighScore from "./Components/EnterHighScore";
 import AddingGame from "./Components/AddingGame";
 import ScanQR from "./Components/ScanQR";
 import QrSuccess from "./Components/QrSuccess";
 import GameOver from "./Components/GameOver";
-
-const url = window.location.href;
-const clean = !!/clean(?:[:=])1/.test(url);
-const locked = !!/lock(?:[:=])1/i.test(url);
-const time = /time=((?:[0-9]{1,3}))/i.exec(url)?.[1];
-const volume = /volume=(1\.?0?|0?\.\d{1,2}|\.\d{1,2})/i.exec(url)?.[1];
-
-const kioskSingleton: Kiosk = new Kiosk(clean, locked, time, volume);
-kioskSingleton.initialize().catch(error => alert(error));
+import Notifications from "./Components/Notifications";
+import { useLocationHash, usePromise } from "./Hooks";
+import { launchGame } from "./Transforms/launchGame";
+import { navigate } from "./Transforms/navigate";
+import { AppStateContext, AppStateReady } from "./State/AppStateContext";
+import { downloadGameListAsync } from "./Transforms/downloadGameListAsync";
+import * as Actions from "./State/Actions";
+import * as SimHost from "./Services/SimHostService";
+import * as NotificationService from "./Services/NotificationService";
+import * as AddingGames from "./Services/AddingGamesService";
 
 function App() {
-    const [state, setState] = useState(kioskSingleton.state);
+    const { state, dispatch } = useContext(AppStateContext);
+    const { kioskState } = state;
+
+    const [hash] = useLocationHash();
+    const ready = usePromise(AppStateReady, false);
 
     useEffect(() => {
-        window.onhashchange = onHashChange;
+        if (ready) {
+            // Set sound system volume.
+            dispatch(Actions.setVolume(state.volume!));
+            // Load persistent state from local storage.
+            dispatch(Actions.loadHighScores());
+            dispatch(Actions.loadKioskCode());
+            // Download the game list from the server and set it in the app state.
+            downloadGameListAsync().then(gameList => {
+                dispatch(Actions.setGameList(gameList));
+                // Load user-added games from local storage.
+                dispatch(Actions.loadUserAddedGames());
+                // Select the first game in the list.
+                dispatch(Actions.setSelectedGameId(gameList[0].id));
+            });
+            // Init subsystems.
+            SimHost.initialize();
+            NotificationService.initialize();
+            AddingGames.initialize();
+        }
+    }, [ready]);
 
-        kioskSingleton.onNavigated = () => {
-            setState(kioskSingleton.state);
-        };
-        onHashChange();
-    }, []);
+    useEffect(() => {
+        if (ready) {
+            const match =
+                /pub:((?:\d{5}-\d{5}-\d{5}-\d{5})|(?:_[a-zA-Z0-9]+))/.exec(
+                    hash
+                );
+            const addGame = /add-game:((?:[a-zA-Z0-9]{6}))/.exec(hash);
+            if (match) {
+                launchGame(match[1], true);
+            } else if (addGame) {
+                navigate(KioskState.ScanQR);
+            }
+            window.location.hash = "";
+        }
+    }, [hash, ready]);
 
-    switch (state) {
-        case KioskState.MainMenu:
-            return <MainMenu kiosk={kioskSingleton} />;
-        case KioskState.EnterHighScore:
-            return <EnterHighScore kiosk={kioskSingleton} />;
-        case KioskState.AddingGame:
-            return <AddingGame kiosk={kioskSingleton} />;
-        case KioskState.ScanQR:
-            return <ScanQR kiosk={kioskSingleton} />;
-        case KioskState.QrSuccess:
-            return <QrSuccess />;
-        case KioskState.GameOver:
-            return <GameOver kiosk={kioskSingleton} />;
-    }
-
-    return <div />;
-}
-
-function onHashChange() {
-    const hash = window.location.hash;
-    const match = /pub:((?:\d{5}-\d{5}-\d{5}-\d{5})|(?:_[a-zA-Z0-9]+))/.exec(
-        hash
+    return (
+        <>
+            {kioskState === KioskState.MainMenu && <MainMenu />}
+            {ready ? (
+                <>
+                    {kioskState === KioskState.EnterHighScore && (
+                        <EnterHighScore />
+                    )}
+                    {kioskState === KioskState.AddingGame && <AddingGame />}
+                    {kioskState === KioskState.ScanQR && <ScanQR />}
+                    {kioskState === KioskState.QrSuccess && <QrSuccess />}
+                    {kioskState === KioskState.GameOver && <GameOver />}
+                    <Notifications />
+                </>
+            ) : (
+                <></>
+            )}
+        </>
     );
-    const addGame = /add-game:((?:[a-zA-Z0-9]{6}))/.exec(hash);
-    if (match) {
-        kioskSingleton.launchGame(match[1], true);
-    } else if (addGame) {
-        kioskSingleton.navigate(KioskState.ScanQR);
-    }
 }
 
 export default App;

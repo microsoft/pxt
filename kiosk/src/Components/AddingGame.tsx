@@ -1,223 +1,92 @@
-import { useEffect, useRef, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
-import { KioskState } from "../Models/KioskState";
+import { useEffect, useState, useContext, useMemo } from "react";
 import configData from "../config.json";
 import "../Kiosk.css";
 import AddGameButton from "./AddGameButton";
 import { QRCodeSVG } from "qrcode.react";
-import { generateKioskCodeAsync, getGameCodesAsync } from "../BackendRequests";
-import { isLocal, tickEvent } from "../browserUtils";
-import { GameData } from "../Models/GameData";
-import KioskNotification from "./KioskNotification";
 import { playSoundEffect } from "../Services/SoundEffectService";
+import { AppStateContext } from "../State/AppStateContext";
+import { gamepadManager } from "../Services/GamepadManager";
+import { showMainMenu } from "../Transforms/showMainMenu";
+import { generateKioskCodeAsync } from "../Services/AddingGamesService";
 
-interface IProps {
-    kiosk: Kiosk;
-}
+interface IProps {}
 
-const AddingGame: React.FC<IProps> = ({ kiosk }) => {
-    const [kioskCode, setKioskCode] = useState("");
-    const [renderQRCode, setRenderQRCode] = useState(true);
-    const [menuButtonSelected, setMenuButtonState] = useState(false);
-    const [qrCodeButtonSelected, setQrButtonState] = useState(false);
-    const [notify, setNotify] = useState(false);
-    const [notifyContent, setNotifyContent] = useState("");
-    const generatingKioskCode = useRef(false);
-    const kioskCodeNextGenerationTime = useRef(0);
-    const nextSafePollTime = useRef(0);
-    const kioskCodeUrl = "/kiosk";
-    const kioskTimeOutInMinutes = getKioskCodeDuration();
+const AddingGame: React.FC<IProps> = ({}) => {
+    const { state: kiosk } = useContext(AppStateContext);
+    const [menuButtonSelected, setMenuButtonState] = useState(true);
+    const [generatingKioskCode, setGeneratingKioskCode] = useState(false);
 
-    function getKioskCodeDuration(): number {
-        const kioskCodeTime = localStorage.getItem("codeDuration");
-        if (kioskCodeTime) {
-            return parseInt(kioskCodeTime);
-        } else if (kiosk.time) {
+    const kioskTimeOutInMinutes = useMemo(() => {
+        if (kiosk.time) {
             const kioskTime = parseInt(kiosk.time);
             return Math.min(240, Math.max(kioskTime, 0.5)) * 60;
         } else {
             return 30;
         }
-    }
-
-    const updateLoop = () => {
-        if (!menuButtonSelected && kiosk.gamepadManager.isDownPressed()) {
-            setMenuButtonState(true);
-            if (qrCodeButtonSelected) {
-                setQrButtonState(false);
-            }
-            playSoundEffect("switch");
-        }
-        if (menuButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
-            tickEvent("kiosk.toMainMenu");
-            kiosk.showMainMenu();
-            playSoundEffect("select");
-        }
-        if (!renderQRCode && kiosk.gamepadManager.isUpPressed()) {
-            setMenuButtonState(false);
-            setQrButtonState(true);
-            playSoundEffect("switch");
-        }
-        if (qrCodeButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
-            tickEvent("kiosk.newKioskCode");
-            setRenderQRCode(true);
-        }
-    };
+    }, [kiosk.time]);
 
     const kioskLinkClicked = () => {
-        tickEvent("kiosk.addGameLink");
+        pxt.tickEvent("kiosk.addGameLink");
         return true;
     };
 
-    const displayGamesAdded = (addedGames: string[]): void => {
-        const games = addedGames.join(", ");
-        const notification = `${games} added!`;
-        setNotifyContent(notification);
-        setNotify(true);
-        playSoundEffect("notification");
-    };
-
+    // Input loop
     useEffect(() => {
-        let intervalId: any = null;
-        intervalId = setInterval(() => {
-            updateLoop();
-        }, configData.GamepadPollLoopMilli);
-
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
+        const updateLoop = () => {
+            if (!menuButtonSelected && gamepadManager.isDownPressed()) {
+                setMenuButtonState(true);
+                playSoundEffect("switch");
+            }
+            if (
+                (menuButtonSelected && gamepadManager.isAButtonPressed()) ||
+                gamepadManager.isBButtonPressed()
+            ) {
+                pxt.tickEvent("kiosk.toMainMenu");
+                showMainMenu();
+                playSoundEffect("select");
             }
         };
-    });
 
+        updateLoop();
+        const intervalId = setInterval(
+            updateLoop,
+            configData.GamepadPollLoopMilli
+        );
+
+        return () => clearInterval(intervalId);
+    }, [menuButtonSelected]);
+
+    // Generate kiosk code
     useEffect(() => {
-        let pollTimer: any;
-        const pollDelay = 5000;
+        const generateOnce = () => {
+            const generatedCodeDuration = kioskTimeOutInMinutes * 60 * 1000; // wait for kioskTimeOutInMinutes a.k.a until the kiosk code expires, backend has extra buffer
 
-        const pollForGameCode = async () => {
-            const timeElapsed = nextSafePollTime.current - Date.now();
-            const timeToPoll = Math.max(Math.min(timeElapsed, pollDelay), 0);
-            nextSafePollTime.current = Date.now() + pollDelay;
-
-            clearTimeout(pollTimer);
-            pollTimer = setTimeout(async () => {
-                try {
-                    const gameCodes = await getGameCodesAsync(kioskCode);
-                    if (gameCodes) {
-                        const justAddedGames = await kiosk.saveNewGamesAsync(
-                            gameCodes
-                        );
-                        if (justAddedGames.length) {
-                            displayGamesAdded(justAddedGames);
-                        }
-                    }
-                    if (kioskCode) {
-                        await pollForGameCode();
-                    }
-                } catch (error: any) {
-                    clearTimeout(pollTimer);
-                    localStorage.removeItem("kioskCodeEnd");
-                    localStorage.removeItem("currentKioskCode");
-                    localStorage.removeItem("codeDuration");
-                    setKioskCode("");
-                    setRenderQRCode(false);
-                }
-            }, timeToPoll);
-        };
-
-        if (kioskCode) {
-            pollForGameCode();
-        }
-
-        return () => {
-            clearTimeout(pollTimer);
-        };
-    }, [kioskCode]);
-
-    useEffect(() => {
-        let codeGenerationTimer: any;
-        const generatedCodeDuration = kioskTimeOutInMinutes * 60 * 1000; // wait for kioskTimeOutInMinutes a.k.a until the kiosk code expires, backend has extra buffer
-
-        const generateKioskCode = async () => {
-            //TODO: maybe? spinner here to indicate work
-            let newKioskCode: string;
-            try {
-                generatingKioskCode.current = true;
-                if (kiosk.time) {
-                    newKioskCode = await generateKioskCodeAsync(
-                        kioskTimeOutInMinutes
-                    );
-                } else {
-                    newKioskCode = await generateKioskCodeAsync();
-                }
-                setKioskCode(newKioskCode);
-
-                kioskCodeNextGenerationTime.current =
-                    Date.now() + generatedCodeDuration;
-                localStorage.setItem(
-                    "kioskCodeEnd",
-                    kioskCodeNextGenerationTime.current.toString()
-                );
-                localStorage.setItem("currentKioskCode", newKioskCode);
-                localStorage.setItem(
-                    "codeDuration",
-                    kioskTimeOutInMinutes.toString()
-                );
-            } catch (error) {
-                setRenderQRCode(false);
+            if (kiosk.kioskCode) {
+                return;
             }
-            generatingKioskCode.current = false;
-        };
-
-        if (!generatingKioskCode.current && renderQRCode) {
-            const kioskCodeEndTime = localStorage.getItem("kioskCodeEnd");
-            if (kioskCodeEndTime) {
-                const endTime = parseInt(kioskCodeEndTime);
-                const timeElapsed = endTime - Date.now();
-                if (timeElapsed > 0) {
-                    kioskCodeNextGenerationTime.current = endTime;
-                    const storedKioskCode =
-                        localStorage.getItem("currentKioskCode");
-                    if (storedKioskCode) {
-                        setKioskCode(storedKioskCode);
-                    }
-                } else {
-                    localStorage.removeItem("kioskCodeEnd");
-                    localStorage.removeItem("currentKioskCode");
-                    localStorage.removeItem("codeDuration");
-                    generateKioskCode();
-                }
-            } else if (!kioskCode) {
-                generateKioskCode();
-            } else {
-                const timeElapsed =
-                    kioskCodeNextGenerationTime.current - Date.now();
-                const time = Math.max(
-                    Math.min(timeElapsed, generatedCodeDuration),
-                    0
-                );
-                codeGenerationTimer = setTimeout(() => {
-                    setKioskCode("");
-                    setRenderQRCode(false);
-                    localStorage.removeItem("kioskCodeEnd");
-                    localStorage.removeItem("currentKioskCode");
-                    localStorage.removeItem("codeDuration");
-                }, time);
+            if (generatingKioskCode) {
+                return;
             }
-        }
 
-        return () => {
-            clearTimeout(codeGenerationTimer);
+            setGeneratingKioskCode(true);
+
+            generateKioskCodeAsync(generatedCodeDuration).then(newKioskCode => {
+                setGeneratingKioskCode(false);
+            });
         };
-    }, [kioskCode, renderQRCode]);
+
+        generateOnce();
+        const interval = setInterval(generateOnce, 750);
+        return () => clearInterval(interval);
+    }, [kiosk, kioskTimeOutInMinutes]);
 
     const qrDivContent = () => {
-        if (renderQRCode && kioskCode) {
-            const kioskUrl = `${window.location.origin}${kioskCodeUrl}#add-game:${kioskCode}`;
+        if (kiosk.kioskCode) {
+            const kioskUrl = `${window.location.origin}/kiosk#add-game:${kiosk.kioskCode}`;
             return (
                 <div className="innerQRCodeContent">
                     <h3>{kioskTimeOutInMinutes} minute Kiosk ID</h3>
-                    <h1 className="kioskCode">{kioskCode}</h1>
+                    <h1 className="kioskCode">{kiosk.kioskCode}</h1>
                     <QRCodeSVG value={kioskUrl} />
                     <div className="kioskLink">
                         <a
@@ -234,10 +103,7 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
         } else {
             return (
                 <div className="innerQRCodeContent">
-                    <AddGameButton
-                        selected={qrCodeButtonSelected}
-                        content="Generate new QR code"
-                    />
+                    <h3>Generating Kiosk ID...</h3>
                 </div>
             );
         }
@@ -268,12 +134,6 @@ const AddingGame: React.FC<IProps> = ({ kiosk }) => {
                 selected={menuButtonSelected}
                 content="Return to menu"
             />
-            {notify && (
-                <KioskNotification
-                    setActive={setNotify}
-                    content={notifyContent}
-                />
-            )}
         </div>
     );
 };

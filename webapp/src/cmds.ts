@@ -479,11 +479,11 @@ export async function pairAsync(implicitlyCalled?: boolean): Promise<boolean> {
                 return true;
             } catch (e) {
                 // Device
-                core.infoNotification("Oops, connection failed.");
+                core.infoNotification(lf("Oops, connection failed."));
                 return false;
             }
         case pxt.commands.WebUSBPairResult.Failed:
-            core.infoNotification("Oops, no device was paired.");
+            core.infoNotification(lf("Oops, no device was paired."));
             return false;
         case pxt.commands.WebUSBPairResult.UserRejected:
             // User exited pair flow intentionally
