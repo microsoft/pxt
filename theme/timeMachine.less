@@ -1,39 +1,67 @@
-.ui.fullscreen.modal.time-machine-dialog > .content {
+.time-machine {
+    display: flex;
+    flex-direction: column;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    position: absolute;
+    z-index: 999999999999;
     background-color: white;
 }
 
-.time-machine {
-    display: flex;
-    flex-direction: row;
+.time-machine-header {
+    height: @mainMenuHeight;
     width: 100%;
-    height: 100%;
-    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    background-color: @teal;
+    flex-shrink: 0;
 
-    .time-machine-timeline {
-        width: 10rem;
-        height: 100%;
-        padding: 1rem;
-        position: relative;
+    .common-button {
+        min-width: 9rem;
+    }
 
-        display: flex;
-        flex-direction: column;
-        text-align: center;
-
-        .time-machine-label {
-            margin: 1rem;
+    .common-button.menu-button {
+        .common-button-label {
+            font-size: 16px;
         }
 
-        .time-machine-timeline-slider {
-            flex-grow: 1;
+        i.fas {
+            font-size: 1em;
         }
     }
+}
+
+.time-machine-actions-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.time-machine-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .time-machine-label {
+        color: white;
+        margin-right: 1rem;
+        text-wrap: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+}
+
+.time-machine-content {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
 }
 
 .time-machine-preview {
     position: relative;
     flex-grow: 1;
-    border: #dedede solid 1px;
-    border-radius: 0.5rem;
     overflow: hidden;
 
     & > iframe {
@@ -44,6 +72,7 @@
         z-index: 1;
     }
 
+    // Loading div that appears while projects are importing
     & > div {
         position: absolute;
         top: 0;
@@ -58,5 +87,65 @@
             width: 5rem;
             height: 5rem;
         }
+    }
+}
+
+.time-machine-timeline {
+    width: 20rem;
+    height: 100%;
+    position: relative;
+
+    border-left: solid 2px darken(desaturate(@editorToolsBackground, 60%), 10%);
+
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .time-machine-timeline-slider {
+        flex-grow: 1;
+    }
+
+    .common-treeitem {
+        border-left: solid 2px @treeitemBackgroundColor;
+    }
+
+    .common-treeitem.selected {
+        border-left: solid 2px @primaryColor;
+        filter: grayscale(.15) brightness(.85) contrast(1.3);
+    }
+
+    .time-machine-tree-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding-right: 1rem;
+        padding-left: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    h3 {
+        padding-right: 1rem;
+        padding-left: 1rem;
+        padding-top: 1rem;
+    }
+}
+
+@media @tabletAndBelow {
+    .time-machine-header {
+        display: flex;
+        flex-direction: row;
+
+        .time-machine-back-button {
+            flex-grow: 1;
+        }
+    }
+
+    .time-machine-timeline {
+        width: 15rem;
+    }
+}
+
+@media @mobileAndBelow {
+    .time-machine-header {
+        height: @mobileMenuHeight;
     }
 }

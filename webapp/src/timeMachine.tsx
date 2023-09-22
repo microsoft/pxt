@@ -1,16 +1,16 @@
 import * as React from "react";
 import * as workspace from "./workspace";
+import { Tree, TreeItem, TreeItemBody } from "../../react-common/components/controls/Tree";
+import { createPortal } from "react-dom";
 import { Button } from "../../react-common/components/controls/Button";
-import { VerticalSlider } from "../../react-common/components/controls/VerticalSlider";
+import { hideDialog } from "./core";
+import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 
 interface TimeMachineProps {
-    onTimestampSelect: (timestamp: number) => void;
+    onProjectLoad: (text: pxt.workspace.ScriptText, editorVersion: string, timestamp?: number) => void;
+    onProjectCopy: (text: pxt.workspace.ScriptText, editorVersion: string, timestamp?: number) => void;
     text: pxt.workspace.ScriptText;
     history: pxt.workspace.HistoryEntry[];
-}
-
-interface FunctionWrapper<U> {
-    impl: U;
 }
 
 interface PendingMessage {
@@ -18,17 +18,23 @@ interface PendingMessage {
     handler: (response: any) => void;
 }
 
+interface TimeEntry {
+    label: string;
+    timestamp: number;
+}
+
 type FrameState = "loading" | "loaded" | "loading-project" | "loaded-project";
 
 export const TimeMachine = (props: TimeMachineProps) => {
-    const { onTimestampSelect, text, history } = props;
+    const { text, history, onProjectLoad, onProjectCopy } = props;
 
-    const [selected, setSelected] = React.useState<number>(history.length - 1);
-    const [importProject, setImportProject] = React.useState<FunctionWrapper<(text: pxt.workspace.ScriptText) => Promise<void>>>();
-
+    // -1 here is a standin for "now"
+    const [selected, setSelected] = React.useState<number>(-1);
     const [loading, setLoading] = React.useState<FrameState>("loading")
 
     const iframeRef = React.useRef<HTMLIFrameElement>();
+
+    const importProject = React.useRef<(text: pxt.workspace.ScriptText) => Promise<void>>();
 
     React.useEffect(() => {
         const iframe = iframeRef.current;
@@ -125,7 +131,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
         };
 
-        setImportProject({ impl: loadProject });
+        importProject.current = loadProject;
 
         window.addEventListener("message", onMessageReceived);
         return () => {
@@ -134,104 +140,271 @@ export const TimeMachine = (props: TimeMachineProps) => {
     }, []);
 
     React.useEffect(() => {
-        if (loading === "loaded" && importProject) {
-            const previewFiles = applyUntilTimestamp(text, history, history[history.length - 1].timestamp);
-            importProject.impl(previewFiles)
+        if (loading === "loaded" && importProject.current) {
+            importProject.current(text)
         }
-    }, [loading, importProject, history, text]);
+    }, [loading, importProject.current, text]);
 
-    const onSliderValueChanged = React.useCallback((newValue: number) => {
-        setSelected(newValue);
-        const previewFiles = applyUntilTimestamp(text, history, history[newValue].timestamp);
-        importProject.impl(previewFiles)
+    const onTimeSelected = (newValue: number) => {
+        if (importProject.current) {
+            setSelected(newValue);
 
-    }, [text, history, importProject]);
-
-    const valueText = React.useCallback((value: number) => {
-        const timestamp = history[value].timestamp;
-
-        return formatTime(timestamp);
-    }, [history]);
+            if (newValue === -1) {
+                importProject.current(text);
+            }
+            else {
+                const previewFiles = applyUntilTimestamp(text, history, newValue);
+                importProject.current(previewFiles)
+            }
+        }
+    };
 
     const onGoPressed = React.useCallback(() => {
-        onTimestampSelect(history[selected].timestamp);
-    }, [selected, onTimestampSelect, history]);
+        if (selected === -1) {
+            hideDialog();
+        }
+        else {
+            const previewFiles = applyUntilTimestamp(text, history, selected);
+            onProjectLoad(previewFiles, history.find(e => e.timestamp === selected).editorVersion, selected);
+        }
+    }, [selected, onProjectLoad]);
+
+    const onSaveCopySelect = React.useCallback(() => {
+        if (selected === -1) {
+            onProjectCopy(text, pxt.appTarget.versions.target);
+        }
+        else {
+            const previewFiles = applyUntilTimestamp(text, history, selected);
+            onProjectCopy(previewFiles, history.find(e => e.timestamp === selected).editorVersion, selected)
+        }
+    }, [selected, onProjectCopy]);
 
     const url = `${window.location.origin + window.location.pathname}?timeMachine=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
 
-    return (
-        <div className="time-machine">
-            <div className="time-machine-timeline">
-                <div className="time-machine-label">
-                    {pxt.U.lf("Past")}
+    const buckets: {[index: string]: TimeEntry[]} = {};
+
+    for (const entry of history) {
+        const date = new Date(entry.timestamp);
+        const key = new Date(date.toLocaleDateString(
+            pxt.U.userLanguage(),
+            {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric"
+            }
+        )).getTime();
+
+        if (!buckets[key]) {
+            buckets[key] = [];
+        }
+
+        buckets[key].push({
+            label: formatTime(entry.timestamp),
+            timestamp: entry.timestamp
+        });
+    }
+
+    const nowEntry = {
+        label: lf("Now"),
+        timestamp: -1
+    };
+
+    const sortedBuckets = Object.keys(buckets).sort((a, b) => parseInt(b) - parseInt(a));
+    for (const bucket of sortedBuckets) {
+        buckets[bucket].sort((a, b) => b.timestamp - a.timestamp);
+    }
+
+    if (!sortedBuckets.length || !isToday(parseInt(sortedBuckets[0]))) {
+        buckets[Date.now()] = [nowEntry]
+    }
+    else {
+        buckets[sortedBuckets[0]].unshift(nowEntry)
+    }
+
+    return createPortal(
+        <FocusTrap className="time-machine" onEscape={hideDialog}>
+            <div className="time-machine-header">
+                <div className="time-machine-back-button">
+                    <Button
+                        className="menu-button"
+                        label={lf("Go Back")}
+                        title={lf("Go Back")}
+                        onClick={hideDialog}
+                        leftIcon="fas fa-arrow-left"
+                    />
                 </div>
-                <VerticalSlider
-                    className="time-machine-timeline-slider"
-                    min={0}
-                    max={history.length - 1}
-                    step={1}
-                    value={selected}
-                    ariaValueText={valueText}
-                    onValueChanged={onSliderValueChanged}
-                />
-                <div className="time-machine-label">
-                    {pxt.U.lf("Present")}
+                <div className="time-machine-actions-container">
+                    <div className="time-machine-actions">
+                        <div className="time-machine-label">
+                            {formatFullDate(selected)}
+                        </div>
+                        <Button
+                            label={lf("Save a copy")}
+                            title={lf("Save a copy")}
+                            onClick={onSaveCopySelect}
+                        />
+                        <Button
+                            label={lf("Restore")}
+                            title={lf("Restore")}
+                            onClick={onGoPressed}
+                        />
+                    </div>
                 </div>
-                <Button
-                    className="green"
-                    label={pxt.U.lf("Go")}
-                    title={pxt.U.lf("Restore editor to selected version")}
-                    onClick={onGoPressed}
-                />
             </div>
-            <div className="time-machine-preview">
-                <div>
-                    <div className="common-spinner" />
+            <div className="time-machine-content">
+                <div className="time-machine-preview">
+                    <div>
+                        <div className="common-spinner" />
+                    </div>
+                    {/* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */}
+                    <iframe
+                        style={{ opacity: loading !== "loaded-project" ? 0 : 1 }}
+                        ref={iframeRef}
+                        frameBorder="0"
+                        aria-label={lf("Project preview")}
+                        sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
+                        src={url}
+                    />
+                    {/* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */}
                 </div>
-                {/* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */}
-                <iframe
-                    style={{ opacity: loading !== "loaded-project" ? 0 : 1 }}
-                    ref={iframeRef}
-                    frameBorder="0"
-                    aria-label={lf("Project preview")}
-                    sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
-                    src={url}
-                />
-                {/* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */}
+                <div className="time-machine-timeline">
+                    <h3>
+                        {lf("Version History")}
+                    </h3>
+                    <div className="time-machine-tree-container">
+                        <Tree>
+                            {sortedBuckets.map((date, i) =>
+                                <TreeItem key={date} initiallyExpanded={i === 0}>
+                                    <TreeItemBody>
+                                        {formatDate(parseInt(date))}
+                                    </TreeItemBody>
+                                    <Tree role="group">
+                                        {...buckets[date].map(entry =>
+                                            <TreeItem
+                                                key={entry.timestamp}
+                                                onClick={() => onTimeSelected(entry.timestamp)}
+                                                className={selected === entry.timestamp ?  "selected" : undefined}
+                                            >
+                                                <TreeItemBody>
+                                                    {entry.label}
+                                                </TreeItemBody>
+                                            </TreeItem>
+                                        )}
+                                    </Tree>
+                                </TreeItem>
+                            )}
+                        </Tree>
+                    </div>
+                </div>
             </div>
-        </div>
-    );
+        </FocusTrap>
+    , document.body);
 }
 
 function applyUntilTimestamp(text: pxt.workspace.ScriptText, history: pxt.workspace.HistoryEntry[], timestamp: number) {
-    let currentText = { ...text };
+    let currentText = text;
 
     for (let i = 0; i < history.length; i++) {
-        const entry = history[history.length - 1 - i];
+        const index = history.length - 1 - i;
+        const entry = history[index];
         currentText = workspace.applyDiff(currentText, entry);
-        if (entry.timestamp === timestamp) break;
+        if (entry.timestamp === timestamp) {
+            const version = index > 0 ? history[index - 1].editorVersion : entry.editorVersion;
+
+            // Attempt to update the version in pxt.json
+            try {
+                const config = JSON.parse(currentText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                if (config.targetVersions) {
+                    config.targetVersions.target = version;
+                }
+                currentText[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+            }
+            catch (e) {
+            }
+
+            break;
+        }
     }
 
     return currentText;
 }
 
 function formatTime(time: number) {
-    const now = Date.now();
-
-    const diff = now - time;
-    const oneDay = 1000 * 60 * 60 * 24;
-
     const date = new Date(time);
 
     const timeString = date.toLocaleTimeString(pxt.U.userLanguage(), { timeStyle: "short" } as any);
+    return timeString;
+}
 
-    if (diff < oneDay) {
-        return timeString;
+function formatDate(time: number) {
+    const now = new Date();
+    const nowYear = now.getFullYear();
+    const nowMonth = now.getMonth();
+    const nowDay = now.getDate();
+
+    const date = new Date(time);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    const diff = Date.now() - time;
+    const oneDay = 1000 * 60 * 60 * 24;
+
+    if (year !== nowYear) {
+        return date.toLocaleDateString(
+            pxt.U.userLanguage(),
+            {
+                year: "numeric",
+                month: "short",
+                day: "numeric"
+            }
+        );
+    }
+    else if (nowMonth === month && nowDay === day) {
+        return lf("Today");
     }
     else if (diff < oneDay * 2) {
-        return lf("Yesterday {0}", timeString);
+        return lf("Yesterday")
+    }
+    else if (diff < oneDay * 8) {
+        return lf("{0} days ago", Math.floor(diff / oneDay))
     }
     else {
-        return date.toLocaleDateString() + " " + timeString;
+        return date.toLocaleDateString(
+            pxt.U.userLanguage(),
+            {
+                month: "short",
+                day: "numeric"
+            }
+        );
     }
+}
+
+function formatFullDate(time: number) {
+    const now = new Date();
+    const nowYear = now.getFullYear();
+
+    const date = new Date(time);
+    const year = date.getFullYear();
+
+    const formattedDate = date.toLocaleDateString(
+        pxt.U.userLanguage(),
+        {
+            year: year !== nowYear ? "numeric" : undefined,
+            month: "long",
+            day: "numeric"
+        } as any
+    );
+
+    const formattedTime = formatTime(time);
+
+    return lf("{id:date,time}{0}, {1}", formattedDate, formattedTime);
+}
+
+function isToday(time: number) {
+    const now = new Date();
+    const date = new Date(time);
+    return now.getFullYear() === date.getFullYear() &&
+        now.getMonth() === date.getMonth() &&
+        now.getDate() == date.getDate();
 }
