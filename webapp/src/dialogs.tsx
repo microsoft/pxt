@@ -861,10 +861,10 @@ export function isDontShowDownloadDialogFlagSet() {
 
 export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, reloadHeader: () => void) {
     const text = await workspace.getTextAsync(header.id);
-    let history: pxt.workspace.HistoryEntry[] = [];
+    let history: pxt.workspace.HistoryFile;
 
     if (text?.[pxt.HISTORY_FILE]) {
-        history = JSON.parse(text[pxt.HISTORY_FILE]).entries;
+        history = pxt.workspace.parseHistoryFile(text[pxt.HISTORY_FILE]);
     }
 
     const loadProject = async (text: pxt.workspace.ScriptText, editorVersion: string) => {
@@ -879,8 +879,14 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
     const copyProject = async (text: pxt.workspace.ScriptText, editorVersion: string, timestamp?: number) => {
         core.hideDialog();
 
-        const newHistory: pxt.workspace.HistoryFile = {
-            entries: timestamp == undefined ? history : history.slice(0, history.findIndex(e => e.timestamp === timestamp))
+        let newHistory = history
+
+        if (timestamp != undefined) {
+            newHistory = {
+                entries:  history.entries.slice(0, history.entries.findIndex(e => e.timestamp === timestamp)),
+                snapshots: history.snapshots.filter(s => s.timestamp <= timestamp),
+                shares: history.shares.filter(s => s.timestamp <= timestamp)
+            }
         }
 
         if (text[pxt.HISTORY_FILE]) {

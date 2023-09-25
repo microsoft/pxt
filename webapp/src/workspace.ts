@@ -19,8 +19,6 @@ import * as dmp from "diff-match-patch";
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
-// 5 minutes
-const historyInterval = 1000 * 60 * 5;
 
 // Avoid importing entire crypto-js
 /* eslint-disable import/no-internal-modules */
@@ -588,44 +586,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                     const previous = await impl.getAsync(h);
 
                     if (previous) {
-                        const diff = diffScriptText(previous.text, toWrite);
-
-                        if (diff) {
-                            let history: pxt.workspace.HistoryFile;
-
-                            if (previous.text[pxt.HISTORY_FILE]) {
-                                history = JSON.parse(previous.text[pxt.HISTORY_FILE]);
-                            }
-                            else {
-                                history = {
-                                    entries: []
-                                };
-                            }
-
-                            let shouldCombine = false;
-                            if (history.entries.length > 1) {
-                                const currentTime = Date.now();
-                                const topTime = history.entries[history.entries.length - 1].timestamp;
-                                const prevTime = history.entries[history.entries.length - 2].timestamp;
-
-                                if (currentTime - topTime < historyInterval && topTime - prevTime < historyInterval) {
-                                    shouldCombine = true;
-                                }
-                            }
-
-                            if (shouldCombine) {
-                                // Roll back the last diff and create a new one
-                                const prevText = applyDiff(previous.text, history.entries.pop());
-
-                                const diff = diffScriptText(prevText, toWrite);
-                                history.entries.push(diff);
-                            }
-                            else {
-                                history.entries.push(diff);
-                            }
-
-                            toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
-                        }
+                        pxt.workspace.updateHistory(previous.text, toWrite, Date.now(), diffText, patchText);
                     }
                 }
             }
@@ -674,15 +635,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     });
 }
 
-export async function getScriptHistoryAsync(header: Header): Promise<pxt.workspace.HistoryFile> {
-    const text = await getTextAsync(header.id);
-
-    if (text?.[pxt.HISTORY_FILE]) {
-        return JSON.parse(text[pxt.HISTORY_FILE]);
-    }
-    return undefined;
-}
-
 function computePath(h: Header) {
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (!path)
@@ -695,10 +647,6 @@ function computePath(h: Header) {
     }
 
     return path
-}
-
-function diffScriptText(oldVersion: pxt.workspace.ScriptText, newVersion: pxt.workspace.ScriptText): pxt.workspace.HistoryEntry {
-    return pxt.workspace.diffScriptText(oldVersion, newVersion, diffText);
 }
 
 function diffText(a: string, b: string) {
