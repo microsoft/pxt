@@ -281,24 +281,29 @@ export function initAsync() {
         })
 }
 
-export function getTextAsync(id: string): Promise<ScriptText> {
-    return maybeSyncHeadersAsync()
-        .then(() => {
-            let e = lookup(id)
-            if (!e)
-                return Promise.resolve(null as ScriptText)
-            if (e.text)
-                return Promise.resolve(e.text)
-            return headerQ.enqueue(id, () => impl.getAsync(e.header)
-                .then(resp => {
-                    if (!e.text) {
-                        // otherwise we were beaten to it
-                        e.text = fixupFileNames(resp.text);
-                    }
-                    e.version = resp.version;
-                    return e.text
-                }))
-        })
+export async function getTextAsync(id: string, getSavedText = false): Promise<ScriptText> {
+    await maybeSyncHeadersAsync();
+
+    const e = lookup(id);
+    if (!e) return null;
+
+    if (e.text && !getSavedText) {
+        return e.text;
+    }
+
+    return headerQ.enqueue(id, async () => {
+        const resp = await impl.getAsync(e.header);
+        const fixedText = fixupFileNames(resp.text);
+
+        if (getSavedText) {
+            return fixedText;
+        }
+        else if (!e.text) {
+            e.text = fixedText;
+        }
+        e.version = resp.version;
+        return e.text
+    });
 }
 
 export interface ScriptMeta {
@@ -578,14 +583,18 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         await fixupVersionAsync(e);
         let ver: any;
 
-        const toWrite = text ? e.text : null;
+        let toWrite = text ? e.text : null;
 
         if (pxt.appTarget.appTheme.timeMachine) {
             try {
-                if (toWrite) {
-                    const previous = await impl.getAsync(h);
+                const previous = await impl.getAsync(h);
 
-                    if (previous) {
+                if (previous) {
+                    if (!toWrite && previous.header.pubVersions?.length !== h.pubVersions?.length) {
+                        toWrite = { ...previous.text };
+                    }
+
+                    if (toWrite) {
                         pxt.workspace.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
                     }
                 }

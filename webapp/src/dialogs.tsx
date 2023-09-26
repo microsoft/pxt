@@ -860,7 +860,7 @@ export function isDontShowDownloadDialogFlagSet() {
 }
 
 export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, reloadHeader: () => void) {
-    const text = await workspace.getTextAsync(header.id);
+    const text = await workspace.getTextAsync(header.id, true);
     let history: pxt.workspace.HistoryFile;
 
     if (text?.[pxt.HISTORY_FILE]) {

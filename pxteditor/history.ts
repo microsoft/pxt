@@ -311,8 +311,7 @@ namespace pxt.workspace {
         }
 
         // If no source changed, we can bail at this point
-        const diffed = diffScriptText(previousText, toWrite, currentTime, diff);
-        if (!diffed) {
+        if (scriptEquals(previousText, toWrite)) {
             toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
             return;
         }
@@ -340,7 +339,11 @@ namespace pxt.workspace {
             }
         }
         else {
-            history.entries.push(diffed);
+            const diffed = diffScriptText(previousText, toWrite, currentTime, diff);
+
+            if (diffed) {
+                history.entries.push(diffed);
+            }
         }
 
         // Finally, update the snapshots. These are failsafes in case something
@@ -378,5 +381,19 @@ namespace pxt.workspace {
             editorVersion: pxt.appTarget.versions.target,
             text: pxt.workspace.createSnapshot(text)
         };
+    }
+
+    function scriptEquals(a: ScriptText, b: ScriptText) {
+        const aKeys = Object.keys(a);
+        const bKeys = Object.keys(b);
+
+        if (aKeys.length !== bKeys.length) return false;
+
+        for (const key of aKeys) {
+            if (bKeys.indexOf(key) === -1) return false;
+            if (a[key] !== b[key]) return false;
+        }
+
+        return true;
     }
 }
