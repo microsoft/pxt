@@ -1674,9 +1674,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             const displayCard = { ...el };
             const matchingVariant = variants.find(variant => variant.name === displayCard.variant);
             if (!matchingVariant) {
-                // TODO: This was a reportError, but seems like this is a fine case to me
-                // to allow including options for experimental hw?
-                // pxt.reportError("hw", "invalid variant");
+                // Variant may be experimental hw, ignore this option
                 return undefined;
             }
 
