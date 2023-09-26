@@ -11,6 +11,7 @@ export interface TreeItemProps extends ContainerProps {
     role?: "treeitem";
     onClick?: () => void;
     initiallyExpanded?: boolean;
+    title?: string;
 }
 
 export interface TreeItemBodyProps extends ContainerProps {
@@ -66,7 +67,8 @@ export const TreeItem = (props: TreeItemProps) => {
         ariaDescribedBy,
         role,
         initiallyExpanded,
-        onClick
+        onClick,
+        title
     } = props;
 
     const [expanded, setExpanded] = React.useState(initiallyExpanded);
@@ -105,7 +107,7 @@ export const TreeItem = (props: TreeItemProps) => {
             aria-hidden={ariaHidden}
             aria-describedby={ariaDescribedBy}
             role={role || "treeitem"}
-
+            title={title}
         >
             <div className={classList("common-treeitem", className)} onClick={onTreeItemClick}>
                 {hasSubtree &&

@@ -586,7 +586,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                     const previous = await impl.getAsync(h);
 
                     if (previous) {
-                        pxt.workspace.updateHistory(previous.text, toWrite, Date.now(), diffText, patchText);
+                        pxt.workspace.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
                     }
                 }
             }
@@ -648,14 +648,13 @@ function computePath(h: Header) {
 
     return path
 }
+const differ = new dmp.diff_match_patch();
 
 function diffText(a: string, b: string) {
-    const differ = new dmp.diff_match_patch();
     return differ.patch_make(a, b);
 }
 
 function patchText(patch: unknown, a: string) {
-    const differ = new dmp.diff_match_patch();
     return differ.patch_apply(patch as any, a)[0]
 }
 
