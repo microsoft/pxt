@@ -220,7 +220,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxt.workspace.updateHistory(prevText, nextText, i * ONE_HOUR, diffText, patchText);
+            pxt.workspace.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -246,7 +246,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxt.workspace.updateHistory(prevText, nextText, i * ONE_MINUTE, diffText, patchText);
+            pxt.workspace.updateHistory(prevText, nextText, i * ONE_MINUTE, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -275,7 +275,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxt.workspace.updateHistory(prevText, nextText, i * ONE_HOUR, diffText, patchText);
+            pxt.workspace.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -304,7 +304,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxt.workspace.updateHistory(prevText, nextText, i * period, diffText, patchText);
+            pxt.workspace.updateHistory(prevText, nextText, i * period, [], diffText, patchText);
 
             prevText = nextText;
         }

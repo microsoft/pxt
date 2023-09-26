@@ -19,7 +19,6 @@ namespace pxt.workspace {
 
     export interface ShareEntry {
         timestamp: number;
-        editorVersion: string;
         id: string;
     }
 
@@ -284,19 +283,12 @@ namespace pxt.workspace {
         return result;
     }
 
-    export function updateHistory(previousText: ScriptText, toWrite: ScriptText, currentTime: number, diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
-        const diffed = diffScriptText(previousText, toWrite, currentTime, diff);
+    export function updateHistory(previousText: ScriptText, toWrite: ScriptText, currentTime: number, shares: PublishVersion[], diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+        let history: pxt.workspace.HistoryFile;
 
         // Always base the history off of what was in the previousText,
         // which is written to disk. The new text could have corrupted it
         // in some way
-        if (!diffed) {
-            toWrite[pxt.HISTORY_FILE] = previousText[pxt.HISTORY_FILE];
-            return;
-        }
-
-        let history: pxt.workspace.HistoryFile;
-
         if (previousText[pxt.HISTORY_FILE]) {
             history = pxt.workspace.parseHistoryFile(previousText[pxt.HISTORY_FILE]);
         }
@@ -308,7 +300,24 @@ namespace pxt.workspace {
             };
         }
 
-        // First, update the diff entries. We always update this, but may
+        // First save any new project shares
+        for (const share of shares) {
+            if (!history.shares.some(s => s.id === share.id)) {
+                history.shares.push({
+                    id: share.id,
+                    timestamp: currentTime,
+                });
+            }
+        }
+
+        // If no source changed, we can bail at this point
+        const diffed = diffScriptText(previousText, toWrite, currentTime, diff);
+        if (!diffed) {
+            toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
+            return;
+        }
+
+        // Next, update the diff entries. We always update this, but may
         // combine it with the previous diff if it's been less than the
         // interval time
         let shouldCombine = false;
@@ -326,7 +335,9 @@ namespace pxt.workspace {
             const prevText = applyDiff(previousText, history.entries.pop(), patch);
 
             const diffed = diffScriptText(prevText, toWrite, currentTime, diff);
-            history.entries.push(diffed);
+            if (diffed) {
+                history.entries.push(diffed);
+            }
         }
         else {
             history.entries.push(diffed);
@@ -357,7 +368,6 @@ namespace pxt.workspace {
 
             history.snapshots = trimmed;
         }
-
 
         toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
     }

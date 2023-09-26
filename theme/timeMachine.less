@@ -6,7 +6,7 @@
     bottom: 0;
     right: 0;
     position: absolute;
-    z-index: 999999999999;
+    z-index: @modalFullscreenZIndex + 1;
     background-color: white;
 }
 
@@ -107,6 +107,7 @@
 
     .common-treeitem {
         border-left: solid 2px @treeitemBackgroundColor;
+        user-select: none;
     }
 
     .common-treeitem.selected {
@@ -126,6 +127,7 @@
         padding-right: 1rem;
         padding-left: 1rem;
         padding-top: 1rem;
+        flex-shrink: 0;
     }
 }
 

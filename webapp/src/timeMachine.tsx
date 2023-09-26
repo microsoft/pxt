@@ -3,7 +3,7 @@ import * as workspace from "./workspace";
 import { Tree, TreeItem, TreeItemBody } from "../../react-common/components/controls/Tree";
 import { createPortal } from "react-dom";
 import { Button } from "../../react-common/components/controls/Button";
-import { hideDialog } from "./core";
+import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 import { classList } from "../../react-common/components/util";
 
@@ -27,7 +27,7 @@ interface TimelineEntry {
 interface TimeEntry {
     label: string;
     timestamp: number;
-    kind: "snapshot" | "diff";
+    kind: "snapshot" | "diff" | "share";
 }
 
 interface Project {
@@ -40,12 +40,13 @@ type FrameState = "loading" | "loaded" | "loading-project" | "loaded-project";
 export const TimeMachine = (props: TimeMachineProps) => {
     const { text, history, onProjectLoad, onProjectCopy } = props;
 
-    // -1 here is a standin for "now"
-    const [selected, setSelected] = React.useState<number>(-1);
+    // undefined here is a standin for "now"
+    const [selected, setSelected] = React.useState<TimeEntry>(undefined);
     const [loading, setLoading] = React.useState<FrameState>("loading");
     const [entries, setEntries] = React.useState(getTimelineEntries(history));
 
     const iframeRef = React.useRef<HTMLIFrameElement>();
+    const fetchingScriptLock = React.useRef(false);
 
     const importProject = React.useRef<(text: pxt.workspace.ScriptText) => Promise<void>>();
 
@@ -162,37 +163,55 @@ export const TimeMachine = (props: TimeMachineProps) => {
         setEntries(getTimelineEntries(history));
     }, [history]);
 
-    const onTimeSelected = async (newValue: number) => {
-        if (importProject.current) {
-            setSelected(newValue);
+    const onTimeSelected = async (entry: TimeEntry) => {
+        if (!importProject.current || fetchingScriptLock.current) return;
 
-            if (newValue === -1) {
-                importProject.current(text);
+        if (entry.timestamp === -1) {
+            entry = undefined;
+        }
+
+        setSelected(entry);
+
+        if (entry === undefined) {
+            importProject.current(text);
+            return;
+        }
+
+        fetchingScriptLock.current = true;
+
+        try {
+            const { files } = await getTextAtTimestampAsync(text, history, entry);
+            importProject.current(files)
+        }
+        catch (e) {
+            if (entry.kind === "share") {
+                warningNotification(lf("Unable to fetch shared project. Are you offline?"));
             }
             else {
-                const { files } = await getTextAtTimestampAsync(text, history, newValue);
-                importProject.current(files)
+                warningNotification(lf("Unable to restore project version. Try selecting a different version."))
             }
+
+            setSelected(undefined);
+            importProject.current(text);
+        }
+        finally {
+            fetchingScriptLock.current = false;
         }
     };
 
-    const onGoPressed = React.useCallback(() => {
-        (async () => {
-            if (selected === -1) {
-                hideDialog();
-            }
-            else {
-                const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
-                onProjectLoad(files, editorVersion, selected);
-            }
-        })();
+    const onGoPressed = React.useCallback(async () => {
+        if (selected === undefined) {
+            hideDialog();
+        }
+        else {
+            const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
+            onProjectLoad(files, editorVersion, selected.timestamp);
+        }
     }, [selected, onProjectLoad]);
 
-    const onSaveCopySelect = React.useCallback(() => {
-        (async () => {
-            const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
-            onProjectCopy(files, editorVersion, selected)
-        })();
+    const onSaveCopySelect = React.useCallback(async () => {
+        const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
+        onProjectCopy(files, editorVersion, selected?.timestamp)
     }, [selected, onProjectCopy]);
 
     const url = `${window.location.origin + window.location.pathname}?timeMachine=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
@@ -212,7 +231,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 <div className="time-machine-actions-container">
                     <div className="time-machine-actions">
                         <div className="time-machine-label">
-                            {formatFullDate(selected)}
+                            {selected ? formatFullDate(selected.timestamp) : lf("Now")}
                         </div>
                         <Button
                             label={lf("Save a copy")}
@@ -255,16 +274,33 @@ export const TimeMachine = (props: TimeMachineProps) => {
                                         {e.label}
                                     </TreeItemBody>
                                     <Tree role="group">
-                                        {e.entries.map(entry =>
-                                            <TreeItem
-                                                key={entry.timestamp}
-                                                onClick={() => onTimeSelected(entry.timestamp)}
-                                                className={classList(selected === entry.timestamp && "selected", entry.kind)}
-                                            >
-                                                <TreeItemBody>
-                                                    {entry.label}
-                                                </TreeItemBody>
-                                            </TreeItem>
+                                        {e.entries.map((entry, index) => {
+                                            const isSelected = (!selected && entry.timestamp === -1) ||
+                                                (selected?.kind === entry.kind && selected?.timestamp === entry.timestamp);
+
+                                            let title: string;
+
+                                            if (entry.kind === "share") {
+                                                title = lf("Select shared version from {0} at {1}", e.label, entry.label);
+                                            }
+                                            else {
+                                                title = lf("Select project version from {0} at {1}", e.label, entry.label);
+                                            }
+
+                                            return (
+                                                <TreeItem
+                                                    key={index}
+                                                    onClick={() => onTimeSelected(entry)}
+                                                    className={classList(isSelected && "selected", entry.kind)}
+                                                    title={title}
+                                                >
+                                                    <TreeItemBody>
+                                                        {entry.label}
+                                                        {entry.kind === "share" && <i className="fas fa-share-alt" />}
+                                                    </TreeItemBody>
+                                                </TreeItem>
+                                            );
+                                        }
                                         )}
                                     </Tree>
                                 </TreeItem>
@@ -277,27 +313,24 @@ export const TimeMachine = (props: TimeMachineProps) => {
     , document.body);
 }
 
-async function getTextAtTimestampAsync(text: pxt.workspace.ScriptText, history: pxt.workspace.HistoryFile, timestamp: number): Promise<Project> {
+async function getTextAtTimestampAsync(text: pxt.workspace.ScriptText, history: pxt.workspace.HistoryFile, time: TimeEntry): Promise<Project> {
     const editorVersion = pxt.appTarget.versions.target;
 
-    if (timestamp < 0) return { files: text, editorVersion };
+    if (!time || time.timestamp < 0) return { files: text, editorVersion };
 
-    const snapshot = history.snapshots.find(s => s.timestamp === timestamp)
-    if (snapshot) {
+    if (time.kind === "snapshot") {
+        const snapshot = history.snapshots.find(s => s.timestamp === time.timestamp)
         return patchPxtJson(pxt.workspace.applySnapshot(text, snapshot.text), snapshot.editorVersion);
     }
+    else if (time.kind === "share") {
+        const share = history.shares.find(s => s.timestamp === time.timestamp);
+        const files = await pxt.Cloud.downloadScriptFilesAsync(share.id);
+        const meta = await pxt.Cloud.downloadScriptMetaAsync(share.id);
 
-    const share = history.shares.find(s => s.timestamp === timestamp);
-    if (share) {
-        try {
-            text = await pxt.Cloud.downloadScriptFilesAsync(share.id);
-            return patchPxtJson(text, share.editorVersion)
-        }
-        catch (e) {
-            if (!history.entries.some(e => e.timestamp === timestamp)) {
-                // ERROR
-            }
-        }
+        return {
+            files,
+            editorVersion: meta.versions?.target || editorVersion
+        };
     }
 
     let currentText = text;
@@ -306,7 +339,7 @@ async function getTextAtTimestampAsync(text: pxt.workspace.ScriptText, history: 
         const index = history.entries.length - 1 - i;
         const entry = history.entries[index];
         currentText = workspace.applyDiff(currentText, entry);
-        if (entry.timestamp === timestamp) {
+        if (entry.timestamp === time.timestamp) {
             const version = index > 0 ? history.entries[index - 1].editorVersion : entry.editorVersion;
             return patchPxtJson(currentText, version)
         }
@@ -418,7 +451,7 @@ function isToday(time: number) {
 function getTimelineEntries(history: pxt.workspace.HistoryFile): TimelineEntry[] {
     const buckets: {[index: string]: TimeEntry[]} = {};
 
-    const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff") => {
+    const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff" | "share") => {
         const date = new Date(timestamp);
         const key = new Date(date.toLocaleDateString(
             pxt.U.userLanguage(),
@@ -453,7 +486,7 @@ function getTimelineEntries(history: pxt.workspace.HistoryFile): TimelineEntry[]
         const bucket = buckets[bucketKey];
         const deduped: TimeEntry[] = [];
 
-        // Deduplicate entries that exist in the same minute and sort
+        // Deduplicate entries that exist in the same minute
         for (const entry of bucket) {
             const eIndex = deduped.findIndex(e => e.label === entry.label);
             const existing = deduped[eIndex];
@@ -477,8 +510,17 @@ function getTimelineEntries(history: pxt.workspace.HistoryFile): TimelineEntry[]
             }
         }
 
-        deduped.sort((a, b) => b.timestamp - a.timestamp);
         buckets[bucketKey] = deduped;
+    }
+
+    // Always show all of the shares, don't dedupe these
+    for (const entry of history.shares) {
+        createTimeEntry(entry.timestamp, "share");
+    }
+
+    // Sort all of the buckets
+    for (const bucketKey of sortedBuckets) {
+        buckets[bucketKey].sort((a, b) => b.timestamp - a.timestamp);
     }
 
     // Always add an entry for "now"
