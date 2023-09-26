@@ -46,6 +46,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
     const [entries, setEntries] = React.useState(getTimelineEntries(history));
 
     const iframeRef = React.useRef<HTMLIFrameElement>();
+    const fetchingScriptLock = React.useRef(false);
 
     const importProject = React.useRef<(text: pxt.workspace.ScriptText) => Promise<void>>();
 
@@ -163,12 +164,11 @@ export const TimeMachine = (props: TimeMachineProps) => {
     }, [history]);
 
     const onTimeSelected = async (entry: TimeEntry) => {
-        if (!importProject.current) return;
+        if (!importProject.current || fetchingScriptLock.current) return;
 
         if (entry.timestamp === -1) {
             entry = undefined;
         }
-        const previouslySelected = selected;
 
         setSelected(entry);
 
@@ -176,6 +176,8 @@ export const TimeMachine = (props: TimeMachineProps) => {
             importProject.current(text);
             return;
         }
+
+        fetchingScriptLock.current = true;
 
         try {
             const { files } = await getTextAtTimestampAsync(text, history, entry);
@@ -186,10 +188,14 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 warningNotification(lf("Unable to fetch shared project. Are you offline?"));
             }
             else {
-                warningNotification(lf("Unable to restore project version. Try selecting a different time."))
+                warningNotification(lf("Unable to restore project version. Try selecting a different version."))
             }
 
-            setSelected(previouslySelected);
+            setSelected(undefined);
+            importProject.current(text);
+        }
+        finally {
+            fetchingScriptLock.current = false;
         }
     };
 
