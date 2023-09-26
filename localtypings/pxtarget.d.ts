@@ -28,6 +28,8 @@ declare namespace pxt {
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
+        // localized options on download dialog; name, description, url, imageUrl, variant used.
+        hardwareOptions?: CodeCard[];
         // release manifest for the electron app
         electronManifest?: pxt.electron.ElectronManifest;
         profileNotification?: ProfileNotification;
