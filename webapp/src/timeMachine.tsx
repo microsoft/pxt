@@ -193,23 +193,19 @@ export const TimeMachine = (props: TimeMachineProps) => {
         }
     };
 
-    const onGoPressed = React.useCallback(() => {
-        (async () => {
-            if (selected === undefined) {
-                hideDialog();
-            }
-            else {
-                const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
-                onProjectLoad(files, editorVersion, selected.timestamp);
-            }
-        })();
+    const onGoPressed = React.useCallback(async () => {
+        if (selected === undefined) {
+            hideDialog();
+        }
+        else {
+            const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
+            onProjectLoad(files, editorVersion, selected.timestamp);
+        }
     }, [selected, onProjectLoad]);
 
-    const onSaveCopySelect = React.useCallback(() => {
-        (async () => {
-            const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
-            onProjectCopy(files, editorVersion, selected?.timestamp)
-        })();
+    const onSaveCopySelect = React.useCallback(async () => {
+        const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
+        onProjectCopy(files, editorVersion, selected?.timestamp)
     }, [selected, onProjectCopy]);
 
     const url = `${window.location.origin + window.location.pathname}?timeMachine=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
