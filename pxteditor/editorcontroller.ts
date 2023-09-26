@@ -403,15 +403,14 @@ namespace pxt.editor {
 
         if (!allowEditorMessages && !allowExtensionMessages && !allowSimTelemetry) return;
 
-        window.addEventListener("message", (msg: MessageEvent) => {
+        window.addEventListener("message", async (msg: MessageEvent) => {
             const data = msg.data as EditorMessage;
             if (!data || !/^pxt(host|editor|pkgext|sim)$/.test(data.type)) return false;
 
             if (data.type === "pxtpkgext" && allowExtensionMessages) {
                 // Messages sent to the editor iframe from a child iframe containing an extension
-                getEditorAsync().then(projectView => {
-                    projectView.handleExtensionRequest(data as ExtensionRequest);
-                })
+                const projectView = await getEditorAsync();
+                projectView.handleExtensionRequest(data as ExtensionRequest);
             }
             else if (data.type === "pxtsim" && allowSimTelemetry) {
                 const event = data as EditorMessageEventRequest;
@@ -426,210 +425,227 @@ namespace pxt.editor {
             }
             else if (allowEditorMessages) {
                 // Messages sent to the editor from the parent frame
-                let p = Promise.resolve();
                 let resp: any = undefined;
-                if (data.type == "pxthost") { // response from the host
-                    const req = pendingRequests[data.id];
-                    if (!req) {
-                        pxt.debug(`pxthost: unknown request ${data.id}`);
-                    } else {
-                        p = p.then(() => req.resolve(data as EditorMessageResponse));
+                try {
+                    if (data.type == "pxthost") { // response from the host
+                        const req = pendingRequests[data.id];
+                        if (!req) {
+                            pxt.debug(`pxthost: unknown request ${data.id}`);
+                        } else {
+                            await req.resolve(data as EditorMessageResponse);
+                        }
+                    } else if (data.type == "pxteditor") { // request from the editor
+                        resp = handleEditorMessage(
+                            data as EditorMessageRequest,
+                            await getEditorAsync()
+                        );
                     }
-                } else if (data.type == "pxteditor") { // request from the editor
-                    p = p.then(() => {
-                        return getEditorAsync().then(projectView => {
-                            const req = data as EditorMessageRequest;
-                            pxt.debug(`pxteditor: ${req.action}`);
-                            switch (req.action.toLowerCase()) {
-                                case "switchjavascript": return Promise.resolve().then(() => projectView.openJavaScript());
-                                case "switchpython": return Promise.resolve().then(() => projectView.openPython());
-                                case "switchblocks": return Promise.resolve().then(() => projectView.openBlocks());
-                                case "startsimulator": return Promise.resolve().then(() => projectView.startSimulator());
-                                case "restartsimulator": return Promise.resolve().then(() => projectView.restartSimulator());
-                                case "hidesimulator": return Promise.resolve().then(() => projectView.collapseSimulator());
-                                case "showsimulator": return Promise.resolve().then(() => projectView.expandSimulator());
-                                case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
-                                case "unloadproject": return Promise.resolve().then(() => projectView.unloadProjectAsync());
-                                case "saveproject": return projectView.saveProjectAsync();
-                                case "redo": return Promise.resolve()
-                                    .then(() => {
-                                        const editor = projectView.editor;
-                                        if (editor && editor.hasRedo())
-                                            editor.redo();
-                                    });
-                                case "undo": return Promise.resolve()
-                                    .then(() => {
-                                        const editor = projectView.editor;
-                                        if (editor && editor.hasUndo())
-                                            editor.undo();
-                                    });
-                                case "setscale": {
-                                    const zoommsg = data as EditorMessageSetScaleRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.editor.setScale(zoommsg.scale));
-                                }
-                                case "stopsimulator": {
-                                    const stop = data as EditorMessageStopRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.stopSimulator(stop.unload));
-                                }
-                                case "newproject": {
-                                    const create = data as EditorMessageNewProjectRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.newProject(create.options));
-                                }
-                                case "importproject": {
-                                    const load = data as EditorMessageImportProjectRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.importProjectAsync(load.project, {
-                                            filters: load.filters,
-                                            searchBar: load.searchBar
-                                        }));
-                                }
-                                case "openheader": {
-                                    const open = data as EditorMessageOpenHeaderRequest;
-                                    return projectView.openProjectByHeaderIdAsync(open.headerId)
-                                }
-                                case "startactivity": {
-                                    const msg = data as EditorMessageStartActivity;
-                                    let tutorialPath = msg.path;
-                                    let editorProjectName: string = undefined;
-                                    if (/^([jt]s|py|blocks?):/i.test(tutorialPath)) {
-                                        if (/^py:/i.test(tutorialPath))
-                                            editorProjectName = pxt.PYTHON_PROJECT_NAME;
-                                        else if (/^[jt]s:/i.test(tutorialPath))
-                                            editorProjectName = pxt.JAVASCRIPT_PROJECT_NAME;
-                                        else
-                                            editorProjectName = pxt.BLOCKS_PROJECT_NAME;
-                                        tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
-                                    }
-                                    return Promise.resolve()
-                                        .then(() => projectView.startActivity({
-                                            activity: msg.activityType,
-                                            path: tutorialPath,
-                                            title: msg.title,
-                                            editor: editorProjectName,
-                                            previousProjectHeaderId: msg.previousProjectHeaderId,
-                                            carryoverPreviousCode: msg.carryoverPreviousCode
-                                        }));
-                                }
-                                case "importtutorial": {
-                                    const load = data as EditorMessageImportTutorialRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.importTutorialAsync(load.markdown));
-                                }
-                                case "proxytosim": {
-                                    const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.proxySimulatorMessage(simmsg.content));
-                                }
-                                case "renderblocks": {
-                                    const rendermsg = data as EditorMessageRenderBlocksRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.renderBlocksAsync(rendermsg))
-                                        .then(r => {
-                                            return r.xml.then((svg: any) => {
-                                                resp = svg.xml;
-                                            })
-                                        });
-                                }
-                                case "renderpython": {
-                                    const rendermsg = data as EditorMessageRenderPythonRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.renderPythonAsync(rendermsg))
-                                        .then(r => {
-                                            resp = r.python;
-                                        });
-                                }
-                                case "toggletrace": {
-                                    const togglemsg = data as EditorMessageToggleTraceRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.toggleTrace(togglemsg.intervalSpeed));
-                                }
-                                case "settracestate": {
-                                    const trcmsg = data as EditorMessageSetTraceStateRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
-                                }
-                                case "setsimulatorfullscreen": {
-                                    const fsmsg = data as EditorMessageSetSimulatorFullScreenRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.setSimulatorFullScreen(fsmsg.enabled));
-                                }
-                                case "togglehighcontrast": {
-                                    return Promise.resolve()
-                                        .then(() => projectView.toggleHighContrast());
-                                }
-                                case "sethighcontrast": {
-                                    const hcmsg = data as EditorMessageSetHighContrastRequest;
-                                    return Promise.resolve()
-                                        .then(() => projectView.setHighContrast(hcmsg.on));
-                                }
-                                case "togglegreenscreen": {
-                                    return Promise.resolve()
-                                        .then(() => projectView.toggleGreenScreen());
-                                }
-                                case "print": {
-                                    return Promise.resolve()
-                                        .then(() => projectView.printCode());
-                                }
-                                case "pair": {
-                                    return projectView.pairAsync().then(() => {});
-                                }
-                                case "info": {
-                                    return Promise.resolve()
-                                        .then(() => {
-                                            resp = <editor.InfoMessage>{
-                                                versions: pxt.appTarget.versions,
-                                                locale: ts.pxtc.Util.userLanguage(),
-                                                availableLocales: pxt.appTarget.appTheme.availableLocales
-                                            }
-                                        });
-                                }
-                                case "shareproject": {
-                                    const msg = data as EditorShareRequest;
-                                    return projectView.anonymousPublishHeaderByIdAsync(msg.headerId, msg.projectName)
-                                        .then(scriptInfo => {
-                                            resp = scriptInfo;
-                                        });
-                                }
-                                case "savelocalprojectstocloud": {
-                                    const msg = data as EditorMessageSaveLocalProjectsToCloud;
-                                    return projectView.saveLocalProjectsToCloudAsync(msg.headerIds)
-                                        .then(guidMap => {
-                                            resp = <EditorMessageSaveLocalProjectsToCloudResponse>{
-                                                headerIdMap: guidMap
-                                            };
-                                        })
-                                }
-                                case "requestprojectcloudstatus": {
-                                    // Responses are sent as separate "projectcloudstatus" messages.
-                                    const msg = data as EditorMessageRequestProjectCloudStatus;
-                                    return projectView.requestProjectCloudStatus(msg.headerIds);
-                                }
-                                case "convertcloudprojectstolocal": {
-                                    const msg = data as EditorMessageConvertCloudProjectsToLocal;
-                                    return projectView.convertCloudProjectsToLocal(msg.userId);
-                                }
-                                case "setlanguagerestriction": {
-                                    const msg = data as EditorSetLanguageRestriction;
-                                    if (msg.restriction === "no-blocks") {
-                                        console.warn("no-blocks language restriction is not supported");
-                                        throw new Error("no-blocks language restriction is not supported")
-                                    }
-                                    return projectView.setLanguageRestrictionAsync(msg.restriction);
-                                }
-                            }
-                            return Promise.resolve();
-                        });
-                    })
+                    sendResponse(data, resp, true, undefined);
+                } catch (err) {
+                    sendResponse(data, resp, false, err);
                 }
-                p.then(() => sendResponse(data, resp, true, undefined),
-                    (err) => sendResponse(data, resp, false, err))
             }
-
             return true;
         }, false)
+    }
+
+    async function handleEditorMessage(data: EditorMessageRequest, projectView: IProjectView): Promise<any> {
+        const req = data as EditorMessageRequest;
+        pxt.debug(`pxteditor: ${req.action}`);
+        switch (req.action.toLowerCase()) {
+            case "switchjavascript":
+                projectView.openJavaScript();
+                return undefined;
+            case "switchpython":
+                projectView.openPython();
+                return undefined;
+            case "switchblocks":
+                projectView.openBlocks();
+                return undefined;
+            case "startsimulator":
+                projectView.startSimulator();
+                return undefined;
+            case "restartsimulator":
+                projectView.restartSimulator();
+                return undefined;
+            case "hidesimulator":
+                projectView.collapseSimulator();
+                return undefined;
+            case "showsimulator":
+                projectView.expandSimulator();
+                return undefined;
+            case "closeflyout":
+                projectView.closeFlyout();
+                return undefined;
+            case "unloadproject":
+                await projectView.unloadProjectAsync();
+                return undefined;
+            case "saveproject":
+                await projectView.saveProjectAsync();
+                return undefined;
+            case "redo": {
+                const editor = projectView.editor;
+                if (editor?.hasRedo())
+                    editor.redo();
+                return undefined;
+            }
+            case "undo": {
+                const editor = projectView.editor;
+                if (editor?.hasUndo())
+                    editor.undo();
+                return undefined;
+            };
+            case "setscale": {
+                const zoommsg = data as EditorMessageSetScaleRequest;
+                projectView.editor.setScale(zoommsg.scale);
+                return undefined;
+            }
+            case "stopsimulator": {
+                const stop = data as EditorMessageStopRequest;
+                projectView.stopSimulator(stop.unload);
+                return undefined;
+            }
+            case "newproject": {
+                const create = data as EditorMessageNewProjectRequest;
+                projectView.newProject(create.options);
+                return undefined;
+            }
+            case "importproject": {
+                const load = data as EditorMessageImportProjectRequest;
+                await projectView.importProjectAsync(load.project, {
+                    filters: load.filters,
+                    searchBar: load.searchBar
+                });
+                return undefined;
+            }
+            case "openheader": {
+                const open = data as EditorMessageOpenHeaderRequest;
+                await projectView.openProjectByHeaderIdAsync(open.headerId);
+                return undefined;
+            }
+            case "startactivity": {
+                const msg = data as EditorMessageStartActivity;
+                let tutorialPath = msg.path;
+                let editorProjectName: string = undefined;
+                if (/^([jt]s|py|blocks?):/i.test(tutorialPath)) {
+                    if (/^py:/i.test(tutorialPath))
+                        editorProjectName = pxt.PYTHON_PROJECT_NAME;
+                    else if (/^[jt]s:/i.test(tutorialPath))
+                        editorProjectName = pxt.JAVASCRIPT_PROJECT_NAME;
+                    else
+                        editorProjectName = pxt.BLOCKS_PROJECT_NAME;
+                    tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1);
+                }
+
+                projectView.startActivity({
+                    activity: msg.activityType,
+                    path: tutorialPath,
+                    title: msg.title,
+                    editor: editorProjectName,
+                    previousProjectHeaderId: msg.previousProjectHeaderId,
+                    carryoverPreviousCode: msg.carryoverPreviousCode
+                });
+                return undefined;
+            }
+            case "importtutorial": {
+                const load = data as EditorMessageImportTutorialRequest;
+                await projectView.importTutorialAsync(load.markdown);
+                return undefined;
+            }
+            case "proxytosim": {
+                const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
+                projectView.proxySimulatorMessage(simmsg.content);
+                return undefined;
+            }
+            case "renderblocks": {
+                const rendermsg = data as EditorMessageRenderBlocksRequest;
+                const renderRes = await projectView.renderBlocksAsync(rendermsg);
+                // TODO jowunder this feels weird. look at renderBlocksAsync a little
+                const svg = await renderRes.xml;
+                return svg.xml;
+            }
+            case "renderpython": {
+                const rendermsg = data as EditorMessageRenderPythonRequest;
+                const renderRes = await projectView.renderPythonAsync(rendermsg);
+                return renderRes.python;
+            }
+            case "toggletrace": {
+                const togglemsg = data as EditorMessageToggleTraceRequest;
+                projectView.toggleTrace(togglemsg.intervalSpeed);
+                return undefined;
+            }
+            case "settracestate": {
+                const trcmsg = data as EditorMessageSetTraceStateRequest;
+                projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed);;
+                return undefined;
+            }
+            case "setsimulatorfullscreen": {
+                const fsmsg = data as EditorMessageSetSimulatorFullScreenRequest;
+                projectView.setSimulatorFullScreen(fsmsg.enabled);
+                return undefined;
+            }
+            case "togglehighcontrast": {
+                projectView.toggleHighContrast();
+                return undefined;
+            }
+            case "sethighcontrast": {
+                const hcmsg = data as EditorMessageSetHighContrastRequest;
+                projectView.setHighContrast(hcmsg.on);
+                return undefined;
+            }
+            case "togglegreenscreen": {
+                projectView.toggleGreenScreen();
+                return undefined;
+            }
+            case "print": {
+                projectView.printCode();
+                return undefined;
+            }
+            case "pair": {
+                return projectView.pairAsync();
+            }
+            case "info": {
+                return <editor.InfoMessage> {
+                    versions: pxt.appTarget.versions,
+                    locale: ts.pxtc.Util.userLanguage(),
+                    availableLocales: pxt.appTarget.appTheme.availableLocales
+                };
+            }
+            case "shareproject": {
+                const msg = data as EditorShareRequest;
+                return projectView.anonymousPublishHeaderByIdAsync(msg.headerId, msg.projectName);
+            }
+            case "savelocalprojectstocloud": {
+                const msg = data as EditorMessageSaveLocalProjectsToCloud;
+                const guidMap = await projectView.saveLocalProjectsToCloudAsync(msg.headerIds);
+                return <EditorMessageSaveLocalProjectsToCloudResponse> {
+                    headerIdMap: guidMap
+                };
+            }
+            case "requestprojectcloudstatus": {
+                // Responses are sent as separate "projectcloudstatus" messages.
+                const msg = data as EditorMessageRequestProjectCloudStatus;
+                await projectView.requestProjectCloudStatus(msg.headerIds);
+                return undefined
+            }
+            case "convertcloudprojectstolocal": {
+                const msg = data as EditorMessageConvertCloudProjectsToLocal;
+                await projectView.convertCloudProjectsToLocal(msg.userId);
+                return undefined
+            }
+            case "setlanguagerestriction": {
+                const msg = data as EditorSetLanguageRestriction;
+                if (msg.restriction === "no-blocks") {
+                    console.warn("no-blocks language restriction is not supported");
+                    throw new Error("no-blocks language restriction is not supported")
+                }
+                await projectView.setLanguageRestrictionAsync(msg.restriction);
+                return undefined;
+            }
+            default: {
+                pxt.debug(`Unhandled pxteditor message ${req.action}`);
+            }
+        }
     }
 
     /**
