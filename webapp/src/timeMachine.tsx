@@ -5,12 +5,13 @@ import { createPortal } from "react-dom";
 import { Button } from "../../react-common/components/controls/Button";
 import { hideDialog } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
+import { classList } from "../../react-common/components/util";
 
 interface TimeMachineProps {
     onProjectLoad: (text: pxt.workspace.ScriptText, editorVersion: string, timestamp?: number) => void;
     onProjectCopy: (text: pxt.workspace.ScriptText, editorVersion: string, timestamp?: number) => void;
     text: pxt.workspace.ScriptText;
-    history: pxt.workspace.HistoryEntry[];
+    history: pxt.workspace.HistoryFile;
 }
 
 interface PendingMessage {
@@ -18,9 +19,20 @@ interface PendingMessage {
     handler: (response: any) => void;
 }
 
+interface TimelineEntry {
+    label: string;
+    entries: TimeEntry[];
+}
+
 interface TimeEntry {
     label: string;
     timestamp: number;
+    kind: "snapshot" | "diff";
+}
+
+interface Project {
+    files: pxt.workspace.ScriptText;
+    editorVersion: string;
 }
 
 type FrameState = "loading" | "loaded" | "loading-project" | "loaded-project";
@@ -30,7 +42,8 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
     // -1 here is a standin for "now"
     const [selected, setSelected] = React.useState<number>(-1);
-    const [loading, setLoading] = React.useState<FrameState>("loading")
+    const [loading, setLoading] = React.useState<FrameState>("loading");
+    const [entries, setEntries] = React.useState(getTimelineEntries(history));
 
     const iframeRef = React.useRef<HTMLIFrameElement>();
 
@@ -145,7 +158,11 @@ export const TimeMachine = (props: TimeMachineProps) => {
         }
     }, [loading, importProject.current, text]);
 
-    const onTimeSelected = (newValue: number) => {
+    React.useEffect(() => {
+        setEntries(getTimelineEntries(history));
+    }, [history]);
+
+    const onTimeSelected = async (newValue: number) => {
         if (importProject.current) {
             setSelected(newValue);
 
@@ -153,73 +170,32 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 importProject.current(text);
             }
             else {
-                const previewFiles = applyUntilTimestamp(text, history, newValue);
-                importProject.current(previewFiles)
+                const { files } = await getTextAtTimestampAsync(text, history, newValue);
+                importProject.current(files)
             }
         }
     };
 
     const onGoPressed = React.useCallback(() => {
-        if (selected === -1) {
-            hideDialog();
-        }
-        else {
-            const previewFiles = applyUntilTimestamp(text, history, selected);
-            onProjectLoad(previewFiles, history.find(e => e.timestamp === selected).editorVersion, selected);
-        }
+        (async () => {
+            if (selected === -1) {
+                hideDialog();
+            }
+            else {
+                const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
+                onProjectLoad(files, editorVersion, selected);
+            }
+        })();
     }, [selected, onProjectLoad]);
 
     const onSaveCopySelect = React.useCallback(() => {
-        if (selected === -1) {
-            onProjectCopy(text, pxt.appTarget.versions.target);
-        }
-        else {
-            const previewFiles = applyUntilTimestamp(text, history, selected);
-            onProjectCopy(previewFiles, history.find(e => e.timestamp === selected).editorVersion, selected)
-        }
+        (async () => {
+            const { files, editorVersion } = await getTextAtTimestampAsync(text, history, selected);
+            onProjectCopy(files, editorVersion, selected)
+        })();
     }, [selected, onProjectCopy]);
 
     const url = `${window.location.origin + window.location.pathname}?timeMachine=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
-
-    const buckets: {[index: string]: TimeEntry[]} = {};
-
-    for (const entry of history) {
-        const date = new Date(entry.timestamp);
-        const key = new Date(date.toLocaleDateString(
-            pxt.U.userLanguage(),
-            {
-                year: "numeric",
-                month: "numeric",
-                day: "numeric"
-            }
-        )).getTime();
-
-        if (!buckets[key]) {
-            buckets[key] = [];
-        }
-
-        buckets[key].push({
-            label: formatTime(entry.timestamp),
-            timestamp: entry.timestamp
-        });
-    }
-
-    const nowEntry = {
-        label: lf("Now"),
-        timestamp: -1
-    };
-
-    const sortedBuckets = Object.keys(buckets).sort((a, b) => parseInt(b) - parseInt(a));
-    for (const bucket of sortedBuckets) {
-        buckets[bucket].sort((a, b) => b.timestamp - a.timestamp);
-    }
-
-    if (!sortedBuckets.length || !isToday(parseInt(sortedBuckets[0]))) {
-        buckets[Date.now()] = [nowEntry]
-    }
-    else {
-        buckets[sortedBuckets[0]].unshift(nowEntry)
-    }
 
     return createPortal(
         <FocusTrap className="time-machine" onEscape={hideDialog}>
@@ -273,17 +249,17 @@ export const TimeMachine = (props: TimeMachineProps) => {
                     </h3>
                     <div className="time-machine-tree-container">
                         <Tree>
-                            {sortedBuckets.map((date, i) =>
-                                <TreeItem key={date} initiallyExpanded={i === 0}>
+                            {entries.map((e, i) =>
+                                <TreeItem key={i} initiallyExpanded={i === 0}>
                                     <TreeItemBody>
-                                        {formatDate(parseInt(date))}
+                                        {e.label}
                                     </TreeItemBody>
                                     <Tree role="group">
-                                        {...buckets[date].map(entry =>
+                                        {e.entries.map(entry =>
                                             <TreeItem
                                                 key={entry.timestamp}
                                                 onClick={() => onTimeSelected(entry.timestamp)}
-                                                className={selected === entry.timestamp ?  "selected" : undefined}
+                                                className={classList(selected === entry.timestamp && "selected", entry.kind)}
                                             >
                                                 <TreeItemBody>
                                                     {entry.label}
@@ -301,32 +277,62 @@ export const TimeMachine = (props: TimeMachineProps) => {
     , document.body);
 }
 
-function applyUntilTimestamp(text: pxt.workspace.ScriptText, history: pxt.workspace.HistoryEntry[], timestamp: number) {
-    let currentText = text;
+async function getTextAtTimestampAsync(text: pxt.workspace.ScriptText, history: pxt.workspace.HistoryFile, timestamp: number): Promise<Project> {
+    const editorVersion = pxt.appTarget.versions.target;
 
-    for (let i = 0; i < history.length; i++) {
-        const index = history.length - 1 - i;
-        const entry = history[index];
-        currentText = workspace.applyDiff(currentText, entry);
-        if (entry.timestamp === timestamp) {
-            const version = index > 0 ? history[index - 1].editorVersion : entry.editorVersion;
+    if (timestamp < 0) return { files: text, editorVersion };
 
-            // Attempt to update the version in pxt.json
-            try {
-                const config = JSON.parse(currentText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                if (config.targetVersions) {
-                    config.targetVersions.target = version;
-                }
-                currentText[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+    const snapshot = history.snapshots.find(s => s.timestamp === timestamp)
+    if (snapshot) {
+        return patchPxtJson(pxt.workspace.applySnapshot(text, snapshot.text), snapshot.editorVersion);
+    }
+
+    const share = history.shares.find(s => s.timestamp === timestamp);
+    if (share) {
+        try {
+            text = await pxt.Cloud.downloadScriptFilesAsync(share.id);
+            return patchPxtJson(text, share.editorVersion)
+        }
+        catch (e) {
+            if (!history.entries.some(e => e.timestamp === timestamp)) {
+                // ERROR
             }
-            catch (e) {
-            }
-
-            break;
         }
     }
 
-    return currentText;
+    let currentText = text;
+
+    for (let i = 0; i < history.entries.length; i++) {
+        const index = history.entries.length - 1 - i;
+        const entry = history.entries[index];
+        currentText = workspace.applyDiff(currentText, entry);
+        if (entry.timestamp === timestamp) {
+            const version = index > 0 ? history.entries[index - 1].editorVersion : entry.editorVersion;
+            return patchPxtJson(currentText, version)
+        }
+    }
+
+    return { files: currentText, editorVersion };
+}
+
+function patchPxtJson(text: pxt.workspace.ScriptText, editorVersion: string): Project {
+    text = {...text};
+
+    // Attempt to update the version in pxt.json
+    try {
+        const config = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        if (config.targetVersions) {
+            config.targetVersions.target = editorVersion;
+        }
+        text[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+    }
+    catch (e) {
+    }
+
+    return {
+        files: text,
+        editorVersion
+    };
 }
 
 function formatTime(time: number) {
@@ -407,4 +413,92 @@ function isToday(time: number) {
     return now.getFullYear() === date.getFullYear() &&
         now.getMonth() === date.getMonth() &&
         now.getDate() == date.getDate();
+}
+
+function getTimelineEntries(history: pxt.workspace.HistoryFile): TimelineEntry[] {
+    const buckets: {[index: string]: TimeEntry[]} = {};
+
+    const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff") => {
+        const date = new Date(timestamp);
+        const key = new Date(date.toLocaleDateString(
+            pxt.U.userLanguage(),
+            {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric"
+            }
+        )).getTime();
+
+        if (!buckets[key]) {
+            buckets[key] = [];
+        }
+
+        buckets[key].push({
+            label: formatTime(timestamp),
+            timestamp,
+            kind
+        });
+    }
+
+    for (const entry of history.entries) {
+        createTimeEntry(entry.timestamp, "diff");
+    }
+
+    for (const entry of history.snapshots) {
+        createTimeEntry(entry.timestamp, "snapshot");
+    }
+
+    const sortedBuckets = Object.keys(buckets).sort((a, b) => parseInt(b) - parseInt(a));
+    for (const bucketKey of sortedBuckets) {
+        const bucket = buckets[bucketKey];
+        const deduped: TimeEntry[] = [];
+
+        // Deduplicate entries that exist in the same minute and sort
+        for (const entry of bucket) {
+            const eIndex = deduped.findIndex(e => e.label === entry.label);
+            const existing = deduped[eIndex];
+
+            if (existing) {
+                // We generally prefer snapshots to diffs. Otherwise take the latest
+                if (existing.kind === entry.kind) {
+                    if (entry.timestamp > existing.timestamp) {
+                        deduped.splice(eIndex, 1, entry);
+                    }
+                }
+                else if (existing.kind === "snapshot") {
+                    continue;
+                }
+                else if (existing.kind === "diff") {
+                    deduped.splice(eIndex, 1, entry);
+                }
+            }
+            else {
+                deduped.push(entry);
+            }
+        }
+
+        deduped.sort((a, b) => b.timestamp - a.timestamp);
+        buckets[bucketKey] = deduped;
+    }
+
+    // Always add an entry for "now"
+    const nowEntry: TimeEntry = {
+        label: lf("Now"),
+        timestamp: -1,
+        kind: "snapshot"
+    };
+
+    if (!sortedBuckets.length || !isToday(parseInt(sortedBuckets[0]))) {
+        buckets[Date.now()] = [nowEntry]
+    }
+    else {
+        buckets[sortedBuckets[0]].unshift(nowEntry)
+    }
+
+    return sortedBuckets.map(key => (
+        {
+            label: formatDate(parseInt(key)),
+            entries: buckets[key]
+        } as TimelineEntry
+    ))
 }
