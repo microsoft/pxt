@@ -40,7 +40,7 @@ type FrameState = "loading" | "loaded" | "loading-project" | "loaded-project";
 export const TimeMachine = (props: TimeMachineProps) => {
     const { text, history, onProjectLoad, onProjectCopy } = props;
 
-    // undefind here is a standin for "now"
+    // undefined here is a standin for "now"
     const [selected, setSelected] = React.useState<TimeEntry>(undefined);
     const [loading, setLoading] = React.useState<FrameState>("loading");
     const [entries, setEntries] = React.useState(getTimelineEntries(history));
