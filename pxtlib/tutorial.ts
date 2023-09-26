@@ -458,22 +458,38 @@ ${code}
     }
 
 
-    export function parseCachedTutorialInfo(json: string, id?: string) {
+    export async function parseCachedTutorialInfo(json: string, id?: string) {
         let cachedInfo = pxt.Util.jsonTryParse(json) as pxt.Map<pxt.BuiltTutorialInfo>;
-        if (!cachedInfo) return Promise.resolve();
+        if (!cachedInfo) return;
 
-        return pxt.BrowserUtils.tutorialInfoDbAsync()
-            .then(db => {
-                if (id && cachedInfo[id]) {
-                    const info = cachedInfo[id];
-                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.snippetBlocks, info.hash, info.highlightBlocks, info.validateBlocks);
-                } else {
-                    for (let key of Object.keys(cachedInfo)) {
-                        const info = cachedInfo[key];
-                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.snippetBlocks, info.hash, info.highlightBlocks, info.validateBlocks);
-                    }
+        try {
+            const db = await pxt.BrowserUtils.tutorialInfoDbAsync();
+            const tryCacheWrite = async (key: string) => {
+                const info = cachedInfo[key];
+                if (info.usedBlocks && info.hash) {
+                    // TODO should we be awaiting here?
+                    // Previously wasn't but check, a few writes not be bad.
+                    await db.setWithHashAsync(
+                        key,
+                        info.snippetBlocks,
+                        info.hash,
+                        info.highlightBlocks,
+                        info.validateBlocks
+                    );
                 }
-            }).catch((err) => { })
+            }
+
+            if (id && cachedInfo[id]) {
+                await tryCacheWrite(id);
+            } else {
+                for (let key of Object.keys(cachedInfo)) {
+                    await tryCacheWrite(key);
+                }
+            }
+        } catch (e) {
+            // ignore cache write failures
+            pxt.debug("Failed to cache tutorial info, continuing");
+        }
     }
 
     export function resolveLocalizedMarkdown(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {

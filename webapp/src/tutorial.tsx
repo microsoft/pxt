@@ -29,121 +29,150 @@ interface ITutorialBlocks {
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox.
  */
-export function getUsedBlocksAsync(code: string[], id: string, language?: string, skipCache = false): Promise<ITutorialBlocks> {
-    if (!code) return Promise.resolve(undefined);
+export async function getUsedBlocksAsync(code: string[], id: string, language?: string, skipCache = false): Promise<ITutorialBlocks> {
+    if (!code)
+        return undefined;
 
     // check to see if usedblocks has been prebuilt. this is hashed on the tutorial code + pxt version + target version
     if (pxt.appTarget?.tutorialInfo && !skipCache) {
         const hash = pxt.BrowserUtils.getTutorialCodeHash(code);
         if (pxt.appTarget.tutorialInfo[hash]) {
             pxt.tickEvent(`tutorial.usedblocks.cached`, { tutorial: id });
-            return Promise.resolve(pxt.appTarget.tutorialInfo[hash]);
+            return pxt.appTarget.tutorialInfo[hash];
         }
     }
 
-    return pxt.BrowserUtils.tutorialInfoDbAsync()
-        .then(db => db.getAsync(id, code)
-            .then(entry => {
-                if (entry?.blocks && Object.keys(entry.blocks).length > 0 && !skipCache) {
-                    pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: id });
-                    // populate snippets if usedBlocks are present, but snippets are not
-                    if (!entry?.snippets) getUsedBlocksInternalAsync(code, id, language, db, skipCache);
-                    return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks, highlightBlocks: entry.highlightBlocks, validateBlocks: entry.validateBlocks });
-                } else {
-                    return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
-                }
-            })
-            .catch((err) => {
-                // fall back to full blocks decompile on error
-                return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
-            })
-        ).catch((err) => {
-            // fall back to full blocks decompile on error
-            return getUsedBlocksInternalAsync(code, id, language, null, skipCache);
-        })
+    const db = await getTutorialDB();
+    const getUsedBlocks = async () => {
+        try {
+            const usedBlocks = getUsedBlocksInternalAsync(code, id, language, db, skipCache);
+            return usedBlocks;
+        } catch (e) {
+            pxt.reportException(e);
+            // TODO jowunder: should this throw or just undefined? see callsites to determine / validate handling
+            throw new Error(`Failed to decompile tutorial`);
+        }
+    }
+    if (db) {
+        try {
+            const entry = await db.getAsync(id, code);
+            if (!skipCache && entry?.blocks && Object.keys(entry.blocks).length > 0) {
+                pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: id });
+                // TODO jowunder ... what is this doing? This is mirrored over from promise chain but doesn't make sense right away.
+                // is entry mutated here? (not awaiting / returning it?)
+                // It seems like it's just calling to get them cached but then they still wouldn't be present in the rturned value
+                // unless the same entry.snippets is mutated
+
+                // populate snippets if usedBlocks are present, but snippets are not
+                if (!entry?.snippets)
+                    getUsedBlocks(); /** TODO above is referring to this, probably return would make sense? **/
+                return ({
+                    snippetBlocks: entry.snippets,
+                    usedBlocks: entry.blocks,
+                    highlightBlocks: entry.highlightBlocks,
+                    validateBlocks: entry.validateBlocks,
+                });
+            }
+        } catch (e) {
+            pxt.debug("Failed to read from tutorial info db")
+        }
+    }
+
+    // fall back to full blocks decompile
+    return getUsedBlocks();
+
+    async function getTutorialDB() {
+        try {
+            const db = await pxt.BrowserUtils.tutorialInfoDbAsync();
+            return db;
+        } catch (e) {
+            pxt.debug("Failed to load tutorial info db");
+            return undefined;
+        }
+    }
 }
 
-function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<ITutorialBlocks> {
+async function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<ITutorialBlocks> {
     const snippetBlocks: pxt.Map<pxt.Map<number>> = {};
     const usedBlocks: pxt.Map<number> = {};
     const highlightBlocks: pxt.Map<pxt.Map<number>> = {};
     const validateBlocks: pxt.Map<pxt.Map<string[]>> = {};
-    return compiler.getBlocksAsync()
-        .then(blocksInfo => {
-            pxt.blocks.initializeAndInject(blocksInfo);
-            if (language == "python") {
-                return compiler.decompilePySnippetstoXmlAsync(code);
+
+    const blocksInfo = await compiler.getBlocksAsync();
+    pxt.blocks.initializeAndInject(blocksInfo);
+
+    const xml = await (language === "python"
+        ? compiler.decompilePySnippetstoXmlAsync(code)
+        : compiler.decompileSnippetstoXmlAsync(code));
+    if (xml?.length > 0) {
+        let headless: Blockly.Workspace;
+        for (let i = 0; i < xml.length; i++) {
+            const blocksXml = xml[i];
+            const snippetHash = pxt.BrowserUtils.getTutorialCodeHash([code[i]]);
+
+            headless = pxt.blocks.loadWorkspaceXml(blocksXml, false, { keepMetaComments: true });
+            if (!headless) {
+                pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
+                throw new Error("blocksXml failed to load");
             }
-            return compiler.decompileSnippetstoXmlAsync(code);
-        }).then(xml => {
-            if (xml?.length > 0) {
-                let headless: Blockly.Workspace;
-                for (let i = 0; i < xml.length; i++) {
-                    const blocksXml = xml[i];
-                    const snippetHash = pxt.BrowserUtils.getTutorialCodeHash([code[i]]);
-
-                    headless = pxt.blocks.loadWorkspaceXml(blocksXml, false, { keepMetaComments: true });
-                    if (!headless) {
-                        pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
-                        throw new Error("blocksXml failed to load");
+            const allblocks = headless.getAllBlocks(false);
+            snippetBlocks[snippetHash] = {};
+            highlightBlocks[snippetHash] = {};
+            validateBlocks[snippetHash] = {};
+            for (let bi = 0; bi < allblocks.length; ++bi) {
+                const blk = allblocks[bi];
+                if (blk.type == "typescript_statement") {
+                    pxt.tickEvent(`tutorial.usedblocks.greyblock`, { tutorial: id, code: code[i]?.substring(0, 2000) });
+                } else if (!blk.isShadow()) {
+                    if (!snippetBlocks[snippetHash][blk.type]) {
+                        snippetBlocks[snippetHash][blk.type] = 0;
                     }
-                    const allblocks = headless.getAllBlocks(false);
-                    snippetBlocks[snippetHash] = {};
-                    highlightBlocks[snippetHash] = {};
-                    validateBlocks[snippetHash] = {};
-                    for (let bi = 0; bi < allblocks.length; ++bi) {
-                        const blk = allblocks[bi];
-                        if (blk.type == "typescript_statement") {
-                            pxt.tickEvent(`tutorial.usedblocks.greyblock`, { tutorial: id, code: code[i]?.substring(0, 2000) });
-                        } else if (!blk.isShadow()) {
-                            if (!snippetBlocks[snippetHash][blk.type]) {
-                                snippetBlocks[snippetHash][blk.type] = 0;
-                            }
-                            snippetBlocks[snippetHash][blk.type] = snippetBlocks[snippetHash][blk.type] + 1;
-                            usedBlocks[blk.type] = 1;
-                        }
+                    snippetBlocks[snippetHash][blk.type] = snippetBlocks[snippetHash][blk.type] + 1;
+                    usedBlocks[blk.type] = 1;
+                }
 
-                        let comment = blk.getCommentText();
-                        if (comment && /@highlight/.test(comment)) {
-                            if (!highlightBlocks[snippetHash][blk.type]) {
-                                highlightBlocks[snippetHash][blk.type] = 0;
-                            }
-                            highlightBlocks[snippetHash][blk.type] = highlightBlocks[snippetHash][blk.type] + 1;
-                        }
-                        while (comment && /@\S+/.test(comment)) {
-                            const marker = comment.match(/@(\S+)/)[1];
-                            comment = comment.replace(/@\S+/, "");
-                            if (!validateBlocks[snippetHash][marker]) {
-                                validateBlocks[snippetHash][marker] = [];
-                            }
-                            validateBlocks[snippetHash][marker].push(blk.type);
-                        }
+                let comment = blk.getCommentText();
+                if (comment && /@highlight/.test(comment)) {
+                    if (!highlightBlocks[snippetHash][blk.type]) {
+                        highlightBlocks[snippetHash][blk.type] = 0;
                     }
+                    highlightBlocks[snippetHash][blk.type] = highlightBlocks[snippetHash][blk.type] + 1;
                 }
-
-                headless?.dispose();
-
-                if (pxt.options.debug) {
-                    pxt.debug(JSON.stringify(snippetBlocks, null, 2));
+                while (comment && /@\S+/.test(comment)) {
+                    const marker = comment.match(/@(\S+)/)[1];
+                    comment = comment.replace(/@\S+/, "");
+                    if (!validateBlocks[snippetHash][marker]) {
+                        validateBlocks[snippetHash][marker] = [];
+                    }
+                    validateBlocks[snippetHash][marker].push(blk.type);
                 }
-
-                try {
-                    if (db && !skipCache) db.setAsync(id, snippetBlocks, code, highlightBlocks, validateBlocks);
-                }
-                catch (e) {
-                    // Don't fail if the indexeddb fails, but log it
-                    pxt.log("Unable to cache used blocks in DB");
-                }
-                pxt.tickEvent(`tutorial.usedblocks.computed`, { tutorial: id });
-            } else if (code?.length > 0) {
-                throw new Error("Failed to decompile");
             }
+        }
 
-            return { snippetBlocks, usedBlocks, highlightBlocks, validateBlocks };
-        }).catch((e) => {
-            pxt.reportException(e);
-            throw new Error(`Failed to decompile tutorial`);
-        });
+        headless?.dispose();
+
+        if (pxt.options.debug) {
+            pxt.debug(JSON.stringify(snippetBlocks, null, 2));
+        }
+
+        try {
+            if (db && !skipCache) db.setAsync(id, snippetBlocks, code, highlightBlocks, validateBlocks);
+        }
+        catch (e) {
+            // Don't fail if the indexeddb fails, but log it
+            pxt.log("Unable to cache used blocks in DB");
+        }
+        pxt.tickEvent(`tutorial.usedblocks.computed`, { tutorial: id });
+    } else if (code?.length > 0) {
+        throw new Error("Failed to decompile");
+    }
+
+    return {
+        snippetBlocks,
+        usedBlocks,
+        highlightBlocks,
+        validateBlocks
+    };
 }
 
 export class TutorialMenu extends data.Component<ISettingsProps, {}> {
