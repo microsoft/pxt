@@ -1642,20 +1642,6 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         this.setState({ visible: true, skipDownload: !!skipDownload });
     }
 
-    fetchGallery(): pxt.CodeCard[] {
-        const path = "/hardware";
-        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
-        if (res) {
-            if (res instanceof Error) {
-                // ignore
-            } else {
-                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
-                    .filter(c => !!c.variant);
-            }
-        }
-        return this.prevGalleries || [];
-    }
-
     private setHwVariant(cfg: pxt.PackageConfig, card: pxt.CodeCard) {
         pxt.tickEvent("projects.choosehwvariant", {
             hwid: cfg.name,
@@ -1682,17 +1668,19 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             const savedV = v
             v.card.onClick = () => this.setHwVariant(savedV, null)
         }
-        let cards = this.fetchGallery();
-        for (const card of cards) {
-            const savedV = variants.find(variant => variant.name == card.variant);
-            const savedCard = card;
-            if (savedV)
-                card.onClick = () => this.setHwVariant(savedV, savedCard);
-            else {
-                pxt.reportError("hw", "invalid variant");
+
+        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
+        const cards = targetConfig?.hardwareOptions?.map(el => {
+            const displayCard = { ...el };
+            const matchingVariant = variants.find(variant => variant.name === displayCard.variant);
+            if (!matchingVariant) {
+                // Variant may be experimental hw, ignore this option
+                return undefined;
             }
-        }
-        cards = cards.filter(card => !!card.onClick);
+
+            displayCard.onClick = () => this.setHwVariant(matchingVariant, displayCard);
+            return displayCard;
+        }).filter(el => !!el);
 
         return (
             <sui.Modal isOpen={visible} className="hardwaredialog" size="large"
@@ -1702,7 +1690,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             >
                 <div className="group">
                     <div className="ui cards centered" role="listbox">
-                        {cards.map(card =>
+                        {cards?.map(card =>
                             <codecard.CodeCardView
                                 key={'card' + card.name}
                                 name={card.name}
