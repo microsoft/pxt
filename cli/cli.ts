@@ -1919,6 +1919,13 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
                 targetStrings[`{id:extension-tag}${tag}`] = tag;
             }
         }
+
+        const hardwareOptions = targetConfig?.hardwareOptions;
+        for (const opt of (hardwareOptions ?? [])) {
+            // Not translating hardware name, as that is typically a brand name / etc.
+            if (opt.description)
+                targetStrings[`{id:hardware-description}${opt.description}`] = opt.description;
+        }
     }
     // extract strings from editor
     ["editor", "fieldeditors", "cmds"]
