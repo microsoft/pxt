@@ -1849,7 +1849,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     walkDocs(theme.docMenu);
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
-        if (targetConfig && targetConfig.galleries) {
+        if (targetConfig?.galleries) {
             const docsRoot = nodeutil.targetDir;
             let gcards: pxt.CodeCard[] = [];
             let tocmd: string =
@@ -1899,6 +1899,25 @@ ${JSON.stringify(gcards, null, 4)}
 ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
 
 `, { encoding: "utf8" });
+        }
+        const multiplayerGames = targetConfig?.multiplayer?.games;
+        for (const game of (multiplayerGames ?? [])) {
+            if (game.title) targetStrings[`{id:game-title}${game.title}`] = game.title;
+            if (game.subtitle) targetStrings[`{id:game-subtitle}${game.subtitle}`] = game.subtitle;
+        }
+
+        const approvedRepoLib = targetConfig?.packages?.approvedRepoLib;
+        for (const [extension, repoData] of Object.entries(approvedRepoLib ?? {})) {
+            for (const tag of (repoData.tags ?? [])) {
+                targetStrings[`{id:extension-tag}${tag}`] = tag;
+            }
+        }
+
+        const builtinExtensionLib = targetConfig?.packages?.builtinExtensionsLib;
+        for (const [extension, repoData] of Object.entries(builtinExtensionLib ?? {})) {
+            for (const tag of (repoData.tags ?? [])) {
+                targetStrings[`{id:extension-tag}${tag}`] = tag;
+            }
         }
     }
     // extract strings from editor
