@@ -1,5 +1,6 @@
+import { nanoid } from "nanoid";
 import * as Constants from "../Constants";
-import { GameList, HighScores } from "../Types";
+import { GamesById, AllHighScores } from "../Types";
 
 function getValue(key: string, defaultValue?: string): string | undefined {
     return localStorage.getItem(key) || defaultValue;
@@ -25,24 +26,57 @@ function setJsonValue(key: string, val: any) {
     setValue(key, JSON.stringify(val));
 }
 
-function getAddedGames(): GameList {
-    return getJsonValue(Constants.addedGamesLocalStorageKey, <GameList>{})!;
+function getUserAddedGames(): GamesById {
+    let games = getJsonValue<GamesById>(Constants.addedGamesLocalStorageKey);
+    if (!games) {
+        games = getJsonValue(Constants.legacy_addedGamesLocalStorageKey);
+        delValue(Constants.legacy_addedGamesLocalStorageKey);
+    }
+    if (!games) {
+        games = {};
+    }
+    return games;
 }
 
-function setAddedGames(games: GameList) {
+function setUserAddedGames(games: GamesById) {
     setJsonValue(Constants.addedGamesLocalStorageKey, games);
 }
 
-function getHighScores(): HighScores {
-    return getJsonValue(Constants.highScoresLocalStorageKey, <HighScores>{})!;
+function getHighScores(): AllHighScores {
+    let scores = getJsonValue<AllHighScores>(
+        Constants.highScoresLocalStorageKey
+    );
+    if (!scores) {
+        scores = getJsonValue(Constants.legacy_highScoresLocalStorageKey);
+        delValue(Constants.legacy_highScoresLocalStorageKey);
+    }
+    if (!scores) {
+        scores = {};
+    }
+    // Fixup old scores with no ids.
+    let hasLegacyScores = false;
+    for (const gameId of Object.keys(scores)) {
+        const gameScores = scores[gameId];
+        for (const score of gameScores) {
+            if (!score.id) {
+                score.id = nanoid();
+                hasLegacyScores = true;
+            }
+        }
+    }
+    if (hasLegacyScores) {
+        setHighScores(scores);
+    }
+    return scores;
 }
 
-function setHighScores(scores: HighScores) {
+function setHighScores(scores: AllHighScores) {
     setJsonValue(Constants.highScoresLocalStorageKey, scores);
 }
 
 function resetHighScores() {
     delValue(Constants.highScoresLocalStorageKey);
+    delValue(Constants.legacy_highScoresLocalStorageKey);
 }
 
 function setKioskCode(code: string, expiration: number) {
@@ -51,8 +85,14 @@ function setKioskCode(code: string, expiration: number) {
 }
 
 function getKioskCode(): { code: string; expiration: number } | undefined {
-    const code = getValue(Constants.kioskCodeStorageKey);
-    const expiration = getValue(Constants.kioskCodeExpirationStorageKey);
+    let code = getValue(Constants.kioskCodeStorageKey);
+    let expiration = getValue(Constants.kioskCodeExpirationStorageKey);
+    if (!code) {
+        code = getValue(Constants.legacy_kioskCodeStorageKey);
+        expiration = getValue(Constants.legacy_kioskCodeExpirationStorageKey);
+        delValue(Constants.legacy_kioskCodeStorageKey);
+        delValue(Constants.legacy_kioskCodeExpirationStorageKey);
+    }
     if (code && expiration) {
         return {
             code,
@@ -65,6 +105,8 @@ function getKioskCode(): { code: string; expiration: number } | undefined {
 function clearKioskCode() {
     delValue(Constants.kioskCodeStorageKey);
     delValue(Constants.kioskCodeExpirationStorageKey);
+    delValue(Constants.legacy_kioskCodeStorageKey);
+    delValue(Constants.legacy_kioskCodeExpirationStorageKey);
 }
 
 export {
@@ -73,8 +115,8 @@ export {
     delValue,
     getJsonValue,
     setJsonValue,
-    getAddedGames,
-    setAddedGames,
+    getUserAddedGames,
+    setUserAddedGames,
     getHighScores,
     setHighScores,
     resetHighScores,

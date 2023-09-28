@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import "../Kiosk.css";
 import { play, stopScan } from "./QrScanner";
-import { addGameToKioskAsync } from "../Services/BackendRequests";
+import { canthrow_addGameToKioskAsync } from "../Services/BackendRequests";
 import { KioskState } from "../Types";
 import { Html5Qrcode } from "html5-qrcode";
 import ErrorModal from "./ErrorModal";
 import { navigate } from "../Transforms/navigate";
+import GenericButton from "./GenericButton";
 
 interface IProps {}
 
@@ -72,7 +72,7 @@ const ScanQR: React.FC<IProps> = ({}) => {
         if (shareId) {
             setLinkError(false);
             try {
-                await addGameToKioskAsync(kioskId, shareId);
+                await canthrow_addGameToKioskAsync(kioskId, shareId);
                 pxt.tickEvent("kiosk.submitGameId.submitSuccess");
                 navigate(KioskState.QrSuccess);
             } catch (error: any) {
@@ -108,8 +108,7 @@ const ScanQR: React.FC<IProps> = ({}) => {
             <div className="scanInstructions">
                 <div className="qrOption">
                     {!scannerVisible && (
-                        <button
-                            className="scanQrButton"
+                        <button className="kioskButton"
                             onClick={renderQrScanner}
                         >
                             Scan QR code

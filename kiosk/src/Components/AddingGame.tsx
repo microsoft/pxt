@@ -1,19 +1,16 @@
 import { useEffect, useState, useContext, useMemo } from "react";
-import configData from "../config.json";
-import "../Kiosk.css";
-import AddGameButton from "./AddGameButton";
+import GenericButton from "./GenericButton";
 import { QRCodeSVG } from "qrcode.react";
-import { playSoundEffect } from "../Services/SoundEffectService";
 import { AppStateContext } from "../State/AppStateContext";
-import { gamepadManager } from "../Services/GamepadManager";
 import { showMainMenu } from "../Transforms/showMainMenu";
 import { generateKioskCodeAsync } from "../Services/AddingGamesService";
+import { useOnControlPress } from "../Hooks";
+import * as GamepadManager from "../Services/GamepadManager";
 
 interface IProps {}
 
 const AddingGame: React.FC<IProps> = ({}) => {
     const { state: kiosk } = useContext(AppStateContext);
-    const [menuButtonSelected, setMenuButtonState] = useState(true);
     const [generatingKioskCode, setGeneratingKioskCode] = useState(false);
 
     const kioskTimeOutInMinutes = useMemo(() => {
@@ -30,31 +27,18 @@ const AddingGame: React.FC<IProps> = ({}) => {
         return true;
     };
 
-    // Input loop
-    useEffect(() => {
-        const updateLoop = () => {
-            if (!menuButtonSelected && gamepadManager.isDownPressed()) {
-                setMenuButtonState(true);
-                playSoundEffect("switch");
-            }
-            if (
-                (menuButtonSelected && gamepadManager.isAButtonPressed()) ||
-                gamepadManager.isBButtonPressed()
-            ) {
-                pxt.tickEvent("kiosk.toMainMenu");
-                showMainMenu();
-                playSoundEffect("select");
-            }
-        };
+    const gotoMainMenu = () => {
+        pxt.tickEvent("kiosk.toMainMenu");
+        showMainMenu();
+    };
 
-        updateLoop();
-        const intervalId = setInterval(
-            updateLoop,
-            configData.GamepadPollLoopMilli
-        );
-
-        return () => clearInterval(intervalId);
-    }, [menuButtonSelected]);
+    // Handle Escape button press
+    useOnControlPress(
+        [],
+        gotoMainMenu,
+        GamepadManager.GamepadControl.EscapeButton,
+        GamepadManager.GamepadControl.BButton
+    );
 
     // Generate kiosk code
     useEffect(() => {
@@ -70,7 +54,7 @@ const AddingGame: React.FC<IProps> = ({}) => {
 
             setGeneratingKioskCode(true);
 
-            generateKioskCodeAsync(generatedCodeDuration).then(newKioskCode => {
+            generateKioskCodeAsync(generatedCodeDuration).then(() => {
                 setGeneratingKioskCode(false);
             });
         };
@@ -95,7 +79,7 @@ const AddingGame: React.FC<IProps> = ({}) => {
                             onClick={kioskLinkClicked}
                             href={kioskUrl}
                         >
-                            {kioskUrl}
+                            <div className="kioskLinkContent">{kioskUrl}</div>
                         </a>
                     </div>
                 </div>
@@ -127,13 +111,11 @@ const AddingGame: React.FC<IProps> = ({}) => {
                         </li>
                     </ol>
                 </div>
-
-                <div className="QRCodeHolder">{qrDivContent()}</div>
+                {qrDivContent()}
             </div>
-            <AddGameButton
-                selected={menuButtonSelected}
-                content="Return to menu"
-            />
+            <GenericButton autofocus={true} onClick={gotoMainMenu}>
+                {"Return to menu"}
+            </GenericButton>
         </div>
     );
 };

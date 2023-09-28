@@ -17,6 +17,11 @@ function getSelectedGameIndex(): number | undefined {
     return state.allGames.findIndex(game => game.id === state.selectedGameId);
 }
 
+function getSelectedGameId(): string | undefined {
+    const { state } = stateAndDispatch();
+    return state.selectedGameId;
+}
+
 function getBuiltGame(gameId: string | undefined): BuiltSimJSInfo | undefined {
     const { state } = stateAndDispatch();
     if (!gameId) {
@@ -25,4 +30,10 @@ function getBuiltGame(gameId: string | undefined): BuiltSimJSInfo | undefined {
     return state.builtGamesCache[gameId];
 }
 
-export { stateAndDispatch, getHighScores, getSelectedGameIndex, getBuiltGame };
+export {
+    stateAndDispatch,
+    getHighScores,
+    getSelectedGameIndex,
+    getSelectedGameId,
+    getBuiltGame,
+};

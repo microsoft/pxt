@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import "../Kiosk.css";
 
 interface IProps {
     errorType: string;

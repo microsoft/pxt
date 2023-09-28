@@ -5,27 +5,31 @@ import { exitGame } from "./exitGame";
 import { exitToEnterHighScore } from "./exitToEnterHighScore";
 
 export function gameOver(skipHighScore?: boolean): void {
-    const { state } = stateAndDispatch();
-    if (state.kioskState !== KioskState.PlayingGame) {
-        return;
-    }
+    // This is a hack to make sure all reducer actions have finished before referencing state. Otherwise, the state object may be out of date.
+    // In this instance, `mostRecentScores` may not be populated yet, so we need to wait until the next frame to check it.
+    setTimeout(() => {
+        const { state } = stateAndDispatch();
+        if (state.kioskState !== KioskState.PlayingGame) {
+            return;
+        }
 
-    if (state.lockedGameId) {
-        launchGame(state.lockedGameId);
-        return;
-    }
+        if (state.lockedGameId) {
+            launchGame(state.lockedGameId);
+            return;
+        }
 
-    const selectedGame = state.allGames.find(
-        g => g.id === state.selectedGameId
-    );
+        const selectedGame = state.allGames.find(
+            g => g.id === state.selectedGameId
+        );
 
-    if (
-        !skipHighScore &&
-        selectedGame?.highScoreMode !== "None" &&
-        state.mostRecentScores?.length
-    ) {
-        exitToEnterHighScore();
-    } else {
-        exitGame(KioskState.GameOver);
-    }
+        if (
+            !skipHighScore &&
+            selectedGame?.highScoreMode !== "None" &&
+            state.mostRecentScores?.length
+        ) {
+            exitToEnterHighScore();
+        } else {
+            exitGame(KioskState.GameOver);
+        }
+    }, 1);
 }
