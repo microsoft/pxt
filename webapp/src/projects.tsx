@@ -1695,7 +1695,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 key={'card' + card.name}
                                 name={card.name}
                                 ariaLabel={card.name}
-                                description={card.description}
+                                description={pxt.Util.rlf(`{id:hardware-description}${card.description}`)}
                                 imageUrl={card.imageUrl}
                                 learnMoreUrl={card.url}
                                 onClick={card.onClick}

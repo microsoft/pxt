@@ -524,7 +524,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         {categoryNames.map(c =>
                             <Button title={pxt.Util.rlf(c)}
                                 key={c}
-                                label={pxt.Util.rlf(c)}
+                                label={pxt.Util.rlf(`{id:extension-tag}${c}`)}
                                 onClick={() => handleCategoryClick(c)}
                                 onKeydown={() => handleCategoryClick}
                                 className={"extension-tag " + (selectedTag == c ? "selected" : "")}
