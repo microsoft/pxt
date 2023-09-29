@@ -68,7 +68,7 @@ button, a, input[type="submit"] {
     background-repeat: no-repeat;
     background-color: var(--black-color);
     background-attachment: fixed;
-    transition: background 2s;
+    transition: background 1s;
     z-index: -100;
 }
 
