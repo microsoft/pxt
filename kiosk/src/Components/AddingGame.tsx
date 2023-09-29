@@ -111,6 +111,7 @@ const AddingGame: React.FC<IProps> = ({}) => {
                         </li>
                     </ol>
                 </div>
+                <div style={{ flexGrow: 1 }} />
                 {qrDivContent()}
             </div>
             <GenericButton autofocus={true} onClick={gotoMainMenu}>
