@@ -447,7 +447,7 @@ h2 {
 }
 
 .linkOption {
-    border-color: var(--button-primary-color);
+    border-color: var(--button-border-color);
     border-style: solid;
     border-radius: 1.5rem;
     padding: 2rem;
@@ -460,7 +460,7 @@ h2 {
 
 .linkOption input[type="url"] {
     margin-top: 1rem;
-    border-color: var(--button-primary-color);
+    border-color: var(--button-border-color);
     width: 67%;
     height: 2em;
     border-radius: 0.45em;
