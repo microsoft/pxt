@@ -46,5 +46,4 @@ If you have any questions or issues, please contact [GitHub Education Support](h
 
 * I'm still having issues, how can I get help?
 
->Try posting your question to the GitHub Education Community Forum. There are many people who can help you there!
-If there is a technical issue, or there is incorrect school information listed, please contact GitHub Education Support.
+>Try posting your question to the [GitHub Education Community Forum](https://github.com/orgs/community/discussions/categories/github-education). There are many people who can help you there! If there is a technical issue, or there is incorrect school information listed, please contact [GitHub Education Support](https://support.github.com/request/education).
