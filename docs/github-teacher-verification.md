@@ -24,8 +24,6 @@ Fill out your school information in the form and upload proof of your school aff
 
 ![Approval email for educator account](/static/github-teacher/github-educator-approved-email.png)
 
-If you have any questions or issues, please contact [GitHub Education Support](https://support.github.com/request/education).
-
 ## Support and Frequently Asked Questions
 
 * It won’t verify me, what can I do?
