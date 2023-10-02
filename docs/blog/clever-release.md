@@ -3,7 +3,9 @@ Just in time for the fall semester, MakeCode has integrated with [Clever](https:
 
 Today, you can find our apps [Microsoft MakeCode Arcade](https://clever.com/library/app/makecode-arcade) and [Microsoft MakeCode for micro:bit](https://clever.com/library/app/makecode-microbit) by searching for it in the [Clever Library](https://clever.com/library).
 
-![MakeCode Arcade in the Clever Library](/docs/static/blog/clever-release/arcade-app-clever.png)
+Arcade             |  Microbit
+:-------------------------:|:-------------------------:
+![MakeCode Arcade in the Clever Library](/docs/static/blog/clever-release/arcade-app-clever.png)  |  ![Microsoft MakeCode for micro:bit in the Clever Library](/docs/static/blog/clever-release/microbit-app-clever.png)
 
 Authorizing our app means your entire classroom gains instant access to MakeCode Arcade and MakeCode for micro:bit through their Clever account.
 
