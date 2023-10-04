@@ -6,20 +6,27 @@ import { playSoundEffect } from "../Services/SoundEffectService";
 import * as Storage from "../Services/LocalStorage";
 import { removeGame } from "../Transforms/removeGame";
 import { makeNotification } from "../Utils";
+import * as GamepadManager from "../Services/GamepadManager";
 
 export default function AppModal() {
     const { state, dispatch } = useContext(AppStateContext);
 
+    const hideAppModal = () => {
+        GamepadManager.lockControl(GamepadManager.GamepadControl.AButton);
+        GamepadManager.lockControl(GamepadManager.GamepadControl.EscapeButton);
+        dispatch(hideModal());
+    };
+
     const cancelClicked = () => {
         playSoundEffect("select");
-        dispatch(hideModal());
+        hideAppModal();
     };
 
     const deleteConfirmClicked = () => {
         pxt.tickEvent("kiosk.deleteGame.confirmed");
         playSoundEffect("select");
         deleteGame();
-        dispatch(hideModal());
+        hideAppModal();
     };
 
     const selectedGame = state.allGames.find(

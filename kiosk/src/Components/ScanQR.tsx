@@ -5,7 +5,9 @@ import { KioskState } from "../Types";
 import { Html5Qrcode } from "html5-qrcode";
 import ErrorModal from "./ErrorModal";
 import { navigate } from "../Transforms/navigate";
+import { useMakeNavigable } from "../Hooks";
 import GenericButton from "./GenericButton";
+import * as GamepadManager from "../Services/GamepadManager";
 
 interface IProps {}
 
@@ -47,6 +49,12 @@ const ScanQR: React.FC<IProps> = ({}) => {
     useEffect(() => {
         pxt.tickEvent("kiosk.scanQrLoaded");
         initiateQrCode();
+    }, []);
+
+    useEffect(() => {
+        // Disallow keyboard navigation because this page has a text input
+        GamepadManager.setVirtualGamepadsEnabled(false);
+        return () => GamepadManager.setVirtualGamepadsEnabled(true);
     }, []);
 
     const checkUrl = async () => {
@@ -98,6 +106,28 @@ const ScanQR: React.FC<IProps> = ({}) => {
         }
     };
 
+    const [submitRef, setSubmitRef] = useState<HTMLInputElement | null>(null);
+    const handleSubmitRef = (input: HTMLInputElement) => {
+        setSubmitRef(input);
+    };
+    useMakeNavigable(submitRef);
+
+    const [shareLinkRef, setShareLinkRef] = useState<HTMLInputElement | null>(
+        null
+    );
+    const handleShareLinkRef = (input: HTMLInputElement) => {
+        setShareLinkRef(input);
+    };
+    useMakeNavigable(shareLinkRef);
+
+    const [helpLinkRef, setHelpLinkRef] = useState<HTMLAnchorElement | null>(
+        null
+    );
+    const handleHelpLinkRef = (input: HTMLAnchorElement) => {
+        setHelpLinkRef(input);
+    };
+    useMakeNavigable(helpLinkRef);
+
     return (
         <div className="scanQrPage">
             <h2>
@@ -108,21 +138,22 @@ const ScanQR: React.FC<IProps> = ({}) => {
             <div className="scanInstructions">
                 <div className="qrOption">
                     {!scannerVisible && (
-                        <button className="kioskButton"
+                        <GenericButton
+                            className="kioskButton"
                             onClick={renderQrScanner}
                         >
                             Scan QR code
-                        </button>
+                        </GenericButton>
                     )}
                     <div id="qrReader" ref={qrReaderRendered}></div>
                     {scannerVisible && (
                         <div className="scanning">
-                            <button
+                            <GenericButton
                                 className="scanQrButton"
                                 onClick={stopQrScanner}
                             >
                                 Cancel Scan
-                            </button>
+                            </GenericButton>
                             <p className="scanTip">
                                 Tip: Do not use the kiosk's QR code
                             </p>
@@ -139,9 +170,16 @@ const ScanQR: React.FC<IProps> = ({}) => {
                         spellCheck={false}
                         required
                         title="Share Link"
+                        tabIndex={0}
                         onChange={clearStatus}
+                        ref={handleShareLinkRef}
                     />
-                    <input type="submit" onClick={checkUrl} />
+                    <input
+                        type="submit"
+                        tabIndex={0}
+                        onClick={checkUrl}
+                        ref={handleSubmitRef}
+                    />
                     {linkError && (
                         <p className="linkError">
                             Incorrect format for a share link
@@ -153,6 +191,8 @@ const ScanQR: React.FC<IProps> = ({}) => {
                     target="_blank"
                     onClick={clickHelp}
                     href="https://arcade.makecode.com/share"
+                    tabIndex={0}
+                    ref={handleHelpLinkRef}
                 >
                     How do I get a game's share link or QR code?
                 </a>

@@ -2,7 +2,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { classList } from "../Utils";
 import GenericButton from "./GenericButton";
-import { FocusTrap } from "./FocusTrap";
 import { ControlProps } from "../Types/Ui";
 import { useOnControlPress } from "../Hooks";
 import * as NavGrid from "../Services/NavGrid";
@@ -40,7 +39,7 @@ export const Modal = (props: ModalProps) => {
     const classes = classList("common-modal-container", className);
 
     return ReactDOM.createPortal(
-        <FocusTrap className={classes}>
+        <div className={classes}>
             <div id={id} className="common-modal" role="dialog">
                 <div className="common-modal-header">
                     <div id="modal-title" className="common-modal-title">
@@ -58,7 +57,7 @@ export const Modal = (props: ModalProps) => {
                     </div>
                 )}
             </div>
-        </FocusTrap>,
+        </div>,
         parentElement || document.getElementById("root") || document.body
     );
 };

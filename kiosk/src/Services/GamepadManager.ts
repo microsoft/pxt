@@ -112,6 +112,10 @@ class GamepadManager {
     // until released. This is useful to prevent a control from triggering an
     // action immediately upon transitioning to a new UI state.
     locks: ControlLocks = { ...emptyControlLocks() };
+    // Virtual gamepads are keyboard-based input mappings. Some pages may want
+    // to disable this form of navigation due to conflicts with controls like
+    // text inputs.
+    virtualGamepadsEnabled: boolean = true;
     externalKeydownListeners: ((ev: KeyboardEvent) => void)[] = [];
     externalKeyupListeners: ((ev: KeyboardEvent) => void)[] = [];
 
@@ -182,6 +186,10 @@ class GamepadManager {
             listeners.forEach(handler => handler(ev));
             // GamepadManager-originated events should not be handled by
             // GamepadManager itself
+            return;
+        }
+        if (!this.virtualGamepadsEnabled) {
+            // Virtual gamepads are disabled. Do not generate events from keyboard input.
             return;
         }
         let index = 0;
@@ -600,6 +608,10 @@ export function keyboardKeyToGamepadControl(
         }
     }
     return undefined;
+}
+
+export function setVirtualGamepadsEnabled(enabled: boolean) {
+    gamepadManager.virtualGamepadsEnabled = enabled;
 }
 
 export function clear() {

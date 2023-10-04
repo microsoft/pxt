@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import * as GamepadManager from "./GamepadManager";
 import * as RectCache from "./RectCache";
-import { debounce } from "../Utils";
+import { debounce, nodeListToArray } from "../Utils";
 import * as domUtils from "../Utils/domUtils";
 import { playSoundEffect } from "./SoundEffectService";
 import { NavRect } from "../Types";
@@ -21,6 +21,10 @@ const allNavDirections = () => [
 ];
 
 const navGridIdentifierKey = Symbol("navGridIdentifierKey");
+
+const isNavGridElement = (el: HTMLElement | null | undefined): boolean => {
+    return !!(el && (el as any)[navGridIdentifierKey]);
+};
 
 type Navigable = {
     id: string;
@@ -94,8 +98,8 @@ class NavGrid {
 
     popContext() {
         if (this.stack.length > 1) {
-            this.mousingElement = undefined;
-            this.activeElement = undefined
+            this.context.mousingElement = undefined;
+            this.context.activeElement = undefined;
             this.stack.pop();
             if (this.activeElement) {
                 // Focus the previously active element
@@ -154,14 +158,63 @@ class NavGrid {
 
     window_keydownHandler = (ev: KeyboardEvent) => {
         if (ev.key === "Tab") {
-            const el = ev.target as HTMLElement;
-            if (el) {
-                const navigable = this.getNavigableForElement(el);
-                if (navigable) {
-                    //navigable.el.focus();
-                    //ev.preventDefault();
-                    //ev.stopPropagation();
-                }
+            const from = ev.target as HTMLElement;
+            if (ev.shiftKey) this.moveFocus(from, false);
+            else this.moveFocus(from, true);
+            ev.preventDefault();
+            ev.stopPropagation();
+        }
+    };
+
+    isOnScreen = (el: HTMLElement) => {
+        const rect = RectCache.getCachedElementRect(el);
+        const viewport = {
+            top: 0,
+            left: 0,
+            right: window.innerWidth,
+            bottom: window.innerHeight,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            center: {
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2,
+            },
+        };
+        return (
+            rect.left < viewport.right &&
+            rect.right > viewport.left &&
+            rect.top < viewport.bottom &&
+            rect.bottom > viewport.top
+        );
+    };
+
+    getFocusableElements = () => {
+        const navs = Array.from(this.navigables.values());
+        return nodeListToArray(
+            document.querySelectorAll(`[tabindex]:not([tabindex="-1"])`)
+        )
+            .map(v => v as HTMLElement)
+            .filter(v => navs.find(n => n.el === v) && this.isOnScreen(v));
+    };
+
+    moveFocus = (from: HTMLElement, forward: boolean) => {
+        const focusable = this.getFocusableElements();
+
+        if (!focusable.length) return;
+
+        const index = focusable.indexOf(from);
+
+        if (forward) {
+            if (index === focusable.length - 1) {
+                focusable[0].focus();
+            } else {
+                focusable[index + 1].focus();
+            }
+        } else {
+            if (index === 0) {
+                focusable[focusable.length - 1].focus();
+            } else {
+                focusable[Math.max(index - 1, 0)].focus();
             }
         }
     };
@@ -466,7 +519,7 @@ export function registerNavigable(
     if (!el) {
         return () => {};
     }
-    if (Object.hasOwnProperty.call(el, navGridIdentifierKey)) {
+    if (isNavGridElement(el)) {
         console.warn("Navigable already registered");
         return () => {};
     }

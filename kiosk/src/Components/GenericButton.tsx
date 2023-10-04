@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useMakeNavigable } from "../Hooks";
 import { classList } from "../Utils";
 import * as GamepadManager from "../Services/GamepadManager";
@@ -22,8 +22,8 @@ const GenericButton: React.FC<IProps> = ({
 }) => {
     const [myRef, setMyRef] = useState<HTMLElement | null>(null);
 
-    const handleKeyDown = (ev: React.KeyboardEvent) => {
-        if (GamepadManager.isGamepadManagerEvent(ev)) {
+    const handleKeyDown = useCallback((ev: KeyboardEvent) => {
+        if (ev.target !== myRef) {
             return;
         }
         const control = GamepadManager.keyboardKeyToGamepadControl(ev.key);
@@ -32,7 +32,7 @@ const GenericButton: React.FC<IProps> = ({
             ev.stopPropagation();
             onClick?.();
         }
-    };
+    }, [myRef]);
 
     const handleClick = (ev: React.MouseEvent) => {
         onClick?.(ev);
@@ -49,13 +49,17 @@ const GenericButton: React.FC<IProps> = ({
         className
     );
 
+    useEffect(() => {
+        GamepadManager.addKeydownListener(handleKeyDown);
+        return () => GamepadManager.removeKeydownListener(handleKeyDown);
+    })
+
     return (
         <>
             <button
                 className={classes}
                 tabIndex={0}
                 onClick={handleClick}
-                onKeyDown={handleKeyDown}
                 ref={handleRef}
             >
                 {children}

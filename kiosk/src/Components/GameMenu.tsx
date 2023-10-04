@@ -2,9 +2,9 @@ import { useContext, useMemo } from "react";
 import { GameData, makeDeleteGameModal } from "../Types";
 import { AppStateContext } from "../State/AppStateContext";
 import GenericButton from "./GenericButton";
-import { playSoundEffect } from "../Services/SoundEffectService";
 import * as NavGrid from "../Services/NavGrid";
 import { showModal } from "../State/Actions";
+import * as GamepadManager from "../Services/GamepadManager";
 
 export interface IProps {}
 
@@ -21,6 +21,7 @@ export const GameMenu: React.FC<IProps> = () => {
         ev?.preventDefault();
         ev?.stopPropagation();
         if (game) {
+            GamepadManager.lockControl(GamepadManager.GamepadControl.AButton);
             dispatch(showModal(makeDeleteGameModal(game.id)));
         }
     };
