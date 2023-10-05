@@ -87,7 +87,7 @@
     "marked": "0.3.19",
     "mocha": "5.1.0",
     "pngjs": "3.4.0",
-    "postcss": "6.0.21",
+    "postcss": "8.4.31",
     "promise.prototype.finally": "^3.1.2",
     "puppeteer": "13.0.1",
     "request": "2.88.0",
