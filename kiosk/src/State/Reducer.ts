@@ -72,27 +72,45 @@ export default function reducer(state: AppState, action: Action): AppState {
         }
         case "REMOVE_GAME": {
             const allGames = state.allGames.filter(g => g.id !== action.gameId);
-            return {
-                ...state,
-                allGames,
-            };
+            const selectedGameIndex = state.allGames.findIndex(
+                g => g.id === action.gameId
+            );
+            if (selectedGameIndex !== -1) {
+                // Try to select the next game in the list, or the previous game if there is no next game.
+                let selectedGameId = undefined;
+                if (selectedGameIndex < allGames.length - 1) {
+                    selectedGameId = allGames[selectedGameIndex].id;
+                } else if (allGames.length > 0) {
+                    selectedGameId = allGames[allGames.length - 1].id;
+                }
+                return {
+                    ...state,
+                    selectedGameId,
+                    allGames,
+                };
+            } else {
+                return state;
+            }
         }
         case "SAVE_HIGH_SCORE": {
-            const { gameId, score } = action;
+            const { gameId, highScore } = action;
             const allHighScores = { ...state.allHighScores };
             const highScores = allHighScores[gameId] || [];
-            highScores.push({
-                initials: action.initials,
-                score,
-            });
-            highScores.sort((first, second) => second.score - first.score);
-            highScores.splice(configData.HighScoresToKeep);
-            allHighScores[gameId] = highScores;
-            Storage.setHighScores(allHighScores);
-            return {
-                ...state,
-                allHighScores,
-            };
+            // Before saving this high score, ensure we don't already have it recorded.
+            // React is mean and will sometimes dispatch the action the reducer multiple times to flush out non-idempotent logic (development mode only).
+            if (!highScores.find(hs => hs.id === highScore.id)) {
+                highScores.push(highScore);
+                highScores.sort((first, second) => second.score - first.score);
+                highScores.splice(configData.HighScoresToKeep);
+                allHighScores[gameId] = highScores;
+                Storage.setHighScores(allHighScores);
+                return {
+                    ...state,
+                    allHighScores,
+                };
+            } else {
+                return state;
+            }
         }
         case "LOAD_HIGH_SCORES": {
             const allHighScores = Storage.getHighScores();
@@ -108,10 +126,11 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "LOAD_USER_ADDED_GAMES": {
-            const addedGamesArr = Storage.getAddedGames();
-            const addedGamesObjs = Object.values(addedGamesArr);
+            // TODO: is this idempotent?
+            const addedGamesMap = Storage.getUserAddedGames();
+            const addedGamesArr = Object.values(addedGamesMap);
             const newGames: GameData[] = [];
-            for (const game of addedGamesObjs) {
+            for (const game of addedGamesArr) {
                 if (game) {
                     game.userAdded = true;
                     if (!game.deleted) {
@@ -149,15 +168,21 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "POST_NOTIFICATION": {
-            const notificationWithId = {
-                ...action.notification,
-                expiration: Date.now() + action.notification.duration,
-                id: nanoid(),
-            };
-            return {
-                ...state,
-                notifications: [...state.notifications, notificationWithId],
-            };
+            // Before posting the notification, ensure is doesn't already exist in the list.
+            // React is mean and will sometimes dispatch the action the reducer multiple times to flush out non-idempotent logic (development mode only).
+            if (
+                !state.notifications.find(n => n.id === action.notification.id)
+            ) {
+                return {
+                    ...state,
+                    notifications: [
+                        ...state.notifications,
+                        action.notification,
+                    ],
+                };
+            } else {
+                return state;
+            }
         }
         case "REMOVE_NOTIFICATION": {
             const notifications = state.notifications.filter(
@@ -179,6 +204,18 @@ export default function reducer(state: AppState, action: Action): AppState {
             } else {
                 return state;
             }
+        }
+        case "SHOW_MODAL": {
+            return {
+                ...state,
+                modal: action.modal,
+            };
+        }
+        case "HIDE_MODAL": {
+            return {
+                ...state,
+                modal: undefined,
+            };
         }
     }
 }

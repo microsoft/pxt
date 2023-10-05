@@ -1,6 +1,5 @@
-import { useEffect, useState, useContext } from "react";
+import { useContext } from "react";
 import { AppStateContext } from "../State/AppStateContext";
-import "../Kiosk.css";
 
 interface IProps {}
 

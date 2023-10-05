@@ -1,6 +1,6 @@
 import NewScoreEntry from "./NewScoreEntry";
 import ExistingScoreEntry from "./ExistingScoreEntry";
-import { useEffect, useContext } from "react";
+import { useContext } from "react";
 import { AppStateContext } from "../State/AppStateContext";
 import { getHighScores } from "../State";
 
@@ -10,21 +10,12 @@ const EnterHighScore: React.FC<IProps> = ({}) => {
     const { state: kiosk } = useContext(AppStateContext);
     const existingHighScores = getHighScores(kiosk.selectedGameId);
 
-    useEffect(() => {
-        if (!kiosk.mostRecentScores || !kiosk.mostRecentScores.length) {
-            throw new Error(
-                "Cannot load high score entry view without having recent scores"
-            );
-        }
-    }, []);
-
-    const aboveScores = existingHighScores.filter(
-        item => item.score > kiosk.mostRecentScores[0]
-    );
-    const belowScores = existingHighScores.slice(
-        aboveScores.length,
-        existingHighScores.length
-    );
+    const aboveScores = existingHighScores
+        .filter(item => item.score > kiosk.mostRecentScores[0])
+        .sort((a, b) => b.score - a.score);
+    const belowScores = existingHighScores
+        .slice(aboveScores.length, existingHighScores.length)
+        .sort((a, b) => b.score - a.score);
 
     return (
         <div className="enterHighScore">

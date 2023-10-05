@@ -1,9 +1,9 @@
 import { stateAndDispatch } from "../State";
-import { KioskState } from "../Types";
 import * as Actions from "../State/Actions";
 import * as Backend from "./BackendRequests";
 import { saveNewGamesAsync } from "../Transforms/saveNewGamesAsync";
 import { postNotification } from "../Transforms/postNotification";
+import { makeNotification } from "../Utils";
 
 function initialize() {
     const pollOnce = async () => {
@@ -21,10 +21,9 @@ function initialize() {
             if (gameCodes) {
                 const justAddedGames = await saveNewGamesAsync(gameCodes);
                 justAddedGames.forEach(game => {
-                    postNotification({
-                        message: `${game.name} added!`,
-                        duration: 5000,
-                    });
+                    postNotification(
+                        makeNotification(`${game.name} added!`, 5000)
+                    );
                 });
             }
         }
@@ -44,7 +43,7 @@ function initialize() {
 
 let generatingKioskCode = false;
 let lastKioskCodeGeneration = 0;
-const kioskCodeGenerationDelay = 1000;
+const kioskCodeGenerationThrottleMs = 1000;
 
 async function generateKioskCodeAsync(durationMs: number) {
     // If we're already generating a code, don't generate another one.
@@ -55,17 +54,20 @@ async function generateKioskCodeAsync(durationMs: number) {
     generatingKioskCode = true;
 
     // If we're generating codes too quickly, wait a bit.
-    if (Date.now() - lastKioskCodeGeneration < kioskCodeGenerationDelay) {
+    if (Date.now() - lastKioskCodeGeneration < kioskCodeGenerationThrottleMs) {
         await new Promise(resolve =>
-            setTimeout(resolve, kioskCodeGenerationDelay)
+            setTimeout(resolve, kioskCodeGenerationThrottleMs)
         );
     }
+
+    const { state, dispatch } = stateAndDispatch();
 
     try {
         const newCode = await Backend.generateKioskCodeAsync(durationMs);
         lastKioskCodeGeneration = Date.now();
-        const { state, dispatch } = stateAndDispatch();
-        dispatch(Actions.setKioskCode(newCode, Date.now() + durationMs));
+        if (newCode) {
+            dispatch(Actions.setKioskCode(newCode, Date.now() + durationMs));
+        }
     } catch (error) {
         console.error(error);
     } finally {

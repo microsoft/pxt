@@ -3,48 +3,82 @@ import configData from "../config.json";
 
 export type SoundEffect = "swipe" | "switch" | "select" | "notification";
 
+type Sound = {
+    howl: Howl;
+    name: string;
+};
+
 class SoundEffectService {
-    private sounds: { [key: string]: Howl };
+    private sounds: { [key: string]: Sound };
     private volume: number = configData.SoundEffectsVolume;
 
     constructor() {
         this.sounds = {
-            swipe: new Howl({
-                src: ["/kiosk-data/sfx/swipe.ogg"],
-                autoplay: false,
-                preload: true,
-                loop: false,
-            }),
-            switch: new Howl({
-                src: ["/kiosk-data/sfx/switch.ogg"],
-                autoplay: false,
-                preload: true,
-                loop: false,
-            }),
-            select: new Howl({
-                src: ["/kiosk-data/sfx/select.ogg"],
-                autoplay: false,
-                preload: true,
-                loop: false,
-            }),
-            notification: new Howl({
-                src: ["/kiosk-data/sfx/notification.ogg"],
-                autoplay: false,
-                preload: true,
-                loop: false,
-            }),
+            swipe: {
+                name: "swipe",
+                howl: new Howl({
+                    src: ["/kiosk-data/sfx/swipe.ogg"],
+                    autoplay: false,
+                    preload: true,
+                    loop: false,
+                }),
+            },
+            switch: {
+                name: "switch",
+                howl: new Howl({
+                    src: ["/kiosk-data/sfx/switch.ogg"],
+                    autoplay: false,
+                    preload: true,
+                    loop: false,
+                }),
+            },
+            select: {
+                name: "select",
+                howl: new Howl({
+                    src: ["/kiosk-data/sfx/select.ogg"],
+                    autoplay: false,
+                    preload: true,
+                    loop: false,
+                }),
+            },
+            notification: {
+                name: "notification",
+                howl: new Howl({
+                    src: ["/kiosk-data/sfx/notification.ogg"],
+                    autoplay: false,
+                    preload: true,
+                    loop: false,
+                }),
+            },
         };
     }
 
     public play(effect: SoundEffect) {
-        this.playSound(this.sounds[effect]);
+        switch (effect) {
+            case "swipe":
+                this.playSound(this.sounds.swipe);
+                break;
+
+            case "switch":
+                this.playSound(this.sounds.switch);
+                break;
+
+            case "select":
+                this.playSound(this.sounds.select);
+                break;
+
+            case "notification":
+                this.playSound(this.sounds.notification);
+                break;
+        }
     }
 
-    public playSound(sound: Howl) {
+    public playSound(sound: Sound) {
         if (!sound) return;
-        if (sound.playing()) return;
-        sound.volume(Math.max(0, Math.min(1, this.volume)));
-        sound.play();
+        if (sound.howl.playing()) return;
+        //console.log(`Playing sound ${sound.name} at ${Date.now()}`);
+        sound.howl.volume(Math.max(0, Math.min(1, this.volume)));
+        sound.howl.play();
     }
 
     public setVolume(volume: number) {

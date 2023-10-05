@@ -9,7 +9,7 @@ import { selectGame } from "./selectGame";
 
 export async function saveNewGamesAsync(games: ShareIds): Promise<GameData[]> {
     const { state, dispatch } = stateAndDispatch();
-    const allAddedGames = Storage.getAddedGames();
+    const allAddedGames = Storage.getUserAddedGames();
     let gamesToAdd: GameData[] = [];
     const shareIds = Object.keys(games);
     for (const shareId of shareIds) {
@@ -17,16 +17,17 @@ export async function saveNewGamesAsync(games: ShareIds): Promise<GameData[]> {
             let gameName;
             let gameDescription;
 
-            try {
-                const gameDetails = await getGameDetailsAsync(shareId);
-                gameName = safeGameName(gameDetails.name);
-                gameDescription = safeGameDescription(gameDetails.description);
-            } catch (error) {
-                gameName = Constants.defaultGameName;
-                gameDescription = Constants.defaultGameDescription;
-            }
+            const gameDetails = await getGameDetailsAsync(shareId);
+            gameName = safeGameName(gameDetails?.name);
+            gameDescription = safeGameDescription(gameDetails?.description);
 
-            const gameUploadDate = new Date().toLocaleString();
+            const gameUploadDate = new Date().toLocaleString(undefined, {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+                minute: "numeric",
+                hour: "numeric",
+            });
             const newGame: GameData = {
                 id: shareId,
                 name: gameName,
@@ -55,6 +56,6 @@ export async function saveNewGamesAsync(games: ShareIds): Promise<GameData[]> {
     if (gamesToAdd.length) {
         selectGame(gamesToAdd[0].id);
     }
-    Storage.setAddedGames(allAddedGames);
+    Storage.setUserAddedGames(allAddedGames);
     return gamesToAdd;
 }

@@ -1,26 +1,29 @@
+import { useContext } from "react";
+import { playSoundEffect } from "../Services/SoundEffectService";
+import { launchGame } from "../Transforms/launchGame";
 import { GameData, HighScore } from "../Types";
-import { DeleteButton } from "./DeleteButton";
+import { AppStateContext } from "../State/AppStateContext";
 import HighScoresList from "./HighScoresList";
+import { GameMenu } from "./GameMenu";
 
 interface IProps {
     highScores: HighScore[];
-    addButtonSelected: boolean;
-    deleteButtonSelected: boolean;
     game: GameData;
-    locked: boolean;
 }
-const GameSlide: React.FC<IProps> = ({
-    highScores,
-    addButtonSelected,
-    deleteButtonSelected,
-    game,
-    locked,
-}) => {
-    const buttonSelected = addButtonSelected || deleteButtonSelected;
-    const carouselSelected = buttonSelected ? "unselected" : "selected";
+const GameSlide: React.FC<IProps> = ({ highScores, game }) => {
+    const { state: kiosk } = useContext(AppStateContext);
+
+    const handleSlideClick = (ev?: React.MouseEvent) => {
+        pxt.tickEvent("kiosk.gameLaunched", { game: game.id });
+        playSoundEffect("select");
+        launchGame(game.id);
+        ev?.preventDefault();
+        ev?.stopPropagation();
+    };
 
     return (
-        <div className={`gameTile ${carouselSelected}`}>
+        <div className="gameTile" onClick={handleSlideClick}>
+            <div className="gameSelectionIndicator" />
             <div
                 className="gameThumbnail"
                 style={{
@@ -28,22 +31,23 @@ const GameSlide: React.FC<IProps> = ({
                 }}
             />
 
-            <p className="pressStart">Press A to Start</p>
-
             <div className="gameDetails">
                 <div className="gameTitle">{game.name}</div>
-                <div className="gameDescription">
-                    {game.description} <hr />
-                </div>
+                <div className="gameDescription">{game.description}</div>
                 <HighScoresList
                     highScores={highScores}
                     highScoreMode={game.highScoreMode}
                 />
                 {game.date && <div className="gameDate">Added {game.date}</div>}
-                {game.userAdded && !locked && (
-                    <DeleteButton focused={deleteButtonSelected} />
-                )}
             </div>
+
+            {kiosk.selectedGameId && game.id === kiosk.selectedGameId && (
+                <div className="pressStart">Press A to Start</div>
+            )}
+
+            {kiosk.selectedGameId && game.id === kiosk.selectedGameId && (
+                <GameMenu />
+            )}
         </div>
     );
 };

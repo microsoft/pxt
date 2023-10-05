@@ -1,6 +1,5 @@
-import "../Kiosk.css";
 import { Html5Qrcode } from "html5-qrcode";
-import { addGameToKioskAsync } from "../Services/BackendRequests";
+import { canthrow_addGameToKioskAsync } from "../Services/BackendRequests";
 import { KioskState } from "../Types";
 import { navigate } from "../Transforms/navigate";
 
@@ -15,7 +14,7 @@ export const play = async (
     async function onScanSuccess(decodedText: string, decodedResult: any) {
         const shareId = /\/([^\/]+)\/?$/.exec(decodedText)?.[1];
         try {
-            await addGameToKioskAsync(kioskId, shareId);
+            await canthrow_addGameToKioskAsync(kioskId, shareId);
             pxt.tickEvent("kiosk.gameQrScanned.success");
             await html5QrCode.stop();
             navigate(KioskState.QrSuccess);
