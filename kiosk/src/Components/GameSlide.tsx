@@ -33,9 +33,7 @@ const GameSlide: React.FC<IProps> = ({ highScores, game }) => {
 
             <div className="gameDetails">
                 <div className="gameTitle">{game.name}</div>
-                <div className="gameDescription">
-                    {game.description}
-                </div>
+                <div className="gameDescription">{game.description}</div>
                 <HighScoresList
                     highScores={highScores}
                     highScoreMode={game.highScoreMode}
@@ -47,7 +45,9 @@ const GameSlide: React.FC<IProps> = ({ highScores, game }) => {
                 <div className="pressStart">Press A to Start</div>
             )}
 
-            {kiosk.selectedGameId && game.id === kiosk.selectedGameId && <GameMenu />}
+            {kiosk.selectedGameId && game.id === kiosk.selectedGameId && (
+                <GameMenu />
+            )}
         </div>
     );
 };

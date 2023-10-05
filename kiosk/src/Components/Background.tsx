@@ -9,7 +9,6 @@ import {
 import { AppStateContext } from "../State/AppStateContext";
 import { KioskState } from "../Types";
 
-
 const Background = () => {
     const { state: kiosk } = useContext(AppStateContext);
     const [myRef, setMyRef] = useState<HTMLElement | null>(null);

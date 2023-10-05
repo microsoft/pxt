@@ -22,17 +22,20 @@ const GenericButton: React.FC<IProps> = ({
 }) => {
     const [myRef, setMyRef] = useState<HTMLElement | null>(null);
 
-    const handleKeyDown = useCallback((ev: KeyboardEvent) => {
-        if (ev.target !== myRef) {
-            return;
-        }
-        const control = GamepadManager.keyboardKeyToGamepadControl(ev.key);
-        if (control === GamepadManager.GamepadControl.AButton) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            onClick?.();
-        }
-    }, [myRef]);
+    const handleKeyDown = useCallback(
+        (ev: KeyboardEvent) => {
+            if (ev.target !== myRef) {
+                return;
+            }
+            const control = GamepadManager.keyboardKeyToGamepadControl(ev.key);
+            if (control === GamepadManager.GamepadControl.AButton) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                onClick?.();
+            }
+        },
+        [myRef]
+    );
 
     const handleClick = (ev: React.MouseEvent) => {
         onClick?.(ev);
@@ -52,7 +55,7 @@ const GenericButton: React.FC<IProps> = ({
     useEffect(() => {
         GamepadManager.addKeydownListener(handleKeyDown);
         return () => GamepadManager.removeKeydownListener(handleKeyDown);
-    })
+    });
 
     return (
         <>

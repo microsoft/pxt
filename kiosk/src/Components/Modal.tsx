@@ -25,16 +25,21 @@ export interface ModalProps extends React.PropsWithChildren<ControlProps> {
 }
 
 export const Modal = (props: ModalProps) => {
-    const { children, id, className, title, actions, parentElement, onClose } = props;
+    const { children, id, className, title, actions, parentElement, onClose } =
+        props;
 
     React.useEffect(() => {
         NavGrid.pushContext();
         return () => NavGrid.popContext();
     }, []);
 
-    useOnControlPress([], () => {
-        onClose?.();
-    }, GamepadManager.GamepadControl.EscapeButton);
+    useOnControlPress(
+        [],
+        () => {
+            onClose?.();
+        },
+        GamepadManager.GamepadControl.EscapeButton
+    );
 
     const classes = classList("common-modal-container", className);
 
@@ -50,7 +55,11 @@ export const Modal = (props: ModalProps) => {
                 {actions?.length && (
                     <div className="common-modal-footer">
                         {actions.map((action, index) => (
-                            <GenericButton key={index} onClick={action.onClick} autofocus={action.autofocus}>
+                            <GenericButton
+                                key={index}
+                                onClick={action.onClick}
+                                autofocus={action.autofocus}
+                            >
                                 {action.label}
                             </GenericButton>
                         ))}
