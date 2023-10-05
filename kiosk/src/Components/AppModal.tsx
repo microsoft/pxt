@@ -36,7 +36,7 @@ export default function AppModal() {
     const deleteGame = () => {
         const userAddedGames = Storage.getUserAddedGames();
         const gameId = state.selectedGameId;
-        if (gameId && gameId in userAddedGames) {
+        if (gameId && userAddedGames.hasOwnProperty(gameId)) {
             const name = userAddedGames[gameId].name;
             userAddedGames[gameId].deleted = true;
             Storage.setUserAddedGames(userAddedGames);
