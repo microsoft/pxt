@@ -14,6 +14,10 @@ export type HighScore = {
     score: number;
 };
 
+export type HighScoreWithId = HighScore & {
+    id: string;
+};
+
 export type BuiltSimJSInfo = {
     js: string;
     targetVersion?: string;
@@ -23,13 +27,13 @@ export type BuiltSimJSInfo = {
 };
 
 export enum KioskState {
-    MainMenu,
-    PlayingGame,
-    EnterHighScore,
-    AddingGame,
-    ScanQR,
-    QrSuccess,
-    GameOver,
+    MainMenu = "MainMenu",
+    PlayingGame = "PlayingGame",
+    EnterHighScore = "EnterHighScore",
+    AddingGame = "AddingGame",
+    ScanQR = "ScanQR",
+    QrSuccess = "QrSuccess",
+    GameOver = "GameOver",
 }
 
 export type Notification = {
@@ -46,8 +50,41 @@ export type ShareId = {
     id: string;
 };
 
-export type GameList = { [index: string]: GameData };
+export type GamesById = { [index: string]: GameData };
 
-export type HighScores = { [index: string]: HighScore[] };
+export type HighScores = HighScoreWithId[];
+
+export type AllHighScores = { [index: string]: HighScores };
+
+export type Notifications = NotificationWithId[];
 
 export type ShareIds = { [index: string]: ShareId };
+
+export type GameInfo = {
+    name: string;
+    description: string;
+};
+
+export type ModalId = "delete-game-confirmation";
+
+export type DeleteGameModal = {
+    id: "delete-game-confirmation";
+    gameId: string;
+};
+
+export const makeDeleteGameModal = (gameId: string): DeleteGameModal => ({
+    id: "delete-game-confirmation",
+    gameId,
+});
+
+export type ModalConfig = DeleteGameModal;
+
+export type NavRect = {
+    top: number;
+    left: number;
+    right: number;
+    bottom: number;
+    width: number;
+    height: number;
+    center: { x: number; y: number };
+};

@@ -3,17 +3,15 @@ import { KioskState } from "../Types";
 import HighScoreInitial from "./HighScoreInitial";
 import configData from "../config.json";
 import { AppStateContext } from "../State/AppStateContext";
-import { gamepadManager } from "../Services/GamepadManager";
 import { navigate } from "../Transforms/navigate";
 import { saveHighScore } from "../Transforms/saveHighScore";
+import * as GamepadManager from "../Services/GamepadManager";
+import { useOnControlPress } from "../Hooks";
 
 interface IProps {}
 
 const NewScoreEntry: React.FC<IProps> = ({}) => {
     const { state: kiosk } = useContext(AppStateContext);
-    const [indexChanged, setIndexChanged] = useState(false);
-    const [nextIndex, setNextIndex] = useState(false);
-    const [previousIndex, setPreviousIndex] = useState(false);
 
     const [initials, setInitials] = useState(
         Array(configData.HighScoreInitialsLength + 1).join(
@@ -21,93 +19,47 @@ const NewScoreEntry: React.FC<IProps> = ({}) => {
         )
     );
     const [timesAPressed, setTimesAPressed] = useState(0);
-    const [runOnce, setRunOnce] = useState(false);
-    const [firstRun, setFirstRun] = useState(true);
 
-    useEffect(() => {
-        const gamepadLoop = () => {
-            if (kiosk.kioskState !== KioskState.EnterHighScore) {
-                return;
-            }
+    // Handle A button press
+    useOnControlPress(
+        [timesAPressed, kiosk],
+        () => {
+            pxt.tickEvent("kiosk.newHighScore.nextInitial");
+            GamepadManager.lockControl(GamepadManager.GamepadControl.AButton);
+            setTimesAPressed(Math.min(3, timesAPressed + 1));
+        },
+        GamepadManager.GamepadControl.AButton
+    );
 
-            if (gamepadManager.isAButtonPressed()) {
-                pxt.tickEvent("kiosk.newHighScore.nextInitial");
-                setIndexChanged(true);
-                setNextIndex(true);
-            } else if (gamepadManager.isBButtonPressed()) {
-                pxt.tickEvent("kiosk.newHighScore.prevInitial");
-                setIndexChanged(true);
-                setPreviousIndex(true);
-            } else {
-                setIndexChanged(false);
-                setPreviousIndex(false);
-                setNextIndex(false);
-            }
+    // Handle B button press
+    useOnControlPress(
+        [timesAPressed, kiosk],
+        () => {
+            pxt.tickEvent("kiosk.newHighScore.prevInitial");
+            GamepadManager.lockControl(GamepadManager.GamepadControl.BButton);
+            setTimesAPressed(Math.max(0, timesAPressed - 1));
+        },
+        GamepadManager.GamepadControl.BButton
+    );
 
-            if (gamepadManager.isEscapeButtonPressed()) {
-                pxt.tickEvent("kiosk.newHighScore.defaultInitialsUsed");
-                saveHighScore(
-                    kiosk.selectedGameId!,
-                    initials,
-                    kiosk.mostRecentScores[0]
-                );
-                navigate(KioskState.GameOver);
-            }
-        };
-
-        let interval: any;
-        let timeout: any;
-        timeout = setTimeout(() => {
-            interval = setInterval(
-                () => gamepadLoop(),
-                configData.EnterHighScorePoll
+    // Handle Escape button press
+    useOnControlPress(
+        [kiosk],
+        () => {
+            pxt.tickEvent("kiosk.newHighScore.defaultInitialsUsed");
+            saveHighScore(
+                kiosk.selectedGameId!,
+                initials,
+                kiosk.mostRecentScores[0]
             );
-        }, configData.EnterHighScoreDelayMilli);
+            navigate(KioskState.GameOver);
+        },
+        GamepadManager.GamepadControl.EscapeButton
+    );
 
-        return () => {
-            if (interval) {
-                clearInterval(interval);
-            }
-            if (timeout) {
-                clearTimeout(timeout);
-            }
-        };
-    }, []);
-
-    const decrementTimesPressed = () => {
-        if (timesAPressed === 0) {
-            return 0;
-        } else {
-            setTimesAPressed(timesAPressed - 1);
-            return timesAPressed - 1;
-        }
-    };
-
-    const updateTimesPressed = () => {
-        if (runOnce) {
-            setRunOnce(false);
-            return timesAPressed;
-        } else if (firstRun) {
-            setFirstRun(false);
-            return timesAPressed;
-        } else {
-            setRunOnce(true);
-            if (nextIndex) {
-                setTimesAPressed(timesAPressed + 1);
-                return timesAPressed + 1;
-            } else if (previousIndex) {
-                return decrementTimesPressed();
-            } else {
-                return timesAPressed;
-            }
-        }
-    };
-
+    // Handle all initials entered
     useEffect(() => {
-        const updatedPressed = updateTimesPressed();
-
-        if (updatedPressed >= 3) {
-            setTimesAPressed(0);
+        if (timesAPressed === 3) {
             pxt.tickEvent("kiosk.newHighScore.initialsEntered");
             saveHighScore(
                 kiosk.selectedGameId!,
@@ -116,7 +68,7 @@ const NewScoreEntry: React.FC<IProps> = ({}) => {
             );
             navigate(KioskState.GameOver);
         }
-    }, [indexChanged]);
+    }, [timesAPressed]);
 
     const updateInitial = (i: number, character: string) => {
         const newInitials = `${initials.substring(

@@ -2,9 +2,11 @@ import {
     GameData,
     BuiltSimJSInfo,
     KioskState,
-    HighScore,
     HighScores,
-    Notification,
+    AllHighScores,
+    NotificationWithId,
+    HighScoreWithId,
+    ModalConfig,
 } from "../Types";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -49,7 +51,7 @@ type SetLockedGame = ActionBase & {
 
 type SetAllHighScores = ActionBase & {
     type: "SET_ALL_HIGH_SCORES";
-    allHighScores: HighScores;
+    allHighScores: AllHighScores;
 };
 
 type SetVolume = ActionBase & {
@@ -70,8 +72,7 @@ type RemoveGame = ActionBase & {
 type SaveHighScore = ActionBase & {
     type: "SAVE_HIGH_SCORE";
     gameId: string;
-    initials: string;
-    score: number;
+    highScore: HighScoreWithId;
 };
 
 type LoadHighScores = ActionBase & {
@@ -103,7 +104,7 @@ type ClearKioskCode = ActionBase & {
 
 type PostNotification = ActionBase & {
     type: "POST_NOTIFICATION";
-    notification: Notification;
+    notification: NotificationWithId;
 };
 
 type RemoveNotification = ActionBase & {
@@ -113,6 +114,15 @@ type RemoveNotification = ActionBase & {
 
 type LoadKioskCode = ActionBase & {
     type: "LOAD_KIOSK_CODE";
+};
+
+type ShowModal = ActionBase & {
+    type: "SHOW_MODAL";
+    modal: ModalConfig;
+};
+
+type HideModal = ActionBase & {
+    type: "HIDE_MODAL";
 };
 
 /**
@@ -139,7 +149,9 @@ export type Action =
     | ClearKioskCode
     | PostNotification
     | RemoveNotification
-    | LoadKioskCode;
+    | LoadKioskCode
+    | ShowModal
+    | HideModal;
 
 /**
  * Action creators
@@ -176,9 +188,7 @@ const setLockedGame = (gameId: string): SetLockedGame => ({
     gameId,
 });
 
-const setAllHighScores = (allHighScores: {
-    [index: string]: HighScore[];
-}): SetAllHighScores => ({
+const setAllHighScores = (allHighScores: AllHighScores): SetAllHighScores => ({
     type: "SET_ALL_HIGH_SCORES",
     allHighScores,
 });
@@ -200,13 +210,11 @@ const removeGame = (gameId: string): RemoveGame => ({
 
 const saveHighScore = (
     gameId: string,
-    initials: string,
-    score: number
+    highScore: HighScoreWithId
 ): SaveHighScore => ({
     type: "SAVE_HIGH_SCORE",
     gameId,
-    initials,
-    score,
+    highScore,
 });
 
 const loadHighScores = (): LoadHighScores => ({
@@ -239,7 +247,9 @@ const clearKioskCode = (): ClearKioskCode => ({
     type: "CLEAR_KIOSK_CODE",
 });
 
-const postNotification = (notification: Notification): PostNotification => ({
+const postNotification = (
+    notification: NotificationWithId
+): PostNotification => ({
     type: "POST_NOTIFICATION",
     notification,
 });
@@ -251,6 +261,15 @@ const removeNotification = (notificationId: string): RemoveNotification => ({
 
 const loadKioskCode = (): LoadKioskCode => ({
     type: "LOAD_KIOSK_CODE",
+});
+
+const showModal = (modal: ModalConfig): ShowModal => ({
+    type: "SHOW_MODAL",
+    modal,
+});
+
+const hideModal = (): HideModal => ({
+    type: "HIDE_MODAL",
 });
 
 export {
@@ -274,4 +293,6 @@ export {
     postNotification,
     removeNotification,
     loadKioskCode,
+    showModal,
+    hideModal,
 };

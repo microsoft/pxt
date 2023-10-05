@@ -1,7 +1,7 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import configData from "../config.json";
-import { AppStateContext } from "../State/AppStateContext";
-import { gamepadManager } from "../Services/GamepadManager";
+import * as GamepadManager from "../Services/GamepadManager";
+import { useOnControlPress } from "../Hooks";
 
 interface IProps {
     isSelected: boolean;
@@ -12,7 +12,6 @@ const HighScoreInitial: React.FC<IProps> = ({
     isSelected,
     onCharacterChanged,
 }) => {
-    const { state: kiosk } = useContext(AppStateContext);
     const [index, setIndex] = useState(0);
 
     const getPreviousIndex = () =>
@@ -37,29 +36,19 @@ const HighScoreInitial: React.FC<IProps> = ({
         );
     };
 
-    useEffect(() => {
-        const gamepadLoop = () => {
-            if (!isSelected) {
-                return;
-            }
+    // Handle DPadUp button press
+    useOnControlPress(
+        [onCharacterChanged, isSelected, index],
+        () => isSelected && previousInitial(),
+        GamepadManager.GamepadControl.DPadUp
+    );
 
-            if (gamepadManager.isUpPressed()) {
-                pxt.tickEvent("kiosk.newHighScore.upPressed");
-                previousInitial();
-            }
-
-            if (gamepadManager.isDownPressed()) {
-                pxt.tickEvent("kiosk.newHighScore.downPressed");
-                nextInitial();
-            }
-        };
-
-        const interval = setInterval(
-            () => gamepadLoop(),
-            configData.GamepadPollLoopMilli
-        );
-        return () => clearInterval(interval);
-    });
+    // Handle DPadDown button press
+    useOnControlPress(
+        [onCharacterChanged, isSelected, index],
+        () => isSelected && nextInitial(),
+        GamepadManager.GamepadControl.DPadDown
+    );
 
     const classNames = [
         "highScoreInitialControl",

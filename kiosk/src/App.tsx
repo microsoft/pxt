@@ -11,6 +11,7 @@ import GameOver from "./Components/GameOver";
 import PlayingGame from "./Components/PlayingGame";
 import Footer from "./Components/Footer";
 import Notifications from "./Components/Notifications";
+import AppModal from "./Components/AppModal";
 import { useLocationHash, usePromise } from "./Hooks";
 import { launchGame } from "./Transforms/launchGame";
 import { navigate } from "./Transforms/navigate";
@@ -20,6 +21,10 @@ import * as Actions from "./State/Actions";
 import * as SimHost from "./Services/SimHostService";
 import * as NotificationService from "./Services/NotificationService";
 import * as AddingGames from "./Services/AddingGamesService";
+import * as GamepadManager from "./Services/GamepadManager";
+import * as NavGrid from "./Services/NavGrid";
+import * as RectCache from "./Services/RectCache";
+import Background from "./Components/Background";
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
@@ -47,6 +52,9 @@ function App() {
             SimHost.initialize();
             NotificationService.initialize();
             AddingGames.initialize();
+            GamepadManager.initialize();
+            NavGrid.initialize();
+            RectCache.initialize();
         }
     }, [ready]);
 
@@ -80,6 +88,8 @@ function App() {
                     {kioskState === KioskState.GameOver && <GameOver />}
                     {kioskState === KioskState.PlayingGame && <PlayingGame />}
                     <Notifications />
+                    <AppModal />
+                    <Background />
                 </>
             ) : (
                 <></>

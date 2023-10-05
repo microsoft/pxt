@@ -1,14 +1,6 @@
 import React, { useEffect, useRef, useContext, useCallback } from "react";
-import { KioskState } from "../Types";
-import configData from "../config.json";
-import "../Kiosk.css";
 import { Swiper, SwiperSlide } from "swiper/react";
-import {
-    Swiper as SwiperClass,
-    EffectCoverflow,
-    Keyboard,
-    Pagination,
-} from "swiper";
+import { Swiper as SwiperClass, Pagination } from "swiper";
 import "swiper/css";
 import "swiper/css/keyboard";
 import GameSlide from "./GameSlide";
@@ -16,118 +8,112 @@ import { playSoundEffect } from "../Services/SoundEffectService";
 import { AppStateContext } from "../State/AppStateContext";
 import { selectGameByIndex } from "../Transforms/selectGameByIndex";
 import { launchGame } from "../Transforms/launchGame";
-import { gamepadManager } from "../Services/GamepadManager";
-import { getHighScores, getSelectedGameIndex } from "../State";
+import {
+    getHighScores,
+    getSelectedGameIndex,
+    getSelectedGameId,
+} from "../State";
+import * as GamepadManager from "../Services/GamepadManager";
+import * as NavGrid from "../Services/NavGrid";
+import { useOnControlPress, useMakeNavigable } from "../Hooks";
 
-interface IProps {
-    addButtonSelected: boolean;
-    deleteButtonSelected: boolean;
-}
+interface IProps {}
 
-const GameList: React.FC<IProps> = ({
-    addButtonSelected,
-    deleteButtonSelected,
-}) => {
+const GameList: React.FC<IProps> = ({}) => {
     const { state: kiosk } = useContext(AppStateContext);
-    const buttonSelected = addButtonSelected || deleteButtonSelected;
     const localSwiper = useRef<SwiperClass>();
+    const [userInitiatedTransition, setUserInitiatedTransition] =
+        React.useState(false);
+    const [pageInited, setPageInited] = React.useState(false);
 
-    const leftKeyEvent = (eventType: string) => {
-        return new KeyboardEvent(eventType, {
-            key: "ArrowLeft",
-            code: "ArrowLeft",
-            composed: true,
-            keyCode: 37,
-            cancelable: true,
-            view: window,
-        });
-    };
+    useMakeNavigable(localSwiper?.current?.el, {
+        exitDirections: [NavGrid.NavDirection.Down, NavGrid.NavDirection.Up],
+        autofocus: true,
+    });
 
-    const rightKeyEvent = (eventType: string) => {
-        return new KeyboardEvent(eventType, {
-            key: "ArrowRight",
-            code: "ArrowRight",
-            composed: true,
-            keyCode: 39,
-            cancelable: true,
-            view: window,
-        });
-    };
-
-    const clickItem = useCallback(() => {
-        const gameId = kiosk.selectedGameId;
+    const launchSelectedGame = () => {
+        const gameId = getSelectedGameId();
         if (gameId) {
             pxt.tickEvent("kiosk.gameLaunched", { game: gameId });
             playSoundEffect("select");
             launchGame(gameId);
         }
-    }, [kiosk]);
+    };
 
-    // on page load use effect
-    useEffect(() => {
-        if (!kiosk.selectedGameId && kiosk.allGames.length) {
-            selectGameByIndex(0);
-        } else {
-            const gameIndex = getSelectedGameIndex();
-            if (gameIndex !== undefined) {
-                localSwiper.current?.slideTo(gameIndex + 2);
-            }
+    const syncSelectedGame = useCallback(() => {
+        const gameIndex = localSwiper?.current?.realIndex || 0;
+        const selectedGameIndex = getSelectedGameIndex();
+        if (
+            selectedGameIndex !== undefined &&
+            gameIndex !== selectedGameIndex
+        ) {
+            selectGameByIndex(gameIndex);
         }
     }, [localSwiper]);
 
-    // poll for game pad input
+    // on page load use effect
     useEffect(() => {
-        const syncSelectedGame = () => {
-            const gameIndex = localSwiper?.current?.realIndex || 0;
-            const selectedGameIndex = getSelectedGameIndex();
-            if (
-                selectedGameIndex !== undefined &&
-                gameIndex !== selectedGameIndex
-            ) {
-                selectGameByIndex(gameIndex);
-                playSoundEffect("swipe");
-            }
-        };
-
-        const updateLoop = () => {
-            if (kiosk.kioskState !== KioskState.MainMenu) {
-                return;
-            }
-
-            if (gamepadManager.isAButtonPressed()) {
-                clickItem();
-            }
-
-            if (gamepadManager.isLeftPressed()) {
-                document.dispatchEvent(leftKeyEvent("keydown"));
-                document.dispatchEvent(leftKeyEvent("keyup"));
-                syncSelectedGame();
-            }
-
-            if (gamepadManager.isRightPressed()) {
-                document.dispatchEvent(rightKeyEvent("keydown"));
-                document.dispatchEvent(rightKeyEvent("keyup"));
-                syncSelectedGame();
-            }
-        };
-
-        let intervalId: any = null;
-        if (kiosk.allGames.length) {
-            intervalId = setInterval(() => {
-                if (!buttonSelected) {
-                    updateLoop();
+        if (!pageInited) {
+            if (kiosk.allGames.length) {
+                if (!kiosk.selectedGameId) {
+                    selectGameByIndex(0);
+                    localSwiper.current?.slideTo(2);
+                } else {
+                    const index = getSelectedGameIndex() || 0;
+                    localSwiper.current?.slideTo(index + 2);
                 }
-            }, configData.GamepadPollLoopMilli);
-        }
-
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
+                setPageInited(true);
             }
-        };
-    }, [kiosk, localSwiper, buttonSelected]);
+        }
+    }, [pageInited, localSwiper, kiosk]);
 
-    const slideChanged = useCallback(() => {}, [localSwiper]);
+    // Handle DPadRight button press
+    useOnControlPress(
+        [localSwiper, userInitiatedTransition],
+        () => {
+            if (NavGrid.isActiveElement(localSwiper?.current?.el)) {
+                setUserInitiatedTransition(true);
+                setTimeout(() => localSwiper.current?.slideNext(), 1);
+            }
+        },
+        GamepadManager.GamepadControl.DPadRight
+    );
+
+    // Handle DPadLeft button press
+    useOnControlPress(
+        [localSwiper, userInitiatedTransition],
+        () => {
+            if (NavGrid.isActiveElement(localSwiper?.current?.el)) {
+                setUserInitiatedTransition(true);
+                setTimeout(() => localSwiper.current?.slidePrev(), 1);
+            }
+        },
+        GamepadManager.GamepadControl.DPadLeft
+    );
+
+    // Handle A button press
+    useOnControlPress(
+        [localSwiper, userInitiatedTransition],
+        () => {
+            if (NavGrid.isActiveElement(localSwiper?.current?.el)) {
+                launchSelectedGame();
+            }
+        },
+        GamepadManager.GamepadControl.AButton,
+        GamepadManager.GamepadControl.BButton
+    );
+
+    const transitionStart = () => {
+        if (userInitiatedTransition) {
+            syncSelectedGame();
+            playSoundEffect("swipe");
+            setUserInitiatedTransition(false);
+        }
+    };
+
+    const onTouchEnd = () => {
+        syncSelectedGame();
+    };
 
     if (!kiosk.allGames?.length) {
         return (
@@ -140,25 +126,20 @@ const GameList: React.FC<IProps> = ({
     return (
         <div className="carouselWrap">
             <Swiper
-                effect={"coverflow"}
+                focusableElements="div"
+                slideActiveClass="swiper-slide-active"
+                tabIndex={0}
                 loop={true}
-                slidesPerView={1.5}
+                slidesPerView={1.8}
                 centeredSlides={true}
-                spaceBetween={10}
                 pagination={{ type: "fraction" }}
                 onSwiper={swiper => {
                     localSwiper.current = swiper;
                 }}
-                coverflowEffect={{
-                    scale: 0.75,
-                    depth: 5,
-                }}
-                allowTouchMove={false}
-                allowSlideNext={!buttonSelected}
-                allowSlidePrev={!buttonSelected}
-                modules={[EffectCoverflow, Keyboard, Pagination]}
-                keyboard={{ enabled: true }}
-                onSlideChange={() => slideChanged()}
+                allowTouchMove={true}
+                modules={[Pagination]}
+                onSlideChangeTransitionStart={() => transitionStart()}
+                onTouchEnd={() => onTouchEnd()}
             >
                 {kiosk.allGames.map((game, index) => {
                     const gameHighScores = getHighScores(game.id);
@@ -166,10 +147,7 @@ const GameList: React.FC<IProps> = ({
                         <SwiperSlide key={index}>
                             <GameSlide
                                 highScores={gameHighScores}
-                                addButtonSelected={addButtonSelected}
-                                deleteButtonSelected={deleteButtonSelected}
                                 game={game}
-                                locked={kiosk.locked}
                             />
                         </SwiperSlide>
                     );

@@ -1,6 +1,5 @@
 import { stateAndDispatch } from "../State";
 import { KioskState } from "../Types";
-import { gamepadManager } from "../Services/GamepadManager";
 import { exitGame } from "./exitGame";
 
 export function escapeGame() {
@@ -9,6 +8,6 @@ export function escapeGame() {
     if (kiosk.kioskState !== KioskState.PlayingGame || kiosk.lockedGameId) {
         return;
     }
-    gamepadManager.keyboardManager.clear();
+
     exitGame(KioskState.MainMenu);
 }
