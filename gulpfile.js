@@ -691,7 +691,7 @@ const kiosk = gulp.series(cleanKiosk, buildKiosk, gulp.series(copyKioskCss, copy
                  Webapp build wrappers
 *********************************************************/
 
-const shouldBuildWebapps = () => (process.argv.indexOf("--no-webapps") === -1);
+const shouldBuildWebapps = () => (process.argv.indexOf("--no-webapps") === -1 && process.argv.indexOf("-n") === -1);
 
 const maybeUpdateWebappStrings = () => {
     if (!shouldBuildWebapps()) return noop;
