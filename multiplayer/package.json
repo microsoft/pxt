@@ -38,7 +38,7 @@
     "autoprefixer": "^10.4.12",
     "html-webpack-plugin": "^5.5.0",
     "node-polyfill-webpack-plugin": "^2.0.1",
-    "postcss": "^8.4.16",
+    "postcss": "^8.4.31",
     "prettier": "^2.7.1",
     "react-app-alias-ex": "^2.1.0",
     "react-app-rewired": "^2.2.1",
