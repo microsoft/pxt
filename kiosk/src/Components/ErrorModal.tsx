@@ -30,7 +30,7 @@ const ErrorModal: React.FC<IProps> = ({
                             className={`common-modal-button confirm error`}
                             onClick={cancelClicked}
                         >
-                            Okay
+                            {lf("Okay")}
                         </button>
                     </div>
                 </div>

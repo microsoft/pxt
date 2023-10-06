@@ -14,9 +14,9 @@ const HighScoresList: React.FC<IProps> = ({ highScores, highScoreMode }) => {
 
     return (
         <div className="gameHighScores">
-            <h2 className="gameHighScoreHeader">High Scores</h2>
+            <h2 className="gameHighScoreHeader">{lf("High Scores")}</h2>
             {!highScoresExist && (
-                <p className="gameHighScoreContent">None yet</p>
+                <p className="gameHighScoreContent">{lf("None yet")}</p>
             )}
             {highScoresExist && (
                 <ol className="gameHighScoreContent">
