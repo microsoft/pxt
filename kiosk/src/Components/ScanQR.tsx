@@ -87,11 +87,11 @@ const ScanQR: React.FC<IProps> = ({}) => {
                 setAddingError(error.toString());
                 if (error.toString().includes("404")) {
                     setErrorDesc(
-                        "The kiosk code expired. Go back to the kiosk to make a new code."
+                        lf("The kiosk code expired. Go back to the kiosk to make a new code.")
                     );
                 } else {
                     setErrorDesc(
-                        "Something went wrong. Please try again later."
+                        lf("Something went wrong. Please try again later.")
                     );
                 }
             }
@@ -131,9 +131,9 @@ const ScanQR: React.FC<IProps> = ({}) => {
     return (
         <div className="scanQrPage">
             <h2>
-                Add game to
+                {lf("Add game to")}
                 <br />
-                Kiosk {kioskId}
+                {lf("Kiosk {0}", kioskId)}
             </h2>
             <div className="scanInstructions">
                 <div className="qrOption">
@@ -142,7 +142,7 @@ const ScanQR: React.FC<IProps> = ({}) => {
                             className="kioskButton"
                             onClick={renderQrScanner}
                         >
-                            Scan QR code
+                            {lf("Scan QR code")}
                         </GenericButton>
                     )}
                     <div id="qrReader" ref={qrReaderRendered}></div>
@@ -152,17 +152,17 @@ const ScanQR: React.FC<IProps> = ({}) => {
                                 className="scanQrButton"
                                 onClick={stopQrScanner}
                             >
-                                Cancel Scan
+                                {lf("Cancel Scan")}
                             </GenericButton>
                             <p className="scanTip">
-                                Tip: Do not use the kiosk's QR code
+                                {lf("Tip: Do not use the kiosk's QR code")}
                             </p>
                         </div>
                     )}
                     <p>OR</p>
                 </div>
                 <div className="linkOption">
-                    <label>Submit share link</label>
+                    <label>{lf("Submit share link")}</label>
                     <input
                         type="url"
                         id="kiosk-share-link"
@@ -182,7 +182,7 @@ const ScanQR: React.FC<IProps> = ({}) => {
                     />
                     {linkError && (
                         <p className="linkError">
-                            Incorrect format for a share link
+                            {lf("Incorrect format for a share link")}
                         </p>
                     )}
                 </div>
@@ -194,7 +194,7 @@ const ScanQR: React.FC<IProps> = ({}) => {
                     tabIndex={0}
                     ref={handleHelpLinkRef}
                 >
-                    How do I get a game's share link or QR code?
+                    {lf("How do I get a game's share link or QR code?")}
                 </a>
             </div>
             {!!addingError && (

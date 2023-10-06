@@ -70,7 +70,6 @@ function App() {
             } else if (addGame) {
                 navigate(KioskState.ScanQR);
             }
-            window.location.hash = "";
         }
     }, [hash, ready]);
 

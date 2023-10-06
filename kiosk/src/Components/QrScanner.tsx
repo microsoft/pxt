@@ -22,17 +22,16 @@ export const play = async (
             setAddError(error.toString());
             if (error.toString().includes("404")) {
                 setDesc(
-                    "This is likely because the kiosk code is expired. Go back to the kiosk to make a new code."
+                    lf("This is likely because the kiosk code is expired. Go back to the kiosk to make a new code.")
                 );
             } else {
-                setDesc("Something went wrong. Please try again later.");
+                setDesc(lf("Something went wrong. Please try again later."));
             }
         }
     }
 
     function onScanFailure(errorMessage: string, error: any) {
-        console.log("scan failed");
-        throw new Error("bad scan");
+        setDesc(lf("Failed to scan QR code. Please try again."));
     }
 
     try {

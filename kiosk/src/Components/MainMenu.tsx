@@ -12,10 +12,6 @@ interface IProps {}
 const MainMenu: React.FC<IProps> = ({}) => {
     const { state: kiosk } = useContext(AppStateContext);
 
-    const selectedGame = kiosk.allGames.find(
-        g => g.id === kiosk.selectedGameId
-    );
-
     const lockedClassName = kiosk.locked ? " locked" : "";
 
     const ready = usePromise(AppStateReady, false);
@@ -32,7 +28,7 @@ const MainMenu: React.FC<IProps> = ({}) => {
                 <div className="mainMenu">
                     <nav className="mainMenuTopBar">
                         <h1 className={`mainMenuHeader${lockedClassName}`}>
-                            Initializing...
+                            {lf("Initializing...")}
                         </h1>
                     </nav>
                 </div>
@@ -41,7 +37,7 @@ const MainMenu: React.FC<IProps> = ({}) => {
                 <div className="mainMenu">
                     <nav className="mainMenuTopBar">
                         <h1 className={`mainMenuHeader${lockedClassName}`}>
-                            Select a Game
+                            {lf("Select a Game")}
                         </h1>
                         {!kiosk.locked && (
                             <div className="mainMenuButton">
@@ -49,7 +45,7 @@ const MainMenu: React.FC<IProps> = ({}) => {
                                     onClick={gotoAddingGame}
                                     exitDirections={[NavGrid.NavDirection.Down]}
                                 >
-                                    {"Add your game"}
+                                    {lf("Add your game")}
                                 </GenericButton>
                             </div>
                         )}

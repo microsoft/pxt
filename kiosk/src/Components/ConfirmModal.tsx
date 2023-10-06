@@ -20,12 +20,12 @@ const ConfirmModal: React.FC<IProps> = ({
 }) => {
     const actions: ModalAction[] = [
         {
-            label: cancelLabel ?? "Cancel",
+            label: cancelLabel ?? lf("Cancel"),
             onClick: onCancel,
             autofocus: true,
         },
         {
-            label: confirmLabel ?? "Confirm",
+            label: confirmLabel ?? lf("Confirm"),
             onClick: onConfirm,
         },
     ];
