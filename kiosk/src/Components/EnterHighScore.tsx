@@ -20,8 +20,8 @@ const EnterHighScore: React.FC<IProps> = ({}) => {
     return (
         <div className="enterHighScore">
             <div className="highScoreTitle">
-                <h1>YOU GOT A HIGH SCORE!</h1>
-                <h2>Enter your initials</h2>
+                <h1>{lf("YOU GOT A HIGH SCORE!")}</h1>
+                <h2>{lf("Enter your initials")}</h2>
             </div>
             <div className="highScoreContent">
                 <div className="highScoreList">
@@ -48,8 +48,8 @@ const EnterHighScore: React.FC<IProps> = ({}) => {
 
                 <div className="highScoreInstructions">
                     <ul>
-                        <li>Use up/down to scroll through the alphabet</li>
-                        <li>When you find your initial, press A</li>
+                        <li>{lf("Use up/down to scroll through the alphabet")}</li>
+                        <li>{lf("When you find your initial, press A")}</li>
                     </ul>
                 </div>
             </div>

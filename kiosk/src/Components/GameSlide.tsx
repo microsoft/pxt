@@ -38,11 +38,11 @@ const GameSlide: React.FC<IProps> = ({ highScores, game }) => {
                     highScores={highScores}
                     highScoreMode={game.highScoreMode}
                 />
-                {game.date && <div className="gameDate">Added {game.date}</div>}
+                {game.date && <div className="gameDate">{lf("Added {0}", game.date)}</div>}
             </div>
 
             {kiosk.selectedGameId && game.id === kiosk.selectedGameId && (
-                <div className="pressStart">Press A to Start</div>
+                <div className="pressStart">{lf("Press A to Start")}</div>
             )}
 
             {kiosk.selectedGameId && game.id === kiosk.selectedGameId && (

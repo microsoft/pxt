@@ -118,7 +118,7 @@ const GameList: React.FC<IProps> = ({}) => {
     if (!kiosk.allGames?.length) {
         return (
             <div>
-                <p>Currently no kiosk games</p>
+                <p>{lf("Currently no kiosk games")}</p>
             </div>
         );
     }

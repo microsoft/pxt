@@ -8,8 +8,8 @@ const QrSuccess: React.FC<{}> = () => {
 
     return (
         <div className="qrSuccess">
-            <p>You have successfully uploaded your game to the kiosk!</p>
-            <p>You can close this window. Happy playing!</p>
+            <p>{lf("You have successfully uploaded your game to the kiosk!")}</p>
+            <p>{lf("You can close this window. Happy playing!")}</p>
         </div>
     );
 };

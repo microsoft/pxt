@@ -69,7 +69,7 @@ const AddingGame: React.FC<IProps> = ({}) => {
             const kioskUrl = `${window.location.origin}/kiosk#add-game:${kiosk.kioskCode}`;
             return (
                 <div className="innerQRCodeContent">
-                    <h3>{kioskTimeOutInMinutes} minute Kiosk ID</h3>
+                    <h3>{lf("{0} minute Kiosk ID", kioskTimeOutInMinutes)}</h3>
                     <h1 className="kioskCode">{kiosk.kioskCode}</h1>
                     <QRCodeSVG value={kioskUrl} />
                     <div className="kioskLink">
@@ -87,7 +87,7 @@ const AddingGame: React.FC<IProps> = ({}) => {
         } else {
             return (
                 <div className="innerQRCodeContent">
-                    <h3>Generating Kiosk ID...</h3>
+                    <h3>{lf("Generating Kiosk ID...")}</h3>
                 </div>
             );
         }
@@ -95,19 +95,17 @@ const AddingGame: React.FC<IProps> = ({}) => {
 
     return (
         <div className="addGame">
-            <h1>Add your game</h1>
+            <h1>{lf("Add your game")}</h1>
             <div className="addGameContent">
                 <div className="addInstructions">
-                    <h2>How to upload your game</h2>
+                    <h2>{lf("How to upload your game")}</h2>
                     <ol>
-                        <li>Use your mobile device to scan the QR code</li>
+                        <li>{lf("Use your mobile device to scan the QR code")}</li>
                         <li>
-                            Use the new page to scan or enter your game's share
-                            code
+                            {lf("Use the new page to scan or enter your game's share code")}
                         </li>
                         <li>
-                            If your game is uploaded successfully, it will be
-                            added to the game list
+                            {lf("If your game is uploaded successfully, it will be added to the game list")}
                         </li>
                     </ol>
                 </div>
@@ -115,7 +113,7 @@ const AddingGame: React.FC<IProps> = ({}) => {
                 {qrDivContent()}
             </div>
             <GenericButton autofocus={true} onClick={gotoMainMenu}>
-                {"Return to menu"}
+                {lf("Return to menu")}
             </GenericButton>
         </div>
     );

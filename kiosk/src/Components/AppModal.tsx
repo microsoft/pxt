@@ -57,9 +57,9 @@ export default function AppModal() {
                 >
                     <div className="common-modal-body">
                         <p>
-                            <b>{`Delete "${selectedGame?.name}"? `}</b>
+                            <b>{lf("Delete {0}?", selectedGame?.name)}{" "}</b>
                             {
-                                "The only way to get the game back is by re-uploading it."
+                                lf("The only way to get the game back is by re-uploading it.")
                             }
                         </p>
                     </div>
