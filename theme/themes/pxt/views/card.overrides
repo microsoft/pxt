@@ -222,12 +222,27 @@ a.ui.card:focus,
     /* Mobile only */
     @media only screen and (max-width: @largestMobileScreen) {
         .projectsdialog {
+            // tutorial cards
             .ui.card.example {
                 height: 9rem;
 
                 .ui.image, .ui.cardimage {
                     height: 8.4rem !important;
                 }
+            }
+
+            // project cards
+            .ui.card.link {
+                height: 9rem;
+
+                // new project card +
+                i.huge.icon {
+                    font-size: 2.5em;
+                }
+            }
+
+            .ui.card.link.blocksprj .ui.fileimage {
+                margin-left: -4px;
             }
         }
     }
