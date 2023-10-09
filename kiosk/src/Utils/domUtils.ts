@@ -43,3 +43,9 @@ export const isInteractable = (
         isElementValid(element)
     );
 };
+
+export const focusElement = (el: HTMLElement | null | undefined): void => {
+    setTimeout(() => {
+        el?.focus({ focusVisible: true, preventScroll: true } as any);
+    }, 0);
+};

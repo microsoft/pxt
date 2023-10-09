@@ -103,13 +103,13 @@ class NavGrid {
             this.stack.pop();
             if (this.activeElement) {
                 // Focus the previously active element
-                this.navigables.get(this.activeElement)?.el.focus();
+                domUtils.focusElement(this.navigables.get(this.activeElement)?.el);
             } else {
                 // Focus the first autofocus element in the context
                 const navs = Array.from(this.navigables.values());
                 for (const navigable of navs) {
                     if (navigable.autofocus) {
-                        navigable.el.focus();
+                        domUtils.focusElement(navigable.el);
                         break;
                     }
                 }
@@ -206,15 +206,15 @@ class NavGrid {
 
         if (forward) {
             if (index === focusable.length - 1) {
-                focusable[0].focus();
+                domUtils.focusElement(focusable[0]);
             } else {
-                focusable[index + 1].focus();
+                domUtils.focusElement(focusable[index + 1]);
             }
         } else {
             if (index === 0) {
-                focusable[focusable.length - 1].focus();
+                domUtils.focusElement(focusable[focusable.length - 1]);
             } else {
-                focusable[Math.max(index - 1, 0)].focus();
+                domUtils.focusElement(focusable[Math.max(index - 1, 0)]);
             }
         }
     };
@@ -305,6 +305,10 @@ class NavGrid {
             opts?.autofocus ?? false
         );
 
+        if (opts?.autofocus) {
+            el.setAttribute("autofocus", "autofocus");
+        }
+
         const onFocus = (ev: FocusEvent) => this.focusHandler(ev, navigable);
         const onBlur = () => this.blurHandler(navigable);
         const onResize = () => this.resizeHandler(navigable);
@@ -323,7 +327,7 @@ class NavGrid {
 
         // If this is the first navigable and it allows autofocus, focus it
         if (!this.activeElement && opts?.autofocus) {
-            el.focus();
+            domUtils.focusElement(el);
         }
 
         //console.log("NavGrid.registerNavigable", navigable);
@@ -345,11 +349,18 @@ class NavGrid {
     navigate(direction: NavDirection): boolean {
         //console.log("navigate", direction);
 
-        // If nothing focused, focus the first registered navigable if it exists
+        // If nothing focused, focus the first registered autofocus navigable,
+        // if any. Otherwise focus the first registered navigable, if any.
         if (!this.activeElement) {
-            const keys = Array.from(this.navigables.keys());
-            if (keys.length) {
-                this.navigables.get(keys[0])?.el?.focus();
+            const values = Array.from(this.navigables.values());
+            const autofocusNavigable = values.filter(n => n.autofocus)?.shift();
+            if (autofocusNavigable) {
+                domUtils.focusElement(autofocusNavigable.el);
+                return true;
+            }
+            const firstNavigable = values.shift();
+            if (firstNavigable) {
+                domUtils.focusElement(firstNavigable.el);
                 return true;
             }
             // No navigables have been registered
@@ -392,7 +403,7 @@ class NavGrid {
         if (!bestNavigable) {
             return false;
         }
-        bestNavigable.el.focus();
+        domUtils.focusElement(bestNavigable.el);
         return true;
     }
 
