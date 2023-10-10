@@ -5,12 +5,12 @@ import { GameData, HighScore } from "../Types";
 import { AppStateContext } from "../State/AppStateContext";
 import HighScoresList from "./HighScoresList";
 import { GameMenu } from "./GameMenu";
+import { getHighScores } from "../State";
 
 interface IProps {
-    highScores: HighScore[];
     game: GameData;
 }
-const GameSlide: React.FC<IProps> = ({ highScores, game }) => {
+const GameSlide: React.FC<IProps> = ({ game }) => {
     const { state: kiosk } = useContext(AppStateContext);
 
     const handleSlideClick = (ev?: React.MouseEvent) => {
@@ -35,10 +35,12 @@ const GameSlide: React.FC<IProps> = ({ highScores, game }) => {
                 <div className="gameTitle">{game.name}</div>
                 <div className="gameDescription">{game.description}</div>
                 <HighScoresList
-                    highScores={highScores}
+                    highScores={getHighScores(game.id)}
                     highScoreMode={game.highScoreMode}
                 />
-                {game.date && <div className="gameDate">{lf("Added {0}", game.date)}</div>}
+                {game.date && (
+                    <div className="gameDate">{lf("Added {0}", game.date)}</div>
+                )}
             </div>
 
             {kiosk.selectedGameId && game.id === kiosk.selectedGameId && (
