@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useContext, useCallback } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Swiper as SwiperClass, Pagination } from "swiper";
 import "swiper/css";
@@ -8,11 +8,7 @@ import { playSoundEffect } from "../Services/SoundEffectService";
 import { AppStateContext } from "../State/AppStateContext";
 import { selectGameByIndex } from "../Transforms/selectGameByIndex";
 import { launchGame } from "../Transforms/launchGame";
-import {
-    getHighScores,
-    getSelectedGameIndex,
-    getSelectedGameId,
-} from "../State";
+import { getSelectedGameIndex, getSelectedGameId } from "../State";
 import * as GamepadManager from "../Services/GamepadManager";
 import * as NavGrid from "../Services/NavGrid";
 import { useOnControlPress, useMakeNavigable } from "../Hooks";
@@ -21,12 +17,18 @@ interface IProps {}
 
 const GameList: React.FC<IProps> = ({}) => {
     const { state: kiosk } = useContext(AppStateContext);
-    const localSwiper = useRef<SwiperClass>();
+    const [localSwiper, setLocalSwiper] = useState<SwiperClass | undefined>(
+        undefined
+    );
     const [userInitiatedTransition, setUserInitiatedTransition] =
         React.useState(false);
     const [pageInited, setPageInited] = React.useState(false);
 
-    useMakeNavigable(localSwiper?.current?.el, {
+    const handleLocalSwiper = (swiper: SwiperClass) => {
+        setLocalSwiper(swiper);
+    };
+
+    useMakeNavigable(localSwiper?.el, {
         exitDirections: [NavGrid.NavDirection.Down, NavGrid.NavDirection.Up],
         autofocus: true,
     });
@@ -41,7 +43,8 @@ const GameList: React.FC<IProps> = ({}) => {
     };
 
     const syncSelectedGame = useCallback(() => {
-        const gameIndex = localSwiper?.current?.realIndex || 0;
+        if (!localSwiper || localSwiper.destroyed) return;
+        const gameIndex = localSwiper.realIndex || 0;
         const selectedGameIndex = getSelectedGameIndex();
         if (
             selectedGameIndex !== undefined &&
@@ -53,14 +56,15 @@ const GameList: React.FC<IProps> = ({}) => {
 
     // on page load use effect
     useEffect(() => {
+        if (!localSwiper || localSwiper.destroyed) return;
         if (!pageInited) {
             if (kiosk.allGames.length) {
                 if (!kiosk.selectedGameId) {
                     selectGameByIndex(0);
-                    localSwiper.current?.slideTo(2);
+                    localSwiper.slideTo(2);
                 } else {
                     const index = getSelectedGameIndex() || 0;
-                    localSwiper.current?.slideTo(index + 2);
+                    localSwiper.slideTo(index + 2);
                 }
                 setPageInited(true);
             }
@@ -71,9 +75,10 @@ const GameList: React.FC<IProps> = ({}) => {
     useOnControlPress(
         [localSwiper, userInitiatedTransition],
         () => {
-            if (NavGrid.isActiveElement(localSwiper?.current?.el)) {
+            if (!localSwiper || localSwiper.destroyed) return;
+            if (NavGrid.isActiveElement(localSwiper.el)) {
                 setUserInitiatedTransition(true);
-                setTimeout(() => localSwiper.current?.slideNext(), 1);
+                setTimeout(() => localSwiper.slideNext(), 1);
             }
         },
         GamepadManager.GamepadControl.DPadRight
@@ -83,9 +88,10 @@ const GameList: React.FC<IProps> = ({}) => {
     useOnControlPress(
         [localSwiper, userInitiatedTransition],
         () => {
-            if (NavGrid.isActiveElement(localSwiper?.current?.el)) {
+            if (!localSwiper || localSwiper.destroyed) return;
+            if (NavGrid.isActiveElement(localSwiper.el)) {
                 setUserInitiatedTransition(true);
-                setTimeout(() => localSwiper.current?.slidePrev(), 1);
+                setTimeout(() => localSwiper?.slidePrev(), 1);
             }
         },
         GamepadManager.GamepadControl.DPadLeft
@@ -95,12 +101,12 @@ const GameList: React.FC<IProps> = ({}) => {
     useOnControlPress(
         [localSwiper, userInitiatedTransition],
         () => {
-            if (NavGrid.isActiveElement(localSwiper?.current?.el)) {
+            if (!localSwiper || localSwiper.destroyed) return;
+            if (NavGrid.isActiveElement(localSwiper.el)) {
                 launchSelectedGame();
             }
         },
-        GamepadManager.GamepadControl.AButton,
-        GamepadManager.GamepadControl.BButton
+        GamepadManager.GamepadControl.AButton
     );
 
     const transitionStart = () => {
@@ -133,22 +139,16 @@ const GameList: React.FC<IProps> = ({}) => {
                 slidesPerView={1.8}
                 centeredSlides={true}
                 pagination={{ type: "fraction" }}
-                onSwiper={swiper => {
-                    localSwiper.current = swiper;
-                }}
+                onSwiper={handleLocalSwiper}
                 allowTouchMove={true}
                 modules={[Pagination]}
                 onSlideChangeTransitionStart={() => transitionStart()}
                 onTouchEnd={() => onTouchEnd()}
             >
                 {kiosk.allGames.map((game, index) => {
-                    const gameHighScores = getHighScores(game.id);
                     return (
                         <SwiperSlide key={index}>
-                            <GameSlide
-                                highScores={gameHighScores}
-                                game={game}
-                            />
+                            <GameSlide game={game} />
                         </SwiperSlide>
                     );
                 })}

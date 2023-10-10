@@ -14,11 +14,38 @@
     "GamepadBButtonPin": 1,
     "GamepadEscapeButtonPin": 9,
     "GamepadResetButtonPin": 10,
+    "GamepadDpadUpButtonPin": 12,
+    "GamepadDpadDownButtonPin": 13,
+    "GamepadDpadLeftButtonPin": 14,
+    "GamepadDpadRightButtonPin": 15,
     "GamepadMenuButtonPin": 11,
-    "GamepadLeftRightAxis": 0,
-    "GamepadLeftRightThreshold": 0.5,
-    "GamepadUpDownAxis": 1,
-    "GamepadUpDownThreshold": 0.5,
+    "GamepadAxes": {
+        "None": {
+            "Pin": -1,
+            "Sign": 0,
+            "Threshold": 0
+        },
+        "Up": {
+            "Pin": 1,
+            "Sign": -1,
+            "Threshold": 0.5
+        },
+        "Down": {
+            "Pin": 1,
+            "Sign": 1,
+            "Threshold": 0.5
+        },
+        "Left": {
+            "Pin": 0,
+            "Sign": -1,
+            "Threshold": 0.5
+        },
+        "Right": {
+            "Pin": 0,
+            "Sign": 1,
+            "Threshold": 0.5
+        }
+    },
     "GamepadControlToKeyboardKeyMap": {
         "AButton": "Space",
         "BButton": "Enter",

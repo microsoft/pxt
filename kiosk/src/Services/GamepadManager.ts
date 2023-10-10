@@ -13,28 +13,36 @@ export enum GamepadControl {
     ResetButton = "ResetButton",
 }
 
+enum GamepadAxis {
+    None = "None",
+    Up = "Up",
+    Down = "Down",
+    Left = "Left",
+    Right = "Right",
+}
+
 const gamepadControlToPinIndex: { [key in GamepadControl]: number } = {
     [GamepadControl.AButton]: configData.GamepadAButtonPin,
     [GamepadControl.BButton]: configData.GamepadBButtonPin,
-    [GamepadControl.DPadUp]: configData.GamepadUpDownAxis,
-    [GamepadControl.DPadDown]: configData.GamepadUpDownAxis,
-    [GamepadControl.DPadLeft]: configData.GamepadLeftRightAxis,
-    [GamepadControl.DPadRight]: configData.GamepadLeftRightAxis,
+    [GamepadControl.DPadUp]: configData.GamepadDpadUpButtonPin,
+    [GamepadControl.DPadDown]: configData.GamepadDpadDownButtonPin,
+    [GamepadControl.DPadLeft]: configData.GamepadDpadLeftButtonPin,
+    [GamepadControl.DPadRight]: configData.GamepadDpadRightButtonPin,
     [GamepadControl.MenuButton]: configData.GamepadMenuButtonPin,
     [GamepadControl.EscapeButton]: configData.GamepadEscapeButtonPin,
     [GamepadControl.ResetButton]: configData.GamepadResetButtonPin,
 };
 
-const gamepadControlToAxisDirection: { [key in GamepadControl]: number } = {
-    [GamepadControl.AButton]: 0,
-    [GamepadControl.BButton]: 0,
-    [GamepadControl.DPadUp]: -1,
-    [GamepadControl.DPadDown]: 1,
-    [GamepadControl.DPadLeft]: -1,
-    [GamepadControl.DPadRight]: 1,
-    [GamepadControl.MenuButton]: 0,
-    [GamepadControl.EscapeButton]: 0,
-    [GamepadControl.ResetButton]: 0,
+const gamepadControlToAxis: { [key in GamepadControl]: GamepadAxis } = {
+    [GamepadControl.AButton]: GamepadAxis.None,
+    [GamepadControl.BButton]: GamepadAxis.None,
+    [GamepadControl.DPadUp]: GamepadAxis.Up,
+    [GamepadControl.DPadDown]: GamepadAxis.Down,
+    [GamepadControl.DPadLeft]: GamepadAxis.Left,
+    [GamepadControl.DPadRight]: GamepadAxis.Right,
+    [GamepadControl.MenuButton]: GamepadAxis.None,
+    [GamepadControl.EscapeButton]: GamepadAxis.None,
+    [GamepadControl.ResetButton]: GamepadAxis.None,
 };
 
 export enum ControlValue {
@@ -129,8 +137,7 @@ class GamepadManager {
         );
 
         this.minAxisRequired = Math.max(
-            configData.GamepadUpDownAxis,
-            configData.GamepadLeftRightAxis
+            ...Object.values(configData.GamepadAxes).map(v => v.Pin)
         );
     }
 
@@ -258,6 +265,15 @@ class GamepadManager {
         }
     }
 
+    mergeControlValues(...values: ControlValue[]): ControlValue {
+        for (const value of values) {
+            if (value === ControlValue.Down) {
+                return ControlValue.Down;
+            }
+        }
+        return ControlValue.Up;
+    }
+
     readGamepad(gamepad: Gamepad): ControlStates {
         return {
             [GamepadControl.AButton]: this.readGamepadButtonValue(
@@ -268,21 +284,24 @@ class GamepadManager {
                 gamepad,
                 GamepadControl.BButton
             ),
-            [GamepadControl.DPadUp]: this.readGamepadDirectionValue(
-                gamepad,
-                GamepadControl.DPadUp
+            [GamepadControl.DPadUp]: this.mergeControlValues(
+                this.readGamepadButtonValue(gamepad, GamepadControl.DPadUp),
+                this.readGamepadDirectionValue(gamepad, GamepadControl.DPadUp)
             ),
-            [GamepadControl.DPadDown]: this.readGamepadDirectionValue(
-                gamepad,
-                GamepadControl.DPadDown
+            [GamepadControl.DPadDown]: this.mergeControlValues(
+                this.readGamepadButtonValue(gamepad, GamepadControl.DPadDown),
+                this.readGamepadDirectionValue(gamepad, GamepadControl.DPadDown)
             ),
-            [GamepadControl.DPadLeft]: this.readGamepadDirectionValue(
-                gamepad,
-                GamepadControl.DPadLeft
+            [GamepadControl.DPadLeft]: this.mergeControlValues(
+                this.readGamepadButtonValue(gamepad, GamepadControl.DPadLeft),
+                this.readGamepadDirectionValue(gamepad, GamepadControl.DPadLeft)
             ),
-            [GamepadControl.DPadRight]: this.readGamepadDirectionValue(
-                gamepad,
-                GamepadControl.DPadRight
+            [GamepadControl.DPadRight]: this.mergeControlValues(
+                this.readGamepadButtonValue(gamepad, GamepadControl.DPadRight),
+                this.readGamepadDirectionValue(
+                    gamepad,
+                    GamepadControl.DPadRight
+                )
             ),
             [GamepadControl.MenuButton]: this.readGamepadButtonValue(
                 gamepad,
@@ -483,11 +502,8 @@ class GamepadManager {
         control: GamepadControl
     ): ControlValue {
         const pinIndex = gamepadControlToPinIndex[control];
-        if (pinIndex < 0 || pinIndex >= gamepad.buttons.length) {
-            throw new Error(
-                `Gamepad at index ${gamepad.index} does not have a button at pin ${pinIndex}`
-            );
-        }
+        if (pinIndex < 0 || pinIndex >= gamepad.buttons.length)
+            return ControlValue.Up;
         return gamepad.buttons[pinIndex].pressed
             ? ControlValue.Down
             : ControlValue.Up;
@@ -497,15 +513,11 @@ class GamepadManager {
         gamepad: Gamepad,
         control: GamepadControl
     ): ControlValue {
-        const axisIndex = gamepadControlToPinIndex[control];
-        const threshold =
-            gamepadControlToAxisDirection[control] *
-            configData.GamepadLeftRightThreshold;
-        if (axisIndex < 0 || axisIndex >= gamepad.axes.length) {
-            throw new Error(
-                `Gamepad at index ${gamepad.index} does not have an axis at index ${axisIndex}`
-            );
-        }
+        const axisConf = configData.GamepadAxes[gamepadControlToAxis[control]];
+        const axisIndex = axisConf.Pin;
+        if (axisIndex < 0 || axisIndex >= gamepad.axes.length)
+            return ControlValue.Up;
+        const threshold = axisConf.Sign * axisConf.Threshold;
         if (threshold < 0) {
             return gamepad.axes[axisIndex] <= threshold
                 ? ControlValue.Down
