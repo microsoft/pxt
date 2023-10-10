@@ -3704,17 +3704,18 @@ export class ProjectView
         }
     }
 
-    startSimulator(opts?: pxt.editor.SimulatorStartOptions) {
+    async startSimulator(opts?: pxt.editor.SimulatorStartOptions) {
         pxt.tickEvent('simulator.start');
         const isDebugMatch = !this.debugOptionsChanged();
         const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`start sim (autorun ${this.state.autoRun})`)
-        if (!this.shouldStartSimulator() && isDebugMatch) {
+        if (!this.shouldStartSimulator() && isDebugMatch || this.state.home) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
-            return Promise.resolve();
+            return;
         }
-        return this.saveFileAsync()
-            .then(() => this.runSimulator({ debug: this.state.debugging, clickTrigger }))
+
+        await this.saveFileAsync();
+        await this.runSimulator({ debug: this.state.debugging, clickTrigger });
     }
 
     debugOptionsChanged() {
