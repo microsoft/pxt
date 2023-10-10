@@ -3755,8 +3755,10 @@ export class ProjectView
         this.clearSerial();
         // Not this.restartSimulator; need full restart to consistently update visuals,
         // and don't want to steal focus.
-        this.stopSimulator();
-        this.startSimulator();
+        if (this.isSimulatorRunning()) {
+            this.stopSimulator();
+            this.startSimulator();
+        }
 
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
         const bodyIsHighContrast = document.body.classList.contains("high-contrast");
