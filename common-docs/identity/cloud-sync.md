@@ -38,6 +38,8 @@ If you’ve set your High Contrast or Language settings, they will be cloud-sync
 
 ## When I sign out all my projects disappeared! What happened?
 
-When you’re signed out, your cloud projects aren’t shown until you sign in again. Instead, you’ll see just one card on under My Projects for all of the projects saved in the cloud. You can just click on this card to sign in and see those projects again.
+When you’re signed out, your cloud projects aren’t shown until you sign in again. Instead, you’ll see just one card on under **My Projects** for all of the projects saved in the cloud. You can just click on this card to sign in and see those projects again.
 
 ![Cloud projects card](/static/identity/cloud-projects.png)
+
+## #target-specific
