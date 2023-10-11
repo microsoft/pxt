@@ -6,7 +6,7 @@ Cloud Synchronization, or Cloud Sync, is a feature available to signed-in users 
 
 ## How do I enable Cloud Sync?
 
-All you need to do is sign in to MakeCode with an online account and Cloud Sync is automatically enabled - so any new project you create, tutorial you start, or any existing project you open will be automatically saved to the cloud. To learn more about how to sign-in, visit [Online Accounts and MakeCode](https://makecode.microbit.org/identity/sign-in). 
+All you need to do is sign in to MakeCode with an online account and Cloud Sync is automatically enabled - so any new project you create, tutorial you start, or any existing project you open will be automatically saved to the cloud. To learn more about how to sign-in, visit [Online Accounts and MakeCode](/identity/sign-in). 
 
 ## Does it cost money?
 
