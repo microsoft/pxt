@@ -2,7 +2,7 @@
 
 ## What is an Online Account?
 
-An online account is a user account with a reputable provider of online services. While MakeCode does not have its own accounts, MakeCode does allow you to sign-in using an online account with either Microsoft, Google or Clever.
+An online account is a user account with a reputable provider of online services. While MakeCode does not have its own accounts, MakeCode does allow you to sign-in using an online account with either Microsoft, Google, or Clever.
 
 ### Microsoft Account
 
@@ -18,7 +18,7 @@ Clever is an educational identity provider used by many schools to aggregate stu
 
 ## What’s the benefit of signing in to MakeCode?
 
-MakeCode doesn’t require you to sign-in with an online account to use the product. However, it is recommended in order to reliably save your work and progress to the cloud. This also allows you to access your projects from any computer. When you are logged-in, you can also create persistent project sharing links which allow you use a single published URL for a project, even if you make subsequent changes. To learn more, see [Cloud Synchronization in MakeCode](https://arcade.makecode.com/identity/cloud-sync) and [Sharing your project]( https://arcade.makecode.com/share).
+MakeCode doesn’t require you to sign in with an online account to use the product. However, it is recommended in order to reliably save your work and progress to the cloud. This also allows you to access your projects from any computer. When you are logged-in, you can also create persistent project sharing links which allow you use a single published URL for a project, even if you make subsequent changes. To learn more, see [Cloud Synchronization in MakeCode](https://arcade.makecode.com/identity/cloud-sync) and [Sharing your project]( https://arcade.makecode.com/share).
 
 ## Is it required?
 
@@ -34,7 +34,7 @@ Nothing. Your signed in status is visible only to you.
 
 ## What if I don’t have a Microsoft, Google or Clever account?
 
-You can create a Microsoft or Google account using your current email address for free and check with your school if you already have a Clever account. But remember that you can still use MakeCode even without an account.
+You can create a Microsoft or Google account using your current email address for free and check with your school if you already have a Clever account. But remember, you can still use MakeCode even without an account.
 
 ## Can I use my school or work account?
 
@@ -57,7 +57,7 @@ GitHub provides a source code repository for your projects to help with version 
 
 ## We use Google school accounts and I’m having trouble accessing MakeCode, what do I need to do?
 
-Google Workspace for Education made some changes in October 2023 that requires schools to explicitly authorize any 3rd party applications. Please work with your IT Administrator to make the following changes in the Google Admin Console to enable use of MakeCode with Google accounts:
+Google Workspace for Education made some changes in October 2023 that require schools to explicitly authorize any 3rd party applications. Please work with your IT Administrator to make the following changes in the Google Admin Console to enable use of MakeCode with Google accounts:
 
 1. Sign in to your Google Admin console using an administrator account at https://admin.google.com
 2. In the Admin console, go to **Menu | Security | Access and data control | API controls**
