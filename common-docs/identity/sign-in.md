@@ -18,7 +18,7 @@ Clever is an educational identity provider used by many schools to aggregate stu
 
 ## What’s the benefit of signing in to MakeCode?
 
-MakeCode doesn’t require you to sign in with an online account to use the product. However, it is recommended in order to reliably save your work and progress to the cloud. This also allows you to access your projects from any computer. When you are logged-in, you can also create persistent project sharing links which allow you use a single published URL for a project, even if you make subsequent changes. To learn more, see [Cloud Synchronization in MakeCode](https://arcade.makecode.com/identity/cloud-sync) and [Sharing your project]( https://arcade.makecode.com/share).
+MakeCode doesn’t require you to sign in with an online account to use the product. However, it is recommended in order to reliably save your work and progress to the cloud. This also allows you to access your projects from any computer. When you are logged-in, you can also create persistent project sharing links which allow you use a single published URL for a project, even if you make subsequent changes. To learn more, see [Cloud Synchronization in MakeCode](/identity/cloud-sync) and [Sharing your project](/share).
 
 ## Is it required?
 
@@ -53,7 +53,7 @@ No. At the time you delete your profile, all of your cloud saved projects are ex
 
 ## How does this work with GitHub?
 
-GitHub provides a source code repository for your projects to help with version control. You can still sign into MakeCode with a Microsoft, Google or Clever Account and use Cloud Sync to store your projects in the cloud, even while using GitHub. To learn more, visit [GitHub with MakeCode](https://arcade.makecode.com/github).
+GitHub provides a source code repository for your projects to help with version control. You can still sign into MakeCode with a Microsoft, Google or Clever Account and use Cloud Sync to store your projects in the cloud, even while using GitHub. To learn more, visit [GitHub with MakeCode](/github).
 
 ## We use Google school accounts and I’m having trouble accessing MakeCode, what do I need to do?
 

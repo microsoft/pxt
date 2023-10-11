@@ -20,7 +20,7 @@ This link is not published anywhere else and it is not tied to a specific user (
 
 ## Persistent Share Link
 
-If you sign-in to MakeCode, you can create a persistent share link for your project. This means that you can create one link to a project, share it with others, or include it in curriculum. Then, for any subsequent changes you make to the project, you can keep the same link. For more information on signing in to MakeCode, see [Online Accounts and MakeCode](https://makecode.microbit.org/share/sign-in).
+If you sign-in to MakeCode, you can create a persistent share link for your project. This means that you can create one link to a project, share it with others, or include it in curriculum. Then, for any subsequent changes you make to the project, you can keep the same link. For more information on signing in to MakeCode, see [Online Accounts and MakeCode](/identity/sign-in).
 
 Persistent share links start with an "S" followed by a series of numbers.
 
