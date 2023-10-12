@@ -4,13 +4,10 @@
   "private": true,
   "dependencies": {
     "@types/node": "^16.11.33",
-    "bezier-easing": "^2.1.0",
     "howler": "^2.2.3",
     "html5-qrcode": "^2.2.6",
     "nanoid": "^4.0.2",
     "qrcode.react": "^3.1.0",
-    "react": "^18.1.0",
-    "react-dom": "^18.1.0",
     "react-scripts": "5.0.1",
     "swiper": "^8.4.4",
     "tslib": "^2.6.2",
@@ -22,11 +19,6 @@
     "prebuild": "node ./scripts/linkfonts.js",
     "build": "react-app-rewired build",
     "prettier": "prettier --write \"src/**/{*.ts,*.tsx}\""
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
   },
   "browserslist": {
     "production": [
@@ -43,11 +35,12 @@
   "devDependencies": {
     "@types/howler": "^2.2.8",
     "@types/qrcode": "^1.5.0",
-    "@types/react": "^18.0.9",
-    "@types/react-dom": "^18.0.3",
+    "@types/react": "file:../node_modules/@types/react",
+    "@types/react-dom": "file:../node_modules/@types/react-dom",
     "html-webpack-plugin": "^5.5.0",
+    "node-polyfill-webpack-plugin": "^2.0.1",
     "prettier": "^2.7.1",
-    "react-app-alias": "^2.2.2",
+    "react-app-alias-ex": "^2.1.0",
     "react-app-rewired": "^2.2.1"
   }
 }
