@@ -1,4 +1,5 @@
-const { aliasWebpack } = require("react-app-alias");
+const { aliasWebpack } = require("react-app-alias-ex");
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = function (config, env) {
@@ -8,6 +9,7 @@ module.exports = function (config, env) {
         ...aliasFn(config),
         plugins: [
             ...config.plugins.filter((p) => !(p instanceof HtmlWebpackPlugin)),
+            new NodePolyfillPlugin(),
             new HtmlWebpackPlugin(
                 Object.assign(
                     {},
@@ -34,10 +36,6 @@ module.exports = function (config, env) {
                 )
             ),
         ],
-        module: {
-            ...config.module,
-            rules: config.module.rules.filter(el => !(el.use && el.use.some(item => !!(item.options && item.options.eslintPath)))),
-        }
     };
     return config;
 };

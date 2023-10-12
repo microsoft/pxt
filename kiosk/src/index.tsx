@@ -5,7 +5,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import React from "react";
-import ReactDOM from "react-dom/client";
+import ReactDOM from "react-dom";
 // eslint-disable-next-line import/no-unassigned-import
 import "./Kiosk.css";
 import App from "./App";
@@ -49,14 +49,12 @@ window.addEventListener("DOMContentLoaded", () => {
     // prefetch worker on load
     pxt.worker.getWorker(pxt.webConfig.workerjs);
 
-    const root = ReactDOM.createRoot(
-        document.getElementById("root") as HTMLElement
-    );
-    root.render(
+    ReactDOM.render(
         <React.StrictMode>
             <AppStateProvider>
                 <App />
             </AppStateProvider>
-        </React.StrictMode>
+        </React.StrictMode>,
+        document.getElementById("root")
     );
 });
