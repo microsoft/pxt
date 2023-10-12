@@ -306,6 +306,49 @@ export async function getTextAsync(id: string, getSavedText = false): Promise<Sc
     });
 }
 
+export async function saveSnapshotAsync(id: string): Promise<void> {
+    await enqueueHistoryOperationAsync(
+        id,
+        text => {
+            pxt.workspace.pushSnapshotOnHistory(text, Date.now())
+        }
+    );
+}
+
+export async function updateShareHistoryAsync(id: string): Promise<void> {
+    await enqueueHistoryOperationAsync(
+        id,
+        (text, header) => {
+            pxt.workspace.updateShareHistory(text, Date.now(), header.pubVersions || [])
+        }
+    );
+}
+
+async function enqueueHistoryOperationAsync(id: string, op: (text: ScriptText, header: Header) => void) {
+    await maybeSyncHeadersAsync();
+
+    const e = lookup(id);
+
+    if (!e) return;
+
+    await headerQ.enqueue(id, async () => {
+        const saved = await impl.getAsync(e.header);
+
+        const h = saved.header;
+
+        op(saved.text, h);
+
+        const ver = await impl.setAsync(h, saved.version, saved.text);
+        e.version = ver;
+
+        data.invalidate("text:" + h.id);
+        data.invalidate("pkg-git-status:" + h.id);
+        data.invalidateHeader("header", h);
+
+        refreshHeadersSession();
+    });
+}
+
 export interface ScriptMeta {
     description: string;
     blocksWidth?: number;
@@ -343,46 +386,48 @@ function getScriptRequest(h: Header, text: ScriptText, meta: ScriptMeta, screens
 }
 
 // https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
-export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
     checkHeaderSession(h);
 
     const saveId = {}
     h.saveId = saveId
     const scrReq = getScriptRequest(h, text, meta, screenshotUri)
+
     pxt.debug(`publishing script; ${scrReq.text.length} bytes`)
-    return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
-        .then((inf: Cloud.JsonScript) => {
-            if (!h.pubVersions) h.pubVersions = [];
-            h.pubVersions.push({ id: inf.id, type: "snapshot" });
-            if (inf.shortid) inf.id = inf.shortid;
-            h.pubId = inf.shortid
-            h.pubCurrent = h.saveId === saveId
-            h.meta = inf.meta;
-            pxt.debug(`published; id /${h.pubId}`)
-            return saveAsync(h)
-                .then(() => inf)
-        })
+    const inf = await Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true) as Cloud.JsonScript;
+    if (!h.pubVersions) h.pubVersions = [];
+    h.pubVersions.push({ id: inf.id, type: "snapshot" });
+    if (inf.shortid) inf.id = inf.shortid;
+    h.pubId = inf.shortid
+    h.pubCurrent = h.saveId === saveId
+    h.meta = inf.meta;
+    pxt.debug(`published; id /${h.pubId}`)
+
+    await saveAsync(h);
+    await updateShareHistoryAsync(h.id);
+    return inf;
 }
 
-export function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+export async function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
     checkHeaderSession(h);
 
     const saveId = {}
     h.saveId = saveId
     const scrReq = getScriptRequest(h, text, meta, screenshotUri)
     pxt.debug(`publishing script; ${scrReq.text.length} bytes`)
-    return cloud.shareAsync(h.id, scrReq)
-        .then((resp: { shareID: string, scr: cloud.SharedCloudProject }) => {
-            const { shareID, scr: script } = resp;
-            if (!h.pubVersions) h.pubVersions = [];
-            h.pubVersions.push({ id: script.id, type: "permalink" });
-            h.pubId = shareID
-            h.pubCurrent = h.saveId === saveId
-            h.pubPermalink = shareID;
-            h.meta = script.meta;
-            pxt.debug(`published; id /${h.pubId}`)
-            return saveAsync(h).then(() => h)
-        })
+
+    const { shareID, scr: script } =  await cloud.shareAsync(h.id, scrReq);
+    if (!h.pubVersions) h.pubVersions = [];
+    h.pubVersions.push({ id: script.id, type: "permalink" });
+    h.pubId = shareID
+    h.pubCurrent = h.saveId === saveId
+    h.pubPermalink = shareID;
+    h.meta = script.meta;
+    pxt.debug(`published; id /${h.pubId}`)
+    await saveAsync(h);
+    await updateShareHistoryAsync(h.id);
+
+    return h;
 }
 
 function fixupVersionAsync(e: File) {

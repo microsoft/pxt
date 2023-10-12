@@ -872,6 +872,7 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
 
         header.targetVersion = editorVersion;
 
+        await workspace.saveSnapshotAsync(header.id);
         await workspace.saveAsync(header, text);
         reloadHeader();
     }
