@@ -1,7 +1,7 @@
 import * as React from "react";
-import { classList, ControlProps, fireClickOnEnter } from "../util";
+import { classList, ContainerProps, fireClickOnEnter } from "../util";
 
-export interface ButtonViewProps extends ControlProps {
+export interface ButtonViewProps extends ContainerProps {
     buttonRef?: (ref: HTMLButtonElement) => void;
     title: string;
     label?: string | JSX.Element;
@@ -56,7 +56,8 @@ export const Button = (props: ButtonProps) => {
         hardDisabled,
         href,
         target,
-        tabIndex
+        tabIndex,
+        children
     } = props;
 
     let {
@@ -101,13 +102,15 @@ export const Button = (props: ButtonProps) => {
             aria-setsize={ariaSetSize}
             aria-describedby={ariaDescribedBy}
             aria-selected={ariaSelected}>
-                <span className="common-button-flex">
-                    {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
-                    <span className="common-button-label">
-                        {label}
-                    </span>
-                    {rightIcon && <i className={"right " + rightIcon} aria-hidden={true}/>}
-                </span>
+                {(leftIcon || rightIcon || label) && (
+                    <span className="common-button-flex">
+                        {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
+                        <span className="common-button-label">
+                            {label}
+                        </span>
+                        {rightIcon && <i className={"right " + rightIcon} aria-hidden={true}/>}
+                    </span>)}
+                {children}
         </button>
     );
 }
