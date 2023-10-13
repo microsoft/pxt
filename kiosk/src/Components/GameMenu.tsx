@@ -17,9 +17,7 @@ export const GameMenu: React.FC<IProps> = () => {
         [kiosk.allGames, selectedGameId]
     );
 
-    const handleDeleteClick = (ev?: React.MouseEvent) => {
-        ev?.preventDefault();
-        ev?.stopPropagation();
+    const handleDeleteClick = () => {
         if (game) {
             GamepadManager.lockControl(GamepadManager.GamepadControl.AButton);
             dispatch(showModal(makeDeleteGameModal(game.id)));
@@ -30,6 +28,7 @@ export const GameMenu: React.FC<IProps> = () => {
         <div className="gameMenu">
             {game?.userAdded && !kiosk.locked && (
                 <GenericButton
+                    title={lf("Delete Game")}
                     classNameReplace="deleteGame"
                     onClick={handleDeleteClick}
                     exitDirections={[NavGrid.NavDirection.Up]}

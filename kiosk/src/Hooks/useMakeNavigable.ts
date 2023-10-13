@@ -7,8 +7,13 @@ export function useMakeNavigable(
     opts?: {
         exitDirections?: NavGrid.NavDirection[];
         autofocus?: boolean;
+        tabIndex?: number;
     }
 ) {
+    if (opts?.tabIndex === -1) {
+        return;
+    }
+
     // Register this element with the NavGrid
     useEffect(() => {
         const unregister = NavGrid.registerNavigable(ref, opts);

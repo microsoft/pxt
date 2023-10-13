@@ -73,14 +73,14 @@ const AddingGame: React.FC<IProps> = ({}) => {
                     <h1 className="kioskCode">{kiosk.kioskCode}</h1>
                     <QRCodeSVG value={kioskUrl} />
                     <div className="kioskLink">
-                        <a
+                        <GenericButton
+                            title={kioskUrl}
+                            label={kioskUrl}
                             target="_blank"
-                            rel="noopener noreferrer"
                             onClick={kioskLinkClicked}
                             href={kioskUrl}
-                        >
-                            <div className="kioskLinkContent">{kioskUrl}</div>
-                        </a>
+                            tabIndex={-1}
+                        />
                     </div>
                 </div>
             );
@@ -100,7 +100,9 @@ const AddingGame: React.FC<IProps> = ({}) => {
                 <div className="addInstructions">
                     <h2>{lf("How to upload your game")}</h2>
                     <ol>
-                        <li>{lf("Use your mobile device to scan the QR code")}</li>
+                        <li>
+                            {lf("Use your mobile device to scan the QR code")}
+                        </li>
                         <li>
                             {lf("Use the new page to scan or enter your game's share code")}
                         </li>
@@ -112,8 +114,12 @@ const AddingGame: React.FC<IProps> = ({}) => {
                 <div style={{ flexGrow: 1 }} />
                 {qrDivContent()}
             </div>
-            <GenericButton autofocus={true} onClick={gotoMainMenu}>
-                {lf("Return to menu")}
+            <GenericButton
+                title={lf("Return to menu")}
+                label={lf("Return to menu")}
+                autofocus={true}
+                onClick={gotoMainMenu}
+            >
             </GenericButton>
         </div>
     );

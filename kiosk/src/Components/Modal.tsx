@@ -56,12 +56,12 @@ export const Modal = (props: ModalProps) => {
                     <div className="common-modal-footer">
                         {actions.map((action, index) => (
                             <GenericButton
+                                title={action.label}
+                                label={action.label}
                                 key={index}
                                 onClick={action.onClick}
                                 autofocus={action.autofocus}
-                            >
-                                {action.label}
-                            </GenericButton>
+                            />
                         ))}
                     </div>
                 )}

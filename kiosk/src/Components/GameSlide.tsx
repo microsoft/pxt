@@ -13,12 +13,10 @@ interface IProps {
 const GameSlide: React.FC<IProps> = ({ game }) => {
     const { state: kiosk } = useContext(AppStateContext);
 
-    const handleSlideClick = (ev?: React.MouseEvent) => {
+    const handleSlideClick = () => {
         pxt.tickEvent("kiosk.gameLaunched", { game: game.id });
         playSoundEffect("select");
         launchGame(game.id);
-        ev?.preventDefault();
-        ev?.stopPropagation();
     };
 
     return (
