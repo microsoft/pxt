@@ -361,7 +361,7 @@ namespace _py {
         if (index == undefined) {
             return arr.pop();
         }
-        else if (index > 0 && index < arr.length) {
+        else if (index >= 0 && index < arr.length) {
             return arr.removeAt(index | 0);
         }
 
