@@ -119,8 +119,7 @@ const AddingGame: React.FC<IProps> = ({}) => {
                 label={lf("Return to menu")}
                 autofocus={true}
                 onClick={gotoMainMenu}
-            >
-            </GenericButton>
+            />
         </div>
     );
 };
