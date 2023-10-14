@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Button } from "../../../react-common/components/controls/Button";
 
 interface IProps {
     errorType: string;
@@ -26,12 +26,12 @@ const ErrorModal: React.FC<IProps> = ({
                         <p>{errorDescription}</p>
                     </div>
                     <div className="common-modal-footer">
-                        <button
+                        <Button
+                            title={lf("Okay")}
+                            label={lf("Okay")}
                             className={`common-modal-button confirm error`}
                             onClick={cancelClicked}
-                        >
-                            {lf("Okay")}
-                        </button>
+                        />
                     </div>
                 </div>
             </div>

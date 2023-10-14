@@ -8,6 +8,7 @@ import { navigate } from "../Transforms/navigate";
 import { useMakeNavigable } from "../Hooks";
 import GenericButton from "./GenericButton";
 import * as GamepadManager from "../Services/GamepadManager";
+import { Button } from "../../../react-common/components/controls/Button";
 
 interface IProps {}
 
@@ -120,10 +121,10 @@ const ScanQR: React.FC<IProps> = ({}) => {
     };
     useMakeNavigable(shareLinkRef);
 
-    const [helpLinkRef, setHelpLinkRef] = useState<HTMLAnchorElement | null>(
+    const [helpLinkRef, setHelpLinkRef] = useState<HTMLButtonElement | null>(
         null
     );
-    const handleHelpLinkRef = (input: HTMLAnchorElement) => {
+    const handleHelpLinkRef = (input: HTMLButtonElement) => {
         setHelpLinkRef(input);
     };
     useMakeNavigable(helpLinkRef);
@@ -139,21 +140,21 @@ const ScanQR: React.FC<IProps> = ({}) => {
                 <div className="qrOption">
                     {!scannerVisible && (
                         <GenericButton
+                            title={lf("Scan QR code")}
+                            label={lf("Scan QR code")}
                             className="kioskButton"
                             onClick={renderQrScanner}
-                        >
-                            {lf("Scan QR code")}
-                        </GenericButton>
+                        />
                     )}
                     <div id="qrReader" ref={qrReaderRendered}></div>
                     {scannerVisible && (
                         <div className="scanning">
                             <GenericButton
+                                title={lf("Cancel Scan")}
+                                label={lf("Cancel Scan")}
                                 className="scanQrButton"
                                 onClick={stopQrScanner}
-                            >
-                                {lf("Cancel Scan")}
-                            </GenericButton>
+                            />
                             <p className="scanTip">
                                 {lf("Tip: Do not use the kiosk's QR code")}
                             </p>
@@ -186,16 +187,16 @@ const ScanQR: React.FC<IProps> = ({}) => {
                         </p>
                     )}
                 </div>
-                <a
-                    className="shareHelp"
-                    target="_blank"
-                    onClick={clickHelp}
-                    href="https://arcade.makecode.com/share"
-                    tabIndex={0}
-                    ref={handleHelpLinkRef}
-                >
-                    {lf("How do I get a game's share link or QR code?")}
-                </a>
+                <div className="shareHelp">
+                    <GenericButton
+                        title={lf("How do I get a game's share link or QR code?")}
+                        label={lf("How do I get a game's share link or QR code?")}
+                        target="_blank"
+                        onClick={clickHelp}
+                        href="https://arcade.makecode.com/share"
+                        buttonRef={handleHelpLinkRef}
+                    />
+                </div>
             </div>
             {!!addingError && (
                 <ErrorModal

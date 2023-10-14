@@ -320,15 +320,16 @@ h2 {
 .QRCodeHolder {
 }
 
-.kioskLink a {
+.kioskLink button {
     overflow: auto;
     overflow-wrap: break-word;
+    text-decoration: underline;
+    line-height: 1.1rem;
+    max-width: 16rem;
 }
 
 .kioskLink {
-    margin: 2rem 0 0 0;
-    text-align: center;
-    line-height: 170%;
+    max-width: 16rem;
 }
 
 .innerQRCodeContent h3 {
@@ -355,10 +356,6 @@ h2 {
     text-align: center;
 }
 
-.kioskLinkContent {
-    max-width: 16rem;
-}
-
 /* -------- QR PAGES STYLING -------- */
 /* ----------------------------------- */
 
@@ -368,6 +365,7 @@ h2 {
     align-items: center;
     width: 100%;
     height: 100vh;
+    padding: 0 1rem;
 }
 
 .scanInstructions {
@@ -450,7 +448,7 @@ h2 {
 .linkOption {
     border-color: var(--button-border-color);
     border-style: solid;
-    border-radius: 1.5rem;
+    border-radius: 0.625rem;
     padding: 2rem;
     width: 350px;
 }
@@ -493,12 +491,17 @@ h2 {
     color: var(--error-color);
 }
 
-.shareHelp {
+.shareHelp button {
     overflow: auto;
     overflow-wrap: break-word;
-    font-family: "Share";
-    font-size: 1.25rem;
-    margin-top: 2rem;
+    text-decoration: underline;
+    border: none;
+    line-height: 1.1rem;
+    font-size: 0.75rem;
+}
+
+.shareHelp {
+    margin: 2rem 0 0 0;
 }
 
 .scanTip {
