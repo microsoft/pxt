@@ -38,14 +38,16 @@ const GameOver: React.FC<IProps> = ({}) => {
             <h2>{lf("Would you like to retry?")}</h2>
             <div className="gameOverButtons">
                 <GenericButton
+                    title={lf("Retry")}
+                    label={lf("Retry")}
                     onClick={handleRetryButtonClick}
                     autofocus={true}
-                >
-                    {lf("Retry")}
-                </GenericButton>
-                <GenericButton onClick={gotoMainMenu}>
-                    {lf("Main Menu")}
-                </GenericButton>
+                />
+                <GenericButton
+                    title={lf("Main Menu")}
+                    label={lf("Main Menu")}
+                    onClick={gotoMainMenu}
+                />
             </div>
         </div>
     );
