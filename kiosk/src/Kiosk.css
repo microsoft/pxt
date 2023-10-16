@@ -317,9 +317,6 @@ h2 {
     min-width: fit-content;
 }
 
-.QRCodeHolder {
-}
-
 .kioskLink button {
     overflow: auto;
     overflow-wrap: break-word;
@@ -611,6 +608,8 @@ h2 {
     line-height: 115%;
     position: absolute;
     bottom: -4.5rem;
+    left: 0;
+    right: 0;
 }
 
 .gameThumbnail {
