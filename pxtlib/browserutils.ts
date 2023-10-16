@@ -149,7 +149,7 @@ namespace pxt.BrowserUtils {
     export function isLocalHost(ignoreFlags?: boolean): boolean {
         try {
             return typeof window !== "undefined"
-                && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
+                && /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+\//.test(window.location.href)
                 && (ignoreFlags || !/nolocalhost=1/.test(window.location.href))
                 && !(pxt?.webConfig?.isStatic);
         } catch (e) { return false; }

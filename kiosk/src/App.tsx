@@ -16,7 +16,7 @@ import { useLocationHash, usePromise } from "./Hooks";
 import { launchGame } from "./Transforms/launchGame";
 import { navigate } from "./Transforms/navigate";
 import { AppStateContext, AppStateReady } from "./State/AppStateContext";
-import { downloadGameListAsync } from "./Transforms/downloadGameListAsync";
+import { downloadTargetConfigAsync } from "./Transforms/downloadTargetConfigAsync";
 import * as Actions from "./State/Actions";
 import * as SimHost from "./Services/SimHostService";
 import * as NotificationService from "./Services/NotificationService";
@@ -40,14 +40,22 @@ function App() {
             // Load persistent state from local storage.
             dispatch(Actions.loadHighScores());
             dispatch(Actions.loadKioskCode());
-            // Download the game list from the server and set it in the app state.
-            downloadGameListAsync().then(gameList => {
-                dispatch(Actions.setGameList(gameList));
-                // Load user-added games from local storage.
-                dispatch(Actions.loadUserAddedGames());
-                // Select the first game in the list.
-                dispatch(Actions.setSelectedGameId(gameList[0].id));
-            });
+            // Download targetconfig.json, then initialize game list.
+            downloadTargetConfigAsync().then(cfg => {
+                if (cfg) {
+                    dispatch(Actions.setTargetConfig(cfg));
+                    if (cfg.kiosk) {
+                        dispatch(Actions.setGameList(cfg.kiosk.games));
+                        // Load user-added games from local storage.
+                        dispatch(Actions.loadUserAddedGames());
+                        // Select the first game in the list.
+                        dispatch(Actions.setSelectedGameId(cfg.kiosk.games[0].id));
+                    }
+                } else {
+                    // TODO: Handle this better
+                    dispatch(Actions.setTargetConfig({}));
+                }
+            });        
             // Init subsystems.
             SimHost.initialize();
             NotificationService.initialize();
