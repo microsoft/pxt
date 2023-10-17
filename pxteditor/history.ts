@@ -375,6 +375,51 @@ namespace pxt.workspace {
         toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
     }
 
+    export function pushSnapshotOnHistory(text: ScriptText, currentTime: number) {
+        let history: pxt.workspace.HistoryFile;
+
+        if (text[pxt.HISTORY_FILE]) {
+            history = pxt.workspace.parseHistoryFile(text[pxt.HISTORY_FILE]);
+        }
+        else {
+            history = {
+                entries: [],
+                snapshots: [],
+                shares: []
+            };
+        }
+
+        history.snapshots.push(takeSnapshot(text, currentTime));
+
+        text[pxt.HISTORY_FILE] = JSON.stringify(history);
+    }
+
+    export function updateShareHistory(text: ScriptText, currentTime: number, shares: PublishVersion[]) {
+        let history: pxt.workspace.HistoryFile;
+
+        if (text[pxt.HISTORY_FILE]) {
+            history = pxt.workspace.parseHistoryFile(text[pxt.HISTORY_FILE]);
+        }
+        else {
+            history = {
+                entries: [],
+                snapshots: [],
+                shares: []
+            };
+        }
+
+        for (const share of shares) {
+            if (!history.shares.some(s => s.id === share.id)) {
+                history.shares.push({
+                    id: share.id,
+                    timestamp: currentTime,
+                });
+            }
+        }
+
+        text[pxt.HISTORY_FILE] = JSON.stringify(history);
+    }
+
     function takeSnapshot(text: ScriptText, time: number) {
         return {
             timestamp: time,
