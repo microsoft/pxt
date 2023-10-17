@@ -807,6 +807,7 @@ export interface ServeOptions {
     hostname?: string;
     wsPort?: number;
     serial?: boolean;
+    noauth?: boolean;
 }
 
 // can use http://localhost:3232/streams/nnngzlzxslfu for testing
@@ -1088,7 +1089,7 @@ export function serveAsync(options: ServeOptions) {
                     })
             }
 
-            if (!isAuthorizedLocalRequest(req)) {
+            if (!options.noauth && !isAuthorizedLocalRequest(req)) {
                 error(403);
                 return null;
             }
