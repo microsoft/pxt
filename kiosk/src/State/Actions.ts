@@ -125,6 +125,12 @@ type HideModal = ActionBase & {
     type: "HIDE_MODAL";
 };
 
+type SetTargetConfig = ActionBase & {
+    type: "SET_TARGET_CONFIG";
+    targetConfig: pxt.TargetConfig;
+};
+
+
 /**
  * Union of all actions
  */
@@ -151,7 +157,8 @@ export type Action =
     | RemoveNotification
     | LoadKioskCode
     | ShowModal
-    | HideModal;
+    | HideModal
+    | SetTargetConfig;
 
 /**
  * Action creators
@@ -272,6 +279,11 @@ const hideModal = (): HideModal => ({
     type: "HIDE_MODAL",
 });
 
+const setTargetConfig = (targetConfig: pxt.TargetConfig): SetTargetConfig => ({
+    type: "SET_TARGET_CONFIG",
+    targetConfig,
+});
+
 export {
     setGameList,
     setSelectedGameId,
@@ -295,4 +307,5 @@ export {
     loadKioskCode,
     showModal,
     hideModal,
+    setTargetConfig,
 };

@@ -33,6 +33,7 @@ declare namespace pxt {
         // release manifest for the electron app
         electronManifest?: pxt.electron.ElectronManifest;
         profileNotification?: ProfileNotification;
+        kiosk?: KioskConfig;
     }
 
     interface PackagesConfig {
@@ -75,6 +76,17 @@ declare namespace pxt {
         title: string;
         subtitle: string;
         image?: string;
+    }
+
+    interface KioskConfig {
+        games: KioskGame[];
+    }
+
+    interface KioskGame {
+        id: string;
+        name: string;
+        description: string;
+        highScoreMode: string;
     }
 
     interface AppTarget {

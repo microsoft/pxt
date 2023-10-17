@@ -217,5 +217,11 @@ export default function reducer(state: AppState, action: Action): AppState {
                 modal: undefined,
             };
         }
+        case "SET_TARGET_CONFIG": {
+            return {
+                ...state,
+                targetConfig: action.targetConfig,
+            };
+        }
     }
 }

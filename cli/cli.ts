@@ -1897,6 +1897,12 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
             if (game.subtitle) targetStrings[`{id:game-subtitle}${game.subtitle}`] = game.subtitle;
         }
 
+        const kioskGames = targetConfig?.kiosk?.games;
+        for (const game of (kioskGames ?? [])) {
+            if (game.name) targetStrings[`{id:game-name}${game.name}`] = game.name;
+            if (game.description)  targetStrings[`{id:game-description}${game.description}`] = game.description;
+        }
+
         const approvedRepoLib = targetConfig?.packages?.approvedRepoLib;
         for (const [extension, repoData] of Object.entries(approvedRepoLib ?? {})) {
             for (const tag of (repoData.tags ?? [])) {
