@@ -28,15 +28,6 @@ export default function reducer(state: AppState, action: Action): AppState {
                 kioskState: action.state,
             };
         }
-        case "ADD_BUILT_GAME": {
-            return {
-                ...state,
-                builtGamesCache: {
-                    ...state.builtGamesCache,
-                    [action.gameId]: action.info,
-                },
-            };
-        }
         case "SET_LAUNCHED_GAME": {
             return {
                 ...state,

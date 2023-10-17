@@ -1,4 +1,4 @@
-import { HighScore, BuiltSimJSInfo } from "../Types";
+import { HighScore } from "../Types";
 import { stateAndDispatch } from "./AppStateContext";
 
 function getHighScores(gameId: string | undefined): HighScore[] {
@@ -22,18 +22,9 @@ function getSelectedGameId(): string | undefined {
     return state.selectedGameId;
 }
 
-function getBuiltGame(gameId: string | undefined): BuiltSimJSInfo | undefined {
-    const { state } = stateAndDispatch();
-    if (!gameId) {
-        return undefined;
-    }
-    return state.builtGamesCache[gameId];
-}
-
 export {
     stateAndDispatch,
     getHighScores,
     getSelectedGameIndex,
     getSelectedGameId,
-    getBuiltGame,
 };

@@ -3,7 +3,9 @@ import { AppStateContext } from "../State/AppStateContext";
 import { escapeGame } from "../Transforms/escapeGame";
 import { playSoundEffect } from "../Services/SoundEffectService";
 import { useOnControlPress } from "../Hooks";
+import { stringifyQueryString } from "../Utils";
 import * as GamepadManager from "../Services/GamepadManager";
+import * as Storage from "../Services/LocalStorage";
 import configData from "../config.json";
 
 export default function PlayingGame() {
@@ -23,11 +25,23 @@ export default function PlayingGame() {
 
     const playUrl = useMemo(() => {
         if (gameId) {
-            const playUrlBase = `${configData.PlayUrlRoot}?id=${gameId}&hideSimButtons=1&noFooter=1&single=1&fullscreen=1&autofocus=1`;
-            const playQueryParam = kiosk.builtGamesCache[gameId]
-                ? "&server=1"
-                : "&sendBuilt=1";
-            return playUrlBase + playQueryParam;
+            const builtGame = Storage.getBuiltJsInfo(gameId);
+            return stringifyQueryString(configData.PlayUrlRoot, {
+                id: gameId,
+                // TODO: Show sim buttons on mobile & touch devices.
+                hideSimButtons: 1,
+                noFooter: 1,
+                single: 1,
+                fullscreen: 1,
+                autofocus: 1,
+                // If we have the built game cached, we will send it to the
+                // simulator once it loads. The `server` flag inhibits the
+                // simulator from trying to build it.
+                server: builtGame ? 1 : undefined,
+                // If we don't have the built game cached, tell the simulator to
+                // send it to us once it's built and we'll cache it.
+                sendBuilt: builtGame ? undefined : 1,
+            });
         }
     }, [gameId]);
 
