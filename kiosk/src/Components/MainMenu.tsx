@@ -22,18 +22,20 @@ const MainMenu: React.FC<IProps> = ({}) => {
         launchAddGame();
     };
 
+    const canShowMainMenu = ready && kiosk.targetConfig;
+
     return (
         <>
-            {!ready && (
+            {!canShowMainMenu && (
                 <div className="mainMenu">
                     <nav className="mainMenuTopBar">
                         <h1 className={`mainMenuHeader${lockedClassName}`}>
-                            {lf("Initializing...")}
+                            {lf("Loading...")}
                         </h1>
                     </nav>
                 </div>
             )}
-            {ready && (
+            {canShowMainMenu && (
                 <div className="mainMenu">
                     <nav className="mainMenuTopBar">
                         <h1 className={`mainMenuHeader${lockedClassName}`}>

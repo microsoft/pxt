@@ -24,6 +24,7 @@ export type AppState = {
     locked: boolean;
     time?: string;
     volume?: number;
+    targetConfig?: pxt.TargetConfig;
 };
 
 export const initialAppState: AppState = {
