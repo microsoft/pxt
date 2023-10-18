@@ -766,6 +766,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.zoomCenter(-0.8);
     }
 
+    getMaxScale() {
+        if (!this.editor) return undefined;
+        return this.editor.options.zoomOptions.maxScale;
+    }
+
     setScale(scale: number) {
         if (!this.editor) return;
         if (scale != this.editor.scale) {

@@ -1208,6 +1208,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    getMaxScale() {
+        if (!this.editor) return undefined;
+        return MAX_EDITOR_FONT_SIZE;
+    }
+
     private loadReference() {
         Util.assert(this.editor != undefined); // Guarded
 

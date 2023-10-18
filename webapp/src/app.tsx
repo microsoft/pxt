@@ -153,8 +153,8 @@ export class ProjectView
     private pendingImport: pxt.Util.DeferredPromise<void>;
 
     private initialEditorScale: number;
-    private tutorialFontIncrement = 0.25;
     private tutorialInitialFontSize = 1.125; // rem
+    private tutorialMaxFontSize = 2; // rem
 
     private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
@@ -1550,12 +1550,11 @@ export class ProjectView
                 // Do not shrink the text beyond its initial size.
                 this.setState({tutorialFontSize: this.tutorialInitialFontSize});
             } else {
-                const change = newScale > oldScale ? this.tutorialFontIncrement : -this.tutorialFontIncrement;
-                if (!this.state.tutorialFontSize) {
-                    this.setState({ tutorialFontSize: this.tutorialInitialFontSize + change });
-                } else {
-                    this.setState({ tutorialFontSize:  this.state.tutorialFontSize + change });
-                }
+                // Increase font size to match the editor's % zoom.
+                const maxEditorScale = this.editor.getMaxScale();
+                const zoomAmt = (newScale - this.initialEditorScale) / (maxEditorScale - this.initialEditorScale);
+                const newTutorialFontSize = this.tutorialInitialFontSize + (this.tutorialMaxFontSize - this.tutorialInitialFontSize) * zoomAmt;
+                this.setState({ tutorialFontSize: newTutorialFontSize });
             }
         }
     }

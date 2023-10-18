@@ -14,6 +14,7 @@ namespace pxt.editor {
         zoomIn(): void;
         zoomOut(): void;
         resize(): void;
+        getMaxScale(): number;
         setScale(scale: number): void;
         onScaleChanged: (oldScale: number, newScale: number) => void;
     }

@@ -87,6 +87,7 @@ export class Editor implements pxt.editor.IEditor {
 
     zoomIn() { }
     zoomOut() { }
+    getMaxScale() { return 1; }
     setScale(scale: number) { }
 
     closeFlyout() { }
