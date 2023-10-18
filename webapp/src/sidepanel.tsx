@@ -148,8 +148,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
         const shouldResize = pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar;
         const editorSidebarHeight = shouldResize ? `${this.state.height}px` : undefined;
-
-        // TODO thsparks : Is this one even necessary?
         let editorSidebarStyle = this.props.tutorialSimSidebar ? undefined : {height: editorSidebarHeight, fontSize: `${this.props.fontSize}rem`}
 
         return <div id="simulator" className="simulator">
