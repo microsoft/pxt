@@ -55,7 +55,7 @@ function App() {
                     // TODO: Handle this better
                     dispatch(Actions.setTargetConfig({}));
                 }
-            });        
+            });
             // Init subsystems.
             SimHost.initialize();
             NotificationService.initialize();

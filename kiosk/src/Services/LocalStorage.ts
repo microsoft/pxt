@@ -14,6 +14,17 @@ function delValue(key: string) {
     localStorage.removeItem(key);
 }
 
+function matchingKeys(pattern: RegExp): string[] {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && pattern.test(key)) {
+            keys.push(key);
+        }
+    }
+    return keys;
+}
+
 function getJsonValue<T>(key: string, defaultValue?: T): T | undefined {
     var value = getValue(key);
     if (value) {
@@ -109,10 +120,29 @@ function clearKioskCode() {
     delValue(Constants.legacy_kioskCodeExpirationStorageKey);
 }
 
+function getBuiltJsInfo(gameId: string): ts.pxtc.BuiltSimJsInfo | undefined {
+    const ver = pxt.appTarget?.versions?.target;
+    if (!ver) return undefined;
+    const key = `builtjs:${ver}:${gameId}`;
+    const rec = getJsonValue<ts.pxtc.BuiltSimJsInfo>(key);
+    return rec;
+}
+
+function setBuiltJsInfo(gameId: string, builtJs: ts.pxtc.BuiltSimJsInfo) {
+    const ver = pxt.appTarget?.versions?.target;
+    if (!ver) return;
+    const key = `builtjs:${ver}:${gameId}`;
+    setJsonValue(key, builtJs);
+}
+
+function clearBuiltJsInfo() {
+    const keys = matchingKeys(/^builtjs:/);
+    for (const key of keys) {
+        delValue(key);
+    }
+}
+
 export {
-    getValue,
-    setValue,
-    delValue,
     getJsonValue,
     setJsonValue,
     getUserAddedGames,
@@ -123,4 +153,7 @@ export {
     setKioskCode,
     getKioskCode,
     clearKioskCode,
+    getBuiltJsInfo,
+    setBuiltJsInfo,
+    clearBuiltJsInfo,
 };

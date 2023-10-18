@@ -1,6 +1,5 @@
 import {
     GameData,
-    BuiltSimJSInfo,
     KioskState,
     AllHighScores,
     Notifications,
@@ -14,7 +13,6 @@ export type AppState = {
     selectedGameId?: string;
     launchedGameId?: string;
     lockedGameId?: string;
-    builtGamesCache: { [gameId: string]: BuiltSimJSInfo };
     allHighScores: AllHighScores;
     kioskCode?: string;
     kioskCodeExpiration?: number;
@@ -31,7 +29,6 @@ export const initialAppState: AppState = {
     kioskState: KioskState.MainMenu,
     allGames: [],
     mostRecentScores: [],
-    builtGamesCache: {},
     allHighScores: {},
     notifications: [],
     clean: false,
