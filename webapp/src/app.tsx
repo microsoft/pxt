@@ -152,6 +152,7 @@ export class ProjectView
     private rootClasses: string[];
     private pendingImport: pxt.Util.DeferredPromise<void>;
 
+    private initialEditorScale: number;
     private tutorialFontIncrement = 0.25;
     private tutorialInitialFontSize = 1.125; // rem
 
@@ -1036,6 +1037,7 @@ export class ProjectView
         this.allEditors.forEach(e => e.onScaleChanged = this.onScaleChanged)
 
         this.editor = this.allEditors[this.allEditors.length - 1]
+        this.initialEditorScale = undefined;
     }
 
     public UNSAFE_componentWillMount() {
@@ -1540,11 +1542,20 @@ export class ProjectView
 
     onScaleChanged(oldScale: number, newScale: number) {
         if (this.isTutorial && oldScale !== newScale) {
-            const change = newScale > oldScale ? this.tutorialFontIncrement : -this.tutorialFontIncrement;
-            if (!this.state.tutorialFontSize) {
-                this.setState({ tutorialFontSize: this.tutorialInitialFontSize + change });
+            if (this.initialEditorScale === undefined) {
+                this.initialEditorScale = oldScale;
+            }
+
+            if (newScale <= this.initialEditorScale) {
+                // Do not shrink the text beyond its initial size.
+                this.setState({tutorialFontSize: this.tutorialInitialFontSize});
             } else {
-                this.setState({ tutorialFontSize:  this.state.tutorialFontSize + change });
+                const change = newScale > oldScale ? this.tutorialFontIncrement : -this.tutorialFontIncrement;
+                if (!this.state.tutorialFontSize) {
+                    this.setState({ tutorialFontSize: this.tutorialInitialFontSize + change });
+                } else {
+                    this.setState({ tutorialFontSize:  this.state.tutorialFontSize + change });
+                }
             }
         }
     }
