@@ -152,6 +152,9 @@ export class ProjectView
     private rootClasses: string[];
     private pendingImport: pxt.Util.DeferredPromise<void>;
 
+    private tutorialFontIncrement = 0.25;
+    private tutorialInitialFontSize = 1.125; // rem
+
     private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => {
@@ -1535,14 +1538,11 @@ export class ProjectView
         }
     }
 
-    zoomIncrement = 0.25; // TODO thsparks : move up.
-    initialFontSize = 1.125; // TODO thsparks : move up. Can this reference the css?
-
     onScaleChanged(oldScale: number, newScale: number) {
         if (this.isTutorial && oldScale !== newScale) {
-            const change = newScale > oldScale ? this.zoomIncrement : -this.zoomIncrement;
+            const change = newScale > oldScale ? this.tutorialFontIncrement : -this.tutorialFontIncrement;
             if (!this.state.tutorialFontSize) {
-                this.setState({ tutorialFontSize: this.initialFontSize + change });
+                this.setState({ tutorialFontSize: this.tutorialInitialFontSize + change });
             } else {
                 this.setState({ tutorialFontSize:  this.state.tutorialFontSize + change });
             }
