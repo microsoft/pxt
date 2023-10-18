@@ -18,14 +18,6 @@ export type HighScoreWithId = HighScore & {
     id: string;
 };
 
-export type BuiltSimJSInfo = {
-    js: string;
-    targetVersion?: string;
-    funArgs?: string[];
-    parts?: string[];
-    usedBuiltinParts?: string[];
-};
-
 export enum KioskState {
     MainMenu = "MainMenu",
     PlayingGame = "PlayingGame",

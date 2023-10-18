@@ -70,3 +70,18 @@ export function nodeListToArray<U extends Node>(list: NodeListOf<U>): U[] {
     }
     return out;
 }
+
+// Copied from pxt.Utils, modified to skip undefined values.
+export function stringifyQueryString(url: string, qs: any) {
+    for (let k of Object.keys(qs)) {
+        if (qs[k] != null) {
+            if (url.indexOf("?") >= 0) {
+                url += "&";
+            } else {
+                url += "?";
+            }
+            url += encodeURIComponent(k) + "=" + encodeURIComponent(qs[k]);
+        }
+    }
+    return url;
+}

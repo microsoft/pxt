@@ -1,5 +1,4 @@
-import { stateAndDispatch, getBuiltGame } from "../State";
-import { BuiltSimJSInfo } from "../Types";
+import { stateAndDispatch } from "../State";
 import * as Actions from "../State/Actions";
 import * as Constants from "../Constants";
 import { gameOver } from "../Transforms/gameOver";
@@ -7,6 +6,7 @@ import { resetHighScores } from "../Transforms/resetHighScores";
 import * as GamepadManager from "./GamepadManager";
 import { postNotification } from "../Transforms/postNotification";
 import { makeNotification } from "../Utils";
+import * as Storage from "./LocalStorage";
 
 export function initialize() {
     let controlStates: GamepadManager.ControlStates = {
@@ -64,8 +64,7 @@ export function initialize() {
     GamepadManager.addKeyupListener(keyuphandler);
 
     function sendBuiltGame(gameId: string) {
-        const { state } = stateAndDispatch();
-        const builtGame = state.builtGamesCache[gameId];
+        const builtGame = Storage.getBuiltJsInfo(gameId);
         if (builtGame) {
             const simIframe = document.getElementsByTagName(
                 "iframe"
@@ -80,15 +79,7 @@ export function initialize() {
     window.addEventListener("message", event => {
         const { state, dispatch } = stateAndDispatch();
         if (event.data?.js && state.launchedGameId) {
-            const builtGame: BuiltSimJSInfo =
-                state.builtGamesCache?.[state.launchedGameId];
-            if (!builtGame) {
-                dispatch(
-                    Actions.addBuiltGame(state.launchedGameId, event.data)
-                );
-            } else {
-                sendBuiltGame(state.launchedGameId);
-            }
+            Storage.setBuiltJsInfo(state.launchedGameId, event.data);
         }
         switch (event.data.type) {
             case "simulator":
@@ -120,7 +111,7 @@ export function initialize() {
                 break;
 
             case "ready":
-                const builtGame = getBuiltGame(state.launchedGameId);
+                const builtGame = Storage.getBuiltJsInfo(state.launchedGameId!);
                 if (builtGame) {
                     sendBuiltGame(state.launchedGameId!);
                 }

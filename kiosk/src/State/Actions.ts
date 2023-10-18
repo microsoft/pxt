@@ -1,8 +1,6 @@
 import {
     GameData,
-    BuiltSimJSInfo,
     KioskState,
-    HighScores,
     AllHighScores,
     NotificationWithId,
     HighScoreWithId,
@@ -31,12 +29,6 @@ type SetSelectedGameId = ActionBase & {
 type SetKioskState = ActionBase & {
     type: "SET_KIOSK_STATE";
     state: KioskState;
-};
-
-type AddBuiltGame = ActionBase & {
-    type: "ADD_BUILT_GAME";
-    gameId: string;
-    info: BuiltSimJSInfo;
 };
 
 type SetLaunchedGame = ActionBase & {
@@ -139,7 +131,6 @@ export type Action =
     | SetGameList
     | SetSelectedGameId
     | SetKioskState
-    | AddBuiltGame
     | SetLaunchedGame
     | SetLockedGame
     | SetAllHighScores
@@ -177,12 +168,6 @@ const setSelectedGameId = (gameId: string | undefined): SetSelectedGameId => ({
 const setKioskState = (state: KioskState): SetKioskState => ({
     type: "SET_KIOSK_STATE",
     state,
-});
-
-const addBuiltGame = (gameId: string, info: BuiltSimJSInfo): AddBuiltGame => ({
-    type: "ADD_BUILT_GAME",
-    gameId,
-    info,
 });
 
 const setLaunchedGame = (gameId: string): SetLaunchedGame => ({
@@ -288,7 +273,6 @@ export {
     setGameList,
     setSelectedGameId,
     setKioskState,
-    addBuiltGame,
     setLaunchedGame,
     setLockedGame,
     setAllHighScores,
