@@ -15,6 +15,7 @@ namespace pxt.editor {
         zoomOut(): void;
         resize(): void;
         setScale(scale: number): void;
+        onScaleChanged: (oldScale: number, newScale: number) => void;
     }
 
     export interface IFile {
@@ -102,6 +103,7 @@ namespace pxt.editor {
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         onboarding?: pxt.tour.BubbleStep[];
+        tutorialFontSize?: number;
     }
 
     export interface EditorState {

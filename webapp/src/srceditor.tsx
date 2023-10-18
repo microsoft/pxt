@@ -14,6 +14,7 @@ export class Editor implements pxt.editor.IEditor {
     isVisible = false;
     constructor(public parent: ProjectView) {
     }
+    onScaleChanged: (oldScale: number, newScale: number) => void;
     changeCallback = () => { };
     setVisible(v: boolean) {
         this.isVisible = v;

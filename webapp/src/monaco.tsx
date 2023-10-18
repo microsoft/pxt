@@ -340,6 +340,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     extraLibs: pxt.Map<monaco.IDisposable>;
     nsMap: pxt.Map<toolbox.BlockDefinition[]>;
     giveFocusOnLoading: boolean = true;
+    onScaleChanged: (oldScale: number, newScale: number) => void;
 
     protected fieldEditors: FieldEditorManager;
     protected feWidget: ViewZoneEditorHost | ModalEditorHost;
@@ -968,9 +969,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
                 // Update editor font size in settings after a ctrl+scroll zoom
                 let currentFont = this.getEditorFontSize();
-                if (this.parent.settings.editorFontSize != currentFont) {
+                let prevFont = this.parent.settings.editorFontSize;
+                if (prevFont != currentFont) {
                     this.parent.settings.editorFontSize = currentFont;
                     this.forceDiagnosticsUpdate();
+                    if(this.onScaleChanged) {
+                        this.onScaleChanged(prevFont, currentFont);
+                    }
                 }
                 // Update widgets
                 const toolbox = document.getElementById('monacoToolboxDiv');
@@ -1184,6 +1189,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.settings.editorFontSize = currentFont + 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
+
+        if (this.onScaleChanged) {
+            this.onScaleChanged(currentFont, this.parent.settings.editorFontSize);
+        }
     }
 
     zoomOut() {
@@ -1193,6 +1202,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.settings.editorFontSize = currentFont - 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
+
+        if (this.onScaleChanged) {
+            this.onScaleChanged(currentFont, this.parent.settings.editorFontSize);
+        }
     }
 
     private loadReference() {

@@ -21,6 +21,7 @@ interface TutorialContainerProps {
     hasTemplate?: boolean;
     preferredEditor?: string;
     hasBeenResized?: boolean;
+    fontSize?: number;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
     tutorialSimSidebar?: boolean;
@@ -35,7 +36,7 @@ const MAX_HEIGHT = 194;
 
 export function TutorialContainer(props: TutorialContainerProps) {
     const { parent, tutorialId, name, steps, hideIteration, hasTemplate,
-        preferredEditor, tutorialOptions, onTutorialStepChange, onTutorialComplete,
+        preferredEditor, tutorialOptions, fontSize, onTutorialStepChange, onTutorialComplete,
         setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ stepErrorAttemptCount, setStepErrorAttemptCount ] = React.useState(0);
@@ -250,7 +251,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     return <div className="tutorial-container">
         {!isHorizontal && stepCounter}
-        <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={updateScrollGradient}>
+        <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={updateScrollGradient} style={{fontSize: `${fontSize || 1.125}rem`}}>
             <div className={"tutorial-content-bkg"}>
                 {!isHorizontal && <div className="tutorial-step-label">
                     {name && <span className="tutorial-step-title">{name}</span>}

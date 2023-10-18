@@ -211,6 +211,7 @@ export class ProjectView
         this.exitTutorial = this.exitTutorial.bind(this);
         this.setEditorOffset = this.setEditorOffset.bind(this);
         this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
+        this.onScaleChanged = this.onScaleChanged.bind(this);
         this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
@@ -1029,6 +1030,8 @@ export class ProjectView
         }
         this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
+        this.allEditors.forEach(e => e.onScaleChanged = this.onScaleChanged)
+
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
 
@@ -1529,6 +1532,20 @@ export class ProjectView
                         break;
                 }
                 break;
+        }
+    }
+
+    zoomIncrement = 0.25; // TODO thsparks : move up.
+    initialFontSize = 1.125; // TODO thsparks : move up. Can this reference the css?
+
+    onScaleChanged(oldScale: number, newScale: number) {
+        if (this.isTutorial && oldScale !== newScale) {
+            const change = newScale > oldScale ? this.zoomIncrement : -this.zoomIncrement;
+            if (!this.state.tutorialFontSize) {
+                this.setState({ tutorialFontSize: this.initialFontSize + change });
+            } else {
+                this.setState({ tutorialFontSize:  this.state.tutorialFontSize + change });
+            }
         }
     }
 
@@ -5110,6 +5127,7 @@ export class ProjectView
                     {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
                 <sidepanel.Sidepanel parent={this} inHome={inHome}
+                    fontSize={this.state.tutorialFontSize}
                     showKeymap={this.state.keymap && simOpts.keymap}
                     showSerialButtons={useSerialEditor}
                     showFileList={showFileList}
