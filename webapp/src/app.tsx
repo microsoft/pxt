@@ -1116,6 +1116,8 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
+
+        document.getElementById("root").style.setProperty("--tutorialFontSize", `${this.tutorialInitialFontSize}rem`);
     }
 
     public componentWillUnmount() {
@@ -1546,15 +1548,16 @@ export class ProjectView
                 this.initialEditorScale = oldScale;
             }
 
-            if (newScale <= this.initialEditorScale) {
+            const root = document.getElementById("root");
+            if (root && newScale <= this.initialEditorScale) {
                 // Do not shrink the text beyond its initial size.
-                this.setState({tutorialFontSize: this.tutorialInitialFontSize});
-            } else {
+                root.style.setProperty("--tutorialFontSize", `${this.tutorialInitialFontSize}rem`);
+            } else if (root) {
                 // Increase font size to match the editor's % zoom.
                 const maxEditorScale = this.editor.getMaxScale();
                 const zoomAmt = (newScale - this.initialEditorScale) / (maxEditorScale - this.initialEditorScale);
                 const newTutorialFontSize = this.tutorialInitialFontSize + (this.tutorialMaxFontSize - this.tutorialInitialFontSize) * zoomAmt;
-                this.setState({ tutorialFontSize: newTutorialFontSize });
+                root.style.setProperty("--tutorialFontSize", `${newTutorialFontSize}rem`);
             }
         }
     }
@@ -5137,7 +5140,6 @@ export class ProjectView
                     {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
                 <sidepanel.Sidepanel parent={this} inHome={inHome}
-                    fontSize={this.state.tutorialFontSize}
                     showKeymap={this.state.keymap && simOpts.keymap}
                     showSerialButtons={useSerialEditor}
                     showFileList={showFileList}

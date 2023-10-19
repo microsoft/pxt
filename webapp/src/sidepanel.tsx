@@ -31,7 +31,6 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     deviceSerialActive?: boolean;
     tutorialOptions?: pxt.tutorial.TutorialOptions;
     tutorialSimSidebar?: boolean;
-    fontSize?: number;
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
     setEditorOffset?: () => void;
@@ -148,11 +147,10 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
         const shouldResize = pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar;
         const editorSidebarHeight = shouldResize ? `${this.state.height}px` : undefined;
-        let editorSidebarStyle = this.props.tutorialSimSidebar ? undefined : {height: editorSidebarHeight, fontSize: `${this.props.fontSize}rem`}
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="editor-sidebar" style={editorSidebarStyle}>
+            <div id="editorSidebar" className="editor-sidebar" style={this.props.tutorialSimSidebar ? undefined : {height: editorSidebarHeight}}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -205,8 +203,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                             hasBeenResized={this.state.resized && shouldResize}
                             onTutorialStepChange={onTutorialStepChange}
                             onTutorialComplete={onTutorialComplete}
-                            setParentHeight={newSize => this.setComponentHeight(newSize, false)}
-                            fontSize={this.props.fontSize} />
+                            setParentHeight={newSize => this.setComponentHeight(newSize, false)} />
                     </VerticalResizeContainer>
                 </div>}
         </div>
