@@ -654,6 +654,10 @@ export class ProjectView
             return;
         }
 
+        if (pxt.appTarget.simulator?.headless && !this.state.collapseEditorTools) {
+            this.toggleSimulatorCollapse();
+        }
+
         const mainBlocks = pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
         if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
             this.textEditor.openBlocks();

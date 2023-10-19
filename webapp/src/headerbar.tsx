@@ -224,7 +224,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 return <projects.ProjectSettingsMenu parent={this.props.parent} />
             case "tutorial-tab":
             case "editor":
-                return <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} showShare={!!header} />
+                return <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} showShare={!!header} inBlocks={this.props.parent.isBlocksActive()} />
             default:
                 return <div />
         }
