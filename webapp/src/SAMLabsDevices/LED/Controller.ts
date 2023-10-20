@@ -5,7 +5,7 @@ class LEDController extends BaseController {
         constructor(appManager: any) {
             super(appManager, 'SAM RGB LED')
             this._ledColor = '#000000'
-            this._ledBrightness = 100
+            this._ledBrightness = 0
         }
 
         _reset = () => {

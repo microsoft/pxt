@@ -31,6 +31,9 @@ class LED{
             if (ev.data.type === `setLEDBrightness for ${this.assignedName}`) {
                 this.Controller.setLEDBrightness(ev.data.value);
             }
+            if (ev.data.type === `turnLEDOff for ${this.assignedName}`) {
+                this.Controller.turnLEDOff();
+            }
         }, false);
 
         this.Controller.on('connected',()=>{
