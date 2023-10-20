@@ -642,10 +642,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
             else if (ev.type === Blockly.Events.VIEWPORT_CHANGE) {
                 const viewportChangeEvent = ev as Blockly.Events.ViewportChange;
-                if (this.initialScaleSet && viewportChangeEvent.oldScale !== viewportChangeEvent.scale) {
-                    if (this.onScaleChanged) {
-                        this.onScaleChanged(viewportChangeEvent.oldScale, viewportChangeEvent.scale);
-                    }
+                if (this.initialScaleSet && viewportChangeEvent.oldScale !== viewportChangeEvent.scale && this.onScaleChanged) {
+                    this.onScaleChanged(viewportChangeEvent.oldScale, viewportChangeEvent.scale);
                 }
                 this.initialScaleSet = true;
             }
