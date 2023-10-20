@@ -109,17 +109,18 @@ const GameList: React.FC<IProps> = ({}) => {
         GamepadManager.GamepadControl.AButton
     );
 
-    const transitionStart = () => {
+    const slideChangeTransitionStart = () => {
         if (userInitiatedTransition) {
-            syncSelectedGame();
             playSoundEffect("swipe");
-            setUserInitiatedTransition(false);
         }
     };
 
-    const onTouchEnd = () => {
-        syncSelectedGame();
-    };
+    const slideChangeTransitionEnd = () => {
+        if (userInitiatedTransition) {
+            syncSelectedGame();
+            setUserInitiatedTransition(false);
+        }
+    }
 
     if (!kiosk.allGames?.length) {
         return (
@@ -142,8 +143,9 @@ const GameList: React.FC<IProps> = ({}) => {
                 onSwiper={handleLocalSwiper}
                 allowTouchMove={true}
                 modules={[Pagination]}
-                onSlideChangeTransitionStart={() => transitionStart()}
-                onTouchEnd={() => onTouchEnd()}
+                onSlideChangeTransitionStart={() => slideChangeTransitionStart()}
+                onSlideChangeTransitionEnd={() => slideChangeTransitionEnd()}
+                onTouchStart={() => setUserInitiatedTransition(true)}
             >
                 {kiosk.allGames.map((game, index) => {
                     return (
