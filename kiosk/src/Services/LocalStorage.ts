@@ -126,6 +126,9 @@ function getBuiltJsInfo(gameId: string): ts.pxtc.BuiltSimJsInfo | undefined {
 }
 
 function setBuiltJsInfo(gameId: string, builtJs: ts.pxtc.BuiltSimJsInfo) {
+    // Need to switch to indexdb. We're hitting local storage size limit with just a few games.
+    return;
+    /*
     try {
         const ver = pxt.appTarget?.versions?.target;
         if (!ver) return;
@@ -134,6 +137,7 @@ function setBuiltJsInfo(gameId: string, builtJs: ts.pxtc.BuiltSimJsInfo) {
     } catch (e) {
         console.error(e);
     }
+    */
 }
 
 export {
