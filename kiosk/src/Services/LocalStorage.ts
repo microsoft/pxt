@@ -14,17 +14,6 @@ function delValue(key: string) {
     localStorage.removeItem(key);
 }
 
-function matchingKeys(pattern: RegExp): string[] {
-    const keys: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && pattern.test(key)) {
-            keys.push(key);
-        }
-    }
-    return keys;
-}
-
 function getJsonValue<T>(key: string, defaultValue?: T): T | undefined {
     var value = getValue(key);
     if (value) {
@@ -50,7 +39,11 @@ function getUserAddedGames(): GamesById {
 }
 
 function setUserAddedGames(games: GamesById) {
-    setJsonValue(Constants.addedGamesLocalStorageKey, games);
+    try {
+        setJsonValue(Constants.addedGamesLocalStorageKey, games);
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 function getHighScores(): AllHighScores {
@@ -91,8 +84,12 @@ function resetHighScores() {
 }
 
 function setKioskCode(code: string, expiration: number) {
-    setValue(Constants.kioskCodeStorageKey, code);
-    setValue(Constants.kioskCodeExpirationStorageKey, expiration.toString());
+    try {
+        setValue(Constants.kioskCodeStorageKey, code);
+        setValue(Constants.kioskCodeExpirationStorageKey, expiration.toString());
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 function getKioskCode(): { code: string; expiration: number } | undefined {
@@ -123,23 +120,24 @@ function clearKioskCode() {
 function getBuiltJsInfo(gameId: string): ts.pxtc.BuiltSimJsInfo | undefined {
     const ver = pxt.appTarget?.versions?.target;
     if (!ver) return undefined;
-    const key = `builtjs:${ver}:${gameId}`;
+    const key = `kiosk/builtjs:${ver}:${gameId}`;
     const rec = getJsonValue<ts.pxtc.BuiltSimJsInfo>(key);
     return rec;
 }
 
 function setBuiltJsInfo(gameId: string, builtJs: ts.pxtc.BuiltSimJsInfo) {
-    const ver = pxt.appTarget?.versions?.target;
-    if (!ver) return;
-    const key = `builtjs:${ver}:${gameId}`;
-    setJsonValue(key, builtJs);
-}
-
-function clearBuiltJsInfo() {
-    const keys = matchingKeys(/^builtjs:/);
-    for (const key of keys) {
-        delValue(key);
+    // Need to switch to indexdb. We're hitting local storage size limit with just a few games.
+    return;
+    /*
+    try {
+        const ver = pxt.appTarget?.versions?.target;
+        if (!ver) return;
+        const key = `kiosk/builtjs:${ver}:${gameId}`;
+        setJsonValue(key, builtJs);
+    } catch (e) {
+        console.error(e);
     }
+    */
 }
 
 export {
@@ -155,5 +153,4 @@ export {
     clearKioskCode,
     getBuiltJsInfo,
     setBuiltJsInfo,
-    clearBuiltJsInfo,
 };
