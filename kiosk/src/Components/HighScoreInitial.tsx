@@ -21,7 +21,7 @@ const HighScoreInitial: React.FC<IProps> = ({
         (index + 1) % configData.HighScoreInitialAllowedCharacters.length;
 
     const previousInitial = () => {
-                const newIndex = getPreviousIndex();
+        const newIndex = getPreviousIndex();
         setIndex(newIndex);
         onCharacterChanged(
             configData.HighScoreInitialAllowedCharacters[newIndex]
@@ -29,7 +29,7 @@ const HighScoreInitial: React.FC<IProps> = ({
     };
 
     const nextInitial = () => {
-                const newIndex = getNextIndex();
+        const newIndex = getNextIndex();
         setIndex(newIndex);
         onCharacterChanged(
             configData.HighScoreInitialAllowedCharacters[newIndex]
