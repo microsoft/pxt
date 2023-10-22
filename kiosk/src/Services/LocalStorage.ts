@@ -117,29 +117,6 @@ function clearKioskCode() {
     delValue(Constants.legacy_kioskCodeExpirationStorageKey);
 }
 
-function getBuiltJsInfo(gameId: string): ts.pxtc.BuiltSimJsInfo | undefined {
-    const ver = pxt.appTarget?.versions?.target;
-    if (!ver) return undefined;
-    const key = `kiosk/builtjs:${ver}:${gameId}`;
-    const rec = getJsonValue<ts.pxtc.BuiltSimJsInfo>(key);
-    return rec;
-}
-
-function setBuiltJsInfo(gameId: string, builtJs: ts.pxtc.BuiltSimJsInfo) {
-    // Need to switch to indexdb. We're hitting local storage size limit with just a few games.
-    return;
-    /*
-    try {
-        const ver = pxt.appTarget?.versions?.target;
-        if (!ver) return;
-        const key = `kiosk/builtjs:${ver}:${gameId}`;
-        setJsonValue(key, builtJs);
-    } catch (e) {
-        console.error(e);
-    }
-    */
-}
-
 export {
     getJsonValue,
     setJsonValue,
@@ -151,6 +128,4 @@ export {
     setKioskCode,
     getKioskCode,
     clearKioskCode,
-    getBuiltJsInfo,
-    setBuiltJsInfo,
 };
