@@ -12,7 +12,7 @@
     "GamepadOnHeldCooldownMilli": 167,
     "GamepadAButtonPin": 0,
     "GamepadBButtonPin": 1,
-    "GamepadEscapeButtonPin": 9,
+    "GamepadEscapeButtonPin": 8,
     "GamepadResetButtonPin": 10,
     "GamepadDpadUpButtonPin": 12,
     "GamepadDpadDownButtonPin": 13,

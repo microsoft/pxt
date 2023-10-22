@@ -19,8 +19,7 @@ export default function PlayingGame() {
             playSoundEffect("select");
             escapeGame();
         },
-        GamepadManager.GamepadControl.EscapeButton,
-        GamepadManager.GamepadControl.MenuButton
+        GamepadManager.GamepadControl.EscapeButton
     );
 
     const playUrl = useMemo(() => {
