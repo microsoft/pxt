@@ -12,15 +12,15 @@ export default function PlayingGame() {
     const { state: kiosk, dispatch } = useContext(AppStateContext);
     const { launchedGameId: gameId } = kiosk;
 
-    // Handle Escape and Menu button presses
+    // Handle Back and Start button presses
     useOnControlPress(
         [],
         () => {
             playSoundEffect("select");
             escapeGame();
         },
-        GamepadManager.GamepadControl.EscapeButton,
-        GamepadManager.GamepadControl.ResetButton
+        GamepadManager.GamepadControl.BackButton,
+        GamepadManager.GamepadControl.StartButton
     );
 
     const playUrl = useMemo(() => {

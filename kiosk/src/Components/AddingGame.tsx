@@ -32,11 +32,11 @@ const AddingGame: React.FC<IProps> = ({}) => {
         showMainMenu();
     };
 
-    // Handle Escape button press
+    // Handle Back button press
     useOnControlPress(
         [],
         gotoMainMenu,
-        GamepadManager.GamepadControl.EscapeButton,
+        GamepadManager.GamepadControl.BackButton,
         GamepadManager.GamepadControl.BButton
     );
 

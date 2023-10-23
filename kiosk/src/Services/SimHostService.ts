@@ -22,17 +22,17 @@ export function initialize() {
 
         // Look for the high scores reset combo
         if (
-            controlStates[GamepadManager.GamepadControl.ResetButton] &&
-            controlStates[GamepadManager.GamepadControl.EscapeButton] &&
+            controlStates[GamepadManager.GamepadControl.StartButton] &&
+            controlStates[GamepadManager.GamepadControl.BackButton] &&
             controlStates[GamepadManager.GamepadControl.BButton] &&
             controlStates[GamepadManager.GamepadControl.DPadLeft]
         ) {
             // Lock the combo so it doesn't get triggered repeatedly
             GamepadManager.lockControl(
-                GamepadManager.GamepadControl.ResetButton
+                GamepadManager.GamepadControl.StartButton
             );
             GamepadManager.lockControl(
-                GamepadManager.GamepadControl.EscapeButton
+                GamepadManager.GamepadControl.BackButton
             );
             GamepadManager.lockControl(GamepadManager.GamepadControl.BButton);
             GamepadManager.lockControl(GamepadManager.GamepadControl.DPadLeft);

@@ -9,8 +9,8 @@ export enum GamepadControl {
     DPadLeft = "DPadLeft",
     DPadRight = "DPadRight",
     MenuButton = "MenuButton",
-    EscapeButton = "EscapeButton",
-    ResetButton = "ResetButton",
+    BackButton = "BackButton",
+    StartButton = "StartButton",
 }
 
 enum GamepadAxis {
@@ -21,16 +21,19 @@ enum GamepadAxis {
     Right = "Right",
 }
 
-const gamepadControlToPinIndex: { [key in GamepadControl]: number } = {
-    [GamepadControl.AButton]: configData.GamepadAButtonPin,
-    [GamepadControl.BButton]: configData.GamepadBButtonPin,
-    [GamepadControl.DPadUp]: configData.GamepadDpadUpButtonPin,
-    [GamepadControl.DPadDown]: configData.GamepadDpadDownButtonPin,
-    [GamepadControl.DPadLeft]: configData.GamepadDpadLeftButtonPin,
-    [GamepadControl.DPadRight]: configData.GamepadDpadRightButtonPin,
-    [GamepadControl.MenuButton]: configData.GamepadMenuButtonPin,
-    [GamepadControl.EscapeButton]: configData.GamepadEscapeButtonPin,
-    [GamepadControl.ResetButton]: configData.GamepadResetButtonPin,
+const gamepadControlToPinIndices: { [key in GamepadControl]: number[] } = {
+    [GamepadControl.AButton]: [configData.GamepadAButtonPin],
+    [GamepadControl.BButton]: [configData.GamepadBButtonPin],
+    [GamepadControl.DPadUp]: [configData.GamepadDpadUpButtonPin],
+    [GamepadControl.DPadDown]: [configData.GamepadDpadDownButtonPin],
+    [GamepadControl.DPadLeft]: [configData.GamepadDpadLeftButtonPin],
+    [GamepadControl.DPadRight]: [configData.GamepadDpadRightButtonPin],
+    [GamepadControl.MenuButton]: [configData.GamepadMenuButtonPin],
+    [GamepadControl.BackButton]: [
+        configData.GamepadBackButtonPin,
+        configData.GamepadYButtonPin,
+    ],
+    [GamepadControl.StartButton]: [configData.GamepadStartButtonPin],
 };
 
 const gamepadControlToAxis: { [key in GamepadControl]: GamepadAxis } = {
@@ -41,8 +44,8 @@ const gamepadControlToAxis: { [key in GamepadControl]: GamepadAxis } = {
     [GamepadControl.DPadLeft]: GamepadAxis.Left,
     [GamepadControl.DPadRight]: GamepadAxis.Right,
     [GamepadControl.MenuButton]: GamepadAxis.None,
-    [GamepadControl.EscapeButton]: GamepadAxis.None,
-    [GamepadControl.ResetButton]: GamepadAxis.None,
+    [GamepadControl.BackButton]: GamepadAxis.None,
+    [GamepadControl.StartButton]: GamepadAxis.None,
 };
 
 export enum ControlValue {
@@ -69,9 +72,9 @@ export const emptyControlStates = (): ControlStates => ({
     [GamepadControl.DPadLeft]: ControlValue.Up,
     [GamepadControl.DPadRight]: ControlValue.Up,
     [GamepadControl.DPadUp]: ControlValue.Up,
-    [GamepadControl.EscapeButton]: ControlValue.Up,
+    [GamepadControl.BackButton]: ControlValue.Up,
     [GamepadControl.MenuButton]: ControlValue.Up,
-    [GamepadControl.ResetButton]: ControlValue.Up,
+    [GamepadControl.StartButton]: ControlValue.Up,
 });
 
 const emptyControlCooldowns = (): ControlCooldowns => ({
@@ -81,9 +84,9 @@ const emptyControlCooldowns = (): ControlCooldowns => ({
     [GamepadControl.DPadLeft]: 0,
     [GamepadControl.DPadRight]: 0,
     [GamepadControl.DPadUp]: 0,
-    [GamepadControl.EscapeButton]: 0,
+    [GamepadControl.BackButton]: 0,
     [GamepadControl.MenuButton]: 0,
-    [GamepadControl.ResetButton]: 0,
+    [GamepadControl.StartButton]: 0,
 });
 
 const emptyControlLocks = (): ControlLocks => ({
@@ -93,9 +96,9 @@ const emptyControlLocks = (): ControlLocks => ({
     [GamepadControl.DPadLeft]: false,
     [GamepadControl.DPadRight]: false,
     [GamepadControl.DPadUp]: false,
-    [GamepadControl.EscapeButton]: false,
+    [GamepadControl.BackButton]: false,
     [GamepadControl.MenuButton]: false,
-    [GamepadControl.ResetButton]: false,
+    [GamepadControl.StartButton]: false,
 });
 
 type GamepadState = {
@@ -131,9 +134,9 @@ class GamepadManager {
         this.minButtonPinRequired = Math.max(
             configData.GamepadAButtonPin,
             configData.GamepadBButtonPin,
-            configData.GamepadEscapeButtonPin,
+            configData.GamepadBackButtonPin,
             configData.GamepadMenuButtonPin,
-            configData.GamepadResetButtonPin
+            configData.GamepadStartButtonPin
         );
 
         this.minAxisRequired = Math.max(
@@ -307,13 +310,13 @@ class GamepadManager {
                 gamepad,
                 GamepadControl.MenuButton
             ),
-            [GamepadControl.EscapeButton]: this.readGamepadButtonValue(
+            [GamepadControl.BackButton]: this.readGamepadButtonValue(
                 gamepad,
-                GamepadControl.EscapeButton
+                GamepadControl.BackButton
             ),
-            [GamepadControl.ResetButton]: this.readGamepadButtonValue(
+            [GamepadControl.StartButton]: this.readGamepadButtonValue(
                 gamepad,
-                GamepadControl.ResetButton
+                GamepadControl.StartButton
             ),
         };
     }
@@ -501,12 +504,18 @@ class GamepadManager {
         gamepad: Gamepad,
         control: GamepadControl
     ): ControlValue {
-        const pinIndex = gamepadControlToPinIndex[control];
-        if (pinIndex < 0 || pinIndex >= gamepad.buttons.length)
-            return ControlValue.Up;
-        return gamepad.buttons[pinIndex].pressed
-            ? ControlValue.Down
-            : ControlValue.Up;
+        const pinIndices = gamepadControlToPinIndices[control];
+        let result = ControlValue.Up;
+        for (let pinIndex of pinIndices) {
+            if (pinIndex < 0 || pinIndex >= gamepad.buttons.length) continue;
+            result = this.mergeControlValues(
+                result,
+                gamepad.buttons[pinIndex].pressed
+                    ? ControlValue.Down
+                    : ControlValue.Up
+            );
+        }
+        return result;
     }
 
     readGamepadDirectionValue(

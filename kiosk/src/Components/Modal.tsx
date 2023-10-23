@@ -38,7 +38,7 @@ export const Modal = (props: ModalProps) => {
         () => {
             onClose?.();
         },
-        GamepadManager.GamepadControl.EscapeButton
+        GamepadManager.GamepadControl.BackButton
     );
 
     const classes = classList("common-modal-container", className);
