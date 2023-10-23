@@ -242,13 +242,13 @@ class GamepadManager {
             gamepad.axes &&
             gamepad.axes.length >= this.minAxisRequired &&
             gamepad.buttons &&
-            gamepad.buttons.length >= this.minButtonPinRequired &&
-            !!gamepad.mapping
+            gamepad.buttons.length >= this.minButtonPinRequired
         );
     }
 
     addGamepad(gamepad: Gamepad) {
         if (this.gamepadFilter(gamepad)) {
+            pxt.tickEvent("kiosk.gamepad.connected", { id: gamepad.id });
             this.gamepads.set(gamepad.index, true);
             this.gamepadStates.set(gamepad.index, {
                 state: { ...this.readGamepad(gamepad) },
