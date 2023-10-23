@@ -11,7 +11,7 @@ interface TutorialCalloutProps extends React.PropsWithChildren<{}> {
 }
 
 export function TutorialCallout(props: TutorialCalloutProps) {
-    const { children, className, buttonIcon, buttonLabel } = props;
+    const { children, className, buttonIcon, buttonLabel, onClick } = props;
     const [ visible, setVisible ] = React.useState(false);
     const [ maxHeight, setMaxHeight ] = React.useState("unset");
     const [ top, setTop ] = React.useState("unset");
@@ -20,6 +20,8 @@ export function TutorialCallout(props: TutorialCalloutProps) {
     const contentRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
+        if (!visible) return undefined;
+
         function checkSize() {
             const lowerBuffer = (document.getElementById("editortools")?.clientHeight ?? 0) + 30;
             if (contentRef.current?.getBoundingClientRect().bottom >= window.innerHeight - lowerBuffer) {
@@ -39,41 +41,41 @@ export function TutorialCallout(props: TutorialCalloutProps) {
         if (contentRef.current) observer.observe(contentRef.current);
 
         checkSize();
-        return () => observer.disconnect();
-    });
 
-    const captureEvent = (e: any) => {
+        const closeOnOutsideClick = (e: PointerEvent) => {
+            if (!popupRef?.current?.contains(e.target as Node)) {
+                setVisible(false);
+            }
+        };
+
+        document.addEventListener("click", closeOnOutsideClick);
+
+        return () => {
+            observer.disconnect();
+            document.removeEventListener("click", closeOnOutsideClick);
+        }
+    }, [visible]);
+
+
+    const captureEvent = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         e.nativeEvent?.stopImmediatePropagation();
     }
 
-    const closeCallout = (e: any) => {
-        document.removeEventListener("click", closeCalloutIfClickedOutside, true);
+    const closeCallout = React.useCallback(() => {
         setVisible(false);
-    }
+    }, []);
 
-    const closeCalloutIfClickedOutside = (e: PointerEvent) => {
-        if (!popupRef?.current?.contains(e.target as Node)) {
-            closeCallout(e);
-        }
-    }
-
-    const toggleCallout = (e: any) => {
+    const toggleCallout = React.useCallback((e: React.MouseEvent) => {
         captureEvent(e);
-        if (!visible) {
-            document.addEventListener("click", closeCalloutIfClickedOutside, true);
-        } else {
-            document.removeEventListener("click", closeCalloutIfClickedOutside, true);
-        }
         setVisible(!visible);
-    }
+    }, [visible]);
 
-    const handleButtonClick = (e: any) => {
-        const { onClick } = props;
+    const handleButtonClick = React.useCallback((e: React.MouseEvent) => {
         if (onClick) onClick(visible);
         toggleCallout(e);
-    }
+    }, [onClick, visible]);
 
     const buttonTitle = lf("Click to show a hint!");
     return <div ref={popupRef} className={className}>
