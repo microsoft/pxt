@@ -13,7 +13,7 @@ export default function AppModal() {
 
     const hideAppModal = () => {
         GamepadManager.lockControl(GamepadManager.GamepadControl.AButton);
-        GamepadManager.lockControl(GamepadManager.GamepadControl.EscapeButton);
+        GamepadManager.lockControl(GamepadManager.GamepadControl.BackButton);
         dispatch(hideModal());
     };
 
