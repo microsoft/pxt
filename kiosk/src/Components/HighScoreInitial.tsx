@@ -38,14 +38,14 @@ const HighScoreInitial: React.FC<IProps> = ({
 
     // Handle DPadUp button press
     useOnControlPress(
-        [onCharacterChanged, isSelected, index],
+        [onCharacterChanged, isSelected, setIndex],
         () => isSelected && previousInitial(),
         GamepadManager.GamepadControl.DPadUp
     );
 
     // Handle DPadDown button press
     useOnControlPress(
-        [onCharacterChanged, isSelected, index],
+        [onCharacterChanged, isSelected, setIndex],
         () => isSelected && nextInitial(),
         GamepadManager.GamepadControl.DPadDown
     );
