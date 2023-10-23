@@ -853,6 +853,22 @@ export async function hasPullAsync(hd: Header) {
     return (await pullAsync(hd, true)) == PullStatus.GotChanges
 }
 
+export async function getMainOrMaster(hd: Header) {
+    let files = await getTextAsync(hd.id)
+    await recomputeHeaderFlagsAsync(hd, files)
+    let gitjsontext = files[GIT_JSON]
+    if (!gitjsontext)
+        return PullStatus.NoSourceControl
+    let gitjson = JSON.parse(gitjsontext) as GitJson
+    let parsed = pxt.github.parseRepoId(gitjson.repo)
+
+    // Try main. If it works, use that. If not, assume master.
+    if((await pxt.github.getRefAsync(parsed.slug, "main"))) {
+        return "main"
+    }
+    return "master";
+}
+
 export async function pullAsync(hd: Header, checkOnly = false) {
     let files = await getTextAsync(hd.id)
     await recomputeHeaderFlagsAsync(hd, files)
@@ -1014,7 +1030,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add compiled javascript to be run in github pages
     if (pxt.appTarget.appTheme.githubCompiledJs
         && options.binaryJs
-        && (!parsed.tag || parsed.tag == "master")) {
+        && (!parsed.tag || parsed.tag == "master" || parsed.tag == "main")) {
         const v = cfg.version || "0.0.0";
         const opts: compiler.CompileOptions = {
             jsMetaVersion: v

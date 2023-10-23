@@ -236,7 +236,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }))
 
         // only branch from master...
-        if (gid.tag == "master") {
+        if (gid.tag === "master" || gid.tag === "main") {
             branchList.unshift({
                 name: lf("Create new branch"),
                 description: lf("Based on {0}", gid.tag),
@@ -665,7 +665,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private async handlePullRequest() {
+    private async handlePullRequest(mainBranch: string) {
         const gh = this.parsedRepoId();
         let res = await core.confirmAsync({
             header: lf("Create pull request"),
@@ -688,7 +688,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 - [ ] ${lf("apply requested changes if any")}
 - [ ] ${lf("merge once approved")}
 `;
-            const id = await pxt.github.createPRFromBranchAsync(gh.slug, "master", gh.tag, title, msg);
+            const id = await pxt.github.createPRFromBranchAsync(gh.slug, mainBranch, gh.tag, title, msg);
             data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
             core.infoNotification(lf("Pull request created successfully!", id));
         } catch (e) {
@@ -749,15 +749,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const hasissue = pullStatus == workspace.PullStatus.BranchNotFound || pullStatus == workspace.PullStatus.NoSourceControl;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
-        const master = githubId.tag == "master";
+        const main = githubId.tag == "master" || githubId.tag == "main";
+        const mainBranch = main ? githubId.tag : await workspace.getMainOrMaster(this.props.parent.state.header);
         const user = this.getData("github:user") as pxt.editor.UserInfo;
 
         // don't use gs.prUrl, as it gets cleared often
-        const url = `https://github.com/${githubId.slug}/${master && !githubId.fileName ? "" : pxt.github.join("tree", githubId.tag || "master", githubId.fileName)}`;
+        const url = `https://github.com/${githubId.slug}/${main && !githubId.fileName ? "" : pxt.github.join("tree", githubId.tag || mainBranch, githubId.fileName)}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
         const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
-        const showPr = pr !== null && (gs.isFork || !master);
+        const showPr = pr !== null && (gs.isFork || !main);
         const showPrResolved = showPr && pr && pr.number > 0;
         const showPrCreate = showPr && pr && pr.number <= 0;
         const isOwner = user && user.id === githubId.owner;
@@ -778,25 +779,25 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} main={main} mainBranch={mainBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                 <div className="ui form">
                     {showPrResolved &&
                         <sui.Link href={pr.url} role="button" className="ui tiny basic button create-pr"
                             target="_blank" text={lf("Pull request (#{0})", pr.number)} icon="external alternate" />}
                     {showPrCreate &&
-                        <sui.Button className="tiny basic create-pr" text={lf("Create pull request")} onClick={this.handlePullRequest} />
+                        <sui.Button className="tiny basic create-pr" text={lf("Create pull request")} onClick={() => this.handlePullRequest(mainBranch)} />
                     }
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
                         <span onClick={this.handleBranchClick} onKeyDown={fireClickOnEnter} tabIndex={0} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
-                    {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} main={main} mainBranch={mainBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} main={main} mainBranch={mainBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
-                    <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
-                    {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} main={main} mainBranch={mainBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
+                    {main && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} main={main} mainBranch={mainBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} main={main} mainBranch={mainBranch} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     <div></div>
                 </div>
                 <div className="ui serialHeader">
@@ -1155,13 +1156,13 @@ ${content}
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props)
-        this.handleSwitchMasterBranch = this.handleSwitchMasterBranch.bind(this);
+        this.handleSwitchMainBranch = this.handleSwitchMainBranch.bind(this);
     }
 
-    private handleSwitchMasterBranch(e: React.MouseEvent<HTMLElement>) {
+    private handleSwitchMainBranch(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch.switch");
         e.stopPropagation();
-        this.props.parent.switchBranchAsync("master");
+        this.props.parent.switchBranchAsync(this.props.mainBranch);
     }
 
     renderCore() {
@@ -1176,7 +1177,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <div className="content">
                     {closed && lf("This Pull Request is closed!")}
                     {merged && lf("This pull request has been merged.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={fireClickOnEnter}>{lf("Switch to master branch")}</span>
+                    <span role="button" className="ui link" onClick={this.handleSwitchMainBranch} onKeyDown={fireClickOnEnter}>{lf("Switch to {0} branch", this.props.mainBranch)}</span>
                 </div>
             </div>;
 
@@ -1194,7 +1195,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <i className="exclamation circle icon"></i>
                 <div className="content">
                     {lf("This branch was not found, please pull again or switch to a different branch.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={fireClickOnEnter}>{lf("Switch to master branch")}</span>
+                    <span role="button" className="ui link" onClick={this.handleSwitchMainBranch} onKeyDown={fireClickOnEnter}>{lf("Switch to {0} branch", this.props.mainBranch)}</span>
                 </div>
             </div>
 
@@ -1212,7 +1213,8 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 interface GitHubViewProps {
     githubId: pxt.github.ParsedRepo;
     needsToken: boolean;
-    master: boolean;
+    main: boolean;
+    mainBranch: string;
     parent: GithubComponent;
     gs: pxt.github.GitJson;
     isBlocks: boolean;
@@ -1362,7 +1364,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.releasezone.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
-        const { needsCommit, master } = this.props;
+        const { needsCommit, main, mainBranch } = this.props;
         const header = this.props.parent.props.parent.state.header;
         if (needsCommit)
             core.confirmAsync({
@@ -1371,10 +1373,10 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 agreeLbl: lf("Ok"),
                 hideAgree: true
             });
-        else if (!master)
+        else if (!main)
             core.confirmAsync({
-                header: lf("Checkout the master branch..."),
-                body: lf("You need to checkout the master branch to create a release."),
+                header: lf("Checkout the {0} branch...", mainBranch),
+                body: lf("You need to checkout the {0} branch to create a release.", mainBranch),
                 agreeLbl: lf("Ok"),
                 hideAgree: true
             });
