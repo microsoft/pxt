@@ -249,6 +249,7 @@ class GamepadManager {
 
     addGamepad(gamepad: Gamepad) {
         if (this.gamepadFilter(gamepad)) {
+            pxt.tickEvent("kiosk.gamepad.connected", { id: gamepad.id });
             this.gamepads.set(gamepad.index, true);
             this.gamepadStates.set(gamepad.index, {
                 state: { ...this.readGamepad(gamepad) },
