@@ -6,7 +6,7 @@ import { resetHighScores } from "../Transforms/resetHighScores";
 import * as GamepadManager from "./GamepadManager";
 import { postNotification } from "../Transforms/postNotification";
 import { makeNotification } from "../Utils";
-import * as Storage from "./LocalStorage";
+import * as IndexedDb from "./IndexedDb";
 
 export function initialize() {
     let controlStates: GamepadManager.ControlStates = {
@@ -63,8 +63,8 @@ export function initialize() {
     GamepadManager.addKeydownListener(keydownhandler);
     GamepadManager.addKeyupListener(keyuphandler);
 
-    function sendBuiltGame(gameId: string) {
-        const builtGame = Storage.getBuiltJsInfo(gameId);
+    async function sendBuiltGameAsync(gameId: string) {
+        const builtGame = await IndexedDb.getBuiltJsInfoAsync(gameId);
         if (builtGame) {
             const simIframe = document.getElementsByTagName(
                 "iframe"
@@ -76,10 +76,10 @@ export function initialize() {
         }
     }
 
-    window.addEventListener("message", event => {
+    window.addEventListener("message", async (event) => {
         const { state, dispatch } = stateAndDispatch();
         if (event.data?.js && state.launchedGameId) {
-            Storage.setBuiltJsInfo(state.launchedGameId, event.data);
+            await IndexedDb.setBuiltJsInfoAsync(state.launchedGameId, event.data);
         }
         switch (event.data.type) {
             case "simulator":
@@ -111,9 +111,9 @@ export function initialize() {
                 break;
 
             case "ready":
-                const builtGame = Storage.getBuiltJsInfo(state.launchedGameId!);
+                const builtGame = await IndexedDb.getBuiltJsInfoAsync(state.launchedGameId!);
                 if (builtGame) {
-                    sendBuiltGame(state.launchedGameId!);
+                    await sendBuiltGameAsync(state.launchedGameId!);
                 }
                 break;
         }
