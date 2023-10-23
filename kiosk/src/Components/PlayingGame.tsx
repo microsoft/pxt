@@ -20,7 +20,7 @@ export default function PlayingGame() {
             escapeGame();
         },
         GamepadManager.GamepadControl.EscapeButton,
-        GamepadManager.GamepadControl.MenuButton
+        GamepadManager.GamepadControl.ResetButton
     );
 
     const playUrl = useMemo(() => {

@@ -242,8 +242,7 @@ class GamepadManager {
             gamepad.axes &&
             gamepad.axes.length >= this.minAxisRequired &&
             gamepad.buttons &&
-            gamepad.buttons.length >= this.minButtonPinRequired &&
-            !!gamepad.mapping
+            gamepad.buttons.length >= this.minButtonPinRequired
         );
     }
 
