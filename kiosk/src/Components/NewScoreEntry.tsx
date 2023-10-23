@@ -42,7 +42,7 @@ const NewScoreEntry: React.FC<IProps> = ({}) => {
         GamepadManager.GamepadControl.BButton
     );
 
-    // Handle Escape button press
+    // Handle Back button press
     useOnControlPress(
         [kiosk],
         () => {
@@ -54,7 +54,7 @@ const NewScoreEntry: React.FC<IProps> = ({}) => {
             );
             navigate(KioskState.GameOver);
         },
-        GamepadManager.GamepadControl.EscapeButton
+        GamepadManager.GamepadControl.BackButton
     );
 
     // Handle all initials entered

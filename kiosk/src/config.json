@@ -12,8 +12,10 @@
     "GamepadOnHeldCooldownMilli": 167,
     "GamepadAButtonPin": 0,
     "GamepadBButtonPin": 1,
-    "GamepadEscapeButtonPin": 8,
-    "GamepadResetButtonPin": 10,
+    "GamepadXButtonPin": 2,
+    "GamepadYButtonPin": 3,
+    "GamepadBackButtonPin": 8,
+    "GamepadStartButtonPin": 10,
     "GamepadDpadUpButtonPin": 12,
     "GamepadDpadDownButtonPin": 13,
     "GamepadDpadLeftButtonPin": 14,
@@ -49,8 +51,8 @@
     "GamepadControlToKeyboardKeyMap": {
         "AButton": "Space",
         "BButton": "Enter",
-        "EscapeButton": "Escape",
-        "ResetButton": "2",
+        "BackButton": "Escape",
+        "StartButton": "2",
         "MenuButton": "1",
         "DPadLeft": "ArrowLeft",
         "DPadRight": "ArrowRight",
@@ -72,8 +74,8 @@
         {
             "Space": "AButton",
             "Enter": "BButton",
-            "Escape": "EscapeButton",
-            "2": "ResetButton",
+            "Escape": "BackButton",
+            "2": "StartButton",
             "1": "MenuButton",
             "ArrowLeft": "DPadLeft",
             "ArrowRight": "DPadRight",
@@ -86,7 +88,7 @@
             "Right": "DPadRight",
             "Up": "DPadUp",
             "Down": "DPadDown",
-            "Esc": "EscapeButton"
+            "Esc": "BackButton"
         },
         {
             "z": "AButton",

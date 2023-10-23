@@ -8,9 +8,9 @@ import { playSoundEffect } from "../Services/SoundEffectService";
 export function navigate(nextState: KioskState) {
     const { dispatch } = stateAndDispatch();
     pxt.tickEvent("kiosk.navigate." + nextState.toLowerCase());
-    // Lock the A button and Escape button to prevent accidental navigation upon entering the new state
+    // Lock the A button and Back button to prevent accidental navigation upon entering the new state
     GamepadManager.lockControl(GamepadManager.GamepadControl.AButton);
-    GamepadManager.lockControl(GamepadManager.GamepadControl.EscapeButton);
+    GamepadManager.lockControl(GamepadManager.GamepadControl.BackButton);
     playSoundEffect("select");
     //NavGrid.resetUserInteraction();
     // As a general safety measure, wait one frame before changing screens to allow any pending reducer
