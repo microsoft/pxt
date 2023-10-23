@@ -34,6 +34,7 @@ export default function PlayingGame() {
                 single: 1,
                 fullscreen: 1,
                 autofocus: 1,
+                loadingColor: "white",
                 // If we have the built game cached, we will send it to the
                 // simulator once it loads. The `server` flag inhibits the
                 // simulator from trying to build it.
