@@ -27,56 +27,66 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
     } = props;
 
     const RESIZABLE_BORDER_SIZE = 4;
-    const containerRef: React.MutableRefObject<HTMLDivElement> = React.useRef(undefined);
+    const containerRef = React.useRef<HTMLDivElement>();
     const heightProperty = `--${id}-height`;
-    const containerEl: HTMLDivElement = document.querySelector(`#${id}`);
 
     let [hasResized, setHasResized] = React.useState(false);
 
-    const resize = (e: React.MouseEvent | MouseEvent) => {
-        let heightVal = `${e.pageY - containerEl.offsetTop}px`;
-        if (maxHeight) heightVal = `min(${maxHeight}, ${heightVal})`;
-        if (minHeight) heightVal = `max(${minHeight}, ${heightVal})`;
+    React.useEffect(() => {
+        if (!resizeEnabled) return undefined;
 
-        containerEl.style.setProperty(heightProperty, heightVal);
+        const container = containerRef.current;
 
-        if (onResizeDrag) {
-            onResizeDrag(containerEl.clientHeight);
-        }
+        const resize = (e: MouseEvent) => {
+            let heightVal = `${e.pageY - container.offsetTop}px`;
+            if (maxHeight) heightVal = `min(${maxHeight}, ${heightVal})`;
+            if (minHeight) heightVal = `max(${minHeight}, ${heightVal})`;
 
-        setHasResized(true);
+            container.style.setProperty(heightProperty, heightVal);
 
-        e.preventDefault();
-        e.stopPropagation();
-    }
+            if (onResizeDrag) {
+                onResizeDrag(container.clientHeight);
+            }
 
-    const onPointerUp = () => {
-        // Clean resize events
-        document.removeEventListener("pointermove", resize, false);
-        document.removeEventListener("pointerup", onPointerUp, false);
-        document.querySelector("body")?.classList.remove("cursor-resize");
+            setHasResized(true);
 
-        // Notify resize end
-        if (onResizeEnd) {
-            onResizeEnd(containerEl.clientHeight);
-        }
-    }
+            e.preventDefault();
+            e.stopPropagation();
+        };
 
-    React.useEffect(() => onPointerUp, []);
+        const cleanupBodyEvents = () => {
+            document.removeEventListener("pointermove", resize, false);
+            document.removeEventListener("pointerup", onPointerUp, false);
+            document.body.classList.remove("cursor-resize");
+        };
 
-    const onPointerDown = (e: React.MouseEvent) => {
-        if (!resizeEnabled) {
-            return;
-        }
+        const onPointerUp = () => {
+            // Clean resize events
+            cleanupBodyEvents();
 
-        const computedStyle = getComputedStyle(containerRef?.current);
-        const containerHeight = parseInt(computedStyle.height) - parseInt(computedStyle.borderWidth);
-        if (e.nativeEvent.offsetY < containerHeight && e.nativeEvent.offsetY > containerHeight - RESIZABLE_BORDER_SIZE - 4) {
-            document.querySelector("body")?.classList.add("cursor-resize");
-            document.addEventListener("pointermove", resize, false);
-            document.addEventListener("pointerup", onPointerUp, false);
-        }
-    }
+            // Notify resize end
+            if (onResizeEnd) {
+                onResizeEnd(container.clientHeight);
+            }
+        };
+
+        const onPointerDown = (e: MouseEvent) => {
+            const computedStyle = getComputedStyle(container);
+            const containerHeight = parseInt(computedStyle.height) - parseInt(computedStyle.borderWidth);
+            if (e.offsetY < containerHeight && e.offsetY > containerHeight - RESIZABLE_BORDER_SIZE - 4) {
+                document.body.classList.add("cursor-resize");
+                document.addEventListener("pointermove", resize, false);
+                document.addEventListener("pointerup", onPointerUp, false);
+            }
+        };
+
+        container.addEventListener("pointerdown", onPointerDown);
+
+        return () => {
+            container.removeEventListener("pointerdown", onPointerDown);
+            cleanupBodyEvents();
+        };
+    }, [heightProperty, minHeight, maxHeight, onResizeEnd, onResizeDrag, resizeEnabled]);
 
     return <div
         id={id}
@@ -85,7 +95,6 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         aria-describedby={ariaDescribedBy}
         aria-hidden={ariaHidden}
         aria-label={ariaLabel}
-        onPointerDown={onPointerDown}
         style={{height: resizeEnabled && hasResized ? `var(${heightProperty})` : initialHeight}}>
             {children}
     </div>

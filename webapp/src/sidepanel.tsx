@@ -135,6 +135,14 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.props.parent.showShareDialog(undefined, "vscode");
     }
 
+    onResizeDrag = (newSize: number) => {
+        this.setComponentHeight(newSize, true);
+    }
+
+    onResizeEnd = (newSize: number) => {
+        pxt.tickEvent("tutorial.resizeInstructions",  {newSize });
+    }
+
     renderCore() {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
@@ -187,8 +195,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         minHeight="100px"
                         initialHeight={editorSidebarHeight}
                         resizeEnabled={shouldResize}
-                        onResizeDrag={newSize => this.setComponentHeight(newSize, true)}
-                        onResizeEnd={newSize => pxt.tickEvent("tutorial.resizeInstructions", {newSize: newSize})}>
+                        onResizeDrag={this.onResizeDrag}
+                        onResizeEnd={this.onResizeEnd}>
                         <TutorialContainer
                             parent={parent}
                             tutorialId={tutorialOptions.tutorial}
