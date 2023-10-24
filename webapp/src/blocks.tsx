@@ -483,7 +483,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const oldAudioPlay = (Blockly as any).WorkspaceAudio.prototype.play;
         (Blockly as any).WorkspaceAudio.prototype.play = function (name: string, opt_volume?: number) {
-            if (editor && editor.parent.state.mute) opt_volume = 0;
+            const themeVolume = pxt.appTarget?.appTheme?.blocklySoundVolume;
+
+            if (editor?.parent.state.mute === pxt.editor.MuteState.Muted) {
+                opt_volume = 0;
+            }
+            else if (themeVolume != undefined) {
+                if (opt_volume != undefined) {
+                    opt_volume *= themeVolume;
+                }
+                else {
+                    opt_volume = themeVolume;
+                }
+            }
             oldAudioPlay.call(this, name, opt_volume);
         };
     }

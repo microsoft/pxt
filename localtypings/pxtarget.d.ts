@@ -492,6 +492,7 @@ declare namespace pxt {
         condenseProfile?: boolean; // if set, will make the profile dialog smaller
         cloudProfileIcon?: string; // the file path for added imagery on smaller profile dialogs
         timeMachine?: boolean; // Save/restore old versions of a project experiment
+        blocklySoundVolume?: number; // A number between 0 and 1 that sets the volume for blockly sounds (e.g. connect, disconnect, click)
     }
 
     interface DownloadDialogTheme {
