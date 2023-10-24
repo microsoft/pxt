@@ -52,3 +52,35 @@ Debug and step through Kiosk code using the browser dev tools (F12 to open).
 
 Follow the "Test in staging environment" instructions, but get your auth token from `https://makecode.com/oauth/gettoken`.
 
+
+## Authoring UI sound effects
+
+1. Open the "Kiosk Audio Effects" project in Arcade: https://makecode.com/_K6AfE6AWd9xV
+   - Click on the provided link to open the MakeCode Arcade project in your web browser.
+
+2. Tweak or add the desired sound:
+   - Within the MakeCode Arcade project, modify or add the sound effect you want.
+
+3. Play the sound in the editor a few times while capturing the audio:
+   - Install a Chrome extension called "Chrome Audio Capturer" from this link: [Link to Chrome Audio Capturer](https://github.com/arblast/Chrome-Audio-Capturer)
+   - Use the extension to capture the audio of the sound effect by playing it within the MakeCode editor.
+
+4. In a sound file editor, clip out the sound effect and export it as .ogg:
+   - Download the captured audio file.
+   - Open a sound file editor (such as Audacity or Adobe Audition).
+   - Import the downloaded audio file.
+   - Edit and clip out the specific sound effect you want.
+   - Run a high-pass filter to reduce volume of low-end frequencies.
+   - Export the edited audio as an .ogg file.
+
+5. Save the .ogg file to /pxt/docs/kiosk-data/sfx:
+   - Navigate to the specified directory (/pxt/docs/kiosk-data/sfx) in your file system.
+   - Save the edited .ogg sound effect file in this directory.
+
+6. If it's a new effect, add it to Services/SoundEffectService.ts:
+   - If the sound effect you added or modified is new and hasn't been used before, you may need to update the code in the `Services/SoundEffectService.ts` file to include the new sound effect.
+
+7. Re-share the above project and update the URL in Step 1:
+   - Share the MakeCode Arcade project with the updated sound effect, ensuring is it not saved as a Persistent Share.
+   - Update the URL in Step 1 of these instructions to reflect the new project URL.
+

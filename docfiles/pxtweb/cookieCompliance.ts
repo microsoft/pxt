@@ -213,10 +213,10 @@ namespace pxt {
         telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
 
         const userAgent = navigator.userAgent.toLowerCase();
-        const userAgentRegexResult = /\belectron\/(\d+\.\d+\.\d+.*?)(?: |$)/i.exec(userAgent); // Example navigator.userAgent: "Mozilla/5.0 Chrome/61.0.3163.100 Electron/2.0.0 Safari/537.36"
-        if (userAgentRegexResult) {
+        const electronRegexResult = /\belectron\/(\d+\.\d+\.\d+.*?)(?: |$)/i.exec(userAgent); // Example navigator.userAgent: "Mozilla/5.0 Chrome/61.0.3163.100 Electron/2.0.0 Safari/537.36"
+        if (electronRegexResult) {
             telemetryItem.properties["Electron"] = 1;
-            telemetryItem.properties["ElectronVersion"] = userAgentRegexResult[1];
+            telemetryItem.properties["ElectronVersion"] = electronRegexResult[1];
         }
 
         const pxtElectron = (window as any).pxtElectron;
@@ -229,6 +229,14 @@ namespace pxt {
             telemetryItem.properties["PxtCoreVersion"] = pxtElectron.versions.pxtCoreVersion;
             telemetryItem.properties["PxtTargetVersion"] = pxtElectron.versions.pxtTargetVersion;
             telemetryItem.properties["PxtElectronIsProd"] = pxtElectron.versions.isProd;
+        }
+
+        // Kiosk UWP info is appended to the user agent by the makecode-dotnet-apps/arcade-kiosk UWP app
+        const kioskUwpRegexResult = /\((MakeCode Arcade Kiosk UWP)\/([\S]+)\/([\S]+)\)/i.exec(userAgent); // Example navigator.userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.2045.60 (MakeCode Arcade Kiosk UWP/0.1.41.0/Windows.Xbox)"
+        if (kioskUwpRegexResult) {
+            telemetryItem.properties["KioskUwp"] = 1;
+            telemetryItem.properties["KioskUwpVersion"] = kioskUwpRegexResult[2];
+            telemetryItem.properties["KioskUwpPlatform"] = kioskUwpRegexResult[3];
         }
 
         // "cookie" does not actually correspond to whether or not we drop the cookie because we recently

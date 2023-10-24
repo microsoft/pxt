@@ -1,61 +1,68 @@
 import { useEffect, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
-import configData from "../config.json"
-import { tickEvent } from "../browserUtils";
+import configData from "../config.json";
+import * as GamepadManager from "../Services/GamepadManager";
+import { useOnControlPress } from "../Hooks";
 
 interface IProps {
-    kiosk: Kiosk,
-    isSelected: boolean,
-    onCharacterChanged: (initial: string) => void
-  }
+    isSelected: boolean;
+    onCharacterChanged: (initial: string) => void;
+}
 
-const HighScoreInitial: React.FC<IProps> = ({ kiosk, isSelected, onCharacterChanged }) => {
+const HighScoreInitial: React.FC<IProps> = ({
+    isSelected,
+    onCharacterChanged,
+}) => {
     const [index, setIndex] = useState(0);
 
-    const getPreviousIndex = () => (index + configData.HighScoreInitialAllowedCharacters.length - 1) % configData.HighScoreInitialAllowedCharacters.length;
-    const getNextIndex = () => (index + 1) % configData.HighScoreInitialAllowedCharacters.length;
+    const getPreviousIndex = () =>
+        (index + configData.HighScoreInitialAllowedCharacters.length - 1) %
+        configData.HighScoreInitialAllowedCharacters.length;
+    const getNextIndex = () =>
+        (index + 1) % configData.HighScoreInitialAllowedCharacters.length;
 
     const previousInitial = () => {
         const newIndex = getPreviousIndex();
         setIndex(newIndex);
-        onCharacterChanged(configData.HighScoreInitialAllowedCharacters[newIndex]);
-    }
+        onCharacterChanged(
+            configData.HighScoreInitialAllowedCharacters[newIndex]
+        );
+    };
 
     const nextInitial = () => {
         const newIndex = getNextIndex();
         setIndex(newIndex);
-        onCharacterChanged(configData.HighScoreInitialAllowedCharacters[newIndex]);
-    }
+        onCharacterChanged(
+            configData.HighScoreInitialAllowedCharacters[newIndex]
+        );
+    };
 
-    useEffect(() => {
-        const gamepadLoop = () => {
-            if (!isSelected) { return; }
+    // Handle DPadUp button press
+    useOnControlPress(
+        [onCharacterChanged, isSelected, setIndex],
+        () => isSelected && previousInitial(),
+        GamepadManager.GamepadControl.DPadUp
+    );
 
-            if (kiosk.gamepadManager.isUpPressed()) {
-                tickEvent("kiosk.newHighScore.upPressed");
-                previousInitial();
-            }
-
-            if (kiosk.gamepadManager.isDownPressed()) {
-                tickEvent("kiosk.newHighScore.downPressed");
-                nextInitial();
-            }
-        };
-
-        const interval = setInterval(() => gamepadLoop(), configData.GamepadPollLoopMilli);
-        return () => clearInterval(interval);
-    });
+    // Handle DPadDown button press
+    useOnControlPress(
+        [onCharacterChanged, isSelected, setIndex],
+        () => isSelected && nextInitial(),
+        GamepadManager.GamepadControl.DPadDown
+    );
 
     const classNames = [
         "highScoreInitialControl",
         "highScoreInitial",
-        isSelected ? "highScoreInitialControlSelected" : ""]
+        isSelected ? "highScoreInitialControlSelected" : "",
+    ];
 
-    return(
+    return (
         <div className={classNames.join(" ")}>
-            <div className="highScoreInitialText">{configData.HighScoreInitialAllowedCharacters[index]}</div>
+            <div className="highScoreInitialText">
+                {configData.HighScoreInitialAllowedCharacters[index]}
+            </div>
         </div>
-    )
-}
-  
+    );
+};
+
 export default HighScoreInitial;

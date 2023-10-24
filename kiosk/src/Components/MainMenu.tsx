@@ -1,85 +1,62 @@
-import { useEffect, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
-import AddGameButton from "./AddGameButton";
+import { useContext } from "react";
+import GenericButton from "./GenericButton";
 import GameList from "./GameList";
-import configData from "../config.json"
-import HighScoresList from "./HighScoresList";
-import { DeleteButton } from "./DeleteButton";
-import { tickEvent } from "../browserUtils";
-import DeletionModal from "./DeletionModal";
+import { playSoundEffect } from "../Services/SoundEffectService";
+import { AppStateContext, AppStateReady } from "../State/AppStateContext";
+import { launchAddGame } from "../Transforms/launchAddGame";
+import { usePromise } from "../Hooks/usePromise";
+import * as NavGrid from "../Services/NavGrid";
 
-interface IProps {
-    kiosk: Kiosk
-  }
+interface IProps {}
 
-const MainMenu: React.FC<IProps> = ({ kiosk }) => {
-    const [addButtonSelected, setAddButtonState] = useState(false);
-    const [deleteButtonSelected, setDeleteButtonState] = useState(false);
-    const [deleteTriggered, setDeleteTriggered] = useState(false);
+const MainMenu: React.FC<IProps> = ({}) => {
+    const { state: kiosk } = useContext(AppStateContext);
+
     const lockedClassName = kiosk.locked ? " locked" : "";
 
-    const updateLoop = () => {
-        if (!addButtonSelected && kiosk.gamepadManager.isUpPressed()) {
-            setAddButtonState(true);
-        }
-        if (addButtonSelected && kiosk.gamepadManager.isDownPressed()) {
-            setAddButtonState(false);
-        }
-        if (!addButtonSelected && kiosk.selectedGame?.userAdded && kiosk.gamepadManager.isDownPressed()) {
-            setDeleteButtonState(true);
-        }
-        if (deleteButtonSelected && kiosk.gamepadManager.isUpPressed()) {
-            setAddButtonState(false);
-            setDeleteButtonState(false);
-        }
-        if (addButtonSelected && (kiosk.gamepadManager.isAButtonPressed() || kiosk.gamepadManager.isBButtonPressed())) {
-            tickEvent("kiosk.addGamePageLoaded");
-            kiosk.launchAddGame();
-        }
-        if (deleteButtonSelected && (kiosk.gamepadManager.isAButtonPressed() || kiosk.gamepadManager.isBButtonPressed())) {
-            setDeleteTriggered(true);
-        }
-    }
+    const ready = usePromise(AppStateReady, false);
 
-    useEffect(() => {
-        if (!kiosk.locked) {
-            let intervalId: any = null;
-            intervalId = setInterval(() => {
-                if (!deleteTriggered) {
-                    updateLoop();
-                }
-            }, configData.GamepadPollLoopMilli);
-            
-            return () => {
-                if (intervalId) {
-                    clearInterval(intervalId);
-                }
-            };
-        } else {
-            tickEvent("kiosk.locked");
-        }
-    });
+    const gotoAddingGame = () => {
+        pxt.tickEvent("kiosk.addGamePageLoaded");
+        playSoundEffect("select");
+        launchAddGame();
+    };
 
-    return(
-        <div className="mainMenu">
-            <nav className="mainMenuTopBar">
-                <h1 className={`mainMenuHeader${lockedClassName}`}>Select a Game</h1>
-                {
-                    !kiosk.locked &&
-                    <div className="mainMenuButton">
-                        <AddGameButton selected={addButtonSelected} content="Add your game" />
-                    </div>
-                }
-            </nav>
-            <GameList kiosk={kiosk} addButtonSelected={addButtonSelected}
-                deleteButtonSelected={deleteButtonSelected} />
-            {
-                deleteTriggered &&
-                <DeletionModal kiosk={kiosk} active={setDeleteTriggered} changeFocus={setDeleteButtonState} />
-            }
+    const canShowMainMenu = ready && kiosk.targetConfig;
 
-        </div>
-    )
-}
-  
+    return (
+        <>
+            {!canShowMainMenu && (
+                <div className="mainMenu">
+                    <nav className="mainMenuTopBar">
+                        <h1 className={`mainMenuHeader${lockedClassName}`}>
+                            {lf("Loading...")}
+                        </h1>
+                    </nav>
+                </div>
+            )}
+            {canShowMainMenu && (
+                <div className="mainMenu">
+                    <nav className="mainMenuTopBar">
+                        <h1 className={`mainMenuHeader${lockedClassName}`}>
+                            {lf("Select a Game")}
+                        </h1>
+                        {!kiosk.locked && (
+                            <div className="mainMenuButton">
+                                <GenericButton
+                                    title={lf("Add your game")}
+                                    label={lf("Add your game")}
+                                    onClick={gotoAddingGame}
+                                    exitDirections={[NavGrid.NavDirection.Down]}
+                                />
+                            </div>
+                        )}
+                    </nav>
+                    <GameList />
+                </div>
+            )}
+        </>
+    );
+};
+
 export default MainMenu;

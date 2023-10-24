@@ -1,170 +1,162 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
-import { KioskState } from "../Models/KioskState";
-import configData from "../config.json"
-import "../Kiosk.css";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { EffectCoverflow, Keyboard, Navigation, Pagination } from "swiper";
+import React, { useEffect, useState, useContext, useCallback } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Swiper as SwiperClass, Pagination } from "swiper";
 import "swiper/css";
 import "swiper/css/keyboard";
 import GameSlide from "./GameSlide";
-import { tickEvent } from "../browserUtils";
-interface IProps {
-    kiosk: Kiosk;
-    addButtonSelected: boolean;
-    deleteButtonSelected: boolean;
-  }
+import { playSoundEffect } from "../Services/SoundEffectService";
+import { AppStateContext } from "../State/AppStateContext";
+import { selectGameByIndex } from "../Transforms/selectGameByIndex";
+import { launchGame } from "../Transforms/launchGame";
+import { getSelectedGameIndex, getSelectedGameId } from "../State";
+import * as GamepadManager from "../Services/GamepadManager";
+import * as NavGrid from "../Services/NavGrid";
+import { useOnControlPress, useMakeNavigable } from "../Hooks";
 
+interface IProps {}
 
-const GameList: React.FC<IProps> = ({ kiosk, addButtonSelected, deleteButtonSelected }) => {
-    const [games, setGames] = useState(kiosk.games);
-    const buttonSelected = addButtonSelected || deleteButtonSelected;
-    const localSwiper = useRef<any>();
+const GameList: React.FC<IProps> = ({}) => {
+    const { state: kiosk } = useContext(AppStateContext);
+    const [localSwiper, setLocalSwiper] = useState<SwiperClass | undefined>(
+        undefined
+    );
+    const [userInitiatedTransition, setUserInitiatedTransition] =
+        React.useState(false);
+    const [pageInited, setPageInited] = React.useState(false);
 
-    const leftKeyEvent = (eventType: string) => {
-        return new KeyboardEvent(eventType, {
-            "key": "ArrowLeft",
-            "code": "ArrowLeft",
-            "composed": true,
-            "keyCode": 37,
-            "cancelable": true,
-            "view": window
-        });
-    }
+    const handleLocalSwiper = (swiper: SwiperClass) => {
+        setLocalSwiper(swiper);
+    };
 
-    const rightKeyEvent = (eventType: string) => {
-        return new KeyboardEvent(eventType, {
-            "key": "ArrowRight",
-            "code": "ArrowRight",
-            "composed": true,
-            "keyCode": 39,
-            "cancelable": true,
-            "view": window
-        });
-    }
+    useMakeNavigable(localSwiper?.el, {
+        exitDirections: [NavGrid.NavDirection.Down, NavGrid.NavDirection.Up],
+        autofocus: true,
+    });
 
-    const getGameIndex = () => {
-        let gameIndex = (localSwiper.current.activeIndex - 2) % games.length;
-        if (gameIndex < 0) {
-            gameIndex = games.length - 1;
-        }
-        return gameIndex;
-    }
-
-    const changeFocusedItem = () => {
-        const gameIndex = getGameIndex();
-        kiosk.selectGame(gameIndex);
-    }
-
-    const clickItem = () => {
-        const localSwiperIndex = getGameIndex();
-        if (localSwiperIndex !== kiosk.selectedGameIndex) {
-            kiosk.selectGame(localSwiperIndex);
-        }
-
-        const gameId = kiosk.selectedGame?.id;
+    const launchSelectedGame = () => {
+        const gameId = getSelectedGameId();
         if (gameId) {
-            tickEvent("kiosk.gameLaunched", { game: gameId });
-            kiosk.launchGame(gameId);
+            pxt.tickEvent("kiosk.gameLaunched", { game: gameId });
+            playSoundEffect("select");
+            launchGame(gameId);
         }
-    }
-        
-    const updateLoop = () => {
-        if (kiosk.state !== KioskState.MainMenu) {
-            return;
-        }
+    };
 
-        if (kiosk.gamepadManager.isAButtonPressed()) {
-            clickItem();
+    const syncSelectedGame = useCallback(() => {
+        if (!localSwiper || localSwiper.destroyed) return;
+        const gameIndex = localSwiper.realIndex || 0;
+        const selectedGameIndex = getSelectedGameIndex();
+        if (
+            selectedGameIndex !== undefined &&
+            gameIndex !== selectedGameIndex
+        ) {
+            selectGameByIndex(gameIndex);
         }
-
-        if (kiosk.gamepadManager.isLeftPressed()) {
-            document.dispatchEvent(leftKeyEvent("keydown"));
-            document.dispatchEvent(leftKeyEvent("keyup"));
-            changeFocusedItem();
-        }
-
-        if (kiosk.gamepadManager.isRightPressed()) {
-            document.dispatchEvent(rightKeyEvent("keydown"));
-            document.dispatchEvent(rightKeyEvent("keyup"));
-            changeFocusedItem();
-        }
-    }
+    }, [localSwiper]);
 
     // on page load use effect
     useEffect(() => {
-        kiosk.initialize().then(() => {
-            setGames(kiosk.games);
-
-            if (!kiosk.selectedGame && kiosk.games.length) {
-                kiosk.selectGame(0);
-            }
-
-            if (kiosk.selectedGameIndex) {
-                localSwiper.current.slideTo(kiosk.selectedGameIndex + 2);
-            }
-        })
-    }, []);
-
-    // poll for game pad input
-    useEffect(() => {
-        let intervalId: any = null;
-        if (games.length) {
-            intervalId = setInterval(() => {
-                if (!buttonSelected) {
-                    updateLoop();
+        if (!localSwiper || localSwiper.destroyed) return;
+        if (!pageInited) {
+            if (kiosk.allGames.length) {
+                if (!kiosk.selectedGameId) {
+                    selectGameByIndex(0);
+                    localSwiper.slideTo(2);
+                } else {
+                    const index = getSelectedGameIndex() || 0;
+                    localSwiper.slideTo(index + 2);
                 }
-            }, configData.GamepadPollLoopMilli);
-        }
-        
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
+                setPageInited(true);
             }
-        };
-    }, [games, buttonSelected]);
+        }
+    }, [pageInited, localSwiper, kiosk]);
 
-    if (!kiosk.games || !kiosk.games.length) {
-        return(
-        <div>
-            <p>Currently no kiosk games</p>
-        </div>);
+    // Handle DPadRight button press
+    useOnControlPress(
+        [localSwiper, userInitiatedTransition],
+        () => {
+            if (!localSwiper || localSwiper.destroyed) return;
+            if (NavGrid.isActiveElement(localSwiper.el)) {
+                setUserInitiatedTransition(true);
+                setTimeout(() => localSwiper.slideNext(), 1);
+            }
+        },
+        GamepadManager.GamepadControl.DPadRight
+    );
+
+    // Handle DPadLeft button press
+    useOnControlPress(
+        [localSwiper, userInitiatedTransition],
+        () => {
+            if (!localSwiper || localSwiper.destroyed) return;
+            if (NavGrid.isActiveElement(localSwiper.el)) {
+                setUserInitiatedTransition(true);
+                setTimeout(() => localSwiper?.slidePrev(), 1);
+            }
+        },
+        GamepadManager.GamepadControl.DPadLeft
+    );
+
+    // Handle A button press
+    useOnControlPress(
+        [localSwiper, userInitiatedTransition],
+        () => {
+            if (!localSwiper || localSwiper.destroyed) return;
+            if (NavGrid.isActiveElement(localSwiper.el)) {
+                launchSelectedGame();
+            }
+        },
+        GamepadManager.GamepadControl.AButton
+    );
+
+    const slideChangeTransitionStart = () => {
+        if (userInitiatedTransition) {
+            playSoundEffect("swipe");
+        }
+    };
+
+    const slideChangeTransitionEnd = () => {
+        if (userInitiatedTransition) {
+            syncSelectedGame();
+            setUserInitiatedTransition(false);
+        }
     }
 
-    return(
+    if (!kiosk.allGames?.length) {
+        return (
+            <div>
+                <p>{lf("Currently no kiosk games")}</p>
+            </div>
+        );
+    }
+
+    return (
         <div className="carouselWrap">
             <Swiper
-                effect={"coverflow"}
+                focusableElements="div"
+                slideActiveClass="swiper-slide-active"
+                tabIndex={0}
                 loop={true}
-                slidesPerView={1.5}
+                slidesPerView={1.8}
                 centeredSlides={true}
-                spaceBetween={10}
-                pagination={{type: "fraction",}}
-                onSwiper={(swiper) => {
-                    localSwiper.current = swiper;
-                }}
-                coverflowEffect={{
-                    scale: 0.75,
-                    depth: 5,
-                }}
-                allowTouchMove={false}
-                allowSlideNext={!buttonSelected}
-                allowSlidePrev={!buttonSelected}
-                modules={[EffectCoverflow, Keyboard, Pagination]}
-                keyboard={{enabled: true}}
+                pagination={{ type: "fraction" }}
+                onSwiper={handleLocalSwiper}
+                allowTouchMove={true}
+                modules={[Pagination]}
+                onSlideChangeTransitionStart={() => slideChangeTransitionStart()}
+                onSlideChangeTransitionEnd={() => slideChangeTransitionEnd()}
+                onTouchStart={() => setUserInitiatedTransition(true)}
             >
-                {kiosk.games.map((game, index) => {
-                    const gameHighScores = kiosk.getHighScores(game.id);
+                {kiosk.allGames.map((game, index) => {
                     return (
-                        <SwiperSlide key={game.id}>
-                            <GameSlide highScores={gameHighScores} addButtonSelected={addButtonSelected}
-                                deleteButtonSelected={deleteButtonSelected} game={game} locked={kiosk.locked}/>
+                        <SwiperSlide key={index}>
+                            <GameSlide game={game} />
                         </SwiperSlide>
-                    )
+                    );
                 })}
             </Swiper>
         </div>
-    )
-}
-  
+    );
+};
+
 export default GameList;

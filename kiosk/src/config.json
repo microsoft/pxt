@@ -6,89 +6,105 @@
     "HighScoresToKeep": 10,
     "HighScoreInitialsLength": 3,
     "HighScoreInitialAllowedCharacters": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    "GamepadPollLoopMilli": 150,
-    "GamepadCacheMilli": 50,
+    "SoundEffectsVolume": 0.5,
+    "GamepadPollLoopMilli": 50,
+    "GamepadOnDownCooldownMilli": 250,
+    "GamepadOnHeldCooldownMilli": 167,
     "GamepadAButtonPin": 0,
     "GamepadBButtonPin": 1,
-    "GamepadEscapeButtonPin": 9,
-    "GamepadResetButtonPin": 10,
+    "GamepadXButtonPin": 2,
+    "GamepadYButtonPin": 3,
+    "GamepadBackButtonPin": 8,
+    "GamepadStartButtonPin": 10,
+    "GamepadDpadUpButtonPin": 12,
+    "GamepadDpadDownButtonPin": 13,
+    "GamepadDpadLeftButtonPin": 14,
+    "GamepadDpadRightButtonPin": 15,
     "GamepadMenuButtonPin": 11,
-    "GamepadLeftRightAxis": 0,
-    "GamepadLeftRightThreshold": 0.5,
-    "GamepadUpDownAxis": 1,
-    "GamepadUpDownThreshold": 0.5,
-    "KeyboardAButtonKeys": [
-        [
-            "Z",
-            " "
-        ],
-        [
-            "U"
-        ]
-    ],
-    "KeyboardBButtonKeys": [
-        [
-            "X",
-            "Enter"
-        ],
-        [
-            "O"
-        ]
-    ],
-    "KeyboardEscapeButtonKeys": [
-        [
-            "Esc",
-            "Escape"
-        ]
-    ],
-    "KeyboardMenuButtonKeys": [
-        [
-            "1"
-        ]
-    ],
-    "KeyboardResetButtonKeys": [
-        [
-            "2"
-        ]
-    ],
-    "KeyboardLeftKeys": [
-        [
-            "Left",
-            "ArrowLeft",
-            "A"
-        ],
-        [
-            "J"
-        ]
-    ],
-    "KeyboardRightKeys": [
-        [
-            "Right",
-            "ArrowRight",
-            "D"
-        ],
-        [
-            "L"
-        ]
-    ],
-    "KeyboardUpKeys": [
-        [
-            "Up",
-            "ArrowUp",
-            "W"
-        ],
-        [
-            "I"
-        ]
-    ],
-    "KeyboardDownKeys": [
-        [
-            "Down",
-            "ArrowDown",
-            "S"
-        ],
-        [
-            "K"
-        ]
+    "GamepadAxes": {
+        "None": {
+            "Pin": -1,
+            "Sign": 0,
+            "Threshold": 0
+        },
+        "Up": {
+            "Pin": 1,
+            "Sign": -1,
+            "Threshold": 0.5
+        },
+        "Down": {
+            "Pin": 1,
+            "Sign": 1,
+            "Threshold": 0.5
+        },
+        "Left": {
+            "Pin": 0,
+            "Sign": -1,
+            "Threshold": 0.5
+        },
+        "Right": {
+            "Pin": 0,
+            "Sign": 1,
+            "Threshold": 0.5
+        }
+    },
+    "GamepadControlToKeyboardKeyMap": {
+        "AButton": "Space",
+        "BButton": "Enter",
+        "BackButton": "Escape",
+        "StartButton": "2",
+        "MenuButton": "1",
+        "DPadLeft": "ArrowLeft",
+        "DPadRight": "ArrowRight",
+        "DPadUp": "ArrowUp",
+        "DPadDown": "ArrowDown"
+    },
+    "KeyboardKeyToCharCodeMap": {
+        "Space": 32,
+        "Enter": 13,
+        "Escape": 27,
+        "1": 49,
+        "2": 50,
+        "ArrowLeft": 37,
+        "ArrowRight": 39,
+        "ArrowUp": 38,
+        "ArrowDown": 40
+    },
+    "VirtualGamepadMaps": [
+        {
+            "Space": "AButton",
+            "Enter": "BButton",
+            "Escape": "BackButton",
+            "2": "StartButton",
+            "1": "MenuButton",
+            "ArrowLeft": "DPadLeft",
+            "ArrowRight": "DPadRight",
+            "ArrowUp": "DPadUp",
+            "ArrowDown": "DPadDown"
+        },
+        {
+            " ": "AButton",
+            "Left": "DPadLeft",
+            "Right": "DPadRight",
+            "Up": "DPadUp",
+            "Down": "DPadDown",
+            "Esc": "BackButton"
+        },
+        {
+            "z": "AButton",
+            "x": "BButton",
+            "a": "DPadLeft",
+            "d": "DPadRight",
+            "w": "DPadUp",
+            "s": "DPadDown"
+        },
+        {
+            "u": "AButton",
+            "o": "BButton",
+            "j": "DPadLeft",
+            "l": "DPadRight",
+            "i": "DPadUp",
+            "k": "DPadDown"
+        }
     ]
 }

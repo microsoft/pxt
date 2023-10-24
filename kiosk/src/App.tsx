@@ -1,62 +1,109 @@
-import React, { useEffect, useState } from 'react';
-import './Kiosk.css';
-import './Fonts.css';
-import { Kiosk } from './Models/Kiosk';
-import MainMenu from './Components/MainMenu';
-import { KioskState } from './Models/KioskState';
-import EnterHighScore from './Components/EnterHighScore';
-import AddingGame from './Components/AddingGame';
-import ScanQR from './Components/ScanQR';
-import QrSuccess from './Components/QrSuccess';
-import GameOver from './Components/GameOver';
-
-const url = window.location.href;
-const clean = !!/clean(?:[:=])1/.test(url);
-const locked = !!/lock(?:[:=])1/i.test(url);
-const time = (/time=((?:[0-9]{1,3}))/i.exec(url))?.[1];
-
-const kioskSingleton: Kiosk = new Kiosk(clean, locked, time);
-kioskSingleton.initialize().catch(error => alert(error));
+import { useEffect, useContext } from "react";
+import "./Kiosk.css";
+import "./Fonts.css";
+import MainMenu from "./Components/MainMenu";
+import { KioskState } from "./Types";
+import EnterHighScore from "./Components/EnterHighScore";
+import AddingGame from "./Components/AddingGame";
+import ScanQR from "./Components/ScanQR";
+import QrSuccess from "./Components/QrSuccess";
+import GameOver from "./Components/GameOver";
+import PlayingGame from "./Components/PlayingGame";
+import Footer from "./Components/Footer";
+import Notifications from "./Components/Notifications";
+import AppModal from "./Components/AppModal";
+import { useLocationHash, usePromise } from "./Hooks";
+import { launchGame } from "./Transforms/launchGame";
+import { navigate } from "./Transforms/navigate";
+import { AppStateContext, AppStateReady } from "./State/AppStateContext";
+import { downloadTargetConfigAsync } from "./Transforms/downloadTargetConfigAsync";
+import * as Actions from "./State/Actions";
+import * as SimHost from "./Services/SimHostService";
+import * as NotificationService from "./Services/NotificationService";
+import * as AddingGames from "./Services/AddingGamesService";
+import * as GamepadManager from "./Services/GamepadManager";
+import * as NavGrid from "./Services/NavGrid";
+import * as RectCache from "./Services/RectCache";
+import Background from "./Components/Background";
 
 function App() {
-  const[state, setState] = useState(kioskSingleton.state);
+    const { state, dispatch } = useContext(AppStateContext);
+    const { kioskState } = state;
 
-  useEffect(() => {
-    window.onhashchange = onHashChange;
+    const [hash] = useLocationHash();
+    const ready = usePromise(AppStateReady, false);
 
-    kioskSingleton.onNavigated = () => {
-      setState(kioskSingleton.state);
-    };
-    onHashChange();
-  }, []);
+    useEffect(() => {
+        if (ready) {
+            // Set sound system volume.
+            dispatch(Actions.setVolume(state.volume!));
+            // Load persistent state from local storage.
+            dispatch(Actions.loadHighScores());
+            dispatch(Actions.loadKioskCode());
+            // Download targetconfig.json, then initialize game list.
+            downloadTargetConfigAsync().then(cfg => {
+                if (cfg) {
+                    dispatch(Actions.setTargetConfig(cfg));
+                    if (cfg.kiosk) {
+                        dispatch(Actions.setGameList(cfg.kiosk.games));
+                        // Load user-added games from local storage.
+                        dispatch(Actions.loadUserAddedGames());
+                        // Select the first game in the list.
+                        dispatch(Actions.setSelectedGameId(cfg.kiosk.games[0].id));
+                    }
+                } else {
+                    // TODO: Handle this better
+                    dispatch(Actions.setTargetConfig({}));
+                }
+            });
+            // Init subsystems.
+            SimHost.initialize();
+            NotificationService.initialize();
+            AddingGames.initialize();
+            GamepadManager.initialize();
+            NavGrid.initialize();
+            RectCache.initialize();
+        }
+    }, [ready]);
 
-  switch(state) {
-      case KioskState.MainMenu:
-        return (<MainMenu kiosk={kioskSingleton} />)
-      case KioskState.EnterHighScore:
-        return (<EnterHighScore kiosk={kioskSingleton} />)
-      case KioskState.AddingGame:
-        return (<AddingGame kiosk={kioskSingleton} />)
-      case KioskState.ScanQR:
-        return (<ScanQR kiosk={kioskSingleton} />)
-      case KioskState.QrSuccess:
-        return (<QrSuccess />)
-      case KioskState.GameOver:
-        return (<GameOver kiosk={kioskSingleton}/>)
-    }
+    useEffect(() => {
+        if (ready) {
+            const match =
+                /pub:((?:\d{5}-\d{5}-\d{5}-\d{5})|(?:_[a-zA-Z0-9]+))/.exec(
+                    hash
+                );
+            const addGame = /add-game:((?:[a-zA-Z0-9]{6}))/.exec(hash);
+            if (match) {
+                launchGame(match[1], true);
+            } else if (addGame) {
+                navigate(KioskState.ScanQR);
+            }
+        }
+    }, [hash, ready]);
 
-  return (<div />)
-}
-
-function onHashChange() {
-  const hash = window.location.hash;
-  const match = /pub:((?:\d{5}-\d{5}-\d{5}-\d{5})|(?:_[a-zA-Z0-9]+))/.exec(hash);
-  const addGame = /add-game:((?:[a-zA-Z0-9]{6}))/.exec(hash);
-  if (match) {
-    kioskSingleton.launchGame(match[1], true);
-  } else if (addGame) {
-    kioskSingleton.navigate(KioskState.ScanQR);
-  }
+    return (
+        <>
+            {kioskState === KioskState.MainMenu && <MainMenu />}
+            {ready ? (
+                <>
+                    {kioskState === KioskState.EnterHighScore && (
+                        <EnterHighScore />
+                    )}
+                    {kioskState === KioskState.AddingGame && <AddingGame />}
+                    {kioskState === KioskState.ScanQR && <ScanQR />}
+                    {kioskState === KioskState.QrSuccess && <QrSuccess />}
+                    {kioskState === KioskState.GameOver && <GameOver />}
+                    {kioskState === KioskState.PlayingGame && <PlayingGame />}
+                    <Notifications />
+                    <AppModal />
+                    <Background />
+                </>
+            ) : (
+                <></>
+            )}
+            {kioskState !== KioskState.PlayingGame && <Footer />}
+        </>
+    );
 }
 
 export default App;

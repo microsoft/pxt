@@ -1,68 +1,56 @@
-import { useEffect, useState } from "react";
-import { Kiosk } from "../Models/Kiosk";
-import AddGameButton from "./AddGameButton";
-import configData from "../config.json"
-import { KioskState } from "../Models/KioskState";
-import { tickEvent } from "../browserUtils";
+import { useContext } from "react";
+import GenericButton from "./GenericButton";
+import { playSoundEffect } from "../Services/SoundEffectService";
+import { AppStateContext } from "../State/AppStateContext";
+import { launchGame } from "../Transforms/launchGame";
+import { showMainMenu } from "../Transforms/showMainMenu";
+import { useOnControlPress } from "../Hooks";
+import * as GamepadManager from "../Services/GamepadManager";
 
+interface IProps {}
 
-interface IProps {
-    kiosk: Kiosk
-  }
+const GameOver: React.FC<IProps> = ({}) => {
+    const { state: kiosk } = useContext(AppStateContext);
+    const gameId = kiosk.launchedGameId;
 
-const GameOver: React.FC<IProps> = ({ kiosk }) => {
-    const [homeButtonSelected, setHomeButtonState] = useState(false);
-    const [retryButtonSelected, setRetryButtonState] = useState(false);
-    const gameId = kiosk.launchedGame;
+    const handleRetryButtonClick = () => {
+        pxt.tickEvent("kiosk.gameOver.retry");
+        playSoundEffect("select");
+        launchGame(gameId!);
+    };
 
+    const gotoMainMenu = () => {
+        pxt.tickEvent("kiosk.gameOver.mainMenu");
+        playSoundEffect("select");
+        showMainMenu();
+    };
 
-    const updateLoop = () => {
-        if (kiosk.gamepadManager.isLeftPressed()) {
-            setRetryButtonState(true);
-            setHomeButtonState(false);
-
-        }
-        if (kiosk.gamepadManager.isRightPressed()) {
-            setHomeButtonState(true);
-            setRetryButtonState(false);
-
-        }
-        if (homeButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
-            tickEvent("kiosk.gameOver.mainMenu");
-            kiosk.navigate(KioskState.MainMenu);
-        }
-
-        if (retryButtonSelected && kiosk.gamepadManager.isAButtonPressed()) {
-            tickEvent("kiosk.gameOver.retry");
-            kiosk.launchGame(gameId);
-        }
-    }
-
-    useEffect(() => {
-        let intervalId: any = null;
-
-        intervalId = setInterval(() => {
-            updateLoop();
-        }, configData.GamepadPollLoopMilli);
-
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-        };
-    });
-
+    // Handle Back button press
+    useOnControlPress(
+        [],
+        gotoMainMenu,
+        GamepadManager.GamepadControl.BackButton
+    );
 
     return (
         <div className="gameOverPage">
-            <h1>GAME OVER</h1>
-            <h2>Would you like to retry?</h2>
+            <h1>{lf("GAME OVER")}</h1>
+            <h2>{lf("Would you like to retry?")}</h2>
             <div className="gameOverButtons">
-                <AddGameButton selected={retryButtonSelected} content="Retry" />
-                <AddGameButton selected={homeButtonSelected} content="Main Menu" />
+                <GenericButton
+                    title={lf("Retry")}
+                    label={lf("Retry")}
+                    onClick={handleRetryButtonClick}
+                    autofocus={true}
+                />
+                <GenericButton
+                    title={lf("Main Menu")}
+                    label={lf("Main Menu")}
+                    onClick={gotoMainMenu}
+                />
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default GameOver;
