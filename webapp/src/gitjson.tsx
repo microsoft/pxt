@@ -235,8 +235,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             }
         }))
 
-        // only branch from master...
-        if (gid.tag == "master") {
+        // only branch from main and master...
+        if (gid.tag === "master" || gid.tag === "main") {
             branchList.unshift({
                 name: lf("Create new branch"),
                 description: lf("Based on {0}", gid.tag),
@@ -749,7 +749,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const hasissue = pullStatus == workspace.PullStatus.BranchNotFound || pullStatus == workspace.PullStatus.NoSourceControl;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
-        const master = githubId.tag == "master";
+        const master = githubId.tag === "master";
+        const main = githubId.tag === "main";
         const user = this.getData("github:user") as pxt.editor.UserInfo;
 
         // don't use gs.prUrl, as it gets cleared often
@@ -795,7 +796,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
                     <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
-                    {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {(master || main) && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     <div></div>
                 </div>
