@@ -3737,9 +3737,18 @@ export class ProjectView
             this.runToken.cancel()
             this.runToken = null
         }
-        simulator.stop(unload);
+
+        if (this.isSimulatorRunning() || unload && simulator.driver?.state !== pxsim.SimulatorState.Unloaded) {
+            simulator.stop(unload);
+        }
+
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
-        this.setState({ simState: pxt.editor.SimState.Stopped, autoRun: autoRun });
+
+        // Only fire setState if something changed
+        if (this.state.simState !== pxt.editor.SimState.Stopped || !!this.state.autoRun !== !!autoRun) {
+            this.setState({ simState: pxt.editor.SimState.Stopped, autoRun: autoRun });
+        }
+
         pxt.perf.measureEnd("stopSimulator")
     }
 

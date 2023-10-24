@@ -511,10 +511,12 @@ namespace pxsim {
         }
 
         public stop(unload = false, starting = false) {
-            this.clearDebugger();
-            this.stopSound();
-            this.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
-            this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
+            if (this.state !== SimulatorState.Stopped && this.state !== SimulatorState.Unloaded) {
+                this.clearDebugger();
+                this.stopSound();
+                this.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
+                this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
+            }
             if (unload)
                 this.unload();
         }
