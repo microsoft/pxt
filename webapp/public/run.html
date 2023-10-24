@@ -121,7 +121,7 @@
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
         var additionalSimParams = /simParams(?:[:=])([^&?]+)/i.exec(window.location.href)?.[1];
         var sendBuilt = !!/sendBuilt(?:[:=])1/i.test(window.location.href);
-        var loadingColor = /[\&\?]loadingColor=(#[0-9A-Fa-f]{3}|#[0-9A-Fa-f]{6}|[A-Za-z]+)\b/i.test(window.location.href)?.[1];
+        var loadingColor = /[\&\?]loadingColor=(#[0-9A-Fa-f]{3}|#[0-9A-Fa-f]{6}|[A-Za-z]+)\b/i.exec(window.location.href)?.[1];
         var codeFromData = undefined;
         var assetJsonFromData = undefined;
         try {
