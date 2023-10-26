@@ -442,7 +442,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
-                {targetTheme.bigRunButton &&
+                {targetTheme.bigRunButton && !pxt.shell.isTimeMachineEmbed() &&
                     <div className="big-play-button-wrapper">
                         <EditorToolbarButton
                             className={`big-play-button play-button ${running ? "stop" : "play"}`}
