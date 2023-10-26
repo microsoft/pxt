@@ -3538,8 +3538,9 @@ export class ProjectView
     toggleSimulatorCollapse() {
         const state = this.state;
         pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !state.collapseEditorTools }, { interactiveConsent: true });
-        if (state.simState == pxt.editor.SimState.Stopped && state.collapseEditorTools)
+        if (state.simState == pxt.editor.SimState.Stopped && state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
             this.startStopSimulator();
+        }
 
         if (state.collapseEditorTools) {
             this.expandSimulator();
