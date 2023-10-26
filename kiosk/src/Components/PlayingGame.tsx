@@ -43,7 +43,7 @@ export default function PlayingGame() {
             return stringifyQueryString(configData.PlayUrlRoot, {
                 id: gameId,
                 // TODO: Show sim buttons on mobile & touch devices.
-                hideSimButtons: 1,
+                hideSimButtons: pxt.BrowserUtils.isMobile() ? undefined : 1,
                 noFooter: 1,
                 single: 1,
                 fullscreen: 1,

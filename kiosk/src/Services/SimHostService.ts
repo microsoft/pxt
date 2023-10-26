@@ -103,7 +103,7 @@ export function initialize() {
             case "messagepacket":
                 const channel = event.data.channel;
                 const parts = channel.split("-");
-                if (parts[0] === "keydown" || parts[0] === "keyup") {
+                if ((parts[0] === "keydown" || parts[0] === "keyup") && parts[1] === "Escape") {
                     // This allows us to listen for the Escape key when the
                     // simulator iframe is focused
                     GamepadManager.emitKeyEvent(parts[0], parts[1]);
