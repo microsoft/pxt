@@ -919,6 +919,8 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
         await workspace.duplicateAsync(newHeader, `${newHeader.name} ${dateString} ${timeString}`, text);
 
         invalidate("headers:");
+
+        core.infoNotification(lf("Project copy saved to My Projects"))
     }
 
     await core.dialogAsync({
