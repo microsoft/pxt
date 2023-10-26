@@ -478,6 +478,7 @@ declare namespace pxt {
         matchWebUSBDeviceInSim?: boolean; // if set, pass current device id as theme to sim when available.
         condenseProfile?: boolean; // if set, will make the profile dialog smaller
         cloudProfileIcon?: string; // the file path for added imagery on smaller profile dialogs
+        blocklySoundVolume?: number; // A number between 0 and 1 that sets the volume for blockly sounds (e.g. connect, disconnect, click)
     }
 
     interface DownloadDialogTheme {
