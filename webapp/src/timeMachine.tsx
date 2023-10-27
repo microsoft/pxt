@@ -214,7 +214,21 @@ export const TimeMachine = (props: TimeMachineProps) => {
         onProjectCopy(files, editorVersion, selected?.timestamp)
     }, [selected, onProjectCopy]);
 
-    const url = `${window.location.origin + window.location.pathname}?timeMachine=1&controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
+    let queryParams = [
+        "timeMachine",
+        "controller",
+        "skillsMap",
+        "noproject",
+        "nocookiebanner"
+    ];
+
+    if (pxt.appTarget?.appTheme.timeMachineQueryParams) {
+        queryParams = queryParams.concat(pxt.appTarget.appTheme.timeMachineQueryParams);
+    }
+
+    const argString = queryParams.map(p => p.indexOf("=") === -1 ? `${p}=1` : p).join("&");
+
+    const url = `${window.location.origin + window.location.pathname}?${argString}`;
 
     return createPortal(
         <FocusTrap className="time-machine" onEscape={hideDialog}>
