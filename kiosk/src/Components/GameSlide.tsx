@@ -1,11 +1,12 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { playSoundEffect } from "../Services/SoundEffectService";
 import { launchGame } from "../Transforms/launchGame";
-import { GameData, HighScore } from "../Types";
+import { GameData } from "../Types";
 import { AppStateContext } from "../State/AppStateContext";
 import HighScoresList from "./HighScoresList";
 import { GameMenu } from "./GameMenu";
 import { getHighScores } from "../State";
+import { getEffectiveGameId } from "../Utils";
 
 interface IProps {
     game: GameData;
@@ -19,13 +20,20 @@ const GameSlide: React.FC<IProps> = ({ game }) => {
         launchGame(game.id);
     };
 
+    const thumbnailUrl = useMemo(() => {
+        if (game) {
+            const gameId = getEffectiveGameId(game);
+            return `url("https://makecode.com/api/${gameId}/thumb")`;
+        }
+    }, [game, game?.tempGameId]);
+
     return (
         <div className="gameTile" onClick={handleSlideClick}>
             <div className="gameSelectionIndicator" />
             <div
                 className="gameThumbnail"
                 style={{
-                    backgroundImage: `url("https://makecode.com/api/${game.id}/thumb")`,
+                    backgroundImage: thumbnailUrl,
                 }}
             />
 

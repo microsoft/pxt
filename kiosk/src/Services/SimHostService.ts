@@ -1,11 +1,11 @@
-import { stateAndDispatch } from "../State";
+import { stateAndDispatch, getLaunchedGame } from "../State";
 import * as Actions from "../State/Actions";
 import * as Constants from "../Constants";
 import { gameOver } from "../Transforms/gameOver";
 import { resetHighScores } from "../Transforms/resetHighScores";
 import * as GamepadManager from "./GamepadManager";
 import { postNotification } from "../Transforms/postNotification";
-import { makeNotification } from "../Utils";
+import { getEffectiveGameId, makeNotification } from "../Utils";
 import * as IndexedDb from "./IndexedDb";
 
 export function initialize() {
@@ -78,8 +78,10 @@ export function initialize() {
 
     window.addEventListener("message", async (event) => {
         const { state, dispatch } = stateAndDispatch();
-        if (event.data?.js && state.launchedGameId) {
-            await IndexedDb.setBuiltJsInfoAsync(state.launchedGameId, event.data);
+        const launchedGame = getLaunchedGame();
+        if (event.data?.js && launchedGame) {
+            const gameId = getEffectiveGameId(launchedGame);
+            await IndexedDb.setBuiltJsInfoAsync(gameId, event.data);
         }
         switch (event.data.type) {
             case "simulator":
@@ -103,7 +105,7 @@ export function initialize() {
             case "messagepacket":
                 const channel = event.data.channel;
                 const parts = channel.split("-");
-                if (parts[0] === "keydown" || parts[0] === "keyup") {
+                if ((parts[0] === "keydown" || parts[0] === "keyup") && parts[1] === "Escape") {
                     // This allows us to listen for the Escape key when the
                     // simulator iframe is focused
                     GamepadManager.emitKeyEvent(parts[0], parts[1]);
@@ -111,9 +113,9 @@ export function initialize() {
                 break;
 
             case "ready":
-                const builtGame = await IndexedDb.getBuiltJsInfoAsync(state.launchedGameId!);
-                if (builtGame) {
-                    await sendBuiltGameAsync(state.launchedGameId!);
+                if (launchedGame) {
+                    const gameId = getEffectiveGameId(launchedGame);
+                    await sendBuiltGameAsync(gameId);
                 }
                 break;
         }

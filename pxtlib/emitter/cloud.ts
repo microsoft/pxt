@@ -280,5 +280,6 @@ namespace pxt.Cloud {
         targetVersion?: string;
         meta?: JsonScriptMeta; // only in lite, bag of metadata
         thumb?: boolean;
+        persistId?: string;
     }
 }
