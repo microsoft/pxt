@@ -1,5 +1,5 @@
 export type GameData = {
-    id: string;
+    id: string; // Can be a static/temporary gameId or a permanent gameId
     name: string;
     description: string;
     highScoreMode: string;
@@ -7,6 +7,8 @@ export type GameData = {
     date?: string;
     userAdded?: boolean;
     deleted?: boolean;
+    lastRefreshMs?: number; // The last time we refreshed the game from the backend (applies to user-added, persistent shares only)
+    staticGameId?: string; // If this is a persistent share game, this is the static game Id
 };
 
 export type HighScore = {
@@ -52,9 +54,22 @@ export type Notifications = NotificationWithId[];
 
 export type ShareIds = { [index: string]: ShareId };
 
+export type GameVersions = {
+    pxt: string;
+    target: string;
+};
+
+export type GameMeta = {
+    versions: GameVersions;
+};
+
+// This must match the object returned by GET /api/<gameId>
 export type GameInfo = {
     name: string;
     description: string;
+    id: string; // static/temporary gameId
+    meta: GameMeta;
+    persistId?: string; // permanent gameId
 };
 
 export type ModalId = "delete-game-confirmation";

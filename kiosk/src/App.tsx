@@ -24,6 +24,7 @@ import * as AddingGames from "./Services/AddingGamesService";
 import * as GamepadManager from "./Services/GamepadManager";
 import * as NavGrid from "./Services/NavGrid";
 import * as RectCache from "./Services/RectCache";
+import * as GameRefreshService from "./Services/GameRefreshService";
 import Background from "./Components/Background";
 
 function App() {
@@ -63,6 +64,7 @@ function App() {
             GamepadManager.initialize();
             NavGrid.initialize();
             RectCache.initialize();
+            GameRefreshService.initialize();
         }
     }, [ready]);
 

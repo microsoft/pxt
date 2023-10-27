@@ -1,16 +1,20 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { AppStateContext } from "../State/AppStateContext";
+import { getLaunchedGame } from "../State";
 import { escapeGame } from "../Transforms/escapeGame";
 import { playSoundEffect } from "../Services/SoundEffectService";
 import { useOnControlPress } from "../Hooks";
-import { stringifyQueryString } from "../Utils";
+import { getEffectiveGameId, stringifyQueryString } from "../Utils";
 import * as GamepadManager from "../Services/GamepadManager";
 import * as IndexedDb from "../Services/IndexedDb";
 import configData from "../config.json";
 
 export default function PlayingGame() {
     const { state: kiosk, dispatch } = useContext(AppStateContext);
-    const { launchedGameId: gameId } = kiosk;
+
+    const launchedGame = useMemo(() => {
+        return getLaunchedGame();
+    }, [kiosk.launchedGameId]);
 
     // Handle Back and Start button presses
     useOnControlPress(
@@ -29,19 +33,22 @@ export default function PlayingGame() {
     >(undefined);
 
     useEffect(() => {
-        if (gameId) {
+        if (launchedGame) {
+            const gameId = getEffectiveGameId(launchedGame);
             // Try to fetch the built game from local storage.
-            IndexedDb.getBuiltJsInfoAsync(gameId).then(builtGame => {
-                setBuiltJsInfo(builtGame);
-                setFetchingBuiltJsInfo(false);
-            });
+            IndexedDb.getBuiltJsInfoAsync(gameId).then(
+                builtGame => {
+                    setBuiltJsInfo(builtGame);
+                    setFetchingBuiltJsInfo(false);
+                }
+            );
         }
-    }, [gameId]);
+    }, [launchedGame]);
 
     const playUrl = useMemo(() => {
-        if (gameId && !fetchingBuiltJsInfo) {
+        if (launchedGame && !fetchingBuiltJsInfo) {
             return stringifyQueryString(configData.PlayUrlRoot, {
-                id: gameId,
+                id: getEffectiveGameId(launchedGame),
                 // TODO: Show sim buttons on mobile & touch devices.
                 hideSimButtons: 1,
                 noFooter: 1,
@@ -58,7 +65,7 @@ export default function PlayingGame() {
                 sendBuilt: builtJsInfo ? undefined : 1,
             });
         }
-    }, [gameId, fetchingBuiltJsInfo]);
+    }, [launchedGame, fetchingBuiltJsInfo]);
 
     return (
         <iframe

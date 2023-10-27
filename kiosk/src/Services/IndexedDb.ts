@@ -1,4 +1,5 @@
 import { openDB, IDBPDatabase } from "idb";
+import { isPersistentGameId } from "../Utils";
 
 class KioskDb {
     db: IDBPDatabase | undefined;
@@ -61,7 +62,7 @@ class KioskDb {
     ): Promise<void> {
         const ver = pxt.appTarget?.versions?.target;
         if (!ver) return;
-        if (/^S/.test(gameId)) return; // skip persistent-share games for now (need to get their actual gameId and use that as the key)
+        if (isPersistentGameId(gameId)) return; // disallow keying to persistent-share gameIds (a safety measure. shouldn't happen in practice)
         const key = `${ver}:${gameId}`;
         await this.setAsync("builtjs", key, info);
     }

@@ -1,4 +1,4 @@
-import { HighScore } from "../Types";
+import { HighScore, GameData } from "../Types";
 import { stateAndDispatch } from "./AppStateContext";
 
 function getHighScores(gameId: string | undefined): HighScore[] {
@@ -22,9 +22,21 @@ function getSelectedGameId(): string | undefined {
     return state.selectedGameId;
 }
 
+function getSelectedGame(): GameData | undefined {
+    const { state } = stateAndDispatch();
+    return state.allGames.find(game => game.id === state.selectedGameId);
+}
+
+function getLaunchedGame(): GameData | undefined {
+    const { state } = stateAndDispatch();
+    return state.allGames.find(game => game.id === state.launchedGameId);
+}
+
 export {
     stateAndDispatch,
     getHighScores,
     getSelectedGameIndex,
     getSelectedGameId,
+    getSelectedGame,
+    getLaunchedGame,
 };

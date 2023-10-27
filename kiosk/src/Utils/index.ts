@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import * as Constants from "../Constants";
-import { HighScoreWithId, NotificationWithId } from "../Types";
+import { HighScoreWithId, NotificationWithId, GameData } from "../Types";
 
 export function safeGameName(name: string | undefined): string {
     if (!name || name.toLowerCase() === "untitled") {
@@ -84,4 +84,24 @@ export function stringifyQueryString(url: string, qs: any) {
         }
     }
     return url;
+}
+
+export function minutesToMs(mins: number): number {
+    return (mins * 60 * 1000) | 0;
+}
+
+export function secondsToMs(secs: number): number {
+    return (secs * 1000) | 0;
+}
+
+export function minutesToSecs(mins: number): number {
+    return (mins * 60) | 0;
+}
+
+export function isPersistentGameId(id: string): boolean {
+    return /^S/i.test(id);
+}
+
+export function getEffectiveGameId(game: GameData): string {
+    return game.staticGameId ?? game.id;
 }

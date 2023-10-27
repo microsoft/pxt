@@ -80,7 +80,6 @@ export const getGameDetailsAsync = async (
             throw new Error("Unable to fetch the game details");
         } else {
             const gameDetails = await response.json();
-            console.log("Game details: " + gameDetails);
             return gameDetails;
         }
     } catch (error) {

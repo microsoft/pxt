@@ -61,6 +61,12 @@ type RemoveGame = ActionBase & {
     gameId: string;
 };
 
+type UpdateGame = ActionBase & {
+    type: "UPDATE_GAME";
+    gameId: string;
+    gameData: Partial<GameData>;
+};
+
 type SaveHighScore = ActionBase & {
     type: "SAVE_HIGH_SCORE";
     gameId: string;
@@ -137,6 +143,7 @@ export type Action =
     | SetVolume
     | AddGame
     | RemoveGame
+    | UpdateGame
     | SaveHighScore
     | LoadHighScores
     | SetMostRecentScores
@@ -198,6 +205,12 @@ const addGame = (game: GameData): AddGame => ({
 const removeGame = (gameId: string): RemoveGame => ({
     type: "REMOVE_GAME",
     gameId,
+});
+
+const updateGame = (gameId: string, gameData: Partial<GameData>): UpdateGame => ({
+    type: "UPDATE_GAME",
+    gameId,
+    gameData
 });
 
 const saveHighScore = (
@@ -279,6 +292,7 @@ export {
     setVolume,
     addGame,
     removeGame,
+    updateGame,
     saveHighScore,
     loadHighScores,
     setMostRecentScores,
