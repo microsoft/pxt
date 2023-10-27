@@ -54,24 +54,6 @@ export type Notifications = NotificationWithId[];
 
 export type ShareIds = { [index: string]: ShareId };
 
-export type GameVersions = {
-    pxt: string;
-    target: string;
-};
-
-export type GameMeta = {
-    versions: GameVersions;
-};
-
-// This must match the object returned by GET /api/<gameId>
-export type GameInfo = {
-    name: string;
-    description: string;
-    id: string; // static/temporary gameId
-    meta: GameMeta;
-    persistId?: string; // permanent gameId
-};
-
 export type ModalId = "delete-game-confirmation";
 
 export type DeleteGameModal = {

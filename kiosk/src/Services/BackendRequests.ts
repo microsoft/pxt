@@ -1,4 +1,4 @@
-import { ShareIds, GameInfo } from "../Types";
+import { ShareIds } from "../Types";
 
 export const getGameCodesAsync = async (
     kioskCode: string
@@ -72,7 +72,7 @@ export const canthrow_addGameToKioskAsync = async (
 
 export const getGameDetailsAsync = async (
     gameId: string
-): Promise<GameInfo | undefined> => {
+): Promise<pxt.Cloud.JsonScript | undefined> => {
     try {
         const gameDetailsUrl = `${pxt.Cloud.apiRoot}/${gameId}`;
         const response = await fetch(gameDetailsUrl);
