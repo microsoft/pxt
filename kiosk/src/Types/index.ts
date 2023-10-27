@@ -1,5 +1,5 @@
 export type GameData = {
-    id: string;
+    id: string; // If this is a persistent share game, this is the persistent game id and `tempGameId` will contain the temporary game id. Otherwise, it's the regular game Id.
     name: string;
     description: string;
     highScoreMode: string;
@@ -7,6 +7,8 @@ export type GameData = {
     date?: string;
     userAdded?: boolean;
     deleted?: boolean;
+    lastRefreshMs?: number; // The last time we refreshed the game from the backend (applies to user-added, persistent shares only)
+    tempGameId?: string; // If this is a persistent share game, this is the temp game Id
 };
 
 export type HighScore = {
@@ -51,11 +53,6 @@ export type AllHighScores = { [index: string]: HighScores };
 export type Notifications = NotificationWithId[];
 
 export type ShareIds = { [index: string]: ShareId };
-
-export type GameInfo = {
-    name: string;
-    description: string;
-};
 
 export type ModalId = "delete-game-confirmation";
 

@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import { AppState } from "./State";
 import { Action } from "./Actions";
 import * as Storage from "../Services/LocalStorage";
@@ -55,28 +54,82 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "ADD_GAME": {
-            const allGames = [...state.allGames, action.game];
+            const existing = state.allGames.find(g => g.id === action.game.id);
+            if (existing && !existing.deleted) {
+                return state;
+            }
+            const game = {
+                ...existing,
+                ...action.game,
+                lastRefreshMs: Date.now(),
+                deleted: false,
+            };
+            // User-added? Persist the change
+            if (action.game.userAdded) {
+                const userAddedGames = Storage.getUserAddedGames();
+                userAddedGames[action.game.id] = game;
+                Storage.setUserAddedGames(userAddedGames);
+            }
+            const remainingGames = state.allGames.filter(
+                g => g.id !== action.game.id
+            );
+            const allGames = [...remainingGames, game];
             return {
                 ...state,
                 allGames,
+                selectedGameId: game.id,
             };
         }
         case "REMOVE_GAME": {
-            const allGames = state.allGames.filter(g => g.id !== action.gameId);
-            const selectedGameIndex = state.allGames.findIndex(
-                g => g.id === action.gameId
-            );
-            if (selectedGameIndex !== -1) {
-                // Try to select the next game in the list, or the previous game if there is no next game.
-                let selectedGameId = undefined;
-                if (selectedGameIndex < allGames.length - 1) {
-                    selectedGameId = allGames[selectedGameIndex].id;
-                } else if (allGames.length > 0) {
-                    selectedGameId = allGames[allGames.length - 1].id;
+            // User-added? Persist the change
+            const userAddedGames = Storage.getUserAddedGames();
+            if (userAddedGames[action.gameId]) {
+                userAddedGames[action.gameId].deleted = true;
+                Storage.setUserAddedGames(userAddedGames);
+            }
+            const remainingGames = state.allGames.filter(g => g.id !== action.gameId);
+            let selectedGameId: string | undefined;
+            // If the deleted game was the selected game, select the next game in the list.
+            if (state.selectedGameId === action.gameId) {
+                // Get the index of the now-deleted game in the original list.
+                const selectedGameIndex = state.allGames.findIndex(g => g.id === action.gameId);
+                if (selectedGameIndex >= 0) {
+                    if (selectedGameIndex > remainingGames.length - 1) {
+                        // The index of the deleted game is beyond the bounds of the updated list. Select the last game in the updated list.
+                        selectedGameId = remainingGames[remainingGames.length - 1].id;
+                    } else {
+                        // The index of the deleted game is within the bounds of the updated list. Select the new game appearing at that index.
+                        selectedGameId = remainingGames[selectedGameIndex].id;
+                    }
+                }
+            }
+            return {
+                ...state,
+                selectedGameId,
+                allGames: remainingGames,
+            };
+        }
+        case "UPDATE_GAME": {
+            let existing = state.allGames.find(g => g.id === action.gameId);
+            if (existing) {
+                const index = state.allGames.findIndex(
+                    g => g.id === action.gameId
+                );
+                existing = {
+                    ...existing,
+                    lastRefreshMs: Date.now(),
+                    ...action.gameData, // can overwrite lastRefreshMs
+                };
+                const allGames = [...state.allGames];
+                allGames[index] = existing;
+                // User-added? Persist the change
+                if (existing.userAdded) {
+                    const userAddedGames = Storage.getUserAddedGames();
+                    userAddedGames[action.gameId] = existing;
+                    Storage.setUserAddedGames(userAddedGames);
                 }
                 return {
                     ...state,
-                    selectedGameId,
                     allGames,
                 };
             } else {
@@ -88,7 +141,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             const allHighScores = { ...state.allHighScores };
             const highScores = allHighScores[gameId] || [];
             // Before saving this high score, ensure we don't already have it recorded.
-            // React is mean and will sometimes dispatch the action the reducer multiple times to flush out non-idempotent logic (development mode only).
+            // Protect against duplicate action dispatches.
             if (!highScores.find(hs => hs.id === highScore.id)) {
                 highScores.push(highScore);
                 highScores.sort((first, second) => second.score - first.score);
@@ -160,7 +213,7 @@ export default function reducer(state: AppState, action: Action): AppState {
         }
         case "POST_NOTIFICATION": {
             // Before posting the notification, ensure is doesn't already exist in the list.
-            // React is mean and will sometimes dispatch the action the reducer multiple times to flush out non-idempotent logic (development mode only).
+            // Protect against duplicate action dispatches.
             if (
                 !state.notifications.find(n => n.id === action.notification.id)
             ) {
