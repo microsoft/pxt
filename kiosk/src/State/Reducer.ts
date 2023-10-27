@@ -95,10 +95,10 @@ export default function reducer(state: AppState, action: Action): AppState {
                 const selectedGameIndex = state.allGames.findIndex(g => g.id === action.gameId);
                 if (selectedGameIndex >= 0) {
                     if (selectedGameIndex > remainingGames.length - 1) {
-                        // Index of deleted game beyond the bounds of the updated list. Select the new last one from the updated list.
+                        // The index of the deleted game is beyond the bounds of the updated list. Select the last game in the updated list.
                         selectedGameId = remainingGames[remainingGames.length - 1].id;
                     } else {
-                        // Index of deleted game was within the bounds of the updated list. Select the same index from the updated list.
+                        // The index of the deleted game is within the bounds of the updated list. Select the new game appearing at that index.
                         selectedGameId = remainingGames[selectedGameIndex].id;
                     }
                 }
