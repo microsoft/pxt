@@ -31,15 +31,15 @@ async function refreshOneAsync() {
             //console.log(`Refreshing game ${game.id}`);
             const details = await getGameDetailsAsync(game.id);
             if (details) {
-                if (details.id !== game.staticGameId) {
-                    // The static/temporary gameId changed, update local copy of game metadata
+                if (details.id !== game.tempGameId) {
+                    // The temporary gameId changed, update local copy of game metadata
                     dispatch(
                         Actions.updateGame(game.id, {
                             name: safeGameName(details.name),
                             description: safeGameDescription(
                                 details.description
                             ),
-                            staticGameId: details.id,
+                            tempGameId: details.id,
                         })
                     );
                     //console.log(`Refreshed game ${game.id} ${details.name}`);

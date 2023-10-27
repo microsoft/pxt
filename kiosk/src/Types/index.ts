@@ -1,5 +1,5 @@
 export type GameData = {
-    id: string; // Can be a static/temporary gameId or a permanent gameId
+    id: string; // If this is a persistent share game, this is the persistent game id and `tempGameId` will contain the temporary game id. Otherwise, it's the regular game Id.
     name: string;
     description: string;
     highScoreMode: string;
@@ -8,7 +8,7 @@ export type GameData = {
     userAdded?: boolean;
     deleted?: boolean;
     lastRefreshMs?: number; // The last time we refreshed the game from the backend (applies to user-added, persistent shares only)
-    staticGameId?: string; // If this is a persistent share game, this is the static game Id
+    tempGameId?: string; // If this is a persistent share game, this is the temp game Id
 };
 
 export type HighScore = {

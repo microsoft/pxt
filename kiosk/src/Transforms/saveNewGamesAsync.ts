@@ -46,7 +46,7 @@ export async function saveNewGamesAsync(
                 uniqueIdentifier: incoming[shareId].id,
                 date: dateStr(),
                 userAdded: true,
-                staticGameId: gameDetails?.id
+                tempGameId: gameDetails?.id
             };
 
             dispatch(Actions.addGame(newGame));
@@ -62,7 +62,7 @@ export async function saveNewGamesAsync(
                     existing.description = safeGameDescription(
                         gameDetails?.description
                     );
-                    existing.staticGameId = gameDetails?.id;
+                    existing.tempGameId = gameDetails?.id;
                 }
                 existing.date = dateStr();
                 existing.uniqueIdentifier = incoming[shareId].id;

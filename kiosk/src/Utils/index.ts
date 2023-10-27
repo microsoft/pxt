@@ -103,5 +103,5 @@ export function isPersistentGameId(id: string): boolean {
 }
 
 export function getEffectiveGameId(game: GameData): string {
-    return game.staticGameId ?? game.id;
+    return game.tempGameId ?? game.id;
 }

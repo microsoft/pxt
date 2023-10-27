@@ -25,7 +25,7 @@ const GameSlide: React.FC<IProps> = ({ game }) => {
             const gameId = getEffectiveGameId(game);
             return `url("https://makecode.com/api/${gameId}/thumb")`;
         }
-    }, [game, game?.staticGameId]);
+    }, [game, game?.tempGameId]);
 
     return (
         <div className="gameTile" onClick={handleSlideClick}>
