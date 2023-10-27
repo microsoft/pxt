@@ -87,34 +87,19 @@ export default function reducer(state: AppState, action: Action): AppState {
                 userAddedGames[action.gameId].deleted = true;
                 Storage.setUserAddedGames(userAddedGames);
             }
-            const remainingGames = state.allGames.filter(
-                g => g.id !== action.gameId
-            );
+            const remainingGames = state.allGames.filter(g => g.id !== action.gameId);
             let selectedGameId: string | undefined;
+            // If the deleted game was the selected game, select the next game in the list.
             if (state.selectedGameId === action.gameId) {
-                // Get the index of the deleted game in the original list.
-                const selectedGameIndex = state.allGames.findIndex(
-                    g => g.id === action.gameId
-                );
-                if (selectedGameIndex !== -1) {
-                    const nonDeletedRemainingGames = remainingGames.filter(
-                        g => !g.deleted
-                    );
-                    if (
-                        selectedGameIndex >
-                        nonDeletedRemainingGames.length - 1
-                    ) {
-                        // Deleted game was the last one in the list. Select the new last one.
-                        selectedGameId =
-                            nonDeletedRemainingGames[remainingGames.length - 1]
-                                .id;
-                    } else if (selectedGameIndex < remainingGames.length) {
-                        // Deleted game was not the last one in the list. Select the next one.
-                        selectedGameId =
-                            nonDeletedRemainingGames[selectedGameIndex].id;
+                // Get the index of the now-deleted game in the original list.
+                const selectedGameIndex = state.allGames.findIndex(g => g.id === action.gameId);
+                if (selectedGameIndex >= 0) {
+                    if (selectedGameIndex > remainingGames.length - 1) {
+                        // Index of deleted game beyond the bounds of the updated list. Select the new last one from the updated list.
+                        selectedGameId = remainingGames[remainingGames.length - 1].id;
                     } else {
-                        // Deleted game was the only one in the list, and there are no more games.
-                        selectedGameId = undefined;
+                        // Index of deleted game was within the bounds of the updated list. Select the same index from the updated list.
+                        selectedGameId = remainingGames[selectedGameIndex].id;
                     }
                 }
             }
