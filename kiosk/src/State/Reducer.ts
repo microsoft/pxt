@@ -93,7 +93,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             if (state.selectedGameId === action.gameId) {
                 // Get the index of the now-deleted game in the original list.
                 const selectedGameIndex = state.allGames.findIndex(g => g.id === action.gameId);
-                if (selectedGameIndex >= 0) {
+                if (selectedGameIndex >= 0 && remainingGames.length) {
                     if (selectedGameIndex > remainingGames.length - 1) {
                         // The index of the deleted game is beyond the bounds of the updated list. Select the last game in the updated list.
                         selectedGameId = remainingGames[remainingGames.length - 1].id;

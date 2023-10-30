@@ -46,11 +46,11 @@ function App() {
                 if (cfg) {
                     dispatch(Actions.setTargetConfig(cfg));
                     if (cfg.kiosk) {
-                        dispatch(Actions.setGameList(cfg.kiosk.games));
+                        if (!state.clean) {
+                            dispatch(Actions.setGameList(cfg.kiosk.games));
+                        }
                         // Load user-added games from local storage.
                         dispatch(Actions.loadUserAddedGames());
-                        // Select the first game in the list.
-                        dispatch(Actions.setSelectedGameId(cfg.kiosk.games[0].id));
                     }
                 } else {
                     // TODO: Handle this better
