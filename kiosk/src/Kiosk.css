@@ -552,19 +552,26 @@ h2 {
 
 .swiper-slide {
     position: relative;
-    width: var(--swiper-width);
     transform: scale(0.75);
     top: -10%;
 }
 
-.swiper-slide-active {
-    cursor: pointer;
-    transform: scale(1) !important;
-    top: 0;
+.swiper-slide.swiper-slide-next {
+    position: relative;
+    transform: scale(0.75) !important;
+    top: -10%;
 }
 
-.swiper-slide-active .deleted {
-    animation: 1s shrink;
+.swiper-slide.swiper-slide-prev {
+    position: relative;
+    transform: scale(0.75) !important;
+    top: -10%;
+}
+
+.swiper-slide.swiper-slide-active {
+    cursor: pointer;
+    transform: scale(1);
+    top: 0;
 }
 
 .gameTile {
