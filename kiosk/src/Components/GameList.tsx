@@ -23,6 +23,7 @@ const GameList: React.FC<IProps> = ({}) => {
     const [userInitiatedTransition, setUserInitiatedTransition] =
         React.useState(false);
     const [pageInited, setPageInited] = React.useState(false);
+    const [generation, setGeneration] = React.useState(0);
 
     const handleLocalSwiper = (swiper: SwiperClass) => {
         setLocalSwiper(swiper);
@@ -116,11 +117,12 @@ const GameList: React.FC<IProps> = ({}) => {
     };
 
     const slideChangeTransitionEnd = () => {
+        setGeneration(generation + 1); // This will force GameSlides to re-render
         if (userInitiatedTransition) {
             syncSelectedGame();
             setUserInitiatedTransition(false);
         }
-    }
+    };
 
     if (!kiosk.allGames?.length) {
         return (
@@ -134,7 +136,6 @@ const GameList: React.FC<IProps> = ({}) => {
         <div className="carouselWrap">
             <Swiper
                 focusableElements="div"
-                slideActiveClass="swiper-slide-active"
                 tabIndex={0}
                 loop={true}
                 slidesPerView={1.8}
@@ -143,14 +144,16 @@ const GameList: React.FC<IProps> = ({}) => {
                 onSwiper={handleLocalSwiper}
                 allowTouchMove={true}
                 modules={[Pagination]}
-                onSlideChangeTransitionStart={() => slideChangeTransitionStart()}
+                onSlideChangeTransitionStart={() =>
+                    slideChangeTransitionStart()
+                }
                 onSlideChangeTransitionEnd={() => slideChangeTransitionEnd()}
                 onTouchStart={() => setUserInitiatedTransition(true)}
             >
                 {kiosk.allGames.map((game, index) => {
                     return (
                         <SwiperSlide key={index}>
-                            <GameSlide game={game} />
+                            <GameSlide game={game} generation={generation} />
                         </SwiperSlide>
                     );
                 })}
