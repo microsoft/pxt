@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { playSoundEffect } from "../Services/SoundEffectService";
 import { launchGame } from "../Transforms/launchGame";
 import { GameData } from "../Types";
@@ -10,9 +10,35 @@ import { getEffectiveGameId } from "../Utils";
 
 interface IProps {
     game: GameData;
+    generation: number; // Enables GameList to force a re-render of GameSlide when carousel transitions
 }
-const GameSlide: React.FC<IProps> = ({ game }) => {
+const GameSlide: React.FC<IProps> = ({ game, generation }) => {
     const { state: kiosk } = useContext(AppStateContext);
+    const [myParentRef, setMyParentRef] = useState<
+        HTMLElement | null | undefined
+    >(null);
+
+    const handleRef = (el: HTMLElement | null) => {
+        setMyParentRef(el?.parentElement);
+    };
+
+    const isSelected = useMemo(() => {
+        let selected = kiosk.selectedGameId === game.id;
+        if (myParentRef) {
+            selected =
+                selected &&
+                myParentRef.classList.contains("swiper-slide-active");
+        }
+        return selected;
+    }, [
+        kiosk.selectedGameId,
+        game.id,
+        myParentRef,
+        // `generation` is included here to force re-render when carousel
+        // transitions. This is a workaround for Swiper's direct DOM
+        // manipulation .. React doesn't always know about it.
+        generation,
+    ]);
 
     const handleSlideClick = () => {
         pxt.tickEvent("kiosk.gameLaunched", { game: game.id });
@@ -28,7 +54,7 @@ const GameSlide: React.FC<IProps> = ({ game }) => {
     }, [game, game?.tempGameId]);
 
     return (
-        <div className="gameTile" onClick={handleSlideClick}>
+        <div className="gameTile" onClick={handleSlideClick} ref={handleRef}>
             <div className="gameSelectionIndicator" />
             <div
                 className="gameThumbnail"
@@ -49,13 +75,11 @@ const GameSlide: React.FC<IProps> = ({ game }) => {
                 )}
             </div>
 
-            {kiosk.selectedGameId && game.id === kiosk.selectedGameId && (
+            {isSelected && (
                 <div className="pressStart">{lf("Press A to Start")}</div>
             )}
 
-            {kiosk.selectedGameId && game.id === kiosk.selectedGameId && (
-                <GameMenu />
-            )}
+            {isSelected && <GameMenu />}
         </div>
     );
 };
