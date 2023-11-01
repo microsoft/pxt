@@ -22,7 +22,7 @@ In addition to more in-game content, we’ve also added a few new code blocks th
 
 ![New particle code block](/static/blog/minecraft/2023-release/particle.png)
 
-**Position comparison** - This was a long-requested block that allows you to more easily compare position values
+**Position comparison** - This was a long-requested block that allows you to more easily compare position values.
 
 ![New position comparison code block](/static/blog/minecraft/2023-release/position-comparison.png)
 
@@ -32,11 +32,11 @@ In addition to more in-game content, we’ve also added a few new code blocks th
 
 ## Version History
 
-We have repeatedly heard reports of students losing or accidentally deleting their code - which makes us very sad. To help with this, we have added version history for projects. You can access previous versions of your code through the Project Settings menu in the upper right corner.
+We have repeatedly heard reports of students losing or accidentally deleting their code - which makes us very sad. To help with this, we have added version history for projects. You can access previous versions of your code through the **Project Settings** menu in the upper right corner.
 
 ![Version History item in the Settings menu](/static/blog/minecraft/2023-release/settings-menu.png)
 
-We save student code automatically every 5 minutes and they can restore older code, if need be, with a click of a button.
+We save student code automatically every 5 minutes and they can restore their older code, if need be, with a click of a button.
 
 ![Version History list and code display](/static/blog/minecraft/2023-release/version-history.png)
 
@@ -74,7 +74,7 @@ To learn more about how to build your own extensions for MakeCode in Minecraft E
 
 ## Code Connection end-of-support
 
-In addition to these updates, we are also announcing end-of-support for Code Connection, the companion app for Minecraft Bedrock on Windows. Because Code Connection is a separate app, it has been a challenge to keep up with game updates, and as a result there have been reliability and game connectivity issues. Code Connection was also not an optimal coding experience being in a separate window from the game. Minecraft Education with Code Builder built into the game is the best way to code with Minecraft, and there are direct purchasing options for individual licenses as well - learn more at https://education.minecraft.net/en-us/licensing. The Code Connection app will be removed from the Microsoft Store on December 1st, 2023. Users can save all their code files and import them into Minecraft Education by clicking on the Settings menu and selecting **Save Project**.
+In addition to these updates, we are also announcing end-of-support for Code Connection, the companion app for Minecraft Bedrock on Windows. Because Code Connection is a separate app, it has been a challenge to keep up with game updates, and as a result there have been reliability and game connectivity issues. Code Connection was also not an optimal coding experience being in a separate window from the game. Minecraft Education with Code Builder built into the game is the best way to code with Minecraft, and there are direct purchasing options for individual licenses as well - learn more at https://education.minecraft.net/en-us/licensing. The Code Connection app will be removed from the Microsoft Store on December 1, 2023. Users can save all their code files and import them into Minecraft Education by clicking on the Settings menu and selecting **Save Project**.
 
 We hope you enjoy these updates, and we can’t wait to see what you create next in Minecraft!
 
