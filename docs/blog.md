@@ -1,12 +1,20 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode Clever Integration Released!](blog/clever-release)
+## [MakeCode Minecraft 2023 Update](/blog/minecraft/2023-release)
+
+November 1st, 2023 by [Jaqster](https://github.com/jaqster)
+
+The MakeCode fall update for Minecraft is here! Here’s a run-down of all the new features and improvements...
+
+**[Continue reading this blog post](/blog/minecraft/2023-release)**
+
+## [MakeCode Clever Integration Released!](/blog/clever-release)
 
 September 6th, 2023 by [benvillalobos](https://github.com/benvillalobos)
 
 Just in time for the fall semester, MakeCode has integrated with [Clever](https://www.clever.com/)!
 
-**[Continue reading this blog post](blog/clever-release)**
+**[Continue reading this blog post](/blog/clever-release)**
 
 ## [MakeCode micro:bit 2023 Release!](/blog/microbit/2023-release)
 
