@@ -275,7 +275,7 @@ Within a validation section, you may specify which validators you want to enable
 
 ### Validators
 
-Currently, only one validator exists: the `BlocksExistValidator`. This validator looks at blocks tagged with `//@validate-exists` or `//@highlight` comments in the answer key and confirms that, for each tagged block, the user's code contains at least one block of the same type. It does *not* validate the parameters passed into the block. For more information on highlighting, see [highlighted blocks](../snippets.md#highlight).
+Currently, only one validator exists, the `BlocksExistValidator`, for [highlight](/writing-docs/snippets.md#highlight) and [validate-exists](/writing-docs/snippets#validate-exists) blocks. This validator looks at blocks tagged with `//@validate-exists` or `//@highlight` comments in the answer key and confirms that, for each tagged block, the user's code contains at least one block of the same type. It does *not* validate the parameters passed into the block.
 
 You can specify whether the `BlocksExistValidator` checks for `//@validate-exists` or `//@highlight` using the `markers` property on the validator. If you specify only `validate-exists`, then highlighted blocks will not be validated. Similarly, if you specify only `highlight`, then blocks marked with `validate-exists` will not be checked. By default, both checks are enabled.
 
