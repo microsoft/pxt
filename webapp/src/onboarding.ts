@@ -29,6 +29,9 @@ function getTargetMap(target: string): querySelector {
         "download": {
             targetQuery: "#downloadArea",
         },
+        "play button" : {
+            targetQuery: ".big-play-button",
+        },
         "everything" : {
             targetQuery: "#root",
         },
