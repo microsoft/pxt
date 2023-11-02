@@ -47,11 +47,27 @@ you can add the namespace it should open in parentheses after the normal one
 
 This will appear in tutorials as the `variables` category, but clicking it will toggle the `sprites` category.
 
+### validate-exists
+
+The ``@validate-exists`` tag marks the code block following it as subject to validation. This means that, when [code validation](/writing-docs/tutorials/basics.md#code-validation-validationlocal-and-validationglobal-sections) is enabled in a tutorial, the user is warned that their code isn't matching a block that the tutorial intended.
+
+ Use `// @validate-exists` in blocks and TypeScript, and `# @validate-exists`
+in Python.
+
+````
+```blocks
+// @validate-exists
+basic.showString("HELLO!")
+```
+````
+
 ### highlight
 
 When used in snippets, the renderer will higlight the next line of code or block following a comment containing
 **@highlight**. Use `// @highlight` in blocks and TypeScript, and `# @highlight`
 in Python.
+
+Another feature of **@highlight**, like with **@validate-exists**, is that the highlighted block is also validated when [code validation](/writing-docs/tutorials/basics.md#code-validation-validationlocal-and-validationglobal-sections) is enabled.
 
 ````
 ```blocks
