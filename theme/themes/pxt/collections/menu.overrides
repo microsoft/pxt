@@ -33,7 +33,7 @@
     background: @invertedBackground;
 }
 
-#mainmenu > .menu > .ui.item:hover > .icon {
+#mainmenu > .menu > .ui.item:hover > .icon:not(.exit-debugmode-btn) {
     transform: scale(1.2);
 }
 
