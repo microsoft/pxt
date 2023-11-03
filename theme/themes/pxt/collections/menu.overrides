@@ -33,6 +33,10 @@
     background: @invertedBackground;
 }
 
+#mainmenu > .menu > .ui.item:hover > .icon:not(.exit-debugmode-btn) {
+    transform: scale(1.2);
+}
+
 @media only screen and (max-width: @largestMobileScreen) {
     .menubar .left.menu > .item.icon:not(.logo),  .menubar .right.menu > .item.icon:not(.logo) {
         width: 48px;
