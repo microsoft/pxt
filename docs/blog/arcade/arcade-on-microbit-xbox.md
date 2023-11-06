@@ -10,27 +10,27 @@ That’s right! We’re crossing the streams! Now you can download your [MakeCod
 
 ![Kittenbot game shield](/static/blog/arcade/arcade-on-microbit-xbox/newbit.png)
 
-Kittenbot was the first to create an Arcade accessory for the micro:bit. The [Newbit]( https://www.kittenbot.cc/products/newbit-arcade-shield) is a cute, cat-themed board with red and blue buttons, pins and a [Jacdac](https://microsoft.github.io/jacdac-docs) connector.
+[Kittenbot](https://www.kittenbot.cc/) was the first to create an Arcade accessory for the micro:bit. The [Newbit]( https://www.kittenbot.cc/products/newbit-arcade-shield) is a cute, cat-themed board with red and blue buttons, pins and a [Jacdac](https://microsoft.github.io/jacdac-docs) connector.
 
 ![Retro expansion board](/static/blog/arcade/arcade-on-microbit-xbox/retro.jpg)
 
-Elecfreaks makes a polished-looking micro:bit [Retro]( https://shop.elecfreaks.com/products/micro-bit-retro-programming-arcade) expansion board with nice hand-holds, yellow buttons, an acrylic case, pins and a [Jacdac](https://microsoft.github.io/jacdac-docs) connector.
+[Elecfreaks](https://www.elecfreaks.com/) makes a polished-looking micro:bit [Retro]( https://shop.elecfreaks.com/products/micro-bit-retro-programming-arcade) expansion board with nice hand-holds, yellow buttons, an acrylic case, pins and a [Jacdac](https://microsoft.github.io/jacdac-docs) connector.
 
 ![Game:bit console shield](/static/blog/arcade/arcade-on-microbit-xbox/gamebit.png)
 
-ICShop from Taiwan has the [Game:Bit]( https://www.icshop.com.tw/products/368112100137) which sports a larger screen, plastic case, and joystick.
+[ICShop](https://www.icshop.com.tw/) from Taiwan has the [Game:Bit](https://www.icshop.com.tw/products/368112100137) which sports a larger screen, plastic case, and joystick.
 
-The micro:bit v2 has enough memory to hold 1 Arcade game, so you can use it as a game cartridge – if you have multiple micro:bits, you can swap different games in and out on a long road trip! For educators, this is a great way to take your classroom micro:bits even further and move from physical computing into game development. Learn more about hardware for MakeCode Arcade here: https://arcade.makecode.com/hardware.
+The micro:bit v2 has enough memory to hold 1 Arcade game, so you can use it as a game cartridge - if you have multiple micro:bits, you can swap different games in and out on a long road trip! For educators, this is a great way to take your classroom micro:bits even further and move from physical computing into game development. Learn more about hardware for MakeCode Arcade here: https://arcade.makecode.com/hardware.
 
 ## MakeCode Arcade on Xbox
 
-Move over [Halo](https://www.halowaypoint.com/) and [Forza](https://forza.net/), now you can play your own games on Xbox! The [Microsoft MakeCode Arcade Kiosk]( https://www.xbox.com/games/store/makecode-arcade-kiosk/9p3rgvvtvb1s) app in the Xbox Store allows you to upload the games you create with MakeCode Arcade onto an Xbox and play them on the big screen with a game controller. There are 20 pre-loaded Arcade games available to play including Space Destroyer and Bunny Hop. To play your own games on Xbox, download and install the app, then select the Add your game button. You will see a unique Kiosk ID appear.
+Move over [Halo](https://www.halowaypoint.com/) and [Forza](https://forza.net/), now you can play your own games on Xbox! The [Microsoft MakeCode Arcade Kiosk]( https://www.xbox.com/games/store/makecode-arcade-kiosk/9p3rgvvtvb1s) app in the Xbox Store allows you to upload the games you create with MakeCode Arcade onto an Xbox and play them on the big screen with a game controller. There are 20 pre-loaded Arcade games available to play including Space Destroyer and Bunny Hop. To play your own games on Xbox, download and install the app, then select the **Add your game** button. You will see a unique Kiosk ID appear.
 
 ![Add your game button](/static/blog/arcade/arcade-on-microbit-xbox/add-game.png)
 
 ![Kiosk ID with QR code](/static/blog/arcade/arcade-on-microbit-xbox/kiosk-id.png)
 
-From [MakeCode Arcade]( https://arcade.makecode.com) in a web browser, click to Share your game, select the Joystick icon, type in the Kiosk ID from the Xbox app, then click Submit.
+From [MakeCode Arcade]( https://arcade.makecode.com) in a web browser, click to Share your game, select the Joystick icon, type in the Kiosk ID from the Xbox app, then click **Submit**.
 
 ![Project Share button](/static/blog/arcade/arcade-on-microbit-xbox/share-button.png)
 
