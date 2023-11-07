@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade - now more ways to play!](/blog/arcade/arcade-on-microbit-xbox)
+
+November 6th, 2023 by [Jaqster](https://github.com/jaqster)
+
+Great news for MakeCode Arcaders... we’re releasing some updates today that will allow you to play the Arcade games you create on micro:bits and on an Xbox!
+
+**[Continue reading this blog post](/blog/arcade/arcade-on-microbit-xbox)**
+
 ## [MakeCode Minecraft 2023 Update](/blog/minecraft/2023-release)
 
 November 1st, 2023 by [Jaqster](https://github.com/jaqster)
