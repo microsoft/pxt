@@ -835,7 +835,12 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
         });
     }
 
-    const upgradeOp = epkg.header.editor !== pxt.BLOCKS_PROJECT_NAME ? upgradeFromTSAsync : upgradeFromBlocksAsync;
+    const upgradeOp =
+      epkg.header.editor !== pxt.BLOCKS_PROJECT_NAME
+        ? epkg.header.editor !== pxt.PYTHON_PROJECT_NAME
+          ? upgradeFromTSAsync
+          : upgradeFromPythonAsync
+        : upgradeFromBlocksAsync;
 
     let projectNeverCompiled = false;
 
@@ -953,6 +958,37 @@ function upgradeFromTSAsync(): Promise<UpgradeResult> {
         });
 }
 
+function upgradeFromPythonAsync(): Promise<UpgradeResult> {
+    const mainPkg = pkg.mainPkg;
+    const project = pkg.getEditorPkg(mainPkg);
+    const targetVersion = project.header.targetVersion;
+
+    const patchedFiles: pxt.Map<string> = {};
+    pxt.Util.values(project.files).filter(isPyFile).forEach(file => {
+        const patched = pxt.patching.patchPython(targetVersion, file.content);
+        if (patched != file.content) {
+            patchedFiles[file.name] = patched;
+        }
+    });
+
+    pxt.debug("Applying upgrades to Python")
+
+    return checkPatchAsync(patchedFiles)
+        .then(() => {
+            return {
+                success: true,
+                editor: pxt.PYTHON_PROJECT_NAME,
+                patchedFiles
+            };
+        })
+        .catch(e => {
+            return {
+                success: false,
+                errorCodes: e.errorCodes
+            };
+        });
+}
+
 interface UpgradeError extends Error {
     errorCodes?: pxt.Map<number>;
 }
@@ -998,6 +1034,10 @@ function patchProjectFilesAsync(project: pkg.EditorPackage, patchedFiles: pxt.Ma
 
 function isTsFile(file: pkg.File) {
     return pxt.Util.endsWith(file.getName(), ".ts");
+}
+
+function isPyFile(file: pkg.File) {
+    return pxt.Util.endsWith(file.getName(), ".py");
 }
 
 export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.Util.CancellationToken): Promise<boolean> {
