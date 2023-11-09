@@ -1209,6 +1209,7 @@ namespace ts.pxtc.Util {
         "ja": { englishName: "Japanese", localizedName: "日本語" },
         "ja-HIRA": { englishName: "Hiragana", localizedName: "にほんご" },
         "ka": { englishName: "Georgian", localizedName: "ქართული" },
+        "kn": { englishName: "Kannada", localizedName: "ಕನ್ನಡ" },        
         "kab": { englishName: "Kabyle", localizedName: "شئعم" },
         "kk": { englishName: "Kazakh", localizedName: "қазақ тілі" },
         "km": { englishName: "Khmer", localizedName: "ខ្មែរ" },
