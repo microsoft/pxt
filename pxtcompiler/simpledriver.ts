@@ -197,23 +197,31 @@ namespace pxt {
     }
 
     export function patchTS(version: string, opts: pxtc.CompileOptions) {
-        patchText(version, opts, ".ts");
+        if (!version)
+            return
+        pxt.debug(`applying TS patches relative to ${version}`)
+        for (let fn of Object.keys(opts.fileSystem)) {
+            if (fn.indexOf("/") == -1 && U.endsWith(fn, ".ts")) {
+                const ts = opts.fileSystem[fn]
+                const ts2 = pxt.patching.patchJavaScript(version, ts)
+                if (ts != ts2) {
+                    pxt.debug(`applying TS patch to ${fn}`)
+                    opts.fileSystem[fn] = ts2
+                }
+            }
+        }
     }
 
     export function patchPY(version: string, opts: pxtc.CompileOptions) {
-        patchText(version, opts, ".py");
-    }
-
-    export function patchText(version: string, opts: pxtc.CompileOptions, extension: string) {
         if (!version)
             return
-        pxt.debug(`applying ${extension.replace('.', '')} patches relative to ${version}`)
+        pxt.debug(`applying PY patches relative to ${version}`)
         for (let fn of Object.keys(opts.fileSystem)) {
-            if (fn.indexOf("/") == -1 && U.endsWith(fn, extension)) {
+            if (fn.indexOf("/") == -1 && U.endsWith(fn, ".py")) {
                 const initial = opts.fileSystem[fn]
                 const patched = pxt.patching.patchPython(version, initial)
                 if (initial != patched) {
-                    pxt.debug(`applying ${extension.replace('.', '')} patch to ${fn}`)
+                    pxt.debug(`applying PY patch to ${fn}`)
                     opts.fileSystem[fn] = patched
                 }
             }
