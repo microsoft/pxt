@@ -95,7 +95,7 @@ namespace ts.pxtc.Util {
     // First two are valid crowdin\makecode locale code,
     // Last all lowercase one is just for the backup when reading user defined extensions & tutorials.
     export function normalizeLanguageCode(code: string): string[] {
-        const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
+        const langParts = /^(\w{2,3})-(\w{2,4}$)/i.exec(code);
         if (langParts && langParts[1] && langParts[2]) {
             return [`${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`, langParts[1].toLowerCase(),
              `${langParts[1].toLowerCase()}-${langParts[2].toLowerCase()}`];
