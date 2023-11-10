@@ -927,7 +927,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
         });
 }
 
-function upgradeFromTSAsync(): Promise<UpgradeResult> {
+async function upgradeFromTSAsync(): Promise<UpgradeResult> {
     const mainPkg = pkg.mainPkg;
     const project = pkg.getEditorPkg(mainPkg);
     const targetVersion = project.header.targetVersion;
@@ -942,23 +942,22 @@ function upgradeFromTSAsync(): Promise<UpgradeResult> {
 
     pxt.debug("Applying upgrades to TypeScript")
 
-    return checkPatchAsync(patchedFiles)
-        .then(() => {
-            return {
-                success: true,
-                editor: pxt.JAVASCRIPT_PROJECT_NAME,
-                patchedFiles
-            };
-        })
-        .catch(e => {
-            return {
-                success: false,
-                errorCodes: e.errorCodes
-            };
-        });
+    try {
+        await checkPatchAsync(patchedFiles)
+        return {
+            success: true,
+            editor: pxt.JAVASCRIPT_PROJECT_NAME,
+            patchedFiles
+        };
+    } catch (e) {
+        return {
+            success: false,
+            errorCodes: e.errorCodes
+        };
+    };
 }
 
-function upgradeFromPythonAsync(): Promise<UpgradeResult> {
+async function upgradeFromPythonAsync(): Promise<UpgradeResult> {
     const mainPkg = pkg.mainPkg;
     const project = pkg.getEditorPkg(mainPkg);
     const targetVersion = project.header.targetVersion;
@@ -973,20 +972,19 @@ function upgradeFromPythonAsync(): Promise<UpgradeResult> {
 
     pxt.debug("Applying upgrades to Python")
 
-    return checkPatchAsync(patchedFiles)
-        .then(() => {
-            return {
-                success: true,
-                editor: pxt.PYTHON_PROJECT_NAME,
-                patchedFiles
-            };
-        })
-        .catch(e => {
-            return {
-                success: false,
-                errorCodes: e.errorCodes
-            };
-        });
+    try {
+        await checkPatchAsync(patchedFiles);
+        return {
+            success: true,
+            editor: pxt.PYTHON_PROJECT_NAME,
+            patchedFiles
+        };
+    } catch (e) {
+        return {
+            success: false,
+            errorCodes: e.errorCodes
+        };
+    }
 }
 
 interface UpgradeError extends Error {
