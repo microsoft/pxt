@@ -125,15 +125,14 @@ namespace pxt.Cloud {
         })
     }
 
-    export function downloadBuiltSimJsInfoAsync(id: string): Promise<pxtc.BuiltSimJsInfo> {
+    export async function downloadBuiltSimJsInfoAsync(id: string): Promise<pxtc.BuiltSimJsInfo> {
         const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || "";
         const url = pxt.U.stringifyQueryString(id + "/js", { v: "v" + targetVersion }) + (id.startsWith("S") ? `&time=${Date.now()}` : "");
-        return privateRequestAsync({
+        const resp = await privateRequestAsync({
             url,
             forceLiveEndpoint: true,
-        }).then(resp => {
-            return resp.json
         });
+        return resp.json;
     }
 
     export async function markdownAsync(docid: string, locale?: string, propagateExceptions?: boolean): Promise<string> {

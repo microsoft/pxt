@@ -469,7 +469,9 @@ namespace pxt.runner {
     export async function fetchSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
         try {
             return await pxt.Cloud.downloadBuiltSimJsInfoAsync(simOptions.id);
-        } catch {
+        } catch (e) {
+            // This exception will happen in the majority of cases, so we don't want to log it unless for debugging.
+            pxt.debug(e.toString());
             return undefined;
         }
     }
