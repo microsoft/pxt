@@ -1216,7 +1216,6 @@ namespace ts.pxtc.Util {
         "ko": { englishName: "Korean", localizedName: "한국어" },
         "kmr": { englishName: "Kurmanji (Kurdish)", localizedName: "کورمانجی‎" },
         "kn": { englishName: "Kannada", localizedName: "ಕನ್ನಡ" },
-        "ku": { englishName: "Kurdish", localizedName: "کوردی" },
         "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
         "lv": { englishName: "Latvian", localizedName: "Latviešu" },
         "ml-IN": { englishName: "Malayalam", localizedName: "മലയാളം" },
