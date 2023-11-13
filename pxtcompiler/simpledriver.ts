@@ -172,6 +172,9 @@ namespace pxt {
                 return mainPkg.getCompileOptionsAsync(target)
             }).then(opts => {
                 patchTS(mainPkg.targetVersion(), opts)
+                if (mainPkg.getPreferredEditor() === pxt.PYTHON_PROJECT_NAME) {
+                    patchPY(mainPkg.targetVersion(), opts)
+                }
                 prepPythonOptions(opts)
                 return opts
             })
@@ -204,6 +207,22 @@ namespace pxt {
                 if (ts != ts2) {
                     pxt.debug(`applying TS patch to ${fn}`)
                     opts.fileSystem[fn] = ts2
+                }
+            }
+        }
+    }
+
+    export function patchPY(version: string, opts: pxtc.CompileOptions) {
+        if (!version)
+            return
+        pxt.debug(`applying PY patches relative to ${version}`)
+        for (let fn of Object.keys(opts.fileSystem)) {
+            if (fn.indexOf("/") == -1 && U.endsWith(fn, ".py")) {
+                const initial = opts.fileSystem[fn]
+                const patched = pxt.patching.patchPython(version, initial)
+                if (initial != patched) {
+                    pxt.debug(`applying PY patch to ${fn}`)
+                    opts.fileSystem[fn] = patched
                 }
             }
         }
