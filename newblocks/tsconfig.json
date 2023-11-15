@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "module": "commonjs",
+        "outDir": "../built/newblocks",
+        "rootDir": "..",
+        "newLine": "LF",
+        "sourceMap": false,
+        "moduleResolution": "node",
+        "isolatedModules": false,
+        "jsx": "react-jsx",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": false,
+        "preserveConstEnums": true,
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "scripthost",
+            "es2017",
+            "ES2018.Promise"
+        ],
+        "types": [
+            "resize-observer-browser"
+        ],
+        "incremental": false,
+        "skipLibCheck": true
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
