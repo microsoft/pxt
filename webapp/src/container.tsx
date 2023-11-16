@@ -3,14 +3,9 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as tutorial from "./tutorial";
-import * as container from "./container";
 import * as core from "./core";
 import * as auth from "./auth";
-import * as identity from "./identity";
-import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
-import * as ImmersiveReader from "./immersivereader";
 import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;

@@ -13,6 +13,7 @@ import {
 } from "./constants";
 import { FunctionManager } from "./functionManager";
 import { MsgKey } from "./msg";
+import { newFunctionMutation } from "./blocks/functionDeclarationBlock";
 
 export type StringMap<T> = { [index: string]: T };
 
@@ -310,10 +311,7 @@ export function getShadowBlockInfoFromType_(argumentType: string, ws: Blockly.Wo
     return [shadowType, fieldName, fieldValue];
 }
 
-export function flyoutCategory(
-    workspace: Blockly.WorkspaceSvg,
-    createFunctionCallback: (workspace: Blockly.Workspace) => void
-) {
+export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
     const xmlList: Element[] = [];
 
     // Add the create function button
@@ -361,3 +359,89 @@ export function flyoutCategory(
 
     return xmlList;
 }
+
+
+export function validateFunctionExternal(mutation: Element, destinationWs: Blockly.Workspace) {
+    // Check for empty function name.
+    const funcName = mutation.getAttribute('name');
+
+    if (!funcName) {
+        Blockly.dialog.alert(Blockly.Msg.FUNCTION_WARNING_EMPTY_NAME);
+        return false;
+    }
+
+    // Check for duplicate arg names and empty arg names.
+    const seen: StringMap<boolean> = {};
+    for (var i = 0; i < mutation.childNodes.length; ++i) {
+        const arg = mutation.childNodes[i] as Element;
+        const argName = arg.getAttribute('name');
+        if (!argName) {
+            Blockly.dialog.alert(Blockly.Msg.FUNCTION_WARNING_EMPTY_NAME);
+            return false;
+        }
+        if (seen[argName]) {
+            Blockly.dialog.alert(Blockly.Msg.FUNCTION_WARNING_DUPLICATE_ARG);
+            return false;
+        }
+        seen[argName] = true;
+    }
+
+    // Check for function name also being an argument name.
+    if (seen[funcName]) {
+        Blockly.dialog.alert(Blockly.Msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME);
+        return false;
+    }
+
+    // Check if function name is in use by a variable or another function.
+    const funcId = mutation.getAttribute('functionid');
+    const usedNames = namesInUse(destinationWs, null, funcId);
+
+    if (usedNames[funcName]) {
+        Blockly.dialog.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS.replace('%1', funcName));
+        return false;
+    }
+
+    // Looks good.
+    return true;
+};
+
+function createFunctionCallback(workspace: Blockly.WorkspaceSvg) {
+    Blockly.hideChaff();
+    if (Blockly.getSelected()) {
+        Blockly.getSelected().unselect();
+    }
+    FunctionManager.getInstance().editFunctionExternal(
+        newFunctionMutation(workspace),
+        createFunctionCallbackFactory_(workspace)
+    );
+}
+
+function createFunctionCallbackFactory_(workspace: Blockly.WorkspaceSvg) {
+    return function (mutation: Element) {
+        if (mutation) {
+            const blockText =
+                '<xml>' +
+                '<block type="' + FUNCTION_DEFINITION_BLOCK_TYPE + '">' +
+                Blockly.Xml.domToText(mutation) +
+                '</block>' +
+                '</xml>';
+            const blockDom = Blockly.utils.xml.textToDom(blockText);
+            Blockly.Events.setGroup(true);
+            const block = Blockly.Xml.domToBlock(blockDom.firstChild as Element, workspace) as CommonFunctionBlock & Blockly.BlockSvg;
+            block.updateDisplay_();
+
+            if (workspace.getMetrics) {
+                const metrics = workspace.getMetrics();
+                const blockDimensions = block.getHeightWidth();
+                block.moveBy(
+                    metrics.viewLeft + (metrics.viewWidth / 2) - (blockDimensions.width / 2),
+                    metrics.viewTop + (metrics.viewHeight / 2) - (blockDimensions.height / 2)
+                );
+                block.scheduleSnapAndBump();
+            }
+
+            workspace.centerOnBlock(block.id);
+            Blockly.Events.setGroup(false);
+        }
+    };
+};

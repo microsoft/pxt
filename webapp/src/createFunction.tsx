@@ -5,14 +5,17 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as codecard from "./codecard"
 
+import * as Blockly from "blockly";
+import * as pxtblockly from "../../newblocks";
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface CreateFunctionDialogState {
     visible?: boolean;
     functionEditorWorkspace?: Blockly.WorkspaceSvg;
-    functionCallback?: Blockly.Functions.ConfirmEditCallback;
+    functionCallback?: pxtblockly.ConfirmEditCallback;
     initialMutation?: Element;
-    functionBeingEdited?: Blockly.FunctionDeclarationBlock;
+    functionBeingEdited?: pxtblockly.FunctionDeclarationBlock;
     mainWorkspace?: Blockly.Workspace;
 }
 
@@ -36,7 +39,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
     }
 
     hide() {
-        pxt.BrowserUtils.removeClass(Blockly.WidgetDiv.DIV as HTMLElement, "functioneditor");
+        pxt.BrowserUtils.removeClass(Blockly.WidgetDiv.getDiv(), "functioneditor");
         const { functionEditorWorkspace, mainWorkspace } = this.state;
         functionEditorWorkspace.clear();
         functionEditorWorkspace.dispose();
@@ -49,7 +52,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         });
     }
 
-    show(initialMutation: Element, cb: Blockly.Functions.ConfirmEditCallback, mainWorkspace: Blockly.Workspace) {
+    show(initialMutation: Element, cb: pxtblockly.ConfirmEditCallback, mainWorkspace: Blockly.Workspace) {
         pxt.tickEvent('createfunction.show', null, { interactiveConsent: false });
         this.setState({
             visible: true,
@@ -68,7 +71,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         }
 
         // Adjust the WidgetDiv classname so that it can show up above the dimmer
-        pxt.BrowserUtils.addClass(Blockly.WidgetDiv.DIV as HTMLElement, "functioneditor");
+        pxt.BrowserUtils.addClass(Blockly.WidgetDiv.getDiv(), "functioneditor");
 
         // Create the function editor workspace
         functionEditorWorkspace = Blockly.inject(workspaceDiv, {
@@ -81,10 +84,10 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         (functionEditorWorkspace as any).showContextMenu_ = () => { }; // Disable the context menu
         functionEditorWorkspace.clear();
 
-        const functionBeingEdited = functionEditorWorkspace.newBlock('function_declaration') as Blockly.FunctionDeclarationBlock;
-        (functionBeingEdited as any).domToMutation(initialMutation);
+        const functionBeingEdited = functionEditorWorkspace.newBlock('function_declaration') as pxtblockly.FunctionDeclarationBlock & Blockly.BlockSvg;
+        functionBeingEdited.domToMutation(initialMutation);
         functionBeingEdited.initSvg();
-        functionBeingEdited.render(false);
+        functionBeingEdited.render();
         functionEditorWorkspace.centerOnBlock(functionBeingEdited.id);
 
         functionEditorWorkspace.addChangeListener(() => {
@@ -109,8 +112,8 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
     confirm() {
         Blockly.hideChaff();
         const { functionBeingEdited, mainWorkspace, functionCallback } = this.state;
-        const mutation = (functionBeingEdited as any).mutationToDom();
-        if (Blockly.Functions.validateFunctionExternal(mutation, mainWorkspace)) {
+        const mutation = functionBeingEdited.mutationToDom();
+        if (pxtblockly.validateFunctionExternal(mutation, mainWorkspace)) {
             functionCallback(mutation);
             this.hide();
         }

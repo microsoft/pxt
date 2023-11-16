@@ -2,7 +2,7 @@
 
 import * as Blockly from "blockly";
 import { Environment, mkEnv } from "./compiler/environment";
-import { getBlockData } from "./loader";
+import { getBlockData } from "./fields/field_utils";
 import { callKey } from "./compiler/compiler";
 import { BlockSnippet, loadWorkspaceXml, saveBlocksXml } from "./importer";
 

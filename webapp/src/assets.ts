@@ -1,3 +1,5 @@
+import * as pxtblockly from "../../newblocks";
+
 export function isNameTaken(name: string) {
     return pxt.react.getTilemapProject().isNameTaken(pxt.AssetType.Image, name);
 }

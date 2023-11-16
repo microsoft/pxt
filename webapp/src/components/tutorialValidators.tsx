@@ -1,5 +1,6 @@
 import { MarkedContent } from "../marked";
 import { getBlocksEditor } from "../app";
+import * as pxtblockly from "../../../newblocks";
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidatorMetadata = pxt.tutorial.CodeValidatorMetadata;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
@@ -95,7 +96,7 @@ export class BlocksExistValidator extends CodeValidatorBase {
             missingBlocks,
             disabledBlocks,
             insufficientBlocks
-        } = pxt.blocks.validateBlocksExist({
+        } = pxtblockly.validateBlocksExist({
             usedBlocks: editor.getAllBlocks(false /* ordered */),
             requiredBlockCounts: requiredBlockCounts,
         });

@@ -1,6 +1,6 @@
 import * as Blockly from "blockly";
 import { FieldTsExpression } from "../fields/field_tsexpression";
-import { GrayBlock, GrayBlockStatement } from "../loader";
+import { GrayBlock, GrayBlockStatement } from "../compiler/environment";
 import { setHelpResources } from "../help";
 
 export function initOnStart() {

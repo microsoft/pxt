@@ -4,6 +4,7 @@
 import * as Blockly from "blockly"
 import { attachCardInfo, installBuiltinHelpInfo, installHelpResources, setBuiltinHelpInfo, setHelpResources } from "../help";
 import { provider } from "../constants";
+import { appendMutation } from "../composableMutations";
 
 export function initMath(blockInfo: pxtc.BlocksInfo) {
     // math_op2

@@ -2,9 +2,10 @@
 
 import * as Blockly from "blockly";
 import { createShadowValue } from "./toolbox";
-import { MutatingBlock, setVarFieldValue } from "./legacyMutations";
+import { MutatingBlock } from "./legacyMutations";
 import { optionalDummyInputPrefix, optionalInputWithFieldPrefix } from "./constants";
 import { FieldArgumentVariable } from "./fields/field_argumentvariable";
+import { setVarFieldValue } from "./loader";
 
 export interface ComposableMutation {
     // Set to save mutations. Should return an XML element

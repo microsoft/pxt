@@ -7,10 +7,11 @@ export * from "./blocks/argumentReporterBlocks";
 export * from "./blocks/functionDeclarationBlock";
 export * from "./blocks/functionDefinitionBlock";
 export * from "./blocks/functionCallBlocks";
+export * from "./functionManager";
 
 export {
     flyoutCategory,
     getDefinition,
     getAllFunctionDefinitionBlocks,
-
+    validateFunctionExternal
 } from "./utils";

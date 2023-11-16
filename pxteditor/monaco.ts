@@ -1,6 +1,5 @@
 /// <reference path="../localtypings/monaco.d.ts" />
 /// <reference path="../built/pxtlib.d.ts"/>
-/// <reference path="../built/pxtblocks.d.ts"/>
 
 namespace pxt.vs {
 

@@ -1,6 +1,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
+import { flyoutCategory, getAllFunctionDefinitionBlocks } from "./plugins/functions";
 
 const primitiveTypeRegex = /^(string|number|boolean)$/;
 
@@ -432,3 +433,46 @@ export function mkReturnStatementBlock() {
 
     return block;
 }
+
+// Patch new functions flyout to add the heading
+export function createFunctionsFlyoutCategory(workspace: Blockly.WorkspaceSvg) {
+    const elems = flyoutCategory(workspace);
+
+    if (elems.length > 1) {
+        let returnBlock = mkReturnStatementBlock();
+        // Add divider
+        elems.splice(1, 0, createFlyoutGroupLabel(lf("Your Functions")));
+        // Insert after the "make a function" button
+        elems.splice(1, 0, returnBlock as HTMLElement);
+    }
+
+    const functionsWithReturn = getAllFunctionDefinitionBlocks(workspace)
+        .filter(def => def.getDescendants(false).some(child => child.type === "function_return" && child.getInputTargetBlock("RETURN_VALUE")))
+        .map(def => def.getField("function_name").getText())
+
+    const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
+        pxt.toolbox.getNamespaceColor('functions'),
+        pxt.toolbox.getNamespaceIcon('functions'),
+        'blocklyFlyoutIconfunctions');
+    elems.unshift(headingLabel);
+
+    const res: Element[] = [];
+
+    for (const e of elems) {
+        res.push(e);
+        if (e.getAttribute("type") === "function_call") {
+            const mutation = e.children.item(0);
+
+            if (mutation) {
+                const name = mutation.getAttribute("name");
+                if (functionsWithReturn.some(n => n === name)) {
+                    const clone = e.cloneNode(true) as HTMLElement;
+                    clone.setAttribute("type", "function_call_output");
+                    res.push(clone);
+                }
+            }
+        }
+    }
+
+    return res;
+};

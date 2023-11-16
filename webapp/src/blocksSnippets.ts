@@ -1,6 +1,8 @@
 import { BuiltinCategoryDefinition, BlockDefinition, CategoryNameID } from "./toolbox";
 
 import * as blocks from "./blocks";
+import * as Blockly from "blockly";
+import * as pxtblockly from "../../newblocks";
 
 let _cachedBuiltinCategories: pxt.Map<BuiltinCategoryDefinition> = null;
 function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
@@ -704,7 +706,7 @@ export function getPauseUntil() {
                 blockNamespace: opts.category || "loops",
                 weight: opts.weight == null ? 0 : opts.weight
             },
-            blockXml: Blockly.Xml.domToText(pxt.blocks.mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE))
+            blockXml: Blockly.Xml.domToText(pxtblockly.mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE))
         };
     }
 

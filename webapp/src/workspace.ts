@@ -19,6 +19,8 @@ import * as dmp from "diff-match-patch";
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
+import * as pxtblockly from "../../newblocks";
+
 
 // Avoid importing entire crypto-js
 /* eslint-disable import/no-internal-modules */
@@ -1209,7 +1211,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                     throw mergeError()
             } else if (/\.blocks$/.test(path)) {
                 // blocks file, try merging the blocks or clear it so that ts merge picks it up
-                const d3 = pxt.blocks.mergeXml(files[path], oldEnt.blobContent, treeEnt.blobContent);
+                const d3 = pxtblockly.mergeXml(files[path], oldEnt.blobContent, treeEnt.blobContent);
                 // if xml merge fails, leave an empty xml payload to force decompilation
                 blocksNeedDecompilation = blocksNeedDecompilation || !d3;
                 text = d3 || "";
@@ -1336,9 +1338,9 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
     // assign ids to blockly blocks
     const mainBlocks = files[pxt.MAIN_BLOCKS];
     if (mainBlocks) {
-        const ws = pxt.blocks.loadWorkspaceXml(mainBlocks, true);
+        const ws = pxtblockly.loadWorkspaceXml(mainBlocks, true);
         if (ws) {
-            const mainBlocksWithIds = pxt.blocks.saveWorkspaceXml(ws, true);
+            const mainBlocksWithIds = pxtblockly.saveWorkspaceXml(ws, true);
             if (mainBlocksWithIds)
                 files[pxt.MAIN_BLOCKS] = mainBlocksWithIds;
         }

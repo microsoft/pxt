@@ -23,23 +23,6 @@ import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";
 import { flow, setCollapsedAll, screenshotEnabled, screenshotAsync } from "./layout";
 
-export interface GrayBlock extends Blockly.Block {
-    setPythonEnabled(enabled: boolean): void;
-}
-
-export interface GrayBlockStatement extends GrayBlock {
-    domToMutation(xmlElement: Element): void;
-    mutationToDom(): Element;
-
-    getLines: () => string[];
-    declaredVariables: string;
-}
-
-// Parsed format of data stored in the .data attribute of blocks
-export interface PXTBlockData {
-    commentRefs: string[];
-    fieldData: pxt.Map<string>;
-}
 
 interface BlockDefinition {
     codeCard?: any;
@@ -53,6 +36,46 @@ interface BlockDefinition {
     onchange?: (event: any) => void;
     mutationToDom?: () => Element;
     domToMutation?: (xmlElement: Element) => void;
+}
+
+/**
+ * Blockly Keyboard Navigation plugin
+ * Used for accessible blocks experiment
+ */
+
+export declare class NavigationController {
+    init(): void;
+    addWorkspace(workspace: Blockly.WorkspaceSvg): void;
+    enable(workspace: Blockly.WorkspaceSvg): void;
+    disable(workspace: Blockly.WorkspaceSvg): void;
+    focusToolbox(workspace: Blockly.WorkspaceSvg): void;
+    navigation: Navigation;
+}
+
+export declare class Navigation {
+    resetFlyout(workspace: Blockly.WorkspaceSvg, shouldHide: boolean): void;
+    setState(workspace: Blockly.WorkspaceSvg, state: BlocklyNavigationState): void;
+}
+
+export declare type BlocklyNavigationState = "workspace" | "toolbox" | "flyout";
+
+/**
+ * Blockly Workspace Search plugin
+ * Used for accessible blocks experiment
+ */
+
+export declare class WorkspaceSearch {
+    constructor(workspace: Blockly.WorkspaceSvg);
+    protected workspace_: Blockly.WorkspaceSvg;
+    protected htmlDiv_: HTMLDivElement;
+    protected inputElement_: HTMLInputElement;
+    init(): void;
+    protected createDom_(): void;
+    protected addEvent_(node: Element, name: string, thisObject: Object, func: Function): void;
+    open(): void;
+    close(): void;
+    previous(): void;
+    next(): void;
 }
 
 
@@ -1176,37 +1199,6 @@ export function setVarFieldValue(block: Blockly.Block, fieldName: string, newNam
         model.name = newName;
         varField.setValue(model.getId());
     }
-}
-
-
-export function getBlockData(block: Blockly.Block): PXTBlockData {
-    if (!block.data) {
-        return {
-            commentRefs: [],
-            fieldData: {}
-        };
-    }
-    if (/^(?:\d+;?)+$/.test(block.data)) {
-        return {
-            commentRefs: block.data.split(";"),
-            fieldData: {}
-        }
-    }
-    return JSON.parse(block.data);
-}
-
-export function setBlockData(block: Blockly.Block, data: PXTBlockData) {
-    block.data = JSON.stringify(data);
-}
-
-export function setBlockDataForField(block: Blockly.Block, field: string, data: string) {
-    const blockData = getBlockData(block);
-    blockData.fieldData[field] = data;
-    setBlockData(block, blockData);
-}
-
-export function getBlockDataForField(block: Blockly.Block, field: string) {
-    return getBlockData(block).fieldData[field];
 }
 
 export class PxtWorkspaceSearch extends WorkspaceSearch {

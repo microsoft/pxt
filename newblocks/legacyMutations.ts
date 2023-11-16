@@ -4,6 +4,7 @@ import * as Blockly from "blockly";
 import { Environment } from "./compiler/environment";
 import { escapeVarName } from "./compiler/util";
 import { compileExpression } from "./compiler/compiler";
+import { setVarFieldValue } from "./loader";
 
 /**
  * This interface defines the optionally defined functions for mutations that Blockly
@@ -645,33 +646,5 @@ class DefaultInstanceMutator extends MutatorHelper {
             }
             this.showing = show;
         }
-    }
-}
-
-/**
- * Blockly variable fields can't be set directly; you either have to use the
- * variable ID or set the value of the model and not the field
- */
-export function setVarFieldValue(block: Blockly.Block, fieldName: string, newName: string) {
-    const varField = block.getField(fieldName) as Blockly.FieldVariable;
-
-    // Check for an existing model with this name; otherwise we'll create
-    // a second variable with the same name and it will show up twice in the UI
-    const vars = block.workspace.getAllVariables();
-    let foundIt = false;
-    if (vars?.length) {
-        for (let v = 0; v < vars.length; v++) {
-            const model = vars[v];
-            if (model.name === newName) {
-                varField.setValue(model.getId());
-                foundIt = true;
-            }
-        }
-    }
-    if (!foundIt) {
-        varField.initModel();
-        const model = varField.getVariable();
-        model.name = newName;
-        varField.setValue(model.getId());
     }
 }

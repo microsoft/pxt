@@ -8,6 +8,8 @@ import { MediaPlayer } from "dashjs"
 import dashjs = require("dashjs");
 import { fireClickOnEnter } from "../../react-common/components/util";
 
+import * as pxtblockly from "../../newblocks";
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 interface MarkedContentProps extends ISettingsProps {
@@ -16,7 +18,7 @@ interface MarkedContentProps extends ISettingsProps {
     tabIndex?: number;
     // do not emit segment around snippets
     unboxSnippets?: boolean;
-    blocksDiffOptions?: pxt.blocks.DiffOptions;
+    blocksDiffOptions?: pxtblockly.DiffOptions;
     textDiffOptions?: pxt.diff.RenderOptions;
     onDidRender?: () => void;
     contentRef?: (el: HTMLDivElement) => void;
@@ -183,7 +185,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => {
-                            const diff = pxt.blocks.diffXml(oldXml, newXml, blocksDiffOptions);
+                            const diff = pxtblockly.diffXml(oldXml, newXml, blocksDiffOptions);
                             return wrapBlockDiff(diff);
                         })));
             });
@@ -203,7 +205,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         .then(blocksInfo => pxt.Util.promiseMapAllSeries([oldSrc, newSrc], src =>
                             compiler.decompileBlocksSnippetAsync(src, blocksInfo))
                         )
-                        .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], blocksDiffOptions || {
+                        .then((resps) => pxtblockly.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], blocksDiffOptions || {
                             hideDeletedTopBlocks: true,
                             hideDeletedBlocks: true
                         }))
@@ -219,7 +221,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     onDidRender();
                 });
 
-        function wrapBlockDiff(diff: pxt.blocks.DiffResult): HTMLElement {
+        function wrapBlockDiff(diff: pxtblockly.DiffResult): HTMLElement {
             const svg = diff.svg;
             if (svg) {
                 if (svg.tagName == "SVG") { // splitsvg
@@ -260,7 +262,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             if (MarkedContent.blockSnippetCache[reqid]) {
                 // Use cache
                 const workspaceXml = MarkedContent.blockSnippetCache[reqid] as string;
-                const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(workspaceXml));
+                const doc = Blockly.utils.xml.textToDomDocument(pxtblockly.serializeSvgString(workspaceXml));
                 wrapperDiv.appendChild(doc.documentElement);
                 pxsim.U.removeClass(wrapperDiv, 'loading');
             } else {

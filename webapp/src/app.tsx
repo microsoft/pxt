@@ -1,10 +1,10 @@
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../../built/pxtlib.d.ts"/>
-/// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as Blockly from "blockly";
 import * as workspace from "./workspace";
 import * as cloudsync from "./cloudsync";
 import * as data from "./data";
@@ -59,6 +59,7 @@ import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
 import * as blocklyFieldView from "./blocklyFieldView";
+import * as pxtblockly from "../../newblocks";
 
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
@@ -1859,7 +1860,7 @@ export class ProjectView
                 pxt.debug(`decompiled ${blockConfig.md} to ${xml}`);
                 // Get all top-level blocks
                 (() => {
-                    const dom = Blockly.Xml.textToDom(xml);
+                    const dom = Blockly.utils.xml.textToDom(xml);
                     const children = Array.from(dom.children);
                     for (const child of children) {
                         if (child.nodeName === "block") {
@@ -2188,10 +2189,10 @@ export class ProjectView
             .then(contents => {
                 let parsedContents = JSON.parse(contents);
                 if (parsedContents.target && parsedContents.target == pxt.appTarget.id) {
-                    let blockSnippet = parsedContents as pxt.blocks.BlockSnippet;
+                    let blockSnippet = parsedContents as pxtblockly.BlockSnippet;
                     blockSnippet.xml.forEach(xml => {
                         let text = pxt.Util.htmlUnescape(xml.replace(/^"|"$/g, ""));
-                        pxt.blocks.loadBlocksXml(this.blocksEditor.editor, text)
+                        pxtblockly.loadBlocksXml(this.blocksEditor.editor, text)
                     })
                 } else {
                     let data = parsedContents as pxt.cpp.HexFile;
@@ -4010,9 +4011,9 @@ export class ProjectView
     }
 
     blocksScreenshotAsync(pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
-        if (pxt.blocks.layout.screenshotEnabled()
+        if (pxtblockly.screenshotEnabled()
             && this.blocksEditor && this.blocksEditor.isReady && this.blocksEditor.editor)
-            return pxt.blocks.layout.screenshotAsync(this.blocksEditor.editor, pixelDensity, encodeBlocks)
+            return pxtblockly.screenshotAsync(this.blocksEditor.editor, pixelDensity, encodeBlocks)
         return Promise.resolve(undefined);
     }
 
@@ -4020,16 +4021,16 @@ export class ProjectView
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo, req))
             .then(resp => {
-                const svg = pxt.blocks.render(resp.outfiles[pxt.MAIN_BLOCKS], {
+                const svg = pxtblockly.render(resp.outfiles[pxt.MAIN_BLOCKS], {
                     snippetMode: req.snippetMode || false,
-                    layout: req.layout !== undefined ? req.layout : pxt.blocks.BlockLayout.Align,
+                    layout: req.layout !== undefined ? req.layout : pxtblockly.BlockLayout.Align,
                     splitSvg: false
                 }) as SVGSVGElement;
                 // TODO: what if svg is undefined? handle that scenario
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
                 return {
                     svg: svg,
-                    xml: pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3])
+                    xml: pxtblockly.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3])
                 }
             });
     }

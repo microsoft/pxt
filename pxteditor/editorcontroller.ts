@@ -281,7 +281,9 @@ namespace pxt.editor {
         ts: string;
         // rendering options
         snippetMode?: boolean;
-        layout?: pxt.blocks.BlockLayout;
+        // FIXME: (riknoll)
+        // layout?: pxt.blocks.BlockLayout;
+        layout?: any;
     }
 
     export interface EditorMessageRenderBlocksResponse {

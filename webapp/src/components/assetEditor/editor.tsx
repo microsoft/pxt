@@ -4,6 +4,7 @@ import * as React from "react";
 import * as pkg from "../../package";
 import * as compiler from "../../compiler";
 import * as blocklyFieldView from "../../blocklyFieldView";
+import * as pxtblockly from "../../../../newblocks";
 
 import { Provider } from 'react-redux';
 import store from './store/assetEditorStore'
@@ -31,7 +32,7 @@ export class AssetEditor extends Editor {
         return super.loadFileAsync(file, hc)
             .then(() => compiler.getBlocksAsync()) // make sure to load block definitions
             .then(info => {
-                pxt.blocks.initializeAndInject(info);
+                pxtblockly.initializeAndInject(info);
                 this.blocksInfo = info;
                 this.updateGalleryAssets();
             })
