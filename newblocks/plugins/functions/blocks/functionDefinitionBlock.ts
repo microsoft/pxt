@@ -11,18 +11,24 @@ import {
     ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE,
     ARGUMENT_REPORTER_NUMBER_BLOCK_TYPE,
     ARGUMENT_REPORTER_STRING_BLOCK_TYPE,
-    COLLAPSE_IMAGE_DATAURI,
+    FUNCTION_CALL_BLOCK_TYPE,
+    FUNCTION_CALL_OUTPUT_BLOCK_TYPE,
     FUNCTION_DEFINITION_BLOCK_TYPE,
 } from "../constants";
-import { createCustomArgumentReporter, rename } from "../utils";
+import { createCustomArgumentReporter, getDefinition, mutateCallersAndDefinition, rename } from "../utils";
 import { FieldAutocapitalizeTextInput } from "../fields/fieldAutocapitalizeTextInput";
 import { MsgKey } from "../msg";
+import { FunctionManager } from "../functionManager";
+import { COLLAPSE_IMAGE_DATAURI } from "../svgs";
 
 interface FunctionDefinitionMixin extends CommonFunctionMixin {
     createArgumentReporter_(arg: FunctionArgument): Blockly.Block;
+    customContextMenu(menuOptions: Blockly.ContextMenuRegistry.LegacyContextMenuOption[]): void;
+    makeEditOption(): Blockly.ContextMenuRegistry.LegacyContextMenuOption;
+    makeCallOption(): Blockly.ContextMenuRegistry.LegacyContextMenuOption;
 }
 
-type FunctionDefinitionBlock = CommonFunctionBlock & FunctionDefinitionMixin;
+export type FunctionDefinitionBlock = CommonFunctionBlock & FunctionDefinitionMixin;
 
 const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
     ...COMMON_FUNCTION_MIXIN,
@@ -102,6 +108,40 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
         }
         return newBlock;
     },
+
+    customContextMenu: function (this: FunctionDefinitionBlock, menuOptions: Blockly.ContextMenuRegistry.LegacyContextMenuOption[]) {
+        // FIXME (riknoll)
+        // if (this.inDebugWorkspace()) return;
+        if (this.isInFlyout || this.workspace?.options?.readOnly) return;
+        menuOptions.push(this.makeEditOption());
+        menuOptions.push(this.makeCallOption());
+    },
+
+    makeEditOption: function (this: FunctionDefinitionBlock) {
+        return {
+            enabled: true, // FIXME !this.inDebugWorkspace(),
+            text: Blockly.Msg.FUNCTIONS_EDIT_OPTION,
+            callback: () => {
+                editFunctionCallback(this);
+            }
+        };
+    },
+
+    makeCallOption: function (this: FunctionDefinitionBlock) {
+        const functionName = this.getName();
+
+        const mutation = Blockly.utils.xml.createElement("mutation");
+        mutation.setAttribute("name", functionName);
+        const callBlock = Blockly.utils.xml.createElement("block");
+        callBlock.appendChild(mutation);
+        callBlock.setAttribute("type", FUNCTION_CALL_BLOCK_TYPE);
+
+        return {
+            enabled: this.workspace.remainingCapacity() > 0, // FIXME && !block.inDebugWorkspace(),
+            text: Blockly.Msg.FUNCTIONS_CREATE_CALL_OPTION.replace("%1", functionName),
+            callback: Blockly.ContextMenu.callbackFactory(this, callBlock),
+        };
+    }
 };
 
 Blockly.Blocks[FUNCTION_DEFINITION_BLOCK_TYPE] = {
@@ -139,3 +179,30 @@ Blockly.Blocks[FUNCTION_DEFINITION_BLOCK_TYPE] = {
         );
     },
 };
+
+
+function editFunctionCallback(block: CommonFunctionBlock) {
+    // Edit can come from either the function definition or a function call.
+    // Normalize by setting the block to the definition block for the function.
+    if (block.type == FUNCTION_CALL_BLOCK_TYPE || block.type == FUNCTION_CALL_OUTPUT_BLOCK_TYPE) {
+        // This is a call block, find the definition block corresponding to the
+        // name. Make sure to search the correct workspace, call block can be in flyout.
+        const workspaceToSearch = block.workspace;
+        block = getDefinition(block.getName(), workspaceToSearch);
+    }
+    // "block" now refers to the function definition block, it is safe to proceed.
+    Blockly.hideChaff();
+    if (Blockly.getSelected()) {
+        Blockly.getSelected().unselect();
+    }
+
+    FunctionManager.getInstance().editFunctionExternal(
+        block.mutationToDom(),
+        mutation => {
+            if (mutation) {
+                mutateCallersAndDefinition(block.getName(), block.workspace, mutation);
+                block.updateDisplay_();
+            }
+        }
+    )
+}

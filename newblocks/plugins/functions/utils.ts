@@ -326,9 +326,9 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
     xmlList.push(button);
 
     // Add the label at the top of the function call blocks
-    const label = Blockly.utils.xml.createElement("label");
-    label.setAttribute("text", Blockly.Msg[MsgKey.FUNCTION_FLYOUT_LABEL]);
-    xmlList.push(label);
+    // const label = Blockly.utils.xml.createElement("label");
+    // label.setAttribute("text", Blockly.Msg[MsgKey.FUNCTION_FLYOUT_LABEL]);
+    // xmlList.push(label);
 
     // Populate function call blocks
     for (const func of getAllFunctionDefinitionBlocks(workspace)) {

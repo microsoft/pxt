@@ -34,6 +34,7 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
         try {
             if (
                 oldBlock &&
+                !oldBlock.isDisposed() &&
                 connectionMap &&
                 checker?.canConnectWithReason(oldBlock?.outputConnection!, input.connection!, false) ===
                     Blockly.Connection.CAN_CONNECT

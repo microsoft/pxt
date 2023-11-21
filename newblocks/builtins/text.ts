@@ -6,9 +6,13 @@ export function initText() {
     // builtin text
     const textInfo = pxt.blocks.getBlockDefinition('text');
     installHelpResources('text', textInfo.name, textInfo.tooltip, textInfo.url,
-        (Blockly as any).Colours.textField,
-        (Blockly as any).Colours.textField,
-        (Blockly as any).Colours.textField);
+        "#fff",
+        "#fff",
+        "#fff",
+        // (Blockly as any).Colours.textField,
+        // (Blockly as any).Colours.textField,
+        // (Blockly as any).Colours.textField
+    );
 
     // builtin text_length66tyyy
     const textLengthId = "text_length";

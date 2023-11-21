@@ -46,6 +46,7 @@ const backendutils = () => compileTsProject("backendutils")
 const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
+const newBlocks = () => compileTsProject("newblocks", "built/newblocks", true);
 
 const pxtblockly = () => gulp.src([
     "webapp/public/blockly/blockly_compressed.js",
@@ -129,7 +130,7 @@ function initWatch() {
         updatestrings,
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
-        reactCommon,
+        gulp.parallel(reactCommon, newBlocks),
         webapp,
         browserifyWebapp,
         browserifyAssetEditor,
@@ -387,7 +388,6 @@ const copyWebapp = () =>
         "built/pxtcompiler.js",
         "built/pxtpy.js",
         "built/pxtblocks.js",
-        "built/pxtblockly.js",
         "built/pxtsim.js",
         "built/pxtrunner.js",
         "built/pxteditor.js",
@@ -814,7 +814,7 @@ const buildAll = gulp.series(
     gulp.parallel(pxtrunner, cli, pxtcommon),
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
-    reactCommon,
+    gulp.parallel(reactCommon, newBlocks),
     gulp.parallel(buildcss, buildSVGIcons),
     maybeBuildWebapps(),
     webapp,
@@ -832,7 +832,7 @@ exports.clean = clean;
 exports.build = buildAll;
 
 exports.webapp = gulp.series(
-    reactCommon,
+    gulp.parallel(reactCommon, newBlocks),
     webapp,
     browserifyWebapp,
     browserifyAssetEditor

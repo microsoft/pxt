@@ -64,8 +64,8 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
-    "@blockly/keyboard-navigation": "^0.1.18",
-    "@blockly/plugin-workspace-search": "^4.0.10",
+    "@blockly/keyboard-navigation": "^0.5.4",
+    "@blockly/plugin-workspace-search": "^8.0.9",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/applicationinsights-web": "^2.8.11",
     "@microsoft/immersive-reader-sdk": "1.1.0",

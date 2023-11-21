@@ -18,6 +18,8 @@ export enum MsgKey {
     FUNCTIONS_DEFAULT_FUNCTION_NAME = "FUNCTIONS_DEFAULT_FUNCTION_NAME",
     FUNCTION_CREATE_NEW = "FUNCTION_CREATE_NEW",
     FUNCTION_FLYOUT_LABEL = "FUNCTION_FLYOUT_LABEL",
+    FUNCTIONS_EDIT_OPTION = "FUNCTIONS_EDIT_OPTION",
+    FUNCTIONS_CREATE_CALL_OPTION = "FUNCTIONS_CREATE_CALL_OPTION"
 }
 
 function defineMsg(key: MsgKey, value: string) {
@@ -49,3 +51,7 @@ defineMsg(MsgKey.FUNCTIONS_DEFAULT_FUNCTION_NAME, "doSomething");
 defineMsg(MsgKey.FUNCTION_CREATE_NEW, "Make a Function");
 
 defineMsg(MsgKey.FUNCTION_FLYOUT_LABEL, "Your Functions");
+
+defineMsg(MsgKey.FUNCTIONS_EDIT_OPTION, "Edit Function");
+
+defineMsg(MsgKey.FUNCTIONS_CREATE_CALL_OPTION, "Create 'call %1'");

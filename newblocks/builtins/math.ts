@@ -7,6 +7,84 @@ import { provider } from "../constants";
 import { appendMutation } from "../composableMutations";
 
 export function initMath(blockInfo: pxtc.BlocksInfo) {
+    Blockly.defineBlocksWithJsonArray([
+        // Block for integer numeric value.
+        {
+            "type": "math_integer",
+            "message0": "%1",
+            "args0": [{
+                "type": "field_number",
+                "name": "NUM",
+                "precision": 1
+            }],
+            "output": "Number",
+            "outputShape": provider.SHAPES.ROUND,
+            "style": "field_blocks",
+            "helpUrl": "%{BKY_MATH_NUMBER_HELPURL}",
+            "tooltip": "%{BKY_MATH_NUMBER_TOOLTIP}",
+            "extensions": ["parent_tooltip_when_inline"]
+        },
+
+        // Block for whole numeric value.
+        {
+            "type": "math_whole_number",
+            "message0": "%1",
+            "args0": [{
+                "type": "field_number",
+                "name": "NUM",
+                "min": 0,
+                "precision": 1
+            }],
+            "output": "Number",
+            "outputShape": provider.SHAPES.ROUND,
+            "style": "field_blocks",
+            "helpUrl": "%{BKY_MATH_NUMBER_HELPURL}",
+            "tooltip": "%{BKY_MATH_NUMBER_TOOLTIP}",
+            "extensions": ["parent_tooltip_when_inline"]
+        },
+
+        // Block for positive numeric value.
+        {
+            "type": "math_positive_number",
+            "message0": "%1",
+            "args0": [{
+                "type": "field_number",
+                "name": "NUM",
+                "min": 0
+            }],
+            "output": "Number",
+            "outputShape": provider.SHAPES.ROUND,
+            "style": "field_blocks",
+            "helpUrl": "%{BKY_MATH_NUMBER_HELPURL}",
+            "tooltip": "%{BKY_MATH_NUMBER_TOOLTIP}",
+            "extensions": ["parent_tooltip_when_inline"]
+        },
+
+        // Block for numeric value with min and max.
+        {
+            "type": "math_number_minmax",
+            "message0": "%1",
+            "args0": [{
+                "type": "field_number",
+                "name": "NUM",
+                // FIXME (riknoll)
+                // "type": "field_slider",
+                // "name": "SLIDER",
+                // "value": 0,
+                // "step": 1,
+                // "labelText": "Number"
+            }],
+            "output": "Number",
+            "outputShape": provider.SHAPES.ROUND,
+            "style": "field_blocks",
+            "helpUrl": "%{BKY_MATH_NUMBER_HELPURL}",
+            "tooltip": "%{BKY_MATH_NUMBER_TOOLTIP}",
+            "mutator": "math_number_minmax_mutator",
+            "extensions": ["parent_tooltip_when_inline"]
+        },
+    ])
+
+
     // math_op2
     const mathOp2Id = "math_op2";
     const mathOp2qName = "Math.min"; // TODO: implement logic so that this changes based on which is used (min or max)
@@ -92,9 +170,12 @@ export function initMath(blockInfo: pxtc.BlocksInfo) {
             mInfo.name,
             mInfo.tooltip,
             mInfo.url,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField,
-            (Blockly as any).Colours.textField
+            "#fff",
+            "#fff",
+            "#fff",
+            // (Blockly as any).Colours.textField,
+            // (Blockly as any).Colours.textField,
+            // (Blockly as any).Colours.textField
         );
     })
 

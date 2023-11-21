@@ -1,5 +1,6 @@
 /// <reference path="../built/pxtlib.d.ts" />
 import * as Blockly from "blockly";
+import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 import { optionalDummyInputPrefix, optionalInputWithFieldPrefix, provider } from "./constants";
 import { initExpandableBlock, initVariableArgsBlock, appendMutation } from "./composableMutations";
 import { addMutation, MutatingBlock, MutatorTypes } from "./legacyMutations";
@@ -12,7 +13,7 @@ import { initLogic } from "./builtins/logic";
 import { initLoops } from "./builtins/loops";
 import { initText } from "./builtins/text";
 import { createToolboxBlock, isArrayType } from "./toolbox";
-import { mkCard, setHelpResources } from "./help";
+import { mkCard } from "./help";
 import { FieldMatrix } from "./fields/field_ledmatrix";
 import { FieldStyledLabel } from "./fields/field_styledlabel";
 import { FieldUserEnum } from "./fields/field_userenum";
@@ -37,47 +38,6 @@ interface BlockDefinition {
     mutationToDom?: () => Element;
     domToMutation?: (xmlElement: Element) => void;
 }
-
-/**
- * Blockly Keyboard Navigation plugin
- * Used for accessible blocks experiment
- */
-
-export declare class NavigationController {
-    init(): void;
-    addWorkspace(workspace: Blockly.WorkspaceSvg): void;
-    enable(workspace: Blockly.WorkspaceSvg): void;
-    disable(workspace: Blockly.WorkspaceSvg): void;
-    focusToolbox(workspace: Blockly.WorkspaceSvg): void;
-    navigation: Navigation;
-}
-
-export declare class Navigation {
-    resetFlyout(workspace: Blockly.WorkspaceSvg, shouldHide: boolean): void;
-    setState(workspace: Blockly.WorkspaceSvg, state: BlocklyNavigationState): void;
-}
-
-export declare type BlocklyNavigationState = "workspace" | "toolbox" | "flyout";
-
-/**
- * Blockly Workspace Search plugin
- * Used for accessible blocks experiment
- */
-
-export declare class WorkspaceSearch {
-    constructor(workspace: Blockly.WorkspaceSvg);
-    protected workspace_: Blockly.WorkspaceSvg;
-    protected htmlDiv_: HTMLDivElement;
-    protected inputElement_: HTMLInputElement;
-    init(): void;
-    protected createDom_(): void;
-    protected addEvent_(node: Element, name: string, thisObject: Object, func: Function): void;
-    open(): void;
-    close(): void;
-    previous(): void;
-    next(): void;
-}
-
 
 // Matches tuples
 export function isTupleType(type: string): string[] {
@@ -627,8 +587,7 @@ function init(blockInfo: pxtc.BlocksInfo) {
 
     // FIXME (riknoll)
     // Blockly.FieldCheckbox.CHECK_CHAR = '■';
-
-    (<any>Blockly).Constants.ADD_START_HATS = !!pxt.appTarget.appTheme.blockHats;
+    // (<any>Blockly).Constants.ADD_START_HATS = !!pxt.appTarget.appTheme.blockHats;
 
     initFieldEditors();
     initContextMenu();
@@ -972,7 +931,9 @@ function initContextMenu() {
     };
 
     // Get rid of bumping behavior
-    (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () { }
+    // (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () { }
+    Blockly.Extensions.unregister("logic_compare");
+    Blockly.Extensions.register("logic_compare", function () {})
 }
 
 function initComments() {
@@ -1202,121 +1163,127 @@ export function setVarFieldValue(block: Blockly.Block, fieldName: string, newNam
 }
 
 export class PxtWorkspaceSearch extends WorkspaceSearch {
-    protected createDom_() {
-        super.createDom_();
-        this.addEvent_(this.workspace_.getInjectionDiv(), "click", this, (e: any) => {
-            if (this.htmlDiv_.style.display == "flex" && !this.htmlDiv_.contains(e.target)) {
-                this.close()
-            }
-        });
-    }
-
-    /**
-     * onKeyDown_ is a private method in WorkspaceSearch, overwrite it to allow searching backwards.
-     * https://github.com/microsoft/pxt-arcade/issues/5716
-     */
-    onKeyDown_(e: KeyboardEvent) {
-        if (e.key === 'Escape') {
-            this.close();
-        } else if (e.key === 'Enter') {
-            if (e.shiftKey) {
-                this.previous();
-            } else {
-                this.next();
-            }
-        }
-    }
-
-    protected highlightSearchGroup_(blocks: Blockly.BlockSvg[]) {
-        blocks.forEach((block) => {
-            const blockPath = block.pathObject.svgPath;
-            Blockly.utils.dom.addClass(blockPath, 'blockly-ws-search-highlight-pxt');
-        });
-    }
-
-    protected unhighlightSearchGroup_(blocks: Blockly.BlockSvg[]) {
-        blocks.forEach((block) => {
-            const blockPath = block.pathObject.svgPath;
-            Blockly.utils.dom.removeClass(blockPath, 'blockly-ws-search-highlight-pxt');
-        });
-    }
-
-    /**
-     * https://github.com/google/blockly-samples/blob/master/plugins/workspace-search/src/WorkspaceSearch.js#L633
-     *
-     * Modified to center offscreen blocks.
-     */
-    protected scrollToVisible_(block: Blockly.BlockSvg) {
-        if (!this.workspace_.isMovable()) {
-            // Cannot scroll to block in a non-movable workspace.
-            return;
-        }
-        // XY is in workspace coordinates.
-        const xy = block.getRelativeToSurfaceXY();
-        const scale = this.workspace_.scale;
-
-        // Block bounds in pixels relative to the workspace origin (0,0 is centre).
-        const width = block.width * scale;
-        const height = block.height * scale;
-        const top = xy.y * scale;
-        const bottom = (xy.y + block.height) * scale;
-        // In RTL the block's position is the top right of the block, not top left.
-        const left = this.workspace_.RTL ? xy.x * scale - width : xy.x * scale;
-        const right = this.workspace_.RTL ? xy.x * scale : xy.x * scale + width;
-
-        const metrics = this.workspace_.getMetrics();
-
-        let targetLeft = metrics.viewLeft;
-        const overflowLeft = left < metrics.viewLeft;
-        const overflowRight = right > metrics.viewLeft + metrics.viewWidth;
-        const wideBlock = width > metrics.viewWidth;
-
-        if ((!wideBlock && overflowLeft) || (wideBlock && !this.workspace_.RTL)) {
-            // Scroll to show left side of block
-            targetLeft = left;
-        } else if ((!wideBlock && overflowRight) ||
-            (wideBlock && this.workspace_.RTL)) {
-            // Scroll to show right side of block
-            targetLeft = right - metrics.viewWidth;
-        }
-
-        let targetTop = metrics.viewTop;
-        const overflowTop = top < metrics.viewTop;
-        const overflowBottom = bottom > metrics.viewTop + metrics.viewHeight;
-        const tallBlock = height > metrics.viewHeight;
-
-        if (overflowTop || (tallBlock && overflowBottom)) {
-            // Scroll to show top of block
-            targetTop = top;
-        } else if (overflowBottom) {
-            // Scroll to show bottom of block
-            targetTop = bottom - metrics.viewHeight;
-        }
-        if (targetLeft !== metrics.viewLeft || targetTop !== metrics.viewTop) {
-            const activeEl = document.activeElement as HTMLElement;
-            if (wideBlock || tallBlock) {
-                this.workspace_.scroll(-targetLeft, -targetTop);
-            } else {
-                this.workspace_.centerOnBlock(block.id);
-            }
-
-            if (activeEl) {
-                // Blockly.WidgetDiv.hide called in scroll is taking away focus.
-                // TODO: Review setFocused call in Blockly.WidgetDiv.hide.
-                activeEl.focus();
-            }
-        }
-    }
-
-    open() {
-        super.open();
-        this.inputElement_.select();
-        Blockly.utils.dom.addClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
-    }
-
-    close() {
-        super.close();
-        Blockly.utils.dom.removeClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
-    }
 
 }
+
+// FIXME (riknoll)
+
+// export class PxtWorkspaceSearch extends WorkspaceSearch {
+//     protected createDom_() {
+//         super.createDom_();
+//         this.addEvent_(this.workspace_.getInjectionDiv(), "click", this, (e: any) => {
+//             if (this.htmlDiv_.style.display == "flex" && !this.htmlDiv_.contains(e.target)) {
+//                 this.close()
+//             }
+//         });
+//     }
+
+//     /**
+//      * onKeyDown_ is a private method in WorkspaceSearch, overwrite it to allow searching backwards.
+//      * https://github.com/microsoft/pxt-arcade/issues/5716
+//      */
+//     onKeyDown_(e: KeyboardEvent) {
+//         if (e.key === 'Escape') {
+//             this.close();
+//         } else if (e.key === 'Enter') {
+//             if (e.shiftKey) {
+//                 this.previous();
+//             } else {
+//                 this.next();
+//             }
+//         }
+//     }
+
+//     protected highlightSearchGroup_(blocks: Blockly.BlockSvg[]) {
+//         blocks.forEach((block) => {
+//             const blockPath = block.pathObject.svgPath;
+//             Blockly.utils.dom.addClass(blockPath, 'blockly-ws-search-highlight-pxt');
+//         });
+//     }
+
+//     protected unhighlightSearchGroup_(blocks: Blockly.BlockSvg[]) {
+//         blocks.forEach((block) => {
+//             const blockPath = block.pathObject.svgPath;
+//             Blockly.utils.dom.removeClass(blockPath, 'blockly-ws-search-highlight-pxt');
+//         });
+//     }
+
+//     /**
+//      * https://github.com/google/blockly-samples/blob/master/plugins/workspace-search/src/WorkspaceSearch.js#L633
+//      *
+//      * Modified to center offscreen blocks.
+//      */
+//     protected scrollToVisible_(block: Blockly.BlockSvg) {
+//         if (!this.workspace_.isMovable()) {
+//             // Cannot scroll to block in a non-movable workspace.
+//             return;
+//         }
+//         // XY is in workspace coordinates.
+//         const xy = block.getRelativeToSurfaceXY();
+//         const scale = this.workspace_.scale;
+
+//         // Block bounds in pixels relative to the workspace origin (0,0 is centre).
+//         const width = block.width * scale;
+//         const height = block.height * scale;
+//         const top = xy.y * scale;
+//         const bottom = (xy.y + block.height) * scale;
+//         // In RTL the block's position is the top right of the block, not top left.
+//         const left = this.workspace_.RTL ? xy.x * scale - width : xy.x * scale;
+//         const right = this.workspace_.RTL ? xy.x * scale : xy.x * scale + width;
+
+//         const metrics = this.workspace_.getMetrics();
+
+//         let targetLeft = metrics.viewLeft;
+//         const overflowLeft = left < metrics.viewLeft;
+//         const overflowRight = right > metrics.viewLeft + metrics.viewWidth;
+//         const wideBlock = width > metrics.viewWidth;
+
+//         if ((!wideBlock && overflowLeft) || (wideBlock && !this.workspace_.RTL)) {
+//             // Scroll to show left side of block
+//             targetLeft = left;
+//         } else if ((!wideBlock && overflowRight) ||
+//             (wideBlock && this.workspace_.RTL)) {
+//             // Scroll to show right side of block
+//             targetLeft = right - metrics.viewWidth;
+//         }
+
+//         let targetTop = metrics.viewTop;
+//         const overflowTop = top < metrics.viewTop;
+//         const overflowBottom = bottom > metrics.viewTop + metrics.viewHeight;
+//         const tallBlock = height > metrics.viewHeight;
+
+//         if (overflowTop || (tallBlock && overflowBottom)) {
+//             // Scroll to show top of block
+//             targetTop = top;
+//         } else if (overflowBottom) {
+//             // Scroll to show bottom of block
+//             targetTop = bottom - metrics.viewHeight;
+//         }
+//         if (targetLeft !== metrics.viewLeft || targetTop !== metrics.viewTop) {
+//             const activeEl = document.activeElement as HTMLElement;
+//             if (wideBlock || tallBlock) {
+//                 this.workspace_.scroll(-targetLeft, -targetTop);
+//             } else {
+//                 this.workspace_.centerOnBlock(block.id);
+//             }
+
+//             if (activeEl) {
+//                 // Blockly.WidgetDiv.hide called in scroll is taking away focus.
+//                 // TODO: Review setFocused call in Blockly.WidgetDiv.hide.
+//                 activeEl.focus();
+//             }
+//         }
+//     }
+
+//     open() {
+//         super.open();
+//         this.inputElement_.select();
+//         Blockly.utils.dom.addClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
+//     }
+
+//     close() {
+//         super.close();
+//         Blockly.utils.dom.removeClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
+//     }
+
+// }

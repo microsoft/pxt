@@ -1,6 +1,12 @@
 import * as Blockly from "blockly/core";
 import { getDefinition } from "./utils";
 import { MsgKey } from "./msg";
+import { ADD_IMAGE_DATAURI, REMOVE_IMAGE_DATAURI } from "./svgs";
+
+export interface InlineSvgsExtensionBlock extends Blockly.Block {
+    ADD_IMAGE_DATAURI: string;
+    REMOVE_IMAGE_DATAURI: string;
+}
 
 const provider = new Blockly.zelos.ConstantProvider();
 
@@ -38,7 +44,12 @@ function textFieldColor(this: Blockly.Block) {
     }
 }
 
-const contextMenuEdit = {
+function inlineSvgs(this: InlineSvgsExtensionBlock) {
+    this.ADD_IMAGE_DATAURI = ADD_IMAGE_DATAURI;
+    this.REMOVE_IMAGE_DATAURI = REMOVE_IMAGE_DATAURI;
+}
+
+const contextMenuEditMixin = {
     customContextMenu: function (this: Blockly.Block, menuOptions: any[]) {
         const gtdOption = {
             enabled: true, // FIXME: !this.inDebugWorkspace(),
@@ -54,10 +65,58 @@ const contextMenuEdit = {
     },
 };
 
+const variableReporterMixin = {
+    /**
+     * Add menu option to create getter/setter block for this setter/getter.
+     * @param {!Array} options List of menu options to add to.
+     * @this Blockly.Block
+     */
+    customContextMenu: function (this: Blockly.BlockSvg, options: Blockly.ContextMenuRegistry.LegacyContextMenuOption[]) {
+        if (this.isCollapsed()) {
+            return;
+        }
+        const renameOption = {
+            text: Blockly.Msg.RENAME_VARIABLE,
+            enabled: true, // FIXME (riknoll) !this.inDebugWorkspace(),
+            callback: () => {
+                const workspace = this.workspace;
+                const variable = (this.getField('VAR') as Blockly.FieldVariable).getVariable();
+                Blockly.Variables.renameVariable(workspace, variable);
+            }
+        };
+        options.unshift(renameOption);
+        if (!this.isInFlyout) {
+            const variablesList = this.workspace.getVariablesOfType('');
+            // FIXME (riknoll)
+            // if (variablesList.length > 0) {
+            //     const separator = { separator: true };
+            //     options.unshift(separator);
+            // }
+            for (const variable of variablesList) {
+                const option = {
+                    enabled: true, // FIXME (riknoll) !this.inDebugWorkspace(),
+                    text: variable.name,
+                    callback: () => {
+                        var variableField = this.getField('VAR') as Blockly.FieldVariable;
+                        if (!variableField) {
+                          console.log("Tried to get a variable field on the wrong type of block.");
+                        }
+                        variableField.setValue(variable.getId());
+                    }
+                };
+
+                options.unshift(option);
+            }
+        }
+    }
+}
+
 // pxt-blockly: Register functions-related extensions
-Blockly.Extensions.registerMixin("function_contextmenu_edit", contextMenuEdit);
+Blockly.Extensions.registerMixin("function_contextmenu_edit", contextMenuEditMixin);
+Blockly.Extensions.registerMixin("contextMenu_variableReporter", variableReporterMixin);
 Blockly.Extensions.register("output_number", outputNumber);
 Blockly.Extensions.register("output_string", outputString);
 Blockly.Extensions.register("output_boolean", outputBoolean);
 Blockly.Extensions.register("output_array", outputArray);
 Blockly.Extensions.register("text_field_color", textFieldColor);
+Blockly.Extensions.register("inline-svgs", inlineSvgs);

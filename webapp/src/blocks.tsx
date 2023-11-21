@@ -1,3 +1,5 @@
+/// <reference path="../../localtypings/navigationController.d.ts"/>
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as Blockly from "blockly";
@@ -15,12 +17,15 @@ import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
 import * as pxtblockly from "../../newblocks";
+import { NavigationController } from "@blockly/keyboard-navigation";
+import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
+
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -44,8 +49,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected highlightedStatement: pxtc.LocationInfo;
 
     // Blockly plugins
-    protected navigationController: pxtblockly.NavigationController;
-    protected workspaceSearch: pxtblockly.WorkspaceSearch;
+    protected navigationController: NavigationController;
+    protected workspaceSearch: WorkspaceSearch;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
@@ -57,7 +62,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
-        const blockToAllBreakpoints: {[index: string]: pxtc.Breakpoint[]} = {};
+        const blockToAllBreakpoints: { [index: string]: pxtc.Breakpoint[] } = {};
 
         for (const breakpoint of breakpoints) {
             const blockId = pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: breakpoint.line, length: breakpoint.endLine - breakpoint.line });
@@ -1155,11 +1160,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let blocklyOptions = this.getDefaultOptions();
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         const hasCategories = (forceHasCategories != undefined) ? forceHasCategories :
-            (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories :
-                this.showCategories);
+            true
+        // FIXME (riknoll)
+        // (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories :
+        //     this.showCategories);
 
-        blocklyOptions.hasCategories = hasCategories;
-        blocklyOptions.renderer = "pxt";
+        // blocklyOptions.hasCategories = hasCategories;
+        // blocklyOptions.renderer = "pxt";
+        blocklyOptions.renderer = "zelos";
         if (!hasCategories) this.showCategories = false;
         // If we're using categories, show the category toolbox, otherwise show the flyout toolbox
         const toolbox = hasCategories ?
@@ -1183,10 +1191,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             comments: true,
             disable: false,
             readOnly: readOnly,
-            toolboxOptions: {
-                colour: theme.coloredToolbox,
-                inverted: theme.invertedToolbox
-            },
+            // FIXME (riknoll)
+            // toolboxOptions: {
+            //     colour: theme.coloredToolbox,
+            //     inverted: theme.invertedToolbox
+            // },
             move: {
                 scrollbars: true,
                 wheel: true
@@ -1356,7 +1365,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return this.parent.state.editorState.hasCategories;
         }
         const blocklyOptions = this.getBlocklyOptions(forceHasCategories);
-        return blocklyOptions.hasCategories;
+        // FIXME (riknoll)
+        // return blocklyOptions.hasCategories;
+        return true;
     }
 
     getBuiltinCategory(ns: string): toolbox.ToolboxCategory {
@@ -1629,69 +1640,73 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private swapFlyout(old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) {
-        // hide the old flyout
-        old.setVisible(false)
+        // // hide the old flyout
+        // old.setVisible(false)
 
-        // set the "current" flyout
-        this.editor.getToolbox().setFlyout(nw);
+        // // set the "current" flyout
+        // this.editor.getToolbox().setFlyout(nw);
 
-        // show the new flyout
-        nw.setVisible(true)
+        // // show the new flyout
+        // nw.setVisible(true)
 
-        // reflow if scale changed
-        const flyoutWs = nw.getWorkspace();
-        const targetWs = nw.targetWorkspace;
-        const scaleChange = (flyoutWs as any).oldScale_ !== targetWs.getScale();
-        if (scaleChange) {
-            nw.reflow();
-        }
+        // // reflow if scale changed
+        // const flyoutWs = nw.getWorkspace();
+        // const targetWs = nw.targetWorkspace;
+        // const scaleChange = (flyoutWs as any).oldScale_ !== targetWs.getScale();
+        // if (scaleChange) {
+        //     nw.reflow();
+        // }
     }
 
     private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
-        if ((!this.parent.state.editorState || this.parent.state.editorState.hasCategories !== false)
-            && this.editor.getToolbox()) {
-            const oldFlyout = this.editor.getFlyout() as Blockly.VerticalFlyout;
+        // if ((!this.parent.state.editorState || this.parent.state.editorState.hasCategories !== false)
+        //     && this.editor.getToolbox()) {
+        //     const oldFlyout = this.editor.getFlyout() as Blockly.VerticalFlyout;
 
-            // determine if the cached flyout exists and isn't stale
-            const hasCachedFlyout = flyoutName in this.flyouts
-            const cachedBlocksHash = hasCachedFlyout ? this.flyouts[flyoutName].blocksHash : 0;
-            const currentBlocksHash = this.hashBlocks(xmlList);
-            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !!cachedBlocksHash
+        //     // determine if the cached flyout exists and isn't stale
+        //     const hasCachedFlyout = flyoutName in this.flyouts
+        //     const cachedBlocksHash = hasCachedFlyout ? this.flyouts[flyoutName].blocksHash : 0;
+        //     const currentBlocksHash = this.hashBlocks(xmlList);
+        //     const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !!cachedBlocksHash
 
-            const mkFlyout = () => {
-                const workspace = this.editor.getToolbox().getWorkspace();
-                const oldSvg = oldFlyout.svgGroup_;
-                const flyout = Blockly.Functions.createFlyout(workspace, oldSvg)
-                return flyout as Blockly.VerticalFlyout;
-            }
+        //     const mkFlyout = () => {
+        //         const workspace = this.editor.getToolbox().getWorkspace();
+        //         const oldSvg = oldFlyout.svgGroup_;
+        //         const flyout = createFlyout(workspace, oldSvg)
+        //         return flyout as Blockly.VerticalFlyout;
+        //     }
 
-            // get the flyout from the cache or make a new one
-            let newFlyout: Blockly.VerticalFlyout;
-            if (!hasCachedFlyout) {
-                newFlyout = mkFlyout();
-                this.flyouts[flyoutName] = { flyout: newFlyout, blocksHash: 0 };
-            } else {
-                newFlyout = this.flyouts[flyoutName].flyout;
-            }
+        //     // get the flyout from the cache or make a new one
+        //     let newFlyout: Blockly.VerticalFlyout;
+        //     if (!hasCachedFlyout) {
+        //         newFlyout = mkFlyout();
+        //         this.flyouts[flyoutName] = { flyout: newFlyout, blocksHash: 0 };
+        //     } else {
+        //         newFlyout = this.flyouts[flyoutName].flyout;
+        //     }
 
-            // update the blocks hash
-            this.flyouts[flyoutName].blocksHash = currentBlocksHash;
+        //     // update the blocks hash
+        //     this.flyouts[flyoutName].blocksHash = currentBlocksHash;
 
-            // switch to the new flyout
-            this.swapFlyout(oldFlyout, newFlyout);
+        //     // switch to the new flyout
+        //     this.swapFlyout(oldFlyout, newFlyout);
 
-            // if the flyout contents have changed, recreate the blocks
-            if (!isFlyoutUpToDate) {
-                newFlyout.show(xmlList);
-            }
+        //     // if the flyout contents have changed, recreate the blocks
+        //     if (!isFlyoutUpToDate) {
+        //         newFlyout.show(xmlList);
+        //     }
 
-            newFlyout.scrollToStart();
-            if (this.parent.state?.accessibleBlocks) newFlyout.svgGroup_.focus();
-        } else if ((this.editor as any).flyout_) {
-            (this.editor as any).flyout_.show(xmlList);
-            (this.editor as any).flyout_.scrollToStart();
-        }
+        //     newFlyout.scrollToStart();
+        //     // FIXME (riknoll)
+        //     // if (this.parent.state?.accessibleBlocks) newFlyout.svgGroup_.focus();
+        // } else if ((this.editor as any).flyout_) {
+        //     (this.editor as any).flyout_.show(xmlList);
+        //     (this.editor as any).flyout_.scrollToStart();
+        // }
+
+        this.editor.getFlyout().show(xmlList);
+        this.editor.getFlyout().scrollToStart();
     }
 
     // For editors that have no toolbox
@@ -1864,8 +1879,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setblock.appendChild(value);
                         }
                         blockXml = setblock;
-                    } else if(fn.attributes.duplicateWithToolboxParent) {
-                        const blockWithParentFn = {...fn, attributes: {...fn.attributes, toolboxParent: fn.attributes.duplicateWithToolboxParent, toolboxParentArgument: fn.attributes.duplicateWithToolboxParentArgument}};
+                    } else if (fn.attributes.duplicateWithToolboxParent) {
+                        const blockWithParentFn = { ...fn, attributes: { ...fn.attributes, toolboxParent: fn.attributes.duplicateWithToolboxParent, toolboxParentArgument: fn.attributes.duplicateWithToolboxParentArgument } };
                         const duplicatedBlock = pxtblockly.createToolboxBlock(this.blockInfo, blockWithParentFn, comp);
                         return [duplicatedBlock, blockXml];
                     }
@@ -1927,7 +1942,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 enableBreakpoint(block, debugging);
             }
         });
-        this.editor.setDebugModeOption(debugging);
+
+        // FIXME (riknoll)
+        // this.editor.setDebugModeOption(debugging);
     }
 }
 
@@ -1967,3 +1984,38 @@ function isBreakpointSet(block: Blockly.BlockSvg) {
     // FIXME (riknoll)
     return false;
 }
+
+function createFlyout(workspace: Blockly.WorkspaceSvg, siblingNode: Element) {
+    let flyoutWorkspaceOptions = new Blockly.Options(
+        /** @type {!Blockly.BlocklyOptions} */
+        ({
+            'scrollbars': true,
+            // 'disabledPatternId': workspace.options.disabledPatternId,
+            'parentWorkspace': workspace,
+            'rtl': workspace.RTL,
+            'oneBasedIndex': workspace.options.oneBasedIndex,
+            'horizontalLayout': workspace.horizontalLayout,
+            // 'toolboxPosition': workspace.options.toolboxPosition,
+            // 'zoomOptions': workspace.options.zoomOptions,
+            'renderer': workspace.options.renderer,
+            'rendererOverrides': workspace.options.rendererOverrides,
+            // // pxt-blockly: pass the newFunctions option
+            // 'newFunctions': workspace.options.newFunctions,
+            'move': {
+                'scrollbars': true,
+            }
+        }));
+    let newFlyout;
+    if (flyoutWorkspaceOptions.horizontalLayout) {
+        newFlyout = new Blockly.HorizontalFlyout(flyoutWorkspaceOptions);
+    } else {
+        newFlyout = new Blockly.VerticalFlyout(flyoutWorkspaceOptions);
+    }
+    let newSvg = newFlyout.createDom('svg');
+    if (siblingNode) {
+        siblingNode.insertAdjacentElement("afterend", newSvg);
+    }
+    newFlyout.init(workspace);
+
+    return newFlyout;
+};

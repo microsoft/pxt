@@ -1,8 +1,30 @@
 import * as Blockly from "blockly";
 import { createFlyoutGroupLabel, createFlyoutHeadingLabel, mkVariableFieldBlock } from "../toolbox";
 import { installBuiltinHelpInfo, setBuiltinHelpInfo } from "../help";
+import { provider } from "../constants";
 
 export function initVariables() {
+
+    Blockly.defineBlocksWithJsonArray([
+        {
+            "type": "variables_get_reporter",
+            "message0": "%1",
+            "args0": [
+              {
+                "type": "field_variable",
+                "name": "VAR",
+                "variable": "%{BKY_VARIABLES_DEFAULT_NAME}"
+              }
+            ],
+            "output": null,
+            "colour": "%{BKY_VARIABLES_HUE}",
+            "outputShape": provider.SHAPES.ROUND,
+            "helpUrl": "%{BKY_VARIABLES_GET_HELPURL}",
+            "tooltip": "%{BKY_VARIABLES_GET_TOOLTIP}",
+            "extensions": ["contextMenu_variableReporter"]
+          }
+    ]);
+
     // We only give types to "special" variables like enum members and we don't
     // want those showing up in the variable dropdown so filter the variables
     // that show up to only ones that have an empty type

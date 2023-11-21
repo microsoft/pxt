@@ -81,7 +81,7 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
     const typeInfo = typeDefaults[isArray || p.type];
 
     shadow.setAttribute("type", shadowId || (isArray ? 'lists_create_with' : typeInfo && typeInfo.block || p.type));
-    shadow.setAttribute("colour", (Blockly as any).Colours.textField);
+    shadow.setAttribute("colour", "#fff");
 
     if (isArray) {
         // if an array of booleans, numbers, or strings
