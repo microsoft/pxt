@@ -929,11 +929,6 @@ function initContextMenu() {
         if (onShowContextMenu)
             onShowContextMenu(this, options);
     };
-
-    // Get rid of bumping behavior
-    // (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () { }
-    Blockly.Extensions.unregister("logic_compare");
-    Blockly.Extensions.register("logic_compare", function () {})
 }
 
 function initComments() {

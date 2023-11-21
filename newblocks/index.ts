@@ -1,5 +1,6 @@
 export * from "./plugins/functions";
 export * from "./plugins/arrays";
+export * from "./plugins/logic";
 export * from "./compiler/compiler";
 export * from "./compiler/environment";
 export * from "./loader";
