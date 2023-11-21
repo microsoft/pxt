@@ -7,6 +7,7 @@ import { FieldTextInput } from "./field_textinput";
 import { FieldCustom, FieldCustomConstructor } from "./field_utils";
 import { FieldSpriteEditor } from "./field_sprite";
 import { FieldGridPicker } from "./field_gridpicker";
+import { FieldColorNumber } from "./field_colour";
 
 interface FieldEditorOptions {
     field: FieldCustomConstructor;
@@ -30,7 +31,7 @@ export function initFieldEditors() {
     // registerFieldEditor('toggledownup', FieldToggleDownUp);
     // registerFieldEditor('togglehighlow', FieldToggleHighLow);
     // registerFieldEditor('togglewinlose', FieldToggleWinLose);
-    // registerFieldEditor('colornumber', FieldColorNumber);
+    registerFieldEditor('colornumber', FieldColorNumber);
     // registerFieldEditor('images', FieldImages);
     registerFieldEditor('sprite', FieldSpriteEditor);
     registerFieldEditor('animation', FieldAnimationEditor);
