@@ -5,6 +5,8 @@ import { FieldAnimationEditor } from "./field_animation";
 import { FieldTilemap } from "./field_tilemap";
 import { FieldTextInput } from "./field_textinput";
 import { FieldCustom, FieldCustomConstructor } from "./field_utils";
+import { FieldSpriteEditor } from "./field_sprite";
+import { FieldGridPicker } from "./field_gridpicker";
 
 interface FieldEditorOptions {
     field: FieldCustomConstructor;
@@ -16,7 +18,7 @@ let registeredFieldEditors: pxt.Map<FieldEditorOptions> = {};
 export function initFieldEditors() {
     registerFieldEditor('text', FieldTextInput);
     // registerFieldEditor('note', FieldNote);
-    // registerFieldEditor('gridpicker', FieldGridPicker);
+    registerFieldEditor('gridpicker', FieldGridPicker);
     // registerFieldEditor('textdropdown', FieldTextDropdown);
     // registerFieldEditor('numberdropdown', FieldNumberDropdown);
     // registerFieldEditor('imagedropdown', FieldImageDropdown);
@@ -30,20 +32,20 @@ export function initFieldEditors() {
     // registerFieldEditor('togglewinlose', FieldToggleWinLose);
     // registerFieldEditor('colornumber', FieldColorNumber);
     // registerFieldEditor('images', FieldImages);
-    // registerFieldEditor('sprite', FieldSpriteEditor);
+    registerFieldEditor('sprite', FieldSpriteEditor);
     registerFieldEditor('animation', FieldAnimationEditor);
     registerFieldEditor('tilemap', FieldTilemap);
-//     registerFieldEditor('tileset', FieldTileset);
-//     registerFieldEditor('speed', FieldSpeed);
-//     registerFieldEditor('turnratio', FieldTurnRatio);
-//     registerFieldEditor('protractor', FieldProtractor);
-//     registerFieldEditor('position', FieldPosition);
-//     registerFieldEditor('melody', FieldCustomMelody);
-//     registerFieldEditor('soundeffect', FieldSoundEffect);
-//     registerFieldEditor('autocomplete', FieldAutoComplete);
-//     if (pxt.appTarget.appTheme?.songEditor) {
-//         registerFieldEditor('musiceditor', FieldMusicEditor);
-//     }
+    // registerFieldEditor('tileset', FieldTileset);
+    // registerFieldEditor('speed', FieldSpeed);
+    // registerFieldEditor('turnratio', FieldTurnRatio);
+    // registerFieldEditor('protractor', FieldProtractor);
+    // registerFieldEditor('position', FieldPosition);
+    // registerFieldEditor('melody', FieldCustomMelody);
+    // registerFieldEditor('soundeffect', FieldSoundEffect);
+    // registerFieldEditor('autocomplete', FieldAutoComplete);
+    // if (pxt.appTarget.appTheme?.songEditor) {
+    //     registerFieldEditor('musiceditor', FieldMusicEditor);
+    // }
 }
 
 export function registerFieldEditor(selector: string, field: FieldCustomConstructor, validator?: any) {
