@@ -66,6 +66,23 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
         return field;
     }
 
+    let paramType = pxt.Util.lookup(info.apis.byQName, p.type)
+
+    const defName = p.definitionName;
+    const actName = p.actualName;
+
+    let isEnum = paramType?.kind == pxtc.SymbolKind.Enum
+    let isFixed = paramType && !!paramType.attributes.fixedInstances && !p.shadowBlockId;
+    // let isConstantShim = !!fn.attributes.constantShim;
+    let isCombined = p.type == "@combined@"
+
+    if (!shadowId && (isEnum || isFixed || isCombined)) {
+        const field = document.createElement("field");
+        field.setAttribute("name", p.definitionName);
+        field.appendChild(document.createTextNode(defaultV));
+        return field;
+    }
+
     const isVariable = shadowId == "variables_get";
     const isText = shadowId == "text";
 
