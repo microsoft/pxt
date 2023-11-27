@@ -443,7 +443,7 @@ namespace pxt.workspace {
     }
 
     function diffInterval() {
-        if (pxt.appTarget?.appTheme.timeMachineDiffInterval != undefined) {
+        if (pxt.appTarget?.appTheme?.timeMachineDiffInterval != undefined) {
             return pxt.appTarget.appTheme.timeMachineDiffInterval;
         }
 
@@ -451,7 +451,7 @@ namespace pxt.workspace {
     }
 
     function snapshotInterval() {
-        if (pxt.appTarget?.appTheme.timeMachineSnapshotInterval != undefined) {
+        if (pxt.appTarget?.appTheme?.timeMachineSnapshotInterval != undefined) {
             return pxt.appTarget.appTheme.timeMachineSnapshotInterval;
         }
 
