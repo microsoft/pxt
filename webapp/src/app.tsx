@@ -5227,16 +5227,16 @@ function initPacketIO() {
         });
 
     window.addEventListener('message', (ev: MessageEvent) => {
-            const msg = ev.data
-            if (msg.type === 'messagepacket'
-            && msg.sender !== "packetio"
-            && pxt.appTarget.simulator?.messageSimulators?.[msg.channel]
-            && msg.channel === pxt.HF2.CUSTOM_EV_JACDAC)
-            pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
-                .then(() => { }, err => {
-                            core.errorNotification(lf("{0}: {1}", msg.channel, err.message));
-                        });
-        }, false);
+        const msg = ev.data
+        if (msg.type === 'messagepacket'
+        && msg.sender !== "packetio"
+        && pxt.appTarget.simulator?.messageSimulators?.[msg.channel]
+        && msg.channel === pxt.HF2.CUSTOM_EV_JACDAC)
+        pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
+            .then(() => { }, err => {
+                        core.errorNotification(lf("{0}: {1}", msg.channel, err.message));
+                    });
+    }, false);
 }
 
 function initSerial() {
