@@ -738,6 +738,7 @@ declare namespace ts.pxtc {
         flashChecksumAddr?: number;
         ramSize?: number;
         patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies
+        pyPatches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies
         openocdScript?: string;
         uf2Family?: string;
         onStartText?: boolean;

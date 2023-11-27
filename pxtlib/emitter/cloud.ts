@@ -125,6 +125,16 @@ namespace pxt.Cloud {
         })
     }
 
+    export async function downloadBuiltSimJsInfoAsync(id: string): Promise<pxtc.BuiltSimJsInfo> {
+        const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || "";
+        const url = pxt.U.stringifyQueryString(id + "/js", { v: "v" + targetVersion }) + (id.startsWith("S") ? `&time=${Date.now()}` : "");
+        const resp = await privateRequestAsync({
+            url,
+            forceLiveEndpoint: true,
+        });
+        return resp.json;
+    }
+
     export async function markdownAsync(docid: string, locale?: string, propagateExceptions?: boolean): Promise<string> {
         // 1h check on markdown content if not on development server
         const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;

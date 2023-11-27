@@ -18,10 +18,10 @@ export type AppState = {
     kioskCodeExpiration?: number;
     notifications: Notifications;
     modal?: ModalConfig;
-    clean: boolean;
-    locked: boolean;
-    time?: string;
-    volume?: number;
+    clean: boolean; // if true, don't load built-in games
+    locked: boolean; // if true, hide the add games button
+    time?: string; // lifetime of kiosk code, in minutes
+    volume?: number; // volume level of kiosk UI sounds, in [0..1]
     targetConfig?: pxt.TargetConfig;
 };
 
