@@ -5234,8 +5234,8 @@ function initPacketIO() {
             && msg.channel === pxt.HF2.CUSTOM_EV_JACDAC)
             pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
                 .then(() => { }, err => {
-                            core.errorNotification(lf("{0}: {1}", msg.channel, err.message));
-                        });
+                    core.errorNotification(lf("{0}: {1}", msg.channel, err.message));
+                });
     }, false);
 }
 
