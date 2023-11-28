@@ -7,6 +7,7 @@ import {
     ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE,
 } from "../constants";
 import { MsgKey } from "../msg";
+import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "../../duplicateOnDrag";
 
 type ArgumentReporterMixinType = typeof ARGUMENT_REPORTER_MIXIN;
 
@@ -16,9 +17,24 @@ export type ArgumentReporterBlock = Blockly.Block & ArgumentReporterMixin;
 
 const ARGUMENT_REPORTER_MIXIN = {
     typeName_: "",
+    duplicateOnDrag_: false,
 
     getTypeName(this: ArgumentReporterBlock) {
         return this.typeName_;
+    },
+
+    mutationToDom(this: ArgumentReporterBlock) {
+        const container = Blockly.utils.xml.createElement("mutation");
+        if (this.duplicateOnDrag_) {
+            container.setAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY, "true");
+        }
+        return container;
+    },
+
+    domToMutation(this: ArgumentReporterBlock, xmlElement: Element) {
+        if (xmlElement.hasAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
+            this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
+        }
     },
 };
 
@@ -119,7 +135,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE] = {
     },
 
     mutationToDom(this: ArgumentReporterBlock) {
-        const container = Blockly.utils.xml.createElement("mutation");
+        const container = ARGUMENT_REPORTER_MIXIN.mutationToDom.call(this);
         container.setAttribute("typename", this.typeName_);
         return container;
     },
@@ -127,5 +143,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE] = {
     domToMutation(this: ArgumentReporterBlock, xmlElement: Element) {
         this.typeName_ = xmlElement.getAttribute("typename")!;
         this.setOutput(true, this.typeName_);
+
+        ARGUMENT_REPORTER_MIXIN.domToMutation.call(this, xmlElement);
     },
 };

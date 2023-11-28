@@ -2,6 +2,7 @@
 
 import * as Blockly from "blockly";
 import { flyoutCategory, getAllFunctionDefinitionBlocks } from "./plugins/functions";
+import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "./plugins/duplicateOnDrag";
 
 const primitiveTypeRegex = /^(string|number|boolean)$/;
 
@@ -363,10 +364,11 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
                 const shadow = document.createElement("shadow");
                 shadow.setAttribute("type", blockType);
 
+                const mutation = document.createElement("mutation");
+                shadow.appendChild(mutation);
+                mutation.setAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY, "true");
                 if (useReporter && blockType === "argument_reporter_custom") {
-                    const mutation = document.createElement("mutation");
                     mutation.setAttribute("typename", arg.type);
-                    shadow.appendChild(mutation);
                 }
 
                 const field = document.createElement("field");

@@ -1119,8 +1119,11 @@ ${output}</xml>`;
         }
 
         function getDraggableVariableBlock(valueName: string, varName: string) {
-            return mkValue(valueName,
-                getFieldBlock("variables_get_reporter", "VAR", varName, true), "variables_get_reporter");
+            const fieldBlock = getFieldBlock("variables_get_reporter", "VAR", varName, true);
+            fieldBlock.mutation = {
+                "duplicateondrag": "true"
+            };
+            return mkValue(valueName, fieldBlock, "variables_get_reporter", fieldBlock.mutation);
         }
 
         function mkDraggableReporterValue(valueName: string, varName: string, varType: string) {

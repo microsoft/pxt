@@ -20,9 +20,10 @@ import { FieldAutocapitalizeTextInput } from "../fields/fieldAutocapitalizeTextI
 import { MsgKey } from "../msg";
 import { FunctionManager } from "../functionManager";
 import { COLLAPSE_IMAGE_DATAURI } from "../svgs";
+import { ArgumentReporterBlock } from "./argumentReporterBlocks";
 
 interface FunctionDefinitionMixin extends CommonFunctionMixin {
-    createArgumentReporter_(arg: FunctionArgument): Blockly.Block;
+    createArgumentReporter_(arg: FunctionArgument): ArgumentReporterBlock;
     customContextMenu(menuOptions: Blockly.ContextMenuRegistry.LegacyContextMenuOption[]): void;
     makeEditOption(): Blockly.ContextMenuRegistry.LegacyContextMenuOption;
     makeCallOption(): Blockly.ContextMenuRegistry.LegacyContextMenuOption;
@@ -46,12 +47,14 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
         if (connectionMap && oldBlock && !oldBlock.isDisposed()) {
             // Update the text if needed. The old argument reporter is the same type,
             // and on the same input, but the argument's display name may have changed.
-            argumentReporter = oldBlock;
+            argumentReporter = oldBlock as ArgumentReporterBlock;
             argumentReporter.setFieldValue(arg.name, "VALUE");
             delete connectionMap[input.name];
         } else {
             argumentReporter = this.createArgumentReporter_(arg);
         }
+
+        argumentReporter.duplicateOnDrag_ = true;
 
         // Attach the block.
         input.connection!.connect(argumentReporter.outputConnection!);
@@ -71,7 +74,7 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
         Blockly.Events.enable();
     },
 
-    createArgumentReporter_: function (this: FunctionDefinitionBlock, arg: FunctionArgument) {
+    createArgumentReporter_: function (this: FunctionDefinitionBlock, arg: FunctionArgument): ArgumentReporterBlock {
         let blockType = "";
         switch (arg.type) {
             case "boolean":
@@ -97,7 +100,6 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
             } else {
                 newBlock = this.workspace.newBlock(blockType);
             }
-            newBlock.setShadow(true);
             newBlock.setFieldValue(arg.name, "VALUE");
             if (!this.isInsertionMarker() && newBlock instanceof Blockly.BlockSvg) {
                 newBlock.initSvg();
@@ -106,7 +108,7 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
         } finally {
             Blockly.Events.enable();
         }
-        return newBlock;
+        return newBlock as ArgumentReporterBlock;
     },
 
     customContextMenu: function (this: FunctionDefinitionBlock, menuOptions: Blockly.ContextMenuRegistry.LegacyContextMenuOption[]) {

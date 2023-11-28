@@ -3,11 +3,12 @@
 import * as Blockly from "blockly"
 import { installBuiltinHelpInfo } from "../help";
 import { FunctionDefinitionBlock, FunctionManager } from "../plugins/functions";
-import { createFlyoutGroupLabel, createFlyoutHeadingLabel, mkReturnStatementBlock } from "../toolbox";
-import { getAllFunctionDefinitionBlocks } from "../plugins/functions";
+import { createFlyoutHeadingLabel } from "../toolbox";
 import { FieldProcedure } from "../fields/field_procedure";
 import { cachedBlockInfo, setOutputCheck } from "../loader";
 import { domToWorkspaceNoEvents } from "../importer";
+
+import { DuplicateOnDragBlockDragger } from "../plugins/duplicateOnDrag";
 
 export function initFunctions() {
     const msg = Blockly.Msg;

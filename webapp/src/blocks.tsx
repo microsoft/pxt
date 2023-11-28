@@ -26,6 +26,8 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 
+import { DuplicateOnDragBlockDragger, DuplicateOnDragConnectionChecker } from "../../newblocks/plugins/duplicateOnDrag";
+
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -603,6 +605,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.VIEWPORT_CHANGE,
                 Blockly.Events.BUBBLE_OPEN
             ];
+
+            this.hideFlyout();
 
             if ((ignoredChanges.indexOf(ev.type) === -1)
                 || this.markIncomplete) {
@@ -1196,6 +1200,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             //     colour: theme.coloredToolbox,
             //     inverted: theme.invertedToolbox
             // },
+            plugins: {
+                'blockDragger': DuplicateOnDragBlockDragger,
+                'connectionChecker': DuplicateOnDragConnectionChecker
+            },
             move: {
                 scrollbars: true,
                 wheel: true
@@ -1828,9 +1836,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         comp.handlerArgs.forEach(arg => {
                             const getterblock = Blockly.utils.xml.textToDom(`
                                 <value name="HANDLER_${arg.name}">
-                                <shadow type="variables_get_reporter">
+                                <block type="variables_get_reporter">
                                 <field name="VAR" variabletype="">${arg.name}</field>
-                                </shadow>
+                                <mutation duplicateondrag="true"></mutation>
+                                </block>
                                 </value>`);
                             blockXml.appendChild(getterblock);
                         });
