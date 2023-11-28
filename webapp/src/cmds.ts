@@ -342,7 +342,7 @@ function applyExtensionResult() {
     }
     if (res.blocklyPatch) {
         log(`extension blockly patch`);
-        pxtblockly.setExtensionBlocklyPatch(res.blocklyPatch);
+        pxtblockly.external.setExtensionBlocklyPatch(res.blocklyPatch);
     }
     if (res.webUsbPairDialogAsync) {
         log(`extension webusb pair dialog`);

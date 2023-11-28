@@ -2,6 +2,7 @@
 import * as Blockly from "blockly";
 import { registerWorkspaceItems } from "./workspaceItems";
 import { onWorkspaceContextMenu } from "../external";
+import { registerBlockitems } from "./blockItems";
 
 export function initContextMenu() {
     const msg = Blockly.Msg;
@@ -23,6 +24,7 @@ export function initContextMenu() {
     msg.HELP = lf("Help");
 
     registerWorkspaceItems();
+    registerBlockitems();
 }
 
 export function setupWorkspaceContextMenu(workspace: Blockly.WorkspaceSvg) {

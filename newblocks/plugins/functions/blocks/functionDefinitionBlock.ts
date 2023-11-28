@@ -166,19 +166,21 @@ Blockly.Blocks[FUNCTION_DEFINITION_BLOCK_TYPE] = {
         this.setStatements_(true);
         this.setInputsInline(true);
 
-        const image = COLLAPSE_IMAGE_DATAURI;
-        this.appendDummyInput("function_collapse").appendField(
-            new Blockly.FieldImage(
-                image,
-                24,
-                24,
-                "",
-                () => {
-                    this.setCollapsed(true);
-                },
-                false
-            )
-        );
+        if (this.workspace.options.collapse) {
+            const image = COLLAPSE_IMAGE_DATAURI;
+            this.appendDummyInput("function_collapse").appendField(
+                new Blockly.FieldImage(
+                    image,
+                    24,
+                    24,
+                    "",
+                    () => {
+                        this.setCollapsed(true);
+                    },
+                    false
+                )
+            );
+        }
     },
 };
 
