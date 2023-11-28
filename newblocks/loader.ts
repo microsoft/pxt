@@ -19,10 +19,10 @@ import { FieldStyledLabel } from "./fields/field_styledlabel";
 import { FieldUserEnum } from "./fields/field_userenum";
 import { createFieldEditor, initFieldEditors } from "./fields/fieldEditorRegistry";
 import { ContextMenuOption } from "blockly/core/contextmenu_registry";
-import { openHelpUrl, promptTranslateBlock } from "./external";
+import { promptTranslateBlock } from "./external";
 import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";
-import { flow, setCollapsedAll, screenshotEnabled, screenshotAsync } from "./layout";
+import { initContextMenu } from "./contextMenu";
 
 
 interface BlockDefinition {
@@ -602,19 +602,6 @@ function init(blockInfo: pxtc.BlocksInfo) {
     initDrag();
     initComments();
     initTooltip();
-
-    // FIXME (riknoll)
-    // PXT is in charge of disabling, don't record undo for disabled events
-    // (Blockly.Block as any).prototype.setEnabled = function (enabled: any) {
-    //     if (this.disabled == enabled) {
-    //         let oldRecordUndo = (Blockly as any).Events.recordUndo;
-    //         (Blockly as any).Events.recordUndo = false;
-    //         Blockly.Events.fire(new Blockly.Events.BlockChange(
-    //             this, 'disabled', null, this.disabled, !enabled));
-    //         (Blockly as any).Events.recordUndo = oldRecordUndo;
-    //         this.disabled = !enabled;
-    //     }
-    // };
 }
 
 
@@ -752,184 +739,14 @@ function initDrag() {
     }
 }
 
-function initContextMenu() {
-    // Translate the context menu for blocks.
-    const msg = Blockly.Msg;
-    msg.DUPLICATE_BLOCK = lf("{id:block}Duplicate");
-    msg.DUPLICATE_COMMENT = lf("Duplicate Comment");
-    msg.REMOVE_COMMENT = lf("Remove Comment");
-    msg.ADD_COMMENT = lf("Add Comment");
-    msg.EXTERNAL_INPUTS = lf("External Inputs");
-    msg.INLINE_INPUTS = lf("Inline Inputs");
-    msg.EXPAND_BLOCK = lf("Expand Block");
-    msg.COLLAPSE_BLOCK = lf("Collapse Block");
-    msg.ENABLE_BLOCK = lf("Enable Block");
-    msg.DISABLE_BLOCK = lf("Disable Block");
-    msg.DELETE_BLOCK = lf("Delete Block");
-    msg.DELETE_X_BLOCKS = lf("Delete Blocks");
-    msg.DELETE_ALL_BLOCKS = lf("Delete All Blocks");
-    msg.HELP = lf("Help");
-
-    // inject hook to handle openings docs
-    Blockly.BlockSvg.prototype.showHelp = function (this: Blockly.BlockSvg) {
-        const url = typeof this.helpUrl === "function" ? this.helpUrl() : this.helpUrl;
-        if (url) openHelpUrl(url);
-    };
-
-    // Use Blockly hook to customize context menu
-    Blockly.WorkspaceSvg.prototype.configureContextMenu = function (this: Blockly.WorkspaceSvg, options: ContextMenuOption[], e: any) {
-        if (this.options.readOnly || this.isFlyout) {
-            return;
-        }
-
-        // Clear default Blockly options
-        options.length = 0;
-        let topBlocks = this.getTopBlocks(true);
-        let eventGroup = Blockly.utils.idGenerator.genUid();
-        let topComments = this.getTopComments();
-        let ws = this;
-
-        // FIXME
-        // const editable = !(this.options.debugMode || this.options.readOnly);
-        const editable = !this.options.readOnly;
-
-        // Option to add a workspace comment.
-        if (this.options.comments && !pxt.BrowserUtils.isIE()) {
-            const commentOption = Blockly.ContextMenu.workspaceCommentOption(ws, e);
-            commentOption.enabled = commentOption.enabled && editable;
-            options.push(commentOption);
-        }
-
-        const scope = {
-            workspace: this
-        };
-
-
-        // Option to delete all blocks.
-        // Count the number of blocks that are deletable.
-        let deleteList = (Blockly.WorkspaceSvg as any).buildDeleteList_(topBlocks);
-        let deleteCount = 0;
-        for (let i = 0; i < deleteList.length; i++) {
-            if (!deleteList[i].isShadow()) {
-                deleteCount++;
-            }
-        }
-
-        // Add a little animation to deleting.
-        const DELAY = 10;
-        function deleteNext() {
-            Blockly.Events.setGroup(eventGroup);
-            let block = deleteList.shift();
-            if (block) {
-                if (block.workspace) {
-                    block.dispose(false, true);
-                    setTimeout(deleteNext, DELAY);
-                } else {
-                    deleteNext();
-                }
-            }
-            Blockly.Events.setGroup(false);
-        }
-
-        const deleteOption = {
-            text: deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
-            enabled: deleteCount > 0 && editable,
-            scope,
-            weight: options.length,
-            callback: () => {
-                pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
-                if (deleteCount < 2) {
-                    deleteNext();
-                } else {
-                    Blockly.dialog.confirm(lf("Delete all {0} blocks?", deleteCount), (ok) => {
-                        if (ok) {
-                            deleteNext();
-                        }
-                    });
-                }
-            }
-        }
-        options.push(deleteOption);
-
-        const formatCodeOption = {
-            text: lf("Format Code"),
-            enabled: editable,
-            scope,
-            weight: options.length,
-            callback: () => {
-                pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
-                flow(this, { useViewWidth: true });
-            }
-        }
-        options.push(formatCodeOption);
-
-        if (pxt.appTarget.appTheme.blocksCollapsing) {
-            // Option to collapse all top-level (enabled) blocks
-            const collapseAllOption = {
-                text: lf("Collapse Blocks"),
-                enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && !b.isCollapsed()) && editable,
-                scope,
-                weight: options.length,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
-                    setCollapsedAll(this, true);
-                }
-            }
-            options.push(collapseAllOption);
-
-            // Option to expand all collapsed blocks
-            const expandAllOption = {
-                text: lf("Expand Blocks"),
-                enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && b.isCollapsed()) && editable,
-                scope,
-                weight: options.length,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
-                    setCollapsedAll(this, false);
-                }
-            }
-            options.push(expandAllOption);
-        }
-
-        if (screenshotEnabled()) {
-            const screenshotOption = {
-                text: lf("Snapshot"),
-                enabled: topBlocks.length > 0 || topComments.length > 0,
-                scope,
-                weight: options.length,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
-                    screenshotAsync(this, null, pxt.appTarget.appTheme?.embedBlocksInSnapshot)
-                        .then((uri) => {
-                            if (pxt.BrowserUtils.isSafari())
-                                uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-                            pxt.BrowserUtils.browserDownloadDataUri(
-                                uri,
-                                `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
-                        });
-                },
-            }
-            options.push(screenshotOption);
-        }
-
-        if (pxt.appTarget.appTheme.workspaceSearch) {
-            options.push({
-                text: lf("Find..."),
-                enabled: topBlocks.length > 0,
-                scope,
-                weight: options.length,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.workspacesearch", undefined, { interactiveConsent: true });
-                    (this.getComponentManager()?.getComponent("workspaceSearch") as any)?.open();
-                }
-            });
-        }
-
-        // custom options...
-        if (onShowContextMenu)
-            onShowContextMenu(this, options);
-    };
-}
+// function initContextMenu() {
+//     // inject hook to handle openings docs
+//     // FIXME (riknoll) remove monkey patch
+//     Blockly.BlockSvg.prototype.showHelp = function (this: Blockly.BlockSvg) {
+//         const url = typeof this.helpUrl === "function" ? this.helpUrl() : this.helpUrl;
+//         if (url) openHelpUrl(url);
+//     };
+// }
 
 function initComments() {
     Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';

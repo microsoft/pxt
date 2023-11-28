@@ -248,6 +248,13 @@ function setChildrenEnabled(block: Blockly.Block, enabled: boolean) {
 }
 
 function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
+    // Since enabling/disabling blocks is automatic, we don't want this showing up on the undo/redo stack
+    const eventsEnabled = Blockly.Events.isEnabled();
+
+    if (eventsEnabled) {
+        Blockly.Events.disable();
+    }
+
     // unset disabled
     allBlocks.forEach(b => b.setEnabled(true));
 
@@ -286,6 +293,10 @@ function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlo
             }
         }
     });
+
+    if (eventsEnabled) {
+        Blockly.Events.enable();
+    }
 }
 
 function compileStatementBlock(e: Environment, b: Blockly.Block): pxt.blocks.JsNode[] {

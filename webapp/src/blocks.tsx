@@ -455,7 +455,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         if (pxt.Util.isTranslationMode()) {
-            pxtblockly.setPromptTranslateBlock(dialogs.promptTranslateBlock);
+            pxtblockly.external.setPromptTranslateBlock(dialogs.promptTranslateBlock);
         }
     }
 
@@ -955,7 +955,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             });
                     })
 
-                    pxtblockly.setOpenHelpUrl((url: string) => {
+                    pxtblockly.external.setOpenHelpUrl((url: string) => {
                         pxt.tickEvent("blocks.help", { url }, { interactiveConsent: true });
                         const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
                         if (m) {

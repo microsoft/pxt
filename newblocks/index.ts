@@ -12,7 +12,14 @@ export * from "./toolbox";
 export * from "./fields";
 export * from "./sourceMap";
 export * from "./importer";
-export * from "./external";
 export * from "./diff";
 export * from "./validation";
 export * from "./legacyMutations";
+
+import * as contextMenu from "./contextMenu";
+import * as external from "./external";
+
+export {
+    contextMenu,
+    external,
+};

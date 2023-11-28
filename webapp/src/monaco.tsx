@@ -1211,7 +1211,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     for (const fn of info.symbols) {
                         const url = pxt.blocks.getHelpUrl(fn);
                         if (url) {
-                            pxtblockly.openHelpUrl(url);
+                            pxtblockly.external.openHelpUrl(url);
                             return;
                         }
                     }

@@ -1,3 +1,5 @@
+import * as Blockly from "blockly";
+
 let _promptTranslateBlock: (blockId: string, blockTranslationIds: string[]) => void;
 
 export function promptTranslateBlock(blockId: string, blockTranslationIds: string[]) {
@@ -39,4 +41,17 @@ export function openHelpUrl(url: string) {
 
 export function setOpenHelpUrl(impl: (url: string) => void) {
     _openHelpUrl = impl;
+}
+
+
+let _onWorkspaceContextMenu: (workspace: Blockly.WorkspaceSvg, options: Blockly.ContextMenuRegistry.ContextMenuOption[]) => void;
+
+export function onWorkspaceContextMenu(workspace: Blockly.WorkspaceSvg, options: Blockly.ContextMenuRegistry.ContextMenuOption[]) {
+    if (_onWorkspaceContextMenu) {
+        _onWorkspaceContextMenu(workspace, options);
+    }
+}
+
+export function setOnWorkspaceContextMenu(impl: (workspace: Blockly.WorkspaceSvg, options: Blockly.ContextMenuRegistry.ContextMenuOption[]) => void) {
+    _onWorkspaceContextMenu = impl;
 }
