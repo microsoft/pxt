@@ -23,6 +23,7 @@ import { promptTranslateBlock } from "./external";
 import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";
 import { initContextMenu } from "./contextMenu";
+import { renderCodeCard } from "./codecardRenderer";
 
 
 interface BlockDefinition {
@@ -678,6 +679,7 @@ export let onShowContextMenu: (workspace: Blockly.Workspace,
  * The following patch to blockly is to add the Trash icon on top of the toolbox,
  * the trash icon should only show when a user drags a block that is already in the workspace.
  */
+// FIXME (riknoll) move into blockdragger
 function initDrag() {
     const calculateDistance = (elemBounds: any, mouseX: any) => {
         return Math.abs(mouseX - (elemBounds.left + (elemBounds.width / 2)));
@@ -739,21 +741,11 @@ function initDrag() {
     }
 }
 
-// function initContextMenu() {
-//     // inject hook to handle openings docs
-//     // FIXME (riknoll) remove monkey patch
-//     Blockly.BlockSvg.prototype.showHelp = function (this: Blockly.BlockSvg) {
-//         const url = typeof this.helpUrl === "function" ? this.helpUrl() : this.helpUrl;
-//         if (url) openHelpUrl(url);
-//     };
-// }
-
 function initComments() {
     Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';
 }
 
 function initTooltip() {
-
     const renderTip = (el: any) => {
         if (el.disabled)
             return lf("This block is disabled and will not run. Attach this block to an event to enable it.")
@@ -764,87 +756,33 @@ function initTooltip() {
         return tip;
     }
 
+    Blockly.Tooltip.setCustomTooltip((contentDiv: Element, anchor: Element) => {
+        const codecard = (anchor as any).codeCard;
 
-    // FIXME (riknoll)
-    // /**
-    //  * Override Blockly tooltip rendering with our own.
-    //  * TODO shakao check if tooltip can be modified in a cleaner way
-    //  * @private
-    //  */
-    // (Blockly.Tooltip as any).show_ = function () {
-    //     const BlocklyTooltip = Blockly.Tooltip as any;
-    //     BlocklyTooltip.poisonedElement_ = BlocklyTooltip.element_;
-    //     if (!Blockly.Tooltip.DIV) {
-    //         return;
-    //     }
-    //     // Erase all existing text.
-    //     goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
-    //     // Get the new text.
-    //     const card = BlocklyTooltip.element_.codeCard as pxt.CodeCard;
-
-    //     function render() {
-    //         let rtl = BlocklyTooltip.element_.RTL;
-    //         let windowSize = goog.dom.getViewportSize();
-    //         // Display the tooltip.
-    //         let tooltip = Blockly.Tooltip.getDiv();
-    //         tooltip.style.direction = rtl ? 'rtl' : 'ltr';
-    //         tooltip.style.display = 'block';
-    //         Blockly.Tooltip.visible = true;
-    //         // Move the tooltip to just below the cursor.
-    //         let anchorX = BlocklyTooltip.lastX_;
-    //         if (rtl) {
-    //             anchorX -= Blockly.Tooltip.OFFSET_X + tooltip.offsetWidth;
-    //         } else {
-    //             anchorX += Blockly.Tooltip.OFFSET_X;
-    //         }
-    //         let anchorY = BlocklyTooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
-
-    //         if (anchorY + tooltip.offsetHeight >
-    //             windowSize.height + window.scrollY) {
-    //             // Falling off the bottom of the screen; shift the tooltip up.
-    //             anchorY -= tooltip.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
-    //         }
-    //         if (rtl) {
-    //             // Prevent falling off left edge in RTL mode.
-    //             anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
-    //         } else {
-    //             if (anchorX + tooltip.offsetWidth >
-    //                 windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
-    //                 // Falling off the right edge of the screen;
-    //                 // clamp the tooltip on the edge.
-    //                 anchorX = windowSize.width - tooltip.offsetWidth -
-    //                     2 * Blockly.Tooltip.MARGINS;
-    //             }
-    //         }
-    //         tooltip.style.top = anchorY + 'px';
-    //         tooltip.style.left = anchorX + 'px';
-    //     }
-    //     if (card) {
-    //         const cardEl = pxt.docs.codeCard.render({
-    //             header: renderTip(BlocklyTooltip.element_)
-    //         })
-    //         Blockly.Tooltip.DIV.appendChild(cardEl);
-    //         render();
-    //     } else {
-    //         let tip = renderTip(BlocklyTooltip.element_);
-    //         tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
-    //         // Create new text, line by line.
-    //         let lines = tip.split('\n');
-    //         for (let i = 0; i < lines.length; i++) {
-    //             let div = document.createElement('div');
-    //             div.appendChild(document.createTextNode(lines[i]));
-    //             Blockly.Tooltip.DIV.appendChild(div);
-    //         }
-    //         render();
-    //     }
-    // }
+        if (codecard) {
+            const cardEl = renderCodeCard({
+                header: renderTip(anchor)
+            })
+            contentDiv.appendChild(cardEl);
+        }
+        else {
+            let tip = renderTip(anchor);
+            tip = Blockly.utils.string.wrap(tip, Blockly.Tooltip.LIMIT);
+            // Create new text, line by line.
+            let lines = tip.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                let div = document.createElement('div');
+                div.appendChild(document.createTextNode(lines[i]));
+                contentDiv.appendChild(div);
+            }
+        }
+    });
 }
 
 function removeBlock(fn: pxtc.SymbolInfo) {
     delete Blockly.Blocks[fn.attributes.blockId];
     delete cachedBlocks[fn.attributes.blockId];
 }
-
 
 let jresIconCache: pxt.Map<string> = {};
 function iconToFieldImage(id: string): Blockly.FieldImage {
@@ -912,7 +850,7 @@ export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: strin
     const symbols = pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
         && sym.attributes.fixedInstance
         && isSubtype(apis, sym.retType, qName))
-        .sort((l,r) => (r.attributes.weight || 50) - (l.attributes.weight || 50))
+        .sort((l, r) => (r.attributes.weight || 50) - (l.attributes.weight || 50))
     return symbols
 }
 

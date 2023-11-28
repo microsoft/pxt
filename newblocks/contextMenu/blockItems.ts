@@ -26,6 +26,10 @@ export function registerBlockitems() {
     Blockly.ContextMenuRegistry.registry.unregister("blockInline");
 }
 
+/**
+ * This differs from the builtin collapse/expand in that we
+ * only allow it on top level event blocks
+ */
 function registerCollapseExpandBlock() {
     const expandOption: Blockly.ContextMenuRegistry.RegistryItem = {
         displayText(scope: Blockly.ContextMenuRegistry.Scope) {
@@ -62,6 +66,9 @@ function registerCollapseExpandBlock() {
 }
 
 
+/**
+ * Same as the builtin help but calls our external openHelpUrl instead
+ */
 function registerHelp() {
     const helpOption: Blockly.ContextMenuRegistry.RegistryItem = {
         displayText() {
