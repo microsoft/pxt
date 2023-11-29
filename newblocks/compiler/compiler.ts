@@ -300,6 +300,10 @@ function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlo
 }
 
 function compileStatementBlock(e: Environment, b: Blockly.Block): pxt.blocks.JsNode[] {
+    if (b.isInsertionMarker()) {
+        // Must have accidentally triggered a compile during a block drag
+        return [];
+    }
     let r: pxt.blocks.JsNode[];
     const comments: string[] = [];
     e.stats[b.type] = (e.stats[b.type] || 0) + 1;

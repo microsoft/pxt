@@ -46,9 +46,6 @@ export class FieldColorNumber extends Blockly.FieldColour implements FieldCustom
 
         if (params.columns) this.setColumns(parseInt(params.columns));
         if (params.valueMode) this.valueMode_ = params.valueMode;
-
-        // FIXME (riknoll)
-        // if (params.className) this.className_ = params.className;
     }
 
     setColours(colours: string[], titles?: string[]): Blockly.FieldColour {
@@ -57,17 +54,6 @@ export class FieldColorNumber extends Blockly.FieldColour implements FieldCustom
         return s;
     }
 
-    // /**
-    //  * @override
-    //  */
-    // applyColour() {
-    //     if (this.borderRect_) {
-    //         this.borderRect_.style.fill = this.value_;
-    //     } else if (this.sourceBlock_) {
-    //         (this.sourceBlock_ as any)?.pathObject?.svgPath?.setAttribute('fill', this.value_);
-    //         (this.sourceBlock_ as any)?.pathObject?.svgPath?.setAttribute('stroke', '#fff');
-    //     }
-    // };
 
     doClassValidation_(colour: string) {
         return "string" != typeof colour ? null : parseColour(colour, this.getColours_());
@@ -110,13 +96,6 @@ export class FieldColorNumber extends Blockly.FieldColour implements FieldCustom
         super.doValueUpdate_(parseColour(colour, this.getColours_()))
         // this.applyColour();
     }
-
-    // FIXME (riknoll)
-    // showEditor_() {
-    //     super.showEditor_();
-    //     if (this.className_ && this.picker_)
-    //         pxt.BrowserUtils.addClass(this.picker_ as HTMLElement, this.className_);
-    // }
 
     getColours_(): string[] {
         return this.colours_;
