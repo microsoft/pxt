@@ -600,7 +600,6 @@ function init(blockInfo: pxtc.BlocksInfo) {
     initLoops();
     initLogic();
     initText();
-    initDrag();
     initComments();
     initTooltip();
 }
@@ -669,75 +668,6 @@ export function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc
 
     if (check || check === null) {
         block.setOutput(true, check);
-    }
-}
-
-export let onShowContextMenu: (workspace: Blockly.Workspace,
-    items: ContextMenuOption[]) => void = undefined;
-
-/**
- * The following patch to blockly is to add the Trash icon on top of the toolbox,
- * the trash icon should only show when a user drags a block that is already in the workspace.
- */
-// FIXME (riknoll) move into blockdragger
-function initDrag() {
-    const calculateDistance = (elemBounds: any, mouseX: any) => {
-        return Math.abs(mouseX - (elemBounds.left + (elemBounds.width / 2)));
-    }
-
-    /**
-     * Execute a step of block dragging, based on the given event.  Update the
-     * display accordingly.
-     * @param {!Event} e The most recent move event.
-     * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
-     *     moved from the position at the start of the drag, in pixel units.
-     * @package
-     */
-    const blockDrag = (<any>Blockly).BlockDragger.prototype.drag;
-    (<any>Blockly).BlockDragger.prototype.drag = function (e: any, currentDragDeltaXY: any) {
-        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
-        const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
-            || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
-        const trashIcon = document.getElementById("blocklyTrashIcon");
-        if (blocklyTreeRoot && trashIcon) {
-            const distance = calculateDistance(blocklyTreeRoot.getBoundingClientRect(), e.clientX);
-            if (distance < 200) {
-                const opacity = distance / 200;
-                trashIcon.style.opacity = `${1 - opacity}`;
-                trashIcon.style.display = 'block';
-                if (blocklyToolboxDiv) {
-                    blocklyTreeRoot.style.opacity = `${opacity}`;
-                    if (distance < 50) {
-                        pxt.BrowserUtils.addClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
-                    }
-                }
-            } else {
-                trashIcon.style.display = 'none';
-                blocklyTreeRoot.style.opacity = '1';
-                if (blocklyToolboxDiv) pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
-            }
-        }
-        return blockDrag.call(this, e, currentDragDeltaXY);
-    };
-
-    /**
-     * Finish dragging the workspace and put everything back where it belongs.
-     * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
-     *     moved from the position at the start of the drag, in pixel coordinates.
-     * @package
-     */
-    const blockEndDrag = (<any>Blockly).BlockDragger.prototype.endDrag;
-    (<any>Blockly).BlockDragger.prototype.endDrag = function (e: any, currentDragDeltaXY: any) {
-        blockEndDrag.call(this, e, currentDragDeltaXY);
-        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
-        const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
-            || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
-        const trashIcon = document.getElementById("blocklyTrashIcon");
-        if (trashIcon && blocklyTreeRoot) {
-            trashIcon.style.display = 'none';
-            blocklyTreeRoot.style.opacity = '1';
-            if (blocklyToolboxDiv) pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
-        }
     }
 }
 

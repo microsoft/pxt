@@ -26,7 +26,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 
-import { DuplicateOnDragBlockDragger, DuplicateOnDragConnectionChecker } from "../../newblocks/plugins/duplicateOnDrag";
+import { DuplicateOnDragConnectionChecker } from "../../newblocks/plugins/duplicateOnDrag";
 
 
 export class Editor extends toolboxeditor.ToolboxEditor {
@@ -1202,7 +1202,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             //     inverted: theme.invertedToolbox
             // },
             plugins: {
-                'blockDragger': DuplicateOnDragBlockDragger,
+                'blockDragger': pxtblockly.BlockDragger,
                 'connectionChecker': DuplicateOnDragConnectionChecker
             },
             move: {

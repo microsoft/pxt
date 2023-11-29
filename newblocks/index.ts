@@ -15,6 +15,7 @@ export * from "./importer";
 export * from "./diff";
 export * from "./validation";
 export * from "./legacyMutations";
+export * from "./blockDragger";
 
 import * as contextMenu from "./contextMenu";
 import * as external from "./external";
