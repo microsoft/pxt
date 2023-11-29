@@ -58,6 +58,20 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
 
         // Attach the block.
         input.connection!.connect(argumentReporter.outputConnection!);
+
+        // FIXME: This is a hack to support duplicate on drag. The argument
+        // reporter can't be a shadow if it's being dragged, but we have to
+        // attach it as a shadow initially just in case this is being called
+        // from within a domToBlock that hasn't connected the existing block
+        // yet. Otherwise, the existing block that domToBlock recreates will
+        // unplug this one and leave it stranded on the workspace. setTimeout
+        // let's us convert it to a non-shadow block after domToBlock
+        // finishes
+        setTimeout(() => {
+            if (input.connection.targetBlock()?.isShadow()) {
+                input.connection.targetBlock()?.setShadow(false);
+            }
+        })
     },
 
     addFunctionLabel_: function (this: FunctionDefinitionBlock, text) {
@@ -101,6 +115,7 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
                 newBlock = this.workspace.newBlock(blockType);
             }
             newBlock.setFieldValue(arg.name, "VALUE");
+            newBlock.setShadow(true);
             if (!this.isInsertionMarker() && newBlock instanceof Blockly.BlockSvg) {
                 newBlock.initSvg();
                 newBlock.render();
