@@ -1945,9 +1945,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
 
-        // FIXME (riknoll)
-        // this.editor.setDebugModeOption(debugging);
-
         this.editor.options.readOnly = debugging;
     }
 
