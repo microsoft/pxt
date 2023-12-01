@@ -640,13 +640,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let toolboxVisible = !!ev.newValue;
                     if (toolboxVisible) pxt.setInteractiveConsent(true);
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                } else if (ev.element == 'breakpointSet') {
-                    this.setBreakpointsFromBlocks();
-                    // if (ev.newValue) {
-                    //     this.addBreakpointFromEvent(ev.blockId);
-                    // } else {
-                    //     this.removeBreakpointFromEvent(ev.blockId);
-                    // }
                 }
                 else if (ev.element == 'melody-editor') {
                     if (ev.newValue) {
@@ -1171,8 +1164,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         //     this.showCategories);
 
         // blocklyOptions.hasCategories = hasCategories;
-        // blocklyOptions.renderer = "pxt";
-        blocklyOptions.renderer = "zelos";
+        blocklyOptions.renderer = "pxt";
         if (!hasCategories) this.showCategories = false;
         // If we're using categories, show the category toolbox, otherwise show the flyout toolbox
         const toolbox = hasCategories ?
@@ -1949,12 +1941,34 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const blocks = this.editor.getAllBlocks(false);
         blocks.forEach(block => {
             if (block.previousConnection) {
-                enableBreakpoint(block, debugging);
+                this.enableBreakpoint(block, debugging);
             }
         });
 
         // FIXME (riknoll)
         // this.editor.setDebugModeOption(debugging);
+
+        this.editor.options.readOnly = debugging;
+    }
+
+    protected enableBreakpoint(block: Blockly.Block, enabled: boolean) {
+        const existing = block.getIcon(pxtblockly.BreakpointIcon.type);
+        if (enabled) {
+            if (existing) return;
+            block.addIcon(new pxtblockly.BreakpointIcon(block, this.onBreakpointClick));
+        }
+        else if (existing) {
+            block.removeIcon(pxtblockly.BreakpointIcon.type);
+        }
+    }
+
+    protected onBreakpointClick = (block: Blockly.Block, enabled: boolean) => {
+        if (enabled) {
+            this.addBreakpointFromEvent(block.id);
+        }
+        else {
+            this.removeBreakpointFromEvent(block.id)
+        }
     }
 }
 
@@ -1986,13 +2000,10 @@ function setHighlightWarning(block: Blockly.BlockSvg, enabled: boolean) {
     block.setHighlighted(enabled);
 }
 
-function enableBreakpoint(block: Blockly.BlockSvg, enabled: boolean) {
-    // FIXME (riknoll)
-}
 
 function isBreakpointSet(block: Blockly.BlockSvg) {
-    // FIXME (riknoll)
-    return false;
+    const existing = block.getIcon(pxtblockly.BreakpointIcon.type) as pxtblockly.BreakpointIcon;
+    return !!existing?.isEnabled();
 }
 
 function createFlyout(workspace: Blockly.WorkspaceSvg, siblingNode: Element) {

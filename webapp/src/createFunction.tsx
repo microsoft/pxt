@@ -79,7 +79,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
             move: {
                 scrollbars: true
             },
-            renderer: "zelos"
+            renderer: "pxt"
         }) as Blockly.WorkspaceSvg;
         (functionEditorWorkspace as any).showContextMenu_ = () => { }; // Disable the context menu
         functionEditorWorkspace.clear();

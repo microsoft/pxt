@@ -3,6 +3,7 @@ export * from "./plugins/functions";
 export * from "./plugins/logic";
 export * from "./plugins/math";
 export * from "./plugins/text";
+export * from "./plugins/renderer";
 export * from "./compiler/compiler";
 export * from "./compiler/environment";
 export * from "./loader";
@@ -19,6 +20,8 @@ export * from "./blockDragger";
 
 import * as contextMenu from "./contextMenu";
 import * as external from "./external";
+
+export * from "./breakpointIcon";
 
 export {
     contextMenu,
