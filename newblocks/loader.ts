@@ -24,6 +24,7 @@ import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";
 import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
+import { applyMonkeyPatches } from "./monkeyPatches";
 
 
 interface BlockDefinition {
@@ -585,6 +586,8 @@ let blocklyInitialized = false;
 function init(blockInfo: pxtc.BlocksInfo) {
     if (blocklyInitialized) return;
     blocklyInitialized = true;
+
+    applyMonkeyPatches();
 
     // FIXME (riknoll)
     // Blockly.FieldCheckbox.CHECK_CHAR = '■';
