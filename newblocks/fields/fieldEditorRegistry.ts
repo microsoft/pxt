@@ -8,6 +8,12 @@ import { FieldCustom, FieldCustomConstructor } from "./field_utils";
 import { FieldSpriteEditor } from "./field_sprite";
 import { FieldGridPicker } from "./field_gridpicker";
 import { FieldColorNumber } from "./field_colour";
+import { FieldImages } from "./field_images";
+import { FieldTextDropdown } from "./field_textdropdown";
+import { FieldNumberDropdown } from "./field_numberdropdown";
+import { FieldImageDropdown } from "./field_imagedropdown";
+import { FieldNote } from "./field_note";
+import { FieldCustomMelody } from "./field_melodySandbox";
 
 interface FieldEditorOptions {
     field: FieldCustomConstructor;
@@ -18,11 +24,11 @@ let registeredFieldEditors: pxt.Map<FieldEditorOptions> = {};
 
 export function initFieldEditors() {
     registerFieldEditor('text', FieldTextInput);
-    // registerFieldEditor('note', FieldNote);
+    registerFieldEditor('note', FieldNote);
     registerFieldEditor('gridpicker', FieldGridPicker);
-    // registerFieldEditor('textdropdown', FieldTextDropdown);
-    // registerFieldEditor('numberdropdown', FieldNumberDropdown);
-    // registerFieldEditor('imagedropdown', FieldImageDropdown);
+    registerFieldEditor('textdropdown', FieldTextDropdown);
+    registerFieldEditor('numberdropdown', FieldNumberDropdown);
+    registerFieldEditor('imagedropdown', FieldImageDropdown);
     // registerFieldEditor('colorwheel', FieldColorWheel);
     // registerFieldEditor('toggle', FieldToggle);
     // registerFieldEditor('toggleonoff', FieldToggleOnOff);
@@ -32,7 +38,7 @@ export function initFieldEditors() {
     // registerFieldEditor('togglehighlow', FieldToggleHighLow);
     // registerFieldEditor('togglewinlose', FieldToggleWinLose);
     registerFieldEditor('colornumber', FieldColorNumber);
-    // registerFieldEditor('images', FieldImages);
+    registerFieldEditor('images', FieldImages);
     registerFieldEditor('sprite', FieldSpriteEditor);
     registerFieldEditor('animation', FieldAnimationEditor);
     registerFieldEditor('tilemap', FieldTilemap);
@@ -41,7 +47,7 @@ export function initFieldEditors() {
     // registerFieldEditor('turnratio', FieldTurnRatio);
     // registerFieldEditor('protractor', FieldProtractor);
     // registerFieldEditor('position', FieldPosition);
-    // registerFieldEditor('melody', FieldCustomMelody);
+    registerFieldEditor('melody', FieldCustomMelody);
     // registerFieldEditor('soundeffect', FieldSoundEffect);
     // registerFieldEditor('autocomplete', FieldAutoComplete);
     // if (pxt.appTarget.appTheme?.songEditor) {
