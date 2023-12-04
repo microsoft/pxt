@@ -1,22 +1,11 @@
-// /// <reference path="../../built/pxtlib.d.ts" />
+/// <reference path="../../built/pxtlib.d.ts" />
 
-// import * as Blockly from "blockly";
+import * as Blockly from "blockly";
+import { BaseFieldToggle } from "./field_toggle";
+import { FieldCustomOptions } from "./field_utils";
 
-// namespace pxtblockly {
-
-//     export class FieldToggleOnOff extends FieldToggle implements Blockly.FieldCustom {
-//         public isFieldCustom_ = true;
-
-//         constructor(state: string, params: Blockly.FieldCustomOptions, opt_validator?: Function) {
-//             super(state, params, opt_validator);
-//         }
-
-//         getTrueText() {
-//             return lf("ON");
-//         }
-
-//         getFalseText() {
-//             return lf("OFF");
-//         }
-//     }
-// }
+export class FieldToggleOnOff extends BaseFieldToggle {
+    constructor(state: string, params: FieldCustomOptions, opt_validator?: Blockly.FieldValidator) {
+        super(state, params, lf("ON"), lf("OFF"), opt_validator);
+    }
+}

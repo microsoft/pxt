@@ -1,5 +1,8 @@
 import * as Blockly from "blockly";
 import { FieldTilemap } from "./field_tilemap";
+import { FieldAnimationEditor } from "./field_animation";
+import { FieldMusicEditor } from "./field_musiceditor";
+import { FieldSpriteEditor } from "./field_sprite";
 
 export interface FieldCustom extends Blockly.Field {
     isFieldCustom_: boolean;
@@ -394,16 +397,15 @@ export function getTilesReferencedByTilesets(workspace: Blockly.Workspace) {
 
 export function getTemporaryAssets(workspace: Blockly.Workspace, type: pxt.AssetType): pxt.Asset[] {
     switch (type) {
-        // FIXME (riknoll)
-        // case pxt.AssetType.Image:
-        //     return getAllFields(workspace, field => field instanceof FieldSpriteEditor && field.isTemporaryAsset())
-        //         .map(f => (f.ref as unknown as FieldSpriteEditor).getAsset());
-        // case pxt.AssetType.Animation:
-        //     return getAllFields(workspace, field => field instanceof FieldAnimationEditor && field.isTemporaryAsset())
-        //         .map(f => (f.ref as unknown as FieldAnimationEditor).getAsset());
-        // case pxt.AssetType.Song:
-        //     return getAllFields(workspace, field => field instanceof FieldMusicEditor && field.isTemporaryAsset())
-        //         .map(f => (f.ref as unknown as FieldMusicEditor).getAsset());
+        case pxt.AssetType.Image:
+            return getAllFields(workspace, field => field instanceof FieldSpriteEditor && field.isTemporaryAsset())
+                .map(f => (f.ref as unknown as FieldSpriteEditor).getAsset());
+        case pxt.AssetType.Animation:
+            return getAllFields(workspace, field => field instanceof FieldAnimationEditor && field.isTemporaryAsset())
+                .map(f => (f.ref as unknown as FieldAnimationEditor).getAsset());
+        case pxt.AssetType.Song:
+            return getAllFields(workspace, field => field instanceof FieldMusicEditor && field.isTemporaryAsset())
+                .map(f => (f.ref as unknown as FieldMusicEditor).getAsset());
 
         default: return [];
     }
