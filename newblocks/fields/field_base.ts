@@ -24,6 +24,10 @@ export abstract class FieldBase<U> extends Blockly.Field implements FieldCustom 
     init() {
         super.init();
         this.onInit();
+
+        // This hack makes sure we run this code only after domToBlock
+        // has finished running and this field has its actual value set
+        setTimeout(() => this.onLoadedIntoWorkspace());
    }
 
     dispose() {
