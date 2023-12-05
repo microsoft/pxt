@@ -199,17 +199,16 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
     }
 
 
-    // FIXME (riknoll)
-    // (b as Blockly.BlockSvg).render = (opt_bubble) => {
-    //     if (updatingInputs) return;
-    //     if (firstRender) {
-    //         firstRender = false;
-    //         updatingInputs = true;
-    //         updateShape(0, undefined, true);
-    //         updatingInputs = false;
-    //     }
-    //     Blockly.BlockSvg.prototype.render.call(b, opt_bubble);
-    // }
+    // This is called inside the pxt renderer
+    (b as any).updateBeforeRender = () => {
+        if (updatingInputs) return;
+        if (firstRender) {
+            firstRender = false;
+            updatingInputs = true;
+            updateShape(0, undefined, true);
+            updatingInputs = false;
+        }
+    }
 
     // Set skipRender to true if the block is still initializing. Otherwise
     // the inputs will render before their shadow blocks are created and

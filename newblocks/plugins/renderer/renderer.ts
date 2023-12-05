@@ -24,6 +24,13 @@ export class Renderer extends Blockly.zelos.Renderer {
     ): Drawer {
         return new Drawer(block, info as RenderInfo);
     }
+
+    render(block: Blockly.BlockSvg): void {
+        if ((block as any).updateBeforeRender) {
+            (block as any).updateBeforeRender();
+        }
+        super.render(block);
+    }
 }
 
 Blockly.blockRendering.register("pxt", Renderer);
