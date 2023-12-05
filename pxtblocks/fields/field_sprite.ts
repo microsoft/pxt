@@ -47,13 +47,22 @@ namespace pxtblockly {
 
             const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
 
+            let data: pxt.sprite.BitmapData;
+
             if (!bmp) {
-                this.isGreyBlock = true;
-                this.valueText = text;
-                return undefined;
+                // check for qualified name
+                const images = project.getGalleryAssets(pxt.AssetType.Image).filter(asset => asset.id === text);
+                const img = images.length && images[0];
+                if (!img) {
+                    this.isGreyBlock = true;
+                    this.valueText = text;
+                    return undefined;
+                } else {
+                    data = img.bitmap;
+                }
             }
 
-            const data = bmp.data();
+            if (!data) data = bmp.data();
 
             const newAsset: pxt.ProjectImage = {
                 internalID: -1,
