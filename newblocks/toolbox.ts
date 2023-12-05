@@ -67,10 +67,17 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
         return field;
     }
 
-    let paramType = pxt.Util.lookup(info.apis.byQName, p.type)
+    if (p.fieldEditor) {
+        if (p.defaultValue) {
+            const field = document.createElement("field");
+            field.setAttribute("name", p.definitionName);
+            field.appendChild(document.createTextNode(p.defaultValue));
+            return field;
+        }
+        return undefined;
+    }
 
-    const defName = p.definitionName;
-    const actName = p.actualName;
+    let paramType = pxt.Util.lookup(info.apis.byQName, p.type)
 
     let isEnum = paramType?.kind == pxtc.SymbolKind.Enum
     let isFixed = paramType && !!paramType.attributes.fixedInstances && !p.shadowBlockId;
@@ -78,10 +85,13 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
     let isCombined = p.type == "@combined@"
 
     if (!shadowId && (isEnum || isFixed || isCombined)) {
-        const field = document.createElement("field");
-        field.setAttribute("name", p.definitionName);
-        field.appendChild(document.createTextNode(defaultV));
-        return field;
+        if (defaultV) {
+            const field = document.createElement("field");
+            field.setAttribute("name", p.definitionName);
+            field.appendChild(document.createTextNode(defaultV));
+            return field;
+        }
+        return undefined;
     }
 
     const isVariable = shadowId == "variables_get";
@@ -329,15 +339,45 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
         block.setAttribute("gap", pxt.appTarget.appTheme.defaultBlockGap.toString());
     if (comp.thisParameter) {
         const t = comp.thisParameter;
-        block.appendChild(createShadowValue(info, t, t.shadowBlockId || "variables_get", t.defaultValue || t.definitionName));
+
+        const isFixedInstance = !!info.apis.byQName[t.type]?.attributes.fixedInstances;
+
+        let shadowId = t.shadowBlockId;
+        let defaultValue = t.defaultValue;
+
+        if (!isFixedInstance && !shadowId) {
+            shadowId = "variables_get";
+            defaultValue = defaultValue || t.definitionName;
+        }
+
+        const inputOrField = createShadowValue(info, t, shadowId, defaultValue);
+
+        if (inputOrField) {
+            block.appendChild(inputOrField);
+        }
     }
-    if (fn.parameters) {
+    if (fn.attributes.shim === "ENUM_GET" || fn.attributes.shim === "KIND_GET") {
+        if (fn.parameters?.length) {
+            const def = fn.parameters[0].default;
+
+            if (def) {
+                const field = document.createElement("field");
+                field.setAttribute("name", "MEMBER");
+                field.textContent = def;
+                block.appendChild(field);
+            }
+        }
+    }
+    else if (fn.parameters) {
         comp.parameters.filter(pr => primitiveTypeRegex.test(pr.type)
                 || primitiveTypeRegex.test(isArrayType(pr.type))
                 || pr.shadowBlockId
                 || pr.defaultValue)
             .forEach(pr => {
-                block.appendChild(createShadowValue(info, pr));
+                const inputOrField = createShadowValue(info, pr);
+                if (inputOrField) {
+                    block.appendChild(inputOrField);
+                }
             })
         if (fn.attributes.draggableParameters) {
             comp.handlerArgs.forEach(arg => {

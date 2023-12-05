@@ -1825,17 +1825,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             }
                             blockXml.appendChild(mutation);
                         });
-                    } else if (comp.handlerArgs.length && !fn.attributes.optionalVariableArgs) {
-                        comp.handlerArgs.forEach(arg => {
-                            const getterblock = Blockly.utils.xml.textToDom(`
-                                <value name="HANDLER_${arg.name}">
-                                <block type="variables_get_reporter">
-                                <field name="VAR" variabletype="">${arg.name}</field>
-                                <mutation duplicateondrag="true"></mutation>
-                                </block>
-                                </value>`);
-                            blockXml.appendChild(getterblock);
-                        });
                     } else if (fn.attributes.mutateDefaults) {
                         const mutationValues = fn.attributes.mutateDefaults.split(";");
                         const mutatedBlocks: Element[] = [];
@@ -1908,7 +1897,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let b = this.getBlockXml(builtin ? builtin : { name: type, type: type, attributes: { blockId: type } }, ignoregap, true);
                     // Note: we're setting one innerHTML to another
                     // eslint-disable-next-line @microsoft/sdl/no-inner-html
-                    if (b && b.length > 0 && b[0]) shadow.innerHTML = b[0].innerHTML;
+                    if (b && b.length > 0 && b[0] && b[0].getAttribute("type") === type) shadow.innerHTML = b[0].innerHTML;
                 })
         }
         return [blockXml];

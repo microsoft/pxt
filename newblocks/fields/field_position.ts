@@ -234,7 +234,7 @@ export class FieldPosition extends FieldSlider implements FieldCustom {
 
         // Destroy the selector div
         if (!this.selectorDiv_) return;
-        goog.dom.removeNode(this.selectorDiv_);
+        Blockly.utils.dom.removeNode(this.selectorDiv_);
         this.selectorDiv_ = undefined;
     }
 }

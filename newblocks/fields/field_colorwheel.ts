@@ -35,21 +35,13 @@ export class FieldColorWheel extends FieldSlider implements FieldCustom {
      * @param {Node} node - The DOM node the gradient will be set on.
      * @private
      */
-    setBackground_(node: Element) {
+    setBackground_(node: HTMLElement) {
         let gradient = this.createColourStops_().join(',');
-        goog.style.setStyle(node, 'background',
-            '-moz-linear-gradient(left, ' + gradient + ')');
-        goog.style.setStyle(node, 'background',
-            '-webkit-linear-gradient(left, ' + gradient + ')');
-        goog.style.setStyle(node, 'background',
-            '-o-linear-gradient(left, ' + gradient + ')');
-        goog.style.setStyle(node, 'background',
-            '-ms-linear-gradient(left, ' + gradient + ')');
-        goog.style.setStyle(node, 'background',
-            'linear-gradient(left, ' + gradient + ')');
-        if (this.params['sliderWidth'])
-            goog.style.setStyle(node, 'width',
-                `${this.params['sliderWidth']}px`)
+        node.style.background = `linear-gradient(left, ${gradient})`;
+
+        if (this.params['sliderWidth']) {
+            node.style.width = `${this.params['sliderWidth']}px`;
+        }
     };
 
     setReadout_(readout: Element, value: string) {

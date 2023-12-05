@@ -29,22 +29,22 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
         if (!this.fieldGroup_) {
             return;
         }
-        // Add an attribute to cassify the type of field.
-        if ((this as any).getArgTypes() !== null) {
-            if (this.sourceBlock_.isShadow()) {
-                (this.sourceBlock_ as any).svgGroup_.setAttribute('data-argument-type',
-                    (this as any).getArgTypes());
-            } else {
-                // Fields without a shadow wrapper, like square dropdowns.
-                this.fieldGroup_.setAttribute('data-argument-type', (this as any).getArgTypes());
-            }
-        }
+        // // Add an attribute to cassify the type of field.
+        // if ((this as any).getArgTypes() !== null) {
+        //     if (this.sourceBlock_.isShadow()) {
+        //         (this.sourceBlock_ as any).svgGroup_.setAttribute('data-argument-type',
+        //             (this as any).getArgTypes());
+        //     } else {
+        //         // Fields without a shadow wrapper, like square dropdowns.
+        //         this.fieldGroup_.setAttribute('data-argument-type', (this as any).getArgTypes());
+        //     }
+        // }
         // If not in a shadow block, and has more than one input, draw a box.
         if (!this.sourceBlock_.isShadow()
             && (this.sourceBlock_.inputList && this.sourceBlock_.inputList.length > 1)) {
             this.borderRect_ = Blockly.utils.dom.createSvgElement('rect', {
-                'rx': (Blockly as any).BlockSvg.CORNER_RADIUS,
-                'ry': (Blockly as any).BlockSvg.CORNER_RADIUS,
+                'rx': this.getConstants().CORNER_RADIUS,
+                'ry': this.getConstants().CORNER_RADIUS,
                 'x': 0,
                 'y': 0,
                 'width': this.size_.width,
@@ -105,9 +105,9 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
             this.fieldGroup_) as SVGTextElement;
 
         this.updateEditable();
-        const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
-        svgRoot.appendChild(this.fieldGroup_);
-        svgRoot.querySelector(".blocklyBlockBackground").setAttribute('fill', (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary())
+        // const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
+        // svgRoot.appendChild(this.fieldGroup_);
+        // svgRoot.querySelector(".blocklyBlockBackground").setAttribute('fill', (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary())
 
         this.switchToggle(this.state_);
         this.setValue(this.getValue());
@@ -160,7 +160,7 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
         if (this.borderRect_) {
             this.borderRect_.setAttribute('stroke', color);
         } else {
-            (this.sourceBlock_ as any).pathObject.svgPath.setAttribute('fill', color);
+            (this.sourceBlock_ as Blockly.BlockSvg).pathObject.svgPath.setAttribute('fill', color);
         }
     };
 
@@ -181,7 +181,7 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
         let newState = this.fromVal(newBool);
         if (this.state_ !== newState) {
             if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                Blockly.Events.fire(new (Blockly.Events as any).BlockChange(
+                Blockly.Events.fire(new Blockly.Events.BlockChange(
                     this.sourceBlock_, 'field', this.name, this.state_, newState));
             }
             this.state_ = newState;
@@ -242,7 +242,9 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
     render_() {
         if (this.visible_ && this.textElement_) {
             // Replace the text.
-            goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
+            while (this.textElement_.firstChild) {
+                this.textElement_.firstChild.remove();
+            }
             let textNode = document.createTextNode(this.getDisplayText_());
             this.textElement_.appendChild(textNode);
             pxt.BrowserUtils.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
