@@ -1148,7 +1148,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let blocklyOptions = this.getDefaultOptions();
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         const hasCategories = (forceHasCategories != undefined) ? forceHasCategories :
-            true
+            this.showCategories
         // FIXME (riknoll)
         // (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories :
         //     this.showCategories);
@@ -1975,7 +1975,7 @@ function clearTemporaryAssetBlockData(workspace: Blockly.Workspace) {
 }
 
 function setHighlightWarning(block: Blockly.BlockSvg, enabled: boolean) {
-    // FIXME (riknoll)
+    // FIXME (riknoll): this was setHighlightWarning in old blocks... not sure what that does
     block.setHighlighted(enabled);
 }
 

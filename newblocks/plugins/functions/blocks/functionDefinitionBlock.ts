@@ -127,8 +127,6 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
     },
 
     customContextMenu: function (this: FunctionDefinitionBlock, menuOptions: Blockly.ContextMenuRegistry.LegacyContextMenuOption[]) {
-        // FIXME (riknoll)
-        // if (this.inDebugWorkspace()) return;
         if (this.isInFlyout || this.workspace?.options?.readOnly) return;
         menuOptions.push(this.makeEditOption());
         menuOptions.push(this.makeCallOption());

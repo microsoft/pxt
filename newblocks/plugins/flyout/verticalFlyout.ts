@@ -11,6 +11,14 @@ export class VerticalFlyout extends Blockly.VerticalFlyout {
     }
 
     protected initFlyoutButton_(button: Blockly.FlyoutButton, x: number, y: number): void {
+        const textMarginX = Blockly.FlyoutButton.TEXT_MARGIN_X;
+        const textMarginY = Blockly.FlyoutButton.TEXT_MARGIN_Y;
+
+        if (!button.isLabel()) {
+            Blockly.FlyoutButton.TEXT_MARGIN_X = 17.5;
+            Blockly.FlyoutButton.TEXT_MARGIN_Y = 14;
+        }
+
         const buttonSvg = button.createDom() as SVGGElement;
         button.moveTo(x, y);
         button.show();
@@ -27,6 +35,8 @@ export class VerticalFlyout extends Blockly.VerticalFlyout {
 
         this.buttons_.push(button);
 
+        Blockly.FlyoutButton.TEXT_MARGIN_X = textMarginX;
+        Blockly.FlyoutButton.TEXT_MARGIN_Y = textMarginY;
 
         const def = this.def.find(n => n.getAttribute("text") === button.getButtonText());
 

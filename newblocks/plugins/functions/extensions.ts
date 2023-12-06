@@ -77,7 +77,7 @@ const variableReporterMixin = {
         }
         const renameOption = {
             text: Blockly.Msg.RENAME_VARIABLE,
-            enabled: true, // FIXME (riknoll) !this.inDebugWorkspace(),
+            enabled: !this.workspace.options.readOnly,
             callback: () => {
                 const workspace = this.workspace;
                 const variable = (this.getField('VAR') as Blockly.FieldVariable).getVariable();
@@ -94,7 +94,7 @@ const variableReporterMixin = {
             // }
             for (const variable of variablesList) {
                 const option = {
-                    enabled: true, // FIXME (riknoll) !this.inDebugWorkspace(),
+                    enabled: !this.workspace.options.readOnly,
                     text: variable.name,
                     callback: () => {
                         var variableField = this.getField('VAR') as Blockly.FieldVariable;

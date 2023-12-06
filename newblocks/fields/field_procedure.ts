@@ -51,8 +51,14 @@ export class FieldProcedure extends Blockly.FieldDropdown {
         if (name && functionList.indexOf(name) == -1) {
             functionList.push(name);
         }
-        // FIXME (riknoll)
-        // functionList.sort(goog.string.caseInsensitiveCompare);
+        // case insensitive compare
+        functionList.sort((a, b) => {
+            const lowA = a.toLowerCase();
+            const lowB = b.toLowerCase();
+            if (lowA === lowB) return 0;
+            if (lowA > lowB) return 1;
+            return -1;
+        });
 
 
         if (!functionList.length) {

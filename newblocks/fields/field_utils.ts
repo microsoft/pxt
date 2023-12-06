@@ -3,6 +3,7 @@ import { FieldTilemap } from "./field_tilemap";
 import { FieldAnimationEditor } from "./field_animation";
 import { FieldMusicEditor } from "./field_musiceditor";
 import { FieldSpriteEditor } from "./field_sprite";
+import { FieldTileset } from "./field_tileset";
 
 export interface FieldCustom extends Blockly.Field {
     isFieldCustom_: boolean;
@@ -228,13 +229,8 @@ export function getAllBlocksWithTilemaps(ws: Blockly.Workspace): FieldEditorRefe
     return getAllFields(ws, f => f instanceof FieldTilemap && !f.isGreyBlock);
 }
 
-// FIXME (riknoll)
-// export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorReference<FieldTileset>[] {
-//     return getAllFields(ws, f => f instanceof FieldTileset);
-// }
-
-export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorReference<any>[] {
-    return getAllFields(ws, f => false)
+export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorReference<FieldTileset>[] {
+    return getAllFields(ws, f => f instanceof FieldTileset);
 }
 
 export function needsTilemapUpgrade(ws: Blockly.Workspace) {
@@ -290,11 +286,9 @@ export function upgradeTilemapsInWorkspace(ws: Blockly.Workspace, proj: pxt.Tile
         const tilesets = getAllBlocksWithTilesets(ws);
 
         for (const tileset of tilesets) {
-            // Force a re-render
+            // Force a re-render. getSize() will rerender if necessary
             tileset.ref.doValueUpdate_(tileset.ref.getValue());
-            if (tileset.ref.isDirty_) {
-                tileset.ref.forceRerender();
-            }
+            tileset.ref.getSize();
         }
     } finally {
         Blockly.Events.enable();
