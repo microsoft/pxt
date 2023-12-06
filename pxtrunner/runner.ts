@@ -213,6 +213,7 @@ namespace pxt.runner {
 
     function initInnerAsync() {
         pxt.setAppTarget((window as any).pxtTargetBundle)
+        pxt.analytics.enable(pxt.Util.userLanguage());
         Util.assert(!!pxt.appTarget);
 
         const href = window.location.href;
@@ -470,7 +471,7 @@ namespace pxt.runner {
         try {
             const start = Date.now();
             const result = await pxt.Cloud.downloadBuiltSimJsInfoAsync(simOptions.id);
-            tickEvent("runner.fetchSimJsInfo", { downloadTime: Date.now() - start });
+            pxt.tickEvent("runner.fetchSimJsInfo", { duration: Date.now() - start});
             return result;
         } catch (e) {
             // This exception will happen in the majority of cases, so we don't want to log it unless for debugging.
@@ -543,7 +544,7 @@ namespace pxt.runner {
 
         const res = pxtc.buildSimJsInfo(compileResult);
         res.parts = compileResult.usedParts;
-        tickEvent("runner.buildSimJsInfo", { compileTime: Date.now() - start });
+        pxt.tickEvent("runner.buildSimJsInfo", { duration: Date.now() - start});
         return res;
     }
 
