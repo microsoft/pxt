@@ -10,6 +10,10 @@ export class VerticalFlyout extends Blockly.VerticalFlyout {
         super.show(flyoutDef);
     }
 
+    // FIXME: Unfortunately, there is no easy way to extend the rendering of
+    // labels and buttons in flyouts. This hack lets us make buttons bigger,
+    // add icons to flyout headers, add custom css classes to labels, and
+    // underline things
     protected initFlyoutButton_(button: Blockly.FlyoutButton, x: number, y: number): void {
         const textMarginX = Blockly.FlyoutButton.TEXT_MARGIN_X;
         const textMarginY = Blockly.FlyoutButton.TEXT_MARGIN_Y;

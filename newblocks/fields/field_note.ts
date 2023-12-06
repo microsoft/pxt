@@ -261,7 +261,7 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
 
         const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
         // invoke FieldTextInputs showeditor, so we can set quiet explicitly / not have a pop up dialogue
-        (FieldNote as any).superClass_.showEditor_.call(this, e, /** quiet **/ isMobile, /** readonly **/ isMobile);
+        super.showEditor_(e, isMobile);
         this.refreshText();
 
         // save all changes in the same group of events
