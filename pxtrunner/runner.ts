@@ -468,7 +468,10 @@ namespace pxt.runner {
 
     export async function fetchSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
         try {
-            return await pxt.Cloud.downloadBuiltSimJsInfoAsync(simOptions.id);
+            const start = Date.now();
+            const result = await pxt.Cloud.downloadBuiltSimJsInfoAsync(simOptions.id);
+            tickEvent("runner.fetchSimJsInfo", { downloadTime: Date.now() - start });
+            return result;
         } catch (e) {
             // This exception will happen in the majority of cases, so we don't want to log it unless for debugging.
             pxt.debug(e.toString());
@@ -477,6 +480,7 @@ namespace pxt.runner {
     }
 
     export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
+        const start = Date.now();
         await loadPackageAsync(simOptions.id, simOptions.code, simOptions.dependencies);
 
         let didUpgrade = false;
@@ -539,6 +543,7 @@ namespace pxt.runner {
 
         const res = pxtc.buildSimJsInfo(compileResult);
         res.parts = compileResult.usedParts;
+        tickEvent("runner.buildSimJsInfo", { compileTime: Date.now() - start });
         return res;
     }
 
