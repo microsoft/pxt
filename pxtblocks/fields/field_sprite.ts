@@ -51,14 +51,13 @@ namespace pxtblockly {
 
             if (!bmp) {
                 // check for qualified name
-                const images = project.getGalleryAssets(pxt.AssetType.Image).filter(asset => asset.id === text);
-                const img = images.length && images[0];
-                if (!img) {
+                data = qNameToBitmapData(text);
+                if (!data) {
                     this.isGreyBlock = true;
                     this.valueText = text;
                     return undefined;
                 } else {
-                    data = img.bitmap;
+                    this.qName = text;
                 }
             }
 
@@ -80,6 +79,12 @@ namespace pxtblockly {
         protected getValueText(): string {
             if (this.asset && !this.isTemporaryAsset()) {
                 return pxt.getTSReferenceForAsset(this.asset);
+            } else if (this.qName) {
+                // check if image has been edited
+                const data = qNameToBitmapData(this.qName);
+                if (data && pxt.sprite.bitmapEquals(data, (this.asset as pxt.ProjectImage).bitmap)) {
+                    return this.qName;
+                }
             }
             return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
         }
@@ -157,5 +162,16 @@ namespace pxtblockly {
             }
             return res;
         }
+
+    }
+
+    function qNameToBitmapData(qName: string): pxt.sprite.BitmapData {
+        const project = pxt.react.getTilemapProject();
+        const images = project.getGalleryAssets(pxt.AssetType.Image).filter(asset => asset.id === qName);
+        const img = images.length && images[0];
+        if (img) {
+            return img.bitmap;
+        }
+        return undefined;
     }
 }
