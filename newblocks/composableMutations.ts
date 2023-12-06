@@ -6,6 +6,7 @@ import { MutatingBlock } from "./legacyMutations";
 import { optionalDummyInputPrefix, optionalInputWithFieldPrefix } from "./constants";
 import { FieldArgumentVariable } from "./fields/field_argumentvariable";
 import { setVarFieldValue } from "./loader";
+import { UpdateBeforeRenderMixin } from "./plugins/renderer";
 
 export interface ComposableMutation {
     // Set to save mutations. Should return an XML element
@@ -199,17 +200,19 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
     }
 
 
-    // This is called inside the pxt renderer
-    // FIXME: clean up this interface
-    (b as any).updateBeforeRender = () => {
-        if (updatingInputs) return;
-        if (firstRender) {
-            firstRender = false;
-            updatingInputs = true;
-            updateShape(0, undefined, true);
-            updatingInputs = false;
+    // This is called inside the pxt renderer whenever the block renders
+    const mixin: UpdateBeforeRenderMixin = {
+        updateBeforeRender: () => {
+            if (updatingInputs) return;
+            if (firstRender) {
+                firstRender = false;
+                updatingInputs = true;
+                updateShape(0, undefined, true);
+                updatingInputs = false;
+            }
         }
-    }
+    };
+    b.mixin(mixin);
 
     // Set skipRender to true if the block is still initializing. Otherwise
     // the inputs will render before their shadow blocks are created and

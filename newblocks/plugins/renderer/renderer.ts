@@ -5,6 +5,12 @@ import { BlockStyle } from "blockly/core/theme";
 import { RenderInfo } from "./info";
 import { Drawer } from "./drawer";
 
+export interface UpdateBeforeRenderMixin {
+    updateBeforeRender(): void;
+}
+
+type UpdateBeforeRenderBlock = UpdateBeforeRenderMixin & Blockly.BlockSvg;
+
 export class Renderer extends Blockly.zelos.Renderer {
     override makePathObject(root: SVGElement, style: BlockStyle): PathObject {
         return new PathObject(root, style, this.getConstants() as ConstantProvider);
@@ -26,8 +32,8 @@ export class Renderer extends Blockly.zelos.Renderer {
     }
 
     render(block: Blockly.BlockSvg): void {
-        if ((block as any).updateBeforeRender) {
-            (block as any).updateBeforeRender();
+        if ((block as UpdateBeforeRenderBlock).updateBeforeRender) {
+            (block as UpdateBeforeRenderBlock).updateBeforeRender();
         }
         super.render(block);
     }
