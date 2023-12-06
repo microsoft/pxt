@@ -5,13 +5,6 @@ import { FieldCustom, FieldCustomOptions, getAllFields } from "./field_utils";
 import { FieldTextDropdown, FieldTextDropdownOptions } from "./field_textdropdown";
 import { FieldString } from "../plugins/text";
 
-// namespace Blockly {
-//     export interface FieldTextDropdown {
-//         showDropdown_(): void
-//         isTextValid_: boolean;
-//     }
-// }
-
 export interface FieldAutoCompleteOptions extends FieldTextDropdownOptions {
     // This is a unique key that should be specified by the parent block. The dropdown
     // will only be populated by other blocks with this same key. If not specified, the parent's

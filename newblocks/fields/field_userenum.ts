@@ -1,6 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
+import { prompt } from "../external";
 
 export class FieldUserEnum extends Blockly.FieldDropdown {
     constructor(private opts: pxtc.EnumInfo) {
@@ -73,7 +74,7 @@ function createMenuGenerator(opts: pxtc.EnumInfo): () => [string, string][] {
 }
 
 function promptAndCreateEnum(ws: Blockly.Workspace, opts: pxtc.EnumInfo, message: string, cb: (newValue: string) => void) {
-    Blockly.dialog.prompt(message, null, response => {
+    prompt(message, null, response => {
         if (response) {
             let nameIsValid = false;
             if (pxtc.isIdentifierStart(response.charCodeAt(0), 2)) {
@@ -103,7 +104,7 @@ function promptAndCreateEnum(ws: Blockly.Workspace, opts: pxtc.EnumInfo, message
 
             cb(createNewEnumMember(ws, opts, response));
         }
-    }/* FIXME (riknoll), { placeholder: opts.promptHint }*/);
+    }, { placeholder: opts.promptHint });
 }
 
 function parseName(model: Blockly.VariableModel): [string, number] {

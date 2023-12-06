@@ -431,17 +431,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
         });
 
-        /**
-         * Wrapper to window.prompt() that app developers may override to provide
-         * alternatives to the modal browser window. Built-in browser prompts are
-         * often used for better text input experience on mobile device. We strongly
-         * recommend testing mobile when overriding this.
-         * @param {string} message The message to display to the user.
-         * @param {string} defaultValue The value to initialize the prompt with.
-         * @param {!function(string)} callback The callback for handling user reponse.
-         * @param {Object} options
-         */
-        Blockly.dialog.setPrompt(function (message, defaultValue, callback, options?: core.PromptOptions) {
+        pxtblockly.external.setPrompt(function (message, defaultValue, callback, options?: Partial<core.PromptOptions>) {
             return core.promptAsync({
                 header: message,
                 initialValue: defaultValue,

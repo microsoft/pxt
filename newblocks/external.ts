@@ -55,3 +55,26 @@ export function onWorkspaceContextMenu(workspace: Blockly.WorkspaceSvg, options:
 export function setOnWorkspaceContextMenu(impl: (workspace: Blockly.WorkspaceSvg, options: Blockly.ContextMenuRegistry.ContextMenuOption[]) => void) {
     _onWorkspaceContextMenu = impl;
 }
+
+export interface PromptOptions {
+    placeholder: string;
+}
+
+let _prompt: (message: string, defaultValue: string, callback: (value: string) => void, options?: PromptOptions) => void;
+
+export function setPrompt(impl: (message: string, defaultValue: string, callback: (value: string) => void, options?: PromptOptions) => void, setBlocklyAlso?: boolean) {
+    if (setBlocklyAlso) {
+        Blockly.dialog.setPrompt(impl);
+    }
+
+    _prompt = impl;
+}
+
+export function prompt(message: string, defaultValue: string, callback: (value: string) => void, options?: PromptOptions) {
+    if (_prompt) {
+        _prompt(message, defaultValue, callback, options);
+    }
+    else {
+        Blockly.dialog.prompt(message, defaultValue, callback);
+    }
+}

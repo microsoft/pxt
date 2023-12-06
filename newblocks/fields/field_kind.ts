@@ -2,6 +2,7 @@
 
 import * as Blockly from "blockly";
 import { getAllFields } from "./field_utils";
+import { prompt } from "../external";
 
 export class FieldKind extends Blockly.FieldDropdown {
     constructor(private opts: pxtc.KindInfo) {
@@ -138,8 +139,8 @@ function createMenuGenerator(opts: pxtc.KindInfo): Blockly.MenuGeneratorFunction
 
 type PromptFunction<U extends pxtc.KindInfo> = (ws: Blockly.Workspace, opts: U, message: string, cb: (newValue: string) => void) => void;
 
-function promptForName<U extends pxtc.KindInfo>(ws: Blockly.Workspace, opts: U, message: string, cb: (newValue: string) => void, prompt: PromptFunction<U>) {
-    Blockly.dialog.prompt(message, null, response => {
+function promptForName<U extends pxtc.KindInfo>(ws: Blockly.Workspace, opts: U, message: string, cb: (newValue: string) => void, promptFn: PromptFunction<U>) {
+    prompt(message, null, response => {
         if (response) {
             let nameIsValid = false;
             if (pxtc.isIdentifierStart(response.charCodeAt(0), 2)) {
@@ -153,13 +154,13 @@ function promptForName<U extends pxtc.KindInfo>(ws: Blockly.Workspace, opts: U, 
 
             if (!nameIsValid) {
                 Blockly.dialog.alert(lf("Names must start with a letter and can only contain letters, numbers, '$', and '_'."),
-                    () => promptForName(ws, opts, message, cb, prompt));
+                    () => promptForName(ws, opts, message, cb, promptFn));
                 return;
             }
 
             if (pxt.blocks.isReservedWord(response) || response === "CREATE" || response === "RENAME" || response === "DELETE") {
                 Blockly.dialog.alert(lf("'{0}' is a reserved word and cannot be used.", response),
-                    () => promptForName(ws, opts, message, cb, prompt));
+                    () => promptForName(ws, opts, message, cb, promptFn));
                 return;
             }
 
@@ -168,19 +169,19 @@ function promptForName<U extends pxtc.KindInfo>(ws: Blockly.Workspace, opts: U, 
                 const name = existing[i];
                 if (name === response) {
                     Blockly.dialog.alert(lf("A {0} named '{1}' already exists.", opts.memberName, response),
-                        () => promptForName(ws, opts, message, cb, prompt));
+                        () => promptForName(ws, opts, message, cb, promptFn));
                     return;
                 }
             }
 
             if (response === opts.createFunctionName) {
                 Blockly.dialog.alert(lf("'{0}' is a reserved name.", opts.createFunctionName),
-                    () => promptForName(ws, opts, message, cb, prompt));
+                    () => promptForName(ws, opts, message, cb, promptFn));
             }
 
             cb(response);
         }
-    }/* FIXME (riknoll), { placeholder: opts.promptHint }*/);
+    }, { placeholder: opts.promptHint });
 }
 
 function promptAndCreateKind(ws: Blockly.Workspace, opts: pxtc.KindInfo, message: string, cb: (newValue: string) => void) {
