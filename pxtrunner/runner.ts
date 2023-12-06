@@ -471,7 +471,10 @@ namespace pxt.runner {
         try {
             const start = Date.now();
             const result = await pxt.Cloud.downloadBuiltSimJsInfoAsync(simOptions.id);
-            pxt.tickEvent("runner.fetchSimJsInfo", { durationMs: Date.now() - start });
+            pxt.tickEvent("perfMeasurement", {
+              durationMs: Date.now() - start,
+              operation: "fetchSimJsInfo",
+            });
             return result;
         } catch (e) {
             // This exception will happen in the majority of cases, so we don't want to log it unless for debugging.
@@ -544,7 +547,10 @@ namespace pxt.runner {
 
         const res = pxtc.buildSimJsInfo(compileResult);
         res.parts = compileResult.usedParts;
-        pxt.tickEvent("runner.buildSimJsInfo", { durationMs: Date.now() - start });
+        pxt.tickEvent("perfMeasurement", {
+          durationMs: Date.now() - start,
+          operation: "buildSimJsInfo",
+        });
         return res;
     }
 
