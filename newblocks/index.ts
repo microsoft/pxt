@@ -4,6 +4,7 @@ export * from "./plugins/logic";
 export * from "./plugins/math";
 export * from "./plugins/text";
 export * from "./plugins/renderer";
+export * from "./plugins/flyout";
 export * from "./plugins/newVariableField";
 export * from "./compiler/compiler";
 export * from "./compiler/environment";

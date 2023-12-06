@@ -281,6 +281,12 @@ export function createFlyoutButton(callbackKey: string, label: string) {
     return button;
 }
 
+export function createFlyoutGap(gap: number) {
+    const sep = Blockly.utils.xml.createElement("sep");
+    sep.setAttribute("gap", gap + "");
+    return sep;
+}
+
 export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo): HTMLElement {
     let parent: HTMLElement;
     let parentInput: HTMLElement;

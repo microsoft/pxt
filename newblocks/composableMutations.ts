@@ -200,6 +200,7 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
 
 
     // This is called inside the pxt renderer
+    // FIXME: clean up this interface
     (b as any).updateBeforeRender = () => {
         if (updatingInputs) return;
         if (firstRender) {

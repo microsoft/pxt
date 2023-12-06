@@ -126,4 +126,36 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
 
         return mainPath;
     };
+
+    override getCSS_(selector: string) {
+        const css = super.getCSS_(selector);
+
+        return css.concat([
+            // Connection indicator.
+            selector + ' .blocklyConnectionIndicator, ' + selector + ' .blocklyInputConnectionIndicator {',
+            'fill: #ff0000;',
+            'fill-opacity: 0.9;',
+            'stroke: #ffff00;',
+            'stroke-width: 3px;',
+            '}',
+            selector + ' .blocklyConnectionIndicator {',
+            'display: none;',
+            '}',
+            selector + ' .blocklyBlockDragSurface > g > .blocklyDraggable > .blocklyConnectionIndicator {',
+            'display: block;',
+            '}',
+            selector + ' .blocklyConnectionLine {',
+            'stroke: #ffff00;',
+            'stroke-width: 4px;',
+            '}',
+            selector + ' .blocklyConnectionLine.hidden {',
+            'display: none;',
+            '}',
+
+            // Flyout heading.
+            selector + ' .blocklyFlyoutHeading .blocklyFlyoutLabelText {' +
+            'font-size: 1.5rem;',
+            '}'
+        ])
+    }
 }

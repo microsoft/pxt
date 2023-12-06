@@ -1195,7 +1195,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // },
             plugins: {
                 'blockDragger': pxtblockly.BlockDragger,
-                'connectionChecker': DuplicateOnDragConnectionChecker
+                'connectionChecker': DuplicateOnDragConnectionChecker,
+                'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout
             },
             move: {
                 scrollbars: true,
@@ -1556,7 +1557,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.helpButtonCallback(group);
             })
         }
+        this.flyoutXmlList.push(pxtblockly.createFlyoutGap(30));
         this.flyoutXmlList.push(groupLabel);
+        this.flyoutXmlList.push(pxtblockly.createFlyoutGap(30));
     }
 
     protected helpButtonCallback(group?: string) {
