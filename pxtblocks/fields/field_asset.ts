@@ -38,6 +38,8 @@ namespace pxtblockly {
         protected pendingEdit = false;
         protected isEmpty = false;
 
+        protected qName?: string;
+
         // If input is invalid, the subclass can set this to be true. The field will instead
         // render as a grey block and preserve the decompiled code
         public isGreyBlock: boolean;
