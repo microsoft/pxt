@@ -83,6 +83,7 @@ namespace pxsim {
     export interface SimulatorBroadcastMessage extends SimulatorMessage {
         broadcast: boolean;
         toParentIFrameOnly?: boolean;
+        srcFrameIndex?: number;
     }
 
     export interface SimulatorControlMessage extends SimulatorBroadcastMessage {
