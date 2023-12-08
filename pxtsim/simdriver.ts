@@ -320,7 +320,7 @@ namespace pxsim {
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
                 // include index of the source iframe
-                broadcastmsg.srcFrameIndex = frames.findIndex((item) => item.contentWindow === source)
+                broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source)
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
                 const single = !!this._currentRuntime?.single;
