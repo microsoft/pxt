@@ -362,6 +362,7 @@ function pxtFileList(pref: string) {
         .concat(nodeutil.allFiles(pref + "built/web/authcode", { maxDepth: 4 }))
         .concat(nodeutil.allFiles(pref + "built/web/multiplayer", { maxDepth: 4 }))
         .concat(nodeutil.allFiles(pref + "built/web/kiosk", { maxDepth: 4 }))
+        .concat(nodeutil.allFiles(pref + "built/web/teachertool", { maxDepth: 4 }))
 }
 
 function semverCmp(a: string, b: string) {
@@ -458,7 +459,8 @@ function ciAsync() {
                             .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
                             .then(() => crowdin.execCrowdinAsync("upload", "built/authcode-strings.json"))
                             .then(() => crowdin.execCrowdinAsync("upload", "built/multiplayer-strings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/kiosk-strings.json"));
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/kiosk-strings.json"))
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/teachertool-strings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                     if (uploadDocs || uploadApiStrings)
@@ -1049,6 +1051,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "authcodeUrl": opts.localDir + "authcode.html",
             "multiplayerUrl": opts.localDir + "multiplayer.html",
             "kioskUrl": opts.localDir + "kiosk.html",
+            "teachertoolUrl": opts.localDir + "teachertool.html",
             "isStatic": true,
         }
         const targetImageLocalPaths = targetImagePaths.map(k =>
@@ -1102,6 +1105,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "authcode.html",
         "multiplayer.html",
         "kiosk.html",
+        "teachertool.html",
     ]
 
     // expandHtml is manually called on these files before upload
@@ -1112,6 +1116,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "authcode.html",
         "multiplayer.html",
         "kiosk.html",
+        "teachertool.html",
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
@@ -2041,7 +2046,8 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     await Promise.all([
         generateReactCommonCss("skillmap"),
         generateReactCommonCss("authcode"),
-        generateReactCommonCss("multiplayer")
+        generateReactCommonCss("multiplayer"),
+        generateReactCommonCss("teachertool")
     ]);
 
     // Run postcss with autoprefixer and rtlcss
@@ -2070,7 +2076,8 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         "blockly.css",
         "react-common-skillmap.css",
         "react-common-authcode.css",
-        "react-common-multiplayer.css"
+        "react-common-multiplayer.css",
+        "react-common-teachertool.css"
     ];
 
     for (const cssFile of files) {
