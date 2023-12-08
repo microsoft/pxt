@@ -1,11 +1,5 @@
 # Teacher Tool
 
-## config.json settings
-
-|Key|Purpose|
-|---------------------------------|-|
-|Volume                           | Volume for sounds within the page|
-
 ## Localhost testing
 
 To test the Teacher Tool locally:

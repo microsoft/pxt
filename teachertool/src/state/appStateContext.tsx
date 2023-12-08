@@ -40,13 +40,9 @@ export function AppStateProvider(
 ): React.ReactElement {
     // Read the URL parameters and set the initial state accordingly
     const url = window.location.href;
-    const volumeStr = /volume=(1\.?0?|0?\.\d{1,2}|\.\d{1,2})/i.exec(url)?.[1];
-    const volume = volumeStr
-        ? parseFloat(volumeStr)
-        : configData.SoundEffectsVolume;
 
     // Create the application state and state change mechanism (dispatch)
-    const [state_, dispatch_] = useReducer(reducer, {...initialAppState, volume});
+    const [state_, dispatch_] = useReducer(reducer, {...initialAppState});
 
     // Make state and dispatch available outside the React context
     useEffect(() => {
