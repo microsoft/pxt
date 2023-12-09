@@ -393,6 +393,7 @@ namespace pxt {
         authcodeUrl?: string; // "/beta---authcode"
         multiplayerUrl?: string; // "/beta---multiplayer"
         kioskUrl?: string; // "/beta---kiosk"
+        teachertoolUrl?: string; // "/beta---teachertool"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }

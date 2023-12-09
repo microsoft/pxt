@@ -1,0 +1,386 @@
+:root {
+    --black: #000;
+    --white: #fff;
+
+    --primary-color: #AA278F;
+    --secondary-color: #EAC6EB;
+    --tertiary-color: #850A6B;
+
+    --hover-color: var(--secondary-color);
+    --active-color: var(--tertiary-color);
+    --inactive-color: var(--secondary-color);
+    --inactive-hover-color: #6e6e6e;
+
+    --invert-active-color: #fff;
+    --invert-hover-text-color: #850A6B;
+
+    --body-background-color: #F9F9F9;
+    --default-card-color: #CCC;
+    --card-hover-color: #BFBFBF;
+    --card-border-color: #e9eef2;
+    --dropdown-hover-color: #CCC;
+    --inverted-text-color: var(--white);
+    --subtitle-text-color: #6e6e6e;
+
+    --header-height: 4rem;
+    --header-padding-top: 1rem;
+
+    --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    --feature-text-font: Segoe UI,Tahoma,Geneva,Verdana;
+
+    --frame-loader-zindex: 30;
+    --above-frame-zindex: 50;
+    --modal-dimmer-zindex: 100;
+
+    --fullscreen-modal-zindex: 90;
+
+    --graph-backround-zindex: 10;
+    --above-graph-zindex: 20;
+
+    --high-contrast-text: var(--white);
+    --high-contrast-background: var(--black);
+    --high-contrast-highlight: #ffff00;
+    --high-contrast-focus-outline: 2px solid var(--high-contrast-highlight);
+    --high-contrast-hyperlink: #807FFF;
+}
+
+
+body {
+    position: relative;
+    margin: 0;
+    font-family: var(--body-font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--body-background-color);
+    overflow: hidden;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
+}
+
+#root.editor {
+    height: 100%;
+}
+
+#root > div {
+    width: 100%;
+    height: 100%;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.noclick {
+    pointer-events: none;
+    cursor: default;
+}
+
+/* HEADER BAR */
+.header {
+    background-color: var(--tertiary-color);
+
+    height: var(--header-height);
+    max-height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--inverted-text-color);
+    flex-grow: 0;
+    flex-shrink: 0;
+
+    z-index: var(--above-frame-zindex);
+}
+
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.header-logo {
+    display: flex;
+}
+
+.header .brand {
+    font-size: 1.5rem;
+    user-select: none;
+    display: flex;
+}
+
+.header .brand:before {
+    position: relative;
+    height: 1.5rem;
+    border-left: 2px solid #fff;
+    content: " ";
+}
+
+.ui.item.logo .name {
+    margin-left: 1rem;
+    margin-bottom: 1px;
+}
+
+.header-logo img {
+    height: 1.4rem;
+    margin: 0 1rem;
+}
+
+.user-menu {
+    height: 100%;
+}
+
+.user-menu .header-button.sign-in {
+    border-radius: 6px;
+    background-color: var(--body-background-color);
+    color: #393939;
+    height: 80%;
+    margin: .5rem;
+    margin-right: 1rem;
+    padding: .6rem;
+    font-family: var(--feature-text-font);
+    font-weight: 500;
+    flex-direction: row-reverse;
+    align-items: center;
+}
+
+.user-menu .header-dropdown {
+    height: inherit;
+    cursor: pointer;
+    width: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-menu .avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.user-menu .avatar img {
+    border: solid 2px white;
+    border-radius: 100%;
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.header-org-logo {
+    height: 2rem;
+    margin-left: 1rem;
+}
+
+.header-org-logo img {
+    height: 100%;
+}
+
+.header-org-logo .header-org-logo-small {
+    display: none;
+}
+
+.header i {
+    line-height: 2rem;
+    cursor: pointer;
+}
+
+.header-dropdown i,
+.header-dropdown span,
+.header-dropdown img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: var(--header-height);
+    width: 3.5rem;
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+.header-button {
+    color: var(--invert-active-color);
+    height: 100%;
+    padding: var(--header-padding-top) 0.5rem;
+    font-size: 1.2rem;
+    text-align: center;
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+    white-space: nowrap;
+    font-size: 1.6rem;
+}
+
+.header-button.with-label {
+    flex-grow: 3;
+    display: flex;
+}
+
+.header-button.icon-only {
+    font-size: unset;
+    padding: var(--header-padding-top) 0.5rem;
+}
+
+.header-button .header-button-label {
+    line-height: 2rem;
+    white-space: nowrap;
+    font-size: 1rem;
+    margin-right: .4rem;
+}
+
+.header-button:hover, .header-dropdown:hover {
+    background-color: rgba(0,0,0,.1);
+}
+
+.header-button:hover>i,
+.header-dropdown:hover>i {
+    transform: scale(1.2);
+}
+
+.header-button.sign-in:hover {
+    transform: scale(1.1);
+}
+
+.header-button.sign-in:hover>span,
+.header-button.sign-in:hover>i {
+    transform: none;
+}
+
+.header-activity-display-name {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    flex-shrink: 10;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.avatar-initials {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 100%;
+    border: solid 2px white;
+    background-color: #028B9B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.header-dropdown.user-dropdown .dropdown-menu {
+    top: var(--header-height);
+}
+
+/* USABILLA */
+.usabilla_live_button_container {
+    top: unset !important;
+    bottom: 14rem !important;
+}
+
+/** mscc cookie banner. Can be removed once the banner is out of the checked in pxtweb in doccdn */
+#msccBanner {
+    display: none;
+}
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .header {
+    background-color: var(--high-contrast-background);
+    border-bottom: 2px solid var(--high-contrast-text);
+}
+
+.high-contrast .header-dropdown i {
+    height: calc(var(--header-height) - 2px);
+}
+
+.high-contrast .avatar-initials {
+    background-color: var(--high-contrast-background);
+}
+
+.high-contrast a {
+    color: var(--high-contrast-hyperlink);
+    text-decoration: underline;
+}
+.high-contrast a:hover {
+    outline: var(--high-contrast-focus-outline);
+}
+
+/*******************************/
+/****  NOTIFICATION STYLING  ***/
+/*******************************/
+
+.notification-container {
+    position: fixed;
+    display: flex;
+    align-items: baseline;
+    justify-content: right;
+    top: 85%;
+    left: 0;
+    right: 2%;
+    bottom: 0;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.notification-contents {
+    border-radius: 0.285rem;
+    overflow: hidden;
+    position: fixed;
+    padding: 0 1rem;
+    margin-right: 1rem;
+    pointer-events: none;
+    border: 4px solid var(--primary-color);
+    background-color: var(--secondary-color);
+}
+
+/*******************************/
+/***** SMALL DESKTOP VIEW  *****/
+/*******************************/
+
+@media only screen and (max-height: 44rem) and (min-width: 767px) {
+    :root {
+        --header-height: 3rem;
+        --header-padding-top: .5rem;
+    }
+
+    .header-button.with-label {
+        flex-grow: 1;
+    }
+
+
+    .user-menu .header-button.sign-in {
+        padding: .2rem .8rem;
+        margin-top: .4rem;
+    }
+}
+
+/*******************************/
+/*****     MOBILE VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 767px) {
+    .header-org-logo .header-org-logo-large {
+        display: none;
+    }
+
+    .header-org-logo .header-org-logo-small {
+        display: block;
+    }
+
+    .user-menu .header-button.sign-in {
+        padding-left: .6rem;
+    }
+
+    .user-menu .header-button.sign-in .header-button-label {
+        display: none;
+    }
+}

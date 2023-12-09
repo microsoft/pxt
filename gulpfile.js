@@ -251,6 +251,10 @@ function updateKioskStrings() {
     return buildStrings("built/kiosk-strings.json", ["kiosk/src"], true);
 }
 
+function updateTeacherToolStrings() {
+    return buildStrings("built/teachertool-strings.json", ["teachertool/src"], true);
+}
+
 // TODO: Copied from Jakefile; should be async
 function buildStrings(out, rootPaths, recursive) {
     let errCnt = 0;
@@ -688,6 +692,33 @@ const copyKioskHtml = () => rimraf("webapp/public/kiosk.html")
 const kiosk = gulp.series(cleanKiosk, buildKiosk, gulp.series(copyKioskCss, copyKioskJs, copyKioskHtml));
 
 /********************************************************
+                      Teacher Tool
+*********************************************************/
+
+const teacherToolRoot = "teachertool";
+const teacherToolOut = "built/web/teachertool";
+
+const cleanTeacherTool = () => rimraf(teacherToolOut);
+
+const npmBuildTeacherTool = () => exec("npm run build", true, { cwd: teacherToolRoot });
+
+const buildTeacherTool = async () => await npmBuildTeacherTool();
+
+const copyTeacherToolCss = () => gulp.src(`${teacherToolRoot}/build/static/css/*`)
+    .pipe(gulp.dest(`${teacherToolOut}/css`));
+
+const copyTeacherToolJs = () => gulp.src(`${teacherToolRoot}/build/static/js/*`)
+    .pipe(gulp.dest(`${teacherToolOut}/js`));
+
+const copyTeacherToolHtml = () => rimraf("webapp/public/teachertool.html")
+    .then(() => gulp.src(`${teacherToolRoot}/build/index.html`)
+                    .pipe(replace(/="\/static\//g, `="/blb/teachertool/`))
+                    .pipe(concat("teachertool.html"))
+                    .pipe(gulp.dest("webapp/public")));
+
+const teacherTool = gulp.series(cleanTeacherTool, buildTeacherTool, gulp.series(copyTeacherToolCss, copyTeacherToolJs, copyTeacherToolHtml));
+
+/********************************************************
                  Webapp build wrappers
 *********************************************************/
 
@@ -700,12 +731,13 @@ const maybeUpdateWebappStrings = () => {
         updateAuthcodeStrings,
         updateMultiplayerStrings,
         updateKioskStrings,
+        updateTeacherToolStrings,
     );
 };
 
 const maybeBuildWebapps = () => {
     if (!shouldBuildWebapps()) return noop;
-    return gulp.parallel(skillmap, authcode, multiplayer, kiosk);
+    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool);
 }
 
 /********************************************************
@@ -715,7 +747,7 @@ const maybeBuildWebapps = () => {
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "webapp",
-        "docfiles/pxtweb", "skillmap", "authcode", "multiplayer"/*, "kiosk"*/, "docs/static/streamer"].map(dirname =>
+        "docfiles/pxtweb", "skillmap", "authcode", "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
@@ -863,6 +895,8 @@ exports.skillmap = skillmap;
 exports.authcode = authcode;
 exports.multiplayer = multiplayer;
 exports.kiosk = kiosk;
+exports.teacherTool = teacherTool;
+exports.tt = teacherTool;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;
