@@ -78,7 +78,11 @@ export class FieldTilemap extends FieldAssetEditor<FieldTilemapOptions, ParsedFi
             return pxt.getTSReferenceForAsset(this.asset);
         }
 
-        return this.getInitText();
+        if (this.initText) {
+            return this.getInitText();
+        }
+
+        return this.valueText || "";
     }
 
     protected parseFieldOptions(opts: FieldTilemapOptions): ParsedFieldTilemapOptions {

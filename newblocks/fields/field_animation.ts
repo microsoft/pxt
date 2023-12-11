@@ -113,7 +113,7 @@ export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions
     }
 
     protected getValueText(): string {
-        if (!this.asset) return "[]";
+        if (!this.asset) return this.valueText || "[]";
 
         if (this.isTemporaryAsset()) {
             return "[" + this.asset.frames.map(frame =>

@@ -113,6 +113,7 @@ export const COMMON_FUNCTION_MIXIN = {
         } else if (!this.getFieldValue("function_name") && this.name_) {
             // pxt-blockly handle old function case where name was stored in text_
             this.setFieldValue(this.name_, "function_name");
+            this.updateDisplay_();
         }
     },
 

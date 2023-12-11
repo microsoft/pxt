@@ -21,13 +21,32 @@ export abstract class FieldBase<U> extends Blockly.Field implements FieldCustom 
     protected abstract onDispose(): void;
     protected abstract onValueChanged(newValue: string): string;
 
+    static pendingInit: FieldBase<any>[] = [];
+    static pendingTimeout: any;
+
+    static enqueueInit(field: FieldBase<any>) {
+        FieldBase.pendingInit.push(field);
+
+        if (!this.pendingTimeout) {
+            FieldBase.pendingTimeout = setTimeout(() => FieldBase.flushInitQueue());
+        }
+    }
+
+    static flushInitQueue() {
+        for (const field of FieldBase.pendingInit) {
+            field.onLoadedIntoWorkspace();
+        }
+        FieldBase.pendingTimeout = undefined;
+        FieldBase.pendingInit = [];
+    }
+
     init() {
         super.init();
         this.onInit();
 
         // This hack makes sure we run this code only after domToBlock
         // has finished running and this field has its actual value set
-        setTimeout(() => this.onLoadedIntoWorkspace());
+        FieldBase.enqueueInit(this);
    }
 
     dispose() {

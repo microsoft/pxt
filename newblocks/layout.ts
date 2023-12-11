@@ -4,7 +4,7 @@ import * as Blockly from "blockly";
 import { Environment, mkEnv } from "./compiler/environment";
 import { getBlockData } from "./fields/field_utils";
 import { callKey } from "./compiler/compiler";
-import { BlockSnippet, loadWorkspaceXml, saveBlocksXml } from "./importer";
+import { BlockSnippet, loadWorkspaceXml, saveBlocksXml, workspaceToDom } from "./importer";
 
 export interface FlowOptions {
     ratio?: number;
@@ -20,8 +20,8 @@ export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs
 }
 
 function injectDisabledBlocks(oldWs: Blockly.Workspace, newWs: Blockly.Workspace): string {
-    const oldDom = Blockly.Xml.workspaceToDom(oldWs, true);
-    const newDom = Blockly.Xml.workspaceToDom(newWs, true);
+    const oldDom = workspaceToDom(oldWs, true);
+    const newDom = workspaceToDom(newWs, true);
     pxt.Util.toArray(oldDom.childNodes)
         .filter((n: ChildNode) => n.nodeType == Node.ELEMENT_NODE && (n as Element).localName == "block" && (<Element>n).getAttribute("disabled") == "true")
         .filter((n: Element) => !!Blockly.Blocks[n.getAttribute("type")])

@@ -897,7 +897,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
             const xml = Blockly.utils.xml.textToDom(text);
             pxtblockly.domToWorkspaceNoEvents(xml, ws);
             pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
-            const upgradedXml = Blockly.Xml.workspaceToDom(ws);
+            const upgradedXml = pxtblockly.workspaceToDom(ws);
             patchedFiles[pxt.MAIN_BLOCKS] = Blockly.Xml.domToText(upgradedXml);
 
             return pxtblockly.compileAsync(ws, info)
@@ -923,7 +923,8 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
                 patchedFiles
             };
         })
-        .catch(() => {
+        .catch(e => {
+            console.log(e)
             pxt.debug("Block upgrade failed, falling back to TS");
             return upgradeFromTSAsync();
         });

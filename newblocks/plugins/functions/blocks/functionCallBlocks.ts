@@ -41,10 +41,13 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
             ) {
                 // Reattach the old block and shadow DOM.
                 oldBlock.outputConnection!.connect(input.connection!);
+                let shadowDom: Element;
                 if (oldBlock.isShadow()) {
-                    input.connection!.setShadowDom(Blockly.Xml.blockToDom(oldBlock) as Element);
+                    shadowDom = Blockly.Xml.blockToDom(oldBlock) as Element;
                 } else {
-                    const shadowDom = oldShadow || this.buildShadowDom_(arg.type);
+                    shadowDom = oldShadow || this.buildShadowDom_(arg.type);
+                }
+                if (shadowDom.getAttribute("type") !== "variables_get") {
                     input.connection!.setShadowDom(shadowDom);
                 }
 
@@ -79,7 +82,7 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
         try {
             newBlock = this.workspace.newBlock(shadowType);
             newBlock.setFieldValue(fieldValue, fieldName);
-            newBlock.setShadow(true);
+            newBlock.setShadow(shadowType !== "variables_get");
             if (!this.isInsertionMarker() && newBlock instanceof Blockly.BlockSvg) {
                 newBlock.initSvg();
                 newBlock.render();

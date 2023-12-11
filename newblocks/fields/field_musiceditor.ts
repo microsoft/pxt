@@ -84,7 +84,7 @@ export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, 
         if (this.asset && !this.isTemporaryAsset()) {
             return pxt.getTSReferenceForAsset(this.asset);
         }
-        return this.asset ? `hex\`${pxt.assets.music.encodeSongToHex((this.asset as pxt.Song).song)}\`` : "";
+        return this.asset ? `hex\`${pxt.assets.music.encodeSongToHex((this.asset as pxt.Song).song)}\`` : (this.valueText || "");
     }
 
     protected parseFieldOptions(opts: FieldMusicEditorOptions): ParsedFieldMusicEditorOptions {

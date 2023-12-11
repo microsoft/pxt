@@ -81,6 +81,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
     protected selected: pxt.Tile;
     protected blocksInfo: pxtc.BlocksInfo;
     protected transparent: TilesetDropdownOption;
+    protected localTile: pxt.Tile;
 
     constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
         super(text, options, validator);
@@ -147,7 +148,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
     }
 
     doValueUpdate_(newValue: string) {
-        super.doValueUpdate_(newValue);
+        let calledSuper = false;
         const options: TilesetDropdownOption[] = this.getOptions(true);
 
         // This text can be one of four things:
@@ -170,8 +171,14 @@ export class FieldTileset extends FieldImages implements FieldCustom {
                     this.selectedOption_ = option;
                     this.value_ = this.getValue();
                     this.updateAssetListener();
+                    super.doValueUpdate_(option[1]);
+                    calledSuper = true;
                     return;
                 }
+            }
+
+            if (!calledSuper) {
+                super.doValueUpdate_(newValue);
             }
 
             this.selectedOption_ = null;
@@ -179,10 +186,53 @@ export class FieldTileset extends FieldImages implements FieldCustom {
         }
     }
 
+    protected doClassValidation_(newValue?: string): string {
+        const options = this.getOptions(true);
+
+        if (!options.some(([_, id]) => id === newValue)) {
+            if (newValue) {
+                const project = pxt.react.getTilemapProject();
+                const match = /^\s*assets\s*\.\s*tile\s*`([^`]*)`\s*$/.exec(newValue);
+
+                if (match) {
+                    const tile = project.lookupAssetByName(pxt.AssetType.Tile, match[1]);
+
+                    if (tile) {
+                        this.localTile = tile;
+                        return newValue;
+                    }
+                }
+            }
+
+            if (this.sourceBlock_) {
+                console.warn(`Trying to set tile reference to nonexistent tile. Block type: ${this.sourceBlock_.type}, Field name: ${this.name}, Value: ${newValue}`)
+            }
+
+            return null;
+        }
+
+        return newValue;
+    }
+
     getOptions(opt_useCache?: boolean): any[] {
         if (typeof this.menuGenerator_ !== 'function') {
             this.transparent = constructTransparentTile();
-            return [this.transparent];
+            const res = [this.transparent];
+
+            if (this.localTile) {
+                res.push([
+                    {
+                        src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(this.localTile.bitmap), PREVIEW_SIDE_LENGTH, false),
+                        width: PREVIEW_SIDE_LENGTH,
+                        height: PREVIEW_SIDE_LENGTH,
+                        alt: displayName(this.localTile)
+                    },
+                    this.localTile.id,
+                    this.localTile
+                ])
+            }
+
+            return res;
         }
 
         return this.menuGenerator_.call(this);

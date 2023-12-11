@@ -70,6 +70,7 @@ export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions
     }
 
     protected getValueText(): string {
+        if (!this.asset) return this.valueText || "";
         if (this.asset && !this.isTemporaryAsset()) {
             return pxt.getTSReferenceForAsset(this.asset);
         }

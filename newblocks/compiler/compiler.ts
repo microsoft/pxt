@@ -439,6 +439,7 @@ export function compileExpression(e: Environment, b: Blockly.Block, comments: st
         case "logic_negate":
             expr = compileNot(e, b, comments); break;
         case "variables_get":
+        case "variables_get_reporter":
             expr = compileVariableGet(e, b); break;
         case "text":
             expr = compileText(e, b, comments); break;

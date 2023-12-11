@@ -3,6 +3,7 @@
 import * as Blockly from "blockly";
 import { blockSymbol, buildinBlockStatements, hasArrowFunction, initializeAndInject } from "./loader";
 import { extensionBlocklyPatch } from "./external";
+import { FieldBase } from "./fields";
 
 export interface BlockSnippet {
     target: string; // pxt.appTarget.id
@@ -27,6 +28,7 @@ export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspac
     try {
         Blockly.Events.disable();
         newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
+        FieldBase.flushInitQueue();
         applyMetaComments(workspace, opts);
     } catch (e) {
         pxt.reportException(e);
@@ -79,9 +81,31 @@ export function clearWithoutEvents(workspace: Blockly.Workspace) {
 
 // Saves entire workspace, including variables, into an xml string
 export function saveWorkspaceXml(ws: Blockly.Workspace, keepIds?: boolean): string {
-    const xml = Blockly.Xml.workspaceToDom(ws, !keepIds);
+    const xml = workspaceToDom(ws, !keepIds);
     const text = Blockly.Xml.domToText(xml);
     return text;
+}
+
+// Same as Blockly's workspaceToDom but always saves all the variables in the workspace and not
+// just the ones that are used. We store some extra variables in the workspace for fields like
+// FieldKind and FieldUserEnum
+export function workspaceToDom(workspace: Blockly.Workspace, keepIds?: boolean): Element {
+    const xml = Blockly.Xml.workspaceToDom(workspace, keepIds);
+    const variables = Blockly.Xml.variablesToDom(workspace.getAllVariables());
+
+    const existingVariables = getDirectChildren(xml, "variables");
+    for (const v of existingVariables) {
+        v.remove();
+    }
+
+    if (xml.firstChild) {
+        xml.insertBefore(variables, xml.firstChild);
+    }
+    else {
+        xml.appendChild(variables);
+    }
+
+    return xml;
 }
 
 // Saves only the blocks xml by iterating over the top blocks
@@ -273,6 +297,72 @@ export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.Bloc
             shadow.replaceWith(block);
         }
 
+        const promoteShadow = (shadow: Element) => {
+            if (shadow.parentElement.childElementCount === 2) {
+                // there is already a block in this input
+                shadow.remove();
+                return undefined;
+            }
+            const newBlock = Blockly.utils.xml.createElement("block");
+
+            for (const attr of shadow.getAttributeNames()) {
+                newBlock.setAttribute(attr, shadow.getAttribute(attr));
+            }
+
+            for (const child of shadow.childNodes) {
+                newBlock.appendChild(child.cloneNode(true));
+            }
+
+            shadow.parentElement.appendChild(newBlock);
+            shadow.remove();
+
+            return newBlock;
+        };
+
+        const patchShadows = (root: Element, inShadow: boolean) => {
+            if (root.tagName === "shadow") {
+                const type = root.getAttribute("type");
+                let shouldPatch = false;
+
+                switch (type) {
+                    case "variables_get_reporter":
+                    case "argument_reporter_boolean":
+                    case "argument_reporter_number":
+                    case "argument_reporter_string":
+                    case "argument_reporter_array":
+                    case "argument_reporter_custom":
+                        shouldPatch = true;
+                        break;
+                }
+
+                if (shouldPatch) {
+                    root = promoteShadow(root)
+                    if (!root) return;
+                    let mutation = getDirectChildren(root, "mutation")[0];
+
+                    if (mutation) {
+                        mutation.setAttribute("duplicateondrag", "true");
+                    }
+                    else {
+                        mutation = Blockly.utils.xml.createElement("mutation");
+                        mutation.setAttribute("duplicateondrag", "true");
+                        root.appendChild(mutation);
+                    }
+                }
+                else if (type === "variables_get" || hasNonShadowChild(root)) {
+                    root = promoteShadow(root);
+                }
+            }
+
+            if (!root) return;
+
+            for (const child of root.children) {
+                patchShadows(child, inShadow || root.tagName === "shadow");
+            }
+        };
+
+        patchShadows(doc.children.item(0), false);
+
         // build upgrade map
         const enums: pxt.Map<string> = {};
         Object.keys(info.apis.byQName).forEach(k => {
@@ -304,6 +394,14 @@ export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.Bloc
             pxt.reportException(e);
         return xml;
     }
+}
+
+function hasNonShadowChild(el: Element) {
+    for (const child of el.children) {
+        if (child.tagName.toLowerCase() === "block" || hasNonShadowChild(child)) return true;
+    }
+
+    return false;
 }
 
 function patchBlock(info: pxtc.BlocksInfo, enums: pxt.Map<string>, block: Element): void {
