@@ -4507,7 +4507,7 @@ export class ProjectView
                 const rawMarkdown = await pxt.Cloud.markdownAsync(path);
                 pxt.perf.measureEnd("downloadMarkdown");
                 autoChooseBoard = true;
-                markdown = await processMarkdown(rawMarkdown);
+                markdown = processMarkdown(rawMarkdown);
             } else if (scriptId) {
                 pxt.tickEvent("tutorial.shared", { tutorial: scriptId });
                 const files = await workspace.downloadFilesByIdAsync(scriptId)
@@ -4561,7 +4561,7 @@ export class ProjectView
                     await pxt.tutorial.parseCachedTutorialInfo(gh.files[pxt.TUTORIAL_INFO_FILE], path);
                 }
                 if (gh) {
-                    markdown = await resolveMarkdown(ghid, gh.files);
+                    markdown = resolveMarkdown(ghid, gh.files);
                 }
             } else if (header) {
                 pxt.tickEvent("tutorial.header");
@@ -4569,7 +4569,7 @@ export class ProjectView
                 const hghid = pxt.github.parseRepoId(header.githubId);
                 const hfileName = path.split(':')[1] || "README";
                 const script = await workspace.getTextAsync(header.id);
-                markdown = await resolveMarkdown(ghid, script, hfileName)
+                markdown = resolveMarkdown(ghid, script, hfileName)
             }
 
             return {
@@ -4808,6 +4808,7 @@ export class ProjectView
             pxt.tickEvent("tutorial.editorLoaded")
             this.postTutorialLoaded();
 
+            pxt.perf.recordMilestone("editorContentLoaded");
             if (!this.autoRunOnStart()) {
                 pxt.analytics.trackPerformanceReport();
             }
