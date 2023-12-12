@@ -370,7 +370,14 @@ export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.Bloc
             }
         };
 
-        patchShadows(doc.children.item(0), false);
+        patchShadows(doc.documentElement, false);
+
+        const comments = getDirectChildren(doc.documentElement, "comment");
+        for (const comment of comments) {
+            if (!comment.hasAttribute("id")) {
+                comment.setAttribute("id", Blockly.utils.idGenerator.genUid());
+            }
+        }
 
         // build upgrade map
         const enums: pxt.Map<string> = {};
