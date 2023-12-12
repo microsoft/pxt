@@ -9,7 +9,7 @@
 namespace pxt.perf {
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
     export declare let perfReportLogged: boolean;
-    export declare function report(): void;
+    export declare function report(): { milestones: {[index: string]: number}, durations: {[index: string]: number} } | undefined;
     export declare function recordMilestone(msg: string, time?: number): void;
     export declare function measureStart(name: string): void;
     export declare function measureEnd(name: string): void;
@@ -18,7 +18,7 @@ namespace pxt.perf {
     // Sometimes these aren't initialized, for example in tests. We only care about them
     // doing anything in the browser.
     if (!pxt.perf.report)
-        pxt.perf.report = () => { }
+        pxt.perf.report = () => undefined
     if (!pxt.perf.recordMilestone)
         pxt.perf.recordMilestone = () => { }
     if (!pxt.perf.measureStart)
