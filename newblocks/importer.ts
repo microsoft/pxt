@@ -17,6 +17,10 @@ export interface DomToWorkspaceOptions {
     keepMetaComments?: boolean;
 }
 
+export interface PostWorkspaceLoad {
+    afterWorkspaceLoad?: () => void;
+}
+
 /**
  * Converts a DOM into workspace without triggering any Blockly event. Returns the new block ids
  * @param dom
@@ -29,6 +33,11 @@ export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspac
         Blockly.Events.disable();
         newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
         FieldBase.flushInitQueue();
+        for (const block of workspace.getAllBlocks()) {
+            if ((block as Blockly.Block & PostWorkspaceLoad).afterWorkspaceLoad) {
+                (block as Blockly.Block & PostWorkspaceLoad).afterWorkspaceLoad.call(block);
+            }
+        }
         applyMetaComments(workspace, opts);
     } catch (e) {
         pxt.reportException(e);

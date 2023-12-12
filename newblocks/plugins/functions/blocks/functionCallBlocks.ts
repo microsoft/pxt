@@ -5,13 +5,14 @@ import {
     FUNCTION_CALL_OUTPUT_BLOCK_TYPE,
     FUNCTION_DEFINITION_BLOCK_TYPE,
 } from "../constants";
-import { getDefinition, getShadowBlockInfoFromType_, mutateCallersAndDefinition } from "../utils";
+import { getDefinition, getShadowBlockInfoFromType_, isVariableBlockType, mutateCallersAndDefinition } from "../utils";
 import { MsgKey } from "../msg";
 
 interface FunctionCallMixin extends CommonFunctionMixin {
     attachShadow_(input: Blockly.Input, typeName: string): void;
     buildShadowDom_(argumentType: string): Element;
     onchange(event: Blockly.Events.Abstract): void;
+    afterWorkspaceLoad(): void;
 }
 
 type FunctionCallBlock = CommonFunctionBlock & FunctionCallMixin;
@@ -54,10 +55,27 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
                 delete connectionMap[input.name!];
             } else {
                 this.attachShadow_(input, arg.type);
-                if (oldBlock?.isShadow()) oldBlock.setShadow(false);
             }
         } finally {
             Blockly.Events.enable();
+        }
+    },
+
+    afterWorkspaceLoad: function(this: FunctionCallBlock) {
+        for (const input of this.inputList) {
+            if (input.type !== Blockly.inputTypes.VALUE) continue;
+            const target = input.connection?.targetBlock();
+
+            if (target) {
+                if (target.isShadow() && target.getVarModels().length) {
+                    target.setShadow(false);
+                }
+            }
+            const shadowDom = input.connection && input.getShadowDom();
+
+            if (isVariableBlockType(shadowDom?.getAttribute("type"))) {
+                input.setShadowDom(null);
+            }
         }
     },
 
@@ -92,6 +110,7 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
         }
 
         if (newBlock) {
+            newBlock.setShadow(true);
             newBlock.outputConnection!.connect(input.connection!);
         }
     },

@@ -15,7 +15,7 @@ import {
     FUNCTION_CALL_OUTPUT_BLOCK_TYPE,
     FUNCTION_DEFINITION_BLOCK_TYPE,
 } from "../constants";
-import { createCustomArgumentReporter, getDefinition, mutateCallersAndDefinition, rename } from "../utils";
+import { createCustomArgumentReporter, getDefinition, isVariableBlockType, mutateCallersAndDefinition, rename } from "../utils";
 import { FieldAutocapitalizeTextInput } from "../fields/fieldAutocapitalizeTextInput";
 import { MsgKey } from "../msg";
 import { FunctionManager } from "../functionManager";
@@ -27,6 +27,7 @@ interface FunctionDefinitionMixin extends CommonFunctionMixin {
     customContextMenu(menuOptions: Blockly.ContextMenuRegistry.LegacyContextMenuOption[]): void;
     makeEditOption(): Blockly.ContextMenuRegistry.LegacyContextMenuOption;
     makeCallOption(): Blockly.ContextMenuRegistry.LegacyContextMenuOption;
+    afterWorkspaceLoad?(): void;
 }
 
 export type FunctionDefinitionBlock = CommonFunctionBlock & FunctionDefinitionMixin;
@@ -58,20 +59,24 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
 
         // Attach the block.
         input.connection!.connect(argumentReporter.outputConnection!);
+    },
 
-        // FIXME: This is a hack to support duplicate on drag. The argument
-        // reporter can't be a shadow if it's being dragged, but we have to
-        // attach it as a shadow initially just in case this is being called
-        // from within a domToBlock that hasn't connected the existing block
-        // yet. Otherwise, the existing block that domToBlock recreates will
-        // unplug this one and leave it stranded on the workspace. setTimeout
-        // let's us convert it to a non-shadow block after domToBlock
-        // finishes
-        setTimeout(() => {
-            if (input.connection.targetBlock()?.isShadow()) {
-                input.connection.targetBlock()?.setShadow(false);
+    afterWorkspaceLoad: function(this: FunctionDefinitionBlock) {
+        for (const input of this.inputList) {
+            if (input.type !== Blockly.inputTypes.VALUE) continue;
+            const target = input.connection?.targetBlock();
+
+            if (target) {
+                if (target.isShadow() && target.getVarModels().length) {
+                    target.setShadow(false);
+                }
             }
-        })
+            const shadowDom = input.connection && input.getShadowDom();
+
+            if (isVariableBlockType(shadowDom?.getAttribute("type"))) {
+                input.setShadowDom(null);
+            }
+        }
     },
 
     addFunctionLabel_: function (this: FunctionDefinitionBlock, text) {

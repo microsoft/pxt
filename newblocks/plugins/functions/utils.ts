@@ -445,3 +445,17 @@ function createFunctionCallbackFactory_(workspace: Blockly.WorkspaceSvg) {
         }
     };
 };
+
+export function isVariableBlockType(type: string) {
+    switch (type) {
+        case "argument_reporter_boolean":
+        case "argument_reporter_number":
+        case "argument_reporter_string":
+        case "argument_reporter_array":
+        case "argument_reporter_custom":
+        case "variables_get_reporter":
+        case "variables_get":
+            return true;
+    }
+    return false;
+}

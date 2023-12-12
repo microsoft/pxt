@@ -2724,7 +2724,9 @@ namespace pxt.blocks {
             // The logic for setting the output check relies on the internals of PXT
             // too much to be refactored into pxt-blockly, so we need to monkey patch
             // it here
+            const oldDomToMutation = (Blockly.Blocks["argument_reporter_custom"]).domToMutation;
             (Blockly.Blocks["argument_reporter_custom"]).domToMutation = function (xmlElement: Element) {
+                oldDomToMutation(xmlElement);
                 const typeName = xmlElement.getAttribute('typename');
                 this.typeName_ = typeName;
 
