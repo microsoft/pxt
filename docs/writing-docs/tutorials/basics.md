@@ -376,4 +376,10 @@ Click ``|Download|`` to transfer your code in your @boardname@!
 
 ## Dependencies
 
-If your tutorial requires the use of an extension, you can add it using the [package macro](https://makecode.com/writing-docs/macros#dependencies).
+If your tutorial requires the use of an extension, you can add it using the [package](/writing-docs/snippets#package) macro.
+
+````
+```package
+microturtle=github:microsoft/pxt-microturtle
+```
+````
