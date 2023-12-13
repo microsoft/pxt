@@ -501,6 +501,7 @@ namespace pxsim {
         }
 
         public preload(aspectRatio: number, clearRuntime?: boolean) {
+            this.addEventListeners();
             if (clearRuntime) {
                 this._currentRuntime = undefined;
                 this.container.textContent = "";
