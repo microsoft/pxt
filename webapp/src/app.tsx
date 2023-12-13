@@ -1097,6 +1097,9 @@ export class ProjectView
                 }
             },
             onSimulatorReady: () => {
+                if (this.autoRunOnStart()) {
+                    pxt.analytics.trackPerformanceReport();
+                }
             },
             onMuteButtonStateChange: state => this.setMute(state),
             setState: (k, v) => {
@@ -4475,7 +4478,7 @@ export class ProjectView
 
     private hintManager: HintManager = new HintManager();
 
-    private loadActivityFromMarkdownAsync(path: string, title?: string, editorProjectName?: string): Promise<{
+    private async loadActivityFromMarkdownAsync(path: string, title?: string, editorProjectName?: string): Promise<{
         reportId: string;
         filename: string;
         autoChooseBoard: boolean;
@@ -4495,71 +4498,80 @@ export class ProjectView
         let features: string[] = undefined;
         let temporary = false;
 
-        let p: Promise<string>;
-        if (/^\//.test(path)) {
-            filename = title || path.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-            p = pxt.Cloud.markdownAsync(path)
-                .then(md => {
-                    autoChooseBoard = true;
-                    return processMarkdown(md);
-                });
-        } else if (scriptId) {
-            pxt.tickEvent("tutorial.shared", { tutorial: scriptId });
-            p = workspace.downloadFilesByIdAsync(scriptId)
-                .then(files => {
-                    const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
-                    pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
-                    filename = pxtJson.name || lf("Untitled");
-                    autoChooseBoard = false;
-                    reportId = scriptId;
-                    const md = files["README.md"];
-                    return processMarkdown(md);
-                });
-        } else if (!!ghid && ghid.owner && ghid.project) {
-            pxt.tickEvent("tutorial.github");
-            pxt.log(`loading tutorial from ${ghid.fullName}`)
-            p = pxt.packagesConfigAsync()
-                .then(config => {
-                    const status = pxt.github.repoStatus(ghid, config);
-                    switch (status) {
-                        case pxt.github.GitRepoStatus.Banned:
-                            throw lf("This GitHub repository has been banned.");
-                        case pxt.github.GitRepoStatus.Approved:
-                            reportId = undefined;
-                            break;
-                        default:
-                            reportId = "https://github.com/" + ghid.slug;
-                            break;
-                    }
-                    return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.slug, config, true))
-                        .then(tag => {
-                            if (!tag) {
-                                pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
-                                return undefined;
-                            }
-                            ghid.tag = tag;
-                            pxt.log(`tutorial ${ghid.fullName} tag: ${tag}`);
-                            return pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
-                        });
-                }).then(gh => {
-                    let p = Promise.resolve();
-                    // check for cached tutorial info, save into IndexedDB if found
-                    if (gh.files[pxt.TUTORIAL_INFO_FILE]) {
-                        p.then(() => pxt.tutorial.parseCachedTutorialInfo(gh.files[pxt.TUTORIAL_INFO_FILE], path));
-                    }
-                    return p.then(() => gh && resolveMarkdown(ghid, gh.files));
-                });
-        } else if (header) {
-            pxt.tickEvent("tutorial.header");
-            temporary = true;
-            const hghid = pxt.github.parseRepoId(header.githubId);
-            const hfileName = path.split(':')[1] || "README";
-            p = workspace.getTextAsync(header.id)
-                .then(script => resolveMarkdown(hghid, script, hfileName))
-        } else {
-            p = Promise.resolve(undefined);
-        }
-        return p.then(md => {
+        let markdown: string;
+
+        try {
+            if (/^\//.test(path)) {
+                filename = title || path.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
+                pxt.perf.measureStart("downloadMarkdown");
+                const rawMarkdown = await pxt.Cloud.markdownAsync(path);
+                pxt.perf.measureEnd("downloadMarkdown");
+                autoChooseBoard = true;
+                markdown = processMarkdown(rawMarkdown);
+            } else if (scriptId) {
+                pxt.tickEvent("tutorial.shared", { tutorial: scriptId });
+                const files = await workspace.downloadFilesByIdAsync(scriptId)
+                const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
+                pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
+                filename = pxtJson.name || lf("Untitled");
+                autoChooseBoard = false;
+                reportId = scriptId;
+                const md = files["README.md"];
+                markdown = processMarkdown(md);
+            } else if (!!ghid && ghid.owner && ghid.project) {
+                pxt.tickEvent("tutorial.github");
+                pxt.log(`loading tutorial from ${ghid.fullName}`)
+                pxt.perf.measureStart("downloadGitHubTutorial");
+                const config = await pxt.packagesConfigAsync();
+
+                const status = pxt.github.repoStatus(ghid, config);
+                switch (status) {
+                    case pxt.github.GitRepoStatus.Banned:
+                        throw lf("This GitHub repository has been banned.");
+                    case pxt.github.GitRepoStatus.Approved:
+                        reportId = undefined;
+                        break;
+                    default:
+                        reportId = "https://github.com/" + ghid.slug;
+                        break;
+                }
+
+                let githubTag: string;
+                if (ghid.tag) {
+                    githubTag = ghid.tag;
+                }
+                else {
+                    githubTag = await pxt.github.latestVersionAsync(ghid.slug, config, true);
+                }
+
+                let gh: pxt.github.CachedPackage;
+                if (!githubTag) {
+                    pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
+                    gh = undefined;
+                }
+                else {
+                    ghid.tag = githubTag;
+                    pxt.log(`tutorial ${ghid.fullName} tag: ${githubTag}`);
+                    gh = await pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
+                }
+                pxt.perf.measureEnd("downloadGitHubTutorial");
+
+                // check for cached tutorial info, save into IndexedDB if found
+                if (gh?.files[pxt.TUTORIAL_INFO_FILE]) {
+                    await pxt.tutorial.parseCachedTutorialInfo(gh.files[pxt.TUTORIAL_INFO_FILE], path);
+                }
+                if (gh) {
+                    markdown = resolveMarkdown(ghid, gh.files);
+                }
+            } else if (header) {
+                pxt.tickEvent("tutorial.header");
+                temporary = true;
+                const hghid = pxt.github.parseRepoId(header.githubId);
+                const hfileName = path.split(':')[1] || "README";
+                const script = await workspace.getTextAsync(header.id);
+                markdown = resolveMarkdown(ghid, script, hfileName)
+            }
+
             return {
                 reportId,
                 filename,
@@ -4567,14 +4579,15 @@ export class ProjectView
                 dependencies,
                 features,
                 temporary,
-                md
+                md: markdown
             };
-        }).catch(e => {
+        }
+        catch (e) {
             core.handleNetworkError(e);
             core.errorNotification(lf("Oops, we could not load this activity."));
             this.openHome(); // don't stay stranded
             return undefined;
-        });
+        }
 
         function processMarkdown(md: string) {
             if (!md) return md;
@@ -4668,6 +4681,8 @@ export class ProjectView
     async startActivity(opts: pxt.editor.StartActivityOptions) {
         const { activity, path, editor, title, focus, importOptions, previousProjectHeaderId, carryoverPreviousCode } = opts;
 
+        pxt.perf.measureStart("startActivity");
+
         this.textEditor.giveFocusOnLoading = focus;
         switch (activity) {
             case "tutorial":
@@ -4683,6 +4698,8 @@ export class ProjectView
                 await this.importExampleAsync({ name: title, path, preferredEditor: editor, ...importOptions });
                 break;
         }
+
+        pxt.perf.measureEnd("startActivity")
     }
 
     completeTutorialAsync(): Promise<void> {
@@ -4790,6 +4807,11 @@ export class ProjectView
         if (this.isTutorial()) {
             pxt.tickEvent("tutorial.editorLoaded")
             this.postTutorialLoaded();
+
+            pxt.perf.recordMilestone("editorContentLoaded");
+            if (!this.autoRunOnStart()) {
+                pxt.analytics.trackPerformanceReport();
+            }
         }
 
         if (this.pendingImport) {
