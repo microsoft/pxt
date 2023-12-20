@@ -173,7 +173,7 @@ In code, you use _radians_ for angle measures. All of the math functions for tri
 ### ~hint
 **Changing degrees to radians**
 
-What's 60 degrees in radians? Well, one radian is _(2 \* Math.PI / 360)_ radians. Or, to make it
+What's 60 degrees in radians? Well, one degree is _(2 \* Math.PI / 360)_ radians. Or, to make it
 simple, _(Math.PI / 180)_ radians. So, 60 degrees is _(60 \* Math.PI / 180)_ radians.
 ### ~
 
