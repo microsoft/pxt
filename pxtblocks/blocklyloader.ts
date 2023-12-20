@@ -716,7 +716,8 @@ namespace pxt.blocks {
         block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
         block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
-        block.setTooltip(/^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
+        block.setTooltip((/^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc) + (pxt.blocks.showBlockIdInTooltip ? " (id: '" + fn.attributes.blockId + "')" : ""));
+
         function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
             let anonIndex = 0;
             let firstParam = !expanded && !!comp.thisParameter;
