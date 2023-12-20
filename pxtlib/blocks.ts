@@ -415,26 +415,26 @@ namespace pxt.blocks {
             },
             'math_number': {
                 name: Util.lf("{id:block}number"),
-                url: '/blocks/math/random',
+                url: '/types/number',
                 category: 'math',
                 tooltip: (pxt.appTarget && pxt.appTarget.compile) ?
                     Util.lf("a decimal number") : Util.lf("an integer number")
             },
             'math_integer': {
                 name: Util.lf("{id:block}number"),
-                url: '/blocks/math/random',
+                url: '/types/number',
                 category: 'math',
                 tooltip: Util.lf("an integer number")
             },
             'math_whole_number': {
                 name: Util.lf("{id:block}number"),
-                url: '/blocks/math/random',
+                url: '/types/number',
                 category: 'math',
                 tooltip: Util.lf("a whole number")
             },
             'math_number_minmax': {
                 name: Util.lf("{id:block}number"),
-                url: '/blocks/math/random',
+                url: '/blocks/math',
                 category: 'math'
             },
             'math_arithmetic': {
