@@ -68,11 +68,6 @@ code {
     height: 100%;
 }
 
-#root > div {
-    width: 100%;
-    height: 100%;
-}
-
 .app-container {
     display: flex;
     flex-direction: column;
@@ -340,6 +335,40 @@ code {
     pointer-events: none;
     border: 4px solid var(--primary-color);
     background-color: var(--secondary-color);
+}
+
+.appContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 100%;
+    height: 100%;
+    padding: 1rem;
+}
+
+.single-share-link-input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.link-input {
+    width: 100%;
+}
+
+.rubric-json-input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.json-input {
+    width: 100%;
 }
 
 /*******************************/

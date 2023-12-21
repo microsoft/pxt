@@ -8,6 +8,8 @@ import Notifications from "./components/Notifications";
 import * as NotificationService from "./services/notificationService";
 import { postNotification } from "./transforms/postNotification";
 import { makeNotification } from "./utils";
+import DebugInput from "./components/DebugInput";
+
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
@@ -31,6 +33,9 @@ function App() {
     return (
         <>
             <HeaderBar />
+            <div className="appContainer">
+                <DebugInput />
+            </div>
             <Notifications />
         </>
     );
