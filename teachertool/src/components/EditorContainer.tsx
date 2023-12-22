@@ -21,11 +21,12 @@ export const EditorContainer: React.FC<{}> = () => {
         console.log("iframe closed");
     }
 
-    return <>
+    return (
         <MakeCodeFrame pageSourceUrl={createIFrameUrl()}
             onFrameOpen={onIframeLoaded}
             onFrameClose={onIframeClosed}
         />
-    </>;
+    )
+
 }
 
