@@ -10,6 +10,8 @@ import { postNotification } from "./transforms/postNotification";
 import { makeNotification } from "./utils";
 import { MakeCodeFrame } from "./components/makecodeFrame";
 import { isLocal, getEditorUrl } from "./utils/browserUtils";
+import DebugInput from "./components/DebugInput";
+
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
@@ -52,6 +54,9 @@ function App() {
     return (
         <>
             <HeaderBar />
+            <div className="appContainer">
+                <DebugInput />
+            </div>
             <Notifications />
             <MakeCodeFrame pageSourceUrl={createIFrameUrl()}
                 onFrameOpen={onIframeLoaded}
