@@ -2,30 +2,12 @@
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { ProgressBar } from "react-common/components/controls/ProgressBar";
-
-// This is something I want to do eventually. The iframe should be able to work with a redux store
-// import { connect } from 'react-redux';
-
-// left  these here commented out because these states are something that might be wanted for generic cases
-// interface CloudState {
-//     [headerId: string]: pxt.cloud.CloudStatus;
-// }
-
-// interface AuthState {
-//     signedIn: boolean;
-//     profile?: pxt.auth.UserProfile;
-//     preferences?: pxt.auth.UserPreferences;
-// }
-// export const cloudLocalStoreKey = "-SHOWN-LOGIN-PROMPT";
-
-
 interface MakeCodeFrameProps {
     pageSourceUrl: string;
     highContrast?: boolean;
     onFrameOpen: () => void;
     onFrameClose: () => void;
     tutorialEventHandler?: (event: pxt.editor.EditorMessageTutorialEventRequest) => void;
-    // TODO: make it so the iframe can work with a redux store
 }
 
 type FrameState = "loading" | "no-project" | "opening-project" | "project-open" | "closing-project";
@@ -53,18 +35,15 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =
 
     useEffect(() => {
         // logic we want to do when the iframe is loaded
-        const root = document.getElementById("root");
         if (ref && ref.contentWindow) {
             window.addEventListener("message", onMessageReceived);
             ref.addEventListener("load", handleFrameReload)
 
-            if (root) pxt.BrowserUtils.addClass(root, "editor");
         }
 
         // logic we want when the iframe unmounts
         return () => {
             window.removeEventListener("message", onMessageReceived);
-            if (root) pxt.BrowserUtils.removeClass(root, "editor");
         }
     }, [])
 
@@ -109,24 +88,13 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =
                 if (!workspaceReady) {
                     setWorkspaceReady(true);
                     sendMessageAsync(); // Flush message queue
-                    // this.props.onWorkspaceReady((message) => this.sendMessageAsync(message));
                 }
                 if (frameState === "loading") {
                     setFrameState("no-project");
                 }
                 break;
-            case "tutorialevent":
-                // for the more general case, we will want to pass in a tutorialEventHandler
-                // this might not be needed for the teacher tool in particular
-                // this.handleTutorialEvent(data as pxt.editor.EditorMessageTutorialEventRequest);
-                break;
-            case "projectcloudstatus": {
-                const msg = data as pxt.editor.EditorMessageProjectCloudStatus;
-                // this.props.dispatchSetCloudStatus(msg.headerId, msg.status);
-                break;
-            }
             default:
-                // console.log(JSON.stringify(data, null, 4));
+                console.log(JSON.stringify(data, null, 4));
         }
     }
 

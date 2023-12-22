@@ -55,9 +55,7 @@ function App() {
         <>
             <HeaderBar />
             <div className="app-container">
-                <div className="debug-container">
-                    <DebugInput />
-                </div>
+                <DebugInput />
                 <MakeCodeFrame pageSourceUrl={createIFrameUrl()}
                     onFrameOpen={onIframeLoaded}
                     onFrameClose={onIframeClosed}
