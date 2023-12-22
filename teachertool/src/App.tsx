@@ -8,6 +8,8 @@ import Notifications from "./components/Notifications";
 import * as NotificationService from "./services/notificationService";
 import { postNotification } from "./transforms/postNotification";
 import { makeNotification } from "./utils";
+import { MakeCodeFrame } from "./components/makecodeFrame";
+import { isLocal, getEditorUrl } from "./utils/browserUtils";
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
@@ -28,10 +30,33 @@ function App() {
         }
     }, [ready]);
 
+    const onIframeLoaded = () => {
+        console.log("iframe loaded");
+    }
+
+    const onIframeClosed = () => {
+        console.log("iframe closed");
+    }
+
+    const createIFrameUrl = (): string => {
+        const editorUrl: string = isLocal() ? "http://localhost:3232/index.html#editor" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
+
+        let url = editorUrl
+        if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
+            url = editorUrl.substr(0, editorUrl.length - 1);
+        }
+        url += `?controller=1&ws=browser&nocookiebanner=1`;
+        return url;
+    }
+
     return (
         <>
             <HeaderBar />
             <Notifications />
+            <MakeCodeFrame pageSourceUrl={createIFrameUrl()}
+                onFrameOpen={onIframeLoaded}
+                onFrameClose={onIframeClosed}
+            />
         </>
     );
 }
