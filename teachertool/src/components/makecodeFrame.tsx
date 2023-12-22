@@ -35,8 +35,8 @@ interface PendingMessage {
     handler: (response: any) => void;
 }
 
-export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =  
-    ( { pageSourceUrl, 
+export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =
+    ( { pageSourceUrl,
         highContrast,
         onFrameClose,
         onFrameOpen
