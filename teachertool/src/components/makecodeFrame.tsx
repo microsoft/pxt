@@ -164,7 +164,7 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =
             {openingProject && <ProgressBar className="makecode-frame-loader-bar" value={loadPercent! / 100} />}
             <div className="makecode-frame-loader-text">{lf("Loading...")}</div>
         </div>
-        <iframe className="makecode-frame" src={pageSourceUrl} title={"title"} ref={frameRef} style={{width: "70vw", height: "70vh"}}></iframe>
+        <iframe className="makecode-frame" src={pageSourceUrl} title={"title"} ref={frameRef}></iframe>
     </div>
     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
 }

@@ -54,14 +54,18 @@ function App() {
     return (
         <>
             <HeaderBar />
-            <div className="appContainer">
-                <DebugInput />
+            <div className="app-container">
+                <div className="debug-container">
+                    <DebugInput />
+                </div>
+                <MakeCodeFrame pageSourceUrl={createIFrameUrl()}
+                    onFrameOpen={onIframeLoaded}
+                    onFrameClose={onIframeClosed}
+                />
             </div>
+
             <Notifications />
-            <MakeCodeFrame pageSourceUrl={createIFrameUrl()}
-                onFrameOpen={onIframeLoaded}
-                onFrameClose={onIframeClosed}
-            />
+
         </>
     );
 }
