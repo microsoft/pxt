@@ -1,3 +1,5 @@
+/// <reference path="../../../built/pxtblocks.d.ts"/>
+
 import { useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
@@ -22,6 +24,8 @@ const DebugInput: React.FC<IProps> = ({}) => {
 
         const projMeta = await getProjectMetaAsync(scriptId);
         if (projMeta) console.log(projMeta);
+
+        console.log(pxt.blocks.parseRubric(rubric));
     }
 
     return <>
