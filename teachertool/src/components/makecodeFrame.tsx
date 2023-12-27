@@ -44,6 +44,9 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =
         // logic we want when the iframe unmounts
         return () => {
             window.removeEventListener("message", onMessageReceived);
+            if (ref && ref.contentWindow) {
+                ref.removeEventListener("load", handleFrameReload)
+            }
         }
     }, [])
 
@@ -57,7 +60,7 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =
 
 
     useEffect(() => {
-        if (frameState === "project-open" /*&& this.props.save*/) {
+        if (frameState === "project-open") {
             setFrameState("closing-project");
             onFrameClose();
         }
