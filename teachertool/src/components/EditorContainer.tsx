@@ -1,4 +1,4 @@
-import { MakeCodeFrame } from "./makecodeFrame";
+import { MakeCodeFrame } from "./MakecodeFrame";
 import { isLocal, getEditorUrl } from "../utils";
 
 const createIFrameUrl = (): string => {
