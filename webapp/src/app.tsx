@@ -320,6 +320,13 @@ export class ProjectView
             }else if (msg.type === "createMicrobit") {
                 this.checkIfDeviceExists(ev.data.id, Microbit);
             }
+            ///// SAMLABS SCRIPT message sent
+            else if (msg.type === "getScriptText"){
+
+                if (this.editorFile.name === "main.py" || this.editorFile.name === "main.ts") {
+                    simulator.driver.samMessageToTarget({type: `CODE_TO_SIM`, value: this.editorFile.content});
+                }
+            }
         }, false);
     }
     ///// SAMLABS Uthility function
@@ -1137,6 +1144,9 @@ export class ProjectView
                     case pxsim.SimulatorState.Suspended:
                     case pxsim.SimulatorState.Pending:
                     case pxsim.SimulatorState.Stopped:
+                        ///// SAMLABS stop message sent
+                        simulator.driver.samMessageToTarget({ type: `PXT_STOPPED`});
+                        ///// SAMLABS stop message sent
                         this.setState({ simState: pxt.editor.SimState.Stopped }, simStateChanged);
                         break;
                     case pxsim.SimulatorState.Running:
@@ -5087,16 +5097,16 @@ export class ProjectView
         ///////////////////////////////////////////////////////////
         ////////////          SAMLABS render          /////////////
         ///////////////////////////////////////////////////////////
-        if(!window.location.href.includes('localhost')){
-            const accessToken = cookies.get('ACCESS_TOKEN');
-            if ( !accessToken) {
-                return NoTokenView();
-            }
-            const validationResults = validate(accessToken);
-            if (!validationResults.isValid) {
-                return NoTokenView();
-            }
-        }
+        // if(!window.location.href.includes('localhost')){
+        //     const accessToken = cookies.get('ACCESS_TOKEN');
+        //     if ( !accessToken) {
+        //         return NoTokenView();
+        //     }
+        //     const validationResults = validate(accessToken);
+        //     if (!validationResults.isValid) {
+        //         return NoTokenView();
+        //     }
+        // }
         ///////////////////////////////////////////////////////////
         ////////////          End SAMLABS render      /////////////
         ///////////////////////////////////////////////////////////
