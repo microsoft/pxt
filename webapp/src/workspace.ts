@@ -53,11 +53,31 @@ export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
         return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
 }
 
-export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
+export async function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
     if (!isBrowserWorkspace()) {
         return Promise.reject("Copy operation only works in browser workspace");
     }
-    return browserworkspace.copyProjectToLegacyEditor(header, majorVersion);
+
+    const script = await getTextAsync(header.id);
+
+    const newHeader = pxt.Util.clone(header);
+    delete (newHeader as any)._id;
+    delete newHeader._rev;
+    newHeader.id = pxt.Util.guidGen();
+
+    // We don't know if the legacy editor uses the indexedDB or PouchDB workspace, so we're going
+    // to copy the project to both places
+    try {
+        await browserworkspace.copyProjectToLegacyEditor(newHeader, script, majorVersion);
+    }
+    catch (e) {
+        pxt.reportException(e);
+        pxt.log("Unable to port project to PouchDB")
+    }
+
+    await indexedDBWorkspace.copyProjectToLegacyEditor(newHeader, script, majorVersion);
+
+    return newHeader;
 }
 
 export function setupWorkspace(id: string) {

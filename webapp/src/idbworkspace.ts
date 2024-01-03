@@ -288,6 +288,19 @@ export async function getObjectStoreAsync<T>(storeName: string) {
     return db.getObjectStoreWrapper<T>(storeName);
 }
 
+export async function copyProjectToLegacyEditor(header: Header, script: pxt.workspace.ScriptText, majorVersion: number): Promise<void> {
+    const prefix = pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[majorVersion];
+
+    const oldDB = await getDbAsync(prefix);
+
+    await oldDB.setAsync(HEADERS_TABLE, header);
+    await oldDB.setAsync(TEXTS_TABLE, {
+        id: header.id,
+        files: script,
+        _rev: null
+    } as StoredText);
+}
+
 export function initGitHubDb() {
     class GithubDb implements pxt.github.IGithubDb {
         // in memory cache
