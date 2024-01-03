@@ -84,12 +84,15 @@ async function migratePouch() {
                 break;
             case "script":
                 table = SCRIPT_TABLE;
+                prefix = prefix || getCurrentDBPrefix();
                 break;
             case "github":
                 table = GITHUB_TABLE;
+                prefix = prefix || getCurrentDBPrefix();
                 break;
             case "hostcache":
                 table = HOSTCACHE_TABLE;
+                prefix = prefix || getCurrentDBPrefix();
                 break;
             default:
                 console.warn("Unknown database table " + table);
