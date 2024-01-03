@@ -1,15 +1,10 @@
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
-import * as db from "./db";
 import * as compiler from "./compiler";
-import * as auth from "./auth";
-import * as toolbox from "./toolbox"
 
 import Util = pxt.Util;
-import { getBlocksEditor } from "./app";
-
-let hostCache = new db.Table("hostcache")
+import { HOSTCACHE_TABLE, getObjectStoreAsync } from "./idbworkspace";
 
 let extWeight: pxt.Map<number> = {
     "ts": 10,
@@ -686,19 +681,27 @@ class Host
         return pxt.hexloader.getHexInfoAsync(this, extInfo).catch(core.handleNetworkError);
     }
 
-    cacheStoreAsync(id: string, val: string): Promise<void> {
-        return hostCache.forceSetAsync({
-            id: id,
-            val: val
-        }).then(() => { }, e => {
+    async cacheStoreAsync(id: string, val: string): Promise<void> {
+        const hostCache = await getHostCacheAsync();
+
+        try {
+            await hostCache.setAsync({ id, val });
+        }
+        catch (e) {
             pxt.tickEvent('cache.store.failed', { error: e.name });
             pxt.log(`cache store failed for ${id}: ${e.name}`)
-        })
+        }
     }
 
-    cacheGetAsync(id: string): Promise<string> {
-        return hostCache.getAsync(id)
-            .then(v => v.val, e => null)
+    async cacheGetAsync(id: string): Promise<string> {
+        const hostCache = await getHostCacheAsync();
+
+        try {
+            return (await hostCache.getAsync(id)).val;
+        }
+        catch (e) {
+            return null;
+        }
     }
 
     downloadPackageAsync(pkg: pxt.Package): Promise<void> {
@@ -992,4 +995,8 @@ export function getExtensionOfFileName(filename: string) {
     let m = /\.([^\.]+)$/.exec(filename)
     if (m) return m[1]
     return ""
+}
+
+async function getHostCacheAsync(): Promise<pxt.BrowserUtils.IDBObjectStoreWrapper<{id: string, val: string}>> {
+    return getObjectStoreAsync(HOSTCACHE_TABLE)
 }
