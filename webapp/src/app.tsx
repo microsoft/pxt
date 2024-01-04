@@ -4037,6 +4037,14 @@ export class ProjectView
             });
     }
 
+    async getBlocksAsync(): Promise<pxt.editor.EditorMessageGetBlocksResponse> {
+        if (!this.isBlocksActive()) {
+            await this.openBlocksAsync();
+        }
+
+        return { blocks: this.blocksEditor.editor.getAllBlocks(false) };
+    }
+
     launchFullEditor() {
         Util.assert(pxt.shell.isSandboxMode());
 

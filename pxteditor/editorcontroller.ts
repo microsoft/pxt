@@ -83,6 +83,7 @@ namespace pxt.editor {
         | "simevent"
         | "info" // return info data`
         | "tutorialevent"
+        | "getblocks"
 
         // package extension messasges
         | ExtInitializeType
@@ -282,6 +283,14 @@ namespace pxt.editor {
         // rendering options
         snippetMode?: boolean;
         layout?: pxt.blocks.BlockLayout;
+    }
+
+    export interface EditorMessageGetBlocksRequest extends EditorMessageRequest {
+        action: "getblocks";
+    }
+
+    export interface EditorMessageGetBlocksResponse {
+        blocks: Blockly.Block[];
     }
 
     export interface EditorMessageRenderBlocksResponse {
@@ -531,6 +540,14 @@ namespace pxt.editor {
                                             return r.xml.then((svg: any) => {
                                                 resp = svg.xml;
                                             })
+                                        });
+                                }
+                                case "getblocks": {
+                                    const getBlocksMsg = data as EditorMessageGetBlocksRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.getBlocksAsync())
+                                        .then (blocks => {
+                                            resp = blocks;
                                         });
                                 }
                                 case "renderpython": {
