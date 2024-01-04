@@ -494,6 +494,8 @@ declare namespace pxt {
         timeMachine?: boolean; // Save/restore old versions of a project experiment
         blocklySoundVolume?: number; // A number between 0 and 1 that sets the volume for blockly sounds (e.g. connect, disconnect, click)
         timeMachineQueryParams?: string[]; // An array of query params to pass to timemachine iframe embed
+        timeMachineDiffInterval?: number; // An interval in milliseconds at which to take diffs to store in project history. Defaults to 5 minutes
+        timeMachineSnapshotInterval?: number; // An interval in milliseconds at which to take full project snapshots in project history. Defaults to 15 minutes
     }
 
     interface DownloadDialogTheme {

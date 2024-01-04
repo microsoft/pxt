@@ -28,26 +28,29 @@ const DebugInput: React.FC<IProps> = ({}) => {
         console.log(pxt.blocks.parseRubric(rubric));
     }
 
-    return <>
-        <div className="single-share-link-input-container">
-            {lf("Share Link:")}
-            <Input
-                id="shareLinkInput"
-                className="link-input"
-                placeholder={lf("Share link to validate")}
-                initialValue={shareLink}
-                onChange={setShareLink} />
+    return (
+        <div className="debug-container">
+            <div className="single-share-link-input-container">
+                {lf("Share Link:")}
+                <Input
+                    id="shareLinkInput"
+                    className="link-input"
+                    placeholder={lf("Share link to validate")}
+                    initialValue={shareLink}
+                    onChange={setShareLink} />
+            </div>
+            <div className="rubric-json-input-container">
+                {lf("Rubric:")}
+                <Textarea
+                    id="rubricJsonInput"
+                    className="json-input"
+                    rows={20}
+                    onChange={setRubric} />
+            </div>
+            <Button id="evaluateSingleProjectButton" className="primary" onClick={runEvaluate} title={"Evaluate"} label={lf("Evaluate")} />
         </div>
-        <div className="rubric-json-input-container">
-            {lf("Rubric:")}
-            <Textarea
-                id="rubricJsonInput"
-                className="json-input"
-                rows={20}
-                onChange={setRubric} />
-        </div>
-        <Button id="evaluateSingleProjectButton" className="primary" onClick={runEvaluate} title={"Evaluate"} label={lf("Evaluate")} />
-    </>;
+    )
+
 };
 
 export default DebugInput;

@@ -9,6 +9,7 @@ import * as NotificationService from "./services/notificationService";
 import { postNotification } from "./transforms/postNotification";
 import { makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
+import { EditorContainer } from "./components/EditorContainer";
 
 
 function App() {
@@ -33,10 +34,13 @@ function App() {
     return (
         <>
             <HeaderBar />
-            <div className="appContainer">
+            <div className="app-container">
                 <DebugInput />
+                <EditorContainer />
             </div>
+
             <Notifications />
+
         </>
     );
 }
