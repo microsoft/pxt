@@ -22,10 +22,7 @@ export const EditorContainer: React.FC<{}> = () => {
     }
 
     return (
-        <MakeCodeFrame pageSourceUrl={createIFrameUrl()}
-            onFrameOpen={onIframeLoaded}
-            onFrameClose={onIframeClosed}
-        />
+        <MakeCodeFrame pageSourceUrl={createIFrameUrl()} />
     )
 
 }
