@@ -7,13 +7,6 @@ interface MakeCodeFrameProps {
     tutorialEventHandler?: (event: pxt.editor.EditorMessageTutorialEventRequest) => void;
 }
 
-type FrameState = "loading" | "no-project" | "opening-project" | "project-open" | "closing-project";
-
-interface PendingMessage {
-    original: pxt.editor.EditorMessageRequest;
-    handler: (response: any) => void;
-}
-
 export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =
     ( { pageSourceUrl} ) => {
 

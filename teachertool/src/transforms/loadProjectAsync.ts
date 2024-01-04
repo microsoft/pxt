@@ -1,5 +1,4 @@
 import { stateAndDispatch } from "../state";
-import { NotificationWithId } from "../types";
 import * as Actions from "../state/actions";
 import { postNotification } from "./postNotification";
 import { makeNotification } from "../utils";
