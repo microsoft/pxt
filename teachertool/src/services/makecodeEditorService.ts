@@ -8,37 +8,17 @@ const messageQueue: pxt.editor.EditorMessageRequest[] = [];
 let nextId: number = 0;
 let pendingMessages: {[index: string]: PendingMessage} = {};
 
-
-// needs to have reference to the service
 const onMessageReceived = (event: MessageEvent) => {
     const data = event.data as pxt.editor.EditorMessageRequest;
-    // this logic might have to change for sending messages back
-    // need to know what the message from the editor looks like
     if (data.type === "pxteditor" && data.id && pendingMessages[data.id]) {
         const pending = pendingMessages[data.id];
         pending.handler(data);
         delete pendingMessages[data.id];
         return;
     }
-
-    // this switch statement is kinda doing nothing right now.
-    // but if you change the "on" property to false, it will turn off high contrast
-    // this is just to show that we can send messages to the editor
-    // we need the new message from the editor to make sure that it actually works for what we want
-    switch (data.action) {
-        case "newproject":
-            break;
-        default:
-            sendMessageAsync({
-                type: "pxteditor",
-                action: "sethighcontrast",
-                on: true
-            }  as pxt.editor.EditorMessageSetHighContrastRequest);
-            console.log(JSON.stringify(data, null, 4));
-    }
 }
 
-const sendMessageAsync = (message?: any) => {
+export const sendMessageAsync = (message?: any) => {
     return new Promise(resolve => {
         const sendMessageCore = (message: any) => {
             message.response = true;
