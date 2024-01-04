@@ -50,3 +50,12 @@ export const removeIframeRef = () => {
     makecodeEditorRef = undefined;
     window.removeEventListener("message", onMessageReceived);
 }
+
+export const getBlocks = async (): Promise<Blockly.Block[]> => { // TODO : create response object or maybe return EditorMessageGetBlocksResponse?
+    const request = sendMessageAsync({
+        type: "pxteditor",
+        action: "getblocks"
+    } as pxt.editor.EditorMessageGetBlocksRequest);
+    const result = await request as pxt.editor.EditorMessageGetBlocksResponse;
+    return result?.blocks;
+}
