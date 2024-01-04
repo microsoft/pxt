@@ -5,50 +5,50 @@ namespace pxt.blocks {
     }
 
     export interface CriteriaData {
-        criteriaID: string;
-        friendlyText: string;
+        criteriaId: string;
+        displayText: string;
         blockRequirements?: BlockSet[];
         count?: number;
     }
 
     export function getCriteria(data: CriteriaData): RubricCriteria {
-        switch (data.criteriaID) {
+        switch (data.criteriaId) {
             case "blockCheck":
-                return new BlockCheckCriteria(data.friendlyText, data.blockRequirements);
+                return new BlockCheckCriteria(data.displayText, data.blockRequirements);
             case "comment":
-                return new CommentCriteria(data.friendlyText, data.count);
+                return new CommentCriteria(data.displayText, data.count);
             default:
-                console.error(`Unrecognized criteriaID: ${data.criteriaID}`);
+                console.error(`Unrecognized criteriaId: ${data.criteriaId}`);
                 return null;
         }
     }
 
     export abstract class RubricCriteria {
-        friendlyText: string;
-        abstract criteriaID: string;
+        displayText: string;
+        abstract criteriaId: string;
 
-        constructor(friendlyText: string) {
-            this.friendlyText = friendlyText;
+        constructor(displayText: string) {
+            this.displayText = displayText;
         }
     }
 
 
     class BlockCheckCriteria extends RubricCriteria {
-        criteriaID: "blockCheck";
+        criteriaId: "blockCheck";
         blockRequirements: BlockSet[];
 
-        constructor(friendlyText: string, blockRequirements: BlockSet[]) {
-            super(friendlyText);
+        constructor(displayText: string, blockRequirements: BlockSet[]) {
+            super(displayText);
             this.blockRequirements = blockRequirements;
         }
     }
 
     class CommentCriteria extends RubricCriteria {
-        criteriaID: "comment";
+        criteriaId: "comment";
         count: number;
 
-        constructor(friendlyText: string, count: number) {
-            super(friendlyText);
+        constructor(displayText: string, count: number) {
+            super(displayText);
             this.count = count;
         }
     }
