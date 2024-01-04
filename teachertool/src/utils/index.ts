@@ -29,3 +29,14 @@ export const getEditorUrl = (embedUrl: string) => {
     const path = /\/([\da-zA-Z\.]+)(?:--)?/i.exec(window.location.pathname);
     return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
 }
+
+export const createIFrameUrl = (): string => {
+    const editorUrl: string = isLocal() ? "http://localhost:3232/index.html#editor" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
+
+    let url = editorUrl
+    if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
+        url = editorUrl.substr(0, editorUrl.length - 1);
+    }
+    url += `?controller=1&ws=browser&nocookiebanner=1`;
+    return url;
+}
