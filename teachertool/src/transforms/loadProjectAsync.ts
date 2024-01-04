@@ -4,13 +4,14 @@ import { postNotification } from "./postNotification";
 import { makeNotification } from "../utils";
 import { sendMessageAsync } from "../services/makecodeEditorService";
 
-export function loadProjectAsync(projectId: string, bool: boolean) {
+export async function loadProjectAsync(projectId: string, bool: boolean) {
     const { dispatch } = stateAndDispatch();
-    sendMessageAsync({
+    const results = await sendMessageAsync({
         type: "pxteditor",
         action: "sethighcontrast",
         on: bool
         }  as pxt.editor.EditorMessageSetHighContrastRequest);
+    console.log(results);
     postNotification(makeNotification(`project ${projectId} evaluated`, 2000));
 
 }
