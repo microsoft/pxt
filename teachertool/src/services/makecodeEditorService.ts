@@ -40,13 +40,13 @@ export const sendMessageAsync = (message?: any) => {
     });
 }
 
-export const getIframeRef = (ref: HTMLIFrameElement) => {
-    makecodeEditorRef = ref;
-    window.addEventListener("message", onMessageReceived);
-    makecodeEditorRef.addEventListener("load", () => {console.log("loaded")});
-}
-
-export const removeIframeRef = () => {
-    makecodeEditorRef = undefined;
-    window.removeEventListener("message", onMessageReceived);
+export const setEditorRef = (ref: HTMLIFrameElement | null) => {
+    if (ref) {
+        makecodeEditorRef = ref;
+        window.addEventListener("message", onMessageReceived);
+        makecodeEditorRef.addEventListener("load", () => {console.log("loaded")});
+    } else {
+        makecodeEditorRef = undefined;
+        window.removeEventListener("message", onMessageReceived);
+    }
 }

@@ -13,14 +13,6 @@ const createIFrameUrl = (): string => {
 }
 
 export const EditorContainer: React.FC<{}> = () => {
-    const onIframeLoaded = () => {
-        console.log("iframe loaded");
-    }
-
-    const onIframeClosed = () => {
-        console.log("iframe closed");
-    }
-
     return (
         <MakeCodeFrame pageSourceUrl={createIFrameUrl()} />
     )
