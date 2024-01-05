@@ -16,11 +16,11 @@ export const GITHUB_TABLE = "github";
 export const HOSTCACHE_TABLE = "hostcache";
 
 let _migrationPromise: Promise<void>;
-async function performMigrations() {
+async function performMigrationsAsync() {
     if (!_migrationPromise) {
         _migrationPromise = (async () => {
             try {
-                await migratePouch();
+                await migratePouchAsync();
             }
             catch (e) {
                 pxt.reportException(e);
@@ -28,7 +28,7 @@ async function performMigrations() {
             }
 
             try {
-                await migrateOldIndexedDb();
+                await migrateOldIndexedDbAsync();
             }
             catch (e) {
                 pxt.reportException(e);
@@ -36,7 +36,7 @@ async function performMigrations() {
             }
 
             try {
-                await migratePrefixes();
+                await migratePrefixesAsync();
             }
             catch (e) {
                 pxt.reportException(e);
@@ -48,13 +48,14 @@ async function performMigrations() {
     return _migrationPromise;
 }
 
-async function migratePouch() {
+async function migratePouchAsync() {
     const POUCH_OBJECT_STORE = "by-sequence";
     const oldDb = new pxt.BrowserUtils.IDBWrapper("_pouch_pxt-" + pxt.storage.storageId(), 99999, () => {});
     await oldDb.openAsync();
     const entries = await oldDb.getAllAsync<any>(POUCH_OBJECT_STORE);
 
     for (const entry of entries) {
+        if (entry._migrated) continue;
         // format is (prefix-)?tableName--id::rev
         const docId: string = entry._doc_id_rev;
 
@@ -105,12 +106,13 @@ async function migratePouch() {
         if (!existing) {
             await db.setAsync(table, entry);
         }
-    }
 
-    await oldDb.deleteAllAsync(POUCH_OBJECT_STORE);
+        entry._migrated = true;
+        await oldDb.setAsync(POUCH_OBJECT_STORE, entry);
+    }
 }
 
-async function migrateOldIndexedDb() {
+async function migrateOldIndexedDbAsync() {
     const legacyDb = new pxt.BrowserUtils.IDBWrapper(`__pxt_idb_workspace`, 1, (ev, r) => {
         const db = r.result as IDBDatabase;
         db.createObjectStore(TEXTS_TABLE, { keyPath: KEYPATH });
@@ -124,14 +126,14 @@ async function migrateOldIndexedDb() {
         await legacyDb.openAsync();
         const currentDb = await getCurrentDbAsync();
 
-        await copyTableEntries(legacyDb, currentDb, HEADERS_TABLE, true);
-        await copyTableEntries(legacyDb, currentDb, TEXTS_TABLE, true);
+        await copyTableEntriesAsync(legacyDb, currentDb, HEADERS_TABLE, true);
+        await copyTableEntriesAsync(legacyDb, currentDb, TEXTS_TABLE, true);
     } catch (e) {
         pxt.reportException(e);
     }
 }
 
-async function migratePrefixes() {
+async function migratePrefixesAsync() {
     if (!getCurrentDBPrefix()) return;
 
     const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
@@ -147,11 +149,11 @@ async function migratePrefixes() {
 
     const prevDb = await getDbAsync(previousDbPrefix);
 
-    await copyTableEntries(prevDb, currentDb, HEADERS_TABLE, false);
-    await copyTableEntries(prevDb, currentDb, TEXTS_TABLE, false);
-    await copyTableEntries(prevDb, currentDb, SCRIPT_TABLE, false);
-    await copyTableEntries(prevDb, currentDb, HOSTCACHE_TABLE, false);
-    await copyTableEntries(prevDb, currentDb, GITHUB_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, HEADERS_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, TEXTS_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, SCRIPT_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, HOSTCACHE_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, GITHUB_TABLE, false);
 }
 
 let _dbPromises: pxt.Map<Promise<pxt.BrowserUtils.IDBWrapper>> = {};
@@ -187,7 +189,7 @@ async function getDbAsync(prefix = "__default") {
     }
 }
 
-async function copyTableEntries(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: pxt.BrowserUtils.IDBWrapper, storeName: string, dontOverwrite: boolean) {
+async function copyTableEntriesAsync(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: pxt.BrowserUtils.IDBWrapper, storeName: string, dontOverwrite: boolean) {
     for (const entry of await fromDb.getAllAsync<any>(storeName)) {
         const existing = dontOverwrite && !!(await toDb.getAsync(storeName, entry.id));
 
@@ -210,7 +212,7 @@ function getCurrentDBPrefix() {
 }
 
 async function listAsync(): Promise<pxt.workspace.Header[]> {
-    await performMigrations();
+    await performMigrationsAsync();
     const db = await getCurrentDbAsync();
     return db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE);
 }
@@ -288,7 +290,7 @@ export async function getObjectStoreAsync<T>(storeName: string) {
     return db.getObjectStoreWrapper<T>(storeName);
 }
 
-export async function copyProjectToLegacyEditor(header: Header, script: pxt.workspace.ScriptText, majorVersion: number): Promise<void> {
+export async function copyProjectToLegacyEditorAsync(header: Header, script: pxt.workspace.ScriptText, majorVersion: number): Promise<void> {
     const prefix = pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[majorVersion];
 
     const oldDB = await getDbAsync(prefix);

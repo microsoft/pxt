@@ -75,7 +75,7 @@ export async function copyProjectToLegacyEditor(header: Header, majorVersion: nu
         pxt.log("Unable to port project to PouchDB")
     }
 
-    await indexedDBWorkspace.copyProjectToLegacyEditor(newHeader, script, majorVersion);
+    await indexedDBWorkspace.copyProjectToLegacyEditorAsync(newHeader, script, majorVersion);
 
     return newHeader;
 }
