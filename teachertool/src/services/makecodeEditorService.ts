@@ -16,6 +16,8 @@ const onMessageReceived = (event: MessageEvent) => {
         delete pendingMessages[data.id];
         return;
     }
+
+    console.log("Received message from MakeCode:", data);
 }
 
 export const sendMessageAsync = (message?: any) => {
@@ -40,7 +42,7 @@ export const sendMessageAsync = (message?: any) => {
     });
 }
 
-export const setEditorRef = (ref: HTMLIFrameElement | null) => {
+export const setEditorRef = (ref: HTMLIFrameElement | undefined) => {
     if (ref) {
         makecodeEditorRef = ref;
         window.addEventListener("message", onMessageReceived);
