@@ -17,7 +17,7 @@ const DebugInput: React.FC<IProps> = ({}) => {
     const evaluate = async () => {
         setBools(!bools);
         await runEvaluateAsync(shareLink, rubric);
-        loadProjectAsync("hi", bools);
+        await loadProjectAsync("hi", bools);
     }
 
     return (

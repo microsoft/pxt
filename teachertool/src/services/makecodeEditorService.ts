@@ -20,7 +20,7 @@ const onMessageReceived = (event: MessageEvent) => {
     console.log("Received message from MakeCode:", data);
 }
 
-export const sendMessageAsync = (message?: any) => {
+const sendMessageAsync = (message?: any) => {
     return new Promise(resolve => {
         const sendMessageCore = (message: any) => {
             message.response = true;
@@ -50,4 +50,14 @@ export const setEditorRef = (ref: HTMLIFrameElement | undefined) => {
         makecodeEditorRef = undefined;
         window.removeEventListener("message", onMessageReceived);
     }
+}
+
+//  an example of events that we want to/can send to the editor
+export const setHighContrastAsync = async (on: boolean) => {
+    const result = await sendMessageAsync({
+        type: "pxteditor",
+        action: "sethighcontrast",
+        on: on
+    });
+    console.log(result);
 }
