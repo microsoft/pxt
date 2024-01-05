@@ -7,9 +7,9 @@ import HeaderBar from "./components/HeaderBar";
 import Notifications from "./components/Notifications";
 import * as NotificationService from "./services/notificationService";
 import { postNotification } from "./transforms/postNotification";
-import { makeNotification } from "./utils";
+import { createIFrameUrl, makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
-import { EditorContainer } from "./components/EditorContainer";
+import { MakeCodeFrame } from "./components/MakecodeFrame";
 
 
 function App() {
@@ -36,7 +36,7 @@ function App() {
             <HeaderBar />
             <div className="app-container">
                 <DebugInput />
-                <EditorContainer />
+                <MakeCodeFrame pageSourceUrl={createIFrameUrl()} />
             </div>
 
             <Notifications />

@@ -1,7 +1,7 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
 import * as React from "react";
 import { useEffect, useRef } from "react";
-import { getIframeRef, removeIframeRef } from "../services/makecodeEditorService";
+import { setEditorRef } from "../services/makecodeEditorService";
 interface MakeCodeFrameProps {
     pageSourceUrl: string;
     tutorialEventHandler?: (event: pxt.editor.EditorMessageTutorialEventRequest) => void;
@@ -14,13 +14,13 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =
 
     useEffect(() => {
         if (frameRef.current) {
-            getIframeRef(frameRef.current);
+            setEditorRef(frameRef.current);
+        } else {
+            setEditorRef(null);
         }
 
         return () => {
-            if (frameRef.current) {
-                removeIframeRef();
-            }
+            setEditorRef(null);
         }
     }, []);
 
