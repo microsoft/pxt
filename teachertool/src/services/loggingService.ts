@@ -1,11 +1,5 @@
 import { isLocal } from "../utils";
 
-export enum LogSeverity {
-    Error,
-    Info,
-    Debug
-}
-
 const formatMessageForConsole = (message: string) => {
     const time = new Date();
     return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}] ${message}`;
@@ -15,34 +9,20 @@ const formatName = (name: string) => {
     return name.toLowerCase().replace(/ /g, "_");
 }
 
-const logError = (name: string, message: string) => {
+export const logError = (name: string, details: string) => {
     if (!isLocal()) {
-        pxt.tickEvent("teachertool.error", { name: name, message: message });
+        pxt.tickEvent("teachertool.error", { name: formatName(name), message: details });
     }
-    console.error(formatMessageForConsole(message));
+    console.error(formatMessageForConsole(`${name}: ${details}`));
 }
 
-const logInfo = (name: string, message: string) => {
+export const logInfo = (name: string, message: string) => {
     pxt.tickEvent(`teachertool.${formatName(name)}`, { message: message });
     console.log(formatMessageForConsole(message));
 }
 
-const logDebug = (name: string, message: string) => {
+export const logDebug = (message: string) => {
     if (isLocal()) {
-        console.log(`${formatMessageForConsole(`${name}: ${message}`)}`);
-    }
-}
-
-export const log = (name: string, message: string, severity: LogSeverity) => {
-    switch (severity) {
-        case LogSeverity.Error:
-            logError(name, message);
-            break;
-        case LogSeverity.Info:
-            logInfo(name, message);
-            break;
-        case LogSeverity.Debug:
-            logDebug(name, message);
-            break;
+        console.log(formatMessageForConsole(message));
     }
 }
