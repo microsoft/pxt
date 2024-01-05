@@ -7,7 +7,8 @@ export enum LogSeverity {
 }
 
 const formatMessageForConsole = (message: string) => {
-    return `[${new Date().toISOString()}] ${message}`;
+    const time = new Date();
+    return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}] ${message}`;
 }
 
 const formatName = (name: string) => {
