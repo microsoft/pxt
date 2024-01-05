@@ -945,6 +945,34 @@ namespace pxt.BrowserUtils {
                 request.onerror = () => this.errorHandler(request.error, "deleteAll", reject);
             });
         }
+
+        public getObjectStoreWrapper<T>(storeName: string): IDBObjectStoreWrapper<T> {
+            return new IDBObjectStoreWrapper(this, storeName);
+        }
+    }
+
+    export class IDBObjectStoreWrapper<T> {
+        constructor(protected db: IDBWrapper, protected storeName: string) {}
+
+        public getAsync(id: string): Promise<T> {
+            return this.db.getAsync(this.storeName, id);
+        }
+
+        public getAllAsync(): Promise<T[]> {
+            return this.db.getAllAsync(this.storeName);
+        }
+
+        public setAsync(data: T): Promise<void> {
+            return this.db.setAsync(this.storeName, data);
+        }
+
+        public async deleteAsync(id: string): Promise<void> {
+            await this.db.deleteAsync(this.storeName, id);
+        }
+
+        public async deleteAllAsync(): Promise<void> {
+            await this.db.deleteAllAsync(this.storeName);
+        }
     }
 
     class IndexedDbTranslationDb implements ITranslationDb {
