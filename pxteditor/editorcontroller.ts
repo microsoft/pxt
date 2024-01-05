@@ -84,6 +84,7 @@ namespace pxt.editor {
         | "info" // return info data`
         | "tutorialevent"
         | "getblocks"
+        | "editorcontentloaded"
 
         // package extension messasges
         | ExtInitializeType
@@ -159,6 +160,10 @@ namespace pxt.editor {
          * Additional optional to create new project
          */
         options?: ProjectCreationOptions;
+    }
+
+    export interface EditorContentLoadedRequest extends EditorMessageRequest {
+        action: "editorcontentloaded";
     }
 
     export interface EditorMessageSetScaleRequest extends EditorMessageRequest {
@@ -543,7 +548,6 @@ namespace pxt.editor {
                                         });
                                 }
                                 case "getblocks": {
-                                    const getBlocksMsg = data as EditorMessageGetBlocksRequest;
                                     return Promise.resolve()
                                         .then(() => projectView.getBlocksAsync())
                                         .then (blocks => {

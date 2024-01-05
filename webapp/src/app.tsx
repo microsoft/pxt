@@ -4822,6 +4822,11 @@ export class ProjectView
             }
         }
 
+        pxt.editor.postHostMessageAsync({
+            type: "pxteditor",
+            action: "editorcontentloaded"
+        } as pxt.editor.EditorContentLoadedRequest)
+
         if (this.pendingImport) {
             this.pendingImport.resolve();
             this.pendingImport = undefined;
