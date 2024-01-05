@@ -121,20 +121,13 @@ function setCoreAsync(headers: db.Table, texts: db.Table, h: Header, prevVer: an
     return headerRes
 }
 
-export function copyProjectToLegacyEditor(h: Header, majorVersion: number): Promise<Header> {
+export async function copyProjectToLegacyEditor(header: Header, script: pxt.workspace.ScriptText, majorVersion: number): Promise<void> {
     const prefix = pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[majorVersion];
 
     const oldHeaders = new db.Table(prefix ? `${prefix}-header` : `header`);
     const oldTexts = new db.Table(prefix ? `${prefix}-text` : `text`);
 
-    const header = pxt.Util.clone(h);
-    delete (header as any)._id;
-    delete header._rev;
-    header.id = pxt.Util.guidGen();
-
-    return getAsync(h)
-        .then(resp => setCoreAsync(oldHeaders, oldTexts, header, undefined, resp.text))
-        .then(rev => header);
+    await setCoreAsync(oldHeaders, oldTexts, header, undefined, script);
 }
 
 function deleteAsync(h: Header, prevVer: any) {
