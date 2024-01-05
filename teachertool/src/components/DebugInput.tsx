@@ -1,9 +1,11 @@
+/// <reference path="../../../built/pxtblocks.d.ts"/>
+
 import { useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
 import { Textarea } from "react-common/components/controls/Textarea";
-import { getProjectMetaAsync, getProjectTextAsync } from "../services/BackendRequests";
 import { loadProjectAsync } from "../transforms/loadProjectAsync";
+import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 
 interface IProps {}
 
@@ -12,20 +14,10 @@ const DebugInput: React.FC<IProps> = ({}) => {
     const [rubric, setRubric] = useState("");
     const [bools, setBools] = useState(true);
 
-    const runEvaluate = async () => {
-        console.log(`Evaluate ${shareLink} with ${rubric}!`);
-        const scriptId = pxt.Cloud.parseScriptId(shareLink);
+    const evaluate = async () => {
         setBools(!bools);
-        if (!scriptId) {
-            console.log("Invalid share link!");
-            return;
-        }
-        const projText = await getProjectTextAsync(scriptId);
+        await runEvaluateAsync(shareLink, rubric);
         loadProjectAsync("hi", bools);
-        if (projText) console.log(projText["main.blocks"] || "Failed to get blocks xml!");
-
-        const projMeta = await getProjectMetaAsync(scriptId);
-        if (projMeta) console.log(projMeta);
     }
 
     return (
@@ -47,7 +39,7 @@ const DebugInput: React.FC<IProps> = ({}) => {
                     rows={20}
                     onChange={setRubric} />
             </div>
-            <Button id="evaluateSingleProjectButton" className="primary" onClick={runEvaluate} title={"Evaluate"} label={lf("Evaluate")} />
+            <Button id="evaluateSingleProjectButton" className="primary" onClick={evaluate} title={"Evaluate"} label={lf("Evaluate")} />
         </div>
     )
 
