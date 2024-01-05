@@ -1,6 +1,6 @@
 import { getProjectMetaAsync, getProjectTextAsync } from "../services/BackendRequests";
 
-export async function runEvaluate(shareLink: string, rubric: string) {
+export async function runEvaluateAsync(shareLink: string, rubric: string) {
     console.log(`Evaluate ${shareLink} with ${rubric}!`);
     const scriptId = pxt.Cloud.parseScriptId(shareLink);
     if (!scriptId) {

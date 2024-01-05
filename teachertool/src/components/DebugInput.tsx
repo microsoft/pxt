@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
 import { Textarea } from "react-common/components/controls/Textarea";
-import { runEvaluate } from "../transforms/runEvaluate";
+import { runEvaluateAsync } from "../transforms/runEvaluate";
 
 interface IProps {}
 
@@ -13,7 +13,7 @@ const DebugInput: React.FC<IProps> = ({}) => {
     const [rubric, setRubric] = useState("");
 
     const evaluate = async () => {
-        runEvaluate(shareLink, rubric);
+        await runEvaluateAsync(shareLink, rubric);
     }
 
     return (
