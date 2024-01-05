@@ -213,6 +213,7 @@ namespace pxt.runner {
 
     function initInnerAsync() {
         pxt.setAppTarget((window as any).pxtTargetBundle)
+        pxt.analytics.enable(pxt.Util.userLanguage());
         Util.assert(!!pxt.appTarget);
 
         const href = window.location.href;
@@ -375,7 +376,7 @@ namespace pxt.runner {
     }
 
     export async function simulateAsync(container: HTMLElement, simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
-        const builtSimJS = simOptions.builtJsInfo || await buildSimJsInfo(simOptions);
+        const builtSimJS = simOptions.builtJsInfo || await fetchSimJsInfo(simOptions) || await buildSimJsInfo(simOptions);
         const { js } = builtSimJS;
 
         if (!js) {
@@ -466,7 +467,24 @@ namespace pxt.runner {
         simDriver?.postMessage(msg);
     }
 
+    export async function fetchSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
+        try {
+            const start = Date.now();
+            const result = await pxt.Cloud.downloadBuiltSimJsInfoAsync(simOptions.id);
+            pxt.tickEvent("perfMeasurement", {
+              durationMs: Date.now() - start,
+              operation: "fetchSimJsInfo",
+            });
+            return result;
+        } catch (e) {
+            // This exception will happen in the majority of cases, so we don't want to log it unless for debugging.
+            pxt.debug(e.toString());
+            return undefined;
+        }
+    }
+
     export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
+        const start = Date.now();
         await loadPackageAsync(simOptions.id, simOptions.code, simOptions.dependencies);
 
         let didUpgrade = false;
@@ -529,6 +547,10 @@ namespace pxt.runner {
 
         const res = pxtc.buildSimJsInfo(compileResult);
         res.parts = compileResult.usedParts;
+        pxt.tickEvent("perfMeasurement", {
+          durationMs: Date.now() - start,
+          operation: "buildSimJsInfo",
+        });
         return res;
     }
 
