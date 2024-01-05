@@ -44,7 +44,6 @@ export const setEditorRef = (ref: HTMLIFrameElement | null) => {
     if (ref) {
         makecodeEditorRef = ref;
         window.addEventListener("message", onMessageReceived);
-        makecodeEditorRef.addEventListener("load", () => {console.log("loaded")});
     } else {
         makecodeEditorRef = undefined;
         window.removeEventListener("message", onMessageReceived);
