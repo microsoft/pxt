@@ -1,9 +1,3 @@
-/**
- * A workspace implementation that uses IndexedDB directly (bypassing PouchDB), to support WKWebview where PouchDB
- * doesn't work.
- */
-import * as browserworkspace from "./browserworkspace"
-
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
@@ -17,47 +11,168 @@ interface StoredText {
 const TEXTS_TABLE = "texts";
 const HEADERS_TABLE = "headers";
 const KEYPATH = "id";
+export const SCRIPT_TABLE = "script";
+export const GITHUB_TABLE = "github";
+export const HOSTCACHE_TABLE = "hostcache";
 
-// This function migrates existing projectes in pouchDb to indexDb
-// From browserworkspace to idbworkspace
-async function migrateBrowserWorkspaceAsync(): Promise<void> {
-    const db = await getDbAsync();
-    const allDbHeaders = await db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE);
-    if (allDbHeaders.length) {
-        // There are already scripts using the idbworkspace, so a migration has already happened
-        return;
+let _migrationPromise: Promise<void>;
+async function performMigrationsAsync() {
+    if (!_migrationPromise) {
+        _migrationPromise = (async () => {
+            try {
+                await migratePouchAsync();
+            }
+            catch (e) {
+                pxt.reportException(e);
+                pxt.log("Unable to migrate pouchDB")
+            }
+
+            try {
+                await migrateOldIndexedDbAsync();
+            }
+            catch (e) {
+                pxt.reportException(e);
+                pxt.log("Unable to migrate old indexed db format")
+            }
+
+            try {
+                await migratePrefixesAsync();
+            }
+            catch (e) {
+                pxt.reportException(e);
+                pxt.log("Unable to migrate projects from other prefixes");
+            }
+        })();
     }
 
-    const copyProject = async (h: pxt.workspace.Header): Promise<void> => {
-        const resp = await browserworkspace.provider.getAsync(h);
-
-        // Ignore metadata of the previous script so they get re-generated for the new copy
-        delete (resp as any)._id;
-        delete (resp as any)._rev;
-
-        await setAsync(h, undefined, resp.text);
-    };
-
-    const previousHeaders = await browserworkspace.provider.listAsync();
-
-    await Promise.all(previousHeaders.map(h => copyProject(h)));
+    return _migrationPromise;
 }
 
-let _dbPromise: Promise<pxt.BrowserUtils.IDBWrapper>;
-async function getDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
-    if (_dbPromise) {
-        return await _dbPromise;
+async function migratePouchAsync() {
+    const POUCH_OBJECT_STORE = "by-sequence";
+    const oldDb = new pxt.BrowserUtils.IDBWrapper("_pouch_pxt-" + pxt.storage.storageId(), 99999, () => {});
+    await oldDb.openAsync();
+    const entries = await oldDb.getAllAsync<any>(POUCH_OBJECT_STORE);
+
+    for (const entry of entries) {
+        if (entry._migrated) continue;
+        // format is (prefix-)?tableName--id::rev
+        const docId: string = entry._doc_id_rev;
+
+        const revSeparatorIndex = docId.lastIndexOf("::");
+        const rev = docId.substring(revSeparatorIndex + 2);
+
+        const tableSeparatorIndex = docId.indexOf("--");
+        let table = docId.substring(0, tableSeparatorIndex);
+
+        const id = docId.substring(tableSeparatorIndex + 2, revSeparatorIndex);
+
+        let prefix: string;
+        let prefixSeparatorIndex = table.indexOf("-")
+        if (prefixSeparatorIndex !== -1) {
+            prefix = table.substring(0, prefixSeparatorIndex);
+            table = table.substring(prefixSeparatorIndex + 1);
+        }
+
+        pxtc.assert(id === entry.id, "ID mismatch!");
+
+        switch (table) {
+            case "header":
+                table = HEADERS_TABLE;
+                break;
+            case "text":
+                table = TEXTS_TABLE;
+                break;
+            case "script":
+                table = SCRIPT_TABLE;
+                prefix = prefix || getCurrentDBPrefix();
+                break;
+            case "github":
+                table = GITHUB_TABLE;
+                prefix = prefix || getCurrentDBPrefix();
+                break;
+            case "hostcache":
+                table = HOSTCACHE_TABLE;
+                prefix = prefix || getCurrentDBPrefix();
+                break;
+            default:
+                console.warn("Unknown database table " + table);
+                continue;
+        }
+
+        const db = await getDbAsync(prefix)
+        const existing = await db.getAsync(table, id);
+
+        if (!existing) {
+            await db.setAsync(table, entry);
+        }
+
+        entry._migrated = true;
+        await oldDb.setAsync(POUCH_OBJECT_STORE, entry);
     }
+}
 
-    _dbPromise = createDbAsync();
+async function migrateOldIndexedDbAsync() {
+    const legacyDb = new pxt.BrowserUtils.IDBWrapper(`__pxt_idb_workspace`, 1, (ev, r) => {
+        const db = r.result as IDBDatabase;
+        db.createObjectStore(TEXTS_TABLE, { keyPath: KEYPATH });
+        db.createObjectStore(HEADERS_TABLE, { keyPath: KEYPATH });
+    }, async () => {
+        await pxt.BrowserUtils.clearTranslationDbAsync();
+        await pxt.BrowserUtils.clearTutorialInfoDbAsync();
+    });
 
-    return _dbPromise;
+    try {
+        await legacyDb.openAsync();
+        const currentDb = await getCurrentDbAsync();
+
+        await copyTableEntriesAsync(legacyDb, currentDb, HEADERS_TABLE, true);
+        await copyTableEntriesAsync(legacyDb, currentDb, TEXTS_TABLE, true);
+    } catch (e) {
+        pxt.reportException(e);
+    }
+}
+
+async function migratePrefixesAsync() {
+    if (!getCurrentDBPrefix()) return;
+
+    const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
+    const currentMajor = currentVersion.major;
+    const previousMajor = currentMajor - 1;
+    const previousDbPrefix = previousMajor < 0 ? "" : pxt.appTarget.appTheme.browserDbPrefixes[previousMajor];
+
+    if (!previousDbPrefix) return;
+    const currentDb = await getCurrentDbAsync();
+
+    // If headers are already in the new db, migration must have already happened
+    if ((await currentDb.getAllAsync(HEADERS_TABLE)).length) return;
+
+    const prevDb = await getDbAsync(previousDbPrefix);
+
+    await copyTableEntriesAsync(prevDb, currentDb, HEADERS_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, TEXTS_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, SCRIPT_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, HOSTCACHE_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, GITHUB_TABLE, false);
+}
+
+let _dbPromises: pxt.Map<Promise<pxt.BrowserUtils.IDBWrapper>> = {};
+
+async function getDbAsync(prefix = "__default") {
+    if (_dbPromises[prefix]) return _dbPromises[prefix];
+
+    _dbPromises[prefix] = createDbAsync();
+
+    return _dbPromises[prefix];
 
     async function createDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
-        const idbDb = new pxt.BrowserUtils.IDBWrapper("__pxt_idb_workspace", 1, (ev, r) => {
+        const idbDb = new pxt.BrowserUtils.IDBWrapper(`__pxt_idb_workspace_${pxt.storage.storageId()}_${prefix}`, 1, (ev, r) => {
             const db = r.result as IDBDatabase;
             db.createObjectStore(TEXTS_TABLE, { keyPath: KEYPATH });
             db.createObjectStore(HEADERS_TABLE, { keyPath: KEYPATH });
+            db.createObjectStore(SCRIPT_TABLE, { keyPath: KEYPATH });
+            db.createObjectStore(HOSTCACHE_TABLE, { keyPath: KEYPATH });
+            db.createObjectStore(GITHUB_TABLE, { keyPath: KEYPATH });
         }, async () => {
             await pxt.BrowserUtils.clearTranslationDbAsync();
             await pxt.BrowserUtils.clearTutorialInfoDbAsync();
@@ -74,14 +189,36 @@ async function getDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
     }
 }
 
+async function copyTableEntriesAsync(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: pxt.BrowserUtils.IDBWrapper, storeName: string, dontOverwrite: boolean) {
+    for (const entry of await fromDb.getAllAsync<any>(storeName)) {
+        const existing = dontOverwrite && !!(await toDb.getAsync(storeName, entry.id));
+
+        if (!existing) {
+            await toDb.setAsync(storeName, entry);
+        }
+    }
+}
+
+async function getCurrentDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
+    return getDbAsync(getCurrentDBPrefix());
+}
+
+function getCurrentDBPrefix() {
+    if (!pxt.appTarget.appTheme.browserDbPrefixes) return undefined;
+
+    const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
+    const currentMajor = currentVersion.major;
+    return pxt.appTarget.appTheme.browserDbPrefixes[currentMajor];
+}
+
 async function listAsync(): Promise<pxt.workspace.Header[]> {
-    await migrateBrowserWorkspaceAsync();
-    const db = await getDbAsync();
+    await performMigrationsAsync();
+    const db = await getCurrentDbAsync();
     return db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE);
 }
 
 async function getAsync(h: Header): Promise<pxt.workspace.File> {
-    const db = await getDbAsync();
+    const db = await getCurrentDbAsync();
     const res = await db.getAsync<StoredText>(TEXTS_TABLE, h.id);
     return {
         header: h,
@@ -91,7 +228,7 @@ async function getAsync(h: Header): Promise<pxt.workspace.File> {
 }
 
 async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<void> {
-    const db = await getDbAsync();
+    const db = await getCurrentDbAsync();
 
     try {
         await setCoreAsync(db, h, prevVer, text);
@@ -137,15 +274,118 @@ async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<voi
 
 
 async function deleteAsync(h: Header, prevVer: any): Promise<void> {
-    const db = await getDbAsync();
+    const db = await getCurrentDbAsync();
     await db.deleteAsync(TEXTS_TABLE, h.id);
     await db.deleteAsync(HEADERS_TABLE, h.id);
 }
 
 async function resetAsync(): Promise<void> {
-    const db = await getDbAsync();
+    const db = await getCurrentDbAsync();
     await db.deleteAllAsync(TEXTS_TABLE);
     await db.deleteAllAsync(HEADERS_TABLE);
+}
+
+export async function getObjectStoreAsync<T>(storeName: string) {
+    const db = await getCurrentDbAsync();
+    return db.getObjectStoreWrapper<T>(storeName);
+}
+
+export async function copyProjectToLegacyEditorAsync(header: Header, script: pxt.workspace.ScriptText, majorVersion: number): Promise<void> {
+    const prefix = pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[majorVersion];
+
+    const oldDB = await getDbAsync(prefix);
+
+    await oldDB.setAsync(HEADERS_TABLE, header);
+    await oldDB.setAsync(TEXTS_TABLE, {
+        id: header.id,
+        files: script,
+        _rev: null
+    } as StoredText);
+}
+
+export function initGitHubDb() {
+    class GithubDb implements pxt.github.IGithubDb {
+        // in memory cache
+        private mem = new pxt.github.MemoryGithubDb();
+
+        latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
+            return this.mem.latestVersionAsync(repopath, config)
+        }
+
+        async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+            // don't cache master
+            if (tag == "master")
+                return this.mem.loadConfigAsync(repopath, tag);
+
+            const id = `config-${repopath}-${tag}`;
+
+            const cache = await getGitHubCacheAsync();
+
+            try {
+                const entry = await cache.getAsync(id);
+                return entry.config;
+            }
+            catch (e) {
+                pxt.debug(`github offline cache miss ${id}`);
+                const config = await this.mem.loadConfigAsync(repopath, tag);
+
+                try {
+                    await cache.setAsync({
+                        id,
+                        config
+                    })
+                }
+                catch (e) {
+                }
+
+                return config;
+            }
+        }
+
+        async loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+            if (!tag) {
+              pxt.debug(`dep: default to master`)
+              tag = "master"
+            }
+            // don't cache master
+            if (tag == "master")
+                return this.mem.loadPackageAsync(repopath, tag);
+
+            const id = `pkg-${repopath}-${tag}`;
+            const cache = await getGitHubCacheAsync();
+
+            try {
+                const entry = await cache.getAsync(id);
+                pxt.debug(`github offline cache hit ${id}`);
+                return entry.package;
+            }
+            catch (e) {
+                pxt.debug(`github offline cache miss ${id}`);
+                const p = await this.mem.loadPackageAsync(repopath, tag);
+
+                try {
+                    await cache.setAsync({
+                        id,
+                        package: p
+                    })
+                }
+                catch (e) {
+                }
+
+                return p;
+            }
+        }
+    }
+
+    function getGitHubCacheAsync() {
+        return getObjectStoreAsync<{
+            id: string;
+            package?: pxt.github.CachedPackage;
+            config?: pxt.PackageConfig;
+        }>(GITHUB_TABLE)
+    }
+
+    pxt.github.db = new GithubDb();
 }
 
 export const provider: WorkspaceProvider = {

@@ -76,6 +76,7 @@ import { CodeCardView } from "./codecard";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
+import { initGitHubDb } from "./idbworkspace";
 
 pxsim.util.injectPolyphils();
 
@@ -4814,6 +4815,11 @@ export class ProjectView
             }
         }
 
+        pxt.editor.postHostMessageAsync({
+            type: "pxteditor",
+            action: "editorcontentloaded"
+        } as pxt.editor.EditorContentLoadedRequest)
+
         if (this.pendingImport) {
             this.pendingImport.resolve();
             this.pendingImport = undefined;
@@ -5735,6 +5741,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (optsQuery["consoleticks"] == "2" || optsQuery["consoleticks"] == "short") {
         pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Short;
     }
+
+    initGitHubDb();
 
     pxt.perf.measureStart("setAppTarget");
     pkg.setupAppTarget((window as any).pxtTargetBundle);
