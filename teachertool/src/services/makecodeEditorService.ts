@@ -17,7 +17,7 @@ const onMessageReceived = (event: MessageEvent) => {
         return;
     }
 
-    console.log("Received message from MakeCode:", data);
+    console.log("Received message from iframe:", data);
 }
 
 const sendMessageAsync = (message?: any) => {
@@ -32,12 +32,11 @@ const sendMessageAsync = (message?: any) => {
             makecodeEditorRef!.contentWindow!.postMessage(message, "*");
         }
 
+        messageQueue.push(message);
         if (makecodeEditorRef) {
-            messageQueue.push(message);
             while (messageQueue.length) {
                 sendMessageCore(messageQueue.shift());
             }
-            if (message) sendMessageCore(message);
         }
     });
 }
