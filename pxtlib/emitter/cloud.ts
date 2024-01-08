@@ -305,4 +305,16 @@ namespace pxt.Cloud {
         thumb?: boolean;
         persistId?: string;
     }
+
+    export interface JsonText {
+        "Readme.md"?: string;
+        "assets.json"?: string;
+        "images.g.jres"?: string;
+        "images.g.ts"?: string;
+        "main.blocks"?: string;
+        "main.ts"?: string;
+        "pxt.json"?: string;
+        "tilemap.g.jres"?: string;
+        "tilemap.g.ts"?: string;
+    }
 }

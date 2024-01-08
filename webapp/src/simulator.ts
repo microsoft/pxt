@@ -183,9 +183,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onSimulatorReady: function () {
             pxt.perf.recordMilestone("simulator ready")
-            if (!pxt.perf.perfReportLogged) {
-                pxt.perf.report()
-            }
+            cfg.onSimulatorReady();
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {

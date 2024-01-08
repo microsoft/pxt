@@ -93,4 +93,16 @@ namespace pxt.analytics {
             }
         };
     }
+
+    export function trackPerformanceReport() {
+        if (pxt.perf.perfReportLogged) return;
+
+        const data = pxt.perf.report();
+
+        if (data) {
+            const { durations, milestones } = data;
+            pxt.tickEvent("performance.milestones", milestones);
+            pxt.tickEvent("performance.durations", durations);
+        }
+    }
 }

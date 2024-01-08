@@ -6,6 +6,7 @@ webapp/public/skillmap.html
 webapp/public/authcode.html
 webapp/public/multiplayer.html
 webapp/public/kiosk.html
+webapp/public/teachertool.html
 localtypings/blockly.d.ts
 node_modules
 *.sw?

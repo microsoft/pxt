@@ -50,11 +50,11 @@ namespace pxt.workspace {
         maxTime?: number;
     }
 
-    // 5 minutes
-    const DIFF_HISTORY_INTERVAL = 1000 * 60 * 5;
+    // 5 minutes. This is overridden in pxtarget.json
+    const DEFAULT_DIFF_HISTORY_INTERVAL = 1000 * 60 * 5;
 
-    // 15 minutes
-    const SNAPSHOT_HISTORY_INTERVAL = 1000 * 60 * 15;
+    // 15 minutes. This is overridden in pxtarget.json
+    const DEFAULT_SNAPSHOT_HISTORY_INTERVAL = 1000 * 60 * 15;
 
     const ONE_DAY = 1000 * 60 * 60 * 24;
 
@@ -324,7 +324,7 @@ namespace pxt.workspace {
             const topTime = history.entries[history.entries.length - 1].timestamp;
             const prevTime = history.entries[history.entries.length - 2].timestamp;
 
-            if (currentTime - topTime < DIFF_HISTORY_INTERVAL && topTime - prevTime < DIFF_HISTORY_INTERVAL) {
+            if (currentTime - topTime < diffInterval() && topTime - prevTime < diffInterval()) {
                 shouldCombine = true;
             }
         }
@@ -352,7 +352,7 @@ namespace pxt.workspace {
         if (history.snapshots.length == 0) {
             history.snapshots.push(takeSnapshot(previousText, currentTime - 1));
         }
-        else if (currentTime - history.snapshots[history.snapshots.length - 1].timestamp >= SNAPSHOT_HISTORY_INTERVAL) {
+        else if (currentTime - history.snapshots[history.snapshots.length - 1].timestamp >= snapshotInterval()) {
             history.snapshots.push(takeSnapshot(previousText, currentTime));
 
             const trimmed: pxt.workspace.SnapshotEntry[] = [];
@@ -440,5 +440,21 @@ namespace pxt.workspace {
         }
 
         return true;
+    }
+
+    function diffInterval() {
+        if (pxt.appTarget?.appTheme?.timeMachineDiffInterval != undefined) {
+            return pxt.appTarget.appTheme.timeMachineDiffInterval;
+        }
+
+        return DEFAULT_DIFF_HISTORY_INTERVAL;
+    }
+
+    function snapshotInterval() {
+        if (pxt.appTarget?.appTheme?.timeMachineSnapshotInterval != undefined) {
+            return pxt.appTarget.appTheme.timeMachineSnapshotInterval;
+        }
+
+        return DEFAULT_SNAPSHOT_HISTORY_INTERVAL;
     }
 }

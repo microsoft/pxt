@@ -83,6 +83,7 @@ namespace pxt.editor {
         | "simevent"
         | "info" // return info data`
         | "tutorialevent"
+        | "editorcontentloaded"
 
         // package extension messasges
         | ExtInitializeType
@@ -158,6 +159,10 @@ namespace pxt.editor {
          * Additional optional to create new project
          */
         options?: ProjectCreationOptions;
+    }
+
+    export interface EditorContentLoadedRequest extends EditorMessageRequest {
+        action: "editorcontentloaded";
     }
 
     export interface EditorMessageSetScaleRequest extends EditorMessageRequest {

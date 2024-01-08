@@ -27,7 +27,8 @@ let serveOptions: ServeOptions;
 
 const webappNames = [
     "kiosk",
-    "multiplayer"
+    "multiplayer",
+    "eval"
     // TODO: Add other webapp names here: "skillmap", "authcode"
 ];
 

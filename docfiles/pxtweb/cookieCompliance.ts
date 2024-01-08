@@ -106,14 +106,21 @@ namespace pxt {
             }
         }
         export function report(filter: string = null) {
+            perfReportLogged = true;
+
             if (enabled) {
+                const milestones: {[index: string]: number} = {};
+                const durations: {[index: string]: number} = {};
+
                 let report = `performance report:\n`
                 for (let [msg, time] of stats.milestones) {
                     if (!filter || msg.indexOf(filter) >= 0) {
                         let pretty = prettyStr(time)
                         report += `\t\t${msg} @ ${pretty}\n`
+                        milestones[msg] = time;
                     }
                 }
+
                 report += `\n`
                 for (let [msg, start, duration] of stats.durations) {
                     let filterIncl = filter && msg.indexOf(filter) >= 0
@@ -125,10 +132,12 @@ namespace pxt {
                         }
                         report += `\n`
                     }
+                    durations[msg] = duration;
                 }
                 console.log(report)
+                return { milestones, durations };
             }
-            perfReportLogged = true
+            return undefined;
         }
         (function () {
             init()
