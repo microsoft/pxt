@@ -295,7 +295,7 @@ namespace pxt.editor {
     }
 
     export interface EditorMessageGetBlocksResponse {
-        blocks: Blockly.Block[];
+        blocks: string;
     }
 
     export interface EditorMessageRenderBlocksResponse {
