@@ -4042,7 +4042,8 @@ export class ProjectView
             await this.openBlocksAsync();
         }
 
-        return { blocks: this.blocksEditor.editor.getAllBlocks(false) };
+        const serializedBlocks = pxt.blocks.saveWorkspaceXml(this.blocksEditor.editor, true);
+        return { blocks: serializedBlocks };
     }
 
     launchFullEditor() {
