@@ -11,7 +11,7 @@ const messageQueue: pxt.editor.EditorMessageRequest[] = [];
 let nextId: number = 0;
 let pendingMessages: {[index: string]: PendingMessage} = {};
 
-const onMessageReceived = (event: MessageEvent) => {
+function onMessageReceived(event: MessageEvent) {
     logDebug(`Message received from iframe: ${JSON.stringify(event.data)}`);
 
     const data = event.data as pxt.editor.EditorMessageRequest;
@@ -31,7 +31,7 @@ const onMessageReceived = (event: MessageEvent) => {
     }
 }
 
-const sendMessageAsync = (message?: any) => {
+function sendMessageAsync(message?: any) {
     logDebug(`Sending message to iframe: ${JSON.stringify(message)}`);
 
     return new Promise(resolve => {
@@ -65,19 +65,18 @@ function validateResponse(result: pxt.editor.EditorMessageResponse, expectRespon
     }
 }
 
-export const setEditorRef = (ref: HTMLIFrameElement | undefined) => {
+export function setEditorRef(ref: HTMLIFrameElement | undefined) {
     iframeLoaded = false;
+    makecodeEditorRef = ref ?? undefined;
+    window.removeEventListener("message", onMessageReceived);
     if (ref) {
-        makecodeEditorRef = ref;
         window.addEventListener("message", onMessageReceived);
-    } else {
-        makecodeEditorRef = undefined;
-        window.removeEventListener("message", onMessageReceived);
+        sendMessageAsync();
     }
 }
 
 //  an example of events that we want to/can send to the editor
-export const setHighContrastAsync = async (on: boolean) => {
+export async function setHighContrastAsync(on: boolean) {
     const result = await sendMessageAsync({
         type: "pxteditor",
         action: "sethighcontrast",
