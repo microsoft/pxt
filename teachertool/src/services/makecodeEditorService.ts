@@ -32,7 +32,7 @@ function sendMessageAsync(message?: any) {
             makecodeEditorRef!.contentWindow!.postMessage(message, "*");
         }
 
-        messageQueue.push(message);
+        if (message) messageQueue.push(message);
         if (makecodeEditorRef) {
             while (messageQueue.length) {
                 sendMessageCore(messageQueue.shift());
@@ -42,12 +42,11 @@ function sendMessageAsync(message?: any) {
 }
 
 export function setEditorRef(ref: HTMLIFrameElement | undefined) {
+    makecodeEditorRef = ref ?? undefined;
+    window.removeEventListener("message", onMessageReceived);
     if (ref) {
-        makecodeEditorRef = ref;
         window.addEventListener("message", onMessageReceived);
-    } else {
-        makecodeEditorRef = undefined;
-        window.removeEventListener("message", onMessageReceived);
+        sendMessageAsync();
     }
 }
 
