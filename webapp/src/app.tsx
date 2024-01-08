@@ -4038,15 +4038,6 @@ export class ProjectView
             });
     }
 
-    async getBlocksAsync(): Promise<pxt.editor.EditorMessageGetBlocksResponse> {
-        if (!this.isBlocksActive()) {
-            await this.openBlocksAsync();
-        }
-
-        const serializedBlocks = pxt.blocks.saveWorkspaceXml(this.blocksEditor.editor, true);
-        return { blocks: serializedBlocks };
-    }
-
     launchFullEditor() {
         Util.assert(pxt.shell.isSandboxMode());
 

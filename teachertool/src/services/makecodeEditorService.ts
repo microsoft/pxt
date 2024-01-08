@@ -16,12 +16,11 @@ const onMessageReceived = (event: MessageEvent) => {
 
     const data = event.data as pxt.editor.EditorMessageRequest;
     if (data.type === "pxteditor") {
-
         if (data.action === "editorcontentloaded") {
             iframeLoaded = true;
             sendMessageAsync(); // flush message queue.
 
-            getBlocks();
+            runEvalInEditorAsync("");
         }
 
         if (data.id && pendingMessages[data.id]) {
@@ -46,13 +45,24 @@ const sendMessageAsync = (message?: any) => {
             makecodeEditorRef!.contentWindow!.postMessage(message, "*");
         }
 
-        messageQueue.push(message);
+        if (message) messageQueue.push(message);
         if (makecodeEditorRef) {
             while (messageQueue.length) {
                 sendMessageCore(messageQueue.shift());
             }
         }
     });
+}
+
+// Check if the result was successful and (if expected) has data.
+// Logs errors and throws if the result was not successful.
+function validateResponse(result: pxt.editor.EditorMessageResponse, expectResponseData: boolean) {
+    if (!result.success) {
+        throw new Error(`Server returned failed status.`);
+    }
+    if (expectResponseData && !result?.resp) {
+        throw new Error(`Missing response data.`);
+    }
 }
 
 export const setEditorRef = (ref: HTMLIFrameElement | undefined) => {
@@ -76,28 +86,22 @@ export const setHighContrastAsync = async (on: boolean) => {
     console.log(result);
 }
 
-export const getBlocks = async (): Promise<Blockly.Block[]> => { // TODO : create response object with success/fail?
-    const request = sendMessageAsync({ type: "pxteditor", action: "getblocks" } as pxt.editor.EditorMessageGetBlocksRequest);
+export async function runEvalInEditorAsync(serializedRubric: string): Promise<pxt.blocks.EvaluationResult | undefined> {
+    const request = sendMessageAsync({ type: "pxteditor", action: "runeval", rubric: serializedRubric } as pxt.editor.EditorMessageRunEvalRequest);
 
     try {
-        const result = await request as pxt.editor.EditorMessageResponse;
+        const response = await request;
 
-        if (result.success) {
-            if (result?.resp) {
-                const serialzedBlocks = result?.resp?.blocks;
-                const workspace = pxt.blocks.loadWorkspaceXml(serialzedBlocks);
-                const blocks = workspace.getAllBlocks(false);
-                console.log(`DEBUG: BLOCKS ${serialzedBlocks} = ${workspace} = ${blocks} = ${blocks?.length}`);
-                return blocks;
-            } else {
-                throw new Error("Missing response data");
-            }
-        } else {
-            throw new Error("Editor-side failure providing blocks");
-        }
+        const result = response as pxt.editor.EditorMessageResponse;
+
+        // Throws on failure
+        validateResponse(result, true);
+
+        const evalResults = result.resp.evalResults as pxt.blocks.EvaluationResult;
+        return evalResults;
     } catch (e: any) {
-        logError("get_blocks_error", e);
+        logError("runeval_error", e);
     }
 
-    return [];
+    return undefined;
 }

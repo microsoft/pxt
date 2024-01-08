@@ -84,7 +84,7 @@ namespace pxt.editor {
         | "info" // return info data`
         | "tutorialevent"
         | "editorcontentloaded"
-        | "getblocks"
+        | "runeval"
 
         // package extension messasges
         | ExtInitializeType
@@ -290,12 +290,9 @@ namespace pxt.editor {
         layout?: pxt.blocks.BlockLayout;
     }
 
-    export interface EditorMessageGetBlocksRequest extends EditorMessageRequest {
-        action: "getblocks";
-    }
-
-    export interface EditorMessageGetBlocksResponse {
-        blocks: string;
+    export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
+        action: "runeval";
+        rubric: string;
     }
 
     export interface EditorMessageRenderBlocksResponse {
@@ -547,11 +544,16 @@ namespace pxt.editor {
                                             })
                                         });
                                 }
-                                case "getblocks": {
+                                case "runeval": {
+                                    const evalmsg = data as EditorMessageRunEvalRequest;
+                                    const rubric = evalmsg.rubric;
+                                    console.log("Rubric: " + rubric);
                                     return Promise.resolve()
-                                        .then(() => projectView.getBlocksAsync())
-                                        .then (blocks => {
-                                            resp = blocks;
+                                        .then(() => (
+                                            // TODO : call into evaluation function.
+                                            { passed: true } as pxt.blocks.EvaluationResult))
+                                        .then (results => {
+                                            resp = results;
                                         });
                                 }
                                 case "renderpython": {
