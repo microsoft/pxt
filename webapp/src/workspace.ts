@@ -53,11 +53,31 @@ export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
         return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
 }
 
-export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
+export async function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
     if (!isBrowserWorkspace()) {
         return Promise.reject("Copy operation only works in browser workspace");
     }
-    return browserworkspace.copyProjectToLegacyEditor(header, majorVersion);
+
+    const script = await getTextAsync(header.id);
+
+    const newHeader = pxt.Util.clone(header);
+    delete (newHeader as any)._id;
+    delete newHeader._rev;
+    newHeader.id = pxt.Util.guidGen();
+
+    // We don't know if the legacy editor uses the indexedDB or PouchDB workspace, so we're going
+    // to copy the project to both places
+    try {
+        await browserworkspace.copyProjectToLegacyEditor(newHeader, script, majorVersion);
+    }
+    catch (e) {
+        pxt.reportException(e);
+        pxt.log("Unable to port project to PouchDB")
+    }
+
+    await indexedDBWorkspace.copyProjectToLegacyEditorAsync(newHeader, script, majorVersion);
+
+    return newHeader;
 }
 
 export function setupWorkspace(id: string) {
@@ -78,12 +98,13 @@ export function setupWorkspace(id: string) {
             // Iframe workspace, the editor relays sync messages back and forth when hosted in an iframe
             impl = iframeworkspace.provider;
             break;
-        case "idb":
-            impl = indexedDBWorkspace.provider;
+        case "pouch":
+            impl = browserworkspace.provider
             break;
+        case "idb":
         case "browser":
         default:
-            impl = browserworkspace.provider
+            impl = indexedDBWorkspace.provider;
             break;
     }
 }
@@ -269,7 +290,7 @@ export function getLastCloudSync(): number {
 
 export function initAsync() {
     if (!impl) {
-        impl = browserworkspace.provider;
+        impl = indexedDBWorkspace.provider;
         implType = "browser";
     }
 
@@ -809,7 +830,6 @@ export function fixupFileNames(txt: ScriptText) {
 
 
 const scriptDlQ = new U.PromiseQueue();
-const scripts = new db.Table("script"); // cache for published scripts
 export async function getPublishedScriptAsync(id: string) {
     if (pxt.github.isGithubId(id))
         id = pxt.github.normalizeRepoId(id)
@@ -817,8 +837,9 @@ export async function getPublishedScriptAsync(id: string) {
     const eid = encodeURIComponent(pxt.github.upgradedPackageId(config, id))
     return await scriptDlQ.enqueue(eid, async () => {
         let files: ScriptText
+        const scriptCache = await getScriptCacheAsync();
         try {
-            files = (await scripts.getAsync(eid)).files
+            files = (await scriptCache.getAsync(eid)).files
         } catch {
             if (pxt.github.isGithubId(id)) {
                 files = (await pxt.github.downloadPackageAsync(id, config)).files
@@ -827,7 +848,7 @@ export async function getPublishedScriptAsync(id: string) {
                     .catch(core.handleNetworkError))
             }
             try {
-                await scripts.setAsync({ id: eid, files: files })
+                await scriptCache.setAsync({ id: eid, files: files })
             }
             catch (e) {
                 // Don't fail if the indexeddb fails, but log it
@@ -1720,7 +1741,7 @@ export function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
 }
 
 export function isBrowserWorkspace() {
-    return impl === browserworkspace.provider;
+    return impl === indexedDBWorkspace.provider;
 }
 
 export function fireEvent(ev: pxt.editor.events.Event) {
@@ -1744,6 +1765,10 @@ function dbgShorten(s: string): string {
 export function dbgHdrToString(h: Header): string {
     if (!h) return "#null"
     return `${h.name} ${h.id.substr(0, 4)}..v${dbgShorten(h.cloudVersion)}@${h.modificationTime % 100}-${U.timeSince(h.modificationTime)}`;
+}
+
+async function getScriptCacheAsync(): Promise<pxt.BrowserUtils.IDBObjectStoreWrapper<{id: string, files: ScriptText}>> {
+    return indexedDBWorkspace.getObjectStoreAsync(indexedDBWorkspace.SCRIPT_TABLE)
 }
 
 /*

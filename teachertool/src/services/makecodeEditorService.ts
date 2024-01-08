@@ -12,7 +12,7 @@ let nextId: number = 0;
 let pendingMessages: {[index: string]: PendingMessage} = {};
 
 const onMessageReceived = (event: MessageEvent) => {
-    logDebug(`Message Received: ${JSON.stringify(event.data)}`);
+    logDebug(`Message received from iframe: ${JSON.stringify(event.data)}`);
 
     const data = event.data as pxt.editor.EditorMessageRequest;
     if (data.type === "pxteditor") {
@@ -32,8 +32,8 @@ const onMessageReceived = (event: MessageEvent) => {
     }
 }
 
-export const sendMessageAsync = (message?: any) => {
-    logDebug(`Sending Message: ${JSON.stringify(message)}`);
+const sendMessageAsync = (message?: any) => {
+    logDebug(`Sending message to iframe: ${JSON.stringify(message)}`);
 
     return new Promise(resolve => {
         const sendMessageCore = (message: any) => {
@@ -46,27 +46,34 @@ export const sendMessageAsync = (message?: any) => {
             makecodeEditorRef!.contentWindow!.postMessage(message, "*");
         }
 
-        if (iframeLoaded) {
+        messageQueue.push(message);
+        if (makecodeEditorRef) {
             while (messageQueue.length) {
                 sendMessageCore(messageQueue.shift());
             }
-            if (message) sendMessageCore(message);
-        } else if (message) {
-            messageQueue.push(message);
         }
     });
 }
 
-export const setEditorRef = (ref: HTMLIFrameElement | null) => {
+export const setEditorRef = (ref: HTMLIFrameElement | undefined) => {
     iframeLoaded = false;
     if (ref) {
         makecodeEditorRef = ref;
         window.addEventListener("message", onMessageReceived);
-        makecodeEditorRef.addEventListener("load", () => {console.log("loaded")});
     } else {
         makecodeEditorRef = undefined;
         window.removeEventListener("message", onMessageReceived);
     }
+}
+
+//  an example of events that we want to/can send to the editor
+export const setHighContrastAsync = async (on: boolean) => {
+    const result = await sendMessageAsync({
+        type: "pxteditor",
+        action: "sethighcontrast",
+        on: on
+    });
+    console.log(result);
 }
 
 export const getBlocks = async (): Promise<Blockly.Block[]> => { // TODO : create response object with success/fail?

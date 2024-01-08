@@ -83,8 +83,8 @@ namespace pxt.editor {
         | "simevent"
         | "info" // return info data`
         | "tutorialevent"
-        | "getblocks"
         | "editorcontentloaded"
+        | "getblocks"
 
         // package extension messasges
         | ExtInitializeType
