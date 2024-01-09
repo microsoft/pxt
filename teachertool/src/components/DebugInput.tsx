@@ -13,6 +13,7 @@ interface IProps {}
 const DebugInput: React.FC<IProps> = ({}) => {
     const [shareLink, setShareLink] = useState("https://arcade.makecode.com/S50644-45891-08403-36583");
     const [rubric, setRubric] = useState("");
+    const [bools, setBools] = useState(true);
 
     const evaluate = async () => {
         await loadProjectMetadataAsync(shareLink);
