@@ -6,7 +6,7 @@ interface PendingMessage {
 }
 
 let makecodeEditorRef: HTMLIFrameElement | undefined;
-let iframeLoaded: boolean;
+let readyForMessages: boolean;
 const messageQueue: pxt.editor.EditorMessageRequest[] = [];
 let nextId: number = 0;
 let pendingMessages: {[index: string]: PendingMessage} = {};
@@ -17,7 +17,7 @@ function onMessageReceived(event: MessageEvent) {
     const data = event.data as pxt.editor.EditorMessageRequest;
     if (data.type === "pxteditor") {
         if (data.action === "editorcontentloaded") {
-            iframeLoaded = true;
+            readyForMessages = true;
             sendMessageAsync(); // flush message queue.
         }
 
@@ -64,7 +64,7 @@ function validateResponse(result: pxt.editor.EditorMessageResponse, expectRespon
 }
 
 export function setEditorRef(ref: HTMLIFrameElement | undefined) {
-    iframeLoaded = false;
+    readyForMessages = false;
     makecodeEditorRef = ref ?? undefined;
     window.removeEventListener("message", onMessageReceived);
     if (ref) {
