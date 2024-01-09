@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
 import { Textarea } from "react-common/components/controls/Textarea";
+import { loadProjectAsync } from "../transforms/loadProjectAsync";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 
 interface IProps {}
@@ -11,9 +12,12 @@ interface IProps {}
 const DebugInput: React.FC<IProps> = ({}) => {
     const [shareLink, setShareLink] = useState("https://arcade.makecode.com/S50644-45891-08403-36583");
     const [rubric, setRubric] = useState("");
+    const [bools, setBools] = useState(true);
 
     const evaluate = async () => {
+        setBools(!bools);
         await runEvaluateAsync(shareLink, rubric);
+        await loadProjectAsync("hi", bools);
     }
 
     return (
