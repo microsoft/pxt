@@ -4,7 +4,7 @@ import { useContext, useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
 import { Textarea } from "react-common/components/controls/Textarea";
-import { loadProjectAsync } from "../transforms/loadProjectAsync";
+import { loadProjectMetadataAsync } from "../transforms/loadProjectMetadataAsync";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 import { AppStateContext } from "../state/appStateContext";
 
@@ -15,7 +15,7 @@ const DebugInput: React.FC<IProps> = ({}) => {
     const [rubric, setRubric] = useState("");
 
     const evaluate = async () => {
-        await loadProjectAsync(shareLink);
+        await loadProjectMetadataAsync(shareLink);
         await runEvaluateAsync(rubric);
     }
 

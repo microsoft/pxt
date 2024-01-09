@@ -5,7 +5,7 @@ import { logDebug } from "../services/loggingService";
 import { postNotification } from "./postNotification";
 import { makeNotification } from "../utils";
 
-export async function loadProjectAsync(shareLink: string) {
+export async function loadProjectMetadataAsync(shareLink: string) {
     const { dispatch } = stateAndDispatch();
 
     const scriptId = pxt.Cloud.parseScriptId(shareLink);
