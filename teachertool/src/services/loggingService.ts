@@ -10,9 +10,7 @@ const formatName = (name: string) => {
 }
 
 export const logError = (name: string, details: string) => {
-    if (!isLocal()) {
-        pxt.tickEvent("teachertool.error", { name: formatName(name), message: details });
-    }
+    pxt.tickEvent("teachertool.error", { name: formatName(name), message: details });
     console.error(formatMessageForConsole(`${name}: ${details}`));
 }
 

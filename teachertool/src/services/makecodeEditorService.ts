@@ -69,7 +69,6 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
     window.removeEventListener("message", onMessageReceived);
     if (ref) {
         window.addEventListener("message", onMessageReceived);
-        sendMessageAsync();
     }
 }
 
@@ -86,19 +85,14 @@ export async function setHighContrastAsync(on: boolean) {
 export async function runEvalInEditorAsync(serializedRubric: string): Promise<pxt.blocks.EvaluationResult | undefined> {
     const request = sendMessageAsync({ type: "pxteditor", action: "runeval", rubric: serializedRubric } as pxt.editor.EditorMessageRunEvalRequest);
 
+    let evalResults = undefined;
     try {
-        const response = await request;
-
-        const result = response as pxt.editor.EditorMessageResponse;
-
-        // Throws on failure
-        validateResponse(result, true);
-
-        const evalResults = result.resp.evalResults as pxt.blocks.EvaluationResult;
-        return evalResults;
+        const result = await request as pxt.editor.EditorMessageResponse;
+        validateResponse(result, true); // Throws on failure
+        evalResults = result.resp.evalResults as pxt.blocks.EvaluationResult;
     } catch (e: any) {
         logError("runeval_error", e);
     }
 
-    return undefined;
+    return evalResults;
 }

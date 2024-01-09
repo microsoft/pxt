@@ -18,4 +18,4 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> =
         <iframe className="makecode-frame" src={pageSourceUrl} title={"title"} ref={handleIFrameRef}></iframe>
     </div>
     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
-};
+}

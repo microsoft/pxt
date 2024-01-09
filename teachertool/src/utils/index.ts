@@ -31,7 +31,6 @@ const getEditorUrl = (embedUrl: string) => {
 }
 
 function targetToUrl(target: string | undefined) {
-    // TODO also handle staging URLs? (as in https://github.com/thsparks/hackathon-ai/blob/master/checker.ts#L205)
     if (isLocal()) {
         return "http://localhost:3232/index.html";
     }

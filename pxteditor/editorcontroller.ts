@@ -547,7 +547,6 @@ namespace pxt.editor {
                                 case "runeval": {
                                     const evalmsg = data as EditorMessageRunEvalRequest;
                                     const rubric = evalmsg.rubric;
-                                    console.log("Rubric: " + rubric);
                                     return Promise.resolve()
                                         .then(() => (
                                             // TODO : call into evaluation function.

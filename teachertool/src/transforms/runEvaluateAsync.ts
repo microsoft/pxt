@@ -7,13 +7,12 @@ import { postNotification } from "./postNotification";
 export async function runEvaluateAsync(rubric: string) {
     const { dispatch } = stateAndDispatch();
 
-    // TODO : Loading screen type thing
     const evalResult = await runEvalInEditorAsync(rubric);
-    // TODO : clear loading
-
     if (evalResult) {
         dispatch(Actions.setEvalResult(evalResult));
     } else {
+        // Errors already logged in the runEvalInEditorAsync function.
+        // Just notify the user.
         postNotification(makeNotification(lf("Unable to evaluate project"), 2000));
     }
 }
