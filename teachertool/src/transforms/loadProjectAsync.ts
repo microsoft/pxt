@@ -1,12 +1,27 @@
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
+import { getProjectMetaAsync } from "../services/BackendRequests";
+import { logDebug } from "../services/loggingService";
 import { postNotification } from "./postNotification";
 import { makeNotification } from "../utils";
-import { setHighContrastAsync } from "../services/makecodeEditorService";
 
-export async function loadProjectAsync(projectId: string, bool: boolean) {
+export async function loadProjectAsync(shareLink: string) {
     const { dispatch } = stateAndDispatch();
-    await setHighContrastAsync(bool);
-    postNotification(makeNotification(`project ${projectId} evaluated`, 2000));
 
+    const scriptId = pxt.Cloud.parseScriptId(shareLink);
+    if (!scriptId) {
+        postNotification(makeNotification(lf("Invalid share link"), 2000));
+        dispatch(Actions.setProjectMetadata(undefined));
+        return;
+    }
+
+    const projMeta = await getProjectMetaAsync(scriptId);
+    if (!projMeta) {
+        postNotification(makeNotification(lf("Failed to load project"), 2000));
+        dispatch(Actions.setProjectMetadata(undefined));
+        return;
+    }
+
+    dispatch(Actions.setProjectMetadata(projMeta));
+    logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);
 }

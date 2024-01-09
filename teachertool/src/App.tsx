@@ -10,6 +10,7 @@ import { postNotification } from "./transforms/postNotification";
 import { createIFrameUrl, makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
+import ProjectMetadataDisplay from "./components/ProjectMetadataDisplay";
 
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
             <HeaderBar />
             <div className="app-container">
                 <DebugInput />
+                <ProjectMetadataDisplay />
                 <MakeCodeFrame pageSourceUrl={createIFrameUrl()} />
             </div>
 
