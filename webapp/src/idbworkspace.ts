@@ -50,7 +50,7 @@ async function performMigrationsAsync() {
 
 async function migratePouchAsync() {
     const POUCH_OBJECT_STORE = "by-sequence";
-    const oldDb = new pxt.BrowserUtils.IDBWrapper("_pouch_pxt-" + pxt.storage.storageId(), 99999, () => {});
+    const oldDb = new pxt.BrowserUtils.IDBWrapper("_pouch_pxt-" + pxt.storage.storageId(), 5, () => {});
     await oldDb.openAsync();
     const entries = await oldDb.getAllAsync<any>(POUCH_OBJECT_STORE);
 
