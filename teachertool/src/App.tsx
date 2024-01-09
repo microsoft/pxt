@@ -37,7 +37,7 @@ function App() {
             <HeaderBar />
             <DebugInput />
             <ProjectMetadataDisplay />
-            {state.projectMetadata && <MakeCodeFrame pageSourceUrl={createIFrameUrl(state.projectMetadata.id, state.projectMetadata?.target)} />}
+            <MakeCodeFrame />
             <Notifications />
         </div>
     );
