@@ -73,6 +73,7 @@ code {
     flex-direction: column;
     height: 100%;
     width: 100%;
+    overflow: auto;
 }
 
 .noclick {
@@ -384,7 +385,27 @@ code {
 .makecode-frame {
     width: 55vw;
     height: 50vh;
-    margin: 0 2.5rem;
+    margin: 0 1rem;
+}
+
+/*******************************/
+/*** PROJECT DETAILS STYLING  **/
+/*******************************/
+
+.project-metadata-display {
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    margin: 1rem 0;
+    padding: 1rem;
+}
+
+.project-metadata-display h4 {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.project-metadata-display p {
+    color: #666;
 }
 
 /*******************************/

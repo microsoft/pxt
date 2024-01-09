@@ -18,7 +18,7 @@ export const isLocal = () => {
 }
 
 // example: embedUrl for arcade is: https://arcade.makecode.com/
-export const getEditorUrl = (embedUrl: string) => {
+const getEditorUrl = (embedUrl: string) => {
     if (!pxt.webConfig && (window as any).pxtConfig) pxt.setupWebConfig((window as any).pxtConfig);
     // relprefix is something like: "/--"
     if (pxt.webConfig?.targetUrl && pxt.webConfig?.relprefix) {
@@ -30,13 +30,30 @@ export const getEditorUrl = (embedUrl: string) => {
     return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
 }
 
-export const createIFrameUrl = (): string => {
-    const editorUrl: string = isLocal() ? "http://localhost:3232/index.html#editor" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
+function targetToUrl(target: string | undefined) {
+    // TODO also handle staging URLs? (as in https://github.com/thsparks/hackathon-ai/blob/master/checker.ts#L205)
+    if (isLocal()) {
+        return "http://localhost:3232/index.html";
+    }
 
-    let url = editorUrl
+    switch (`${target}`) {
+        case "minecraft":
+            return "https://minecraft.makecode.com/";
+        case "microbit":
+            return "https://makecode.microbit.org/";
+        case "arcade":
+        default:
+            return "https://arcade.makecode.com/";
+    }
+}
+
+export const createIFrameUrl = (shareId: string, target?: string): string => {
+    const editorUrl: string = isLocal() ? "http://localhost:3232/index.html#editor" : target ? targetToUrl(target) : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
+
+    let url = editorUrl;
     if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
         url = editorUrl.substr(0, editorUrl.length - 1);
     }
-    url += `?controller=1&ws=browser&nocookiebanner=1`;
+    url += `?controller=1&ws=browser&nocookiebanner=1#pub:${shareId}`;
     return url;
 }

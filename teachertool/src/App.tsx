@@ -33,17 +33,13 @@ function App() {
     }, [ready]);
 
     return (
-        <>
+        <div className="app-container">
             <HeaderBar />
-            <div className="app-container">
-                <DebugInput />
-                <ProjectMetadataDisplay />
-                <MakeCodeFrame pageSourceUrl={createIFrameUrl()} />
-            </div>
-
+            <DebugInput />
+            <ProjectMetadataDisplay />
+            {state.projectMetadata && <MakeCodeFrame pageSourceUrl={createIFrameUrl(state.projectMetadata.id, state.projectMetadata?.target)} />}
             <Notifications />
-
-        </>
+        </div>
     );
 }
 
