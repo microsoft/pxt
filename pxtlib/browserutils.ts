@@ -835,7 +835,8 @@ namespace pxt.BrowserUtils {
             private name: string,
             private version: number,
             private upgradeHandler?: IDBUpgradeHandler,
-            private quotaExceededHandler?: () => void) {
+            private quotaExceededHandler?: () => void,
+            private skipErrorLog = false) {
         }
 
         private throwIfNotOpened(): void {
@@ -845,6 +846,10 @@ namespace pxt.BrowserUtils {
         }
 
         private errorHandler(err: Error, op: string, reject: (err: Error) => void): void {
+            if (this.skipErrorLog) {
+                reject(err);
+                return;
+            }
             console.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
             reject(err);
             // special case for quota exceeded
