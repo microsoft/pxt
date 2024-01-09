@@ -31,6 +31,12 @@ export default function reducer(state: AppState, action: Action): AppState {
                 notifications,
             };
         }
+        case "SET_EVAL_RESULT": {
+            return {
+                ...state,
+                currentEvalResult: action.result,
+            };
+        }
     }
 
     return state;

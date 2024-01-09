@@ -18,13 +18,19 @@ type RemoveNotification = ActionBase & {
     notificationId: string;
 };
 
+type SetEvalResult = ActionBase & {
+    type: "SET_EVAL_RESULT";
+    result: pxt.blocks.EvaluationResult;
+};
+
 /**
  * Union of all actions
  */
 
 export type Action =
     | PostNotification
-    | RemoveNotification;
+    | RemoveNotification
+    | SetEvalResult;
 
 /**
  * Action creators
@@ -41,8 +47,14 @@ const removeNotification = (notificationId: string): RemoveNotification => ({
     notificationId,
 });
 
+const setEvalResult = (result: pxt.blocks.EvaluationResult): SetEvalResult => ({
+    type: "SET_EVAL_RESULT",
+    result,
+});
+
 
 export {
     postNotification,
-    removeNotification
+    removeNotification,
+    setEvalResult
 };

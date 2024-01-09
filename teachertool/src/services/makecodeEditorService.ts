@@ -19,8 +19,6 @@ function onMessageReceived(event: MessageEvent) {
         if (data.action === "editorcontentloaded") {
             iframeLoaded = true;
             sendMessageAsync(); // flush message queue.
-
-            runEvalInEditorAsync("");
         }
 
         if (data.id && pendingMessages[data.id]) {
