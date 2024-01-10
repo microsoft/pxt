@@ -1,17 +1,18 @@
-import { getProjectMetaAsync, getProjectTextAsync } from "../services/BackendRequests";
+import { runEvalInEditorAsync } from "../services/makecodeEditorService";
+import { stateAndDispatch } from "../state";
+import * as Actions from "../state/actions";
+import { makeNotification } from "../utils";
+import { postNotification } from "./postNotification";
 
-export async function runEvaluateAsync(shareLink: string, rubric: string) {
-    console.log(`Evaluate ${shareLink} with ${rubric}!`);
-    const scriptId = pxt.Cloud.parseScriptId(shareLink);
-    if (!scriptId) {
-        console.log("Invalid share link!");
-        return;
+export async function runEvaluateAsync(rubric: string) {
+    const { dispatch } = stateAndDispatch();
+
+    const evalResult = await runEvalInEditorAsync(rubric);
+    if (evalResult) {
+        dispatch(Actions.setEvalResult(evalResult));
+    } else {
+        // Errors already logged in the runEvalInEditorAsync function.
+        // Just notify the user.
+        postNotification(makeNotification(lf("Unable to evaluate project"), 2000));
     }
-    const projText = await getProjectTextAsync(scriptId);
-    if (projText) console.log(projText["main.blocks"] || "Failed to get blocks xml!");
-
-    const projMeta = await getProjectMetaAsync(scriptId);
-    if (projMeta) console.log(projMeta);
-
-    console.log(pxt.blocks.parseRubric(rubric));
 }

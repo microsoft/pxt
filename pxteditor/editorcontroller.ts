@@ -84,6 +84,7 @@ namespace pxt.editor {
         | "info" // return info data`
         | "tutorialevent"
         | "editorcontentloaded"
+        | "runeval"
 
         // package extension messasges
         | ExtInitializeType
@@ -287,6 +288,11 @@ namespace pxt.editor {
         // rendering options
         snippetMode?: boolean;
         layout?: pxt.blocks.BlockLayout;
+    }
+
+    export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
+        action: "runeval";
+        rubric: string;
     }
 
     export interface EditorMessageRenderBlocksResponse {
@@ -536,6 +542,17 @@ namespace pxt.editor {
                                             return r.xml.then((svg: any) => {
                                                 resp = svg.xml;
                                             })
+                                        });
+                                }
+                                case "runeval": {
+                                    const evalmsg = data as EditorMessageRunEvalRequest;
+                                    const rubric = evalmsg.rubric;
+                                    return Promise.resolve()
+                                        .then(() => (
+                                            // TODO : call into evaluation function.
+                                            { passed: true } as pxt.blocks.EvaluationResult))
+                                        .then (results => {
+                                            resp = results;
                                         });
                                 }
                                 case "renderpython": {
