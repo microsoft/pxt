@@ -1,5 +1,3 @@
-import { isLocal } from "../utils";
-
 const formatMessageForConsole = (message: string) => {
     const time = new Date();
     return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}] ${message}`;
@@ -20,7 +18,7 @@ export const logInfo = (name: string, message: string) => {
 }
 
 export const logDebug = (message: string) => {
-    if (isLocal()) {
+    if (pxt.BrowserUtils.isLocalHost()) {
         console.log(formatMessageForConsole(message));
     }
 }

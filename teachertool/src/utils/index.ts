@@ -13,10 +13,6 @@ export function makeNotification(
     };
 }
 
-export const isLocal = () => {
-    return window.location.hostname === "localhost";
-}
-
 // example: embedUrl for arcade is: https://arcade.makecode.com/
 export const getEditorUrl = (embedUrl: string) => {
     if (!pxt.webConfig && (window as any).pxtConfig) pxt.setupWebConfig((window as any).pxtConfig);
@@ -31,10 +27,10 @@ export const getEditorUrl = (embedUrl: string) => {
 }
 
 export const createIFrameUrl = (shareId: string): string => {
-    const editorUrl: string = isLocal() ? "http://localhost:3232/index.html#editor" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
+    const editorUrl: string = pxt.BrowserUtils.isLocalHost() ? "http://localhost:3232/index.html" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
 
     let url = editorUrl;
-    if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
+    if (editorUrl.charAt(editorUrl.length - 1) === "/" && !pxt.BrowserUtils.isLocalHost()) {
         url = editorUrl.substr(0, editorUrl.length - 1);
     }
     url += `?controller=1&ws=browser&nocookiebanner=1#pub:${shareId}`;
