@@ -2,11 +2,22 @@
 import { useContext } from "react";
 import { setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
-import { createIFrameUrl } from "../utils";
+import { getEditorUrl } from "../utils";
 
 interface MakeCodeFrameProps {}
 export const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext)
+
+    function createIFrameUrl(shareId: string): string {
+        const editorUrl: string = pxt.BrowserUtils.isLocalHost() ? "http://localhost:3232/index.html" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
+
+        let url = editorUrl;
+        if (editorUrl.charAt(editorUrl.length - 1) === "/" && !pxt.BrowserUtils.isLocalHost()) {
+            url = editorUrl.substr(0, editorUrl.length - 1);
+        }
+        url += `?controller=1&ws=browser&nocookiebanner=1#pub:${shareId}`;
+        return url;
+    }
 
     const handleIFrameRef = (el: HTMLIFrameElement | null) => {
         setEditorRef(el ?? undefined);

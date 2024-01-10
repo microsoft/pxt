@@ -25,14 +25,3 @@ export const getEditorUrl = (embedUrl: string) => {
     const path = /\/([\da-zA-Z\.]+)(?:--)?/i.exec(window.location.pathname);
     return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
 }
-
-export const createIFrameUrl = (shareId: string): string => {
-    const editorUrl: string = pxt.BrowserUtils.isLocalHost() ? "http://localhost:3232/index.html" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
-
-    let url = editorUrl;
-    if (editorUrl.charAt(editorUrl.length - 1) === "/" && !pxt.BrowserUtils.isLocalHost()) {
-        url = editorUrl.substr(0, editorUrl.length - 1);
-    }
-    url += `?controller=1&ws=browser&nocookiebanner=1#pub:${shareId}`;
-    return url;
-}
