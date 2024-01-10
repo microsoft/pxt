@@ -18,7 +18,7 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
             {teacherTool.projectMetadata && (
                 <iframe
                     className="makecode-frame"
-                    src={createIFrameUrl(teacherTool.projectMetadata.id, teacherTool.projectMetadata?.target)}
+                    src={createIFrameUrl(teacherTool.projectMetadata.id)}
                     title={"title"}
                     ref={handleIFrameRef} />
             )}

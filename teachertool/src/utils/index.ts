@@ -18,7 +18,7 @@ export const isLocal = () => {
 }
 
 // example: embedUrl for arcade is: https://arcade.makecode.com/
-const getEditorUrl = (embedUrl: string) => {
+export const getEditorUrl = (embedUrl: string) => {
     if (!pxt.webConfig && (window as any).pxtConfig) pxt.setupWebConfig((window as any).pxtConfig);
     // relprefix is something like: "/--"
     if (pxt.webConfig?.targetUrl && pxt.webConfig?.relprefix) {
@@ -30,20 +30,8 @@ const getEditorUrl = (embedUrl: string) => {
     return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
 }
 
-function targetToUrl(target: string | undefined) {
-    switch (`${target}`) {
-        case "minecraft":
-            return "https://minecraft.makecode.com/";
-        case "microbit":
-            return "https://makecode.microbit.org/";
-        case "arcade":
-        default:
-            return "https://arcade.makecode.com/";
-    }
-}
-
-export const createIFrameUrl = (shareId: string, target?: string): string => {
-    const editorUrl: string = isLocal() ? "http://localhost:3232/index.html#editor" : target ? targetToUrl(target) : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
+export const createIFrameUrl = (shareId: string): string => {
+    const editorUrl: string = isLocal() ? "http://localhost:3232/index.html#editor" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
 
     let url = editorUrl;
     if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
