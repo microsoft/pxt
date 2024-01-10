@@ -11,6 +11,7 @@ import { createIFrameUrl, makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
 import ProjectMetadataDisplay from "./components/ProjectMetadataDisplay";
+import EvalResultDisplay from "./components/EvalResultDisplay";
 
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
             <HeaderBar />
             <DebugInput />
             <ProjectMetadataDisplay />
+            <EvalResultDisplay />
             <MakeCodeFrame />
             <Notifications />
         </div>

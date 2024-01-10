@@ -409,6 +409,19 @@ code {
 }
 
 /*******************************/
+/*** EVAL RESULTS STYLING  **/
+/*******************************/
+.eval-results-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    margin: 1rem 0;
+    padding: 1rem;
+}
+
+/*******************************/
 /***** SMALL DESKTOP VIEW  *****/
 /*******************************/
 
