@@ -12,7 +12,7 @@ const EvalResultDisplay: React.FC<IProps> = ({}) => {
         <>
             {teacherTool.projectMetadata && (
                 <div className="eval-results-container">
-                    <h3>{lf("Project: {0}", teacherTool.projectMetadata?.name)}</h3>
+                    <h3>{lf("Project: {0}", teacherTool.projectMetadata.name)}</h3>
                     {teacherTool.currentEvalResult === undefined && <div className="common-spinner" />}
                     {teacherTool.currentEvalResult?.passed === true && <h4 className="positive-text">Passed!</h4>}
                     {teacherTool.currentEvalResult?.passed === false && <h4 className="negative-text">Failed!</h4>}
