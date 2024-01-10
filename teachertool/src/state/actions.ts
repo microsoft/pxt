@@ -53,9 +53,9 @@ const removeNotification = (notificationId: string): RemoveNotification => ({
     notificationId,
 });
 
-const setProjectMetadata = (meta: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
+const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
-    metadata: meta,
+    metadata,
 });
 
 const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEvalResult => ({
