@@ -18,7 +18,7 @@ export const logInfo = (name: string, message: string) => {
 }
 
 export const logDebug = (message: string) => {
-    if (pxt.BrowserUtils.isLocalHost()) {
+    if (pxt.BrowserUtils.isLocalHost() || pxt.options.debug) {
         console.log(formatMessageForConsole(message));
     }
 }
