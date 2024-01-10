@@ -389,36 +389,22 @@ code {
 }
 
 /*******************************/
-/*** PROJECT DETAILS STYLING  **/
+/**** EVAL RESULTS STYLING  ****/
 /*******************************/
 
-.project-metadata-display {
-    border-top: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
-    margin: 1rem 0;
-    padding: 1rem;
-}
-
-.project-metadata-display h4 {
-    color: #333;
-    margin-bottom: 1rem;
-}
-
-.project-metadata-display p {
-    color: #666;
-}
-
-/*******************************/
-/*** EVAL RESULTS STYLING  **/
-/*******************************/
 .eval-results-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     border-top: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
     margin: 1rem 0;
     padding: 1rem;
+}
+
+.positive-text {
+    color: green;
+}
+
+.negative-text {
+    color: red;
 }
 
 /*******************************/

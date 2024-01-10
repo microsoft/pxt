@@ -7,10 +7,9 @@ import HeaderBar from "./components/HeaderBar";
 import Notifications from "./components/Notifications";
 import * as NotificationService from "./services/notificationService";
 import { postNotification } from "./transforms/postNotification";
-import { createIFrameUrl, makeNotification } from "./utils";
+import { makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
-import ProjectMetadataDisplay from "./components/ProjectMetadataDisplay";
 import EvalResultDisplay from "./components/EvalResultDisplay";
 
 
@@ -37,7 +36,6 @@ function App() {
         <div className="app-container">
             <HeaderBar />
             <DebugInput />
-            <ProjectMetadataDisplay />
             <EvalResultDisplay />
             <MakeCodeFrame />
             <Notifications />
