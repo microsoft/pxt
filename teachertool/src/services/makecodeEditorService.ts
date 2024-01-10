@@ -30,21 +30,22 @@ function onMessageReceived(event: MessageEvent) {
 }
 
 function sendMessageAsync(message?: any) {
-    logDebug(`Sending message to iframe: ${JSON.stringify(message)}`);
-
     return new Promise(resolve => {
         const sendMessageCore = (message: any) => {
+            logDebug(`Sending message to iframe: ${JSON.stringify(message)}`);
+            makecodeEditorRef!.contentWindow!.postMessage(message, "*");
+        }
+
+        if (message) {
             message.response = true;
             message.id = nextId++ + "";
             pendingMessages[message.id] = {
                 original: message,
                 handler: resolve
             };
-            makecodeEditorRef!.contentWindow!.postMessage(message, "*");
+            messageQueue.push(message);
         }
-
-        if (message) messageQueue.push(message);
-        if (makecodeEditorRef) {
+        if (readyForMessages) {
             while (messageQueue.length) {
                 sendMessageCore(messageQueue.shift());
             }
@@ -83,13 +84,17 @@ export async function setHighContrastAsync(on: boolean) {
 }
 
 export async function runEvalInEditorAsync(serializedRubric: string): Promise<pxt.blocks.EvaluationResult | undefined> {
-    const request = sendMessageAsync({ type: "pxteditor", action: "runeval", rubric: serializedRubric } as pxt.editor.EditorMessageRunEvalRequest);
-
     let evalResults = undefined;
+
     try {
-        const result = await request as pxt.editor.EditorMessageResponse;
+        const response = await sendMessageAsync({
+            type: "pxteditor",
+            action: "runeval",
+            rubric: serializedRubric } as pxt.editor.EditorMessageRunEvalRequest
+        );
+        const result = response as pxt.editor.EditorMessageResponse;
         validateResponse(result, true); // Throws on failure
-        evalResults = result.resp.evalResults as pxt.blocks.EvaluationResult;
+        evalResults = result.resp as pxt.blocks.EvaluationResult;
     } catch (e: any) {
         logError("runeval_error", e);
     }
