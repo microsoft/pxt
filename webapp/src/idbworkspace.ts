@@ -48,14 +48,42 @@ async function performMigrationsAsync() {
     return _migrationPromise;
 }
 
+const POUCH_OBJECT_STORE = "by-sequence";
+const POUCH_DB_VERSION = 5;
+
+async function checkIfPouchDbExistsAsync() {
+    // Unfortunately, there is no simple cross-browser way to check
+    // if an indexedDb already exists. This works by requesting the
+    // db with a version lower than the current version. If it
+    // throws an exception, then the db must already exist with the
+    // higher version. If it tries to upgrade, then the db doesn't
+    // exist. We abort the transaction to avoid poisoning pouchdb
+    // if anyone ever visits an old version of the editor.
+    let result = true;
+    try {
+        const db = new pxt.BrowserUtils.IDBWrapper("_pouch_pxt-" + pxt.storage.storageId(), 1, (e, r) => {
+            result = false;
+            r.transaction.abort();
+        }, null, true);
+        await db.openAsync();
+    }
+    catch (e) {
+        // This will always throw an exception
+    }
+
+    return result;
+}
+
 async function migratePouchAsync() {
-    const POUCH_OBJECT_STORE = "by-sequence";
-    const oldDb = new pxt.BrowserUtils.IDBWrapper("_pouch_pxt-" + pxt.storage.storageId(), 5, () => {});
+    if (!await checkIfPouchDbExistsAsync()) return;
+
+    const oldDb = new pxt.BrowserUtils.IDBWrapper("_pouch_pxt-" + pxt.storage.storageId(), POUCH_DB_VERSION, () => {});
     await oldDb.openAsync();
+
     const entries = await oldDb.getAllAsync<any>(POUCH_OBJECT_STORE);
+    const alreadyMigratedList = await getMigrationDbAsync();
 
     for (const entry of entries) {
-        if (entry._migrated) continue;
         // format is (prefix-)?tableName--id::rev
         const docId: string = entry._doc_id_rev;
 
@@ -100,15 +128,18 @@ async function migratePouchAsync() {
                 continue;
         }
 
+        if (await alreadyMigratedList.getAsync(table, id)) {
+            continue;
+        }
+
+        alreadyMigratedList.setAsync(table, { id });
+
         const db = await getDbAsync(prefix)
         const existing = await db.getAsync(table, id);
 
         if (!existing) {
             await db.setAsync(table, entry);
         }
-
-        entry._migrated = true;
-        await oldDb.setAsync(POUCH_OBJECT_STORE, entry);
     }
 }
 
@@ -301,6 +332,29 @@ export async function copyProjectToLegacyEditorAsync(header: Header, script: pxt
         files: script,
         _rev: null
     } as StoredText);
+}
+
+async function getMigrationDbAsync() {
+    const idbDb = new pxt.BrowserUtils.IDBWrapper(`__pxt_idb_migration_${pxt.storage.storageId()}`, 1, (ev, r) => {
+        const db = r.result as IDBDatabase;
+        db.createObjectStore(TEXTS_TABLE, { keyPath: KEYPATH });
+        db.createObjectStore(HEADERS_TABLE, { keyPath: KEYPATH });
+        db.createObjectStore(SCRIPT_TABLE, { keyPath: KEYPATH });
+        db.createObjectStore(HOSTCACHE_TABLE, { keyPath: KEYPATH });
+        db.createObjectStore(GITHUB_TABLE, { keyPath: KEYPATH });
+    }, async () => {
+        await pxt.BrowserUtils.clearTranslationDbAsync();
+        await pxt.BrowserUtils.clearTutorialInfoDbAsync();
+    });
+
+    try {
+        await idbDb.openAsync();
+    } catch (e) {
+        pxt.reportException(e);
+        return Promise.reject(e);
+    }
+
+    return idbDb;
 }
 
 export function initGitHubDb() {
