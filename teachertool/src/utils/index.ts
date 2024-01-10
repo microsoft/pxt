@@ -31,10 +31,6 @@ const getEditorUrl = (embedUrl: string) => {
 }
 
 function targetToUrl(target: string | undefined) {
-    if (isLocal()) {
-        return "http://localhost:3232/index.html";
-    }
-
     switch (`${target}`) {
         case "minecraft":
             return "https://minecraft.makecode.com/";
