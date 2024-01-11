@@ -548,9 +548,9 @@ namespace pxt.editor {
                                     const evalmsg = data as EditorMessageRunEvalRequest;
                                     const rubric = evalmsg.rubric;
                                     return Promise.resolve()
-                                        .then(() => (
-                                            // TODO : call into evaluation function.
-                                            { passed: true } as pxt.blocks.EvaluationResult))
+                                        .then(() => projectView.getBlocksAsync())
+                                        .then((blocks) => (
+                                            pxt.blocks.validateProject(blocks, rubric)))
                                         .then (results => {
                                             resp = results;
                                         });

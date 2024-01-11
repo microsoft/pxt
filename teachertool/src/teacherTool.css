@@ -76,6 +76,13 @@ code {
     overflow: auto;
 }
 
+.inner-app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    width: 100%;
+}
+
 .noclick {
     pointer-events: none;
     cursor: default;
@@ -397,6 +404,22 @@ code {
     border-bottom: 1px solid #ddd;
     margin: 1rem 0;
     padding: 1rem;
+    overflow: auto;
+}
+
+.result-block-id {
+    display: flex;
+    padding-left: .5rem;
+    margin: .2rem 0;
+}
+
+.result-block-id p {
+    margin: 0;
+}
+
+.block-id-label {
+    font-weight: 700;
+    padding-right: .5rem;
 }
 
 .positive-text {

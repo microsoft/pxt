@@ -4038,6 +4038,14 @@ export class ProjectView
             });
     }
 
+    async getBlocksAsync(): Promise<Blockly.Block[]> {
+        if (!this.isBlocksActive()) {
+            await this.openBlocksAsync();
+        }
+
+        return this.blocksEditor.editor.getAllBlocks(false);
+    }
+
     launchFullEditor() {
         Util.assert(pxt.shell.isSandboxMode());
 

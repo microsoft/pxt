@@ -35,9 +35,11 @@ function App() {
     return (
         <div className="app-container">
             <HeaderBar />
-            <DebugInput />
-            <EvalResultDisplay />
-            <MakeCodeFrame />
+            <div className="inner-app-container">
+                <DebugInput />
+                <EvalResultDisplay />
+                <MakeCodeFrame />
+            </div>
             <Notifications />
         </div>
     );

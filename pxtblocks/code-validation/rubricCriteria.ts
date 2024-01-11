@@ -23,6 +23,55 @@ namespace pxt.blocks {
         }
     }
 
+    function blockSetToRequiredBlockCounts(blockSet: BlockSet): pxt.Map<number> {
+        const requiredBlockCounts: pxt.Map<number> = {};
+        blockSet.blocks.forEach((block) => {
+            requiredBlockCounts[block] = blockSet.count;
+        });
+        return requiredBlockCounts;
+    }
+
+    export function validateProject(usedBlocks: Blockly.Block[], rubric: string): EvaluationResult {
+        const rubricData = parseRubric(rubric);
+        const finalResult: pxt.Map<boolean> = {};
+        rubricData.criteria.forEach((criteria: RubricCriteria) => {
+            (criteria as BlockCheckCriteria).blockRequirements.forEach((blockSet) => {
+                const result = validateBlockSet(usedBlocks, blockSet);
+                Object.keys(result).forEach((blockId) => {
+                    finalResult[blockId] = result[blockId];
+                });
+            });
+        });
+        return { blockIdResults: finalResult} as EvaluationResult;
+    }
+
+
+    function validateBlockSet(usedBlocks: Blockly.Block[], blockSet: BlockSet): pxt.Map<boolean> {
+        const requiredBlockCounts = blockSetToRequiredBlockCounts(blockSet);
+        const blockResults: pxt.Map<boolean> = {};
+        Object.keys(requiredBlockCounts).forEach((blockId) => {
+            blockResults[blockId] = true;
+        });
+        const {
+            missingBlocks,
+            disabledBlocks,
+            insufficientBlocks
+        } = pxt.blocks.validateBlocksExist({
+            usedBlocks: usedBlocks,
+            requiredBlockCounts: requiredBlockCounts,
+        });
+        missingBlocks.forEach((blockId) => {
+            blockResults[blockId] = false;
+        });
+        disabledBlocks.forEach((blockId) => {
+            blockResults[blockId] = false;
+        });
+        insufficientBlocks.forEach((blockId) => {
+            blockResults[blockId] = false;
+        });
+        return blockResults;
+    }
+
     export abstract class RubricCriteria {
         displayText: string;
         abstract criteriaId: string;
