@@ -14,7 +14,7 @@ const EvalResultDisplay: React.FC<IProps> = ({}) => {
                 <div className="eval-results-container">
                     <h3>{lf("Project: {0}", teacherTool.projectMetadata.name)}</h3>
                     {teacherTool.currentEvalResult === undefined && <div className="common-spinner" />}
-                    {Object.keys(teacherTool.currentEvalResult?.blockIdResults??{}).map((id) => {
+                    {Object.keys(teacherTool.currentEvalResult?.blockIdResults ?? {}).map((id) => {
                         const result = teacherTool.currentEvalResult?.blockIdResults[id];
                         return (
                             <div className="result-block-id" key={id}>

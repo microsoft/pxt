@@ -42,7 +42,7 @@ namespace pxt.blocks {
                 });
             });
         });
-        return { blockIdResults: finalResult} as EvaluationResult;
+        return { blockIdResults: finalResult } as EvaluationResult;
     }
 
 
