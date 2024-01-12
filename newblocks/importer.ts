@@ -359,7 +359,7 @@ export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.Bloc
                     }
                 }
                 else if (type === "variables_get" || hasNonShadowChild(root)) {
-                    root = promoteShadow(root);
+                    // root = promoteShadow(root);
                 }
             }
 
@@ -371,13 +371,7 @@ export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.Bloc
         };
 
         patchShadows(doc.documentElement, false);
-
-        const comments = getDirectChildren(doc.documentElement, "comment");
-        for (const comment of comments) {
-            if (!comment.hasAttribute("id")) {
-                comment.setAttribute("id", Blockly.utils.idGenerator.genUid());
-            }
-        }
+        patchCommentIds(doc.documentElement);
 
         // build upgrade map
         const enums: pxt.Map<string> = {};
@@ -409,6 +403,15 @@ export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.Bloc
         if (!skipReport)
             pxt.reportException(e);
         return xml;
+    }
+}
+
+export function patchCommentIds(xml: Element) {
+    const comments = getDirectChildren(xml, "comment");
+    for (const comment of comments) {
+        if (!comment.hasAttribute("id")) {
+            comment.setAttribute("id", Blockly.utils.idGenerator.genUid());
+        }
     }
 }
 
