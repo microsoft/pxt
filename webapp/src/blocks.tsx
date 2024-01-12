@@ -328,6 +328,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Clear out any deletable flags. There are currently no scenarios where we rely on this flag,
         // and it can be persisted erroneously (with value "false") if the app closes unexpectedly while in debug mode.
         dom.querySelectorAll("block[deletable], shadow[deletable]").forEach(b => { b.removeAttribute("deletable") });
+        pxtblockly.patchCommentIds(dom);
     }
 
     private initLayout() {
@@ -1612,95 +1613,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    private blocksToString(xmlList: Element[]): string {
-        let xmlSerializer: XMLSerializer = null;
-        const serialize = (e: Element) => {
-            if (!e)
-                return "<!-- invalid block here! -->"
-            if (e.outerHTML)
-                return e.outerHTML
-            // The below code is only needed for IE 11 where outerHTML occassionally returns undefined :/
-            if (!xmlSerializer)
-                xmlSerializer = new XMLSerializer()
-            return xmlSerializer.serializeToString(e);
-        }
-        return xmlList
-            .map(serialize)
-            .reduce((p, c) => p + c, "")
-    }
-
-    private hashBlocks(xmlList: Element[]): number {
-        return pxt.Util.codalHash16(this.blocksToString(xmlList));
-    }
-
-    private swapFlyout(old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) {
-        // // hide the old flyout
-        // old.setVisible(false)
-
-        // // set the "current" flyout
-        // this.editor.getToolbox().setFlyout(nw);
-
-        // // show the new flyout
-        // nw.setVisible(true)
-
-        // // reflow if scale changed
-        // const flyoutWs = nw.getWorkspace();
-        // const targetWs = nw.targetWorkspace;
-        // const scaleChange = (flyoutWs as any).oldScale_ !== targetWs.getScale();
-        // if (scaleChange) {
-        //     nw.reflow();
-        // }
-    }
-
-    private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
-        // if ((!this.parent.state.editorState || this.parent.state.editorState.hasCategories !== false)
-        //     && this.editor.getToolbox()) {
-        //     const oldFlyout = this.editor.getFlyout() as Blockly.VerticalFlyout;
-
-        //     // determine if the cached flyout exists and isn't stale
-        //     const hasCachedFlyout = flyoutName in this.flyouts
-        //     const cachedBlocksHash = hasCachedFlyout ? this.flyouts[flyoutName].blocksHash : 0;
-        //     const currentBlocksHash = this.hashBlocks(xmlList);
-        //     const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !!cachedBlocksHash
-
-        //     const mkFlyout = () => {
-        //         const workspace = this.editor.getToolbox().getWorkspace();
-        //         const oldSvg = oldFlyout.svgGroup_;
-        //         const flyout = createFlyout(workspace, oldSvg)
-        //         return flyout as Blockly.VerticalFlyout;
-        //     }
-
-        //     // get the flyout from the cache or make a new one
-        //     let newFlyout: Blockly.VerticalFlyout;
-        //     if (!hasCachedFlyout) {
-        //         newFlyout = mkFlyout();
-        //         this.flyouts[flyoutName] = { flyout: newFlyout, blocksHash: 0 };
-        //     } else {
-        //         newFlyout = this.flyouts[flyoutName].flyout;
-        //     }
-
-        //     // update the blocks hash
-        //     this.flyouts[flyoutName].blocksHash = currentBlocksHash;
-
-        //     // switch to the new flyout
-        //     this.swapFlyout(oldFlyout, newFlyout);
-
-        //     // if the flyout contents have changed, recreate the blocks
-        //     if (!isFlyoutUpToDate) {
-        //         newFlyout.show(xmlList);
-        //     }
-
-        //     newFlyout.scrollToStart();
-        //     // FIXME (riknoll)
-        //     // if (this.parent.state?.accessibleBlocks) newFlyout.svgGroup_.focus();
-        // } else if ((this.editor as any).flyout_) {
-        //     (this.editor as any).flyout_.show(xmlList);
-        //     (this.editor as any).flyout_.scrollToStart();
-        // }
-
-        this.editor.getFlyout().show(xmlList);
-        this.editor.getFlyout().scrollToStart();
+        const flyout = this.editor.getFlyout() as pxtblockly.VerticalFlyout;
+        flyout.show(xmlList, flyoutName);
+        flyout.scrollToStart();
     }
 
     // For editors that have no toolbox
