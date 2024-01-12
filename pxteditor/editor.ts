@@ -335,7 +335,7 @@ namespace pxt.editor {
         blocksScreenshotAsync(pixelDensity?: number, encodeBlocks?: boolean): Promise<string>;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<EditorMessageRenderBlocksResponse>;
         renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
-        getBlocksAsync(): Promise<Blockly.Block[]>;
+        getBlocks(): Blockly.Block[];
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;

@@ -4038,9 +4038,10 @@ export class ProjectView
             });
     }
 
-    async getBlocksAsync(): Promise<Blockly.Block[]> {
+    getBlocks(): Blockly.Block[] {
         if (!this.isBlocksActive()) {
-            await this.openBlocksAsync();
+            console.error("Trying to get blocks from a non-blocks editor.");
+            throw new Error("Trying to get blocks from a non-blocks editor.");
         }
 
         return this.blocksEditor.editor.getAllBlocks(false);
