@@ -170,7 +170,7 @@ export class FieldAutoComplete extends FieldTextDropdown implements FieldCustom 
         return addedWidth;
     }
 
-    createSVGArrow_() {
+    createSVGArrow() {
         // This creates the little arrow for dropdown fields. Intentionally
         // do nothing
     }
