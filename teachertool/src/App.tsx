@@ -9,7 +9,8 @@ import * as NotificationService from "./services/notificationService";
 import { postNotification } from "./transforms/postNotification";
 import { makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
-import { EditorContainer } from "./components/EditorContainer";
+import { MakeCodeFrame } from "./components/MakecodeFrame";
+import EvalResultDisplay from "./components/EvalResultDisplay";
 
 
 function App() {
@@ -32,16 +33,15 @@ function App() {
     }, [ready]);
 
     return (
-        <>
+        <div className="app-container">
             <HeaderBar />
-            <div className="app-container">
+            <div className="inner-app-container">
                 <DebugInput />
-                <EditorContainer />
+                <EvalResultDisplay />
+                <MakeCodeFrame />
             </div>
-
             <Notifications />
-
-        </>
+        </div>
     );
 }
 

@@ -13,10 +13,6 @@ export function makeNotification(
     };
 }
 
-export const isLocal = () => {
-    return window.location.hostname === "localhost";
-}
-
 // example: embedUrl for arcade is: https://arcade.makecode.com/
 export const getEditorUrl = (embedUrl: string) => {
     if (!pxt.webConfig && (window as any).pxtConfig) pxt.setupWebConfig((window as any).pxtConfig);

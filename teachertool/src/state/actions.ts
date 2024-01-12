@@ -18,13 +18,25 @@ type RemoveNotification = ActionBase & {
     notificationId: string;
 };
 
+type SetProjectMetadata = ActionBase & {
+    type: "SET_PROJECT_METADATA";
+    metadata: pxt.Cloud.JsonScript | undefined;
+};
+
+type SetEvalResult = ActionBase & {
+    type: "SET_EVAL_RESULT";
+    result: pxt.blocks.EvaluationResult | undefined;
+};
+
 /**
  * Union of all actions
  */
 
 export type Action =
     | PostNotification
-    | RemoveNotification;
+    | RemoveNotification
+    | SetProjectMetadata
+    | SetEvalResult;
 
 /**
  * Action creators
@@ -41,8 +53,19 @@ const removeNotification = (notificationId: string): RemoveNotification => ({
     notificationId,
 });
 
+const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
+    type: "SET_PROJECT_METADATA",
+    metadata,
+});
+
+const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEvalResult => ({
+    type: "SET_EVAL_RESULT",
+    result,
+});
 
 export {
     postNotification,
-    removeNotification
+    removeNotification,
+    setProjectMetadata,
+    setEvalResult,
 };
