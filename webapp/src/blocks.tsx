@@ -654,11 +654,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (e.type === Blockly.Events.BLOCK_MOVE) {
                 const parent = this.editor.getBlockById((e as Blockly.Events.BlockMove).newParentId);
                 if (parent && parent.isShadow()) {
+                    Blockly.Events.setGroup(e.group)
                     const json = Blockly.serialization.blocks.save(parent);
                     // Dispose of the original block so it doesn't get saved in the parent connection's shadow state.
                     this.editor.getBlockById((e as Blockly.Events.BlockMove).blockId).dispose();
-                    const dupe = Blockly.serialization.blocks.append(json, this.editor);
+                    const dupe = Blockly.serialization.blocks.append(json, this.editor, { recordUndo: true });
                     parent.outputConnection.targetConnection.connect(dupe.outputConnection);
+                    Blockly.Events.setGroup(false);
                 }
             }
         })
