@@ -29,6 +29,8 @@ export interface PostWorkspaceLoad {
 export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace, opts?: DomToWorkspaceOptions): string[] {
     pxt.tickEvent(`blocks.domtow`)
     let newBlockIds: string[] = [];
+    patchCommentIds(dom);
+    patchShadows(dom, false);
     try {
         Blockly.Events.disable();
         newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
@@ -306,70 +308,6 @@ export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.Bloc
             shadow.replaceWith(block);
         }
 
-        const promoteShadow = (shadow: Element) => {
-            if (shadow.parentElement.childElementCount === 2) {
-                // there is already a block in this input
-                shadow.remove();
-                return undefined;
-            }
-            const newBlock = Blockly.utils.xml.createElement("block");
-
-            for (const attr of shadow.getAttributeNames()) {
-                newBlock.setAttribute(attr, shadow.getAttribute(attr));
-            }
-
-            for (const child of shadow.childNodes) {
-                newBlock.appendChild(child.cloneNode(true));
-            }
-
-            shadow.parentElement.appendChild(newBlock);
-            shadow.remove();
-
-            return newBlock;
-        };
-
-        const patchShadows = (root: Element, inShadow: boolean) => {
-            if (root.tagName === "shadow") {
-                const type = root.getAttribute("type");
-                let shouldPatch = false;
-
-                switch (type) {
-                    case "variables_get_reporter":
-                    case "argument_reporter_boolean":
-                    case "argument_reporter_number":
-                    case "argument_reporter_string":
-                    case "argument_reporter_array":
-                    case "argument_reporter_custom":
-                        shouldPatch = true;
-                        break;
-                }
-
-                if (shouldPatch) {
-                    root = promoteShadow(root)
-                    if (!root) return;
-                    let mutation = getDirectChildren(root, "mutation")[0];
-
-                    if (mutation) {
-                        mutation.setAttribute("duplicateondrag", "true");
-                    }
-                    else {
-                        mutation = Blockly.utils.xml.createElement("mutation");
-                        mutation.setAttribute("duplicateondrag", "true");
-                        root.appendChild(mutation);
-                    }
-                }
-                else if (type === "variables_get" || hasNonShadowChild(root)) {
-                    // root = promoteShadow(root);
-                }
-            }
-
-            if (!root) return;
-
-            for (const child of root.children) {
-                patchShadows(child, inShadow || root.tagName === "shadow");
-            }
-        };
-
         patchShadows(doc.documentElement, false);
         patchCommentIds(doc.documentElement);
 
@@ -414,6 +352,70 @@ export function patchCommentIds(xml: Element) {
         }
     }
 }
+
+function promoteShadow(shadow: Element) {
+    if (shadow.parentElement.childElementCount === 2) {
+        // there is already a block in this input
+        shadow.remove();
+        return undefined;
+    }
+    const newBlock = Blockly.utils.xml.createElement("block");
+
+    for (const attr of shadow.getAttributeNames()) {
+        newBlock.setAttribute(attr, shadow.getAttribute(attr));
+    }
+
+    for (const child of shadow.childNodes) {
+        newBlock.appendChild(child.cloneNode(true));
+    }
+
+    shadow.parentElement.appendChild(newBlock);
+    shadow.remove();
+
+    return newBlock;
+};
+
+export function patchShadows(root: Element, inShadow: boolean) {
+    if (root.tagName === "shadow") {
+        const type = root.getAttribute("type");
+        let shouldPatch = false;
+
+        switch (type) {
+            case "variables_get_reporter":
+            case "argument_reporter_boolean":
+            case "argument_reporter_number":
+            case "argument_reporter_string":
+            case "argument_reporter_array":
+            case "argument_reporter_custom":
+                shouldPatch = true;
+                break;
+        }
+
+        if (shouldPatch) {
+            root = promoteShadow(root)
+            if (!root) return;
+            let mutation = getDirectChildren(root, "mutation")[0];
+
+            if (mutation) {
+                mutation.setAttribute("duplicateondrag", "true");
+            }
+            else {
+                mutation = Blockly.utils.xml.createElement("mutation");
+                mutation.setAttribute("duplicateondrag", "true");
+                root.appendChild(mutation);
+            }
+        }
+        else if (type === "variables_get" || hasNonShadowChild(root)) {
+            root = promoteShadow(root);
+        }
+    }
+
+    if (!root) return;
+
+    for (const child of root.children) {
+        patchShadows(child, inShadow || root.tagName === "shadow");
+    }
+};
 
 function hasNonShadowChild(el: Element) {
     for (const child of el.children) {

@@ -1,10 +1,5 @@
 import * as Blockly from "blockly";
 
-interface CacheEntry {
-    hash: number;
-    workspace: Blockly.WorkspaceSvg;
-}
-
 export class VerticalFlyout implements Blockly.IFlyout {
     horizontalLayout = false;
     RTL: boolean;

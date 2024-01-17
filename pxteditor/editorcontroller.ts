@@ -546,17 +546,17 @@ namespace pxt.editor {
                                             })
                                         });
                                 }
-                                case "runeval": {
-                                    const evalmsg = data as EditorMessageRunEvalRequest;
-                                    const rubric = evalmsg.rubric;
-                                    return Promise.resolve()
-                                        .then(() => {
-                                            const blocks = projectView.getBlocks();
-                                            return pxt.blocks.validateProject(blocks, rubric)})
-                                        .then (results => {
-                                            resp = results;
-                                        });
-                                }
+                                // case "runeval": {
+                                //     const evalmsg = data as EditorMessageRunEvalRequest;
+                                //     const rubric = evalmsg.rubric;
+                                //     return Promise.resolve()
+                                //         .then(() => {
+                                //             const blocks = projectView.getBlocks();
+                                //             return pxt.blocks.validateProject(blocks, rubric)})
+                                //         .then (results => {
+                                //             resp = results;
+                                //         });
+                                // }
                                 case "renderpython": {
                                     const rendermsg = data as EditorMessageRenderPythonRequest;
                                     return Promise.resolve()

@@ -328,7 +328,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Clear out any deletable flags. There are currently no scenarios where we rely on this flag,
         // and it can be persisted erroneously (with value "false") if the app closes unexpectedly while in debug mode.
         dom.querySelectorAll("block[deletable], shadow[deletable]").forEach(b => { b.removeAttribute("deletable") });
-        pxtblockly.patchCommentIds(dom);
     }
 
     private initLayout() {
@@ -650,6 +649,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.parent.pokeUserActivity();
             }
         })
+
+        this.editor.addChangeListener((e) => {
+            if (e.type === Blockly.Events.BLOCK_MOVE) {
+                const parent = this.editor.getBlockById((e as Blockly.Events.BlockMove).newParentId);
+                if (parent && parent.isShadow()) {
+                    const json = Blockly.serialization.blocks.save(parent);
+                    // Dispose of the original block so it doesn't get saved in the parent connection's shadow state.
+                    this.editor.getBlockById((e as Blockly.Events.BlockMove).blockId).dispose();
+                    const dupe = Blockly.serialization.blocks.append(json, this.editor);
+                    parent.outputConnection.targetConnection.connect(dupe.outputConnection);
+                }
+            }
+        })
+
+
         if (this.shouldShowCategories()) {
             this.renderToolbox();
         }
