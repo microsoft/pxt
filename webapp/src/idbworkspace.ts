@@ -138,6 +138,7 @@ async function migratePouchAsync() {
         const existing = await db.getAsync(table, id);
 
         if (!existing) {
+            delete entry._doc_id_rev
             await db.setAsync(table, entry);
         }
     }

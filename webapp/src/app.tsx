@@ -4038,6 +4038,15 @@ export class ProjectView
             });
     }
 
+    getBlocks(): Blockly.Block[] {
+        if (!this.isBlocksActive()) {
+            console.error("Trying to get blocks from a non-blocks editor.");
+            throw new Error("Trying to get blocks from a non-blocks editor.");
+        }
+
+        return this.blocksEditor.editor.getAllBlocks(false);
+    }
+
     launchFullEditor() {
         Util.assert(pxt.shell.isSandboxMode());
 
