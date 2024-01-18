@@ -15,7 +15,7 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
         if (editorUrl.charAt(editorUrl.length - 1) === "/" && !pxt.BrowserUtils.isLocalHost()) {
             url = editorUrl.substr(0, editorUrl.length - 1);
         }
-        url += `#pub:${shareId}?controller=1&teachertool=1&readonly=1&ws=browser&nocookiebanner=1`;
+        url += `?controller=1&teachertool=1&readonly=1&ws=browser&nocookiebanner=1#pub:${shareId}`;
         return url;
     }
 
