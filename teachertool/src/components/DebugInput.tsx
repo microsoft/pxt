@@ -10,7 +10,7 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 interface IProps {}
 
 const DebugInput: React.FC<IProps> = ({}) => {
-    const [shareLink, setShareLink] = useState("https://arcade.makecode.com/S50644-45891-08403-36583");
+    const [shareLink, setShareLink] = useState("https://arcade.makecode.com/S70821-26848-68192-30094");
     const [rubric, setRubric] = useState("");
 
     const evaluate = async () => {
