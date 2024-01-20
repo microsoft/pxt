@@ -11,6 +11,7 @@ import { makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
 import EvalResultDisplay from "./components/EvalResultDisplay";
+import CatalogDisplay from "./components/CatalogDisplay";
 
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
             <HeaderBar />
             <div className="inner-app-container">
                 <DebugInput />
+                <CatalogDisplay />
                 <EvalResultDisplay />
                 <MakeCodeFrame />
             </div>

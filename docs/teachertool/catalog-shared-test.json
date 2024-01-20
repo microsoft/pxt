@@ -1,0 +1,19 @@
+{
+    "criteria": [
+        {
+            "displayText": "TEST Four or more comments",
+            "criteriaId": "comment",
+            "count": 4
+        },
+        {
+            "displayText": "TEST Some other rule",
+            "criteriaId": "blockCheck",
+            "blockRequirements": [
+                {
+                    "blocks": ["abc", "def", "ghi", "jkl", "mno", "pqr", "stu", "vwx", "yz"],
+                    "count": 200
+                }
+            ]
+        }
+    ]
+}
