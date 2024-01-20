@@ -7,13 +7,12 @@ const formatName = (name: string) => {
     return name.toLowerCase().replace(/ /g, "_");
 }
 
-export const logError = (name: string, details: string) => {
-    pxt.tickEvent("teachertool.error", { name: formatName(name), message: details });
-    console.error(formatMessageForConsole(`${name}: ${details}`));
+export const logError = (name: string, details: string, props: pxt.Map<string | number> = {}) => {
+    pxt.tickEvent("teachertool.error", { ...props, name: formatName(name), message: details });
+    console.error(formatMessageForConsole(`${name}: '${details}' Props: ${JSON.stringify(props)}`));
 }
 
-export const logInfo = (name: string, message: string) => {
-    pxt.tickEvent(`teachertool.${formatName(name)}`, { message: message });
+export const logInfo = (message: string) => {
     console.log(formatMessageForConsole(message));
 }
 
