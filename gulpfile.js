@@ -39,7 +39,7 @@ const pxtcompiler = () => compileTsProject("pxtcompiler");
 const pxtpy = () => compileTsProject("pxtpy");
 const pxtsim = () => compileTsProject("pxtsim");
 const pxtblocks = () => compileTsProject("pxtblocks");
-const pxtrunner = () => compileTsProject("pxtrunner");
+const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
 const pxteditor = () => compileTsProject("pxteditor");
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
 const backendutils = () => compileTsProject("backendutils")
@@ -90,7 +90,7 @@ const pxtembed = () => gulp.src([
     "built/pxtblockly.js",
     "built/pxteditor.js",
     "built/pxtsim.js",
-    "built/pxtrunner.js"
+    "built/web/runnerembed.js"
 ])
     .pipe(concat("pxtembed.js"))
     .pipe(gulp.dest("built/web"));
@@ -126,7 +126,7 @@ function initWatch() {
         gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
         pxteditor,
         gulp.parallel(pxtrunner, cli, pxtcommon),
-        updatestrings,
+        gulp.parallel(updatestrings, browserifyEmbed),
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
         reactCommon,
@@ -393,7 +393,6 @@ const copyWebapp = () =>
         "built/pxtblocks.js",
         "built/pxtblockly.js",
         "built/pxtsim.js",
-        "built/pxtrunner.js",
         "built/pxteditor.js",
         "built/webapp/src/worker.js",
         "built/webapp/src/serviceworker.js",
@@ -412,6 +411,10 @@ const browserifyWebapp = () => process.env.PXT_ENV == 'production' ?
 const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
     exec('node node_modules/browserify/bin/cmd ./built/webapp/src/assetEditor.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/pxtasseteditor.js') :
     exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
+
+const browserifyEmbed = () => process.env.PXT_ENV == 'production' ?
+    exec('node node_modules/browserify/bin/cmd ./built/pxtrunner/embed.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/runnerembed.js') :
+    exec('node node_modules/browserify/bin/cmd built/pxtrunner/embed.js -o built/web/runnerembed.js --debug')
 
 const buildSVGIcons = () => {
     let webfontsGenerator = require('@vusion/webfonts-generator')
@@ -844,6 +847,7 @@ const buildAll = gulp.series(
     gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
     pxteditor,
     gulp.parallel(pxtrunner, cli, pxtcommon),
+    browserifyEmbed,
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
     reactCommon,
