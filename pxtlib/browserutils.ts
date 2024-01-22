@@ -835,7 +835,8 @@ namespace pxt.BrowserUtils {
             private name: string,
             private version: number,
             private upgradeHandler?: IDBUpgradeHandler,
-            private quotaExceededHandler?: () => void) {
+            private quotaExceededHandler?: () => void,
+            private skipErrorLog = false) {
         }
 
         private throwIfNotOpened(): void {
@@ -845,6 +846,10 @@ namespace pxt.BrowserUtils {
         }
 
         private errorHandler(err: Error, op: string, reject: (err: Error) => void): void {
+            if (this.skipErrorLog) {
+                reject(err);
+                return;
+            }
             console.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
             reject(err);
             // special case for quota exceeded
@@ -944,6 +949,34 @@ namespace pxt.BrowserUtils {
                 request.onsuccess = () => resolve();
                 request.onerror = () => this.errorHandler(request.error, "deleteAll", reject);
             });
+        }
+
+        public getObjectStoreWrapper<T>(storeName: string): IDBObjectStoreWrapper<T> {
+            return new IDBObjectStoreWrapper(this, storeName);
+        }
+    }
+
+    export class IDBObjectStoreWrapper<T> {
+        constructor(protected db: IDBWrapper, protected storeName: string) {}
+
+        public getAsync(id: string): Promise<T> {
+            return this.db.getAsync(this.storeName, id);
+        }
+
+        public getAllAsync(): Promise<T[]> {
+            return this.db.getAllAsync(this.storeName);
+        }
+
+        public setAsync(data: T): Promise<void> {
+            return this.db.setAsync(this.storeName, data);
+        }
+
+        public async deleteAsync(id: string): Promise<void> {
+            await this.db.deleteAsync(this.storeName, id);
+        }
+
+        public async deleteAllAsync(): Promise<void> {
+            await this.db.deleteAllAsync(this.storeName);
         }
     }
 
