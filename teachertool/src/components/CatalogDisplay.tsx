@@ -10,19 +10,18 @@ interface IProps {}
 const CatalogDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    function handleClick (criteria: pxt.blocks.CatalogCriteria) {
+    function handleClick (id: string) {
         // Todo call into addCriteriaInstance
-        logDebug(`Add criteria with id: ${criteria.id}`);
+        logDebug(`Add criteria with id: ${id}`);
 
-        // Template prop is technically redundant but added for easy readability when querying
-        pxt.tickEvent("teachertool.addcriteria", { id: criteria.id, template: criteria.template });
+        pxt.tickEvent("teachertool.addcriteria", { id: id });
     }
 
     return (
         <div className="catalog-container">
             {
                 teacherTool.catalog?.map(criteria => {
-                    return criteria?.template && <Button id={`btn${criteria.id}`} className="catalog-item" label={criteria.template} onClick={() => handleClick(criteria)} title={criteria.id} />
+                    return criteria?.template && <Button id={`btn${criteria.id}`} className="catalog-item" label={criteria.template} onClick={() => handleClick(criteria.id)} title={criteria.id} />
                 })
             }
         </div>
