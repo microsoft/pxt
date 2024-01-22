@@ -13,6 +13,7 @@ import { MakeCodeFrame } from "./components/MakecodeFrame";
 import EvalResultDisplay from "./components/EvalResultDisplay";
 import CatalogDisplay from "./components/CatalogDisplay";
 import { loadCatalog } from "./transforms/loadCatalog";
+import ActiveRubricDisplay from "./components/ActiveRubricDisplay";
 
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
             <div className="inner-app-container">
                 <DebugInput />
                 <CatalogDisplay />
+                <ActiveRubricDisplay />
                 <EvalResultDisplay />
                 <MakeCodeFrame />
             </div>

@@ -305,10 +305,9 @@ code {
     margin: 0;
     padding: 1rem;
     border: none;
+    border-radius: 0;
     background-color: var(--body-background-color);
     color: var(--subtitle-text-color);
-    text-align: left;
-    cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
     width: 100%;
 }
@@ -316,6 +315,44 @@ code {
 .catalog-item:hover {
     background-color: var(--card-hover-color);
     color: var(--primary-color);
+}
+
+/*******************************/
+/******* RUBRIC STYLING  *******/
+/*******************************/
+
+.rubric-display {
+    border-radius: 0;
+    margin: 1rem 1rem;
+}
+
+.rubric-display h3 {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.criteria-instance-display {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0;
+    padding: 0.1rem 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.criteria-btn-remove {
+    background-color: #f55c51;
+    color: #fff;
+    border: none;
+    display: inline-block;
+    margin: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0;
+    transition: background-color 0.2s ease;
+}
+
+.criteria-btn-remove:hover {
+    background-color: #da4949;
 }
 
 /*******************************/

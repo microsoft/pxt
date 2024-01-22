@@ -11,8 +11,7 @@ namespace pxt.blocks {
     }
     export interface CriteriaParameterValue {
         name: string;
-        value: string;
-        isSet: boolean;
+        value: any;
     }
 
     export interface CatalogCriteria {
@@ -25,9 +24,9 @@ namespace pxt.blocks {
     }
 
     export interface CriteriaInstance {
-        templateId: string;
+        catalogCriteriaId: string;
         instanceId: string;
-        params: pxt.Map<CriteriaParameterValue>;
+        params: CriteriaParameterValue[] | undefined;
     }
 
     interface BlockSet {

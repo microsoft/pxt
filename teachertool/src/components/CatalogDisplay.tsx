@@ -1,21 +1,14 @@
 /// <reference path="../../../built/pxtblocks.d.ts"/>
 
-import { useContext, useEffect, useState } from "react";
-import { logDebug, logError } from "../services/loggingService";
+import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Button } from "react-common/components/controls/Button";
+import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 
 interface IProps {}
 
 const CatalogDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
-
-    function handleClick (id: string) {
-        // Todo call into addCriteriaInstance
-        logDebug(`Add criteria with id: ${id}`);
-
-        pxt.tickEvent("teachertool.addcriteria", { id: id });
-    }
 
     return (
         <>
@@ -25,7 +18,7 @@ const CatalogDisplay: React.FC<IProps> = ({}) => {
                             id={`btn${criteria.id}`}
                             className="catalog-item"
                             label={criteria.template}
-                            onClick={() => handleClick(criteria.id)}
+                            onClick={() => addCriteriaToRubric(criteria)}
                             title={criteria.id} />
                 );
             })}

@@ -8,7 +8,10 @@ const prodFiles = [
 ];
 
 // Catalog entries still being tested, will only appear when in debug mode (?dbg=1)
-const testFiles = ["/teachertool/catalog-test.json", "/teachertool/catalog-shared-test.json"]
+const testFiles = [
+    "/teachertool/catalog-test.json",
+    "/teachertool/catalog-shared-test.json"
+]
 
 interface CatalogInfo {
     criteria: pxt.blocks.CatalogCriteria[];
