@@ -1,4 +1,35 @@
 namespace pxt.blocks {
+
+    // todo thsparks : move these types elsewhere...
+    export type CriteriaParameterPicker = "blocksPicker" | "numberPicker";
+
+    export interface CriteriaParameter {
+        name: string;
+        type: string;
+        picker: CriteriaParameterPicker;
+        path: string;
+    }
+    export interface CriteriaParameterValue {
+        name: string;
+        value: string;
+        isSet: boolean;
+    }
+
+    export interface CatalogCriteria {
+        id: string;
+        use: string;
+        template: string;
+        description: string | undefined;
+        docPath: string | undefined;
+        parameters: CriteriaParameter[] | undefined;
+    }
+
+    export interface CriteriaInstance {
+        templateId: string;
+        instanceId: string;
+        params: pxt.Map<CriteriaParameterValue>;
+    }
+
     interface BlockSet {
         blocks: string[];
         count: number;

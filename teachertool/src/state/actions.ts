@@ -28,6 +28,21 @@ type SetEvalResult = ActionBase & {
     result: pxt.blocks.EvaluationResult | undefined;
 };
 
+type SetCatalog = ActionBase & {
+    type: "SET_CATALOG";
+    catalog: pxt.blocks.CatalogCriteria[] | undefined;
+};
+
+type AddCriteriaInstance = ActionBase & {
+    type: "ADD_CRITERIA_INSTANCE"
+    criteria: pxt.blocks.CriteriaInstance;
+};
+
+type RemoveCriteriaInstance = ActionBase & {
+    type: "REMOVE_CRITERIA_INSTANCE";
+    instanceId: string;
+};
+
 /**
  * Union of all actions
  */
@@ -36,7 +51,10 @@ export type Action =
     | PostNotification
     | RemoveNotification
     | SetProjectMetadata
-    | SetEvalResult;
+    | SetEvalResult
+    | SetCatalog
+    | AddCriteriaInstance
+    | RemoveCriteriaInstance;
 
 /**
  * Action creators
@@ -63,9 +81,27 @@ const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEval
     result,
 });
 
+const setCatalog = (catalog: pxt.blocks.CatalogCriteria[] | undefined): SetCatalog => ({
+    type: "SET_CATALOG",
+    catalog,
+});
+
+const addCriteriaInstance = (criteria: pxt.blocks.CriteriaInstance): AddCriteriaInstance => ({
+    type: "ADD_CRITERIA_INSTANCE",
+    criteria,
+});
+
+const removeCriteriaInstance = (instanceId: string): RemoveCriteriaInstance => ({
+    type: "REMOVE_CRITERIA_INSTANCE",
+    instanceId,
+});
+
 export {
     postNotification,
     removeNotification,
     setProjectMetadata,
     setEvalResult,
+    setCatalog,
+    addCriteriaInstance,
+    removeCriteriaInstance,
 };

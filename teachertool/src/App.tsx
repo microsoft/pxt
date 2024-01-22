@@ -12,6 +12,7 @@ import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
 import EvalResultDisplay from "./components/EvalResultDisplay";
 import CatalogDisplay from "./components/CatalogDisplay";
+import { loadCatalog } from "./transforms/loadCatalog";
 
 
 function App() {
@@ -21,8 +22,13 @@ function App() {
     const ready = usePromise(AppStateReady, false);
 
     useEffect(() => {
-        // Init subsystems.
-        NotificationService.initialize();
+        if (ready) {
+            // Init subsystems.
+            NotificationService.initialize();
+
+            // Load criteria catalog
+            loadCatalog();
+        }
     }, [ready]);
 
     // Test notification

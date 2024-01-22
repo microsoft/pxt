@@ -43,6 +43,27 @@ export default function reducer(state: AppState, action: Action): AppState {
                 currentEvalResult: action.result,
             };
         }
+        case "SET_CATALOG": {
+            return {
+                ...state,
+                catalog: action.catalog,
+            };
+        }
+        case "ADD_CRITERIA_INSTANCE": {
+            return {
+                ...state,
+                selectedCriteria: [
+                    ...state.selectedCriteria,
+                    action.criteria,
+                ],
+            };
+        }
+        case "REMOVE_CRITERIA_INSTANCE": {
+            return {
+                ...state,
+                selectedCriteria: state.selectedCriteria.filter(c => c.instanceId !== action.instanceId)
+            };
+        }
     }
 
     return state;

@@ -296,6 +296,29 @@ code {
 }
 
 /*******************************/
+/******* CATALOG STYLING  ******/
+/*******************************/
+.catalog-item {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    margin: 0;
+    padding: 1rem;
+    border: none;
+    background-color: var(--body-background-color);
+    color: var(--subtitle-text-color);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    width: 100%;
+}
+
+.catalog-item:hover {
+    background-color: var(--card-hover-color);
+    color: var(--primary-color);
+}
+
+/*******************************/
 /*****   HIGH CONTRAST     *****/
 /*******************************/
 

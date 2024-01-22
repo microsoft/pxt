@@ -1,17 +1,23 @@
 {
     "criteria": [
         {
-            "displayText": "TEST Four or more comments",
-            "criteriaId": "comment",
-            "count": 4
+            "id": "E3FBB45F-B63B-46FB-A101-72CAAC709301",
+            "use": "another_rule",
+            "template": "TEST some other rule",
+            "docPath": "/teachertool"
         },
         {
-            "displayText": "TEST Some other rule",
-            "criteriaId": "blockCheck",
-            "blockRequirements": [
+            "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
+            "use": "check_for_comments",
+            "template": "TEST At least ${count} comments",
+            "description": "The project contains at least the specified number of comments.",
+            "docPath": "/teachertool",
+            "params": [
                 {
-                    "blocks": ["abc", "def", "ghi", "jkl", "mno", "pqr", "stu", "vwx", "yz"],
-                    "count": 200
+                    "name": "count",
+                    "type": "number",
+                    "default": 1,
+                    "path": "checks[0].count"
                 }
             ]
         }
