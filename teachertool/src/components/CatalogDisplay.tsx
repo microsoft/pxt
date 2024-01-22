@@ -18,15 +18,19 @@ const CatalogDisplay: React.FC<IProps> = ({}) => {
     }
 
     return (
-        <div className="catalog-container">
-            {
-                teacherTool.catalog?.map(criteria => {
-                    return criteria?.template && <Button id={`btn${criteria.id}`} className="catalog-item" label={criteria.template} onClick={() => handleClick(criteria.id)} title={criteria.id} />
-                })
-            }
-        </div>
-    )
-
+        <>
+            {teacherTool.catalog?.map(criteria => {
+                return criteria?.template && (
+                        <Button
+                            id={`btn${criteria.id}`}
+                            className="catalog-item"
+                            label={criteria.template}
+                            onClick={() => handleClick(criteria.id)}
+                            title={criteria.id} />
+                );
+            })}
+        </>
+    );
 };
 
 export default CatalogDisplay;
