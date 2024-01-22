@@ -333,16 +333,19 @@ code {
 }
 
 .criteria-instance-display {
-    background-color: #fff;
+    background-color: var(--white);
     border: 1px solid #ddd;
     border-radius: 0;
     padding: 0.1rem 0.5rem;
     margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .criteria-btn-remove {
     background-color: #f55c51;
-    color: #fff;
+    color: var(--white);
     border: none;
     display: inline-block;
     margin: 0.5rem;
