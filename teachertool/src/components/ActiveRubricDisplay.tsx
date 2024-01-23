@@ -5,16 +5,12 @@ import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../utils";
 import { Button } from "react-common/components/controls/Button";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
-import * as Actions from "../state/actions";
+import { showCatalog } from "../transforms/showCatalog";
 
 interface IProps {}
 
 const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool, dispatch } = useContext(AppStateContext);
-
-    function handleAddCriteriaClicked() {
-        dispatch(Actions.showModal("catalog-display"));
-    }
 
     return (
         <div className="rubric-display">
@@ -34,7 +30,7 @@ const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                         </div>
                 );
             })}
-            <Button className="add-criteria secondary" label={lf("+ Add Criteria")} onClick={handleAddCriteriaClicked} title={lf("Add Criteria")} />
+            <Button className="add-criteria secondary" label={lf("+ Add Criteria")} onClick={showCatalog} title={lf("Add Criteria")} />
         </div>
     );
 };
