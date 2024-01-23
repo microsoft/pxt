@@ -1,15 +1,9 @@
 {
     "criteria": [
         {
-            "id": "E3FBB45F-B63B-46FB-A101-72CAAC709301",
-            "use": "another_rule",
-            "template": "TEST some other rule",
-            "docPath": "/teachertool"
-        },
-        {
-            "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
+            "id": "7AE7EA2A-3AC8-42DC-89DB-65E3AE157156",
             "use": "check_for_comments",
-            "template": "TEST At least ${count} comments",
+            "template": "At least ${count} comments",
             "description": "The project contains at least the specified number of comments.",
             "docPath": "/teachertool",
             "params": [
