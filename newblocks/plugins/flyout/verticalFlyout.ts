@@ -5,7 +5,7 @@ export class VerticalFlyout implements Blockly.IFlyout {
     RTL: boolean;
     targetWorkspace: Blockly.WorkspaceSvg;
     MARGIN: number;
-    autoClose: boolean;
+    autoClose = true;
     CORNER_RADIUS: number;
 
     protected cached: CachedFlyout[] = [];
