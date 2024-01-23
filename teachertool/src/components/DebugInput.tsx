@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
-import { Textarea } from "react-common/components/controls/Textarea";
 import { loadProjectMetadataAsync } from "../transforms/loadProjectMetadataAsync";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 
@@ -15,7 +14,7 @@ const DebugInput: React.FC<IProps> = ({}) => {
 
     const evaluate = async () => {
         await loadProjectMetadataAsync(shareLink);
-        await runEvaluateAsync(rubric);
+        await runEvaluateAsync();
     }
 
     return (
@@ -28,14 +27,6 @@ const DebugInput: React.FC<IProps> = ({}) => {
                     placeholder={lf("Share link to validate")}
                     initialValue={shareLink}
                     onChange={setShareLink} />
-            </div>
-            <div className="rubric-json-input-container">
-                {lf("Rubric:")}
-                <Textarea
-                    id="rubricJsonInput"
-                    className="json-input"
-                    rows={20}
-                    onChange={setRubric} />
             </div>
             <Button id="evaluateSingleProjectButton" className="primary" onClick={evaluate} title={"Evaluate"} label={lf("Evaluate")} />
         </div>

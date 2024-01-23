@@ -1,4 +1,26 @@
 namespace pxt.blocks {
+    export interface ValidatorCheck {
+        validator: string;
+    };
+
+    export interface BlockExistsValidatorCheck extends ValidatorCheck {
+        validator: "block_exists";
+        inputs: {
+            blockId: string;
+            count: number;
+        }[];
+    }
+
+    export interface AiQuestionValidatorCheck extends ValidatorCheck {
+        validator: "ai_question";
+    }
+
+    export interface ValidatorPlan {
+        name: string;
+        threshold: number;
+        checks: ValidatorCheck[];
+    }
+
     // A criteria defined in the catalog of all possible criteria for the user to choose from when creating a rubric.
     export interface CatalogCriteria {
         id: string; // A unique id (GUID) for the catalog criteria

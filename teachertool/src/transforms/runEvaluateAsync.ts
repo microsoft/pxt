@@ -4,10 +4,10 @@ import * as Actions from "../state/actions";
 import { makeNotification } from "../utils";
 import { postNotification } from "./postNotification";
 
-export async function runEvaluateAsync(rubric: string) {
-    const { dispatch } = stateAndDispatch();
+export async function runEvaluateAsync() {
+    const { state: teacherTool, dispatch } = stateAndDispatch();
 
-    const evalResult = await runEvalInEditorAsync(rubric);
+    const evalResult = await runEvalInEditorAsync(teacherTool.selectedCriteria, teacherTool.catalog!);
     if (evalResult) {
         dispatch(Actions.setEvalResult(evalResult));
     } else {

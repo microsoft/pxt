@@ -31,18 +31,27 @@ namespace pxt.blocks {
         return requiredBlockCounts;
     }
 
-    export function validateProject(usedBlocks: Blockly.Block[], rubric: string): EvaluationResult {
-        const rubricData = parseRubric(rubric);
-        const finalResult: pxt.Map<boolean> = {};
-        rubricData.criteria.forEach((criteria: RubricCriteria) => {
-            (criteria as BlockCheckCriteria).blockRequirements.forEach((blockSet) => {
-                const result = validateBlockSet(usedBlocks, blockSet);
-                Object.keys(result).forEach((blockId) => {
-                    finalResult[blockId] = result[blockId];
-                });
-            });
-        });
-        return { blockIdResults: finalResult } as EvaluationResult;
+    export async function validateProject(usedBlocks: Blockly.Block[], rubric: CriteriaInstance[], catalog: CatalogCriteria[]): Promise<EvaluationResult> {
+        const finalResult: pxt.Map<CriteriaResult> = {};
+
+        await Promise.all(rubric.map(async (criteria: CriteriaInstance) => {
+            const catalogCriteria = catalog.find((c) => c.id === criteria.catalogCriteriaId);
+            if (!catalogCriteria) {
+                console.error(`Could not find catalog criteria with id ${criteria.catalogCriteriaId}`);
+                return;
+            }
+            const validatorPlanId = catalogCriteria.use;
+
+            if (validatorPlanId == "block_used_n_times") {
+                // TODO - create validation plans somewhere which defines checks to run.
+                finalResult[criteria.instanceId] = { passed: true, message: undefined };
+            } else if (validatorPlanId == "ai_question") {
+                const aiResponse = await askAiQuestion({ shareId: "???", target: "???", question: "Does this program use variables in a meaningful way, and are they well named?" });
+                finalResult[criteria.instanceId] = { passed: true, message: aiResponse.responseMessage };
+            }
+        }));
+
+        return { criteriaResults: finalResult } as EvaluationResult;
     }
 
 

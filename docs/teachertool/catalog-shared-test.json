@@ -2,8 +2,8 @@
     "criteria": [
         {
             "id": "E3FBB45F-B63B-46FB-A101-72CAAC709301",
-            "use": "another_rule",
-            "template": "TEST some other rule",
+            "use": "ai_question",
+            "template": "Ask experimental AI: Analyze the use of variables.",
             "docPath": "/teachertool"
         },
         {

@@ -1,5 +1,11 @@
 namespace pxt.blocks {
+
+  export interface CriteriaResult {
+    passed: boolean;
+    message: string;
+  }
+
   export interface EvaluationResult {
-   blockIdResults: pxt.Map<boolean>;
+    criteriaResults: pxt.Map<CriteriaResult>;
   }
 }

@@ -292,7 +292,8 @@ namespace pxt.editor {
 
     export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
         action: "runeval";
-        rubric: string;
+        rubric: pxt.blocks.CriteriaInstance[];
+        catalog: pxt.blocks.CatalogCriteria[];
     }
 
     export interface EditorMessageRenderBlocksResponse {
@@ -547,10 +548,11 @@ namespace pxt.editor {
                                 case "runeval": {
                                     const evalmsg = data as EditorMessageRunEvalRequest;
                                     const rubric = evalmsg.rubric;
+                                    const catalog = evalmsg.catalog;
                                     return Promise.resolve()
                                         .then(() => {
                                             const blocks = projectView.getBlocks();
-                                            return pxt.blocks.validateProject(blocks, rubric)})
+                                            return pxt.blocks.validateProject(blocks, rubric, catalog)})
                                         .then (results => {
                                             resp = results;
                                         });
