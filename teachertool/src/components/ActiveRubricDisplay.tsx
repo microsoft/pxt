@@ -5,7 +5,7 @@ import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../utils";
 import { Button } from "react-common/components/controls/Button";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
-import { showCatalog } from "../transforms/showCatalog";
+import { showCatalogModal } from "../transforms/showCatalogModal";
 
 interface IProps {}
 
@@ -30,7 +30,7 @@ const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                         </div>
                 );
             })}
-            <Button className="add-criteria secondary" label={lf("+ Add Criteria")} onClick={showCatalog} title={lf("Add Criteria")} />
+            <Button className="add-criteria secondary" label={lf("+ Add Criteria")} onClick={showCatalogModal} title={lf("Add Criteria")} />
         </div>
     );
 };
