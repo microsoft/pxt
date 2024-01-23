@@ -177,3 +177,31 @@ export class FieldImageDropdown extends Blockly.FieldDropdown implements FieldCu
         }
     };
 }
+
+Blockly.Css.register(`
+.blocklyDropDownButton {
+    display: inline-block;
+    float: left;
+    padding: 0;
+    margin: 4px;
+    border-radius: 4px;
+    outline: none;
+    border: 1px solid;
+    transition: box-shadow .1s;
+    cursor: pointer;
+}
+
+.blocklyDropDownButtonHover {
+    box-shadow: 0px 0px 0px 4px rgba(255, 255, 255, 0.2);
+}
+
+.blocklyDropDownButton:active {
+    box-shadow: 0px 0px 0px 6px rgba(255, 255, 255, 0.2);
+}
+
+.blocklyDropDownButton > img {
+    width: 80%;
+    height: 80%;
+    margin-top: 5%
+}
+`)
