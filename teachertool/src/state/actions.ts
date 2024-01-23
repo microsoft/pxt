@@ -33,9 +33,9 @@ type SetCatalog = ActionBase & {
     catalog: pxt.blocks.CatalogCriteria[] | undefined;
 };
 
-type AddCriteriaInstance = ActionBase & {
-    type: "ADD_CRITERIA_INSTANCE"
-    criteria: pxt.blocks.CriteriaInstance;
+type AddCriteriaInstances = ActionBase & {
+    type: "ADD_CRITERIA_INSTANCES"
+    criteria: pxt.blocks.CriteriaInstance[];
 };
 
 type RemoveCriteriaInstance = ActionBase & {
@@ -62,7 +62,7 @@ export type Action =
     | SetProjectMetadata
     | SetEvalResult
     | SetCatalog
-    | AddCriteriaInstance
+    | AddCriteriaInstances
     | RemoveCriteriaInstance
     | ShowModal
     | HideModal;
@@ -97,8 +97,8 @@ const setCatalog = (catalog: pxt.blocks.CatalogCriteria[] | undefined): SetCatal
     catalog,
 });
 
-const addCriteriaInstance = (criteria: pxt.blocks.CriteriaInstance): AddCriteriaInstance => ({
-    type: "ADD_CRITERIA_INSTANCE",
+const addCriteriaInstances = (criteria: pxt.blocks.CriteriaInstance[]): AddCriteriaInstances => ({
+    type: "ADD_CRITERIA_INSTANCES",
     criteria,
 });
 
@@ -122,7 +122,7 @@ export {
     setProjectMetadata,
     setEvalResult,
     setCatalog,
-    addCriteriaInstance,
+    addCriteriaInstances,
     removeCriteriaInstance,
     showModal,
     hideModal

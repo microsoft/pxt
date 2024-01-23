@@ -299,6 +299,11 @@ code {
 /******* CATALOG STYLING  ******/
 /*******************************/
 
+.catalog-modal .common-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .catalog-container {
     display: flex;
     flex-direction: column;
@@ -310,22 +315,7 @@ code {
 }
 
 .catalog-item {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    margin: 0;
-    padding: 1rem;
-    border: none;
-    border-radius: 0;
-    background-color: var(--white);
-    color: var(--subtitle-text-color);
-    transition: background-color 0.2s ease, color 0.2s ease;
-    width: 100%;
-}
-
-.catalog-item:hover {
-    background-color: var(--card-hover-color);
-    color: var(--primary-color);
+    padding: 0.5rem;
 }
 
 /*******************************/
