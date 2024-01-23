@@ -1,4 +1,4 @@
-import { Notifications } from "../types";
+import { ModalType, Notifications } from "../types";
 
 export type AppState = {
     targetConfig?: pxt.TargetConfig;
@@ -7,6 +7,7 @@ export type AppState = {
     projectMetadata: pxt.Cloud.JsonScript | undefined;
     catalog: pxt.blocks.CatalogCriteria[] | undefined;
     selectedCriteria: pxt.blocks.CriteriaInstance[];
+    modal: ModalType | undefined;
 };
 
 export const initialAppState: AppState = {
@@ -14,5 +15,6 @@ export const initialAppState: AppState = {
     currentEvalResult: undefined,
     projectMetadata: undefined,
     catalog: undefined,
-    selectedCriteria: []
+    selectedCriteria: [],
+    modal: undefined
 };

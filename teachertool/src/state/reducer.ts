@@ -64,6 +64,18 @@ export default function reducer(state: AppState, action: Action): AppState {
                 selectedCriteria: state.selectedCriteria.filter(c => c.instanceId !== action.instanceId)
             };
         }
+        case "SHOW_MODAL": {
+            return {
+                ...state,
+                modal: action.modal,
+            };
+        }
+        case "HIDE_MODAL": {
+            return {
+                ...state,
+                modal: undefined,
+            };
+        }
     }
 
     return state;

@@ -11,9 +11,9 @@ import { makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
 import EvalResultDisplay from "./components/EvalResultDisplay";
-import CatalogDisplay from "./components/CatalogDisplay";
 import { loadCatalog } from "./transforms/loadCatalog";
 import ActiveRubricDisplay from "./components/ActiveRubricDisplay";
+import CatalogModal from "./components/CatalogModal";
 
 
 function App() {
@@ -45,11 +45,11 @@ function App() {
             <HeaderBar />
             <div className="inner-app-container">
                 <DebugInput />
-                <CatalogDisplay />
                 <ActiveRubricDisplay />
                 <EvalResultDisplay />
                 <MakeCodeFrame />
             </div>
+            <CatalogModal />
             <Notifications />
         </div>
     );

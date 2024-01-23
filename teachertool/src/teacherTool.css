@@ -298,6 +298,17 @@ code {
 /*******************************/
 /******* CATALOG STYLING  ******/
 /*******************************/
+
+.catalog-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.catalog-done {
+    align-self: flex-end;
+}
+
 .catalog-item {
     display: flex;
     align-items: center;
@@ -306,7 +317,7 @@ code {
     padding: 1rem;
     border: none;
     border-radius: 0;
-    background-color: var(--body-background-color);
+    background-color: var(--white);
     color: var(--subtitle-text-color);
     transition: background-color 0.2s ease, color 0.2s ease;
     width: 100%;

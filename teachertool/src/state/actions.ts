@@ -1,4 +1,4 @@
-import { NotificationWithId } from "../types";
+import { ModalType, NotificationWithId } from "../types";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -43,6 +43,15 @@ type RemoveCriteriaInstance = ActionBase & {
     instanceId: string;
 };
 
+type ShowModal = ActionBase & {
+    type: "SHOW_MODAL";
+    modal: ModalType;
+};
+
+type HideModal = ActionBase & {
+    type: "HIDE_MODAL";
+};
+
 /**
  * Union of all actions
  */
@@ -54,7 +63,9 @@ export type Action =
     | SetEvalResult
     | SetCatalog
     | AddCriteriaInstance
-    | RemoveCriteriaInstance;
+    | RemoveCriteriaInstance
+    | ShowModal
+    | HideModal;
 
 /**
  * Action creators
@@ -96,6 +107,15 @@ const removeCriteriaInstance = (instanceId: string): RemoveCriteriaInstance => (
     instanceId,
 });
 
+const showModal = (modal: ModalType): ShowModal => ({
+    type: "SHOW_MODAL",
+    modal,
+});
+
+const hideModal = (): HideModal => ({
+    type: "HIDE_MODAL",
+});
+
 export {
     postNotification,
     removeNotification,
@@ -104,4 +124,6 @@ export {
     setCatalog,
     addCriteriaInstance,
     removeCriteriaInstance,
+    showModal,
+    hideModal
 };
