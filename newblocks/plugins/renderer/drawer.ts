@@ -89,14 +89,4 @@ export class Drawer extends Blockly.zelos.Drawer {
             this.outlinePath_ += Blockly.utils.svgPaths.lineOnAxis('V', endY);
         }
     }
-
-    protected drawLeftDynamicConnection_(): void {
-        super.drawLeftDynamicConnection_();
-
-        // FIXME (riknoll)
-        // this.block_.pathObject.positionConnectionIndicator(
-        //     this.block_.outputConnection.getOffsetInBlock().x,
-        //     this.block_.outputConnection.getOffsetInBlock().y
-        // );
-    }
 }

@@ -1916,38 +1916,3 @@ function isBreakpointSet(block: Blockly.BlockSvg) {
     const existing = block.getIcon(pxtblockly.BreakpointIcon.type) as pxtblockly.BreakpointIcon;
     return !!existing?.isEnabled();
 }
-
-function createFlyout(workspace: Blockly.WorkspaceSvg, siblingNode: Element) {
-    let flyoutWorkspaceOptions = new Blockly.Options(
-        /** @type {!Blockly.BlocklyOptions} */
-        ({
-            'scrollbars': true,
-            // 'disabledPatternId': workspace.options.disabledPatternId,
-            'parentWorkspace': workspace,
-            'rtl': workspace.RTL,
-            'oneBasedIndex': workspace.options.oneBasedIndex,
-            'horizontalLayout': workspace.horizontalLayout,
-            // 'toolboxPosition': workspace.options.toolboxPosition,
-            // 'zoomOptions': workspace.options.zoomOptions,
-            'renderer': workspace.options.renderer,
-            'rendererOverrides': workspace.options.rendererOverrides,
-            // // pxt-blockly: pass the newFunctions option
-            // 'newFunctions': workspace.options.newFunctions,
-            'move': {
-                'scrollbars': true,
-            }
-        }));
-    let newFlyout;
-    if (flyoutWorkspaceOptions.horizontalLayout) {
-        newFlyout = new Blockly.HorizontalFlyout(flyoutWorkspaceOptions);
-    } else {
-        newFlyout = new Blockly.VerticalFlyout(flyoutWorkspaceOptions);
-    }
-    let newSvg = newFlyout.createDom('svg');
-    if (siblingNode) {
-        siblingNode.insertAdjacentElement("afterend", newSvg);
-    }
-    newFlyout.init(workspace);
-
-    return newFlyout;
-};
