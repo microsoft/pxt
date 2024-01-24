@@ -16,9 +16,10 @@ const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
         <div className="rubric-display">
             <h3>{lf("Rubric")}</h3>
             {teacherTool.selectedCriteria?.map(criteriaInstance => {
-                const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
+                if (!criteriaInstance) return null;
 
-                return criteriaInstance?.catalogCriteriaId && (
+                const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
+                return criteriaInstance.catalogCriteriaId && (
                         <div className="criteria-instance-display" id={`criteriaInstance${criteriaInstance.instanceId}`}>
                             {catalogCriteria?.template}
                             <Button
