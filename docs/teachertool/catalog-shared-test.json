@@ -14,6 +14,27 @@
                     "path": "checks[0].count"
                 }
             ]
+        },
+        {
+            "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
+            "use": "block_used_n_times",
+            "template": "${block_id} used ${count} times",
+            "description": "This block was used the specified number of times in your project.",
+            "docPath": "/teachertool",
+            "params": [
+                {
+                    "name": "block_id",
+                    "type": "string",
+                    "picker": "blockSelector",
+                    "path": "checks[0].blocks[:clear&:append]"
+                },
+                {
+                    "name": "count",
+                    "type": "number",
+                    "default": 1,
+                    "path": "checks[0].count"
+                }
+            ]
         }
     ]
 }

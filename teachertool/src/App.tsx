@@ -14,6 +14,7 @@ import EvalResultDisplay from "./components/EvalResultDisplay";
 import { loadCatalog } from "./transforms/loadCatalog";
 import ActiveRubricDisplay from "./components/ActiveRubricDisplay";
 import CatalogModal from "./components/CatalogModal";
+import { loadValidatorPlans } from "./transforms/loadValidatorPlans";
 
 
 function App() {
@@ -27,8 +28,9 @@ function App() {
             // Init subsystems.
             NotificationService.initialize();
 
-            // Load criteria catalog
+            // Load catalog and validator plans into state.
             loadCatalog();
+            loadValidatorPlans();
         }
     }, [ready]);
 

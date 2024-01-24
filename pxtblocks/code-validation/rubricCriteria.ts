@@ -31,20 +31,41 @@ namespace pxt.blocks {
         return requiredBlockCounts;
     }
 
-    export function validateProject(usedBlocks: Blockly.Block[], rubric: string): EvaluationResult {
-        const rubricData = parseRubric(rubric);
-        const finalResult: pxt.Map<boolean> = {};
-        rubricData.criteria.forEach((criteria: RubricCriteria) => {
-            (criteria as BlockCheckCriteria).blockRequirements.forEach((blockSet) => {
-                const result = validateBlockSet(usedBlocks, blockSet);
-                Object.keys(result).forEach((blockId) => {
-                    finalResult[blockId] = result[blockId];
+    async function runValidatorPlan(usedBlocks: Blockly.Block[], plan: ValidatorPlanWithId): Promise<boolean> {
+      const checkRuns = plan.checks.map((check) => new Promise<boolean>((resolve) => {
+            switch (check.validator) {
+              case "blocksExist":
+                const blockExistsCheck = check as BlocksExistValidatorCheck;
+                const blockResults = validateBlocksExist({
+                  usedBlocks,
+                  requiredBlockCounts: blockExistsCheck.blockCounts,
                 });
-            });
-        });
-        return { blockIdResults: finalResult } as EvaluationResult;
+                const success = blockResults.disabledBlocks.length === 0 && blockResults.missingBlocks.length === 0 && blockResults.insufficientBlocks.length === 0;
+                resolve(success);
+                break;
+              default:
+                console.error(`Unrecognized validator: ${check.validator}`);
+                break;
+            }
+            resolve(false);
+      }));
+
+      const results = await Promise.all(checkRuns);
+      const successCount = results.filter((r) => r).length;
+      return successCount >= plan.threshold;
     }
 
+    export async function validateProject(usedBlocks: Blockly.Block[], rubric: string): Promise<EvaluationResult> {
+        const validatorPlans = JSON.parse(rubric) as ValidatorPlanWithId[];
+
+        const finalResult: pxt.Map<boolean> = {};
+        for (const plan of validatorPlans) {
+            const planResult = await runValidatorPlan(usedBlocks, plan);
+            finalResult[plan.id] = planResult;
+        }
+
+        return { results: finalResult } as EvaluationResult;
+    }
 
     function validateBlockSet(usedBlocks: Blockly.Block[], blockSet: BlockSet): pxt.Map<boolean> {
         const requiredBlockCounts = blockSetToRequiredBlockCounts(blockSet);

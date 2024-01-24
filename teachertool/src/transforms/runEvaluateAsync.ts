@@ -1,13 +1,48 @@
+import { logError } from "../services/loggingService";
 import { runEvalInEditorAsync } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
-import * as Actions from "../state/actions";
-import { makeNotification } from "../utils";
+import { getCatalogCriteriaWithId, makeNotification } from "../utils";
 import { postNotification } from "./postNotification";
+import * as Actions from "../state/actions";
 
-export async function runEvaluateAsync(rubric: string) {
+function generateValidatorPlans(): pxt.blocks.ValidatorPlanWithId[] {
+    const { state: teacherTool } = stateAndDispatch();
+
+    const validatorPlans: pxt.blocks.ValidatorPlanWithId[] = [];
+    for (const criteriaInstance of teacherTool.selectedCriteria) {
+        const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
+        if (!catalogCriteria) {
+            logError("eval_missing_criteria", "Attempting to evaluate criteria with unrecognized id", { id: criteriaInstance.catalogCriteriaId })
+            continue;
+        }
+
+        const plan = teacherTool.validatorPlans?.find(plan => plan.name === catalogCriteria.use);
+        if (!plan) {
+            logError("eval_missing_plan", "Attempting to evaluate criteria with unrecognized plan", { plan: catalogCriteria.use })
+            continue;
+        }
+
+        // TODO: Fill in any parameters. Error if parameters are missing.
+
+        const planWithId = {
+            ...plan,
+            id: criteriaInstance.instanceId
+        } as pxt.blocks.ValidatorPlanWithId;
+
+        validatorPlans.push(planWithId);
+    }
+
+    return validatorPlans;
+}
+
+export async function runEvaluateAsync() {
     const { dispatch } = stateAndDispatch();
 
-    const evalResult = await runEvalInEditorAsync(rubric);
+    const validatorPlans = generateValidatorPlans();
+    const serializedPlans = JSON.stringify(validatorPlans);
+
+    const evalResult = await runEvalInEditorAsync(serializedPlans);
+
     if (evalResult) {
         dispatch(Actions.setEvalResult(evalResult));
     } else {

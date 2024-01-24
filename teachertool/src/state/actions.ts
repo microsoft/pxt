@@ -52,6 +52,11 @@ type HideModal = ActionBase & {
     type: "HIDE_MODAL";
 };
 
+type SetValidatorPlans = ActionBase & {
+    type: "SET_VALIDATOR_PLANS";
+    plans: pxt.blocks.ValidatorPlan[] | undefined;
+};
+
 /**
  * Union of all actions
  */
@@ -65,7 +70,8 @@ export type Action =
     | AddCriteriaInstances
     | RemoveCriteriaInstance
     | ShowModal
-    | HideModal;
+    | HideModal
+    | SetValidatorPlans;
 
 /**
  * Action creators
@@ -116,6 +122,11 @@ const hideModal = (): HideModal => ({
     type: "HIDE_MODAL",
 });
 
+const setValidatorPlans = (plans: pxt.blocks.ValidatorPlan[] | undefined): SetValidatorPlans => ({
+    type: "SET_VALIDATOR_PLANS",
+    plans,
+});
+
 export {
     postNotification,
     removeNotification,
@@ -125,5 +136,6 @@ export {
     addCriteriaInstances,
     removeCriteriaInstance,
     showModal,
-    hideModal
+    hideModal,
+    setValidatorPlans
 };

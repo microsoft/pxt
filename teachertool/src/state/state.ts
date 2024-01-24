@@ -8,6 +8,7 @@ export type AppState = {
     catalog: pxt.blocks.CatalogCriteria[] | undefined;
     selectedCriteria: pxt.blocks.CriteriaInstance[];
     modal: ModalType | undefined;
+    validatorPlans: pxt.blocks.ValidatorPlan[] | undefined;
 };
 
 export const initialAppState: AppState = {
@@ -16,5 +17,6 @@ export const initialAppState: AppState = {
     projectMetadata: undefined,
     catalog: undefined,
     selectedCriteria: [],
-    modal: undefined
+    modal: undefined,
+    validatorPlans: undefined,
 };

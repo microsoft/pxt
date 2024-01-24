@@ -1,31 +1,16 @@
 {
     "criteria": [
         {
-            "id": "A7C78825-51B5-45B0-9E42-2AAC767D4E02",
-            "use": "processes_and_displays_array_in_loop",
-            "template": "One kind of loop to process/display the information in an array",
+            "id": "B3FD8B3D-61B4-42F4-B0EF-64BD7D62CDAB",
+            "use": "two_different_loops",
+            "template": "Two different kinds of loops used.",
             "docPath": "/teachertool"
         },
         {
-            "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
-            "use": "block_used_n_times",
-            "template": "${block_id} used ${count} times",
-            "description": "This block was used the specified number of times in your project.",
-            "docPath": "/teachertool",
-            "params": [
-                {
-                    "name": "block_id",
-                    "type": "string",
-                    "picker": "blockSelector",
-                    "path": "checks[0].blocks[:clear&:append]"
-                },
-                {
-                    "name": "count",
-                    "type": "number",
-                    "default": 1,
-                    "path": "checks[0].count"
-                }
-            ]
+            "id": "49262A2B-C02A-43A2-BAD5-FCAC6AE9D464",
+            "use": "custom_function_called",
+            "template": "A custom function exists and gets called.",
+            "docPath": "/teachertool"
         }
     ]
 }

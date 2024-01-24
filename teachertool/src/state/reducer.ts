@@ -73,6 +73,12 @@ export default function reducer(state: AppState, action: Action): AppState {
                 modal: undefined,
             };
         }
+        case "SET_VALIDATOR_PLANS": {
+            return {
+                ...state,
+                validatorPlans: action.plans,
+            };
+        }
     }
 
     return state;
