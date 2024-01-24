@@ -1,9 +1,9 @@
 import { stateAndDispatch } from "../state";
-import { v4 as uuidV4 } from 'uuid';
 import * as Actions from "../state/actions";
 import { logDebug, logError } from "../services/loggingService";
 import { getCatalogCriteriaWithId } from "../utils";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
+import { nanoid } from "nanoid";
 
 export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { dispatch } = stateAndDispatch();
@@ -25,7 +25,7 @@ export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
                 } as CriteriaParameterValue)
         );
 
-        const instanceId = uuidV4();
+        const instanceId = nanoid();
         const criteriaInstance = {
             catalogCriteriaId,
             instanceId,
