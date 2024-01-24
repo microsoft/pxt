@@ -3,17 +3,19 @@ import { useEffect, useContext, useState } from "react";
 import "./teacherTool.css";
 import { AppStateContext, AppStateReady } from "./state/appStateContext";
 import { usePromise } from "./hooks";
+import { makeNotification } from "./utils";
+import * as NotificationService from "./services/notificationService";
+
 import HeaderBar from "./components/HeaderBar";
 import Notifications from "./components/Notifications";
-import * as NotificationService from "./services/notificationService";
-import { postNotification } from "./transforms/postNotification";
-import { makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
 import EvalResultDisplay from "./components/EvalResultDisplay";
-import { loadCatalog } from "./transforms/loadCatalog";
 import ActiveRubricDisplay from "./components/ActiveRubricDisplay";
 import CatalogModal from "./components/CatalogModal";
+
+import { postNotification } from "./transforms/postNotification";
+import { loadCatalog } from "./transforms/loadCatalog";
 
 
 function App() {
