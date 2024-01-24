@@ -10,23 +10,25 @@ import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 interface IProps {}
 
 const CatalogModal: React.FC<IProps> = ({}) => {
-    const { state: teacherTool, dispatch } = useContext(AppStateContext);
-    const [ checkedCriteriaIds, setCheckedCriteria ] = useState<string[]>([]);
+    const { state: teacherTool } = useContext(AppStateContext);
+    const [ checkedCriteriaIds, setCheckedCriteria ] = useState<Set<string>>(new Set<string>());
 
     function handleCheckboxChange(criteria: pxt.blocks.CatalogCriteria, newValue: boolean) {
-        if (newValue && !checkedCriteriaIds.includes(criteria.id)) {
-            setCheckedCriteria(checkedCriteriaIds.concat(criteria.id));
-        } else if (!newValue && checkedCriteriaIds.includes(criteria.id)) {
-            setCheckedCriteria(checkedCriteriaIds.filter(id => id !== criteria.id));
+        const newSet = new Set(checkedCriteriaIds);
+        if (newValue) {
+            newSet.add(criteria.id);
+        } else {
+            newSet.delete(criteria.id); // Returns false if criteria.id is not in the set, can be safely ignored.
         }
+        setCheckedCriteria(newSet);
     }
 
     function isCheckboxChecked(criteriaId: string): boolean {
-        return checkedCriteriaIds.includes(criteriaId);
+        return checkedCriteriaIds.has(criteriaId);
     }
 
     function handleDoneClicked() {
-        addCriteriaToRubric(checkedCriteriaIds)
+        addCriteriaToRubric([...checkedCriteriaIds])
         closeModal();
     }
 
@@ -34,7 +36,7 @@ const CatalogModal: React.FC<IProps> = ({}) => {
         hideCatalogModal();
 
         // Clear for next open.
-        setCheckedCriteria([]);
+        setCheckedCriteria(new Set<string>());
     }
 
     const modalActions = [
