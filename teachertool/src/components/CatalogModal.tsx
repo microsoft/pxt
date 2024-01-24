@@ -29,7 +29,7 @@ const CatalogModal: React.FC<IProps> = ({}) => {
     }
 
     function handleAddSelectedClicked() {
-        addCriteriaToRubric([...checkedCriteriaIds])
+        addCriteriaToRubric([...checkedCriteriaIds]);
         closeModal();
     }
 
