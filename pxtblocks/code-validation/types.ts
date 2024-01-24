@@ -16,14 +16,10 @@ namespace pxt.blocks {
         params: CriteriaParameterValue[] | undefined;
     }
 
-    // Possible values for CriteriaParameterPicker, these are different ways a user may enter parameter values.
-    export type CriteriaParameterPicker = "blocksPicker" | "numericInput";
-
     // Represents a parameter definition in a catalog criteria.
     export interface CriteriaParameter {
         name: string;
         type: string;
-        picker: CriteriaParameterPicker;
         path: string; // The json path of the parameter in the catalog criteria.
     }
 

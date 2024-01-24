@@ -15,8 +15,7 @@
             "params": [
                 {
                     "name": "block_id",
-                    "type": "string",
-                    "picker": "blockSelector",
+                    "type": "block_id",
                     "path": "checks[0].blocks[:clear&:append]"
                 },
                 {
