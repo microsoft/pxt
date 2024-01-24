@@ -55,19 +55,17 @@ const CatalogModal: React.FC<IProps> = ({}) => {
 
     return teacherTool.modal === "catalog-display" ? (
         <Modal className="catalog-modal" title={lf("Select the criteria you'd like to include")} onClose={closeModal} actions={modalActions}>
-            <div className="catalog-container" title={lf("Select the criteria you'd like to include")}>
-                {teacherTool.catalog?.map(criteria => {
-                    return criteria?.template && (
-                            <Checkbox
-                                id={`checkbox_${criteria.id}`}
-                                key={criteria.id}
-                                className="catalog-item"
-                                label={criteria.template}
-                                onChange={(newValue) => handleCriteriaSelectedChange(criteria, newValue)}
-                                isChecked={isCriteriaSelected(criteria.id)} />
-                    );
-                })}
-            </div>
+            {teacherTool.catalog?.map(criteria => {
+                return criteria?.template && (
+                        <Checkbox
+                            id={`checkbox_${criteria.id}`}
+                            key={criteria.id}
+                            className="catalog-item"
+                            label={criteria.template}
+                            onChange={(newValue) => handleCriteriaSelectedChange(criteria, newValue)}
+                            isChecked={isCriteriaSelected(criteria.id)} />
+                );
+            })}
         </Modal>
     ) : null;
 };

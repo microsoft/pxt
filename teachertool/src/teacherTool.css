@@ -304,12 +304,6 @@ code {
     justify-content: flex-end;
 }
 
-.catalog-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
 .catalog-done {
     align-self: flex-end;
 }
