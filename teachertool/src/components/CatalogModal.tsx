@@ -59,7 +59,8 @@ const CatalogModal: React.FC<IProps> = ({}) => {
                 {teacherTool.catalog?.map(criteria => {
                     return criteria?.template && (
                             <Checkbox
-                                id={`chk${criteria.id}`}
+                                id={`checkbox_${criteria.id}`}
+                                key={criteria.id}
                                 className="catalog-item"
                                 label={criteria.template}
                                 onChange={(newValue) => handleCheckboxChange(criteria, newValue)}

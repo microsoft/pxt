@@ -20,10 +20,9 @@ const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
 
                 const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
                 return criteriaInstance.catalogCriteriaId && (
-                        <div className="criteria-instance-display" id={`criteriaInstance${criteriaInstance.instanceId}`}>
+                        <div className="criteria-instance-display" key={criteriaInstance.instanceId}>
                             {catalogCriteria?.template}
                             <Button
-                                id={`btnRemove${criteriaInstance.instanceId}`}
                                 className="criteria-btn-remove"
                                 label={lf("X")}
                                 onClick={() => removeCriteriaFromRubric(criteriaInstance)}
