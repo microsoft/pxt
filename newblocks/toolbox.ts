@@ -407,7 +407,7 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
                 value.setAttribute("name", "HANDLER_DRAG_PARAM_" + arg.name);
 
                 const blockType = useReporter ? pxt.blocks.reporterTypeForArgType(arg.type) : "variables_get_reporter";
-                const shadow = document.createElement("shadow");
+                const shadow = document.createElement("block");
                 shadow.setAttribute("type", blockType);
 
                 const mutation = document.createElement("mutation");
