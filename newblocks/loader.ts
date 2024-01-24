@@ -589,10 +589,6 @@ function init(blockInfo: pxtc.BlocksInfo) {
 
     applyMonkeyPatches();
 
-    // FIXME (riknoll)
-    // Blockly.FieldCheckbox.CHECK_CHAR = '■';
-    // (<any>Blockly).Constants.ADD_START_HATS = !!pxt.appTarget.appTheme.blockHats;
-
     initFieldEditors();
     initContextMenu();
     initOnStart();
