@@ -3,6 +3,8 @@
 namespace pxt.blocks {
     const THIS_NAME = "this";
 
+    export let showBlockIdInTooltip: boolean = false;
+
     // The JS Math functions supported in the blocks. The order of this array
     // determines the order of the dropdown in the math_js_op block
     export const MATH_FUNCTIONS = {
@@ -805,6 +807,21 @@ namespace pxt.blocks {
                     })
                 )
             })
+        }
+
+        if (pxt.blocks.showBlockIdInTooltip) {
+            for (const id of Object.keys(_blockDefinitions)) {
+                const tooltip = _blockDefinitions[id].tooltip;
+                if (typeof tooltip === "object" && tooltip !== null) {
+                    for (const innerKey in tooltip) {
+                        if (tooltip.hasOwnProperty(innerKey)) {
+                            (_blockDefinitions[id].tooltip as any)[innerKey] = `${tooltip[innerKey]} (id: ${id})`;
+                        }
+                    }
+                } else {
+                    _blockDefinitions[id].tooltip = `${_blockDefinitions[id].tooltip} (id: ${id})`;
+                }
+            }
         }
     }
 }

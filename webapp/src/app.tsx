@@ -5751,6 +5751,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (optsQuery["consoleticks"] == "2" || optsQuery["consoleticks"] == "short") {
         pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Short;
     }
+    if (optsQuery["tooltipblockids"] == "1") {
+        pxt.blocks.showBlockIdInTooltip = true;
+    }
 
     initGitHubDb();
 
