@@ -1,6 +1,7 @@
 import { stateAndDispatch } from "../state";
-import { logError } from "../services/loggingService";
 import * as Actions from "../state/actions";
+import { logError } from "../services/loggingService";
+import { CatalogCriteria } from "../types/criteria";
 
 const prodFiles = [
     "/teachertool/catalog.json", // target-specific catalog
@@ -14,14 +15,14 @@ const testFiles = [
 ]
 
 interface CatalogInfo {
-    criteria: pxt.blocks.CatalogCriteria[];
+    criteria: CatalogCriteria[];
 }
 
 export async function loadCatalog() {
     const { dispatch } = stateAndDispatch();
     const catalogFiles = pxt.options.debug ? prodFiles.concat(testFiles) : prodFiles;
 
-    let fullCatalog: pxt.blocks.CatalogCriteria[] = [];
+    let fullCatalog: CatalogCriteria[] = [];
     for (const catalogFile of catalogFiles) {
         let catalogContent = "";
         try {

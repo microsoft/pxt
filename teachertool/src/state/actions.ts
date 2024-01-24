@@ -1,4 +1,5 @@
 import { ModalType, NotificationWithId } from "../types";
+import { CatalogCriteria, CriteriaInstance } from "../types/criteria";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -30,12 +31,12 @@ type SetEvalResult = ActionBase & {
 
 type SetCatalog = ActionBase & {
     type: "SET_CATALOG";
-    catalog: pxt.blocks.CatalogCriteria[] | undefined;
+    catalog: CatalogCriteria[] | undefined;
 };
 
 type AddCriteriaInstances = ActionBase & {
     type: "ADD_CRITERIA_INSTANCES"
-    criteria: pxt.blocks.CriteriaInstance[];
+    criteria: CriteriaInstance[];
 };
 
 type RemoveCriteriaInstance = ActionBase & {
@@ -92,12 +93,12 @@ const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEval
     result,
 });
 
-const setCatalog = (catalog: pxt.blocks.CatalogCriteria[] | undefined): SetCatalog => ({
+const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     type: "SET_CATALOG",
     catalog,
 });
 
-const addCriteriaInstances = (criteria: pxt.blocks.CriteriaInstance[]): AddCriteriaInstances => ({
+const addCriteriaInstances = (criteria: CriteriaInstance[]): AddCriteriaInstances => ({
     type: "ADD_CRITERIA_INSTANCES",
     criteria,
 });

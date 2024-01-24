@@ -1,9 +1,9 @@
 import { stateAndDispatch } from "../state";
-import { v4 as uuidV4 } from 'uuid';
 import * as Actions from "../state/actions";
 import { logDebug } from "../services/loggingService";
+import { CriteriaInstance } from "../types/criteria";
 
-export async function removeCriteriaFromRubric(instance: pxt.blocks.CriteriaInstance) {
+export async function removeCriteriaFromRubric(instance: CriteriaInstance) {
     logDebug(`Removing criteria with id: ${instance.instanceId}`);
 
     const { dispatch } = stateAndDispatch();

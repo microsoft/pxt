@@ -3,6 +3,7 @@ import { v4 as uuidV4 } from 'uuid';
 import * as Actions from "../state/actions";
 import { logDebug, logError } from "../services/loggingService";
 import { getCatalogCriteriaWithId } from "../utils";
+import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 
 export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { dispatch } = stateAndDispatch();
@@ -21,7 +22,7 @@ export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
                 ({
                     name: param.name,
                     value: undefined,
-                } as pxt.blocks.CriteriaParameterValue)
+                } as CriteriaParameterValue)
         );
 
         const instanceId = uuidV4();
@@ -29,10 +30,10 @@ export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
             catalogCriteriaId,
             instanceId,
             params
-        } as pxt.blocks.CriteriaInstance;
+        } as CriteriaInstance;
 
         return [...accumulator, criteriaInstance];
-    }, [] as pxt.blocks.CriteriaInstance[]);
+    }, [] as CriteriaInstance[]);
 
     dispatch(Actions.addCriteriaInstances(instances));
 

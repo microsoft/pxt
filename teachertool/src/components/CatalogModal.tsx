@@ -6,6 +6,7 @@ import { Checkbox } from "react-common/components/controls/Checkbox";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideCatalogModal } from "../transforms/hideCatalogModal";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
+import { CatalogCriteria } from "../types/criteria";
 
 interface IProps {}
 
@@ -13,7 +14,7 @@ const CatalogModal: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [ checkedCriteriaIds, setCheckedCriteria ] = useState<Set<string>>(new Set<string>());
 
-    function handleCheckboxChange(criteria: pxt.blocks.CatalogCriteria, newValue: boolean) {
+    function handleCheckboxChange(criteria: CatalogCriteria, newValue: boolean) {
         const newSet = new Set(checkedCriteriaIds);
         if (newValue) {
             newSet.add(criteria.id);

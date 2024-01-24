@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
-import { NotificationWithId } from "../types";
 import { stateAndDispatch } from "../state";
+import { NotificationWithId } from "../types";
+import { CatalogCriteria } from "../types/criteria";
 
 export function makeNotification(
     message: string,
@@ -27,7 +28,7 @@ export const getEditorUrl = (embedUrl: string) => {
     return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
 }
 
-export function getCatalogCriteriaWithId(id: string): pxt.blocks.CatalogCriteria | undefined {
+export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefined {
     const { state } = stateAndDispatch();
     return state.catalog?.find(c => c.id === id);
 }
