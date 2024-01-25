@@ -8,17 +8,30 @@ const formatName = (name: string) => {
 };
 
 export const logError = (
-    name: string,
+    errorCode: string,
     message?: any,
     data: pxt.Map<string | number> = {}
 ) => {
-    name = formatName(name);
+    errorCode = formatName(errorCode);
+    let dataObj = { ...data };
+    if (message) {
+        if (typeof message === "object") {
+            dataObj = { ...dataObj, ...message };
+            // Look for non-enumerable properties found on Error objects
+            ["message", "stack", "name"].forEach(key => {
+                if (message[key]) {
+                    dataObj[key] = message[key];
+                }
+            });
+        } else {
+            dataObj.message = message;
+        }
+    }
     pxt.tickEvent("teachertool.error", {
-        ...data,
-        name,
-        message: JSON.stringify(message ?? ""),
+        ...dataObj,
+        errorCode,
     });
-    console.error(timestamp(), name, message, data);
+    console.error(timestamp(), errorCode, dataObj);
 };
 
 export const logInfo = (message: any) => {

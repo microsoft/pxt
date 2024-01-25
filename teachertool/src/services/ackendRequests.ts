@@ -13,7 +13,7 @@ export async function getProjectTextAsync(
             return projectText;
         }
     } catch (e) {
-        logError("getProjectTextAsync", e?.toString());
+        logError("getProjectTextAsync", e);
     }
 }
 
@@ -30,7 +30,7 @@ export async function getProjectMetaAsync(
             return projectMeta;
         }
     } catch (e) {
-        logError("getProjectMetaAsync", e?.toString());
+        logError("getProjectMetaAsync", e);
     }
 }
 
@@ -40,6 +40,6 @@ export async function downloadTargetConfigAsync(): Promise<
     try {
         return await pxt.targetConfigAsync();
     } catch (e) {
-        logError("downloadTargetConfigAsync", e?.toString());
+        logError("downloadTargetConfigAsync", e);
     }
 }
