@@ -6,7 +6,7 @@ To test the Teacher Tool locally:
 
 1. Ensure your pxt repo is up to date and has been built recently.
 2. In a command shell, in the `pxt` repo, cd into the `teachertool` folder and start the Teacher Tool dev server: `npm run start`. This will *not* open a browser window.
-3. In another command shell, in the `pxt-arcade` repo, start the Arcade dev server: `pxt serve --rebundle --noauth`. This will open the Arcade webapp in a browser.
+3. In another command shell, in the target repo (e.g. `pxt-arcade` or `pxt-microbit`), start the Arcade dev server: `pxt serve --rebundle --noauth`. This will open the Arcade webapp in a browser.
    1. **Note the `--noauth` parameter.** It is important to include this option when running on localhost in order to download certain required startup files from the localhost pxt server.
 
 Requests to the `/teachertool` endpoint will be routed to the Teacher Tool dev server.
