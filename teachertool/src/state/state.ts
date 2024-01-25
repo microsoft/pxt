@@ -22,7 +22,7 @@ export const initialAppState: AppState = {
     catalog: undefined,
     selectedCriteria: [],
     modal: undefined,
-    validatorPlans: undefined,,
+    validatorPlans: undefined,
     flags: {
         testCatalog: false
     }
