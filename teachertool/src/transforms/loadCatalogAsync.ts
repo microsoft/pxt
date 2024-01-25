@@ -24,26 +24,13 @@ export async function loadCatalogAsync() {
 
     let fullCatalog: CatalogCriteria[] = [];
     for (const catalogFile of catalogFiles) {
-        let catalogContent = "";
         try {
             const catalogResponse = await fetch(catalogFile);
-            catalogContent = await catalogResponse.text();
+            const catalogContent = await catalogResponse.json() as CatalogInfo;
+            fullCatalog = fullCatalog.concat(catalogContent.criteria ?? []);
         } catch (e) {
-            logError("fetch_catalog_failed", e as string, { catalogFile });
-            continue;
-        }
-
-        if (!catalogContent) {
-            // Empty file.
-            continue;
-        }
-
-        try {
-            const catalogInfoParsed = JSON.parse(catalogContent);
-            const catalogInfo = catalogInfoParsed as CatalogInfo;
-            fullCatalog = fullCatalog.concat(catalogInfo.criteria ?? []);
-        } catch (e) {
-            logError("parse_catalog_failed", e as string, {catalogFile});
+            const details = e instanceof Error ? e.toString() : "Unable to load catalog file."
+            logError("load_catalog_failed", details, { catalogFile });
             continue;
         }
     }
