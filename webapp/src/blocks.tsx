@@ -442,7 +442,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }).then(value => {
                 callback(value);
             })
-        });
+        }, true);
 
         if (pxt.Util.isTranslationMode()) {
             pxtblockly.external.setPromptTranslateBlock(dialogs.promptTranslateBlock);
