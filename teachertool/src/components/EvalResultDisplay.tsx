@@ -12,29 +12,14 @@ const EvalResultDisplay: React.FC<IProps> = ({}) => {
         <>
             {teacherTool.projectMetadata && (
                 <div className="eval-results-container">
-                    <h3>
-                        {lf("Project: {0}", teacherTool.projectMetadata.name)}
-                    </h3>
-                    {teacherTool.currentEvalResult === undefined && (
-                        <div className="common-spinner" />
-                    )}
-                    {Object.keys(
-                        teacherTool.currentEvalResult?.blockIdResults ?? {}
-                    ).map(id => {
-                        const result =
-                            teacherTool.currentEvalResult?.blockIdResults[id];
+                    <h3>{lf("Project: {0}", teacherTool.projectMetadata.name)}</h3>
+                    {teacherTool.currentEvalResult === undefined && <div className="common-spinner" />}
+                    {Object.keys(teacherTool.currentEvalResult?.blockIdResults ?? {}).map(id => {
+                        const result = teacherTool.currentEvalResult?.blockIdResults[id];
                         return (
                             <div className="result-block-id" key={id}>
                                 <p className="block-id-label">{id}:</p>
-                                <p
-                                    className={
-                                        result
-                                            ? "positive-text"
-                                            : "negative-text"
-                                    }
-                                >
-                                    {result ? "passed" : "failed"}
-                                </p>
+                                <p className={result ? "positive-text" : "negative-text"}>{result ? "passed" : "failed"}</p>
                             </div>
                         );
                     })}

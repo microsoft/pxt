@@ -56,10 +56,7 @@ function sendMessageAsync(message?: any) {
 
 // Check if the result was successful and (if expected) has data.
 // Logs errors and throws if the result was not successful.
-function validateResponse(
-    result: pxt.editor.EditorMessageResponse,
-    expectResponseData: boolean
-) {
+function validateResponse(result: pxt.editor.EditorMessageResponse, expectResponseData: boolean) {
     if (!result.success) {
         throw new Error(`Server returned failed status.`);
     }
@@ -87,9 +84,7 @@ export async function setHighContrastAsync(on: boolean) {
     console.log(result);
 }
 
-export async function runEvalInEditorAsync(
-    serializedRubric: string
-): Promise<pxt.blocks.EvaluationResult | undefined> {
+export async function runEvalInEditorAsync(serializedRubric: string): Promise<pxt.blocks.EvaluationResult | undefined> {
     let evalResults = undefined;
 
     try {

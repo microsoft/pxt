@@ -10,9 +10,7 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 interface IProps {}
 
 const DebugInput: React.FC<IProps> = ({}) => {
-    const [shareLink, setShareLink] = useState(
-        "https://makecode.microbit.org/S95591-52406-50965-65671"
-    );
+    const [shareLink, setShareLink] = useState("https://makecode.microbit.org/S95591-52406-50965-65671");
     const [rubric, setRubric] = useState("");
 
     const evaluate = async () => {
@@ -24,30 +22,13 @@ const DebugInput: React.FC<IProps> = ({}) => {
         <div className="debug-container">
             <div className="single-share-link-input-container">
                 {lf("Share Link:")}
-                <Input
-                    id="shareLinkInput"
-                    className="link-input"
-                    placeholder={lf("Share link to validate")}
-                    initialValue={shareLink}
-                    onChange={setShareLink}
-                />
+                <Input id="shareLinkInput" className="link-input" placeholder={lf("Share link to validate")} initialValue={shareLink} onChange={setShareLink} />
             </div>
             <div className="rubric-json-input-container">
                 {lf("Rubric:")}
-                <Textarea
-                    id="rubricJsonInput"
-                    className="json-input"
-                    rows={20}
-                    onChange={setRubric}
-                />
+                <Textarea id="rubricJsonInput" className="json-input" rows={20} onChange={setRubric} />
             </div>
-            <Button
-                id="evaluateSingleProjectButton"
-                className="ui button primary"
-                onClick={evaluate}
-                title={"Evaluate"}
-                label={lf("Evaluate")}
-            />
+            <Button id="evaluateSingleProjectButton" className="ui button primary" onClick={evaluate} title={"Evaluate"} label={lf("Evaluate")} />
         </div>
     );
 };

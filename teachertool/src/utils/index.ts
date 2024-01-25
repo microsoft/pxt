@@ -1,10 +1,7 @@
 import { nanoid } from "nanoid";
 import { NotificationWithId } from "../types";
 
-export function makeNotification(
-    message: string,
-    duration: number
-): NotificationWithId {
+export function makeNotification(message: string, duration: number): NotificationWithId {
     return {
         id: nanoid(),
         message,
@@ -15,17 +12,10 @@ export function makeNotification(
 
 // example: embedUrl for arcade is: https://arcade.makecode.com/
 export const getEditorUrl = (embedUrl: string) => {
-    if (!pxt.webConfig && (window as any).pxtConfig)
-        pxt.setupWebConfig((window as any).pxtConfig);
+    if (!pxt.webConfig && (window as any).pxtConfig) pxt.setupWebConfig((window as any).pxtConfig);
     // relprefix is something like: "/--"
     if (pxt.webConfig?.targetUrl && pxt.webConfig?.relprefix) {
-        return (
-            pxt.webConfig.targetUrl +
-            pxt.webConfig.relprefix.substr(
-                0,
-                pxt.webConfig.relprefix.length - 3
-            )
-        );
+        return pxt.webConfig.targetUrl + pxt.webConfig.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
     }
     // if  there is something at the end of the url, that is what path would be set to
     // example: https://arcade.makecode.com/abc123 and this would get returned

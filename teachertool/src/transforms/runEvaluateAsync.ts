@@ -13,8 +13,6 @@ export async function runEvaluateAsync(rubric: string) {
     } else {
         // Errors already logged in the runEvalInEditorAsync function.
         // Just notify the user.
-        postNotification(
-            makeNotification(lf("Unable to evaluate project"), 2000)
-        );
+        postNotification(makeNotification(lf("Unable to evaluate project"), 2000));
     }
 }

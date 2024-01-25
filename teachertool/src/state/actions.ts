@@ -62,24 +62,12 @@ type HideModal = ActionBase & {
  * Union of all actions
  */
 
-export type Action =
-    | PostNotification
-    | RemoveNotification
-    | SetProjectMetadata
-    | SetEvalResult
-    | SetTargetConfig
-    | SetCatalog
-    | SetSelectedCriteria
-    | RemoveCriteriaInstance
-    | ShowModal
-    | HideModal;
+export type Action = PostNotification | RemoveNotification | SetProjectMetadata | SetEvalResult | SetTargetConfig | SetCatalog | SetSelectedCriteria | RemoveCriteriaInstance | ShowModal | HideModal;
 
 /**
  * Action creators
  */
-const postNotification = (
-    notification: NotificationWithId
-): PostNotification => ({
+const postNotification = (notification: NotificationWithId): PostNotification => ({
     type: "POST_NOTIFICATION",
     notification,
 });
@@ -89,16 +77,12 @@ const removeNotification = (notificationId: string): RemoveNotification => ({
     notificationId,
 });
 
-const setProjectMetadata = (
-    metadata: pxt.Cloud.JsonScript | undefined
-): SetProjectMetadata => ({
+const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
     metadata,
 });
 
-const setEvalResult = (
-    result: pxt.blocks.EvaluationResult | undefined
-): SetEvalResult => ({
+const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
     result,
 });
@@ -113,16 +97,12 @@ const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     catalog,
 });
 
-const setSelectedCriteria = (
-    criteria: CriteriaInstance[]
-): SetSelectedCriteria => ({
+const setSelectedCriteria = (criteria: CriteriaInstance[]): SetSelectedCriteria => ({
     type: "SET_SELECTED_CRITERIA",
     criteria,
 });
 
-const removeCriteriaInstance = (
-    instanceId: string
-): RemoveCriteriaInstance => ({
+const removeCriteriaInstance = (instanceId: string): RemoveCriteriaInstance => ({
     type: "REMOVE_CRITERIA_INSTANCE",
     instanceId,
 });
@@ -136,15 +116,4 @@ const hideModal = (): HideModal => ({
     type: "HIDE_MODAL",
 });
 
-export {
-    postNotification,
-    removeNotification,
-    setProjectMetadata,
-    setEvalResult,
-    setTargetConfig,
-    setCatalog,
-    setSelectedCriteria,
-    removeCriteriaInstance,
-    showModal,
-    hideModal,
-};
+export { postNotification, removeNotification, setProjectMetadata, setEvalResult, setTargetConfig, setCatalog, setSelectedCriteria, removeCriteriaInstance, showModal, hideModal };

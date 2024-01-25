@@ -31,17 +31,12 @@ const initialAppStateContextProps: AppStateContextProps = {
     dispatch: undefined!,
 };
 
-export const AppStateContext = createContext<AppStateContextProps>(
-    initialAppStateContextProps
-);
+export const AppStateContext = createContext<AppStateContextProps>(initialAppStateContextProps);
 
-export function AppStateProvider(
-    props: React.PropsWithChildren<{}>
-): React.ReactElement {
+export function AppStateProvider(props: React.PropsWithChildren<{}>): React.ReactElement {
     // Read the URL parameters and set the initial state accordingly
     const url = window.location.href;
-    const testCatalog =
-        !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
+    const testCatalog = !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
 
     // Create the application state and state change mechanism (dispatch)
     const [state_, dispatch_] = useReducer(reducer, {

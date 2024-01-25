@@ -14,14 +14,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         return (
             <div className="ui item logo organization">
                 {appTheme.organizationWideLogo || appTheme.organizationLogo ? (
-                    <img
-                        className={`ui logo`}
-                        src={
-                            appTheme.organizationWideLogo ||
-                            appTheme.organizationLogo
-                        }
-                        alt={lf("{0} Logo", appTheme.organization)}
-                    />
+                    <img className={`ui logo`} src={appTheme.organizationWideLogo || appTheme.organizationLogo} alt={lf("{0} Logo", appTheme.organization)} />
                 ) : (
                     <span className="name">{appTheme.organization}</span>
                 )}
@@ -31,30 +24,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
 
     const getTargetLogo = () => {
         return (
-            <div
-                aria-label={lf("{0} Logo", appTheme.boardName)}
-                role="menuitem"
-                className={`ui item logo brand mobile hide`}
-                onClick={brandIconClick}
-            >
+            <div aria-label={lf("{0} Logo", appTheme.boardName)} role="menuitem" className={`ui item logo brand mobile hide`} onClick={brandIconClick}>
                 {appTheme.useTextLogo ? (
                     [
                         <span className="name" key="org-name">
                             {appTheme.organizationText}
                         </span>,
                         <span className="name-short" key="org-name-short">
-                            {appTheme.organizationShortText ||
-                                appTheme.organizationText}
+                            {appTheme.organizationShortText || appTheme.organizationText}
                         </span>,
                     ]
                 ) : appTheme.logo || appTheme.portraitLogo ? (
-                    <img
-                        className={`ui ${
-                            appTheme.logoWide ? "small" : ""
-                        } logo`}
-                        src={appTheme.logo || appTheme.portraitLogo}
-                        alt={lf("{0} Logo", appTheme.boardName)}
-                    />
+                    <img className={`ui ${appTheme.logoWide ? "small" : ""} logo`} src={appTheme.logo || appTheme.portraitLogo} alt={lf("{0} Logo", appTheme.boardName)} />
                 ) : (
                     <span className="name">{appTheme.boardName}</span>
                 )}
@@ -66,15 +47,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         pxt.tickEvent("teacherTool.home");
 
         // relprefix looks like "/beta---", need to chop off the hyphens and slash
-        let rel = pxt.webConfig?.relprefix.substr(
-            0,
-            pxt.webConfig.relprefix.length - 3
-        );
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
         if (pxt.appTarget.appTheme.homeUrl && rel) {
-            if (
-                pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") ===
-                pxt.appTarget.appTheme.homeUrl?.length - 1
-            ) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
                 rel = rel.substr(1);
             }
             window.open(pxt.appTarget.appTheme.homeUrl + rel);
@@ -85,12 +60,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
 
     return (
         <header className="menubar" role="banner">
-            <MenuBar
-                className={`ui menu ${
-                    appTheme?.invertedMenu ? `inverted` : ""
-                } header`}
-                ariaLabel={lf("Header")}
-            >
+            <MenuBar className={`ui menu ${appTheme?.invertedMenu ? `inverted` : ""} header`} ariaLabel={lf("Header")}>
                 <div className="left menu">
                     {getOrganizationLogo()}
                     {getTargetLogo()}
@@ -99,12 +69,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 <div className="spacer" />
 
                 <div className="header-right">
-                    <Button
-                        className="menu-button"
-                        leftIcon="fas fa-home large"
-                        title={lf("Return to the editor homepage")}
-                        onClick={onHomeClicked}
-                    />
+                    <Button className="menu-button" leftIcon="fas fa-home large" title={lf("Return to the editor homepage")} onClick={onHomeClicked} />
                 </div>
             </MenuBar>
         </header>
