@@ -2,10 +2,11 @@
 
 import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
-import { getCatalogCriteriaWithId } from "../utils";
+import { getCatalogCriteriaWithId } from "../state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
 import { showCatalogModal } from "../transforms/showCatalogModal";
+
 
 interface IProps {}
 
@@ -16,13 +17,13 @@ const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
         <div className="rubric-display">
             <h3>{lf("Rubric")}</h3>
             {teacherTool.selectedCriteria?.map(criteriaInstance => {
-                const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
+                if (!criteriaInstance) return null;
 
-                return criteriaInstance?.catalogCriteriaId && (
-                        <div className="criteria-instance-display" id={`criteriaInstance${criteriaInstance.instanceId}`}>
+                const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
+                return criteriaInstance.catalogCriteriaId && (
+                        <div className="criteria-instance-display" key={criteriaInstance.instanceId}>
                             {catalogCriteria?.template}
                             <Button
-                                id={`btnRemove${criteriaInstance.instanceId}`}
                                 className="criteria-btn-remove"
                                 label={lf("X")}
                                 onClick={() => removeCriteriaFromRubric(criteriaInstance)}

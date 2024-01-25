@@ -1,19 +1,21 @@
 import { stateAndDispatch } from "../state";
-import { v4 as uuidV4 } from 'uuid';
 import * as Actions from "../state/actions";
+import { getCatalogCriteriaWithId } from "../state/helpers";
 import { logDebug, logError } from "../services/loggingService";
-import { getCatalogCriteriaWithId } from "../utils";
+import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
+import { nanoid } from "nanoid";
+import { ErrorCode } from "../types/errorCode";
 
-export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
-    const { dispatch } = stateAndDispatch();
+export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
+    const { state: teacherTool, dispatch } = stateAndDispatch();
 
     // Create instances for each of the catalog criteria.
-    const instances = catalogCriteriaIds.reduce((accumulator, catalogCriteriaId) => {
-        logDebug(`Adding criteria with ID ${catalogCriteriaId}`);
+    const newSelectedCriteria = [...teacherTool.selectedCriteria ?? []]
+    for(const catalogCriteriaId of catalogCriteriaIds) {
         const catalogCriteria = getCatalogCriteriaWithId(catalogCriteriaId);
         if (!catalogCriteria) {
-            logError("adding_missing_criteria", "Attempting to add criteria with unrecognized id", { id: catalogCriteriaId });
-            return accumulator;
+            logError(ErrorCode.addingMissingCriteria, "Attempting to add criteria with unrecognized id", { id: catalogCriteriaId });
+            continue;
         }
 
         const params = catalogCriteria.parameters?.map(
@@ -21,20 +23,22 @@ export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
                 ({
                     name: param.name,
                     value: undefined,
-                } as pxt.blocks.CriteriaParameterValue)
+                } as CriteriaParameterValue)
         );
 
-        const instanceId = uuidV4();
+        const instanceId = nanoid();
+
+        logDebug(`Adding criteria with Catalog ID '${catalogCriteriaId}' and Instance ID '${instanceId}'`);
         const criteriaInstance = {
             catalogCriteriaId,
             instanceId,
             params
-        } as pxt.blocks.CriteriaInstance;
+        } as CriteriaInstance;
 
-        return [...accumulator, criteriaInstance];
-    }, [] as pxt.blocks.CriteriaInstance[]);
+        newSelectedCriteria.push(criteriaInstance);
+    }
 
-    dispatch(Actions.addCriteriaInstances(instances));
+    dispatch(Actions.setSelectedCriteria(newSelectedCriteria));
 
     pxt.tickEvent("teachertool.addcriteria", { ids: JSON.stringify(catalogCriteriaIds) });
 }

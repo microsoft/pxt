@@ -1,13 +1,14 @@
 import { logDebug } from "../services/loggingService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
+import { ModalType } from "../types";
 
-export async function hideCatalogModal() {
+export function hideModal(modal: ModalType) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
-    if (teacherTool.modal === "catalog-display") {
+    if (teacherTool.modal === modal) {
         dispatch(Actions.hideModal());
     } else {
-        logDebug("hideCatalog called when catalog-display modal was not open");
+        logDebug(`Trying to hide '${modal}' model when it was not active`);
     }
 }

@@ -1,23 +1,42 @@
-const formatMessageForConsole = (message: string) => {
+import { ErrorCode } from "../types/errorCode";
+
+const timestamp = () => {
     const time = new Date();
-    return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}] ${message}`;
-}
+    return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}]`;
+};
 
-const formatName = (name: string) => {
-    return name.toLowerCase().replace(/ /g, "_");
-}
-
-export const logError = (name: string, details: string, props: pxt.Map<string | number> = {}) => {
-    pxt.tickEvent("teachertool.error", { ...props, name: formatName(name), message: details });
-    console.error(formatMessageForConsole(`${name}: '${details}' Props: ${JSON.stringify(props)}`));
-}
-
-export const logInfo = (message: string) => {
-    console.log(formatMessageForConsole(message));
-}
-
-export const logDebug = (message: string) => {
-    if (pxt.BrowserUtils.isLocalHost() || pxt.options.debug) {
-        console.log(formatMessageForConsole(message));
+export const logError = (
+    errorCode: ErrorCode,
+    message?: any,
+    data: pxt.Map<string | number> = {}
+) => {
+    let dataObj = { ...data };
+    if (message) {
+        if (typeof message === "object") {
+            dataObj = { ...dataObj, ...message };
+            // Look for non-enumerable properties found on Error objects
+            ["message", "stack", "name"].forEach(key => {
+                if (message[key]) {
+                    dataObj[key] = message[key];
+                }
+            });
+        } else {
+            dataObj.message = message;
+        }
     }
-}
+    pxt.tickEvent("teachertool.error", {
+        ...dataObj,
+        errorCode,
+    });
+    console.error(timestamp(), errorCode, dataObj);
+};
+
+export const logInfo = (message: any) => {
+    console.log(timestamp(), message);
+};
+
+export const logDebug = (message: any) => {
+    if (pxt.BrowserUtils.isLocalHost() || pxt.options.debug) {
+        console.log(timestamp(), message);
+    }
+};

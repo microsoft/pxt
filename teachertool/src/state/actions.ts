@@ -1,4 +1,5 @@
 import { ModalType, NotificationWithId } from "../types";
+import { CatalogCriteria, CriteriaInstance } from "../types/criteria";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -28,14 +29,19 @@ type SetEvalResult = ActionBase & {
     result: pxt.blocks.EvaluationResult | undefined;
 };
 
-type SetCatalog = ActionBase & {
-    type: "SET_CATALOG";
-    catalog: pxt.blocks.CatalogCriteria[] | undefined;
+type SetTargetConfig = ActionBase & {
+    type: "SET_TARGET_CONFIG";
+    config: pxt.TargetConfig;
 };
 
-type AddCriteriaInstances = ActionBase & {
-    type: "ADD_CRITERIA_INSTANCES"
-    criteria: pxt.blocks.CriteriaInstance[];
+type SetCatalog = ActionBase & {
+    type: "SET_CATALOG";
+    catalog: CatalogCriteria[] | undefined;
+};
+
+type SetSelectedCriteria = ActionBase & {
+    type: "SET_SELECTED_CRITERIA"
+    criteria: CriteriaInstance[];
 };
 
 type RemoveCriteriaInstance = ActionBase & {
@@ -66,8 +72,9 @@ export type Action =
     | RemoveNotification
     | SetProjectMetadata
     | SetEvalResult
+    | SetTargetConfig
     | SetCatalog
-    | AddCriteriaInstances
+    | SetSelectedCriteria
     | RemoveCriteriaInstance
     | ShowModal
     | HideModal
@@ -88,23 +95,32 @@ const removeNotification = (notificationId: string): RemoveNotification => ({
     notificationId,
 });
 
-const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
+const setProjectMetadata = (
+    metadata: pxt.Cloud.JsonScript | undefined
+): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
     metadata,
 });
 
-const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEvalResult => ({
+const setEvalResult = (
+    result: pxt.blocks.EvaluationResult | undefined
+): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
     result,
 });
 
-const setCatalog = (catalog: pxt.blocks.CatalogCriteria[] | undefined): SetCatalog => ({
+const setTargetConfig = (config: pxt.TargetConfig): SetTargetConfig => ({
+    type: "SET_TARGET_CONFIG",
+    config,
+});
+
+const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     type: "SET_CATALOG",
     catalog,
 });
 
-const addCriteriaInstances = (criteria: pxt.blocks.CriteriaInstance[]): AddCriteriaInstances => ({
-    type: "ADD_CRITERIA_INSTANCES",
+const setSelectedCriteria = (criteria: CriteriaInstance[]): SetSelectedCriteria => ({
+    type: "SET_SELECTED_CRITERIA",
     criteria,
 });
 
@@ -132,8 +148,9 @@ export {
     removeNotification,
     setProjectMetadata,
     setEvalResult,
+    setTargetConfig,
     setCatalog,
-    addCriteriaInstances,
+    setSelectedCriteria,
     removeCriteriaInstance,
     showModal,
     hideModal,

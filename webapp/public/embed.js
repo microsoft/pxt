@@ -27,7 +27,7 @@
     window.ksRunnerWhenLoaded = function() {
         pxt.docs.requireHighlightJs = function() { return hljs; }
         pxt.setupWebConfig(pxtConfig || window.pxtWebConfig)
-        pxt.runner.initCallbacks = pxtCallbacks
+        pxt.runner.setInitCallbacks(pxtCallbacks)
         pxtCallbacks.push(function() {
             pxtCallbacks = null
         })

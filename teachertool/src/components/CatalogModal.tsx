@@ -4,37 +4,40 @@ import { useContext, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Checkbox } from "react-common/components/controls/Checkbox";
 import { Modal } from "react-common/components/controls/Modal";
-import { hideCatalogModal } from "../transforms/hideCatalogModal";
+import { hideModal } from "../transforms/hideModal";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
+import { CatalogCriteria } from "../types/criteria";
 
 interface IProps {}
 
 const CatalogModal: React.FC<IProps> = ({}) => {
-    const { state: teacherTool, dispatch } = useContext(AppStateContext);
-    const [ checkedCriteriaIds, setCheckedCriteria ] = useState<string[]>([]);
+    const { state: teacherTool } = useContext(AppStateContext);
+    const [ checkedCriteriaIds, setCheckedCriteria ] = useState<Set<string>>(new Set<string>());
 
-    function handleCheckboxChange(criteria: pxt.blocks.CatalogCriteria, newValue: boolean) {
-        if (newValue && !checkedCriteriaIds.includes(criteria.id)) {
-            setCheckedCriteria(checkedCriteriaIds.concat(criteria.id));
-        } else if (!newValue && checkedCriteriaIds.includes(criteria.id)) {
-            setCheckedCriteria(checkedCriteriaIds.filter(id => id !== criteria.id));
+    function handleCriteriaSelectedChange(criteria: CatalogCriteria, newValue: boolean) {
+        const newSet = new Set(checkedCriteriaIds);
+        if (newValue) {
+            newSet.add(criteria.id);
+        } else {
+            newSet.delete(criteria.id); // Returns false if criteria.id is not in the set, can be safely ignored.
         }
+        setCheckedCriteria(newSet);
     }
 
-    function isCheckboxChecked(criteriaId: string): boolean {
-        return checkedCriteriaIds.includes(criteriaId);
+    function isCriteriaSelected(criteriaId: string): boolean {
+        return checkedCriteriaIds.has(criteriaId);
     }
 
-    function handleDoneClicked() {
-        addCriteriaToRubric(checkedCriteriaIds)
+    function handleAddSelectedClicked() {
+        addCriteriaToRubric([...checkedCriteriaIds]);
         closeModal();
     }
 
     function closeModal() {
-        hideCatalogModal();
+        hideModal("catalog-display");
 
         // Clear for next open.
-        setCheckedCriteria([]);
+        setCheckedCriteria(new Set<string>());
     }
 
     const modalActions = [
@@ -46,24 +49,23 @@ const CatalogModal: React.FC<IProps> = ({}) => {
         {
             label: lf("Add Selected"),
             className: "primary",
-            onClick: handleDoneClicked,
+            onClick: handleAddSelectedClicked,
         },
     ]
 
-    return teacherTool.modal ? (
+    return teacherTool.modal === "catalog-display" ? (
         <Modal className="catalog-modal" title={lf("Select the criteria you'd like to include")} onClose={closeModal} actions={modalActions}>
-            <div className="catalog-container" title={lf("Select the criteria you'd like to include")}>
-                {teacherTool.catalog?.map(criteria => {
-                    return criteria?.template && (
-                            <Checkbox
-                                id={`chk${criteria.id}`}
-                                className="catalog-item"
-                                label={criteria.template}
-                                onChange={(newValue) => handleCheckboxChange(criteria, newValue)}
-                                isChecked={isCheckboxChecked(criteria.id)} />
-                    );
-                })}
-            </div>
+            {teacherTool.catalog?.map(criteria => {
+                return criteria?.template && (
+                        <Checkbox
+                            id={`checkbox_${criteria.id}`}
+                            key={criteria.id}
+                            className="catalog-item"
+                            label={criteria.template}
+                            onChange={(newValue) => handleCriteriaSelectedChange(criteria, newValue)}
+                            isChecked={isCriteriaSelected(criteria.id)} />
+                );
+            })}
         </Modal>
     ) : null;
 };

@@ -46,26 +46,13 @@
 
 
 body {
-    position: relative;
-    margin: 0;
-    font-family: var(--body-font-family);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: var(--body-background-color);
     overflow: hidden;
 }
 
 code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
-}
-
-#root {
-    width: 100%;
-    height: 100%;
-}
-
-#root.editor {
-    height: 100%;
 }
 
 .app-container {
@@ -92,18 +79,22 @@ code {
 /***** HEADER BAR  *****/
 /*******************************/
 
-.header {
-    background-color: var(--tertiary-color);
+.menubar {
+    position: relative;
+    .ui.menu .brand .ui.logo {
+        height: 1.1rem;
+    }
+}
 
+.ui.header {
     height: var(--header-height);
     max-height: var(--header-height);
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: var(--inverted-text-color);
     flex-grow: 0;
     flex-shrink: 0;
-
     z-index: var(--above-frame-zindex);
 }
 
@@ -124,7 +115,6 @@ code {
 }
 
 .header .brand:before {
-    position: relative;
     height: 1.5rem;
     border-left: 2px solid #fff;
     content: " ";
@@ -302,12 +292,6 @@ code {
 .catalog-modal .common-modal-footer {
     display: flex;
     justify-content: flex-end;
-}
-
-.catalog-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
 }
 
 .catalog-done {

@@ -1,6 +1,5 @@
 import { nanoid } from "nanoid";
 import { NotificationWithId } from "../types";
-import { stateAndDispatch } from "../state";
 
 export function makeNotification(
     message: string,
@@ -25,9 +24,4 @@ export const getEditorUrl = (embedUrl: string) => {
     // example: https://arcade.makecode.com/abc123 and this would get returned
     const path = /\/([\da-zA-Z\.]+)(?:--)?/i.exec(window.location.pathname);
     return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
-}
-
-export function getCatalogCriteriaWithId(id: string): pxt.blocks.CatalogCriteria | undefined {
-    const { state } = stateAndDispatch();
-    return state.catalog?.find(c => c.id === id);
 }
