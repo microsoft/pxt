@@ -29,6 +29,11 @@ type SetEvalResult = ActionBase & {
     result: pxt.blocks.EvaluationResult | undefined;
 };
 
+type SetTargetConfig = ActionBase & {
+    type: "SET_TARGET_CONFIG";
+    config: pxt.TargetConfig;
+};
+
 type SetCatalog = ActionBase & {
     type: "SET_CATALOG";
     catalog: CatalogCriteria[] | undefined;
@@ -62,6 +67,7 @@ export type Action =
     | RemoveNotification
     | SetProjectMetadata
     | SetEvalResult
+    | SetTargetConfig
     | SetCatalog
     | SetSelectedCriteria
     | RemoveCriteriaInstance
@@ -83,14 +89,23 @@ const removeNotification = (notificationId: string): RemoveNotification => ({
     notificationId,
 });
 
-const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
+const setProjectMetadata = (
+    metadata: pxt.Cloud.JsonScript | undefined
+): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
     metadata,
 });
 
-const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEvalResult => ({
+const setEvalResult = (
+    result: pxt.blocks.EvaluationResult | undefined
+): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
     result,
+});
+
+const setTargetConfig = (config: pxt.TargetConfig): SetTargetConfig => ({
+    type: "SET_TARGET_CONFIG",
+    config,
 });
 
 const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
@@ -122,6 +137,7 @@ export {
     removeNotification,
     setProjectMetadata,
     setEvalResult,
+    setTargetConfig,
     setCatalog,
     setSelectedCriteria,
     removeCriteriaInstance,

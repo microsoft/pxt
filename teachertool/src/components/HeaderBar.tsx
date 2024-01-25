@@ -3,67 +3,112 @@ import * as React from "react";
 import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 
-interface HeaderBarProps {
-}
+interface HeaderBarProps {}
 
-export class HeaderBar extends React.Component<HeaderBarProps> {
-    protected reportAbuseUrl = "https://github.com/contact/report-content";
+export const HeaderBar: React.FC<HeaderBarProps> = () => {
+    const appTheme = pxt.appTarget?.appTheme;
 
-    protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
-        const logoUrl = targetTheme.organizationWideLogo;
-        return <div className="header-logo">
-            {logoUrl
-                ? <img src={logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
-                : <span className="name">{targetTheme.organization}</span>}
-        </div>
-    }
+    const brandIconClick = () => {};
 
-    protected getTargetLogo(targetTheme: pxt.AppTheme) {
-        return <div className={`ui item logo brand noclick}`}>
-            {targetTheme.useTextLogo
-                ? [<span className="name" key="org-name" onClick={this.onHomeClicked}>{targetTheme.organizationText}</span>,
-                   <span className="name-short" key="org-name-short" onClick={this.onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>]
-                : (targetTheme.logo || targetTheme.portraitLogo
-                    ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
-                    : <span className="name"> {targetTheme.boardName}</span>)
-            }
-        </div>
-    }
+    const getOrganizationLogo = () => {
+        return (
+            <div className="ui item logo organization">
+                {appTheme.organizationWideLogo || appTheme.organizationLogo ? (
+                    <img
+                        className={`ui logo`}
+                        src={
+                            appTheme.organizationWideLogo ||
+                            appTheme.organizationLogo
+                        }
+                        alt={lf("{0} Logo", appTheme.organization)}
+                    />
+                ) : (
+                    <span className="name">{appTheme.organization}</span>
+                )}
+            </div>
+        );
+    };
 
-    onHomeClicked = () => {
+    const getTargetLogo = () => {
+        return (
+            <div
+                aria-label={lf("{0} Logo", appTheme.boardName)}
+                role="menuitem"
+                className={`ui item logo brand mobile hide`}
+                onClick={brandIconClick}
+            >
+                {appTheme.useTextLogo ? (
+                    [
+                        <span className="name" key="org-name">
+                            {appTheme.organizationText}
+                        </span>,
+                        <span className="name-short" key="org-name-short">
+                            {appTheme.organizationShortText ||
+                                appTheme.organizationText}
+                        </span>,
+                    ]
+                ) : appTheme.logo || appTheme.portraitLogo ? (
+                    <img
+                        className={`ui ${
+                            appTheme.logoWide ? "small" : ""
+                        } logo`}
+                        src={appTheme.logo || appTheme.portraitLogo}
+                        alt={lf("{0} Logo", appTheme.boardName)}
+                    />
+                ) : (
+                    <span className="name">{appTheme.boardName}</span>
+                )}
+            </div>
+        );
+    };
+
+    const onHomeClicked = () => {
         pxt.tickEvent("teacherTool.home");
 
         // relprefix looks like "/beta---", need to chop off the hyphens and slash
-        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        let rel = pxt.webConfig?.relprefix.substr(
+            0,
+            pxt.webConfig.relprefix.length - 3
+        );
         if (pxt.appTarget.appTheme.homeUrl && rel) {
-            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+            if (
+                pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") ===
+                pxt.appTarget.appTheme.homeUrl?.length - 1
+            ) {
                 rel = rel.substr(1);
             }
             window.open(pxt.appTarget.appTheme.homeUrl + rel);
-        }
-        else {
+        } else {
             window.open(pxt.appTarget.appTheme.homeUrl);
         }
-    }
+    };
 
-    render() {
-        const hasIdentity = pxt.auth.hasIdentity();
+    return (
+        <header className="menubar" role="banner">
+            <MenuBar
+                className={`ui menu ${
+                    appTheme?.invertedMenu ? `inverted` : ""
+                } header`}
+                ariaLabel={lf("Header")}
+            >
+                <div className="left menu">
+                    {getOrganizationLogo()}
+                    {getTargetLogo()}
+                </div>
 
-        const appTheme = pxt.appTarget?.appTheme;
+                <div className="spacer" />
 
-        return <MenuBar className="header" ariaLabel={lf("Header")}>
-            <div className="header-left">
-                {this.getOrganizationLogo(appTheme)}
-                {this.getTargetLogo(appTheme)}
-            </div>
-
-            <div className="spacer" />
-
-            <div className="header-right">
-                <Button className="menu-button" leftIcon="fas fa-home large" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
-            </div>
-        </MenuBar>
-    }
-}
+                <div className="header-right">
+                    <Button
+                        className="menu-button"
+                        leftIcon="fas fa-home large"
+                        title={lf("Return to the editor homepage")}
+                        onClick={onHomeClicked}
+                    />
+                </div>
+            </MenuBar>
+        </header>
+    );
+};
 
 export default HeaderBar;

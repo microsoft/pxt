@@ -1,28 +1,42 @@
 import { ErrorCode } from "../types/errorCode";
 
-const formatMessageForConsole = (message: string) => {
+const timestamp = () => {
     const time = new Date();
-    return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}] ${message}`;
-}
+    return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}]`;
+};
 
-export const logError = (name: ErrorCode, details: string, data: pxt.Map<string | number> = {}) => {
-    let callstack = "";
-    try {
-        throw new Error();
-    } catch (e) {
-        callstack = (e as Error).stack ?? "";
+export const logError = (
+    errorCode: ErrorCode,
+    message?: any,
+    data: pxt.Map<string | number> = {}
+) => {
+    let dataObj = { ...data };
+    if (message) {
+        if (typeof message === "object") {
+            dataObj = { ...dataObj, ...message };
+            // Look for non-enumerable properties found on Error objects
+            ["message", "stack", "name"].forEach(key => {
+                if (message[key]) {
+                    dataObj[key] = message[key];
+                }
+            });
+        } else {
+            dataObj.message = message;
+        }
     }
+    pxt.tickEvent("teachertool.error", {
+        ...dataObj,
+        errorCode,
+    });
+    console.error(timestamp(), errorCode, dataObj);
+};
 
-    pxt.tickEvent("teachertool.error", { ...data, name: name, message: details, callstack: callstack });
-    console.error(formatMessageForConsole(`${name}: '${details}'\nData: ${JSON.stringify(data)}\nCallstack: ${callstack}`));
-}
+export const logInfo = (message: any) => {
+    console.log(timestamp(), message);
+};
 
-export const logInfo = (message: string) => {
-    console.log(formatMessageForConsole(message));
-}
-
-export const logDebug = (message: string) => {
+export const logDebug = (message: any) => {
     if (pxt.BrowserUtils.isLocalHost() || pxt.options.debug) {
-        console.log(formatMessageForConsole(message));
+        console.log(timestamp(), message);
     }
-}
+};

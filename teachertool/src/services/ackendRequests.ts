@@ -1,6 +1,9 @@
-export const getProjectTextAsync = async (
+import { ErrorCode } from "../types/errorCode";
+import { logError } from "./loggingService";
+
+export async function getProjectTextAsync(
     projectId: string
-): Promise<pxt.Cloud.JsonText | undefined> => {
+): Promise<pxt.Cloud.JsonText | undefined> {
     try {
         const projectTextUrl = `${pxt.Cloud.apiRoot}/${projectId}/text`;
         const response = await fetch(projectTextUrl);
@@ -10,14 +13,14 @@ export const getProjectTextAsync = async (
             const projectText = await response.json();
             return projectText;
         }
-    } catch (error) {
-        console.error(error);
+    } catch (e) {
+        logError(ErrorCode.getProjectTextAsync, e);
     }
-};
+}
 
-export const getProjectMetaAsync = async (
+export async function getProjectMetaAsync(
     projectId: string
-): Promise<pxt.Cloud.JsonScript | undefined> => {
+): Promise<pxt.Cloud.JsonScript | undefined> {
     try {
         const projectMetaUrl = `${pxt.Cloud.apiRoot}/${projectId}`;
         const response = await fetch(projectMetaUrl);
@@ -27,7 +30,17 @@ export const getProjectMetaAsync = async (
             const projectMeta = await response.json();
             return projectMeta;
         }
-    } catch (error) {
-        console.error(error);
+    } catch (e) {
+        logError(ErrorCode.getProjectMetaAsync, e);
     }
-};
+}
+
+export async function downloadTargetConfigAsync(): Promise<
+    pxt.TargetConfig | undefined
+> {
+    try {
+        return await pxt.targetConfigAsync();
+    } catch (e) {
+        logError(ErrorCode.downloadTargetConfigAsync, e);
+    }
+}

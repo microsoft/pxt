@@ -30,8 +30,7 @@ export async function loadCatalogAsync() {
             const catalogContent = await catalogResponse.json() as CatalogInfo;
             fullCatalog = fullCatalog.concat(catalogContent.criteria ?? []);
         } catch (e) {
-            const details = e instanceof Error ? e.toString() : "Unable to load catalog file.";
-            logError(ErrorCode.loadCatalogFailed, details, { catalogFile });
+            logError(ErrorCode.loadCatalogFailed, e, { catalogFile });
             continue;
         }
     }

@@ -37,7 +37,7 @@ const DebugInput: React.FC<IProps> = ({}) => {
                     rows={20}
                     onChange={setRubric} />
             </div>
-            <Button id="evaluateSingleProjectButton" className="primary" onClick={evaluate} title={"Evaluate"} label={lf("Evaluate")} />
+            <Button id="evaluateSingleProjectButton" className="ui button primary" onClick={evaluate} title={"Evaluate"} label={lf("Evaluate")} />
         </div>
     )
 

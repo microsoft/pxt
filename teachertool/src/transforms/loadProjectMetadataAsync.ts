@@ -1,6 +1,6 @@
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
-import { getProjectMetaAsync } from "../services/BackendRequests";
+import { getProjectMetaAsync } from "../services/ackendRequests";
 import { logDebug } from "../services/loggingService";
 import { postNotification } from "./postNotification";
 import { makeNotification } from "../utils";
