@@ -11,28 +11,40 @@ import { makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
 import EvalResultDisplay from "./components/EvalResultDisplay";
-
+import { downloadTargetConfigAsync } from "./services/ackendRequests";
+import * as Actions from "./state/actions";
+import { logDebug } from "./services/loggingService";
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
-    const [didNotify, setDidNotify] = useState(false);
+    const [inited, setInited] = useState(false);
 
     const ready = usePromise(AppStateReady, false);
 
     useEffect(() => {
-        // Init subsystems.
-        NotificationService.initialize();
-    }, [ready]);
+        if (ready && !inited) {
+            NotificationService.initialize();
+            Promise.resolve().then(async () => {
+                const cfg = await downloadTargetConfigAsync();
+                dispatch(Actions.setTargetConfig(cfg || {}));
+                pxt.BrowserUtils.initTheme();
+                // TODO: Remove this. Delay app init to expose any startup race conditions.
+                setTimeout(() => {
+                    // Test notification
+                    postNotification(makeNotification("🎓", 2000));
+                    setInited(true);
 
-    // Test notification
-    useEffect(() => {
-        if (ready && !didNotify) {
-            postNotification(makeNotification("🎓", 2000));
-            setDidNotify(true);
+                    logDebug("App initialized");
+                }, 10);
+            });
         }
-    }, [ready]);
+    }, [ready, inited]);
 
-    return (
+    return !inited ? (
+        <div className="ui active dimmer">
+            <div className="ui large main loader msft"></div>
+        </div>
+    ) : (
         <div className="app-container">
             <HeaderBar />
             <div className="inner-app-container">

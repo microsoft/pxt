@@ -43,7 +43,11 @@ export default function reducer(state: AppState, action: Action): AppState {
                 currentEvalResult: action.result,
             };
         }
+        case "SET_TARGET_CONFIG": {
+            return {
+                ...state,
+                targetConfig: action.config,
+            };
+        }
     }
-
-    return state;
 }
