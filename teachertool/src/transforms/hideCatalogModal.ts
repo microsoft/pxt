@@ -2,7 +2,7 @@ import { logDebug } from "../services/loggingService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 
-export async function hideCatalogModal() {
+export function hideCatalogModal() {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
     if (teacherTool.modal === "catalog-display") {

@@ -15,7 +15,7 @@ import ActiveRubricDisplay from "./components/ActiveRubricDisplay";
 import CatalogModal from "./components/CatalogModal";
 
 import { postNotification } from "./transforms/postNotification";
-import { loadCatalog } from "./transforms/loadCatalog";
+import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 
 
 function App() {
@@ -30,7 +30,7 @@ function App() {
             NotificationService.initialize();
 
             // Load criteria catalog
-            loadCatalog();
+            loadCatalogAsync();
         }
     }, [ready]);
 

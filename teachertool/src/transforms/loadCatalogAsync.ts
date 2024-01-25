@@ -18,7 +18,7 @@ interface CatalogInfo {
     criteria: CatalogCriteria[];
 }
 
-export async function loadCatalog() {
+export async function loadCatalogAsync() {
     const { dispatch } = stateAndDispatch();
     const catalogFiles = pxt.options.debug ? prodFiles.concat(testFiles) : prodFiles;
 

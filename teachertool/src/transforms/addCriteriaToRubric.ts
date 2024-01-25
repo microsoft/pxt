@@ -5,7 +5,7 @@ import { getCatalogCriteriaWithId } from "../utils";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
 
-export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
+export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
     // Create instances for each of the catalog criteria.
