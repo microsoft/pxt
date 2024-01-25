@@ -20,8 +20,8 @@ interface CatalogInfo {
 }
 
 export async function loadCatalogAsync() {
-    const { dispatch } = stateAndDispatch();
-    const catalogFiles = pxt.options.debug ? prodFiles.concat(testFiles) : prodFiles;
+    const { state: teacherTool, dispatch } = stateAndDispatch();
+    const catalogFiles = teacherTool.flags.testCatalog ? prodFiles.concat(testFiles) : prodFiles;
 
     let fullCatalog: CatalogCriteria[] = [];
     for (const catalogFile of catalogFiles) {
@@ -30,7 +30,7 @@ export async function loadCatalogAsync() {
             const catalogContent = await catalogResponse.json() as CatalogInfo;
             fullCatalog = fullCatalog.concat(catalogContent.criteria ?? []);
         } catch (e) {
-            const details = e instanceof Error ? e.toString() : "Unable to load catalog file."
+            const details = e instanceof Error ? e.toString() : "Unable to load catalog file.";
             logError(ErrorCode.loadCatalogFailed, details, { catalogFile });
             continue;
         }

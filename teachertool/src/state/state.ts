@@ -9,6 +9,9 @@ export type AppState = {
     catalog: CatalogCriteria[] | undefined;
     selectedCriteria: CriteriaInstance[];
     modal: ModalType | undefined;
+    flags: {
+        testCatalog: boolean;
+    }
 };
 
 export const initialAppState: AppState = {
@@ -17,5 +20,8 @@ export const initialAppState: AppState = {
     projectMetadata: undefined,
     catalog: undefined,
     selectedCriteria: [],
-    modal: undefined
+    modal: undefined,
+    flags: {
+        testCatalog: false
+    }
 };
