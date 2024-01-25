@@ -4,7 +4,7 @@ import { useContext, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Checkbox } from "react-common/components/controls/Checkbox";
 import { Modal } from "react-common/components/controls/Modal";
-import { hideCatalogModal } from "../transforms/hideCatalogModal";
+import { hideModal } from "../transforms/hideModal";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
 
@@ -34,7 +34,7 @@ const CatalogModal: React.FC<IProps> = ({}) => {
     }
 
     function closeModal() {
-        hideCatalogModal();
+        hideModal("catalog-display");
 
         // Clear for next open.
         setCheckedCriteria(new Set<string>());
