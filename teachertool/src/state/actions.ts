@@ -28,6 +28,11 @@ type SetEvalResult = ActionBase & {
     result: pxt.blocks.EvaluationResult | undefined;
 };
 
+type SetTargetConfig = ActionBase & {
+    type: "SET_TARGET_CONFIG";
+    config: pxt.TargetConfig;
+};
+
 /**
  * Union of all actions
  */
@@ -36,7 +41,8 @@ export type Action =
     | PostNotification
     | RemoveNotification
     | SetProjectMetadata
-    | SetEvalResult;
+    | SetEvalResult
+    | SetTargetConfig;
 
 /**
  * Action creators
@@ -53,14 +59,23 @@ const removeNotification = (notificationId: string): RemoveNotification => ({
     notificationId,
 });
 
-const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
+const setProjectMetadata = (
+    metadata: pxt.Cloud.JsonScript | undefined
+): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
     metadata,
 });
 
-const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEvalResult => ({
+const setEvalResult = (
+    result: pxt.blocks.EvaluationResult | undefined
+): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
     result,
+});
+
+const setTargetConfig = (config: pxt.TargetConfig): SetTargetConfig => ({
+    type: "SET_TARGET_CONFIG",
+    config,
 });
 
 export {
@@ -68,4 +83,5 @@ export {
     removeNotification,
     setProjectMetadata,
     setEvalResult,
+    setTargetConfig,
 };

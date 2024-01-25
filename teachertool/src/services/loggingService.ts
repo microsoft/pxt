@@ -1,24 +1,32 @@
-const formatMessageForConsole = (message: string) => {
+const timestamp = () => {
     const time = new Date();
-    return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}] ${message}`;
-}
+    return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}]`;
+};
 
 const formatName = (name: string) => {
     return name.toLowerCase().replace(/ /g, "_");
-}
+};
 
-export const logError = (name: string, details: string) => {
-    pxt.tickEvent("teachertool.error", { name: formatName(name), message: details });
-    console.error(formatMessageForConsole(`${name}: ${details}`));
-}
+export const logError = (
+    name: string,
+    message?: any,
+    data: pxt.Map<string | number> = {}
+) => {
+    name = formatName(name);
+    pxt.tickEvent("teachertool.error", {
+        ...data,
+        name,
+        message: JSON.stringify(message ?? ""),
+    });
+    console.error(timestamp(), name, message, data);
+};
 
-export const logInfo = (name: string, message: string) => {
-    pxt.tickEvent(`teachertool.${formatName(name)}`, { message: message });
-    console.log(formatMessageForConsole(message));
-}
+export const logInfo = (message: any) => {
+    console.log(timestamp(), message);
+};
 
-export const logDebug = (message: string) => {
+export const logDebug = (message: any) => {
     if (pxt.BrowserUtils.isLocalHost() || pxt.options.debug) {
-        console.log(formatMessageForConsole(message));
+        console.log(timestamp(), message);
     }
-}
+};
