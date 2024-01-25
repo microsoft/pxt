@@ -1,13 +1,11 @@
+import { ErrorName } from "../types/errorName";
+
 const formatMessageForConsole = (message: string) => {
     const time = new Date();
     return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}] ${message}`;
 }
 
-const formatName = (name: string) => {
-    return name.toLowerCase().replace(/ /g, "_");
-}
-
-export const logError = (name: string, details: string, data: pxt.Map<string | number> = {}) => {
+export const logError = (name: ErrorName, details: string, data: pxt.Map<string | number> = {}) => {
     let callstack = "";
     try {
         throw new Error();
@@ -15,7 +13,7 @@ export const logError = (name: string, details: string, data: pxt.Map<string | n
         callstack = (e as Error).stack ?? "";
     }
 
-    pxt.tickEvent("teachertool.error", { ...data, name: formatName(name), message: details, callstack: callstack });
+    pxt.tickEvent("teachertool.error", { ...data, name: name, message: details, callstack: callstack });
     console.error(formatMessageForConsole(`${name}: '${details}'\nData: ${JSON.stringify(data)}\nCallstack: ${callstack}`));
 }
 
