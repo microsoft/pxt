@@ -19,7 +19,9 @@ const EvalResultDisplay: React.FC<IProps> = ({}) => {
                         return (
                             <div className="result-block-id" key={id}>
                                 <p className="block-id-label">{id}:</p>
-                                <p className={result ? "positive-text" : "negative-text"}>{result ? "passed" : "failed"}</p>
+                                <p className={result ? "positive-text" : "negative-text"}>
+                                    {result ? "passed" : "failed"}
+                                </p>
                             </div>
                         );
                     })}

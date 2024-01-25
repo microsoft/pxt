@@ -62,7 +62,17 @@ type HideModal = ActionBase & {
  * Union of all actions
  */
 
-export type Action = PostNotification | RemoveNotification | SetProjectMetadata | SetEvalResult | SetTargetConfig | SetCatalog | SetSelectedCriteria | RemoveCriteriaInstance | ShowModal | HideModal;
+export type Action =
+    | PostNotification
+    | RemoveNotification
+    | SetProjectMetadata
+    | SetEvalResult
+    | SetTargetConfig
+    | SetCatalog
+    | SetSelectedCriteria
+    | RemoveCriteriaInstance
+    | ShowModal
+    | HideModal;
 
 /**
  * Action creators
@@ -116,4 +126,15 @@ const hideModal = (): HideModal => ({
     type: "HIDE_MODAL",
 });
 
-export { postNotification, removeNotification, setProjectMetadata, setEvalResult, setTargetConfig, setCatalog, setSelectedCriteria, removeCriteriaInstance, showModal, hideModal };
+export {
+    postNotification,
+    removeNotification,
+    setProjectMetadata,
+    setEvalResult,
+    setTargetConfig,
+    setCatalog,
+    setSelectedCriteria,
+    removeCriteriaInstance,
+    showModal,
+    hideModal,
+};

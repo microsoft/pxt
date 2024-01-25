@@ -54,7 +54,12 @@ const CatalogModal: React.FC<IProps> = ({}) => {
     ];
 
     return teacherTool.modal === "catalog-display" ? (
-        <Modal className="catalog-modal" title={lf("Select the criteria you'd like to include")} onClose={closeModal} actions={modalActions}>
+        <Modal
+            className="catalog-modal"
+            title={lf("Select the criteria you'd like to include")}
+            onClose={closeModal}
+            actions={modalActions}
+        >
             {teacherTool.catalog?.map(criteria => {
                 return (
                     criteria?.template && (

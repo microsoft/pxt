@@ -14,7 +14,9 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     for (const catalogCriteriaId of catalogCriteriaIds) {
         const catalogCriteria = getCatalogCriteriaWithId(catalogCriteriaId);
         if (!catalogCriteria) {
-            logError(ErrorCode.addingMissingCriteria, "Attempting to add criteria with unrecognized id", { id: catalogCriteriaId });
+            logError(ErrorCode.addingMissingCriteria, "Attempting to add criteria with unrecognized id", {
+                id: catalogCriteriaId,
+            });
             continue;
         }
 
