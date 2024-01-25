@@ -11,7 +11,7 @@ import { makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
 import EvalResultDisplay from "./components/EvalResultDisplay";
-import { downloadTargetConfigAsync } from "./services/backendRequests";
+import { downloadTargetConfigAsync } from "./services/ackendRequests";
 import * as Actions from "./state/actions";
 import { logDebug } from "./services/loggingService";
 
