@@ -34,8 +34,8 @@ type SetCatalog = ActionBase & {
     catalog: CatalogCriteria[] | undefined;
 };
 
-type AddCriteriaInstances = ActionBase & {
-    type: "ADD_CRITERIA_INSTANCES"
+type SetSelectedCriteria = ActionBase & {
+    type: "SET_SELECTED_CRITERIA"
     criteria: CriteriaInstance[];
 };
 
@@ -63,7 +63,7 @@ export type Action =
     | SetProjectMetadata
     | SetEvalResult
     | SetCatalog
-    | AddCriteriaInstances
+    | SetSelectedCriteria
     | RemoveCriteriaInstance
     | ShowModal
     | HideModal;
@@ -98,8 +98,8 @@ const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     catalog,
 });
 
-const addCriteriaInstances = (criteria: CriteriaInstance[]): AddCriteriaInstances => ({
-    type: "ADD_CRITERIA_INSTANCES",
+const setSelectedCriteria = (criteria: CriteriaInstance[]): SetSelectedCriteria => ({
+    type: "SET_SELECTED_CRITERIA",
     criteria,
 });
 
@@ -123,7 +123,7 @@ export {
     setProjectMetadata,
     setEvalResult,
     setCatalog,
-    addCriteriaInstances,
+    setSelectedCriteria,
     removeCriteriaInstance,
     showModal,
     hideModal

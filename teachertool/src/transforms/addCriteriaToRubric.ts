@@ -6,15 +6,15 @@ import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
 
 export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
-    const { dispatch } = stateAndDispatch();
+    const { state: teacherTool, dispatch } = stateAndDispatch();
 
     // Create instances for each of the catalog criteria.
-    const instances = catalogCriteriaIds.reduce((accumulator, catalogCriteriaId) => {
-        logDebug(`Adding criteria with ID ${catalogCriteriaId}`);
+    const newSelectedCriteria = [...teacherTool.selectedCriteria ?? []]
+    for(const catalogCriteriaId of catalogCriteriaIds) {
         const catalogCriteria = getCatalogCriteriaWithId(catalogCriteriaId);
         if (!catalogCriteria) {
             logError("adding_missing_criteria", "Attempting to add criteria with unrecognized id", { id: catalogCriteriaId });
-            return accumulator;
+            continue;
         }
 
         const params = catalogCriteria.parameters?.map(
@@ -26,16 +26,18 @@ export async function addCriteriaToRubric(catalogCriteriaIds: string[]) {
         );
 
         const instanceId = nanoid();
+
+        logDebug(`Adding criteria with Catalog ID '${catalogCriteriaId}' and Instance ID '${instanceId}'`);
         const criteriaInstance = {
             catalogCriteriaId,
             instanceId,
             params
         } as CriteriaInstance;
 
-        return [...accumulator, criteriaInstance];
-    }, [] as CriteriaInstance[]);
+        newSelectedCriteria.push(criteriaInstance);
+    }
 
-    dispatch(Actions.addCriteriaInstances(instances));
+    dispatch(Actions.setSelectedCriteria(newSelectedCriteria));
 
     pxt.tickEvent("teachertool.addcriteria", { ids: JSON.stringify(catalogCriteriaIds) });
 }

@@ -49,10 +49,10 @@ export default function reducer(state: AppState, action: Action): AppState {
                 catalog: action.catalog,
             };
         }
-        case "ADD_CRITERIA_INSTANCES": {
+        case "SET_SELECTED_CRITERIA": {
             return {
                 ...state,
-                selectedCriteria: [...state.selectedCriteria, ...action.criteria],
+                selectedCriteria: [...action.criteria],
             };
         }
         case "REMOVE_CRITERIA_INSTANCE": {
