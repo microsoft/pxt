@@ -10,6 +10,8 @@ import { fireClickOnEnter } from "../../react-common/components/util";
 
 import * as pxtblockly from "../../newblocks";
 
+import * as Blockly from "blockly";
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 interface MarkedContentProps extends ISettingsProps {
@@ -262,8 +264,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             if (MarkedContent.blockSnippetCache[reqid]) {
                 // Use cache
                 const workspaceXml = MarkedContent.blockSnippetCache[reqid] as string;
-                const doc = Blockly.utils.xml.textToDomDocument(pxtblockly.serializeSvgString(workspaceXml));
-                wrapperDiv.appendChild(doc.documentElement);
+                const doc = Blockly.utils.xml.textToDom(pxtblockly.serializeSvgString(workspaceXml));
+                wrapperDiv.appendChild(doc);
                 pxsim.U.removeClass(wrapperDiv, 'loading');
             } else {
                 promises.push(parent.renderBlocksAsync(req).then(resp => {
