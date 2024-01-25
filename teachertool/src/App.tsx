@@ -3,17 +3,23 @@ import { useEffect, useContext, useState } from "react";
 import "./teacherTool.css";
 import { AppStateContext, AppStateReady } from "./state/appStateContext";
 import { usePromise } from "./hooks";
+import { makeNotification } from "./utils";
+import * as Actions from "./state/actions";
+import * as NotificationService from "./services/notificationService";
+import { downloadTargetConfigAsync } from "./services/ackendRequests";
+import { logDebug } from "./services/loggingService";
+
 import HeaderBar from "./components/HeaderBar";
 import Notifications from "./components/Notifications";
-import * as NotificationService from "./services/notificationService";
-import { postNotification } from "./transforms/postNotification";
-import { makeNotification } from "./utils";
 import DebugInput from "./components/DebugInput";
 import { MakeCodeFrame } from "./components/MakecodeFrame";
 import EvalResultDisplay from "./components/EvalResultDisplay";
-import { downloadTargetConfigAsync } from "./services/ackendRequests";
-import * as Actions from "./state/actions";
-import { logDebug } from "./services/loggingService";
+import ActiveRubricDisplay from "./components/ActiveRubricDisplay";
+import CatalogModal from "./components/CatalogModal";
+
+import { postNotification } from "./transforms/postNotification";
+import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
+
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
@@ -28,6 +34,10 @@ function App() {
                 const cfg = await downloadTargetConfigAsync();
                 dispatch(Actions.setTargetConfig(cfg || {}));
                 pxt.BrowserUtils.initTheme();
+
+                // Load criteria catalog
+                await loadCatalogAsync();
+
                 // TODO: Remove this. Delay app init to expose any startup race conditions.
                 setTimeout(() => {
                     // Test notification
@@ -49,9 +59,11 @@ function App() {
             <HeaderBar />
             <div className="inner-app-container">
                 <DebugInput />
+                <ActiveRubricDisplay />
                 <EvalResultDisplay />
                 <MakeCodeFrame />
             </div>
+            <CatalogModal />
             <Notifications />
         </div>
     );

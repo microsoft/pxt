@@ -1,4 +1,5 @@
-import { NotificationWithId } from "../types";
+import { ModalType, NotificationWithId } from "../types";
+import { CatalogCriteria, CriteriaInstance } from "../types/criteria";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -33,6 +34,30 @@ type SetTargetConfig = ActionBase & {
     config: pxt.TargetConfig;
 };
 
+type SetCatalog = ActionBase & {
+    type: "SET_CATALOG";
+    catalog: CatalogCriteria[] | undefined;
+};
+
+type SetSelectedCriteria = ActionBase & {
+    type: "SET_SELECTED_CRITERIA"
+    criteria: CriteriaInstance[];
+};
+
+type RemoveCriteriaInstance = ActionBase & {
+    type: "REMOVE_CRITERIA_INSTANCE";
+    instanceId: string;
+};
+
+type ShowModal = ActionBase & {
+    type: "SHOW_MODAL";
+    modal: ModalType;
+};
+
+type HideModal = ActionBase & {
+    type: "HIDE_MODAL";
+};
+
 /**
  * Union of all actions
  */
@@ -42,7 +67,12 @@ export type Action =
     | RemoveNotification
     | SetProjectMetadata
     | SetEvalResult
-    | SetTargetConfig;
+    | SetTargetConfig
+    | SetCatalog
+    | SetSelectedCriteria
+    | RemoveCriteriaInstance
+    | ShowModal
+    | HideModal;
 
 /**
  * Action creators
@@ -78,10 +108,39 @@ const setTargetConfig = (config: pxt.TargetConfig): SetTargetConfig => ({
     config,
 });
 
+const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
+    type: "SET_CATALOG",
+    catalog,
+});
+
+const setSelectedCriteria = (criteria: CriteriaInstance[]): SetSelectedCriteria => ({
+    type: "SET_SELECTED_CRITERIA",
+    criteria,
+});
+
+const removeCriteriaInstance = (instanceId: string): RemoveCriteriaInstance => ({
+    type: "REMOVE_CRITERIA_INSTANCE",
+    instanceId,
+});
+
+const showModal = (modal: ModalType): ShowModal => ({
+    type: "SHOW_MODAL",
+    modal,
+});
+
+const hideModal = (): HideModal => ({
+    type: "HIDE_MODAL",
+});
+
 export {
     postNotification,
     removeNotification,
     setProjectMetadata,
     setEvalResult,
     setTargetConfig,
+    setCatalog,
+    setSelectedCriteria,
+    removeCriteriaInstance,
+    showModal,
+    hideModal
 };

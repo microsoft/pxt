@@ -1,18 +1,15 @@
+import { ErrorCode } from "../types/errorCode";
+
 const timestamp = () => {
     const time = new Date();
     return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}]`;
 };
 
-const formatName = (name: string) => {
-    return name.toLowerCase().replace(/ /g, "_");
-};
-
 export const logError = (
-    errorCode: string,
+    errorCode: ErrorCode,
     message?: any,
     data: pxt.Map<string | number> = {}
 ) => {
-    errorCode = formatName(errorCode);
     let dataObj = { ...data };
     if (message) {
         if (typeof message === "object") {

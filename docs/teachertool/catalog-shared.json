@@ -1,0 +1,30 @@
+{
+    "criteria": [
+        {
+            "id": "A7C78825-51B5-45B0-9E42-2AAC767D4E02",
+            "use": "processes_and_displays_array_in_loop",
+            "template": "One kind of loop to process/display the information in an array",
+            "docPath": "/teachertool"
+        },
+        {
+            "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
+            "use": "block_used_n_times",
+            "template": "${block_id} used ${count} times",
+            "description": "This block was used the specified number of times in your project.",
+            "docPath": "/teachertool",
+            "params": [
+                {
+                    "name": "block_id",
+                    "type": "block_id",
+                    "path": "checks[0].blocks[:clear&:append]"
+                },
+                {
+                    "name": "count",
+                    "type": "number",
+                    "default": 1,
+                    "path": "checks[0].count"
+                }
+            ]
+        }
+    ]
+}
