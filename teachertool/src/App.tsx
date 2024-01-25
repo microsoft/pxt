@@ -42,7 +42,7 @@ function App() {
         }
     }, [ready]);
 
-    return ready ? (
+    return (
         <div className="app-container">
             <HeaderBar />
             <div className="inner-app-container">
@@ -54,7 +54,7 @@ function App() {
             <CatalogModal />
             <Notifications />
         </div>
-    ) : null;
+    );
 }
 
 export default App;
