@@ -1,7 +1,7 @@
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
+import { getCatalogCriteriaWithId } from "../state/helpers";
 import { logDebug, logError } from "../services/loggingService";
-import { getCatalogCriteriaWithId } from "../utils";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
 

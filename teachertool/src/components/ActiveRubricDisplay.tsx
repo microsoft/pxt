@@ -2,10 +2,11 @@
 
 import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
-import { getCatalogCriteriaWithId } from "../utils";
+import { getCatalogCriteriaWithId } from "../state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
 import { showCatalogModal } from "../transforms/showCatalogModal";
+
 
 interface IProps {}
 
