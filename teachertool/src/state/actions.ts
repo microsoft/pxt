@@ -40,7 +40,7 @@ type SetCatalog = ActionBase & {
 };
 
 type SetSelectedCriteria = ActionBase & {
-    type: "SET_SELECTED_CRITERIA"
+    type: "SET_SELECTED_CRITERIA";
     criteria: CriteriaInstance[];
 };
 
@@ -113,12 +113,16 @@ const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     catalog,
 });
 
-const setSelectedCriteria = (criteria: CriteriaInstance[]): SetSelectedCriteria => ({
+const setSelectedCriteria = (
+    criteria: CriteriaInstance[]
+): SetSelectedCriteria => ({
     type: "SET_SELECTED_CRITERIA",
     criteria,
 });
 
-const removeCriteriaInstance = (instanceId: string): RemoveCriteriaInstance => ({
+const removeCriteriaInstance = (
+    instanceId: string
+): RemoveCriteriaInstance => ({
     type: "REMOVE_CRITERIA_INSTANCE",
     instanceId,
 });
@@ -142,5 +146,5 @@ export {
     setSelectedCriteria,
     removeCriteriaInstance,
     showModal,
-    hideModal
+    hideModal,
 };

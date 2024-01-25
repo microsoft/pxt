@@ -40,15 +40,16 @@ export function AppStateProvider(
 ): React.ReactElement {
     // Read the URL parameters and set the initial state accordingly
     const url = window.location.href;
-    const testCatalog = !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
+    const testCatalog =
+        !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
 
     // Create the application state and state change mechanism (dispatch)
     const [state_, dispatch_] = useReducer(reducer, {
         ...initialAppState,
         flags: {
             ...initialAppState.flags,
-            testCatalog
-        }
+            testCatalog,
+        },
     });
 
     // Make state and dispatch available outside the React context

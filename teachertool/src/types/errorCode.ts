@@ -4,5 +4,5 @@ export enum ErrorCode {
     loadCatalogFailed = "loadCatalogFailed",
     getProjectTextAsync = "getProjectTextAsync",
     getProjectMetaAsync = "getProjectMetaAsync",
-    downloadTargetConfigAsync = "downloadTargetConfigAsync"
+    downloadTargetConfigAsync = "downloadTargetConfigAsync",
 }

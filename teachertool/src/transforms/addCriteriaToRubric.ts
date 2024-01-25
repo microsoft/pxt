@@ -10,11 +10,15 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
     // Create instances for each of the catalog criteria.
-    const newSelectedCriteria = [...teacherTool.selectedCriteria ?? []]
-    for(const catalogCriteriaId of catalogCriteriaIds) {
+    const newSelectedCriteria = [...(teacherTool.selectedCriteria ?? [])];
+    for (const catalogCriteriaId of catalogCriteriaIds) {
         const catalogCriteria = getCatalogCriteriaWithId(catalogCriteriaId);
         if (!catalogCriteria) {
-            logError(ErrorCode.addingMissingCriteria, "Attempting to add criteria with unrecognized id", { id: catalogCriteriaId });
+            logError(
+                ErrorCode.addingMissingCriteria,
+                "Attempting to add criteria with unrecognized id",
+                { id: catalogCriteriaId }
+            );
             continue;
         }
 
@@ -28,11 +32,13 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
 
         const instanceId = nanoid();
 
-        logDebug(`Adding criteria with Catalog ID '${catalogCriteriaId}' and Instance ID '${instanceId}'`);
+        logDebug(
+            `Adding criteria with Catalog ID '${catalogCriteriaId}' and Instance ID '${instanceId}'`
+        );
         const criteriaInstance = {
             catalogCriteriaId,
             instanceId,
-            params
+            params,
         } as CriteriaInstance;
 
         newSelectedCriteria.push(criteriaInstance);
@@ -40,5 +46,7 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
 
     dispatch(Actions.setSelectedCriteria(newSelectedCriteria));
 
-    pxt.tickEvent("teachertool.addcriteria", { ids: JSON.stringify(catalogCriteriaIds) });
+    pxt.tickEvent("teachertool.addcriteria", {
+        ids: JSON.stringify(catalogCriteriaIds),
+    });
 }

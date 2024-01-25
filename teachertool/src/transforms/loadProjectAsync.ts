@@ -8,5 +8,4 @@ export async function loadProjectAsync(projectId: string, bool: boolean) {
     const { dispatch } = stateAndDispatch();
     await setHighContrastAsync(bool);
     postNotification(makeNotification(`project ${projectId} evaluated`, 2000));
-
 }

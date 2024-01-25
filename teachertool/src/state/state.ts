@@ -11,7 +11,7 @@ export type AppState = {
     modal: ModalType | undefined;
     flags: {
         testCatalog: boolean;
-    }
+    };
 };
 
 export const initialAppState: AppState = {
@@ -22,6 +22,6 @@ export const initialAppState: AppState = {
     selectedCriteria: [],
     modal: undefined,
     flags: {
-        testCatalog: false
-    }
+        testCatalog: false,
+    },
 };
