@@ -6,7 +6,7 @@ import { usePromise } from "./hooks";
 import { makeNotification } from "./utils";
 import * as Actions from "./state/actions";
 import * as NotificationService from "./services/notificationService";
-import { downloadTargetConfigAsync } from "./services/ackendRequests";
+import { downloadTargetConfigAsync } from "./services/backendRequests";
 import { logDebug } from "./services/loggingService";
 
 import HeaderBar from "./components/HeaderBar";
@@ -19,7 +19,6 @@ import CatalogModal from "./components/CatalogModal";
 
 import { postNotification } from "./transforms/postNotification";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
-
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);

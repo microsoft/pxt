@@ -1,9 +1,7 @@
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
 
-export async function getProjectTextAsync(
-    projectId: string
-): Promise<pxt.Cloud.JsonText | undefined> {
+export async function getProjectTextAsync(projectId: string): Promise<pxt.Cloud.JsonText | undefined> {
     try {
         const projectTextUrl = `${pxt.Cloud.apiRoot}/${projectId}/text`;
         const response = await fetch(projectTextUrl);
@@ -18,9 +16,7 @@ export async function getProjectTextAsync(
     }
 }
 
-export async function getProjectMetaAsync(
-    projectId: string
-): Promise<pxt.Cloud.JsonScript | undefined> {
+export async function getProjectMetaAsync(projectId: string): Promise<pxt.Cloud.JsonScript | undefined> {
     try {
         const projectMetaUrl = `${pxt.Cloud.apiRoot}/${projectId}`;
         const response = await fetch(projectMetaUrl);
@@ -35,9 +31,7 @@ export async function getProjectMetaAsync(
     }
 }
 
-export async function downloadTargetConfigAsync(): Promise<
-    pxt.TargetConfig | undefined
-> {
+export async function downloadTargetConfigAsync(): Promise<pxt.TargetConfig | undefined> {
     try {
         return await pxt.targetConfigAsync();
     } catch (e) {

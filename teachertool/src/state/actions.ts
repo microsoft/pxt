@@ -40,7 +40,7 @@ type SetCatalog = ActionBase & {
 };
 
 type SetSelectedCriteria = ActionBase & {
-    type: "SET_SELECTED_CRITERIA"
+    type: "SET_SELECTED_CRITERIA";
     criteria: CriteriaInstance[];
 };
 
@@ -77,9 +77,7 @@ export type Action =
 /**
  * Action creators
  */
-const postNotification = (
-    notification: NotificationWithId
-): PostNotification => ({
+const postNotification = (notification: NotificationWithId): PostNotification => ({
     type: "POST_NOTIFICATION",
     notification,
 });
@@ -89,16 +87,12 @@ const removeNotification = (notificationId: string): RemoveNotification => ({
     notificationId,
 });
 
-const setProjectMetadata = (
-    metadata: pxt.Cloud.JsonScript | undefined
-): SetProjectMetadata => ({
+const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
     metadata,
 });
 
-const setEvalResult = (
-    result: pxt.blocks.EvaluationResult | undefined
-): SetEvalResult => ({
+const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
     result,
 });
@@ -142,5 +136,5 @@ export {
     setSelectedCriteria,
     removeCriteriaInstance,
     showModal,
-    hideModal
+    hideModal,
 };

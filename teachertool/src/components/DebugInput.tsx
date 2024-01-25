@@ -16,7 +16,7 @@ const DebugInput: React.FC<IProps> = ({}) => {
     const evaluate = async () => {
         await loadProjectMetadataAsync(shareLink);
         await runEvaluateAsync(rubric);
-    }
+    };
 
     return (
         <div className="debug-container">
@@ -27,20 +27,22 @@ const DebugInput: React.FC<IProps> = ({}) => {
                     className="link-input"
                     placeholder={lf("Share link to validate")}
                     initialValue={shareLink}
-                    onChange={setShareLink} />
+                    onChange={setShareLink}
+                />
             </div>
             <div className="rubric-json-input-container">
                 {lf("Rubric:")}
-                <Textarea
-                    id="rubricJsonInput"
-                    className="json-input"
-                    rows={20}
-                    onChange={setRubric} />
+                <Textarea id="rubricJsonInput" className="json-input" rows={20} onChange={setRubric} />
             </div>
-            <Button id="evaluateSingleProjectButton" className="ui button primary" onClick={evaluate} title={"Evaluate"} label={lf("Evaluate")} />
+            <Button
+                id="evaluateSingleProjectButton"
+                className="ui button primary"
+                onClick={evaluate}
+                title={"Evaluate"}
+                label={lf("Evaluate")}
+            />
         </div>
-    )
-
+    );
 };
 
 export default DebugInput;
