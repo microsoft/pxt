@@ -2,7 +2,7 @@ import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 import { logError } from "../services/loggingService";
 import { CatalogCriteria } from "../types/criteria";
-import { ErrorName } from "../types/errorName";
+import { ErrorCode } from "../types/errorCode";
 
 const prodFiles = [
     "/teachertool/catalog.json", // target-specific catalog
@@ -31,7 +31,7 @@ export async function loadCatalogAsync() {
             fullCatalog = fullCatalog.concat(catalogContent.criteria ?? []);
         } catch (e) {
             const details = e instanceof Error ? e.toString() : "Unable to load catalog file."
-            logError(ErrorName.loadCatalogFailed, details, { catalogFile });
+            logError(ErrorCode.loadCatalogFailed, details, { catalogFile });
             continue;
         }
     }

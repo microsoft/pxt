@@ -1,11 +1,11 @@
-import { ErrorName } from "../types/errorName";
+import { ErrorCode } from "../types/errorCode";
 
 const formatMessageForConsole = (message: string) => {
     const time = new Date();
     return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}] ${message}`;
 }
 
-export const logError = (name: ErrorName, details: string, data: pxt.Map<string | number> = {}) => {
+export const logError = (name: ErrorCode, details: string, data: pxt.Map<string | number> = {}) => {
     let callstack = "";
     try {
         throw new Error();

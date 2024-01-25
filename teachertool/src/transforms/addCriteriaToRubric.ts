@@ -4,7 +4,7 @@ import { getCatalogCriteriaWithId } from "../state/helpers";
 import { logDebug, logError } from "../services/loggingService";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
-import { ErrorName } from "../types/errorName";
+import { ErrorCode } from "../types/errorCode";
 
 export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
@@ -14,7 +14,7 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     for(const catalogCriteriaId of catalogCriteriaIds) {
         const catalogCriteria = getCatalogCriteriaWithId(catalogCriteriaId);
         if (!catalogCriteria) {
-            logError(ErrorName.addingMissingCriteria, "Attempting to add criteria with unrecognized id", { id: catalogCriteriaId });
+            logError(ErrorCode.addingMissingCriteria, "Attempting to add criteria with unrecognized id", { id: catalogCriteriaId });
             continue;
         }
 

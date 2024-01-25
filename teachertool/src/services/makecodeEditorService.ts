@@ -1,4 +1,4 @@
-import { ErrorName } from "../types/errorName";
+import { ErrorCode } from "../types/errorCode";
 import { logDebug, logError } from "./loggingService";
 
 interface PendingMessage {
@@ -97,7 +97,7 @@ export async function runEvalInEditorAsync(serializedRubric: string): Promise<px
         validateResponse(result, true); // Throws on failure
         evalResults = result.resp as pxt.blocks.EvaluationResult;
     } catch (e: any) {
-        logError(ErrorName.runEval, e);
+        logError(ErrorCode.runEval, e);
     }
 
     return evalResults;
