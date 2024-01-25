@@ -9,7 +9,7 @@ const prodFiles = [
     "/teachertool/catalog-shared.json" // shared across all targets
 ];
 
-// Catalog entries still being tested, will only appear when in debug mode (?dbg=1)
+// Catalog entries still being tested, will only appear when test catalogs are enabled (?testcatalog=1 or ?tc=1)
 const testFiles = [
     "/teachertool/catalog-test.json",
     "/teachertool/catalog-shared-test.json"

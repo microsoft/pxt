@@ -1,9 +1,11 @@
 import { logError } from "../services/loggingService";
 import { runEvalInEditorAsync } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
-import { getCatalogCriteriaWithId, makeNotification } from "../utils";
-import { postNotification } from "./postNotification";
 import * as Actions from "../state/actions";
+import { getCatalogCriteriaWithId } from "../state/helpers";
+import { ErrorCode } from "../types/errorCode";
+import { makeNotification } from "../utils";
+import { postNotification } from "./postNotification";
 
 function generateValidatorPlans(): pxt.blocks.ValidatorPlanWithId[] {
     const { state: teacherTool } = stateAndDispatch();
@@ -12,13 +14,13 @@ function generateValidatorPlans(): pxt.blocks.ValidatorPlanWithId[] {
     for (const criteriaInstance of teacherTool.selectedCriteria) {
         const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
         if (!catalogCriteria) {
-            logError("eval_missing_criteria", "Attempting to evaluate criteria with unrecognized id", { id: criteriaInstance.catalogCriteriaId })
+            logError(ErrorCode.evalMissingCriteria, "Attempting to evaluate criteria with unrecognized id", { id: criteriaInstance.catalogCriteriaId })
             continue;
         }
 
         const plan = teacherTool.validatorPlans?.find(plan => plan.name === catalogCriteria.use);
         if (!plan) {
-            logError("eval_missing_plan", "Attempting to evaluate criteria with unrecognized plan", { plan: catalogCriteria.use })
+            logError(ErrorCode.evalMissingPlan, "Attempting to evaluate criteria with unrecognized plan", { plan: catalogCriteria.use })
             continue;
         }
 

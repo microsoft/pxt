@@ -19,7 +19,7 @@ import CatalogModal from "./components/CatalogModal";
 
 import { postNotification } from "./transforms/postNotification";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
-import { loadValidatorPlans } from "./transforms/loadValidatorPlans";
+import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 
 
 function App() {
@@ -38,7 +38,7 @@ function App() {
 
                 // Load catalog and validator plans into state.
                 await loadCatalogAsync();
-                await loadValidatorPlans();
+                await loadValidatorPlansAsync();
 
                 // TODO: Remove this. Delay app init to expose any startup race conditions.
                 setTimeout(() => {

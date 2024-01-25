@@ -1,8 +1,8 @@
 /// <reference path="../../../built/pxtblocks.d.ts"/>
 
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
-import { getCatalogCriteriaWithId } from "../utils";
+import { getCatalogCriteriaWithId } from "../state/helpers";
 
 interface IProps {}
 
