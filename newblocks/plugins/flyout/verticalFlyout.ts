@@ -245,6 +245,12 @@ class CachedFlyout extends Blockly.VerticalFlyout {
     }
 
     protected blockIsRecyclable_(block: Blockly.BlockSvg) {
+        switch (block.type) {
+            case "variables_get":
+            case "variables_set":
+            case "variables_change":
+                return false;
+        }
         return true;
     }
 
