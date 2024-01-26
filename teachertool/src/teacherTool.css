@@ -44,6 +44,10 @@
     --high-contrast-hyperlink: #807FFF;
 }
 
+* {
+    min-height: initial;
+    min-width: initial;
+}
 
 body {
     -webkit-font-smoothing: antialiased;
@@ -55,19 +59,12 @@ code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-.app-container {
+#root {
     display: flex;
     flex-direction: column;
     height: 100%;
     width: 100%;
-    overflow: auto;
-}
-
-.inner-app-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-    width: 100%;
+    overflow: hidden;
 }
 
 .noclick {
@@ -96,6 +93,7 @@ code {
     flex-grow: 0;
     flex-shrink: 0;
     z-index: var(--above-frame-zindex);
+    margin: 0;
 }
 
 .header-left, .header-right {

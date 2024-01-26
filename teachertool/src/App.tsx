@@ -10,11 +10,8 @@ import { downloadTargetConfigAsync } from "./services/backendRequests";
 import { logDebug } from "./services/loggingService";
 
 import HeaderBar from "./components/HeaderBar";
+import MainPanel from "./components/MainPanel";
 import Notifications from "./components/Notifications";
-import DebugInput from "./components/DebugInput";
-import { MakeCodeFrame } from "./components/MakecodeFrame";
-import EvalResultDisplay from "./components/EvalResultDisplay";
-import ActiveRubricDisplay from "./components/ActiveRubricDisplay";
 import CatalogModal from "./components/CatalogModal";
 
 import { postNotification } from "./transforms/postNotification";
@@ -54,17 +51,12 @@ function App() {
             <div className="ui large main loader msft"></div>
         </div>
     ) : (
-        <div className="app-container">
+        <>
             <HeaderBar />
-            <div className="inner-app-container">
-                <DebugInput />
-                <ActiveRubricDisplay />
-                <EvalResultDisplay />
-                <MakeCodeFrame />
-            </div>
+            <MainPanel />
             <CatalogModal />
             <Notifications />
-        </div>
+        </>
     );
 }
 

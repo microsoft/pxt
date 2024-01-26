@@ -5,7 +5,7 @@ import { MenuBar } from "react-common/components/controls/MenuBar";
 
 interface HeaderBarProps {}
 
-export const HeaderBar: React.FC<HeaderBarProps> = () => {
+const HeaderBar: React.FC<HeaderBarProps> = () => {
     const appTheme = pxt.appTarget?.appTheme;
 
     const brandIconClick = () => {};
