@@ -46,7 +46,7 @@ export function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>) {
     }
 }
 
-export function classList(...classes: string[]) {
+export function classList(...classes: (string | undefined)[]) {
     return classes
         .filter(c => typeof c === "string")
         .reduce((prev, c) => prev.concat(c.split(" ")), [] as string[])
