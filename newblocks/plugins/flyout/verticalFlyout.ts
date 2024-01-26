@@ -32,7 +32,8 @@ export class VerticalFlyout implements Blockly.IFlyout {
             }
         );
 
-        this.element.id = "multiFlyout"
+        this.element.id = "multiFlyout";
+        this.element.style.display = "none";
 
         return this.element;
     }
@@ -79,6 +80,7 @@ export class VerticalFlyout implements Blockly.IFlyout {
         if (visible === this.visible) return;
 
         this.visible = visible;
+        this.element.style.display = visible ? "block"  : "none";
 
         for (const flyout of this.cached) {
             if (flyout !== this.activeFlyout && flyout.isVisible()) {
@@ -117,6 +119,9 @@ export class VerticalFlyout implements Blockly.IFlyout {
         }
 
         const existing = this.cached.find(e => e.key === hash);
+
+        this.element.style.display = "block";
+        this.visible = true;
 
         if (existing) {
             this.activeFlyout = existing;
