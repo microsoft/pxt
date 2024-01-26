@@ -597,7 +597,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.BUBBLE_OPEN
             ];
 
-            this.hideFlyout();
+            if (ev.type !== "var_create") {
+                this.hideFlyout();
+            }
 
             if ((ignoredChanges.indexOf(ev.type) === -1)
                 || this.markIncomplete) {
