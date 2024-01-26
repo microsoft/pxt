@@ -3,13 +3,13 @@
         {
             "id": "B3FD8B3D-61B4-42F4-B0EF-64BD7D62CDAB",
             "use": "two_different_loops",
-            "template": "Two different kinds of loops used.",
+            "template": "Two different kinds of loops used",
             "docPath": "/teachertool"
         },
         {
             "id": "49262A2B-C02A-43A2-BAD5-FCAC6AE9D464",
             "use": "custom_function_called",
-            "template": "A custom function exists and gets called.",
+            "template": "A custom function exists and gets called",
             "docPath": "/teachertool"
         }
     ]
