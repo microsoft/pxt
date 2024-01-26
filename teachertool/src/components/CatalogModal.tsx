@@ -10,7 +10,7 @@ import { CatalogCriteria } from "../types/criteria";
 
 interface IProps {}
 
-const CatalogModal: React.FC<IProps> = ({}) => {
+export const CatalogModal: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [checkedCriteriaIds, setCheckedCriteria] = useState<Set<string>>(new Set<string>());
 
@@ -77,5 +77,3 @@ const CatalogModal: React.FC<IProps> = ({}) => {
         </Modal>
     ) : null;
 };
-
-export default CatalogModal;

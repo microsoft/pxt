@@ -9,7 +9,7 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 
 interface IProps {}
 
-const DebugInput: React.FC<IProps> = ({}) => {
+export const DebugInput: React.FC<IProps> = ({}) => {
     const [shareLink, setShareLink] = useState("https://makecode.microbit.org/S95591-52406-50965-65671");
     const [rubric, setRubric] = useState("");
 
@@ -44,5 +44,3 @@ const DebugInput: React.FC<IProps> = ({}) => {
         </div>
     );
 };
-
-export default DebugInput;
