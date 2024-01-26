@@ -11,7 +11,7 @@ interface IProps {
     children: React.ReactNode;
 }
 
-const VerticalSplit: React.FC<IProps> = ({ className, split, children }) => {
+const SplitPane: React.FC<IProps> = ({ className, split, children }) => {
     const [left, right] = React.Children.toArray(children);
 
     return (
@@ -25,4 +25,4 @@ const VerticalSplit: React.FC<IProps> = ({ className, split, children }) => {
     );
 };
 
-export default VerticalSplit;
+export default SplitPane;
