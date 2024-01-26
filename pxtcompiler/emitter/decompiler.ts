@@ -1119,11 +1119,11 @@ ${output}</xml>`;
         }
 
         function getDraggableVariableBlock(valueName: string, varName: string) {
-            const fieldBlock = getFieldBlock("variables_get_reporter", "VAR", varName, true);
+            const fieldBlock = getFieldBlock("variables_get_reporter", "VAR", varName);
             fieldBlock.mutation = {
                 "duplicateondrag": "true"
             };
-            return mkValue(valueName, fieldBlock, "variables_get_reporter", fieldBlock.mutation);
+            return mkValue(valueName, fieldBlock, undefined, fieldBlock.mutation);
         }
 
         function mkDraggableReporterValue(valueName: string, varName: string, varType: string) {
@@ -1132,12 +1132,20 @@ ${output}</xml>`;
             return mkValue(valueName, reporterShadowBlock, reporterType);
         }
 
-        function getDraggableReporterBlock(varName: string, varType: string, shadow: boolean) {
+        function getDraggableReporterBlock(varName: string, varType: string, draggable: boolean) {
             const reporterType = pxt.blocks.reporterTypeForArgType(varType);
-            const reporterShadowBlock = getFieldBlock(reporterType, "VALUE", varName, shadow);
+            const reporterShadowBlock = getFieldBlock(reporterType, "VALUE", varName);
 
             if (reporterType === "argument_reporter_custom") {
                 reporterShadowBlock.mutation = { typename: varType };
+            }
+
+            if (draggable) {
+                if (!reporterShadowBlock.mutation) {
+                    reporterShadowBlock.mutation = {};
+                }
+
+                reporterShadowBlock.mutation["duplicateondrag"] = "true";
             }
 
             return reporterShadowBlock;
