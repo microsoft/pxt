@@ -6,7 +6,7 @@ import { getEditorUrl } from "../utils";
 
 interface MakeCodeFrameProps {}
 
-const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
+export const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     function createIFrameUrl(shareId: string): string {
@@ -41,5 +41,3 @@ const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
     );
     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
 };
-
-export default MakeCodeFrame;

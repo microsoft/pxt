@@ -5,7 +5,7 @@ import { AppStateContext } from "../state/appStateContext";
 
 interface IProps {}
 
-const EvalResultDisplay: React.FC<IProps> = ({}) => {
+export const EvalResultDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     return (
@@ -30,5 +30,3 @@ const EvalResultDisplay: React.FC<IProps> = ({}) => {
         </>
     );
 };
-
-export default EvalResultDisplay;

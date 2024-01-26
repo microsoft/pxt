@@ -9,15 +9,15 @@ import * as NotificationService from "./services/notificationService";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
 import { logDebug } from "./services/loggingService";
 
-import HeaderBar from "./components/HeaderBar";
-import MainPanel from "./components/MainPanel";
-import Notifications from "./components/Notifications";
-import CatalogModal from "./components/CatalogModal";
+import { HeaderBar } from "./components/HeaderBar";
+import { MainPanel } from "./components/MainPanel";
+import { Notifications } from "./components/Notifications";
+import { CatalogModal } from "./components/CatalogModal";
 
 import { postNotification } from "./transforms/postNotification";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 
-function App() {
+export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
     const [inited, setInited] = useState(false);
 
@@ -58,6 +58,4 @@ function App() {
             <Notifications />
         </>
     );
-}
-
-export default App;
+};

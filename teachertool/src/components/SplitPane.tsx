@@ -11,7 +11,7 @@ interface IProps {
     children: React.ReactNode;
 }
 
-const SplitPane: React.FC<IProps> = ({ className, split, children }) => {
+export const SplitPane: React.FC<IProps> = ({ className, split, children }) => {
     const [left, right] = React.Children.toArray(children);
 
     return (
@@ -24,5 +24,3 @@ const SplitPane: React.FC<IProps> = ({ className, split, children }) => {
         </div>
     );
 };
-
-export default SplitPane;
