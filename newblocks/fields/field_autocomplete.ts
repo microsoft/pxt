@@ -40,6 +40,7 @@ export class FieldAutoComplete extends FieldTextDropdown implements FieldCustom 
     }
 
     doValueUpdate_(newValue: string) {
+        this.isDirty_ = true;
         if (newValue === null) return;
 
         if (/['"`].*['"`]/.test(newValue)) {
