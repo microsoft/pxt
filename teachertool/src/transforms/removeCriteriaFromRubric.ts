@@ -8,5 +8,7 @@ export function removeCriteriaFromRubric(instance: CriteriaInstance) {
 
     const { dispatch } = stateAndDispatch();
     dispatch(Actions.removeCriteriaInstance(instance.instanceId));
-    pxt.tickEvent("teachertool.removecriteria", { catalogCriteriaId: instance.catalogCriteriaId });
+    pxt.tickEvent("teachertool.removecriteria", {
+        catalogCriteriaId: instance.catalogCriteriaId,
+    });
 }

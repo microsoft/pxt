@@ -31,13 +31,9 @@ const initialAppStateContextProps: AppStateContextProps = {
     dispatch: undefined!,
 };
 
-export const AppStateContext = createContext<AppStateContextProps>(
-    initialAppStateContextProps
-);
+export const AppStateContext = createContext<AppStateContextProps>(initialAppStateContextProps);
 
-export function AppStateProvider(
-    props: React.PropsWithChildren<{}>
-): React.ReactElement {
+export function AppStateProvider(props: React.PropsWithChildren<{}>): React.ReactElement {
     // Read the URL parameters and set the initial state accordingly
     const url = window.location.href;
     const testCatalog = !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
@@ -47,8 +43,8 @@ export function AppStateProvider(
         ...initialAppState,
         flags: {
             ...initialAppState.flags,
-            testCatalog
-        }
+            testCatalog,
+        },
     });
 
     // Make state and dispatch available outside the React context

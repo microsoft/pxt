@@ -5,7 +5,7 @@ import { loadTestableCollectionFromFileAsync } from "../utils/fileSystemHelpers"
 
 const prodFiles = [
     "/teachertool/catalog.json", // target-specific catalog
-    "/teachertool/catalog-shared.json" // shared across all targets
+    "/teachertool/catalog-shared.json", // shared across all targets
 ];
 
 export async function loadCatalogAsync() {

@@ -8,24 +8,17 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "POST_NOTIFICATION": {
             // Before posting the notification, ensure is doesn't already exist in the list.
             // Protect against duplicate action dispatches.
-            if (
-                !state.notifications.find(n => n.id === action.notification.id)
-            ) {
+            if (!state.notifications.find(n => n.id === action.notification.id)) {
                 return {
                     ...state,
-                    notifications: [
-                        ...state.notifications,
-                        action.notification,
-                    ],
+                    notifications: [...state.notifications, action.notification],
                 };
             } else {
                 return state;
             }
         }
         case "REMOVE_NOTIFICATION": {
-            const notifications = state.notifications.filter(
-                n => n.id !== action.notificationId
-            );
+            const notifications = state.notifications.filter(n => n.id !== action.notificationId);
             return {
                 ...state,
                 notifications,
@@ -58,7 +51,7 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "REMOVE_CRITERIA_INSTANCE": {
             return {
                 ...state,
-                selectedCriteria: state.selectedCriteria.filter(c => c.instanceId !== action.instanceId)
+                selectedCriteria: state.selectedCriteria.filter(c => c.instanceId !== action.instanceId),
             };
         }
         case "SHOW_MODAL": {

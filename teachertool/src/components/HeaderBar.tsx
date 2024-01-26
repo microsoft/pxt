@@ -16,10 +16,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 {appTheme.organizationWideLogo || appTheme.organizationLogo ? (
                     <img
                         className={`ui logo`}
-                        src={
-                            appTheme.organizationWideLogo ||
-                            appTheme.organizationLogo
-                        }
+                        src={appTheme.organizationWideLogo || appTheme.organizationLogo}
                         alt={lf("{0} Logo", appTheme.organization)}
                     />
                 ) : (
@@ -43,15 +40,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                             {appTheme.organizationText}
                         </span>,
                         <span className="name-short" key="org-name-short">
-                            {appTheme.organizationShortText ||
-                                appTheme.organizationText}
+                            {appTheme.organizationShortText || appTheme.organizationText}
                         </span>,
                     ]
                 ) : appTheme.logo || appTheme.portraitLogo ? (
                     <img
-                        className={`ui ${
-                            appTheme.logoWide ? "small" : ""
-                        } logo`}
+                        className={`ui ${appTheme.logoWide ? "small" : ""} logo`}
                         src={appTheme.logo || appTheme.portraitLogo}
                         alt={lf("{0} Logo", appTheme.boardName)}
                     />
@@ -66,15 +60,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         pxt.tickEvent("teacherTool.home");
 
         // relprefix looks like "/beta---", need to chop off the hyphens and slash
-        let rel = pxt.webConfig?.relprefix.substr(
-            0,
-            pxt.webConfig.relprefix.length - 3
-        );
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
         if (pxt.appTarget.appTheme.homeUrl && rel) {
-            if (
-                pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") ===
-                pxt.appTarget.appTheme.homeUrl?.length - 1
-            ) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
                 rel = rel.substr(1);
             }
             window.open(pxt.appTarget.appTheme.homeUrl + rel);
@@ -85,12 +73,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
 
     return (
         <header className="menubar" role="banner">
-            <MenuBar
-                className={`ui menu ${
-                    appTheme?.invertedMenu ? `inverted` : ""
-                } header`}
-                ariaLabel={lf("Header")}
-            >
+            <MenuBar className={`ui menu ${appTheme?.invertedMenu ? `inverted` : ""} header`} ariaLabel={lf("Header")}>
                 <div className="left menu">
                     {getOrganizationLogo()}
                     {getTargetLogo()}

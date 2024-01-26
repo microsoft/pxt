@@ -12,7 +12,7 @@ export type AppState = {
     validatorPlans: pxt.blocks.ValidatorPlan[] | undefined;
     flags: {
         testCatalog: boolean;
-    }
+    };
 };
 
 export const initialAppState: AppState = {
@@ -24,6 +24,6 @@ export const initialAppState: AppState = {
     modal: undefined,
     validatorPlans: undefined,
     flags: {
-        testCatalog: false
-    }
+        testCatalog: false,
+    },
 };

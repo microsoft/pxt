@@ -5,11 +5,7 @@ const timestamp = () => {
     return `[${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}]`;
 };
 
-export const logError = (
-    errorCode: ErrorCode,
-    message?: any,
-    data: pxt.Map<string | number> = {}
-) => {
+export const logError = (errorCode: ErrorCode, message?: any, data: pxt.Map<string | number> = {}) => {
     let dataObj = { ...data };
     if (message) {
         if (typeof message === "object") {

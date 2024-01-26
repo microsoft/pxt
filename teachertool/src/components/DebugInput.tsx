@@ -26,12 +26,18 @@ const DebugInput: React.FC<IProps> = ({}) => {
                     className="link-input"
                     placeholder={lf("Share link to validate")}
                     initialValue={shareLink}
-                    onChange={setShareLink} />
+                    onChange={setShareLink}
+                />
             </div>
-            <Button id="evaluateSingleProjectButton" className="ui button primary" onClick={evaluate} title={"Evaluate"} label={lf("Evaluate")} />
+            <Button
+                id="evaluateSingleProjectButton"
+                className="ui button primary"
+                onClick={evaluate}
+                title={"Evaluate"}
+                label={lf("Evaluate")}
+            />
         </div>
-    )
-
+    );
 };
 
 export default DebugInput;

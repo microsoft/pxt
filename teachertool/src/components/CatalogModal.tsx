@@ -12,7 +12,7 @@ interface IProps {}
 
 const CatalogModal: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [ checkedCriteriaIds, setCheckedCriteria ] = useState<Set<string>>(new Set<string>());
+    const [checkedCriteriaIds, setCheckedCriteria] = useState<Set<string>>(new Set<string>());
 
     function handleCriteriaSelectedChange(criteria: CatalogCriteria, newValue: boolean) {
         const newSet = new Set(checkedCriteriaIds);
@@ -51,19 +51,27 @@ const CatalogModal: React.FC<IProps> = ({}) => {
             className: "primary",
             onClick: handleAddSelectedClicked,
         },
-    ]
+    ];
 
     return teacherTool.modal === "catalog-display" ? (
-        <Modal className="catalog-modal" title={lf("Select the criteria you'd like to include")} onClose={closeModal} actions={modalActions}>
+        <Modal
+            className="catalog-modal"
+            title={lf("Select the criteria you'd like to include")}
+            onClose={closeModal}
+            actions={modalActions}
+        >
             {teacherTool.catalog?.map(criteria => {
-                return criteria?.template && (
+                return (
+                    criteria?.template && (
                         <Checkbox
                             id={`checkbox_${criteria.id}`}
                             key={criteria.id}
                             className="catalog-item"
                             label={criteria.template}
-                            onChange={(newValue) => handleCriteriaSelectedChange(criteria, newValue)}
-                            isChecked={isCriteriaSelected(criteria.id)} />
+                            onChange={newValue => handleCriteriaSelectedChange(criteria, newValue)}
+                            isChecked={isCriteriaSelected(criteria.id)}
+                        />
+                    )
                 );
             })}
         </Modal>

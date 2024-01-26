@@ -1,5 +1,3 @@
 import { stateAndDispatch } from "./appStateContext";
 
-export {
-    stateAndDispatch
-};
+export { stateAndDispatch };
