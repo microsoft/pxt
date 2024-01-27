@@ -9,7 +9,7 @@ import { showCatalogModal } from "../transforms/showCatalogModal";
 
 interface IProps {}
 
-const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
+export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool, dispatch } = useContext(AppStateContext);
 
     return (
@@ -42,5 +42,3 @@ const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
         </div>
     );
 };
-
-export default ActiveRubricDisplay;

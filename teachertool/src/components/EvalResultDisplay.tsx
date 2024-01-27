@@ -7,7 +7,7 @@ import { CriteriaEvaluationResult } from "../types/criteria";
 
 interface IProps {}
 
-const EvalResultDisplay: React.FC<IProps> = ({}) => {
+export const EvalResultDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     function getTemplateFromCriteriaInstanceId(instanceId: string): string {
@@ -43,5 +43,3 @@ const EvalResultDisplay: React.FC<IProps> = ({}) => {
         </>
     );
 };
-
-export default EvalResultDisplay;
