@@ -60,8 +60,8 @@ export async function runEvaluateAsync() {
     const results = await Promise.all(evalRequests);
     const errorCount = results.filter((r) => !r).length;
     if (errorCount == teacherTool.selectedCriteria.length) {
-        postNotification(makeNotification(lf(`Unable to run evaluation`), 2000));
+        postNotification(makeNotification(lf("Unable to run evaluation"), 2000));
     } else if (errorCount > 0) {
-        postNotification(makeNotification(lf(`Unable to evaluate some criteria`), 2000));
+        postNotification(makeNotification(lf("Unable to evaluate some criteria"), 2000));
     }
 }
