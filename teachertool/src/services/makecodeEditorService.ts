@@ -84,14 +84,14 @@ export async function setHighContrastAsync(on: boolean) {
     console.log(result);
 }
 
-export async function runEvalInEditorAsync(serializedRubric: string): Promise<pxt.blocks.EvaluationResult | undefined> {
+export async function runValidatorPlanAsync(validatorPlan: pxt.blocks.ValidatorPlan): Promise<pxt.blocks.EvaluationResult | undefined> {
     let evalResults = undefined;
 
     try {
         const response = await sendMessageAsync({
             type: "pxteditor",
             action: "runeval",
-            rubric: serializedRubric,
+            validatorPlan: validatorPlan,
         } as pxt.editor.EditorMessageRunEvalRequest);
         const result = response as pxt.editor.EditorMessageResponse;
         validateResponse(result, true); // Throws on failure

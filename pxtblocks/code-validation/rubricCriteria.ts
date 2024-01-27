@@ -31,8 +31,8 @@ namespace pxt.blocks {
         return requiredBlockCounts;
     }
 
-    async function runValidatorPlan(usedBlocks: Blockly.Block[], plan: ValidatorPlanWithId): Promise<boolean> {
-      const checkRuns = plan.checks.map((check) => new Promise<boolean>((resolve) => {
+    export async function runValidatorPlan(usedBlocks: Blockly.Block[], plan: ValidatorPlan): Promise<boolean> {
+      const checkRuns = plan.checks.map((check) => new Promise<boolean>(async (resolve) => {
             switch (check.validator) {
               case "blocksExist":
                 const blockExistsCheck = check as BlocksExistValidatorCheck;
@@ -53,18 +53,6 @@ namespace pxt.blocks {
       const results = await Promise.all(checkRuns);
       const successCount = results.filter((r) => r).length;
       return successCount >= plan.threshold;
-    }
-
-    export async function validateProject(usedBlocks: Blockly.Block[], rubric: string): Promise<EvaluationResult> {
-        const validatorPlans = JSON.parse(rubric) as ValidatorPlanWithId[];
-
-        const finalResult: pxt.Map<boolean> = {};
-        for (const plan of validatorPlans) {
-            const planResult = await runValidatorPlan(usedBlocks, plan);
-            finalResult[plan.id] = planResult;
-        }
-
-        return { results: finalResult } as EvaluationResult;
     }
 
     function validateBlockSet(usedBlocks: Blockly.Block[], blockSet: BlockSet): pxt.Map<boolean> {

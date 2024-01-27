@@ -292,7 +292,7 @@ namespace pxt.editor {
 
     export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
         action: "runeval";
-        rubric: string;
+        validatorPlan: pxt.blocks.ValidatorPlan;
     }
 
     export interface EditorMessageRenderBlocksResponse {
@@ -546,13 +546,13 @@ namespace pxt.editor {
                                 }
                                 case "runeval": {
                                     const evalmsg = data as EditorMessageRunEvalRequest;
-                                    const rubric = evalmsg.rubric;
+                                    const plan = evalmsg.validatorPlan;
                                     return Promise.resolve()
                                         .then(() => {
                                             const blocks = projectView.getBlocks();
-                                            return pxt.blocks.validateProject(blocks, rubric)})
+                                            return pxt.blocks.runValidatorPlan(blocks, plan)})
                                         .then (results => {
-                                            resp = results;
+                                            resp = { result: results };
                                         });
                                 }
                                 case "renderpython": {

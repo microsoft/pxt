@@ -27,3 +27,11 @@ export interface CriteriaParameterValue {
     name: string;
     value: any; // Undefined if no value has been selected.
 }
+
+// Possible results from evaluating a criteria instance.
+export enum CriteriaEvaluationResult {
+    Pass,
+    Fail,
+    CompleteWithNoResult,
+    InProgress,
+}

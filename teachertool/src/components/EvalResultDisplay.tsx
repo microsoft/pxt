@@ -3,6 +3,7 @@
 import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
+import { CriteriaEvaluationResult } from "../types/criteria";
 
 interface IProps {}
 
@@ -22,15 +23,18 @@ const EvalResultDisplay: React.FC<IProps> = ({}) => {
             {teacherTool.projectMetadata && (
                 <div className="eval-results-container">
                     <h3>{lf("Project: {0}", teacherTool.projectMetadata.name)}</h3>
-                    {teacherTool.currentEvalResult === undefined && <div className="common-spinner" />}
-                    {Object.keys(teacherTool.currentEvalResult?.results ?? {}).map(id => {
-                        const result = teacherTool.currentEvalResult?.results[id];
+
+                    {teacherTool.evalResults.length === 0 && <div className="common-spinner" />}
+                    {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
+                        const result = teacherTool.evalResults[criteriaInstanceId];
+
                         return (
-                            <div className="result-block-id" key={id}>
-                                <p className="block-id-label">{getTemplateFromCriteriaInstanceId(id)}:</p>
-                                <p className={result ? "positive-text" : "negative-text"}>
-                                    {result ? "passed" : "failed"}
-                                </p>
+                            <div className="result-block-id" key={criteriaInstanceId}>
+                                <p className="block-id-label">{getTemplateFromCriteriaInstanceId(criteriaInstanceId)}:</p>
+                                { result === CriteriaEvaluationResult.InProgress && <div className="common-spinner" /> }
+                                { result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
+                                { result === CriteriaEvaluationResult.Fail && <p className="negative-text">{lf("Needs Work")}</p>}
+                                { result === CriteriaEvaluationResult.Pass && <p className="positive-text">{lf("Looks Good!")}</p>}
                             </div>
                         );
                     })}

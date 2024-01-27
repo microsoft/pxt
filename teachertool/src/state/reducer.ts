@@ -33,7 +33,24 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "SET_EVAL_RESULT": {
             return {
                 ...state,
-                currentEvalResult: action.result,
+                evalResults: {
+                    ...state.evalResults,
+                    [action.criteriaInstanceId]: action.result,
+                },
+            };
+        }
+        case "CLEAR_EVAL_RESULT": {
+            const evalResults = { ...state.evalResults };
+            delete evalResults[action.criteriaInstanceId];
+            return {
+                ...state,
+                evalResults,
+            };
+        }
+        case "CLEAR_ALL_EVAL_RESULTS": {
+            return {
+                ...state,
+                evalResults: {},
             };
         }
         case "SET_CATALOG": {
