@@ -55,9 +55,9 @@ export class FieldAutoComplete extends FieldTextDropdown implements FieldCustom 
 
     getValue() {
         if (this.parsedValue) {
-            return JSON.stringify(this.parsedValue)
+            return this.parsedValue
         }
-        else return '""';
+        else return '';
     }
 
     getOptions() {

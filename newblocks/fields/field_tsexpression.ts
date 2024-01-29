@@ -43,7 +43,9 @@ export class FieldTsExpression extends Blockly.FieldTextInput implements FieldCu
         if (this.sourceBlock_ && this.getConstants()?.FULL_BLOCK_FIELDS) {
             if (this.borderRect_) {
                 this.borderRect_.setAttribute('stroke',
-                    (this.sourceBlock_ as Blockly.BlockSvg).style.colourTertiary);
+                    (this.sourceBlock_ as Blockly.BlockSvg).style.colourPrimary);
+                this.borderRect_.setAttribute('fill',
+                    (this.sourceBlock_ as Blockly.BlockSvg).style.colourPrimary);
             }
         }
     }
