@@ -5,6 +5,7 @@ export function monkeyPatchBlockSvg() {
     const oldSetCollapsed = Blockly.BlockSvg.prototype.setCollapsed;
 
     Blockly.BlockSvg.prototype.setCollapsed = function (this: Blockly.BlockSvg, collapsed: boolean) {
+        if (collapsed === this.isCollapsed()) return;
         oldSetCollapsed.call(this, collapsed);
 
         if (this.isCollapsed()) {
