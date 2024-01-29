@@ -109,8 +109,8 @@ pre {
     right: 0;
     z-index: @editorToolsZIndex;
     height: @editorToolsCollapsedHeight;
-    background-color: @editorToolsBackground;
-    border-top: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
+    background-color: @colorNeutralBackground3;
+    border-top: 2px solid @colorNeutralStroke3;
 
     display: flex;
     justify-content: space-between;
@@ -199,7 +199,7 @@ pre {
     margin-top: 0;
     margin-bottom: 0;
     right: 0;
-    background-color: @filelistBackgroundColor;
+    background-color: @colorNeutralBackground4;
     z-index: @filelistZIndex;
 }
 
@@ -846,7 +846,7 @@ Avatar
 
 // clashes with highlighted typescript code snippets
 svg .highlight {
-    border-bottom: 2px solid #FFC107;
+    border-bottom: 2px solid @colorPaletteYellowForeground3;
 }
 
 /* Modulator */
@@ -964,7 +964,7 @@ Field editors
 
 .extensions-browser {
     position: absolute;
-    background-color: @white;
+    background-color: @colorNeutralBackground1;
     width: 100%;
     min-height: 100%;
     z-index: 200;
@@ -977,7 +977,7 @@ Field editors
         gap: 1rem;
         padding-top: 2rem;
         padding-bottom: 2rem;
-        background-color: #E5E5E5;
+        background-color: @colorNeutralBackground2;
 
         .common-input-wrapper {
             width: 70%;
@@ -2508,7 +2508,7 @@ button.ui.button.hostmultiplayergame-button {
         }
 
         p.warning {
-            background-color: #F5BC5F;
+            background-color: @colorStatusWarningBackground1;
             padding: 6px;
         }
 
@@ -2665,7 +2665,7 @@ select.ui.dropdown {
 
 .ui.modal.auto-save-disabled-warning {
     .header {
-        background-color: #F5BC5F;
+        background-color: @colorStatusWarningBackground1;
     }
 }
 

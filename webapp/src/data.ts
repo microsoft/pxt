@@ -411,3 +411,23 @@ export class PureComponent<TProps, TState> extends React.PureComponent<TProps, T
 }
 
 loadCache();
+
+export function useData<U>(path: string): U {
+    const [value, setValue] = React.useState<U>(getData<U>(path))
+    React.useEffect(() => {
+        const subscriber: DataSubscriber = {
+            subscriptions: [],
+            onDataChanged: (path: string) => {
+                setValue(getData<U>(path));
+            }
+        }
+        subscribe(subscriber, path);
+        setValue(getData<U>(path));
+
+        return () => {
+            unsubscribe(subscriber)
+        };
+    }, [path]);
+
+    return value;
+}

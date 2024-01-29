@@ -1,6 +1,6 @@
 import * as React from "react";
 import { MarkedContent } from "../../marked";
-import { Button, Modal, ModalButton } from "../../sui";
+import { Modal, ModalButton } from "../../sui";
 import { ImmersiveReaderButton, launchImmersiveReader } from "../../immersivereader";
 import { TutorialStepCounter } from "./TutorialStepCounter";
 import { TutorialHint } from "./TutorialHint";
@@ -10,6 +10,7 @@ import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage
 import { GetValidator } from "../tutorialValidators";
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
+import { Button } from "../../../../react-common/components/controls/Button";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -233,9 +234,32 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const doneButtonLabel = lf("Finish the tutorial.");
     const nextButtonLabel = lf("Go to the next step of the tutorial.");
-    const nextButton = showDone
-        ? <Button icon="check circle" title={doneButtonLabel} ariaLabel={doneButtonLabel} text={lf("Done")} onClick={onTutorialComplete} />
-        : <Button icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!showNext} text={lf("Next")} onClick={() => validateTutorialStep()} />;
+
+    let nextButton: JSX.Element;
+
+    if (showDone) {
+        nextButton = (
+            <Button
+                leftIcon="check circle"
+                title={doneButtonLabel}
+                ariaLabel={doneButtonLabel}
+                label={lf("Done")}
+                onClick={onTutorialComplete}
+            />
+        );
+    }
+    else {
+        nextButton = (
+            <Button
+                leftIcon="arrow circle right"
+                title={nextButtonLabel}
+                ariaLabel={nextButtonLabel}
+                disabled={!showNext}
+                label={lf("Next")}
+                onClick={() => validateTutorialStep()}
+            />
+        );
+    }
 
     const stepCounter = <TutorialStepCounter
         tutorialId={tutorialId}

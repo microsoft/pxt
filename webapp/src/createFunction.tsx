@@ -4,6 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as codecard from "./codecard"
+import { Button } from "../../react-common/components/controls/Button";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -167,13 +168,13 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
                     <div className="horizontal list">
                         <span className="ui text mobile hide paramlabel">{lf("Add a parameter")}</span>
                         {types.map(t =>
-                            <sui.Button
+                            <Button
                                 key={t.typeName}
                                 role="button"
                                 className="icon"
-                                icon={t.icon}
+                                leftIcon={t.icon}
                                 textClass="mobile hide"
-                                text={t.label || t.typeName}
+                                label={t.label || t.typeName}
                                 ariaLabel={lf("Add {0} parameter", t.label || t.typeName)}
                                 onClick={this.addArgumentFactory(t.typeName)}
                             />

@@ -1,10 +1,8 @@
 import * as React from "react";
 import { classList, ControlProps, fireClickOnEnter } from "../util";
 
-export interface ButtonViewProps extends ControlProps {
+interface ButtonCommonProps extends ControlProps {
     buttonRef?: (ref: HTMLButtonElement) => void;
-    title: string;
-    label?: string | JSX.Element;
     leftIcon?: string;
     rightIcon?: string;
     disabled?: boolean;     // Disables the button in an accessible-friendly way.
@@ -21,16 +19,22 @@ export interface ButtonViewProps extends ControlProps {
     ariaPosInSet?: number;
     ariaSetSize?: number;
     ariaSelected?: boolean;
+    ariaOwns?: string;
 }
 
+export type ButtonViewProps =
+    (ButtonCommonProps & { label: string | JSX.Element, title?: string }) |
+    (ButtonCommonProps & { label?: string | JSX.Element, title: string }) |
+    (ButtonCommonProps & { label?: string | JSX.Element, title?: string, ariaLabel: string })
 
-export interface ButtonProps extends ButtonViewProps {
-    onClick: () => void;
+export interface ButtonProps extends ButtonCommonProps {
+    onClick: (e: React.MouseEvent) => void;
     onBlur?: () => void;
     onKeydown?: (e: React.KeyboardEvent) => void;
+    textClass?: string;
 }
 
-export const Button = (props: ButtonProps) => {
+export const Button = (props: ButtonProps & ButtonViewProps) => {
     const {
         id,
         className,
@@ -44,6 +48,7 @@ export const Button = (props: ButtonProps) => {
         ariaPosInSet,
         ariaSetSize,
         ariaSelected,
+        ariaOwns,
         role,
         onClick,
         onKeydown,
@@ -56,7 +61,8 @@ export const Button = (props: ButtonProps) => {
         hardDisabled,
         href,
         target,
-        tabIndex
+        tabIndex,
+        textClass
     } = props;
 
     let {
@@ -73,7 +79,7 @@ export const Button = (props: ButtonProps) => {
     );
 
     let clickHandler = (ev: React.MouseEvent) => {
-        if (onClick) onClick();
+        if (onClick) onClick(ev);
         if (href) window.open(href, target || "_blank", "noopener,noreferrer")
         ev.stopPropagation();
         ev.preventDefault();
@@ -100,10 +106,11 @@ export const Button = (props: ButtonProps) => {
             aria-posinset={ariaPosInSet}
             aria-setsize={ariaSetSize}
             aria-describedby={ariaDescribedBy}
-            aria-selected={ariaSelected}>
+            aria-selected={ariaSelected}
+            aria-owns={ariaOwns}>
                 <span className="common-button-flex">
                     {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
-                    <span className="common-button-label">
+                    <span className={classList("common-button-label", textClass)}>
                         {label}
                     </span>
                     {rightIcon && <i className={"right " + rightIcon} aria-hidden={true}/>}

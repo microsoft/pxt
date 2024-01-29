@@ -92,3 +92,13 @@ export function screenToSVGCoord(ref: SVGSVGElement, coord: ClientCoordinates) {
     screenCoord.y = coord.clientY;
     return screenCoord.matrixTransform(ref.getScreenCTM().inverse());
 }
+
+/**
+ * Polyfill for React.useId(), generates an ID that can be used for accessibility
+ * attributes in the dom.
+ */
+export function useId(): string {
+    const [id] = React.useState(pxt.U.guidGen());
+
+    return id;
+}

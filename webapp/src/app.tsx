@@ -5674,6 +5674,8 @@ function filenameForEditor(editor: string): string {
 document.addEventListener("DOMContentLoaded", async () => {
     pxt.perf.recordMilestone(`DOM loaded`)
 
+    pxt.theme.initTheme();
+
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
 

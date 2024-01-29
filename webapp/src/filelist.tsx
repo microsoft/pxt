@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
 import { fireClickOnEnter } from "./util";
+import { Button } from "../../react-common/components/controls/Button";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -65,7 +66,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
         this.toggleVisibility = this.toggleVisibility.bind(this);
         this.handleCustomBlocksClick = this.handleCustomBlocksClick.bind(this);
-        this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
         this.setFile = this.setFile.bind(this);
         this.removeFile = this.removeFile.bind(this);
         this.addLocalizedFile = this.addLocalizedFile.bind(this);
@@ -273,10 +273,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         e.stopPropagation();
     }
 
-    private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
-        e.stopPropagation();
-    }
-
     private addProjectFile() {
         const mainPkg = pkg.mainEditorPkg();
         const validRx = /^[\w][\/\w\-\.]*$/;
@@ -396,7 +392,14 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${showFiles ? "up" : "down"} icon`} />
-                {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
+                {plus &&
+                    <Button
+                        className="primary label"
+                        leftIcon="plus"
+                        title={lf("Add custom blocks?")}
+                        onClick={this.handleCustomBlocksClick}
+                    />
+                }
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
             {showFiles ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
@@ -452,7 +455,6 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
 
         this.handleClick = this.handleClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
-        this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
         this.handlePreview = this.handlePreview.bind(this);
         this.handleShare = this.handleShare.bind(this);
         this.handleAddLocale = this.handleAddLocale.bind(this);
@@ -504,10 +506,6 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         e.stopPropagation();
     }
 
-    private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
-        e.stopPropagation();
-    }
-
     renderCore() {
         const { isActive, hasDelete, file, meta, previewUrl, shareUrl, addLocalizedFile, className } = this.props;
 
@@ -520,17 +518,47 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             onKeyDown={fireClickOnEnter}
             className={className}>
             {this.props.children}
-            {hasDelete && <sui.Button className="primary label" icon="trash"
-                title={lf("Delete file {0}", file.name)}
-                onClick={this.handleRemove}
-                onKeyDown={this.handleButtonKeydown} />}
-            {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
-            {shareUrl && <sui.Button className="button primary label" icon="share alternate" title={lf("Share")} onClick={this.handleShare} onKeyDown={fireClickOnEnter} />}
-            {previewUrl && <sui.Button className="button primary label" icon="flask" title={lf("Preview")} onClick={this.handlePreview} onKeyDown={fireClickOnEnter} />}
-            {!!addLocalizedFile && <sui.Button className="primary label" icon="xicon globe"
-                title={lf("Add localized file")}
-                onClick={this.handleAddLocale}
-                onKeyDown={this.handleButtonKeydown} />}
+            {hasDelete &&
+                <Button
+                    className="primary label"
+                    leftIcon="trash"
+                    title={lf("Delete file {0}", file.name)}
+                    onClick={this.handleRemove}
+                />
+            }
+            {!!(meta && meta.numErrors) &&
+                <span
+                    className='ui label red button'
+                    role="button"
+                    title={lf("Go to error")}
+                >
+                    {meta.numErrors}
+                </span>
+            }
+            {shareUrl &&
+                <Button
+                    className="button primary label"
+                    leftIcon="share alternate"
+                    title={lf("Share")}
+                    onClick={this.handleShare}
+                />
+            }
+            {previewUrl &&
+                <Button
+                    className="button primary label"
+                    leftIcon="flask"
+                    title={lf("Preview")}
+                    onClick={this.handlePreview}
+                />
+            }
+            {!!addLocalizedFile &&
+                <Button
+                    className="primary label"
+                    leftIcon="xicon globe"
+                    title={lf("Add localized file")}
+                    onClick={this.handleAddLocale}
+                />
+            }
         </a>
     }
 }

@@ -1,6 +1,5 @@
 import * as React from "react";
-
-import { Button } from "../../sui";
+import { Button } from "../../../../react-common/components/controls/Button";
 
 interface TutorialCalloutProps extends React.PropsWithChildren<{}> {
     className?: string;
@@ -42,24 +41,24 @@ export function TutorialCallout(props: TutorialCalloutProps) {
         return () => observer.disconnect();
     });
 
-    const captureEvent = (e: any) => {
+    const captureEvent = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         e.nativeEvent?.stopImmediatePropagation();
     }
 
-    const closeCallout = (e: any) => {
+    const closeCallout = () => {
         document.removeEventListener("click", closeCalloutIfClickedOutside, true);
         setVisible(false);
     }
 
     const closeCalloutIfClickedOutside = (e: PointerEvent) => {
         if (!popupRef?.current?.contains(e.target as Node)) {
-            closeCallout(e);
+            closeCallout();
         }
     }
 
-    const toggleCallout = (e: any) => {
+    const toggleCallout = (e: React.MouseEvent) => {
         captureEvent(e);
         if (!visible) {
             document.addEventListener("click", closeCalloutIfClickedOutside, true);
@@ -69,7 +68,7 @@ export function TutorialCallout(props: TutorialCalloutProps) {
         setVisible(!visible);
     }
 
-    const handleButtonClick = (e: any) => {
+    const handleButtonClick = (e: React.MouseEvent) => {
         const { onClick } = props;
         if (onClick) onClick(visible);
         toggleCallout(e);
@@ -77,15 +76,22 @@ export function TutorialCallout(props: TutorialCalloutProps) {
 
     const buttonTitle = lf("Click to show a hint!");
     return <div ref={popupRef} className={className}>
-        <Button icon={buttonIcon}
-            text={buttonLabel}
+        <Button
+            leftIcon={buttonIcon}
+            label={buttonLabel}
             className="tutorial-callout-button"
             title={buttonTitle}
             ariaLabel={buttonTitle}
             disabled={!children}
-            onClick={children ? handleButtonClick : undefined} />
+            onClick={handleButtonClick}
+        />
         {visible && <div ref={contentRef} className={`tutorial-callout no-select`} onClick={captureEvent} style={{top: top, bottom: bottom, maxHeight: maxHeight}}>
-            <Button icon="close" className="tutorial-callout-close" onClick={closeCallout} />
+            <Button
+                leftIcon="close"
+                className="tutorial-callout-close"
+                onClick={closeCallout}
+                title={lf("Close")}
+            />
             {children}
         </div>}
         {visible && <div className="tutorial-callout-mask" onClick={closeCallout} />}
