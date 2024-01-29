@@ -62,16 +62,20 @@ export class FieldProtractor extends FieldSlider implements FieldCustom {
         // labelContainer.setAttribute('class', 'blocklyFieldSliderLabel');
         const readout = document.createElement('span');
         readout.setAttribute('class', 'blocklyFieldSliderReadout');
+        this.setReadout(this.value_);
         return [labelContainer, readout] as [HTMLDivElement, HTMLSpanElement];
     };
 
-    setReadout_(readout: Element, value: string) {
-        this.updateAngle(parseFloat(value));
+    setReadout(value: string | number) {
+        this.updateAngle(typeof value === "string" ? parseFloat(value) : value);
         // Update reporter
-        this.reporter.textContent = `${value}°`;
+        if (this.reporter) {
+            this.reporter.textContent = `${value}°`;
+        }
     }
 
     private updateAngle(angle: number) {
+        if (!this.circleBar) return;
         angle = Math.max(0, Math.min(180, angle));
         const radius = 90;
         const pct = (180 - angle) / 180 * Math.PI * radius;

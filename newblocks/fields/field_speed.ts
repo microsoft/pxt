@@ -75,16 +75,20 @@ export class FieldSpeed extends FieldSlider implements FieldCustom {
         // label.innerHTML = labelText;
         // labelContainer.appendChild(label);
         // labelContainer.appendChild(readout);
+        this.setReadout(this.value_);
         return [labelContainer, readout] as [HTMLDivElement, HTMLSpanElement];
     };
 
-    setReadout_(readout: Element, value: string) {
-        this.updateSpeed(parseFloat(value));
+    setReadout(value: string | number) {
+        this.updateSpeed(typeof value === "string" ? parseFloat(value) : value);
         // Update reporter
-        this.reporter.textContent = ts.pxtc.U.rlf(this.params.format, value);
+        if (this.params && this.reporter) {
+            this.reporter.textContent = ts.pxtc.U.rlf(this.params.format, value);
+        }
     }
 
     private updateSpeed(speed: number) {
+        if (!this.circleBar) return;
         let sign = this.sign(speed);
         speed = (Math.abs(speed) / 100 * 50) + 50;
         if (sign == -1) speed = 50 - speed;

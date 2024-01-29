@@ -102,7 +102,7 @@ export class FieldTurnRatio extends FieldSlider implements FieldCustom {
         this.reporter_.textContent = `${v}`;
     }
 
-    setReadout_(readout: Element, value: string) {
+    setReadout(value: string | number) {
         this.updateGraph_();
     }
 }
