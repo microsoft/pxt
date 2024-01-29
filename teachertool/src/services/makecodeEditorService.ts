@@ -84,7 +84,9 @@ export async function setHighContrastAsync(on: boolean) {
     console.log(result);
 }
 
-export async function runValidatorPlanAsync(validatorPlan: pxt.blocks.ValidatorPlan): Promise<pxt.blocks.EvaluationResult | undefined> {
+export async function runValidatorPlanAsync(
+    validatorPlan: pxt.blocks.ValidatorPlan
+): Promise<pxt.blocks.EvaluationResult | undefined> {
     let evalResults = undefined;
 
     try {

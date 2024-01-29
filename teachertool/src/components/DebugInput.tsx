@@ -15,7 +15,7 @@ export const DebugInput: React.FC<IProps> = ({}) => {
     const evaluate = async () => {
         await loadProjectMetadataAsync(shareLink);
         await runEvaluateAsync();
-    }
+    };
 
     return (
         <div className="debug-container">

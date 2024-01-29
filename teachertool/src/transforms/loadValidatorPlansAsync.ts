@@ -4,7 +4,7 @@ import { loadTestableCollectionFromFileAsync } from "../utils/fileSystemHelpers"
 
 const files = [
     "/teachertool/validator-plans.json", // target-specific catalog
-    "/teachertool/validator-plans-shared.json" // shared across all targets
+    "/teachertool/validator-plans-shared.json", // shared across all targets
 ];
 
 export async function loadValidatorPlansAsync() {
