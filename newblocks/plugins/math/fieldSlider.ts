@@ -84,6 +84,12 @@ export class FieldSlider extends Blockly.FieldNumber {
         this.slider_ = this.createSlider();
         contentDiv.appendChild(this.slider_);
 
+        const focus = () => {
+            if (!pxt.BrowserUtils.isFirefox()) {
+                this.htmlInput_.focus();
+            }
+        };
+
         // Configure event handler.
         Blockly.browserEvents.bind(this.slider_, "input", this, (event: InputEvent) => {
             const val = parseFloat(this.slider_.value) || 0;
@@ -92,14 +98,14 @@ export class FieldSlider extends Blockly.FieldNumber {
                 const htmlInput = this.htmlInput_;
                 if (htmlInput) { // pxt-blockly
                     htmlInput.value = val + "";
-                    htmlInput.focus();
+                    focus();
                 }
             }
-        })
+        });
 
         Blockly.browserEvents.bind(this.slider_, "focus", this, (event: FocusEvent) => {
-            this.htmlInput_.focus();
-        })
+            focus();
+        });
     }
 
     setValue(newValue: any, fireChangeEvent?: boolean): void {
