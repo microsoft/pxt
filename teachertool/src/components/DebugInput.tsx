@@ -32,11 +32,11 @@ export const DebugInput: React.FC<IProps> = ({}) => {
             </div>
             <div className="rubric-json-input-container">
                 {lf("Rubric:")}
-                <Textarea id="rubricJsonInput" className="json-input" rows={20} onChange={setRubric} />
+                <Textarea id="rubricJsonInput" className="json-input" onChange={setRubric} resize="horizontal" />
             </div>
             <Button
                 id="evaluateSingleProjectButton"
-                className="ui button primary"
+                className="btn-primary"
                 onClick={evaluate}
                 title={"Evaluate"}
                 label={lf("Evaluate")}

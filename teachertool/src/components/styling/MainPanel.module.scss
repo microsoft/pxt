@@ -1,0 +1,10 @@
+
+
+.main-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background-color: var(--pxt-c1-background);
+    color: var(--pxt-c1-foreground);
+}

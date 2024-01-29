@@ -7,7 +7,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 // eslint-disable-next-line import/no-unassigned-import
-import "./teacherTool.css";
+import "./global.scss";
 import { App } from "./App";
 import { AppStateProvider } from "./state/appStateContext";
 

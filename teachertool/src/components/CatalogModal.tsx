@@ -43,12 +43,12 @@ export const CatalogModal: React.FC<IProps> = ({}) => {
     const modalActions = [
         {
             label: lf("Cancel"),
-            className: "secondary",
+            className: "btn-secondary",
             onClick: closeModal,
         },
         {
             label: lf("Add Selected"),
-            className: "primary",
+            className: "btn-primary",
             onClick: handleAddSelectedClicked,
         },
     ];

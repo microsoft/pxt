@@ -1,6 +1,4 @@
 import { useEffect, useContext, useState } from "react";
-// eslint-disable-next-line import/no-unassigned-import
-import "./teacherTool.css";
 import { AppStateContext, AppStateReady } from "./state/appStateContext";
 import { usePromise } from "./hooks";
 import { makeNotification } from "./utils";

@@ -1,5 +1,6 @@
 import * as React from "react";
-
+// eslint-disable-next-line import/no-internal-modules
+import css from "./styling/HeaderBar.module.scss";
 import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 
@@ -12,10 +13,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
 
     const getOrganizationLogo = () => {
         return (
-            <div className="ui item logo organization">
+            <div className={css["org"]}>
                 {appTheme.organizationWideLogo || appTheme.organizationLogo ? (
                     <img
-                        className={`ui logo`}
+                        className={css["logo"]}
                         src={appTheme.organizationWideLogo || appTheme.organizationLogo}
                         alt={lf("{0} Logo", appTheme.organization)}
                     />
@@ -29,28 +30,28 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
     const getTargetLogo = () => {
         return (
             <div
+                className={css["brand"]}
                 aria-label={lf("{0} Logo", appTheme.boardName)}
                 role="menuitem"
-                className={`ui item logo brand mobile hide`}
                 onClick={brandIconClick}
             >
                 {appTheme.useTextLogo ? (
                     [
-                        <span className="name" key="org-name">
+                        <span className={css["name"]} key="org-name">
                             {appTheme.organizationText}
                         </span>,
-                        <span className="name-short" key="org-name-short">
+                        <span className={css["name-short"]} key="org-name-short">
                             {appTheme.organizationShortText || appTheme.organizationText}
                         </span>,
                     ]
                 ) : appTheme.logo || appTheme.portraitLogo ? (
                     <img
-                        className={`ui ${appTheme.logoWide ? "small" : ""} logo`}
+                        className={css["logo"]}
                         src={appTheme.logo || appTheme.portraitLogo}
                         alt={lf("{0} Logo", appTheme.boardName)}
                     />
                 ) : (
-                    <span className="name">{appTheme.boardName}</span>
+                    <span className={css["name"]}>{appTheme.boardName}</span>
                 )}
             </div>
         );
@@ -72,24 +73,20 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
     };
 
     return (
-        <header className="menubar" role="banner">
-            <MenuBar className={`ui menu ${appTheme?.invertedMenu ? `inverted` : ""} header`} ariaLabel={lf("Header")}>
-                <div className="left menu">
-                    {getOrganizationLogo()}
-                    {getTargetLogo()}
-                </div>
+        <MenuBar className={css["header"]} ariaLabel={lf("Header")}>
+            <div className={css["left-menu"]}>
+                {getOrganizationLogo()}
+                {getTargetLogo()}
+            </div>
 
-                <div className="spacer" />
-
-                <div className="header-right">
-                    <Button
-                        className="menu-button"
-                        leftIcon="fas fa-home large"
-                        title={lf("Return to the editor homepage")}
-                        onClick={onHomeClicked}
-                    />
-                </div>
-            </MenuBar>
-        </header>
+            <div className={css["right-menu"]}>
+                <Button
+                    className="menu-button"
+                    leftIcon="fas fa-home large"
+                    title={lf("Return to the editor homepage")}
+                    onClick={onHomeClicked}
+                />
+            </div>
+        </MenuBar>
     );
 };

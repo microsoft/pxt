@@ -1,5 +1,5 @@
 
-/* Vertical split pane */
+// TODO make this scssy
 
 .split-pane-vertical {
   display: flex;
@@ -19,22 +19,22 @@
 }
 
 .splitter-vertical {
-  background-color: #ccc;
-  width: 1px;
+  background-color: var(--pxt-c1-border);
+  width: 0.5px;
 }
 
 .splitter-vertical-inner {
   position: relative;
   background-color: transparent;
   transition: background-color 0.2s ease;
-  left: -3px;
-  width: 6px;
+  left: -2.5px;
+  width: 5px;
   height: 100%;
   cursor: ew-resize;
 }
 
 .splitter-vertical-inner:hover {
-  background-color: #000000aa;
+  background-color: var(--pxt-c1-foreground);
   transition: background-color 0.2s ease;
   transition-delay: 0.2s;
 }
@@ -60,7 +60,7 @@
 
 .splitter-horizontal {
   flex: 0 0 1px;
-  background-color: #ccc;
+  background-color: var(--pxt-c0-background);
   height: 5px;
   cursor: ns-resize;
 }
