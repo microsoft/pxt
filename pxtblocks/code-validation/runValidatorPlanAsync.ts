@@ -1,26 +1,23 @@
 namespace pxt.blocks {
-    export async function runValidatorPlan(usedBlocks: Blockly.Block[], plan: ValidatorPlan): Promise<boolean> {
+    export async function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: ValidatorPlan): Promise<boolean> {
         // Each plan can have multiple checks it needs to run.
         // Run all of them in parallel, and then check if the number of successes is greater than the specified threshold.
         // TBD if it's faster to run in parallel without short-circuiting once the threshold is reached, or if it's faster to run sequentially and short-circuit.
         const startTime = Date.now();
-        const checkRuns = plan.checks.map(
-            (check) =>
-                new Promise<boolean>(async (resolve) => {
-                    switch (check.validator) {
-                        case "blocksExist":
-                            const result = runBlocksExistValidation(usedBlocks, check as BlocksExistValidatorCheck);
-                            resolve(result);
-                            break;
 
-                        default:
-                            console.error(`Unrecognized validator: ${check.validator}`);
-                            resolve(false);
-                    }
-                })
-        );
+        const checkRuns = pxt.Util.promisePoolAsync(4, plan.checks, async (check: ValidatorCheckBase): Promise<boolean> => {
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 10000 + 5000));
+            switch (check.validator) {
+                case "blocksExist":
+                    return runBlocksExistValidation(usedBlocks, check as BlocksExistValidatorCheck);
 
-        const results = await Promise.all(checkRuns);
+                default:
+                    console.error(`Unrecognized validator: ${check.validator}`);
+                    return false;
+            }
+        });
+
+        const results = await checkRuns;
         const successCount = results.filter((r) => r).length;
 
         pxt.tickEvent("validation.evaluation_complete", {

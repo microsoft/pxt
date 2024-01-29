@@ -550,7 +550,7 @@ namespace pxt.editor {
                                     return Promise.resolve()
                                         .then(() => {
                                             const blocks = projectView.getBlocks();
-                                            return pxt.blocks.runValidatorPlan(blocks, plan)})
+                                            return pxt.blocks.runValidatorPlanAsync(blocks, plan)})
                                         .then (results => {
                                             resp = { result: results };
                                         });
