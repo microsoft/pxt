@@ -27,6 +27,7 @@ import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 
 import { DuplicateOnDragConnectionChecker } from "../../newblocks/plugins/duplicateOnDrag";
+import { PathObject } from "../../newblocks/plugins/renderer/pathObject";
 
 
 export class Editor extends toolboxeditor.ToolboxEditor {
@@ -1909,7 +1910,7 @@ function clearTemporaryAssetBlockData(workspace: Blockly.Workspace) {
 }
 
 function setHighlightWarning(block: Blockly.BlockSvg, enabled: boolean) {
-    // FIXME (riknoll): this was setHighlightWarning in old blocks... not sure what that does
+    (block.pathObject as PathObject).setHasError(enabled);
     block.setHighlighted(enabled);
 }
 

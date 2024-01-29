@@ -21,6 +21,8 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
      */
     HIGHLIGHT_GLOW_COLOUR = '#FFF200';
 
+    ERROR_HIGHLIGHT_GLOW_COLOR = '#FF0000';
+
     /**
      * The width of the glow outline around highlighted blocks.
      */
@@ -38,6 +40,10 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
 
     highlightOutlineFilterId?: string;
     highlightOutlineFilter?: SVGElement;
+
+    errorOutlineFilterId?: string;
+    errorOutlineFilter?: SVGElement;
+
     ellipses = this.makeEllipses();
 
 
@@ -46,58 +52,11 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
 
         const defs = Blockly.utils.dom.createSvgElement(Blockly.utils.Svg.DEFS, {}, svg);
 
+        this.highlightOutlineFilter = this.createHighlight(defs, "blocklyHighlightedGlowFilter", this.HIGHLIGHT_GLOW_COLOUR);
+        this.highlightOutlineFilterId = this.highlightOutlineFilter.id;
 
-        // This is the same as the Zelos selected glow filter but with a different
-        // standard deviation to make it wider
-        const highlightOutlineFilter = Blockly.utils.dom.createSvgElement(
-            Blockly.utils.Svg.FILTER,
-            {
-                'id': 'blocklyHighlightedGlowFilter' + this.randomIdentifier,
-                'height': '160%',
-                'width': '180%',
-                'y': '-30%',
-                'x': '-40%',
-            },
-            defs,
-        );
-        Blockly.utils.dom.createSvgElement(
-            Blockly.utils.Svg.FEGAUSSIANBLUR,
-            { 'in': 'SourceGraphic', 'stdDeviation': this.HIGHLIGHT_GLOW_SIZE },
-            highlightOutlineFilter,
-        );
-        // Set all gaussian blur pixels to 1 opacity before applying flood
-        const selectedComponentTransfer = Blockly.utils.dom.createSvgElement(
-            Blockly.utils.Svg.FECOMPONENTTRANSFER,
-            { 'result': 'outBlur' },
-            highlightOutlineFilter,
-        );
-        Blockly.utils.dom.createSvgElement(
-            Blockly.utils.Svg.FEFUNCA,
-            { 'type': 'table', 'tableValues': '0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1' },
-            selectedComponentTransfer,
-        );
-        // Color the highlight
-        Blockly.utils.dom.createSvgElement(
-            Blockly.utils.Svg.FEFLOOD,
-            {
-                'flood-color': this.HIGHLIGHT_GLOW_COLOUR,
-                'flood-opacity': 1,
-                'result': 'outColor',
-            },
-            highlightOutlineFilter,
-        );
-        Blockly.utils.dom.createSvgElement(
-            Blockly.utils.Svg.FECOMPOSITE,
-            {
-                'in': 'outColor',
-                'in2': 'outBlur',
-                'operator': 'in',
-                'result': 'outGlow',
-            },
-            highlightOutlineFilter,
-        );
-        this.highlightOutlineFilterId = highlightOutlineFilter.id;
-        this.highlightOutlineFilter = highlightOutlineFilter;
+        this.errorOutlineFilter = this.createHighlight(defs, "blocklyErrorHighlightedGlowFilter", this.ERROR_HIGHLIGHT_GLOW_COLOR);
+        this.errorOutlineFilterId = this.errorOutlineFilter.id;
     }
 
     dispose(): void {
@@ -157,5 +116,57 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
             'font-size: 1.5rem;',
             '}'
         ])
+    }
+
+    protected createHighlight(defs: SVGDefsElement, id: string, color: string) {
+        const highlightOutlineFilter = Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FILTER,
+            {
+                'id': id + this.randomIdentifier,
+                'height': '160%',
+                'width': '180%',
+                'y': '-30%',
+                'x': '-40%',
+            },
+            defs,
+        );
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FEGAUSSIANBLUR,
+            { 'in': 'SourceGraphic', 'stdDeviation': this.HIGHLIGHT_GLOW_SIZE },
+            highlightOutlineFilter,
+        );
+        // Set all gaussian blur pixels to 1 opacity before applying flood
+        const selectedComponentTransfer = Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FECOMPONENTTRANSFER,
+            { 'result': 'outBlur' },
+            highlightOutlineFilter,
+        );
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FEFUNCA,
+            { 'type': 'table', 'tableValues': '0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1' },
+            selectedComponentTransfer,
+        );
+        // Color the highlight
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FEFLOOD,
+            {
+                'flood-color': color,
+                'flood-opacity': 1,
+                'result': 'outColor',
+            },
+            highlightOutlineFilter,
+        );
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FECOMPOSITE,
+            {
+                'in': 'outColor',
+                'in2': 'outBlur',
+                'operator': 'in',
+                'result': 'outGlow',
+            },
+            highlightOutlineFilter,
+        );
+
+        return highlightOutlineFilter;
     }
 }

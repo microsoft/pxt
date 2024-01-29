@@ -3,16 +3,19 @@ import { ConstantProvider } from "./constants";
 
 export class PathObject extends Blockly.zelos.PathObject {
     protected svgPathHighlighted: SVGElement;
+    protected hasError: boolean;
 
     override updateHighlighted(enable: boolean) {
         // this.setClass_('blocklySelected', enable);
         if (enable) {
             if (!this.svgPathHighlighted) {
+                const constants = this.constants as ConstantProvider;
+                const filterId = this.hasError ? constants.errorOutlineFilterId : constants.highlightOutlineFilterId;
                 this.svgPathHighlighted = this.svgPath.cloneNode(true) as SVGElement;
                 this.svgPathHighlighted.setAttribute('fill', 'none');
                 this.svgPathHighlighted.setAttribute(
                     'filter',
-                    'url(#' + (this.constants as ConstantProvider).highlightOutlineFilterId + ')',
+                    'url(#' + filterId + ')',
                 );
                 this.svgRoot.appendChild(this.svgPathHighlighted);
             }
@@ -22,5 +25,9 @@ export class PathObject extends Blockly.zelos.PathObject {
                 this.svgPathHighlighted = null;
             }
         }
+    }
+
+    setHasError(hasError: boolean) {
+        this.hasError = hasError;
     }
 }

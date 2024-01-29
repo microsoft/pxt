@@ -85,6 +85,8 @@ export class FieldSlider extends Blockly.FieldNumber {
         contentDiv.appendChild(this.slider_);
 
         const focus = () => {
+            // In firefox, stealing focus from the range input interrupts
+            // the dragging of the slider
             if (!pxt.BrowserUtils.isFirefox()) {
                 this.htmlInput_.focus();
             }
