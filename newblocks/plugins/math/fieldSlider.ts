@@ -200,7 +200,7 @@ input[type=range]::-webkit-slider-thumb {
 input[type=range]::-moz-range-track {
     margin: 8px;
     height: 22px;
-    width: 180px;
+    width: 95%;
     outline: none;
     border-radius: 11px;
     margin-bottom: 20px;

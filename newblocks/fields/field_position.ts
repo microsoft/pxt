@@ -20,7 +20,7 @@ export class FieldPosition extends FieldSlider implements FieldCustom {
     private resetCrosshair: () => void;
 
     constructor(text: string, params: FieldPositionOptions, validator?: Blockly.FieldValidator) {
-        super(text, '0', '100', '1', '100', 'Value', validator);
+        super(text, '0', '100', '1', '1', 'Value', validator);
         this.params = params;
         if (!this.params.screenHeight) this.params.screenHeight = 120;
         if (!this.params.screenWidth) this.params.screenWidth = 160;
