@@ -17,8 +17,4 @@ namespace pxt.blocks {
         validator: "blocksExist";
         blockCounts: pxt.Map<number>;
     }
-
-    function isBlocksExistValidatorCheck(check: ValidatorCheckBase): check is BlocksExistValidatorCheck {
-        return check.validator === "blocksExist";
-    }
 }

@@ -10,7 +10,7 @@ interface IProps {}
 export const EvalResultDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    function getTemplateFromCriteriaInstanceId(instanceId: string): string {
+    function getTemplateStringFromCriteriaInstanceId(instanceId: string): string {
         const catalogCriteriaId = teacherTool.selectedCriteria?.find(
             criteria => criteria.instanceId === instanceId
         )?.catalogCriteriaId;
@@ -30,11 +30,17 @@ export const EvalResultDisplay: React.FC<IProps> = ({}) => {
 
                         return (
                             <div className="result-block-id" key={criteriaInstanceId}>
-                                <p className="block-id-label">{getTemplateFromCriteriaInstanceId(criteriaInstanceId)}:</p>
-                                { result === CriteriaEvaluationResult.InProgress && <div className="common-spinner" /> }
-                                { result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
-                                { result === CriteriaEvaluationResult.Fail && <p className="negative-text">{lf("Needs Work")}</p>}
-                                { result === CriteriaEvaluationResult.Pass && <p className="positive-text">{lf("Looks Good!")}</p>}
+                                <p className="block-id-label">
+                                    {getTemplateStringFromCriteriaInstanceId(criteriaInstanceId)}:
+                                </p>
+                                {result === CriteriaEvaluationResult.InProgress && <div className="common-spinner" />}
+                                {result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
+                                {result === CriteriaEvaluationResult.Fail && (
+                                    <p className="negative-text">{lf("Needs Work")}</p>
+                                )}
+                                {result === CriteriaEvaluationResult.Pass && (
+                                    <p className="positive-text">{lf("Looks Good!")}</p>
+                                )}
                             </div>
                         );
                     })}
