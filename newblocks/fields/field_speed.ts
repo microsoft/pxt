@@ -75,7 +75,6 @@ export class FieldSpeed extends FieldSlider implements FieldCustom {
         // label.innerHTML = labelText;
         // labelContainer.appendChild(label);
         // labelContainer.appendChild(readout);
-        this.setReadout(this.value_);
         return [labelContainer, readout] as [HTMLDivElement, HTMLSpanElement];
     };
 

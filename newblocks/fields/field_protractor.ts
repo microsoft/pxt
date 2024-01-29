@@ -62,7 +62,6 @@ export class FieldProtractor extends FieldSlider implements FieldCustom {
         // labelContainer.setAttribute('class', 'blocklyFieldSliderLabel');
         const readout = document.createElement('span');
         readout.setAttribute('class', 'blocklyFieldSliderReadout');
-        this.setReadout(this.value_);
         return [labelContainer, readout] as [HTMLDivElement, HTMLSpanElement];
     };
 

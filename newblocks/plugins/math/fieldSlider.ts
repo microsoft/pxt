@@ -79,6 +79,7 @@ export class FieldSlider extends Blockly.FieldNumber {
             var elements = this.createLabelDom_(this.labelText_);
             contentDiv.appendChild(elements[0]);
             this.readout_ = elements[1];
+            this.setReadout(this.value_);
         }
         this.slider_ = this.createSlider();
         contentDiv.appendChild(this.slider_);
