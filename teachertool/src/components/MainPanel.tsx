@@ -1,6 +1,6 @@
 import * as React from "react";
 // eslint-disable-next-line import/no-internal-modules
-import css from "./styling/MainPanel.module.css";
+import css from "./styling/MainPanel.module.scss";
 
 import { DebugInput } from "./DebugInput";
 import { MakeCodeFrame } from "./MakecodeFrame";
