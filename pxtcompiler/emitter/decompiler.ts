@@ -1127,9 +1127,8 @@ ${output}</xml>`;
         }
 
         function mkDraggableReporterValue(valueName: string, varName: string, varType: string) {
-            const reporterType = pxt.blocks.reporterTypeForArgType(varType);
             const reporterShadowBlock = getDraggableReporterBlock(varName, varType, true);
-            return mkValue(valueName, reporterShadowBlock, reporterType);
+            return mkValue(valueName, reporterShadowBlock, undefined);
         }
 
         function getDraggableReporterBlock(varName: string, varType: string, draggable: boolean) {
