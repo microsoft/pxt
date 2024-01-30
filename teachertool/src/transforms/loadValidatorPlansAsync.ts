@@ -1,6 +1,6 @@
+import { loadTestableCollectionFromDocsAsync } from "../services/backendRequests";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
-import { loadTestableCollectionFromFileAsync } from "../utils/fileSystemHelpers";
 
 const files = [
     "/teachertool/validator-plans.json", // target-specific catalog
@@ -9,6 +9,6 @@ const files = [
 
 export async function loadValidatorPlansAsync() {
     const { dispatch } = stateAndDispatch();
-    const plans = await loadTestableCollectionFromFileAsync<pxt.blocks.ValidatorPlan>(files, "validatorPlans");
+    const plans = await loadTestableCollectionFromDocsAsync<pxt.blocks.ValidatorPlan>(files, "validatorPlans");
     dispatch(Actions.setValidatorPlans(plans));
 }
