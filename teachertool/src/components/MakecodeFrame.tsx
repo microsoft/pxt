@@ -1,6 +1,6 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
-import { useContext } from "react";
-import { setEditorRef } from "../services/makecodeEditorService";
+import { useContext, useEffect } from "react";
+import { clearReady, setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
 
@@ -8,6 +8,11 @@ interface MakeCodeFrameProps {}
 
 export const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
+
+    // Clear iframe state when the iframe url is changed
+    useEffect(() => {
+        clearReady();
+    }, [teacherTool.projectMetadata?.id]);
 
     function createIFrameUrl(shareId: string): string {
         const editorUrl: string = pxt.BrowserUtils.isLocalHost()
