@@ -27,8 +27,8 @@ export const EvalResultDisplay: React.FC<IProps> = ({}) => {
                     {teacherTool.evalResults.length === 0 && <div className="common-spinner" />}
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
                         const result = teacherTool.evalResults[criteriaInstanceId];
-
-                        return (
+                        const label = getTemplateStringFromCriteriaInstanceId(criteriaInstanceId);
+                        return label && (
                             <div className="result-block-id" key={criteriaInstanceId}>
                                 <p className="block-id-label">
                                     {getTemplateStringFromCriteriaInstanceId(criteriaInstanceId)}:

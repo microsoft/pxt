@@ -65,8 +65,11 @@ function validateResponse(result: pxt.editor.EditorMessageResponse, expectRespon
     }
 }
 
-export function setEditorRef(ref: HTMLIFrameElement | undefined) {
+export function clearReady() {
     readyForMessages = false;
+}
+
+export function setEditorRef(ref: HTMLIFrameElement | undefined) {
     makecodeEditorRef = ref ?? undefined;
     window.removeEventListener("message", onMessageReceived);
     if (ref) {
