@@ -11,11 +11,10 @@ interface IProps {}
 
 export const DebugInput: React.FC<IProps> = ({}) => {
     const [shareLink, setShareLink] = useState("https://makecode.microbit.org/S95591-52406-50965-65671");
-    const [rubric, setRubric] = useState("");
 
     const evaluate = async () => {
         await loadProjectMetadataAsync(shareLink);
-        await runEvaluateAsync(rubric);
+        await runEvaluateAsync();
     };
 
     return (
@@ -29,10 +28,6 @@ export const DebugInput: React.FC<IProps> = ({}) => {
                     initialValue={shareLink}
                     onChange={setShareLink}
                 />
-            </div>
-            <div className="rubric-json-input-container">
-                {lf("Rubric:")}
-                <Textarea id="rubricJsonInput" className="json-input" onChange={setRubric} resize="horizontal" />
             </div>
             <Button
                 id="evaluateSingleProjectButton"

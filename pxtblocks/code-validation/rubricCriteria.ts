@@ -31,21 +31,6 @@ namespace pxt.blocks {
         return requiredBlockCounts;
     }
 
-    export function validateProject(usedBlocks: Blockly.Block[], rubric: string): EvaluationResult {
-        const rubricData = parseRubric(rubric);
-        const finalResult: pxt.Map<boolean> = {};
-        rubricData.criteria.forEach((criteria: RubricCriteria) => {
-            (criteria as BlockCheckCriteria).blockRequirements.forEach((blockSet) => {
-                const result = validateBlockSet(usedBlocks, blockSet);
-                Object.keys(result).forEach((blockId) => {
-                    finalResult[blockId] = result[blockId];
-                });
-            });
-        });
-        return { blockIdResults: finalResult } as EvaluationResult;
-    }
-
-
     function validateBlockSet(usedBlocks: Blockly.Block[], blockSet: BlockSet): pxt.Map<boolean> {
         const requiredBlockCounts = blockSetToRequiredBlockCounts(blockSet);
         const blockResults: pxt.Map<boolean> = {};

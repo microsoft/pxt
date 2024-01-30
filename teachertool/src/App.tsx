@@ -14,6 +14,7 @@ import { CatalogModal } from "./components/CatalogModal";
 
 import { postNotification } from "./transforms/postNotification";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
+import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -29,8 +30,9 @@ export const App = () => {
                 dispatch(Actions.setTargetConfig(cfg || {}));
                 pxt.BrowserUtils.initTheme();
 
-                // Load criteria catalog
+                // Load catalog and validator plans into state.
                 await loadCatalogAsync();
+                await loadValidatorPlansAsync();
 
                 // TODO: Remove this. Delay app init to expose any startup race conditions.
                 setTimeout(() => {
