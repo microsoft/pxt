@@ -6,13 +6,12 @@ namespace pxt.blocks {
         const startTime = Date.now();
 
         const checkRuns = pxt.Util.promisePoolAsync(4, plan.checks, async (check: ValidatorCheckBase): Promise<boolean> => {
-            await new Promise(resolve => setTimeout(resolve, Math.random() * 10000 + 5000));
             switch (check.validator) {
                 case "blocksExist":
                     return runBlocksExistValidation(usedBlocks, check as BlocksExistValidatorCheck);
 
                 default:
-                    console.error(`Unrecognized validator: ${check.validator}`);
+                    pxt.debug(`Unrecognized validator: ${check.validator}`);
                     return false;
             }
         });
