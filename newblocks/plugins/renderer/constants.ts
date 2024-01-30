@@ -44,6 +44,8 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
     errorOutlineFilterId?: string;
     errorOutlineFilter?: SVGElement;
 
+    embossFilterOverride?: SVGElement;
+
     ellipses = this.makeEllipses();
 
 
@@ -57,6 +59,9 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
 
         this.errorOutlineFilter = this.createHighlight(defs, "blocklyErrorHighlightedGlowFilter", this.ERROR_HIGHLIGHT_GLOW_COLOR);
         this.errorOutlineFilterId = this.errorOutlineFilter.id;
+
+        this.embossFilterOverride = this.createOutline(defs, "blocklyBubbleEmbossGlowFilter")
+        this.embossFilterId = this.embossFilterOverride.id
     }
 
     dispose(): void {
@@ -165,6 +170,91 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
                 'result': 'outGlow',
             },
             highlightOutlineFilter,
+        );
+
+        return highlightOutlineFilter;
+    }
+
+    protected createOutline(defs: SVGDefsElement, id: string) {
+        const highlightOutlineFilter = Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FILTER,
+            {
+                'id': id + this.randomIdentifier,
+                'height': '160%',
+                'width': '180%',
+                'y': '-30%',
+                'x': '-40%',
+            },
+            defs,
+        );
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FEGAUSSIANBLUR,
+            { 'in': 'SourceGraphic', 'stdDeviation': 0.92 },
+            highlightOutlineFilter,
+        );
+        // Set all gaussian blur pixels to 1 opacity before applying flood
+        const selectedComponentTransfer = Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FECOMPONENTTRANSFER,
+            { 'result': 'outBlur' },
+            highlightOutlineFilter,
+        );
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FEFUNCA,
+            { 'type': 'table', 'tableValues': '0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1' },
+            selectedComponentTransfer,
+        );
+        // Flood the blur with an opacity
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FEFLOOD,
+            {
+                'flood-color': "#000000",
+                'flood-opacity': 0.5,
+                'result': 'outColor',
+            },
+            highlightOutlineFilter,
+        );
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.FECOMPOSITE,
+            {
+                'in': 'outColor',
+                'in2': 'outBlur',
+                'operator': 'in',
+                'result': 'outGlow',
+            },
+            highlightOutlineFilter,
+        );
+
+        // Stack the flooded blur on top of the original blur
+        // to create a darkened outline. Then place the original
+        // image on top of the darkened outline.
+        const merge = Blockly.utils.dom.createSvgElement(
+            'feMerge',
+            {},
+            highlightOutlineFilter,
+        );
+
+        Blockly.utils.dom.createSvgElement(
+            'feMergeNode',
+            {
+                'in': 'outBlur'
+            },
+            merge,
+        );
+
+        Blockly.utils.dom.createSvgElement(
+            'feMergeNode',
+            {
+                'in': 'outGlow'
+            },
+            merge,
+        );
+
+        Blockly.utils.dom.createSvgElement(
+            'feMergeNode',
+            {
+                'in': 'SourceGraphic'
+            },
+            merge,
         );
 
         return highlightOutlineFilter;
