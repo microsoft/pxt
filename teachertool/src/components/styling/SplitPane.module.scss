@@ -19,7 +19,7 @@
 }
 
 .splitter-vertical {
-  background-color: var(--pxt-c1-border);
+  background-color: var(--pxt-content-accent);
   width: 0.5px;
 }
 
@@ -34,7 +34,7 @@
 }
 
 .splitter-vertical-inner:hover {
-  background-color: var(--pxt-c1-foreground);
+  background-color: var(--pxt-content-foreground);
   transition: background-color 0.2s ease;
   transition-delay: 0.2s;
 }
@@ -60,7 +60,7 @@
 
 .splitter-horizontal {
   flex: 0 0 1px;
-  background-color: var(--pxt-c0-background);
+  background-color: var(--pxt-headerbar-background);
   height: 5px;
   cursor: ns-resize;
 }

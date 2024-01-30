@@ -98,32 +98,32 @@ code {
 
 .btn-primary {
     transition: all 0.1s ease;
-    background-color: var(--pxt-c2-background);
-    color: var(--pxt-c2-foreground);
+    background-color: var(--pxt-button-primary-background);
+    color: var(--pxt-button-primary-foreground);
     border-width: 1px;
     border-style: solid;
-    border-color: var(--pxt-c2-border);
+    border-color: var(--pxt-button-primary-accent);
 }
 
 .btn-secondary {
     transition: all 0.1s ease;
-    background-color: var(--pxt-c3-background);
-    color: var(--pxt-c3-foreground);
+    background-color: var(--pxt-button-secondary-background);
+    color: var(--pxt-button-secondary-foreground);
     border-width: 1px;
     border-style: solid;
-    border-color: var(--pxt-c3-border);
+    border-color: var(--pxt-button-secondary-accent);
 }
 
 .btn-inline {
     transition: all 0.1s ease;
-    background-color: var(--pxt-c1-background);
-    color: var(--pxt-c1-foreground);
+    background-color: var(--pxt-content-background);
+    color: var(--pxt-content-foreground);
     border-width: 1px;
     border-style: solid;
-    border-color: var(--pxt-c1-foreground);
+    border-color: var(--pxt-content-foreground);
     &:hover {
         filter: none;
-        background-color: var(--pxt-c0-background-alpha-25);
+        background-color: var(--pxt-headerbar-background-glass);
     }
 }
 
@@ -209,8 +209,8 @@ code {
     padding: 0 1rem;
     margin-right: 1rem;
     pointer-events: none;
-    border: 4px solid var(--pxt-c2-border);
-    background-color: var(--pxt-c2-foreground);
+    border: 4px solid var(--pxt-button-primary-accent);
+    background-color: var(--pxt-button-primary-foreground);
 }
 
 /*******************************/

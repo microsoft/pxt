@@ -6,58 +6,35 @@
         2. Set the variable value in each target's theme/themepacks.less
 ***************************************************************************/
 
-// TODO: Define the actual set of theme variables we want to support
+// TODO: Define the complete set of theme variables we want to support
 :root {
-    // Default to terrible choices so we can easily see when we're missing a theme variable in a target
-    --pxt-page-font: "Comic Sans MS", "Comic Sans", cursive;
+    // Default to a resonable scheme that doesn't closely match any existing target's colors
+    /// Page
+    --pxt-page-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     --pxt-page-background: white;
     --pxt-page-foreground: black;
-    // color combo 0 (eg: navbar, toolbar button)
-    --pxt-c0-background: #4F3130;
-    --pxt-c0-background-alpha-25: rgba(var(--pxt-c0-background), 0.25);
-    --pxt-c0-foreground: #D8D78F;
-    --pxt-c0-border: #AA5042;
-    // color combo 1 (eg: main content frame, secondary toolbar)
-    --pxt-c1-background: #A3E7FC;
-    --pxt-c1-background-alpha-25: rgba(var(--pxt-c1-background), 0.25);
-    --pxt-c1-foreground: #4F3130;
-    --pxt-c1-border: #32908F;
-    // color combo 2 (eg: primary button)
-    --pxt-c2-background: #AD6CFA;
-    --pxt-c2-background-alpha-25: rgba(var(--pxt-c2-background), 0.25);
-    --pxt-c2-foreground: #FFFFC7;
-    --pxt-c2-border: #548687;
-    // color combo 3 (eg: secondary button)
-    --pxt-c3-background: #F2CEE6;
-    --pxt-c3-background-alpha-25: rgba(var(--pxt-c3-background), 0.25);
-    --pxt-c3-foreground: #0D1B1E;
-    --pxt-c3-border: #D8D8D8;
+    /// Header bar
+    --pxt-headerbar-background: #475569;
+    --pxt-headerbar-background-glass: #47556940;
+    --pxt-headerbar-foreground: white;
+    --pxt-headerbar-accent: #475569;
+    /// Content area
+    --pxt-content-background: #C7D2FE;
+    --pxt-content-background-glass: #C7D2FE40;
+    --pxt-content-foreground: #1E293B;
+    --pxt-content-accent: #EEF2FF;
+    /// Primary button
+    --pxt-button-primary-background: #065F46;
+    --pxt-button-primary-background-glass: #065F4640;
+    --pxt-button-primary-foreground: white;
+    --pxt-button-primary-accent: #065F46;
+    /// Secondary button
+    --pxt-button-secondary-background: #CBD5E1;
+    --pxt-button-secondary-background-glass: #CBD5E140;
+    --pxt-button-secondary-foreground: #1E293B;
+    --pxt-button-secondary-accent: #334155;
 }
 
-// TODO: Don't make bad choices here. Base high-contrast theme can be shared across targets and CRAs
-
 .theme-highcontrast {
-    --pxt-page-font: "Comic Sans MS", "Comic Sans", cursive;
-    --pxt-page-background: black;
-    --pxt-page-foreground: white;
-    // color combo 0 (eg: navbar, toolbar button)
-    --pxt-c0-background: #D8D78F;
-    --pxt-c0-background-alpha-25: rgba(var(--pxt-c0-background), 0.25);
-    --pxt-c0-foreground: #4F3130;
-    --pxt-c0-border: #AA5042;
-    // color combo 1 (eg: main content frame, secondary toolbar)
-    --pxt-c1-background: #4F3130;
-    --pxt-c1-background-alpha-25: rgba(var(--pxt-c1-background), 0.25);
-    --pxt-c1-foreground: #A3E7FC;
-    --pxt-c1-border: #32908F;
-    // color combo 2 (eg: primary button)
-    --pxt-c2-background: #FFFFC7;
-    --pxt-c2-background-alpha-25: rgba(var(--pxt-c2-background), 0.25);
-    --pxt-c2-foreground: #AD6CFA;
-    --pxt-c2-border: #548687;
-    // color combo 3 (eg: secondary button)
-    --pxt-c3-background: #0D1B1E;
-    --pxt-c3-background-alpha-25: rgba(var(--pxt-c3-background), 0.25);
-    --pxt-c3-foreground: #F2CEE6;
-    --pxt-c3-border: #D8D8D8;
+    // TODO: Fill this in
 }

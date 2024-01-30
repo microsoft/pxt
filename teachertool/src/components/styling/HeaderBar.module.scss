@@ -3,8 +3,8 @@
 /*******************************/
 
 .header {
-    background-color: var(--pxt-c0-background);
-    color: var(--pxt-c0-foreground);
+    background-color: var(--pxt-headerbar-background);
+    color: var(--pxt-headerbar-foreground);
     display: flex;
     flex-direction: row;
     height: 4rem;
@@ -35,7 +35,7 @@
         align-items: center;
         &:before {
             height: 1.5rem;
-            border-left: 2px solid var(--pxt-c0-foreground);
+            border-left: 2px solid var(--pxt-headerbar-foreground);
             content: " ";
         }
         .logo {
