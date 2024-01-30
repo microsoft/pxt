@@ -38,7 +38,7 @@ export async function runEvaluateAsync() {
     // Clear all existing results.
     dispatch(Actions.clearAllEvalResults());
 
-    // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail)
+    // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
     // They will only resolve to false if evaluation was unable to complete.
     const evalRequests = teacherTool.selectedCriteria.map(
         criteriaInstance =>
@@ -49,10 +49,10 @@ export async function runEvaluateAsync() {
 
                 if (!plan) {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
-                    resolve(false);
+                    return resolve(false);
                 }
 
-                const planResult = await runValidatorPlanAsync(plan!);
+                const planResult = await runValidatorPlanAsync(plan);
 
                 if (planResult) {
                     dispatch(
@@ -61,17 +61,17 @@ export async function runEvaluateAsync() {
                             planResult.result ? CriteriaEvaluationResult.Pass : CriteriaEvaluationResult.Fail
                         )
                     );
-                    resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
+                    return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
-                    resolve(false);
+                    return resolve(false);
                 }
             })
     );
 
     const results = await Promise.all(evalRequests);
     const errorCount = results.filter(r => !r).length;
-    if (errorCount == teacherTool.selectedCriteria.length) {
+    if (errorCount === teacherTool.selectedCriteria.length) {
         postNotification(makeNotification(lf("Unable to run evaluation"), 2000));
     } else if (errorCount > 0) {
         postNotification(makeNotification(lf("Unable to evaluate some criteria"), 2000));
