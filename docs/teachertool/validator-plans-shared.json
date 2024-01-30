@@ -1,0 +1,35 @@
+{
+    "validatorPlans": [
+        {
+            ".desc": "Two different kinds of loops used",
+            "name": "two_different_loops",
+            "threshold": 2,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "controls_repeat_ext": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "device_while": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "pxt_controls_for": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "pxt_controls_for_of": 1
+                    }
+                }
+            ]
+        }
+    ]
+}

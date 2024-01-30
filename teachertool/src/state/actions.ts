@@ -1,5 +1,5 @@
 import { ModalType, NotificationWithId } from "../types";
-import { CatalogCriteria, CriteriaInstance } from "../types/criteria";
+import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -26,7 +26,17 @@ type SetProjectMetadata = ActionBase & {
 
 type SetEvalResult = ActionBase & {
     type: "SET_EVAL_RESULT";
-    result: pxt.blocks.EvaluationResult | undefined;
+    criteriaInstanceId: string;
+    result: CriteriaEvaluationResult;
+};
+
+type ClearEvalResult = ActionBase & {
+    type: "CLEAR_EVAL_RESULT";
+    criteriaInstanceId: string;
+};
+
+type ClearAllEvalResults = ActionBase & {
+    type: "CLEAR_ALL_EVAL_RESULTS";
 };
 
 type SetTargetConfig = ActionBase & {
@@ -58,6 +68,11 @@ type HideModal = ActionBase & {
     type: "HIDE_MODAL";
 };
 
+type SetValidatorPlans = ActionBase & {
+    type: "SET_VALIDATOR_PLANS";
+    plans: pxt.blocks.ValidatorPlan[] | undefined;
+};
+
 /**
  * Union of all actions
  */
@@ -67,12 +82,15 @@ export type Action =
     | RemoveNotification
     | SetProjectMetadata
     | SetEvalResult
+    | ClearEvalResult
+    | ClearAllEvalResults
     | SetTargetConfig
     | SetCatalog
     | SetSelectedCriteria
     | RemoveCriteriaInstance
     | ShowModal
-    | HideModal;
+    | HideModal
+    | SetValidatorPlans;
 
 /**
  * Action creators
@@ -92,9 +110,19 @@ const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProj
     metadata,
 });
 
-const setEvalResult = (result: pxt.blocks.EvaluationResult | undefined): SetEvalResult => ({
+const setEvalResult = (criteriaInstanceId: string, result: CriteriaEvaluationResult): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
+    criteriaInstanceId,
     result,
+});
+
+const clearEvalResult = (criteriaInstanceId: string): ClearEvalResult => ({
+    type: "CLEAR_EVAL_RESULT",
+    criteriaInstanceId,
+});
+
+const clearAllEvalResults = (): ClearAllEvalResults => ({
+    type: "CLEAR_ALL_EVAL_RESULTS",
 });
 
 const setTargetConfig = (config: pxt.TargetConfig): SetTargetConfig => ({
@@ -126,15 +154,23 @@ const hideModal = (): HideModal => ({
     type: "HIDE_MODAL",
 });
 
+const setValidatorPlans = (plans: pxt.blocks.ValidatorPlan[] | undefined): SetValidatorPlans => ({
+    type: "SET_VALIDATOR_PLANS",
+    plans,
+});
+
 export {
     postNotification,
     removeNotification,
     setProjectMetadata,
     setEvalResult,
+    clearEvalResult,
+    clearAllEvalResults,
     setTargetConfig,
     setCatalog,
     setSelectedCriteria,
     removeCriteriaInstance,
     showModal,
     hideModal,
+    setValidatorPlans,
 };
