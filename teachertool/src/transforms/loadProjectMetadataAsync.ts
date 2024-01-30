@@ -22,6 +22,7 @@ export async function loadProjectMetadataAsync(shareLink: string) {
         return;
     }
 
+    dispatch(Actions.clearAllEvalResults());
     dispatch(Actions.setProjectMetadata(projMeta));
     logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);
 }
