@@ -5,7 +5,6 @@ import { logDebug, logError } from "../services/loggingService";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
 import { ErrorCode } from "../types/errorCode";
-import { saveRubric } from "../services/indexedDbService";
 
 export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
@@ -50,6 +49,4 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     pxt.tickEvent("teachertool.addcriteria", {
         ids: JSON.stringify(catalogCriteriaIds),
     });
-
-    saveRubric(newRubric); // fire and forget, we don't really need to wait on this.
 }

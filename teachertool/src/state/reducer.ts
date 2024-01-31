@@ -1,5 +1,6 @@
 import { AppState } from "./state";
 import { Action } from "./actions";
+import { updateStoredRubricAsync } from "../transforms/updateStoredRubric";
 
 // The reducer's job is to apply state changes by creating a copy of the existing state with the change applied.
 // The reducer must not create side effects. E.g. do not dispatch a state change from within the reducer.
@@ -60,6 +61,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "SET_RUBRIC": {
+            updateStoredRubricAsync(state.rubric, action.rubric); // fire and forget, we don't need to wait for this to finish.
             return {
                 ...state,
                 rubric: action.rubric,
