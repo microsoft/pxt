@@ -32,12 +32,23 @@
             ]
         },
         {
-            ".desc": "A comment exists in a project",
+            ".desc": "A block comment exists in a project",
             "name": "block_comment_used",
             "threshold": 1,
             "checks": [
                 {
                     "validator": "blockCommentExists"
+                }
+            ]
+        },
+        {
+            ".desc": "All function definitions have block comments",
+            "name": "functions_have_comments",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blockCommentExists",
+                    "blockType": "function_definition"
                 }
             ]
         }

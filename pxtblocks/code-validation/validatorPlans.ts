@@ -20,6 +20,6 @@ namespace pxt.blocks {
 
     export interface BlockCommentExistsValidatorCheck extends ValidatorCheckBase {
         validator: "blockCommentExists";
-        onBlocks?: pxt.Map<number>;
+        blockType?: string;
     }
 }
