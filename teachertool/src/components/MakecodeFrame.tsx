@@ -8,8 +8,7 @@ import { clearReady, setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
 
-interface IProps {
-}
+interface IProps {}
 
 export const MakeCodeFrame: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
