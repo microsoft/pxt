@@ -13,7 +13,7 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const newRubric = {
         ...teacherTool.rubric,
         criteria: [...(teacherTool.rubric.criteria ?? [])],
-    }
+    };
 
     for (const catalogCriteriaId of catalogCriteriaIds) {
         const catalogCriteria = getCatalogCriteriaWithId(catalogCriteriaId);

@@ -21,7 +21,7 @@ export const initialAppState: AppState = {
     evalResults: {},
     projectMetadata: undefined,
     catalog: undefined,
-    rubric: {name: "", criteria: []},
+    rubric: { name: "", criteria: [] },
     modal: undefined,
     validatorPlans: undefined,
     flags: {

@@ -13,6 +13,6 @@ export function setRubricName(name: string) {
     const newRubric = {
         ...teacherTool.rubric,
         name,
-    }
+    };
     dispatch(Actions.setRubric(newRubric));
 }
