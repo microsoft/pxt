@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-process.env.CHROME_BIN = puppeteer.executablePath()
+// process.env.CHROME_BIN = puppeteer.executablePath()
 console.log(`chromium: `, process.env.CHROME_BIN)
 
 // Karma configuration
@@ -21,9 +21,8 @@ module.exports = function(config) {
       'built/web/typescript.js',
       'webapp/public/blockly/**/*.js',
       'built/pxtlib.js',
-      'built/pxtblocks.js',
       'built/pxtcompiler.js',
-      'built/tests/tests.spec.js',
+      'built/tests/karma-test-runner.js',
 
       // test assets
       { pattern: 'tests/blocklycompiler-test/cases/*.blocks', watched: false, included: false, served: true, nocache: false },
@@ -73,7 +72,7 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: true,
+    singleRun: false,
 
     // Concurrency level
     // how many browser should be started simultaneous

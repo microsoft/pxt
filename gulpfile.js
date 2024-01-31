@@ -766,7 +766,10 @@ const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 const testpxteditor = testTask("pxt-editor-test", "editorrunner.js", ["built/pxteditor.js"]);
 
-const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/tests/", true);
+const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/", true);
+const browserifyKarma = () =>
+    exec('node node_modules/browserify/bin/cmd built/tests/blocklycompiler-test/test.spec.js -o built/tests/karma-test-runner.js --debug');
+
 const runKarma = () => {
     let command;
     if (isWin32) {
@@ -779,7 +782,7 @@ const runKarma = () => {
     }
     return exec(command, true);
 }
-const karma = gulp.series(buildKarmaRunner, runKarma);
+const karma = gulp.series(buildKarmaRunner, browserifyKarma, runKarma);
 
 const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/tests", false, "blocksrunner")
 

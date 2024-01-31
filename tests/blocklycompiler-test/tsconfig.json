@@ -3,19 +3,37 @@
         "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
-        "declaration": true,
-        "outFile": "../../built/tests/tests.spec.js",
+        "noImplicitThis": true,
+        "module": "commonjs",
+        "outDir": "../built/",
+        "rootDir": "../..",
         "newLine": "LF",
-        "types": [
-            "chai",
-            "mocha"
-        ],
         "sourceMap": false,
+        "moduleResolution": "node",
+        "isolatedModules": false,
+        "jsx": "react-jsx",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": false,
+        "preserveConstEnums": true,
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "scripthost",
+            "es2017",
+            "ES2018.Promise"
+        ],
+        "types": [
+            "resize-observer-browser",
+            "mocha",
+            "chai"
+        ],
+        "incremental": false,
         "skipLibCheck": true
     },
-    "files": [
-        "test.spec.ts",
-        "commentparsing.spec.ts",
-        "fieldUserEnum.spec.ts"
+    "exclude": [
+        "node_modules",
+        "test-library",
+        "baselines"
     ]
 }
