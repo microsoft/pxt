@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { NotificationWithId } from "../types";
+import { classList } from "react-common/components/util";
 
 export function makeNotification(message: string, duration: number): NotificationWithId {
     return {
@@ -22,3 +23,7 @@ export const getEditorUrl = (embedUrl: string) => {
     const path = /\/([\da-zA-Z\.]+)(?:--)?/i.exec(window.location.pathname);
     return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
 };
+
+export function classes(css: { [name: string]: string }, ...names: string[]) {
+    return classList(...names.map(n => css[n]));
+}

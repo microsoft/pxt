@@ -10,25 +10,12 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 interface IProps {}
 
 export const DebugInput: React.FC<IProps> = ({}) => {
-    const [shareLink, setShareLink] = useState("https://makecode.microbit.org/S95591-52406-50965-65671");
-
     const evaluate = async () => {
-        await loadProjectMetadataAsync(shareLink);
         await runEvaluateAsync();
     };
 
     return (
         <div className="debug-container">
-            <div className="single-share-link-input-container">
-                {lf("Share Link:")}
-                <Input
-                    id="shareLinkInput"
-                    className="link-input"
-                    placeholder={lf("Share link to validate")}
-                    initialValue={shareLink}
-                    onChange={setShareLink}
-                />
-            </div>
             <Button
                 id="evaluateSingleProjectButton"
                 className="btn-primary"
