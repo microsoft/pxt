@@ -7,4 +7,7 @@ export enum ErrorCode {
     evalMissingCriteria = "evalMissingCriteria",
     evalMissingPlan = "evalMissingPlan",
     loadCollectionFileFailed = "loadCollectionFileFailed",
+    unableToGetIndexedDbRecord = "unableToGetIndexedDbRecord",
+    unableToSetIndexedDbRecord = "unableToSetIndexedDbRecord",
+    unableToDeleteIndexedDbRecord = "unableToDeleteIndexedDbRecord",
 }
