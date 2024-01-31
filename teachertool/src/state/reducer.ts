@@ -61,7 +61,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "SET_RUBRIC": {
-            updateStoredRubricAsync(state.rubric, action.rubric); // fire and forget, we don't need to wait for this to finish.
+            /*await*/ updateStoredRubricAsync(state.rubric, action.rubric); // fire and forget, we don't need to wait for this to finish.
             return {
                 ...state,
                 rubric: action.rubric,
