@@ -10,7 +10,7 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
     // Create instances for each of the catalog criteria.
-    const newSelectedCriteria = [...(teacherTool.selectedCriteria ?? [])];
+    const newSelectedCriteria = [...(teacherTool.rubric.criteria ?? [])];
     for (const catalogCriteriaId of catalogCriteriaIds) {
         const catalogCriteria = getCatalogCriteriaWithId(catalogCriteriaId);
         if (!catalogCriteria) {

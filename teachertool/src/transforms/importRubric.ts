@@ -4,6 +4,6 @@ import * as Actions from "../state/actions";
 
 export function importRubric(serializedRubric: string) {
     const { dispatch } = stateAndDispatch();
-    const selectedCriteria = JSON.parse(serializedRubric) as CriteriaInstance[];
-    dispatch(Actions.setSelectedCriteria(selectedCriteria));
+
+    // todo : setRubric action.
 }

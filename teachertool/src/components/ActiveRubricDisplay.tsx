@@ -1,21 +1,36 @@
 /// <reference path="../../../built/pxtblocks.d.ts"/>
 
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
 import { showCatalogModal } from "../transforms/showCatalogModal";
+import { Input } from "react-common/components/controls/Input";
+import { setRubricName } from "../state/actions";
 
 interface IProps {}
 
 export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
-    const { state: teacherTool, dispatch } = useContext(AppStateContext);
+    const { state: teacherTool } = useContext(AppStateContext);
+
+    const [inProgressName, setInProgressName] = useState(teacherTool.rubric.name);
+
+    function handleConfirmName() {
+        setRubricName(inProgressName);
+    }
 
     return (
         <div className="rubric-display">
-            <h3>{lf("Rubric")}</h3>
-            {teacherTool.selectedCriteria?.map(criteriaInstance => {
+            <Input
+                label={lf("Rubric Name")}
+                onChange={setInProgressName}
+                placeholder={lf("Rubric Name")}
+                initialValue={inProgressName}
+                onEnterKey={handleConfirmName}
+                onBlur={handleConfirmName}
+            />
+            {teacherTool.rubric.criteria?.map(criteriaInstance => {
                 if (!criteriaInstance) return null;
 
                 const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);

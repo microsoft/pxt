@@ -2,6 +2,7 @@ import { openDB, IDBPDatabase } from "idb";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
 import { CriteriaInstance } from "../types/criteria";
+import { Rubric } from "../types/rubric";
 
 const teacherToolDbName = "makecode-project-insights";
 const dbVersion = 1;
@@ -62,16 +63,16 @@ class TeacherToolDb {
         return this.getAsync<string>(rubricsStoreName, lastActiveRubricKey);
     }
 
-    public getRubricWithNameAsync(name: string): Promise<CriteriaInstance[] | undefined> {
-        return this.getAsync<CriteriaInstance[]>(rubricsStoreName, name);
+    public getRubricWithNameAsync(name: string): Promise<Rubric | undefined> {
+        return this.getAsync<Rubric>(rubricsStoreName, name);
     }
 
-    public setLastActiveRubricNameAsync(name: string): Promise<void> {
+    public saveLastActiveRubricNameAsync(name: string): Promise<void> {
         return this.setAsync<string>(rubricsStoreName, lastActiveRubricKey, name);
     }
 
-    public setRubricWithNameAsync(name: string, rubric: CriteriaInstance[]): Promise<void> {
-        return this.setAsync(rubricsStoreName, name, rubric);
+    public saveRubric(rubric: Rubric): Promise<void> {
+        return this.setAsync(rubricsStoreName, rubric.name, rubric);
     }
 }
 
@@ -83,10 +84,10 @@ let initializeAsync = async () => {
     await db.initializeAsync();
 };
 
-export async function getLastActiveRubricAsync(): Promise<CriteriaInstance[] | undefined> {
+export async function getLastActiveRubricAsync(): Promise<Rubric | undefined> {
     await initializeAsync();
 
-    let rubric: CriteriaInstance[] | undefined = undefined;
+    let rubric: Rubric | undefined = undefined;
     const name = await db.getLastActiveRubricNameAsync();
     if (name) {
         rubric = await db.getRubricWithNameAsync(name);
@@ -95,7 +96,7 @@ export async function getLastActiveRubricAsync(): Promise<CriteriaInstance[] | u
     return rubric;
 }
 
-export async function saveLastActiveRubricAsync(name: string, rubric: CriteriaInstance[]) {
-    await db.setRubricWithNameAsync(name, rubric);
-    await db.setLastActiveRubricNameAsync(name);
+export async function saveLastActiveRubricAsync(rubric: Rubric) {
+    await db.saveRubric(rubric);
+    await db.saveLastActiveRubricNameAsync(rubric.name);
 }

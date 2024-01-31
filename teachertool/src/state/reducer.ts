@@ -62,13 +62,28 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "SET_SELECTED_CRITERIA": {
             return {
                 ...state,
-                selectedCriteria: [...action.criteria],
+                rubric: {
+                    ...state.rubric,
+                    criteria: action.criteria,
+                },
             };
         }
         case "REMOVE_CRITERIA_INSTANCE": {
             return {
                 ...state,
-                selectedCriteria: state.selectedCriteria.filter(c => c.instanceId !== action.instanceId),
+                rubric: {
+                    ...state.rubric,
+                    criteria: state.rubric?.criteria.filter(c => c.instanceId !== action.instanceId),
+                },
+            };
+        }
+        case "SET_RUBRIC_NAME": {
+            return {
+                ...state,
+                rubric: {
+                    ...state.rubric,
+                    name: action.name,
+                },
             };
         }
         case "SHOW_MODAL": {

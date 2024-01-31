@@ -1,5 +1,6 @@
 import { ModalType, Notifications } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
+import { Rubric } from "../types/rubric";
 
 export type AppState = {
     targetConfig?: pxt.TargetConfig;
@@ -7,7 +8,7 @@ export type AppState = {
     evalResults: pxt.Map<CriteriaEvaluationResult>; // Criteria Instance Id -> Result
     projectMetadata: pxt.Cloud.JsonScript | undefined;
     catalog: CatalogCriteria[] | undefined;
-    selectedCriteria: CriteriaInstance[];
+    rubric: Rubric;
     modal: ModalType | undefined;
     validatorPlans: pxt.blocks.ValidatorPlan[] | undefined;
     flags: {
@@ -20,7 +21,7 @@ export const initialAppState: AppState = {
     evalResults: {},
     projectMetadata: undefined,
     catalog: undefined,
-    selectedCriteria: [],
+    rubric: {name: "", criteria: []},
     modal: undefined,
     validatorPlans: undefined,
     flags: {

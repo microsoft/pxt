@@ -59,6 +59,11 @@ type RemoveCriteriaInstance = ActionBase & {
     instanceId: string;
 };
 
+type SetRubricName = ActionBase & {
+    type: "SET_RUBRIC_NAME";
+    name: string;
+};
+
 type ShowModal = ActionBase & {
     type: "SHOW_MODAL";
     modal: ModalType;
@@ -88,6 +93,7 @@ export type Action =
     | SetCatalog
     | SetSelectedCriteria
     | RemoveCriteriaInstance
+    | SetRubricName
     | ShowModal
     | HideModal
     | SetValidatorPlans;
@@ -145,6 +151,11 @@ const removeCriteriaInstance = (instanceId: string): RemoveCriteriaInstance => (
     instanceId,
 });
 
+const setRubricName = (name: string): SetRubricName => ({
+    type: "SET_RUBRIC_NAME",
+    name,
+});
+
 const showModal = (modal: ModalType): ShowModal => ({
     type: "SHOW_MODAL",
     modal,
@@ -170,6 +181,7 @@ export {
     setCatalog,
     setSelectedCriteria,
     removeCriteriaInstance,
+    setRubricName,
     showModal,
     hideModal,
     setValidatorPlans,
