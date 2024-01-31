@@ -7,4 +7,6 @@ export enum ErrorCode {
     evalMissingCriteria = "evalMissingCriteria",
     evalMissingPlan = "evalMissingPlan",
     loadCollectionFileFailed = "loadCollectionFileFailed",
+    unableToSaveRubric = "unableToSaveRubric",
+    unableToLoadRubric = "unableToLoadRubric",
 }
