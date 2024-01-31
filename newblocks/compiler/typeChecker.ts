@@ -482,7 +482,8 @@ function mkPlaceholderBlock(e: Environment, parent: Blockly.Block, type?: string
         type: "placeholder",
         p: mkPoint(type || null),
         workspace: e.workspace,
-        parentBlock_: parent
+        parentBlock_: parent,
+        getParent: () => parent
     } as any;
 }
 

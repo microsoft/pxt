@@ -3,18 +3,32 @@
 import * as Blockly from "blockly";
 
 export class FieldProcedure extends Blockly.FieldDropdown {
+    protected rawValue: string;
 
     constructor(funcname: string, opt_validator?: Blockly.FieldValidator) {
-        super([["Temp", "Temp"]], opt_validator);
+        super(createMenuGenerator(), opt_validator);
 
         this.setValue(funcname || '');
     }
 
-    getOptions() {
-        return this.generateOptions();
-    };
+    getOptions(useCache?: boolean): Blockly.MenuOption[] {
+        return (this.menuGenerator_ as () => Blockly.MenuOption[])();
+    }
 
-    init() {
+    protected override doClassValidation_(newValue?: string): string {
+        if (newValue === undefined) {
+            return null;
+        }
+
+        return newValue;
+    }
+
+    protected override doValueUpdate_(newValue: string): void {
+        this.rawValue = newValue;
+        super.doValueUpdate_(newValue);
+    }
+
+    override init() {
         if (this.fieldGroup_) {
             // Dropdown has already been initialized once.
             return;
@@ -22,19 +36,15 @@ export class FieldProcedure extends Blockly.FieldDropdown {
         super.init.call(this);
     };
 
-    setSourceBlock(block: Blockly.Block) {
-        (goog as any).asserts.assert(!(block as any).isShadow(),
+    override setSourceBlock(block: Blockly.Block) {
+        pxt.Util.assert(!block.isShadow(),
             'Procedure fields are not allowed to exist on shadow blocks.');
         super.setSourceBlock.call(this, block);
     };
+}
 
-    /**
-     * Return a sorted list of variable names for procedure dropdown menus.
-     * Include a special option at the end for creating a new function name.
-     * @return {!Array.<string>} Array of procedure names.
-     * @this {pxtblockly.FieldProcedure}
-     */
-    public generateOptions() {
+function createMenuGenerator() {
+    return function (this: FieldProcedure) {
         let functionList: string[] = [];
         if (this.sourceBlock_ && this.sourceBlock_.workspace) {
             let blocks = this.sourceBlock_.workspace.getAllBlocks(false);
@@ -66,19 +76,17 @@ export class FieldProcedure extends Blockly.FieldDropdown {
             functionList.push("Temp");
         }
 
+        if (this.rawValue && functionList.indexOf(this.rawValue) === -1) {
+            functionList.push(this.rawValue);
+        }
+
         // Variables are not language-specific, use the name as both the user-facing
         // text and the internal representation.
         let options: [string, string][] = [];
         for (let i = 0; i < functionList.length; i++) {
             options[i] = [functionList[i], functionList[i]];
         }
-        return options;
-    }
 
-    onItemSelected(menu: any, menuItem: any) {
-        let itemText = menuItem.getValue();
-        if (itemText !== null) {
-            this.setValue(itemText);
-        }
+        return options;
     }
 }

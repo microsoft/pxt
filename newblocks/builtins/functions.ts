@@ -44,7 +44,7 @@ export function initFunctions() {
         this.setColour(pxt.toolbox.getNamespaceColor('functions'));
         this.arguments_ = [];
         this.argumentVarModels_ = [];
-        this.setStartHat(true);
+        this.hat = "cap";
         this.setStatements_(true);
         this.statementConnection_ = null;
     };
