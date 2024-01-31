@@ -10,4 +10,6 @@ export enum ErrorCode {
     unableToGetIndexedDbRecord = "unableToGetIndexedDbRecord",
     unableToSetIndexedDbRecord = "unableToSetIndexedDbRecord",
     unableToDeleteIndexedDbRecord = "unableToDeleteIndexedDbRecord",
+    loadUnrecognizedCatalogId =  "loadUnrecognizedCatalogId",
+    loadUnrecognizedParameter = "loadUnrecognizedParameter",
 }
