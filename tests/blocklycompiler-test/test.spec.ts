@@ -5,6 +5,9 @@ import * as Blockly from "blockly";
 import * as pxtblockly from "../../newblocks";
 import { DuplicateOnDragConnectionChecker } from "../../newblocks/plugins/duplicateOnDrag";
 
+import "./commentparsing.spec";
+import "./fieldUserEnum.spec";
+
 const WEB_PREFIX = "http://localhost:9876";
 
 // Blockly crashes if this isn't defined

@@ -1208,7 +1208,7 @@ function compileArgument(e: Environment, b: Blockly.Block, p: pxt.blocks.BlockPa
             return prefixWithSemicolon(compileExpression(e, target, comments));
         }
 
-        if (p.shadowOptions && p.shadowOptions.toString && isStringType(returnType(e, target))) {
+        if (p.shadowOptions && p.shadowOptions.toString && !isStringType(returnType(e, target))) {
             return pxt.blocks.H.mkSimpleCall("+", [pxt.blocks.H.mkStringLiteral(""), pxt.blocks.H.mkParenthesizedExpression(compileExpression(e, target, comments))]);
         }
 
