@@ -46,7 +46,7 @@ export async function tryLoadLastActiveRubricAsync() {
         lastActiveRubric.criteria = lastActiveRubric.criteria.filter(validateCriteriaInstance);
 
         if (lastActiveRubric.criteria.length !== initialCriteriaCount) {
-            postNotification(makeNotification("Some criteria could not be loaded.", 2000));
+            postNotification(makeNotification(lf("Some criteria could not be loaded."), 2000));
         }
 
         dispatch(Actions.setRubric(lastActiveRubric));
