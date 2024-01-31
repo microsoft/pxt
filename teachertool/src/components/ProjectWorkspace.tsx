@@ -3,7 +3,7 @@ import * as React from "react";
 import css from "./styling/ProjectWorkspace.module.scss";
 
 import { Toolbar } from "./Toolbar";
-import { AddressBar } from "./AddressBar";
+import { ShareLinkInput } from "./ShareLinkInput";
 import { MakeCodeFrame } from "./MakecodeFrame";
 import { classes } from "../utils";
 
@@ -20,7 +20,7 @@ export const ProjectWorkspace: React.FC<IProps> = () => {
                 {/* Right */}
                 <></>
             </Toolbar>
-            <AddressBar className={css["grow-1"]} />
+            <ShareLinkInput className={css["grow-1"]} />
             <MakeCodeFrame />
         </div>
     );

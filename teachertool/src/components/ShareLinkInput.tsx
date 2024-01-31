@@ -1,6 +1,6 @@
 import * as React from "react";
 // eslint-disable-next-line import/no-internal-modules
-import css from "./styling/AddressBar.module.scss";
+import css from "./styling/ShareLinkInput.module.scss";
 
 import { useContext, useState, useMemo, useCallback, useEffect } from "react";
 import { AppStateContext } from "../state/appStateContext";
@@ -12,7 +12,7 @@ interface IProps {
     className?: string;
 }
 
-export const AddressBar: React.FC<IProps> = ({ className }) => {
+export const ShareLinkInput: React.FC<IProps> = ({ className }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const { projectMetadata } = teacherTool;
     const [text, setText] = useState("");
