@@ -16,11 +16,11 @@ export const SplitPane: React.FC<IProps> = ({ className, split, children }) => {
 
     return (
         <div className={classList(css[`split-pane-${split}`], className)}>
-            <div className={classList(css[`left-${split}`])}>{left}</div>
+            <div className={css[`left-${split}`]}>{left}</div>
             <div className={css[`splitter-${split}`]}>
                 <div className={css[`splitter-${split}-inner`]} />
             </div>
-            <div className={classList(css[`right-${split}`])}>{right}</div>
+            <div className={css[`right-${split}`]}>{right}</div>
         </div>
     );
 };
