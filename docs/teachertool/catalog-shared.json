@@ -11,6 +11,12 @@
             "use": "custom_function_called",
             "template": "A custom function exists and gets called",
             "docPath": "/teachertool"
+        },
+        {
+            "id": "49262A2B-C02A-43A2-BAD5-FCAC6AE9D465",
+            "use": "block_comment_used",
+            "template": "At least one comment was left on a block in the code",
+            "docPath": "/teachertool"
         }
     ]
 }
