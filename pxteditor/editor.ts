@@ -428,7 +428,9 @@ namespace pxt.editor {
 
     export interface IFieldCustomOptions {
         selector: string;
-        editor: Blockly.FieldCustomConstructor;
+        // FIXME (riknoll)
+        // editor: Blockly.FieldCustomConstructor;
+        editor: any;
         text?: string;
         validator?: any;
     }

@@ -8,7 +8,7 @@ import * as data from "./data";
 import * as dialogs from "./dialogs";
 import Cloud = pxt.Cloud;
 import { isDontShowDownloadDialogFlagSet } from "./dialogs";
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 function log(msg: string) {
     pxt.debug(`cmds: ${msg}`);

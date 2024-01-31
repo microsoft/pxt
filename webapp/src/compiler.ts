@@ -2,7 +2,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as workspace from "./workspace";
 import * as Blockly from "blockly";
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 import U = pxt.Util;
 

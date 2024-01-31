@@ -4,11 +4,11 @@ import * as Blockly from "blockly"
 import { installBuiltinHelpInfo } from "../help";
 import { FunctionDefinitionBlock, FunctionManager } from "../plugins/functions";
 import { createFlyoutHeadingLabel } from "../toolbox";
-import { FieldProcedure } from "../fields/field_procedure";
+import { FieldProcedure } from "../fields";
 import { cachedBlockInfo, setOutputCheck } from "../loader";
 import { domToWorkspaceNoEvents } from "../importer";
 
-import { DUPLICATE_ON_DRAG_MUTATION_KEY, DuplicateOnDragBlockDragger } from "../plugins/duplicateOnDrag";
+import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "../plugins/duplicateOnDrag";
 
 export function initFunctions() {
     const msg = Blockly.Msg;

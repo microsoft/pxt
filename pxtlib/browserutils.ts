@@ -637,9 +637,6 @@ namespace pxt.BrowserUtils {
         if (!loadBlocklyPromise) {
             pxt.debug(`blockly: delay load`);
             let p = pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl());
-            // js not loaded yet?
-            if (typeof Blockly === "undefined")
-                p = p.then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"));
             p = p.then(() => {
                 pxt.debug(`blockly: loaded`)
             });

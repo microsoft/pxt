@@ -6,7 +6,7 @@ import * as sui from "./sui";
 import * as codecard from "./codecard"
 
 import * as Blockly from "blockly";
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 

@@ -14,7 +14,7 @@ import * as tutorial from "./tutorial";
 import * as _package from "./package";
 import { fireClickOnEnter } from "./util"
 
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 

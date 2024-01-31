@@ -1,6 +1,6 @@
 import { MarkedContent } from "../marked";
 import { getBlocksEditor } from "../app";
-import * as pxtblockly from "../../../newblocks";
+import * as pxtblockly from "../../../pxtblocks";
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidatorMetadata = pxt.tutorial.CodeValidatorMetadata;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;

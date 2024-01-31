@@ -3,10 +3,9 @@
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
-/// <reference path="../built/pxtblocks.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
-import { BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../newblocks";
+import { BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../pxtblocks";
 import { defaultClientRenderOptions, renderAsync } from "./renderer";
 
 export interface SimulateOptions {

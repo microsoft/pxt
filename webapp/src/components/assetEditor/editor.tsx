@@ -4,7 +4,7 @@ import * as React from "react";
 import * as pkg from "../../package";
 import * as compiler from "../../compiler";
 import * as blocklyFieldView from "../../blocklyFieldView";
-import * as pxtblockly from "../../../../newblocks";
+import * as pxtblockly from "../../../../pxtblocks";
 
 import { Provider } from 'react-redux';
 import store from './store/assetEditorStore'

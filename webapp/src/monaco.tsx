@@ -28,7 +28,7 @@ import { MonacoFlyout } from "./monacoFlyout";
 import { ErrorList } from "./errorList";
 import * as auth from "./auth";
 
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40

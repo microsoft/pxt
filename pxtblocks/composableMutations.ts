@@ -4,7 +4,7 @@ import * as Blockly from "blockly";
 import { createShadowValue } from "./toolbox";
 import { MutatingBlock } from "./legacyMutations";
 import { optionalDummyInputPrefix, optionalInputWithFieldPrefix } from "./constants";
-import { FieldArgumentVariable } from "./fields/field_argumentvariable";
+import { FieldArgumentVariable } from "./fields";
 import { setVarFieldValue } from "./loader";
 import { UpdateBeforeRenderMixin } from "./plugins/renderer";
 

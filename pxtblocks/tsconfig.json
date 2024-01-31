@@ -5,7 +5,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "module": "commonjs",
-        "outDir": "../built/newblocks",
+        "outDir": "../built/pxtblocks",
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false,

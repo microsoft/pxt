@@ -17,7 +17,7 @@ import * as editortoolbar from "./editortoolbar";
 import * as ImmersiveReader from "./immersivereader";
 import { fireClickOnEnter } from "./util";
 
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 

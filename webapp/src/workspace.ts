@@ -19,7 +19,7 @@ import * as dmp from "diff-match-patch";
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 
 // Avoid importing entire crypto-js

@@ -4,7 +4,7 @@ import * as React from "react";
 import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
 
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 type GroupedError = {
     error: pxtc.KsDiagnostic,

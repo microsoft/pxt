@@ -38,7 +38,6 @@ const pxtlib = () => compileTsProject("pxtlib");
 const pxtcompiler = () => compileTsProject("pxtcompiler");
 const pxtpy = () => compileTsProject("pxtpy");
 const pxtsim = () => compileTsProject("pxtsim");
-const pxtblocks = () => compileTsProject("pxtblocks");
 const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
 const pxteditor = () => compileTsProject("pxteditor");
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
@@ -46,17 +45,7 @@ const backendutils = () => compileTsProject("backendutils")
 const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
-const newBlocks = () => compileTsProject("newblocks", "built/newblocks", true);
-
-const pxtblockly = () => gulp.src([
-    "webapp/public/blockly/blockly_compressed.js",
-    "webapp/public/blockly/blocks_compressed.js",
-    "webapp/public/blockly/plugins.js",
-    "webapp/public/blockly/msg/js/en.js",
-    "built/pxtblocks.js"
-])
-    .pipe(concat("pxtblockly.js"))
-    .pipe(gulp.dest("built"));
+const pxtblocks = () => compileTsProject("pxtblocks", "built/pxtblocks", true);
 
 const pxtapp = () => gulp.src([
     "node_modules/lzma/src/lzma_worker-min.js",
@@ -123,9 +112,9 @@ function initWatch() {
     const tasks = [
         pxtlib,
         gulp.parallel(pxtcompiler, pxtsim, backendutils),
-        gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
+        pxtpy,
         pxteditor,
-        gulp.parallel(pxtrunner, cli, pxtcommon, newBlocks),
+        gulp.parallel(pxtrunner, cli, pxtcommon, pxtblocks),
         gulp.parallel(updatestrings, browserifyEmbed),
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
@@ -144,7 +133,7 @@ function initWatch() {
     gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
-    gulp.watch("./pxtblocks/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
+    gulp.watch("./pxtblocks/**/*", gulp.series(pxtblocks, ...tasks.slice(5)));
 
     gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
 
@@ -164,7 +153,7 @@ function initWatchCli() {
     const tasks = [
         pxtlib,
         gulp.parallel(pxtcompiler),
-        gulp.parallel(pxtpy, gulp.series(pxtblocks, pxtblockly)),
+        pxtpy,
         cli,
         notifyBuildComplete
     ]
@@ -174,7 +163,6 @@ function initWatchCli() {
     gulp.watch("./pxtcompiler/**/*", gulp.series(pxtcompiler, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
-    gulp.watch("./pxtblockly/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
 
     gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
 }
@@ -390,7 +378,6 @@ const copyWebapp = () =>
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js",
-        "built/pxtblocks.js",
         "built/pxtsim.js",
         "built/pxteditor.js",
         "built/webapp/src/worker.js",
@@ -535,37 +522,6 @@ const copyMonaco = gulp.series(
     inlineCodiconFont,
     stripMonacoSourceMaps
 );
-
-
-
-/********************************************************
-                      Blockly
-*********************************************************/
-
-const copyBlocklyCompressed = () => gulp.src([
-    "node_modules/pxt-blockly/blocks_compressed.js",
-    "node_modules/pxt-blockly/blockly_compressed.js"
-])
-    .pipe(gulp.dest("webapp/public/blockly/"));
-
-const copyBlocklyExtensions = () => gulp.src("node_modules/@blockly/**/dist/index.js")
-    .pipe(concat("plugins.js"))
-    .pipe(gulp.dest("webapp/public/blockly/"));
-
-const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
-    .pipe(gulp.dest("webapp/public/blockly/msg/js/"));
-
-const copyBlocklyEnJson = () => gulp.src("node_modules/pxt-blockly/msg/json/en.json")
-    .pipe(gulp.dest("webapp/public/blockly/msg/json/"));
-
-const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media/*")
-    .pipe(gulp.dest("webapp/public/blockly/media"))
-
-const copyBlocklyTypings = () => gulp.src("node_modules/pxt-blockly/typings/blockly.d.ts")
-    .pipe(gulp.dest("localtypings/"))
-
-const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyExtensions, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia, copyBlocklyTypings);
-
 
 /********************************************************
                       Skillmap
@@ -784,7 +740,9 @@ const runKarma = () => {
 }
 const karma = gulp.series(buildKarmaRunner, browserifyKarma, runKarma);
 
-const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/tests", false, "blocksrunner")
+const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/", true);
+const browserifyBlocksTestRunner = () =>
+    exec('node node_modules/browserify/bin/cmd built/tests/blocks-test/blocksrunner.js -o built/tests/blocksrunner.js --debug');
 
 const testAll = gulp.series(
     testdecompiler,
@@ -843,12 +801,11 @@ const buildAll = gulp.series(
     updatestrings,
     maybeUpdateWebappStrings(),
     copyTypescriptServices,
-    copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
-    gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
+    pxtpy,
     pxteditor,
-    gulp.parallel(pxtrunner, cli, pxtcommon, newBlocks),
+    gulp.parallel(pxtrunner, cli, pxtcommon, pxtblocks),
     browserifyEmbed,
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
@@ -860,6 +817,7 @@ const buildAll = gulp.series(
     browserifyAssetEditor,
     gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
     buildBlocksTestRunner,
+    browserifyBlocksTestRunner,
     runUglify
 );
 
@@ -870,7 +828,7 @@ exports.clean = clean;
 exports.build = buildAll;
 
 exports.webapp = gulp.series(
-    gulp.parallel(reactCommon, newBlocks),
+    gulp.parallel(reactCommon, pxtblocks),
     webapp,
     browserifyWebapp,
     browserifyAssetEditor
@@ -878,7 +836,6 @@ exports.webapp = gulp.series(
 
 exports.skillmapTest = testSkillmap;
 exports.updatestrings = updatestrings;
-exports.updateblockly = copyBlockly;
 exports.lint = lint
 exports.testdecompiler = testdecompiler;
 exports.testlang = testlang;
@@ -909,7 +866,7 @@ exports.testpxteditor = testpxteditor;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
-    gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
+    pxtpy,
     pxteditor,
     gulp.parallel(pxtrunner, cli, pxtcommon),
     pxtjs

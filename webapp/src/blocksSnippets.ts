@@ -2,7 +2,7 @@ import { BuiltinCategoryDefinition, BlockDefinition, CategoryNameID } from "./to
 
 import * as blocks from "./blocks";
 import * as Blockly from "blockly";
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 let _cachedBuiltinCategories: pxt.Map<BuiltinCategoryDefinition> = null;
 function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {

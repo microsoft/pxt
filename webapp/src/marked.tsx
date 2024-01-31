@@ -8,7 +8,7 @@ import { MediaPlayer } from "dashjs"
 import dashjs = require("dashjs");
 import { fireClickOnEnter } from "../../react-common/components/util";
 
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 import * as Blockly from "blockly";
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import * as Blockly from "blockly";
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as md from "./marked";

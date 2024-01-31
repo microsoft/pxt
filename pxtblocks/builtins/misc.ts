@@ -1,5 +1,5 @@
 import * as Blockly from "blockly";
-import { FieldTsExpression } from "../fields/field_tsexpression";
+import { FieldTsExpression } from "../fields";
 import { GrayBlock, GrayBlockStatement } from "../compiler/environment";
 import { setHelpResources } from "../help";
 

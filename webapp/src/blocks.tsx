@@ -16,8 +16,8 @@ import * as blocklyFieldView from "./blocklyFieldView";
 import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
-import * as pxtblockly from "../../newblocks";
-import { NavigationController } from "@blockly/keyboard-navigation";
+import * as pxtblockly from "../../pxtblocks";
+import { NavigationController, Navigation } from "@blockly/keyboard-navigation";
 import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 
@@ -26,8 +26,8 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 
-import { DuplicateOnDragConnectionChecker } from "../../newblocks/plugins/duplicateOnDrag";
-import { PathObject } from "../../newblocks/plugins/renderer/pathObject";
+import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 
 
 export class Editor extends toolboxeditor.ToolboxEditor {

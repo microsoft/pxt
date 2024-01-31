@@ -8,9 +8,8 @@ import { append, countOptionals, escapeVarName, forEachChildExpression, getInput
 import { isArrayType } from "../toolbox";
 import { MutatorTypes } from "../legacyMutations";
 import { trackAllVariables } from "./variables";
-import { FieldTilemap } from "../fields/field_tilemap";
+import { FieldTilemap, FieldTextInput } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
-import { FieldTextInput } from "../fields/field_textinput";
 
 
 interface Rect {

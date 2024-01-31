@@ -59,7 +59,7 @@ import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
 import * as blocklyFieldView from "./blocklyFieldView";
-import * as pxtblockly from "../../newblocks";
+import * as pxtblockly from "../../pxtblocks";
 
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
