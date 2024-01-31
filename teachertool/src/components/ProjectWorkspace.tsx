@@ -5,14 +5,13 @@ import css from "./styling/ProjectWorkspace.module.scss";
 import { Toolbar } from "./Toolbar";
 import { ShareLinkInput } from "./ShareLinkInput";
 import { MakeCodeFrame } from "./MakecodeFrame";
-import { classes } from "../utils";
 
 interface IProps {}
 
 export const ProjectWorkspace: React.FC<IProps> = () => {
     return (
-        <div className={classes(css, "panel", "h-full", "w-full", "flex", "flex-col")}>
-            <Toolbar toolbarClass={css["grow-1"]}>
+        <div className={css.panel}>
+            <Toolbar>
                 {/* Left */}
                 <></>
                 {/* Center */}
@@ -20,7 +19,7 @@ export const ProjectWorkspace: React.FC<IProps> = () => {
                 {/* Right */}
                 <></>
             </Toolbar>
-            <ShareLinkInput className={css["grow-1"]} />
+            <ShareLinkInput />
             <MakeCodeFrame />
         </div>
     );

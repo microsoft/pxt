@@ -6,19 +6,15 @@ import { classList } from "react-common/components/util";
 
 interface IProps {
     children: React.ReactNode;
-    toolbarClass?: string;
-    leftClass?: string;
-    centerClass?: string;
-    rightClass?: string;
 }
 
-export const Toolbar: React.FC<IProps> = ({ children, toolbarClass, leftClass, centerClass, rightClass }) => {
+export const Toolbar: React.FC<IProps> = ({ children }) => {
     const [left, center, right] = React.Children.toArray(children);
     return (
-        <div className={classList(css["toolbar"], toolbarClass)}>
-            <div className={classList(css["left"], leftClass)}>{left}</div>
-            <div className={classList(css["center"], centerClass)}>{center}</div>
-            <div className={classList(css["right"], rightClass)}>{right}</div>
+        <div className={classList(css["toolbar"], "tt-toolbar")}>
+            <div className={classList(css["left"], "tt-toolbar-left")}>{left}</div>
+            <div className={classList(css["center"], "tt-toolbar-center")}>{center}</div>
+            <div className={classList(css["right"], "tt-toolbar-right")}>{right}</div>
         </div>
     );
 };

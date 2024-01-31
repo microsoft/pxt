@@ -9,10 +9,9 @@ import { Input } from "react-common/components/controls/Input";
 import { loadProjectMetadataAsync } from "../transforms/loadProjectMetadataAsync";
 
 interface IProps {
-    className?: string;
 }
 
-export const ShareLinkInput: React.FC<IProps> = ({ className }) => {
+export const ShareLinkInput: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
     const { projectMetadata } = teacherTool;
     const [text, setText] = useState("");
@@ -39,7 +38,7 @@ export const ShareLinkInput: React.FC<IProps> = ({ className }) => {
     }, [iconVisible]);
 
     return (
-        <div className={classList(css["address-bar"], className)}>
+        <div className={classList(css["share-link-input"], "tt-share-link-input")}>
             <Input
                 placeholder={lf("Enter Project Link or Share ID")}
                 ariaLabel={lf("Enter Project Link or Share ID")}
