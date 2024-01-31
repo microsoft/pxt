@@ -24,11 +24,13 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
         <div className="rubric-display">
             <Input
                 label={lf("Rubric Name")}
+                ariaLabel={lf("Rubric Name")}
                 onChange={setInProgressName}
                 placeholder={lf("Rubric Name")}
                 initialValue={inProgressName}
                 onEnterKey={handleConfirmName}
                 onBlur={handleConfirmName}
+                preserveValueOnBlur={true}
             />
             {teacherTool.rubric.criteria?.map(criteriaInstance => {
                 if (!criteriaInstance) return null;
