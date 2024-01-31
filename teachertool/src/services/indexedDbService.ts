@@ -98,16 +98,14 @@ class TeacherToolDb {
     }
 }
 
-const db = new TeacherToolDb();
-
-let initializeAsync = async () => {
-    initializeAsync = async () => {}; // Ensure future initializeAsync calls are no-ops.
-
+const getDb = (async () => {
+    const db = new TeacherToolDb();
     await db.initializeAsync();
-};
+    return db;
+})();
 
 export async function getLastActiveRubricAsync(): Promise<Rubric | undefined> {
-    await initializeAsync();
+    const db = await getDb;
 
     let rubric: Rubric | undefined = undefined;
     const name = await db.getLastActiveRubricNameAsync();
@@ -119,10 +117,12 @@ export async function getLastActiveRubricAsync(): Promise<Rubric | undefined> {
 }
 
 export async function saveRubricAsync(rubric: Rubric) {
+    const db = await getDb;
     await db.saveRubric(rubric);
     await db.saveLastActiveRubricNameAsync(rubric.name);
 }
 
 export async function deleteRubricAsync(name: string) {
+    const db = await getDb;
     await db.deleteRubric(name);
 }
