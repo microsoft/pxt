@@ -1,13 +1,17 @@
 import { openDB, IDBPDatabase } from "idb";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
-import { CriteriaInstance } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
 const teacherToolDbName = "makecode-project-insights";
 const dbVersion = 1;
 const rubricsStoreName = "rubrics";
-const lastActiveRubricKey = "_lastActiveRubricName";
+const metadataStoreName = "metadata";
+const metadataKeys = {
+    lastActiveRubricKey: "lastActiveRubricName",
+};
+
+type MetadataEntry = { key: string; value: any };
 
 class TeacherToolDb {
     db: IDBPDatabase | undefined;
@@ -16,7 +20,8 @@ class TeacherToolDb {
         if (this.db) return;
         this.db = await openDB(teacherToolDbName, dbVersion, {
             upgrade(db) {
-                db.createObjectStore(rubricsStoreName);
+                db.createObjectStore(rubricsStoreName, { keyPath: "name" });
+                db.createObjectStore(metadataStoreName, { keyPath: "key" });
             },
         });
     }
@@ -34,13 +39,13 @@ class TeacherToolDb {
         }
     }
 
-    private async setAsync<T>(storeName: string, key: string, value: T): Promise<void> {
+    private async setAsync<T>(storeName: string, value: T): Promise<void> {
         if (!this.db) {
             throw new Error("IndexedDb not initialized.");
         }
 
         try {
-            await this.db.put(storeName, value, key);
+            await this.db.put(storeName, value);
         } catch (e) {
             // Not recording key, as it could contain user-input with sensitive information.
             logError(ErrorCode.unableToSetIndexedDbRecord, e);
@@ -59,12 +64,25 @@ class TeacherToolDb {
         }
     }
 
-    public getLastActiveRubricNameAsync(): Promise<string | undefined> {
-        return this.getAsync<string>(rubricsStoreName, lastActiveRubricKey);
+    private async getMetadataEntryAsync(key: string): Promise<MetadataEntry | undefined> {
+        return this.getAsync<MetadataEntry>(metadataStoreName, key);
+    }
+
+    private async setMetadataEntryAsync(key: string, value: any): Promise<void> {
+        return this.setAsync<MetadataEntry>(metadataStoreName, { key, value });
+    }
+
+    private async deleteMetadataEntryAsync(key: string): Promise<void> {
+        return this.deleteAsync(metadataStoreName, key);
+    }
+
+    public async getLastActiveRubricNameAsync(): Promise<string | undefined> {
+        const metadataEntry = await this.getMetadataEntryAsync(metadataKeys.lastActiveRubricKey);
+        return metadataEntry?.value;
     }
 
     public saveLastActiveRubricNameAsync(name: string): Promise<void> {
-        return this.setAsync<string>(rubricsStoreName, lastActiveRubricKey, name);
+        return this.setMetadataEntryAsync(metadataKeys.lastActiveRubricKey, name);
     }
 
     public getRubric(name: string): Promise<Rubric | undefined> {
@@ -72,7 +90,7 @@ class TeacherToolDb {
     }
 
     public saveRubric(rubric: Rubric): Promise<void> {
-        return this.setAsync(rubricsStoreName, rubric.name, rubric);
+        return this.setAsync(rubricsStoreName, rubric);
     }
 
     public deleteRubric(name: string): Promise<void> {
@@ -100,11 +118,11 @@ export async function getLastActiveRubricAsync(): Promise<Rubric | undefined> {
     return rubric;
 }
 
-export async function saveRubric(rubric: Rubric) {
+export async function saveRubricAsync(rubric: Rubric) {
     await db.saveRubric(rubric);
     await db.saveLastActiveRubricNameAsync(rubric.name);
 }
 
-export async function deleteRubric(name: string) {
+export async function deleteRubricAsync(name: string) {
     await db.deleteRubric(name);
 }

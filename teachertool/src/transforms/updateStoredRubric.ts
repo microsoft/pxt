@@ -1,4 +1,4 @@
-import { deleteRubric, saveRubric } from "../services/indexedDbService";
+import { deleteRubricAsync, saveRubricAsync } from "../services/indexedDbService";
 import { Rubric } from "../types/rubric";
 
 export async function updateStoredRubricAsync(oldRubric: Rubric | undefined, newRubric: Rubric | undefined) {
@@ -6,10 +6,10 @@ export async function updateStoredRubricAsync(oldRubric: Rubric | undefined, new
     const deleted = oldRubric && !newRubric;
 
     if (newRubric) {
-        await saveRubric(newRubric);
+        await saveRubricAsync(newRubric);
     }
 
     if (renamed || deleted) {
-        await deleteRubric(oldRubric.name);
+        await deleteRubricAsync(oldRubric.name);
     }
 }
