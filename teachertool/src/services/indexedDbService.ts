@@ -6,7 +6,7 @@ import { Rubric } from "../types/rubric";
 
 const teacherToolDbName = "makecode-project-insights";
 const dbVersion = 1;
-const rubricsStoreName = "rubrics"
+const rubricsStoreName = "rubrics";
 const lastActiveRubricKey = "_lastActiveRubricName";
 
 class TeacherToolDb {
@@ -63,16 +63,20 @@ class TeacherToolDb {
         return this.getAsync<string>(rubricsStoreName, lastActiveRubricKey);
     }
 
-    public getRubricWithNameAsync(name: string): Promise<Rubric | undefined> {
-        return this.getAsync<Rubric>(rubricsStoreName, name);
-    }
-
     public saveLastActiveRubricNameAsync(name: string): Promise<void> {
         return this.setAsync<string>(rubricsStoreName, lastActiveRubricKey, name);
     }
 
+    public getRubric(name: string): Promise<Rubric | undefined> {
+        return this.getAsync<Rubric>(rubricsStoreName, name);
+    }
+
     public saveRubric(rubric: Rubric): Promise<void> {
         return this.setAsync(rubricsStoreName, rubric.name, rubric);
+    }
+
+    public deleteRubric(name: string): Promise<void> {
+        return this.deleteAsync(rubricsStoreName, name);
     }
 }
 
@@ -90,13 +94,17 @@ export async function getLastActiveRubricAsync(): Promise<Rubric | undefined> {
     let rubric: Rubric | undefined = undefined;
     const name = await db.getLastActiveRubricNameAsync();
     if (name) {
-        rubric = await db.getRubricWithNameAsync(name);
+        rubric = await db.getRubric(name);
     }
 
     return rubric;
 }
 
-export async function saveLastActiveRubricAsync(rubric: Rubric) {
+export async function saveRubric(rubric: Rubric) {
     await db.saveRubric(rubric);
     await db.saveLastActiveRubricNameAsync(rubric.name);
+}
+
+export async function deleteRubric(name: string) {
+    await db.deleteRubric(name);
 }

@@ -7,7 +7,7 @@ import { Button } from "react-common/components/controls/Button";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
 import { showCatalogModal } from "../transforms/showCatalogModal";
 import { Input } from "react-common/components/controls/Input";
-import { setRubricName } from "../state/actions";
+import { setRubricName } from "../transforms/setRubricName";
 
 interface IProps {}
 

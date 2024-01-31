@@ -1,5 +1,6 @@
 import { ModalType, NotificationWithId } from "../types";
-import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
+import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
+import { Rubric } from "../types/rubric";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -49,19 +50,14 @@ type SetCatalog = ActionBase & {
     catalog: CatalogCriteria[] | undefined;
 };
 
-type SetSelectedCriteria = ActionBase & {
-    type: "SET_SELECTED_CRITERIA";
-    criteria: CriteriaInstance[];
+type SetRubric = ActionBase & {
+    type: "SET_RUBRIC";
+    rubric: Rubric;
 };
 
 type RemoveCriteriaInstance = ActionBase & {
     type: "REMOVE_CRITERIA_INSTANCE";
     instanceId: string;
-};
-
-type SetRubricName = ActionBase & {
-    type: "SET_RUBRIC_NAME";
-    name: string;
 };
 
 type ShowModal = ActionBase & {
@@ -91,9 +87,8 @@ export type Action =
     | ClearAllEvalResults
     | SetTargetConfig
     | SetCatalog
-    | SetSelectedCriteria
+    | SetRubric
     | RemoveCriteriaInstance
-    | SetRubricName
     | ShowModal
     | HideModal
     | SetValidatorPlans;
@@ -141,19 +136,14 @@ const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     catalog,
 });
 
-const setSelectedCriteria = (criteria: CriteriaInstance[]): SetSelectedCriteria => ({
-    type: "SET_SELECTED_CRITERIA",
-    criteria,
+const setRubric = (rubric: Rubric): SetRubric => ({
+    type: "SET_RUBRIC",
+    rubric,
 });
 
 const removeCriteriaInstance = (instanceId: string): RemoveCriteriaInstance => ({
     type: "REMOVE_CRITERIA_INSTANCE",
     instanceId,
-});
-
-const setRubricName = (name: string): SetRubricName => ({
-    type: "SET_RUBRIC_NAME",
-    name,
 });
 
 const showModal = (modal: ModalType): ShowModal => ({
@@ -179,9 +169,8 @@ export {
     clearAllEvalResults,
     setTargetConfig,
     setCatalog,
-    setSelectedCriteria,
+    setRubric,
     removeCriteriaInstance,
-    setRubricName,
     showModal,
     hideModal,
     setValidatorPlans,

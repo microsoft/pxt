@@ -59,13 +59,10 @@ export default function reducer(state: AppState, action: Action): AppState {
                 catalog: action.catalog,
             };
         }
-        case "SET_SELECTED_CRITERIA": {
+        case "SET_RUBRIC": {
             return {
                 ...state,
-                rubric: {
-                    ...state.rubric,
-                    criteria: action.criteria,
-                },
+                rubric: action.rubric,
             };
         }
         case "REMOVE_CRITERIA_INSTANCE": {
@@ -74,15 +71,6 @@ export default function reducer(state: AppState, action: Action): AppState {
                 rubric: {
                     ...state.rubric,
                     criteria: state.rubric?.criteria.filter(c => c.instanceId !== action.instanceId),
-                },
-            };
-        }
-        case "SET_RUBRIC_NAME": {
-            return {
-                ...state,
-                rubric: {
-                    ...state.rubric,
-                    name: action.name,
                 },
             };
         }

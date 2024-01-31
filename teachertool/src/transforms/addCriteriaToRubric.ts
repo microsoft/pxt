@@ -5,12 +5,17 @@ import { logDebug, logError } from "../services/loggingService";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
 import { ErrorCode } from "../types/errorCode";
+import { saveRubric } from "../services/indexedDbService";
 
 export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
     // Create instances for each of the catalog criteria.
-    const newSelectedCriteria = [...(teacherTool.rubric.criteria ?? [])];
+    const newRubric = {
+        ...teacherTool.rubric,
+        criteria: [...(teacherTool.rubric.criteria ?? [])],
+    }
+
     for (const catalogCriteriaId of catalogCriteriaIds) {
         const catalogCriteria = getCatalogCriteriaWithId(catalogCriteriaId);
         if (!catalogCriteria) {
@@ -37,12 +42,14 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
             params,
         } as CriteriaInstance;
 
-        newSelectedCriteria.push(criteriaInstance);
+        newRubric.criteria.push(criteriaInstance);
     }
 
-    dispatch(Actions.setSelectedCriteria(newSelectedCriteria));
+    dispatch(Actions.setRubric(newRubric));
 
     pxt.tickEvent("teachertool.addcriteria", {
         ids: JSON.stringify(catalogCriteriaIds),
     });
+
+    saveRubric(newRubric); // fire and forget, we don't really need to wait on this.
 }
