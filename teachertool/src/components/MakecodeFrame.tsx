@@ -1,12 +1,17 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
+
+// eslint-disable-next-line import/no-internal-modules
+import css from "./styling/MakeCodeFrame.module.scss";
+
 import { useContext, useEffect } from "react";
 import { clearReady, setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
 
-interface MakeCodeFrameProps {}
+interface IProps {
+}
 
-export const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
+export const MakeCodeFrame: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     // Clear iframe state when the iframe url is changed
@@ -32,17 +37,13 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
     };
 
     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-    return (
-        <div className="makecode-frame-outer" style={{ display: "block" }}>
-            {teacherTool.projectMetadata && (
-                <iframe
-                    className="makecode-frame"
-                    src={createIFrameUrl(teacherTool.projectMetadata.id)}
-                    title={"title"}
-                    ref={handleIFrameRef}
-                />
-            )}
-        </div>
-    );
+    return teacherTool.projectMetadata ? (
+        <iframe
+            className={css["makecode-frame"]}
+            src={createIFrameUrl(teacherTool.projectMetadata.id)}
+            title={"title"}
+            ref={handleIFrameRef}
+        />
+    ) : null;
     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
 };

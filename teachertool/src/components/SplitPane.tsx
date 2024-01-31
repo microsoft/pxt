@@ -9,18 +9,20 @@ interface IProps {
     defaultSize: number | string;
     primary: "left" | "right";
     children: React.ReactNode;
+    leftPaneClass?: string;
+    rightPaneClass?: string;
 }
 
-export const SplitPane: React.FC<IProps> = ({ className, split, children }) => {
+export const SplitPane: React.FC<IProps> = ({ className, split, children, leftPaneClass, rightPaneClass }) => {
     const [left, right] = React.Children.toArray(children);
 
     return (
         <div className={classList(css[`split-pane-${split}`], className)}>
-            <div className={css[`left-${split}`]}>{left}</div>
+            <div className={classList(css[`left-${split}`], leftPaneClass)}>{left}</div>
             <div className={css[`splitter-${split}`]}>
                 <div className={css[`splitter-${split}-inner`]} />
             </div>
-            <div className={css[`right-${split}`]}>{right}</div>
+            <div className={classList(css[`right-${split}`], rightPaneClass)}>{right}</div>
         </div>
     );
 };

@@ -1,0 +1,9 @@
+@import "shared";
+
+.panel {
+    background-color: var(--pxt-headerbar-accent-smoke);
+
+    iframe {
+        flex: 1 1 0%;
+    }
+}
