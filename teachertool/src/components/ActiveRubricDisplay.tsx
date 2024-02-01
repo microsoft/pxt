@@ -6,30 +6,22 @@ import { getCatalogCriteriaWithId } from "../state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
 import { showCatalogModal } from "../transforms/showCatalogModal";
-import { Input } from "react-common/components/controls/Input";
 import { setRubricName } from "../transforms/setRubricName";
+import { DebouncedInput } from "./DebouncedInput";
 
 interface IProps {}
 
 export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    const [inProgressName, setInProgressName] = useState(teacherTool.rubric.name);
-
-    function handleConfirmName() {
-        setRubricName(inProgressName);
-    }
-
     return (
         <div className="rubric-display">
-            <Input
+            <DebouncedInput
                 label={lf("Rubric Name")}
                 ariaLabel={lf("Rubric Name")}
-                onChange={setInProgressName}
+                onChange={setRubricName}
                 placeholder={lf("Rubric Name")}
-                initialValue={inProgressName}
-                onEnterKey={handleConfirmName}
-                onBlur={handleConfirmName}
+                initialValue={teacherTool.rubric.name}
                 preserveValueOnBlur={true}
             />
             {teacherTool.rubric.criteria?.map(criteriaInstance => {
