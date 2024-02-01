@@ -43,7 +43,7 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                 );
             })}
             <Button
-                className="btn-inline"
+                className="inline"
                 label={lf("+ Add Criteria")}
                 onClick={showCatalogModal}
                 title={lf("Add Criteria")}

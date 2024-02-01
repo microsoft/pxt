@@ -3,15 +3,16 @@
     flex-direction: row;
     align-items: center;
     height: 3.625rem;
+    min-height: 3.625rem;
     background-color: var(--pxt-content-background);
     color: var(--pxt-content-foreground);
     padding: 0 1rem 0 1rem;
     border-top: solid 1px var(--pxt-content-accent);
 
-    div[class="common-input-wrapper"] {
+    div[class*="common-input-wrapper"] {
         width: 100%;
 
-        div[class="common-input-group"] {
+        div[class*="common-input-group"] {
             border-radius: 99px;
             border: solid 1px var(--pxt-content-accent);
             padding: 0 1rem 0 1rem;

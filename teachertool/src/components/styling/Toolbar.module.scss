@@ -5,6 +5,7 @@
     flex-direction: row;
     justify-content: space-between;
     height: 2.625rem;
+    min-height: 2.625rem;
     background-color: var(--pxt-content-background);
     color: var(--pxt-content-foreground);
 }

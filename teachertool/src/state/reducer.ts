@@ -91,5 +91,11 @@ export default function reducer(state: AppState, action: Action): AppState {
                 targetConfig: action.config,
             };
         }
+        case "SET_ACTIVE_TAB": {
+            return {
+                ...state,
+                activeTab: action.tabName,
+            };
+        }
     }
 }
