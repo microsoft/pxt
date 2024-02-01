@@ -10,9 +10,9 @@ namespace pxt.blocks {
                 case "blocksExist":
                     return runBlocksExistValidation(usedBlocks, check as BlocksExistValidatorCheck);
                 case "blockCommentsExist":
-                    return runValidateBlockCommentsExist(usedBlocks);
+                    return runValidateBlockCommentsExist(usedBlocks, check as BlockCommentsExistValidatorCheck);
                 case "specificBlockCommentsExist":
-                    return runValidateSpecificBlockCommentsExist(usedBlocks, check as BlockCommentExistsValidatorCheck);
+                    return runValidateSpecificBlockCommentsExist(usedBlocks, check as SpecificBlockCommentExistsValidatorCheck);
                 default:
                     pxt.debug(`Unrecognized validator: ${check.validator}`);
                     return false;
@@ -40,12 +40,12 @@ namespace pxt.blocks {
         return success;
     }
 
-    function runValidateBlockCommentsExist(usedBlocks: Blockly.Block[]): boolean {
-        const blockResults = validateBlockCommentsExist({ usedBlocks });
+    function runValidateBlockCommentsExist(usedBlocks: Blockly.Block[], inputs: BlockCommentsExistValidatorCheck): boolean {
+        const blockResults = validateBlockCommentsExist({ usedBlocks, numRequired: inputs.count });
         return blockResults.passed;
     }
 
-    function runValidateSpecificBlockCommentsExist(usedBlocks: Blockly.Block[], inputs: BlockCommentExistsValidatorCheck): boolean {
+    function runValidateSpecificBlockCommentsExist(usedBlocks: Blockly.Block[], inputs: SpecificBlockCommentExistsValidatorCheck): boolean {
         const blockResults = validateSpecificBlockCommentsExist({ usedBlocks, blockType: inputs.blockType });
         return blockResults.passed;
     }

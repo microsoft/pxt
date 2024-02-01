@@ -37,7 +37,8 @@
             "threshold": 1,
             "checks": [
                 {
-                    "validator": "blockCommentsExist"
+                    "validator": "blockCommentsExist",
+                    "count": 1
                 }
             ]
         },
