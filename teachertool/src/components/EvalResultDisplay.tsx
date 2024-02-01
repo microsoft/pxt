@@ -11,7 +11,7 @@ export const EvalResultDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     function getTemplateStringFromCriteriaInstanceId(instanceId: string): string {
-        const catalogCriteriaId = teacherTool.selectedCriteria?.find(
+        const catalogCriteriaId = teacherTool.rubric.criteria?.find(
             criteria => criteria.instanceId === instanceId
         )?.catalogCriteriaId;
         if (!catalogCriteriaId) return "";

@@ -1,11 +1,14 @@
 namespace pxt.blocks {
+
+    const maxConcurrentChecks = 4;
+
     export async function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: ValidatorPlan): Promise<boolean> {
         // Each plan can have multiple checks it needs to run.
         // Run all of them in parallel, and then check if the number of successes is greater than the specified threshold.
         // TBD if it's faster to run in parallel without short-circuiting once the threshold is reached, or if it's faster to run sequentially and short-circuit.
         const startTime = Date.now();
 
-        const checkRuns = pxt.Util.promisePoolAsync(4, plan.checks, async (check: ValidatorCheckBase): Promise<boolean> => {
+        const checkRuns = pxt.Util.promisePoolAsync(maxConcurrentChecks, plan.checks, async (check: ValidatorCheckBase): Promise<boolean> => {
             switch (check.validator) {
                 case "blocksExist":
                     return runBlocksExistValidation(usedBlocks, check as BlocksExistValidatorCheck);
@@ -18,14 +21,15 @@ namespace pxt.blocks {
 
         const results = await checkRuns;
         const successCount = results.filter((r) => r).length;
+        const passed = successCount >= plan.threshold;
 
         pxt.tickEvent("validation.evaluation_complete", {
             plan: plan.name,
             durationMs: Date.now() - startTime,
-            passed: `${successCount >= plan.threshold}`,
+            passed: `${passed}`,
         });
 
-        return successCount >= plan.threshold;
+        return passed;
     }
 
     function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: BlocksExistValidatorCheck): boolean {
