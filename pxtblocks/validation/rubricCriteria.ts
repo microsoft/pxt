@@ -1,4 +1,5 @@
-import { EvaluationResult } from "./evaluationResult";
+/// <reference path="../../localtypings/evaluation.d.ts" />
+
 import { parseRubric } from "./rubric";
 import { validateBlocksExist } from "./validateBlockExists";
 
@@ -36,7 +37,7 @@ function blockSetToRequiredBlockCounts(blockSet: BlockSet): pxt.Map<number> {
     return requiredBlockCounts;
 }
 
-export function validateProject(usedBlocks: Blockly.Block[], rubric: string): EvaluationResult {
+export function validateProject(usedBlocks: Blockly.Block[], rubric: string): pxt.blocks.EvaluationResult {
     const rubricData = parseRubric(rubric);
     const finalResult: pxt.Map<boolean> = {};
     rubricData.criteria.forEach((criteria: RubricCriteria) => {
@@ -47,7 +48,7 @@ export function validateProject(usedBlocks: Blockly.Block[], rubric: string): Ev
             });
         });
     });
-    return { blockIdResults: finalResult } as EvaluationResult;
+    return { blockIdResults: finalResult } as pxt.blocks.EvaluationResult;
 }
 
 

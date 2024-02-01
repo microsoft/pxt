@@ -3,6 +3,7 @@
 /// <reference path="../../built/pxtcompiler.d.ts" />
 /// <reference path="../../built/pxtsim.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
+/// <reference path="../../localtypings/evaluation.d.ts" />
 
 import React from "react";
 import ReactDOM from "react-dom";
