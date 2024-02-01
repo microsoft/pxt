@@ -1,5 +1,4 @@
 @defaultTutorialHeight: 18.625rem;
-@tutorialFontSize: 1.125rem;
 @tutorialTitleFontSize: 1.5rem;
 
 @tutorialPrimaryColor: @sidebarPrimaryColor;
@@ -55,7 +54,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     font-family: @segoeUIFont;
-    font-size: @tutorialFontSize;
+    font-size: var(--tutorialFontSize);
 
     span.docs.inlineblock {
         white-space: break-spaces;
@@ -248,7 +247,7 @@
         margin: 0 1rem;
         color: @white;
         background: @tutorialPrimaryColor;
-        font-size: @tutorialFontSize;
+        font-size: var(--tutorialFontSize);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;

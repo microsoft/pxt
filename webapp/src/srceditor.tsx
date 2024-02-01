@@ -14,6 +14,7 @@ export class Editor implements pxt.editor.IEditor {
     isVisible = false;
     constructor(public parent: ProjectView) {
     }
+    onScaleChanged: (oldScale: number, newScale: number) => void;
     changeCallback = () => { };
     setVisible(v: boolean) {
         this.isVisible = v;
@@ -86,6 +87,7 @@ export class Editor implements pxt.editor.IEditor {
 
     zoomIn() { }
     zoomOut() { }
+    getMaxScale() { return 1; }
     setScale(scale: number) { }
 
     closeFlyout() { }

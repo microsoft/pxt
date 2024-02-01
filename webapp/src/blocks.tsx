@@ -31,6 +31,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
     functionsDialog: CreateFunctionDialog = null;
+    onScaleChanged: (oldScale: number, newScale: number) => void;
 
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
@@ -47,6 +48,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected workspaceSearch: WorkspaceSearch;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
+
+    // Blockly fires a scale event when it loads, but the user hasn't actually changed the scale.
+    // We use this flag to ignore that initial event.
+    private initialScaleSet: boolean = false;
 
     constructor(parent: pxt.editor.IProjectView) {
         super(parent);
@@ -593,7 +598,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.UI,
                 Blockly.Events.SELECTED,
                 Blockly.Events.CLICK,
-                Blockly.Events.VIEWPORT_CHANGE,
                 Blockly.Events.BUBBLE_OPEN
             ];
 
@@ -647,6 +651,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         }
                     }
                 }
+            }
+            else if (ev.type === Blockly.Events.VIEWPORT_CHANGE) {
+                const viewportChangeEvent = ev as Blockly.Events.ViewportChange;
+                if (this.initialScaleSet && viewportChangeEvent.oldScale !== viewportChangeEvent.scale && this.onScaleChanged) {
+                    this.onScaleChanged(viewportChangeEvent.oldScale, viewportChangeEvent.scale);
+                }
+                this.initialScaleSet = true;
             }
 
             // reset tutorial hint animation on any blockly event
@@ -763,6 +774,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     zoomOut() {
         if (!this.editor) return;
         this.editor.zoomCenter(-0.8);
+    }
+
+    getMaxScale() {
+        if (!this.editor) return undefined;
+        return this.editor.options.zoomOptions.maxScale;
     }
 
     setScale(scale: number) {

@@ -153,6 +153,10 @@ export class ProjectView
     private rootClasses: string[];
     private pendingImport: pxt.Util.DeferredPromise<void>;
 
+    private initialEditorScale: number;
+    private tutorialInitialFontSize = 1.125; // rem
+    private tutorialMaxFontSize = 2; // rem
+
     private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => {
@@ -212,6 +216,7 @@ export class ProjectView
         this.exitTutorial = this.exitTutorial.bind(this);
         this.setEditorOffset = this.setEditorOffset.bind(this);
         this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
+        this.onScaleChanged = this.onScaleChanged.bind(this);
         this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
@@ -1034,7 +1039,10 @@ export class ProjectView
         }
         this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
+        this.allEditors.forEach(e => e.onScaleChanged = this.onScaleChanged)
+
         this.editor = this.allEditors[this.allEditors.length - 1]
+        this.initialEditorScale = undefined;
     }
 
     public UNSAFE_componentWillMount() {
@@ -1116,6 +1124,8 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
+
+        document.getElementById("root").style.setProperty("--tutorialFontSize", `${this.tutorialInitialFontSize}rem`);
     }
 
     public componentWillUnmount() {
@@ -1537,6 +1547,26 @@ export class ProjectView
                         break;
                 }
                 break;
+        }
+    }
+
+    onScaleChanged(oldScale: number, newScale: number) {
+        if (this.isTutorial && oldScale !== newScale) {
+            if (this.initialEditorScale === undefined) {
+                this.initialEditorScale = oldScale;
+            }
+
+            const root = document.getElementById("root");
+            if (root && newScale <= this.initialEditorScale) {
+                // Do not shrink the text beyond its initial size.
+                root.style.setProperty("--tutorialFontSize", `${this.tutorialInitialFontSize}rem`);
+            } else if (root) {
+                // Increase font size to match the editor's % zoom.
+                const maxEditorScale = this.editor.getMaxScale();
+                const zoomAmt = (newScale - this.initialEditorScale) / (maxEditorScale - this.initialEditorScale);
+                const newTutorialFontSize = this.tutorialInitialFontSize + (this.tutorialMaxFontSize - this.tutorialInitialFontSize) * zoomAmt;
+                root.style.setProperty("--tutorialFontSize", `${newTutorialFontSize}rem`);
+            }
         }
     }
 
