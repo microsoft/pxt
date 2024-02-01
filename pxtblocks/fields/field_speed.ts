@@ -70,7 +70,7 @@ export class FieldSpeed extends FieldSlider implements FieldCustom {
         // labelContainer.setAttribute('class', 'blocklyFieldSliderLabel');
         const readout = document.createElement('span');
         readout.setAttribute('class', 'blocklyFieldSliderReadout');
-        // var label = document.createElement('span');
+        // const label = document.createElement('span');
         // label.setAttribute('class', 'blocklyFieldSliderLabelText');
         // label.innerHTML = labelText;
         // labelContainer.appendChild(label);

@@ -1,4 +1,4 @@
-import * as Blockly from "blockly/core";
+import * as Blockly from "blockly";
 import { CommonFunctionBlock } from "./commonFunctionMixin";
 import {
     ARGUMENT_EDITOR_CUSTOM_BLOCK_TYPE,
@@ -372,7 +372,7 @@ export function validateFunctionExternal(mutation: Element, destinationWs: Block
 
     // Check for duplicate arg names and empty arg names.
     const seen: StringMap<boolean> = {};
-    for (var i = 0; i < mutation.childNodes.length; ++i) {
+    for (let i = 0; i < mutation.childNodes.length; ++i) {
         const arg = mutation.childNodes[i] as Element;
         const argName = arg.getAttribute('name');
         if (!argName) {

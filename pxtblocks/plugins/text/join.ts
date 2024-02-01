@@ -23,12 +23,12 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
     },
     storeValueConnections_: function (this: TextJoinBlock) {
         this.valueConnections_ = [];
-        for (var i = 0; i < this.itemCount_; i++) {
+        for (let i = 0; i < this.itemCount_; i++) {
             this.valueConnections_.push(this.getInput('ADD' + i).connection.targetConnection);
         }
     },
     restoreValueConnections_: function (this: TextJoinBlock) {
-        for (var i = 0; i < this.itemCount_; i++) {
+        for (let i = 0; i < this.itemCount_; i++) {
             this.valueConnections_[i]?.reconnect(this, 'ADD' + i);
         }
     },
@@ -127,7 +127,7 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
                 .appendField(Blockly.Msg['TEXT_JOIN_TITLE_CREATEWITH']);
         }
         // Add new inputs.
-        for (var i = 0; i < this.itemCount_; i++) {
+        for (let i = 0; i < this.itemCount_; i++) {
             if (!this.getInput('ADD' + i)) {
                 const input = this.appendValueInput('ADD' + i)
                     // pxt-blockly: pxt-blockly/pull/112

@@ -1,4 +1,4 @@
-import * as Blockly from "blockly/core";
+import * as Blockly from "blockly";
 import {
     FUNCTION_CALL_BLOCK_TYPE,
     FUNCTION_CALL_OUTPUT_BLOCK_TYPE,
@@ -62,7 +62,7 @@ export const COMMON_FUNCTION_MIXIN = {
 
     domToMutation: function (this: CommonFunctionBlock, xmlElement: Element) {
         const args: FunctionArgument[] = [];
-        for (var i = 0; i < xmlElement.childNodes.length; ++i) {
+        for (let i = 0; i < xmlElement.childNodes.length; ++i) {
             // During domToWorkspace, it's possible that the element has some whitespace text child nodes.
             // Ignore those.
             const c = xmlElement.childNodes[i] as Element;

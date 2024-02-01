@@ -50,8 +50,8 @@ export class Drawer extends Blockly.zelos.Drawer {
             this.drawLeftDynamicConnection_();
         } else {
             this.drawTop_();
-            for (var r = 1; r < this.info_.rows.length - 1; r++) {
-                var row = this.info_.rows[r];
+            for (let r = 1; r < this.info_.rows.length - 1; r++) {
+                const row = this.info_.rows[r];
                 if (row.hasJaggedEdge) {
                     this.drawJaggedEdge_(row);
                 } else if (isCollapsedInputRow(row)) {

@@ -1,4 +1,4 @@
-import * as Blockly from "blockly/core";
+import * as Blockly from "blockly";
 import { CommonFunctionMixin, COMMON_FUNCTION_MIXIN, CommonFunctionBlock } from "../commonFunctionMixin";
 import {
     FUNCTION_CALL_BLOCK_TYPE,

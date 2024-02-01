@@ -1,4 +1,4 @@
-import * as Blockly from "blockly/core";
+import * as Blockly from "blockly";
 import { getDefinition } from "./utils";
 import { MsgKey } from "./msg";
 import { ADD_IMAGE_DATAURI, REMOVE_IMAGE_DATAURI } from "./svgs";
@@ -97,7 +97,7 @@ const variableReporterMixin = {
                     enabled: !this.workspace.options.readOnly,
                     text: variable.name,
                     callback: () => {
-                        var variableField = this.getField('VAR') as Blockly.FieldVariable;
+                        let variableField = this.getField('VAR') as Blockly.FieldVariable;
                         if (!variableField) {
                           console.log("Tried to get a variable field on the wrong type of block.");
                         }

@@ -1,4 +1,4 @@
-import * as Blockly from "blockly/core";
+import * as Blockly from "blockly";
 import { FunctionManager } from "../functionManager";
 
 export interface FieldArgumentEditorConfig extends Blockly.FieldTextInputConfig {

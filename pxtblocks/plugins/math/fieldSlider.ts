@@ -76,7 +76,7 @@ export class FieldSlider extends Blockly.FieldNumber {
 
     protected addSlider_(contentDiv: Element) {
         if (this.labelText_) {
-            var elements = this.createLabelDom_(this.labelText_);
+            let elements = this.createLabelDom_(this.labelText_);
             contentDiv.appendChild(elements[0]);
             this.readout_ = elements[1];
             this.setReadout(this.value_);
@@ -136,7 +136,7 @@ export class FieldSlider extends Blockly.FieldNumber {
 
     protected setReadout(value: string | number) {
         if (this.readout_) {
-            this.readout_.innerHTML = value + "";
+            this.readout_.innerText = value + "";
         }
     }
 
@@ -147,7 +147,7 @@ export class FieldSlider extends Blockly.FieldNumber {
         readout.setAttribute('class', 'blocklyFieldSliderReadout');
         const label = document.createElement('span');
         label.setAttribute('class', 'blocklyFieldSliderLabelText');
-        label.innerHTML = labelText;
+        label.innerText = labelText;
         labelContainer.appendChild(label);
         labelContainer.appendChild(readout);
         return [labelContainer, readout];

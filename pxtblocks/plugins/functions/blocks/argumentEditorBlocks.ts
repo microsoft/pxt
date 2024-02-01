@@ -1,4 +1,4 @@
-import * as Blockly from "blockly/core";
+import * as Blockly from "blockly";
 import {
     ARGUMENT_EDITOR_BOOLEAN_BLOCK_TYPE,
     ARGUMENT_EDITOR_STRING_BLOCK_TYPE,

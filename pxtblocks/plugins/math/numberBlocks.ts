@@ -85,7 +85,7 @@ const MATH_NUMBER_MINMAX_MIXIN = {
      */
     mutationToDom: function (this: Blockly.Block) {
         const slider = this.inputList[0].fieldRow[0] as unknown as FieldSlider
-        var container = Blockly.utils.xml.createElement('mutation');
+        let container = Blockly.utils.xml.createElement('mutation');
         if (slider.hasMin()) container.setAttribute('min', slider.getMin() + "");
         if (slider.hasMax()) container.setAttribute('max', slider.getMax() + "");
         if (slider.getLabel() != undefined) container.setAttribute('label', slider.getLabel());

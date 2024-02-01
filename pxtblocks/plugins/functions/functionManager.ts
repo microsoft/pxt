@@ -1,4 +1,4 @@
-import * as Blockly from "blockly/core";
+import * as Blockly from "blockly";
 import { MsgKey } from "./msg";
 import { StringMap } from "./utils";
 

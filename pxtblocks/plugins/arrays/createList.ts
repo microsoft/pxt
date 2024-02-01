@@ -1,4 +1,4 @@
-import * as Blockly from "blockly/core";
+import * as Blockly from "blockly";
 import { FUNCTION_CALL_OUTPUT_BLOCK_TYPE } from "../functions/constants";
 import { CommonFunctionBlock } from "../functions/commonFunctionMixin";
 import { InlineSvgsExtensionBlock } from "../functions";

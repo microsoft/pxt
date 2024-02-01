@@ -1,4 +1,4 @@
-import * as Blockly from "blockly/core";
+import * as Blockly from "blockly";
 import { CommonFunctionMixin, COMMON_FUNCTION_MIXIN, CommonFunctionBlock } from "../commonFunctionMixin";
 import {
     ARGUMENT_EDITOR_ARRAY_BLOCK_TYPE,
@@ -57,7 +57,7 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
         let newBlock;
 
         try {
-            var blockType = "";
+            let blockType = "";
             switch (argumentType) {
                 case "boolean":
                     blockType = ARGUMENT_EDITOR_BOOLEAN_BLOCK_TYPE;
@@ -94,7 +94,7 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
 
     focusLastEditor_(this: FunctionDeclarationBlock) {
         if (this.inputList.length > 0) {
-            var newInput = this.inputList[this.inputList.length - 2];
+            let newInput = this.inputList[this.inputList.length - 2];
             if (newInput.type == Blockly.inputTypes.DUMMY) {
                 const workspace = this.workspace;
 
