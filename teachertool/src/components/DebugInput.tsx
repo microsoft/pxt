@@ -18,7 +18,7 @@ export const DebugInput: React.FC<IProps> = ({}) => {
         <div className="debug-container">
             <Button
                 id="evaluateSingleProjectButton"
-                className="btn-primary"
+                className="primary"
                 onClick={evaluate}
                 title={"Evaluate"}
                 label={lf("Evaluate")}
