@@ -8,6 +8,13 @@
 import { BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../pxtblocks";
 import { defaultClientRenderOptions, renderAsync } from "./renderer";
 
+import * as pxtblockly from "../pxtblocks";
+import * as Blockly from "blockly";
+
+pxt.blocks.requirePxtBlockly = () => pxtblockly;
+pxt.blocks.requireBlockly = () => Blockly;
+pxt.blocks.registerFieldEditor = (selector, proto, validator) => pxtblockly.registerFieldEditor(selector, proto, validator);
+
 export interface SimulateOptions {
     embedId?: string;
     id?: string;
