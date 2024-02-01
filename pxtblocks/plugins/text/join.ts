@@ -127,7 +127,8 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
                 .appendField(Blockly.Msg['TEXT_JOIN_TITLE_CREATEWITH']);
         }
         // Add new inputs.
-        for (let i = 0; i < this.itemCount_; i++) {
+        let i: number;
+        for (i = 0; i < this.itemCount_; i++) {
             if (!this.getInput('ADD' + i)) {
                 const input = this.appendValueInput('ADD' + i)
                     // pxt-blockly: pxt-blockly/pull/112
