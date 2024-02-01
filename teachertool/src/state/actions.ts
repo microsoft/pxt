@@ -1,5 +1,6 @@
 import { ModalType, NotificationWithId } from "../types";
-import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
+import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
+import { Rubric } from "../types/rubric";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -49,14 +50,9 @@ type SetCatalog = ActionBase & {
     catalog: CatalogCriteria[] | undefined;
 };
 
-type SetSelectedCriteria = ActionBase & {
-    type: "SET_SELECTED_CRITERIA";
-    criteria: CriteriaInstance[];
-};
-
-type RemoveCriteriaInstance = ActionBase & {
-    type: "REMOVE_CRITERIA_INSTANCE";
-    instanceId: string;
+type SetRubric = ActionBase & {
+    type: "SET_RUBRIC";
+    rubric: Rubric;
 };
 
 type ShowModal = ActionBase & {
@@ -86,8 +82,7 @@ export type Action =
     | ClearAllEvalResults
     | SetTargetConfig
     | SetCatalog
-    | SetSelectedCriteria
-    | RemoveCriteriaInstance
+    | SetRubric
     | ShowModal
     | HideModal
     | SetValidatorPlans;
@@ -135,14 +130,9 @@ const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     catalog,
 });
 
-const setSelectedCriteria = (criteria: CriteriaInstance[]): SetSelectedCriteria => ({
-    type: "SET_SELECTED_CRITERIA",
-    criteria,
-});
-
-const removeCriteriaInstance = (instanceId: string): RemoveCriteriaInstance => ({
-    type: "REMOVE_CRITERIA_INSTANCE",
-    instanceId,
+const setRubric = (rubric: Rubric): SetRubric => ({
+    type: "SET_RUBRIC",
+    rubric,
 });
 
 const showModal = (modal: ModalType): ShowModal => ({
@@ -168,8 +158,7 @@ export {
     clearAllEvalResults,
     setTargetConfig,
     setCatalog,
-    setSelectedCriteria,
-    removeCriteriaInstance,
+    setRubric,
     showModal,
     hideModal,
     setValidatorPlans,

@@ -73,7 +73,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
     };
 
     return (
-        <MenuBar className={css["header"]} ariaLabel={lf("Header")}>
+        <MenuBar className={css["header"]} ariaLabel={lf("Header")} role="navigation">
             <div className={css["left-menu"]}>
                 {getOrganizationLogo()}
                 {getTargetLogo()}

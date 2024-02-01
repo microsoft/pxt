@@ -11,7 +11,7 @@ export const EvalResultDisplay: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     function getTemplateStringFromCriteriaInstanceId(instanceId: string): string {
-        const catalogCriteriaId = teacherTool.selectedCriteria?.find(
+        const catalogCriteriaId = teacherTool.rubric.criteria?.find(
             criteria => criteria.instanceId === instanceId
         )?.catalogCriteriaId;
         if (!catalogCriteriaId) return "";
@@ -28,20 +28,24 @@ export const EvalResultDisplay: React.FC<IProps> = ({}) => {
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
                         const result = teacherTool.evalResults[criteriaInstanceId];
                         const label = getTemplateStringFromCriteriaInstanceId(criteriaInstanceId);
-                        return label && (
-                            <div className="result-block-id" key={criteriaInstanceId}>
-                                <p className="block-id-label">
-                                    {getTemplateStringFromCriteriaInstanceId(criteriaInstanceId)}:
-                                </p>
-                                {result === CriteriaEvaluationResult.InProgress && <div className="common-spinner" />}
-                                {result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
-                                {result === CriteriaEvaluationResult.Fail && (
-                                    <p className="negative-text">{lf("Needs Work")}</p>
-                                )}
-                                {result === CriteriaEvaluationResult.Pass && (
-                                    <p className="positive-text">{lf("Looks Good!")}</p>
-                                )}
-                            </div>
+                        return (
+                            label && (
+                                <div className="result-block-id" key={criteriaInstanceId}>
+                                    <p className="block-id-label">
+                                        {getTemplateStringFromCriteriaInstanceId(criteriaInstanceId)}:
+                                    </p>
+                                    {result === CriteriaEvaluationResult.InProgress && (
+                                        <div className="common-spinner" />
+                                    )}
+                                    {result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
+                                    {result === CriteriaEvaluationResult.Fail && (
+                                        <p className="negative-text">{lf("Needs Work")}</p>
+                                    )}
+                                    {result === CriteriaEvaluationResult.Pass && (
+                                        <p className="positive-text">{lf("Looks Good!")}</p>
+                                    )}
+                                </div>
+                            )
                         );
                     })}
                 </div>
