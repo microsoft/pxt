@@ -630,8 +630,7 @@ namespace pxt.editor {
                     .then(res => {
                         if (res.fieldEditors)
                             res.fieldEditors.forEach(fi => {
-                                // FIXME (riknoll)
-                                // pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                                pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
                             })
                     })
             }

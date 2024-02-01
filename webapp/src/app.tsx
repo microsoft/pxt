@@ -79,6 +79,10 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 
+pxt.blocks.requirePxtBlockly = () => pxtblockly;
+pxt.blocks.requireBlockly = () => Blockly;
+pxt.blocks.registerFieldEditor = (selector, proto, validator) => pxtblockly.registerFieldEditor(selector, proto, validator);
+
 pxsim.util.injectPolyphils();
 
 let theEditor: ProjectView;

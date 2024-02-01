@@ -5,6 +5,17 @@ namespace pxt.blocks {
 
     export let showBlockIdInTooltip: boolean = false;
 
+    // These interfaces are extended in localtypings/pxtblockly.d.ts
+    export interface PxtBlockly {
+    }
+    export interface BlocklyModule {
+    }
+
+    // patched in webapp/pxtrunner
+    export let requirePxtBlockly: () => PxtBlockly = () => undefined;
+    export let requireBlockly: () => BlocklyModule = () => undefined;
+    export let registerFieldEditor: (selector: string, proto: any, validator?: any) => void = () => {}
+
     // The JS Math functions supported in the blocks. The order of this array
     // determines the order of the dropdown in the math_js_op block
     export const MATH_FUNCTIONS = {

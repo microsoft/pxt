@@ -11,10 +11,9 @@
         "sourceMap": false,
         "moduleResolution": "node",
         "isolatedModules": false,
-        "jsx": "react-jsx",
+        "declaration": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "declaration": false,
         "preserveConstEnums": true,
         "lib": [
             "dom",
