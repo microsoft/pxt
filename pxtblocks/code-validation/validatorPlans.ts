@@ -21,5 +21,6 @@ namespace pxt.blocks {
     export interface BlockCommentExistsValidatorCheck extends ValidatorCheckBase {
         validator: "blockCommentExists";
         blockType?: string;
+        count?: number;
     }
 }

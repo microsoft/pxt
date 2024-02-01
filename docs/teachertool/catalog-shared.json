@@ -15,13 +15,13 @@
         {
             "id": "76D86387-E3CF-4BEB-B62C-B811F5997631",
             "use": "block_comment_used",
-            "template": "At least one comment was left on a block in the code",
+            "template": "At least one block has comments",
             "docPath": "/teachertool"
         },
         {
             "id": "8F97C9A6-CF16-48B4-A84F-3105C24B20DE",
             "use": "functions_have_comments",
-            "template": "All function definitions have block comments",
+            "template": "All function definitions have comments",
             "docPath": "/teachertool"
         }
     ]
