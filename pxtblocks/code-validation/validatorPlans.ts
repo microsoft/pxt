@@ -17,4 +17,13 @@ namespace pxt.blocks {
         validator: "blocksExist";
         blockCounts: pxt.Map<number>;
     }
+
+    export interface BlockCommentsExistValidatorCheck extends ValidatorCheckBase {
+        validator: "blockCommentsExist";
+        count: number;
+    }
+    export interface SpecificBlockCommentsExistValidatorCheck extends ValidatorCheckBase {
+        validator: "specificBlockCommentsExist";
+        blockType: string;
+    }
 }
