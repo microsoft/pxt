@@ -4,11 +4,11 @@ import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/ImportRubricModal.module.scss";
-import { importRubricFromFile } from "../transforms/importRubricFromFile";
+import { getRubricFromFileAsync } from "../transforms/getRubricFromFileAsync";
 import { NoticeLabel } from "./NoticeLabel";
 import { Rubric } from "../types/rubric";
-import { loadRubricFromFileAsync } from "../services/fileSystemService";
 import { RubricPreview } from "./RubricPreview";
+import { setRubric } from "../transforms/setRubric";
 
 export interface IProps {}
 
@@ -18,19 +18,22 @@ export const ImportRubricModal: React.FC<IProps> = () => {
     const [selectedRubric, setSelectedRubric] = useState<Rubric | undefined>(undefined);
 
     useEffect(() => {
-        async function updatePreview (file: File) {
-            try {
-                const parsedRubric = await loadRubricFromFileAsync(file);
-                setSelectedRubric(parsedRubric);
-            } catch {
-                // Error
-            }
+        async function updatePreview(file: File) {
+            const parsedRubric = await getRubricFromFileAsync(file, false /* allow partial */);
+            setSelectedRubric(parsedRubric);
         }
 
         if (selectedFile) {
             updatePreview(selectedFile);
+        } else {
+            setSelectedRubric(undefined);
         }
-    }, [selectedFile])
+    }, [selectedFile]);
+
+    function closeModal() {
+        setSelectedFile(undefined);
+        hideModal("import-rubric");
+    }
 
     function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
         if (event.target.files && event.target.files.length > 0) {
@@ -40,31 +43,33 @@ export const ImportRubricModal: React.FC<IProps> = () => {
         }
     }
 
-    function handleLoadClicked() {
-        if (selectedFile) {
-            importRubricFromFile(selectedFile);
+    function handleImportClicked() {
+        if (selectedRubric) {
+            setRubric(selectedRubric);
         }
 
-        hideModal("import-rubric")
+        closeModal();
     }
 
     const actions = [
         {
             label: lf("Cancel"),
             className: "secondary",
-            onClick: () => hideModal("import-rubric"),
+            onClick: closeModal,
         },
         {
             label: lf("Import"),
             className: "primary",
-            onClick: handleLoadClicked,
+            onClick: handleImportClicked,
         },
     ];
 
     return teacherTool.modal === "import-rubric" ? (
-        <Modal title={lf("Select rubric to import")} actions={actions} onClose={() => hideModal("import-rubric")}>
+        <Modal title={lf("Select rubric to import")} actions={actions} onClose={closeModal}>
             <div className={css["import-rubric"]}>
-                <NoticeLabel severity="warning">{lf("Warning! Your current rubric will be overwritten by the imported rubric.")}</NoticeLabel>
+                <NoticeLabel severity="warning">
+                    {lf("Warning! Your current rubric will be overwritten by the imported rubric.")}
+                </NoticeLabel>
                 {selectedRubric && <RubricPreview rubric={selectedRubric} />}
                 <input
                     type="file"

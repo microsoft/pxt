@@ -1,8 +1,9 @@
 import { getLastActiveRubricAsync } from "../services/indexedDbService";
-import { logDebug } from "../services/loggingService";
+import { logDebug, logError } from "../services/loggingService";
 import { postNotification } from "./postNotification";
 import { makeNotification } from "../utils";
 import { setRubric } from "./setRubric";
+import { verifyRubricIntegrity } from "../state/helpers";
 
 export async function tryLoadLastActiveRubricAsync() {
     const lastActiveRubric = await getLastActiveRubricAsync();
@@ -10,11 +11,13 @@ export async function tryLoadLastActiveRubricAsync() {
     if (lastActiveRubric) {
         logDebug(`Loading last active rubric '${lastActiveRubric.name}'...`);
 
-        const success = setRubric(lastActiveRubric, true /* validateRubric */, true /* continueOnCriteriaFailure */);
+        const rubricVerificationResult = verifyRubricIntegrity(lastActiveRubric);
 
-        if (!success) {
+        if (!rubricVerificationResult.valid) {
             postNotification(makeNotification(lf("Some criteria could not be loaded."), 2000));
         }
+
+        setRubric({...lastActiveRubric, criteria: rubricVerificationResult.validCriteria});
     } else {
         logDebug(`No last active rubric to load.`);
     }

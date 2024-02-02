@@ -1,4 +1,6 @@
+import { logError } from "../services/loggingService";
 import { CatalogCriteria, CriteriaInstance } from "../types/criteria";
+import { ErrorCode } from "../types/errorCode";
 import { Rubric } from "../types/rubric";
 import { stateAndDispatch } from "./appStateContext";
 
@@ -7,7 +9,7 @@ export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefine
     return state.catalog?.find(c => c.id === id);
 }
 
-export function validateCriteriaInstance(instance: CriteriaInstance) {
+export function verifyCriteriaInstanceIntegrity(instance: CriteriaInstance) {
     const catalogCriteria = getCatalogCriteriaWithId(instance.catalogCriteriaId);
 
     if (!catalogCriteria) {
@@ -19,4 +21,19 @@ export function validateCriteriaInstance(instance: CriteriaInstance) {
             throw new Error("Unrecognized parameter in criteria instance.");
         }
     }
+}
+
+export function verifyRubricIntegrity(rubric: Rubric): { valid: boolean; validCriteria: CriteriaInstance[], invalidCriteria: CriteriaInstance[] } {
+    const validCriteria: CriteriaInstance[] = [];
+    const invalidCriteria: CriteriaInstance[] = [];
+    for (const criteria of rubric.criteria) {
+        try {
+            verifyCriteriaInstanceIntegrity(criteria);
+            validCriteria.push(criteria);
+        } catch (error) {
+            logError(ErrorCode.unableToLoadCriteriaInstance, error);
+            invalidCriteria.push(criteria);
+        }
+    }
+    return { valid: invalidCriteria.length === 0, validCriteria, invalidCriteria };
 }

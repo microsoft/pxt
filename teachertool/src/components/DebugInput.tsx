@@ -33,7 +33,7 @@ export const DebugInput: React.FC<IProps> = ({}) => {
             {/* TODO thsparks : move out of debug input */}
             <Button
                 id="exportButton"
-                className="btn-primary"
+                className="primary"
                 onClick={runExport}
                 title={"Export"}
                 label={lf("Export")}
@@ -41,7 +41,7 @@ export const DebugInput: React.FC<IProps> = ({}) => {
 
             <Button
                 id="importButton"
-                className="btn-primary"
+                className="primary"
                 onClick={() => showModal("import-rubric")}
                 title={"Import"}
                 label={lf("Import")}
