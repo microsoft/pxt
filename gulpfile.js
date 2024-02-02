@@ -390,17 +390,16 @@ const copyWebapp = () =>
 const copySemanticFonts = () => gulp.src("node_modules/semantic-ui-less/themes/default/assets/fonts/*")
     .pipe(gulp.dest("built/web/fonts"))
 
-const browserifyWebapp = () => process.env.PXT_ENV == 'production' ?
-    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js') :
-    exec('node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js --debug')
+const execBrowserify = (entryPoint, outfile) => process.env.PXT_ENV == 'production' ?
+    exec(`node node_modules/browserify/bin/cmd ${entryPoint} -g [ envify --NODE_ENV production ] -g [ uglifyify --ignore '**/node_modules/@blockly/**' ] -o ${outfile}`) :
+    exec(`node node_modules/browserify/bin/cmd ${entryPoint} -o ${outfile} --debug`);
 
-const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
-    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/assetEditor.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/pxtasseteditor.js') :
-    exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
+const browserifyWebapp = () => execBrowserify("./built/webapp/src/app.js", "./built/web/main.js");
 
-const browserifyEmbed = () => process.env.PXT_ENV == 'production' ?
-    exec('node node_modules/browserify/bin/cmd ./built/pxtrunner/embed.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/runnerembed.js') :
-    exec('node node_modules/browserify/bin/cmd built/pxtrunner/embed.js -o built/web/runnerembed.js --debug')
+const browserifyAssetEditor = () => execBrowserify("./built/webapp/src/assetEditor.js", "./built/web/pxtasseteditor.js");
+
+const browserifyEmbed = () => execBrowserify("./built/pxtrunner/embed.js", "./built/web/runnerembed.js");
+
 
 const buildSVGIcons = () => {
     let webfontsGenerator = require('@vusion/webfonts-generator')
