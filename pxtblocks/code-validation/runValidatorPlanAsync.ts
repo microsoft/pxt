@@ -57,7 +57,7 @@ namespace pxt.blocks {
     }
 
     function runBlocksInSetExistValidation(usedBlocks: Blockly.Block[], inputs: BlocksInSetExistValidatorCheck): boolean {
-        const blockResults = validateBlocksInSetExist({ usedBlocks, blocks: inputs.blocks, count: inputs.count });
+        const blockResults = validateBlocksInSetExist({ usedBlocks, blockIdsToCheck: inputs.blocks, count: inputs.count });
         return blockResults.passed;
     }
 }
