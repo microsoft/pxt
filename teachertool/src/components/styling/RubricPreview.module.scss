@@ -1,0 +1,22 @@
+.rubric-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    border: 2px solid black;
+    border-radius: 0.3rem;
+    background-color: var(--pxt-content-background-glass);
+
+    .rubric-header {
+        width: 100%;
+        font-weight: bold;
+        margin-bottom: 0.1rem;
+        border-bottom: 1px solid black;
+        padding: 0.2rem 0.5rem;
+    }
+
+    .rubric-criteria {
+        width: 100%;
+        padding: 0.2rem 0.5rem;
+    }
+}

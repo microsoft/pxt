@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
@@ -6,12 +6,31 @@ import { hideModal } from "../transforms/hideModal";
 import css from "./styling/ImportRubricModal.module.scss";
 import { importRubricFromFile } from "../transforms/importRubricFromFile";
 import { NoticeLabel } from "./NoticeLabel";
+import { Rubric } from "../types/rubric";
+import { loadRubricFromFileAsync } from "../services/fileSystemService";
+import { RubricPreview } from "./RubricPreview";
 
 export interface IProps {}
 
 export const ImportRubricModal: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
+    const [selectedRubric, setSelectedRubric] = useState<Rubric | undefined>(undefined);
+
+    useEffect(() => {
+        async function updatePreview (file: File) {
+            try {
+                const parsedRubric = await loadRubricFromFileAsync(file);
+                setSelectedRubric(parsedRubric);
+            } catch {
+                // Error
+            }
+        }
+
+        if (selectedFile) {
+            updatePreview(selectedFile);
+        }
+    }, [selectedFile])
 
     function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
         if (event.target.files && event.target.files.length > 0) {
@@ -43,18 +62,17 @@ export const ImportRubricModal: React.FC<IProps> = () => {
     ];
 
     return teacherTool.modal === "import-rubric" ? (
-        <Modal title={lf("Import Rubric")} actions={actions} onClose={() => hideModal("import-rubric")}>
+        <Modal title={lf("Select rubric to import")} actions={actions} onClose={() => hideModal("import-rubric")}>
             <div className={css["import-rubric"]}>
                 <NoticeLabel severity="warning">{lf("Warning! Your current rubric will be overwritten by the imported rubric.")}</NoticeLabel>
-                <label id="selectRubricToImport">{lf("Select a rubric file to import.")}</label>
+                {selectedRubric && <RubricPreview rubric={selectedRubric} />}
                 <input
                     type="file"
                     tabIndex={0}
                     autoFocus
-                    aria-labelledby="selectRubricToImport"
+                    aria-label={lf("Select rubric file.")}
                     onChange={handleFileChange}
                 />
-                {/* Rubric Preview - perhaps a component that takes in a Rubric prop? */}
             </div>
         </Modal>
     ) : null;
