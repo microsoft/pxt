@@ -12,6 +12,12 @@
         border: 2px solid
     }
 
+    .error-notice-label-container {
+        border-color: rgba(red, 0.2);
+        background-color: rgba(red, 0.2);
+        justify-content: flex-start;
+    }
+
     .warning-notice-label-container {
         border-color: rgba(orange, 0.4);
         background-color: rgba(orange, 0.4);

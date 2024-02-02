@@ -16,10 +16,16 @@ export const ImportRubricModal: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
     const [selectedRubric, setSelectedRubric] = useState<Rubric | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         async function updatePreview(file: File) {
             const parsedRubric = await getRubricFromFileAsync(file, false /* allow partial */);
+            if (!parsedRubric) {
+                setErrorMessage(lf("Invalid rubric file."));
+            } else {
+                setErrorMessage(undefined);
+            }
             setSelectedRubric(parsedRubric);
         }
 
@@ -27,11 +33,14 @@ export const ImportRubricModal: React.FC<IProps> = () => {
             updatePreview(selectedFile);
         } else {
             setSelectedRubric(undefined);
+            setErrorMessage(undefined);
         }
     }, [selectedFile]);
 
     function closeModal() {
         setSelectedFile(undefined);
+        setErrorMessage(undefined);
+        setSelectedRubric(undefined);
         hideModal("import-rubric");
     }
 
@@ -61,6 +70,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
             label: lf("Import"),
             className: "primary",
             onClick: handleImportClicked,
+            disabled: !selectedRubric,
         },
     ];
 
@@ -70,6 +80,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
                 <NoticeLabel severity="warning">
                     {lf("Warning! Your current rubric will be overwritten by the imported rubric.")}
                 </NoticeLabel>
+                {errorMessage && <NoticeLabel severity="error">{errorMessage}</NoticeLabel>}
                 {selectedRubric && <RubricPreview rubric={selectedRubric} />}
                 <input
                     type="file"
