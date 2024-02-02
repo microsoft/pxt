@@ -3,12 +3,12 @@ import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
 // eslint-disable-next-line import/no-internal-modules
-import css from "./styling/FilePickerModal.module.scss";
+import css from "./styling/ImportRubricModal.module.scss";
 import { importRubricFromFile } from "../transforms/importRubricFromFile";
 
 export interface IProps {}
 
-export const FilePickerModal: React.FC<IProps> = () => {
+export const ImportRubricModal: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
 
@@ -25,14 +25,14 @@ export const FilePickerModal: React.FC<IProps> = () => {
             importRubricFromFile(selectedFile);
         }
 
-        hideModal("file-picker")
+        hideModal("import-rubric")
     }
 
     const actions = [
         {
             label: lf("Cancel"),
             className: "secondary",
-            onClick: () => hideModal("file-picker"),
+            onClick: () => hideModal("import-rubric"),
         },
         {
             label: lf("Import"),
@@ -41,9 +41,9 @@ export const FilePickerModal: React.FC<IProps> = () => {
         },
     ];
 
-    return teacherTool.modal === "file-picker" ? (
-        <Modal title={lf("Import Rubric")} actions={actions}>
-            <div className={css["file-picker"]}>
+    return teacherTool.modal === "import-rubric" ? (
+        <Modal title={lf("Import Rubric")} actions={actions} onClose={() => hideModal("import-rubric")}>
+            <div className={css["import-rubric"]}>
                 {/* TODO thsparks : split into separate components, like WarningLabel (with a ! icon, maybe?) */}
                 <label className="warning-label">{lf("Warning! Your current rubric will be overwritten by the imported rubric.")}</label>
                 <label id="selectRubricToImport">{lf("Select a rubric file to import.")}</label>

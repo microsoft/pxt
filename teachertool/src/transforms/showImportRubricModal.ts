@@ -1,7 +1,7 @@
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 
-export function showFilePickerModal() {
+export function showImportRubricModal() {
     const { dispatch } = stateAndDispatch();
-    dispatch(Actions.showModal("file-picker"));
+    dispatch(Actions.showModal("import-rubric"));
 }

@@ -5,7 +5,7 @@ import { Button } from "react-common/components/controls/Button";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 import { writeRubricToFile } from "../services/fileSystemService";
 import { AppStateContext } from "../state/appStateContext";
-import { showFilePickerModal } from "../transforms/showFilePickerModal";
+import { showImportRubricModal } from "../transforms/showImportRubricModal";
 
 interface IProps {}
 
@@ -42,7 +42,7 @@ export const DebugInput: React.FC<IProps> = ({}) => {
             <Button
                 id="importButton"
                 className="btn-primary"
-                onClick={showFilePickerModal}
+                onClick={showImportRubricModal}
                 title={"Import"}
                 label={lf("Import")}
             />

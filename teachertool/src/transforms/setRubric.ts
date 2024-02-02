@@ -4,8 +4,6 @@ import * as Actions from "../state/actions";
 import { validateCriteriaInstance } from "../state/helpers";
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
-import { postNotification } from "./postNotification";
-import { makeNotification } from "../utils";
 
 export function setRubric(rubric: Rubric, validateRubric: boolean, continueOnCriteriaFailure: boolean): boolean {
     const { dispatch } = stateAndDispatch();
