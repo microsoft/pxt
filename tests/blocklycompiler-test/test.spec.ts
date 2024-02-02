@@ -2,8 +2,8 @@
 /// <reference path="..\..\built\pxtcompiler.d.ts" />
 
 import * as Blockly from "blockly";
-import * as pxtblockly from "../../newblocks";
-import { DuplicateOnDragConnectionChecker } from "../../newblocks/plugins/duplicateOnDrag";
+import * as pxtblockly from "../../pxtblocks";
+import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
 
 import "./commentparsing.spec";
 import "./fieldUserEnum.spec";
