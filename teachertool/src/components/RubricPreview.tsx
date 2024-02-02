@@ -14,9 +14,9 @@ export const RubricPreview: React.FC<IRubricPreviewProps> = ({ rubric }) => {
             {rubric.criteria.map((c, i) => {
                 const template = getCatalogCriteriaWithId(c.catalogCriteriaId)?.template;
                 return template ? (
-                    <li key={i} className={css["rubric-criteria"]}>
+                    <div key={i} className={css["rubric-criteria"]}>
                         {template}
-                    </li>
+                    </div>
                 ) : null;
             })}
         </div>

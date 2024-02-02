@@ -18,5 +18,10 @@
     .rubric-criteria {
         width: 100%;
         padding: 0.2rem 0.5rem;
+        border-bottom: 1px solid rgba(black, 0.5);
+
+        &:last-child {
+            border-bottom: none;
+        }
     }
 }
