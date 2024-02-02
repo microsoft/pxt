@@ -8,8 +8,8 @@ namespace pxt.blocks {
         uncommentedBlocks: Blockly.Block[],
         passed: boolean
     } {
-    const allSpecifcBlocks = usedBlocks.filter((block) => block.type === blockType);
-    const uncommentedBlocks = allSpecifcBlocks.filter((block) => !block.getCommentText());
-    return { uncommentedBlocks, passed: uncommentedBlocks.length === 0 };
+        const allSpecifcBlocks = usedBlocks.filter((block) => block.type === blockType);
+        const uncommentedBlocks = allSpecifcBlocks.filter((block) => !block.getCommentText());
+        return { uncommentedBlocks, passed: uncommentedBlocks.length === 0 };
     }
 }

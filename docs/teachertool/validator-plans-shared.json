@@ -52,6 +52,24 @@
                     "blockType": "function_definition"
                 }
             ]
+        },
+        {
+            ".desc": "A custom function exists and gets called",
+            "name": "custom_function_called",
+            "threshold": 2,
+            "checks": [
+                {
+                    "validator": "blocksInSetExist",
+                    "blocks": ["function_call", "function_call_output"],
+                    "count": 1
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "function_definition": 1
+                    }
+                }
+            ]
         }
     ]
 }
