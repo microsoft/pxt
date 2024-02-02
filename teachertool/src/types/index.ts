@@ -11,3 +11,5 @@ export type NotificationWithId = Notification & {
 export type Notifications = NotificationWithId[];
 
 export type ModalType = "catalog-display" | "import-rubric";
+
+export type TabName = "rubric" | "results";

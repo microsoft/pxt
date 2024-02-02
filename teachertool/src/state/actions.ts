@@ -1,4 +1,4 @@
-import { ModalType, NotificationWithId } from "../types";
+import { ModalType, NotificationWithId, TabName } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
@@ -69,6 +69,11 @@ type SetValidatorPlans = ActionBase & {
     plans: pxt.blocks.ValidatorPlan[] | undefined;
 };
 
+type SetActiveTab = ActionBase & {
+    type: "SET_ACTIVE_TAB";
+    tabName: TabName;
+};
+
 /**
  * Union of all actions
  */
@@ -85,7 +90,8 @@ export type Action =
     | SetRubric
     | ShowModal
     | HideModal
-    | SetValidatorPlans;
+    | SetValidatorPlans
+    | SetActiveTab;
 
 /**
  * Action creators
@@ -149,6 +155,11 @@ const setValidatorPlans = (plans: pxt.blocks.ValidatorPlan[] | undefined): SetVa
     plans,
 });
 
+const setActiveTab = (tabName: TabName): SetActiveTab => ({
+    type: "SET_ACTIVE_TAB",
+    tabName,
+});
+
 export {
     postNotification,
     removeNotification,
@@ -162,4 +173,5 @@ export {
     showModal,
     hideModal,
     setValidatorPlans,
+    setActiveTab,
 };

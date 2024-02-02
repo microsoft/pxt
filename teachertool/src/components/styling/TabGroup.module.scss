@@ -1,0 +1,34 @@
+.tabgroup {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    background-color: var(--pxt-content-background);
+    color: var(--pxt-content-foreground);
+
+    button[class*="common-button"] {
+        transition: background-color 0.1s;
+        color: var(--pxt-content-foreground);
+        background-color: var(--pxt-content-background);
+        border: none;
+        border-right: solid 1px var(--pxt-content-accent);
+        border-radius: 0;
+        margin: 0;
+        padding: 0 0.75rem;
+    
+        &:hover {
+            background-color: var(--pxt-page-background);
+            filter: none;
+        }
+
+        &:focus-visible::after {
+            outline: solid 1px var(--pxt-content-foreground);
+        }
+
+        &[class*="tt-tabgroup-tab-active"] {
+            background-color: var(--pxt-page-background);
+            &:hover {
+                filter: none;
+            }
+        }
+    }
+}

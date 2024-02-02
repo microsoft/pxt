@@ -1,4 +1,4 @@
-import { ModalType, Notifications } from "../types";
+import { ModalType, Notifications, TabName } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
@@ -10,6 +10,7 @@ export type AppState = {
     catalog: CatalogCriteria[] | undefined;
     rubric: Rubric;
     modal: ModalType | undefined;
+    activeTab: TabName;
     validatorPlans: pxt.blocks.ValidatorPlan[] | undefined;
     flags: {
         testCatalog: boolean;
@@ -23,6 +24,7 @@ export const initialAppState: AppState = {
     catalog: undefined,
     rubric: { name: "", criteria: [] },
     modal: undefined,
+    activeTab: "rubric",
     validatorPlans: undefined,
     flags: {
         testCatalog: false,

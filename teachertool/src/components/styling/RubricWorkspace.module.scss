@@ -1,0 +1,17 @@
+.panel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--pxt-page-background);
+    color: var(--pxt-page-foreground);
+
+    div[class*="tt-tabgroup"] {
+        height: 100%;
+    }
+
+    div[class*="tt-tabview"] {
+        flex: 1 1 0%;
+    }
+}

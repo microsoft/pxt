@@ -92,41 +92,6 @@ code {
     cursor: default;
 }
 
-/**********************************************/
-/********* THINGS THAT NEED HOMES *************/
-/**********************************************/
-
-.btn-primary {
-    transition: all 0.1s ease;
-    background-color: var(--pxt-button-primary-background);
-    color: var(--pxt-button-primary-foreground);
-    border-width: 1px;
-    border-style: solid;
-    border-color: var(--pxt-button-primary-accent);
-}
-
-.btn-secondary {
-    transition: all 0.1s ease;
-    background-color: var(--pxt-button-secondary-background);
-    color: var(--pxt-button-secondary-foreground);
-    border-width: 1px;
-    border-style: solid;
-    border-color: var(--pxt-button-secondary-accent);
-}
-
-.btn-inline {
-    transition: all 0.1s ease;
-    background-color: var(--pxt-content-background);
-    color: var(--pxt-content-foreground);
-    border-width: 1px;
-    border-style: solid;
-    border-color: var(--pxt-content-foreground);
-    &:hover {
-        filter: none;
-        background-color: var(--pxt-headerbar-background-glass);
-    }
-}
-
 /*******************************/
 /******* CATALOG STYLING  ******/
 /*******************************/
@@ -272,43 +237,7 @@ code {
 }
 
 /*******************************/
-/***** SMALL DESKTOP VIEW  *****/
+/******  STYLE OVERRIDES  ******/
 /*******************************/
 
-@media only screen and (max-height: 44rem) and (min-width: 767px) {
-    :root {
-        --header-height: 3rem;
-        --header-padding-top: 0.5rem;
-    }
-
-    .header-button.with-label {
-        flex-grow: 1;
-    }
-
-    .user-menu .header-button.sign-in {
-        padding: 0.2rem 0.8rem;
-        margin-top: 0.4rem;
-    }
-}
-
-/*******************************/
-/*****     MOBILE VIEW     *****/
-/*******************************/
-
-@media only screen and (max-width: 767px) {
-    .header-org-logo .header-org-logo-large {
-        display: none;
-    }
-
-    .header-org-logo .header-org-logo-small {
-        display: block;
-    }
-
-    .user-menu .header-button.sign-in {
-        padding-left: 0.6rem;
-    }
-
-    .user-menu .header-button.sign-in .header-button-label {
-        display: none;
-    }
-}
+@import "./style.overrides/Button.scss";
