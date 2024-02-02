@@ -5,6 +5,7 @@ import { hideModal } from "../transforms/hideModal";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/ImportRubricModal.module.scss";
 import { importRubricFromFile } from "../transforms/importRubricFromFile";
+import { NoticeLabel } from "./NoticeLabel";
 
 export interface IProps {}
 
@@ -44,8 +45,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
     return teacherTool.modal === "import-rubric" ? (
         <Modal title={lf("Import Rubric")} actions={actions} onClose={() => hideModal("import-rubric")}>
             <div className={css["import-rubric"]}>
-                {/* TODO thsparks : split into separate components, like WarningLabel (with a ! icon, maybe?) */}
-                <label className="warning-label">{lf("Warning! Your current rubric will be overwritten by the imported rubric.")}</label>
+                <NoticeLabel severity="warning">{lf("Warning! Your current rubric will be overwritten by the imported rubric.")}</NoticeLabel>
                 <label id="selectRubricToImport">{lf("Select a rubric file to import.")}</label>
                 <input
                     type="file"
@@ -54,7 +54,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
                     aria-labelledby="selectRubricToImport"
                     onChange={handleFileChange}
                 />
-                {/* Rubric Preview */}
+                {/* Rubric Preview - perhaps a component that takes in a Rubric prop? */}
             </div>
         </Modal>
     ) : null;
