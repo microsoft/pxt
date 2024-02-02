@@ -5,7 +5,7 @@ import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
-import { showCatalogModal } from "../transforms/showCatalogModal";
+import { showModal } from "../transforms/showModal";
 import { setRubricName } from "../transforms/setRubricName";
 import { DebouncedInput } from "./DebouncedInput";
 
@@ -45,7 +45,7 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
             <Button
                 className="btn-inline"
                 label={lf("+ Add Criteria")}
-                onClick={showCatalogModal}
+                onClick={() => showModal("catalog-display")}
                 title={lf("Add Criteria")}
             />
         </div>

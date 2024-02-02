@@ -5,7 +5,7 @@ import { Button } from "react-common/components/controls/Button";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 import { writeRubricToFile } from "../services/fileSystemService";
 import { AppStateContext } from "../state/appStateContext";
-import { showImportRubricModal } from "../transforms/showImportRubricModal";
+import { showModal } from "../transforms/showModal";
 
 interface IProps {}
 
@@ -42,7 +42,7 @@ export const DebugInput: React.FC<IProps> = ({}) => {
             <Button
                 id="importButton"
                 className="btn-primary"
-                onClick={showImportRubricModal}
+                onClick={() => showModal("import-rubric")}
                 title={"Import"}
                 label={lf("Import")}
             />
