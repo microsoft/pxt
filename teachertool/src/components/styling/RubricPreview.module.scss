@@ -3,7 +3,7 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    border: 2px solid black;
+    border: 2px solid var(--pxt-content-foreground);
     border-radius: 0.3rem;
     background-color: var(--pxt-content-background-glass);
 
@@ -11,14 +11,14 @@
         width: 100%;
         font-weight: bold;
         margin-bottom: 0.1rem;
-        border-bottom: 1px solid black;
+        border-bottom: 1px solid var(--pxt-content-foreground);
         padding: 0.2rem 0.5rem;
     }
 
     .rubric-criteria {
         width: 100%;
         padding: 0.2rem 0.5rem;
-        border-bottom: 1px solid rgba(black, 0.5);
+        border-bottom: 1px solid var(--pxt-content-accent);
 
         &:last-child {
             border-bottom: none;
