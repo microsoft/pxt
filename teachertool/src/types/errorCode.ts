@@ -10,8 +10,7 @@ export enum ErrorCode {
     unableToGetIndexedDbRecord = "unableToGetIndexedDbRecord",
     unableToSetIndexedDbRecord = "unableToSetIndexedDbRecord",
     unableToDeleteIndexedDbRecord = "unableToDeleteIndexedDbRecord",
-    loadUnrecognizedCatalogId = "loadUnrecognizedCatalogId",
-    loadUnrecognizedParameter = "loadUnrecognizedParameter",
-    unableToSaveRubric = "unableToSaveRubric",
-    unableToLoadRubric = "unableToLoadRubric",
+    unableToLoadCriteriaInstance = "unableToLoadCriteriaInstance",
+    unableToExportRubric = "unableToExportRubric",
+    unableToReadRubricFile = "unableToReadRubricFile",
 }

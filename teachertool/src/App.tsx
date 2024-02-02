@@ -16,6 +16,7 @@ import { postNotification } from "./transforms/postNotification";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubricAsync";
+import { FilePickerModal } from "./components/FilePickerModal";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -58,6 +59,7 @@ export const App = () => {
             <HeaderBar />
             <MainPanel />
             <CatalogModal />
+            <FilePickerModal />
             <Notifications />
         </>
     );

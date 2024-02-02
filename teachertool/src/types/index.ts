@@ -10,4 +10,4 @@ export type NotificationWithId = Notification & {
 
 export type Notifications = NotificationWithId[];
 
-export type ModalType = "catalog-display";
+export type ModalType = "catalog-display" | "file-picker";
