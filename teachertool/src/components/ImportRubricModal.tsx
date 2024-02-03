@@ -81,7 +81,11 @@ export const ImportRubricModal: React.FC<IProps> = () => {
                     {lf("Warning! Your current rubric will be overwritten by the imported rubric.")}
                 </NoticeLabel>
                 {errorMessage && <NoticeLabel severity="error">{errorMessage}</NoticeLabel>}
-                {selectedRubric && <RubricPreview rubric={selectedRubric} />}
+                {selectedRubric && (
+                    <div className={css["rubric-preview-container"]}>
+                        <RubricPreview rubric={selectedRubric} />
+                    </div>
+                )}
                 <input
                     type="file"
                     tabIndex={0}
