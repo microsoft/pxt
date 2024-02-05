@@ -29,7 +29,7 @@ export const NoticeLabel: React.FC<INoticeLabelProps> = props => {
     return (
         <div className={css["notice-label-background"]}>
             <div className={classList(css["notice-label-container"], css[`${props.severity}-notice-label-container`])}>
-                {props.severity !== "info" && <i className={classList(iconClass, css["icon"])} />}
+                {props.severity !== "neutral" && <i className={classList(iconClass, css["icon"])} />}
                 <label className="notice-label">{props.children}</label>
             </div>
         </div>
