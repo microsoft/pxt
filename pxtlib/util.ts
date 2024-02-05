@@ -1236,7 +1236,7 @@ namespace ts.pxtc.Util {
         "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
         "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
         "sq": { englishName: "Albanian", localizedName: "shqip" },
-        "sr": { englishName: "Serbian (Latin)", localizedName: "Srpski" },
+        "sr": { englishName: "Serbian (Cyrillic)", localizedName: "Srpski" },
         "su": { englishName: "Sundanese", localizedName: "ᮘᮞ ᮞᮥᮔ᮪ᮓ" },
         "sv-SE": { englishName: "Swedish", localizedName: "Svenska" },
         "sw": { englishName: "Swahili", localizedName: "Kiswahili" },
