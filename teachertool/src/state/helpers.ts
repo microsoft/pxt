@@ -23,7 +23,11 @@ export function verifyCriteriaInstanceIntegrity(instance: CriteriaInstance) {
     }
 }
 
-export function verifyRubricIntegrity(rubric: Rubric): { valid: boolean; validCriteria: CriteriaInstance[], invalidCriteria: CriteriaInstance[] } {
+export function verifyRubricIntegrity(rubric: Rubric): {
+    valid: boolean;
+    validCriteria: CriteriaInstance[];
+    invalidCriteria: CriteriaInstance[];
+} {
     const validCriteria: CriteriaInstance[] = [];
     const invalidCriteria: CriteriaInstance[] = [];
     for (const criteria of rubric.criteria) {

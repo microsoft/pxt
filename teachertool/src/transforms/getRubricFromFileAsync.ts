@@ -15,7 +15,7 @@ export async function getRubricFromFileAsync(file: File, allowPartial: boolean):
 
         if (!rubricVerificationResult.valid) {
             postNotification(makeNotification(lf("Rubric contains invalid criteria."), 2000));
-            rubric = allowPartial ? {...rubric, criteria: rubricVerificationResult.validCriteria} : undefined;
+            rubric = allowPartial ? { ...rubric, criteria: rubricVerificationResult.validCriteria } : undefined;
         }
     } else {
         postNotification(makeNotification(lf("Unable to read rubric file."), 2000));

@@ -25,17 +25,25 @@ export const ActionsMenu: React.FC<IProps> = () => {
             title: lf("Import Rubric"),
             label: lf("Import Rubric"),
             ariaLabel: lf("Import Rubric"),
-            onClick: handleImportRubricClicked
+            onClick: handleImportRubricClicked,
         },
         {
             id: "export-rubric",
             title: lf("Export Rubric"),
             label: lf("Export Rubric"),
             ariaLabel: lf("Export Rubric"),
-            onClick: handleExportRubricClicked
-        }
-    ]
+            onClick: handleExportRubricClicked,
+        },
+    ];
 
-    const dropdownLabel = <i className={"fas fa-ellipsis-v"} />
-    return <MenuDropdown id="actions-menu" className={css["actions-menu"]} items={menuItems} title={"Actions"} label={dropdownLabel} />
+    const dropdownLabel = <i className={"fas fa-ellipsis-v"} />;
+    return (
+        <MenuDropdown
+            id="actions-menu"
+            className={css["actions-menu"]}
+            items={menuItems}
+            title={"Actions"}
+            label={dropdownLabel}
+        />
+    );
 };

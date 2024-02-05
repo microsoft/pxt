@@ -1,13 +1,13 @@
-import { logError } from '../services/loggingService';
-import { ErrorCode } from '../types/errorCode';
-import { Rubric } from '../types/rubric';
+import { logError } from "../services/loggingService";
+import { ErrorCode } from "../types/errorCode";
+import { Rubric } from "../types/rubric";
 
 export function sanitizeFileName(fileName: string): string {
     // Remove invalid characters
-    let sanitized = fileName.replace(/[<>:"/\\|?*]+/g, '');
+    let sanitized = fileName.replace(/[<>:"/\\|?*]+/g, "");
 
     // Replace spaces with underscores
-    sanitized = sanitized.replace(/ /g, '_');
+    sanitized = sanitized.replace(/ /g, "_");
 
     return sanitized;
 }
@@ -19,7 +19,7 @@ export function writeRubricToFile(rubric: Rubric): boolean {
         return false;
     }
 
-    const fileName = sanitizeFileName(rubric.name) + '.json';
+    const fileName = sanitizeFileName(rubric.name) + ".json";
 
     // Write content to the given path on disk.
     const rubricJson = JSON.stringify(rubric, null, 4);

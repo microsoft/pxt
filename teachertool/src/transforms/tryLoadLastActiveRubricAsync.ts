@@ -17,7 +17,7 @@ export async function tryLoadLastActiveRubricAsync() {
             postNotification(makeNotification(lf("Some criteria could not be loaded."), 2000));
         }
 
-        setRubric({...lastActiveRubric, criteria: rubricVerificationResult.validCriteria});
+        setRubric({ ...lastActiveRubric, criteria: rubricVerificationResult.validCriteria });
     } else {
         logDebug(`No last active rubric to load.`);
     }
