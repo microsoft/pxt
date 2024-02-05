@@ -3,7 +3,7 @@ import { AppStateContext } from "../state/appStateContext";
 
 interface IProps {}
 
-const Notifications: React.FC<IProps> = ({}) => {
+export const Notifications: React.FC<IProps> = ({}) => {
     const { state: teacherTool, dispatch } = useContext(AppStateContext);
 
     return (
@@ -16,5 +16,3 @@ const Notifications: React.FC<IProps> = ({}) => {
         </div>
     );
 };
-
-export default Notifications;

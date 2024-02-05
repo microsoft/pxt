@@ -1,0 +1,75 @@
+{
+    "validatorPlans": [
+        {
+            ".desc": "Two different kinds of loops used",
+            "name": "two_different_loops",
+            "threshold": 2,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "controls_repeat_ext": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "device_while": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "pxt_controls_for": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "pxt_controls_for_of": 1
+                    }
+                }
+            ]
+        },
+        {
+            ".desc": "A block comment exists in a project",
+            "name": "block_comment_used",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blockCommentsExist",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            ".desc": "All function definitions have block comments",
+            "name": "functions_have_comments",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "specificBlockCommentsExist",
+                    "blockType": "function_definition"
+                }
+            ]
+        },
+        {
+            ".desc": "A custom function exists and gets called",
+            "name": "custom_function_called",
+            "threshold": 2,
+            "checks": [
+                {
+                    "validator": "blocksInSetExist",
+                    "blocks": ["function_call", "function_call_output"],
+                    "count": 1
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "function_definition": 1
+                    }
+                }
+            ]
+        }
+    ]
+}

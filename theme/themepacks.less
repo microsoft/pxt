@@ -1,0 +1,41 @@
+/**************************************************************************
+    CSS theme variables
+    These are overridden by targets and used in: react-common, CRA webapps.
+    To add new theme variable:
+        1. Add variable to :root and .high-contrast below
+        2. Set the variable value in each target's theme/themepacks.less
+***************************************************************************/
+
+// TODO: Define the complete set of theme variables we want to support
+:root {
+    // Default to a resonable scheme that doesn't closely match any existing target's colors
+    /// Page
+    --pxt-page-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --pxt-page-background: white;
+    --pxt-page-foreground: black;
+    /// Header bar
+    --pxt-headerbar-background: #475569;
+    --pxt-headerbar-background-glass: #47556940;
+    --pxt-headerbar-foreground: white;
+    --pxt-headerbar-accent: #475569;
+    --pxt-headerbar-accent-smoke: #334155;
+    /// Content area
+    --pxt-content-background: #C7D2FE;
+    --pxt-content-background-glass: #C7D2FE40;
+    --pxt-content-foreground: #1E293B;
+    --pxt-content-accent: #EEF2FF;
+    /// Primary button
+    --pxt-button-primary-background: #065F46;
+    --pxt-button-primary-background-glass: #065F4640;
+    --pxt-button-primary-foreground: white;
+    --pxt-button-primary-accent: #065F46;
+    /// Secondary button
+    --pxt-button-secondary-background: #CBD5E1;
+    --pxt-button-secondary-background-glass: #CBD5E140;
+    --pxt-button-secondary-foreground: #1E293B;
+    --pxt-button-secondary-accent: #334155;
+}
+
+.theme-highcontrast {
+    // TODO: Fill this in
+}

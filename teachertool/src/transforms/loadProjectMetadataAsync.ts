@@ -1,6 +1,6 @@
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
-import { getProjectMetaAsync } from "../services/BackendRequests";
+import { getProjectMetaAsync } from "../services/backendRequests";
 import { logDebug } from "../services/loggingService";
 import { postNotification } from "./postNotification";
 import { makeNotification } from "../utils";
@@ -22,6 +22,7 @@ export async function loadProjectMetadataAsync(shareLink: string) {
         return;
     }
 
+    dispatch(Actions.clearAllEvalResults());
     dispatch(Actions.setProjectMetadata(projMeta));
     logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);
 }

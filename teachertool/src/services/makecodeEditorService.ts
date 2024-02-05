@@ -1,3 +1,4 @@
+import { ErrorCode } from "../types/errorCode";
 import { logDebug, logError } from "./loggingService";
 
 interface PendingMessage {
@@ -9,7 +10,7 @@ let makecodeEditorRef: HTMLIFrameElement | undefined;
 let readyForMessages: boolean;
 const messageQueue: pxt.editor.EditorMessageRequest[] = [];
 let nextId: number = 0;
-let pendingMessages: {[index: string]: PendingMessage} = {};
+let pendingMessages: { [index: string]: PendingMessage } = {};
 
 function onMessageReceived(event: MessageEvent) {
     logDebug(`Message received from iframe: ${JSON.stringify(event.data)}`);
@@ -34,14 +35,14 @@ function sendMessageAsync(message?: any) {
         const sendMessageCore = (message: any) => {
             logDebug(`Sending message to iframe: ${JSON.stringify(message)}`);
             makecodeEditorRef!.contentWindow!.postMessage(message, "*");
-        }
+        };
 
         if (message) {
             message.response = true;
             message.id = nextId++ + "";
             pendingMessages[message.id] = {
                 original: message,
-                handler: resolve
+                handler: resolve,
             };
             messageQueue.push(message);
         }
@@ -64,8 +65,11 @@ function validateResponse(result: pxt.editor.EditorMessageResponse, expectRespon
     }
 }
 
-export function setEditorRef(ref: HTMLIFrameElement | undefined) {
+export function clearReady() {
     readyForMessages = false;
+}
+
+export function setEditorRef(ref: HTMLIFrameElement | undefined) {
     makecodeEditorRef = ref ?? undefined;
     window.removeEventListener("message", onMessageReceived);
     if (ref) {
@@ -78,25 +82,27 @@ export async function setHighContrastAsync(on: boolean) {
     const result = await sendMessageAsync({
         type: "pxteditor",
         action: "sethighcontrast",
-        on: on
+        on: on,
     });
     console.log(result);
 }
 
-export async function runEvalInEditorAsync(serializedRubric: string): Promise<pxt.blocks.EvaluationResult | undefined> {
+export async function runValidatorPlanAsync(
+    validatorPlan: pxt.blocks.ValidatorPlan
+): Promise<pxt.blocks.EvaluationResult | undefined> {
     let evalResults = undefined;
 
     try {
         const response = await sendMessageAsync({
             type: "pxteditor",
             action: "runeval",
-            rubric: serializedRubric } as pxt.editor.EditorMessageRunEvalRequest
-        );
+            validatorPlan: validatorPlan,
+        } as pxt.editor.EditorMessageRunEvalRequest);
         const result = response as pxt.editor.EditorMessageResponse;
         validateResponse(result, true); // Throws on failure
         evalResults = result.resp as pxt.blocks.EvaluationResult;
     } catch (e: any) {
-        logError("runeval_error", e);
+        logError(ErrorCode.runEval, e);
     }
 
     return evalResults;

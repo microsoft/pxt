@@ -1,0 +1,243 @@
+/*******************************/
+/*****  GLOBAL VARIABLES  ******/
+/*******************************/
+
+:root {
+    --frame-loader-zindex: 30;
+    --above-frame-zindex: 50;
+    --modal-dimmer-zindex: 100;
+    --fullscreen-modal-zindex: 90;
+}
+
+/*******************************/
+/*********  RESETS  ************/
+/*******************************/
+
+* {
+    // undo semantic.css defaults
+    min-height: initial;
+    min-width: initial;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+* {
+    margin: 0;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    overflow-wrap: break-word;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--pxt-page-font);
+    background: var(--pxt-page-background);
+    color: var(--pxt-page-foreground);
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    // undo semantic.css defaults
+    display: initial;
+    font-size: initial;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/*******************************/
+/*********  GLOBALS  ***********/
+/*******************************/
+
+#root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.noclick {
+    pointer-events: none;
+    cursor: default;
+}
+
+/*******************************/
+/******* CATALOG STYLING  ******/
+/*******************************/
+
+.catalog-modal .common-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.catalog-done {
+    align-self: flex-end;
+}
+
+.catalog-item {
+    padding: 0.5rem;
+}
+
+/*******************************/
+/******* RUBRIC STYLING  *******/
+/*******************************/
+
+.rubric-display {
+    border-radius: 0;
+    margin: 1rem 1rem;
+}
+
+.rubric-display h3 {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.criteria-instance-display {
+    background-color: var(--white);
+    border: 1px solid #ddd;
+    border-radius: 0;
+    padding: 0.1rem 0.5rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.criteria-btn-remove {
+    background-color: #f55c51;
+    color: var(--white);
+    border: none;
+    display: inline-block;
+    margin: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0;
+    transition: background-color 0.2s ease;
+}
+
+.criteria-btn-remove:hover {
+    background-color: #da4949;
+}
+
+/*******************************/
+/****  NOTIFICATION STYLING  ***/
+/*******************************/
+
+.notification-container {
+    position: fixed;
+    display: flex;
+    align-items: baseline;
+    justify-content: right;
+    top: 85%;
+    left: 0;
+    right: 2%;
+    bottom: 0;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.notification-contents {
+    border-radius: 0.285rem;
+    overflow: hidden;
+    position: fixed;
+    padding: 0 1rem;
+    margin-right: 1rem;
+    pointer-events: none;
+    border: 4px solid var(--pxt-button-primary-accent);
+    background-color: var(--pxt-button-primary-foreground);
+}
+
+/*******************************/
+/***** DEBUG INPUT STYLING  *****/
+/*******************************/
+
+.debug-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 1rem;
+}
+
+.single-share-link-input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.link-input {
+    width: 100%;
+}
+
+/*******************************/
+/**** EVAL RESULTS STYLING  ****/
+/*******************************/
+
+.eval-results-container {
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    margin: 1rem 0;
+    padding: 1rem;
+    overflow: auto;
+}
+
+.result-block-id {
+    display: flex;
+    padding-left: 0.5rem;
+    margin: 0.2rem 0;
+}
+
+.result-block-id p {
+    margin: 0;
+}
+
+.block-id-label {
+    font-weight: 700;
+    padding-right: 0.5rem;
+}
+
+.positive-text {
+    color: green;
+}
+
+.negative-text {
+    color: red;
+}
+
+/*******************************/
+/******  STYLE OVERRIDES  ******/
+/*******************************/
+
+@import "./style.overrides/Button.scss";

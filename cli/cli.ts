@@ -2707,8 +2707,12 @@ async function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: bo
             skipFirstCssBuild = false;
         } else {
             console.log("rebuilding css");
-            await buildSemanticUIAsync();
-            console.log("css build complete");
+            try {
+                await buildSemanticUIAsync();
+                console.log("css build complete");
+            } catch (e) {
+                console.error("css build failed", e);
+            }
         }
         return lessFiles;
     };

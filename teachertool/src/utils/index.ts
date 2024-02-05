@@ -1,10 +1,8 @@
 import { nanoid } from "nanoid";
 import { NotificationWithId } from "../types";
+import { classList } from "react-common/components/util";
 
-export function makeNotification(
-    message: string,
-    duration: number
-): NotificationWithId {
+export function makeNotification(message: string, duration: number): NotificationWithId {
     return {
         id: nanoid(),
         message,
@@ -24,4 +22,8 @@ export const getEditorUrl = (embedUrl: string) => {
     // example: https://arcade.makecode.com/abc123 and this would get returned
     const path = /\/([\da-zA-Z\.]+)(?:--)?/i.exec(window.location.pathname);
     return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
+};
+
+export function classes(css: { [name: string]: string }, ...names: string[]) {
+    return classList(...names.map(n => css[n]));
 }

@@ -1,15 +1,27 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
-import { useContext } from "react";
-import { setEditorRef } from "../services/makecodeEditorService";
+
+// eslint-disable-next-line import/no-internal-modules
+import css from "./styling/MakeCodeFrame.module.scss";
+
+import { useContext, useEffect } from "react";
+import { clearReady, setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
 
-interface MakeCodeFrameProps {}
-export const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
-    const { state: teacherTool } = useContext(AppStateContext)
+interface IProps {}
+
+export const MakeCodeFrame: React.FC<IProps> = () => {
+    const { state: teacherTool } = useContext(AppStateContext);
+
+    // Clear iframe state when the iframe url is changed
+    useEffect(() => {
+        clearReady();
+    }, [teacherTool.projectMetadata?.id]);
 
     function createIFrameUrl(shareId: string): string {
-        const editorUrl: string = pxt.BrowserUtils.isLocalHost() ? "http://localhost:3232/index.html" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
+        const editorUrl: string = pxt.BrowserUtils.isLocalHost()
+            ? "http://localhost:3232/index.html"
+            : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl);
 
         let url = editorUrl;
         if (editorUrl.charAt(editorUrl.length - 1) === "/" && !pxt.BrowserUtils.isLocalHost()) {
@@ -21,19 +33,16 @@ export const MakeCodeFrame: React.FC<MakeCodeFrameProps> = () => {
 
     const handleIFrameRef = (el: HTMLIFrameElement | null) => {
         setEditorRef(el ?? undefined);
-    }
+    };
 
     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-    return (
-        <div className="makecode-frame-outer" style={{ display: "block" }}>
-            {teacherTool.projectMetadata && (
-                <iframe
-                    className="makecode-frame"
-                    src={createIFrameUrl(teacherTool.projectMetadata.id)}
-                    title={"title"}
-                    ref={handleIFrameRef} />
-            )}
-        </div>
-    );
+    return teacherTool.projectMetadata ? (
+        <iframe
+            className={css["makecode-frame"]}
+            src={createIFrameUrl(teacherTool.projectMetadata.id)}
+            title={"title"}
+            ref={handleIFrameRef}
+        />
+    ) : null;
     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
-}
+};

@@ -294,7 +294,7 @@ namespace pxt.editor {
 
     export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
         action: "runeval";
-        rubric: string;
+        validatorPlan: pxt.blocks.ValidatorPlan;
     }
 
     export interface EditorMessageRenderBlocksResponse {
@@ -546,17 +546,17 @@ namespace pxt.editor {
                                             })
                                         });
                                 }
-                                // case "runeval": {
-                                //     const evalmsg = data as EditorMessageRunEvalRequest;
-                                //     const rubric = evalmsg.rubric;
-                                //     return Promise.resolve()
-                                //         .then(() => {
-                                //             const blocks = projectView.getBlocks();
-                                //             return pxt.blocks.validateProject(blocks, rubric)})
-                                //         .then (results => {
-                                //             resp = results;
-                                //         });
-                                // }
+                                case "runeval": {
+                                    const evalmsg = data as EditorMessageRunEvalRequest;
+                                    const plan = evalmsg.validatorPlan;
+                                    return Promise.resolve()
+                                        .then(() => {
+                                            const blocks = projectView.getBlocks();
+                                            return pxt.blocks.runValidatorPlanAsync(blocks, plan)})
+                                        .then (results => {
+                                            resp = { result: results };
+                                        });
+                                }
                                 case "renderpython": {
                                     const rendermsg = data as EditorMessageRenderPythonRequest;
                                     return Promise.resolve()

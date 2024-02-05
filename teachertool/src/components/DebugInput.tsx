@@ -7,38 +7,20 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 
 interface IProps {}
 
-const DebugInput: React.FC<IProps> = ({}) => {
-    const [shareLink, setShareLink] = useState("https://arcade.makecode.com/S70821-26848-68192-30094");
-    const [rubric, setRubric] = useState("");
-
+export const DebugInput: React.FC<IProps> = ({}) => {
     const evaluate = async () => {
-        await loadProjectMetadataAsync(shareLink);
-        await runEvaluateAsync(rubric);
-    }
+        await runEvaluateAsync();
+    };
 
     return (
         <div className="debug-container">
-            <div className="single-share-link-input-container">
-                {lf("Share Link:")}
-                <Input
-                    id="shareLinkInput"
-                    className="link-input"
-                    placeholder={lf("Share link to validate")}
-                    initialValue={shareLink}
-                    onChange={setShareLink} />
-            </div>
-            <div className="rubric-json-input-container">
-                {lf("Rubric:")}
-                <Textarea
-                    id="rubricJsonInput"
-                    className="json-input"
-                    rows={20}
-                    onChange={setRubric} />
-            </div>
-            <Button id="evaluateSingleProjectButton" className="primary" onClick={evaluate} title={"Evaluate"} label={lf("Evaluate")} />
+            <Button
+                id="evaluateSingleProjectButton"
+                className="primary"
+                onClick={evaluate}
+                title={"Evaluate"}
+                label={lf("Evaluate")}
+            />
         </div>
-    )
-
+    );
 };
-
-export default DebugInput;

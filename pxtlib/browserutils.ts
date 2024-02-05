@@ -1421,4 +1421,24 @@ namespace pxt.BrowserUtils {
             return false;
         }
     }
+
+    /**
+     * Sets the theme of the application by adding a class to the body. Themes
+     * are defined in CSS variable packs. The default theme is defined in
+     * `themes/themepacks.less`, in the `:root` pseudoclass. `highcontrast` is
+     * also defined there. Target-specific themes are defined in the target
+     * repo's `theme/themepack.less`.
+     */
+    export function setApplicationTheme(theme: string | undefined) {
+        const body = document.body;
+        const classes = body.classList;
+        for (let i = 0; i < classes.length; i++) {
+            if (/^theme-/.test(classes[i])) {
+                body.classList.remove(classes[i]);
+            }
+        }
+        if (theme) {
+            body.classList.add(`theme-${theme}`);
+        }
+    }
 }
