@@ -41,3 +41,19 @@ export function verifyRubricIntegrity(rubric: Rubric): {
     }
     return { valid: invalidCriteria.length === 0, validCriteria, invalidCriteria };
 }
+
+export function getSelectableCatalogCriteria(): CatalogCriteria[] {
+    const { state } = stateAndDispatch();
+
+    const usedCriteria = state.rubric.criteria.map(c => c.catalogCriteriaId) ?? [];
+
+    // Return a criteria as selectable if it has parameters (so it can be used multiple times in a rubric)
+    // or if it has not yet been used in the active rubric.
+    return (
+        state.catalog?.filter(
+            catalogCriteria =>
+                (catalogCriteria.parameters && catalogCriteria.parameters.length > 0) ||
+                !usedCriteria.includes(catalogCriteria.id)
+        ) ?? []
+    );
+}

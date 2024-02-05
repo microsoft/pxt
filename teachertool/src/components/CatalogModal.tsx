@@ -7,6 +7,7 @@ import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
+import { getSelectableCatalogCriteria } from "../state/helpers";
 
 interface IProps {}
 
@@ -53,6 +54,8 @@ export const CatalogModal: React.FC<IProps> = ({}) => {
         },
     ];
 
+    const selectableCatalogCriteria = getSelectableCatalogCriteria();
+
     return teacherTool.modal === "catalog-display" ? (
         <Modal
             className="catalog-modal"
@@ -60,7 +63,7 @@ export const CatalogModal: React.FC<IProps> = ({}) => {
             onClose={closeModal}
             actions={modalActions}
         >
-            {teacherTool.catalog?.map(criteria => {
+            {selectableCatalogCriteria.map(criteria => {
                 return (
                     criteria?.template && (
                         <Checkbox
