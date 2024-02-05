@@ -9,7 +9,7 @@ export interface IRubricPreviewProps {
 
 export const RubricPreview: React.FC<IRubricPreviewProps> = ({ rubric }) => {
     return (
-        <div className={css["rubric-preview-container"]}>
+        <div className={css["container"]}>
             <div className={css["rubric-header"]}>{rubric.name}</div>
             {rubric.criteria.map((c, i) => {
                 const template = getCatalogCriteriaWithId(c.catalogCriteriaId)?.template;
