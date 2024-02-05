@@ -185,6 +185,11 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export function sanitizeFileName(name: string): string {
+        /* eslint-disable no-control-regex */
+        return name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '').trim().replace(/\s+/g, '-');
+    }
+
     export function repeatMap<T>(n: number, fn: (index: number) => T): T[] {
         n = n || 0;
         let r: T[] = [];

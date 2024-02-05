@@ -787,8 +787,7 @@ export function mainEditorPkg() {
 
 export function genFileName(extension: string): string {
     /* eslint-disable no-control-regex */
-    let sanitizedName = mainEditorPkg().header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '');
-    sanitizedName = sanitizedName.trim().replace(/\s+/g, '-');
+    let sanitizedName = pxt.Util.sanitizeFileName(mainEditorPkg().header.name);
     /* eslint-enable no-control-regex */
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
         const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
