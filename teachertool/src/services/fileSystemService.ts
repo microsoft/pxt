@@ -5,11 +5,8 @@ import { Rubric } from "../types/rubric";
 // Serializes the active rubric and writes it to a file.
 // Returns true if the file was written successfully, false otherwise.
 export function writeRubricToFile(rubric: Rubric): boolean {
-    if (!rubric.name || rubric.criteria.length === 0) {
-        return false;
-    }
-
-    const fileName = pxt.Util.sanitizeFileName(rubric.name) + ".json";
+    const sanitizedName = rubric.name ? pxt.Util.sanitizeFileName(rubric.name) : "";
+    const fileName = `${sanitizedName ? sanitizedName : lf("unnamed-rubric")}.json`;
 
     // Write content to the given path on disk.
     const rubricJson = JSON.stringify(rubric, null, 4);
