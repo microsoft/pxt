@@ -41,7 +41,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
         setSelectedFile(undefined);
         setErrorMessage(undefined);
         setSelectedRubric(undefined);
-        hideModal("import-rubric");
+        hideModal();
     }
 
     function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
