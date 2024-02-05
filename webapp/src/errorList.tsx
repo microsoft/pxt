@@ -4,6 +4,8 @@ import * as React from "react";
 import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
 
+import * as pxteditor from "../../pxteditor";
+
 type GroupedError = {
     error: pxtc.KsDiagnostic,
     count: number,
@@ -12,7 +14,7 @@ type GroupedError = {
 
 export interface ErrorListProps {
     isInBlocksEditor: boolean;
-    onSizeChange?: (state: pxt.editor.ErrorListState) => void;
+    onSizeChange?: (state: pxteditor.ErrorListState) => void;
     listenToErrorChanges?: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
     listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: pxt.blocks.BlockDiagnostic[]) => void) => void;
     listenToExceptionChanges?: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
@@ -97,8 +99,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 noValueToDisplay ?
                     undefined
                     : isCollapsed ?
-                        pxt.editor.ErrorListState.HeaderOnly
-                        : pxt.editor.ErrorListState.Expanded
+                        pxteditor.ErrorListState.HeaderOnly
+                        : pxteditor.ErrorListState.Expanded
             );
         }
     }

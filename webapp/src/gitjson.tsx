@@ -13,6 +13,7 @@ import * as cloudsync from "./cloudsync";
 import * as tutorial from "./tutorial";
 import * as _package from "./package";
 import { fireClickOnEnter } from "./util"
+import { IProjectView, UserInfo } from "../../pxteditor"
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 
@@ -34,7 +35,7 @@ interface DiffCache {
 }
 
 interface GithubProps {
-    parent: pxt.editor.IProjectView;
+    parent: IProjectView;
 }
 
 interface GithubState {
@@ -751,7 +752,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const githubId = this.parsedRepoId()
         const master = githubId.tag === "master";
         const main = githubId.tag === "main";
-        const user = this.getData("github:user") as pxt.editor.UserInfo;
+        const user = this.getData("github:user") as UserInfo;
 
         // don't use gs.prUrl, as it gets cleared often
         const url = `https://github.com/${githubId.slug}/${master && !githubId.fileName ? "" : pxt.github.join("tree", githubId.tag || "master", githubId.fileName)}`;
@@ -1218,7 +1219,7 @@ interface GitHubViewProps {
     gs: pxt.github.GitJson;
     isBlocks: boolean;
     needsCommit: boolean;
-    user: pxt.editor.UserInfo;
+    user: UserInfo;
     pullStatus: workspace.PullStatus;
     pullRequest: pxt.github.PullRequest;
 }
@@ -1733,7 +1734,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
 export class Editor extends srceditor.Editor {
     private view: GithubComponent;
 
-    constructor(public parent: pxt.editor.IProjectView) {
+    constructor(public parent: IProjectView) {
         super(parent)
         this.handleViewRef = this.handleViewRef.bind(this);
     }

@@ -1,12 +1,13 @@
 import * as db from "./db";
 import * as workspace from "./workspace";
+import * as pxteditor from "../../pxteditor";
 
 let headerDb: db.Table;
 let textDb: db.Table;
 
 type Header = pxt.workspace.Header;
-type ScriptText = pxt.workspace.ScriptText;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type ScriptText = pxteditor.workspace.ScriptText;
+type WorkspaceProvider = pxteditor.workspace.WorkspaceProvider;
 
 type TextDbEntry = {
     files?: ScriptText,
@@ -85,7 +86,7 @@ async function listAsync(): Promise<pxt.workspace.Header[]> {
     return headerDb.getAllAsync() as Promise<Header[]>;
 }
 
-async function getAsync(h: Header): Promise<pxt.workspace.File> {
+async function getAsync(h: Header): Promise<pxteditor.workspace.File> {
     const hdrProm = headerDb.getAsync(h.id)
     const textProm = textDb.getAsync(h.id)
     let [hdrResp, textResp] = await Promise.all([hdrProm, textProm]) as [Header, TextDbEntry]
@@ -121,7 +122,7 @@ function setCoreAsync(headers: db.Table, texts: db.Table, h: Header, prevVer: an
     return headerRes
 }
 
-export async function copyProjectToLegacyEditor(header: Header, script: pxt.workspace.ScriptText, majorVersion: number): Promise<void> {
+export async function copyProjectToLegacyEditor(header: Header, script: pxteditor.workspace.ScriptText, majorVersion: number): Promise<void> {
     const prefix = pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[majorVersion];
 
     const oldHeaders = new db.Table(prefix ? `${prefix}-header` : `header`);

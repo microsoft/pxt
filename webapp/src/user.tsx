@@ -5,8 +5,7 @@ import * as auth from "./auth";
 import * as cloudsync from "./cloudsync";
 import { Profile } from "../../react-common/components/profile/Profile";
 import { CheckboxStatus } from "../../react-common/components/util";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ISettingsProps } from "../../pxteditor";
 
 export type ProfileTab = 'settings' | 'privacy' | 'my-stuff';
 

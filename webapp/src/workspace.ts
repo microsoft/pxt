@@ -1,5 +1,4 @@
 /// <reference path="../../built/pxtlib.d.ts" />
-/// <reference path="../../built/pxteditor.d.ts" />
 
 import * as db from "./db";
 import * as core from "./core";
@@ -15,6 +14,7 @@ import * as auth from "./auth"
 import * as cloud from "./cloud"
 
 import * as dmp from "diff-match-patch";
+import * as pxteditor from "../../pxteditor";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -25,10 +25,10 @@ import Cloud = pxt.Cloud;
 const sha1 = require("crypto-js/sha1");
 
 type Header = pxt.workspace.Header;
-type ScriptText = pxt.workspace.ScriptText;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type ScriptText = pxteditor.workspace.ScriptText;
+type WorkspaceProvider = pxteditor.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
-type File = pxt.workspace.File;
+type File = pxteditor.workspace.File;
 
 let allScripts: File[] = [];
 
@@ -331,7 +331,7 @@ export async function saveSnapshotAsync(id: string): Promise<void> {
     await enqueueHistoryOperationAsync(
         id,
         text => {
-            pxt.workspace.pushSnapshotOnHistory(text, Date.now())
+            pxteditor.history.pushSnapshotOnHistory(text, Date.now())
         }
     );
 }
@@ -340,7 +340,7 @@ export async function updateShareHistoryAsync(id: string): Promise<void> {
     await enqueueHistoryOperationAsync(
         id,
         (text, header) => {
-            pxt.workspace.updateShareHistory(text, Date.now(), header.pubVersions || [])
+            pxteditor.history.updateShareHistory(text, Date.now(), header.pubVersions || [])
         }
     );
 }
@@ -661,7 +661,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                     }
 
                     if (toWrite) {
-                        pxt.workspace.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
+                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
                     }
                 }
             }
@@ -733,8 +733,8 @@ function patchText(patch: unknown, a: string) {
     return differ.patch_apply(patch as any, a)[0]
 }
 
-export function applyDiff(text: ScriptText, history: pxt.workspace.HistoryEntry) {
-    return pxt.workspace.applyDiff(text, history, patchText);
+export function applyDiff(text: ScriptText, history: pxteditor.history.HistoryEntry) {
+    return pxteditor.history.applyDiff(text, history, patchText);
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
@@ -1655,8 +1655,8 @@ export function installByIdAsync(id: string) {
 
 // this promise is set while a sync is in progress
 // cleared when sync is done.
-let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
-export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+let syncAsyncPromise: Promise<pxteditor.EditorSyncState>;
+export function syncAsync(): Promise<pxteditor.EditorSyncState> {
     pxt.debug("workspace: sync")
     if (syncAsyncPromise) return syncAsyncPromise;
     return syncAsyncPromise = impl.listAsync()
@@ -1734,7 +1734,7 @@ export function saveAssetAsync(id: string, filename: string, data: Uint8Array): 
         return Promise.reject(new Error(lf("Assets not supported here.")))
 }
 
-export function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
+export function listAssetsAsync(id: string): Promise<pxteditor.workspace.Asset[]> {
     if (impl.listAssetsAsync)
         return impl.listAssetsAsync(id)
     return Promise.resolve([])
@@ -1744,7 +1744,7 @@ export function isBrowserWorkspace() {
     return impl === indexedDBWorkspace.provider;
 }
 
-export function fireEvent(ev: pxt.editor.events.Event) {
+export function fireEvent(ev: pxteditor.EditorEvent) {
     if (impl.fireEvent)
         return impl.fireEvent(ev)
     // otherwise, NOP

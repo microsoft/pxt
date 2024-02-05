@@ -7,8 +7,7 @@ import * as compiler from "./compiler"
 import { MediaPlayer } from "dashjs"
 import dashjs = require("dashjs");
 import { fireClickOnEnter } from "../../react-common/components/util";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { EditorMessageRenderBlocksRequest, ISettingsProps } from "../../pxteditor";
 
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;
@@ -250,7 +249,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             pxsim.U.clear(langBlock);
             langBlock.appendChild(wrapperDiv);
             wrapperDiv.className = `ui ${unboxSnippets ? "" : "segment raised "} loading`;
-            const req: pxt.editor.EditorMessageRenderBlocksRequest = {
+            const req: EditorMessageRenderBlocksRequest = {
                 type: "pxteditor",
                 action: "renderblocks",
                 ts: code,

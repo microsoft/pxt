@@ -1,8 +1,9 @@
+import * as pxteditor from "../../pxteditor";
 
 type Header = pxt.workspace.Header;
-type Project = pxt.workspace.Project;
-type ScriptText = pxt.workspace.ScriptText;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type Project = pxteditor.workspace.Project;
+type ScriptText = pxteditor.workspace.ScriptText;
+type WorkspaceProvider = pxteditor.workspace.WorkspaceProvider;
 import U = pxt.Util;
 
 export let projects: pxt.Map<Project> = {};
@@ -10,7 +11,7 @@ export let projects: pxt.Map<Project> = {};
 export function merge(prj: Project) {
     let h: Header = prj.header;
     if (!h) {
-        prj.header = h = pxt.workspace.freshHeader(lf("Untitled"), U.nowSeconds())
+        prj.header = h = pxteditor.workspace.freshHeader(lf("Untitled"), U.nowSeconds())
         if (prj.text && prj.text[pxt.MAIN_BLOCKS]) {
             prj.header.editor = pxt.BLOCKS_PROJECT_NAME;
         }
@@ -22,7 +23,7 @@ function listAsync() {
     return Promise.resolve(U.values(projects).map(p => p.header))
 }
 
-function getAsync(h: Header): Promise<pxt.workspace.File> {
+function getAsync(h: Header): Promise<pxteditor.workspace.File> {
     let p = projects[h.id];
     return Promise.resolve({
         header: h,

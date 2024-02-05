@@ -40,7 +40,7 @@ const pxtpy = () => compileTsProject("pxtpy");
 const pxtsim = () => compileTsProject("pxtsim");
 const pxtblocks = () => compileTsProject("pxtblocks");
 const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
-const pxteditor = () => compileTsProject("pxteditor");
+const pxteditor = () => compileTsProject("pxteditor", "built", true);
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
 const backendutils = () => compileTsProject("backendutils")
 const cli = () => compileTsProject("cli", "built", true);
@@ -61,7 +61,6 @@ const pxtapp = () => gulp.src([
     "node_modules/lzma/src/lzma_worker-min.js",
     "node_modules/dompurify/dist/purify.min.js",
     "built/pxtlib.js",
-    "built/pxteditor.js",
     "built/pxtsim.js"
 ])
     .pipe(concat("pxtapp.js"))
@@ -88,7 +87,6 @@ const pxtembed = () => gulp.src([
     "built/pxtcompiler.js",
     "built/pxtpy.js",
     "built/pxtblockly.js",
-    "built/pxteditor.js",
     "built/pxtsim.js",
     "built/web/runnerembed.js"
 ])
@@ -393,7 +391,6 @@ const copyWebapp = () =>
         "built/pxtblocks.js",
         "built/pxtblockly.js",
         "built/pxtsim.js",
-        "built/pxteditor.js",
         "built/webapp/src/worker.js",
         "built/webapp/src/serviceworker.js",
         "built/webapp/src/simulatorserviceworker.js",
@@ -782,7 +779,7 @@ const runKarma = () => {
 }
 const karma = gulp.series(buildKarmaRunner, runKarma);
 
-const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/tests", false, "blocksrunner")
+const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/tests", true)
 
 const testAll = gulp.series(
     testdecompiler,

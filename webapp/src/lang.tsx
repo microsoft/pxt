@@ -5,8 +5,7 @@ import * as data from "./data"
 import * as core from "./core"
 import * as auth from "./auth"
 import { compose } from "redux";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ISettingsProps } from "../../pxteditor";
 
 interface LanguagesState {
     visible?: boolean;

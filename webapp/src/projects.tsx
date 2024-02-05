@@ -12,8 +12,7 @@ import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
 import { fireClickOnEnter } from "./util";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { IProjectView, ISettingsProps, ProjectCreationOptions, UserInfo } from "../../pxteditor";
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {
@@ -289,7 +288,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const targetTheme = pxt.appTarget.appTheme;
         // Targets with identity show github user on the profile screen.
-        const githubUser = !hasIdentity && this.getData("github:user") as pxt.editor.UserInfo;
+        const githubUser = !hasIdentity && this.getData("github:user") as UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
@@ -1176,7 +1175,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
         />
 }
 
-function applyCodeCardAction(projectView: pxt.editor.IProjectView, ticSrc: "projects" | "herobanner", scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
+function applyCodeCardAction(projectView: IProjectView, ticSrc: "projects" | "herobanner", scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
     let editor: string = (action && action.editor) || "blocks";
     if (editor == "js") editor = "ts";
     const url = action ? action.url : scr.url;
@@ -1462,7 +1461,7 @@ export interface NewProjectDialogState {
 }
 
 export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectDialogState> {
-    private createProjectCb: (projectState: pxt.editor.ProjectCreationOptions) => void;
+    private createProjectCb: (projectState: ProjectCreationOptions) => void;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -1502,7 +1501,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
 
     promptUserAsync() {
         this.show();
-        return new Promise<pxt.editor.ProjectCreationOptions>(resolve => {
+        return new Promise<ProjectCreationOptions>(resolve => {
             this.createProjectCb = resolve;
         });
     }

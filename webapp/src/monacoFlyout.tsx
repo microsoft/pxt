@@ -5,6 +5,7 @@ import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as auth from "./auth";
+import { CreateEvent, FilterState, HELP_IMAGE_URI, ISettingsProps, UIEvent } from "../../pxteditor";
 
 const DRAG_THRESHOLD = 5;
 const SELECTED_BORDER_WIDTH = 4;
@@ -17,7 +18,7 @@ interface BlockDragInfo {
     color?: string;
 }
 
-export interface MonacoFlyoutProps extends pxt.editor.ISettingsProps {
+export interface MonacoFlyoutProps extends ISettingsProps {
     fileType?: pxt.editor.FileType;
     blockIdMap?: pxt.Map<string[]>;
     moveFocusToParent?: () => void;
@@ -136,7 +137,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 parent.appendChild(dragBlock);
 
                 // Fire a create event
-                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
+                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as CreateEvent);
                 let inline = "";
                 if (block.retType != "void") {
                     inline = "inline:1&";
@@ -192,7 +193,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 p.then(snip => {
                     this.props.insertSnippet(null, snip, block.retType != "void");
                     // Fire a create event
-                    workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
+                    workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as CreateEvent);
                 });
             }
         }
@@ -201,7 +202,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     protected getHelpButtonClickHandler = (group?: string) => {
         return () => {
             pxt.debug(`${group} help icon clicked.`);
-            workspace.fireEvent({ type: 'ui', editor: 'ts', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
+            workspace.fireEvent({ type: 'ui', editor: 'ts', action: 'groupHelpClicked', data: { group } } as UIEvent);
         }
     }
 
@@ -331,7 +332,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
         const mappedIds = this.props.blockIdMap && this.props.blockIdMap[block.attributes.blockId];
 
-        let fnState = filters ? filters.defaultState : pxt.editor.FilterState.Visible;
+        let fnState = filters ? filters.defaultState : FilterState.Visible;
         if (filters && filters.fns && filters.fns[block.name] !== undefined) {
             fnState = filters.fns[block.name];
         } else if (filters && filters.blocks && block.attributes.blockId &&
@@ -340,10 +341,10 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         } else if (categoryState !== undefined) {
             fnState = categoryState;
         }
-        if (fnState == pxt.editor.FilterState.Hidden) return undefined;
+        if (fnState == FilterState.Hidden) return undefined;
 
         // Get block DOM element
-        const disabled = fnState == pxt.editor.FilterState.Disabled;
+        const disabled = fnState == FilterState.Disabled;
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
 
         const snippet = isPython ? block.pySnippet : block.snippet;
@@ -419,8 +420,8 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                             <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={0} onKeyDown={this.getKeyDownHandler()} role="separator">
                                 {g.icon && <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation">{g.icon}</span>}
                                 <div className="monacoFlyoutLabelText">{pxtc.U.rlf(`{id:group}${g.name}`)}</div>
-                                {g.hasHelp && pxt.editor.HELP_IMAGE_URI && <span>
-                                    <img src={pxt.editor.HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)} alt={lf("Click for help")}>
+                                {g.hasHelp && HELP_IMAGE_URI && <span>
+                                    <img src={HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)} alt={lf("Click for help")}>
                                     </img></span>}
                                 <hr className="monacoFlyoutLabelLine" />
                             </div>)

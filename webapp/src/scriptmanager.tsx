@@ -12,6 +12,7 @@ import { fireClickOnEnter } from "./util";
 import { Modal } from "../../react-common/components/controls/Modal";
 import { ProgressBar } from "./dialogs";
 import { classList } from "../../react-common/components/util";
+import { ISettingsProps } from "../../pxteditor";
 
 declare const zip: any;
 
@@ -23,8 +24,6 @@ export function loadZipAsync(): Promise<boolean> {
             .catch(e => false)
     return loadZipJsPromise;
 }
-
-type ISettingsProps = pxt.editor.ISettingsProps;
 
 export type ScriptSource = 'cloud' | 'local';
 

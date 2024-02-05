@@ -11,8 +11,7 @@ import { fireClickOnEnter } from "./util";
 import { Modal, ModalAction } from "../../react-common/components/controls/Modal";
 import { Share, ShareData } from "../../react-common/components/share/Share";
 import { SimRecorderImpl } from "./components/SimRecorder";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ISettingsProps } from "../../pxteditor/editor";
 
 export enum ShareMode {
     Code,

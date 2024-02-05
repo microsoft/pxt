@@ -5,8 +5,7 @@ import * as sui from "./sui";
 import * as md from "./marked";
 import { TutorialCard, TutorialHint } from "./tutorial";
 import { fireClickOnEnter } from "./util";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ISettingsProps } from "../../pxteditor";
 
 export class SidebarTutorialHint extends TutorialHint {
     constructor(props: ISettingsProps) {

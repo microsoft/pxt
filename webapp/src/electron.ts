@@ -1,13 +1,13 @@
+import { IProjectView } from "../../pxteditor";
 import Cloud = pxt.Cloud;
 import * as cmds from "./cmds";
 import * as core from "./core";
-import { ProjectView } from "./srceditor";
 
 const pxtElectron: pxt.electron.PxtElectron = (window as any).pxtElectron;
 
 const downloadingUpdateLoadingName = "pxtelectron-downloadingupdate";
 
-export function initElectron(projectView: ProjectView): void {
+export function initElectron(projectView: IProjectView): void {
     if (!pxt.BrowserUtils.isPxtElectron()) {
         return;
     }

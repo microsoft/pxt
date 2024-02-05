@@ -3,8 +3,7 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ISettingsProps } from "../../pxteditor";
 
 interface KeymapState {
     above?: boolean;

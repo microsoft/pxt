@@ -3,11 +3,12 @@
 import * as React from "react";
 import * as data from "./data";
 import { fireClickOnEnter } from "./util";
+import { IProjectView } from "../../pxteditor";
 
 export interface SerialIndicatorProps {
     isSim: boolean;
     onClick: () => any;
-    parent: pxt.editor.IProjectView;
+    parent: IProjectView;
 }
 
 export interface SerialIndicatorState {

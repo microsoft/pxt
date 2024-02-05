@@ -5,6 +5,7 @@ import * as compiler from "./compiler";
 import * as pkg from "./package";
 import * as data from "./data";
 import { getBlocksEditor } from "./app";
+import { FilterState } from "../../pxteditor";
 
 export abstract class ToolboxEditor extends srceditor.Editor {
 
@@ -26,13 +27,13 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             const blockFilter = filters.blocks && (filters.blocks[blockId] || (this.blockIdMap && this.blockIdMap[blockId]?.some(id => filters.blocks[id])));
             const categoryFilter = filters.namespaces && filters.namespaces[ns];
             // First try block filters
-            if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden && !shadow) return false;
+            if (blockFilter != undefined && blockFilter == FilterState.Hidden && !shadow) return false;
             if (blockFilter != undefined) return true;
             // Check if category is hidden
-            if (categoryFilter != undefined && categoryFilter == pxt.editor.FilterState.Hidden) return false;
+            if (categoryFilter != undefined && categoryFilter == FilterState.Hidden) return false;
             if (categoryFilter != undefined) return true;
             // Check default filter state
-            if (filters.defaultState != undefined && filters.defaultState == pxt.editor.FilterState.Hidden && !shadow) return false;
+            if (filters.defaultState != undefined && filters.defaultState == FilterState.Hidden && !shadow) return false;
         }
         return true;
     }
@@ -45,14 +46,14 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 filters.blocks["variables_set"] ||
                 filters.blocks["variables_get"] ||
                 filters.blocks["variables_change"]) &&
-                (!filters.namespaces || filters.namespaces["variables"] !== pxt.editor.FilterState.Disabled)) {
+                (!filters.namespaces || filters.namespaces["variables"] !== FilterState.Disabled)) {
                 return true;
             } else if (ns === "functions" && (!filters.blocks ||
                 filters.blocks["function_definition"] ||
                 filters.blocks["function_call"] ||
                 filters.blocks["procedures_defnoreturn"] ||
                 filters.blocks["procedures_callnoreturn"]) &&
-                (!filters.namespaces || filters.namespaces["functions"] !== pxt.editor.FilterState.Disabled)) {
+                (!filters.namespaces || filters.namespaces["functions"] !== FilterState.Disabled)) {
                 return true;
             } else {
                 return false;

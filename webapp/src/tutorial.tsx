@@ -15,8 +15,7 @@ import { ProjectView } from "./app";
 import * as editortoolbar from "./editortoolbar";
 import * as ImmersiveReader from "./immersivereader";
 import { fireClickOnEnter } from "./util";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ISettingsProps } from "../../pxteditor";
 
 interface ITutorialBlocks {
     snippetBlocks: pxt.Map<pxt.Map<number>>;

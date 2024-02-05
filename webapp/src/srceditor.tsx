@@ -1,18 +1,18 @@
 import * as pkg from "./package";
 import * as core from "./core";
 import * as React from "react";
+import { IEditor, IProjectView } from "../../pxteditor/editor";
 
 export type ViewState = any;
-export type ProjectView = pxt.editor.IProjectView;
 
 export interface ParentProps {
-    parent: ProjectView;
+    parent: IProjectView;
 }
 
-export class Editor implements pxt.editor.IEditor {
+export class Editor implements IEditor {
     protected currSource: string;
     isVisible = false;
-    constructor(public parent: ProjectView) {
+    constructor(public parent: IProjectView) {
     }
     changeCallback = () => { };
     setVisible(v: boolean) {

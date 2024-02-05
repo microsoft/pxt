@@ -1,6 +1,8 @@
+import * as pxteditor from "../../pxteditor";
+
 type Header = pxt.workspace.Header;
-type ScriptText = pxt.workspace.ScriptText;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type ScriptText = pxteditor.workspace.ScriptText;
+type WorkspaceProvider = pxteditor.workspace.WorkspaceProvider;
 
 interface StoredText {
     id: string;
@@ -249,7 +251,7 @@ async function listAsync(): Promise<pxt.workspace.Header[]> {
     return db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE);
 }
 
-async function getAsync(h: Header): Promise<pxt.workspace.File> {
+async function getAsync(h: Header): Promise<pxteditor.workspace.File> {
     const db = await getCurrentDbAsync();
     const res = await db.getAsync<StoredText>(TEXTS_TABLE, h.id);
     return {
@@ -322,7 +324,7 @@ export async function getObjectStoreAsync<T>(storeName: string) {
     return db.getObjectStoreWrapper<T>(storeName);
 }
 
-export async function copyProjectToLegacyEditorAsync(header: Header, script: pxt.workspace.ScriptText, majorVersion: number): Promise<void> {
+export async function copyProjectToLegacyEditorAsync(header: Header, script: pxteditor.workspace.ScriptText, majorVersion: number): Promise<void> {
     const prefix = pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[majorVersion];
 
     const oldDB = await getDbAsync(prefix);

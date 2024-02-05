@@ -4,8 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as codecard from "./codecard"
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ISettingsProps } from "../../pxteditor";
 
 export interface CreateFunctionDialogState {
     visible?: boolean;

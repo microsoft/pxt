@@ -12,8 +12,7 @@ import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
 import * as ImmersiveReader from "./immersivereader";
 import { fireClickOnEnter } from "./util";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { IProjectView, ISettingsProps, SimState, UserInfo } from "../../pxteditor/editor";
 
 // common menu items -- do not remove
 // lf("About")
@@ -28,7 +27,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 // lf("Hardware")
 // lf("Tour")
 
-function openTutorial(parent: pxt.editor.IProjectView, path: string) {
+function openTutorial(parent: IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
     parent.startActivity({
         activity: "tutorial",
@@ -36,17 +35,17 @@ function openTutorial(parent: pxt.editor.IProjectView, path: string) {
     });
 }
 
-function openDocs(parent: pxt.editor.IProjectView, path: string) {
+function openDocs(parent: IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
     parent.setSideDoc(path);
 }
 
-function startTour(parent: pxt.editor.IProjectView) {
+function startTour(parent: IProjectView) {
     pxt.tickEvent(`tour.start`, { origin: "help-menu" });
     parent.showOnboarding();
 }
 
-function renderDocItems(parent: pxt.editor.IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
+function renderDocItems(parent: IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
     return elements.map(m =>
         m.tutorial ? <DocsMenuItem key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openTutorial} />
             : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{pxt.Util.rlf(m.name)}</a>
@@ -55,13 +54,13 @@ function renderDocItems(parent: pxt.editor.IProjectView, elements: pxt.DocMenuEn
 }
 
 // Always append a link to the appropriate language (Blocks, JS, Python) to the help menu
-function getDocsLanguageItem(editor: DocsMenuEditorName, parent: pxt.editor.IProjectView, cls: string = ""): JSX.Element {
+function getDocsLanguageItem(editor: DocsMenuEditorName, parent: IProjectView, cls: string = ""): JSX.Element {
     const path = "/" + editor.toLowerCase();
     // Use rlf as "Blocks" is localized above & "JavaScript" and "Python" should not be localized
     return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={pxt.Util.rlf(editor)} text={pxt.Util.rlf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
 }
 
-function getTourItem(parent: pxt.editor.IProjectView, cls: string = ""): JSX.Element {
+function getTourItem(parent: IProjectView, cls: string = ""): JSX.Element {
     const path = "/tour";
     return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Tour")} text={lf("Tour")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={startTour} />
 }
@@ -86,9 +85,9 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
 
 
 interface DocsMenuItemProps extends sui.ItemProps {
-    parent: pxt.editor.IProjectView;
+    parent: IProjectView;
     path: string;
-    onItemClick: (parent: pxt.editor.IProjectView, path: string) => void;
+    onItemClick: (parent: IProjectView, path: string) => void;
 }
 
 class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
@@ -311,7 +310,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         // Electron does not currently support webusb
         // Targets with identity show github user on the profile screen.
-        const githubUser = !hasIdentity && !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
+        const githubUser = !hasIdentity && !readOnly && !isController && this.getData("github:user") as UserInfo;
         const showPairDevice = pxt.usb.isEnabled;
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
@@ -452,7 +451,7 @@ class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         const active = this.isActive();
-        const isRunning = this.props.parent.state.simState == pxt.editor.SimState.Running;
+        const isRunning = this.props.parent.state.simState == SimState.Running;
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
 
         return <BaseMenuItemProps className="sim-menuitem" icon={active && isRunning ? "stop" : "play"} text={lf("Simulator")} title={!active ? lf("Show Simulator") : runTooltip} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />

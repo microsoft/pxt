@@ -3,6 +3,7 @@ import * as React from "react"
 import * as screenshot from "../screenshot";
 import { getEditorAsync } from "../app";
 import { SimRecorder, SimRecorderRef, SimRecorderState } from "../../../react-common/components/share/ThumbnailRecorder";
+import { ScreenshotData } from "../../../pxteditor";
 
 interface SimRecorderRefImpl extends SimRecorderRef {
     gifAddFrame(data: ImageData, delay?: number): boolean;
@@ -19,7 +20,7 @@ export const SimRecorderImpl: SimRecorder = props => {
 
         const ref = createSimRecorderRef();
 
-        const onSimulatorMessage = (message: pxt.editor.ScreenshotData) => {
+        const onSimulatorMessage = (message: ScreenshotData) => {
             if ((message as any).type === "screenshot") {
                 if (ref.state === "recording") {
                     // Adds frame, returns true if we've exceeded the max frame count

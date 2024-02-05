@@ -20,6 +20,7 @@ import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
+import { CreateEvent, IProjectView, MuteState, SimState, initEditorExtensionsAsync, UIEvent } from "../../pxteditor";
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -48,7 +49,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
-    constructor(parent: pxt.editor.IProjectView) {
+    constructor(parent: IProjectView) {
         super(parent);
 
         this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
@@ -485,7 +486,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         (Blockly as any).WorkspaceAudio.prototype.play = function (name: string, opt_volume?: number) {
             const themeVolume = pxt.appTarget?.appTheme?.blocklySoundVolume;
 
-            if (editor?.parent.state.mute === pxt.editor.MuteState.Muted) {
+            if (editor?.parent.state.mute === MuteState.Muted) {
                 opt_volume = 0;
             }
             else if (themeVolume != undefined) {
@@ -616,7 +617,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.cleanUpShadowBlocks();
                 if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
                     this.parent.setState({ hideEditorFloats: false });
-                workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
+                workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as CreateEvent);
             }
             else if (ev.type == Blockly.Events.VAR_CREATE || ev.type == Blockly.Events.VAR_RENAME || ev.type == Blockly.Events.VAR_DELETE) {
                 // a new variable name is used or blocks were removed,
@@ -638,7 +639,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 else if (ev.element == 'melody-editor') {
                     if (ev.newValue) {
-                        shouldRestartSim = this.parent.state.simState != pxt.editor.SimState.Stopped;
+                        shouldRestartSim = this.parent.state.simState != SimState.Stopped;
                         this.parent.stopSimulator();
                     }
                     else {
@@ -971,7 +972,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                     this.prepareBlockly();
                 })
-                .then(() => pxt.editor.initEditorExtensionsAsync())
+                .then(() => initEditorExtensionsAsync())
                 .then(() => pxt.perf.measureEnd("loadBlockly"))
         }
         return this._loadBlocklyPromise;
@@ -1545,7 +1546,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected helpButtonCallback(group?: string) {
         pxt.debug(`${group} help icon clicked.`);
-        workspace.fireEvent({ type: 'ui', editor: 'blocks', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
+        workspace.fireEvent({ type: 'ui', editor: 'blocks', action: 'groupHelpClicked', data: { group } } as UIEvent);
     }
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {

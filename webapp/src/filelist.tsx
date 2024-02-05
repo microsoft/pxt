@@ -6,11 +6,10 @@ import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
 import { fireClickOnEnter } from "./util";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { IFile, ISettingsProps } from "../../pxteditor";
 
 interface FileListState {
-    currentFile?: pxt.editor.IFile;
+    currentFile?: IFile;
     expandedPkg?: string;
 }
 
@@ -252,7 +251,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         </PackgeTreeItem>]
     }
 
-    private packageContainsFile(pkg: pkg.EditorPackage, f: pxt.editor.IFile) {
+    private packageContainsFile(pkg: pkg.EditorPackage, f: IFile) {
         return pkg.sortedFiles().filter(file => file == f).length > 0;
     }
 

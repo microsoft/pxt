@@ -3,8 +3,7 @@ import * as ReactDOM from 'react-dom';
 import * as sui from "./sui";
 import * as data from "./data";
 import * as simulator from "./simulator";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ISettingsProps, SimState } from "../../pxteditor";
 
 export interface DebuggerToolbarProps extends ISettingsProps {
 }
@@ -74,8 +73,8 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const parentState = this.props.parent.state;
 
         const simState = parentState.simState;
-        const isRunning = simState == pxt.editor.SimState.Running;
-        const isStarting = simState == pxt.editor.SimState.Starting;
+        const isRunning = simState == SimState.Running;
+        const isStarting = simState == SimState.Starting;
         const isDebugging = parentState.debugging;
         if (!isDebugging) return <div />;
 

@@ -4,6 +4,7 @@
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import U = pxt.U
+import { EditorSimulatorStoppedEvent, MuteState, postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 
 interface SimulatorConfig {
     // return true if a visible breakpoint was found
@@ -13,7 +14,7 @@ interface SimulatorConfig {
     onStateChanged(state: pxsim.SimulatorState): void;
     onSimulatorReady(): void;
     setState(key: string, value: any): void;
-    onMuteButtonStateChange(state: pxt.editor.MuteState): void;
+    onMuteButtonStateChange(state: MuteState): void;
     editor: string;
 }
 
@@ -244,13 +245,13 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
-    if (pxt.editor.shouldPostHostMessages()) {
-        pxt.editor.postHostMessageAsync({
+    if (shouldPostHostMessages()) {
+        postHostMessageAsync({
             type: "pxthost",
             action: "simevent",
             subtype: subtype as any,
             exception: exception
-        } as pxt.editor.EditorSimulatorStoppedEvent);
+        } as EditorSimulatorStoppedEvent);
     }
 }
 

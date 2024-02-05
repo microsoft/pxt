@@ -8,12 +8,13 @@ import * as data from "./data";
 import * as dialogs from "./dialogs";
 import Cloud = pxt.Cloud;
 import { isDontShowDownloadDialogFlagSet } from "./dialogs";
+import { ExtensionResult, NativeHostMessage } from "../../pxteditor";
 
 function log(msg: string) {
     pxt.debug(`cmds: ${msg}`);
 }
 
-let extensionResult: pxt.editor.ExtensionResult;
+let extensionResult: ExtensionResult;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
@@ -130,7 +131,7 @@ function showUploadInstructionsAsync(
     }).then(() => { });
 }
 
-export function nativeHostPostMessageFunction(): (msg: pxt.editor.NativeHostMessage) => void {
+export function nativeHostPostMessageFunction(): (msg: NativeHostMessage) => void {
     const webkit = (<any>window).webkit;
     if (webkit
         && webkit.messageHandlers
@@ -152,7 +153,7 @@ function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     core.infoNotification(lf("Flashing device..."));
     const out = resp.outfiles[pxt.outputName()];
     const nativePostMessage = nativeHostPostMessageFunction();
-    nativePostMessage(<pxt.editor.NativeHostMessage>{
+    nativePostMessage(<NativeHostMessage>{
         name: resp.downloadFileBaseName,
         download: out
     })
@@ -164,7 +165,7 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     core.infoNotification(lf("Saving file..."));
     const out = resp.outfiles[pxt.outputName()]
     const nativePostMessage = nativeHostPostMessageFunction();
-    nativePostMessage(<pxt.editor.NativeHostMessage>{
+    nativePostMessage(<NativeHostMessage>{
         name: resp.downloadFileBaseName,
         save: out
     })
@@ -175,7 +176,7 @@ function nativeHostWorkspaceLoadedCoreAsync(): Promise<void> {
     log(`native workspace loaded`)
     const nativePostMessage = nativeHostPostMessageFunction();
     if (nativePostMessage) {
-        nativePostMessage(<pxt.editor.NativeHostMessage>{
+        nativePostMessage(<NativeHostMessage>{
             cmd: "workspaceloaded"
         })
     }
@@ -186,7 +187,7 @@ export function nativeHostBackAsync(): Promise<void> {
     log(`native back`)
     const nativePostMessage = nativeHostPostMessageFunction();
     if (nativePostMessage) {
-        nativePostMessage(<pxt.editor.NativeHostMessage>{
+        nativePostMessage(<NativeHostMessage>{
             cmd: "backtap"
         })
     }
@@ -197,7 +198,7 @@ export function nativeHostLongpressAsync(): Promise<void> {
     log(`native longpress`)
     const nativePostMessage = nativeHostPostMessageFunction();
     if (nativePostMessage) {
-        nativePostMessage(<pxt.editor.NativeHostMessage>{
+        nativePostMessage(<NativeHostMessage>{
             cmd: "backpress"
         })
     }
@@ -288,7 +289,7 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 
-export function setExtensionResult(res: pxt.editor.ExtensionResult) {
+export function setExtensionResult(res: ExtensionResult) {
     extensionResult = res;
     applyExtensionResult();
 }

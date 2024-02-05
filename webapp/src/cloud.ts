@@ -4,9 +4,11 @@ import * as data from "./data";
 import * as workspace from "./workspace";
 import * as app from "./app";
 
-type File = pxt.workspace.File;
+import * as pxteditor from "../../pxteditor";
+
+type File = pxteditor.workspace.File;
 type Header = pxt.workspace.Header;
-type ScriptText = pxt.workspace.ScriptText;
+type ScriptText = pxteditor.workspace.ScriptText;
 
 import U = pxt.Util;
 
@@ -562,13 +564,13 @@ export async function requestProjectCloudStatus(headerIds: string[]): Promise<vo
     for (const id of headerIds) {
         const cloudMd = getCloudTempMetadata(id);
         const cloudStatus = cloudMd.cloudStatus();
-        const msg: pxt.editor.EditorMessageProjectCloudStatus = {
+        const msg: pxteditor.EditorMessageProjectCloudStatus = {
             type: "pxteditor",
             action: "projectcloudstatus",
             headerId: cloudMd.headerId,
             status: cloudStatus.value
         };
-        pxt.editor.postHostMessageAsync(msg);
+        pxteditor.postHostMessageAsync(msg);
     }
 }
 

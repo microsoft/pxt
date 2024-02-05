@@ -1,12 +1,13 @@
 import * as core from "./core";
 import * as electron from "./electron";
+import * as pxteditor from "../../pxteditor";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 type Header = pxt.workspace.Header;
-type ScriptText = pxt.workspace.ScriptText;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type ScriptText = pxteditor.workspace.ScriptText;
+type WorkspaceProvider = pxteditor.workspace.WorkspaceProvider;
 
 let apiAsync = (path: string, data?: any) => {
     return U.requestAsync({
@@ -24,7 +25,7 @@ export function setApiAsync(f: (path: string, data?: any) => Promise<any>) {
 function getAsync(h: Header) {
     return apiAsync("pkg/" + h.path)
         .then((resp: pxt.FsPkg) => {
-            let r: pxt.workspace.File = {
+            let r: pxteditor.workspace.File = {
                 header: h,
                 text: {},
                 version: null
@@ -39,7 +40,7 @@ function getAsync(h: Header) {
         })
 }
 
-function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptText): Promise<pxt.workspace.Version> {
+function setAsync(h: Header, prevVersion: pxteditor.workspace.Version, text?: ScriptText): Promise<pxteditor.workspace.Version> {
     let pkg: pxt.FsPkg = {
         files: [],
         config: null,
@@ -93,7 +94,7 @@ async function listAsync(): Promise<Header[]> {
             let time = pkg.files.map(f => f.mtime)
             time.sort((a, b) => b - a)
             let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
-            pkg.header = pxt.workspace.freshHeader(pkg.config.name, modTime)
+            pkg.header = pxteditor.workspace.freshHeader(pkg.config.name, modTime)
             if (pkg.config.preferredEditor)
                 pkg.header.editor = pkg.config.preferredEditor
             pkg.header.path = pkg.path
@@ -126,7 +127,7 @@ function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise
     })
 }
 
-function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
+function listAssetsAsync(id: string): Promise<pxteditor.workspace.Asset[]> {
     return apiAsync("pkgasset/" + id).then(r => r.files)
 }
 

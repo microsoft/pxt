@@ -1,7 +1,8 @@
 /// <reference path="..\..\localtypings\pxtblockly.d.ts" />
 /// <reference path="..\..\built\pxtblocks.d.ts" />
 /// <reference path="..\..\built\pxtcompiler.d.ts" />
-/// <reference path="..\..\built\pxteditor.d.ts" />
+
+import { initFieldExtensionsAsync } from "../../pxteditor";
 
 const WEB_PREFIX = "http://localhost:9876";
 
@@ -51,8 +52,8 @@ class BlocklyCompilerTestHost implements pxt.Host {
     static cachedFiles: pxt.Map<string> = {};
 
     static createTestHostAsync() {
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors && pxt.editor.initFieldExtensionsAsync) {
-            return pxt.editor.initFieldExtensionsAsync({})
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors && initFieldExtensionsAsync) {
+            return initFieldExtensionsAsync({})
                 .then(res => {
                     if (res.fieldEditors)
                         res.fieldEditors.forEach(fi => {
@@ -257,8 +258,8 @@ let init = false;
 function initAsync() {
     if (init) return Promise.resolve();
     init = true;
-    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors && pxt.editor.initFieldExtensionsAsync) {
-        return pxt.editor.initFieldExtensionsAsync({})
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors && initFieldExtensionsAsync) {
+        return initFieldExtensionsAsync({})
             .then(res => {
                 if (res.fieldEditors)
                     res.fieldEditors.forEach(fi => {

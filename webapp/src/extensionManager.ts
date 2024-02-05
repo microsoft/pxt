@@ -1,7 +1,8 @@
-import e = pxt.editor;
+import * as pxteditor from "../../pxteditor";
 import * as pkg from "./package";
+
 export interface ExtensionHost {
-    send(name: string, message: e.ExtensionMessage): void;
+    send(name: string, message: pxteditor.ExtensionMessage): void;
 }
 
 export class ExtensionManager {
@@ -26,8 +27,8 @@ export class ExtensionManager {
         return Object.keys(this.messages);
     }
 
-    handleExtensionMessage(message: e.ExtensionMessage) {
-        this.handleRequestAsync(message as e.ExtensionRequest)
+    handleExtensionMessage(message: pxteditor.ExtensionMessage) {
+        this.handleRequestAsync(message as pxteditor.ExtensionRequest)
             .catch(e => { })
     }
 
@@ -43,15 +44,15 @@ export class ExtensionManager {
         return this.nameToExtId[name];
     }
 
-    private sendResponse(response: e.ExtensionResponse) {
+    private sendResponse(response: pxteditor.ExtensionResponse) {
         this.host.send(this.extIdToName[response.extId], response);
     }
 
-    private handleRequestAsync(request: e.ExtensionRequest): Promise<void> {
+    private handleRequestAsync(request: pxteditor.ExtensionRequest): Promise<void> {
         const resp = mkResponse(request);
         switch (request.action) {
             case "extinit": {
-                const ri = resp as pxt.editor.InitializeResponse;
+                const ri = resp as pxteditor.InitializeResponse;
                 ri.target = pxt.appTarget;
                 this.sendResponse(resp);
                 break;
@@ -65,13 +66,13 @@ export class ExtensionManager {
             case "extusercode":
                 return this.operation(request.extId, resp, handleUserCodeRequest);
             case "extreadcode":
-                handleReadCodeRequest(this.extIdToName[request.extId], resp as e.ReadCodeResponse);
+                handleReadCodeRequest(this.extIdToName[request.extId], resp as pxteditor.ReadCodeResponse);
                 this.sendResponse(resp);
                 break;
             case "extwritecode":
                 const handleWriteCode = () => handleWriteCodeRequestAsync(this.extIdToName[request.extId], resp, request.body)
                     .then(() => this.sendResponse(resp));
-                const missingDepdencies = resolveMissingDependencies(request.body as e.WriteExtensionFiles);
+                const missingDepdencies = resolveMissingDependencies(request.body as pxteditor.WriteExtensionFiles);
                 if (missingDepdencies?.length)
                     this.operation(request.extId, resp, handleWriteCode);
                 else
@@ -82,7 +83,7 @@ export class ExtensionManager {
         return Promise.resolve();
     }
 
-    private operation(id: string, resp: e.ExtensionResponse, cb: (name: string, resp: e.ExtensionResponse) => void) {
+    private operation(id: string, resp: pxteditor.ExtensionResponse, cb: (name: string, resp: pxteditor.ExtensionResponse) => void) {
         return Promise.resolve()
             .then(() => {
                 cb(this.extIdToName[id], resp);
@@ -95,11 +96,11 @@ export class ExtensionManager {
             });
     }
 
-    private handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
+    private handleDataStreamRequest(name: string, resp: pxteditor.ExtensionResponse) {
         this.streams[name] = true;
     }
 
-    private handleMessageStreamRequest(name: string, resp: e.ExtensionResponse) {
+    private handleMessageStreamRequest(name: string, resp: pxteditor.ExtensionResponse) {
         this.messages[name] = true;
     }
 }
@@ -139,12 +140,12 @@ export async function resolveExtensionUrl(pkg: pxt.Package) {
     return { url, name: config.name, trusted }
 }
 
-function handleUserCodeRequest(name: string, resp: e.ExtensionResponse) {
+function handleUserCodeRequest(name: string, resp: pxteditor.ExtensionResponse) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     resp.resp = mainPackage.getAllFiles();
 }
 
-function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
+function handleReadCodeRequest(name: string, resp: pxteditor.ReadCodeResponse) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     const fn = ts.pxtc.escapeIdentifier(name);
     const files = mainPackage.getAllFiles();
@@ -156,7 +157,7 @@ function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     };
 }
 
-function resolveMissingDependencies(files: e.WriteExtensionFiles) {
+function resolveMissingDependencies(files: pxteditor.WriteExtensionFiles) {
     let missingDependencies: string[];
     if (files?.dependencies) {
         // collect missing depdencies
@@ -171,7 +172,7 @@ function resolveMissingDependencies(files: e.WriteExtensionFiles) {
     return missingDependencies;
 }
 
-function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, files: e.WriteExtensionFiles) {
+function handleWriteCodeRequestAsync(name: string, resp: pxteditor.WriteCodeResponse, files: pxteditor.WriteExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     const fn = ts.pxtc.escapeIdentifier(name);
 
@@ -226,7 +227,7 @@ function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, fi
     }).then(() => mainPackage.saveFilesAsync());
 }
 
-function mkEvent(event: string): e.ExtensionEvent {
+function mkEvent(event: string): pxteditor.ExtensionEvent {
     return {
         target: pxt.appTarget.id,
         type: "pxtpkgext",
@@ -234,7 +235,7 @@ function mkEvent(event: string): e.ExtensionEvent {
     };
 }
 
-function mkResponse(request: e.ExtensionRequest, success = true): e.ExtensionResponse {
+function mkResponse(request: pxteditor.ExtensionRequest, success = true): pxteditor.ExtensionResponse {
     return {
         type: "pxtpkgext",
         id: request.id,

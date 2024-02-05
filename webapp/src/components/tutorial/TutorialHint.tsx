@@ -2,9 +2,10 @@ import * as React from "react";
 
 import { MarkedContent } from "../../marked";
 import { TutorialCallout } from "./TutorialCallout";
+import { IProjectView } from "../../../../pxteditor";
 
 interface TutorialHintProps {
-    parent: pxt.editor.IProjectView;
+    parent: IProjectView;
     markdown: string;
 
     // Telemetry data

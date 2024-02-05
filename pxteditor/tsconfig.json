@@ -3,11 +3,18 @@
         "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
-        "declaration": true,
-        "outFile": "../built/pxteditor.js",
+        "noImplicitThis": true,
+        "module": "commonjs",
+        "outDir": "../built/pxteditor",
+        "rootDir": "..",
         "newLine": "LF",
         "sourceMap": false,
         "moduleResolution": "node",
+        "isolatedModules": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": false,
+        "preserveConstEnums": true,
         "lib": [
             "dom",
             "dom.iterable",
@@ -15,7 +22,13 @@
             "es2017",
             "ES2018.Promise"
         ],
-        "incremental": true,
+        "types": [
+            "resize-observer-browser"
+        ],
+        "incremental": false,
         "skipLibCheck": true
-    }
+    },
+    "exclude": [
+        "node_modules"
+    ]
 }

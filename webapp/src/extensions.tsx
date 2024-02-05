@@ -5,8 +5,7 @@ import * as data from "./data";
 import * as core from "./core";
 import * as sui from "./sui";
 import * as ext from "./extensionManager";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ConsoleEvent, ExtensionMessage, ExtensionRequest, HiddenEvent, ISettingsProps, LoadedEvent, MessagePacketEvent, ShownEvent } from "../../pxteditor";
 
 const CUSTOM_CONTENT_DIV = 'custom-content';
 
@@ -57,7 +56,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 sim: smsg.sim,
                 data
             }
-        } as pxt.editor.ConsoleEvent;
+        } as ConsoleEvent;
         exts.forEach(n => this.send(n, resp))
     }
 
@@ -78,7 +77,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 channel,
                 data
             }
-        } as pxt.editor.MessagePacketEvent;
+        } as MessagePacketEvent;
         exts.forEach(n => this.send(n, resp))
     }
 
@@ -98,7 +97,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
         // reload project to update changes from the editor
         core.showLoading("reloadproject", lf("loading..."));
-        this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "exthidden" } as pxt.editor.HiddenEvent);
+        this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "exthidden" } as HiddenEvent);
         this.props.parent.reloadHeaderAsync()
             .then(() => core.hideLoading("reloadproject"));
     }
@@ -109,7 +108,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 target: pxt.appTarget.id,
                 type: "pxtpkgext",
                 event: "extshown"
-            } as pxt.editor.ShownEvent);
+            } as ShownEvent);
         })
     }
 
@@ -119,7 +118,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         if (!frame.src) {
             frame.src = this.state.url + "#" + this.manager.getExtId(this.state.extension);
             frame.onload = () => {
-                this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "extloaded" } as pxt.editor.LoadedEvent);
+                this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "extloaded" } as LoadedEvent);
             }
         }
     }
@@ -169,11 +168,11 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         }
     }
 
-    handleExtensionRequest(request: pxt.editor.ExtensionRequest) {
+    handleExtensionRequest(request: ExtensionRequest) {
         this.manager.handleExtensionMessage(request);
     }
 
-    send(name: string, editorMessage: pxt.editor.ExtensionMessage) {
+    send(name: string, editorMessage: ExtensionMessage) {
         const frame = Extensions.getFrame(name, false);
         if (frame) {
             frame.contentWindow.postMessage(editorMessage, "*");

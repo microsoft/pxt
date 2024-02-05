@@ -3,8 +3,7 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-
-type ISettingsProps = pxt.editor.ISettingsProps;
+import { ISettingsProps, MuteState, SimState } from "../../pxteditor";
 
 export interface SimulatorProps extends ISettingsProps {
     collapsed?: boolean;
@@ -23,7 +22,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         // iOS requires interactive consent to use audio
         if (pxt.BrowserUtils.isIOS())
-            this.props.parent.setMute(pxt.editor.MuteState.Disabled);
+            this.props.parent.setMute(MuteState.Disabled);
 
         this.toggleMute = this.toggleMute.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
@@ -101,9 +100,9 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const make = !sandbox && parentState.showParts && targetTheme.instructions;
 
         const simState = parentState.simState;
-        const isRunning = simState == pxt.editor.SimState.Running;
-        const isStarting = simState == pxt.editor.SimState.Starting;
-        const isSimulatorPending = simState == pxt.editor.SimState.Pending;
+        const isRunning = simState == SimState.Running;
+        const isStarting = simState == SimState.Starting;
+        const isSimulatorPending = simState == SimState.Pending;
         const isFullscreen = parentState.fullscreen;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
@@ -177,7 +176,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
 interface PlayButtonProps extends sui.ButtonProps, ISettingsProps {
     className?: string;
-    simState?: pxt.editor.SimState;
+    simState?: SimState;
     debugging?: boolean;
 }
 
@@ -193,18 +192,18 @@ export class PlayButton extends sui.StatelessUIElement<PlayButtonProps> {
 
     renderCore() {
         const simState = this.props.simState;
-        const isRunning = simState == pxt.editor.SimState.Running;
-        const isStarting = simState == pxt.editor.SimState.Starting;
-        const isSimulatorPending = simState == pxt.editor.SimState.Pending;
+        const isRunning = simState == SimState.Running;
+        const isStarting = simState == SimState.Starting;
+        const isSimulatorPending = simState == SimState.Pending;
         const runControlsEnabled = !this.props.debugging && !isStarting && !isSimulatorPending;
         const runTooltip = (() => {
             switch (simState) {
-                case pxt.editor.SimState.Stopped:
+                case SimState.Stopped:
                     return lf("Start the simulator");
-                case pxt.editor.SimState.Pending:
-                case pxt.editor.SimState.Starting:
+                case SimState.Pending:
+                case SimState.Starting:
                     return lf("Starting the simulator");
-                case pxt.editor.SimState.Running:
+                case SimState.Running:
                     return lf("Stop the simulator");
             }
         })();
@@ -215,7 +214,7 @@ export class PlayButton extends sui.StatelessUIElement<PlayButtonProps> {
 
 interface MuteButtonProps {
     onClick: () => void;
-    state: pxt.editor.MuteState;
+    state: MuteState;
     className?: string;
 }
 
@@ -223,21 +222,21 @@ const MuteButton = ({onClick, state, className}: MuteButtonProps) => {
     let tooltip: string;
 
     switch (state) {
-        case pxt.editor.MuteState.Muted:
+        case MuteState.Muted:
             tooltip = lf("Unmute audio");
             break;
-        case pxt.editor.MuteState.Unmuted:
+        case MuteState.Unmuted:
             tooltip = lf("Mute audio");
             break;
-        case pxt.editor.MuteState.Disabled:
+        case MuteState.Disabled:
             tooltip = lf("Click inside the simulator to enable audio");
             break;
     }
 
     return <sui.Button
-        className={`${className || ''} mute-button ${state === pxt.editor.MuteState.Muted ? 'red' : ''}`}
-        icon={`${state !== pxt.editor.MuteState.Unmuted  ? 'volume off' : 'volume up'}`}
-        disabled={state === pxt.editor.MuteState.Disabled}
+        className={`${className || ''} mute-button ${state === MuteState.Muted ? 'red' : ''}`}
+        icon={`${state !== MuteState.Unmuted  ? 'volume off' : 'volume up'}`}
+        disabled={state === MuteState.Disabled}
         title={tooltip}
         onClick={onClick} />;
 }
