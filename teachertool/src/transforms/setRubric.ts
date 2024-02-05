@@ -1,7 +1,8 @@
 import { stateAndDispatch } from "../state";
+import { Rubric } from "../types/rubric";
 import * as Actions from "../state/actions";
 
-export function showCatalogModal() {
+export function setRubric(rubric: Rubric) {
     const { dispatch } = stateAndDispatch();
-    dispatch(Actions.showModal("catalog-display"));
+    dispatch(Actions.setRubric(rubric));
 }
