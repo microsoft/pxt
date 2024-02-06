@@ -1,4 +1,4 @@
-/// <reference path="../../../built/pxteditor.d.ts" />
+/// <reference path="../../../localtypings/iframeController.d.ts" />
 import * as React from "react";
 import { connect } from 'react-redux';
 import { isLocal, resolvePath, getEditorUrl, tickEvent, cloudLocalStoreKey } from "../lib/browserUtils";

@@ -5,7 +5,7 @@ import * as compiler from "./compiler";
 
 import Util = pxt.Util;
 import { HOSTCACHE_TABLE, getObjectStoreAsync } from "./idbworkspace";
-import { IFile, ProjectFilters } from "../../pxteditor";
+import { IFile } from "../../pxteditor";
 
 let extWeight: pxt.Map<number> = {
     "ts": 10,
@@ -26,7 +26,7 @@ export class File implements IFile {
     inSyncWithEditor = true;
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
-    filters: ProjectFilters;
+    filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
     virtual: boolean;
     baseGitContent: string;

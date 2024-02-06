@@ -7,8 +7,8 @@ import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 import { classList } from "../../react-common/components/util";
 import { HistoryFile, applySnapshot } from "../../pxteditor/history";
-import { EditorMessageRequest, EditorMessageResponse, EditorWorkspaceSyncResponse, EditorMessageImportProjectRequest } from "../../pxteditor/editorcontroller";
-import { ScriptText } from "../../pxteditor/workspace";
+
+import ScriptText = pxt.workspace.ScriptText;
 
 
 interface TimeMachineProps {
@@ -19,7 +19,7 @@ interface TimeMachineProps {
 }
 
 interface PendingMessage {
-    original: EditorMessageRequest;
+    original: pxt.editor.EditorMessageRequest;
     handler: (response: any) => void;
 }
 
@@ -58,14 +58,14 @@ export const TimeMachine = (props: TimeMachineProps) => {
         const iframe = iframeRef.current;
         let nextId = 1;
         let workspaceReady: boolean;
-        const messageQueue: EditorMessageRequest[] = [];
+        const messageQueue: pxt.editor.EditorMessageRequest[] = [];
         const pendingMessages: {[index: string]: PendingMessage} = {};
 
-        const postMessageCore = (message: EditorMessageRequest | EditorMessageResponse) => {
+        const postMessageCore = (message: pxt.editor.EditorMessageRequest | pxt.editor.EditorMessageResponse) => {
             iframe.contentWindow!.postMessage(message, "*");
         };
 
-        const sendMessageAsync = (message?: EditorMessageRequest) => {
+        const sendMessageAsync = (message?: pxt.editor.EditorMessageRequest) => {
             return new Promise(resolve => {
                 const sendMessageCore = (message: any) => {
                     message.response = true;
@@ -90,7 +90,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
         };
 
         const onMessageReceived = (event: MessageEvent) => {
-            const data = event.data as EditorMessageRequest;
+            const data = event.data as pxt.editor.EditorMessageRequest;
 
             if (data.type === "pxteditor" && data.id && pendingMessages[data.id]) {
                 const pending = pendingMessages[data.id];
@@ -113,7 +113,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                         id: data.id,
                         success: true,
                         projects: []
-                    } as EditorWorkspaceSyncResponse);
+                    } as pxt.editor.EditorWorkspaceSyncResponse);
                     break;
             }
         };
@@ -135,7 +135,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 project: {
                     text: project
                 }
-            } as EditorMessageImportProjectRequest);
+            } as pxt.editor.EditorMessageImportProjectRequest);
 
             currentlyLoading = false;
 

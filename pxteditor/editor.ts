@@ -1,7 +1,3 @@
-import { EditorMessageRenderBlocksRequest, EditorMessageRenderBlocksResponse, EditorMessageRenderPythonRequest, EditorMessageRenderPythonResponse } from "./editorcontroller";
-import { ExtensionRequest } from "./extension";
-import { Project } from "./workspace";
-
 export enum SimState {
     Stopped,
     // waiting to be started
@@ -108,27 +104,9 @@ export interface IAppState {
 }
 
 export interface EditorState {
-    filters?: ProjectFilters;
+    filters?: pxt.editor.ProjectFilters;
     searchBar?: boolean; // show the search bar in editor
     hasCategories?: boolean; // show categories in toolbox
-}
-
-export interface ProjectCreationOptions {
-    prj?: pxt.ProjectTemplate;
-    name?: string;
-    documentation?: string;
-    filesOverride?: pxt.Map<string>;
-    filters?: ProjectFilters;
-    temporary?: boolean;
-    tutorial?: pxt.tutorial.TutorialOptions;
-    dependencies?: pxt.Map<string>;
-    tsOnly?: boolean; // DEPRECATED: use LanguageRestriction.NoBlocks or LanguageRestriction.JavaScriptOnly instead
-    languageRestriction?: pxt.editor.LanguageRestriction;
-    preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
-    extensionUnderTest?: string; // workspace id of the extension under test
-    skillmapProject?: boolean;
-    simTheme?: Partial<pxt.PackageConfig>;
-    firstProject?: boolean;
 }
 
 export interface ExampleImportOptions {
@@ -148,19 +126,6 @@ export interface StartActivityOptions {
     importOptions?: ExampleImportOptions;
     previousProjectHeaderId?: string;
     carryoverPreviousCode?: boolean;
-}
-
-export interface ProjectFilters {
-    namespaces?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
-    blocks?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
-    fns?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
-    defaultState?: FilterState; // hide, show or disable all by default
-}
-
-export enum FilterState {
-    Hidden = 0,
-    Visible = 1,
-    Disabled = 2
 }
 
 export interface ModalDialogButton {
@@ -239,7 +204,7 @@ export interface IProjectView {
     saveProjectAsync(): Promise<void>;
     loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
     reloadHeaderAsync(): Promise<void>;
-    importProjectAsync(prj: Project, editorState?: EditorState): Promise<void>;
+    importProjectAsync(prj: pxt.workspace.Project, editorState?: EditorState): Promise<void>;
     importTutorialAsync(markdown: string): Promise<void>;
     openProjectByHeaderIdAsync(headerId: string): Promise<void>;
     overrideTypescriptFile(text: string): void;
@@ -249,8 +214,8 @@ export interface IProjectView {
     exportAsync(): Promise<string>;
 
     newEmptyProject(name?: string, documentation?: string, preferredEditor?: string): void;
-    newProject(options?: ProjectCreationOptions): void;
-    createProjectAsync(options: ProjectCreationOptions): Promise<void>;
+    newProject(options?: pxt.editor.ProjectCreationOptions): void;
+    createProjectAsync(options: pxt.editor.ProjectCreationOptions): Promise<void>;
     importExampleAsync(options: ExampleImportOptions): Promise<void>;
     showScriptManager(): void;
     importProjectDialog(): void;
@@ -326,7 +291,7 @@ export interface IProjectView {
     shouldPreserveUndoStack(): boolean;
 
     openExtension(extension: string, url: string, consentRequired?: boolean, trusted?: boolean): void;
-    handleExtensionRequest(request: ExtensionRequest): void;
+    handleExtensionRequest(request: pxt.editor.ExtensionRequest): void;
 
     fireResize(): void;
     updateEditorLogo(left: number, rgba?: string): number;
@@ -336,8 +301,8 @@ export interface IProjectView {
     isTextEditor(): boolean;
     isPxtJsonEditor(): boolean;
     blocksScreenshotAsync(pixelDensity?: number, encodeBlocks?: boolean): Promise<string>;
-    renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<EditorMessageRenderBlocksResponse>;
-    renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
+    renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse>;
+    renderPythonAsync(req: pxt.editor.EditorMessageRenderPythonRequest): Promise<pxt.editor.EditorMessageRenderPythonResponse>;
     getBlocks(): Blockly.Block[];
 
     toggleHighContrast(): void;
@@ -393,7 +358,7 @@ export interface IProjectView {
     createModalClasses(classes?: string): string;
     showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
-    askForProjectCreationOptionsAsync(): Promise<ProjectCreationOptions>;
+    askForProjectCreationOptionsAsync(): Promise<pxt.editor.ProjectCreationOptions>;
 
     pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
     popScreenshotHandler(): void;

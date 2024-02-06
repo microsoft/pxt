@@ -1,4 +1,5 @@
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
+/// <reference path="../../localtypings/iframeController.d.ts"/>
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
@@ -66,7 +67,7 @@ type IAppState = pxteditor.IAppState;
 type IProjectView = pxteditor.IProjectView;
 type FileHistoryEntry = pxteditor.FileHistoryEntry;
 type EditorSettings = pxteditor.EditorSettings;
-type ProjectCreationOptions = pxteditor.ProjectCreationOptions;
+type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 declare const zip: any;
 
@@ -1450,7 +1451,7 @@ export class ProjectView
             tutorialId,
             projectHeaderId: this.state.header?.id,
             isCompleted: !!this.state.header?.tutorialCompleted
-        } as pxteditor.EditorMessageTutorialProgressEventRequest)
+        } as pxt.editor.EditorMessageTutorialProgressEventRequest)
     }
 
     protected postTutorialLoaded() {
@@ -1462,7 +1463,7 @@ export class ProjectView
             tutorialEvent: "loaded",
             tutorialId,
             projectHeaderId: this.state.header.id
-        } as pxteditor.EditorMessageTutorialLoadedEventRequest)
+        } as pxt.editor.EditorMessageTutorialLoadedEventRequest)
     }
 
     protected postTutorialCompleted() {
@@ -1474,7 +1475,7 @@ export class ProjectView
             tutorialEvent: "completed",
             tutorialId,
             projectHeaderId: this.state.header.id
-        } as pxteditor.EditorMessageTutorialCompletedEventRequest)
+        } as pxt.editor.EditorMessageTutorialCompletedEventRequest)
     }
 
     protected postTutorialExit() {
@@ -1486,7 +1487,7 @@ export class ProjectView
             tutorialEvent: "exit",
             tutorialId,
             projectHeaderId: this.state.header.id
-        } as pxteditor.EditorMessageTutorialExitEventRequest)
+        } as pxt.editor.EditorMessageTutorialExitEventRequest)
     }
 
     handleMessage(msg: pxsim.SimulatorMessage) {
@@ -1505,7 +1506,7 @@ export class ProjectView
                                 editorState: {
                                     filters: {
                                         blocks: tt.toolboxSubset,
-                                        defaultState: pxteditor.FilterState.Hidden
+                                        defaultState: pxt.editor.FilterState.Hidden
                                     }
                                 }
                             });
@@ -1828,7 +1829,7 @@ export class ProjectView
                 if (tutorialBlocks?.usedBlocks && Object.keys(tutorialBlocks.usedBlocks).length > 0) {
                     editorState.filters = {
                         blocks: tutorialBlocks.usedBlocks,
-                        defaultState: pxteditor.FilterState.Hidden
+                        defaultState: pxt.editor.FilterState.Hidden
                     }
                     editorState.hasCategories = !(header.tutorial.metadata && header.tutorial.metadata.flyoutOnly);
                 }
@@ -2403,7 +2404,7 @@ export class ProjectView
         }
     }
 
-    async importProjectAsync(project: pxteditor.workspace.Project, editorState?: pxteditor.EditorState): Promise<void> {
+    async importProjectAsync(project: pxt.workspace.Project, editorState?: pxteditor.EditorState): Promise<void> {
         if (this.pendingImport) {
             this.pendingImport.reject("concurrent import requests");
         }
@@ -2421,7 +2422,7 @@ export class ProjectView
         }
     }
 
-    protected async installAndLoadProjectAsync(project: pxteditor.workspace.Project, editorState?: pxteditor.EditorState) {
+    protected async installAndLoadProjectAsync(project: pxt.workspace.Project, editorState?: pxteditor.EditorState) {
         let h: pxt.workspace.InstallHeader = project.header;
         if (!h) {
             h = {
@@ -2816,7 +2817,7 @@ export class ProjectView
         this.extensions.showExtensionAsync(extension, url);
     }
 
-    handleExtensionRequest(request: pxteditor.ExtensionRequest): void {
+    handleExtensionRequest(request: pxt.editor.ExtensionRequest): void {
         this.extensions.handleExtensionRequest(request);
     }
 
@@ -2855,7 +2856,7 @@ export class ProjectView
         let cfg = pxt.U.clone(options.prj.config);
         cfg.name = options.name || lf("Untitled");
         cfg.documentation = options.documentation;
-        let files: pxteditor.workspace.ScriptText = Util.clone(options.prj.files)
+        let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
         if (options.filesOverride) {
             Util.jsonCopyFrom(files, options.filesOverride);
             Object.keys(options.filesOverride).forEach(name => {
@@ -2963,7 +2964,7 @@ export class ProjectView
                 const example = !!md && pxt.gallery.parseExampleMarkdown(filename, md);
                 if (!example)
                     throw new Error(lf("Example not found or invalid format"))
-                const opts: pxteditor.ProjectCreationOptions = example;
+                const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
                 if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
                     return this.createProjectAsync(opts)
@@ -3794,7 +3795,7 @@ export class ProjectView
         const cloudMd = this.getData<cloud.CloudTempMetadata>(path);
         const cloudStatus = cloudMd?.cloudStatus();
         if (cloudStatus) {
-            const msg: pxteditor.EditorMessageProjectCloudStatus = {
+            const msg: pxt.editor.EditorMessageProjectCloudStatus = {
                 type: "pxteditor",
                 action: "projectcloudstatus",
                 headerId: cloudMd.headerId,
@@ -4007,7 +4008,7 @@ export class ProjectView
         this.importDialog.show();
     }
 
-    renderPythonAsync(req: pxteditor.EditorMessageRenderPythonRequest): Promise<pxteditor.EditorMessageRenderPythonResponse> {
+    renderPythonAsync(req: pxt.editor.EditorMessageRenderPythonRequest): Promise<pxt.editor.EditorMessageRenderPythonResponse> {
         return compiler.decompilePythonSnippetAsync(req.ts)
             .then(resp => {
                 return { python: resp };
@@ -4021,7 +4022,7 @@ export class ProjectView
         return Promise.resolve(undefined);
     }
 
-    renderBlocksAsync(req: pxteditor.EditorMessageRenderBlocksRequest): Promise<pxteditor.EditorMessageRenderBlocksResponse> {
+    renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo, req))
             .then(resp => {
@@ -4828,7 +4829,7 @@ export class ProjectView
         pxteditor.postHostMessageAsync({
             type: "pxteditor",
             action: "editorcontentloaded"
-        } as pxteditor.EditorContentLoadedRequest)
+        } as pxt.editor.EditorContentLoadedRequest)
 
         if (this.pendingImport) {
             this.pendingImport.resolve();
@@ -5965,7 +5966,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 pxteditor.postHostMessageAsync({
                     action: "newproject",
                     options: { preferredEditor: "blocks" }
-                } as pxteditor.EditorMessageNewProjectRequest)
+                } as pxt.editor.EditorMessageNewProjectRequest)
                 return Promise.resolve();
             }
             if (showHome) return Promise.resolve();

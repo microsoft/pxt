@@ -869,7 +869,7 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
         history = pxteditor.history.parseHistoryFile(text[pxt.HISTORY_FILE]);
     }
 
-    const loadProject = async (text: pxteditor.workspace.ScriptText, editorVersion: string) => {
+    const loadProject = async (text: pxt.workspace.ScriptText, editorVersion: string) => {
         core.hideDialog();
 
         header.targetVersion = editorVersion;
@@ -879,7 +879,7 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
         reloadHeader();
     }
 
-    const copyProject = async (text: pxteditor.workspace.ScriptText, editorVersion: string, timestamp?: number) => {
+    const copyProject = async (text: pxt.workspace.ScriptText, editorVersion: string, timestamp?: number) => {
         core.hideDialog();
 
         let newHistory = history

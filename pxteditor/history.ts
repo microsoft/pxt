@@ -1,4 +1,4 @@
-import { ScriptText } from "./workspace";
+import ScriptText = pxt.workspace.ScriptText;
 
 export interface HistoryFile {
     entries: HistoryEntry[];

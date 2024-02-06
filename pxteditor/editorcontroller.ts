@@ -1,404 +1,9 @@
-import { ProjectCreationOptions, IProjectView, ProjectFilters } from "./editor";
-import { EditorEvent } from "./events";
-import { ExtInitializeType, ExtDataStreamType, ExtUserCodeType, ExtReadCodeType, ExtWriteCodeType, ExtensionRequest } from "./extension";
-import { Project } from "./workspace";
+/// <reference path="../localtypings/iframeController.d.ts" />
 
-export interface EditorMessage {
-    /**
-     * Constant identifier
-     */
-    type: "pxteditor" | "pxthost" | "pxtpkgext" | "pxtsim",
-    /**
-     * Original request id
-     */
-    id?: string;
-    /**
-     * flag to request response
-     */
-    response?: boolean;
-}
-
-export interface EditorMessageResponse extends EditorMessage {
-    /**
-     * Additional response payload provided by the command
-     */
-    resp?: any;
-    /**
-     * indicate if operation started or completed successfully
-     */
-    success: boolean;
-    /**
-     * Error object if any
-     */
-    error?: any;
-}
-
-export interface EditorMessageRequest extends EditorMessage {
-    /**
-     * Request action
-     */
-    action: "switchblocks"
-    | "switchjavascript"
-    | "startsimulator"
-    | "restartsimulator"
-    | "stopsimulator" // EditorMessageStopRequest
-    | "hidesimulator"
-    | "showsimulator"
-    | "closeflyout"
-    | "newproject"
-    | "importproject"
-    | "importtutorial"
-    | "openheader"
-    | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
-    | "undo"
-    | "redo"
-    | "renderblocks"
-    | "renderpython"
-    | "setscale"
-    | "startactivity"
-    | "saveproject"
-    | "unloadproject"
-    | "shareproject"
-    | "savelocalprojectstocloud"
-    | "projectcloudstatus"
-    | "requestprojectcloudstatus"
-    | "convertcloudprojectstolocal"
-    | "setlanguagerestriction"
-
-    | "toggletrace" // EditorMessageToggleTraceRequest
-    | "togglehighcontrast"
-    | "sethighcontrast" // EditorMessageSetHighContrastRequest
-    | "togglegreenscreen"
-    | "settracestate" //
-    | "setsimulatorfullscreen" // EditorMessageSimulatorFullScreenRequest
-
-    | "print" // print code
-    | "pair" // pair device
-
-    | "workspacesync" // EditorWorspaceSyncRequest
-    | "workspacereset"
-    | "workspacesave" // EditorWorkspaceSaveRequest
-    | "workspaceloaded"
-    | "workspaceevent" // EditorWorspaceEvent
-
-    | "workspacediagnostics" // compilation results
-
-    | "event"
-    | "simevent"
-    | "info" // return info data`
-    | "tutorialevent"
-    | "editorcontentloaded"
-    | "runeval"
-
-    // package extension messasges
-    | ExtInitializeType
-    | ExtDataStreamType
-    | ExtUserCodeType
-    | ExtReadCodeType
-    | ExtWriteCodeType
-    ;
-}
-
-/**
- * Request sent by the editor when a tick/error/expection is registered
- */
-export interface EditorMessageEventRequest extends EditorMessageRequest {
-    action: "event";
-    // metric identifier
-    tick: string;
-    // error category if any
-    category?: string;
-    // error message if any
-    message?: string;
-    // custom data
-    data?: pxt.Map<string | number>;
-}
-
-export type EditorMessageTutorialEventRequest = EditorMessageTutorialProgressEventRequest |
-    EditorMessageTutorialCompletedEventRequest |
-    EditorMessageTutorialLoadedEventRequest |
-    EditorMessageTutorialExitEventRequest;
-
-export interface EditorMessageTutorialProgressEventRequest extends EditorMessageRequest {
-    action: "tutorialevent";
-    tutorialEvent: "progress"
-    currentStep: number;
-    totalSteps: number;
-    isCompleted: boolean;
-    tutorialId: string;
-    projectHeaderId: string;
-}
-
-export interface EditorMessageTutorialCompletedEventRequest extends EditorMessageRequest {
-    action: "tutorialevent";
-    tutorialEvent: "completed";
-    tutorialId: string;
-    projectHeaderId: string;
-}
-
-export interface EditorMessageTutorialLoadedEventRequest extends EditorMessageRequest {
-    action: "tutorialevent";
-    tutorialEvent: "loaded";
-    tutorialId: string;
-    projectHeaderId: string;
-}
-
-export interface EditorMessageTutorialExitEventRequest extends EditorMessageRequest {
-    action: "tutorialevent";
-    tutorialEvent: "exit";
-    tutorialId: string;
-    projectHeaderId: string;
-}
-
-export interface EditorMessageStopRequest extends EditorMessageRequest {
-    action: "stopsimulator";
-    /**
-     * Indicates if simulator iframes should be unloaded or kept hot.
-     */
-    unload?: boolean;
-}
-
-export interface EditorMessageNewProjectRequest extends EditorMessageRequest {
-    action: "newproject";
-    /**
-     * Additional optional to create new project
-     */
-    options?: ProjectCreationOptions;
-}
-
-export interface EditorContentLoadedRequest extends EditorMessageRequest {
-    action: "editorcontentloaded";
-}
-
-export interface EditorMessageSetScaleRequest extends EditorMessageRequest {
-    action: "setscale";
-    scale: number;
-}
-
-export interface EditorMessageSimulatorMessageProxyRequest extends EditorMessageRequest {
-    action: "proxytosim";
-    /**
-     * Content to send to the simulator
-     */
-    content: any;
-}
-
-export interface EditorWorkspaceSyncRequest extends EditorMessageRequest {
-    /**
-     * Synching projects from host into
-     */
-    action: "workspacesync" | "workspacereset" | "workspaceloaded";
-}
-
-export interface EditorWorkspaceEvent extends EditorMessageRequest {
-    action: "workspaceevent";
-    event: EditorEvent;
-}
-
-export interface EditorWorkspaceDiagnostics extends EditorMessageRequest {
-    action: "workspacediagnostics";
-    operation: "compile" | "decompile" | "typecheck";
-    output: string;
-    diagnostics: {
-        code: number;
-        category: "error" | "warning" | "message";
-        fileName?: string;
-        start?: number;
-        length?: number;
-        line?: number;
-        column?: number;
-        endLine?: number;
-        endColumn?: number;
-    }[];
-}
-
-// UI properties to sync on load
-export interface EditorSyncState {
-    // (optional) filtering argument
-    filters?: ProjectFilters;
-    // (optional) show or hide the search bar
-    searchBar?: boolean;
-}
-
-export interface EditorWorkspaceSyncResponse extends EditorMessageResponse {
-    /*
-    * Full list of project, required for init
-    */
-    projects: Project[];
-    // (optional) filtering argument
-    editor?: EditorSyncState;
-    // (optional) controller id, used for determining what the parent controller is
-    controllerId?: string;
-}
-
-export interface EditorWorkspaceSaveRequest extends EditorMessageRequest {
-    action: "workspacesave";
-    /*
-    * Modified project
-    */
-    project: Project;
-}
-
-export interface EditorMessageImportProjectRequest extends EditorMessageRequest {
-    action: "importproject";
-    // project to load
-    project: Project;
-    // (optional) filtering argument
-    filters?: ProjectFilters;
-    searchBar?: boolean;
-}
-
-export interface EditorMessageSaveLocalProjectsToCloud extends EditorMessageRequest {
-    action: "savelocalprojectstocloud";
-    headerIds: string[];
-}
-
-export interface EditorMessageSaveLocalProjectsToCloudResponse extends EditorMessageResponse {
-    action: "savelocalprojectstocloud";
-    headerIdMap?: pxt.Map<string>;
-}
-
-export interface EditorMessageProjectCloudStatus extends EditorMessageRequest {
-    action: "projectcloudstatus";
-    headerId: string;
-    status: pxt.cloud.CloudStatus;
-}
-
-export interface EditorMessageRequestProjectCloudStatus extends EditorMessageRequest {
-    action: "requestprojectcloudstatus";
-    headerIds: string[];
-}
-
-export interface EditorMessageConvertCloudProjectsToLocal extends EditorMessageRequest {
-    action: "convertcloudprojectstolocal";
-    userId: string;
-}
-
-export interface EditorMessageImportTutorialRequest extends EditorMessageRequest {
-    action: "importtutorial";
-    // markdown to load
-    markdown: string;
-}
-
-export interface EditorMessageOpenHeaderRequest extends EditorMessageRequest {
-    action: "openheader";
-    headerId: string;
-}
-
-export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest {
-    action: "renderblocks";
-    // typescript code to render
-    ts: string;
-    // rendering options
-    snippetMode?: boolean;
-    layout?: pxt.blocks.BlockLayout;
-}
-
-export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
-    action: "runeval";
-    validatorPlan: pxt.blocks.ValidatorPlan;
-}
-
-export interface EditorMessageRenderBlocksResponse {
-    svg: SVGSVGElement;
-    xml: Promise<any>;
-}
-
-export interface EditorMessageRenderPythonRequest extends EditorMessageRequest {
-    action: "renderpython";
-    // typescript code to render
-    ts: string;
-}
-
-export interface EditorMessageRenderPythonResponse {
-    python: string;
-}
-
-export interface EditorSimulatorEvent extends EditorMessageRequest {
-    action: "simevent";
-    subtype: "toplevelfinished" | "started" | "stopped" | "resumed"
-}
-
-export interface EditorSimulatorStoppedEvent extends EditorSimulatorEvent {
-    subtype: "stopped";
-    exception?: string;
-}
-
-export interface EditorMessageToggleTraceRequest extends EditorMessageRequest {
-    action: "toggletrace";
-    // interval speed for the execution trace
-    intervalSpeed?: number;
-}
-
-export interface EditorMessageSetTraceStateRequest extends EditorMessageRequest {
-    action: "settracestate";
-    enabled: boolean;
-    // interval speed for the execution trace
-    intervalSpeed?: number;
-}
-
-export interface EditorMessageSetSimulatorFullScreenRequest extends EditorMessageRequest {
-    action: "setsimulatorfullscreen";
-    enabled: boolean;
-}
-
-export interface EditorMessageSetHighContrastRequest extends EditorMessageRequest {
-    action: "sethighcontrast";
-    on: boolean;
-}
-
-export interface EditorMessageStartActivity extends EditorMessageRequest {
-    action: "startactivity";
-    activityType: "tutorial" | "example" | "recipe";
-    path: string;
-    title?: string;
-    previousProjectHeaderId?: string;
-    carryoverPreviousCode?: boolean;
-}
-
-export interface InfoMessage {
-    versions: pxt.TargetVersions;
-    locale: string;
-    availableLocales?: string[];
-}
-
-export interface PackageExtensionData {
-    ts: string;
-    json?: any;
-}
-
-export interface EditorPkgExtMessageRequest extends EditorMessageRequest {
-    // extension identifier
-    package: string;
-}
-
-export interface EditorPkgExtMessageResponse extends EditorMessageResponse {
-    // extension identifier
-    package: string;
-}
-
-export interface EditorSimulatorTickEvent extends EditorMessageEventRequest {
-    type: "pxtsim";
-}
-
-export interface EditorShareRequest extends EditorMessageRequest {
-    action: "shareproject";
-    headerId: string;
-    projectName: string;
-}
-
-export interface EditorShareResponse extends EditorMessageRequest {
-    action: "shareproject";
-    script: pxt.Cloud.JsonScript;
-}
-
-export interface EditorSetLanguageRestriction extends EditorMessageRequest {
-    action: "setlanguagerestriction";
-    restriction: pxt.editor.LanguageRestriction;
-}
+import { IProjectView } from "./editor";
 
 const pendingRequests: pxt.Map<{
-    resolve: (res?: EditorMessageResponse | PromiseLike<EditorMessageResponse>) => void;
+    resolve: (res?: pxt.editor.EditorMessageResponse | PromiseLike<pxt.editor.EditorMessageResponse>) => void;
     reject: (err: any) => void;
 }> = {};
 /**
@@ -419,17 +24,17 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
     if (!allowEditorMessages && !allowExtensionMessages && !allowSimTelemetry) return;
 
     window.addEventListener("message", (msg: MessageEvent) => {
-        const data = msg.data as EditorMessage;
+        const data = msg.data as pxt.editor.EditorMessage;
         if (!data || !/^pxt(host|editor|pkgext|sim)$/.test(data.type)) return false;
 
         if (data.type === "pxtpkgext" && allowExtensionMessages) {
             // Messages sent to the editor iframe from a child iframe containing an extension
             getEditorAsync().then(projectView => {
-                projectView.handleExtensionRequest(data as ExtensionRequest);
+                projectView.handleExtensionRequest(data as pxt.editor.ExtensionRequest);
             })
         }
         else if (data.type === "pxtsim" && allowSimTelemetry) {
-            const event = data as EditorMessageEventRequest;
+            const event = data as pxt.editor.EditorMessageEventRequest;
             if (event.action === "event") {
                 if (event.category || event.message) {
                     pxt.reportError(event.category, event.message, event.data as pxt.Map<string>)
@@ -448,12 +53,12 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                 if (!req) {
                     pxt.debug(`pxthost: unknown request ${data.id}`);
                 } else {
-                    p = p.then(() => req.resolve(data as EditorMessageResponse));
+                    p = p.then(() => req.resolve(data as pxt.editor.EditorMessageResponse));
                 }
             } else if (data.type == "pxteditor") { // request from the editor
                 p = p.then(() => {
                     return getEditorAsync().then(projectView => {
-                        const req = data as EditorMessageRequest;
+                        const req = data as pxt.editor.EditorMessageRequest;
                         pxt.debug(`pxteditor: ${req.action}`);
                         switch (req.action.toLowerCase()) {
                             case "switchjavascript": return Promise.resolve().then(() => projectView.openJavaScript());
@@ -479,22 +84,22 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         editor.undo();
                                 });
                             case "setscale": {
-                                const zoommsg = data as EditorMessageSetScaleRequest;
+                                const zoommsg = data as pxt.editor.EditorMessageSetScaleRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.editor.setScale(zoommsg.scale));
                             }
                             case "stopsimulator": {
-                                const stop = data as EditorMessageStopRequest;
+                                const stop = data as pxt.editor.EditorMessageStopRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.stopSimulator(stop.unload));
                             }
                             case "newproject": {
-                                const create = data as EditorMessageNewProjectRequest;
+                                const create = data as pxt.editor.EditorMessageNewProjectRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.newProject(create.options));
                             }
                             case "importproject": {
-                                const load = data as EditorMessageImportProjectRequest;
+                                const load = data as pxt.editor.EditorMessageImportProjectRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.importProjectAsync(load.project, {
                                         filters: load.filters,
@@ -502,11 +107,11 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     }));
                             }
                             case "openheader": {
-                                const open = data as EditorMessageOpenHeaderRequest;
+                                const open = data as pxt.editor.EditorMessageOpenHeaderRequest;
                                 return projectView.openProjectByHeaderIdAsync(open.headerId)
                             }
                             case "startactivity": {
-                                const msg = data as EditorMessageStartActivity;
+                                const msg = data as pxt.editor.EditorMessageStartActivity;
                                 let tutorialPath = msg.path;
                                 let editorProjectName: string = undefined;
                                 if (/^([jt]s|py|blocks?):/i.test(tutorialPath)) {
@@ -529,17 +134,17 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     }));
                             }
                             case "importtutorial": {
-                                const load = data as EditorMessageImportTutorialRequest;
+                                const load = data as pxt.editor.EditorMessageImportTutorialRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.importTutorialAsync(load.markdown));
                             }
                             case "proxytosim": {
-                                const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
+                                const simmsg = data as pxt.editor.EditorMessageSimulatorMessageProxyRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.proxySimulatorMessage(simmsg.content));
                             }
                             case "renderblocks": {
-                                const rendermsg = data as EditorMessageRenderBlocksRequest;
+                                const rendermsg = data as pxt.editor.EditorMessageRenderBlocksRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.renderBlocksAsync(rendermsg))
                                     .then(r => {
@@ -549,7 +154,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     });
                             }
                             case "runeval": {
-                                const evalmsg = data as EditorMessageRunEvalRequest;
+                                const evalmsg = data as pxt.editor.EditorMessageRunEvalRequest;
                                 const plan = evalmsg.validatorPlan;
                                 return Promise.resolve()
                                     .then(() => {
@@ -560,7 +165,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     });
                             }
                             case "renderpython": {
-                                const rendermsg = data as EditorMessageRenderPythonRequest;
+                                const rendermsg = data as pxt.editor.EditorMessageRenderPythonRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.renderPythonAsync(rendermsg))
                                     .then(r => {
@@ -568,17 +173,17 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     });
                             }
                             case "toggletrace": {
-                                const togglemsg = data as EditorMessageToggleTraceRequest;
+                                const togglemsg = data as pxt.editor.EditorMessageToggleTraceRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.toggleTrace(togglemsg.intervalSpeed));
                             }
                             case "settracestate": {
-                                const trcmsg = data as EditorMessageSetTraceStateRequest;
+                                const trcmsg = data as pxt.editor.EditorMessageSetTraceStateRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
                             }
                             case "setsimulatorfullscreen": {
-                                const fsmsg = data as EditorMessageSetSimulatorFullScreenRequest;
+                                const fsmsg = data as pxt.editor.EditorMessageSetSimulatorFullScreenRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.setSimulatorFullScreen(fsmsg.enabled));
                             }
@@ -587,7 +192,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     .then(() => projectView.toggleHighContrast());
                             }
                             case "sethighcontrast": {
-                                const hcmsg = data as EditorMessageSetHighContrastRequest;
+                                const hcmsg = data as pxt.editor.EditorMessageSetHighContrastRequest;
                                 return Promise.resolve()
                                     .then(() => projectView.setHighContrast(hcmsg.on));
                             }
@@ -609,36 +214,36 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                             versions: pxt.appTarget.versions,
                                             locale: ts.pxtc.Util.userLanguage(),
                                             availableLocales: pxt.appTarget.appTheme.availableLocales
-                                        } as InfoMessage;
+                                        } as pxt.editor.InfoMessage;
                                     });
                             }
                             case "shareproject": {
-                                const msg = data as EditorShareRequest;
+                                const msg = data as pxt.editor.EditorShareRequest;
                                 return projectView.anonymousPublishHeaderByIdAsync(msg.headerId, msg.projectName)
                                     .then(scriptInfo => {
                                         resp = scriptInfo;
                                     });
                             }
                             case "savelocalprojectstocloud": {
-                                const msg = data as EditorMessageSaveLocalProjectsToCloud;
+                                const msg = data as pxt.editor.EditorMessageSaveLocalProjectsToCloud;
                                 return projectView.saveLocalProjectsToCloudAsync(msg.headerIds)
                                     .then(guidMap => {
-                                        resp = <EditorMessageSaveLocalProjectsToCloudResponse>{
+                                        resp = <pxt.editor.EditorMessageSaveLocalProjectsToCloudResponse>{
                                             headerIdMap: guidMap
                                         };
                                     })
                             }
                             case "requestprojectcloudstatus": {
                                 // Responses are sent as separate "projectcloudstatus" messages.
-                                const msg = data as EditorMessageRequestProjectCloudStatus;
+                                const msg = data as pxt.editor.EditorMessageRequestProjectCloudStatus;
                                 return projectView.requestProjectCloudStatus(msg.headerIds);
                             }
                             case "convertcloudprojectstolocal": {
-                                const msg = data as EditorMessageConvertCloudProjectsToLocal;
+                                const msg = data as pxt.editor.EditorMessageConvertCloudProjectsToLocal;
                                 return projectView.convertCloudProjectsToLocal(msg.userId);
                             }
                             case "setlanguagerestriction": {
-                                const msg = data as EditorSetLanguageRestriction;
+                                const msg = data as pxt.editor.EditorSetLanguageRestriction;
                                 if (msg.restriction === "no-blocks") {
                                     console.warn("no-blocks language restriction is not supported");
                                     throw new Error("no-blocks language restriction is not supported")
@@ -667,7 +272,7 @@ export function enableControllerAnalytics() {
     const te = pxt.tickEvent;
     pxt.tickEvent = function (id: string, data?: pxt.Map<string | number>): void {
         if (te) te(id, data);
-        postHostMessageAsync(<EditorMessageEventRequest>{
+        postHostMessageAsync(<pxt.editor.EditorMessageEventRequest>{
             type: 'pxthost',
             action: 'event',
             tick: id,
@@ -680,7 +285,7 @@ export function enableControllerAnalytics() {
     pxt.reportException = function (err: any, data: pxt.Map<string>): void {
         if (rexp) rexp(err, data);
         try {
-            postHostMessageAsync(<EditorMessageEventRequest>{
+            postHostMessageAsync(<pxt.editor.EditorMessageEventRequest>{
                 type: 'pxthost',
                 action: 'event',
                 tick: 'error',
@@ -696,7 +301,7 @@ export function enableControllerAnalytics() {
     const re = pxt.reportError;
     pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string | number>): void {
         if (re) re(cat, msg, data);
-        postHostMessageAsync(<EditorMessageEventRequest>{
+        postHostMessageAsync(<pxt.editor.EditorMessageEventRequest>{
             type: 'pxthost',
             action: 'event',
             tick: 'error',
@@ -707,7 +312,7 @@ export function enableControllerAnalytics() {
     }
 }
 
-function sendResponse(request: EditorMessage, resp: any, success: boolean, error: any) {
+function sendResponse(request: pxt.editor.EditorMessage, resp: any, success: boolean, error: any) {
     if (request.response) {
         window.parent.postMessage({
             type: request.type,
@@ -729,8 +334,8 @@ export function shouldPostHostMessages() {
 /**
  * Posts a message from the editor to the host
  */
-export function postHostMessageAsync(msg: EditorMessageRequest): Promise<EditorMessageResponse> {
-    return new Promise<EditorMessageResponse>((resolve, reject) => {
+export function postHostMessageAsync(msg: pxt.editor.EditorMessageRequest): Promise<pxt.editor.EditorMessageResponse> {
+    return new Promise<pxt.editor.EditorMessageResponse>((resolve, reject) => {
         const env = pxt.Util.clone(msg);
         env.id = ts.pxtc.Util.guidGen();
         if (msg.response)

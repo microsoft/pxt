@@ -12,7 +12,7 @@ import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
 import { fireClickOnEnter } from "./util";
-import { IProjectView, ISettingsProps, ProjectCreationOptions, UserInfo } from "../../pxteditor";
+import { IProjectView, ISettingsProps, UserInfo } from "../../pxteditor";
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {
@@ -1461,7 +1461,7 @@ export interface NewProjectDialogState {
 }
 
 export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectDialogState> {
-    private createProjectCb: (projectState: ProjectCreationOptions) => void;
+    private createProjectCb: (projectState: pxt.editor.ProjectCreationOptions) => void;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -1501,7 +1501,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
 
     promptUserAsync() {
         this.show();
-        return new Promise<ProjectCreationOptions>(resolve => {
+        return new Promise<pxt.editor.ProjectCreationOptions>(resolve => {
             this.createProjectCb = resolve;
         });
     }

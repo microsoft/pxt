@@ -1,4 +1,5 @@
 /// <reference path="./lib/skillMap.d.ts" />
+/// <reference path="../../localtypings/iframeController.d.ts" />
 
 import React from 'react';
 import { connect } from 'react-redux';

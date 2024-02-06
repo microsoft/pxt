@@ -20,7 +20,7 @@ import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
-import { CreateEvent, IProjectView, MuteState, SimState, initEditorExtensionsAsync, UIEvent } from "../../pxteditor";
+import { IProjectView, MuteState, SimState, initEditorExtensionsAsync } from "../../pxteditor";
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -617,7 +617,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.cleanUpShadowBlocks();
                 if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
                     this.parent.setState({ hideEditorFloats: false });
-                workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as CreateEvent);
+                workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.CreateEvent);
             }
             else if (ev.type == Blockly.Events.VAR_CREATE || ev.type == Blockly.Events.VAR_RENAME || ev.type == Blockly.Events.VAR_DELETE) {
                 // a new variable name is used or blocks were removed,
@@ -1546,7 +1546,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected helpButtonCallback(group?: string) {
         pxt.debug(`${group} help icon clicked.`);
-        workspace.fireEvent({ type: 'ui', editor: 'blocks', action: 'groupHelpClicked', data: { group } } as UIEvent);
+        workspace.fireEvent({ type: 'ui', editor: 'blocks', action: 'groupHelpClicked', data: { group } } as pxt.editor.UIEvent);
     }
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {

@@ -6,8 +6,8 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 type Header = pxt.workspace.Header;
-type ScriptText = pxteditor.workspace.ScriptText;
-type WorkspaceProvider = pxteditor.workspace.WorkspaceProvider;
+type ScriptText = pxt.workspace.ScriptText;
+type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 let apiAsync = (path: string, data?: any) => {
     return U.requestAsync({
@@ -25,7 +25,7 @@ export function setApiAsync(f: (path: string, data?: any) => Promise<any>) {
 function getAsync(h: Header) {
     return apiAsync("pkg/" + h.path)
         .then((resp: pxt.FsPkg) => {
-            let r: pxteditor.workspace.File = {
+            let r: pxt.workspace.File = {
                 header: h,
                 text: {},
                 version: null
@@ -40,7 +40,7 @@ function getAsync(h: Header) {
         })
 }
 
-function setAsync(h: Header, prevVersion: pxteditor.workspace.Version, text?: ScriptText): Promise<pxteditor.workspace.Version> {
+function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptText): Promise<pxt.workspace.Version> {
     let pkg: pxt.FsPkg = {
         files: [],
         config: null,
@@ -127,7 +127,7 @@ function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise
     })
 }
 
-function listAssetsAsync(id: string): Promise<pxteditor.workspace.Asset[]> {
+function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
     return apiAsync("pkgasset/" + id).then(r => r.files)
 }
 

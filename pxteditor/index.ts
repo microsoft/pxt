@@ -11,9 +11,7 @@ import * as experiments from "./experiments";
 
 export * from "./editor";
 export * from "./editorcontroller";
-export * from "./events";
 export * from "./monaco-fields/monacoFieldEditor";
-export * from "./extension";
 
 export {
     history,

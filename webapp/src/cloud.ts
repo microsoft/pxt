@@ -6,9 +6,9 @@ import * as app from "./app";
 
 import * as pxteditor from "../../pxteditor";
 
-type File = pxteditor.workspace.File;
+type File = pxt.workspace.File;
 type Header = pxt.workspace.Header;
-type ScriptText = pxteditor.workspace.ScriptText;
+type ScriptText = pxt.workspace.ScriptText;
 
 import U = pxt.Util;
 
@@ -564,7 +564,7 @@ export async function requestProjectCloudStatus(headerIds: string[]): Promise<vo
     for (const id of headerIds) {
         const cloudMd = getCloudTempMetadata(id);
         const cloudStatus = cloudMd.cloudStatus();
-        const msg: pxteditor.EditorMessageProjectCloudStatus = {
+        const msg: pxt.editor.EditorMessageProjectCloudStatus = {
             type: "pxteditor",
             action: "projectcloudstatus",
             headerId: cloudMd.headerId,

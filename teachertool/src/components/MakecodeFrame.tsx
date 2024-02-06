@@ -1,4 +1,4 @@
-/// <reference path="../../../built/pxteditor.d.ts" />
+/// <reference path="../../../localtypings/iframeController.d.ts" />
 
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/MakeCodeFrame.module.scss";

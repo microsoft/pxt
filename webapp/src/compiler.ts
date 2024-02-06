@@ -3,7 +3,7 @@ import * as core from "./core";
 import * as workspace from "./workspace";
 
 import U = pxt.Util;
-import { EditorWorkspaceDiagnostics, postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 
 function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
@@ -80,7 +80,7 @@ function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagno
                 endLine: diag.endLine,
                 endColumn: diag.endColumn
             }))
-        } as EditorWorkspaceDiagnostics);
+        } as pxt.editor.EditorWorkspaceDiagnostics);
     }
 }
 

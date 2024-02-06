@@ -25,10 +25,10 @@ import Cloud = pxt.Cloud;
 const sha1 = require("crypto-js/sha1");
 
 type Header = pxt.workspace.Header;
-type ScriptText = pxteditor.workspace.ScriptText;
-type WorkspaceProvider = pxteditor.workspace.WorkspaceProvider;
+type ScriptText = pxt.workspace.ScriptText;
+type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
-type File = pxteditor.workspace.File;
+type File = pxt.workspace.File;
 
 let allScripts: File[] = [];
 
@@ -1655,8 +1655,8 @@ export function installByIdAsync(id: string) {
 
 // this promise is set while a sync is in progress
 // cleared when sync is done.
-let syncAsyncPromise: Promise<pxteditor.EditorSyncState>;
-export function syncAsync(): Promise<pxteditor.EditorSyncState> {
+let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
+export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     pxt.debug("workspace: sync")
     if (syncAsyncPromise) return syncAsyncPromise;
     return syncAsyncPromise = impl.listAsync()
@@ -1734,7 +1734,7 @@ export function saveAssetAsync(id: string, filename: string, data: Uint8Array): 
         return Promise.reject(new Error(lf("Assets not supported here.")))
 }
 
-export function listAssetsAsync(id: string): Promise<pxteditor.workspace.Asset[]> {
+export function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
     if (impl.listAssetsAsync)
         return impl.listAssetsAsync(id)
     return Promise.resolve([])
@@ -1744,7 +1744,7 @@ export function isBrowserWorkspace() {
     return impl === indexedDBWorkspace.provider;
 }
 
-export function fireEvent(ev: pxteditor.EditorEvent) {
+export function fireEvent(ev: pxt.editor.EditorEvent) {
     if (impl.fireEvent)
         return impl.fireEvent(ev)
     // otherwise, NOP

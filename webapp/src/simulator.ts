@@ -4,7 +4,7 @@
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import U = pxt.U
-import { EditorSimulatorStoppedEvent, MuteState, postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+import { MuteState, postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 
 interface SimulatorConfig {
     // return true if a visible breakpoint was found
@@ -251,7 +251,7 @@ function postSimEditorEvent(subtype: string, exception?: string) {
             action: "simevent",
             subtype: subtype as any,
             exception: exception
-        } as EditorSimulatorStoppedEvent);
+        } as pxt.editor.EditorSimulatorStoppedEvent);
     }
 }
 

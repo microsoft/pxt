@@ -1,9 +1,9 @@
 import * as pxteditor from "../../pxteditor";
 
 type Header = pxt.workspace.Header;
-type Project = pxteditor.workspace.Project;
-type ScriptText = pxteditor.workspace.ScriptText;
-type WorkspaceProvider = pxteditor.workspace.WorkspaceProvider;
+type Project = pxt.workspace.Project;
+type ScriptText = pxt.workspace.ScriptText;
+type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 import U = pxt.Util;
 
 export let projects: pxt.Map<Project> = {};
@@ -23,7 +23,7 @@ function listAsync() {
     return Promise.resolve(U.values(projects).map(p => p.header))
 }
 
-function getAsync(h: Header): Promise<pxteditor.workspace.File> {
+function getAsync(h: Header): Promise<pxt.workspace.File> {
     let p = projects[h.id];
     return Promise.resolve({
         header: h,

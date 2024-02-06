@@ -2,25 +2,25 @@ import * as mem from "./memoryworkspace";
 import * as pxteditor from "../../pxteditor";
 
 type Header = pxt.workspace.Header;
-type ScriptText = pxteditor.workspace.ScriptText;
-type WorkspaceProvider = pxteditor.workspace.WorkspaceProvider;
+type ScriptText = pxt.workspace.ScriptText;
+type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 function loadedAsync(): Promise<void> {
-    return pxteditor.postHostMessageAsync(<pxteditor.EditorWorkspaceSyncRequest>{
+    return pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
         type: "pxthost",
         action: "workspaceloaded",
         response: true
     }).then(() => { })
 }
 
-let lastSyncState: pxteditor.EditorSyncState
+let lastSyncState: pxt.editor.EditorSyncState
 
 function listAsync() {
-    return pxteditor.postHostMessageAsync(<pxteditor.EditorWorkspaceSyncRequest>{
+    return pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
         type: "pxthost",
         action: "workspacesync",
         response: true
-    }).then((msg: pxteditor.EditorWorkspaceSyncResponse) => {
+    }).then((msg: pxt.editor.EditorWorkspaceSyncResponse) => {
         (msg.projects || []).forEach(mem.merge);
 
         lastSyncState = msg.editor
@@ -34,7 +34,7 @@ function listAsync() {
 
 function getSyncState() { return lastSyncState }
 
-function getAsync(h: Header): Promise<pxteditor.workspace.File> {
+function getAsync(h: Header): Promise<pxt.workspace.File> {
     return mem.provider.getAsync(h)
 }
 
@@ -42,7 +42,7 @@ function setAsync(h: Header, prevVer: any, text?: ScriptText) {
     return mem.provider.setAsync(h, prevVer, text)
         .then(() => {
             const projectText = (text || (mem.projects[h.id] && mem.projects[h.id].text));
-            return pxteditor.postHostMessageAsync(<pxteditor.EditorWorkspaceSaveRequest>{
+            return pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSaveRequest>{
                     type: "pxthost",
                     action: "workspacesave",
                     project: { header: h, text: projectText },
@@ -53,16 +53,16 @@ function setAsync(h: Header, prevVer: any, text?: ScriptText) {
 
 function resetAsync(): Promise<void> {
     return mem.provider.resetAsync()
-        .then(() => pxteditor.postHostMessageAsync(<pxteditor.EditorWorkspaceSyncRequest>{
+        .then(() => pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
             type: "pxthost",
             action: "workspacereset",
             response: true
         })).then(() => { })
 }
 
-function fireEvent(ev: pxteditor.EditorEvent) {
+function fireEvent(ev: pxt.editor.EditorEvent) {
     // Send the message up the chain
-    pxteditor.postHostMessageAsync(<pxteditor.EditorWorkspaceEvent>{
+    pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceEvent>{
         type: "pxthost",
         action: "workspaceevent",
         response: false,
