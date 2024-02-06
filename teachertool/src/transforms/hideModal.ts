@@ -1,14 +1,13 @@
 import { logDebug } from "../services/loggingService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
-import { ModalType } from "../types";
 
-export function hideModal(modal: ModalType) {
+export function hideModal() {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
-    if (teacherTool.modal === modal) {
+    if (teacherTool.modal !== undefined) {
         dispatch(Actions.hideModal());
     } else {
-        logDebug(`Trying to hide '${modal}' model when it was not active`);
+        logDebug(`Trying to hide model when no modal is active`);
     }
 }

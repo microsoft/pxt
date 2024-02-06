@@ -8,6 +8,7 @@ import { TabPanel } from "./TabPanel";
 import { DebugInput } from "./DebugInput";
 import { EvalResultDisplay } from "./EvalResultDisplay";
 import { ActiveRubricDisplay } from "./ActiveRubricDisplay";
+import { ActionsMenu } from "./ActionsMenu";
 
 interface IProps {}
 
@@ -23,7 +24,9 @@ export const RubricWorkspace: React.FC<IProps> = () => {
                 {/* Center */}
                 <></>
                 {/* Right */}
-                <></>
+                <>
+                    <ActionsMenu />
+                </>
             </Toolbar>
             <TabPanel name="rubric">
                 <DebugInput />
