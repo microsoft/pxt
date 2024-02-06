@@ -4,9 +4,9 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 
-import Cloud = pxt.Cloud;
+import { experiments } from "../../pxteditor";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface GenericBannerProps extends ISettingsProps {
     id: string;
@@ -102,7 +102,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
 
     clearExperiments() {
         pxt.tickEvent("banner.experiments", undefined, { interactiveConsent: true });
-        pxt.editor.experiments.clear();
+        experiments.clear();
         this.props.parent.reloadEditor();
     }
 
@@ -113,7 +113,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
-        const showExperiments = pxt.editor.experiments.someEnabled() && !/experiments=1/.test(window.location.href);
+        const showExperiments = experiments.someEnabled() && !/experiments=1/.test(window.location.href);
 
         if (showExperiments) {
             const displayTime = 20 * 1000; // 20 seconds

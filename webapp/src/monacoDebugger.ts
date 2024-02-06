@@ -1,5 +1,4 @@
 /// <reference path="../../localtypings/monaco.d.ts" />
-/// <reference path="../../built/pxteditor.d.ts" />
 
 import * as pkg from "./package";
 

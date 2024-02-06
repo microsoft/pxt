@@ -11,9 +11,10 @@ import * as electron from "./electron";
 import * as workspace from "./workspace";
 import { SearchInput } from "./components/searchInput";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
-
 import Cloud = pxt.Cloud;
+import { experiments } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 export enum ScriptSearchMode {
     Extensions,
@@ -59,7 +60,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         if (back === true) this.props.parent.openPreviousEditor();
         // something changed?
         if (this.state.mode == ScriptSearchMode.Experiments &&
-            this.state.experimentsState !== pxt.editor.experiments.state())
+            this.state.experimentsState !== experiments.state())
             this.props.parent.reloadEditor();
     }
 
@@ -104,7 +105,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             searchFor: '',
             mode: ScriptSearchMode.Experiments,
             closeIcon: true,
-            experimentsState: pxt.editor.experiments.state(),
+            experimentsState: experiments.state(),
             features: undefined,
             resolve: undefined
         });
@@ -203,9 +204,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     }
 
-    fetchExperiments(): pxt.editor.experiments.Experiment[] {
+    fetchExperiments(): experiments.Experiment[] {
         if (this.state.mode != ScriptSearchMode.Experiments) return [];
-        return pxt.editor.experiments.all();
+        return experiments.all();
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
@@ -308,9 +309,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
     }
 
-    toggleExperiment(experiment: pxt.editor.experiments.Experiment) {
-        pxt.editor.experiments.toggle(experiment);
-        pxt.tickEvent(`experiments.toggle`, { "experiment": experiment.id, "enabled": pxt.editor.experiments.isEnabled(experiment) ? 1 : 0 }, { interactiveConsent: true })
+    toggleExperiment(experiment: experiments.Experiment) {
+        experiments.toggle(experiment);
+        pxt.tickEvent(`experiments.toggle`, { "experiment": experiment.id, "enabled": experiments.isEnabled(experiment) ? 1 : 0 }, { interactiveConsent: true })
         this.forceUpdate();
     }
 
@@ -333,7 +334,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
         const local = this.fetchLocalRepositories();
-        const experiments = this.fetchExperiments();
+        const currentExperiments = this.fetchExperiments();
         const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
@@ -388,7 +389,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 : "/extensions";
 
         const experimentsChanged = mode == ScriptSearchMode.Experiments
-            && experimentsState != pxt.editor.experiments.state();
+            && experimentsState != experiments.state();
 
         const classes = this.props.parent.createModalClasses("searchdialog");
 
@@ -496,7 +497,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
-                            {experiments.map(experiment =>
+                            {currentExperiments.map(experiment =>
                                 <ScriptSearchCodeCard
                                     name={experiment.name}
                                     scr={experiment}
@@ -504,8 +505,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     description={experiment.description}
                                     key={'exp' + experiment.id}
                                     role="button"
-                                    label={pxt.editor.experiments.isEnabled(experiment) ? lf("Enabled") : lf("Disabled")}
-                                    labelClass={pxt.editor.experiments.isEnabled(experiment) ? "green right ribbon" : "grey right ribbon"}
+                                    label={experiments.isEnabled(experiment) ? lf("Enabled") : lf("Disabled")}
+                                    labelClass={experiments.isEnabled(experiment) ? "green right ribbon" : "grey right ribbon"}
                                     onCardClick={this.toggleExperiment}
                                     feedbackUrl={experiment.feedbackUrl}
                                 />

@@ -1,9 +1,10 @@
-/// <reference path="../../built/pxteditor.d.ts"/>
+/// <reference path="../../localtypings/pxteditor.d.ts"/>
 
 /* eslint-disable import/no-unassigned-import mocha-no-side-effect-code */
 import "mocha";
 import * as chai from "chai";
 import * as dmp from "diff-match-patch";
+import * as pxteditor from "../../pxteditor";
 
 pxt.appTarget = {
     versions: {
@@ -35,7 +36,7 @@ const versions = [
     "That should do it", // 800
 ];
 
-function checkTimestamp(e: pxt.workspace.HistoryEntry, value: number) {
+function checkTimestamp(e: pxteditor.history.HistoryEntry, value: number) {
     chai.expect(e.timestamp).to.equal(value);
     chai.expect(e.editorVersion).to.equal(value + "");
 }
@@ -46,7 +47,7 @@ describe("history", () => {
 
         for (let i = 0; history.length > 0; i++) {
             chai.expect(text[filename]).to.equal(versions[versions.length - 1 - i]);
-            text = pxt.workspace.applyDiff(text, history.pop(), patchText);
+            text = pxteditor.history.applyDiff(text, history.pop(), patchText);
         }
 
         chai.expect(text[filename]).to.equal(versions[0]);
@@ -55,13 +56,13 @@ describe("history", () => {
     it("should collapse entries at a given interval", () => {
         let { text, history } = createTestHistory();
 
-        const collapsed = pxt.workspace.collapseHistory([...history], {...text}, { interval: 250 }, diffText, patchText);
+        const collapsed = pxteditor.history.collapseHistory([...history], {...text}, { interval: 250 }, diffText, patchText);
 
         chai.expect(collapsed.length).to.equal(3);
 
         for (let i = 0; collapsed.length > 0; i++) {
             const entry = collapsed.pop();
-            text = pxt.workspace.applyDiff(text, entry, patchText);
+            text = pxteditor.history.applyDiff(text, entry, patchText);
             if (collapsed.length) {
                 chai.expect(text[filename]).to.equal(versions[collapsed[collapsed.length - 1].timestamp / 100]);
             }
@@ -72,7 +73,7 @@ describe("history", () => {
     it("should respect a min timestamp when collapsing", () => {
         let { text, history } = createTestHistory();
 
-        const collapsed = pxt.workspace.collapseHistory([...history], {...text}, { interval: 250, minTime: 300 }, diffText, patchText);
+        const collapsed = pxteditor.history.collapseHistory([...history], {...text}, { interval: 250, minTime: 300 }, diffText, patchText);
 
         chai.expect(collapsed.length).to.equal(4);
         checkTimestamp(collapsed[0], 100);
@@ -82,7 +83,7 @@ describe("history", () => {
 
         for (let i = 0; collapsed.length > 0; i++) {
             const entry = collapsed.pop();
-            text = pxt.workspace.applyDiff(text, entry, patchText);
+            text = pxteditor.history.applyDiff(text, entry, patchText);
             if (collapsed.length) {
                 chai.expect(text[filename]).to.equal(versions[collapsed[collapsed.length - 1].timestamp / 100]);
             }
@@ -93,7 +94,7 @@ describe("history", () => {
     it("should respect a max timestamp when collapsing", () => {
         let { text, history } = createTestHistory();
 
-        const collapsed = pxt.workspace.collapseHistory([...history], {...text}, { interval: 250, maxTime: 500 }, diffText, patchText);
+        const collapsed = pxteditor.history.collapseHistory([...history], {...text}, { interval: 250, maxTime: 500 }, diffText, patchText);
 
         chai.expect(collapsed.length).to.equal(5);
         checkTimestamp(collapsed[0], 200);
@@ -104,7 +105,7 @@ describe("history", () => {
 
         for (let i = 0; collapsed.length > 0; i++) {
             const entry = collapsed.pop();
-            text = pxt.workspace.applyDiff(text, entry, patchText);
+            text = pxteditor.history.applyDiff(text, entry, patchText);
             if (collapsed.length) {
                 chai.expect(text[filename]).to.equal(versions[collapsed[collapsed.length - 1].timestamp / 100]);
             }
@@ -115,7 +116,7 @@ describe("history", () => {
     it("should respect a min + max timestamp when collapsing", () => {
         let { text, history } = createTestHistory();
 
-        const collapsed = pxt.workspace.collapseHistory([...history], {...text}, { interval: 250, minTime: 400, maxTime: 500 }, diffText, patchText);
+        const collapsed = pxteditor.history.collapseHistory([...history], {...text}, { interval: 250, minTime: 400, maxTime: 500 }, diffText, patchText);
 
         chai.expect(collapsed.length).to.equal(7);
         checkTimestamp(collapsed[0], 100);
@@ -128,7 +129,7 @@ describe("history", () => {
 
         for (let i = 0; collapsed.length > 0; i++) {
             const entry = collapsed.pop();
-            text = pxt.workspace.applyDiff(text, entry, patchText);
+            text = pxteditor.history.applyDiff(text, entry, patchText);
             if (collapsed.length) {
                 chai.expect(text[filename]).to.equal(versions[collapsed[collapsed.length - 1].timestamp / 100]);
             }
@@ -141,28 +142,28 @@ describe("history", () => {
         const v2 = { "main.ts": versions[1], "custom.blocks": versions[2] };
         const v3 = { "custom.blocks": versions[3] };
 
-        const history: pxt.workspace.HistoryEntry[] = [];
-        history.push(pxt.workspace.diffScriptText(v1, v2, Date.now(), diffText));
-        history.push(pxt.workspace.diffScriptText(v2, v3, Date.now(), diffText));
+        const history: pxteditor.history.HistoryEntry[] = [];
+        history.push(pxteditor.history.diffScriptText(v1, v2, Date.now(), diffText));
+        history.push(pxteditor.history.diffScriptText(v2, v3, Date.now(), diffText));
 
-        const res1 = pxt.workspace.applyDiff({...v3}, history.pop(), patchText);
+        const res1 = pxteditor.history.applyDiff({...v3}, history.pop(), patchText);
         chai.expect(res1["main.ts"]).to.equal(versions[1]);
         chai.expect(res1["custom.blocks"]).to.equal(versions[2]);
 
-        const res2 = pxt.workspace.applyDiff({...res1}, history.pop(), patchText);
+        const res2 = pxteditor.history.applyDiff({...res1}, history.pop(), patchText);
         chai.expect(res2["main.ts"]).to.equal(versions[0]);
         chai.expect(res2["custom.blocks"]).to.equal(undefined);
     });
 })
 
 function createTestHistory() {
-    const history: pxt.workspace.HistoryEntry[] = [];
+    const history: pxteditor.history.HistoryEntry[] = [];
 
     let previous = { [filename]: versions[0] };
 
     for (let i = 1; i < versions.length; i++) {
         let current = { [filename]: versions[i] };
-        history.push(pxt.workspace.diffScriptText(previous, current, Date.now(), diffText));
+        history.push(pxteditor.history.diffScriptText(previous, current, Date.now(), diffText));
         history[history.length - 1].timestamp = 100 * i;
         history[history.length - 1].editorVersion = "" + (100 * i);
         previous = {...current};
@@ -220,18 +221,18 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxt.workspace.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
 
             prevText = nextText;
         }
 
-        const history = pxt.workspace.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
+        const history = pxteditor.history.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
 
         chai.expect(history.entries.length).to.equal(testVersions.length - 1);
 
         let currentText = prevText;
         for (let i = 0; i < history.entries.length; i++) {
-            currentText = pxt.workspace.applyDiff(currentText, history.entries[history.entries.length - 1 - i], patchText);
+            currentText = pxteditor.history.applyDiff(currentText, history.entries[history.entries.length - 1 - i], patchText);
             const comp = testVersions[testVersions.length - 2 - i];
 
             chai.expect(currentText[pxt.MAIN_BLOCKS]).to.equal(comp[pxt.MAIN_BLOCKS])
@@ -246,19 +247,19 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxt.workspace.updateHistory(prevText, nextText, i * ONE_MINUTE, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * ONE_MINUTE, [], diffText, patchText);
 
             prevText = nextText;
         }
 
-        const history = pxt.workspace.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
+        const history = pxteditor.history.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
 
         chai.expect(history.entries.length).to.equal(Math.floor((testVersions.length / 5)) + 1);
 
         let currentText = prevText;
         for (let i = 0; i < history.entries.length; i++) {
             const index = history.entries.length - 1 - i;
-            currentText = pxt.workspace.applyDiff(currentText, history.entries[index], patchText);
+            currentText = pxteditor.history.applyDiff(currentText, history.entries[index], patchText);
 
             const compIndex = index ? Math.floor(history.entries[index - 1].timestamp / ONE_MINUTE) : 0;
             const comp = testVersions[compIndex];
@@ -275,19 +276,19 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxt.workspace.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
 
             prevText = nextText;
         }
 
-        const history = pxt.workspace.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
+        const history = pxteditor.history.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
 
         chai.expect(history.snapshots.length).to.equal(testVersions.length - 1);
 
         let currentText = prevText;
         for (let i = 0; i < history.snapshots.length; i++) {
             const index = history.snapshots.length - 1 - i;
-            currentText = pxt.workspace.applySnapshot(currentText, history.snapshots[index].text)
+            currentText = pxteditor.history.applySnapshot(currentText, history.snapshots[index].text)
             const comp = testVersions[testVersions.length - 2 - i];
 
             chai.expect(currentText[pxt.MAIN_BLOCKS]).to.equal(comp[pxt.MAIN_BLOCKS])
@@ -304,18 +305,18 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxt.workspace.updateHistory(prevText, nextText, i * period, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * period, [], diffText, patchText);
 
             prevText = nextText;
         }
 
-        const history = pxt.workspace.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
+        const history = pxteditor.history.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
         chai.expect(history.snapshots.length).to.equal(10);
 
         let currentText = prevText;
         for (let i = 0; i < history.snapshots.length; i++) {
             const index = history.snapshots.length - 1 - i;
-            currentText = pxt.workspace.applySnapshot(currentText, history.snapshots[index].text);
+            currentText = pxteditor.history.applySnapshot(currentText, history.snapshots[index].text);
 
             const compIndex = index ? Math.floor(history.snapshots[index].timestamp / period) - 1 : 0;
             const comp = testVersions[compIndex];

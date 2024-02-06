@@ -2,6 +2,10 @@ import { BuiltinCategoryDefinition, BlockDefinition, CategoryNameID } from "./to
 
 import * as monaco from "./monaco";
 
+import ToolboxBlockDefinition = pxt.editor.ToolboxBlockDefinition;
+import ToolboxCategoryDefinition = pxt.editor.ToolboxCategoryDefinition;
+import ToolboxDefinition = pxt.editor.ToolboxDefinition;
+
 let _cachedBuiltinCategories: pxt.Map<BuiltinCategoryDefinition> = null;
 function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
     if (!_cachedBuiltinCategories) {
@@ -678,7 +682,7 @@ export function clearBuiltinBlockCache() {
     builtinBlockCacheByName = undefined;
 }
 
-export function overrideCategory(ns: string, def: pxt.editor.ToolboxCategoryDefinition) {
+export function overrideCategory(ns: string, def: ToolboxCategoryDefinition) {
     const cat = getBuiltinCategory(ns);
     if (def && cat) {
         if (Object.keys(def).length === 0) {
@@ -721,7 +725,7 @@ export function overrideCategory(ns: string, def: pxt.editor.ToolboxCategoryDefi
     }
 }
 
-function blockFromJson(b: pxt.editor.ToolboxBlockDefinition, currentWeight?: number): BlockDefinition {
+function blockFromJson(b: ToolboxBlockDefinition, currentWeight?: number): BlockDefinition {
     return {
         name: b.name,
         snippet: b.snippet,
@@ -741,7 +745,7 @@ function blockFromJson(b: pxt.editor.ToolboxBlockDefinition, currentWeight?: num
     }
 }
 
-function blockToJson(b: BlockDefinition): pxt.editor.ToolboxBlockDefinition {
+function blockToJson(b: BlockDefinition): ToolboxBlockDefinition {
     return {
         name: b.name,
         snippet: b.snippet,
@@ -759,7 +763,7 @@ function blockToJson(b: BlockDefinition): pxt.editor.ToolboxBlockDefinition {
     }
 }
 
-function categoryToJson(c: BuiltinCategoryDefinition): pxt.editor.ToolboxCategoryDefinition {
+function categoryToJson(c: BuiltinCategoryDefinition): ToolboxCategoryDefinition {
     return {
         name: c.name,
         icon: c.attributes.icon,
@@ -770,7 +774,7 @@ function categoryToJson(c: BuiltinCategoryDefinition): pxt.editor.ToolboxCategor
     }
 }
 
-export function overrideToolbox(def: pxt.editor.ToolboxDefinition) {
+export function overrideToolbox(def: ToolboxDefinition) {
     overrideCategory(CategoryNameID.Loops, def.loops);
     overrideCategory(CategoryNameID.Logic, def.logic);
     overrideCategory(CategoryNameID.Variables, def.variables);
@@ -780,7 +784,7 @@ export function overrideToolbox(def: pxt.editor.ToolboxDefinition) {
     overrideCategory(CategoryNameID.Functions, def.functions);
 }
 
-export function getToolboxDefinition(): pxt.editor.ToolboxDefinition {
+export function getToolboxDefinition(): ToolboxDefinition {
     return {
         loops: categoryToJson(getBuiltinCategory(CategoryNameID.Loops)),
         logic: categoryToJson(getBuiltinCategory(CategoryNameID.Logic)),

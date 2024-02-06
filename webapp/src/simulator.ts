@@ -4,6 +4,9 @@
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import U = pxt.U
+import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+
+
 
 interface SimulatorConfig {
     // return true if a visible breakpoint was found
@@ -244,8 +247,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
-    if (pxt.editor.shouldPostHostMessages()) {
-        pxt.editor.postHostMessageAsync({
+    if (shouldPostHostMessages()) {
+        postHostMessageAsync({
             type: "pxthost",
             action: "simevent",
             subtype: subtype as any,

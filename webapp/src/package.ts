@@ -6,6 +6,8 @@ import * as compiler from "./compiler";
 import Util = pxt.Util;
 import { HOSTCACHE_TABLE, getObjectStoreAsync } from "./idbworkspace";
 
+import IFile = pxt.editor.IFile;
+
 let extWeight: pxt.Map<number> = {
     "ts": 10,
     "blocks": 20,
@@ -21,7 +23,7 @@ export function setupAppTarget(trgbundle: pxt.TargetBundle) {
 const GENERATED_EXTENSION = ".g."
 
 
-export class File implements pxt.editor.IFile {
+export class File implements IFile {
     inSyncWithEditor = true;
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
