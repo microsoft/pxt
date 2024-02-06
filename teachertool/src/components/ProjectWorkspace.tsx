@@ -11,14 +11,7 @@ interface IProps {}
 export const ProjectWorkspace: React.FC<IProps> = () => {
     return (
         <div className={css.panel}>
-            <Toolbar>
-                {/* Left */}
-                <></>
-                {/* Center */}
-                <></>
-                {/* Right */}
-                <></>
-            </Toolbar>
+            <Toolbar />
             <ShareLinkInput />
             <MakeCodeFrame />
         </div>

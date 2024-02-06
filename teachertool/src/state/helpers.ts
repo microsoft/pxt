@@ -3,6 +3,7 @@ import { CatalogCriteria, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { Rubric } from "../types/rubric";
 import { stateAndDispatch } from "./appStateContext";
+import { AppState } from "./state";
 
 export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefined {
     const { state } = stateAndDispatch();
@@ -40,4 +41,8 @@ export function verifyRubricIntegrity(rubric: Rubric): {
         }
     }
     return { valid: invalidCriteria.length === 0, validCriteria, invalidCriteria };
+}
+
+export function isProjectLoaded(state: AppState) {
+    return !!state.projectMetadata;
 }
