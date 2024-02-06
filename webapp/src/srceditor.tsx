@@ -1,7 +1,9 @@
 import * as pkg from "./package";
 import * as core from "./core";
 import * as React from "react";
-import { IEditor, IProjectView } from "../../pxteditor/editor";
+
+import IEditor = pxt.editor.IEditor;
+import IProjectView = pxt.editor.IProjectView;
 
 export type ViewState = any;
 

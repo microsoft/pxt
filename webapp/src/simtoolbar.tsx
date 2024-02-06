@@ -3,7 +3,10 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import { ISettingsProps, MuteState, SimState } from "../../pxteditor";
+
+import MuteState = pxt.editor.MuteState;
+import SimState = pxt.editor.SimState;
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface SimulatorProps extends ISettingsProps {
     collapsed?: boolean;
@@ -206,6 +209,8 @@ export class PlayButton extends sui.StatelessUIElement<PlayButtonProps> {
                 case SimState.Running:
                     return lf("Stop the simulator");
             }
+
+            return undefined;
         })();
 
         return <sui.Button disabled={!runControlsEnabled} key='runbtn' className={`play-button ${this.props.className || ""} ${(isRunning) ? "stop" : "play"}`} icon={(isRunning) ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} />

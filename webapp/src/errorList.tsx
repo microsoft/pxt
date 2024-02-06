@@ -14,7 +14,7 @@ type GroupedError = {
 
 export interface ErrorListProps {
     isInBlocksEditor: boolean;
-    onSizeChange?: (state: pxteditor.ErrorListState) => void;
+    onSizeChange?: (state: pxt.editor.ErrorListState) => void;
     listenToErrorChanges?: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
     listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: pxt.blocks.BlockDiagnostic[]) => void) => void;
     listenToExceptionChanges?: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
@@ -99,8 +99,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 noValueToDisplay ?
                     undefined
                     : isCollapsed ?
-                        pxteditor.ErrorListState.HeaderOnly
-                        : pxteditor.ErrorListState.Expanded
+                        pxt.editor.ErrorListState.HeaderOnly
+                        : pxt.editor.ErrorListState.Expanded
             );
         }
     }

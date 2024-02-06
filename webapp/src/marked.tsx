@@ -7,7 +7,8 @@ import * as compiler from "./compiler"
 import { MediaPlayer } from "dashjs"
 import dashjs = require("dashjs");
 import { fireClickOnEnter } from "../../react-common/components/util";
-import { ISettingsProps } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;

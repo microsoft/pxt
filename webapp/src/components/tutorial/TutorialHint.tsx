@@ -2,7 +2,8 @@ import * as React from "react";
 
 import { MarkedContent } from "../../marked";
 import { TutorialCallout } from "./TutorialCallout";
-import { IProjectView } from "../../../../pxteditor";
+
+import IProjectView = pxt.editor.IProjectView;
 
 interface TutorialHintProps {
     parent: IProjectView;

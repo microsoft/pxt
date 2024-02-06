@@ -5,7 +5,9 @@ import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as auth from "./auth";
-import { HELP_IMAGE_URI, ISettingsProps } from "../../pxteditor";
+import { HELP_IMAGE_URI } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 const DRAG_THRESHOLD = 5;
 const SELECTED_BORDER_WIDTH = 4;

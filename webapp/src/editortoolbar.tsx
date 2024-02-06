@@ -9,7 +9,10 @@ import * as identity from "./identity";
 import { ProjectView } from "./app";
 import { userPrefersDownloadFlagSet } from "./webusb";
 import { dialogAsync, hideDialog } from "./core";
-import { ISettingsProps, SimState } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
+import SimState = pxt.editor.SimState;
+
 
 const enum View {
     Computer,

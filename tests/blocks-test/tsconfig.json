@@ -1,32 +1,22 @@
 {
     "compilerOptions": {
-        "target": "es2017",
+        "target": "ES2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "module": "commonjs",
-        "outDir": "../built/",
-        "rootDir": "../..",
+        "declaration": true,
+        "outFile": "../../built/tests/blocksrunner.js",
         "newLine": "LF",
-        "sourceMap": false,
-        "moduleResolution": "node",
-        "isolatedModules": false,
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "declaration": false,
-        "preserveConstEnums": true,
         "lib": [
             "dom",
             "dom.iterable",
-            "scripthost",
             "es2017",
             "ES2018.Promise"
         ],
         "types": [
-            "mocha",
-            "chai"
+            "chai",
+            "mocha"
         ],
-        "incremental": false,
+        "sourceMap": false,
         "skipLibCheck": true
     },
     "files": [

@@ -2,13 +2,14 @@
 
 import * as React from "react";
 import * as sui from "./sui";
-import * as core from "./core";
 import * as auth from "./auth";
 import * as data from "./data";
-import * as cloudsync from "./cloudsync";
 import * as cloud from "./cloud";
 import { SignInModal } from "../../react-common/components/profile/SignInModal";
-import { ISettingsProps, UserInfo } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
+import UserInfo = pxt.editor.UserInfo;
+
 
 export type LoginDialogProps = ISettingsProps & {
 };

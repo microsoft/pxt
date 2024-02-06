@@ -92,7 +92,7 @@ declare namespace pxt.workspace {
         deleteAsync?: (h: pxt.workspace.Header, prevVersion: Version) => Promise<void>;
         resetAsync(): Promise<void>;
         loadedAsync?: () => Promise<void>;
-        getSyncState?: () => EditorSyncState;
+        getSyncState?: () => pxt.editor.EditorSyncState;
 
         // optional screenshot support
         saveScreenshotAsync?: (h: pxt.workspace.Header, screenshot: string, icon: string) => Promise<void>;
@@ -101,6 +101,6 @@ declare namespace pxt.workspace {
         saveAssetAsync?: (id: string, filename: string, data: Uint8Array) => Promise<void>;
         listAssetsAsync?: (id: string) => Promise<Asset[]>;
 
-        fireEvent?: (ev: EditorEvent) => void;
+        fireEvent?: (ev: pxt.editor.EditorEvent) => void;
     }
 }

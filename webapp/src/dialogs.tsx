@@ -16,10 +16,12 @@ import { fireClickOnEnter } from "./util";
 import { pairAsync } from "./cmds";
 import { invalidate } from "./data";
 
+import IProjectView = pxt.editor.IProjectView;
+import ImportFileOptions = pxt.editor.ImportFileOptions;
 
 let dontShowDownloadFlag = false;
 
-export function showAboutDialogAsync(projectView: pxteditor.IProjectView) {
+export function showAboutDialogAsync(projectView: IProjectView) {
     const compileService = pxt.appTarget.compileService;
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
     const targetTheme = pxt.appTarget.appTheme;
@@ -606,7 +608,7 @@ export function showImportGithubDialogAsync() {
         }).then(() => res)
 }
 
-export function showImportFileDialogAsync(options?: pxteditor.ImportFileOptions) {
+export function showImportFileDialogAsync(options?: ImportFileOptions) {
     let input: HTMLInputElement;
     let exts = [pxt.appTarget.compile.saveAsPNG ? ".png" : ".mkcd"];
     if (pxt.appTarget.compile.hasHex) {

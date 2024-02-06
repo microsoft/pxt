@@ -4,8 +4,9 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 
-import Cloud = pxt.Cloud;
-import { ISettingsProps, experiments } from "../../pxteditor";
+import { experiments } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface GenericBannerProps extends ISettingsProps {
     id: string;

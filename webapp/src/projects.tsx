@@ -12,7 +12,11 @@ import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
 import { fireClickOnEnter } from "./util";
-import { IProjectView, ISettingsProps, UserInfo } from "../../pxteditor";
+
+import IProjectView = pxt.editor.IProjectView;
+import ISettingsProps = pxt.editor.ISettingsProps;
+import UserInfo = pxt.editor.UserInfo;
+
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {

@@ -3,7 +3,9 @@ import * as ReactDOM from 'react-dom';
 import * as sui from "./sui";
 import * as data from "./data";
 import * as simulator from "./simulator";
-import { ISettingsProps, SimState } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
+import SimState = pxt.editor.SimState;
 
 export interface DebuggerToolbarProps extends ISettingsProps {
 }

@@ -3,16 +3,15 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as tutorial from "./tutorial";
-import * as container from "./container";
 import * as core from "./core";
 import * as auth from "./auth";
-import * as identity from "./identity";
-import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
-import * as ImmersiveReader from "./immersivereader";
 import { fireClickOnEnter } from "./util";
-import { IProjectView, ISettingsProps, SimState, UserInfo } from "../../pxteditor/editor";
+
+import IProjectView = pxt.editor.IProjectView;
+import ISettingsProps = pxt.editor.ISettingsProps;
+import UserInfo = pxt.editor.UserInfo;
+import SimState = pxt.editor.SimState;
 
 // common menu items -- do not remove
 // lf("About")

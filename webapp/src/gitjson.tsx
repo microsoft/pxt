@@ -13,7 +13,9 @@ import * as cloudsync from "./cloudsync";
 import * as tutorial from "./tutorial";
 import * as _package from "./package";
 import { fireClickOnEnter } from "./util"
-import { IProjectView, UserInfo } from "../../pxteditor"
+
+import IProjectView = pxt.editor.IProjectView;
+import UserInfo = pxt.editor.UserInfo;
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 

@@ -2,7 +2,8 @@ import * as React from "react";
 import { DebuggerCallStack } from "./debuggerCallStack";
 import { DebuggerVariables } from "./debuggerVariables";
 import { DebuggerToolbar } from "./debuggerToolbar";
-import { ISettingsProps } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface DebuggerToolboxProps extends ISettingsProps {
     apis: pxt.Map<pxtc.SymbolInfo>;

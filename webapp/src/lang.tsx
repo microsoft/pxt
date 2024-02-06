@@ -3,9 +3,9 @@ import * as codecard from "./codecard"
 import * as sui from "./sui"
 import * as data from "./data"
 import * as core from "./core"
-import * as auth from "./auth"
-import { compose } from "redux";
-import { ISettingsProps } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
+
 
 interface LanguagesState {
     visible?: boolean;

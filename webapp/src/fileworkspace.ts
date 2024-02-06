@@ -1,5 +1,4 @@
 import * as core from "./core";
-import * as electron from "./electron";
 import * as pxteditor from "../../pxteditor";
 
 import U = pxt.Util;

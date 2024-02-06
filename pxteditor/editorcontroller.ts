@@ -1,6 +1,6 @@
-/// <reference path="../localtypings/iframeController.d.ts" />
+/// <reference path="../localtypings/pxteditor.d.ts" />
 
-import { IProjectView } from "./editor";
+import IProjectView = pxt.editor.IProjectView;
 
 const pendingRequests: pxt.Map<{
     resolve: (res?: pxt.editor.EditorMessageResponse | PromiseLike<pxt.editor.EditorMessageResponse>) => void;

@@ -4,6 +4,8 @@ import * as core from "./core";
 import * as data from "./data";
 
 import U = pxt.Util;
+import UserInfo = pxt.editor.UserInfo;
+
 const lf = U.lf
 
 let allProviders: pxt.Map<IdentityProvider>
@@ -319,7 +321,6 @@ export function reconstructMeta(files: pxt.Map<string>) {
 
 // these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
 import * as githubprovider from "./githubprovider";
-import { UserInfo } from "../../pxteditor";
 
 // All identity providers, including github
 function identityProviders(): IdentityProvider[] {

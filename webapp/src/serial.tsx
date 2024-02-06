@@ -10,7 +10,9 @@ import { EditorToggle } from "../../react-common/components/controls/EditorToggl
 import Util = pxt.Util
 import { fireClickOnEnter } from "./util"
 import { classList } from "../../react-common/components/util"
-import { IProjectView, IResourceImporter } from "../../pxteditor"
+
+import IProjectView = pxt.editor.IProjectView;
+import IResourceImporter = pxt.editor.IResourceImporter;
 
 const maxEntriesPerChart: number = 4000;
 

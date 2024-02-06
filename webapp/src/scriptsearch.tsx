@@ -12,7 +12,9 @@ import * as workspace from "./workspace";
 import { SearchInput } from "./components/searchInput";
 
 import Cloud = pxt.Cloud;
-import { ISettingsProps, experiments } from "../../pxteditor";
+import { experiments } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 export enum ScriptSearchMode {
     Extensions,

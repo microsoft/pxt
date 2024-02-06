@@ -4,7 +4,8 @@ import * as React from "react";
 import * as auth from "./auth";
 import * as data from "./data";
 import * as sui from "./sui";
-import { ISettingsProps } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface EditorAccessibilityMenuProps extends ISettingsProps {
     highContrast?: boolean;

@@ -1,7 +1,7 @@
-import { IProjectView } from "../../pxteditor";
-import Cloud = pxt.Cloud;
 import * as cmds from "./cmds";
 import * as core from "./core";
+
+import IProjectView = pxt.editor.IProjectView;
 
 const pxtElectron: pxt.electron.PxtElectron = (window as any).pxtElectron;
 

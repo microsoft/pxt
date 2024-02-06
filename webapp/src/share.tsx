@@ -1,17 +1,12 @@
 import * as React from "react";
 import * as auth from "./auth";
-import * as core from "./core";
-import * as data from "./data";
-import * as sui from "./sui";
-import * as simulator from "./simulator";
 import * as screenshot from "./screenshot";
-import * as qr from "./qr";
-import { fireClickOnEnter } from "./util";
 
-import { Modal, ModalAction } from "../../react-common/components/controls/Modal";
-import { Share, ShareData } from "../../react-common/components/share/Share";
+import { Modal } from "../../react-common/components/controls/Modal";
+import { Share } from "../../react-common/components/share/Share";
 import { SimRecorderImpl } from "./components/SimRecorder";
-import { ISettingsProps } from "../../pxteditor/editor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 export enum ShareMode {
     Code,

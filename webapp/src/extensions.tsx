@@ -5,7 +5,8 @@ import * as data from "./data";
 import * as core from "./core";
 import * as sui from "./sui";
 import * as ext from "./extensionManager";
-import { ISettingsProps } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 const CUSTOM_CONTENT_DIV = 'custom-content';
 

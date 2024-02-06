@@ -3,7 +3,8 @@ import * as React from "react"
 import * as screenshot from "../screenshot";
 import { getEditorAsync } from "../app";
 import { SimRecorder, SimRecorderRef, SimRecorderState } from "../../../react-common/components/share/ThumbnailRecorder";
-import { ScreenshotData } from "../../../pxteditor";
+
+import ScreenshotData = pxt.editor.ScreenshotData;
 
 interface SimRecorderRefImpl extends SimRecorderRef {
     gifAddFrame(data: ImageData, delay?: number): boolean;

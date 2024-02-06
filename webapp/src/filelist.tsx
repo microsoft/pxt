@@ -6,7 +6,9 @@ import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
 import { fireClickOnEnter } from "./util";
-import { IFile, ISettingsProps } from "../../pxteditor";
+
+import IFile = pxt.editor.IFile;
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 interface FileListState {
     currentFile?: IFile;

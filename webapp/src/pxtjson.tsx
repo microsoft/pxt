@@ -7,7 +7,8 @@ import * as data from "./data";
 
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util";
-import { IProjectView } from "../../pxteditor";
+
+import IProjectView = pxt.editor.IProjectView;
 
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;

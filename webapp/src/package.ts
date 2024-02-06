@@ -5,7 +5,8 @@ import * as compiler from "./compiler";
 
 import Util = pxt.Util;
 import { HOSTCACHE_TABLE, getObjectStoreAsync } from "./idbworkspace";
-import { IFile } from "../../pxteditor";
+
+import IFile = pxt.editor.IFile;
 
 let extWeight: pxt.Map<number> = {
     "ts": 10,

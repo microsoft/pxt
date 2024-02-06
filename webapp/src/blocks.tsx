@@ -20,7 +20,13 @@ import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
-import { IProjectView, MuteState, SimState, initEditorExtensionsAsync } from "../../pxteditor";
+import { initEditorExtensionsAsync } from "../../pxteditor";
+
+
+import IProjectView = pxt.editor.IProjectView;
+import MuteState = pxt.editor.MuteState;
+import SimState = pxt.editor.SimState;
+
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;

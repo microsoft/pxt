@@ -4,7 +4,8 @@ import * as core from "./core";
 import * as cloudsync from "./cloudsync";
 import * as dialogs from "./dialogs";
 import * as workspace from "./workspace";
-import { UserInfo } from "../../pxteditor";
+
+import UserInfo = pxt.editor.UserInfo;
 
 export const PROVIDER_NAME = "github";
 

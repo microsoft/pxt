@@ -3,7 +3,8 @@
 import * as React from "react";
 import * as data from "./data";
 import { fireClickOnEnter } from "./util";
-import { IProjectView } from "../../pxteditor";
+
+import IProjectView = pxt.editor.IProjectView;
 
 export interface SerialIndicatorProps {
     isSim: boolean;

@@ -6,12 +6,10 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
-import * as sui from "./sui";
 import * as snippets from "./monacoSnippets"
 import * as pyhelper from "./monacopyhelper";
 import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
-import * as workspace from "./workspace";
 import * as blocklyFieldView from "./blocklyFieldView";
 import { ViewZoneEditorHost, ModalEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 import * as data from "./data";
@@ -26,6 +24,9 @@ import { MonacoFlyout } from "./monacoFlyout";
 import { ErrorList } from "./errorList";
 import * as auth from "./auth";
 import * as pxteditor from "../../pxteditor";
+
+import IProjectView = pxt.editor.IProjectView;
+import ErrorListState = pxt.editor.ErrorListState;
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -375,7 +376,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
-    constructor(parent: pxteditor.IProjectView) {
+    constructor(parent: IProjectView) {
         super(parent);
 
         this.setErrorListState = this.setErrorListState.bind(this);
@@ -848,7 +849,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    setErrorListState(newState?: pxteditor.ErrorListState) {
+    setErrorListState(newState?: ErrorListState) {
         const oldState = this.parent.state.errorListState;
 
         if (oldState != newState) {

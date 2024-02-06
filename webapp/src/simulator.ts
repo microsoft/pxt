@@ -4,7 +4,9 @@
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import U = pxt.U
-import { MuteState, postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+
+
 
 interface SimulatorConfig {
     // return true if a visible breakpoint was found
@@ -14,7 +16,7 @@ interface SimulatorConfig {
     onStateChanged(state: pxsim.SimulatorState): void;
     onSimulatorReady(): void;
     setState(key: string, value: any): void;
-    onMuteButtonStateChange(state: MuteState): void;
+    onMuteButtonStateChange(state: pxt.editor.MuteState): void;
     editor: string;
 }
 

@@ -8,9 +8,10 @@ import { TutorialResetCode } from "./TutorialResetCode";
 import { classList } from "../../../../react-common/components/util";
 import { TutorialValidationErrorMessage } from "./TutorialValidationErrorMessage";
 import { GetValidator } from "../tutorialValidators";
-import { IProjectView } from "../../../../pxteditor";
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
+
+import IProjectView = pxt.editor.IProjectView;
 
 interface TutorialContainerProps {
     parent: IProjectView;

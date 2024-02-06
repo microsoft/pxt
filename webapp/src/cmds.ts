@@ -8,7 +8,10 @@ import * as data from "./data";
 import * as dialogs from "./dialogs";
 import Cloud = pxt.Cloud;
 import { isDontShowDownloadDialogFlagSet } from "./dialogs";
-import { ExtensionResult, NativeHostMessage } from "../../pxteditor";
+
+import ExtensionResult = pxt.editor.ExtensionResult;
+import NativeHostMessage = pxt.editor.NativeHostMessage;
+
 
 function log(msg: string) {
     pxt.debug(`cmds: ${msg}`);

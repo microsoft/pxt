@@ -10,7 +10,10 @@ import * as pkg from './package';
 import * as toolbox from "./toolbox";
 import * as core from "./core";
 import { InputHandler } from './snippetBuilderInputHandler';
-import { IProjectView, ISettingsProps } from "../../pxteditor";
+
+import IProjectView = pxt.editor.IProjectView;
+import ISettingsProps = pxt.editor.ISettingsProps;
+
 
 interface SnippetBuilderProps extends ISettingsProps {
     mainWorkspace: Blockly.WorkspaceSvg;

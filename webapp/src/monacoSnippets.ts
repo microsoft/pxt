@@ -1,7 +1,10 @@
 import { BuiltinCategoryDefinition, BlockDefinition, CategoryNameID } from "./toolbox";
 
 import * as monaco from "./monaco";
-import { ToolboxBlockDefinition, ToolboxCategoryDefinition, ToolboxDefinition } from "../../pxteditor";
+
+import ToolboxBlockDefinition = pxt.editor.ToolboxBlockDefinition;
+import ToolboxCategoryDefinition = pxt.editor.ToolboxCategoryDefinition;
+import ToolboxDefinition = pxt.editor.ToolboxDefinition;
 
 let _cachedBuiltinCategories: pxt.Map<BuiltinCategoryDefinition> = null;
 function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
