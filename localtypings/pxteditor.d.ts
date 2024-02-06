@@ -1183,3 +1183,24 @@ declare namespace pxt.editor {
         blockId?: string;
     }
 }
+
+declare namespace pxt.workspace {
+    export interface WorkspaceProvider {
+        listAsync(): Promise<pxt.workspace.Header[]>; // called from workspace.syncAsync (including upon startup)
+        getAsync(h: pxt.workspace.Header): Promise<File>;
+        setAsync(h: pxt.workspace.Header, prevVersion: pxt.workspace.Version, text?: pxt.workspace.ScriptText): Promise<pxt.workspace.Version>;
+        deleteAsync?: (h: pxt.workspace.Header, prevVersion: pxt.workspace.Version) => Promise<void>;
+        resetAsync(): Promise<void>;
+        loadedAsync?: () => Promise<void>;
+        getSyncState?: () => pxt.editor.EditorSyncState;
+
+        // optional screenshot support
+        saveScreenshotAsync?: (h: pxt.workspace.Header, screenshot: string, icon: string) => Promise<void>;
+
+        // optional asset (large binary file) support
+        saveAssetAsync?: (id: string, filename: string, data: Uint8Array) => Promise<void>;
+        listAssetsAsync?: (id: string) => Promise<Asset[]>;
+
+        fireEvent?: (ev: pxt.editor.EditorEvent) => void;
+    }
+}
