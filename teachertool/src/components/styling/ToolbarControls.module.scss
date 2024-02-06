@@ -1,0 +1,106 @@
+@mixin toolbar-font-size {
+    font-size: 1rem;
+}
+
+@mixin toolbar-button {
+    margin: 0;
+    padding: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.25rem;
+    background-color: var(--pxt-content-background);
+    color: var(--pxt-content-foreground);
+    @include toolbar-font-size;
+
+    &:hover {
+        filter: none;
+        background-color: var(--pxt-headerbar-background-glass);
+    }
+
+    &:active::after {
+        filter: brightness(.80) contrast(1.3);
+        background-color: var(--pxt-headerbar-background-glass);
+    }
+
+    &:focus-visible::after {
+        border: none;
+        outline: solid 1px var(--pxt-content-foreground);
+    }
+
+    i[class*="fas"] {
+        margin: 0;
+        width: auto;
+        height: auto;
+        @include toolbar-font-size;
+
+        &::before {
+            @include toolbar-font-size;
+        }
+    }
+}
+
+.toolbar-control-group {
+    display: flex;
+    min-height: 100%;
+    align-items: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    gap: 0.125rem;
+
+    button {
+        @include toolbar-button;
+    }
+
+    button[class*="menu-button"] {
+        @include toolbar-button;
+
+        &[class*="expanded"] {
+            background-color: var(--pxt-headerbar-background-glass);
+        }
+    }
+
+    button[class*="disabled"] {
+        color: var(--pxt-headerbar-accent-smoke);
+        background-color: inherit;
+    }
+
+    div[class*="common-focus-trap"] {
+        outline: none;
+    }
+
+    div[class*="common-menu-dropdown-pane"] {
+        background-color: var(--pxt-content-background);
+        border: 1px solid var(--pxt-content-accent);
+        border-radius: 0.25rem;
+        padding: 0.25rem 0;
+        box-shadow: 0 0.5rem 0.5rem 0 #00000020;
+    }
+
+    ul {
+        background-color: inherit;
+
+        li {
+            background-color: inherit;
+            padding: 0;
+
+            button[class*="common-button"] {
+                height: auto;
+                padding: 0.5rem 0.5rem;
+                border-radius: 0;
+
+                &:focus-visible::after {
+                    border: none;
+                    outline: solid 1px var(--pxt-content-foreground);
+                }
+            }
+        }
+
+        li:first-child {
+            padding-top: 0.125rem;
+        }
+
+        li:last-child {
+            padding-bottom: 0.125rem;
+        }
+    }
+}
