@@ -12,9 +12,16 @@ import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
 import { fireClickOnEnter } from "./util";
+// --- SAMLABS IMPORTS ---
+import {rudderanalytics} from "./rudderstack";
+import  Cookies  from 'universal-cookie';
+// --- SAMLABS IMPORTS ---
+
+///// SAMLABS cookie initialization
+const cookies = new Cookies();
+///// SAMLABS END cookie initialization
 
 type ISettingsProps = pxt.editor.ISettingsProps;
-
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {
     visible?: boolean;
@@ -757,7 +764,23 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const isFirstProject = (!headers || headers?.length == 0);
             return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
                 {showNewProject && <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
-                    onClick={() => this.newProject(isFirstProject)} onKeyDown={fireClickOnEnter} >
+                    onClick={() => {
+                             // --- SAMLABS ANALYTICS CODE --
+                        if(!window.location.href.includes('localhost')){
+                            const obj = cookies.get('ACCESS_TOKEN');
+                            const userId = obj.samScriptEncryptedUserId;
+                            if (userId) {
+                                rudderanalytics.identify(userId);
+                                rudderanalytics.track("Create Project", {
+                                    Type: 'SAM Script',
+                                    Module: 'Projects',
+                                });
+                            }
+                        }
+                            this.newProject(isFirstProject)
+                        // --- SAMLABS ANALYTICS CODE ---
+                        }
+                    } onKeyDown={fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
