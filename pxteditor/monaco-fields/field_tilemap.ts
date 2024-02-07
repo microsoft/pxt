@@ -37,7 +37,7 @@ export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.ProjectTilem
         this.isTilemapLiteral = true;
 
         // This matches the regex for the field editor, so it should always match
-        const match = /^\s*(tilemap(?:8|16|32)?)\s*(?:`([^`]*)`)|(?:\(\s*"""([^"]*)"""\s*\))\s*$/.exec(text);
+        const match = /^\s*(tilemap(?:4|8|16|32)?)\s*(?:`([^`]*)`)|(?:\(\s*"""([^"]*)"""\s*\))\s*$/.exec(text);
         const name = (match[2] || match[3] || "").trim();
         this.tilemapLiteral = match[1];
 
@@ -56,6 +56,9 @@ export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.ProjectTilem
             }
             else if (this.tilemapLiteral === "tilemap32") {
                 tileWidth = 32;
+            }
+            else if (this.tilemapLiteral === "tilemap4") {
+                tileWidth = 4;
             }
             const [ name ] = project.createNewTilemap(id, tileWidth, 16, 16);
             proj = project.getTilemap(name);
