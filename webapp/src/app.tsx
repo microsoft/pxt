@@ -1,4 +1,5 @@
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
+/// <reference path="../../localtypings/pxteditor.d.ts"/>
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
@@ -40,7 +41,6 @@ import * as greenscreen from "./greenscreen";
 import * as accessibleblocks from "./accessibleblocks";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
-import * as keymap from "./keymap";
 import * as auth from "./auth";
 import * as cloud from "./cloud";
 import * as user from "./user";
@@ -59,20 +59,22 @@ import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
 import * as blocklyFieldView from "./blocklyFieldView";
+import * as pxteditor from "../../pxteditor";
 
-type IAppProps = pxt.editor.IAppProps;
-type IAppState = pxt.editor.IAppState;
-type IProjectView = pxt.editor.IProjectView;
-type FileHistoryEntry = pxt.editor.FileHistoryEntry;
-type EditorSettings = pxt.editor.EditorSettings;
-type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
+import IAppProps = pxt.editor.IAppProps;
+import IAppState = pxt.editor.IAppState;
+import IProjectView = pxt.editor.IProjectView;
+import FileHistoryEntry = pxt.editor.FileHistoryEntry;
+import EditorSettings = pxt.editor.EditorSettings;
+import ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
+import SimState = pxt.editor.SimState;
+
 
 declare const zip: any;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
-import { CodeCardView } from "./codecard";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
@@ -184,7 +186,7 @@ export class ProjectView
             active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
             // don't start collapsed in mobile since we can go fullscreen now
             collapseEditorTools: simcfg.headless,
-            simState: pxt.editor.SimState.Stopped,
+            simState: SimState.Stopped,
             autoRun: this.autoRunOnStart(),
             isMultiplayerGame: false,
             onboarding: undefined,
@@ -890,7 +892,7 @@ export class ProjectView
         // Only show in blocks or main.ts
         if (this.state.currFile) {
             const fn = this.state.currFile;
-            if (!pxt.editor.isBlocks(fn) && fn.name !== pxt.MAIN_TS) return false;
+            if (!pxteditor.isBlocks(fn) && fn.name !== pxt.MAIN_TS) return false;
         }
 
         if (!this.state.suppressPackageWarning || force) {
@@ -1022,7 +1024,7 @@ export class ProjectView
                 this.editorFile.markDirty();
             }
             this.lastChangeTime = Util.now();
-            if (this.state.simState != pxt.editor.SimState.Stopped
+            if (this.state.simState != SimState.Stopped
                 && pxt.appTarget.simulator && pxt.appTarget.simulator.stopOnChange)
                 this.stopSimulator();
 
@@ -1090,10 +1092,10 @@ export class ProjectView
                     case pxsim.SimulatorState.Suspended:
                     case pxsim.SimulatorState.Pending:
                     case pxsim.SimulatorState.Stopped:
-                        this.setState({ simState: pxt.editor.SimState.Stopped }, simStateChanged);
+                        this.setState({ simState: SimState.Stopped }, simStateChanged);
                         break;
                     case pxsim.SimulatorState.Running:
-                        this.setState({ simState: pxt.editor.SimState.Running }, simStateChanged);
+                        this.setState({ simState: SimState.Running }, simStateChanged);
                         break;
                 }
             },
@@ -1168,12 +1170,12 @@ export class ProjectView
         this.updatingEditorFile = true;
         return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), Promise.resolve())
             .then(() => {
-                simRunning = this.state.simState != pxt.editor.SimState.Stopped;
+                simRunning = this.state.simState != SimState.Stopped;
                 if (!this.state.currFile.virtual && !this.state.debugging) { // switching to serial should not reset the sim
                     this.stopSimulator();
                     if (simRunning || this.state.autoRun) {
                         simulator.setPending();
-                        this.setState({ simState: pxt.editor.SimState.Pending });
+                        this.setState({ simState: SimState.Pending });
                     }
                 }
                 this.saveSettings();
@@ -1296,7 +1298,7 @@ export class ProjectView
         let currFile = this.state.currFile.name;
 
         const header = this.state.header;
-        if (fileName != currFile && pxt.editor.isBlocks(fn)) {
+        if (fileName != currFile && pxteditor.isBlocks(fn)) {
             // Going from ts/py -> blocks
             pxt.tickEvent("sidebar.showBlocks");
             this.openBlocks();
@@ -1440,7 +1442,7 @@ export class ProjectView
         const totalSteps = this.state.tutorialOptions?.tutorialStepInfo?.length || this.state.header?.tutorialCompleted?.steps || 0;
         const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
 
-        pxt.editor.postHostMessageAsync({
+        pxteditor.postHostMessageAsync({
             type: "pxthost",
             action: "tutorialevent",
             tutorialEvent: "progress",
@@ -1455,7 +1457,7 @@ export class ProjectView
     protected postTutorialLoaded() {
         const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
 
-        pxt.editor.postHostMessageAsync({
+        pxteditor.postHostMessageAsync({
             type: "pxthost",
             action: "tutorialevent",
             tutorialEvent: "loaded",
@@ -1467,7 +1469,7 @@ export class ProjectView
     protected postTutorialCompleted() {
         const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
 
-        pxt.editor.postHostMessageAsync({
+        pxteditor.postHostMessageAsync({
             type: "pxthost",
             action: "tutorialevent",
             tutorialEvent: "completed",
@@ -1479,7 +1481,7 @@ export class ProjectView
     protected postTutorialExit() {
         const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
 
-        pxt.editor.postHostMessageAsync({
+        pxteditor.postHostMessageAsync({
             type: "pxthost",
             action: "tutorialevent",
             tutorialEvent: "exit",
@@ -1709,7 +1711,7 @@ export class ProjectView
                 if ((!e && h.editor && file.getVirtualFileName(h.editor)))
                     file = main.lookupFile("this/" + file.getVirtualFileName(h.editor)) || file;
 
-                if (pxt.editor.isBlocks(file) && !file.content) {
+                if (pxteditor.isBlocks(file) && !file.content) {
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)) || file
                 }
@@ -2386,7 +2388,7 @@ export class ProjectView
             pxt.tickEvent("import", { id: importer.id });
             core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
-            pxt.editor.initEditorExtensionsAsync()
+            pxteditor.initEditorExtensionsAsync()
                 .then(() => importer.importAsync(this, data)
                     .then(() => core.hideLoading("importhex"), e => {
                         pxt.reportException(e, { importer: importer.id });
@@ -3245,10 +3247,10 @@ export class ProjectView
             return;
         }
 
-        let simRestart = this.state.simState != pxt.editor.SimState.Stopped;
+        let simRestart = this.state.simState != SimState.Stopped;
         // if we're just waiting for empty code to run, don't force restart
         if (simRestart
-            && this.state.simState == pxt.editor.SimState.Pending
+            && this.state.simState == SimState.Pending
             && pxt.appTarget.simulator.emptyRunCode
             && !this.isBlocksEditor())
             simRestart = false;
@@ -3488,11 +3490,11 @@ export class ProjectView
 
     startStopSimulator(opts?: pxt.editor.SimulatorStartOptions) {
         switch (this.state.simState) {
-            case pxt.editor.SimState.Starting:
-            case pxt.editor.SimState.Pending:
+            case SimState.Starting:
+            case SimState.Pending:
                 // button smashing, do nothing
                 break;
-            case pxt.editor.SimState.Running:
+            case SimState.Running:
                 this.stopSimulator(false, opts);
                 break;
             default:
@@ -3542,7 +3544,7 @@ export class ProjectView
     toggleSimulatorCollapse() {
         const state = this.state;
         pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !state.collapseEditorTools }, { interactiveConsent: true });
-        if (state.simState == pxt.editor.SimState.Stopped && state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
+        if (state.simState == SimState.Stopped && state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
             this.startStopSimulator();
         }
 
@@ -3626,7 +3628,7 @@ export class ProjectView
     }
 
     openInstructions() {
-        const running = this.state.simState != pxt.editor.SimState.Stopped;
+        const running = this.state.simState != SimState.Stopped;
         if (running) this.stopSimulator();
         make.makeAsync()
             .finally(() => {
@@ -3686,8 +3688,8 @@ export class ProjectView
 
     shouldStartSimulator(): boolean {
         switch (this.state.simState) {
-            case pxt.editor.SimState.Starting:
-            case pxt.editor.SimState.Running:
+            case SimState.Starting:
+            case SimState.Running:
                 return false; // already reunning
         }
         const hasHome = !pxt.shell.isControllerMode();
@@ -3696,12 +3698,12 @@ export class ProjectView
     }
 
     isSimulatorRunning(): boolean {
-        return this.state.simState == pxt.editor.SimState.Running;
+        return this.state.simState == SimState.Running;
     }
 
     restartSimulator() {
         const isDebug = this.state.tracing || this.state.debugging;
-        if (this.state.simState == pxt.editor.SimState.Stopped
+        if (this.state.simState == SimState.Stopped
             || this.debugOptionsChanged()) {
             this.startSimulator();
         } else {
@@ -3750,8 +3752,8 @@ export class ProjectView
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
 
         // Only fire setState if something changed
-        if (this.state.simState !== pxt.editor.SimState.Stopped || !!this.state.autoRun !== !!autoRun) {
-            this.setState({ simState: pxt.editor.SimState.Stopped, autoRun: autoRun });
+        if (this.state.simState !== SimState.Stopped || !!this.state.autoRun !== !!autoRun) {
+            this.setState({ simState: SimState.Stopped, autoRun: autoRun });
         }
 
         pxt.perf.measureEnd("stopSimulator")
@@ -3799,7 +3801,7 @@ export class ProjectView
                 headerId: cloudMd.headerId,
                 status: cloudStatus.value
             };
-            pxt.editor.postHostMessageAsync(msg);
+            pxteditor.postHostMessageAsync(msg);
         }
     }
 
@@ -3842,7 +3844,7 @@ export class ProjectView
             const autoRun = this.autoRunOnStart() && this.isBlocksEditor() && (this.state.autoRun || !!opts.clickTrigger);
 
             const state = this.editor.snapshotState()
-            return this.setStateAsync({ simState: pxt.editor.SimState.Starting, autoRun: autoRun })
+            return this.setStateAsync({ simState: SimState.Starting, autoRun: autoRun })
                 .then(() => (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts)))
                 .then(resp => {
                     if (cancellationToken.isCancelled()) {
@@ -3882,13 +3884,13 @@ export class ProjectView
                             } else {
                                 pxt.debug(`sim: cancelled 2`)
                                 simulator.stop();
-                                this.setState({ simState: pxt.editor.SimState.Stopped });
+                                this.setState({ simState: SimState.Stopped });
                             }
                         }
                     } else if (!opts.background) {
                         core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                         simulator.stop();
-                        this.setState({ simState: pxt.editor.SimState.Stopped });
+                        this.setState({ simState: SimState.Stopped });
                     }
                 })
                 .finally(() => {
@@ -3933,7 +3935,7 @@ export class ProjectView
     hwDebug() {
         pxt.tickEvent("menu.debug.hw")
         let start = Promise.resolve()
-        if (this.state.simState != pxt.editor.SimState.Running || !simulator.driver.isDebug())
+        if (this.state.simState != SimState.Running || !simulator.driver.isDebug())
             start = this.runSimulator({ debug: true })
         return start.then(() => {
             simulator.driver.setHwDebugger({
@@ -4824,7 +4826,7 @@ export class ProjectView
             }
         }
 
-        pxt.editor.postHostMessageAsync({
+        pxteditor.postHostMessageAsync({
             type: "pxteditor",
             action: "editorcontentloaded"
         } as pxt.editor.EditorContentLoadedRequest)
@@ -5317,7 +5319,7 @@ function getsrc() {
 
 function enableAnalytics() {
     pxt.analytics.enable(pxt.Util.userLanguage());
-    pxt.editor.enableControllerAnalytics();
+    pxteditor.enableControllerAnalytics();
 
     const stats: pxt.Map<string | number> = {}
     if (typeof window !== "undefined") {
@@ -5925,13 +5927,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
         .then(() => {
             pxt.BrowserUtils.initTheme();
-            theme = pxt.editor.experiments.syncTheme();
+            theme = pxteditor.experiments.syncTheme();
             // editor messages need to be enabled early, in case workspace provider is IFrame
             if (theme.allowParentController
                 || theme.allowPackageExtensions
                 || theme.allowSimulatorTelemetry
                 || pxt.shell.isControllerMode())
-                pxt.editor.bindEditorMessages(getEditorAsync);
+                pxteditor.bindEditorMessages(getEditorAsync);
             return workspace.initAsync().then(async s => {
                 // Poll cloud for changes after workspace is initialized
                 await cloud.syncAsync(); return s;
@@ -5961,7 +5963,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return Promise.resolve();
             }
             if (pxt.shell.isNoProject()) {
-                pxt.editor.postHostMessageAsync({
+                pxteditor.postHostMessageAsync({
                     action: "newproject",
                     options: { preferredEditor: "blocks" }
                 } as pxt.editor.EditorMessageNewProjectRequest)

@@ -11,15 +11,16 @@ import * as simulator from "./simulator";
 import { Button } from "./sui";
 import { SimulatorPresenceBar } from "./components/SimulatorPresenceBar"
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
-import { fireClickOnEnter } from "./util";
 import { VerticalResizeContainer } from '../../react-common/components/controls/VerticalResizeContainer'
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 interface SidepanelState {
     resized?: boolean;
     height?: number;
 }
 
-interface SidepanelProps extends pxt.editor.ISettingsProps {
+interface SidepanelProps extends ISettingsProps {
     inHome: boolean;
     showKeymap?: boolean;
     showSerialButtons?: boolean;

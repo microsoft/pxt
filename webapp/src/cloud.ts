@@ -4,6 +4,8 @@ import * as data from "./data";
 import * as workspace from "./workspace";
 import * as app from "./app";
 
+import * as pxteditor from "../../pxteditor";
+
 type File = pxt.workspace.File;
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -568,7 +570,7 @@ export async function requestProjectCloudStatus(headerIds: string[]): Promise<vo
             headerId: cloudMd.headerId,
             status: cloudStatus.value
         };
-        pxt.editor.postHostMessageAsync(msg);
+        pxteditor.postHostMessageAsync(msg);
     }
 }
 

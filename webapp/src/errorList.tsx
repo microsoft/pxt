@@ -4,6 +4,8 @@ import * as React from "react";
 import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
 
+import * as pxteditor from "../../pxteditor";
+
 type GroupedError = {
     error: pxtc.KsDiagnostic,
     count: number,

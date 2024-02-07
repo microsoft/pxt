@@ -6,7 +6,7 @@ import * as core from "./core";
 import * as sui from "./sui";
 import * as ext from "./extensionManager";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 const CUSTOM_CONTENT_DIV = 'custom-content';
 

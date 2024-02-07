@@ -43,6 +43,10 @@ export function verifyRubricIntegrity(rubric: Rubric): {
     return { valid: invalidCriteria.length === 0, validCriteria, invalidCriteria };
 }
 
+export function isProjectLoaded(state: AppState) {
+    return !!state.projectMetadata;
+}
+
 export function getSelectableCatalogCriteria(state: AppState): CatalogCriteria[] {
     const usedCatalogCriteria = state.rubric.criteria.map(c => c.catalogCriteriaId) ?? [];
 
