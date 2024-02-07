@@ -45,4 +45,4 @@ function setAutorun(autorun: boolean) {
     }
 }
 
-export { getJsonValue, setJsonValue, getAutorun, setAutorun };
+export { getAutorun, setAutorun };
