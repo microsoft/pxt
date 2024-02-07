@@ -1,3 +1,5 @@
+import * as Blockly from "blockly";
+
 // validates that all of a specific block type have comments
 // returns the blocks that do not have comments for a tutorial validation scenario
 export function validateSpecificBlockCommentsExist({ usedBlocks, blockType }: {

@@ -16,7 +16,6 @@ export * from "./fields";
 export * from "./sourceMap";
 export * from "./importer";
 export * from "./diff";
-export * from "./validation";
 export * from "./legacyMutations";
 export * from "./blockDragger";
 

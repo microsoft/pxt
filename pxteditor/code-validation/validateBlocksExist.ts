@@ -1,3 +1,4 @@
+import * as Blockly from "blockly";
 
 export function validateBlocksExist({ usedBlocks, requiredBlockCounts }: {
     usedBlocks: Blockly.Block[],

@@ -1,3 +1,5 @@
+import * as Blockly from "blockly";
+
 // validates that a combination of blocks in the set satisfies the required count
 // returns the blocks that make the validator pass
 export function validateBlocksInSetExist({ usedBlocks, blockIdsToCheck, count, requireUnique }: {
