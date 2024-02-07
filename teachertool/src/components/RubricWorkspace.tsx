@@ -58,21 +58,6 @@ const WorkspaceTabPanels: React.FC = () => {
     );
 };
 
-const WorkspaceAutorun: React.FC = () => {
-    const { state: teacherTool } = useContext(AppStateContext);
-    const { autorun } = teacherTool;
-
-    const onChange = (checked: boolean) => {
-        setAutorun(checked);
-    };
-
-    return (
-        <Toolbar.ControlGroup>
-            <Toolbar.Toggle label={lf("auto-run")} isChecked={autorun} onChange={onChange} />
-        </Toolbar.ControlGroup>
-    );
-};
-
 function getActionMenuItems(tab: TabName): MenuItem[] {
     switch (tab) {
         case "rubric":
@@ -97,23 +82,27 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
 
 const WorkspaceToolbarButtons: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const { activeTab } = teacherTool;
+    const { activeTab, autorun } = teacherTool;
 
     const actionItems = getActionMenuItems(activeTab);
+
+    const onAutorunChange = (checked: boolean) => {
+        setAutorun(checked);
+    };
 
     return (
         <Toolbar.ControlGroup>
             {activeTab === "results" && (
                 <Toolbar.Button icon="fas fa-print" title={lf("Print")} onClick={() => console.log("Print")} />
             )}
-
+            {/* Conditional buttons go above this line */}
+            <Toolbar.Toggle label={lf("auto-run")} isChecked={autorun} onChange={onAutorunChange} />
             <Toolbar.Button
                 icon="fas fa-play"
                 title={lf("Evaluate")}
                 onClick={handleEvaluateClickedAsync}
                 disabled={!isProjectLoaded(teacherTool)}
             />
-
             <Toolbar.MenuDropdown title={lf("More Actions")} items={actionItems} disabled={!actionItems.length} />
         </Toolbar.ControlGroup>
     );
@@ -124,7 +113,7 @@ interface IProps {}
 export const RubricWorkspace: React.FC<IProps> = () => {
     return (
         <div className={css.panel}>
-            <Toolbar left={<WorkspaceTabButtons />} center={<WorkspaceAutorun />} right={<WorkspaceToolbarButtons />} />
+            <Toolbar left={<WorkspaceTabButtons />} right={<WorkspaceToolbarButtons />} />
             <WorkspaceTabPanels />
         </div>
     );
