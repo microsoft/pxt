@@ -1,5 +1,5 @@
 import * as core from "./core";
-import * as electron from "./electron";
+import * as pxteditor from "../../pxteditor";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -93,7 +93,7 @@ async function listAsync(): Promise<Header[]> {
             let time = pkg.files.map(f => f.mtime)
             time.sort((a, b) => b - a)
             let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
-            pkg.header = pxt.workspace.freshHeader(pkg.config.name, modTime)
+            pkg.header = pxteditor.workspace.freshHeader(pkg.config.name, modTime)
             if (pkg.config.preferredEditor)
                 pkg.header.editor = pkg.config.preferredEditor
             pkg.header.path = pkg.path

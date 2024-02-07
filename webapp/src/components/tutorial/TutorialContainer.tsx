@@ -11,8 +11,10 @@ import { GetValidator } from "../tutorialValidators";
 import CodeValidator = pxt.tutorial.CodeValidator;
 import CodeValidationResult = pxt.tutorial.CodeValidationResult;
 
+import IProjectView = pxt.editor.IProjectView;
+
 interface TutorialContainerProps {
-    parent: pxt.editor.IProjectView;
+    parent: IProjectView;
     tutorialId: string;
     name: string;
     steps: pxt.tutorial.TutorialStepInfo[];

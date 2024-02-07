@@ -5,6 +5,9 @@ import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as auth from "./auth";
+import { HELP_IMAGE_URI } from "../../pxteditor";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 const DRAG_THRESHOLD = 5;
 const SELECTED_BORDER_WIDTH = 4;
@@ -17,7 +20,7 @@ interface BlockDragInfo {
     color?: string;
 }
 
-export interface MonacoFlyoutProps extends pxt.editor.ISettingsProps {
+export interface MonacoFlyoutProps extends ISettingsProps {
     fileType?: pxt.editor.FileType;
     blockIdMap?: pxt.Map<string[]>;
     moveFocusToParent?: () => void;
@@ -136,7 +139,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 parent.appendChild(dragBlock);
 
                 // Fire a create event
-                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
+                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.CreateEvent);
                 let inline = "";
                 if (block.retType != "void") {
                     inline = "inline:1&";
@@ -192,7 +195,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 p.then(snip => {
                     this.props.insertSnippet(null, snip, block.retType != "void");
                     // Fire a create event
-                    workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
+                    workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.CreateEvent);
                 });
             }
         }
@@ -201,7 +204,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     protected getHelpButtonClickHandler = (group?: string) => {
         return () => {
             pxt.debug(`${group} help icon clicked.`);
-            workspace.fireEvent({ type: 'ui', editor: 'ts', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
+            workspace.fireEvent({ type: 'ui', editor: 'ts', action: 'groupHelpClicked', data: { group } } as pxt.editor.UIEvent);
         }
     }
 
@@ -419,8 +422,8 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                             <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={0} onKeyDown={this.getKeyDownHandler()} role="separator">
                                 {g.icon && <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation">{g.icon}</span>}
                                 <div className="monacoFlyoutLabelText">{pxtc.U.rlf(`{id:group}${g.name}`)}</div>
-                                {g.hasHelp && pxt.editor.HELP_IMAGE_URI && <span>
-                                    <img src={pxt.editor.HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)} alt={lf("Click for help")}>
+                                {g.hasHelp && HELP_IMAGE_URI && <span>
+                                    <img src={HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)} alt={lf("Click for help")}>
                                     </img></span>}
                                 <hr className="monacoFlyoutLabelLine" />
                             </div>)

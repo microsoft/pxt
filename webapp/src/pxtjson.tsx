@@ -8,6 +8,8 @@ import * as data from "./data";
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util";
 
+import IProjectView = pxt.editor.IProjectView;
+
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
     isSaving: boolean;
@@ -15,7 +17,7 @@ export class Editor extends srceditor.Editor {
 
     private nameInput: sui.Input;
 
-    constructor(public parent: pxt.editor.IProjectView) {
+    constructor(public parent: IProjectView) {
         super(parent);
 
         this.editSettingsText = this.editSettingsText.bind(this);

@@ -2,9 +2,6 @@
 import * as srceditor from "./srceditor";
 import * as toolbox from "./toolbox";
 import * as compiler from "./compiler";
-import * as pkg from "./package";
-import * as data from "./data";
-import { getBlocksEditor } from "./app";
 
 export abstract class ToolboxEditor extends srceditor.Editor {
 

@@ -11,6 +11,9 @@ import Util = pxt.Util
 import { fireClickOnEnter } from "./util"
 import { classList } from "../../react-common/components/util"
 
+import IProjectView = pxt.editor.IProjectView;
+import IResourceImporter = pxt.editor.IResourceImporter;
+
 const maxEntriesPerChart: number = 4000;
 
 export class Editor extends srceditor.Editor {
@@ -136,7 +139,7 @@ export class Editor extends srceditor.Editor {
         return (!this.isSim || this.parent.isSimulatorRunning());
     }
 
-    constructor(public parent: pxt.editor.IProjectView) {
+    constructor(public parent: IProjectView) {
         super(parent)
         window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
@@ -877,7 +880,7 @@ class Chart {
     }
 }
 
-export class ResourceImporter implements pxt.editor.IResourceImporter {
+export class ResourceImporter implements IResourceImporter {
     public id: "console";
     public canImport(data: File): boolean {
         return data.type == "text/plain";

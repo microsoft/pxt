@@ -1,5 +1,4 @@
 /// <reference path="../../localtypings/monaco.d.ts" />
-/// <reference path="../../built/pxteditor.d.ts" />
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -7,12 +6,10 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
-import * as sui from "./sui";
 import * as snippets from "./monacoSnippets"
 import * as pyhelper from "./monacopyhelper";
 import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
-import * as workspace from "./workspace";
 import * as blocklyFieldView from "./blocklyFieldView";
 import { ViewZoneEditorHost, ModalEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 import * as data from "./data";
@@ -26,6 +23,10 @@ import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacemen
 import { MonacoFlyout } from "./monacoFlyout";
 import { ErrorList } from "./errorList";
 import * as auth from "./auth";
+import * as pxteditor from "../../pxteditor";
+
+import IProjectView = pxt.editor.IProjectView;
+import ErrorListState = pxt.editor.ErrorListState;
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -375,7 +376,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
-    constructor(parent: pxt.editor.IProjectView) {
+    constructor(parent: IProjectView) {
         super(parent);
 
         this.setErrorListState = this.setErrorListState.bind(this);
@@ -848,7 +849,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    setErrorListState(newState?: pxt.editor.ErrorListState) {
+    setErrorListState(newState?: ErrorListState) {
         const oldState = this.parent.state.errorListState;
 
         if (oldState != newState) {
@@ -874,7 +875,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
-        return pxt.vs.initMonacoAsync(editorElement).then((editor) => {
+        return pxteditor.monaco.initMonacoAsync(editorElement).then((editor) => {
             this.editor = editor;
 
             // This is used to detect ios 13 on iPad, which is not properly detected by monaco
@@ -1236,7 +1237,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         pxt.appTarget.appTheme.monacoFieldEditors.forEach(name => {
-            const editor = pxt.editor.getMonacoFieldEditor(name);
+            const editor = pxteditor.getMonacoFieldEditor(name);
             if (editor) {
                 this.fieldEditors.addFieldEditor(editor);
             }
@@ -1485,7 +1486,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.blockInfo = bi
             this.nsMap = this.partitionBlocks();
             this.updateToolbox();
-            pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
+            pxteditor.monaco.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
             this.defineEditorTheme(hc, true);
         });
         this.blockIdMap = snippets.blockIdMap();
@@ -1605,7 +1606,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number, buildAfter: boolean) {
+    showFieldEditor(range: monaco.Range, fe: pxteditor.MonacoFieldEditor, viewZoneHeight: number, buildAfter: boolean) {
         if (this.feWidget) {
             this.feWidget.close();
         }

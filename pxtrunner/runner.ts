@@ -1,11 +1,11 @@
 /* TODO(tslint): get rid of jquery html() calls */
 
 /// <reference path="../built/pxtlib.d.ts" />
-/// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtblocks.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
+import { initEditorExtensionsAsync } from "../pxteditor/editor";
 import { defaultClientRenderOptions, renderAsync } from "./renderer";
 
 export interface SimulateOptions {
@@ -712,7 +712,7 @@ export function startRenderServer() {
             })
     }
 
-    pxt.editor.initEditorExtensionsAsync()
+    initEditorExtensionsAsync()
         .then(() => {
             // notify parent that render engine is loaded
             window.addEventListener("message", function (ev) {
@@ -850,7 +850,7 @@ export function startDocsServer(loading: HTMLElement, content: HTMLElement, back
             render(m[1], decodeURIComponent(m[2]));
         }
     }
-    let promise = pxt.editor.initEditorExtensionsAsync();
+    let promise = initEditorExtensionsAsync();
     promise.then(() => {
         window.addEventListener("message", receiveDocMessage, false);
         window.addEventListener("hashchange", () => {

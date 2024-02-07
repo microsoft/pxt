@@ -4,9 +4,10 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "outDir": "../../built/tests",
+        "outDir": "../../built",
         "newLine": "LF",
         "module": "commonjs",
+        "rootDir": "../..",
         "lib": [
             "dom",
             "dom.iterable",

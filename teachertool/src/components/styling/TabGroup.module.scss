@@ -30,5 +30,15 @@
                 filter: none;
             }
         }
+
+        &[class*="disabled"] {
+            color: var(--pxt-headerbar-accent-smoke);
+
+            &:hover {
+                background-color: inherit;
+                filter: none;
+            }
+    
+        }
     }
 }

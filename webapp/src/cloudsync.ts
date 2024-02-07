@@ -4,6 +4,8 @@ import * as core from "./core";
 import * as data from "./data";
 
 import U = pxt.Util;
+import UserInfo = pxt.editor.UserInfo;
+
 const lf = U.lf
 
 let allProviders: pxt.Map<IdentityProvider>
@@ -34,9 +36,9 @@ export interface IdentityProvider {
     loginAsync(redirect?: boolean, silent?: boolean): Promise<ProviderLoginResponse>;
     logout(): void;
     loginCallback(rememberMe: boolean, queryString: pxt.Map<string>): void;
-    getUserInfoAsync(): Promise<pxt.editor.UserInfo>;
-    user(): pxt.editor.UserInfo;
-    setUser(user: pxt.editor.UserInfo): void;
+    getUserInfoAsync(): Promise<UserInfo>;
+    user(): UserInfo;
+    setUser(user: UserInfo): void;
 }
 
 export interface Provider extends IdentityProvider {
@@ -110,12 +112,12 @@ export class ProviderBase {
         throw mkSyncError(msg)
     }
 
-    user(): pxt.editor.UserInfo {
-        const user = pxt.Util.jsonTryParse(pxt.storage.getLocal(this.name + CLOUD_USER)) as pxt.editor.UserInfo;
+    user(): UserInfo {
+        const user = pxt.Util.jsonTryParse(pxt.storage.getLocal(this.name + CLOUD_USER)) as UserInfo;
         return user;
     }
 
-    setUser(user: pxt.editor.UserInfo) {
+    setUser(user: UserInfo) {
         if (user)
             pxt.storage.setLocal(this.name + CLOUD_USER, JSON.stringify(user))
         else
