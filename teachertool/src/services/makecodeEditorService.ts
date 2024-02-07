@@ -1,3 +1,5 @@
+/// <reference path="../../../localtypings/validatorPlan.d.ts" />
+
 import { ErrorCode } from "../types/errorCode";
 import { logDebug, logError } from "./loggingService";
 
