@@ -14,6 +14,7 @@ import {
 import { FunctionManager } from "./functionManager";
 import { MsgKey } from "./msg";
 import { newFunctionMutation } from "./blocks/functionDeclarationBlock";
+import { FunctionDefinitionBlock } from "./blocks/functionDefinitionBlock";
 
 export type StringMap<T> = { [index: string]: T };
 
@@ -442,6 +443,12 @@ function createFunctionCallbackFactory_(workspace: Blockly.WorkspaceSvg) {
 
             workspace.centerOnBlock(block.id);
             Blockly.Events.setGroup(false);
+
+            setTimeout(() => {
+                if ((block as (FunctionDefinitionBlock & Blockly.BlockSvg)).afterWorkspaceLoad) {
+                    (block as (FunctionDefinitionBlock & Blockly.BlockSvg)).afterWorkspaceLoad();
+                }
+            });
         }
     };
 };

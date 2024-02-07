@@ -21,6 +21,7 @@ import { MsgKey } from "../msg";
 import { FunctionManager } from "../functionManager";
 import { COLLAPSE_IMAGE_DATAURI } from "../svgs";
 import { ArgumentReporterBlock } from "./argumentReporterBlocks";
+import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "../../duplicateOnDrag";
 
 interface FunctionDefinitionMixin extends CommonFunctionMixin {
     createArgumentReporter_(arg: FunctionArgument): ArgumentReporterBlock;
@@ -66,8 +67,10 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
             if (input.type !== Blockly.inputTypes.VALUE) continue;
             const target = input.connection?.targetBlock();
 
-            if (target) {
-                if (target.isShadow() && target.getVarModels().length) {
+            if (target?.isShadow() && target.mutationToDom) {
+                const mutation = target.mutationToDom();
+
+                if (mutation.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
                     target.setShadow(false);
                 }
             }
