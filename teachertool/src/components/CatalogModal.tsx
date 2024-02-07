@@ -1,6 +1,6 @@
 /// <reference path="../../../built/pxtblocks.d.ts"/>
 
-import { useContext, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Checkbox } from "react-common/components/controls/Checkbox";
 import { Modal } from "react-common/components/controls/Modal";
@@ -14,6 +14,11 @@ interface IProps {}
 export const CatalogModal: React.FC<IProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [checkedCriteriaIds, setCheckedCriteria] = useState<Set<string>>(new Set<string>());
+
+    const selectableCriteria = useMemo<CatalogCriteria[]>(
+        () => getSelectableCatalogCriteria(teacherTool),
+        [teacherTool.catalog, teacherTool.rubric]
+    );
 
     function handleCriteriaSelectedChange(criteria: CatalogCriteria, newValue: boolean) {
         const newSet = new Set(checkedCriteriaIds);
@@ -54,8 +59,6 @@ export const CatalogModal: React.FC<IProps> = ({}) => {
         },
     ];
 
-    const selectableCatalogCriteria = getSelectableCatalogCriteria();
-
     return teacherTool.modal === "catalog-display" ? (
         <Modal
             className="catalog-modal"
@@ -63,7 +66,7 @@ export const CatalogModal: React.FC<IProps> = ({}) => {
             onClose={closeModal}
             actions={modalActions}
         >
-            {selectableCatalogCriteria.map(criteria => {
+            {selectableCriteria.map(criteria => {
                 return (
                     criteria?.template && (
                         <Checkbox
