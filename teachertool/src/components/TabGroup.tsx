@@ -11,9 +11,10 @@ import { setActiveTab } from "../transforms/setActiveTab";
 
 interface ITabProps extends React.PropsWithChildren<{}> {
     name: TabName;
+    disabled?: boolean;
 }
 
-export const Tab: React.FC<ITabProps> = ({ children, name }) => {
+export const TabButton: React.FC<ITabProps> = ({ children, name, disabled }) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     const onClick = () => {
@@ -24,7 +25,7 @@ export const Tab: React.FC<ITabProps> = ({ children, name }) => {
     const classes = classList("tt-tabgroup-tab", active ? "tt-tabgroup-tab-active" : undefined);
 
     return (
-        <Button className={classes} title={name} onClick={onClick}>
+        <Button className={classes} title={name} onClick={onClick} disabled={disabled}>
             {children}
         </Button>
     );

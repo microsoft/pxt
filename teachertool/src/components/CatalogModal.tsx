@@ -34,7 +34,7 @@ export const CatalogModal: React.FC<IProps> = ({}) => {
     }
 
     function closeModal() {
-        hideModal("catalog-display");
+        hideModal();
 
         // Clear for next open.
         setCheckedCriteria(new Set<string>());

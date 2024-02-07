@@ -1,5 +1,4 @@
 /// <reference path="../../built/pxtlib.d.ts" />
-/// <reference path="../../built/pxteditor.d.ts" />
 
 import * as db from "./db";
 import * as core from "./core";
@@ -15,6 +14,7 @@ import * as auth from "./auth"
 import * as cloud from "./cloud"
 
 import * as dmp from "diff-match-patch";
+import * as pxteditor from "../../pxteditor";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -333,7 +333,7 @@ export async function saveSnapshotAsync(id: string): Promise<void> {
     await enqueueHistoryOperationAsync(
         id,
         text => {
-            pxt.workspace.pushSnapshotOnHistory(text, Date.now())
+            pxteditor.history.pushSnapshotOnHistory(text, Date.now())
         }
     );
 }
@@ -342,7 +342,7 @@ export async function updateShareHistoryAsync(id: string): Promise<void> {
     await enqueueHistoryOperationAsync(
         id,
         (text, header) => {
-            pxt.workspace.updateShareHistory(text, Date.now(), header.pubVersions || [])
+            pxteditor.history.updateShareHistory(text, Date.now(), header.pubVersions || [])
         }
     );
 }
@@ -663,7 +663,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                     }
 
                     if (toWrite) {
-                        pxt.workspace.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
+                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
                     }
                 }
             }
@@ -735,8 +735,8 @@ function patchText(patch: unknown, a: string) {
     return differ.patch_apply(patch as any, a)[0]
 }
 
-export function applyDiff(text: ScriptText, history: pxt.workspace.HistoryEntry) {
-    return pxt.workspace.applyDiff(text, history, patchText);
+export function applyDiff(text: ScriptText, history: pxteditor.history.HistoryEntry) {
+    return pxteditor.history.applyDiff(text, history, patchText);
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
@@ -1746,7 +1746,7 @@ export function isBrowserWorkspace() {
     return impl === indexedDBWorkspace.provider;
 }
 
-export function fireEvent(ev: pxt.editor.events.Event) {
+export function fireEvent(ev: pxt.editor.EditorEvent) {
     if (impl.fireEvent)
         return impl.fireEvent(ev)
     // otherwise, NOP

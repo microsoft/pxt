@@ -1,3 +1,4 @@
+import * as pxteditor from "../../pxteditor";
 
 type Header = pxt.workspace.Header;
 type Project = pxt.workspace.Project;
@@ -10,7 +11,7 @@ export let projects: pxt.Map<Project> = {};
 export function merge(prj: Project) {
     let h: Header = prj.header;
     if (!h) {
-        prj.header = h = pxt.workspace.freshHeader(lf("Untitled"), U.nowSeconds())
+        prj.header = h = pxteditor.workspace.freshHeader(lf("Untitled"), U.nowSeconds())
         if (prj.text && prj.text[pxt.MAIN_BLOCKS]) {
             prj.header.editor = pxt.BLOCKS_PROJECT_NAME;
         }

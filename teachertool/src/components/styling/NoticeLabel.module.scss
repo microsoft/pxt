@@ -1,0 +1,43 @@
+.notice-label-background {
+    border-color: var(--pxt-content-foreground);
+    background-color: var(--pxt-content-background);
+    border-radius: 0.3rem;
+
+    .notice-label-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 0.3rem;
+        border-radius: 0.3rem;
+        border: 2px solid
+    }
+
+    .error-notice-label-container {
+        border-color: rgba(red, 0.2);
+        background-color: rgba(red, 0.2);
+        justify-content: flex-start;
+    }
+
+    .warning-notice-label-container {
+        border-color: rgba(orange, 0.4);
+        background-color: rgba(orange, 0.4);
+        justify-content: flex-start;
+    }
+
+    .info-notice-label-container {
+        border-color: rgba(blue, 0.2);
+        background-color: rgba(blue, 0.2);
+        justify-content: flex-start;
+    }
+
+    .neutral-notice-label-container {
+        border-color: rgba(black, 0.1);
+        background-color: rgba(black, 0.1);
+        align-content: center;
+        justify-content: center;
+    }
+
+    .icon {
+        margin-right: 0.5rem;
+    }
+}

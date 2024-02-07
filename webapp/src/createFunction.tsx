@@ -3,12 +3,11 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as codecard from "./codecard"
 
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface CreateFunctionDialogState {
     visible?: boolean;

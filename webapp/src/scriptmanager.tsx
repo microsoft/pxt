@@ -4,7 +4,6 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as workspace from "./workspace";
 import * as compiler from "./compiler";
-import * as auth from "./auth";
 
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
@@ -12,6 +11,8 @@ import { fireClickOnEnter } from "./util";
 import { Modal } from "../../react-common/components/controls/Modal";
 import { ProgressBar } from "./dialogs";
 import { classList } from "../../react-common/components/util";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 declare const zip: any;
 
@@ -23,8 +24,6 @@ export function loadZipAsync(): Promise<boolean> {
             .catch(e => false)
     return loadZipJsPromise;
 }
-
-type ISettingsProps = pxt.editor.ISettingsProps;
 
 export type ScriptSource = 'cloud' | 'local';
 

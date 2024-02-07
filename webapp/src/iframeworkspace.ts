@@ -1,11 +1,12 @@
 import * as mem from "./memoryworkspace";
+import * as pxteditor from "../../pxteditor";
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 function loadedAsync(): Promise<void> {
-    return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
+    return pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
         type: "pxthost",
         action: "workspaceloaded",
         response: true
@@ -15,7 +16,7 @@ function loadedAsync(): Promise<void> {
 let lastSyncState: pxt.editor.EditorSyncState
 
 function listAsync() {
-    return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
+    return pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
         type: "pxthost",
         action: "workspacesync",
         response: true
@@ -41,7 +42,7 @@ function setAsync(h: Header, prevVer: any, text?: ScriptText) {
     return mem.provider.setAsync(h, prevVer, text)
         .then(() => {
             const projectText = (text || (mem.projects[h.id] && mem.projects[h.id].text));
-            return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSaveRequest>{
+            return pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSaveRequest>{
                     type: "pxthost",
                     action: "workspacesave",
                     project: { header: h, text: projectText },
@@ -52,16 +53,16 @@ function setAsync(h: Header, prevVer: any, text?: ScriptText) {
 
 function resetAsync(): Promise<void> {
     return mem.provider.resetAsync()
-        .then(() => pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
+        .then(() => pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
             type: "pxthost",
             action: "workspacereset",
             response: true
         })).then(() => { })
 }
 
-function fireEvent(ev: pxt.editor.events.Event) {
+function fireEvent(ev: pxt.editor.EditorEvent) {
     // Send the message up the chain
-    pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceEvent>{
+    pxteditor.postHostMessageAsync(<pxt.editor.EditorWorkspaceEvent>{
         type: "pxthost",
         action: "workspaceevent",
         response: false,

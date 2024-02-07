@@ -185,6 +185,11 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export function sanitizeFileName(name: string): string {
+        /* eslint-disable no-control-regex */
+        return name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '').trim().replace(/\s+/g, '-');
+    }
+
     export function repeatMap<T>(n: number, fn: (index: number) => T): T[] {
         n = n || 0;
         let r: T[] = [];
@@ -1236,7 +1241,7 @@ namespace ts.pxtc.Util {
         "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
         "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
         "sq": { englishName: "Albanian", localizedName: "shqip" },
-        "sr": { englishName: "Serbian (Latin)", localizedName: "Srpski" },
+        "sr": { englishName: "Serbian (Cyrillic)", localizedName: "Srpski" },
         "su": { englishName: "Sundanese", localizedName: "ᮘᮞ ᮞᮥᮔ᮪ᮓ" },
         "sv-SE": { englishName: "Swedish", localizedName: "Svenska" },
         "sw": { englishName: "Swahili", localizedName: "Kiswahili" },

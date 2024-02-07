@@ -10,12 +10,13 @@ export interface MenuItem extends ButtonProps {
 }
 
 export interface MenuDropdownProps extends ControlProps {
-    id: string;
+    id?: string;
     items: MenuItem[];
     label?: string | JSX.Element;
     title: string;
     icon?: string;
     tabIndex?: number;
+    disabled?: boolean;
 }
 
 export const MenuDropdown = (props: MenuDropdownProps) => {
@@ -29,7 +30,8 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         label,
         title,
         icon,
-        tabIndex
+        tabIndex,
+        disabled
     } = props;
 
     const [ expanded, setExpanded ] = React.useState(false);
@@ -80,6 +82,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
             ariaControls={expanded ? menuId : undefined}
             ariaLabel={ariaLabel}
             ariaHidden={ariaHidden}
+            disabled={disabled}
             />
         {expanded &&
             <div role="menu"

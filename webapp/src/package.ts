@@ -6,6 +6,8 @@ import * as compiler from "./compiler";
 import Util = pxt.Util;
 import { HOSTCACHE_TABLE, getObjectStoreAsync } from "./idbworkspace";
 
+import IFile = pxt.editor.IFile;
+
 let extWeight: pxt.Map<number> = {
     "ts": 10,
     "blocks": 20,
@@ -21,7 +23,7 @@ export function setupAppTarget(trgbundle: pxt.TargetBundle) {
 const GENERATED_EXTENSION = ".g."
 
 
-export class File implements pxt.editor.IFile {
+export class File implements IFile {
     inSyncWithEditor = true;
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
@@ -787,8 +789,7 @@ export function mainEditorPkg() {
 
 export function genFileName(extension: string): string {
     /* eslint-disable no-control-regex */
-    let sanitizedName = mainEditorPkg().header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '');
-    sanitizedName = sanitizedName.trim().replace(/\s+/g, '-');
+    let sanitizedName = pxt.Util.sanitizeFileName(mainEditorPkg().header.name);
     /* eslint-enable no-control-regex */
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
         const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');

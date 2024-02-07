@@ -9,10 +9,9 @@ import dashjs = require("dashjs");
 import { fireClickOnEnter } from "../../react-common/components/util";
 
 import * as pxtblockly from "../../pxtblocks";
-
 import * as Blockly from "blockly";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;

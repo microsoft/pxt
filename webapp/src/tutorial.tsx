@@ -19,7 +19,8 @@ import { fireClickOnEnter } from "./util";
 
 import * as pxtblockly from "../../pxtblocks";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import ISettingsProps = pxt.editor.ISettingsProps;
+
 
 interface ITutorialBlocks {
     snippetBlocks: pxt.Map<pxt.Map<number>>;
