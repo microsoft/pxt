@@ -23,6 +23,18 @@
             "use": "functions_have_comments",
             "template": "All function definitions have comments",
             "docPath": "/teachertool"
+        },
+        {
+            "id": "D21D76A2-D9FD-4F9B-B0AC-973CB870EA78",
+            "use": "variable_set",
+            "template": "At least one variable's value is set",
+            "docPath": "/teachertool"
+        },
+        {
+            "id": "0173898D-8A48-4266-AAB9-CE934471A734",
+            "use": "variable_accessed",
+            "template": "At least one variable is accessed",
+            "docPath": "/teachertool"
         }
     ]
 }
