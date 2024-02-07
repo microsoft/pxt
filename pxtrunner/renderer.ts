@@ -1,8 +1,10 @@
+/// <reference path="../localtypings/pxteditor.d.ts" />
+
 import { DecompileResult, compileBlocksAsync, decompileSnippetAsync, renderProjectAsync } from "./runner";
 
 import * as Blockly from "blockly";
 
-import { BlockLayout, BlocksRenderOptions, cleanRenderingWorkspace, decompiledDiffAsync, diffXml, render } from "../pxtblocks";
+import { BlocksRenderOptions, cleanRenderingWorkspace, decompiledDiffAsync, diffXml, render } from "../pxtblocks";
 import { CodeCardRenderOptions, renderCodeCard } from "../pxtblocks/codecardRenderer";
 
 const JS_ICON = "icon xicon js";
@@ -419,7 +421,7 @@ function renderNextSnippetAsync(cls: string,
     if (!$el[0]) return Promise.resolve();
 
     if (!options.emPixels) options.emPixels = 18;
-    if (!options.layout) options.layout = BlockLayout.Align;
+    if (!options.layout) options.layout = pxt.editor.BlockLayout.Align;
     options.splitSvg = true;
 
     renderQueue.push({ el: $el, source: $el.text(), options, render });

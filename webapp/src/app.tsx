@@ -81,7 +81,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 
-pxt.blocks.requirePxtBlockly = () => pxtblockly;
+pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
 pxt.blocks.registerFieldEditor = (selector, proto, validator) => pxtblockly.registerFieldEditor(selector, proto, validator);
 
@@ -4033,7 +4033,7 @@ export class ProjectView
             .then(resp => {
                 const svg = pxtblockly.render(resp.outfiles[pxt.MAIN_BLOCKS], {
                     snippetMode: req.snippetMode || false,
-                    layout: req.layout !== undefined ? req.layout : pxtblockly.BlockLayout.Align,
+                    layout: req.layout !== undefined ? req.layout : pxt.editor.BlockLayout.Align,
                     splitSvg: false
                 }) as SVGSVGElement;
                 // TODO: what if svg is undefined? handle that scenario

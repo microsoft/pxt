@@ -1,4 +1,5 @@
 /// <reference path="../built/pxtlib.d.ts" />
+/// <reference path="../localtypings/pxteditor.d.ts" />
 
 import * as Blockly from "blockly";
 import { verticalAlign, flow, cleanUpBlocklySvg, splitSvg } from "./layout";
@@ -7,17 +8,9 @@ import { clearWithoutEvents, domToWorkspaceNoEvents } from "./importer";
 let workspace: Blockly.WorkspaceSvg;
 let blocklyDiv: HTMLElement;
 
-export enum BlockLayout {
-    None = 0,
-    Align = 1,
-    // Shuffle deprecated
-    Clean = 3,
-    Flow = 4
-}
-
 export interface BlocksRenderOptions {
     emPixels?: number;
-    layout?: BlockLayout;
+    layout?: pxt.editor.BlockLayout;
     clean?: boolean;
     aspectRatio?: number;
     packageId?: string;
@@ -62,14 +55,14 @@ export function cleanRenderingWorkspace() {
     workspace = undefined;
 }
 
-export function renderWorkspace(options: BlocksRenderOptions = { emPixels: 18, layout: BlockLayout.Align }): Element {
-    const layout = options.splitSvg ? BlockLayout.Align : (options.layout || BlockLayout.Flow);
+export function renderWorkspace(options: BlocksRenderOptions = { emPixels: 18, layout: pxt.editor.BlockLayout.Align }): Element {
+    const layout = options.splitSvg ? pxt.editor.BlockLayout.Align : (options.layout || pxt.editor.BlockLayout.Flow);
     switch (layout) {
-        case BlockLayout.Align:
+        case pxt.editor.BlockLayout.Align:
             verticalAlign(workspace, options.emPixels || 18); break;
-        case BlockLayout.Flow:
+        case pxt.editor.BlockLayout.Flow:
             flow(workspace, { ratio: options.aspectRatio, useViewWidth: options.useViewWidth }); break;
-        case BlockLayout.Clean:
+        case pxt.editor.BlockLayout.Clean:
             if ((<any>workspace).cleanUp_)
                 (<any>workspace).cleanUp_();
             break;
@@ -97,7 +90,7 @@ export function renderWorkspace(options: BlocksRenderOptions = { emPixels: 18, l
         : svg;
 }
 
-export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 18, layout: BlockLayout.Align }): Element {
+export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 18, layout: pxt.editor.BlockLayout.Align }): Element {
     initRenderingWorkspace();
     try {
         let text = blocksXml || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;

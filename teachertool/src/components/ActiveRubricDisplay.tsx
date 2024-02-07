@@ -1,5 +1,3 @@
-/// <reference path="../../../built/pxtblocks.d.ts"/>
-
 import { useContext, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";

@@ -111,8 +111,8 @@ function initWatch() {
         pxtlib,
         gulp.parallel(pxtcompiler, pxtsim, backendutils),
         pxtpy,
-        pxteditor,
-        gulp.parallel(pxtrunner, cli, pxtcommon, pxtblocks),
+        gulp.parallel(pxtblocks, pxteditor),
+        gulp.parallel(pxtrunner, cli, pxtcommon),
         gulp.parallel(updatestrings, browserifyEmbed),
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
@@ -131,7 +131,7 @@ function initWatch() {
     gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
-    gulp.watch("./pxtblocks/**/*", gulp.series(pxtblocks, ...tasks.slice(5)));
+    gulp.watch("./pxtblocks/**/*", gulp.series(pxtblocks, ...tasks.slice(4)));
 
     gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
 
@@ -811,8 +811,8 @@ const buildAll = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     pxtpy,
-    pxteditor,
-    gulp.parallel(pxtrunner, cli, pxtcommon, pxtblocks),
+    gulp.parallel(pxteditor, pxtblocks),
+    gulp.parallel(pxtrunner, cli, pxtcommon),
     browserifyEmbed,
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
@@ -835,7 +835,7 @@ exports.clean = clean;
 exports.build = buildAll;
 
 exports.webapp = gulp.series(
-    gulp.parallel(reactCommon, pxtblocks),
+    gulp.parallel(reactCommon, pxtblocks, pxteditor),
     webapp,
     browserifyWebapp,
     browserifyAssetEditor

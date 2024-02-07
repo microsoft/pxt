@@ -2,7 +2,7 @@
 
 import * as Blockly from "blockly";
 import { domToWorkspaceNoEvents, loadWorkspaceXml, saveWorkspaceXml } from "./importer";
-import { BlockLayout, BlocksRenderOptions, initRenderingWorkspace, renderWorkspace } from "./render";
+import { BlocksRenderOptions, initRenderingWorkspace, renderWorkspace } from "./render";
 
 export interface DiffOptions {
     hideDeletedTopBlocks?: boolean;
@@ -253,7 +253,7 @@ function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspac
     // final render
     const svg = renderWorkspace(options.renderOptions || {
         emPixels: 20,
-        layout: BlockLayout.Flow,
+        layout: pxt.editor.BlockLayout.Flow,
         aspectRatio: 0.5,
         useViewWidth: true
     });
