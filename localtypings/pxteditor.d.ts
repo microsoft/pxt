@@ -1,6 +1,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../built/pxtblocks.d.ts" />
 /// <reference path="./projectheader.d.ts" />
+/// <reference path="./validatorPlan.d.ts" />
 
 declare namespace pxt.editor {
     export interface EditorMessage {
