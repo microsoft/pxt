@@ -20,7 +20,7 @@ export const AddCriteriaButton: React.FC<IProps> = ({}) => {
             label={lf("Add Criteria")}
             onClick={() => showModal("catalog-display")}
             title={lf("Add Criteria")}
-            leftIcon="fas fa-plus"
+            leftIcon="fas fa-plus-circle"
             disabled={!hasAvailableCriteria}
         />
 };
