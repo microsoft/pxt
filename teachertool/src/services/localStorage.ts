@@ -17,7 +17,7 @@ function delValue(key: string) {
 }
 
 function getJsonValue<T>(key: string, defaultValue?: T): T | undefined {
-    var value = getValue(key);
+    const value = getValue(key);
     if (value) {
         return JSON.parse(value);
     }
