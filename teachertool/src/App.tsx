@@ -8,7 +8,7 @@ import { downloadTargetConfigAsync } from "./services/backendRequests";
 import { logDebug } from "./services/loggingService";
 import { HeaderBar } from "./components/HeaderBar";
 import { MainPanel } from "./components/MainPanel";
-import { Notifications } from "./components/Notifications";
+import { Toasts } from "./components/Toasts";
 import { CatalogModal } from "./components/CatalogModal";
 import { postNotification } from "./transforms/postNotification";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
@@ -55,7 +55,7 @@ export const App = () => {
             <MainPanel />
             <CatalogModal />
             <ImportRubricModal />
-            <Notifications />
+            <Toasts />
         </>
     );
 };

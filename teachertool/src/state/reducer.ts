@@ -6,23 +6,23 @@ import { updateStoredRubricAsync } from "../transforms/updateStoredRubric";
 // The reducer must not create side effects. E.g. do not dispatch a state change from within the reducer.
 export default function reducer(state: AppState, action: Action): AppState {
     switch (action.type) {
-        case "POST_NOTIFICATION": {
+        case "SHOW_TOAST": {
             // Before posting the notification, ensure is doesn't already exist in the list.
             // Protect against duplicate action dispatches.
-            if (!state.notifications.find(n => n.id === action.notification.id)) {
+            if (!state.toasts.find(n => n.id === action.toast.id)) {
                 return {
                     ...state,
-                    notifications: [...state.notifications, action.notification],
+                    toasts: [...state.toasts, action.toast],
                 };
             } else {
                 return state;
             }
         }
-        case "REMOVE_NOTIFICATION": {
-            const notifications = state.notifications.filter(n => n.id !== action.notificationId);
+        case "DISMISS_TOAST": {
+            const toasts = state.toasts.filter(n => n.id !== action.toastId);
             return {
                 ...state,
-                notifications,
+                toasts,
             };
         }
         case "SET_PROJECT_METADATA": {

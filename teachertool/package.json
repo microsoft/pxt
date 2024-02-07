@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@types/node": "^16.11.33",
+    "framer-motion": "^11.0.3",
     "idb": "^7.1.1",
     "nanoid": "^4.0.2",
     "react-scripts": "5.0.1",
