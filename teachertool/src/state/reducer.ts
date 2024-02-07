@@ -97,5 +97,11 @@ export default function reducer(state: AppState, action: Action): AppState {
                 activeTab: action.tabName,
             };
         }
+        case "SET_AUTORUN": {
+            return {
+                ...state,
+                autorun: action.autorun,
+            };
+        }
     }
 }
