@@ -13,4 +13,6 @@ export enum ErrorCode {
     unableToLoadCriteriaInstance = "unableToLoadCriteriaInstance",
     unableToExportRubric = "unableToExportRubric",
     unableToReadRubricFile = "unableToReadRubricFile",
+    localStorageReadError = "localStorageReadError",
+    localStorageWriteError = "localStorageWriteError",
 }

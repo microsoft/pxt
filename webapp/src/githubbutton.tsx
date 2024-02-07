@@ -1,11 +1,12 @@
 import * as React from "react";
 import * as sui from "./sui";
 import * as pkg from "./package";
-import * as cloudsync from "./cloudsync";
 import * as workspace from "./workspace";
 import { fireClickOnEnter } from "./util";
 
-interface GithubButtonProps extends pxt.editor.ISettingsProps {
+import ISettingsProps = pxt.editor.ISettingsProps;
+
+interface GithubButtonProps extends ISettingsProps {
     className?: string;
 }
 

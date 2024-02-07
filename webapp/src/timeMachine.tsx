@@ -6,12 +6,16 @@ import { Button } from "../../react-common/components/controls/Button";
 import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 import { classList } from "../../react-common/components/util";
+import { HistoryFile, applySnapshot } from "../../pxteditor/history";
+
+import ScriptText = pxt.workspace.ScriptText;
+
 
 interface TimeMachineProps {
-    onProjectLoad: (text: pxt.workspace.ScriptText, editorVersion: string, timestamp?: number) => void;
-    onProjectCopy: (text: pxt.workspace.ScriptText, editorVersion: string, timestamp?: number) => void;
-    text: pxt.workspace.ScriptText;
-    history: pxt.workspace.HistoryFile;
+    onProjectLoad: (text: ScriptText, editorVersion: string, timestamp?: number) => void;
+    onProjectCopy: (text: ScriptText, editorVersion: string, timestamp?: number) => void;
+    text: ScriptText;
+    history: HistoryFile;
 }
 
 interface PendingMessage {
@@ -31,7 +35,7 @@ interface TimeEntry {
 }
 
 interface Project {
-    files: pxt.workspace.ScriptText;
+    files: ScriptText;
     editorVersion: string;
 }
 
@@ -48,7 +52,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
     const iframeRef = React.useRef<HTMLIFrameElement>();
     const fetchingScriptLock = React.useRef(false);
 
-    const importProject = React.useRef<(text: pxt.workspace.ScriptText) => Promise<void>>();
+    const importProject = React.useRef<(text: ScriptText) => Promise<void>>();
 
     React.useEffect(() => {
         const iframe = iframeRef.current;
@@ -114,10 +118,10 @@ export const TimeMachine = (props: TimeMachineProps) => {
             }
         };
 
-        let pendingLoad: pxt.workspace.ScriptText;
+        let pendingLoad: ScriptText;
         let currentlyLoading = false;
 
-        const loadProject = async (project: pxt.workspace.ScriptText) => {
+        const loadProject = async (project: ScriptText) => {
             if (currentlyLoading) {
                 pendingLoad = project;
                 return;
@@ -327,14 +331,14 @@ export const TimeMachine = (props: TimeMachineProps) => {
     , document.body);
 }
 
-async function getTextAtTimestampAsync(text: pxt.workspace.ScriptText, history: pxt.workspace.HistoryFile, time: TimeEntry): Promise<Project> {
+async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, time: TimeEntry): Promise<Project> {
     const editorVersion = pxt.appTarget.versions.target;
 
     if (!time || time.timestamp < 0) return { files: text, editorVersion };
 
     if (time.kind === "snapshot") {
         const snapshot = history.snapshots.find(s => s.timestamp === time.timestamp)
-        return patchPxtJson(pxt.workspace.applySnapshot(text, snapshot.text), snapshot.editorVersion);
+        return patchPxtJson(applySnapshot(text, snapshot.text), snapshot.editorVersion);
     }
     else if (time.kind === "share") {
         const share = history.shares.find(s => s.timestamp === time.timestamp);
@@ -362,7 +366,7 @@ async function getTextAtTimestampAsync(text: pxt.workspace.ScriptText, history: 
     return { files: currentText, editorVersion };
 }
 
-function patchPxtJson(text: pxt.workspace.ScriptText, editorVersion: string): Project {
+function patchPxtJson(text: ScriptText, editorVersion: string): Project {
     text = {...text};
 
     // Attempt to update the version in pxt.json
@@ -462,7 +466,7 @@ function isToday(time: number) {
         now.getDate() == date.getDate();
 }
 
-function getTimelineEntries(history: pxt.workspace.HistoryFile): TimelineEntry[] {
+function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
     const buckets: {[index: string]: TimeEntry[]} = {};
 
     const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff" | "share") => {

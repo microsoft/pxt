@@ -1,4 +1,6 @@
-namespace pxt.blocks {
+/// <reference path="./pxtpackage.d.ts" />
+
+declare namespace pxt.blocks {
     // A set of validation checks (with inputs) to run for a given criteria.
     export interface ValidatorPlan {
         name: string;
@@ -31,5 +33,9 @@ namespace pxt.blocks {
         validator: "blocksInSetExist";
         blocks: string[];
         count: number;
+    }
+
+    export interface EvaluationResult {
+        result: boolean;
     }
 }

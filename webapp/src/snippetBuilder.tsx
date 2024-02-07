@@ -11,7 +11,9 @@ import * as toolbox from "./toolbox";
 import * as core from "./core";
 import { InputHandler } from './snippetBuilderInputHandler';
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import IProjectView = pxt.editor.IProjectView;
+import ISettingsProps = pxt.editor.ISettingsProps;
+
 
 interface SnippetBuilderProps extends ISettingsProps {
     mainWorkspace: Blockly.WorkspaceSvg;
@@ -558,7 +560,7 @@ function getSnippetExtensions(): pxt.SnippetConfig[] {
     return pxt.Util.concat(snippetConfigs);
 }
 
-function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
+function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: IProjectView) {
     const overlay = document.createElement('div');
     const wrapper = document.body.appendChild(overlay);
     const props = { parent: parent, mainWorkspace: editor, config };
@@ -569,7 +571,7 @@ function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceS
     snippetBuilder.show();
 }
 
-export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
+export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: IProjectView) {
     const snippetExtensions = getSnippetExtensions();
 
     snippetExtensions

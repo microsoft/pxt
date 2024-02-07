@@ -40,7 +40,7 @@ const pxtpy = () => compileTsProject("pxtpy");
 const pxtsim = () => compileTsProject("pxtsim");
 const pxtblocks = () => compileTsProject("pxtblocks");
 const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
-const pxteditor = () => compileTsProject("pxteditor");
+const pxteditor = () => compileTsProject("pxteditor", "built", true);
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
 const backendutils = () => compileTsProject("backendutils")
 const cli = () => compileTsProject("cli", "built", true);
@@ -61,7 +61,6 @@ const pxtapp = () => gulp.src([
     "node_modules/lzma/src/lzma_worker-min.js",
     "node_modules/dompurify/dist/purify.min.js",
     "built/pxtlib.js",
-    "built/pxteditor.js",
     "built/pxtsim.js"
 ])
     .pipe(concat("pxtapp.js"))
@@ -88,7 +87,6 @@ const pxtembed = () => gulp.src([
     "built/pxtcompiler.js",
     "built/pxtpy.js",
     "built/pxtblockly.js",
-    "built/pxteditor.js",
     "built/pxtsim.js",
     "built/web/runnerembed.js"
 ])
@@ -393,7 +391,6 @@ const copyWebapp = () =>
         "built/pxtblocks.js",
         "built/pxtblockly.js",
         "built/pxtsim.js",
-        "built/pxteditor.js",
         "built/webapp/src/worker.js",
         "built/webapp/src/serviceworker.js",
         "built/webapp/src/simulatorserviceworker.js",
@@ -765,7 +762,7 @@ const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
-const testpxteditor = testTask("pxt-editor-test", "editorrunner.js", ["built/pxteditor.js"]);
+const testpxteditor = pxtEditorTestTask();
 
 const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/tests/", true);
 const runKarma = () => {
@@ -782,7 +779,7 @@ const runKarma = () => {
 }
 const karma = gulp.series(buildKarmaRunner, runKarma);
 
-const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/tests", false, "blocksrunner")
+const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/tests", true)
 
 const testAll = gulp.series(
     testdecompiler,
@@ -830,11 +827,22 @@ function testTask(testFolder, testFile, additionalFiles) {
     const testArgs = " built/tests/" + testFolder + "/runner.js --reporter dot";
 
 
-    const runTest = () => isWin32 ?
-        exec(path.resolve("node_modules/.bin/mocha.cmd") + testArgs, true) :
-        exec("./node_modules/.bin/mocha" + testArgs, true);
+    const runTest = () => exec(getMochaExecutable() + testArgs, true);
 
     return gulp.series(buildTs, buildTestRunner, runTest);
+}
+
+function pxtEditorTestTask() {
+    const buildTs = () => compileTsProject("tests/pxt-editor-test", "built", true);
+    const browserifyTs = () => exec('node node_modules/browserify/bin/cmd built/tests/pxt-editor-test/editorrunner.js -o built/tests/pxt-editor-test/bundled.js --debug');
+    const buildRunner = () => gulp.src(["built/pxtlib.js", "built/tests/pxt-editor-test/bundled.js"]).pipe(concat("runner.js")).pipe(gulp.dest("built/tests/pxt-editor-test/"));
+    const runTests = () => exec(`${getMochaExecutable()} built/tests/pxt-editor-test/runner.js --reporter dot`, true)
+    return gulp.series([buildTs, browserifyTs, buildRunner, runTests]);
+}
+
+
+function getMochaExecutable() {
+    return isWin32 ? path.resolve("node_modules/.bin/mocha.cmd") : "./node_modules/.bin/mocha";
 }
 
 const buildAll = gulp.series(

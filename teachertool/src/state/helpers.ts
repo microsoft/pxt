@@ -3,6 +3,7 @@ import { CatalogCriteria, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { Rubric } from "../types/rubric";
 import { stateAndDispatch } from "./appStateContext";
+import { AppState } from "./state";
 
 export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefined {
     const { state } = stateAndDispatch();
@@ -40,4 +41,22 @@ export function verifyRubricIntegrity(rubric: Rubric): {
         }
     }
     return { valid: invalidCriteria.length === 0, validCriteria, invalidCriteria };
+}
+
+export function isProjectLoaded(state: AppState) {
+    return !!state.projectMetadata;
+}
+
+export function getSelectableCatalogCriteria(state: AppState): CatalogCriteria[] {
+    const usedCatalogCriteria = state.rubric.criteria.map(c => c.catalogCriteriaId) ?? [];
+
+    // Return a criteria as selectable if it has parameters (so it can be used multiple times in a rubric)
+    // or if it has not yet been used in the active rubric.
+    return (
+        state.catalog?.filter(
+            catalogCriteria =>
+                (catalogCriteria.parameters && catalogCriteria.parameters.length > 0) ||
+                !usedCatalogCriteria.includes(catalogCriteria.id)
+        ) ?? []
+    );
 }

@@ -63,4 +63,25 @@ declare namespace pxt.workspace {
         id: string;
         type: "snapshot" | "permalink";
     }
+
+    export type ScriptText = pxt.Map<string>;
+
+    export interface Project {
+        header?: pxt.workspace.Header;
+        text?: ScriptText;
+    }
+
+    export interface Asset {
+        name: string;
+        size: number;
+        url: string;
+    }
+
+    export type Version = any;
+
+    export interface File {
+        header: pxt.workspace.Header;
+        text: ScriptText;
+        version: Version;
+    }
 }

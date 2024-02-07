@@ -1,5 +1,6 @@
 import * as runner from "./runner";
 import * as renderer from "./renderer";
+import * as pxteditor from "../pxteditor";
 
 /**
  * This file serves as the browserify entry point for compiling
@@ -16,7 +17,11 @@ if (!window.pxt) {
 (window as any).pxt.runner = {
     ...runner,
     ...renderer
-}
+};
+
+(window as any).pxt.editor = {
+    ...pxteditor
+};
 
 function windowLoad() {
     let f = (window as any).ksRunnerWhenLoaded

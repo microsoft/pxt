@@ -12,7 +12,8 @@ import * as pkg from "./package";
 import * as projects from "./projects";
 import * as tutorial from "./tutorial";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import ISettingsProps = pxt.editor.ISettingsProps;
+
 type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox" | "time-machine";
 const LONGPRESS_DURATION = 750;
 

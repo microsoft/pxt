@@ -5,6 +5,8 @@ import * as cloudsync from "./cloudsync";
 import * as dialogs from "./dialogs";
 import * as workspace from "./workspace";
 
+import UserInfo = pxt.editor.UserInfo;
+
 export const PROVIDER_NAME = "github";
 
 export class GithubProvider extends cloudsync.ProviderBase {
@@ -156,7 +158,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         return pxt.Util.delay(1000);
     }
 
-    getUserInfoAsync(): Promise<pxt.editor.UserInfo> {
+    getUserInfoAsync(): Promise<UserInfo> {
         if (!this.token())
             return Promise.resolve(undefined);
         return pxt.github.authenticatedUserAsync()

@@ -1,7 +1,7 @@
 /// <reference path="..\..\localtypings\pxtblockly.d.ts" />
+/// <reference path="..\..\localtypings\pxteditor.d.ts" />
 /// <reference path="..\..\built\pxtblocks.d.ts" />
 /// <reference path="..\..\built\pxtcompiler.d.ts" />
-/// <reference path="..\..\built\pxteditor.d.ts" />
 
 const WEB_PREFIX = "http://localhost:9876";
 
