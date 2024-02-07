@@ -21,7 +21,7 @@ export interface ButtonViewProps extends ContainerProps {
     ariaPosInSet?: number;
     ariaSetSize?: number;
     ariaSelected?: boolean;
-    ariaChecked?: boolean | "mixed";
+    ariaPressed?: boolean | "mixed";
 }
 
 
@@ -45,7 +45,7 @@ export const Button = (props: ButtonProps) => {
         ariaPosInSet,
         ariaSetSize,
         ariaSelected,
-        ariaChecked,
+        ariaPressed,
         role,
         onClick,
         onKeydown,
@@ -104,7 +104,7 @@ export const Button = (props: ButtonProps) => {
             aria-setsize={ariaSetSize}
             aria-describedby={ariaDescribedBy}
             aria-selected={ariaSelected}
-            aria-checked={ariaChecked}>
+            aria-pressed={ariaPressed}>
                 {(leftIcon || rightIcon || label) && (
                     <span className="common-button-flex">
                         {leftIcon && <i className={leftIcon} aria-hidden={true}/>}

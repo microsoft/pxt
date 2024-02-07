@@ -57,8 +57,7 @@ const ToolbarToggle: React.FC<ToolbarToggleProps> = ({ label, isChecked, onChang
             ariaLabel={label}
             onClick={onClick}
             rightIcon={checked ? "fas fa-toggle-on" : "fas fa-toggle-off"}
-            ariaChecked={checked}
-            role="switch"
+            ariaPressed={checked}
         />
     );
 };
