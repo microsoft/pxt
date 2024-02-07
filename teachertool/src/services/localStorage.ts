@@ -16,18 +16,6 @@ function delValue(key: string) {
     localStorage.removeItem(key);
 }
 
-function getJsonValue<T>(key: string, defaultValue?: T): T | undefined {
-    const value = getValue(key);
-    if (value) {
-        return JSON.parse(value);
-    }
-    return defaultValue;
-}
-
-function setJsonValue(key: string, val: any) {
-    setValue(key, JSON.stringify(val));
-}
-
 function getAutorun(): boolean {
     try {
         return getValue(AUTORUN_KEY, "false") === "true";
