@@ -5,6 +5,7 @@ import { logDebug, logError } from "../services/loggingService";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
 import { ErrorCode } from "../types/errorCode";
+import * as AutorunService from "../services/autorunService";
 
 export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
@@ -45,6 +46,7 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     }
 
     dispatch(Actions.setRubric(newRubric));
+    AutorunService.poke();
 
     pxt.tickEvent("teachertool.addcriteria", {
         ids: JSON.stringify(catalogCriteriaIds),
