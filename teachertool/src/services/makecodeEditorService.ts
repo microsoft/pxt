@@ -2,6 +2,7 @@
 
 import { ErrorCode } from "../types/errorCode";
 import { logDebug, logError } from "./loggingService";
+import * as AutorunService from "./autorunService";
 
 interface PendingMessage {
     original: pxt.editor.EditorMessageRequest;
@@ -22,6 +23,7 @@ function onMessageReceived(event: MessageEvent) {
         if (data.action === "editorcontentloaded") {
             readyForMessages = true;
             sendMessageAsync(); // flush message queue.
+            AutorunService.poke();
         }
 
         if (data.id && pendingMessages[data.id]) {

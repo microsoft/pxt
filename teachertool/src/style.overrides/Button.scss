@@ -21,7 +21,7 @@
     }
 }
 
-.common-button.inline {
+.common-button.inline:not(.disabled) {
     background-color: var(--pxt-page-background);
     color: var(--pxt-content-foreground);
     border: solid 1px var(--pxt-content-accent);
@@ -35,4 +35,8 @@
     &:focus-visible::after {
         outline: solid 1px var(--pxt-content-foreground);
     }
+}
+
+.common-button.disabled {
+    opacity: 0.8;
 }

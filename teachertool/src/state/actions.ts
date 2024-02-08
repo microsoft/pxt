@@ -74,6 +74,11 @@ type SetActiveTab = ActionBase & {
     tabName: TabName;
 };
 
+type SetAutorun = ActionBase & {
+    type: "SET_AUTORUN";
+    autorun: boolean;
+};
+
 /**
  * Union of all actions
  */
@@ -91,7 +96,8 @@ export type Action =
     | ShowModal
     | HideModal
     | SetValidatorPlans
-    | SetActiveTab;
+    | SetActiveTab
+    | SetAutorun;
 
 /**
  * Action creators
@@ -160,6 +166,11 @@ const setActiveTab = (tabName: TabName): SetActiveTab => ({
     tabName,
 });
 
+const setAutorun = (autorun: boolean): SetAutorun => ({
+    type: "SET_AUTORUN",
+    autorun,
+});
+
 export {
     postNotification,
     removeNotification,
@@ -174,4 +185,5 @@ export {
     hideModal,
     setValidatorPlans,
     setActiveTab,
+    setAutorun,
 };

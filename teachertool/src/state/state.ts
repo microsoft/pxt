@@ -12,6 +12,7 @@ export type AppState = {
     modal: ModalType | undefined;
     activeTab: TabName;
     validatorPlans: pxt.blocks.ValidatorPlan[] | undefined;
+    autorun: boolean;
     flags: {
         testCatalog: boolean;
     };
@@ -26,6 +27,7 @@ export const initialAppState: AppState = {
     modal: undefined,
     activeTab: "rubric",
     validatorPlans: undefined,
+    autorun: false,
     flags: {
         testCatalog: false,
     },

@@ -1,11 +1,11 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
-import { showModal } from "../transforms/showModal";
 import { setRubricName } from "../transforms/setRubricName";
 import { DebouncedInput } from "./DebouncedInput";
+import { AddCriteriaButton } from "./AddCriteriaButton";
 
 interface IProps {}
 
@@ -40,12 +40,7 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                     )
                 );
             })}
-            <Button
-                className="inline"
-                label={lf("+ Add Criteria")}
-                onClick={() => showModal("catalog-display")}
-                title={lf("Add Criteria")}
-            />
+            <AddCriteriaButton />
         </div>
     );
 };
