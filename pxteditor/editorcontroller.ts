@@ -1,5 +1,6 @@
 /// <reference path="../localtypings/pxteditor.d.ts" />
 
+import { runValidatorPlanAsync } from "./code-validation/runValidatorPlanAsync";
 import IProjectView = pxt.editor.IProjectView;
 
 const pendingRequests: pxt.Map<{
@@ -159,7 +160,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                 return Promise.resolve()
                                     .then(() => {
                                         const blocks = projectView.getBlocks();
-                                        return pxt.blocks.runValidatorPlanAsync(blocks, plan)})
+                                        return runValidatorPlanAsync(blocks, plan)})
                                     .then (results => {
                                         resp = { result: results };
                                     });

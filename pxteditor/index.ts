@@ -2,6 +2,7 @@ import * as history from "./history";
 import * as monaco from "./monaco";
 import * as workspace from "./workspace";
 import * as experiments from "./experiments";
+import * as validation from "./code-validation";
 
 export * from "./editor";
 export * from "./editorcontroller";
@@ -16,5 +17,6 @@ export {
     history,
     monaco,
     workspace,
-    experiments
+    experiments,
+    validation
 };

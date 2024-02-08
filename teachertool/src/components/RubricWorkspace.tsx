@@ -9,7 +9,6 @@ import { TabGroup, TabButton } from "./TabGroup";
 import { TabPanel } from "./TabPanel";
 import { EvalResultDisplay } from "./EvalResultDisplay";
 import { ActiveRubricDisplay } from "./ActiveRubricDisplay";
-import { ToolbarControlGroup, ToolbarButton, ToolbarMenuDropdown } from "./ToolbarControls";
 import { MenuItem } from "react-common/components/controls/MenuDropdown";
 import { TabName } from "../types";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
@@ -17,6 +16,7 @@ import { writeRubricToFile } from "../services/fileSystemService";
 import { showModal } from "../transforms/showModal";
 import { isProjectLoaded } from "../state/helpers";
 import { setActiveTab } from "../transforms/setActiveTab";
+import { setAutorun } from "../transforms/setAutorun";
 
 function handleImportRubricClicked() {
     showModal("import-rubric");
@@ -82,25 +82,29 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
 
 const WorkspaceToolbarButtons: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const { activeTab } = teacherTool;
+    const { activeTab, autorun } = teacherTool;
 
     const actionItems = getActionMenuItems(activeTab);
 
-    return (
-        <ToolbarControlGroup>
-            {activeTab === "results" && (
-                <ToolbarButton icon="fas fa-print" title={lf("Print")} onClick={() => console.log("Print")} />
-            )}
+    const onAutorunChange = (checked: boolean) => {
+        setAutorun(checked);
+    };
 
-            <ToolbarButton
+    return (
+        <Toolbar.ControlGroup>
+            {activeTab === "results" && (
+                <Toolbar.Button icon="fas fa-print" title={lf("Print")} onClick={() => console.log("Print")} />
+            )}
+            {/* Conditional buttons go above this line */}
+            <Toolbar.Toggle label={lf("auto-run")} isChecked={autorun} onChange={onAutorunChange} />
+            <Toolbar.Button
                 icon="fas fa-play"
                 title={lf("Evaluate")}
                 onClick={handleEvaluateClickedAsync}
                 disabled={!isProjectLoaded(teacherTool)}
             />
-
-            <ToolbarMenuDropdown title={lf("More Actions")} items={actionItems} disabled={!actionItems.length} />
-        </ToolbarControlGroup>
+            <Toolbar.MenuDropdown title={lf("More Actions")} items={actionItems} disabled={!actionItems.length} />
+        </Toolbar.ControlGroup>
     );
 };
 
