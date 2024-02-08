@@ -15,7 +15,8 @@ export const AddCriteriaButton: React.FC<IProps> = ({}) => {
         () => getSelectableCatalogCriteria(teacherTool).length > 0,
         [teacherTool.catalog, teacherTool.rubric]
     );
-    return <Button
+    return (
+        <Button
             className="inline"
             label={lf("Add Criteria")}
             onClick={() => showModal("catalog-display")}
@@ -23,4 +24,5 @@ export const AddCriteriaButton: React.FC<IProps> = ({}) => {
             leftIcon="fas fa-plus-circle"
             disabled={!hasAvailableCriteria}
         />
+    );
 };
