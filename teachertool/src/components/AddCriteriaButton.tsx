@@ -1,5 +1,3 @@
-/// <reference path="../../../built/pxtblocks.d.ts"/>
-
 import { getSelectableCatalogCriteria } from "../state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { showModal } from "../transforms/showModal";
