@@ -36,3 +36,7 @@
         outline: solid 1px var(--pxt-content-foreground);
     }
 }
+
+.common-button.disabled {
+    opacity: 0.8;
+}
