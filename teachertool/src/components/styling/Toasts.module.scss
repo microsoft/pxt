@@ -23,19 +23,19 @@
     pointer-events: none;
 
     &.success {
-        background-color: #81E6D9;
+        background-color: var(--pxt-toast-background-success);
     }
 
     &.info {
-        background-color: #63B3ED;
+        background-color: var(--pxt-toast-background-info);
     }
 
     &.warning {
-        background-color: #FBD38D;
+        background-color: var(--pxt-toast-background-warning);
     }
 
     &.error {
-        background-color: #FEB2B2;
+        background-color: var(--pxt-toast-background-error);
     }
 
     .toast-content {
@@ -54,19 +54,19 @@
             height: 1.75rem;
 
             &.success {
-                background-color: #38A169;
+                background-color: var(--pxt-toast-accent-success);;
             }
 
             &.info {
-                background-color: #3182CE;
+                background-color: var(--pxt-toast-accent-info);;
             }
 
             &.warning {
-                background-color: #DD6B20;
+                background-color: var(--pxt-toast-accent-warning);;
             }
 
             &.error {
-                background-color: #E53E3E;
+                background-color: var(--pxt-toast-accent-error);
             }
         }
 
@@ -115,19 +115,19 @@
         transition: all 0.2s linear;
 
         &.success {
-            background-color: #38A169;
+            background-color: var(--pxt-toast-accent-success);;
         }
 
         &.info {
-            background-color: #3182CE;
+            background-color: var(--pxt-toast-accent-info);;
         }
 
         &.warning {
-            background-color: #DD6B20;
+            background-color: var(--pxt-toast-accent-warning);;
         }
 
         &.error {
-            background-color: #E53E3E;
+            background-color: var(--pxt-toast-accent-error);
         }
     }
 }
