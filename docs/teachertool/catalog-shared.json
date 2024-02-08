@@ -27,7 +27,7 @@
         {
             "id": "D21D76A2-D9FD-4F9B-B0AC-973CB870EA78",
             "use": "variable_set",
-            "template": "At least one variable's value is set",
+            "template": "At least one custom variable is set",
             "docPath": "/teachertool"
         },
         {
