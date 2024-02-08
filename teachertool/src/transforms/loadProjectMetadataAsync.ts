@@ -10,14 +10,14 @@ export async function loadProjectMetadataAsync(shareLink: string) {
 
     const scriptId = pxt.Cloud.parseScriptId(shareLink);
     if (!scriptId) {
-        showToast(makeNotification("error", lf("Invalid share link"), 2000));
+        showToast(makeNotification("error", lf("Invalid share link")));
         dispatch(Actions.setProjectMetadata(undefined));
         return;
     }
 
     const projMeta = await getProjectMetaAsync(scriptId);
     if (!projMeta) {
-        showToast(makeNotification("error", lf("Failed to load project"), 2000));
+        showToast(makeNotification("error", lf("Failed to load project")));
         dispatch(Actions.setProjectMetadata(undefined));
         return;
     }

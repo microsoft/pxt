@@ -52,6 +52,22 @@
             border-radius: 50%;
             width: 1.75rem;
             height: 1.75rem;
+
+            &.success {
+                background-color: #38A169;
+            }
+
+            &.info {
+                background-color: #3182CE;
+            }
+
+            &.warning {
+                background-color: #DD6B20;
+            }
+
+            &.error {
+                background-color: #E53E3E;
+            }
         }
 
         .text-container {

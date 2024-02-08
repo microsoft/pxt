@@ -7,10 +7,10 @@ import { classList } from "react-common/components/util";
 import css from "./styling/Toasts.module.scss";
 
 const icons: { [type in ToastType]: string } = {
-    success: "fas fa-smile",
-    info: "fas fa-bell",
-    warning: "fas fa-exclamation-circle",
-    error: "fas fa-frown",
+    success: "😊",
+    info: "🔔",
+    warning: "😮",
+    error: "😢",
 };
 
 const SLIDER_DELAY_MS = 300;
@@ -48,7 +48,7 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
             <div className={classList(css["toast-content"])}>
                 {!toast.hideIcon && (
                     <div className={classList(css["icon-container"], css[toast.type])}>
-                        <i className={toast.icon ?? icons[toast.type]} />
+                        {toast.icon ?? icons[toast.type]}
                     </div>
                 )}
                 <div className={classList(css["text-container"])}>
@@ -58,11 +58,11 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
                 </div>
                 {!toast.hideDismissBtn && !toast.showSpinner && (
                     <div className={classList(css["dismiss-btn"])} onClick={handleDismissClicked}>
-                        <i className="fas fa-times-circle" />
+                        <i className={classList("far fa-times-circle", css["icon"])} />
                     </div>
                 )}
                 {toast.showSpinner && (
-                    <div className={classList(css["spinner"])}>
+                    <div className={css["spinner"]}>
                         <i className="fas fa-circle-notch fa-spin" />
                     </div>
                 )}

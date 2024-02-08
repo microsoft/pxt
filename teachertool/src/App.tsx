@@ -37,7 +37,7 @@ export const App = () => {
                 await tryLoadLastActiveRubricAsync();
 
                 // Test notification
-                showToast(makeNotification("info", "🎓", 2000));
+                showToast(makeNotification("success", "🎓", 2000));
 
                 setInited(true);
                 logDebug("App initialized");

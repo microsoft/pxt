@@ -14,7 +14,7 @@ export async function tryLoadLastActiveRubricAsync() {
         const rubricVerificationResult = verifyRubricIntegrity(lastActiveRubric);
 
         if (!rubricVerificationResult.valid) {
-            showToast(makeNotification("error", lf("Some criteria could not be loaded."), 2000));
+            showToast(makeNotification("error", lf("Some criteria could not be loaded.")));
         }
 
         setRubric({ ...lastActiveRubric, criteria: rubricVerificationResult.validCriteria });
