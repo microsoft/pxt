@@ -2,7 +2,7 @@ import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 import { getProjectMetaAsync } from "../services/backendRequests";
 import { logDebug } from "../services/loggingService";
-import { postNotification } from "./postNotification";
+import { showToast } from "./showToast";
 import { makeNotification } from "../utils";
 
 export async function loadProjectMetadataAsync(shareLink: string) {
@@ -10,14 +10,14 @@ export async function loadProjectMetadataAsync(shareLink: string) {
 
     const scriptId = pxt.Cloud.parseScriptId(shareLink);
     if (!scriptId) {
-        postNotification(makeNotification(lf("Invalid share link"), 2000));
+        showToast(makeNotification("error", lf("Invalid share link"), 2000));
         dispatch(Actions.setProjectMetadata(undefined));
         return;
     }
 
     const projMeta = await getProjectMetaAsync(scriptId);
     if (!projMeta) {
-        postNotification(makeNotification(lf("Failed to load project"), 2000));
+        showToast(makeNotification("error", lf("Failed to load project"), 2000));
         dispatch(Actions.setProjectMetadata(undefined));
         return;
     }

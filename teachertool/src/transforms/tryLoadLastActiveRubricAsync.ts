@@ -1,6 +1,6 @@
 import { getLastActiveRubricAsync } from "../services/indexedDbService";
 import { logDebug, logError } from "../services/loggingService";
-import { postNotification } from "./postNotification";
+import { showToast } from "./showToast";
 import { makeNotification } from "../utils";
 import { setRubric } from "./setRubric";
 import { verifyRubricIntegrity } from "../state/helpers";
@@ -14,7 +14,7 @@ export async function tryLoadLastActiveRubricAsync() {
         const rubricVerificationResult = verifyRubricIntegrity(lastActiveRubric);
 
         if (!rubricVerificationResult.valid) {
-            postNotification(makeNotification(lf("Some criteria could not be loaded."), 2000));
+            showToast(makeNotification("error", lf("Some criteria could not be loaded."), 2000));
         }
 
         setRubric({ ...lastActiveRubric, criteria: rubricVerificationResult.validCriteria });

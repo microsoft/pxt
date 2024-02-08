@@ -1,13 +1,13 @@
 import { nanoid } from "nanoid";
-import { ToastWithId } from "../types";
+import { ToastType, ToastWithId } from "../types";
 import { classList } from "react-common/components/util";
 
-export function makeNotification(message: string, duration: number): ToastWithId {
+export function makeNotification(type: ToastType, text: string, timeoutMs: number): ToastWithId {
     return {
         id: nanoid(),
-        message,
-        duration,
-        expiration: Date.now() + duration,
+        type,
+        text,
+        timeoutMs,
     };
 }
 

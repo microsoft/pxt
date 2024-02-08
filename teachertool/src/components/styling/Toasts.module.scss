@@ -1,0 +1,117 @@
+.toast-container {
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    margin-bottom: 2rem;
+    margin-right: 1rem;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    flex-direction: column;
+    margin-right: 0;
+    border: none;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    pointer-events: none;
+
+    &.success {
+        background-color: #81E6D9;
+    }
+
+    &.info {
+        background-color: #63B3ED;
+    }
+
+    &.warning {
+        background-color: #FBD38D;
+    }
+
+    &.error {
+        background-color: #FEB2B2;
+    }
+
+    .toast-content {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        font-size: 1.125rem;
+
+        .icon-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 50%;
+            width: 1.75rem;
+            height: 1.75rem;
+        }
+
+        .text-container {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+
+            .text {
+                white-space: nowrap;
+                font-size: 1rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .detail {
+                font-size: 0.875rem;
+            }
+        }
+
+        .dismiss-btn {
+            display: flex;
+            flex-grow: 1;
+            justify-content: flex-end;
+            pointer-events: auto;
+
+            .icon {
+                cursor: pointer;
+
+                &:hover {
+                    transform: scale(1.25);
+                    transition: all 0.15s ease-in-out;
+                }
+            }
+        }
+
+        .spinner {
+            display: flex;
+            flex-grow: 1;
+            justify-content: flex-end;
+        }
+    }
+
+    .slider {
+        height: 0.25rem;
+        transition: all 0.2s linear;
+
+        &.success {
+            background-color: #38A169;
+        }
+
+        &.info {
+            background-color: #3182CE;
+        }
+
+        &.warning {
+            background-color: #DD6B20;
+        }
+
+        &.error {
+            background-color: #E53E3E;
+        }
+    }
+}

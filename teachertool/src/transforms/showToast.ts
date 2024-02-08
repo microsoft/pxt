@@ -2,7 +2,7 @@ import { stateAndDispatch } from "../state";
 import { ToastWithId } from "../types";
 import * as Actions from "../state/actions";
 
-export function postNotification(notification: ToastWithId) {
+export function showToast(toast: ToastWithId) {
     const { dispatch } = stateAndDispatch();
-    dispatch(Actions.postNotification(notification));
+    dispatch(Actions.showToast(toast));
 }

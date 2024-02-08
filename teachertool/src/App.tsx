@@ -10,7 +10,7 @@ import { HeaderBar } from "./components/HeaderBar";
 import { MainPanel } from "./components/MainPanel";
 import { Toasts } from "./components/Toasts";
 import { CatalogModal } from "./components/CatalogModal";
-import { postNotification } from "./transforms/postNotification";
+import { showToast } from "./transforms/showToast";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubricAsync";
@@ -37,7 +37,7 @@ export const App = () => {
                 await tryLoadLastActiveRubricAsync();
 
                 // Test notification
-                postNotification(makeNotification("🎓", 2000));
+                showToast(makeNotification("info", "🎓", 2000));
 
                 setInited(true);
                 logDebug("App initialized");
