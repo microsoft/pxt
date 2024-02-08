@@ -1,4 +1,4 @@
-import { deleteRubricAsync, saveRubricAsync } from "../services/indexedDbService";
+import { deleteRubricAsync, saveRubricAsync } from "../utils/storageHelpers";
 import { Rubric } from "../types/rubric";
 
 export async function updateStoredRubricAsync(oldRubric: Rubric | undefined, newRubric: Rubric | undefined) {
