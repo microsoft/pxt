@@ -1,4 +1,4 @@
-import { ModalType, NotificationWithId, TabName } from "../types";
+import { ModalType, ToastWithId, TabName } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
@@ -10,14 +10,14 @@ type ActionBase = {
 /**
  * Actions
  */
-type PostNotification = ActionBase & {
-    type: "POST_NOTIFICATION";
-    notification: NotificationWithId;
+type ShowToast = ActionBase & {
+    type: "SHOW_TOAST";
+    toast: ToastWithId;
 };
 
-type RemoveNotification = ActionBase & {
-    type: "REMOVE_NOTIFICATION";
-    notificationId: string;
+type DismissToast = ActionBase & {
+    type: "DISMISS_TOAST";
+    toastId: string;
 };
 
 type SetProjectMetadata = ActionBase & {
@@ -84,8 +84,8 @@ type SetAutorun = ActionBase & {
  */
 
 export type Action =
-    | PostNotification
-    | RemoveNotification
+    | ShowToast
+    | DismissToast
     | SetProjectMetadata
     | SetEvalResult
     | ClearEvalResult
@@ -102,14 +102,14 @@ export type Action =
 /**
  * Action creators
  */
-const postNotification = (notification: NotificationWithId): PostNotification => ({
-    type: "POST_NOTIFICATION",
-    notification,
+const showToast = (toast: ToastWithId): ShowToast => ({
+    type: "SHOW_TOAST",
+    toast,
 });
 
-const removeNotification = (notificationId: string): RemoveNotification => ({
-    type: "REMOVE_NOTIFICATION",
-    notificationId,
+const dismissToast = (toastId: string): DismissToast => ({
+    type: "DISMISS_TOAST",
+    toastId,
 });
 
 const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
@@ -172,8 +172,8 @@ const setAutorun = (autorun: boolean): SetAutorun => ({
 });
 
 export {
-    postNotification,
-    removeNotification,
+    showToast,
+    dismissToast,
     setProjectMetadata,
     setEvalResult,
     clearEvalResult,
