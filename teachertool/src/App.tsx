@@ -3,7 +3,6 @@ import { AppStateContext, AppStateReady } from "./state/appStateContext";
 import { usePromise } from "./hooks";
 import { makeNotification } from "./utils";
 import * as Actions from "./state/actions";
-import * as NotificationService from "./services/notificationService";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
 import { logDebug } from "./services/loggingService";
 import { HeaderBar } from "./components/HeaderBar";
@@ -24,8 +23,6 @@ export const App = () => {
 
     useEffect(() => {
         if (ready && !inited) {
-            NotificationService.initialize();
-
             Promise.resolve().then(async () => {
                 const cfg = await downloadTargetConfigAsync();
                 dispatch(Actions.setTargetConfig(cfg || {}));
