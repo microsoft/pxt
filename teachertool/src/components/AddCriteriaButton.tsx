@@ -16,7 +16,7 @@ export const AddCriteriaButton: React.FC<IProps> = ({}) => {
         [teacherTool.catalog, teacherTool.rubric]
     );
     return <Button
-            className="primary"
+            className="inline"
             label={lf("Add Criteria")}
             onClick={() => showModal("catalog-display")}
             title={lf("Add Criteria")}
