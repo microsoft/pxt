@@ -4,6 +4,7 @@ import { ToastType, ToastWithId } from "../types";
 import { AnimatePresence, motion } from "framer-motion";
 import { dismissToast } from "../state/actions";
 import { classList } from "react-common/components/util";
+// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/Toasts.module.scss";
 
 const icons: { [type in ToastType]: string } = {
