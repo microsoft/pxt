@@ -30,4 +30,15 @@ export class PathObject extends Blockly.zelos.PathObject {
     setHasError(hasError: boolean) {
         this.hasError = hasError;
     }
+
+    isHighlighted() {
+        return !!this.svgPathHighlighted;
+    }
+
+    resizeHighlight() {
+        if (this.svgPathHighlighted) {
+            this.updateHighlighted(false);
+            this.updateHighlighted(true);
+        }
+    }
 }

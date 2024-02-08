@@ -597,6 +597,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.editor.addChangeListener((ev: any) => {
             Blockly.Events.disableOrphans(ev);
+
+            // Blockly doesn't automatically resize highlight outlines. If an event
+            // occurs that could have changed the size of a block, go ahead and refresh
+            // the associated highlights
+            if (ev.type === "block_field_intermediate_change" || ev.type === "change") {
+                if (ev.blockId) {
+                    const block = this.editor.getBlockById(ev.blockId);
+                    fixHighlight(block);
+                }
+            }
+            else if (ev.type === "drag") {
+                for (const block of this.editor.getAllBlocks(false)) {
+                    (block.pathObject as PathObject).resizeHighlight();
+                }
+            }
+
             const ignoredChanges = [
                 Blockly.Events.UI,
                 Blockly.Events.SELECTED,
@@ -1921,8 +1937,17 @@ function setHighlightWarning(block: Blockly.BlockSvg, enabled: boolean) {
     block.setHighlighted(enabled);
 }
 
-
 function isBreakpointSet(block: Blockly.BlockSvg) {
     const existing = block.getIcon(pxtblockly.BreakpointIcon.type) as pxtblockly.BreakpointIcon;
     return !!existing?.isEnabled();
+}
+
+function fixHighlight(block: Blockly.BlockSvg) {
+    (block.pathObject as PathObject).resizeHighlight();
+
+    const connectedTo = block.outputConnection?.targetBlock();
+
+    if (connectedTo) {
+        fixHighlight(connectedTo);
+    }
 }
