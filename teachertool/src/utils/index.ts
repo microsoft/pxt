@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 import { ToastType, ToastWithId } from "../types";
 import { classList } from "react-common/components/util";
 
-export function makeNotification(type: ToastType, text: string, timeoutMs: number = 5000): ToastWithId {
+export function makeToast(type: ToastType, text: string, timeoutMs: number = 5000): ToastWithId {
     return {
         id: nanoid(),
         type,

@@ -5,7 +5,7 @@ import * as Actions from "../state/actions";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
-import { makeNotification } from "../utils";
+import { makeToast } from "../utils";
 import { showToast } from "./showToast";
 
 function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.ValidatorPlan | undefined {
@@ -72,8 +72,8 @@ export async function runEvaluateAsync() {
     const results = await Promise.all(evalRequests);
     const errorCount = results.filter(r => !r).length;
     if (errorCount === teacherTool.rubric.criteria.length) {
-        showToast(makeNotification("error", lf("Unable to run evaluation")));
+        showToast(makeToast("error", lf("Unable to run evaluation")));
     } else if (errorCount > 0) {
-        showToast(makeNotification("error", lf("Unable to evaluate some criteria")));
+        showToast(makeToast("error", lf("Unable to evaluate some criteria")));
     }
 }

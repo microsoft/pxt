@@ -1,7 +1,7 @@
 import { useEffect, useContext, useState } from "react";
 import { AppStateContext, AppStateReady } from "./state/appStateContext";
 import { usePromise } from "./hooks";
-import { makeNotification } from "./utils";
+import { makeToast } from "./utils";
 import * as Actions from "./state/actions";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
 import { logDebug } from "./services/loggingService";
@@ -34,7 +34,7 @@ export const App = () => {
                 await tryLoadLastActiveRubricAsync();
 
                 // Test notification
-                showToast(makeNotification("success", "🎓", 2000));
+                showToast(makeToast("success", "🎓", 2000));
 
                 setInited(true);
                 logDebug("App initialized");
