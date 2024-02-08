@@ -1,16 +1,15 @@
 import { useEffect, useContext, useState } from "react";
 import { AppStateContext, AppStateReady } from "./state/appStateContext";
 import { usePromise } from "./hooks";
-import { makeNotification } from "./utils";
+import { makeToast } from "./utils";
 import * as Actions from "./state/actions";
-import * as NotificationService from "./services/notificationService";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
 import { logDebug } from "./services/loggingService";
 import { HeaderBar } from "./components/HeaderBar";
 import { MainPanel } from "./components/MainPanel";
-import { Notifications } from "./components/Notifications";
+import { Toasts } from "./components/Toasts";
 import { CatalogModal } from "./components/CatalogModal";
-import { postNotification } from "./transforms/postNotification";
+import { showToast } from "./transforms/showToast";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubricAsync";
@@ -24,8 +23,6 @@ export const App = () => {
 
     useEffect(() => {
         if (ready && !inited) {
-            NotificationService.initialize();
-
             Promise.resolve().then(async () => {
                 const cfg = await downloadTargetConfigAsync();
                 dispatch(Actions.setTargetConfig(cfg || {}));
@@ -37,7 +34,7 @@ export const App = () => {
                 await tryLoadLastActiveRubricAsync();
 
                 // Test notification
-                postNotification(makeNotification("🎓", 2000));
+                showToast(makeToast("success", "🎓", 2000));
 
                 setInited(true);
                 logDebug("App initialized");
@@ -55,7 +52,7 @@ export const App = () => {
             <MainPanel />
             <CatalogModal />
             <ImportRubricModal />
-            <Notifications />
+            <Toasts />
         </>
     );
 };
