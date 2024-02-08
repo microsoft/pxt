@@ -224,6 +224,7 @@ export class VerticalFlyout implements Blockly.IFlyout {
     }
 
     protected hashBlocks(xmlList: Element[]): number {
+        if (!Array.isArray(xmlList)) return undefined;
         return pxt.Util.codalHash16(this.blocksToString(xmlList));
     }
 }
@@ -239,7 +240,9 @@ class CachedFlyout extends Blockly.VerticalFlyout {
     }
 
     show(flyoutDef: string | Blockly.utils.toolbox.FlyoutDefinition): void {
-        this.def = (flyoutDef as Element[]).slice();
+        if (Array.isArray(flyoutDef)) {
+            this.def = (flyoutDef as Element[]).slice();
+        }
 
         super.show(flyoutDef);
     }
@@ -285,6 +288,8 @@ class CachedFlyout extends Blockly.VerticalFlyout {
 
         Blockly.FlyoutButton.TEXT_MARGIN_X = textMarginX;
         Blockly.FlyoutButton.TEXT_MARGIN_Y = textMarginY;
+
+        if (!this.def) return;
 
         // This relies on the layout in the parent class always happening in order from
         // top to bottom, which is unlikely to ever change but still a little iffy

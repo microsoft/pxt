@@ -1188,7 +1188,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private getBlocklyOptions(forceHasCategories?: boolean) {
-        let blocklyOptions = this.getDefaultOptions();
+        let blocklyOptions = { ...this.getDefaultOptions() };
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         const hasCategories = (forceHasCategories != undefined) ? forceHasCategories :
             this.showCategories
@@ -1198,7 +1198,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         // blocklyOptions.hasCategories = hasCategories;
         blocklyOptions.renderer = "pxt";
-        if (!hasCategories) this.showCategories = false;
+        if (!hasCategories) {
+            this.showCategories = false;
+            delete blocklyOptions.plugins["flyoutsVerticalToolbox"];
+        }
         // If we're using categories, show the category toolbox, otherwise show the flyout toolbox
         const toolbox = hasCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
@@ -1267,7 +1270,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const hasCategories = this.shouldShowCategories(!forceFlyoutOnly);
 
         // We might need to switch the toolbox type
-        if ((this.editor.getToolbox() && hasCategories) || ((this.editor as any).flyout_ && !hasCategories)) {
+        if (this.editor.options.hasCategories === hasCategories) {
             // Toolbox is consistent with current mode, safe to update
             if (hasCategories) {
                 this.toolbox.setState({ loading: false, categories: this.getAllCategories(), showSearchBox: this.shouldShowSearch() });
