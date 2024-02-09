@@ -87,7 +87,7 @@ const variableReporterMixin = {
         options.unshift(renameOption);
         if (!this.isInFlyout) {
             const variablesList = this.workspace.getVariablesOfType('');
-            // FIXME (riknoll)
+            // FIXME (riknoll): Probably need to make a custom field to make this work again
             // if (variablesList.length > 0) {
             //     const separator = { separator: true };
             //     options.unshift(separator);

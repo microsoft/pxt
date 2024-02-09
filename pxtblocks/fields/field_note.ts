@@ -232,13 +232,6 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         this.forceRerender();
     }
 
-    // FIXME (riknoll) This is private in the base class
-    // onHtmlInputChange_(e: any) {
-    //     super.onHtmlInputChange_(e);
-    //     Blockly.DropDownDiv.hideWithoutAnimation();
-    //     (this as any).htmlInput_.focus();
-    // }
-
     onFinishEditing_(text: string) {
         this.refreshText();
     }

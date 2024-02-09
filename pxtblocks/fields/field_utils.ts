@@ -405,9 +405,23 @@ export function getTemporaryAssets(workspace: Blockly.Workspace, type: pxt.Asset
     }
 }
 
+export const FIELD_EDITOR_OPEN_EVENT_TYPE = "field_editor_open";
+
+export class FieldEditorOpenEvent extends Blockly.Events.UiBase {
+    override type = FIELD_EDITOR_OPEN_EVENT_TYPE;
+
+    blockId: string;
+    isOpen: boolean;
+
+    constructor(block: Blockly.Block, isOpen: boolean) {
+        super(block.workspace.id);
+        this.blockId = block.id;
+        this.isOpen = isOpen;
+    }
+}
+
 export function setMelodyEditorOpen(block: Blockly.Block, isOpen: boolean) {
-    // FIXME (riknoll)
-    // Blockly.Events.fire(new Blockly.Events.Ui(block, "melody-editor", !isOpen, isOpen));
+    Blockly.Events.fire(new FieldEditorOpenEvent(block, isOpen));
 }
 
 

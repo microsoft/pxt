@@ -587,11 +587,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxsim.U.clear(blocklyDiv);
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
-        const hasCategories = (this.editor.options as any).hasCategories;
+
         // set Blockly Colors
-        let blocklyColors = (Blockly as any).Colours;
-        Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
-        (Blockly as any).Colours = blocklyColors;
+        const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
+        if (blocklyColors) {
+            const theme = this.editor.getTheme();
+            for (const key of Object.keys(blocklyColors)) {
+                theme.setComponentStyle(key, blocklyColors[key]);
+            }
+            this.editor.setTheme(theme);
+        }
 
         let shouldRestartSim = false;
 
@@ -618,7 +623,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.SELECTED,
                 Blockly.Events.CLICK,
                 Blockly.Events.VIEWPORT_CHANGE,
-                Blockly.Events.BUBBLE_OPEN
+                Blockly.Events.BUBBLE_OPEN,
+                pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
             if (ev.type !== "var_create") {
@@ -657,15 +663,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     if (toolboxVisible) pxt.setInteractiveConsent(true);
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
                 }
-                else if (ev.element == 'melody-editor') {
-                    if (ev.newValue) {
-                        shouldRestartSim = this.parent.state.simState != SimState.Stopped;
-                        this.parent.stopSimulator();
-                    }
-                    else {
-                        if (shouldRestartSim) {
-                            this.parent.startSimulator();
-                        }
+            }
+            else if (ev.type === pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE) {
+                const openEvent = ev as pxtblockly.FieldEditorOpenEvent;
+                if (openEvent.isOpen) {
+                    shouldRestartSim = this.parent.state.simState != SimState.Stopped;
+                    this.parent.stopSimulator();
+                }
+                else {
+                    if (shouldRestartSim) {
+                        this.parent.startSimulator();
                     }
                 }
             }
@@ -1192,11 +1199,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         const hasCategories = (forceHasCategories != undefined) ? forceHasCategories :
             this.showCategories
-        // FIXME (riknoll)
-        // (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories :
-        //     this.showCategories);
 
-        // blocklyOptions.hasCategories = hasCategories;
         blocklyOptions.renderer = "pxt";
         if (!hasCategories) {
             this.showCategories = false;
@@ -1402,9 +1405,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
             return this.parent.state.editorState.hasCategories;
         }
-        const blocklyOptions = this.getBlocklyOptions(forceHasCategories);
-        // FIXME (riknoll)
-        // return blocklyOptions.hasCategories;
         return true;
     }
 

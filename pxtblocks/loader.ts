@@ -100,7 +100,7 @@ export function blockSymbol(type: string): pxtc.SymbolInfo {
 export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
     cachedBlockInfo = blockInfo;
 
-    // FIXME (riknoll)
+    // FIXME (riknoll): This relies on Blockly's custom dragging support (coming in v11)
     // Blockly.pxtBlocklyUtils.whitelistDraggableBlockTypes(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
 
     // inject Blockly with all block definitions
