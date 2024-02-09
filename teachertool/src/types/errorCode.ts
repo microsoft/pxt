@@ -15,4 +15,5 @@ export enum ErrorCode {
     unableToReadRubricFile = "unableToReadRubricFile",
     localStorageReadError = "localStorageReadError",
     localStorageWriteError = "localStorageWriteError",
+    missingCriteriaInstance = "missingCriteriaInstance"
 }

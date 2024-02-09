@@ -35,6 +35,20 @@
                     "path": "checks[0].count"
                 }
             ]
+        },
+        {            
+            "id": "499F3572-E655-4DEE-953B-5F26BF0191D7",
+            "use": "ai_question",
+            "template": "Ask AI: ${question}",
+            "description": "Ask the AI a question about the project.",
+            "docPath": "/teachertool",
+            "params": [
+                {
+                    "name": "question",
+                    "type": "string",
+                    "path": "checks[0].question"
+                }
+            ]
         }
     ]
 }
