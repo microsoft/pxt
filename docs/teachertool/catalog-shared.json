@@ -35,6 +35,18 @@
             "use": "variable_accessed",
             "template": "At least one variable is accessed",
             "docPath": "/teachertool"
+        },
+        {
+            "id": "8E6F9A92-2D22-4BB0-A77A-BD7490D3CEF7",
+            "use": "variable_set_random",
+            "template": "A custom variable's value is set to a random number",
+            "docPath": "/teachertool"
+        },
+        {
+            "id": "E8DAD360-F4AB-4E6B-9981-C14BDEE1295B",
+            "use": "device_random_used",
+            "template": "The math random number generator block is used",
+            "docPath": "/teachertool"
         }
     ]
 }

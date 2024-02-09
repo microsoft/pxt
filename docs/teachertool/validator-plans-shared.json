@@ -96,6 +96,33 @@
                     }
                 }
             ]
+        },
+        {
+            ".desc": "A custom variable's value is set to a random number",
+            "name": "variable_set_random",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "variables_set": 1
+                    },
+                    "childValidatorPlans": ["device_random_used"]
+                }
+            ]
+        },
+        {
+            ".desc": "Random number block used in project",
+            "name": "device_random_used",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "device_random": 1
+                    }
+                }
+            ]
         }
     ]
 }

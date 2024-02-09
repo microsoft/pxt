@@ -19,7 +19,7 @@ export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blo
         let checkResult = false;
         switch (check.validator) {
             case "blocksExist":
-                checkResult = runBlocksExistValidation(usedBlocks, check as pxt.blocks.BlocksExistValidatorCheck);
+                checkResult = runBlocksExistValidation(usedBlocks, check as pxt.blocks.BlocksExistValidatorCheck)[1];
                 break;
             case "blockCommentsExist":
                 checkResult = runValidateBlockCommentsExist(usedBlocks, check as pxt.blocks.BlockCommentsExistValidatorCheck);
@@ -28,7 +28,7 @@ export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blo
                 checkResult = runValidateSpecificBlockCommentsExist(usedBlocks, check as pxt.blocks.SpecificBlockCommentsExistValidatorCheck);
                 break;
             case "blocksInSetExist":
-                checkResult = runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck);
+                checkResult = runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck)[1];
                 break;
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
@@ -57,13 +57,11 @@ export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blo
     return passed;
 }
 
-function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksExistValidatorCheck): boolean {
+function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksExistValidatorCheck): [Blockly.Block[], boolean] {
     const blockResults = validateBlocksExist({ usedBlocks, requiredBlockCounts: inputs.blockCounts });
-    const success =
-        blockResults.disabledBlocks.length === 0 &&
-        blockResults.missingBlocks.length === 0 &&
-        blockResults.insufficientBlocks.length === 0;
-    return success;
+    const blockId = Object.keys(inputs.blockCounts)[0];
+    const successfulBlocks = blockResults.successfulBlocks[0][blockId];
+    return [successfulBlocks, blockResults.passed];
 }
 
 function runValidateBlockCommentsExist(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlockCommentsExistValidatorCheck): boolean {
@@ -76,7 +74,7 @@ function runValidateSpecificBlockCommentsExist(usedBlocks: Blockly.Block[], inpu
     return blockResults.passed;
 }
 
-function runBlocksInSetExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksInSetExistValidatorCheck): boolean {
+function runBlocksInSetExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksInSetExistValidatorCheck): [Blockly.Block[], boolean] {
     const blockResults = validateBlocksInSetExist({ usedBlocks, blockIdsToCheck: inputs.blocks, count: inputs.count });
-    return blockResults.passed;
+    return  [blockResults.successfulBlocks, blockResults.passed];
 }
