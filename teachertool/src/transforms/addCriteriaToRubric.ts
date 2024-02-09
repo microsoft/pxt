@@ -1,11 +1,10 @@
 import { stateAndDispatch } from "../state";
-import * as Actions from "../state/actions";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { logDebug, logError } from "../services/loggingService";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
 import { ErrorCode } from "../types/errorCode";
-import * as AutorunService from "../services/autorunService";
+import { setRubric } from "./setRubric";
 
 export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
@@ -45,8 +44,7 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
         newRubric.criteria.push(criteriaInstance);
     }
 
-    dispatch(Actions.setRubric(newRubric));
-    AutorunService.poke();
+    setRubric(newRubric);
 
     pxt.tickEvent("teachertool.addcriteria", {
         ids: JSON.stringify(catalogCriteriaIds),
