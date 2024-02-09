@@ -1,4 +1,4 @@
-import { deleteRubricAsync, saveRubricAsync } from "../utils/storageHelpers";
+import { deleteRubricAsync, saveRubricAsync } from "../services/storageService";
 import { Rubric } from "../types/rubric";
 
 export async function updateStoredRubricAsync(oldRubric: Rubric | undefined, newRubric: Rubric | undefined) {

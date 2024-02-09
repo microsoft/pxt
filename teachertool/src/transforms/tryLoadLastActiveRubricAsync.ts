@@ -1,4 +1,4 @@
-import { getLastActiveRubricAsync } from "../utils/storageHelpers";
+import { getLastActiveRubricAsync } from "../services/storageService";
 import { logDebug } from "../services/loggingService";
 import { showToast } from "./showToast";
 import { makeToast } from "../utils";

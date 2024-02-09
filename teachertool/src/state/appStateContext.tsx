@@ -3,7 +3,7 @@ import { AppState, initialAppState } from "./state";
 import { Action } from "./actions";
 import reducer from "./reducer";
 import assert from "assert";
-import * as LocalStorage from "../services/localStorage";
+import { getAutorun } from "../services/storageService";
 
 let state: AppState;
 let dispatch: React.Dispatch<Action>;
@@ -41,7 +41,7 @@ export function AppStateProvider(props: React.PropsWithChildren<{}>): React.Reac
     // Create the application state and state change mechanism (dispatch)
     const [state_, dispatch_] = useReducer(reducer, {
         ...initialAppState,
-        autorun: LocalStorage.getAutorun(),
+        autorun: getAutorun(),
         flags: {
             ...initialAppState.flags,
             testCatalog,
