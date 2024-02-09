@@ -70,6 +70,32 @@
                     }
                 }
             ]
+        },
+        {
+            ".desc": "A variable's value is set",
+            "name": "variable_set",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "variables_set": 1
+                    }
+                }
+            ]
+        },
+        {
+            ".desc": "A variable's value is used",
+            "name": "variable_accessed",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "variables_get": 1
+                    }
+                }
+            ]
         }
     ]
 }
