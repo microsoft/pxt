@@ -7,33 +7,46 @@ import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockComme
 
 const maxConcurrentChecks = 4;
 
-export async function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planBank: pxt.blocks.ValidatorPlan[]): Promise<boolean> {
+
+export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planBank: pxt.blocks.ValidatorPlan[]): boolean {
     // Each plan can have multiple checks it needs to run.
     // Run all of them in parallel, and then check if the number of successes is greater than the specified threshold.
     // TBD if it's faster to run in parallel without short-circuiting once the threshold is reached, or if it's faster to run sequentially and short-circuit.
     const startTime = Date.now();
-    console.log("I'm getting all of the plans");
-    console.log(planBank);
+    let checksSucceeded = 0;
 
-    const checkRuns = pxt.Util.promisePoolAsync(maxConcurrentChecks, plan.checks, async (check: pxt.blocks.ValidatorCheckBase): Promise<boolean> => {
+    for (const check of plan.checks) {
+        let checkResult = false;
         switch (check.validator) {
             case "blocksExist":
-                return runBlocksExistValidation(usedBlocks, check as pxt.blocks.BlocksExistValidatorCheck);
+                checkResult = runBlocksExistValidation(usedBlocks, check as pxt.blocks.BlocksExistValidatorCheck);
+                break;
             case "blockCommentsExist":
-                return runValidateBlockCommentsExist(usedBlocks, check as pxt.blocks.BlockCommentsExistValidatorCheck);
+                checkResult = runValidateBlockCommentsExist(usedBlocks, check as pxt.blocks.BlockCommentsExistValidatorCheck);
+                break;
             case "specificBlockCommentsExist":
-                return runValidateSpecificBlockCommentsExist(usedBlocks, check as pxt.blocks.SpecificBlockCommentsExistValidatorCheck);
+                checkResult = runValidateSpecificBlockCommentsExist(usedBlocks, check as pxt.blocks.SpecificBlockCommentsExistValidatorCheck);
+                break;
             case "blocksInSetExist":
-                return runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck);
+                checkResult = runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck);
+                break;
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
-                return false;
+                checkResult = false;
+                break;
         }
-    });
 
-    const results = await checkRuns;
-    const successCount = results.filter((r) => r).length;
-    const passed = successCount >= plan.threshold;
+        if (checkResult && check.childValidatorPlans) {
+            for (const planName of check.childValidatorPlans) {
+                const childPlan = planBank.find((plan) => plan.name === planName);
+                const childResult = runValidatorPlanAsync(usedBlocks, childPlan, planBank);
+                checkResult = checkResult && childResult;
+            }
+        }
+        checksSucceeded += checkResult ? 1 : 0;
+    }
+
+    const passed = checksSucceeded >= plan.threshold;
 
     pxt.tickEvent("validation.evaluation_complete", {
         plan: plan.name,
