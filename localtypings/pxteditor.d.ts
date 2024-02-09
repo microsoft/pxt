@@ -298,6 +298,7 @@ declare namespace pxt.editor {
     export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
         action: "runeval";
         validatorPlan: pxt.blocks.ValidatorPlan;
+        planBank: pxt.blocks.ValidatorPlan[];
     }
 
     export interface EditorMessageRenderBlocksResponse {

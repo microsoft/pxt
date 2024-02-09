@@ -157,10 +157,11 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             case "runeval": {
                                 const evalmsg = data as pxt.editor.EditorMessageRunEvalRequest;
                                 const plan = evalmsg.validatorPlan;
+                                const planBank = evalmsg.planBank;
                                 return Promise.resolve()
                                     .then(() => {
                                         const blocks = projectView.getBlocks();
-                                        return runValidatorPlanAsync(blocks, plan)})
+                                        return runValidatorPlanAsync(blocks, plan, planBank)})
                                     .then (results => {
                                         resp = { result: results };
                                     });

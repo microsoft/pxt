@@ -7,11 +7,13 @@ import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockComme
 
 const maxConcurrentChecks = 4;
 
-export async function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan): Promise<boolean> {
+export async function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planBank: pxt.blocks.ValidatorPlan[]): Promise<boolean> {
     // Each plan can have multiple checks it needs to run.
     // Run all of them in parallel, and then check if the number of successes is greater than the specified threshold.
     // TBD if it's faster to run in parallel without short-circuiting once the threshold is reached, or if it's faster to run sequentially and short-circuit.
     const startTime = Date.now();
+    console.log("I'm getting all of the plans");
+    console.log(planBank);
 
     const checkRuns = pxt.Util.promisePoolAsync(maxConcurrentChecks, plan.checks, async (check: pxt.blocks.ValidatorCheckBase): Promise<boolean> => {
         switch (check.validator) {
