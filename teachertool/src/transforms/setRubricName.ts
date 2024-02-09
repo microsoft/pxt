@@ -1,8 +1,8 @@
 import { stateAndDispatch } from "../state";
-import * as Actions from "../state/actions";
+import { setRubric } from "./setRubric";
 
 export function setRubricName(name: string) {
-    const { state: teacherTool, dispatch } = stateAndDispatch();
+    const { state: teacherTool } = stateAndDispatch();
 
     const oldName = teacherTool.rubric.name;
 
@@ -14,5 +14,5 @@ export function setRubricName(name: string) {
         ...teacherTool.rubric,
         name,
     };
-    dispatch(Actions.setRubric(newRubric));
+    setRubric(newRubric);
 }
