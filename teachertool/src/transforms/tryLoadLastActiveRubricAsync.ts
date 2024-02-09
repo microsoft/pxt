@@ -1,5 +1,5 @@
-import { getLastActiveRubricAsync } from "../services/indexedDbService";
-import { logDebug, logError } from "../services/loggingService";
+import { getLastActiveRubricAsync } from "../services/storageService";
+import { logDebug } from "../services/loggingService";
 import { showToast } from "./showToast";
 import { makeToast } from "../utils";
 import { setRubric } from "./setRubric";

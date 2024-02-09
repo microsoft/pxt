@@ -3,15 +3,33 @@ import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
 import { Rubric } from "../types/rubric";
 
+// ----------------------------------
+// Local Storage (for simple key -> value mappings of small data)
+// ----------------------------------
+
+const KEY_PREFIX = "teachertool";
+const AUTORUN_KEY = [KEY_PREFIX, "autorun"].join("/");
+const LAST_ACTIVE_RUBRIC_KEY = [KEY_PREFIX, "lastActiveRubric"].join("/");
+
+function getValue(key: string, defaultValue?: string): string | undefined {
+    return localStorage.getItem(key) || defaultValue;
+}
+
+function setValue(key: string, val: string) {
+    localStorage.setItem(key, val);
+}
+
+function delValue(key: string) {
+    localStorage.removeItem(key);
+}
+
+// ----------------------------------
+// Indexed DB (for storing larger, structured data)
+// ----------------------------------
+
 const teacherToolDbName = "makecode-project-insights";
 const dbVersion = 1;
 const rubricsStoreName = "rubrics";
-const metadataStoreName = "metadata";
-const metadataKeys = {
-    lastActiveRubricKey: "lastActiveRubricName",
-};
-
-type MetadataEntry = { key: string; value: any };
 
 class TeacherToolDb {
     db: IDBPDatabase | undefined;
@@ -21,7 +39,6 @@ class TeacherToolDb {
         this.db = await openDB(teacherToolDbName, dbVersion, {
             upgrade(db) {
                 db.createObjectStore(rubricsStoreName, { keyPath: "name" });
-                db.createObjectStore(metadataStoreName, { keyPath: "key" });
             },
         });
     }
@@ -64,27 +81,6 @@ class TeacherToolDb {
         }
     }
 
-    private async getMetadataEntryAsync(key: string): Promise<MetadataEntry | undefined> {
-        return this.getAsync<MetadataEntry>(metadataStoreName, key);
-    }
-
-    private async setMetadataEntryAsync(key: string, value: any): Promise<void> {
-        return this.setAsync<MetadataEntry>(metadataStoreName, { key, value });
-    }
-
-    private async deleteMetadataEntryAsync(key: string): Promise<void> {
-        return this.deleteAsync(metadataStoreName, key);
-    }
-
-    public async getLastActiveRubricNameAsync(): Promise<string | undefined> {
-        const metadataEntry = await this.getMetadataEntryAsync(metadataKeys.lastActiveRubricKey);
-        return metadataEntry?.value;
-    }
-
-    public saveLastActiveRubricNameAsync(name: string): Promise<void> {
-        return this.setMetadataEntryAsync(metadataKeys.lastActiveRubricKey, name);
-    }
-
     public getRubric(name: string): Promise<Rubric | undefined> {
         return this.getAsync<Rubric>(rubricsStoreName, name);
     }
@@ -104,11 +100,58 @@ const getDb = (async () => {
     return db;
 })();
 
-export async function getLastActiveRubricAsync(): Promise<Rubric | undefined> {
+async function saveRubricToIndexedDbAsync(rubric: Rubric) {
+    const db = await getDb;
+    await db.saveRubric(rubric);
+}
+
+async function deleteRubricFromIndexedDbAsync(name: string) {
+    const db = await getDb;
+    await db.deleteRubric(name);
+}
+
+// ----------------------------------
+// Exports
+// ----------------------------------
+
+export function getAutorun(): boolean {
+    try {
+        return getValue(AUTORUN_KEY, "false") === "true";
+    } catch (e) {
+        logError(ErrorCode.localStorageReadError, e);
+        return false;
+    }
+}
+
+export function setAutorun(autorun: boolean) {
+    try {
+        setValue(AUTORUN_KEY, autorun.toString());
+    } catch (e) {
+        logError(ErrorCode.localStorageWriteError, e);
+    }
+}
+
+export function getLastActiveRubricName(): string {
+    try {
+        return getValue(LAST_ACTIVE_RUBRIC_KEY) ?? "";
+    } catch (e) {
+        logError(ErrorCode.localStorageReadError, e);
+        return "";
+    }
+}
+
+export function setLastActiveRubricName(name: string) {
+    try {
+        setValue(LAST_ACTIVE_RUBRIC_KEY, name);
+    } catch (e) {
+        logError(ErrorCode.localStorageWriteError, e);
+    }
+}
+
+export async function getRubric(name: string): Promise<Rubric | undefined> {
     const db = await getDb;
 
     let rubric: Rubric | undefined = undefined;
-    const name = await db.getLastActiveRubricNameAsync();
     if (name) {
         rubric = await db.getRubric(name);
     }
@@ -116,13 +159,20 @@ export async function getLastActiveRubricAsync(): Promise<Rubric | undefined> {
     return rubric;
 }
 
+export async function getLastActiveRubricAsync(): Promise<Rubric | undefined> {
+    const lastActiveRubricName = getLastActiveRubricName();
+    return await getRubric(lastActiveRubricName);
+}
+
 export async function saveRubricAsync(rubric: Rubric) {
-    const db = await getDb;
-    await db.saveRubric(rubric);
-    await db.saveLastActiveRubricNameAsync(rubric.name);
+    await saveRubricToIndexedDbAsync(rubric);
+    setLastActiveRubricName(rubric.name);
 }
 
 export async function deleteRubricAsync(name: string) {
-    const db = await getDb;
-    await db.deleteRubric(name);
+    await deleteRubricFromIndexedDbAsync(name);
+
+    if (getLastActiveRubricName() === name) {
+        setLastActiveRubricName("");
+    }
 }
