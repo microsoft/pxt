@@ -17,37 +17,37 @@ export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blo
     let successfulBlocks: Blockly.Block[] = [];
 
     for (const check of plan.checks) {
-        let checkResult = false;
+        let checkPassed = false;
         switch (check.validator) {
             case "blocksExist":
-                [successfulBlocks, checkResult] = [...runBlocksExistValidation(usedBlocks, check as pxt.blocks.BlocksExistValidatorCheck)];
+                [successfulBlocks, checkPassed] = [...runBlocksExistValidation(usedBlocks, check as pxt.blocks.BlocksExistValidatorCheck)];
                 break;
             case "blockCommentsExist":
-                checkResult = runValidateBlockCommentsExist(usedBlocks, check as pxt.blocks.BlockCommentsExistValidatorCheck);
+                checkPassed = runValidateBlockCommentsExist(usedBlocks, check as pxt.blocks.BlockCommentsExistValidatorCheck);
                 break;
             case "specificBlockCommentsExist":
-                checkResult = runValidateSpecificBlockCommentsExist(usedBlocks, check as pxt.blocks.SpecificBlockCommentsExistValidatorCheck);
+                checkPassed = runValidateSpecificBlockCommentsExist(usedBlocks, check as pxt.blocks.SpecificBlockCommentsExistValidatorCheck);
                 break;
             case "blocksInSetExist":
-                [successfulBlocks, checkResult] = [...runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck)];
+                [successfulBlocks, checkPassed] = [...runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck)];
                 break;
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
-                checkResult = false;
+                checkPassed = false;
                 break;
         }
 
-        if (checkResult && check.childValidatorPlans) {
+        if (checkPassed && check.childValidatorPlans) {
             for (const parentBlock of successfulBlocks) {
                 const blocksToUse = parentBlock.getChildren(true);
                 for (const planName of check.childValidatorPlans) {
                     const childPlan = planBank.find((plan) => plan.name === planName);
                     const childResult = runValidatorPlanAsync(blocksToUse, childPlan, planBank);
-                    checkResult = checkResult && childResult;
+                    checkPassed = checkPassed && childResult;
                 }
             }
         }
-        checksSucceeded += checkResult ? 1 : 0;
+        checksSucceeded += checkPassed ? 1 : 0;
     }
 
     const passed = checksSucceeded >= plan.threshold;
