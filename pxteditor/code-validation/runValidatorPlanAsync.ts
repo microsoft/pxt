@@ -5,13 +5,7 @@ import { validateBlocksInSetExist } from "./validateBlocksInSetExist";
 import { validateBlockCommentsExist } from "./validateCommentsExist";
 import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockCommentsExist";
 
-const maxConcurrentChecks = 4;
-
-
 export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planBank: pxt.blocks.ValidatorPlan[]): boolean {
-    // Each plan can have multiple checks it needs to run.
-    // Run all of them in parallel, and then check if the number of successes is greater than the specified threshold.
-    // TBD if it's faster to run in parallel without short-circuiting once the threshold is reached, or if it's faster to run sequentially and short-circuit.
     const startTime = Date.now();
     let checksSucceeded = 0;
     let successfulBlocks: Blockly.Block[] = [];
@@ -38,13 +32,15 @@ export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blo
         }
 
         if (checkPassed && check.childValidatorPlans) {
-            for (const parentBlock of successfulBlocks) {
-                const blocksToUse = parentBlock.getChildren(true);
-                for (const planName of check.childValidatorPlans) {
+            for (const planName of check.childValidatorPlans) {
+                let timesPassed = 0;
+                for (const parentBlock of successfulBlocks) {
+                    const blocksToUse = parentBlock.getChildren(true);
                     const childPlan = planBank.find((plan) => plan.name === planName);
-                    const childResult = runValidatorPlanAsync(blocksToUse, childPlan, planBank);
-                    checkPassed = checkPassed && childResult;
+                    const childPassed = runValidatorPlanAsync(blocksToUse, childPlan, planBank);
+                    timesPassed += childPassed ? 1 : 0;
                 }
+                checkPassed = timesPassed > 0;
             }
         }
         checksSucceeded += checkPassed ? 1 : 0;
