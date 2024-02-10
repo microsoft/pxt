@@ -7,6 +7,7 @@ import { CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { makeToast } from "../utils";
 import { showToast } from "./showToast";
+import jp from "jsonpath";
 
 function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.ValidatorPlan | undefined {
     const { state: teacherTool } = stateAndDispatch();
@@ -27,7 +28,22 @@ function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.V
         return undefined;
     }
 
-    // TODO: Fill in any parameters. Error if parameters are missing.
+    // Fill in parameters.
+    for (const param of criteriaInstance.params ?? []) {
+        const catalogParam = catalogCriteria.params?.find(p => p.name === param.name);
+        if (!catalogParam) {
+            logError(ErrorCode.evalMissingCatalogParameter, "Attempting to evaluate criteria with unrecognized parameter", {catalogId: criteriaInstance.catalogCriteriaId, paramName: param.name});
+            return undefined;
+        }
+
+        if (!param.value) {
+            // User didn't set a value for the parameter.
+            logError(ErrorCode.evalParameterUnset, "Attempting to evaluate criteria with unset parameter value", {catalogId: criteriaInstance.catalogCriteriaId, paramName: param.name});
+            showToast(makeToast("error", lf("Unable to evaluate criteria: missing value for {0} in {1}", param.name, catalogCriteria.template)));
+        }
+
+        jp.apply(plan, catalogParam.path, () => param.value);
+    }
 
     return plan;
 }

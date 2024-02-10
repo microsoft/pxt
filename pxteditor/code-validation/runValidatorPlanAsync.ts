@@ -23,6 +23,8 @@ export async function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: p
                 return runValidateSpecificBlockCommentsExist(usedBlocks, check as pxt.blocks.SpecificBlockCommentsExistValidatorCheck);
             case "blocksInSetExist":
                 return runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck);
+            case "aiQuestion":
+                return runAiQuestionValidation(check as pxt.blocks.AiQuestionValidatorCheck);
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
                 return false;
@@ -64,4 +66,10 @@ function runValidateSpecificBlockCommentsExist(usedBlocks: Blockly.Block[], inpu
 function runBlocksInSetExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksInSetExistValidatorCheck): boolean {
     const blockResults = validateBlocksInSetExist({ usedBlocks, blockIdsToCheck: inputs.blocks, count: inputs.count });
     return blockResults.passed;
+}
+
+function runAiQuestionValidation(inputs: pxt.blocks.AiQuestionValidatorCheck): boolean {
+    // TODO thsparks - send question to AI and get a response.
+    console.log(`Ask question: '${inputs.question}'`);
+    return true;
 }

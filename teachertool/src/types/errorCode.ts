@@ -6,6 +6,8 @@ export enum ErrorCode {
     downloadTargetConfigAsync = "downloadTargetConfigAsync",
     evalMissingCriteria = "evalMissingCriteria",
     evalMissingPlan = "evalMissingPlan",
+    evalParameterUnset = "evalParameterUnset",
+    evalMissingCatalogParameter = "evalMissingCatalogParameter",
     loadCollectionFileFailed = "loadCollectionFileFailed",
     unableToGetIndexedDbRecord = "unableToGetIndexedDbRecord",
     unableToSetIndexedDbRecord = "unableToSetIndexedDbRecord",
