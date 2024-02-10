@@ -14,12 +14,13 @@ export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blo
     // TBD if it's faster to run in parallel without short-circuiting once the threshold is reached, or if it's faster to run sequentially and short-circuit.
     const startTime = Date.now();
     let checksSucceeded = 0;
+    let successfulBlocks: Blockly.Block[] = [];
 
     for (const check of plan.checks) {
         let checkResult = false;
         switch (check.validator) {
             case "blocksExist":
-                checkResult = runBlocksExistValidation(usedBlocks, check as pxt.blocks.BlocksExistValidatorCheck)[1];
+                [successfulBlocks, checkResult] = [...runBlocksExistValidation(usedBlocks, check as pxt.blocks.BlocksExistValidatorCheck)];
                 break;
             case "blockCommentsExist":
                 checkResult = runValidateBlockCommentsExist(usedBlocks, check as pxt.blocks.BlockCommentsExistValidatorCheck);
@@ -28,7 +29,7 @@ export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blo
                 checkResult = runValidateSpecificBlockCommentsExist(usedBlocks, check as pxt.blocks.SpecificBlockCommentsExistValidatorCheck);
                 break;
             case "blocksInSetExist":
-                checkResult = runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck)[1];
+                [successfulBlocks, checkResult] = [...runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck)];
                 break;
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
@@ -37,10 +38,13 @@ export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blo
         }
 
         if (checkResult && check.childValidatorPlans) {
-            for (const planName of check.childValidatorPlans) {
-                const childPlan = planBank.find((plan) => plan.name === planName);
-                const childResult = runValidatorPlanAsync(usedBlocks, childPlan, planBank);
-                checkResult = checkResult && childResult;
+            for (const parentBlock of successfulBlocks) {
+                const blocksToUse = parentBlock.getChildren(true);
+                for (const planName of check.childValidatorPlans) {
+                    const childPlan = planBank.find((plan) => plan.name === planName);
+                    const childResult = runValidatorPlanAsync(blocksToUse, childPlan, planBank);
+                    checkResult = checkResult && childResult;
+                }
             }
         }
         checksSucceeded += checkResult ? 1 : 0;
@@ -60,7 +64,7 @@ export function runValidatorPlanAsync(usedBlocks: Blockly.Block[], plan: pxt.blo
 function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksExistValidatorCheck): [Blockly.Block[], boolean] {
     const blockResults = validateBlocksExist({ usedBlocks, requiredBlockCounts: inputs.blockCounts });
     const blockId = Object.keys(inputs.blockCounts)[0];
-    const successfulBlocks = blockResults.successfulBlocks[0][blockId];
+    const successfulBlocks = blockResults.successfulBlocks.length ? blockResults.successfulBlocks[0][blockId] : [];
     return [successfulBlocks, blockResults.passed];
 }
 
