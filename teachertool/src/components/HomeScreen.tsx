@@ -1,5 +1,4 @@
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/HomeScreen.module.scss";
 import { Link } from "react-common/components/controls/Link";
 import { Button } from "react-common/components/controls/Button";
@@ -8,11 +7,9 @@ import { showModal } from "../transforms/showModal";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
 import Constants from "../constants";
 
-// eslint-disable-next-line import/no-internal-modules
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
 
-// eslint-disable import/no-unassigned-import
 import "swiper/scss";
 import "swiper/scss/navigation";
 import "swiper/scss/mousewheel";
