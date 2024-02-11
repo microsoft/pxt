@@ -4,6 +4,7 @@ import { ErrorCode } from "../types/errorCode";
 import { Rubric } from "../types/rubric";
 import { stateAndDispatch } from "./appStateContext";
 import { AppState } from "./state";
+import { Strings } from "../constants";
 
 export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefined {
     const { state } = stateAndDispatch();
@@ -53,12 +54,12 @@ export function isRubricLoaded(state: AppState): boolean {
 
 export function getSafeProjectName(state: AppState): string | undefined {
     if (state.projectMetadata) {
-        return state.projectMetadata.name ?? lf("Untitled Project");
+        return state.projectMetadata.name ?? Strings.UntitledProject;
     }
 }
 
 export function getSafeRubricName(state: AppState): string | undefined {
-    return state.rubric.name || lf("Untitled Rubric");
+    return state.rubric.name || Strings.UntitledRubric;
 }
 
 export function getSelectableCatalogCriteria(state: AppState): CatalogCriteria[] {

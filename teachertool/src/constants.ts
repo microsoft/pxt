@@ -2,6 +2,8 @@
 
 export namespace Strings {
     export const ConfirmReplaceRubric = lf("This will replace your current rubric. Continue?");
+    export const UntitledProject = lf("Untitled Project");
+    export const UntitledRubric = lf("Untitled Rubric");
 }
 
 namespace Constants {
