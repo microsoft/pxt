@@ -15,13 +15,22 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
     const appTheme = pxt.appTarget?.appTheme;
 
     const brandIconClick = () => {
-        pxt.tickEvent(Ticks.BrandIcon);
-        // TODO: Link this
+        pxt.tickEvent(Ticks.BrandLink);
+        if (appTheme?.logoUrl) {
+            window.open(appTheme.logoUrl);
+        }
     };
+
+    const onOrgClick = () => {
+        pxt.tickEvent(Ticks.OrgLink);
+        if (appTheme?.organizationUrl) {
+            window.open(appTheme.organizationUrl);
+        }
+    }
 
     const getOrganizationLogo = () => {
         return (
-            <div className={css["org"]}>
+            <div className={css["org"]} onClick={onOrgClick}>
                 {appTheme.organizationWideLogo || appTheme.organizationLogo ? (
                     <img
                         className={css["logo"]}
@@ -75,7 +84,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
     };
 
     const onHomeClicked = () => {
-        pxt.tickEvent(Ticks.HomeTab);
+        pxt.tickEvent(Ticks.HomeLink);
 
         // relprefix looks like "/beta---", need to chop off the hyphens and slash
         let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
@@ -101,7 +110,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 <Button
                     className="menu-button"
                     leftIcon="fas fa-home large"
-                    title={lf("Return to the editor homepage")}
+                    title={lf("Open the MakeCode editor")}
                     onClick={onHomeClicked}
                 />
             </div>

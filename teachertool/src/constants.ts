@@ -8,14 +8,14 @@ export namespace Strings {
 
 export namespace Ticks {
     export const Loaded = "teachertool.loaded";
+    export const HomeLink = "teachertool.homelink";
+    export const BrandLink = "teachertool.brandlink";
+    export const OrgLink = "teachertool.orglink";
     export const Error = "teachertool.error";
     export const NewRubric = "teachertool.newrubric";
     export const ImportRubric = "teachertool.importrubric";
     export const ExportRubric = "teachertool.exportrubric";
-    export const BrandIcon = "teachertool.brandicon";
-    export const HomeTab = "teachertool.hometab";
-    export const RubricTab = "teachertool.rubrictab";
-    export const ResultsTab = "teachertool.resultstab";
+    export const TabClicked = "teachertool.tabclicked";
     export const Evaluate = "teachertool.evaluate";
     export const Autorun = "teachertool.autorun";
     export const AddCriteria = "teachertool.addcriteria";

@@ -8,6 +8,7 @@ import { Button } from "react-common/components/controls/Button";
 import { AppStateContext } from "../state/appStateContext";
 import { TabName } from "../types";
 import { setActiveTab } from "../transforms/setActiveTab";
+import { Ticks } from "../constants";
 
 interface ITabProps extends React.PropsWithChildren<{}> {
     name: TabName;
@@ -18,6 +19,7 @@ export const TabButton: React.FC<ITabProps> = ({ children, name, disabled }) => 
     const { state: teacherTool } = useContext(AppStateContext);
 
     const onClick = () => {
+        pxt.tickEvent(Ticks.TabClicked, { tab: name });
         setActiveTab(name);
     };
 
