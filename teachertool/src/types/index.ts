@@ -14,6 +14,7 @@ export type Toast = {
     showSpinner?: boolean; // if true, will show a spinner icon
     hideIcon?: boolean; // if true, will hide the type-specific icon
     icon?: string; // if provided, will override the type-specific icon
+    textContainerClass?: string; // if provided, will be appended to the text container class list
 };
 
 export type ToastWithId = Toast & {
@@ -22,4 +23,4 @@ export type ToastWithId = Toast & {
 
 export type ModalType = "catalog-display" | "import-rubric";
 
-export type TabName = "rubric" | "results";
+export type TabName = "home" | "rubric" | "results";

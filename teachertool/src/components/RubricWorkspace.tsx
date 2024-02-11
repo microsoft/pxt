@@ -7,6 +7,7 @@ import { AppStateContext, stateAndDispatch } from "../state/appStateContext";
 import { Toolbar } from "./Toolbar";
 import { TabGroup, TabButton } from "./TabGroup";
 import { TabPanel } from "./TabPanel";
+import { HomeScreen } from "./HomeScreen";
 import { EvalResultDisplay } from "./EvalResultDisplay";
 import { ActiveRubricDisplay } from "./ActiveRubricDisplay";
 import { MenuItem } from "react-common/components/controls/MenuDropdown";
@@ -15,21 +16,22 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 import { writeRubricToFile } from "../services/fileSystemService";
 import { showModal } from "../transforms/showModal";
 import { isProjectLoaded } from "../state/helpers";
-import { setActiveTab } from "../transforms/setActiveTab";
 import { setAutorun } from "../transforms/setAutorun";
 
 function handleImportRubricClicked() {
+    pxt.tickEvent("teachertool.importrubric");
     showModal("import-rubric");
 }
 
 function handleExportRubricClicked() {
+    pxt.tickEvent("teachertool.exportrubric");
     const { state: teacherTool } = stateAndDispatch();
     writeRubricToFile(teacherTool.rubric);
 }
 
 async function handleEvaluateClickedAsync() {
-    setActiveTab("results");
-    await runEvaluateAsync();
+    pxt.tickEvent("teachertool.evaluate");
+    await runEvaluateAsync(true);
 }
 
 const WorkspaceTabButtons: React.FC = () => {
@@ -37,6 +39,7 @@ const WorkspaceTabButtons: React.FC = () => {
 
     return (
         <TabGroup>
+            <TabButton name="home">{lf("Home")}</TabButton>
             <TabButton name="rubric">{lf("Rubric")}</TabButton>
             <TabButton name="results" disabled={!isProjectLoaded(teacherTool)}>
                 {lf("Results")}
@@ -48,6 +51,9 @@ const WorkspaceTabButtons: React.FC = () => {
 const WorkspaceTabPanels: React.FC = () => {
     return (
         <>
+            <TabPanel name="home">
+                <HomeScreen />
+            </TabPanel>
             <TabPanel name="rubric">
                 <ActiveRubricDisplay />
             </TabPanel>
@@ -59,9 +65,11 @@ const WorkspaceTabPanels: React.FC = () => {
 };
 
 function getActionMenuItems(tab: TabName): MenuItem[] {
+    const items: MenuItem[] = [];
     switch (tab) {
+        case "home":
         case "rubric":
-            return [
+            items.push(
                 {
                     title: lf("Import Rubric"),
                     label: lf("Import Rubric"),
@@ -73,11 +81,13 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
                     label: lf("Export Rubric"),
                     ariaLabel: lf("Export Rubric"),
                     onClick: handleExportRubricClicked,
-                },
-            ];
+                }
+            );
+            break;
         case "results":
-            return [];
+            break;
     }
+    return items;
 }
 
 const WorkspaceToolbarButtons: React.FC = () => {
@@ -87,6 +97,7 @@ const WorkspaceToolbarButtons: React.FC = () => {
     const actionItems = getActionMenuItems(activeTab);
 
     const onAutorunChange = (checked: boolean) => {
+        pxt.tickEvent("teachertool.autorun", { checked: checked ? "true" : "false" });
         setAutorun(checked);
     };
 
@@ -108,9 +119,7 @@ const WorkspaceToolbarButtons: React.FC = () => {
     );
 };
 
-interface IProps {}
-
-export const RubricWorkspace: React.FC<IProps> = () => {
+export const RubricWorkspace: React.FC = () => {
     return (
         <div className={css.panel}>
             <Toolbar left={<WorkspaceTabButtons />} right={<WorkspaceToolbarButtons />} />

@@ -1,15 +1,23 @@
 import * as React from "react";
+import { useContext } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/HeaderBar.module.scss";
 import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
+import { AppStateContext } from "../state/appStateContext";
+import { getSafeRubricName } from "../state/helpers";
 
 interface HeaderBarProps {}
 
 export const HeaderBar: React.FC<HeaderBarProps> = () => {
+    const { state: teacherTool } = useContext(AppStateContext);
+
     const appTheme = pxt.appTarget?.appTheme;
 
-    const brandIconClick = () => {};
+    const brandIconClick = () => {
+        pxt.tickEvent("teachertool.brandicon");
+        // TODO: Link this
+    };
 
     const getOrganizationLogo = () => {
         return (
@@ -57,8 +65,17 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         );
     };
 
+    const getRubricName = (): JSX.Element | null => {
+        const rubricName = getSafeRubricName(teacherTool);
+        return rubricName ? (
+            <div className={css["rubric-name"]}>
+                <span>{rubricName}</span>
+            </div>
+        ) : null;
+    };
+
     const onHomeClicked = () => {
-        pxt.tickEvent("teacherTool.home");
+        pxt.tickEvent("teachertool.home");
 
         // relprefix looks like "/beta---", need to chop off the hyphens and slash
         let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
@@ -77,6 +94,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             <div className={css["left-menu"]}>
                 {getOrganizationLogo()}
                 {getTargetLogo()}
+                {getRubricName()}
             </div>
 
             <div className={css["right-menu"]}>

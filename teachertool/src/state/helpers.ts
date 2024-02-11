@@ -47,6 +47,20 @@ export function isProjectLoaded(state: AppState) {
     return !!state.projectMetadata;
 }
 
+export function isRubricLoaded(state: AppState): boolean {
+    return !!(state.rubric.criteria.length || state.rubric.name);
+}
+
+export function getSafeProjectName(state: AppState): string | undefined {
+    if (state.projectMetadata) {
+        return state.projectMetadata.name ?? lf("Untitled Project");
+    }
+}
+
+export function getSafeRubricName(state: AppState): string {
+    return state.rubric.name || lf("Untitled Rubric");
+}
+
 export function getSelectableCatalogCriteria(state: AppState): CatalogCriteria[] {
     const usedCatalogCriteria = state.rubric.criteria.map(c => c.catalogCriteriaId) ?? [];
 
