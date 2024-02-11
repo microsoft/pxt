@@ -6,6 +6,8 @@ import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { showModal } from "../transforms/showModal";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
+import Constants from "../constants";
+
 // eslint-disable-next-line import/no-internal-modules
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
@@ -21,7 +23,7 @@ const Welcome: React.FC = () => {
             <h1>{lf("Welcome to MakeCode Project Insights!")}</h1>
             <p>
                 {lf("This tool is designed to help you evaluate student projects using a rubric.")}{" "}
-                <Link target="_blank" href="https://makecode.com/teachertool">
+                <Link target="_blank" href={Constants.LearnMoreLink}>
                     {lf("Learn More.")}
                 </Link>
             </p>
