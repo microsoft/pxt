@@ -1,7 +1,5 @@
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/ProjectWorkspace.module.scss";
-
 import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { getSafeProjectName } from "../state/helpers";

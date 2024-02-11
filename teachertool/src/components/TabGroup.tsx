@@ -1,7 +1,5 @@
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/TabGroup.module.scss";
-
 import { useContext } from "react";
 import { classList } from "react-common/components/util";
 import { Button } from "react-common/components/controls/Button";

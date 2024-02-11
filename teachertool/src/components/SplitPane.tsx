@@ -1,5 +1,4 @@
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/SplitPane.module.scss";
 import { classList } from "react-common/components/util";
 

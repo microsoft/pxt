@@ -1,7 +1,5 @@
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/ShareLinkInput.module.scss";
-
 import { useContext, useState, useMemo, useCallback, useEffect } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { classList } from "react-common/components/util";

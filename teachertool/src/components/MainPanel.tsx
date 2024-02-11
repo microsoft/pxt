@@ -1,8 +1,5 @@
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/MainPanel.module.scss";
-
-import { MakeCodeFrame } from "./MakecodeFrame";
 import { SplitPane } from "./SplitPane";
 import { RubricWorkspace } from "./RubricWorkspace";
 import { ProjectWorkspace } from "./ProjectWorkspace";
