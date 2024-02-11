@@ -1,7 +1,5 @@
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/RubricWorkspace.module.scss";
-
 import { useContext } from "react";
 import { AppStateContext, stateAndDispatch } from "../state/appStateContext";
 import { Toolbar } from "./Toolbar";
@@ -17,20 +15,21 @@ import { writeRubricToFile } from "../services/fileSystemService";
 import { showModal } from "../transforms/showModal";
 import { isProjectLoaded } from "../state/helpers";
 import { setAutorun } from "../transforms/setAutorun";
+import { Ticks } from "../constants";
 
 function handleImportRubricClicked() {
-    pxt.tickEvent("teachertool.importrubric");
+    pxt.tickEvent(Ticks.ImportRubric);
     showModal("import-rubric");
 }
 
 function handleExportRubricClicked() {
-    pxt.tickEvent("teachertool.exportrubric");
+    pxt.tickEvent(Ticks.ExportRubric);
     const { state: teacherTool } = stateAndDispatch();
     writeRubricToFile(teacherTool.rubric);
 }
 
 async function handleEvaluateClickedAsync() {
-    pxt.tickEvent("teachertool.evaluate");
+    pxt.tickEvent(Ticks.Evaluate);
     await runEvaluateAsync(true);
 }
 
@@ -97,7 +96,7 @@ const WorkspaceToolbarButtons: React.FC = () => {
     const actionItems = getActionMenuItems(activeTab);
 
     const onAutorunChange = (checked: boolean) => {
-        pxt.tickEvent("teachertool.autorun", { checked: checked ? "true" : "false" });
+        pxt.tickEvent(Ticks.Autorun, { checked: checked ? "true" : "false" });
         setAutorun(checked);
     };
 

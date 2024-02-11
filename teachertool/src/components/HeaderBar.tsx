@@ -1,11 +1,11 @@
 import * as React from "react";
 import { useContext } from "react";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/HeaderBar.module.scss";
 import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 import { AppStateContext } from "../state/appStateContext";
 import { getSafeRubricName } from "../state/helpers";
+import { Ticks } from "../constants";
 
 interface HeaderBarProps {}
 
@@ -15,7 +15,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
     const appTheme = pxt.appTarget?.appTheme;
 
     const brandIconClick = () => {
-        pxt.tickEvent("teachertool.brandicon");
+        pxt.tickEvent(Ticks.BrandIcon);
         // TODO: Link this
     };
 
@@ -75,7 +75,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
     };
 
     const onHomeClicked = () => {
-        pxt.tickEvent("teachertool.home");
+        pxt.tickEvent(Ticks.HomeTab);
 
         // relprefix looks like "/beta---", need to chop off the hyphens and slash
         let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);

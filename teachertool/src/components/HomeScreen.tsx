@@ -5,7 +5,7 @@ import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { showModal } from "../transforms/showModal";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
-import Constants from "../constants";
+import Constants, { Ticks } from "../constants";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
@@ -81,12 +81,12 @@ const Carousel: React.FC<CarouselProps> = ({ children }) => {
 
 const GetStarted: React.FC = () => {
     const onNewRubricClickedAsync = async () => {
-        pxt.tickEvent("teachertool.newrubric");
+        pxt.tickEvent(Ticks.NewRubric);
         await resetRubricAsync(true);
     };
 
     const onImportRubricClicked = () => {
-        pxt.tickEvent("teachertool.importrubric");
+        pxt.tickEvent(Ticks.ImportRubric);
         showModal("import-rubric");
     };
 
