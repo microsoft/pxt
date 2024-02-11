@@ -6,6 +6,12 @@ import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { showModal } from "../transforms/showModal";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Mousewheel, Navigation } from "swiper";
+
+import "swiper/scss";
+import "swiper/scss/navigation";
+import "swiper/scss/mousewheel";
 
 const Welcome: React.FC = () => {
     return (
@@ -30,18 +36,46 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({ title, className, icon, onClick }) => {
     return (
-        <Button className={classList(css.cardButton, className)} title={title} onClick={onClick}>
-            <div className={css.cardDiv}>
-                {icon && (
-                    <div className={css.cardIcon}>
-                        <i className={icon}></i>
+        <div className={css.cardContainer}>
+            <Button className={classList(css.cardButton, className)} title={title} onClick={onClick}>
+                <div className={css.cardDiv}>
+                    {icon && (
+                        <div className={css.cardIcon}>
+                            <i className={icon}></i>
+                        </div>
+                    )}
+                    <div className={css.cardTitle}>
+                        <h3>{title}</h3>
                     </div>
-                )}
-                <div className={css.cardTitle}>
-                    <h3>{title}</h3>
                 </div>
-            </div>
-        </Button>
+            </Button>
+        </div>
+    );
+};
+
+interface CarouselProps extends React.PropsWithChildren<{}> {}
+
+const Carousel: React.FC<CarouselProps> = ({ children }) => {
+    const cards = React.Children.toArray(children);
+
+    return (
+        <Swiper
+            spaceBetween={16}
+            slidesPerView={"auto"}
+            allowTouchMove={true}
+            slidesOffsetBefore={32}
+            navigation={true}
+            mousewheel={true}
+            scrollbar={{ draggable: true }}
+            modules={[Navigation, Mousewheel]}
+            className={css.swiperCarousel}
+        >
+            {cards.map((card, index) => (
+                <SwiperSlide key={index} className={css.swiperSlide}>
+                    {card}
+                </SwiperSlide>
+            ))}
+        </Swiper>
     );
 };
 
@@ -57,10 +91,11 @@ const GetStarted: React.FC = () => {
     };
 
     return (
-        <div className={css.getStarted}>
-            <h2>{lf("Get Started")}</h2>
-            {/* TODO: Replace with carousel */}
-            <div className={css.cards}>
+        <div className={css.carouselRow}>
+            <div className={css.rowTitle}>
+                <h2>{lf("Get Started")}</h2>
+            </div>
+            <Carousel>
                 <Card
                     title={lf("New Rubric")}
                     icon={"fas fa-plus-circle"}
@@ -73,7 +108,7 @@ const GetStarted: React.FC = () => {
                     className={css.importRubric}
                     onClick={onImportRubricClicked}
                 />
-            </div>
+            </Carousel>
         </div>
     );
 };
