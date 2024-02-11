@@ -6,10 +6,11 @@ import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { showModal } from "../transforms/showModal";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
+// eslint-disable-next-line import/no-internal-modules
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
 
-// eslint-disable import/no-internal-modules
+// eslint-disable import/no-unassigned-import
 import "swiper/scss";
 import "swiper/scss/navigation";
 import "swiper/scss/mousewheel";
