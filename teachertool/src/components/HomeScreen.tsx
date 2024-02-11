@@ -9,6 +9,7 @@ import { resetRubricAsync } from "../transforms/resetRubricAsync";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
 
+// eslint-disable import/no-internal-modules
 import "swiper/scss";
 import "swiper/scss/navigation";
 import "swiper/scss/mousewheel";
@@ -60,13 +61,12 @@ const Carousel: React.FC<CarouselProps> = ({ children }) => {
 
     return (
         <Swiper
-            spaceBetween={16}
+            spaceBetween={10}
             slidesPerView={"auto"}
             allowTouchMove={true}
             slidesOffsetBefore={32}
             navigation={true}
             mousewheel={true}
-            scrollbar={{ draggable: true }}
             modules={[Navigation, Mousewheel]}
             className={css.swiperCarousel}
         >

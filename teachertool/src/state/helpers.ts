@@ -43,7 +43,7 @@ export function verifyRubricIntegrity(rubric: Rubric): {
     return { valid: invalidCriteria.length === 0, validCriteria, invalidCriteria };
 }
 
-export function isProjectLoaded(state: AppState) {
+export function isProjectLoaded(state: AppState): boolean {
     return !!state.projectMetadata;
 }
 
@@ -57,7 +57,7 @@ export function getSafeProjectName(state: AppState): string | undefined {
     }
 }
 
-export function getSafeRubricName(state: AppState): string {
+export function getSafeRubricName(state: AppState): string | undefined {
     return state.rubric.name || lf("Untitled Rubric");
 }
 

@@ -124,5 +124,52 @@ div.page {
     .swiperSlide {
         display: flex;
         width: fit-content !important;
+        transform: scale(0.95);
+        transition: transform 0.1s ease;
+
+        &:focus-visible,
+        &:focus-within,
+        &:active,
+        &:hover {
+            transform: scale(1);
+        }
+    }
+
+    div[class*="swiper-button-prev"],
+    div[class*="swiper-button-next"] {
+        height: 100%;
+        top: 0;
+        background-color: var(--pxt-page-background);
+        filter: opacity(0.5);
+        padding: 10px;
+        width: fit-content;
+        margin: 0;
+        transition: filter 0.1s ease;
+
+        &:hover {
+            filter: opacity(0.95);
+
+            &::after {
+                transform: scale(1.1);
+            }
+        }
+        
+        &::after {
+            transform: scale(0.9);
+            color: var(--pxt-headerbar-background);
+            font-weight: bolder;
+        }
+    }
+
+    div[class*="swiper-button-prev"] {
+        left: 0;
+    }
+
+    div[class*="swiper-button-next"] {
+        right: 0;
+    }
+
+    div[class*="swiper-button-disabled"] {
+        display: none;
     }
 }
