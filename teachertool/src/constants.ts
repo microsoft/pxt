@@ -15,7 +15,6 @@ export namespace Ticks {
     export const NewRubric = "teachertool.newrubric";
     export const ImportRubric = "teachertool.importrubric";
     export const ExportRubric = "teachertool.exportrubric";
-    export const TabClicked = "teachertool.tabclicked";
     export const Evaluate = "teachertool.evaluate";
     export const Autorun = "teachertool.autorun";
     export const AddCriteria = "teachertool.addcriteria";
