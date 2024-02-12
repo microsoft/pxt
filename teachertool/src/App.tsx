@@ -38,7 +38,7 @@ export const App = () => {
                     ...makeToast("success", "🎓", 2000),
                     hideIcon: true,
                     hideDismissBtn: true,
-                    textContainerClass: "app-large-toast",
+                    className: "app-large-toast",
                 });
 
                 setInited(true);

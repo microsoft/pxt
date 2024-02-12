@@ -14,7 +14,7 @@ export type Toast = {
     showSpinner?: boolean; // if true, will show a spinner icon
     hideIcon?: boolean; // if true, will hide the type-specific icon
     icon?: string; // if provided, will override the type-specific icon
-    textContainerClass?: string; // if provided, will be appended to the text container class list
+    className?: string; // if provided, will be appended to the toast's class list
 };
 
 export type ToastWithId = Toast & {
