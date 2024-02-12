@@ -9,16 +9,13 @@ interface IProps {}
 export const MainPanel: React.FC<IProps> = () => {
     return (
         <div className={css["main-panel"]}>
-            <SplitPane split={"vertical"} defaultSize={"80%"} primary={"left"}>
-                {/* Left side */}
-                <>
-                    <RubricWorkspace />
-                </>
-                {/* Right side */}
-                <>
-                    <ProjectWorkspace />
-                </>
-            </SplitPane>
+            <SplitPane
+                split={"vertical"}
+                defaultSize={"80%"}
+                primary={"left"}
+                left={<RubricWorkspace />}
+                right={<ProjectWorkspace />}
+            />
         </div>
     );
 };
