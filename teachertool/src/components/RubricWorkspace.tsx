@@ -15,7 +15,8 @@ import { writeRubricToFile } from "../services/fileSystemService";
 import { showModal } from "../transforms/showModal";
 import { isProjectLoaded } from "../state/helpers";
 import { setAutorun } from "../transforms/setAutorun";
-import { Ticks } from "../constants";
+import { Strings, Ticks } from "../constants";
+import { resetRubricAsync } from "../transforms/resetRubricAsync";
 
 function handleImportRubricClicked() {
     pxt.tickEvent(Ticks.ImportRubric);
@@ -26,6 +27,11 @@ function handleExportRubricClicked() {
     pxt.tickEvent(Ticks.ExportRubric);
     const { state: teacherTool } = stateAndDispatch();
     writeRubricToFile(teacherTool.rubric);
+}
+
+async function handleNewRubricClickedAsync() {
+    pxt.tickEvent(Ticks.NewRubric);
+    await resetRubricAsync(true);
 }
 
 async function handleEvaluateClickedAsync() {
@@ -70,15 +76,21 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
         case "rubric":
             items.push(
                 {
-                    title: lf("Import Rubric"),
-                    label: lf("Import Rubric"),
-                    ariaLabel: lf("Import Rubric"),
+                    title: Strings.NewRubric,
+                    label: Strings.NewRubric,
+                    ariaLabel: Strings.NewRubric,
+                    onClick: handleNewRubricClickedAsync,
+                },
+                {
+                    title: Strings.ImportRubric,
+                    label: Strings.ImportRubric,
+                    ariaLabel: Strings.ImportRubric,
                     onClick: handleImportRubricClicked,
                 },
                 {
-                    title: lf("Export Rubric"),
-                    label: lf("Export Rubric"),
-                    ariaLabel: lf("Export Rubric"),
+                    title: Strings.ExportRubric,
+                    label: Strings.ExportRubric,
+                    ariaLabel: Strings.ExportRubric,
                     onClick: handleExportRubricClicked,
                 }
             );

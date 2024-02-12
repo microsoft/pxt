@@ -2,6 +2,9 @@ export namespace Strings {
     export const ConfirmReplaceRubric = lf("This will replace your current rubric. Continue?");
     export const UntitledProject = lf("Untitled Project");
     export const UntitledRubric = lf("Untitled Rubric");
+    export const NewRubric = lf("New Rubric");
+    export const ImportRubric = lf("Import Rubric");
+    export const ExportRubric = lf("Export Rubric");
 }
 
 export namespace Ticks {
@@ -19,8 +22,8 @@ export namespace Ticks {
     export const RemoveCriteria = "teachertool.removecriteria";
 }
 
-namespace Constants {
+namespace Misc {
     export const LearnMoreLink = "https://makecode.com/teachertool"; // TODO: Replace with gwlink or aka.ms link
 }
 
-export default Constants;
+export const Constants = Object.assign(Misc, { Strings, Ticks });

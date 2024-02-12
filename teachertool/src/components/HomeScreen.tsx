@@ -5,7 +5,7 @@ import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { showModal } from "../transforms/showModal";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
-import Constants, { Ticks } from "../constants";
+import { Constants, Strings, Ticks } from "../constants";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
 
@@ -60,7 +60,7 @@ const Carousel: React.FC<CarouselProps> = ({ children }) => {
 
     return (
         <Swiper
-            spaceBetween={10}
+            spaceBetween={0}
             slidesPerView={"auto"}
             allowTouchMove={true}
             slidesOffsetBefore={32}
@@ -96,13 +96,13 @@ const GetStarted: React.FC = () => {
             </div>
             <Carousel>
                 <Card
-                    title={lf("New Rubric")}
+                    title={Strings.NewRubric}
                     icon={"fas fa-plus-circle"}
                     className={css.newRubric}
                     onClick={onNewRubricClickedAsync}
                 />
                 <Card
-                    title={lf("Import Rubric")}
+                    title={Strings.ImportRubric}
                     icon={"fas fa-file-upload"}
                     className={css.importRubric}
                     onClick={onImportRubricClicked}
