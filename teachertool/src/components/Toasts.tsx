@@ -52,7 +52,7 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
                     </div>
                 )}
                 <div className={css["text-container"]}>
-                    {toast.text && <div className={css["text"]}>{toast.text}</div>}
+                    {toast.text && <div className={classList(css["text"], "tt-toast-text")}>{toast.text}</div>}
                     {toast.detail && <div className={css["detail"]}>{toast.detail}</div>}
                     {toast.jsx && <div>{toast.jsx}</div>}
                 </div>
