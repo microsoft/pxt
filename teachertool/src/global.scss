@@ -93,6 +93,33 @@ code {
 }
 
 /*******************************/
+/********** SCROLLBAR  *********/
+/*******************************/
+
+// Modeled after the scrollbar in the MakeCode blocks editor
+
+::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+::-webkit-scrollbar-thumb {
+    height: 0;
+    border: 2px solid rgba(0, 0, 0, 0);
+    border-radius: 99px;
+    background-clip: padding-box;
+    background-color: rgb(206, 205, 206);
+    &:hover {
+        // Style matching the standalone editor
+        //background-color: rgb(187, 187, 187);
+        //box-shadow: inset -2px -2px 0px rgb(206, 205, 206), inset 2px 2px 0px rgb(206, 205, 206);
+        // Style matching the embedded editor
+        border-width: 1px;
+    }
+}
+
+/*******************************/
 /******* CATALOG STYLING  ******/
 /*******************************/
 
