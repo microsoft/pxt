@@ -6,7 +6,6 @@ import { classList } from "react-common/components/util";
 import { showModal } from "../transforms/showModal";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
 import Constants, { Ticks } from "../constants";
-
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
 
