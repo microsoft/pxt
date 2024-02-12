@@ -81,7 +81,7 @@ const Carousel: React.FC<CarouselProps> = ({ children }) => {
 const GetStarted: React.FC = () => {
     const onNewRubricClickedAsync = async () => {
         pxt.tickEvent(Ticks.NewRubric);
-        await resetRubricAsync(true);
+        await resetRubricAsync();
     };
 
     const onImportRubricClicked = () => {

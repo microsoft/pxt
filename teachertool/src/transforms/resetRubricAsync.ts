@@ -6,10 +6,10 @@ import { confirmAsync } from "./confirmAsync";
 import { makeRubric } from "../utils";
 import { Strings } from "../constants";
 
-export async function resetRubricAsync(fromUserInteraction: boolean) {
+export async function resetRubricAsync() {
     const { state: teachertool, dispatch } = stateAndDispatch();
 
-    if (fromUserInteraction && isRubricLoaded(teachertool)) {
+    if (isRubricLoaded(teachertool)) {
         if (!(await confirmAsync(Strings.ConfirmReplaceRubric))) {
             return;
         }
@@ -18,7 +18,5 @@ export async function resetRubricAsync(fromUserInteraction: boolean) {
     dispatch(Actions.clearAllEvalResults());
     setRubric(makeRubric());
 
-    if (fromUserInteraction) {
-        dispatch(Actions.setActiveTab("rubric"));
-    }
+    dispatch(Actions.setActiveTab("rubric"));
 }

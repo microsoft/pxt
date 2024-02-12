@@ -31,7 +31,7 @@ function handleExportRubricClicked() {
 
 async function handleNewRubricClickedAsync() {
     pxt.tickEvent(Ticks.NewRubric);
-    await resetRubricAsync(true);
+    await resetRubricAsync();
 }
 
 async function handleEvaluateClickedAsync() {
