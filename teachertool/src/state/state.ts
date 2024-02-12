@@ -1,10 +1,11 @@
-import { ModalType, Notifications, TabName } from "../types";
+import { ModalType, ToastWithId, TabName } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { Rubric } from "../types/rubric";
+import { makeRubric } from "../utils";
 
 export type AppState = {
     targetConfig?: pxt.TargetConfig;
-    notifications: Notifications;
+    toasts: ToastWithId[];
     evalResults: pxt.Map<CriteriaEvaluationResult>; // Criteria Instance Id -> Result
     projectMetadata: pxt.Cloud.JsonScript | undefined;
     catalog: CatalogCriteria[] | undefined;
@@ -19,13 +20,13 @@ export type AppState = {
 };
 
 export const initialAppState: AppState = {
-    notifications: [],
+    toasts: [],
     evalResults: {},
     projectMetadata: undefined,
     catalog: undefined,
-    rubric: { name: "", criteria: [] },
+    rubric: makeRubric(),
     modal: undefined,
-    activeTab: "rubric",
+    activeTab: "home",
     validatorPlans: undefined,
     autorun: false,
     flags: {

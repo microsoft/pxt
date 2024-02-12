@@ -11,6 +11,7 @@ import ReactDOM from "react-dom";
 import "./global.scss";
 import { App } from "./App";
 import { AppStateProvider } from "./state/appStateContext";
+import { Ticks } from "./constants";
 
 function enableAnalytics() {
     pxt.analytics.enable(pxt.Util.userLanguage());
@@ -31,7 +32,7 @@ function enableAnalytics() {
             stats["screen.clientHeight"] = body.clientHeight;
         }
     }
-    pxt.tickEvent("teachertool.loaded", stats);
+    pxt.tickEvent(Ticks.Loaded, stats);
 }
 
 window.addEventListener("DOMContentLoaded", () => {

@@ -2,22 +2,28 @@ import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 import { getProjectMetaAsync } from "../services/backendRequests";
 import { logDebug } from "../services/loggingService";
-import { postNotification } from "./postNotification";
-import { makeNotification } from "../utils";
+import { showToast } from "./showToast";
+import { makeToast } from "../utils";
 
 export async function loadProjectMetadataAsync(shareLink: string) {
     const { dispatch } = stateAndDispatch();
 
     const scriptId = pxt.Cloud.parseScriptId(shareLink);
     if (!scriptId) {
-        postNotification(makeNotification(lf("Invalid share link"), 2000));
+        showToast(makeToast("error", lf("Invalid share link")));
         dispatch(Actions.setProjectMetadata(undefined));
         return;
     }
 
     const projMeta = await getProjectMetaAsync(scriptId);
     if (!projMeta) {
-        postNotification(makeNotification(lf("Failed to load project"), 2000));
+        showToast(makeToast("error", lf("Failed to load project")));
+        dispatch(Actions.setProjectMetadata(undefined));
+        return;
+    }
+
+    if (projMeta.target !== pxt.appTarget.id) {
+        showToast(makeToast("error", lf("That project was built with a different MakeCode editor")));
         dispatch(Actions.setProjectMetadata(undefined));
         return;
     }

@@ -32,7 +32,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
             FieldTileset.cachedWorkspaceId = workspace.id;
             const references = getAllReferencedTiles(workspace);
 
-            const supportedTileWidths = [16, 8, 32];
+            const supportedTileWidths = [16, 4, 8, 32];
 
             for (const width of supportedTileWidths) {
                 const projectTiles = project.getProjectTiles(width, width === 16);
@@ -298,6 +298,7 @@ function tileWeight(id: string) {
     switch (id) {
         case "myTiles.transparency16":
             return 1;
+        case "myTiles.transparency4":
         case "myTiles.transparency8":
         case "myTiles.transparency32":
             return 2;

@@ -566,6 +566,8 @@ namespace pxt.sprite {
                 return proj.getTransparency(16);
             case "myTiles.transparency8":
                 return proj.getTransparency(8);
+            case "myTiles.transparency4":
+                return proj.getTransparency(4);
             case "myTiles.transparency32":
                 return proj.getTransparency(32);
             default:
@@ -804,6 +806,7 @@ namespace pxt.sprite {
 
     export function tileWidthToTileScale(tileWidth: number) {
         switch (tileWidth) {
+            case 4: return `TileScale.Four`;
             case 8: return `TileScale.Eight`;
             case 16: return `TileScale.Sixteen`;
             case 32: return `TileScale.ThirtyTwo`;
@@ -814,6 +817,7 @@ namespace pxt.sprite {
     export function tileScaleToTileWidth(tileScale: string) {
         tileScale = tileScale.replace(/\s/g, "");
         switch (tileScale) {
+            case `TileScale.Four`: return 4;
             case `TileScale.Eight`: return 8;
             case `TileScale.Sixteen`: return 16;
             case `TileScale.ThirtyTwo`: return 32;
