@@ -24,12 +24,8 @@ div.page {
         font-weight: 600;
     }
 
-    div.top {
-        height: 0;
-    }
-
     div.welcome {
-        padding: 0 $pageGutter;
+        padding: $pageGutter 0 0 $pageGutter;
     }
 
     div.carouselRow {

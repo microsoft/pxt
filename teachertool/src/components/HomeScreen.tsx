@@ -115,7 +115,6 @@ const GetStarted: React.FC = () => {
 export const HomeScreen: React.FC = () => {
     return (
         <div className={css.page}>
-            <div className={css.top} />
             <Welcome />
             <GetStarted />
         </div>
