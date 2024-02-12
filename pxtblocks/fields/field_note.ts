@@ -443,7 +443,12 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
             output,
             'mouseover',
             this,
-            () => this.noteLabel.textContent = this.getKeyName(keyInd),
+            (e: MouseEvent) => {
+                this.noteLabel.textContent = this.getKeyName(keyInd)
+                if (e.buttons) {
+                    this.playKey(output, this.getKeyFreq(keyInd))
+                }
+            },
             /** noCaptureIdentifier **/ true
         );
 

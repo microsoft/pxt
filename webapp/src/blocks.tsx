@@ -1227,11 +1227,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             comments: true,
             disable: false,
             readOnly: readOnly,
-            // FIXME (riknoll)
-            // toolboxOptions: {
-            //     colour: theme.coloredToolbox,
-            //     inverted: theme.invertedToolbox
-            // },
             plugins: {
                 'blockDragger': pxtblockly.BlockDragger,
                 'connectionChecker': DuplicateOnDragConnectionChecker,
