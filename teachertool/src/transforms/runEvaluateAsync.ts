@@ -7,6 +7,7 @@ import { CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { makeToast } from "../utils";
 import { showToast } from "./showToast";
+import { setActiveTab } from "./setActiveTab";
 
 function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.ValidatorPlan | undefined {
     const { state: teacherTool } = stateAndDispatch();
@@ -32,8 +33,12 @@ function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.V
     return plan;
 }
 
-export async function runEvaluateAsync() {
+export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
+
+    if (fromUserInteraction) {
+        setActiveTab("results");
+    }
 
     // Clear all existing results.
     dispatch(Actions.clearAllEvalResults());
@@ -68,6 +73,10 @@ export async function runEvaluateAsync() {
                 }
             })
     );
+
+    if (evalRequests.length === 0) {
+        return;
+    }
 
     const results = await Promise.all(evalRequests);
     const errorCount = results.filter(r => !r).length;

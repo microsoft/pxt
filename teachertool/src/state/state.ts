@@ -1,6 +1,7 @@
 import { ModalType, ToastWithId, TabName } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { Rubric } from "../types/rubric";
+import { makeRubric } from "../utils";
 
 export type AppState = {
     targetConfig?: pxt.TargetConfig;
@@ -23,9 +24,9 @@ export const initialAppState: AppState = {
     evalResults: {},
     projectMetadata: undefined,
     catalog: undefined,
-    rubric: { name: "", criteria: [] },
+    rubric: makeRubric(),
     modal: undefined,
-    activeTab: "rubric",
+    activeTab: "home",
     validatorPlans: undefined,
     autorun: false,
     flags: {

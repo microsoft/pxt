@@ -1,8 +1,6 @@
 /// <reference path="../../../localtypings/pxteditor.d.ts" />
 
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/MakeCodeFrame.module.scss";
-
 import { useContext, useEffect } from "react";
 import { clearReady, setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";

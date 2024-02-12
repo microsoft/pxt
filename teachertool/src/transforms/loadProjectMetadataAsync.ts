@@ -22,6 +22,12 @@ export async function loadProjectMetadataAsync(shareLink: string) {
         return;
     }
 
+    if (projMeta.target !== pxt.appTarget.id) {
+        showToast(makeToast("error", lf("That project was built with a different MakeCode editor")));
+        dispatch(Actions.setProjectMetadata(undefined));
+        return;
+    }
+
     dispatch(Actions.clearAllEvalResults());
     dispatch(Actions.setProjectMetadata(projMeta));
     logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);

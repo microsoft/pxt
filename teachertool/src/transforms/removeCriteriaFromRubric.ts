@@ -2,6 +2,7 @@ import { stateAndDispatch } from "../state";
 import { logDebug } from "../services/loggingService";
 import { CriteriaInstance } from "../types/criteria";
 import { setRubric } from "./setRubric";
+import { Ticks } from "../constants";
 
 export function removeCriteriaFromRubric(instance: CriteriaInstance) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
@@ -15,5 +16,5 @@ export function removeCriteriaFromRubric(instance: CriteriaInstance) {
 
     setRubric(newRubric);
 
-    pxt.tickEvent("teachertool.removecriteria", { catalogCriteriaId: instance.catalogCriteriaId });
+    pxt.tickEvent(Ticks.RemoveCriteria, { catalogCriteriaId: instance.catalogCriteriaId });
 }

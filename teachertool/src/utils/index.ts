@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { ToastType, ToastWithId } from "../types";
+import { Rubric } from "../types/rubric";
 import { classList } from "react-common/components/util";
 
 export function makeToast(type: ToastType, text: string, timeoutMs: number = 5000): ToastWithId {
@@ -26,4 +27,11 @@ export const getEditorUrl = (embedUrl: string) => {
 
 export function classes(css: { [name: string]: string }, ...names: string[]) {
     return classList(...names.map(n => css[n]));
+}
+
+export function makeRubric(): Rubric {
+    return {
+        name: "",
+        criteria: [],
+    };
 }
