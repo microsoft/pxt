@@ -14,7 +14,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
 
     const appTheme = pxt.appTarget?.appTheme;
 
-    const brandIconClick = () => {
+    const onBrandIconClick = () => {
         pxt.tickEvent(Ticks.BrandLink);
         if (appTheme?.logoUrl) {
             window.open(appTheme.logoUrl);
@@ -50,7 +50,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 className={css["brand"]}
                 aria-label={lf("{0} Logo", appTheme.boardName)}
                 role="menuitem"
-                onClick={brandIconClick}
+                onClick={onBrandIconClick}
             >
                 {appTheme.useTextLogo ? (
                     [
