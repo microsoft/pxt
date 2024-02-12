@@ -26,7 +26,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         if (appTheme?.organizationUrl) {
             window.open(appTheme.organizationUrl);
         }
-    }
+    };
 
     const getOrganizationLogo = () => {
         return (
