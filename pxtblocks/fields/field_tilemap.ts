@@ -109,10 +109,12 @@ function parseFieldOptions(opts: FieldTilemapOptions) {
         parsed.filter = opts.filter;
     }
 
-<<<<<<< HEAD
     if (opts.tileWidth) {
         if (typeof opts.tileWidth === "number") {
             switch (opts.tileWidth) {
+                case 4:
+                    parsed.tileWidth = 4;
+                    break;
                 case 8:
                     parsed.tileWidth = 8;
                     break;
@@ -127,6 +129,10 @@ function parseFieldOptions(opts: FieldTilemapOptions) {
         else {
             const tw = opts.tileWidth.trim().toLowerCase();
             switch (tw) {
+                case "4":
+                case "four":
+                    parsed.tileWidth = 4;
+                    break;
                 case "8":
                 case "eight":
                     parsed.tileWidth = 8;
@@ -139,45 +145,6 @@ function parseFieldOptions(opts: FieldTilemapOptions) {
                 case "thirtytwo":
                     parsed.tileWidth = 32;
                     break;
-=======
-        if (opts.tileWidth) {
-            if (typeof opts.tileWidth === "number") {
-                switch (opts.tileWidth) {
-                    case 4:
-                        parsed.tileWidth = 4;
-                        break;
-                    case 8:
-                        parsed.tileWidth = 8;
-                        break;
-                    case 16:
-                        parsed.tileWidth = 16;
-                        break;
-                    case 32:
-                        parsed.tileWidth = 32;
-                        break;
-                }
-            }
-            else {
-                const tw = opts.tileWidth.trim().toLowerCase();
-                switch (tw) {
-                    case "4":
-                    case "four":
-                        parsed.tileWidth = 4;
-                        break;
-                    case "8":
-                    case "eight":
-                        parsed.tileWidth = 8;
-                        break;
-                    case "16":
-                    case "sixteen":
-                        parsed.tileWidth = 16;
-                        break;
-                    case "32":
-                    case "thirtytwo":
-                        parsed.tileWidth = 32;
-                        break;
-                }
->>>>>>> origin/master
             }
         }
     }
