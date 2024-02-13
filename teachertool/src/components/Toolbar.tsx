@@ -1,7 +1,5 @@
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/Toolbar.module.scss";
-
 import { classList } from "react-common/components/util";
 import { Button, ButtonProps } from "react-common/components/controls/Button";
 import { MenuDropdown, MenuDropdownProps } from "react-common/components/controls/MenuDropdown";

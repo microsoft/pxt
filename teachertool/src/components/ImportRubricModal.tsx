@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/ImportRubricModal.module.scss";
 import { getRubricFromFileAsync } from "../transforms/getRubricFromFileAsync";
 import { NoticeLabel } from "./NoticeLabel";

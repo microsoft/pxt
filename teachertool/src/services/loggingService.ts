@@ -1,4 +1,5 @@
 import { ErrorCode } from "../types/errorCode";
+import { Ticks } from "../constants";
 
 const timestamp = () => {
     const time = new Date();
@@ -20,7 +21,7 @@ export const logError = (errorCode: ErrorCode, message?: any, data: pxt.Map<stri
             dataObj.message = message;
         }
     }
-    pxt.tickEvent("teachertool.error", {
+    pxt.tickEvent(Ticks.Error, {
         ...dataObj,
         errorCode,
     });

@@ -1,6 +1,5 @@
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { Rubric } from "../types/rubric";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/RubricPreview.module.scss";
 
 export interface IRubricPreviewProps {

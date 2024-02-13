@@ -1,0 +1,168 @@
+$pageGutter: 2rem;
+
+div.page {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: $pageGutter;
+    background-color: var(--pxt-page-background);
+    color: var(--pxt-page-foreground);
+
+    h1 {
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    div.welcome {
+        padding: $pageGutter 0 0 $pageGutter;
+    }
+
+    div.carouselRow {
+        display: flex;
+        flex-direction: column;
+    }
+
+    div.rowTitle {
+        padding: 0 0 0.75rem $pageGutter;
+    }
+
+    div.cardContainer {
+        display: flex;
+    }
+
+    button.cardButton {
+        border-radius: 0.5rem;
+        margin: 0;
+        padding: 0;
+        min-width: 17.5rem;
+        min-height: 12rem;
+
+        div.cardDiv {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            height: 100%;
+
+            div.cardIcon {
+                height: 100%;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                position: absolute;
+
+                i {
+                    margin: 0;
+                    font-size: 5.5rem;
+                    width: auto;
+                    height: auto;
+                    padding-bottom: 1.75rem;
+                }
+            }
+
+            div.cardTitle {
+                display: flex;
+                padding: 0.75rem 0.625rem;
+                justify-content: center;
+                align-items: center;
+                gap: 0.625rem;
+                align-self: stretch;
+
+                h3 {
+                    font-size: 1.25rem;
+                    font-weight: normal;
+                    padding-bottom: 0.25rem;
+                }
+            }
+        }
+
+        &.newRubric {
+            background-color: var(--pxt-button-primary-background);
+            color: var(--pxt-button-primary-foreground);
+
+            &:focus-visible::after {
+                outline-color: var(--pxt-button-primary-foreground);
+            }
+        }
+        &.importRubric {
+            background-color: var(--pxt-headerbar-background);
+            color: var(--pxt-button-primary-foreground);
+
+            &:focus-visible::after {
+                outline-color: var(--pxt-button-primary-foreground);
+            }
+        }
+    }
+
+    .swiperCarousel {
+        display: flex;
+        min-height: 0;
+        min-width: 0;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .swiperSlide {
+        display: flex;
+        width: fit-content !important;
+        transform: scale(0.95);
+        transition: transform 0.1s ease;
+
+        &:focus-visible,
+        &:focus-within,
+        &:active,
+        &:hover {
+            transform: scale(1);
+        }
+    }
+
+    div[class*="swiper-button-prev"],
+    div[class*="swiper-button-next"] {
+        height: 100%;
+        top: 0;
+        background-color: var(--pxt-page-background);
+        filter: opacity(0.75);
+        padding: 10px;
+        width: fit-content;
+        margin: 0;
+        transition: filter 0.1s ease;
+
+        &:hover {
+            filter: opacity(0.95);
+
+            &::after {
+                transform: scale(1.1);
+            }
+        }
+        
+        &::after {
+            transform: scale(0.9);
+            color: var(--pxt-headerbar-background);
+            font-weight: bolder;
+        }
+    }
+
+    div[class*="swiper-button-prev"] {
+        left: 0;
+    }
+
+    div[class*="swiper-button-next"] {
+        right: 0;
+    }
+
+    div[class*="swiper-button-disabled"] {
+        display: none;
+    }
+}

@@ -145,5 +145,7 @@ module.exports = {
         "@microsoft/sdl/react-iframe-missing-sandbox": "error",
         "@typescript-eslint/no-implied-eval": "error",
         "react/no-danger": "error",
+        "import/no-unassigned-import": "off",
+        "import/no-internal-modules": "off",
     }
 };
