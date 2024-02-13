@@ -1,4 +1,5 @@
 import * as Blockly from "blockly";
+import { showEditorMixin } from "./fieldDropdownMixin";
 
 /**
  * This is the same as the Blockly variable field but with the addition
@@ -8,10 +9,16 @@ export class FieldVariable extends Blockly.FieldVariable {
     static CREATE_VARIABLE_ID = "CREATE_VARIABLE";
 
     static dropdownCreate(this: FieldVariable): Blockly.MenuOption[] {
-        const options = Blockly.FieldVariable.dropdownCreate.call(this);
+        const options = Blockly.FieldVariable.dropdownCreate.call(this) as Blockly.MenuOption[];
 
-        options.push([Blockly.Msg['NEW_VARIABLE_DROPDOWN'], FieldVariable.CREATE_VARIABLE_ID]);
-        // options.push([undefined, 'SEPARATOR']);
+        const insertIndex = options.findIndex(e => e[1] === "RENAME_VARIABLE_ID");
+
+        options.splice(
+            insertIndex,
+            0,
+            [Blockly.Msg['NEW_VARIABLE_DROPDOWN'], FieldVariable.CREATE_VARIABLE_ID],
+            [undefined, 'SEPARATOR']
+        );
 
         return options;
     }
@@ -44,6 +51,10 @@ export class FieldVariable extends Blockly.FieldVariable {
         }
 
         super.onItemSelected_(menu, menuItem);
+    }
+
+    protected showEditor_(e?: MouseEvent): void {
+        showEditorMixin.call(this, e);
     }
 }
 

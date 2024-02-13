@@ -1,4 +1,5 @@
 import * as Blockly from "blockly";
+import { showEditorMixin } from "../plugins/newVariableField/fieldDropdownMixin";
 
 export class FieldDropdown extends Blockly.FieldDropdown {
     protected shouldAddBorderRect_() {
@@ -6,5 +7,9 @@ export class FieldDropdown extends Blockly.FieldDropdown {
             return true;
         }
         return super.shouldAddBorderRect_();
+    }
+
+    protected showEditor_(e?: MouseEvent): void {
+        showEditorMixin.call(this, e);
     }
 }
