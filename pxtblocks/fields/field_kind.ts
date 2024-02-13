@@ -3,8 +3,9 @@
 import * as Blockly from "blockly";
 import { getAllFields } from "./field_utils";
 import { prompt } from "../external";
+import { FieldDropdown } from "./field_dropdown";
 
-export class FieldKind extends Blockly.FieldDropdown {
+export class FieldKind extends FieldDropdown {
     constructor(private opts: pxtc.KindInfo) {
         super(createMenuGenerator(opts));
     }

@@ -5,6 +5,7 @@ import * as Blockly from "blockly"
 import { attachCardInfo, installBuiltinHelpInfo, installHelpResources, setBuiltinHelpInfo, setHelpResources } from "../help";
 import { provider } from "../constants";
 import { appendMutation } from "../composableMutations";
+import { FieldDropdown } from "../fields/field_dropdown";
 
 export function initMath(blockInfo: pxtc.BlocksInfo) {
     // math_op2
@@ -149,7 +150,7 @@ export function initMathOpBlock() {
 
             const ddi = b.appendDummyInput("op_dropdown")
             ddi.appendField(
-                new Blockly.FieldDropdown(allOperations.map(op => [mathOpDef.block[op], op]),
+                new FieldDropdown(allOperations.map(op => [mathOpDef.block[op], op]),
                     (op: string) => onOperatorSelect(b, op)),
                 "OP");
 
@@ -275,7 +276,7 @@ export function initMathRoundBlock() {
 
             const ddi = b.appendDummyInput("round_dropdown")
             ddi.appendField(
-                new Blockly.FieldDropdown(allOperations.map(op => [mathRoundDef.block[op], op])),
+                new FieldDropdown(allOperations.map(op => [mathRoundDef.block[op], op])),
                 "OP"
             );
 

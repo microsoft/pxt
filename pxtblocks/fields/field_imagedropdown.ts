@@ -2,6 +2,7 @@
 
 import * as Blockly from "blockly";
 import { FieldCustom, FieldCustomDropdownOptions, parseColour } from "./field_utils";
+import { FieldDropdown } from "./field_dropdown";
 
 export interface FieldImageDropdownOptions extends FieldCustomDropdownOptions {
     columns?: string;
@@ -9,7 +10,7 @@ export interface FieldImageDropdownOptions extends FieldCustomDropdownOptions {
     width?: string;
 }
 
-export class FieldImageDropdown extends Blockly.FieldDropdown implements FieldCustom {
+export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
     public isFieldCustom_ = true;
     // Width in pixels
     protected width_: number;

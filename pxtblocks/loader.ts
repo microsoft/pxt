@@ -24,6 +24,7 @@ import { initOnStart } from "./builtins/misc";
 import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { applyMonkeyPatches } from "./monkeyPatches";
+import { FieldDropdown } from "./fields/field_dropdown";
 
 
 interface BlockDefinition {
@@ -472,7 +473,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                             fields.push(namedField(createFieldEditor(customField, defl, options), defName));
                         }
                         else
-                            fields.push(namedField(new Blockly.FieldDropdown(dd), defName));
+                            fields.push(namedField(new FieldDropdown(dd), defName));
 
                     } else if (customField) {
                         const defl = fn.attributes.paramDefl[pr.actualName] || "";

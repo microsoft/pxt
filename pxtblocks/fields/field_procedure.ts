@@ -1,8 +1,9 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
+import { FieldDropdown } from "./field_dropdown";
 
-export class FieldProcedure extends Blockly.FieldDropdown {
+export class FieldProcedure extends FieldDropdown {
     protected rawValue: string;
 
     constructor(funcname: string, opt_validator?: Blockly.FieldValidator) {

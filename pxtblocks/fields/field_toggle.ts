@@ -29,6 +29,8 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
         if (!this.fieldGroup_) {
             return;
         }
+
+        this.clickTarget_ = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
         // // Add an attribute to cassify the type of field.
         // if ((this as any).getArgTypes() !== null) {
         //     if (this.sourceBlock_.isShadow()) {

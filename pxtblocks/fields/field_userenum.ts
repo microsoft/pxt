@@ -2,8 +2,9 @@
 
 import * as Blockly from "blockly";
 import { prompt } from "../external";
+import { FieldDropdown } from "./field_dropdown";
 
-export class FieldUserEnum extends Blockly.FieldDropdown {
+export class FieldUserEnum extends FieldDropdown {
     constructor(private opts: pxtc.EnumInfo) {
         super(createMenuGenerator(opts));
     }
