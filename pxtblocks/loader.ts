@@ -844,7 +844,7 @@ export class PxtWorkspaceSearch extends WorkspaceSearch {
 
 }
 
-// FIXME (riknoll)
+// FIXME (riknoll): This probably needs to be re-implemented
 
 // export class PxtWorkspaceSearch extends WorkspaceSearch {
 //     protected createDom_() {

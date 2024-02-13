@@ -328,7 +328,7 @@ function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspac
         b.inputList.forEach(i => i.fieldRow.forEach(f => {
             f.init();
 
-            // FIXME (riknoll)
+            // FIXME (riknoll): Not sure if this is still necessary
             // if (f.borderRect_) {
             //     f.borderRect_.setAttribute('fill', b.getColour())
             //     f.borderRect_.setAttribute('stroke', (b as Blockly.BlockSvg).getColourTertiary())
