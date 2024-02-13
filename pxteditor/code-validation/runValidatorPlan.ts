@@ -40,7 +40,7 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
                     const childPassed = runValidatorPlan(blocksToUse, childPlan, planLib);
                     timesPassed += childPassed ? 1 : 0;
                 }
-                checkPassed = timesPassed > 0;
+                checkPassed = checkPassed && timesPassed > 0;
             }
         }
         checksSucceeded += checkPassed ? 1 : 0;
@@ -59,8 +59,12 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
 
 function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksExistValidatorCheck): [Blockly.Block[], boolean] {
     const blockResults = validateBlocksExist({ usedBlocks, requiredBlockCounts: inputs.blockCounts });
-    const blockId = Object.keys(inputs.blockCounts)[0];
-    const successfulBlocks = blockResults.successfulBlocks.length ? blockResults.successfulBlocks[0][blockId] : [];
+    let successfulBlocks: Blockly.Block[] = [];
+    if (blockResults.passed) {
+        const blockIdsFromValidator = Object.keys(inputs.blockCounts)
+        const blockId = blockIdsFromValidator?.[0];
+        successfulBlocks = blockResults.successfulBlocks.length ? blockResults.successfulBlocks[0][blockId] : [];
+    }
     return [successfulBlocks, blockResults.passed];
 }
 
