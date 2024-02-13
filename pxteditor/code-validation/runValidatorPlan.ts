@@ -5,7 +5,7 @@ import { validateBlocksInSetExist } from "./validateBlocksInSetExist";
 import { validateBlockCommentsExist } from "./validateCommentsExist";
 import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockCommentsExist";
 
-export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planBank: pxt.blocks.ValidatorPlan[]): boolean {
+export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]): boolean {
     const startTime = Date.now();
     let checksSucceeded = 0;
     let successfulBlocks: Blockly.Block[] = [];
@@ -36,8 +36,8 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
                 let timesPassed = 0;
                 for (const parentBlock of successfulBlocks) {
                     const blocksToUse = parentBlock.getChildren(true);
-                    const childPlan = planBank.find((plan) => plan.name === planName);
-                    const childPassed = runValidatorPlan(blocksToUse, childPlan, planBank);
+                    const childPlan = planLib.find((plan) => plan.name === planName);
+                    const childPassed = runValidatorPlan(blocksToUse, childPlan, planLib);
                     timesPassed += childPassed ? 1 : 0;
                 }
                 checkPassed = timesPassed > 0;
