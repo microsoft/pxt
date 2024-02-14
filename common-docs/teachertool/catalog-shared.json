@@ -51,7 +51,7 @@
         {
             "id": "DC564060-F177-46CC-A3AC-890CD8545972",
             "use": "num_compare_eq",
-            "template": "Check that two numbers are equal",
+            "template": "Compare two numbers for equality",
             "docPath": "/teachertool"
         }
     ]
