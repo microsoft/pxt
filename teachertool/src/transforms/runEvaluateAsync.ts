@@ -50,6 +50,13 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
             new Promise(async resolve => {
                 dispatch(Actions.setEvalResult(criteriaInstance.instanceId, CriteriaEvaluationResult.InProgress));
 
+                const loadedValidatorPlans = teacherTool.validatorPlans;
+                if (!loadedValidatorPlans) {
+                    logError(ErrorCode.validatorPlansNotFound, "Attempting to evaluate criteria without any plans");
+                    dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
+                    return resolve(false);
+                }
+
                 const plan = generateValidatorPlan(criteriaInstance);
 
                 if (!plan) {
@@ -57,7 +64,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                     return resolve(false);
                 }
 
-                const planResult = await runValidatorPlanAsync(plan);
+                const planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
 
                 if (planResult) {
                     dispatch(
