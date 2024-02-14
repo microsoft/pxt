@@ -123,6 +123,33 @@
                     }
                 }
             ]
+        },
+        {
+            ".desc": "make sure two numbers are equal",
+            "name": "num_compare_eq",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blockFieldValueExists",
+                    "fieldType": "OP",
+                    "fieldValue": "EQ",
+                    "blockType": "logic_compare",
+                    "childValidatorPlans": ["two_nums_exist"]
+                }
+            ]
+        },
+        {
+            ".desc": "two numbers exist",
+            "name": "two_nums_exist",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "math_number": 2
+                    }
+                }
+            ]
         }
     ]
 }

@@ -39,4 +39,11 @@ declare namespace pxt.blocks {
     export interface EvaluationResult {
         result: boolean;
     }
+
+    export interface BlockFieldValueExistsCheck extends ValidatorCheckBase {
+        validator: "blockFieldValueExists";
+        fieldType: string;
+        fieldValue: string;
+        blockType: string;
+    }
 }
