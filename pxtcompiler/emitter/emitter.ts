@@ -505,9 +505,11 @@ namespace ts.pxtc {
     }
 
     function getRefTagToValidate(tp: string): number {
+        // the user accessible (Arcade image) my vary across targets
+        if (tp == target.imageName || tp == "_Image")
+            return target.imageRefTag || pxt.BuiltInType.RefImage
         switch (tp) {
             case "_Buffer": return pxt.BuiltInType.BoxedBuffer
-            case "_Image": return target.imageRefTag || pxt.BuiltInType.RefImage
             case "_Action": return pxt.BuiltInType.RefAction
             case "_RefCollection": return pxt.BuiltInType.RefCollection
             default:
@@ -1654,7 +1656,8 @@ ${lbl}: .short 0xffff
         .short ${w}, ${h}
         .byte ${lit}
 `)
-            let jsLit = "new pxsim.Image(" + w + ", [" + lit + "])"
+            let image = target.imageName || "Image"
+            let jsLit = "new pxsim." + image + "(" + w + ", [" + lit + "])"
 
             return <any>{
                 kind: SK.NumericLiteral,
@@ -2735,8 +2738,9 @@ ${lbl}: .short 0xffff
                             thisJres.dataEncoding, thisJres.id))
                     }
                 }
+                let image = target.imageName?.toLowerCase() || "image"
                 if (/^e[14]/i.test(s) && node.parent && node.parent.kind == SK.CallExpression &&
-                    (node.parent as CallExpression).expression.getText() == "image.ofBuffer") {
+                    (node.parent as CallExpression).expression.getText() == (image + ".ofBuffer")) {
                     const m = /^e([14])(..)(..)..(.*)/i.exec(s)
                     s = `870${m[1]}${m[2]}00${m[3]}000000${m[4]}`
                 }

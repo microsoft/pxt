@@ -749,6 +749,7 @@ declare namespace ts.pxtc {
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
         postProcessSymbols?: boolean;
+        imageName?: string;
         imageRefTag?: number;
         keepCppFiles?: boolean;
         debugMode?: boolean; // set dynamically, not in config
