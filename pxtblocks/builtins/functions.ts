@@ -9,6 +9,7 @@ import { cachedBlockInfo, setOutputCheck } from "../loader";
 import { domToWorkspaceNoEvents } from "../importer";
 
 import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "../plugins/duplicateOnDrag";
+import { PathObject } from "../plugins/renderer/pathObject";
 
 export function initFunctions() {
     const msg = Blockly.Msg;
@@ -393,6 +394,8 @@ export function initFunctions() {
             if (xmlElement.hasAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
                 this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
             }
+
+            (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
 
             setOutputCheck(this, typeName, cachedBlockInfo);
         };

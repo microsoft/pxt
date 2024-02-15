@@ -8,12 +8,13 @@ import {
 } from "../constants";
 import { MsgKey } from "../msg";
 import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "../../duplicateOnDrag";
+import { PathObject } from "../../renderer/pathObject";
 
 type ArgumentReporterMixinType = typeof ARGUMENT_REPORTER_MIXIN;
 
 interface ArgumentReporterMixin extends ArgumentReporterMixinType {}
 
-export type ArgumentReporterBlock = Blockly.Block & ArgumentReporterMixin;
+export type ArgumentReporterBlock = Blockly.BlockSvg & ArgumentReporterMixin;
 
 const ARGUMENT_REPORTER_MIXIN = {
     typeName_: "",
@@ -34,6 +35,7 @@ const ARGUMENT_REPORTER_MIXIN = {
     domToMutation(this: ArgumentReporterBlock, xmlElement: Element) {
         if (xmlElement.hasAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
             this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
+            (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
         }
     },
 };
@@ -145,5 +147,6 @@ Blockly.Blocks[ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE] = {
         this.setOutput(true, this.typeName_);
 
         ARGUMENT_REPORTER_MIXIN.domToMutation.call(this, xmlElement);
+        (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
     },
 };

@@ -1,11 +1,12 @@
 import * as Blockly from "blockly";
 import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "./duplicateOnDrag";
+import { PathObject } from "../renderer/pathObject";
 
 type VariablesGetReporterMixinType = typeof VARIABLES_GET_REPORTER_MIXIN;
 
 interface VariablesGetReporterMixin extends VariablesGetReporterMixinType {}
 
-export type VariablesGetReporterBlock = Blockly.Block & VariablesGetReporterMixin;
+export type VariablesGetReporterBlock = Blockly.BlockSvg & VariablesGetReporterMixin;
 
 const VARIABLES_GET_REPORTER_MIXIN = {
     duplicateOnDrag_: false,
@@ -21,6 +22,7 @@ const VARIABLES_GET_REPORTER_MIXIN = {
     domToMutation(this: VariablesGetReporterBlock, xmlElement: Element) {
         if (xmlElement.hasAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
             this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
+            (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
         }
     },
 };
