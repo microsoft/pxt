@@ -158,6 +158,7 @@ async function runAiQuestionValidation(
     };
 
     // Send a post request to deep prompt endpoint to get the response.
+    // TODO thsparks - Switch to sending an async request. Not doing it now because it is causing weird generic responses for some reason.
     console.log("Sending request with data " + JSON.stringify(data));
     const request = await fetch("http://127.0.0.1:5000/api/v1/query", {
         method: "POST",
