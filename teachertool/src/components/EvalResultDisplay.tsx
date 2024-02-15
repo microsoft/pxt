@@ -4,7 +4,6 @@ import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaEvaluationResult } from "../types/criteria";
-import { get } from "jquery";
 
 interface IProps {}
 
