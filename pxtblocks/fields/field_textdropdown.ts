@@ -104,7 +104,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
     }
 
     showDropdown_(e?: MouseEvent) {
-        const block = this.getSourceBlock();
+        const block = this.getSourceBlock() as Blockly.BlockSvg;
         if (!block) {
             throw new Blockly.UnattachedFieldError();
         }
@@ -121,8 +121,10 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         const menuElement = this.menu_!.render(Blockly.DropDownDiv.getContentDiv());
         Blockly.utils.dom.addClass(menuElement, 'blocklyDropdownMenu');
 
-        const primaryColour = block.getColour();
-        const borderColour = (this.sourceBlock_ as Blockly.BlockSvg).style.colourTertiary;
+        const parent = block.getParent() as Blockly.BlockSvg;
+
+        const primaryColour = (parent || block).getColour();
+        const borderColour = (parent || block).style.colourTertiary;
         Blockly.DropDownDiv.setColour(primaryColour, borderColour);
 
         this.dropDownOpen_ = true;
