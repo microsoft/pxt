@@ -11,5 +11,6 @@ export function validateSpecificBlockCommentsExist({ usedBlocks, blockType }: {
 } {
     const allSpecifcBlocks = usedBlocks.filter((block) => block.type === blockType);
     const uncommentedBlocks = allSpecifcBlocks.filter((block) => !block.getCommentText());
-    return { uncommentedBlocks, passed: uncommentedBlocks.length === 0 };
+    const passed = allSpecifcBlocks.length === 0 ? false : uncommentedBlocks.length === 0;
+    return { uncommentedBlocks, passed };
 }

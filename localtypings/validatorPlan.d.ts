@@ -12,6 +12,7 @@ declare namespace pxt.blocks {
     // Each type of validation will need to implement its own ValidatorCheck based on this.
     export interface ValidatorCheckBase {
         validator: string;
+        childValidatorPlans?: string[]
     }
 
     // Inputs for "Blocks Exist" validation.
@@ -37,5 +38,12 @@ declare namespace pxt.blocks {
 
     export interface EvaluationResult {
         result: boolean;
+    }
+
+    export interface BlockFieldValueExistsCheck extends ValidatorCheckBase {
+        validator: "blockFieldValueExists";
+        fieldType: string;
+        fieldValue: string;
+        blockType: string;
     }
 }
