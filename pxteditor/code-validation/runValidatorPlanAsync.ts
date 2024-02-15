@@ -157,42 +157,6 @@ async function runAiQuestionValidation(
         },
     };
 
-    // // Send a post request to deep prompt endpoint to get the response.
-    // const initialRequest = await fetch(
-    //   "http://127.0.0.1:5000/api/v1/query_async",
-    //   {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify(data),
-    //   }
-    // );
-
-    // const requestStatusInfo = await initialRequest.json();
-
-    // if (!requestStatusInfo) {
-    //   throw new Error("Failed to get response from deep prompt.");
-    // }
-
-    // const result_id = requestStatusInfo.result_id;
-    // if (!result_id) {
-    //   throw new Error("No result id returned from deep prompt.");
-    // }
-
-    //   // Poll for response
-    //   // TODO thsparks - timeout?
-    //   let response;
-    //   while (!response) {
-    //       const pollResponse = await fetch(`http://127.0.0.1:5000/api/v1/result/${result_id}`);
-    //       const pollData = await pollResponse.json();
-
-    //       if (pollData.executed === true) {
-    //           response = pollData;
-    //       } else {
-    //           // Wait for a bit before polling again to avoid spamming the server
-    //           await new Promise(resolve => setTimeout(resolve, 1000));
-    //       }
-    //   }
-
     // Send a post request to deep prompt endpoint to get the response.
     console.log("Sending request with data " + JSON.stringify(data));
     const request = await fetch("http://127.0.0.1:5000/api/v1/query", {
@@ -206,11 +170,6 @@ async function runAiQuestionValidation(
     if (!response) {
         throw new Error("Failed to get response from deep prompt.");
     }
-
-    // if (!response.successful) {
-    //     // TODO thsparks - can we get more info?
-    //     throw new Error("AI was unable to complete the request.");
-    // }
 
     console.log(`Response: ${response.response_text}`);
 
