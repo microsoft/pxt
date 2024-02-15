@@ -47,6 +47,12 @@
             "use": "device_random_used",
             "template": "The math random number generator block is used",
             "docPath": "/teachertool"
+        },
+        {
+            "id": "DC564060-F177-46CC-A3AC-890CD8545972",
+            "use": "num_compare_eq",
+            "template": "Compare two numbers for equality",
+            "docPath": "/teachertool"
         }
     ]
 }

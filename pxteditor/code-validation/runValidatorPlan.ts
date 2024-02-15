@@ -1,5 +1,6 @@
 /// <reference path="../../localtypings/validatorPlan.d.ts" />
 
+import { validateBlockFieldValueExists } from "./validateBlockFieldValueExists";
 import { validateBlocksExist } from "./validateBlocksExist";
 import { validateBlocksInSetExist } from "./validateBlocksInSetExist";
 import { validateBlockCommentsExist } from "./validateCommentsExist";
@@ -24,6 +25,9 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
                 break;
             case "blocksInSetExist":
                 [successfulBlocks, checkPassed] = [...runBlocksInSetExistValidation(usedBlocks, check as pxt.blocks.BlocksInSetExistValidatorCheck)];
+                break;
+            case "blockFieldValueExists":
+                [successfulBlocks, checkPassed] = [...runBlockFieldValueExistsValidation(usedBlocks, check as pxt.blocks.BlockFieldValueExistsCheck)];
                 break;
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
@@ -80,5 +84,15 @@ function runValidateSpecificBlockCommentsExist(usedBlocks: Blockly.Block[], inpu
 
 function runBlocksInSetExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksInSetExistValidatorCheck): [Blockly.Block[], boolean] {
     const blockResults = validateBlocksInSetExist({ usedBlocks, blockIdsToCheck: inputs.blocks, count: inputs.count });
+    return  [blockResults.successfulBlocks, blockResults.passed];
+}
+
+function runBlockFieldValueExistsValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlockFieldValueExistsCheck): [Blockly.Block[], boolean] {
+    const blockResults = validateBlockFieldValueExists({
+        usedBlocks,
+        fieldType: inputs.fieldType,
+        fieldValue: inputs.fieldValue,
+        specifiedBlock: inputs.blockType
+    });
     return  [blockResults.successfulBlocks, blockResults.passed];
 }
