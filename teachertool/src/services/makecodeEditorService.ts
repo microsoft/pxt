@@ -62,7 +62,7 @@ function sendMessageAsync(message?: any) {
 // Logs errors and throws if the result was not successful.
 function validateResponse(result: pxt.editor.EditorMessageResponse, expectResponseData: boolean) {
     if (!result.success) {
-        throw new Error(`Server returned failed status.`);
+        throw new Error(`Server returned failed status.`, result.error);
     }
     if (expectResponseData && !result?.resp) {
         throw new Error(`Missing response data.`);
@@ -92,6 +92,8 @@ export async function setHighContrastAsync(on: boolean) {
 }
 
 export async function runValidatorPlanAsync(
+    shareId: string,
+    target: string,
     validatorPlan: pxt.blocks.ValidatorPlan
 ): Promise<pxt.blocks.EvaluationResult | undefined> {
     let evalResults = undefined;
@@ -100,7 +102,9 @@ export async function runValidatorPlanAsync(
         const response = await sendMessageAsync({
             type: "pxteditor",
             action: "runeval",
-            validatorPlan: validatorPlan,
+            shareId,
+            target,
+            validatorPlan,
         } as pxt.editor.EditorMessageRunEvalRequest);
         const result = response as pxt.editor.EditorMessageResponse;
         validateResponse(result, true); // Throws on failure

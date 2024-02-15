@@ -36,3 +36,8 @@ export enum CriteriaEvaluationResult {
     CompleteWithNoResult,
     InProgress,
 }
+
+export interface CriteriaEvaluation {
+    result: CriteriaEvaluationResult;
+    notes: string | undefined;
+}

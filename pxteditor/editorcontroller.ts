@@ -160,9 +160,9 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                 return Promise.resolve()
                                     .then(() => {
                                         const blocks = projectView.getBlocks();
-                                        return runValidatorPlanAsync(blocks, plan)})
+                                        return runValidatorPlanAsync(evalmsg.shareId, evalmsg.target, blocks, plan)})
                                     .then (results => {
-                                        resp = { result: results };
+                                        resp = results;
                                     });
                             }
                             case "renderpython": {

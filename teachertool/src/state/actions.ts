@@ -1,5 +1,5 @@
 import { ModalType, ToastWithId, TabName } from "../types";
-import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
+import { CatalogCriteria, CriteriaEvaluation, CriteriaEvaluationResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -28,7 +28,7 @@ type SetProjectMetadata = ActionBase & {
 type SetEvalResult = ActionBase & {
     type: "SET_EVAL_RESULT";
     criteriaInstanceId: string;
-    result: CriteriaEvaluationResult;
+    result: CriteriaEvaluation;
 };
 
 type ClearEvalResult = ActionBase & {
@@ -117,7 +117,7 @@ const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProj
     metadata,
 });
 
-const setEvalResult = (criteriaInstanceId: string, result: CriteriaEvaluationResult): SetEvalResult => ({
+const setEvalResult = (criteriaInstanceId: string, result: CriteriaEvaluation): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
     criteriaInstanceId,
     result,

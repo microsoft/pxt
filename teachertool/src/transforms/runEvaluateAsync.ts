@@ -3,7 +3,7 @@ import { runValidatorPlanAsync } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 import { getCatalogCriteriaWithId } from "../state/helpers";
-import { CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
+import { CriteriaEvaluation, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { makeToast } from "../utils";
 import { showToast } from "./showToast";
@@ -32,14 +32,30 @@ function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.V
     for (const param of criteriaInstance.params ?? []) {
         const catalogParam = catalogCriteria.params?.find(p => p.name === param.name);
         if (!catalogParam) {
-            logError(ErrorCode.evalMissingCatalogParameter, "Attempting to evaluate criteria with unrecognized parameter", {catalogId: criteriaInstance.catalogCriteriaId, paramName: param.name});
+            logError(
+                ErrorCode.evalMissingCatalogParameter,
+                "Attempting to evaluate criteria with unrecognized parameter",
+                { catalogId: criteriaInstance.catalogCriteriaId, paramName: param.name }
+            );
             return undefined;
         }
 
         if (!param.value) {
             // User didn't set a value for the parameter.
-            logError(ErrorCode.evalParameterUnset, "Attempting to evaluate criteria with unset parameter value", {catalogId: criteriaInstance.catalogCriteriaId, paramName: param.name});
-            showToast(makeToast("error", lf("Unable to evaluate criteria: missing value for {0} in {1}", param.name, catalogCriteria.template)));
+            logError(ErrorCode.evalParameterUnset, "Attempting to evaluate criteria with unset parameter value", {
+                catalogId: criteriaInstance.catalogCriteriaId,
+                paramName: param.name,
+            });
+            showToast(
+                makeToast(
+                    "error",
+                    lf(
+                        "Unable to evaluate criteria: missing value for {0} in {1}",
+                        param.name,
+                        catalogCriteria.template
+                    )
+                )
+            );
         }
 
         jp.apply(plan, catalogParam.path, () => param.value);
@@ -59,7 +75,12 @@ export async function runEvaluateAsync() {
     const evalRequests = teacherTool.rubric.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
-                dispatch(Actions.setEvalResult(criteriaInstance.instanceId, CriteriaEvaluationResult.InProgress));
+                dispatch(
+                    Actions.setEvalResult(criteriaInstance.instanceId, {
+                        result: CriteriaEvaluationResult.InProgress,
+                        notes: undefined,
+                    })
+                );
 
                 const plan = generateValidatorPlan(criteriaInstance);
 
@@ -68,15 +89,21 @@ export async function runEvaluateAsync() {
                     return resolve(false);
                 }
 
-                const planResult = await runValidatorPlanAsync(plan);
+                // TODO thsparks - probably don't pass in share id and microbit here, but if we do, figure out target dynamically
+                const planResult = await runValidatorPlanAsync(teacherTool.projectMetadata?.id ?? "", "microbit", plan);
 
                 if (planResult) {
-                    dispatch(
-                        Actions.setEvalResult(
-                            criteriaInstance.instanceId,
-                            planResult.result ? CriteriaEvaluationResult.Pass : CriteriaEvaluationResult.Fail
-                        )
-                    );
+                    const evaluation: CriteriaEvaluation = {
+                        result:
+                            planResult.result === 2
+                                ? CriteriaEvaluationResult.CompleteWithNoResult
+                                : planResult.result === 0
+                                ? CriteriaEvaluationResult.Pass
+                                : CriteriaEvaluationResult.Fail,
+                        notes: planResult.notes,
+                    };
+
+                    dispatch(Actions.setEvalResult(criteriaInstance.instanceId, evaluation));
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));

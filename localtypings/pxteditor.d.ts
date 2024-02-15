@@ -297,6 +297,8 @@ declare namespace pxt.editor {
 
     export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
         action: "runeval";
+        shareId: string, // todo thsparks : ideally, I think we'd get these from the project somehow.
+        target: string,
         validatorPlan: pxt.blocks.ValidatorPlan;
     }
 

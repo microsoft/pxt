@@ -24,26 +24,30 @@ export const EvalResultDisplay: React.FC<IProps> = ({}) => {
                 <div className="eval-results-container">
                     <h3>{lf("Project: {0}", teacherTool.projectMetadata.name)}</h3>
 
-                    {teacherTool.evalResults.length === 0 && <div className="common-spinner" />}
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
                         const result = teacherTool.evalResults[criteriaInstanceId];
                         const label = getTemplateStringFromCriteriaInstanceId(criteriaInstanceId);
                         return (
                             label && (
-                                <div className="result-block-id" key={criteriaInstanceId}>
-                                    <p className="block-id-label">
-                                        {getTemplateStringFromCriteriaInstanceId(criteriaInstanceId)}:
-                                    </p>
-                                    {result === CriteriaEvaluationResult.InProgress && (
-                                        <div className="common-spinner" />
-                                    )}
-                                    {result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
-                                    {result === CriteriaEvaluationResult.Fail && (
-                                        <p className="negative-text">{lf("Needs Work")}</p>
-                                    )}
-                                    {result === CriteriaEvaluationResult.Pass && (
-                                        <p className="positive-text">{lf("Looks Good!")}</p>
-                                    )}
+                                <div key={criteriaInstanceId}>
+                                    <div className="result-block-id">
+                                        <p className="block-id-label">
+                                            {getTemplateStringFromCriteriaInstanceId(criteriaInstanceId)}:
+                                        </p>
+                                        {result.result === CriteriaEvaluationResult.InProgress && (
+                                            <div className="common-spinner" />
+                                        )}
+                                        {result.result === CriteriaEvaluationResult.CompleteWithNoResult && (
+                                            <p>{lf("N/A")}</p>
+                                        )}
+                                        {result.result === CriteriaEvaluationResult.Fail && (
+                                            <p className="negative-text">{lf("Needs Work")}</p>
+                                        )}
+                                        {result.result === CriteriaEvaluationResult.Pass && (
+                                            <p className="positive-text">{lf("Looks Good!")}</p>
+                                        )}
+                                    </div>
+                                    {result.notes && <p className="notes">{result.notes}</p>}
                                 </div>
                             )
                         );

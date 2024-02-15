@@ -24,7 +24,7 @@ const StringInputSnippet: React.FC<StringInputSnippetProps> = ({ initialValue, i
             initialValue={initialValue}
             onChange={onChange}
             preserveValueOnBlur={true}
-            placeholder={lf(param.name)}
+            placeholder={param.name}
         />
     );
 };

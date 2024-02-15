@@ -40,7 +40,13 @@ declare namespace pxt.blocks {
         question: string;
     }
 
+    export enum EvaluationResultStatus {
+        Success = 0,
+        Failure = 1,
+        NotApplicable = 2,
+    }
     export interface EvaluationResult {
-        result: boolean;
+        notes: string | undefined;
+        result: EvaluationResultStatus;
     }
 }
