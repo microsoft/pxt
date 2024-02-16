@@ -1,0 +1,32 @@
+.rubric-display {
+    border-radius: 0;
+    margin: 1rem 1rem;
+    width: 100%;
+
+    .rubric-name-input {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+
+        div[class*="common-input-group"] {
+            margin-left: 0.5rem;
+            flex-grow: 1;
+        }
+    }
+
+    .criteria-table {
+        margin: 0.5rem 0;
+        border: var(--pxt-content-accent) solid 1px;
+        border-radius: 1rem;
+        overflow: hidden;
+
+        th, td {
+            border: var(--pxt-content-accent) solid 1px;
+        }
+
+        th {
+            text-align: left;
+            font-weight: bold;
+        }
+    }
+}
