@@ -13,42 +13,63 @@ import { classList } from "react-common/components/util";
 import { MenuItem } from "react-common/components/controls/MenuDropdown";
 import { Strings } from "../constants";
 import { Toolbar } from "./Toolbar";
+import React from "react";
 
 interface CriteriaActionMenuProps {
     criteriaInstance: CriteriaInstance | undefined;
+    hidden: boolean;
 }
-const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({criteriaInstance}) => {
-    const actions: MenuItem[] = criteriaInstance ? [
-        {
-            title: Strings.Remove,
-            label: Strings.Remove,
-            ariaLabel: Strings.Remove,
-            onClick: () => removeCriteriaFromRubric(criteriaInstance),
-        }
-    ] : [];
+const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({ criteriaInstance, hidden }) => {
+    const actions: MenuItem[] = criteriaInstance
+        ? [
+              {
+                  title: Strings.Remove,
+                  label: Strings.Remove,
+                  ariaLabel: Strings.Remove,
+                  onClick: () => removeCriteriaFromRubric(criteriaInstance),
+              },
+          ]
+        : [];
 
     return (
-        <div className={css["criteria-action-menu"]}>
-            <Toolbar.MenuDropdown title={lf("Actions")} items={actions} disabled={!actions.length} ariaLabel="Actions" />
+        <div className={classList(css["criteria-action-menu"], hidden ? "hidden" : undefined)}>
+            <Toolbar.MenuDropdown
+                title={lf("Actions")}
+                items={actions}
+                disabled={!actions.length}
+                ariaLabel="Actions"
+            />
         </div>
     );
-}
+};
 
 // TODO thsparks - move to different file or keep here?
 interface CriteriaInstanceDisplayProps {
     criteriaInstance: CriteriaInstance;
 }
 const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaInstance }) => {
+    const [isActive, setIsActive] = React.useState(false);
+
     const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
     if (!catalogCriteria) {
         return null;
     }
 
     return catalogCriteria ? (
-        <div className={css["criteria-instance-display"]} role="row">
-            <div className={classList(css["cell"], css["criteria-text-cell"])} role="cell">{catalogCriteria.template}</div>
+        <div
+            className={css["criteria-instance-display"]}
+            role="row"
+            onMouseEnter={() => setIsActive(true)}
+            onMouseLeave={() => setIsActive(false)}
+            onFocus={() => setIsActive(true)}
+            onBlur={() => setIsActive(false)}
+            tabIndex={0}
+        >
+            <div className={classList(css["cell"], css["criteria-text-cell"])} role="cell">
+                {catalogCriteria.template}
+            </div>
             <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="cell">
-                <CriteriaActionMenu criteriaInstance={criteriaInstance} />
+                <CriteriaActionMenu criteriaInstance={criteriaInstance} hidden={!isActive}/>
             </div>
         </div>
     ) : null;
@@ -71,9 +92,11 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
             />
             <div className={css["criteria-table"]} role="table" aria-label="Criteria Table">
                 <div className={css["criteria-header"]} role="row">
-                    <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">{lf("Criteria")}</div>
+                    <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
+                        {lf("Criteria")}
+                    </div>
                     <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
-                        <CriteriaActionMenu criteriaInstance={undefined} />
+                        <CriteriaActionMenu criteriaInstance={undefined} hidden={false} />
                     </div>
                 </div>
                 <div className={css["criteria-table-body"]}>

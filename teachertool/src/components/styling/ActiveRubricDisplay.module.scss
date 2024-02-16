@@ -2,6 +2,10 @@
     border-radius: 0;
     margin: 1rem 1rem;
 
+    label[class*="common-input-label"] {
+        font-size: 1rem;
+    }
+
     .rubric-name-input {
         display: flex;
         flex-direction: row;
@@ -25,9 +29,19 @@
 
         .criteria-header {
             border-bottom: 1px solid var(--pxt-content-accent);
+
+            .cell {
+                font-weight: bold;
+                padding-top: 0.5rem;
+                padding-bottom: 0.3rem;
+            }
         }
 
         .criteria-instance-display {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            height: 2.2rem;
             border-bottom: 1px solid var(--pxt-content-accent);
 
             &:last-child {
@@ -37,9 +51,14 @@
 
         .cell {
             display: table-cell;
-            padding: 1rem;
+            padding: 0.2rem;
             text-align: left;
+            height: 100%;
             border-right: 1px solid var(--pxt-content-accent);
+
+            &:first-child {
+                padding-left: 0.7rem;
+            }
 
             &:last-child {
                 border-right: none;
@@ -51,16 +70,20 @@
         }
 
         .criteria-action-menu-cell {
-            width: auto;
+            min-width: 3rem;
+            max-width: 3rem;
 
-            button {
-                color: var(--black);
-            }
-        }
+            .criteria-action-menu {
+                transition: all 0.3s ease;
 
-        .criteria-header {
-            .cell {
-                font-weight: bold;
+                button {
+                    color: var(--black);
+                    padding: 0.2rem;
+    
+                    i[class*="fas"] {
+                        font-size: 1rem;
+                    }
+                }
             }
         }
     }
