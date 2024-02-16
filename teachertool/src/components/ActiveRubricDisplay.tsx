@@ -30,7 +30,7 @@ const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({criteriaInstance
 
     return (
         <div className={css["criteria-action-menu"]}>
-            <Toolbar.MenuDropdown title={lf("More Actions")} items={actions} disabled={!actions.length} />
+            <Toolbar.MenuDropdown title={lf("Actions")} items={actions} disabled={!actions.length} ariaLabel="Actions" />
         </div>
     );
 }
@@ -46,9 +46,9 @@ const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = ({ crite
     }
 
     return catalogCriteria ? (
-        <div className={css["criteria-instance-display"]}>
-            <div className={classList(css["cell"], css["criteria-text-cell"])}>{catalogCriteria.template}</div>
-            <div className={classList(css["cell"], css["criteria-action-menu-cell"])}>
+        <div className={css["criteria-instance-display"]} role="row">
+            <div className={classList(css["cell"], css["criteria-text-cell"])} role="cell">{catalogCriteria.template}</div>
+            <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="cell">
                 <CriteriaActionMenu criteriaInstance={criteriaInstance} />
             </div>
         </div>
@@ -70,10 +70,10 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                 preserveValueOnBlur={true}
                 className={css["rubric-name-input"]}
             />
-            <div className={css["criteria-table"]}>
-                <div className={css["criteria-header"]}>
-                    <div className={classList(css["cell"], css["criteria-text-cell"])}>{lf("Criteria")}</div>
-                    <div className={classList(css["cell"], css["criteria-action-menu-cell"])}>
+            <div className={css["criteria-table"]} role="table" aria-label="Criteria Table">
+                <div className={css["criteria-header"]} role="row">
+                    <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">{lf("Criteria")}</div>
+                    <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
                         <CriteriaActionMenu criteriaInstance={undefined} />
                     </div>
                 </div>
