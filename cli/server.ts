@@ -1037,20 +1037,39 @@ export function serveAsync(options: ServeOptions) {
         };
 
         const serveWebappFile = (webappName: string, webappPath: string) => {
-            const webappUri = url.parse(`http://localhost:3000/${webappPath}${uri.search || ""}`);
-            http.get(webappUri, r => {
+            const webappUri = url.parse(`http://127.0.0.1:3000/${webappPath}${uri.search || ""}`);
+            const request = http.get(webappUri, r => {
                 let body = "";
                 r.on("data", (chunk) => {
                     body += chunk;
                 });
                 r.on("end", () => {
+                    if (body.includes("<title>Error</title>")) { // CRA development server returns this for missing files
+                        res.writeHead(404, {
+                            'Content-Type': 'text/html; charset=utf8',
+                        });
+                        res.write(body);
+                        return res.end();
+                    }
                     if (!webappPath || webappPath === "index.html") {
                         body = expandWebappHtml(webappName, body);
                     }
-                    res.writeHead(200);
+                    if (webappPath) {
+                        res.writeHead(200, {
+                            'Content-Type': U.getMime(webappPath),
+                        });
+                    } else {
+                        res.writeHead(200, {
+                            'Content-Type': 'text/html; charset=utf8',
+                        });
+                    }
                     res.write(body);
                     res.end();
                 });
+            });
+            request.on("error", (e) => {
+                console.error(`Error fetching ${webappUri.href} .. ${e.message}`);
+                error(500, e.message);
             });
         };
 

@@ -1,12 +1,10 @@
 // TODO: pxtcompiler type is only needed for a few compiler service types,
 // we should get rid of this somehow.
-/// <reference path="../../built/pxtcompiler.d.ts" />
 /// <reference path="../../built/pxtsim.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import React from "react";
 import ReactDOM from "react-dom";
-// eslint-disable-next-line import/no-unassigned-import
 import "./global.scss";
 import { App } from "./App";
 import { AppStateProvider } from "./state/appStateContext";
@@ -46,9 +44,6 @@ window.addEventListener("DOMContentLoaded", () => {
     pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
 
     enableAnalytics();
-
-    // prefetch worker on load
-    pxt.worker.getWorker(pxt.webConfig.workerjs);
 
     ReactDOM.render(
         <React.StrictMode>
