@@ -228,6 +228,12 @@ function editFunctionCallback(block: CommonFunctionBlock) {
                 mutateCallersAndDefinition(block.getName(), block.workspace, mutation);
                 block.updateDisplay_();
             }
+
+            setTimeout(() => {
+                if ((block as (FunctionDefinitionBlock & Blockly.BlockSvg)).afterWorkspaceLoad) {
+                    (block as (FunctionDefinitionBlock & Blockly.BlockSvg)).afterWorkspaceLoad();
+                }
+            });
         }
     )
 }
