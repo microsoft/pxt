@@ -22,7 +22,9 @@ const VARIABLES_GET_REPORTER_MIXIN = {
     domToMutation(this: VariablesGetReporterBlock, xmlElement: Element) {
         if (xmlElement.hasAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
             this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
-            (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
+            if (this.pathObject) {
+                (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
+            }
         }
     },
 };

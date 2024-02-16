@@ -395,7 +395,9 @@ export function initFunctions() {
                 this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
             }
 
-            (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
+            if (this.pathObject) {
+                (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
+            }
 
             setOutputCheck(this, typeName, cachedBlockInfo);
         };
