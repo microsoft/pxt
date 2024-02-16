@@ -697,6 +697,7 @@ const kiosk = gulp.series(cleanKiosk, buildKiosk, gulp.series(copyKioskCss, copy
 
 const teacherToolRoot = "teachertool";
 const teacherToolOut = "built/web/teachertool";
+const teacherToolFrag = "eval";
 
 const cleanTeacherTool = () => rimraf(teacherToolOut);
 
@@ -716,7 +717,18 @@ const copyTeacherToolHtml = () => rimraf("webapp/public/teachertool.html")
                     .pipe(concat("teachertool.html"))
                     .pipe(gulp.dest("webapp/public")));
 
-const teacherTool = gulp.series(cleanTeacherTool, buildTeacherTool, gulp.series(copyTeacherToolCss, copyTeacherToolJs, copyTeacherToolHtml));
+const copyTeacherToolServiceWorkerJs = () => rimraf(`webapp/public/${teacherToolFrag}`)
+    .then(() => gulp.src(`${teacherToolRoot}/build/serviceWorker.js`)
+                    .pipe(gulp.dest(`webapp/public/${teacherToolFrag}`)));
+
+const teacherTool = gulp.series(
+    cleanTeacherTool,
+    buildTeacherTool,
+    gulp.parallel(
+        copyTeacherToolCss,
+        copyTeacherToolJs,
+        copyTeacherToolHtml,
+        copyTeacherToolServiceWorkerJs));
 
 /********************************************************
                  Webapp build wrappers

@@ -6,11 +6,11 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-// eslint-disable-next-line import/no-unassigned-import
 import "./global.scss";
 import { App } from "./App";
 import { AppStateProvider } from "./state/appStateContext";
 import { Ticks } from "./constants";
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
 function enableAnalytics() {
     pxt.analytics.enable(pxt.Util.userLanguage());
@@ -47,9 +47,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     enableAnalytics();
 
-    // prefetch worker on load
-    pxt.worker.getWorker(pxt.webConfig.workerjs);
-
     ReactDOM.render(
         <React.StrictMode>
             <AppStateProvider>
@@ -59,3 +56,6 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("root")
     );
 });
+
+// Register service worker
+serviceWorkerRegistration.register();
