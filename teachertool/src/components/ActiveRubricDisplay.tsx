@@ -10,6 +10,30 @@ import { DebouncedInput } from "./DebouncedInput";
 import { AddCriteriaButton } from "./AddCriteriaButton";
 import css from "./styling/ActiveRubricDisplay.module.scss";
 import { CriteriaInstance } from "../types/criteria";
+import { classList } from "react-common/components/util";
+import { MenuItem } from "react-common/components/controls/MenuDropdown";
+import { Strings } from "../constants";
+import { Toolbar } from "./Toolbar";
+
+interface CriteriaActionMenuProps {
+    criteriaInstance: CriteriaInstance | undefined;
+}
+const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({criteriaInstance}) => {
+    const actions: MenuItem[] = criteriaInstance ? [
+        {
+            title: Strings.Remove,
+            label: Strings.Remove,
+            ariaLabel: Strings.Remove,
+            onClick: () => removeCriteriaFromRubric(criteriaInstance),
+        }
+    ] : [];
+
+    return (
+        <div className={css["criteria-action-menu"]}>
+            <Toolbar.MenuDropdown title={lf("More Actions")} items={actions} disabled={!actions.length} />
+        </div>
+    );
+}
 
 // TODO thsparks - move to different file or keep here?
 interface CriteriaInstanceDisplayProps {
@@ -22,17 +46,12 @@ const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = ({ crite
     }
 
     return catalogCriteria ? (
-        <tr className={css["criteria-instance-display"]}>
-            <td className={css["criteria-display-text"]}>{catalogCriteria.template}</td>
-            <td>
-                <Button
-                    className={css["criteria-btn-remove"]}
-                    label={lf("X")}
-                    onClick={() => removeCriteriaFromRubric(criteriaInstance)}
-                    title={lf("Remove")}
-                />
-            </td>
-        </tr>
+        <div className={css["criteria-instance-display"]}>
+            <div className={classList(css["cell"], css["criteria-text-cell"])}>{catalogCriteria.template}</div>
+            <div className={classList(css["cell"], css["criteria-action-menu-cell"])}>
+                <CriteriaActionMenu criteriaInstance={criteriaInstance} />
+            </div>
+        </div>
     ) : null;
 };
 
@@ -51,16 +70,14 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                 preserveValueOnBlur={true}
                 className={css["rubric-name-input"]}
             />
-            <table className={css["criteria-table"]}>
-                <thead>
-                    <tr>
-                        <th>{lf("Criteria")}</th>
-                        <th>
-                            <i className={"fas fa-ellipsis-v"} />
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
+            <div className={css["criteria-table"]}>
+                <div className={css["criteria-header"]}>
+                    <div className={classList(css["cell"], css["criteria-text-cell"])}>{lf("Criteria")}</div>
+                    <div className={classList(css["cell"], css["criteria-action-menu-cell"])}>
+                        <CriteriaActionMenu criteriaInstance={undefined} />
+                    </div>
+                </div>
+                <div className={css["criteria-table-body"]}>
                     {teacherTool.rubric.criteria?.map(criteriaInstance => {
                         if (!criteriaInstance) return null;
                         return (
@@ -70,8 +87,8 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                             />
                         );
                     })}
-                </tbody>
-            </table>
+                </div>
+            </div>
             <AddCriteriaButton />
         </div>
     );

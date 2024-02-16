@@ -5,6 +5,7 @@ export namespace Strings {
     export const NewRubric = lf("New Rubric");
     export const ImportRubric = lf("Import Rubric");
     export const ExportRubric = lf("Export Rubric");
+    export const Remove = lf("Remove");
 }
 
 export namespace Ticks {

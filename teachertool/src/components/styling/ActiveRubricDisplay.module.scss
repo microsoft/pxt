@@ -1,7 +1,6 @@
 .rubric-display {
     border-radius: 0;
     margin: 1rem 1rem;
-    width: 100%;
 
     .rubric-name-input {
         display: flex;
@@ -15,18 +14,54 @@
     }
 
     .criteria-table {
-        margin: 0.5rem 0;
-        border: var(--pxt-content-accent) solid 1px;
+        display: table;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 1px solid var(--pxt-content-accent);
         border-radius: 1rem;
         overflow: hidden;
+        margin: 1rem 0;
 
-        th, td {
-            border: var(--pxt-content-accent) solid 1px;
+        .criteria-header {
+            border-bottom: 1px solid var(--pxt-content-accent);
         }
 
-        th {
+        .criteria-instance-display {
+            border-bottom: 1px solid var(--pxt-content-accent);
+
+            &:last-child {
+                border-bottom: none;
+            }
+        }
+
+        .cell {
+            display: table-cell;
+            padding: 1rem;
             text-align: left;
-            font-weight: bold;
+            border-right: 1px solid var(--pxt-content-accent);
+
+            &:last-child {
+                border-right: none;
+            }
+        }
+
+        .criteria-text-cell {
+            width: 100%;
+        }
+
+        .criteria-action-menu-cell {
+            width: auto;
+
+            button {
+                color: var(--black);
+            }
+        }
+
+        .criteria-header {
+            .cell {
+                font-weight: bold;
+            }
         }
     }
 }
