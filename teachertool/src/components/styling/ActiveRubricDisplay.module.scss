@@ -73,9 +73,18 @@
             min-width: 3rem;
             max-width: 3rem;
 
-            .criteria-action-menu {
-                transition: all 0.3s ease;
+            .hidden-menu-button {
+                opacity: 0; // Need opacity-based hiding (rather than display) for transitions
+                transform: translateX(0.5rem);
+                transition: opacity 0.15s ease, transform 0.15s ease;
+            }
+            .visible-menu-button {
+                opacity: 1;
+                transform: translateX(0);
+                transition: opacity 0.15s ease 0.15s, transform 0.15s ease 0.15s;
+            }
 
+            .criteria-action-menu {
                 button {
                     color: var(--black);
                     padding: 0.2rem;

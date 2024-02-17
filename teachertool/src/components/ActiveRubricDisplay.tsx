@@ -32,7 +32,7 @@ const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({ criteriaInstanc
         : [];
 
     return (
-        <div className={classList(css["criteria-action-menu"], hidden ? "hidden" : undefined)}>
+        <div className={classList(css["criteria-action-menu"], hidden ? css["hidden-menu-button"] : css["visible-menu-button"])}>
             <Toolbar.MenuDropdown
                 title={lf("Actions")}
                 items={actions}
