@@ -86,13 +86,18 @@
 
             .criteria-action-menu {
                 button {
+                    transition: background-color 0.15s ease;
                     color: var(--black);
                     padding: 0.2rem;
-    
-                    i[class*="fas"] {
-                        font-size: 1rem;
+
+                    &:hover {
+                        background-color: var(--pxt-content-accent);
                     }
                 }
+            }
+
+            i[class*="fas"] {
+                font-size: 1rem;
             }
         }
     }

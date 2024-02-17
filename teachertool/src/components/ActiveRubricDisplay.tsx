@@ -14,31 +14,16 @@ import { MenuItem } from "react-common/components/controls/MenuDropdown";
 import { Strings } from "../constants";
 import { Toolbar } from "./Toolbar";
 import React from "react";
+import { Button } from "react-common/components/controls/Button";
 
 interface CriteriaActionMenuProps {
-    criteriaInstance: CriteriaInstance | undefined;
+    criteriaInstance: CriteriaInstance;
     hidden: boolean;
 }
 const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({ criteriaInstance, hidden }) => {
-    const actions: MenuItem[] = criteriaInstance
-        ? [
-              {
-                  title: Strings.Remove,
-                  label: Strings.Remove,
-                  ariaLabel: Strings.Remove,
-                  onClick: () => removeCriteriaFromRubric(criteriaInstance),
-              },
-          ]
-        : [];
-
     return (
         <div className={classList(css["criteria-action-menu"], hidden ? css["hidden-menu-button"] : css["visible-menu-button"])}>
-            <Toolbar.MenuDropdown
-                title={lf("Actions")}
-                items={actions}
-                disabled={!actions.length}
-                ariaLabel="Actions"
-            />
+            <Button label={<i className="fas fa-trash" />} title={Strings.Remove} ariaLabel={Strings.Remove} onClick={() => removeCriteriaFromRubric(criteriaInstance)} />
         </div>
     );
 };
@@ -96,7 +81,7 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                         {lf("Criteria")}
                     </div>
                     <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
-                        <CriteriaActionMenu criteriaInstance={undefined} hidden={false} />
+                        <i className="fas fa-trash" />
                     </div>
                 </div>
                 <div className={css["criteria-table-body"]}>
