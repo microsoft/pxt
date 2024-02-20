@@ -32,7 +32,6 @@
             font-size: 1rem;
         }
 
-        // Styling shared between criteria instance display and header bar display
         .cell {
             display: flex;
             align-items: center;
@@ -53,7 +52,6 @@
             border-right: none;
         }
 
-        // Styling specific to the header bar.
         .criteria-header {
             display: flex;
             flex-direction: row;
@@ -63,7 +61,6 @@
             height: 2rem;
         }
 
-        // Styling specific to the criteria instance display (not header bar).
         .criteria-instance-display {
             display: flex;
             flex-direction: row;
