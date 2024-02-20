@@ -27,22 +27,28 @@
         overflow: hidden;
         margin: 1rem 0;
 
+        // Styling shared between criteria instance display and header bar display
         .cell {
             display: flex;
             align-items: center;
             width: 100%;
-            border-right: 1px solid var(--pxt-content-accent);
             border-bottom: 1px solid var(--pxt-content-accent);
-
-            &:first-child {
-                padding-left: 0.7rem;
-            }
-
-            &:last-child {
-                border-right: none;
-            }
         }
 
+        .criteria-text-cell {
+            text-align: left;
+            padding-left: 0.7rem;
+            border-right: 1px solid var(--pxt-content-accent);
+        }
+
+        .criteria-action-menu-cell {
+            text-align: center;
+            min-width: 3rem;
+            max-width: 3rem;
+            border-right: none;
+        }
+
+        // Styling specific to the header bar.
         .criteria-header {
             display: flex;
             flex-direction: row;
@@ -54,18 +60,7 @@
             }
         }
 
-        // Styling shared between criteria instance display and header bar display
-        .criteria-action-menu-cell {
-            text-align: center;
-            min-width: 3rem;
-            max-width: 3rem;
-        }
-
-        .criteria-text-cell {
-            text-align: left;
-        }
-
-        // Styling specific to the criteria instance display (not header bar)
+        // Styling specific to the criteria instance display (not header bar).
         .criteria-instance-display {
             display: flex;
             flex-direction: row;
@@ -76,7 +71,7 @@
                 height: 3.5rem;
             }
 
-            .criteria-action-menu-cell .criteria-action-menu {
+            .criteria-action-menu {
                 width: 100%;
                 height: 100%;
 
