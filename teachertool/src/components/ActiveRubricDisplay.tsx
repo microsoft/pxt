@@ -30,7 +30,6 @@ const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({ criteriaInstanc
     );
 };
 
-// TODO thsparks - move to different file or keep here?
 interface CriteriaInstanceDisplayProps {
     criteriaInstance: CriteriaInstance;
 }
@@ -52,8 +51,8 @@ const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = ({ crite
     ) : null;
 };
 
-interface IProps {}
-export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
+interface ActiveRubricDisplayProps {}
+export const ActiveRubricDisplay: React.FC<ActiveRubricDisplayProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     return (
