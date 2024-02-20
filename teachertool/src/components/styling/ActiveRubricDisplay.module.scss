@@ -1,18 +1,16 @@
 .rubric-display {
     margin: 1rem 1rem;
 
-    label[class*="common-input-label"] {
-        font-size: 1rem;
-    }
-
-    i[class*="fas"] {
-        font-size: 1rem;
-    }
-
     .rubric-name-input {
         display: flex;
         flex-direction: row;
         width: 100%;
+
+        label[class*="common-input-label"] {
+            font-size: 1rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
 
         div[class*="common-input-group"] {
             margin-left: 0.5rem;
@@ -26,6 +24,10 @@
         border-radius: 0.5rem;
         overflow: hidden;
         margin: 1rem 0;
+
+        i[class*="fas"] {
+            font-size: 1rem;
+        }
 
         // Styling shared between criteria instance display and header bar display
         .cell {
@@ -53,7 +55,8 @@
             display: flex;
             flex-direction: row;
             align-items: center;
-            font-weight: bold;
+            font-weight: 600;
+            opacity: 0.8;
 
             .cell {
                 height: 2rem;
