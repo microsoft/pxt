@@ -22,7 +22,7 @@ interface CriteriaActionMenuProps {
 const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({ criteriaInstance }) => {
     return (
         <div className={css["criteria-action-menu"]}>
-            <Button label={<i className="fas fa-trash" />} title={Strings.Remove} ariaLabel={Strings.Remove} onClick={() => removeCriteriaFromRubric(criteriaInstance)} />
+            <Button label={<i className="far fa-trash-alt" />} title={Strings.Remove} ariaLabel={Strings.Remove} onClick={() => removeCriteriaFromRubric(criteriaInstance)} />
         </div>
     );
 };
