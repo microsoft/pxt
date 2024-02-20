@@ -27,20 +27,12 @@
         overflow: hidden;
         margin: 1rem 0;
 
-        .criteria-header {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            font-weight: bold;
-        }
-
         .cell {
             display: flex;
             align-items: center;
             width: 100%;
             border-right: 1px solid var(--pxt-content-accent);
             border-bottom: 1px solid var(--pxt-content-accent);
-            height: 2.5rem;
 
             &:first-child {
                 padding-left: 0.7rem;
@@ -48,6 +40,17 @@
 
             &:last-child {
                 border-right: none;
+            }
+        }
+
+        .criteria-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            font-weight: bold;
+
+            .cell {
+                height: 2rem;
             }
         }
 
@@ -60,7 +63,6 @@
 
         .criteria-text-cell {
             text-align: left;
-            padding: 0.2rem;
         }
 
         // Styling specific to the criteria instance display (not header bar)
@@ -69,6 +71,10 @@
             flex-direction: row;
             align-items: center;
             transition: background-color 0.1s ease;
+
+            .cell {
+                height: 3.5rem;
+            }
 
             .criteria-action-menu-cell .criteria-action-menu {
                 width: 100%;
