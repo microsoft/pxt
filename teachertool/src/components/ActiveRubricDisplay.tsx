@@ -22,7 +22,12 @@ interface CriteriaActionMenuProps {
 const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({ criteriaInstance }) => {
     return (
         <div className={css["criteria-action-menu"]}>
-            <Button label={<i className="far fa-trash-alt" />} title={Strings.Remove} ariaLabel={Strings.Remove} onClick={() => removeCriteriaFromRubric(criteriaInstance)} />
+            <Button
+                label={<i className="far fa-trash-alt" />}
+                title={Strings.Remove}
+                ariaLabel={Strings.Remove}
+                onClick={() => removeCriteriaFromRubric(criteriaInstance)}
+            />
         </div>
     );
 };
@@ -64,27 +69,29 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                 preserveValueOnBlur={true}
                 className={css["rubric-name-input"]}
             />
-            <div className={css["criteria-table"]} role="table" aria-label="Criteria Table">
-                <div className={css["criteria-header"]} role="row">
-                    <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
-                        {lf("Criteria")}
+            {teacherTool.rubric.criteria && teacherTool.rubric.criteria.length > 0 && (
+                <div className={css["criteria-table"]} role="table" aria-label="Criteria Table">
+                    <div className={css["criteria-header"]} role="row">
+                        <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
+                            {lf("Criteria")}
+                        </div>
+                        <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
+                            {/* Intentionally left empty */}
+                        </div>
                     </div>
-                    <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
-                        {/* Intentionally left empty */}
+                    <div className={css["criteria-table-body"]}>
+                        {teacherTool.rubric.criteria.map(criteriaInstance => {
+                            if (!criteriaInstance) return null;
+                            return (
+                                <CriteriaInstanceDisplay
+                                    criteriaInstance={criteriaInstance}
+                                    key={criteriaInstance.instanceId}
+                                />
+                            );
+                        })}
                     </div>
                 </div>
-                <div className={css["criteria-table-body"]}>
-                    {teacherTool.rubric.criteria?.map(criteriaInstance => {
-                        if (!criteriaInstance) return null;
-                        return (
-                            <CriteriaInstanceDisplay
-                                criteriaInstance={criteriaInstance}
-                                key={criteriaInstance.instanceId}
-                            />
-                        );
-                    })}
-                </div>
-            </div>
+            )}
             <AddCriteriaButton />
         </div>
     );
