@@ -42,7 +42,7 @@
 
         .criteria-text-cell {
             text-align: left;
-            padding-left: 0.7rem;
+            padding: 0.5rem 0.5rem 0.5rem 0.7rem;
             border-right: 1px solid var(--pxt-content-accent);
         }
 
@@ -57,25 +57,19 @@
         .criteria-header {
             display: flex;
             flex-direction: row;
-            align-items: center;
+            align-items: stretch;
             font-weight: 600;
             opacity: 0.8;
-
-            .cell {
-                height: 2rem;
-            }
+            height: 2rem;
         }
 
         // Styling specific to the criteria instance display (not header bar).
         .criteria-instance-display {
             display: flex;
             flex-direction: row;
-            align-items: center;
+            align-items: stretch;
             transition: background-color 0.1s ease;
-
-            .cell {
-                height: 3.5rem;
-            }
+            min-height: 3.5rem;
 
             .criteria-action-menu {
                 width: 100%;
