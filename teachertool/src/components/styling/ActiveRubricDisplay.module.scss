@@ -30,14 +30,10 @@
         overflow: hidden;
         margin: 1rem 0;
 
-        .criteria-header {
-            border-bottom: 1px solid var(--pxt-content-accent);
-
-            .cell {
-                font-weight: bold;
-                padding-top: 0.5rem;
-                padding-bottom: 0.3rem;
-            }
+        .criteria-header .cell {
+            font-weight: bold;
+            padding-top: 0.5rem;
+            padding-bottom: 0.3rem;
         }
 
         .cell {
@@ -45,6 +41,7 @@
             width: 100%;
             height: 100%;
             border-right: 1px solid var(--pxt-content-accent);
+            border-bottom: 1px solid var(--pxt-content-accent);
 
             &:first-child {
                 padding-left: 0.7rem;
@@ -73,12 +70,7 @@
             flex-direction: row;
             align-items: center;
             height: 2.2rem;
-            border-bottom: 1px solid var(--pxt-content-accent);
             transition: background-color 0.2s ease;
-
-            &:last-child {
-                border-bottom: none;
-            }
 
             .criteria-action-menu-cell .criteria-action-menu {
                 width: 100%;
@@ -111,6 +103,10 @@
                 .criteria-action-menu-cell .criteria-action-menu button {
                     opacity: 1;
                 }
+            }
+
+            &:last-child .cell{
+                border-bottom: none;
             }
         }
     }
