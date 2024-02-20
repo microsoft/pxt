@@ -1,5 +1,4 @@
 .rubric-display {
-    border-radius: 0;
     margin: 1rem 1rem;
 
     label[class*="common-input-label"] {
@@ -97,6 +96,10 @@
 
                     &:hover {
                         background-color: var(--pxt-content-accent);
+                    }
+
+                    &:focus {
+                        opacity: 1;
                     }
                 }
             }
