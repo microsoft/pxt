@@ -1,20 +1,18 @@
 /// <reference path="../../../built/pxtblocks.d.ts"/>
 
 import { useContext } from "react";
+import { Strings } from "../constants";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
 import { setRubricName } from "../transforms/setRubricName";
 import { DebouncedInput } from "./DebouncedInput";
 import { AddCriteriaButton } from "./AddCriteriaButton";
-import css from "./styling/ActiveRubricDisplay.module.scss";
 import { CriteriaInstance } from "../types/criteria";
 import { classList } from "react-common/components/util";
-import { MenuItem } from "react-common/components/controls/MenuDropdown";
-import { Strings } from "../constants";
-import { Toolbar } from "./Toolbar";
-import React from "react";
 import { Button } from "react-common/components/controls/Button";
+import css from "./styling/ActiveRubricDisplay.module.scss";
+import React from "react";
 
 interface CriteriaActionMenuProps {
     criteriaInstance: CriteriaInstance;
@@ -61,19 +59,19 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
     return (
         <div className={css["rubric-display"]}>
             <DebouncedInput
-                label={lf("Name")}
-                ariaLabel={lf("Name")}
+                label={Strings.Name}
+                ariaLabel={Strings.Name}
                 onChange={setRubricName}
-                placeholder={lf("Rubric Name")}
+                placeholder={Strings.RubricName}
                 initialValue={teacherTool.rubric.name}
                 preserveValueOnBlur={true}
                 className={css["rubric-name-input"]}
             />
             {teacherTool.rubric.criteria && teacherTool.rubric.criteria.length > 0 && (
-                <div className={css["criteria-table"]} role="table" aria-label="Criteria Table">
+                <div className={css["criteria-table"]} role="table" aria-label={Strings.Criteria}>
                     <div className={css["criteria-header"]} role="row">
                         <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
-                            {lf("Criteria")}
+                            {Strings.Criteria}
                         </div>
                         <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
                             {/* Intentionally left empty */}
