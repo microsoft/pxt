@@ -5,6 +5,7 @@ import { Button } from "react-common/components/controls/Button";
 import { showModal } from "../transforms/showModal";
 import { AppStateContext } from "../state/appStateContext";
 import { useContext, useMemo } from "react";
+import { classList } from "react-common/components/util";
 
 interface IProps {}
 
@@ -17,7 +18,7 @@ export const AddCriteriaButton: React.FC<IProps> = ({}) => {
     );
     return (
         <Button
-            className="inline"
+            className={classList("inline", "add-criteria-button")}
             label={lf("Add Criteria")}
             onClick={() => showModal("catalog-display")}
             title={lf("Add Criteria")}

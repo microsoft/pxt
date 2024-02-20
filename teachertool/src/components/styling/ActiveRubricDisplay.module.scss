@@ -1,4 +1,6 @@
 .rubric-display {
+    display: flex;
+    flex-direction: column;
     margin: 1rem 1rem;
 
     .rubric-name-input {
@@ -111,5 +113,12 @@
                 border-bottom: none;
             }
         }
+    }
+
+    button[class*="add-criteria-button"] {
+        align-self: center;
+        border-radius: 0.5rem;
+        width: auto;
+        padding: 1rem 1.4rem;
     }
 }
