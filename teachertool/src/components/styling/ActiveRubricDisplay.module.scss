@@ -76,12 +76,12 @@
             .hidden-menu-button {
                 opacity: 0; // Need opacity-based hiding (rather than display) for transitions
                 transform: translateX(0.5rem);
-                transition: opacity 0.15s ease, transform 0.15s ease;
+                transition: opacity 0.1s ease, transform 0.1s ease;
             }
             .visible-menu-button {
                 opacity: 1;
                 transform: translateX(0);
-                transition: opacity 0.15s ease 0.15s, transform 0.15s ease 0.15s;
+                transition: opacity 0.2s ease, transform 0.2s ease;
             }
 
             .criteria-action-menu {
