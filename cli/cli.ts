@@ -2047,7 +2047,6 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         generateReactCommonCss("skillmap"),
         generateReactCommonCss("authcode"),
         generateReactCommonCss("multiplayer"),
-        generateReactCommonCss("teachertool")
     ]);
 
     // Run postcss with autoprefixer and rtlcss
@@ -2076,8 +2075,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         "blockly.css",
         "react-common-skillmap.css",
         "react-common-authcode.css",
-        "react-common-multiplayer.css",
-        "react-common-teachertool.css"
+        "react-common-multiplayer.css"
     ];
 
     for (const cssFile of files) {
