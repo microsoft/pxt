@@ -51,7 +51,6 @@
 
         .cell {
             display: table-cell;
-            text-align: left;
             width: 100%;
             height: 100%;
             border-right: 1px solid var(--pxt-content-accent);
@@ -66,10 +65,12 @@
         }
 
         .criteria-text-cell {
+            text-align: left;
             padding: 0.2rem;
         }
 
         .criteria-action-menu-cell {
+            text-align: center;
             min-width: 3rem;
             max-width: 3rem;
 
