@@ -70,7 +70,7 @@ export const ActiveRubricDisplay: React.FC<IProps> = ({}) => {
                         {lf("Criteria")}
                     </div>
                     <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
-                        <i className="fas fa-trash" />
+                        {/* Intentionally left empty */}
                     </div>
                 </div>
                 <div className={css["criteria-table-body"]}>
