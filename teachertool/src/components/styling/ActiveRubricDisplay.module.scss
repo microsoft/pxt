@@ -6,6 +6,10 @@
         font-size: 1rem;
     }
 
+    i[class*="fas"] {
+        font-size: 1rem;
+    }
+
     .rubric-name-input {
         display: flex;
         flex-direction: row;
@@ -37,23 +41,6 @@
             }
         }
 
-        .criteria-instance-display {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            height: 2.2rem;
-            border-bottom: 1px solid var(--pxt-content-accent);
-            transition: background-color 0.2s ease;
-
-            &:hover, &:focus {
-                background-color: var(--pxt-content-background);
-            }
-
-            &:last-child {
-                border-bottom: none;
-            }
-        }
-
         .cell {
             display: table-cell;
             width: 100%;
@@ -69,27 +56,32 @@
             }
         }
 
+        // Styling shared between criteria instance display and header bar display
+        .criteria-action-menu-cell {
+            text-align: center;
+            min-width: 3rem;
+            max-width: 3rem;
+        }
+
         .criteria-text-cell {
             text-align: left;
             padding: 0.2rem;
         }
 
-        .criteria-action-menu-cell {
-            text-align: center;
-            min-width: 3rem;
-            max-width: 3rem;
+        // Styling specific to the criteria instance display (not header bar)
+        .criteria-instance-display {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            height: 2.2rem;
+            border-bottom: 1px solid var(--pxt-content-accent);
+            transition: background-color 0.2s ease;
 
-            .hidden-menu-button {
-                opacity: 0; // Need opacity-based hiding (rather than display) for transitions
-                transition: opacity 0.2s ease;
+            &:last-child {
+                border-bottom: none;
             }
 
-            .visible-menu-button {
-                opacity: 1;
-                transition: opacity 0.2s ease;
-            }
-
-            .criteria-action-menu {
+            .criteria-action-menu-cell .criteria-action-menu {
                 width: 100%;
                 height: 100%;
 
@@ -97,7 +89,8 @@
                     width: 100%;
                     height: 100%;
                     background-color: var(--pxt-content-background);
-                    transition: background-color 0.2s ease;
+                    opacity: 0; // Need opacity-based hiding (rather than display) for transitions
+                    transition: background-color 0.2s ease, opacity 0.2s ease;
                     color: var(--black);
                     padding: 0.2rem;
                     border-radius: 0;
@@ -108,8 +101,13 @@
                 }
             }
 
-            i[class*="fas"] {
-                font-size: 1rem;
+            &:hover,
+            &:focus {
+                background-color: var(--pxt-content-background);
+
+                .criteria-action-menu-cell .criteria-action-menu button {
+                    opacity: 1;
+                }
             }
         }
     }

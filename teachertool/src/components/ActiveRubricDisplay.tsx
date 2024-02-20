@@ -18,11 +18,10 @@ import { Button } from "react-common/components/controls/Button";
 
 interface CriteriaActionMenuProps {
     criteriaInstance: CriteriaInstance;
-    hidden: boolean;
 }
-const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({ criteriaInstance, hidden }) => {
+const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({ criteriaInstance }) => {
     return (
-        <div className={classList(css["criteria-action-menu"], hidden ? css["hidden-menu-button"] : css["visible-menu-button"])}>
+        <div className={css["criteria-action-menu"]}>
             <Button label={<i className="fas fa-trash" />} title={Strings.Remove} ariaLabel={Strings.Remove} onClick={() => removeCriteriaFromRubric(criteriaInstance)} />
         </div>
     );
@@ -33,28 +32,18 @@ interface CriteriaInstanceDisplayProps {
     criteriaInstance: CriteriaInstance;
 }
 const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaInstance }) => {
-    const [isActive, setIsActive] = React.useState(false);
-
     const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
     if (!catalogCriteria) {
         return null;
     }
 
     return catalogCriteria ? (
-        <div
-            className={css["criteria-instance-display"]}
-            role="row"
-            onMouseEnter={() => setIsActive(true)}
-            onMouseLeave={() => setIsActive(false)}
-            onFocus={() => setIsActive(true)}
-            onBlur={() => setIsActive(false)}
-            tabIndex={0}
-        >
+        <div className={css["criteria-instance-display"]} role="row" tabIndex={0}>
             <div className={classList(css["cell"], css["criteria-text-cell"])} role="cell">
                 {catalogCriteria.template}
             </div>
             <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="cell">
-                <CriteriaActionMenu criteriaInstance={criteriaInstance} hidden={!isActive}/>
+                <CriteriaActionMenu criteriaInstance={criteriaInstance} />
             </div>
         </div>
     ) : null;
