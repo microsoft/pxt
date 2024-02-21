@@ -21,11 +21,15 @@ const CriteriaInstanceRow: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaI
     }
 
     return catalogCriteria ? (
-        <div className={css["criteria-instance-display"]} role="row" tabIndex={0}>
+        <div className={css["criteria-instance-display"]} role="row">
             <div className={classList(css["cell"], css["criteria-text-cell"])} role="cell">
                 {catalogCriteria.template}
             </div>
-            <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="cell">
+            <div
+                className={classList(css["cell"], css["criteria-action-menu-cell"])}
+                role="cell"
+                aria-label={Strings.Actions}
+            >
                 <Button
                     label={<i className="far fa-trash-alt" />}
                     className={css["delete-criteria-button"]}
@@ -45,10 +49,14 @@ const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
     return teacherTool.rubric.criteria?.length > 0 ? (
         <div className={css["criteria-table"]} role="table" aria-label={Strings.Criteria}>
             <div className={css["criteria-header"]} role="row">
-                <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
+                <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader" tabIndex={0}>
                     {Strings.Criteria}
                 </div>
-                <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
+                <div
+                    className={classList(css["cell"], css["criteria-action-menu-cell"])}
+                    role="columnheader"
+                    aria-label={Strings.Actions}
+                >
                     {/* Intentionally left empty */}
                 </div>
             </div>

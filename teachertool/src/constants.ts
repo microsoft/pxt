@@ -10,6 +10,7 @@ export namespace Strings {
     export const Name = lf("Name");
     export const RubricName = lf("Rubric Name");
     export const AddCriteria = lf("Add Criteria");
+    export const Actions = lf("Actions");
 }
 
 export namespace Ticks {
