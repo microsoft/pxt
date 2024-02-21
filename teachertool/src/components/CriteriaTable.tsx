@@ -54,7 +54,6 @@ const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
             </div>
             <div className={css["criteria-table-body"]}>
                 {teacherTool.rubric.criteria.map(criteriaInstance => {
-                    if (!criteriaInstance) return null;
                     return (
                         <CriteriaInstanceRow criteriaInstance={criteriaInstance} key={criteriaInstance.instanceId} />
                     );
