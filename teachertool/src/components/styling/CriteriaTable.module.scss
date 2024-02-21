@@ -45,27 +45,23 @@
         transition: background-color 0.1s ease;
         min-height: 3.5rem;
 
-        .criteria-action-menu {
+        .delete-criteria-button {
             width: 100%;
             height: 100%;
+            background-color: var(--pxt-content-background);
+            opacity: 0; // Need opacity-based hiding (rather than display) for transitions
+            transition: background-color 0.1s ease, opacity 0.1s ease;
+            color: var(--black);
+            padding: 0.2rem;
+            margin: 0;
+            border-radius: 0;
 
-            button {
-                width: 100%;
-                height: 100%;
-                background-color: var(--pxt-content-background);
-                opacity: 0; // Need opacity-based hiding (rather than display) for transitions
-                transition: background-color 0.1s ease, opacity 0.1s ease;
-                color: var(--black);
-                padding: 0.2rem;
-                border-radius: 0;
+            &:hover {
+                background-color: var(--pxt-content-accent);
+            }
 
-                &:hover {
-                    background-color: var(--pxt-content-accent);
-                }
-
-                &:focus {
-                    opacity: 1;
-                }
+            &:focus {
+                opacity: 1;
             }
         }
 
@@ -73,7 +69,7 @@
         &:focus {
             background-color: var(--pxt-content-background);
 
-            .criteria-action-menu-cell .criteria-action-menu button {
+            .delete-criteria-button {
                 opacity: 1;
             }
         }

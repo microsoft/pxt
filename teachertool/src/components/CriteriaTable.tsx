@@ -11,26 +11,10 @@ import { Button } from "react-common/components/controls/Button";
 import css from "./styling/CriteriaTable.module.scss";
 import React from "react";
 
-interface CriteriaActionMenuProps {
-    criteriaInstance: CriteriaInstance;
-}
-const CriteriaActionMenu: React.FC<CriteriaActionMenuProps> = ({ criteriaInstance }) => {
-    return (
-        <div className={css["criteria-action-menu"]}>
-            <Button
-                label={<i className="far fa-trash-alt" />}
-                title={Strings.Remove}
-                ariaLabel={Strings.Remove}
-                onClick={() => removeCriteriaFromRubric(criteriaInstance)}
-            />
-        </div>
-    );
-};
-
 interface CriteriaInstanceDisplayProps {
     criteriaInstance: CriteriaInstance;
 }
-const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaInstance }) => {
+const CriteriaInstanceRow: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaInstance }) => {
     const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
     if (!catalogCriteria) {
         return null;
@@ -42,7 +26,13 @@ const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = ({ crite
                 {catalogCriteria.template}
             </div>
             <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="cell">
-                <CriteriaActionMenu criteriaInstance={criteriaInstance} />
+                <Button
+                    label={<i className="far fa-trash-alt" />}
+                    className={css["delete-criteria-button"]}
+                    title={Strings.Remove}
+                    ariaLabel={Strings.Remove}
+                    onClick={() => removeCriteriaFromRubric(criteriaInstance)}
+                />
             </div>
         </div>
     ) : null;
@@ -66,7 +56,7 @@ const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
                         {teacherTool.rubric.criteria.map(criteriaInstance => {
                             if (!criteriaInstance) return null;
                             return (
-                                <CriteriaInstanceDisplay
+                                <CriteriaInstanceRow
                                     criteriaInstance={criteriaInstance}
                                     key={criteriaInstance.instanceId}
                                 />
@@ -78,6 +68,5 @@ const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
 };
 
 export const CriteriaTable = Object.assign(CriteriaTableControl, {
-    CriteriaInstanceDisplay,
-    CriteriaActionMenu
+    CriteriaInstanceDisplay: CriteriaInstanceRow
 });
