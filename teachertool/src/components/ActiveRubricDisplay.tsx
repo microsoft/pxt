@@ -16,15 +16,17 @@ export const ActiveRubricDisplay: React.FC<ActiveRubricDisplayProps> = ({}) => {
 
     return (
         <div className={css["rubric-display"]}>
-            <DebouncedInput
-                label={Strings.Name}
-                ariaLabel={Strings.Name}
-                onChange={setRubricName}
-                placeholder={Strings.RubricName}
-                initialValue={teacherTool.rubric.name}
-                preserveValueOnBlur={true}
-                className={css["rubric-name-input"]}
-            />
+            <div className={css["rubric-name-input-container"]}>
+                <DebouncedInput
+                    label={Strings.Name}
+                    ariaLabel={Strings.Name}
+                    onChange={setRubricName}
+                    placeholder={Strings.RubricName}
+                    initialValue={teacherTool.rubric.name}
+                    preserveValueOnBlur={true}
+                    className={css["rubric-name-input"]}
+                />
+            </div>
             <CriteriaTable />
             <AddCriteriaButton />
         </div>
