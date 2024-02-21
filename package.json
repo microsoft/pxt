@@ -55,6 +55,7 @@
     "localtypings/**",
     "tests/blocks-test/karma.conf.js",
     "built/tests/blocksrunner.js",
+    "scripts/patchUglifyify.js",
     "docfiles",
     "theme",
     "common-docs",
