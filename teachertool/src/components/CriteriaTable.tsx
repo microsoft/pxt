@@ -43,30 +43,27 @@ const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     return teacherTool.rubric.criteria && teacherTool.rubric.criteria.length > 0 ? (
-                <div className={css["criteria-table"]} role="table" aria-label={Strings.Criteria}>
-                    <div className={css["criteria-header"]} role="row">
-                        <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
-                            {Strings.Criteria}
-                        </div>
-                        <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
-                            {/* Intentionally left empty */}
-                        </div>
-                    </div>
-                    <div className={css["criteria-table-body"]}>
-                        {teacherTool.rubric.criteria.map(criteriaInstance => {
-                            if (!criteriaInstance) return null;
-                            return (
-                                <CriteriaInstanceRow
-                                    criteriaInstance={criteriaInstance}
-                                    key={criteriaInstance.instanceId}
-                                />
-                            );
-                        })}
-                    </div>
+        <div className={css["criteria-table"]} role="table" aria-label={Strings.Criteria}>
+            <div className={css["criteria-header"]} role="row">
+                <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
+                    {Strings.Criteria}
                 </div>
-            ) : null;
+                <div className={classList(css["cell"], css["criteria-action-menu-cell"])} role="columnheader">
+                    {/* Intentionally left empty */}
+                </div>
+            </div>
+            <div className={css["criteria-table-body"]}>
+                {teacherTool.rubric.criteria.map(criteriaInstance => {
+                    if (!criteriaInstance) return null;
+                    return (
+                        <CriteriaInstanceRow criteriaInstance={criteriaInstance} key={criteriaInstance.instanceId} />
+                    );
+                })}
+            </div>
+        </div>
+    ) : null;
 };
 
 export const CriteriaTable = Object.assign(CriteriaTableControl, {
-    CriteriaInstanceDisplay: CriteriaInstanceRow
+    CriteriaInstanceDisplay: CriteriaInstanceRow,
 });
