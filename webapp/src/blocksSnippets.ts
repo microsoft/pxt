@@ -1,6 +1,8 @@
 import { BuiltinCategoryDefinition, BlockDefinition, CategoryNameID } from "./toolbox";
 
 import * as blocks from "./blocks";
+import * as Blockly from "blockly";
+import * as pxtblockly from "../../pxtblocks";
 
 import ToolboxBlockDefinition = pxt.editor.ToolboxBlockDefinition;
 import ToolboxCategoryDefinition = pxt.editor.ToolboxCategoryDefinition;
@@ -50,9 +52,10 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     },
                     blockXml: `<block type="pxt_controls_for">
                     <value name="VAR">
-                        <shadow type="variables_get_reporter">
+                        <block type="variables_get_reporter">
                             <field name="VAR">${lf("{id:var}index")}</field>
-                        </shadow>
+                            <mutation duplicateondrag="true"></mutation>
+                        </block>
                     </value>
                     <value name="TO">
                         <shadow type="math_whole_number">
@@ -69,14 +72,15 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     },
                     blockXml: `<block type="pxt_controls_for_of">
                     <value name="VAR">
-                        <shadow type="variables_get_reporter">
+                        <block type="variables_get_reporter">
                             <field name="VAR">${lf("{id:var}value")}</field>
-                        </shadow>
+                            <mutation duplicateondrag="true"></mutation>
+                        </block>
                     </value>
                     <value name="LIST">
-                        <shadow type="variables_get">
+                        <block type="variables_get">
                             <field name="VAR">list</field>
-                        </shadow>
+                        </block>
                     </value>
                 </block>`
                 }
@@ -709,7 +713,7 @@ export function getPauseUntil() {
                 blockNamespace: opts.category || "loops",
                 weight: opts.weight == null ? 0 : opts.weight
             },
-            blockXml: Blockly.Xml.domToText(pxt.blocks.mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE))
+            blockXml: Blockly.Xml.domToText(pxtblockly.mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE))
         };
     }
 

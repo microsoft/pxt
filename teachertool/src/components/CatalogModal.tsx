@@ -1,5 +1,3 @@
-/// <reference path="../../../built/pxtblocks.d.ts"/>
-
 import { useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Checkbox } from "react-common/components/controls/Checkbox";

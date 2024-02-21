@@ -1,5 +1,7 @@
 /// <reference path="../../localtypings/validatorPlan.d.ts" />
 
+import * as Blockly from "blockly";
+
 import { validateBlockFieldValueExists } from "./validateBlockFieldValueExists";
 import { validateBlocksExist } from "./validateBlocksExist";
 import { validateBlocksInSetExist } from "./validateBlocksInSetExist";

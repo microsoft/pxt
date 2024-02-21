@@ -1,9 +1,10 @@
-/// <reference path="..\..\localtypings\pxtblockly.d.ts" />
 /// <reference path="..\..\localtypings\pxteditor.d.ts" />
-/// <reference path="..\..\built\pxtblocks.d.ts" />
 /// <reference path="..\..\built\pxtcompiler.d.ts" />
 
 const WEB_PREFIX = "http://localhost:9876";
+
+import * as Blockly from "blockly";
+import * as pxtblockly from "../../pxtblocks";
 
 interface BlockTestCase {
     packageName: string;
@@ -11,9 +12,6 @@ interface BlockTestCase {
 }
 
 declare const testJSON: { libsTests: BlockTestCase[], commonTests: BlockTestCase[] };
-
-// Blockly crashes if this isn't defined
-(Blockly as any).Msg.DELETE_VARIABLE = "Delete the '%1' variable";
 
 // target.js should be embedded in the page
 pxt.setAppTarget((window as any).pxtTargetBundle);
@@ -56,7 +54,7 @@ class BlocklyCompilerTestHost implements pxt.Host {
                 .then(res => {
                     if (res.fieldEditors)
                         res.fieldEditors.forEach(fi => {
-                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                            pxtblockly.registerFieldEditor(fi.selector, fi.editor, fi.validator);
                         })
                 })
                 .then(() => new BlocklyCompilerTestHost())
@@ -133,7 +131,7 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
             // decompile to blocks
             let apis = pxtc.getApiInfo(resp.ast, opts.jres);
             let blocksInfo = pxtc.getBlocksInfo(apis);
-            pxt.blocks.initializeAndInject(blocksInfo);
+            pxtblockly.initializeAndInject(blocksInfo);
 
             cachedBlocksInfo = blocksInfo;
 
@@ -147,7 +145,7 @@ function testXmlAsync(blocksfile: string) {
         .then(blocksInfo => {
             const workspace = new Blockly.Workspace();
             (Blockly as any).mainWorkspace = workspace;
-            const xml = Blockly.Xml.textToDom(blocksfile);
+            const xml = Blockly.utils.xml.textToDom(blocksfile);
 
             try {
                 Blockly.Xml.domToWorkspace(xml, workspace);
@@ -262,7 +260,7 @@ function initAsync() {
             .then(res => {
                 if (res.fieldEditors)
                     res.fieldEditors.forEach(fi => {
-                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                        pxtblockly.registerFieldEditor(fi.selector, fi.editor, fi.validator);
                     })
             })
     }

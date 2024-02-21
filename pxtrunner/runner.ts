@@ -2,11 +2,18 @@
 
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
-/// <reference path="../built/pxtblocks.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
+import { BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../pxtblocks";
 import { initEditorExtensionsAsync } from "../pxteditor/editor";
 import { defaultClientRenderOptions, renderAsync } from "./renderer";
+
+import * as pxtblockly from "../pxtblocks";
+import * as Blockly from "blockly";
+
+pxt.blocks.requirePxtBlockly = () => pxtblockly;
+pxt.blocks.requireBlockly = () => Blockly;
+pxt.blocks.registerFieldEditor = (selector, proto, validator) => pxtblockly.registerFieldEditor(selector, proto, validator);
 
 export interface SimulateOptions {
     embedId?: string;
@@ -660,13 +667,12 @@ export function startRenderServer() {
         const msg = jobQueue.shift();
         if (!msg) return; // no more work
 
-        const options = (msg.options || {}) as pxt.blocks.BlocksRenderOptions;
+        const options = (msg.options || {}) as BlocksRenderOptions;
         options.splitSvg = false; // don't split when requesting rendered images
         pxt.tickEvent("renderer.job")
         const isXml = /^\s*<xml/.test(msg.code);
 
         const doWork = async () => {
-            await pxt.BrowserUtils.loadBlocklyAsync();
             const result = isXml
                 ? await compileBlocksAsync(msg.code, options)
                 : await decompileSnippetAsync(msg.code, msg.options);
@@ -674,7 +680,7 @@ export function startRenderServer() {
             const width = blocksSvg.viewBox.baseVal.width;
             const height = blocksSvg.viewBox.baseVal.height;
             const res = blocksSvg
-                ? await pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, width, height)
+                ? await blocklyToSvgAsync(blocksSvg, 0, 0, width, height)
                 : undefined;
             // try to render to png
             let png: string;
@@ -1155,7 +1161,7 @@ export interface DecompileResult {
 let programCache: ts.Program;
 let apiCache: pxt.Map<pxtc.ApisInfo>;
 
-export function decompileSnippetAsync(code: string, options?: pxt.blocks.BlocksRenderOptions): Promise<DecompileResult> {
+export function decompileSnippetAsync(code: string, options?: BlocksRenderOptions): Promise<DecompileResult> {
     const { assets, forceCompilation, snippetMode, generateSourceMap } = options || {};
 
     // code may be undefined or empty!!!
@@ -1200,7 +1206,7 @@ export function decompileSnippetAsync(code: string, options?: pxt.blocks.BlocksR
             return ts.pxtc.localizeApisAsync(apis, mainPkg)
                 .then(() => {
                     let blocksInfo = pxtc.getBlocksInfo(apis);
-                    pxt.blocks.initializeAndInject(blocksInfo);
+                    initializeAndInject(blocksInfo);
                     const tilemapJres = assets?.[pxt.TILEMAP_JRES];
                     const assetsJres = assets?.[pxt.IMAGES_JRES];
                     if (tilemapJres || assetsJres) {
@@ -1230,7 +1236,7 @@ export function decompileSnippetAsync(code: string, options?: pxt.blocks.BlocksR
                         };
                     pxt.debug(bresp.outfiles[pxt.MAIN_BLOCKS])
 
-                    const blocksSvg = pxt.blocks.render(bresp.outfiles[pxt.MAIN_BLOCKS], options);
+                    const blocksSvg = render(bresp.outfiles[pxt.MAIN_BLOCKS], options);
 
                     if (tilemapJres || assetsJres) {
                         tilemapProject = null;
@@ -1259,7 +1265,7 @@ function getApiInfo(program: ts.Program, opts: pxtc.CompileOptions) {
     return apiCache[key];
 }
 
-export function compileBlocksAsync(code: string, options?: pxt.blocks.BlocksRenderOptions): Promise<DecompileResult> {
+export function compileBlocksAsync(code: string, options?: BlocksRenderOptions): Promise<DecompileResult> {
     const { assets } = options || {};
 
     const packageid = options && options.packageId ? "pub:" + options.packageId :
@@ -1282,7 +1288,7 @@ export function compileBlocksAsync(code: string, options?: pxt.blocks.BlocksRend
             return ts.pxtc.localizeApisAsync(apis, mainPkg)
                 .then(() => {
                     const blocksInfo = pxtc.getBlocksInfo(apis);
-                    pxt.blocks.initializeAndInject(blocksInfo);
+                    initializeAndInject(blocksInfo);
 
                     const tilemapJres = assets?.[pxt.TILEMAP_JRES];
                     const assetsJres = assets?.[pxt.IMAGES_JRES];
@@ -1294,7 +1300,7 @@ export function compileBlocksAsync(code: string, options?: pxt.blocks.BlocksRend
                         if (assetsJres)
                             tilemapProject.loadAssetsJRes(JSON.parse(assetsJres))
                     }
-                    const blockSvg = pxt.blocks.render(code, options);
+                    const blockSvg = render(code, options);
 
                     if (tilemapJres || assetsJres) {
                         tilemapProject = null;

@@ -4,7 +4,7 @@ import * as React from "react";
 import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
 
-import * as pxteditor from "../../pxteditor";
+import * as pxtblockly from "../../pxtblocks";
 
 type GroupedError = {
     error: pxtc.KsDiagnostic,
@@ -16,7 +16,7 @@ export interface ErrorListProps {
     isInBlocksEditor: boolean;
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
     listenToErrorChanges?: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
-    listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: pxt.blocks.BlockDiagnostic[]) => void) => void;
+    listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: pxtblockly.BlockDiagnostic[]) => void) => void;
     listenToExceptionChanges?: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
     goToError?: (errorLocation: pxtc.LocationInfo) => void;
     startDebugger?: () => void;
@@ -26,7 +26,7 @@ export interface ErrorListState {
     errors?: pxtc.KsDiagnostic[],
     exception?: pxsim.DebuggerBreakpointMessage,
     callLocations?: pxtc.LocationInfo[],
-    blockErrors?: pxt.blocks.BlockDiagnostic[]
+    blockErrors?: pxtblockly.BlockDiagnostic[]
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -125,7 +125,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }, this.onDisplayStateChange);
     }
 
-    onBlockErrorsChanged(blockErrors: pxt.blocks.BlockDiagnostic[]) {
+    onBlockErrorsChanged(blockErrors: pxtblockly.BlockDiagnostic[]) {
         this.setState({
             blockErrors,
             isCollapsed: blockErrors?.length == 0 || this.state.isCollapsed,
@@ -169,7 +169,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         </div>;
     }
 
-    listBlockErrors(blockErrors: pxt.blocks.BlockDiagnostic[]) {
+    listBlockErrors(blockErrors: pxtblockly.BlockDiagnostic[]) {
         return <div className="ui selection list">
             {(blockErrors || []).map((e, i) => <ErrorListItem index={i} key={`${i}-${e}`} blockError={e} />)}
         </div>
@@ -182,7 +182,7 @@ interface ErrorListItemProps {
     error?: GroupedError;
     stackframe?: pxsim.StackFrameInfo;
     location?: pxtc.LocationInfo;
-    blockError?: pxt.blocks.BlockDiagnostic;
+    blockError?: pxtblockly.BlockDiagnostic;
 }
 
 interface ErrorListItemState {

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as Blockly from "blockly";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
@@ -27,6 +28,8 @@ import * as pxteditor from "../../pxteditor";
 
 import IProjectView = pxt.editor.IProjectView;
 import ErrorListState = pxt.editor.ErrorListState;
+
+import * as pxtblockly from "../../pxtblocks";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -477,16 +480,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .then(() => compiler.getBlocksAsync())
                 .then((bi: pxtc.BlocksInfo) => {
                     blocksInfo = bi;
-                    pxt.blocks.cleanBlocks();
-                    pxt.blocks.initializeAndInject(blocksInfo);
+                    pxtblockly.cleanBlocks();
+                    pxtblockly.initializeAndInject(blocksInfo);
 
                     // It's possible that the extensions changed and some blocks might not exist anymore
-                    if (!pxt.blocks.validateAllReferencedBlocksExist(mainPkg.files[blockFile].content)) {
+                    if (!pxtblockly.validateAllReferencedBlocksExist(mainPkg.files[blockFile].content)) {
                         return [undefined, true];
                     }
-                    const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
+                    const oldWorkspace = pxtblockly.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
-                        return pxt.blocks.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
+                        return pxtblockly.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
                             const oldJs = compilationResult.source;
                             return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
                                 return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
@@ -1209,12 +1212,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     for (const fn of info.symbols) {
                         const url = pxt.blocks.getHelpUrl(fn);
                         if (url) {
-                            if (pxt.blocks.openHelpUrl) {
-                                pxt.blocks.openHelpUrl(url);
-                            }
-                            else {
-                                window.open(url);
-                            }
+                            pxtblockly.external.openHelpUrl(url);
                             return;
                         }
                     }

@@ -1,6 +1,8 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
+import * as Blockly from "blockly";
+import * as pxtblockly from "../../pxtblocks";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as md from "./marked";
@@ -271,8 +273,8 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
             .then(resp => {
                 // get the root blocks (e.g. on_start) from the new code
-                const newXml = Blockly.Xml.textToDom(resp.outfiles[pxt.MAIN_BLOCKS]);
-                const newBlocksDom = pxt.blocks.findRootBlocks(newXml)
+                const newXml = Blockly.utils.xml.textToDom(resp.outfiles[pxt.MAIN_BLOCKS]);
+                const newBlocksDom = findRootBlocks(newXml)
 
                 // get the existing root blocks
                 let existingBlocks = mainWorkspace.getTopBlocks(true);
@@ -306,7 +308,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 // merge them
                 function merge(pair: { newB: Element, exB: Blockly.Block }) {
                     let { newB, exB } = pair;
-                    const firstChild = pxt.blocks.findRootBlock(newB)
+                    const firstChild = findRootBlock(newB)
                     const toAttach = Blockly.Xml.domToBlock(firstChild, mainWorkspace);
                     exB.getInput("HANDLER").connection.connect(toAttach.previousConnection);
                 }
@@ -321,7 +323,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 
                 // if there wasn't more than one existing block, reformat the code
                 if (existingBlocks.length <= 1) {
-                    pxt.blocks.layout.flow(mainWorkspace, { useViewWidth: true });
+                    pxtblockly.flow(mainWorkspace, { useViewWidth: true });
                 }
             }).catch((e) => {
                 core.errorNotification(e);
@@ -613,4 +615,36 @@ export function isSnippetInputAnswerTypeYesNo(input: SnippetInputType): input is
 
 export function isSnippetInputAnswerTypeDropdown(input: SnippetInputType): input is pxt.SnippetInputDropdownType {
     return (input as pxt.SnippetInputDropdownType).options !== undefined;
+}
+
+export function findRootBlocks(xmlDOM: Element, type?: string): Element[] {
+    let blocks: Element[] = []
+    for (const child in xmlDOM.children) {
+        const xmlChild = xmlDOM.children[child];
+
+        if (xmlChild.tagName === 'block') {
+            if (type) {
+                const childType = xmlChild.getAttribute('type');
+
+                if (childType && childType === type) {
+                    blocks.push(xmlChild)
+                }
+            } else {
+                blocks.push(xmlChild)
+            }
+        } else {
+            const childChildren = findRootBlock(xmlChild);
+            if (childChildren) {
+                blocks = blocks.concat(childChildren)
+            }
+        }
+    }
+    return blocks;
+}
+
+export function findRootBlock(xmlDOM: Element, type?: string): Element {
+    let blks = findRootBlocks(xmlDOM, type)
+    if (blks.length)
+        return blks[0]
+    return null
 }

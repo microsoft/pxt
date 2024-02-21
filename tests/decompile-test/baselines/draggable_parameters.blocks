@@ -1,56 +1,64 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="test_handler_arguments3">
 <value name="HANDLER_DRAG_PARAM_c">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">hello</field>
-</shadow>
+</block>
 </value>
 <value name="HANDLER_DRAG_PARAM_d">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">goodbye</field>
-</shadow>
+</block>
 </value>
 <statement name="HANDLER">
 </statement>
 </block>
 <block type="test_handler_arguments3">
 <value name="HANDLER_DRAG_PARAM_c">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">sure</field>
-</shadow>
+</block>
 </value>
 <value name="HANDLER_DRAG_PARAM_d">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">whatever</field>
-</shadow>
+</block>
 </value>
 <statement name="HANDLER">
 </statement>
 </block>
 <block type="test_handler_arguments3">
 <value name="HANDLER_DRAG_PARAM_c">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">okay</field>
-</shadow>
+</block>
 </value>
 <value name="HANDLER_DRAG_PARAM_d">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">d</field>
-</shadow>
+</block>
 </value>
 <statement name="HANDLER">
 </statement>
 </block>
 <block type="test_handler_arguments3">
 <value name="HANDLER_DRAG_PARAM_c">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">c</field>
-</shadow>
+</block>
 </value>
 <value name="HANDLER_DRAG_PARAM_d">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">d</field>
-</shadow>
+</block>
 </value>
 <statement name="HANDLER">
 </statement>

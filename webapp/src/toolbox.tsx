@@ -12,6 +12,8 @@ import Util = pxt.Util;
 import { fireClickOnEnter } from "./util"
 import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal"
 
+import * as Blockly from "blockly";
+
 export const enum CategoryNameID {
     Loops = "loops",
     Logic = "logic",
@@ -587,7 +589,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const { toolbox } = this.props;
         const isRtl = Util.isUserLanguageRtl();
 
-        const mainWorkspace = Blockly.getMainWorkspace() as any;
+        const mainWorkspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg;
         const accessibleBlocksEnabled = mainWorkspace.keyboardAccessibilityMode;
         const accessibleBlocksState = accessibleBlocksEnabled
             && (toolbox.props.parent as any).navigationController?.navigation?.getState(mainWorkspace);

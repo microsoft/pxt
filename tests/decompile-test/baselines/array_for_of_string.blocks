@@ -8,9 +8,10 @@
 </shadow>
 </value>
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">i</field>
-</shadow>
+</block>
 </value>
 <statement name="DO">
 <block type="variables_set">

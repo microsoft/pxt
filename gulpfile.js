@@ -38,7 +38,6 @@ const pxtlib = () => compileTsProject("pxtlib");
 const pxtcompiler = () => compileTsProject("pxtcompiler");
 const pxtpy = () => compileTsProject("pxtpy");
 const pxtsim = () => compileTsProject("pxtsim");
-const pxtblocks = () => compileTsProject("pxtblocks");
 const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
 const pxteditor = () => compileTsProject("pxteditor", "built", true);
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
@@ -46,16 +45,7 @@ const backendutils = () => compileTsProject("backendutils")
 const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
-
-const pxtblockly = () => gulp.src([
-    "webapp/public/blockly/blockly_compressed.js",
-    "webapp/public/blockly/blocks_compressed.js",
-    "webapp/public/blockly/plugins.js",
-    "webapp/public/blockly/msg/js/en.js",
-    "built/pxtblocks.js"
-])
-    .pipe(concat("pxtblockly.js"))
-    .pipe(gulp.dest("built"));
+const pxtblocks = () => compileTsProject("pxtblocks", "built/pxtblocks", true);
 
 const pxtapp = () => gulp.src([
     "node_modules/lzma/src/lzma_worker-min.js",
@@ -86,7 +76,6 @@ const pxtembed = () => gulp.src([
     "built/pxtlib.js",
     "built/pxtcompiler.js",
     "built/pxtpy.js",
-    "built/pxtblockly.js",
     "built/pxtsim.js",
     "built/web/runnerembed.js"
 ])
@@ -121,8 +110,8 @@ function initWatch() {
     const tasks = [
         pxtlib,
         gulp.parallel(pxtcompiler, pxtsim, backendutils),
-        gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
-        pxteditor,
+        pxtpy,
+        gulp.parallel(pxtblocks, pxteditor),
         gulp.parallel(pxtrunner, cli, pxtcommon),
         gulp.parallel(updatestrings, browserifyEmbed),
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
@@ -142,7 +131,7 @@ function initWatch() {
     gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
-    gulp.watch("./pxtblocks/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
+    gulp.watch("./pxtblocks/**/*", gulp.series(pxtblocks, ...tasks.slice(4)));
 
     gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
 
@@ -162,7 +151,7 @@ function initWatchCli() {
     const tasks = [
         pxtlib,
         gulp.parallel(pxtcompiler),
-        gulp.parallel(pxtpy, gulp.series(pxtblocks, pxtblockly)),
+        pxtpy,
         cli,
         notifyBuildComplete
     ]
@@ -172,7 +161,6 @@ function initWatchCli() {
     gulp.watch("./pxtcompiler/**/*", gulp.series(pxtcompiler, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
-    gulp.watch("./pxtblockly/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
 
     gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
 }
@@ -388,8 +376,6 @@ const copyWebapp = () =>
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js",
-        "built/pxtblocks.js",
-        "built/pxtblockly.js",
         "built/pxtsim.js",
         "built/webapp/src/worker.js",
         "built/webapp/src/serviceworker.js",
@@ -401,17 +387,16 @@ const copyWebapp = () =>
 const copySemanticFonts = () => gulp.src("node_modules/semantic-ui-less/themes/default/assets/fonts/*")
     .pipe(gulp.dest("built/web/fonts"))
 
-const browserifyWebapp = () => process.env.PXT_ENV == 'production' ?
-    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js') :
-    exec('node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js --debug')
+const execBrowserify = (entryPoint, outfile) => process.env.PXT_ENV == 'production' ?
+    exec(`node node_modules/browserify/bin/cmd ${entryPoint} -g [ envify --NODE_ENV production ] -g [ uglifyify --ignore '**/node_modules/@blockly/**' ] -o ${outfile}`) :
+    exec(`node node_modules/browserify/bin/cmd ${entryPoint} -o ${outfile} --debug`);
 
-const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
-    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/assetEditor.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/pxtasseteditor.js') :
-    exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
+const browserifyWebapp = () => execBrowserify("./built/webapp/src/app.js", "./built/web/main.js");
 
-const browserifyEmbed = () => process.env.PXT_ENV == 'production' ?
-    exec('node node_modules/browserify/bin/cmd ./built/pxtrunner/embed.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/runnerembed.js') :
-    exec('node node_modules/browserify/bin/cmd built/pxtrunner/embed.js -o built/web/runnerembed.js --debug')
+const browserifyAssetEditor = () => execBrowserify("./built/webapp/src/assetEditor.js", "./built/web/pxtasseteditor.js");
+
+const browserifyEmbed = () => execBrowserify("./built/pxtrunner/embed.js", "./built/web/runnerembed.js");
+
 
 const buildSVGIcons = () => {
     let webfontsGenerator = require('@vusion/webfonts-generator')
@@ -533,37 +518,6 @@ const copyMonaco = gulp.series(
     inlineCodiconFont,
     stripMonacoSourceMaps
 );
-
-
-
-/********************************************************
-                      Blockly
-*********************************************************/
-
-const copyBlocklyCompressed = () => gulp.src([
-    "node_modules/pxt-blockly/blocks_compressed.js",
-    "node_modules/pxt-blockly/blockly_compressed.js"
-])
-    .pipe(gulp.dest("webapp/public/blockly/"));
-
-const copyBlocklyExtensions = () => gulp.src("node_modules/@blockly/**/dist/index.js")
-    .pipe(concat("plugins.js"))
-    .pipe(gulp.dest("webapp/public/blockly/"));
-
-const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
-    .pipe(gulp.dest("webapp/public/blockly/msg/js/"));
-
-const copyBlocklyEnJson = () => gulp.src("node_modules/pxt-blockly/msg/json/en.json")
-    .pipe(gulp.dest("webapp/public/blockly/msg/json/"));
-
-const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media/*")
-    .pipe(gulp.dest("webapp/public/blockly/media"))
-
-const copyBlocklyTypings = () => gulp.src("node_modules/pxt-blockly/typings/blockly.d.ts")
-    .pipe(gulp.dest("localtypings/"))
-
-const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyExtensions, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia, copyBlocklyTypings);
-
 
 /********************************************************
                       Skillmap
@@ -764,7 +718,10 @@ const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 const testpxteditor = pxtEditorTestTask();
 
-const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/tests/", true);
+const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/", true);
+const browserifyKarma = () =>
+    exec('node node_modules/browserify/bin/cmd built/tests/blocklycompiler-test/test.spec.js -o built/tests/karma-test-runner.js --debug');
+
 const runKarma = () => {
     let command;
     if (isWin32) {
@@ -777,9 +734,11 @@ const runKarma = () => {
     }
     return exec(command, true);
 }
-const karma = gulp.series(buildKarmaRunner, runKarma);
+const karma = gulp.series(buildKarmaRunner, browserifyKarma, runKarma);
 
-const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/tests", true)
+const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/", true);
+const browserifyBlocksTestRunner = () =>
+    exec('node node_modules/browserify/bin/cmd built/tests/blocks-test/blocksrunner.js -o built/tests/blocksrunner.js --debug');
 
 const testAll = gulp.series(
     testdecompiler,
@@ -849,11 +808,10 @@ const buildAll = gulp.series(
     updatestrings,
     maybeUpdateWebappStrings(),
     copyTypescriptServices,
-    copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
-    gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
-    pxteditor,
+    pxtpy,
+    gulp.parallel(pxteditor, pxtblocks),
     gulp.parallel(pxtrunner, cli, pxtcommon),
     browserifyEmbed,
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
@@ -866,6 +824,7 @@ const buildAll = gulp.series(
     browserifyAssetEditor,
     gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
     buildBlocksTestRunner,
+    browserifyBlocksTestRunner,
     runUglify
 );
 
@@ -876,7 +835,7 @@ exports.clean = clean;
 exports.build = buildAll;
 
 exports.webapp = gulp.series(
-    reactCommon,
+    gulp.parallel(reactCommon, pxtblocks, pxteditor),
     webapp,
     browserifyWebapp,
     browserifyAssetEditor
@@ -884,7 +843,6 @@ exports.webapp = gulp.series(
 
 exports.skillmapTest = testSkillmap;
 exports.updatestrings = updatestrings;
-exports.updateblockly = copyBlockly;
 exports.lint = lint
 exports.testdecompiler = testdecompiler;
 exports.testlang = testlang;
@@ -915,7 +873,7 @@ exports.testpxteditor = testpxteditor;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
-    gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
+    pxtpy,
     pxteditor,
     gulp.parallel(pxtrunner, cli, pxtcommon),
     pxtjs
