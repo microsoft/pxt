@@ -42,7 +42,7 @@ interface CriteriaTableProps {}
 const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    return teacherTool.rubric.criteria && teacherTool.rubric.criteria.length > 0 ? (
+    return teacherTool.rubric.criteria?.length > 0 ? (
         <div className={css["criteria-table"]} role="table" aria-label={Strings.Criteria}>
             <div className={css["criteria-header"]} role="row">
                 <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
