@@ -48,19 +48,21 @@ const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
 
     return teacherTool.rubric.criteria?.length > 0 ? (
         <div className={css["criteria-table"]} role="table" aria-label={Strings.Criteria}>
-            <div className={css["criteria-header"]} role="row">
-                <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader" tabIndex={0}>
-                    {Strings.Criteria}
-                </div>
-                <div
-                    className={classList(css["cell"], css["criteria-action-menu-cell"])}
-                    role="columnheader"
-                    aria-label={Strings.Actions}
-                >
-                    {/* Intentionally left empty */}
+            <div role="rowgroup">
+                <div className={css["criteria-header"]} role="row">
+                    <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader" tabIndex={0}>
+                        {Strings.Criteria}
+                    </div>
+                    <div
+                        className={classList(css["cell"], css["criteria-action-menu-cell"])}
+                        role="columnheader"
+                        aria-label={Strings.Actions}
+                    >
+                        {/* Intentionally left empty */}
+                    </div>
                 </div>
             </div>
-            <div className={css["criteria-table-body"]}>
+            <div className={css["criteria-table-body"]} role="rowgroup">
                 {teacherTool.rubric.criteria.map(criteriaInstance => {
                     return (
                         <CriteriaInstanceRow criteriaInstance={criteriaInstance} key={criteriaInstance.instanceId} />
