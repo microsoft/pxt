@@ -70,8 +70,9 @@ export function getSelectableCatalogCriteria(state: AppState): CatalogCriteria[]
     return (
         state.catalog?.filter(
             catalogCriteria =>
-                (catalogCriteria.parameters && catalogCriteria.parameters.length > 0) ||
-                !usedCatalogCriteria.includes(catalogCriteria.id)
+                ((catalogCriteria.parameters && catalogCriteria.parameters.length > 0) ||
+                !usedCatalogCriteria.includes(catalogCriteria.id)) &&
+                !catalogCriteria.hideInCatalog
         ) ?? []
     );
 }
