@@ -52,7 +52,62 @@ export class FieldSlider extends Blockly.FieldNumber {
         this.setConstraints(min, max, precision);
 
         this.step_ = parseFloat(step) || undefined;
-    };
+    }
+
+    // Mostly the same as FieldNumber, but doesn't constrain min and max
+    protected override doClassValidation_(newValue?: any): number {
+        if (newValue === null) {
+            return null;
+        }
+
+        // Clean up text.
+        newValue = `${newValue}`;
+        // TODO: Handle cases like 'ten', '1.203,14', etc.
+        // 'O' is sometimes mistaken for '0' by inexperienced users.
+        newValue = newValue.replace(/O/gi, '0');
+        // Strip out thousands separators.
+        newValue = newValue.replace(/,/g, '');
+        // Ignore case of 'Infinity'.
+        newValue = newValue.replace(/infinity/i, 'Infinity');
+
+        // Clean up number.
+        let n = Number(newValue || 0);
+        if (isNaN(n)) {
+            // Invalid number.
+            return null;
+        }
+
+        // We allow values outside of the range with sliders in pxt
+        // n = Math.min(Math.max(n, this.min_), this.max_);
+
+        // Round to nearest multiple of precision.
+        if (this.precision_ && isFinite(n)) {
+            n = Math.round(n / this.precision_) * this.precision_;
+        }
+
+        let precisionString = String(this.precision_);
+        if (precisionString.indexOf('e') !== -1) {
+            // String() is fast.  But it turns .0000001 into '1e-7'.
+            // Use the much slower toLocaleString to access all the digits.
+            precisionString = this.precision_.toLocaleString('en-US', {
+                maximumFractionDigits: 20,
+            });
+        }
+        const decimalIndex = precisionString.indexOf('.');
+        let decimalPlaces: number;
+        if (decimalIndex === -1) {
+            // If the precision is 0 (float) allow any number of decimals,
+            // otherwise allow none.
+            decimalPlaces = this.precision_ ? 0 : null;
+        } else {
+            decimalPlaces = precisionString.length - decimalIndex - 1;
+        }
+        // Clean up floating point errors.
+        if (decimalPlaces !== null) {
+            n = Number(n.toFixed(decimalPlaces));
+        }
+        return n;
+    }
 
 
     protected showEditor_(_e?: Event, quietInput?: boolean): void {

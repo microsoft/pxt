@@ -739,6 +739,8 @@ const karma = gulp.series(buildKarmaRunner, browserifyKarma, runKarma);
 const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/", true);
 const browserifyBlocksTestRunner = () =>
     exec('node node_modules/browserify/bin/cmd built/tests/blocks-test/blocksrunner.js -o built/tests/blocksrunner.js --debug');
+const browserifyBlocksPrep = () =>
+    exec('node node_modules/browserify/bin/cmd built/tests/blocks-test/blockssetup.js -o built/tests/blockssetup.js --debug');
 
 const testAll = gulp.series(
     testdecompiler,
@@ -824,7 +826,7 @@ const buildAll = gulp.series(
     browserifyAssetEditor,
     gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
     buildBlocksTestRunner,
-    browserifyBlocksTestRunner,
+    gulp.parallel(browserifyBlocksTestRunner, browserifyBlocksPrep),
     runUglify
 );
 
