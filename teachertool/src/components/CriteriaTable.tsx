@@ -48,7 +48,7 @@ const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
         <div className={css["criteria-table"]} role="table" aria-label={Strings.Criteria}>
             <div role="rowgroup">
                 <div className={css["criteria-header"]} role="row">
-                    <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader" tabIndex={0}>
+                    <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
                         {Strings.Criteria}
                     </div>
                     <div
