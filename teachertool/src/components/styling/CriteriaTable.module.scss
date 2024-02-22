@@ -17,9 +17,17 @@
     }
 
     .criteria-text-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
         text-align: left;
         padding: 0.5rem 0.5rem 0.5rem 0.7rem;
         border-right: 1px solid var(--pxt-content-accent);
+
+        .criteria-description {
+            color: var(--pxt-page-foreground-light)
+        }
     }
 
     .criteria-action-menu-cell {
