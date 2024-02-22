@@ -19,9 +19,12 @@ const CriteriaInstanceRow: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaI
     }
 
     return catalogCriteria ? (
-        <div className={css["criteria-instance-display"]} role="row">
+        <div className={css["criteria-instance-display"]} role="row" title={catalogCriteria.template}>
             <div className={classList(css["cell"], css["criteria-text-cell"])} role="cell">
                 {catalogCriteria.template}
+                {catalogCriteria.description && (
+                    <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
+                )}
             </div>
             <div
                 className={classList(css["cell"], css["criteria-action-menu-cell"])}
