@@ -9,7 +9,7 @@ import { getSelectableCatalogCriteria } from "../state/helpers";
 import css from "./styling/CatalogModal.module.scss";
 
 interface CatalogCriteriaDisplayProps {
-    criteria: CatalogCriteria
+    criteria: CatalogCriteria;
 }
 const CatalogCriteriaDisplay: React.FC<CatalogCriteriaDisplayProps> = ({ criteria }) => {
     return (
@@ -18,7 +18,7 @@ const CatalogCriteriaDisplay: React.FC<CatalogCriteriaDisplayProps> = ({ criteri
             {criteria.description && <div className={css["criteria-description"]}>{criteria.description}</div>}
         </div>
     );
-}
+};
 
 interface CatalogModalProps {}
 export const CatalogModal: React.FC<CatalogModalProps> = ({}) => {
