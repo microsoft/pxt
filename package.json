@@ -25,7 +25,7 @@
   "files": [
     "README.md",
     "built/*.js",
-    "built/*.d.ts",
+    "built/**/*.d.ts",
     "built/pxt-common.json",
     "built/web/fonts",
     "built/web/*.js",
