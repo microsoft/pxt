@@ -102,7 +102,7 @@ export async function runValidatorPlanAsync(
             type: "pxteditor",
             action: "runeval",
             validatorPlan: validatorPlan,
-            planLib: planLib
+            planLib: planLib,
         } as pxt.editor.EditorMessageRunEvalRequest);
         const result = response as pxt.editor.EditorMessageResponse;
         validateResponse(result, true); // Throws on failure
