@@ -1,5 +1,3 @@
-/// <reference path="../../../built/pxtblocks.d.ts"/>
-
 import { useContext } from "react";
 import { Strings } from "../constants";
 import { AppStateContext } from "../state/appStateContext";
