@@ -167,7 +167,7 @@
     "test:lang": "gulp testlang",
     "update": "gulp update",
     "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch",
-    "prepare": "bash scripts/npm-prepare.sh",
+    "prepare": "node ./scripts/npm-prepare.js",
     "postinstall": "node ./scripts/patchUglifyify.js"
   }
 }
