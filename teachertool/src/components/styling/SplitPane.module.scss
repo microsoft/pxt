@@ -4,18 +4,24 @@
     width: 100%;
 
     .left {
-        position: relative;
         flex-grow: 0;
         flex-shrink: 0;
         overflow: auto;
     }
 
     .right {
-        position: relative;
         flex-grow: 1;
         flex-shrink: 1;
         overflow: auto;
     }
+
+  .resizing-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
 }
 
 .split-vertical {
@@ -52,9 +58,4 @@
         height: 5px;
         cursor: ns-resize;
     }
-}
-
-.resizing-overlay {
-    position: absolute;
-    inset: 0;
 }

@@ -15,7 +15,17 @@ interface IProps {
     onResizeEnd?: (size: number | string) => void;
 }
 
-export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, startingSize, left, right, leftMinSize, rightMinSize, onResizeEnd }) => {
+export const SplitPane: React.FC<IProps> = ({
+    className,
+    split,
+    defaultSize,
+    startingSize,
+    left,
+    right,
+    leftMinSize,
+    rightMinSize,
+    onResizeEnd,
+}) => {
     const [size, setSize] = React.useState(startingSize ?? defaultSize);
     const [isResizing, setIsResizing] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -44,6 +54,7 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
                     ? `${((clientX - containerRect.left) / containerRect.width) * 100}%`
                     : `${((clientY - containerRect.top) / containerRect.height) * 100}%`;
 
+            setIsResizing(true); // Do this here rather than inside startResizing to prevent interference with double click detection.
             setSize(newSize);
         }
     }
@@ -54,8 +65,6 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
         document.addEventListener("mouseup", endResizing);
         document.addEventListener("touchmove", handleResizeTouch);
         document.addEventListener("touchend", endResizing);
-
-        setIsResizing(true);
     }
 
     function endResizing() {
@@ -88,21 +97,23 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
         <div ref={containerRef} className={classList(css["split-pane"], css[`split-${split}`], className)}>
             <div className={css[`left`]} style={leftStyle}>
                 {left}
-
-                {/*
-                    This overlay is necessary to prevent any other parts of the page (particularly iframes)
-                    from intercepting the mouse events while resizing. We simply add a transparent div over the
-                    left and right sections.
-                */}
-                <div className={classList(css["resizing-overlay"], isResizing ? undefined : "hidden")} />
             </div>
-            <div className={css[`splitter`]} onMouseDown={startResizing} onTouchStart={startResizing} onDoubleClick={setToDefaultSize}>
+            <div
+                className={css[`splitter`]}
+                onMouseDown={startResizing}
+                onTouchStart={startResizing}
+                onDoubleClick={setToDefaultSize}
+            >
                 <div className={css[`splitter-inner`]} />
             </div>
-            <div className={css[`right`]}>
-                {right}
-                <div className={classList(css["resizing-overlay"], isResizing ? undefined : "hidden")} />
-            </div>
+            <div className={css[`right`]}>{right}</div>
+
+            {/*
+                This overlay is necessary to prevent any other parts of the page (particularly iframes)
+                from intercepting the mouse events while resizing. We simply add a transparent div over the
+                left and right sections.
+            */}
+            <div className={classList(css["resizing-overlay"], isResizing ? undefined : "hidden")} />
         </div>
     );
 };
