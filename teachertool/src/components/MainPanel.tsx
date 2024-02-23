@@ -16,8 +16,6 @@ export const MainPanel: React.FC<IProps> = () => {
 
     const lastSavedSplitPosition = getLastSplitPosition() ?? defaultSize;
 
-    // TODO : fix horizontal (offset within the view?)
-
     return (
         <div className={css["main-panel"]}>
             <SplitPane
