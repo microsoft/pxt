@@ -10,6 +10,7 @@ import { Rubric } from "../types/rubric";
 const KEY_PREFIX = "teachertool";
 const AUTORUN_KEY = [KEY_PREFIX, "autorun"].join("/");
 const LAST_ACTIVE_RUBRIC_KEY = [KEY_PREFIX, "lastActiveRubric"].join("/");
+const SPLIT_POSITION_KEY = [KEY_PREFIX, "splitPosition"].join("/");
 
 function getValue(key: string, defaultValue?: string): string | undefined {
     return localStorage.getItem(key) || defaultValue;
@@ -143,6 +144,23 @@ export function getLastActiveRubricName(): string {
 export function setLastActiveRubricName(name: string) {
     try {
         setValue(LAST_ACTIVE_RUBRIC_KEY, name);
+    } catch (e) {
+        logError(ErrorCode.localStorageWriteError, e);
+    }
+}
+
+export function getSplitPosition(): string {
+    try {
+        return getValue(SPLIT_POSITION_KEY) ?? "";
+    } catch (e) {
+        logError(ErrorCode.localStorageReadError, e);
+        return "";
+    }
+}
+
+export function setSplitPosition(position: string) {
+    try {
+        setValue(SPLIT_POSITION_KEY, position);
     } catch (e) {
         logError(ErrorCode.localStorageWriteError, e);
     }

@@ -9,9 +9,10 @@ interface IProps {
     primary: "left" | "right";
     left: React.ReactNode;
     right: React.ReactNode;
+    onResize?: (size: number | string) => void;
 }
 
-export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, left, right }) => {
+export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, left, right, onResize }) => {
     const [size, setSize] = React.useState(defaultSize);
     const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -33,6 +34,7 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, lef
                     ? `${(clientX / containerRect.width) * 100}%`
                     : `${(clientY / containerRect.height) * 100}%`;
             setSize(newSize);
+            onResize?.(newSize);
         }
     }
 
