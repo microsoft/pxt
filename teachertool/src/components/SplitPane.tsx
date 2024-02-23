@@ -9,12 +9,19 @@ interface IProps {
     primary: "left" | "right";
     left: React.ReactNode;
     right: React.ReactNode;
-    onResize?: (size: number | string) => void;
+    onResizeEnd?: (size: number | string) => void;
 }
 
-export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, left, right, onResize }) => {
+export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, left, right, onResizeEnd }) => {
     const [size, setSize] = React.useState(defaultSize);
+    const [isResizing, setIsResizing] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (!isResizing) {
+            onResizeEnd?.(size);
+        }
+    }, [isResizing]);
 
     function handleResizeMouse(event: MouseEvent) {
         handleResize(event.clientX, event.clientY);
@@ -33,24 +40,29 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, lef
                 split === "vertical"
                     ? `${(clientX / containerRect.width) * 100}%`
                     : `${(clientY / containerRect.height) * 100}%`;
+
+            console.log("newSize", newSize);
             setSize(newSize);
-            onResize?.(newSize);
         }
     }
 
-    function addResizeListeners(event: React.MouseEvent | React.TouchEvent) {
+    function startResizing(event: React.MouseEvent | React.TouchEvent) {
         event.preventDefault();
         document.addEventListener("mousemove", handleResizeMouse);
-        document.addEventListener("mouseup", removeResizeListeners);
+        document.addEventListener("mouseup", endResizing);
         document.addEventListener("touchmove", handleResizeTouch);
-        document.addEventListener("touchend", removeResizeListeners);
+        document.addEventListener("touchend", endResizing);
+
+        setIsResizing(true);
     }
 
-    function removeResizeListeners() {
+    function endResizing() {
         document.removeEventListener("mousemove", handleResizeMouse);
-        document.removeEventListener("mouseup", removeResizeListeners);
+        document.removeEventListener("mouseup", endResizing);
         document.removeEventListener("touchmove", handleResizeTouch);
-        document.removeEventListener("touchend", removeResizeListeners);
+        document.removeEventListener("touchend", endResizing);
+
+        setIsResizing(false);
     }
 
     return (
@@ -60,8 +72,8 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, lef
             </div>
             <div
                 className={css[`splitter-${split}`]}
-                onMouseDown={addResizeListeners}
-                onTouchStart={addResizeListeners}
+                onMouseDown={startResizing}
+                onTouchStart={startResizing}
             >
                 <div className={css[`splitter-${split}-inner`]} />
             </div>

@@ -8,13 +8,15 @@ import { getSplitPosition as getLastSplitPosition, setSplitPosition as setLastSp
 interface IProps {}
 
 export const MainPanel: React.FC<IProps> = () => {
-    function handleResize(size: number | string) {
+    function handleResizeEnd(size: number | string) {
         setLastSplitPosition(size.toString());
     }
 
     const lastSavedSplitPosition = getLastSplitPosition() ?? "50%";
 
-    // TODO still - fix arrow mouse display, figure out why it isn't working with the iframe loaded. Maybe test local storage more (does it redraw a bunch because of this changing after the change in SplitPane?)...
+    // TODO still:
+    // figure out why it isn't working with the iframe loaded.
+    // Double click to restore defaults.
 
     return (
         <div className={css["main-panel"]}>
@@ -24,7 +26,7 @@ export const MainPanel: React.FC<IProps> = () => {
                 primary={"left"}
                 left={<RubricWorkspace />}
                 right={<ProjectWorkspace />}
-                onResize={handleResize}
+                onResizeEnd={handleResizeEnd}
             />
         </div>
     );
