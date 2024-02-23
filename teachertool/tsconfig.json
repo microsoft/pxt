@@ -15,7 +15,10 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmit": true,
-        "jsx": "react-jsx"
+        "jsx": "react-jsx",
+        "types": [
+          "../localtypings/pxtarget.d.ts"
+        ]
     },
     "include": ["src"]
 }

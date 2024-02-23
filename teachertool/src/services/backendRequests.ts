@@ -2,6 +2,21 @@ import { stateAndDispatch } from "../state";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
 
+export async function fetchJsonDocAsync<T = any>(url: string): Promise<T | undefined> {
+    try {
+        // TODO: Prepend CDN origin if not localhost
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error("Unable to fetch the json file from CDN");
+        } else {
+            const json = await response.json();
+            return json;
+        }
+    } catch (e) {
+        logError(ErrorCode.fetchJsonDocAsync, e);
+    }
+}
+
 export async function getProjectTextAsync(projectId: string): Promise<pxt.Cloud.JsonText | undefined> {
     try {
         const projectTextUrl = `${pxt.Cloud.apiRoot}/${projectId}/text`;

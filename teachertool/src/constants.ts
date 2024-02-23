@@ -1,5 +1,6 @@
 export namespace Strings {
-    export const ConfirmReplaceRubric = lf("This will replace your current rubric. Continue?");
+    export const ErrorLoadingRubricMsg = lf("That wasn't a valid rubric.");
+    export const ConfirmReplaceRubricMsg = lf("This will replace your current rubric. Continue?");
     export const UntitledProject = lf("Untitled Project");
     export const UntitledRubric = lf("Untitled Rubric");
     export const NewRubric = lf("New Rubric");
@@ -22,6 +23,7 @@ export namespace Ticks {
     export const NewRubric = "teachertool.newrubric";
     export const ImportRubric = "teachertool.importrubric";
     export const ExportRubric = "teachertool.exportrubric";
+    export const LoadRubric = "teachertool.loadrubric";
     export const Evaluate = "teachertool.evaluate";
     export const Autorun = "teachertool.autorun";
     export const AddCriteria = "teachertool.addcriteria";

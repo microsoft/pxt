@@ -1,17 +1,22 @@
+import "swiper/scss";
+import "swiper/scss/navigation";
+import "swiper/scss/mousewheel";
+
 import * as React from "react";
+import { useContext, useState } from "react";
 import css from "./styling/HomeScreen.module.scss";
 import { Link } from "react-common/components/controls/Link";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { showModal } from "../transforms/showModal";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
+import { loadRubricAsync } from "../transforms/loadRubricAsync";
 import { Constants, Strings, Ticks } from "../constants";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
-
-import "swiper/scss";
-import "swiper/scss/navigation";
-import "swiper/scss/mousewheel";
+import { AppStateContext } from "../state/appStateContext";
+import { CarouselCardSet, RequestStatus, CarouselRubricResourceCard } from "../types";
+import { useJsonDocRequest } from "../hooks/useJsonDocRequest";
 
 const Welcome: React.FC = () => {
     return (
@@ -27,14 +32,14 @@ const Welcome: React.FC = () => {
     );
 };
 
-interface CardProps {
+interface IconCardProps {
     title: string;
     className?: string;
     icon?: string;
     onClick: () => void;
 }
 
-const Card: React.FC<CardProps> = ({ title, className, icon, onClick }) => {
+const IconCard: React.FC<IconCardProps> = ({ title, className, icon, onClick }) => {
     return (
         <div className={css.cardContainer}>
             <Button className={classList(css.cardButton, className)} title={title} onClick={onClick}>
@@ -46,6 +51,60 @@ const Card: React.FC<CardProps> = ({ title, className, icon, onClick }) => {
                     )}
                     <div className={css.cardTitle}>
                         <h3>{title}</h3>
+                    </div>
+                </div>
+            </Button>
+        </div>
+    );
+};
+
+interface LoadingCardProps {
+    delay?: boolean;
+}
+
+const LoadingCard: React.FC<LoadingCardProps> = ({ delay }) => {
+    return (
+        <div className={css.cardContainer}>
+            <Button
+                className={classList(css.cardButton, css.loadingGradient, delay ? css.loadingGradientDelay : undefined)}
+                title={""}
+                onClick={() => {}}
+            >
+                <div className={css.cardDiv}>
+                    <div className={css.loadingGradient}></div>
+                </div>
+            </Button>
+        </div>
+    );
+};
+
+interface RubricResourceCardProps {
+    cardTitle: string;
+    imageUrl: string;
+    rubricUrl: string;
+}
+
+const RubricResourceCard: React.FC<RubricResourceCardProps> = ({ cardTitle, imageUrl, rubricUrl }) => {
+    const onRubricClickedAsync = async () => {
+        pxt.tickEvent(Ticks.LoadRubric, { rubricUrl });
+        await loadRubricAsync(rubricUrl);
+    };
+    return (
+        <div className={css.cardContainer}>
+            <Button
+                className={classList(css.cardButton, css.rubricResource)}
+                title={cardTitle}
+                onClick={onRubricClickedAsync}
+            >
+                <div
+                    className={classList(css.cardDiv)}
+                    style={{
+                        backgroundImage: `url("${window.location.origin}${imageUrl}")`,
+                        backgroundSize: "cover",
+                    }}
+                >
+                    <div className={classList(css.cardTitle, css.rubricResourceCardTitle)}>
+                        <h3>{cardTitle}</h3>
                     </div>
                 </div>
             </Button>
@@ -65,7 +124,9 @@ const Carousel: React.FC<CarouselProps> = ({ children }) => {
             allowTouchMove={true}
             slidesOffsetBefore={32}
             navigation={true}
-            mousewheel={true}
+            mousewheel={{
+                forceToAxis: true,
+            }}
             modules={[Navigation, Mousewheel]}
             className={css.swiperCarousel}
         >
@@ -95,13 +156,13 @@ const GetStarted: React.FC = () => {
                 <h2>{lf("Get Started")}</h2>
             </div>
             <Carousel>
-                <Card
+                <IconCard
                     title={Strings.NewRubric}
                     icon={"fas fa-plus-circle"}
                     className={css.newRubric}
                     onClick={onNewRubricClickedAsync}
                 />
-                <Card
+                <IconCard
                     title={Strings.ImportRubric}
                     icon={"fas fa-file-upload"}
                     className={css.importRubric}
@@ -112,11 +173,76 @@ const GetStarted: React.FC = () => {
     );
 };
 
+interface DataCarouselProps {
+    title: string;
+    cardsUrl: string;
+}
+
+const CardCarousel: React.FC<DataCarouselProps> = ({ title, cardsUrl }) => {
+    const [cardSet, setCardSet] = useState<CarouselCardSet | undefined>();
+    const [fetchStatus, setFetchStatus] = useState<RequestStatus | undefined>();
+
+    useJsonDocRequest(cardsUrl, setFetchStatus, setCardSet);
+
+    return (
+        <>
+            <div className={css.carouselRow}>
+                <div className={css.rowTitle}>
+                    <h2>{title}</h2>
+                </div>
+                {(fetchStatus === "loading" || fetchStatus === "error") && (
+                    <Carousel>
+                        <LoadingCard />
+                        <LoadingCard delay={true} />
+                    </Carousel>
+                )}
+                {fetchStatus === "success" && (
+                    <Carousel>
+                        {cardSet?.cards.map((card, index) => {
+                            switch (card.cardType) {
+                                case "rubric-resource": {
+                                    const rubricCard = card as CarouselRubricResourceCard;
+                                    return (
+                                        <RubricResourceCard
+                                            key={index}
+                                            cardTitle={rubricCard.cardTitle}
+                                            imageUrl={rubricCard.imageUrl}
+                                            rubricUrl={rubricCard.rubricUrl}
+                                        />
+                                    );
+                                }
+                                default:
+                                    return <LoadingCard />;
+                            }
+                        })}
+                    </Carousel>
+                )}
+            </div>
+        </>
+    );
+};
+
+const CardCarousels: React.FC = () => {
+    const { state } = useContext(AppStateContext);
+    const { targetConfig } = state;
+    const teachertool = targetConfig?.teachertool;
+    const carousels = teachertool?.carousels;
+
+    return (
+        <>
+            {carousels?.map((carousel, index) => (
+                <CardCarousel key={index} title={carousel.title} cardsUrl={carousel.cardsUrl} />
+            ))}
+        </>
+    );
+};
+
 export const HomeScreen: React.FC = () => {
     return (
         <div className={css.page}>
             <Welcome />
             <GetStarted />
+            <CardCarousels />
         </div>
     );
 };

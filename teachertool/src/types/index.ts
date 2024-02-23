@@ -24,3 +24,21 @@ export type ToastWithId = Toast & {
 export type ModalType = "catalog-display" | "import-rubric";
 
 export type TabName = "home" | "rubric" | "results";
+
+// Rubric Card types that can be appear in the carousel
+export type CarouselCard = {
+    cardType: string;
+};
+
+export type CarouselRubricResourceCard = CarouselCard & {
+    cardType: "rubric-card";
+    cardTitle: string;
+    imageUrl: string;
+    rubricUrl: string;
+};
+
+export type CarouselCardSet = {
+    cards: CarouselCard[];
+};
+
+export type RequestStatus = "init" | "loading" | "error" | "success";
