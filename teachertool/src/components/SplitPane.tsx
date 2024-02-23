@@ -87,14 +87,14 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
     }
 
     return (
-        <div ref={containerRef} className={classList(css[`split-pane-${split}`], className)}>
-            <div className={css[`left-${split}`]} style={leftStyle}>
+        <div ref={containerRef} className={classList(css["split-pane"], css[`split-${split}`], className)}>
+            <div className={css[`left`]} style={leftStyle}>
                 {left}
             </div>
-            <div className={css[`splitter-${split}`]} onMouseDown={startResizing} onTouchStart={startResizing} onDoubleClick={setToDefaultSize}>
-                <div className={css[`splitter-${split}-inner`]} />
+            <div className={css[`splitter`]} onMouseDown={startResizing} onTouchStart={startResizing} onDoubleClick={setToDefaultSize}>
+                <div className={css[`splitter-inner`]} />
             </div>
-            <div className={css[`right-${split}`]}>{right}</div>
+            <div className={css[`right`]}>{right}</div>
 
             {/*
                 This overlay hack is necessary to prevent any other parts of the page (particularly iframes)
