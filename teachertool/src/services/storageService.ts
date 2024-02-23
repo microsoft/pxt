@@ -149,7 +149,7 @@ export function setLastActiveRubricName(name: string) {
     }
 }
 
-export function getSplitPosition(): string {
+export function getLastSplitPosition(): string {
     try {
         return getValue(SPLIT_POSITION_KEY) ?? "";
     } catch (e) {
@@ -158,7 +158,7 @@ export function getSplitPosition(): string {
     }
 }
 
-export function setSplitPosition(position: string) {
+export function setLastSplitPosition(position: string) {
     try {
         setValue(SPLIT_POSITION_KEY, position);
     } catch (e) {

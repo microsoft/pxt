@@ -3,7 +3,7 @@ import css from "./styling/MainPanel.module.scss";
 import { SplitPane } from "./SplitPane";
 import { RubricWorkspace } from "./RubricWorkspace";
 import { ProjectWorkspace } from "./ProjectWorkspace";
-import { getSplitPosition as getLastSplitPosition, setSplitPosition as setLastSplitPosition } from "../services/storageService";
+import { getLastSplitPosition, setLastSplitPosition } from "../services/storageService";
 
 interface IProps {}
 
