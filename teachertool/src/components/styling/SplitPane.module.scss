@@ -4,12 +4,14 @@
     width: 100%;
 
     .left {
+        position: relative;
         flex-grow: 0;
         flex-shrink: 0;
         overflow: auto;
     }
 
     .right {
+        position: relative;
         flex-grow: 1;
         flex-shrink: 1;
         overflow: auto;
@@ -27,8 +29,8 @@
             position: relative;
             background-color: transparent;
             transition: background-color 0.2s ease;
-            left: -2.5px;
-            width: 5px;
+            left: -3px;
+            width: 6px;
             height: 100%;
             cursor: ew-resize;
 

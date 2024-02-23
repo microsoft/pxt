@@ -19,7 +19,6 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
     const [size, setSize] = React.useState(startingSize ?? defaultSize);
     const [isResizing, setIsResizing] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const overlayRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         if (!isResizing) {
@@ -45,7 +44,6 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
                     ? `${((clientX - containerRect.left) / containerRect.width) * 100}%`
                     : `${((clientY - containerRect.top) / containerRect.height) * 100}%`;
 
-            console.log("newSize", newSize);
             setSize(newSize);
         }
     }
@@ -90,17 +88,21 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
         <div ref={containerRef} className={classList(css["split-pane"], css[`split-${split}`], className)}>
             <div className={css[`left`]} style={leftStyle}>
                 {left}
+
+                {/*
+                    This overlay is necessary to prevent any other parts of the page (particularly iframes)
+                    from intercepting the mouse events while resizing. We simply add a transparent div over the
+                    left and right sections.
+                */}
+                <div className={classList(css["resizing-overlay"], isResizing ? undefined : "hidden")} />
             </div>
             <div className={css[`splitter`]} onMouseDown={startResizing} onTouchStart={startResizing} onDoubleClick={setToDefaultSize}>
                 <div className={css[`splitter-inner`]} />
             </div>
-            <div className={css[`right`]}>{right}</div>
-
-            {/*
-                This overlay hack is necessary to prevent any other parts of the page (particularly iframes)
-                from intercepting the mouse events while resizing. We simply add a transparent div over everything.
-            */}
-            <div ref={overlayRef} className={classList(css["resizing-overlay"], isResizing ? undefined : "hidden")} />
+            <div className={css[`right`]}>
+                {right}
+                <div className={classList(css["resizing-overlay"], isResizing ? undefined : "hidden")} />
+            </div>
         </div>
     );
 };
