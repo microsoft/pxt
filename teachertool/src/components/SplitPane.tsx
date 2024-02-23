@@ -16,6 +16,7 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, lef
     const [size, setSize] = React.useState(defaultSize);
     const [isResizing, setIsResizing] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
+    const overlayRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         if (!isResizing) {
@@ -70,14 +71,16 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, lef
             <div className={css[`left-${split}`]} style={{ flexBasis: size }}>
                 {left}
             </div>
-            <div
-                className={css[`splitter-${split}`]}
-                onMouseDown={startResizing}
-                onTouchStart={startResizing}
-            >
+            <div className={css[`splitter-${split}`]} onMouseDown={startResizing} onTouchStart={startResizing}>
                 <div className={css[`splitter-${split}-inner`]} />
             </div>
             <div className={css[`right-${split}`]}>{right}</div>
+
+            {/*
+                This overlay hack is necessary to prevent any other parts of the page (particularly iframes)
+                from intercepting the mouse events while resizing. We simply add a transparent div over everything.
+            */}
+            <div ref={overlayRef} className={classList(css["resizing-overlay"], isResizing ? "" : "hidden")} />
         </div>
     );
 };

@@ -66,3 +66,8 @@
   height: 5px;
   cursor: ns-resize;
 }
+
+.resizing-overlay {
+  position: 'absolute';
+  inset: 0;
+}

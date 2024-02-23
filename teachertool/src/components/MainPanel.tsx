@@ -15,7 +15,6 @@ export const MainPanel: React.FC<IProps> = () => {
     const lastSavedSplitPosition = getLastSplitPosition() ?? "50%";
 
     // TODO still:
-    // figure out why it isn't working with the iframe loaded.
     // Double click to restore defaults.
 
     return (
