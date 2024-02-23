@@ -10,10 +10,12 @@ interface IProps {
     primary: "left" | "right";
     left: React.ReactNode;
     right: React.ReactNode;
+    leftMinSize?: number | string;
+    rightMinSize?: number | string;
     onResizeEnd?: (size: number | string) => void;
 }
 
-export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, startingSize, left, right, onResizeEnd }) => {
+export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, startingSize, left, right, leftMinSize, rightMinSize, onResizeEnd }) => {
     const [size, setSize] = React.useState(startingSize ?? defaultSize);
     const [isResizing, setIsResizing] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -72,9 +74,21 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
         onResizeEnd?.(defaultSize);
     }
 
+    const leftStyle: React.CSSProperties = { flexBasis: size };
+    if (split === "vertical") {
+        leftStyle.minWidth = leftMinSize;
+
+        // Setting right's minWidth doesn't work because left is still allowed
+        // to expand beyond it. Instead, set left's maxWidth.
+        leftStyle.maxWidth = `calc(100% - ${rightMinSize})`;
+    } else {
+        leftStyle.minHeight = leftMinSize;
+        leftStyle.maxHeight = `calc(100% - ${rightMinSize})`;
+    }
+
     return (
         <div ref={containerRef} className={classList(css[`split-pane-${split}`], className)}>
-            <div className={css[`left-${split}`]} style={{ flexBasis: size }}>
+            <div className={css[`left-${split}`]} style={leftStyle}>
                 {left}
             </div>
             <div className={css[`splitter-${split}`]} onMouseDown={startResizing} onTouchStart={startResizing} onDoubleClick={setToDefaultSize}>

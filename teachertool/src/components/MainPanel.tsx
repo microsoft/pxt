@@ -16,8 +16,7 @@ export const MainPanel: React.FC<IProps> = () => {
 
     const lastSavedSplitPosition = getLastSplitPosition() ?? defaultSize;
 
-    // TODO still:
-    // Min and Max sizes.
+    // TODO : fix horizontal (offset within the view?)
 
     return (
         <div className={css["main-panel"]}>
@@ -28,6 +27,8 @@ export const MainPanel: React.FC<IProps> = () => {
                 primary={"left"}
                 left={<RubricWorkspace />}
                 right={<ProjectWorkspace />}
+                leftMinSize="5rem"
+                rightMinSize="5rem"
                 onResizeEnd={handleResizeEnd}
             />
         </div>
