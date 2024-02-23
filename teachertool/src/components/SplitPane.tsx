@@ -13,7 +13,7 @@ interface IProps {
 
 export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, left, right }) => {
     const [size, setSize] = React.useState(defaultSize);
-    const leftRef = React.useRef<HTMLDivElement>(null);
+    const containerRef = React.useRef<HTMLDivElement>(null);
 
     function handleResizeMouse(event: MouseEvent) {
         handleResize(event.clientX, event.clientY);
@@ -26,9 +26,12 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, lef
     }
 
     function handleResize(clientX: number, clientY: number) {
-        const paneRect = leftRef.current?.getBoundingClientRect();
-        if (paneRect) {
-            const newSize = split === "vertical" ? clientX - paneRect.left : clientY - paneRect.top;
+        const containerRect = containerRef.current?.getBoundingClientRect();
+        if (containerRect) {
+            const newSize =
+                split === "vertical"
+                    ? `${(clientX / containerRect.width) * 100}%`
+                    : `${(clientY / containerRect.height) * 100}%`;
             setSize(newSize);
         }
     }
@@ -49,8 +52,8 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, lef
     }
 
     return (
-        <div className={classList(css[`split-pane-${split}`], className)}>
-            <div ref={leftRef} className={css[`left-${split}`]} style={{ flexBasis: size }}>
+        <div ref={containerRef} className={classList(css[`split-pane-${split}`], className)}>
+            <div className={css[`left-${split}`]} style={{ flexBasis: size }}>
                 {left}
             </div>
             <div
