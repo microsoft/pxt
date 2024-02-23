@@ -30,7 +30,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
     render() {
         return <div className="image-editor-wrapper">
             <div className="image-editor-gallery-content">
-                <ImageEditor ref="image-editor" singleFrame={true} onDoneClicked={this.onDoneClick} />
+                <ImageEditor ref="image-editor" singleFrame={true} onDoneClicked={this.onDoneClick} hideAssetName={!pxt.appTarget?.appTheme?.assetEditor} />
             </div>
         </div>
     }

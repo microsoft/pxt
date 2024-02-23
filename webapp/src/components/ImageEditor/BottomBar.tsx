@@ -22,6 +22,7 @@ export interface BottomBarProps {
 
     aspectRatioLocked: boolean;
     onionSkinEnabled: boolean;
+    hideAssetName: boolean;
 
     dispatchUndoImageEdit: () => void;
     dispatchRedoImageEdit: () => void;
@@ -67,7 +68,8 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             singleFrame,
             onDoneClick,
             assetName,
-            hideDoneButton
+            hideDoneButton,
+            hideAssetName
         } = this.props;
 
         const { assetNameMessage } = this.state;
@@ -124,19 +126,23 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                     {cursorLocation && `${cursorLocation[0]}, ${cursorLocation[1]}`}
                 </div>
                 <div className="image-editor-change-name">
-                    <input className="image-editor-input"
-                        title={lf("Asset Name")}
-                        value={assetNameState}
-                        placeholder={lf("Asset Name")}
-                        tabIndex={0}
-                        onChange={this.handleAssetNameChange}
-                        onFocus={this.disableShortcutsOnFocus}
-                        onBlur={this.handleAssetNameBlur}
-                        onKeyDown={this.handleDimensionalKeydown}
-                    />
-                    {assetNameMessage && <div className="ui pointing below red basic label">
-                        {assetNameMessage}
-                    </div>}
+                    {!hideAssetName &&
+                        <>
+                            <input className="image-editor-input"
+                                title={lf("Asset Name")}
+                                value={assetNameState}
+                                placeholder={lf("Asset Name")}
+                                tabIndex={0}
+                                onChange={this.handleAssetNameChange}
+                                onFocus={this.disableShortcutsOnFocus}
+                                onBlur={this.handleAssetNameBlur}
+                                onKeyDown={this.handleDimensionalKeydown}
+                            />
+                            {assetNameMessage && <div className="ui pointing below red basic label">
+                                {assetNameMessage}
+                            </div>}
+                        </>
+                    }
                 </div>
                 <div className="image-editor-undo-redo">
                     <IconButton
