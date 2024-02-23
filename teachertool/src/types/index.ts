@@ -25,13 +25,15 @@ export type ModalType = "catalog-display" | "import-rubric";
 
 export type TabName = "home" | "rubric" | "results";
 
+export type CardType = "rubric-resource";
+
 // Rubric Card types that can be appear in the carousel
 export type CarouselCard = {
-    cardType: string;
+    cardType: CardType;
 };
 
 export type CarouselRubricResourceCard = CarouselCard & {
-    cardType: "rubric-card";
+    cardType: "rubric-resource";
     cardTitle: string;
     imageUrl: string;
     rubricUrl: string;
