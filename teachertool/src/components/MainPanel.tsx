@@ -11,7 +11,7 @@ export const MainPanel: React.FC<IProps> = () => {
         <div className={css["main-panel"]}>
             <SplitPane
                 split={"vertical"}
-                defaultSize={"80%"}
+                defaultSize={"50%"}
                 primary={"left"}
                 left={<RubricWorkspace />}
                 right={<ProjectWorkspace />}
