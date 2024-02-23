@@ -8,20 +8,23 @@ import { getSplitPosition as getLastSplitPosition, setSplitPosition as setLastSp
 interface IProps {}
 
 export const MainPanel: React.FC<IProps> = () => {
+    const defaultSize = "50%";
+
     function handleResizeEnd(size: number | string) {
         setLastSplitPosition(size.toString());
     }
 
-    const lastSavedSplitPosition = getLastSplitPosition() ?? "50%";
+    const lastSavedSplitPosition = getLastSplitPosition() ?? defaultSize;
 
     // TODO still:
-    // Double click to restore defaults.
+    // Min and Max sizes.
 
     return (
         <div className={css["main-panel"]}>
             <SplitPane
                 split={"vertical"}
-                defaultSize={lastSavedSplitPosition}
+                defaultSize={defaultSize}
+                startingSize={lastSavedSplitPosition}
                 primary={"left"}
                 left={<RubricWorkspace />}
                 right={<ProjectWorkspace />}

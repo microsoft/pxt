@@ -5,15 +5,16 @@ import { classList } from "react-common/components/util";
 interface IProps {
     className?: string;
     split: "horizontal" | "vertical";
-    defaultSize: number | string;
+    defaultSize: number | string; // The size to reset to when double clicking the splitter.
+    startingSize?: number | string; // The size to use initially when creating the splitter. Defaults to `defaultSize`.
     primary: "left" | "right";
     left: React.ReactNode;
     right: React.ReactNode;
     onResizeEnd?: (size: number | string) => void;
 }
 
-export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, left, right, onResizeEnd }) => {
-    const [size, setSize] = React.useState(defaultSize);
+export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, startingSize, left, right, onResizeEnd }) => {
+    const [size, setSize] = React.useState(startingSize ?? defaultSize);
     const [isResizing, setIsResizing] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const overlayRef = React.useRef<HTMLDivElement>(null);
@@ -66,12 +67,17 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, lef
         setIsResizing(false);
     }
 
+    function setToDefaultSize() {
+        setSize(defaultSize);
+        onResizeEnd?.(defaultSize);
+    }
+
     return (
         <div ref={containerRef} className={classList(css[`split-pane-${split}`], className)}>
             <div className={css[`left-${split}`]} style={{ flexBasis: size }}>
                 {left}
             </div>
-            <div className={css[`splitter-${split}`]} onMouseDown={startResizing} onTouchStart={startResizing}>
+            <div className={css[`splitter-${split}`]} onMouseDown={startResizing} onTouchStart={startResizing} onDoubleClick={setToDefaultSize}>
                 <div className={css[`splitter-${split}-inner`]} />
             </div>
             <div className={css[`right-${split}`]}>{right}</div>
