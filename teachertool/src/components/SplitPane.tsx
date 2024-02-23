@@ -42,8 +42,8 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
         if (containerRect) {
             const newSize =
                 split === "vertical"
-                    ? `${(clientX / containerRect.width) * 100}%`
-                    : `${(clientY / containerRect.height) * 100}%`;
+                    ? `${((clientX - containerRect.left) / containerRect.width) * 100}%`
+                    : `${((clientY - containerRect.top) / containerRect.height) * 100}%`;
 
             console.log("newSize", newSize);
             setSize(newSize);
@@ -100,7 +100,7 @@ export const SplitPane: React.FC<IProps> = ({ className, split, defaultSize, sta
                 This overlay hack is necessary to prevent any other parts of the page (particularly iframes)
                 from intercepting the mouse events while resizing. We simply add a transparent div over everything.
             */}
-            <div ref={overlayRef} className={classList(css["resizing-overlay"], isResizing ? "" : "hidden")} />
+            <div ref={overlayRef} className={classList(css["resizing-overlay"], isResizing ? undefined : "hidden")} />
         </div>
     );
 };

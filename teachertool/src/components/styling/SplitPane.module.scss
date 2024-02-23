@@ -51,12 +51,14 @@
 }
 
 .left-horizontal {
-  flex: 1;
+  flex-grow: 0;
+  flex-shrink: 0;
   overflow: auto;
 }
 
 .right-horizontal {
-  flex: 1;
+  flex-grow: 1;
+  flex-shrink: 1;
   overflow: auto;
 }
 
