@@ -17,7 +17,7 @@ export function validateBlockFieldValueExists({ usedBlocks, fieldType, fieldValu
 
     const successfulBlocks = enabledSpecifiedBlocks.filter((block) => {
         if (fieldType === "VAR") {
-            return (block.getField(fieldType) as any).selectedOption_[0] === fieldValue;
+            return (block.getField(fieldType) as any).selectedOption[0] === fieldValue;
         } else {
             return block.getFieldValue(fieldType) === fieldValue;
         }
