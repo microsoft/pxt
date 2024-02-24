@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as Blockly from "blockly";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as sounds from "./sounds";
@@ -15,6 +16,8 @@ import { ProjectView } from "./app";
 import * as editortoolbar from "./editortoolbar";
 import * as ImmersiveReader from "./immersivereader";
 import { fireClickOnEnter } from "./util";
+
+import * as pxtblockly from "../../pxtblocks";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -71,7 +74,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
     const validateBlocks: pxt.Map<pxt.Map<string[]>> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
-            pxt.blocks.initializeAndInject(blocksInfo);
+            pxtblockly.initializeAndInject(blocksInfo);
             if (language == "python") {
                 return compiler.decompilePySnippetstoXmlAsync(code);
             }
@@ -83,7 +86,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     const blocksXml = xml[i];
                     const snippetHash = pxt.BrowserUtils.getTutorialCodeHash([code[i]]);
 
-                    headless = pxt.blocks.loadWorkspaceXml(blocksXml, false, { keepMetaComments: true });
+                    headless = pxtblockly.loadWorkspaceXml(blocksXml, false, { keepMetaComments: true });
                     if (!headless) {
                         pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
                         throw new Error("blocksXml failed to load");

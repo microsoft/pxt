@@ -1,0 +1,89 @@
+.criteria-table {
+    width: 100%;
+    border: 1px solid var(--pxt-content-accent);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+
+    i[class*="fas"] {
+        font-size: 1rem;
+    }
+
+    .cell {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        border-bottom: 1px solid var(--pxt-content-accent);
+    }
+
+    .criteria-text-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        text-align: left;
+        padding: 0.5rem 0.5rem 0.5rem 0.7rem;
+        border-right: 1px solid var(--pxt-content-accent);
+
+        .criteria-description {
+            color: var(--pxt-page-foreground-light)
+        }
+    }
+
+    .criteria-action-menu-cell {
+        text-align: center;
+        min-width: 3rem;
+        max-width: 3rem;
+        border-right: none;
+    }
+
+    .criteria-header {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        font-weight: 600;
+        opacity: 0.8;
+        height: 2rem;
+    }
+
+    .criteria-instance-display {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        transition: background-color 0.1s ease;
+        min-height: 3.5rem;
+
+        .delete-criteria-button {
+            width: 100%;
+            height: 100%;
+            background-color: var(--pxt-content-background);
+            opacity: 0; // Need opacity-based hiding (rather than display) for transitions
+            transition: background-color 0.1s ease, opacity 0.1s ease;
+            color: var(--black);
+            padding: 0.2rem;
+            margin: 0;
+            border-radius: 0;
+
+            &:hover {
+                background-color: var(--pxt-content-accent);
+            }
+
+            &:focus {
+                opacity: 1;
+            }
+        }
+
+        &:hover,
+        &:focus {
+            background-color: var(--pxt-content-background);
+
+            .delete-criteria-button {
+                opacity: 1;
+            }
+        }
+
+        &:last-child .cell {
+            border-bottom: none;
+        }
+    }
+}

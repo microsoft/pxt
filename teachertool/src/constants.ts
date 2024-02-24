@@ -5,6 +5,14 @@ export namespace Strings {
     export const NewRubric = lf("New Rubric");
     export const ImportRubric = lf("Import Rubric");
     export const ExportRubric = lf("Export Rubric");
+    export const Remove = lf("Remove");
+    export const Criteria = lf("Criteria");
+    export const Name = lf("Name");
+    export const RubricName = lf("Rubric Name");
+    export const AddCriteria = lf("Add Criteria");
+    export const Actions = lf("Actions");
+    export const AutoRun = lf("auto-run");
+    export const AutoRunDescription = lf("Automatically re-evaluate when the rubric or project changes");
 }
 
 export namespace Ticks {

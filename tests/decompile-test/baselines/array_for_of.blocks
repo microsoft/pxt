@@ -22,9 +22,10 @@
 </block>
 </value>
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">a</field>
-</shadow>
+</block>
 </value>
 <statement name="DO">
 <block type="variables_change">
@@ -49,9 +50,10 @@
 </block>
 </value>
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">b</field>
-</shadow>
+</block>
 </value>
 <statement name="DO">
 </statement>

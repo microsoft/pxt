@@ -21,9 +21,8 @@ module.exports = function(config) {
       'built/web/typescript.js',
       'webapp/public/blockly/**/*.js',
       'built/pxtlib.js',
-      'built/pxtblocks.js',
       'built/pxtcompiler.js',
-      'built/tests/tests.spec.js',
+      'built/tests/karma-test-runner.js',
 
       // test assets
       { pattern: 'tests/blocklycompiler-test/cases/*.blocks', watched: false, included: false, served: true, nocache: false },

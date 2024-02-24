@@ -1,0 +1,183 @@
+import * as Blockly from "blockly";
+import { createFlyoutGroupLabel, createFlyoutHeadingLabel, mkVariableFieldBlock } from "../toolbox";
+import { installBuiltinHelpInfo, setBuiltinHelpInfo } from "../help";
+import { provider } from "../constants";
+
+export function initVariables() {
+    // We only give types to "special" variables like enum members and we don't
+    // want those showing up in the variable dropdown so filter the variables
+    // that show up to only ones that have an empty type
+    (Blockly.FieldVariable.prototype as any).getVariableTypes_ = () => [""];
+
+    let varname = lf("{id:var}item");
+    Blockly.Variables.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
+        let xmlList: HTMLElement[] = [];
+
+        if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
+            // Add the Heading label
+            let headingLabel = createFlyoutHeadingLabel(lf("Variables"),
+                pxt.toolbox.getNamespaceColor('variables'),
+                pxt.toolbox.getNamespaceIcon('variables'));
+            xmlList.push(headingLabel);
+        }
+
+        let button = document.createElement('button') as HTMLElement;
+        button.setAttribute('text', lf("Make a Variable..."));
+        button.setAttribute('callbackKey', 'CREATE_VARIABLE');
+
+        workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
+            Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
+        });
+
+        xmlList.push(button);
+
+        let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace) as HTMLElement[];
+        xmlList = xmlList.concat(blockList);
+        return xmlList;
+    };
+    Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
+        let variableModelList = workspace.getVariablesOfType('');
+
+        let xmlList: HTMLElement[] = [];
+        if (variableModelList.length > 0) {
+            let mostRecentVariable = variableModelList[variableModelList.length - 1];
+            variableModelList.sort(Blockly.VariableModel.compareByName);
+            // variables getters first
+            for (let i = 0; i < variableModelList.length; i++) {
+                const variable = variableModelList[i];
+                if (Blockly.Blocks['variables_get']) {
+
+                    let block = mkVariableFieldBlock("variables_get", variable.getId(), variable.type, variable.name, false);
+                    block.setAttribute("gap", "8");
+                    xmlList.push(block);
+                }
+            }
+            xmlList[xmlList.length - 1].setAttribute('gap', '24');
+
+            if (Blockly.Blocks['variables_change'] || Blockly.Blocks['variables_set']) {
+                xmlList.unshift(createFlyoutGroupLabel(lf("Your Variables")));
+            }
+
+            if (Blockly.Blocks['variables_change']) {
+                let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
+                let block = mkVariableFieldBlock("variables_change", mostRecentVariable.getId(), mostRecentVariable.type, mostRecentVariable.name, false);
+                block.setAttribute("gap", gap + "")
+                {
+                    let value = Blockly.utils.xml.createElement('value');
+                    value.setAttribute('name', 'VALUE');
+                    let shadow = Blockly.utils.xml.createElement('shadow');
+                    shadow.setAttribute("type", "math_number");
+                    value.appendChild(shadow);
+                    let field = Blockly.utils.xml.createElement('field');
+                    field.setAttribute('name', 'NUM');
+                    field.appendChild(document.createTextNode("1"));
+                    shadow.appendChild(field);
+                    block.appendChild(value);
+                }
+                xmlList.unshift(block);
+            }
+            if (Blockly.Blocks['variables_set']) {
+                let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
+                let block = mkVariableFieldBlock("variables_set", mostRecentVariable.getId(), mostRecentVariable.type, mostRecentVariable.name, false);
+                block.setAttribute("gap", gap + "")
+                {
+                    let value = Blockly.utils.xml.createElement('value');
+                    value.setAttribute('name', 'VALUE');
+                    let shadow = Blockly.utils.xml.createElement('shadow');
+                    shadow.setAttribute("type", "math_number");
+                    value.appendChild(shadow);
+                    let field = Blockly.utils.xml.createElement('field');
+                    field.setAttribute('name', 'NUM');
+                    field.appendChild(document.createTextNode("0"));
+                    shadow.appendChild(field);
+                    block.appendChild(value);
+                }
+                xmlList.unshift(block);
+            }
+        }
+        return xmlList;
+    };
+
+    // builtin variables_get
+    const msg = Blockly.Msg;
+    const variablesGetId = "variables_get";
+    const variablesGetDef = pxt.blocks.getBlockDefinition(variablesGetId);
+    msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
+    installBuiltinHelpInfo(variablesGetId);
+
+    const variablesReporterGetId = "variables_get_reporter";
+    installBuiltinHelpInfo(variablesReporterGetId);
+
+    // Dropdown menu of variables_get
+    msg.RENAME_VARIABLE = lf("Rename variable...");
+    msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
+    msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
+    msg.NEW_VARIABLE_DROPDOWN = lf("New variable...");
+
+    // builtin variables_set
+    const variablesSetId = "variables_set";
+    const variablesSetDef = pxt.blocks.getBlockDefinition(variablesSetId);
+    msg.VARIABLES_SET = variablesSetDef.block["VARIABLES_SET"];
+    msg.VARIABLES_DEFAULT_NAME = varname;
+    msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
+    installBuiltinHelpInfo(variablesSetId);
+
+    // pxt variables_change
+    const variablesChangeId = "variables_change";
+    const variablesChangeDef = pxt.blocks.getBlockDefinition(variablesChangeId);
+    Blockly.Blocks[variablesChangeId] = {
+        init: function () {
+            this.jsonInit({
+                "message0": variablesChangeDef.block["message0"],
+                "args0": [
+                    {
+                        "type": "field_variable",
+                        "name": "VAR",
+                        "variable": varname
+                    },
+                    {
+                        "type": "input_value",
+                        "name": "VALUE",
+                        "check": "Number"
+                    }
+                ],
+                "inputsInline": true,
+                "previousStatement": null,
+                "nextStatement": null,
+                "colour": pxt.toolbox.getNamespaceColor('variables')
+            });
+
+            setBuiltinHelpInfo(this, variablesChangeId);
+        },
+        /**
+         * Add menu option to create getter block for this variable
+         * @param {!Array} options List of menu options to add to.
+         * @this Blockly.Block
+         */
+        customContextMenu: function (options: any[]) {
+            if (!(this.inDebugWorkspace())) {
+                let option: any = {
+                    enabled: this.workspace.remainingCapacity() > 0
+                };
+
+                let name = this.getField("VAR").getText();
+                option.text = lf("Create 'get {0}'", name)
+
+                let xmlField = Blockly.utils.xml.createElement('field');
+                xmlField.textContent = name;
+                xmlField.setAttribute('name', 'VAR');
+                let xmlBlock = Blockly.utils.xml.createElement('block');
+                xmlBlock.setAttribute('type', "variables_get");
+                xmlBlock.appendChild(xmlField)
+                option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+                options.push(option);
+            }
+        }
+    };
+
+    // New variable dialog
+    msg.NEW_VARIABLE_TITLE = lf("New variable name:");
+
+    // Rename variable dialog
+    msg.RENAME_VARIABLE_TITLE = lf("Rename all '%1' variables to:");
+}

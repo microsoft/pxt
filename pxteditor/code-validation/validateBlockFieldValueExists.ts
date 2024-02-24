@@ -1,3 +1,5 @@
+import * as Blockly from "blockly";
+
 // validates that one or more blocks comments are in the project
 // returns the blocks that have comments for teacher tool scenario
 export function validateBlockFieldValueExists({ usedBlocks, fieldType, fieldValue, specifiedBlock }: {

@@ -1,5 +1,4 @@
 /// <reference path="../built/pxtlib.d.ts" />
-/// <reference path="../built/pxtblocks.d.ts" />
 /// <reference path="./projectheader.d.ts" />
 /// <reference path="./validatorPlan.d.ts" />
 
@@ -292,7 +291,7 @@ declare namespace pxt.editor {
         ts: string;
         // rendering options
         snippetMode?: boolean;
-        layout?: pxt.blocks.BlockLayout;
+        layout?: BlockLayout;
     }
 
     export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
@@ -591,6 +590,14 @@ declare namespace pxt.editor {
         Hidden = 0,
         Visible = 1,
         Disabled = 2
+    }
+
+    export const enum BlockLayout {
+        None = 0,
+        Align = 1,
+        // Shuffle deprecated
+        Clean = 3,
+        Flow = 4
     }
 
     export type EditorType = 'blocks' | 'ts';
@@ -920,7 +927,10 @@ declare namespace pxt.editor {
         blocksScreenshotAsync(pixelDensity?: number, encodeBlocks?: boolean): Promise<string>;
         renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse>;
         renderPythonAsync(req: pxt.editor.EditorMessageRenderPythonRequest): Promise<pxt.editor.EditorMessageRenderPythonResponse>;
-        getBlocks(): Blockly.Block[];
+
+        // FIXME (riknoll) need to figure out how to type this better
+        // getBlocks(): Blockly.Block[];
+        getBlocks(): any[];
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
@@ -1013,7 +1023,10 @@ declare namespace pxt.editor {
 
     export interface IFieldCustomOptions {
         selector: string;
-        editor: Blockly.FieldCustomConstructor;
+        // FIXME (riknoll) need to figure out how to type this better. Also this type is from pxtblocks, but
+        // it uses types dervied from Blockly
+        // editor: Blockly.FieldCustomConstructor;
+        editor: any;
         text?: string;
         validator?: any;
     }

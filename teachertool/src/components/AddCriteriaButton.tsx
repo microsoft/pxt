@@ -1,10 +1,10 @@
-/// <reference path="../../../built/pxtblocks.d.ts"/>
-
 import { getSelectableCatalogCriteria } from "../state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { showModal } from "../transforms/showModal";
 import { AppStateContext } from "../state/appStateContext";
 import { useContext, useMemo } from "react";
+import { classList } from "react-common/components/util";
+import { Strings } from "../constants";
 
 interface IProps {}
 
@@ -17,10 +17,10 @@ export const AddCriteriaButton: React.FC<IProps> = ({}) => {
     );
     return (
         <Button
-            className="inline"
-            label={lf("Add Criteria")}
+            className={classList("inline", "add-criteria-button")}
+            label={Strings.AddCriteria}
             onClick={() => showModal("catalog-display")}
-            title={lf("Add Criteria")}
+            title={Strings.AddCriteria}
             leftIcon="fas fa-plus-circle"
             disabled={!hasAvailableCriteria}
         />

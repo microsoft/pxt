@@ -1,21 +1,11 @@
-/// <reference path="../../localtypings/blockly.d.ts" />
-/// <reference path="./field_toggle.ts" />
+/// <reference path="../../built/pxtlib.d.ts" />
 
-namespace pxtblockly {
+import * as Blockly from "blockly";
+import { BaseFieldToggle } from "./field_toggle";
+import { FieldCustomOptions } from "./field_utils";
 
-    export class FieldToggleHighLow extends FieldToggle implements Blockly.FieldCustom {
-        public isFieldCustom_ = true;
-
-        constructor(state: string, params: Blockly.FieldCustomOptions, opt_validator?: Function) {
-            super(state, params, opt_validator);
-        }
-
-        getTrueText() {
-            return lf("HIGH");
-        }
-
-        getFalseText() {
-            return lf("LOW");
-        }
+export class FieldToggleHighLow extends BaseFieldToggle {
+    constructor(state: string, params: FieldCustomOptions, opt_validator?: Blockly.FieldValidator) {
+        super(state, params, lf("HIGH"), lf("LOW"), opt_validator);
     }
 }

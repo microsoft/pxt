@@ -152,9 +152,7 @@ export async function getRubric(name: string): Promise<Rubric | undefined> {
     const db = await getDb;
 
     let rubric: Rubric | undefined = undefined;
-    if (name) {
-        rubric = await db.getRubric(name);
-    }
+    rubric = await db.getRubric(name);
 
     return rubric;
 }

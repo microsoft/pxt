@@ -120,64 +120,6 @@ code {
 }
 
 /*******************************/
-/******* CATALOG STYLING  ******/
-/*******************************/
-
-.catalog-modal .common-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.catalog-done {
-    align-self: flex-end;
-}
-
-.catalog-item {
-    padding: 0.5rem;
-}
-
-/*******************************/
-/******* RUBRIC STYLING  *******/
-/*******************************/
-
-.rubric-display {
-    border-radius: 0;
-    margin: 1rem 1rem;
-}
-
-.rubric-display h3 {
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 0.1rem;
-    margin-bottom: 0.5rem;
-}
-
-.criteria-instance-display {
-    background-color: var(--white);
-    border: 1px solid #ddd;
-    border-radius: 0;
-    padding: 0.1rem 0.5rem;
-    margin-bottom: 0.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.criteria-btn-remove {
-    background-color: #f55c51;
-    color: var(--white);
-    border: none;
-    display: inline-block;
-    margin: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 0;
-    transition: background-color 0.2s ease;
-}
-
-.criteria-btn-remove:hover {
-    background-color: #da4949;
-}
-
-/*******************************/
 /****  NOTIFICATION STYLING  ***/
 /*******************************/
 
@@ -275,3 +217,4 @@ code {
 /*******************************/
 
 @import "./style.overrides/Button.scss";
+@import "./style.overrides/Input.scss";

@@ -1,6 +1,8 @@
 import * as pkg from "./package";
 import * as core from "./core";
 import * as workspace from "./workspace";
+import * as Blockly from "blockly";
+import * as pxtblockly from "../../pxtblocks";
 
 import U = pxt.Util;
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
@@ -285,7 +287,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         .then(resp => {
             // try to patch event locations
             if (resp.success && blockInfo && oldWorkspace && blockFile) {
-                const newXml = pxt.blocks.layout.patchBlocksFromOldWorkspace(blockInfo, oldWorkspace, resp.outfiles[blockFile]);
+                const newXml = pxtblockly.patchBlocksFromOldWorkspace(blockInfo, oldWorkspace, resp.outfiles[blockFile]);
                 resp.outfiles[blockFile] = newXml;
             }
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
@@ -891,15 +893,15 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
         .then(() => getBlocksAsync())
         .then(info => {
             ws = new Blockly.Workspace();
-            const text = pxt.blocks.importXml(targetVersion, fileText, info, true);
+            const text = pxtblockly.importXml(targetVersion, fileText, info, true);
 
-            const xml = Blockly.Xml.textToDom(text);
-            pxt.blocks.domToWorkspaceNoEvents(xml, ws);
+            const xml = Blockly.utils.xml.textToDom(text);
+            pxtblockly.domToWorkspaceNoEvents(xml, ws);
             pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
-            const upgradedXml = Blockly.Xml.workspaceToDom(ws);
+            const upgradedXml = pxtblockly.workspaceToDom(ws);
             patchedFiles[pxt.MAIN_BLOCKS] = Blockly.Xml.domToText(upgradedXml);
 
-            return pxt.blocks.compileAsync(ws, info)
+            return pxtblockly.compileAsync(ws, info)
         })
         .then(res => {
             patchedFiles[pxt.MAIN_TS] = res.source;
@@ -922,7 +924,8 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
                 patchedFiles
             };
         })
-        .catch(() => {
+        .catch(e => {
+            console.log(e)
             pxt.debug("Block upgrade failed, falling back to TS");
             return upgradeFromTSAsync();
         });

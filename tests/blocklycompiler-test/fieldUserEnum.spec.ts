@@ -1,5 +1,6 @@
 /// <reference path="..\..\built\pxtlib.d.ts" />
-/// <reference path="..\..\built\pxtblocks.d.ts" />
+
+import * as pxtblockly from "../../pxtblocks";
 
 describe("field user enum (when picking new enum values)", () => {
     it("should start at 0 if no flag is set", () => {
