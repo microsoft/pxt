@@ -69,7 +69,107 @@ directly, not when you add it to a project. You can put TypeScript test code in 
 
 ## Documenting your extension
 
-MakeCode displays a **Help** option when the user right-clicks on a block. By default, clicking this for extension blocks will open the extension README in a new window. To disable the option (if the README is being used for other purposes), add `//% help=none`. To specify a custom help file, loaded in the editor (instead of in a new window), use `//% help=github:repository-name/path-to-file`, for example `//% help=pxt-mypkg/on-message-received`.
+MakeCode displays a **Help** option in the context menu when the user right-clicks on a block. By default, clicking this for an extension block will open the `README` file of the extension's repository and show it in a new window. You can choose to add information describing the extension's blocks within in the `README` or in separate document pages.
+
+### Setting help paths for each block
+
+To determine where help information comes from, you can add the `help` attribute to the jsDoc in the header of the function or method that defines the block. In this example, the `help` attribute is added at the end of the header of the block definition and set to `none`.
+
+```typescript-ignore
+namespace myblocks {
+    /**
+     * Return a fibonacci number for the value given
+     * @param value position in a fibonacci sequence, eg: 5
+     */
+    //% blockId=fibonacci_number
+    //% block="fibonacci number of %value
+    //% weight=100
+    //% help=none
+    export function fibonacci(value: number): number {
+        return value <= 1 ? value : fibonacci(value -1) + fibonacci(value - 2);
+    }
+}
+```
+
+### Setting help to 'none'
+
+To disable any help for the block, use the `help` attribute of `none`: `//% help=none`.
+
+If don't want the extension's `README` used as help for blocks and no separate document page is available for a block, set its `help` path to `none`.
+
+### Setting help to a document page
+
+To use a custom help file for a block, specify a path in the repository of a markdown document to use. This is done by setting the `help` attribute in this format:
+
+```
+//% help=github:<repository-name>/<path-to-file>
+```
+
+For the fibonacci example, if the help document is in the `./docs` folder of the `myblocks` extension repository, the `help` attribute would have this setting:
+
+```
+//% help=github:myblocks/docs/fibonacci
+```
+
+There is NO file name extension used here, `.md` as in `fibonacci.md`, since the file is assumed to be a markdown file.
+
+#### Block reference page format
+
+Although there is no requirement as to how you write and format a block help page, it is recommended to use the simple MakeCode reference page format in markdown. The page format includes:
+
+* a title which is the block's function name
+* a descriptive sentence
+* the block's signature
+* a description list of the parameters
+* the value returned
+* a usage example
+* an optional set of 'See also' links to related pages
+* the `package` specification for the extension
+
+The following is a simple markdown example of a reference page for the `fibonacci` block:
+
+````markdown
+# fibonacci
+
+Return the fibonacci number for a given sequence value.
+
+```sig
+MyBlocks.fibonacci(5)
+```
+
+## Parameters
+
+**value**: a [number](/types/number) that is a position in the fibonacci sequence.
+
+## Returns
+
+* the fibonacci [number](/types/number) at the sequence position of **value**.
+
+## Example
+
+Display the fibonacci number of `11`.
+
+```blocks
+console.log("The fibonacci number for 11 is:" + MyBlocks.fibonacci(11))
+```
+
+## See also
+
+[number](/types/number)
+
+```package
+myblocks=github:myaccount/myblocks
+```
+````
+
+The help document page is placed under the `./docs` folder of the extension's repository and saved using the name of `fibonacci.md`:
+
+```
+myblocks/docs/fibonacci.md
+```
+
+Make sure to add the ```` ```package ```` specification for your extension in order for the signature and snippets to work properly in the document. 
+See the [package](/writing-docs/snippets#package) section in the [snippets](/writing-docs/snippets) page for the proper format.
 
 ## Non-extensions
 
