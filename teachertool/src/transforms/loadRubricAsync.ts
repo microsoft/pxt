@@ -9,10 +9,6 @@ import { setRubric } from "./setRubric";
 import { showToast } from "./showToast";
 
 export async function loadRubricAsync(rubricUrl: string) {
-    if (!(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
-        return;
-    }
-
     const json = await fetchJsonDocAsync<Rubric | undefined>(rubricUrl);
 
     if (!json) {
@@ -24,6 +20,10 @@ export async function loadRubricAsync(rubricUrl: string) {
 
     if (!valid) {
         showToast(makeToast("error", Strings.ErrorLoadingRubricMsg));
+        return;
+    }
+
+    if (!(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
         return;
     }
 
