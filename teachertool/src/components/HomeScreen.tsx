@@ -15,8 +15,9 @@ import { Constants, Strings, Ticks } from "../constants";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
 import { AppStateContext } from "../state/appStateContext";
-import { CarouselCardSet, RequestStatus, CarouselRubricResourceCard } from "../types";
+import { CarouselCardSet, RequestStatus, CarouselRubricResourceCard, CardType } from "../types";
 import { useJsonDocRequest } from "../hooks/useJsonDocRequest";
+import { isRubricResourceCard } from "../utils";
 
 const Welcome: React.FC = () => {
     return (
@@ -199,20 +200,10 @@ const CardCarousel: React.FC<DataCarouselProps> = ({ title, cardsUrl }) => {
                 {fetchStatus === "success" && (
                     <Carousel>
                         {cardSet?.cards.map((card, index) => {
-                            switch (card.cardType) {
-                                case "rubric-resource": {
-                                    const rubricCard = card as CarouselRubricResourceCard;
-                                    return (
-                                        <RubricResourceCard
-                                            key={index}
-                                            cardTitle={rubricCard.cardTitle}
-                                            imageUrl={rubricCard.imageUrl}
-                                            rubricUrl={rubricCard.rubricUrl}
-                                        />
-                                    );
-                                }
-                                default:
-                                    return <LoadingCard />;
+                            if (isRubricResourceCard(card)) {
+                                return <RubricResourceCard key={index} {...card} />;
+                            } else {
+                                return <LoadingCard />;
                             }
                         })}
                     </Carousel>
