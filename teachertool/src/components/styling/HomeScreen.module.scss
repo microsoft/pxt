@@ -47,6 +47,7 @@ div.page {
         padding: 0;
         min-width: 17.5rem;
         min-height: 12rem;
+        overflow: hidden;
 
         div.cardDiv {
             display: flex;
@@ -104,6 +105,38 @@ div.page {
                 outline-color: var(--pxt-button-primary-foreground);
             }
         }
+        &.loadingGradient {
+            background: linear-gradient(45deg, var(--pxt-content-background), var(--pxt-content-foreground));
+            opacity: 0.2;
+            background-size: 400% 200%;
+            animation: loading 3s ease infinite;
+
+            @keyframes loading {
+                0% {
+                    background-position: 0 0;
+                }
+                50% {
+                    background-position: 100% 50%;
+                }
+                100% {
+                    background-position: 0 0;
+                }
+            }
+            &.loadingGradientDelay {
+                animation-delay: 0.3s;
+            }
+        }
+        &.rubricResource {
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            grid-area: 1 / 1 / 2 / 5;
+            border: 1px solid var(--pxt-content-background);
+
+            .rubricResourceCardTitle {
+                background-color: rgba(228, 231, 241, 0.9);
+                color: var(--pxt-page-foreground);
+            }
+        }
     }
 
     .swiperCarousel {
@@ -146,7 +179,7 @@ div.page {
                 transform: scale(1.1);
             }
         }
-        
+
         &::after {
             transform: scale(0.9);
             color: var(--pxt-headerbar-background);
