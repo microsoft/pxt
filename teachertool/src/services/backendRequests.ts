@@ -4,10 +4,9 @@ import { logError } from "./loggingService";
 
 export async function fetchJsonDocAsync<T = any>(url: string): Promise<T | undefined> {
     try {
-        // TODO: Prepend CDN origin if not localhost
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error("Unable to fetch the json file from CDN");
+            throw new Error("Unable to fetch the json file");
         } else {
             const json = await response.json();
             return json;
