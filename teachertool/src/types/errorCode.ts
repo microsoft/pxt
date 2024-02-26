@@ -16,4 +16,6 @@ export enum ErrorCode {
     localStorageReadError = "localStorageReadError",
     localStorageWriteError = "localStorageWriteError",
     validatorPlansNotFound = "validatorPlansNotFound",
+    fetchRequestFailed = "fetchRequestFailed",
+    fetchJsonDocAsync = "fetchJsonDocAsync",
 }

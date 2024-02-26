@@ -39,6 +39,7 @@
             width: 6px;
             height: 100%;
             cursor: ew-resize;
+            z-index: 1;
 
             &:hover {
                 background-color: var(--pxt-content-foreground);

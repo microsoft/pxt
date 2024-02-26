@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { ToastType, ToastWithId } from "../types";
+import { CarouselRubricResourceCard, ToastType, ToastWithId } from "../types";
 import { Rubric } from "../types/rubric";
 import { classList } from "react-common/components/util";
 
@@ -35,3 +35,7 @@ export function makeRubric(): Rubric {
         criteria: [],
     };
 }
+
+export const isRubricResourceCard = (card: any): card is CarouselRubricResourceCard => {
+    return typeof card === "object" && card.cardType === "rubric-resource";
+};

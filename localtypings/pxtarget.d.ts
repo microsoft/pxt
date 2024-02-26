@@ -33,6 +33,7 @@ declare namespace pxt {
         electronManifest?: pxt.electron.ElectronManifest;
         profileNotification?: ProfileNotification;
         kiosk?: KioskConfig;
+        teachertool?: TeacherToolConfig;
     }
 
     interface PackagesConfig {
@@ -86,6 +87,15 @@ declare namespace pxt {
         name: string;
         description: string;
         highScoreMode: string;
+    }
+
+    interface TeacherToolConfig {
+        carousels?: TeacherToolCarouselConfig[];
+    }
+
+    interface TeacherToolCarouselConfig {
+        title: string;
+        cardsUrl: string;
     }
 
     interface AppTarget {

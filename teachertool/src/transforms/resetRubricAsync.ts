@@ -10,7 +10,7 @@ export async function resetRubricAsync() {
     const { state: teachertool, dispatch } = stateAndDispatch();
 
     if (isRubricLoaded(teachertool)) {
-        if (!(await confirmAsync(Strings.ConfirmReplaceRubric))) {
+        if (!(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
             return;
         }
     }
