@@ -10,8 +10,8 @@ interface IProps {
     primary: "left" | "right";
     left: React.ReactNode;
     right: React.ReactNode;
-    leftMinSize?: number | string;
-    rightMinSize?: number | string;
+    leftMinSize: number | string;
+    rightMinSize: number | string;
     onResizeEnd?: (size: number | string) => void;
 }
 
