@@ -31,6 +31,7 @@
   width: 5px;
   height: 100%;
   cursor: ew-resize;
+  z-index: 1;
 }
 
 .splitter-vertical-inner:hover {

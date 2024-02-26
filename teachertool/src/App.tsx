@@ -1,6 +1,6 @@
 import { useEffect, useContext, useState } from "react";
 import { AppStateContext, AppStateReady } from "./state/appStateContext";
-import { usePromise } from "./hooks";
+import { usePromise } from "./hooks/usePromise";
 import { makeToast } from "./utils";
 import * as Actions from "./state/actions";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
