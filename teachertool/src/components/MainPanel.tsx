@@ -14,8 +14,7 @@ export const MainPanel: React.FC<IProps> = () => {
         setLastSplitPosition(size.toString());
     }
 
-    const lastSavedSplitPosition = getLastSplitPosition() ?? defaultSize;
-
+    const lastSavedSplitPosition = getLastSplitPosition();
     return (
         <div className={css["main-panel"]}>
             <SplitPane
