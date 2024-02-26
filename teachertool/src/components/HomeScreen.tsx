@@ -85,7 +85,7 @@ interface RubricResourceCardProps {
 }
 
 const RubricResourceCard: React.FC<RubricResourceCardProps> = ({ cardTitle, imageUrl, rubricUrl }) => {
-    const onRubricClickedAsync = async () => {
+    const onCardClickedAsync = async () => {
         pxt.tickEvent(Ticks.LoadRubric, { rubricUrl });
         await loadRubricAsync(rubricUrl);
     };
@@ -94,12 +94,12 @@ const RubricResourceCard: React.FC<RubricResourceCardProps> = ({ cardTitle, imag
             <Button
                 className={classList(css.cardButton, css.rubricResource)}
                 title={cardTitle}
-                onClick={onRubricClickedAsync}
+                onClick={onCardClickedAsync}
             >
                 <div
                     className={classList(css.cardDiv)}
                     style={{
-                        backgroundImage: `url("${window.location.origin}${imageUrl}")`,
+                        backgroundImage: `url("${imageUrl}")`,
                         backgroundSize: "cover",
                     }}
                 >
