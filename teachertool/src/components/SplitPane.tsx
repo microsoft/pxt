@@ -49,12 +49,11 @@ export const SplitPane: React.FC<IProps> = ({
     function handleResize(clientX: number, clientY: number) {
         const containerRect = containerRef.current?.getBoundingClientRect();
         if (containerRect) {
+            setIsResizing(true); // Do this here rather than inside startResizing to prevent interference with double click detection.
             const newSize =
                 split === "vertical"
                     ? `${((clientX - containerRect.left) / containerRect.width) * 100}%`
                     : `${((clientY - containerRect.top) / containerRect.height) * 100}%`;
-
-            setIsResizing(true); // Do this here rather than inside startResizing to prevent interference with double click detection.
             setSize(newSize);
         }
     }
