@@ -4,26 +4,28 @@ import { fetchJsonDocAsync } from "../services/backendRequests";
 
 export function useJsonDocRequest<T>(
     url: string,
-    statusCb: (status: RequestStatus) => void,
-    jsonCb: (data: T) => void
+    setStatus: (status: RequestStatus) => void,
+    setJson: (data: T) => void
 ) {
-    const [status, setStatus] = useState<RequestStatus | undefined>();
+    const [fetching, setFetching] = useState<boolean>();
 
     useEffect(() => {
-        if (!status) {
+        if (!fetching) {
+            setFetching(true);
             setStatus("loading");
-            statusCb("loading");
-            Promise.resolve().then(async () => {
-                const json = await fetchJsonDocAsync(url);
-                if (!json) {
+            Promise.resolve()
+                .then(async () => {
+                    const json = await fetchJsonDocAsync(url);
+                    if (!json) {
+                        setStatus("error");
+                    } else {
+                        setStatus("success");
+                        setJson(json as T);
+                    }
+                })
+                .catch(() => {
                     setStatus("error");
-                    statusCb("error");
-                } else {
-                    setStatus("success");
-                    statusCb("success");
-                    jsonCb(json as T);
-                }
-            });
+                });
         }
-    }, []);
+    }, [fetching]);
 }
