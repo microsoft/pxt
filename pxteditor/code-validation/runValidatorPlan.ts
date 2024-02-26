@@ -43,7 +43,6 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
                 let timesPassed = 0;
                 for (const parentBlock of successfulBlocks) {
                     const blocksToUse = getNestedChildBlocks(parentBlock);
-                    // const blocksToUse = parentBlock.getChildren(true);
                     const childPlan = planLib.find((plan) => plan.name === planName);
                     const childPassed = runValidatorPlan(blocksToUse, childPlan, planLib);
                     timesPassed += childPassed ? 1 : 0;
