@@ -47,11 +47,11 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
     }
 
     /*
-    We can't use the drag-and-drop-file-surface directly to handle most drop events, because child elements interfere with them.
+    We can't use the drag-and-drop-file-surface directly to handle most drop events, because the child elements interfere with them.
     To solve this, we add a transparent div (droppable-surface) over everything and use that for most drag-related event handling.
     However, we don't want the transparent droppable-surface to intercept pointer events when there is no drag occurring, so
-    we still use the drag-and-drop-file-surface to detect dragEnter events and only intercept pointer events in the droppable-surface
-    when that has happened.
+    we still use the drag-and-drop-file-surface to detect dragEnter events and only intercept pointer events on the droppable-surface
+    after that has happened.
     */
     return (
         <div className={css["drag-and-drop-file-surface"]} onDragEnter={handleDragEnter}>
@@ -62,10 +62,21 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
                     <span className={css["or-container"]}>{lf("or")}</span>
 
                     {/* The button triggers a hidden file input to open the file browser */}
-                    <Button className={classList("link-button", css["browse-button"])} title={Strings.Browse} onClick={() => fileInputRef?.current?.click()}>
+                    <Button
+                        className={classList("link-button", css["browse-button"])}
+                        title={Strings.Browse}
+                        onClick={() => fileInputRef?.current?.click()}
+                    >
                         {Strings.Browse}
                     </Button>
-                    <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileFromBrowse} aria-label={Strings.SelectRubricFile} accept=".json" />
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        onChange={handleFileFromBrowse}
+                        aria-label={Strings.SelectRubricFile}
+                        accept=".json"
+                    />
                 </div>
             </div>
 
