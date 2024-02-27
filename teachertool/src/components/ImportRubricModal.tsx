@@ -22,7 +22,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
     async function handleFileDroppedAsync(file: File) {
         const parsedRubric = await getRubricFromFileAsync(file, false /* allow partial */);
         if (!parsedRubric) {
-            setErrorMessage(lf("Invalid rubric file."));
+            setErrorMessage(Strings.InvalidRubricFile);
         } else {
             setErrorMessage(undefined);
             closeModal();

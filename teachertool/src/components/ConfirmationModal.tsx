@@ -37,13 +37,21 @@ export const ConfirmationModal: React.FC<IProps> = () => {
         },
         {
             label: lf("Continue"),
-            className: classList("primary", teacherTool.confirmationProps?.cautionLevel === "high" ? css["caution"] : undefined),
+            className: classList(
+                "primary",
+                teacherTool.confirmationProps?.cautionLevel === "high" ? css["caution"] : undefined
+            ),
             onClick: handleContinue,
         },
     ];
 
     return teacherTool.modal === "confirmation" && teacherTool.confirmationProps ? (
-        <Modal title={teacherTool.confirmationProps.title ?? ""} onClose={handleCancel} actions={actions} className={css["confirmation-modal"]}>
+        <Modal
+            title={teacherTool.confirmationProps.title ?? ""}
+            onClose={handleCancel}
+            actions={actions}
+            className={css["confirmation-modal"]}
+        >
             {teacherTool.confirmationProps.message}
         </Modal>
     ) : null;

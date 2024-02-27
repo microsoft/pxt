@@ -43,7 +43,11 @@
 
     .error-label-container {
         position: absolute;
-        bottom: 2rem;
+        bottom: 1rem;
+
+        i {
+            display: none;
+        }
     }
 
     .droppable-surface {
@@ -56,6 +60,21 @@
         pointer-events: none;
         &.dragging {
             pointer-events: all;
+        }
+    }
+
+    @media screen and (max-height: 720px) {
+        padding: 1rem;
+
+        .instruction-container {
+            font-size: 1.5rem;
+
+            .or-browse-container .browse-button {
+                font-size: 1.5rem;
+            }
+            .upload-icon {
+                display: none;
+            }
         }
     }
 }

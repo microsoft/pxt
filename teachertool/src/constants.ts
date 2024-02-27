@@ -18,6 +18,7 @@ export namespace Strings {
     export const ReleaseToUpload = lf("Release to Upload");
     export const Browse = lf("Browse");
     export const SelectRubricFile = lf("Select Rubric File");
+    export const InvalidRubricFile = lf("Invalid Rubric File");
 }
 
 export namespace Ticks {
