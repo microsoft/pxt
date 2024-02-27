@@ -87,7 +87,7 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
             </div>
 
             {errorMessage && (
-                <div className={css["error-label-container"]} key={errorKey}>
+                <div className={css["error-label-container"]} key={errorKey} role="alert" title={errorMessage}>
                     <NoticeLabel severity="error">{errorMessage}</NoticeLabel>
                 </div>
             )}
