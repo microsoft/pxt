@@ -14,6 +14,7 @@ import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubricAsync";
 import { ImportRubricModal } from "./components/ImportRubricModal";
+import { ConfirmationModal } from "./components/ConfirmationModal";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -57,6 +58,7 @@ export const App = () => {
             <MainPanel />
             <CatalogModal />
             <ImportRubricModal />
+            <ConfirmationModal />
             <Toasts />
         </>
     );

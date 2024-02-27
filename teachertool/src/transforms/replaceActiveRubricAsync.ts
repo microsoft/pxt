@@ -9,7 +9,11 @@ import { setRubric } from "./setRubric";
 export async function replaceActiveRubricAsync(newRubric: Rubric): Promise<boolean> {
     const { state: teacherTool } = stateAndDispatch();
 
-    if (isRubricLoaded(teacherTool) && !(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
+    const title =
+        !newRubric.name && !newRubric.criteria?.length
+            ? lf("Create Empty Rubric")
+            : lf("Import '{0}'?", newRubric.name ? newRubric.name : Strings.UntitledRubric);
+    if (isRubricLoaded(teacherTool) && !(await confirmAsync(title, Strings.ConfirmReplaceRubricMsg, "high"))) {
         return false;
     }
 

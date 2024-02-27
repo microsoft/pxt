@@ -21,11 +21,13 @@ export type ToastWithId = Toast & {
     id: string;
 };
 
-export type ModalType = "catalog-display" | "import-rubric";
+export type ModalType = "catalog-display" | "import-rubric" | "confirmation";
 
 export type TabName = "home" | "rubric" | "results";
 
 export type CardType = "rubric-resource";
+
+export type CautionLevel = "low" | "high";
 
 // Rubric Card types that can be appear in the carousel
 export type CarouselCard = {

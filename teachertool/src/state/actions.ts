@@ -1,3 +1,4 @@
+import { ConfirmationModalProps } from "../components/ConfirmationModal";
 import { ModalType, ToastWithId, TabName } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
@@ -55,6 +56,11 @@ type SetRubric = ActionBase & {
     rubric: Rubric;
 };
 
+type SetConfirmationProps = ActionBase & {
+    type: "SET_CONFIRMATION_PROPS";
+    props: ConfirmationModalProps | undefined;
+};
+
 type ShowModal = ActionBase & {
     type: "SHOW_MODAL";
     modal: ModalType;
@@ -93,6 +99,7 @@ export type Action =
     | SetTargetConfig
     | SetCatalog
     | SetRubric
+    | SetConfirmationProps
     | ShowModal
     | HideModal
     | SetValidatorPlans
@@ -147,6 +154,11 @@ const setRubric = (rubric: Rubric): SetRubric => ({
     rubric,
 });
 
+const setConfirmationProps = (props: ConfirmationModalProps | undefined): SetConfirmationProps => ({
+    type: "SET_CONFIRMATION_PROPS",
+    props,
+});
+
 const showModal = (modal: ModalType): ShowModal => ({
     type: "SHOW_MODAL",
     modal,
@@ -181,6 +193,7 @@ export {
     setTargetConfig,
     setCatalog,
     setRubric,
+    setConfirmationProps,
     showModal,
     hideModal,
     setValidatorPlans,
