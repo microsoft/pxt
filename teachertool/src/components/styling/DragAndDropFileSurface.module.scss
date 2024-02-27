@@ -41,9 +41,17 @@
         }
     }
 
+    @keyframes fadeInAndOut {
+        0% { opacity: 0; }
+        5% { opacity: 1; }
+        50% { opacity: 1; }
+        100% { opacity: 0; }
+    }
+
     .error-label-container {
         position: absolute;
         bottom: 1rem;
+        animation: fadeInAndOut 4s forwards;
 
         i {
             display: none;
