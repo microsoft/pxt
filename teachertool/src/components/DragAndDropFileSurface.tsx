@@ -1,7 +1,7 @@
 import { classList } from "react-common/components/util";
 import { Strings } from "../constants";
 import { NoticeLabel } from "./NoticeLabel";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import css from "./styling/DragAndDropFileSurface.module.scss";
 import { Button } from "react-common/components/controls/Button";
 
@@ -11,6 +11,7 @@ export interface DragAndDropFileSurfaceProps {
 }
 export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ onFileDroppedAsync, errorMessage }) => {
     const [fileIsOverSurface, setFileIsOverSurface] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
         // Stop the browser from intercepting the file.
@@ -38,6 +39,13 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
         }
     }
 
+    function handleFileFromBrowse(event: React.ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0];
+        if (file) {
+            onFileDroppedAsync(file);
+        }
+    }
+
     /*
     We can't use the drag-and-drop-file-surface directly to handle most drop events, because child elements interfere with them.
     To solve this, we add a transparent div (droppable-surface) over everything and use that for most drag-related event handling.
@@ -52,19 +60,12 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
                 <div className="no-select">{fileIsOverSurface ? Strings.ReleaseToUpload : Strings.DragAndDrop}</div>
                 <div className={css["or-browse-container"]}>
                     <span className={css["or-container"]}>{lf("or")}</span>
-                    {/* <input
-                        type="file"
-                        className={css["file-input"]}
-                        onChange={(event) => {
-                            const file = event.target.files?.[0];
-                            if (file) {
-                                onFileDroppedAsync(file);
-                            }
-                        }}
-                    /> */}
-                    <Button className={classList("link-button", css["browse-button"])} title={Strings.Browse} onClick={() => {}}>
+
+                    {/* The button triggers a hidden file input to open the file browser */}
+                    <Button className={classList("link-button", css["browse-button"])} title={Strings.Browse} onClick={() => fileInputRef?.current?.click()}>
                         {Strings.Browse}
                     </Button>
+                    <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileFromBrowse} aria-label={Strings.SelectRubricFile} accept=".json" />
                 </div>
             </div>
 
