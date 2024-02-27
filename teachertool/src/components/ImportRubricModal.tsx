@@ -1,16 +1,12 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
 import { getRubricFromFileAsync } from "../transforms/getRubricFromFileAsync";
-import { Rubric } from "../types/rubric";
-import { setRubric } from "../transforms/setRubric";
 import { DragAndDropFileSurface } from "./DragAndDropFileSurface";
 import { Strings } from "../constants";
 import css from "./styling/ImportRubricModal.module.scss";
-import { isRubricLoaded } from "../state/helpers";
-import { confirmAsync } from "../transforms/confirmAsync";
-import { setActiveTab } from "../transforms/setActiveTab";
+import { replaceActiveRubricAsync } from "../transforms/replaceActiveRubricAsync";
 
 export interface IProps {}
 
@@ -29,16 +25,8 @@ export const ImportRubricModal: React.FC<IProps> = () => {
             setErrorMessage(lf("Invalid rubric file."));
         } else {
             setErrorMessage(undefined);
-
-            // TODO thsparks - set parsedRubric in app state as a "Pending Rubric" and open a whole new modal, which can also be used with the New Rubric command?
-
-            if (isRubricLoaded(teacherTool) && !(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
-                return;
-            }
-
-            setRubric(parsedRubric);
             closeModal();
-            setActiveTab("rubric");
+            replaceActiveRubricAsync(parsedRubric);
         }
     }
 
