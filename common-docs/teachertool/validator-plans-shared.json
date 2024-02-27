@@ -150,6 +150,19 @@
                     }
                 }
             ]
+        },
+        {
+            ".desc": "a number exists",
+            "name": "math_num_exists",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "math_number": 1
+                    }
+                }
+            ]
         }
     ]
 }
