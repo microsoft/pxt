@@ -10,6 +10,7 @@ import { Strings } from "../constants";
 import css from "./styling/ImportRubricModal.module.scss";
 import { isRubricLoaded } from "../state/helpers";
 import { confirmAsync } from "../transforms/confirmAsync";
+import { setActiveTab } from "../transforms/setActiveTab";
 
 export interface IProps {}
 
@@ -31,14 +32,13 @@ export const ImportRubricModal: React.FC<IProps> = () => {
 
             // TODO thsparks - set parsedRubric in app state as a "Pending Rubric" and open a whole new modal, which can also be used with the New Rubric command?
 
-            if (isRubricLoaded(teacherTool)) {
-                if (!(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
-                    return;
-                }
-
-                setRubric(parsedRubric);
-                closeModal();
+            if (isRubricLoaded(teacherTool) && !(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
+                return;
             }
+
+            setRubric(parsedRubric);
+            closeModal();
+            setActiveTab("rubric");
         }
     }
 
