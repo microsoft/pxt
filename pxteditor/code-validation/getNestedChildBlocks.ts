@@ -7,7 +7,6 @@ import * as Blockly from "blockly";
 // for something like pick random, it would return the two number blocks
 export function getNestedChildBlocks(parentBlock: Blockly.Block): Blockly.Block[] {
     const descendants = parentBlock.getDescendants(true);
-    const enabledDescendants = descendants.filter((block) => block.isEnabled());
-    const nestedChildren = enabledDescendants.filter((block) => block.getSurroundParent() === parentBlock);
+    const nestedChildren = descendants.filter((block) => block.isEnabled() && block.getSurroundParent() === parentBlock);
     return nestedChildren;
 }
