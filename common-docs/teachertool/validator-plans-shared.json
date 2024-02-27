@@ -152,7 +152,7 @@
             ]
         },
         {
-            ".desc": "a number exists // no catalog entry",
+            ".desc": "a number exists",
             "name": "math_num_exists",
             "threshold": 1,
             "checks": [
