@@ -3,6 +3,7 @@ import { Strings } from "../constants";
 import { NoticeLabel } from "./NoticeLabel";
 import { useState } from "react";
 import css from "./styling/DragAndDropFileSurface.module.scss";
+import { Button } from "react-common/components/controls/Button";
 
 export interface DragAndDropFileSurfaceProps {
     onFileDroppedAsync: (file: File) => void;
@@ -37,11 +38,34 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
         }
     }
 
+    /*
+    We can't use the drag-and-drop-file-surface directly to handle most drop events, because child elements interfere with them.
+    To solve this, we add a transparent div (droppable-surface) over everything and use that for most drag-related event handling.
+    However, we don't want the transparent droppable-surface to intercept pointer events when there is no drag occurring, so
+    we still use the drag-and-drop-file-surface to detect dragEnter events and only intercept pointer events in the droppable-surface
+    when that has happened.
+    */
     return (
-        <div className={css["drag-and-drop-file-surface"]}>
+        <div className={css["drag-and-drop-file-surface"]} onDragEnter={handleDragEnter}>
             <div className={css["instruction-container"]}>
                 <i className={classList("fas fa-file-upload", css["upload-icon"])}></i>
                 <div className="no-select">{fileIsOverSurface ? Strings.ReleaseToUpload : Strings.DragAndDrop}</div>
+                <div className={css["or-browse-container"]}>
+                    <span className={css["or-container"]}>{lf("or")}</span>
+                    {/* <input
+                        type="file"
+                        className={css["file-input"]}
+                        onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) {
+                                onFileDroppedAsync(file);
+                            }
+                        }}
+                    /> */}
+                    <Button className={classList("link-button", css["browse-button"])} title={Strings.Browse} onClick={() => {}}>
+                        {Strings.Browse}
+                    </Button>
+                </div>
             </div>
 
             {errorMessage && (
@@ -50,14 +74,9 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
                 </div>
             )}
 
-            {/*
-            Use a transparent div over everything to detect drop events.
-            We can't use drag-and-drop-file-surface directly because child elements interfere with the drag events.
-            */}
             <div
-                className={css["droppable-surface"]}
+                className={classList(css["droppable-surface"], fileIsOverSurface ? css["dragging"] : undefined)}
                 onDrop={handleDrop}
-                onDragEnter={handleDragEnter}
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
             />

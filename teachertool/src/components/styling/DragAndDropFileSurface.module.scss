@@ -19,9 +19,25 @@
 
         color: lighten(black, 50%); // todo thsparks : yet another theme variable?
         font-size: 2rem;
+        font-weight: 600;
 
         .upload-icon {
             font-size: 3rem;
+        }
+
+        .or-browse-container {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+
+            .or-container {
+                font-weight: 400;
+            }
+
+            .browse-button {
+                font-weight: 600;
+                font-size: 2rem;
+            }
         }
     }
 
@@ -36,5 +52,10 @@
         left: 0;
         right: 0;
         bottom: 0;
+
+        pointer-events: none;
+        &.dragging {
+            pointer-events: all;
+        }
     }
 }

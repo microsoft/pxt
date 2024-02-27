@@ -16,6 +16,7 @@ export namespace Strings {
     export const AutoRunDescription = lf("Automatically re-evaluate when the rubric or project changes");
     export const DragAndDrop = lf("Drag & Drop");
     export const ReleaseToUpload = lf("Release to Upload");
+    export const Browse = lf("Browse");
 }
 
 export namespace Ticks {
