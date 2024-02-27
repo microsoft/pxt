@@ -32,7 +32,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
             // TODO thsparks - set parsedRubric in app state as a "Pending Rubric" and open a whole new modal, which can also be used with the New Rubric command?
 
             if (isRubricLoaded(teacherTool)) {
-                if (!(await confirmAsync(Strings.ConfirmReplaceRubric))) {
+                if (!(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
                     return;
                 }
 
