@@ -1,4 +1,4 @@
-import { ModalType, ToastWithId, TabName } from "../types";
+import { ModalType, ToastWithId, TabName, ProjectData } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
@@ -22,7 +22,7 @@ type DismissToast = ActionBase & {
 
 type SetProjectMetadata = ActionBase & {
     type: "SET_PROJECT_METADATA";
-    metadata: pxt.Cloud.JsonScript | undefined;
+    metadata: ProjectData | undefined;
 };
 
 type SetEvalResult = ActionBase & {
@@ -112,7 +112,7 @@ const dismissToast = (toastId: string): DismissToast => ({
     toastId,
 });
 
-const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
+const setProjectMetadata = (metadata: ProjectData | undefined): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
     metadata,
 });
