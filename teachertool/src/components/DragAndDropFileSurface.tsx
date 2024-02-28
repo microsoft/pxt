@@ -16,20 +16,24 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
 
     function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
         // Stop the browser from intercepting the file.
+        event.stopPropagation();
         event.preventDefault();
     }
 
     function handleDragEnter(event: React.DragEvent<HTMLDivElement>) {
+        event.stopPropagation();
         event.preventDefault();
         setFileIsOverSurface(true);
     }
 
     function handleDragLeave(event: React.DragEvent<HTMLDivElement>) {
+        event.stopPropagation();
         event.preventDefault();
         setFileIsOverSurface(false);
     }
 
     function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+        event.stopPropagation();
         event.preventDefault();
 
         setFileIsOverSurface(false);
