@@ -30,6 +30,10 @@ export function verifyRubricIntegrity(rubric: Rubric): {
     validCriteria: CriteriaInstance[];
     invalidCriteria: CriteriaInstance[];
 } {
+    if (!rubric || !rubric.criteria) {
+        return { valid: false, validCriteria: [], invalidCriteria: [] };
+    }
+
     const validCriteria: CriteriaInstance[] = [];
     const invalidCriteria: CriteriaInstance[] = [];
     for (const criteria of rubric.criteria) {
