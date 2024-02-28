@@ -5,19 +5,18 @@ import { hideModal } from "../transforms/hideModal";
 import { classList } from "react-common/components/util";
 import css from "./styling/ConfirmationModal.module.scss";
 
-// ConfirmationModalProps are passed in through app state, not as component props.
 export interface IProps {}
 export const ConfirmationModal: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     function handleCancel() {
         hideModal();
-        teacherTool.confirmationProps?.onCancel?.();
+        teacherTool.confirmationOptions?.onCancel?.();
     }
 
     function handleContinue() {
         hideModal();
-        teacherTool.confirmationProps?.onContinue?.();
+        teacherTool.confirmationOptions?.onContinue?.();
     }
 
     const actions = [
@@ -30,20 +29,20 @@ export const ConfirmationModal: React.FC<IProps> = () => {
             label: lf("Continue"),
             className: classList(
                 "primary",
-                teacherTool.confirmationProps?.cautionLevel === "high" ? css["caution"] : undefined
+                teacherTool.confirmationOptions?.cautionLevel === "high" ? css["caution"] : undefined
             ),
             onClick: handleContinue,
         },
     ];
 
-    return teacherTool.modal === "confirmation" && teacherTool.confirmationProps ? (
+    return teacherTool.modal === "confirmation" && teacherTool.confirmationOptions ? (
         <Modal
-            title={teacherTool.confirmationProps.title}
+            title={teacherTool.confirmationOptions.title}
             onClose={handleCancel}
             actions={actions}
             className={css["confirmation-modal"]}
         >
-            {teacherTool.confirmationProps.message}
+            {teacherTool.confirmationOptions.message}
         </Modal>
     ) : null;
 };

@@ -47,7 +47,7 @@ export type CarouselCardSet = {
 
 export type RequestStatus = "init" | "loading" | "error" | "success";
 
-export type ConfirmationModalProps = {
+export type ConfirmationModalOptions = {
     title: string;
     message: string;
     cautionLevel: CautionLevel;

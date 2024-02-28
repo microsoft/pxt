@@ -1,4 +1,4 @@
-import { ModalType, ToastWithId, TabName, ConfirmationModalProps } from "../types";
+import { ModalType, ToastWithId, TabName, ConfirmationModalOptions } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 import { makeRubric } from "../utils";
@@ -14,7 +14,7 @@ export type AppState = {
     activeTab: TabName;
     validatorPlans: pxt.blocks.ValidatorPlan[] | undefined;
     autorun: boolean;
-    confirmationProps: ConfirmationModalProps | undefined;
+    confirmationOptions: ConfirmationModalOptions | undefined;
     flags: {
         testCatalog: boolean;
     };
@@ -30,7 +30,7 @@ export const initialAppState: AppState = {
     activeTab: "home",
     validatorPlans: undefined,
     autorun: false,
-    confirmationProps: undefined,
+    confirmationOptions: undefined,
     flags: {
         testCatalog: false,
     },

@@ -70,7 +70,7 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "SET_CONFIRMATION_PROPS": {
             return {
                 ...state,
-                confirmationProps: action.props,
+                confirmationOptions: action.props,
             };
         }
         case "SHOW_MODAL": {
