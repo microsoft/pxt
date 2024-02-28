@@ -28,3 +28,10 @@
 .negative-text {
     color: red;
 }
+
+.header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    // height: 2.625rem;
+}

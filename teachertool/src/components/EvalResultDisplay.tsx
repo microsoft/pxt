@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
@@ -6,18 +7,49 @@ import css from "./styling/EvalResultDisplay.module.scss";
 import { classList } from "react-common/components/util";
 
 
-interface IProps {}
-
 const ResultsHeader: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
+    // TODO: change the headers to be the correct thing for html (not h3, h4)
     return (
-        <>
-            <h1>{teacherTool.rubric.name}</h1>
-        </>
+        <div className={css["header"]}>
+            <div className={css["rubric-name"]}>
+                <h3>{lf("{0}",teacherTool.rubric.name)}</h3>
+            </div>
+            <div className={css["project-details"]}>
+                <h4>{lf("{0}", teacherTool?.projectMetadata?.name)}</h4>
+                <p>{teacherTool?.projectMetadata?.id}</p>
+            </div>
+        </div>
     );
 };
 
-export const EvalResultDisplay: React.FC<IProps> = ({}) => {
+interface CriteriaResultProps {
+    criteriaId: string;
+    result: CriteriaEvaluationResult;
+    label: string;
+}
+
+const CriteriaResult: React.FC<CriteriaResultProps> = ({ criteriaId, result, label }) => {
+    return (
+        <div className={css["result-block-id"]} key={criteriaId}>
+            <p className={css["block-id-label"]}>
+                {label}:
+            </p>
+            {result === CriteriaEvaluationResult.InProgress && (
+                <div className={css["common-spinner"]} />
+            )}
+            {result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
+            {result === CriteriaEvaluationResult.Fail && (
+                <p className={css["negative-text"]}>{lf("Needs Work")}</p>
+            )}
+            {result === CriteriaEvaluationResult.Pass && (
+                <p className={css["positive-text"]}>{lf("Looks Good!")}</p>
+            )}
+        </div>
+    );
+}
+
+export const EvalResultDisplay: React.FC<{}> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     function getTemplateStringFromCriteriaInstanceId(instanceId: string): string {
@@ -31,32 +63,18 @@ export const EvalResultDisplay: React.FC<IProps> = ({}) => {
     return (
         <>
             {teacherTool.projectMetadata && (
-                <div className={classList(css["eval-results-container"])}>
-                    <h3>{lf("Project: {0}", teacherTool.projectMetadata.name)}</h3>
-
-                    {teacherTool.evalResults.length === 0 && <div className={css["common-spinner"]} />}
+                <div className={css["eval-results-container"]}>
+                    <ResultsHeader />
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
-                        const result = teacherTool.evalResults[criteriaInstanceId];
                         const label = getTemplateStringFromCriteriaInstanceId(criteriaInstanceId);
                         return (
-                            label && (
-                                <div className={css["result-block-id"]} key={criteriaInstanceId}>
-                                    <p className={css["block-id-label"]}>
-                                        {label}:
-                                    </p>
-                                    {result === CriteriaEvaluationResult.InProgress && (
-                                        <div className={css["common-spinner"]} />
-                                    )}
-                                    {result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
-                                    {result === CriteriaEvaluationResult.Fail && (
-                                        <p className={css["negative-text"]}>{lf("Needs Work")}</p>
-                                    )}
-                                    {result === CriteriaEvaluationResult.Pass && (
-                                        <p className={css["positive-text"]}>{lf("Looks Good!")}</p>
-                                    )}
-                                </div>
-                            )
-                        );
+                            label &&
+                            <CriteriaResult
+                                criteriaId={criteriaInstanceId}
+                                result={teacherTool.evalResults[criteriaInstanceId]}
+                                label={label}
+                            />
+                        )
                     })}
                 </div>
             )}

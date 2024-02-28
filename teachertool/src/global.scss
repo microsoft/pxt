@@ -155,29 +155,6 @@ code {
 }
 
 /*******************************/
-/***** DEBUG INPUT STYLING  *****/
-/*******************************/
-
-.debug-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    padding: 1rem;
-}
-
-.single-share-link-input-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
-    margin-bottom: 1.5rem;
-}
-
-.link-input {
-    width: 100%;
-}
-
-/*******************************/
 /******  STYLE OVERRIDES  ******/
 /*******************************/
 
