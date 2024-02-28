@@ -67,10 +67,10 @@ export default function reducer(state: AppState, action: Action): AppState {
                 rubric: action.rubric,
             };
         }
-        case "SET_CONFIRMATION_PROPS": {
+        case "SET_CONFIRMATION_OPTIONS": {
             return {
                 ...state,
-                confirmationOptions: action.props,
+                confirmationOptions: action.options,
             };
         }
         case "SHOW_MODAL": {

@@ -55,9 +55,9 @@ type SetRubric = ActionBase & {
     rubric: Rubric;
 };
 
-type SetConfirmationProps = ActionBase & {
-    type: "SET_CONFIRMATION_PROPS";
-    props: ConfirmationModalOptions | undefined;
+type SetConfirmationOptions = ActionBase & {
+    type: "SET_CONFIRMATION_OPTIONS";
+    options: ConfirmationModalOptions | undefined;
 };
 
 type ShowModal = ActionBase & {
@@ -98,7 +98,7 @@ export type Action =
     | SetTargetConfig
     | SetCatalog
     | SetRubric
-    | SetConfirmationProps
+    | SetConfirmationOptions
     | ShowModal
     | HideModal
     | SetValidatorPlans
@@ -153,9 +153,9 @@ const setRubric = (rubric: Rubric): SetRubric => ({
     rubric,
 });
 
-const setConfirmationProps = (props: ConfirmationModalOptions | undefined): SetConfirmationProps => ({
-    type: "SET_CONFIRMATION_PROPS",
-    props,
+const setConfirmationOptions = (options: ConfirmationModalOptions | undefined): SetConfirmationOptions => ({
+    type: "SET_CONFIRMATION_OPTIONS",
+    options,
 });
 
 const showModal = (modal: ModalType): ShowModal => ({
@@ -192,7 +192,7 @@ export {
     setTargetConfig,
     setCatalog,
     setRubric,
-    setConfirmationProps,
+    setConfirmationOptions,
     showModal,
     hideModal,
     setValidatorPlans,

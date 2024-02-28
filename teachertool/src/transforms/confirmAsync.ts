@@ -7,7 +7,7 @@ export async function confirmAsync(title: string, message: string, cautionLevel:
     const { dispatch } = stateAndDispatch();
     return new Promise<boolean>(resolve => {
         dispatch(
-            Actions.setConfirmationProps({
+            Actions.setConfirmationOptions({
                 title,
                 message,
                 cautionLevel,
