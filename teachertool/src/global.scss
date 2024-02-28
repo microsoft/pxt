@@ -158,5 +158,12 @@ code {
 /******  STYLE OVERRIDES  ******/
 /*******************************/
 
+button[class*="add-button"] {
+    align-self: center;
+    border-radius: 0.5rem;
+    width: auto;
+    padding: 0.85rem 1.4rem;
+}
+
 @import "./style.overrides/Button.scss";
 @import "./style.overrides/Input.scss";

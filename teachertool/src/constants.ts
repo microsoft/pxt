@@ -14,6 +14,7 @@ export namespace Strings {
     export const Actions = lf("Actions");
     export const AutoRun = lf("auto-run");
     export const AutoRunDescription = lf("Automatically re-evaluate when the rubric or project changes");
+    export const AddNotes = lf("Add Notes");
 }
 
 export namespace Ticks {
