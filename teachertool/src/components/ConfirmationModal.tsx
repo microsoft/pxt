@@ -47,7 +47,7 @@ export const ConfirmationModal: React.FC<IProps> = () => {
 
     return teacherTool.modal === "confirmation" && teacherTool.confirmationProps ? (
         <Modal
-            title={teacherTool.confirmationProps.title ?? ""}
+            title={teacherTool.confirmationProps.title}
             onClose={handleCancel}
             actions={actions}
             className={css["confirmation-modal"]}
