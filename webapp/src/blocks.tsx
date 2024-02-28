@@ -585,6 +585,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!blocklyDiv)
             return;
         pxsim.U.clear(blocklyDiv);
+
+        // Increase the Blockly connection radius
+        Blockly.config.snapRadius = 48;
+        Blockly.config.connectingSnapRadius = 96;
+
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
@@ -1230,7 +1235,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             plugins: {
                 'blockDragger': pxtblockly.BlockDragger,
                 'connectionChecker': DuplicateOnDragConnectionChecker,
-                'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout
+                'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout,
+                'connectionPreviewer': pxtblockly.ConnectionPreviewer
             },
             move: {
                 scrollbars: true,
