@@ -11,7 +11,7 @@ export interface DragAndDropFileSurfaceProps {
 }
 export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ onFileDroppedAsync, errorMessage }) => {
     const [fileIsOverSurface, setFileIsOverSurface] = useState(false);
-    const [errorKey, setErrorKey] = useState(0); // Used to reset animations on the error label.
+    const [errorKey, setErrorKey] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
@@ -48,6 +48,7 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
     }
 
     function processNewFile(file: File) {
+        // Change errorKey so that the error component resets (notably, resetting animations).
         setErrorKey(errorKey + 1);
         onFileDroppedAsync(file);
     }
