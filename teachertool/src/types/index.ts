@@ -46,3 +46,11 @@ export type CarouselCardSet = {
 };
 
 export type RequestStatus = "init" | "loading" | "error" | "success";
+
+export type ConfirmationModalProps = {
+    title: string;
+    message: string;
+    cautionLevel: CautionLevel;
+    onCancel: () => void;
+    onContinue: () => void;
+};

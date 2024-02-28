@@ -3,16 +3,7 @@ import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
 import { classList } from "react-common/components/util";
-import { CautionLevel } from "../types";
 import css from "./styling/ConfirmationModal.module.scss";
-
-export type ConfirmationModalProps = {
-    title: string;
-    message: string;
-    cautionLevel: CautionLevel;
-    onCancel: () => void;
-    onContinue: () => void;
-};
 
 // ConfirmationModalProps are passed in through app state, not as component props.
 export interface IProps {}

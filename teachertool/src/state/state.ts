@@ -1,5 +1,4 @@
-import { ConfirmationModalProps } from "../components/ConfirmationModal";
-import { ModalType, ToastWithId, TabName } from "../types";
+import { ModalType, ToastWithId, TabName, ConfirmationModalProps } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 import { makeRubric } from "../utils";
