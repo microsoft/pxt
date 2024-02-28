@@ -7,9 +7,10 @@ import { CriteriaEvaluationResult } from "../types/criteria";
 import { classList } from "react-common/components/util";
 import { Button } from "react-common/components/controls/Button";
 import { Strings, Ticks } from "../constants";
-import { Input } from "react-common/components/controls/Input";
 import { MenuDropdown, MenuDropdownProps, MenuItem } from "react-common/components/controls/MenuDropdown";
-import { updateEvalResults } from "../transforms/updateEvalResults";
+import { DebouncedInput } from "./DebouncedInput";
+import { setEvalResultNotes } from "../transforms/setEvalResultNotes";
+import { setEvalResultOutcome } from "../transforms/setEvalResultOutcome";
 
 
 const ResultsHeader: React.FC = () => {
@@ -55,14 +56,24 @@ const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInpu
     );
 }
 
-const CriteriaResultNotes: React.FC<{}> = () => {
+interface CriteriaResultNotesProps {
+    criteriaId: string;
+}
+
+const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId }) => {
+    const onTextChange = (str: string) => {
+        setEvalResultNotes(criteriaId, str);
+    };
+
     return (
         <div>
-            <Input
+            <DebouncedInput
                 placeholder={lf("Write your notes here")}
                 ariaLabel={lf("Notes regarding the criteria result")}
                 preserveValueOnBlur={true}
+                onChange={onTextChange}
                 autoComplete={false}
+                intervalMs={5000}
             />
         </div>
     )
@@ -79,7 +90,7 @@ const CriteriaEvalResult: React.FC<CriteriaEvalResultProps> = ({ result, criteri
 
     function changeResult(newResult: CriteriaEvaluationResult) {
         setSelectedResult(newResult);
-        updateEvalResults(criteriaId, {result: newResult});
+        setEvalResultOutcome(criteriaId, newResult);
     }
 
     useEffect(() => {
@@ -148,7 +159,7 @@ const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId, r
             </p>
             <CriteriaEvalResult result={result} criteriaId={criteriaId} />
             {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-            {showInput && <CriteriaResultNotes />}
+            {showInput && <CriteriaResultNotes criteriaId={criteriaId}/>}
         </div>
     );
 }
