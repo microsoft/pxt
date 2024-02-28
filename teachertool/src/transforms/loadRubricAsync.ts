@@ -21,5 +21,5 @@ export async function loadRubricAsync(rubricUrl: string) {
         return;
     }
 
-    replaceActiveRubricAsync(json);
+    await replaceActiveRubricAsync(json);
 }
