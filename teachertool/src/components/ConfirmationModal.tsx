@@ -2,8 +2,6 @@ import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
-import { classList } from "react-common/components/util";
-import css from "./styling/ConfirmationModal.module.scss";
 
 export interface IProps {}
 export const ConfirmationModal: React.FC<IProps> = () => {
@@ -27,10 +25,7 @@ export const ConfirmationModal: React.FC<IProps> = () => {
         },
         {
             label: lf("Continue"),
-            className: classList(
-                "primary",
-                teacherTool.confirmationOptions?.cautionLevel === "high" ? css["caution"] : undefined
-            ),
+            className: "primary",
             onClick: handleContinue,
         },
     ];
@@ -40,7 +35,6 @@ export const ConfirmationModal: React.FC<IProps> = () => {
             title={teacherTool.confirmationOptions.title}
             onClose={handleCancel}
             actions={actions}
-            className={css["confirmation-modal"]}
         >
             {teacherTool.confirmationOptions.message}
         </Modal>

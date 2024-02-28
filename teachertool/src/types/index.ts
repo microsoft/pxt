@@ -27,8 +27,6 @@ export type TabName = "home" | "rubric" | "results";
 
 export type CardType = "rubric-resource";
 
-export type CautionLevel = "low" | "high";
-
 // Rubric Card types that can be appear in the carousel
 export type CarouselCard = {
     cardType: CardType;
@@ -50,7 +48,6 @@ export type RequestStatus = "init" | "loading" | "error" | "success";
 export type ConfirmationModalOptions = {
     title: string;
     message: string;
-    cautionLevel: CautionLevel;
     onCancel: () => void;
     onContinue: () => void;
 };

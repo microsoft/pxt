@@ -13,7 +13,7 @@ export async function replaceActiveRubricAsync(newRubric: Rubric): Promise<boole
         !newRubric.name && !newRubric.criteria?.length
             ? lf("Create Empty Rubric")
             : lf("Import '{0}'?", newRubric.name ? newRubric.name : Strings.UntitledRubric);
-    if (isRubricLoaded(teacherTool) && !(await confirmAsync(title, Strings.ConfirmReplaceRubricMsg, "high"))) {
+    if (isRubricLoaded(teacherTool) && !(await confirmAsync(title, Strings.ConfirmReplaceRubricMsg))) {
         return false;
     }
 
