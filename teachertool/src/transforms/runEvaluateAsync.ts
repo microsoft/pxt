@@ -48,7 +48,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const evalRequests = teacherTool.rubric.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
-                dispatch(Actions.setEvalResult(criteriaInstance.instanceId, CriteriaEvaluationResult.InProgress));
+                dispatch(Actions.setEvalResult(criteriaInstance.instanceId, { result: CriteriaEvaluationResult.InProgress }));
 
                 const loadedValidatorPlans = teacherTool.validatorPlans;
                 if (!loadedValidatorPlans) {
@@ -70,7 +70,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                     dispatch(
                         Actions.setEvalResult(
                             criteriaInstance.instanceId,
-                            planResult.result ? CriteriaEvaluationResult.Pass : CriteriaEvaluationResult.Fail
+                            { result: planResult.result ? CriteriaEvaluationResult.Pass : CriteriaEvaluationResult.Fail }
                         )
                     );
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)

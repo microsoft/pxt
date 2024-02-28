@@ -36,3 +36,8 @@ export enum CriteriaEvaluationResult {
     CompleteWithNoResult = "Not evaluated",
     InProgress = "Evaluating...",
 }
+
+export interface CriteriaResult {
+    result: CriteriaEvaluationResult;
+    notes?: string;
+}

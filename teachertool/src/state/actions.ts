@@ -1,5 +1,5 @@
 import { ModalType, ToastWithId, TabName, ProjectData } from "../types";
-import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
+import { CatalogCriteria, CriteriaEvaluationResult, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -28,7 +28,7 @@ type SetProjectMetadata = ActionBase & {
 type SetEvalResult = ActionBase & {
     type: "SET_EVAL_RESULT";
     criteriaInstanceId: string;
-    result: CriteriaEvaluationResult;
+    result: CriteriaResult;
 };
 
 type ClearEvalResult = ActionBase & {
@@ -117,10 +117,10 @@ const setProjectMetadata = (metadata: ProjectData | undefined): SetProjectMetada
     metadata,
 });
 
-const setEvalResult = (criteriaInstanceId: string, result: CriteriaEvaluationResult): SetEvalResult => ({
+const setEvalResult = (criteriaInstanceId: string, result: CriteriaResult): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
     criteriaInstanceId,
-    result,
+    result
 });
 
 const clearEvalResult = (criteriaInstanceId: string): ClearEvalResult => ({

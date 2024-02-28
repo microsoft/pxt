@@ -9,6 +9,7 @@ import { Button } from "react-common/components/controls/Button";
 import { Strings, Ticks } from "../constants";
 import { Input } from "react-common/components/controls/Input";
 import { MenuDropdown, MenuDropdownProps, MenuItem } from "react-common/components/controls/MenuDropdown";
+import { updateEvalResults } from "../transforms/updateEvalResults";
 
 
 const ResultsHeader: React.FC = () => {
@@ -39,7 +40,7 @@ interface AddNotesButtonProps {
 }
 
 const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInput }) => {
-    const onAddNotesClicked = async () => {
+    const onAddNotesClicked = () => {
         pxt.tickEvent(Ticks.AddResultNotes, { criteriaId });
         setShowInput(true);
     };
@@ -76,8 +77,13 @@ const CriteriaEvalResult: React.FC<CriteriaEvalResultProps> = ({ result, criteri
     // Q: if we change the criteria's evaluated result here, do we want to change it in the state, too
     const [selectedResult, setSelectedResult] = useState(result);
 
+    function changeResult(newResult: CriteriaEvaluationResult) {
+        setSelectedResult(newResult);
+        updateEvalResults(criteriaId, {result: newResult});
+    }
+
     useEffect(() => {
-        setSelectedResult(result);
+        changeResult(result);
     }, [result]);
 
     const items: MenuItem[] = [
@@ -85,25 +91,25 @@ const CriteriaEvalResult: React.FC<CriteriaEvalResultProps> = ({ result, criteri
             title: CriteriaEvaluationResult.InProgress,
             label: CriteriaEvaluationResult.InProgress,
             ariaLabel: CriteriaEvaluationResult.InProgress,
-            onClick: () => setSelectedResult(CriteriaEvaluationResult.InProgress),
+            onClick: () => changeResult(CriteriaEvaluationResult.InProgress),
         },
         {
             title: CriteriaEvaluationResult.CompleteWithNoResult,
             label: CriteriaEvaluationResult.CompleteWithNoResult,
             ariaLabel: CriteriaEvaluationResult.CompleteWithNoResult,
-            onClick: () => setSelectedResult(CriteriaEvaluationResult.CompleteWithNoResult),
+            onClick: () => changeResult(CriteriaEvaluationResult.CompleteWithNoResult),
         },
         {
             title: CriteriaEvaluationResult.Fail,
             label: CriteriaEvaluationResult.Fail,
             ariaLabel: CriteriaEvaluationResult.Fail,
-            onClick: () => setSelectedResult(CriteriaEvaluationResult.Fail),
+            onClick: () => changeResult(CriteriaEvaluationResult.Fail),
         },
         {
             title: CriteriaEvaluationResult.Pass,
             label: CriteriaEvaluationResult.Pass,
             ariaLabel: CriteriaEvaluationResult.Pass,
-            onClick: () => setSelectedResult(CriteriaEvaluationResult.Pass),
+            onClick: () => changeResult(CriteriaEvaluationResult.Pass),
         },
     ]
     return (
@@ -169,7 +175,7 @@ export const EvalResultDisplay: React.FC<{}> = () => {
                             label &&
                             <CriteriaResultEntry
                                 criteriaId={criteriaInstanceId}
-                                result={teacherTool.evalResults[criteriaInstanceId]}
+                                result={teacherTool.evalResults[criteriaInstanceId].result}
                                 label={label}
                             />
                         )
