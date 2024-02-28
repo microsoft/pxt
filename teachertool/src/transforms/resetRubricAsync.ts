@@ -1,22 +1,12 @@
 import { stateAndDispatch } from "../state";
-import { isRubricLoaded } from "../state/helpers";
 import * as Actions from "../state/actions";
-import { setRubric } from "./setRubric";
-import { confirmAsync } from "./confirmAsync";
 import { makeRubric } from "../utils";
-import { Strings } from "../constants";
+import { replaceActiveRubricAsync } from "./replaceActiveRubricAsync";
 
 export async function resetRubricAsync() {
-    const { state: teachertool, dispatch } = stateAndDispatch();
+    const { dispatch } = stateAndDispatch();
 
-    if (isRubricLoaded(teachertool)) {
-        if (!(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
-            return;
-        }
+    if (await replaceActiveRubricAsync(makeRubric())) {
+        dispatch(Actions.clearAllEvalResults());
     }
-
-    dispatch(Actions.clearAllEvalResults());
-    setRubric(makeRubric());
-
-    dispatch(Actions.setActiveTab("rubric"));
 }

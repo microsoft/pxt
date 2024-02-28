@@ -3,9 +3,7 @@ import { fetchJsonDocAsync } from "../services/backendRequests";
 import { verifyRubricIntegrity } from "../state/helpers";
 import { Rubric } from "../types/rubric";
 import { makeToast } from "../utils";
-import { confirmAsync } from "./confirmAsync";
-import { setActiveTab } from "./setActiveTab";
-import { setRubric } from "./setRubric";
+import { replaceActiveRubricAsync } from "./replaceActiveRubricAsync";
 import { showToast } from "./showToast";
 
 export async function loadRubricAsync(rubricUrl: string) {
@@ -23,10 +21,5 @@ export async function loadRubricAsync(rubricUrl: string) {
         return;
     }
 
-    if (!(await confirmAsync(Strings.ConfirmReplaceRubricMsg))) {
-        return;
-    }
-
-    setRubric(json);
-    setActiveTab("rubric");
+    await replaceActiveRubricAsync(json);
 }
