@@ -70,19 +70,4 @@
             pointer-events: all;
         }
     }
-
-    @media screen and (max-height: 720px) {
-        padding: 1rem;
-
-        .instruction-container {
-            font-size: 1.5rem;
-
-            .or-browse-container .browse-button {
-                font-size: 1.5rem;
-            }
-            .upload-icon {
-                display: none;
-            }
-        }
-    }
 }
