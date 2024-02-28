@@ -31,8 +31,8 @@ export interface CriteriaParameterValue {
 
 // Possible results from evaluating a criteria instance.
 export enum CriteriaEvaluationResult {
-    Pass,
-    Fail,
-    CompleteWithNoResult,
-    InProgress,
+    Pass = "Looks Good!",
+    Fail = "Needs Work",
+    CompleteWithNoResult = "Not evaluated",
+    InProgress = "Evaluating...",
 }

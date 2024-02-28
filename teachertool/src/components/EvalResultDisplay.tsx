@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
@@ -8,6 +8,7 @@ import { classList } from "react-common/components/util";
 import { Button } from "react-common/components/controls/Button";
 import { Strings, Ticks } from "../constants";
 import { Input } from "react-common/components/controls/Input";
+import { MenuDropdown, MenuDropdownProps, MenuItem } from "react-common/components/controls/MenuDropdown";
 
 
 const ResultsHeader: React.FC = () => {
@@ -60,19 +61,52 @@ const CriteriaResultNotes: React.FC<{}> = () => {
     )
 }
 
-interface CriteriaResultProps {
-    criteriaId: string;
+interface CriteriaEvalResultProps {
     result: CriteriaEvaluationResult;
-    label: string;
+    criteriaId: string;
 }
 
-const CriteriaResult: React.FC<CriteriaResultProps> = ({ criteriaId, result, label }) => {
-    const [showInput, setShowInput] = useState(false);
+const CriteriaEvalResult: React.FC<CriteriaEvalResultProps> = ({ result, criteriaId }) => {
+    // Q: if we change the criteria's evaluated result here, do we want to change it in the state, too
+    const [selectedResult, setSelectedResult] = useState(result);
+
+    useEffect(() => {
+        setSelectedResult(result);
+    }, [result]);
+
+    const items: MenuItem[] = [
+        {
+            title: CriteriaEvaluationResult.InProgress,
+            label: CriteriaEvaluationResult.InProgress,
+            ariaLabel: CriteriaEvaluationResult.InProgress,
+            onClick: () => setSelectedResult(CriteriaEvaluationResult.InProgress),
+        },
+        {
+            title: CriteriaEvaluationResult.CompleteWithNoResult,
+            label: CriteriaEvaluationResult.CompleteWithNoResult,
+            ariaLabel: CriteriaEvaluationResult.CompleteWithNoResult,
+            onClick: () => setSelectedResult(CriteriaEvaluationResult.CompleteWithNoResult),
+        },
+        {
+            title: CriteriaEvaluationResult.Fail,
+            label: CriteriaEvaluationResult.Fail,
+            ariaLabel: CriteriaEvaluationResult.Fail,
+            onClick: () => setSelectedResult(CriteriaEvaluationResult.Fail),
+        },
+        {
+            title: CriteriaEvaluationResult.Pass,
+            label: CriteriaEvaluationResult.Pass,
+            ariaLabel: CriteriaEvaluationResult.Pass,
+            onClick: () => setSelectedResult(CriteriaEvaluationResult.Pass),
+        },
+    ]
     return (
-        <div className={css["result-block-id"]} key={criteriaId}>
-            <p className={css["block-id-label"]}>
-                {label}:
-            </p>
+        <div>
+            <MenuDropdown
+                title="hello"
+                label={selectedResult}
+                items={items}
+            />
             {result === CriteriaEvaluationResult.InProgress && (
                 <div className={css["common-spinner"]} />
             )}
@@ -83,6 +117,24 @@ const CriteriaResult: React.FC<CriteriaResultProps> = ({ criteriaId, result, lab
             {result === CriteriaEvaluationResult.Pass && (
                 <p className={css["positive-text"]}>{lf("Looks Good!")}</p>
             )}
+        </div>
+    )
+}
+
+interface CriteriaResultEntryProps {
+    criteriaId: string;
+    result: CriteriaEvaluationResult;
+    label: string;
+}
+
+const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId, result, label }) => {
+    const [showInput, setShowInput] = useState(false);
+    return (
+        <div className={css["result-block-id"]} key={criteriaId}>
+            <p className={css["block-id-label"]}>
+                {label}:
+            </p>
+            <CriteriaEvalResult result={result} criteriaId={criteriaId} />
             {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
             {showInput && <CriteriaResultNotes />}
         </div>
@@ -105,12 +157,11 @@ export const EvalResultDisplay: React.FC<{}> = () => {
             {teacherTool.projectMetadata && (
                 <div className={css["eval-results-container"]}>
                     <ResultsHeader />
-                    {teacherTool.evalResults.length === 0 && <div className={css["common-spinner"]} />}
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
                         const label = getTemplateStringFromCriteriaInstanceId(criteriaInstanceId);
                         return (
                             label &&
-                            <CriteriaResult
+                            <CriteriaResultEntry
                                 criteriaId={criteriaInstanceId}
                                 result={teacherTool.evalResults[criteriaInstanceId]}
                                 label={label}
