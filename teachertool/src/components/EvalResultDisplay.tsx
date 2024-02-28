@@ -1,12 +1,13 @@
 import * as React from "react";
-import { useContext } from "react";
+import { useState, useContext } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaEvaluationResult } from "../types/criteria";
 import { classList } from "react-common/components/util";
 import { Button } from "react-common/components/controls/Button";
-import { Strings } from "../constants";
+import { Strings, Ticks } from "../constants";
+import { Input } from "react-common/components/controls/Input";
 
 
 const ResultsHeader: React.FC = () => {
@@ -25,6 +26,40 @@ const ResultsHeader: React.FC = () => {
     );
 };
 
+interface AddNotesButtonProps {
+    criteriaId: string;
+    setShowInput: (show: boolean) => void;
+}
+
+const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInput }) => {
+    const onAddNotesClicked = async () => {
+        pxt.tickEvent(Ticks.AddResultNotes, { criteriaId });
+        setShowInput(true);
+    };
+    return (
+        <Button
+            className={classList("inline", "add-button")}
+            label={Strings.AddNotes}
+            onClick={onAddNotesClicked}
+            title={Strings.AddNotes}
+            leftIcon="fas fa-plus-circle"
+        />
+    );
+}
+
+const CriteriaResultNotes: React.FC<{}> = () => {
+    return (
+        <div>
+            <Input
+                placeholder={lf("Write your notes here")}
+                ariaLabel={lf("Notes regarding the criteria result")}
+                preserveValueOnBlur={true}
+                autoComplete={false}
+            />
+        </div>
+    )
+}
+
 interface CriteriaResultProps {
     criteriaId: string;
     result: CriteriaEvaluationResult;
@@ -32,6 +67,7 @@ interface CriteriaResultProps {
 }
 
 const CriteriaResult: React.FC<CriteriaResultProps> = ({ criteriaId, result, label }) => {
+    const [showInput, setShowInput] = useState(false);
     return (
         <div className={css["result-block-id"]} key={criteriaId}>
             <p className={css["block-id-label"]}>
@@ -47,13 +83,8 @@ const CriteriaResult: React.FC<CriteriaResultProps> = ({ criteriaId, result, lab
             {result === CriteriaEvaluationResult.Pass && (
                 <p className={css["positive-text"]}>{lf("Looks Good!")}</p>
             )}
-            <Button
-                className={classList("inline", "add-button")}
-                label={Strings.AddNotes}
-                onClick={() => console.log("Add notes getting clicked")}
-                title={Strings.AddNotes}
-                leftIcon="fas fa-plus-circle"
-            />
+            {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
+            {showInput && <CriteriaResultNotes />}
         </div>
     );
 }

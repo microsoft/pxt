@@ -31,6 +31,7 @@ export namespace Ticks {
     export const Autorun = "teachertool.autorun";
     export const AddCriteria = "teachertool.addcriteria";
     export const RemoveCriteria = "teachertool.removecriteria";
+    export const AddResultNotes = "teachertool.addresultnotes";
 }
 
 namespace Misc {
