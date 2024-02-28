@@ -13,6 +13,12 @@ import { MenuDropdown, MenuDropdownProps, MenuItem } from "react-common/componen
 
 const ResultsHeader: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
+
+    function getProjectLink(): string {
+        const inputText = teacherTool.projectMetadata?.inputText!;
+        const hasMakeCode = inputText?.indexOf("makecode") !== -1;
+        return hasMakeCode ? inputText : `https://makecode.com/${inputText}`;
+    }
     // TODO: change the headers to be the correct thing for html (not h3, h4)
     return (
         <div className={css["header"]}>
@@ -21,7 +27,7 @@ const ResultsHeader: React.FC = () => {
             </div>
             <div className={css["project-details"]}>
                 <h4>{lf("{0}", teacherTool?.projectMetadata?.name)}</h4>
-                <p>{teacherTool?.projectMetadata?.id}</p>
+                <p>{getProjectLink()}</p>
             </div>
         </div>
     );
