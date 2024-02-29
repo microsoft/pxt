@@ -40,6 +40,12 @@ export default function reducer(state: AppState, action: Action): AppState {
                 },
             };
         }
+        case "SET_EVAL_RESULTS": {
+            return {
+                ...state,
+                evalResults: action.criteriaResults,
+            };
+        }
         case "CLEAR_EVAL_RESULT": {
             const evalResults = { ...state.evalResults };
             delete evalResults[action.criteriaInstanceId];

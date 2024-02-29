@@ -16,6 +16,7 @@ const itemIdToCriteriaResult: pxt.Map<CriteriaEvaluationResult> = {
     "notevaluated": CriteriaEvaluationResult.CompleteWithNoResult,
     "fail": CriteriaEvaluationResult.Fail,
     "pass": CriteriaEvaluationResult.Pass,
+    "pending": CriteriaEvaluationResult.Pending
 }
 
 const criteriaResultToItemId: pxt.Map<string> = {
@@ -23,6 +24,7 @@ const criteriaResultToItemId: pxt.Map<string> = {
     [CriteriaEvaluationResult.CompleteWithNoResult]: "notevaluated",
     [CriteriaEvaluationResult.Fail]: "fail",
     [CriteriaEvaluationResult.Pass]: "pass",
+    [CriteriaEvaluationResult.Pending]: "pending"
 }
 
 const dropdownItems: DropdownItem[] = [
@@ -46,7 +48,12 @@ const dropdownItems: DropdownItem[] = [
         id: "pass",
         title: lf("looks good!"),
         label: lf("looks good!"),
-    }
+    },
+    {
+        id: "pending",
+        title: lf("not started"),
+        label: lf("not started"),
+    },
 ]
 
 export const CriteriaEvalResultDropdown: React.FC<CriteriaEvalResultProps> = ({ result, criteriaId }) => {

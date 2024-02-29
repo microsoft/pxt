@@ -79,6 +79,11 @@ type SetAutorun = ActionBase & {
     autorun: boolean;
 };
 
+type SetEvalResultsBatch = ActionBase & {
+    type: "SET_EVAL_RESULTS";
+    criteriaResults: pxt.Map<CriteriaResult>;
+}
+
 /**
  * Union of all actions
  */
@@ -90,6 +95,7 @@ export type Action =
     | SetEvalResult
     | ClearEvalResult
     | ClearAllEvalResults
+    | SetEvalResultsBatch
     | SetTargetConfig
     | SetCatalog
     | SetRubric
@@ -126,10 +132,6 @@ const setEvalResult = (criteriaInstanceId: string, result: CriteriaResult): SetE
 const clearEvalResult = (criteriaInstanceId: string): ClearEvalResult => ({
     type: "CLEAR_EVAL_RESULT",
     criteriaInstanceId,
-});
-
-const clearAllEvalResults = (): ClearAllEvalResults => ({
-    type: "CLEAR_ALL_EVAL_RESULTS",
 });
 
 const setTargetConfig = (config: pxt.TargetConfig): SetTargetConfig => ({
@@ -171,13 +173,18 @@ const setAutorun = (autorun: boolean): SetAutorun => ({
     autorun,
 });
 
+const setEvalResultsBatch = (criteriaResults: pxt.Map<CriteriaResult>): SetEvalResultsBatch => ({
+    type: "SET_EVAL_RESULTS",
+    criteriaResults,
+})
+
 export {
     showToast,
     dismissToast,
     setProjectMetadata,
     setEvalResult,
     clearEvalResult,
-    clearAllEvalResults,
+    setEvalResultsBatch,
     setTargetConfig,
     setCatalog,
     setRubric,

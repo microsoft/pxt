@@ -4,6 +4,7 @@ import { getProjectMetaAsync } from "../services/backendRequests";
 import { logDebug } from "../services/loggingService";
 import { showToast } from "./showToast";
 import { makeToast } from "../utils";
+import { setEvalResultsPending } from "./setEvalResultsPending";
 
 export async function loadProjectMetadataAsync(inputText: string, shareLink: string) {
     const { dispatch } = stateAndDispatch();
@@ -31,7 +32,7 @@ export async function loadProjectMetadataAsync(inputText: string, shareLink: str
         ...projMeta,
         inputText
     }
-    dispatch(Actions.clearAllEvalResults());
+    setEvalResultsPending();
     dispatch(Actions.setProjectMetadata(projectData));
     logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);
 }

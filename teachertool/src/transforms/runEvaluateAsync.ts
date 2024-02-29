@@ -8,6 +8,7 @@ import { ErrorCode } from "../types/errorCode";
 import { makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
+import { setEvalResultsPending } from "./setEvalResultsPending";
 
 function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.ValidatorPlan | undefined {
     const { state: teacherTool } = stateAndDispatch();
@@ -41,7 +42,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     }
 
     // Clear all existing results.
-    dispatch(Actions.clearAllEvalResults());
+    setEvalResultsPending();
 
     // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
     // They will only resolve to false if evaluation was unable to complete.
