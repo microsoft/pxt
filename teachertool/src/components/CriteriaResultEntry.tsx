@@ -39,12 +39,14 @@ interface CriteriaResultNotesProps {
 }
 
 const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, notes }) => {
+    // TODO: use a textarea instead of an input
     const onTextChange = (str: string) => {
         setEvalResultNotes(criteriaId, str);
     };
 
     return (
-        <div>
+        <div className={css["notes-container"]}>
+            <p>{lf("Notes")}</p>
             <DebouncedInput
                 placeholder={lf("Write your notes here")}
                 ariaLabel={lf("Notes regarding the criteria result")}
