@@ -1,5 +1,5 @@
 import { ModalType, ToastWithId, TabName, ProjectData } from "../types";
-import { CatalogCriteria, CriteriaEvaluationResult, CriteriaResult } from "../types/criteria";
+import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
 // Changes to app state are performed by dispatching actions to the reducer

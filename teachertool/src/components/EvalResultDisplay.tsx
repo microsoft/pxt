@@ -1,16 +1,9 @@
 import * as React from "react";
-import { useState, useContext, useEffect, useRef } from "react";
+import { useContext } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
-import { CriteriaEvaluationResult } from "../types/criteria";
-import { classList } from "react-common/components/util";
-import { Button } from "react-common/components/controls/Button";
-import { Strings, Ticks } from "../constants";
-import { MenuDropdown, MenuDropdownProps, MenuItem } from "react-common/components/controls/MenuDropdown";
-import { DebouncedInput } from "./DebouncedInput";
-import { setEvalResultNotes } from "../transforms/setEvalResultNotes";
-import { setEvalResultOutcome } from "../transforms/setEvalResultOutcome";
+import { CriteriaResultEntry } from "./CriteriaResultEntry";
 
 
 const ResultsHeader: React.FC = () => {
@@ -35,143 +28,6 @@ const ResultsHeader: React.FC = () => {
     );
 };
 
-interface AddNotesButtonProps {
-    criteriaId: string;
-    setShowInput: (show: boolean) => void;
-}
-
-const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInput }) => {
-    const onAddNotesClicked = () => {
-        pxt.tickEvent(Ticks.AddResultNotes, { criteriaId });
-        setShowInput(true);
-    };
-    return (
-        <Button
-            className={classList("inline", "add-button")}
-            label={Strings.AddNotes}
-            onClick={onAddNotesClicked}
-            title={Strings.AddNotes}
-            leftIcon="fas fa-plus-circle"
-        />
-    );
-}
-
-interface CriteriaResultNotesProps {
-    criteriaId: string;
-    notes?: string;
-}
-
-const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, notes }) => {
-    const onTextChange = (str: string) => {
-        setEvalResultNotes(criteriaId, str);
-    };
-
-    return (
-        <div>
-            <DebouncedInput
-                placeholder={lf("Write your notes here")}
-                ariaLabel={lf("Notes regarding the criteria result")}
-                preserveValueOnBlur={true}
-                initialValue={notes ?? undefined}
-                onChange={onTextChange}
-                autoComplete={false}
-                intervalMs={1000}
-            />
-        </div>
-    )
-}
-
-interface CriteriaEvalResultProps {
-    result: CriteriaEvaluationResult;
-    criteriaId: string;
-}
-
-const CriteriaEvalResult: React.FC<CriteriaEvalResultProps> = ({ result, criteriaId }) => {
-    const [selectedResult, setSelectedResult] = useState(result);
-
-    function changeResult(newResult: CriteriaEvaluationResult) {
-        setSelectedResult(newResult);
-        setEvalResultOutcome(criteriaId, newResult);
-    }
-
-    useEffect(() => {
-        changeResult(result);
-    }, [result]);
-
-    const items: MenuItem[] = [
-        {
-            title: CriteriaEvaluationResult.InProgress,
-            label: CriteriaEvaluationResult.InProgress,
-            ariaLabel: CriteriaEvaluationResult.InProgress,
-            onClick: () => changeResult(CriteriaEvaluationResult.InProgress),
-        },
-        {
-            title: CriteriaEvaluationResult.CompleteWithNoResult,
-            label: CriteriaEvaluationResult.CompleteWithNoResult,
-            ariaLabel: CriteriaEvaluationResult.CompleteWithNoResult,
-            onClick: () => changeResult(CriteriaEvaluationResult.CompleteWithNoResult),
-        },
-        {
-            title: CriteriaEvaluationResult.Fail,
-            label: CriteriaEvaluationResult.Fail,
-            ariaLabel: CriteriaEvaluationResult.Fail,
-            onClick: () => changeResult(CriteriaEvaluationResult.Fail),
-        },
-        {
-            title: CriteriaEvaluationResult.Pass,
-            label: CriteriaEvaluationResult.Pass,
-            ariaLabel: CriteriaEvaluationResult.Pass,
-            onClick: () => changeResult(CriteriaEvaluationResult.Pass),
-        },
-    ]
-    return (
-        <div>
-            <MenuDropdown
-                title="hello"
-                label={selectedResult}
-                items={items}
-            />
-            {result === CriteriaEvaluationResult.InProgress && (
-                <div className={css["common-spinner"]} />
-            )}
-            {result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
-            {result === CriteriaEvaluationResult.Fail && (
-                <p className={css["negative-text"]}>{lf("Needs Work")}</p>
-            )}
-            {result === CriteriaEvaluationResult.Pass && (
-                <p className={css["positive-text"]}>{lf("Looks Good!")}</p>
-            )}
-        </div>
-    )
-}
-
-interface CriteriaResultEntryProps {
-    criteriaId: string;
-    result: CriteriaEvaluationResult;
-    label: string;
-}
-
-const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId, result, label }) => {
-    const { state: teacherTool } = useContext(AppStateContext);
-    const [showInput, setShowInput] = useState(false);
-    const notesRef = useRef<string | undefined>(teacherTool.evalResults[criteriaId].notes);
-
-    useEffect(() => {
-        if (notesRef.current) {
-            setShowInput(true);
-        }
-    }, [])
-    return (
-        <div className={css["result-block-id"]} key={criteriaId}>
-            <p className={css["block-id-label"]}>
-                {label}:
-            </p>
-            <CriteriaEvalResult result={result} criteriaId={criteriaId} />
-            {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-            {showInput && <CriteriaResultNotes criteriaId={criteriaId} notes={notesRef.current}/>}
-        </div>
-    );
-}
 
 export const EvalResultDisplay: React.FC<{}> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
