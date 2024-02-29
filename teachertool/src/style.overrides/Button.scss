@@ -40,3 +40,15 @@
 .common-button.disabled {
     opacity: 0.8;
 }
+
+.rounded > .common-button.common-dropdown-button {
+    border-radius: 1rem;
+}
+
+.fail > .common-button.common-dropdown-button {
+    background-color: #FFD15C;
+}
+
+.pass > .common-button.common-dropdown-button {
+    background-color: #29FF89;
+}

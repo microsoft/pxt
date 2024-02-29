@@ -4,6 +4,7 @@ import { setEvalResultOutcome } from "../transforms/setEvalResultOutcome";
 import { Dropdown, DropdownItem } from "react-common/components/controls/Dropdown";
 import { CriteriaEvaluationResult } from "../types/criteria";
 import css from "./styling/EvalResultDisplay.module.scss";
+import { classList } from "react-common/components/util";
 
 interface CriteriaEvalResultProps {
     result: CriteriaEvaluationResult;
@@ -55,7 +56,7 @@ export const CriteriaEvalResultDropdown: React.FC<CriteriaEvalResultProps> = ({ 
         <Dropdown
             id="project-eval-result-dropdown"
             selectedId={selectedResult}
-            className="rounded"
+            className={classList("rounded", selectedResult)}
             items={dropdownItems}
             onItemSelected={(id) => setEvalResultOutcome(criteriaId, itemIdToCriteriaResult[id])}
         />
