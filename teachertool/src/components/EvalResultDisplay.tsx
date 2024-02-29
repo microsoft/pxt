@@ -58,9 +58,10 @@ const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInpu
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
+    notes?: string;
 }
 
-const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId }) => {
+const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, notes }) => {
     const onTextChange = (str: string) => {
         setEvalResultNotes(criteriaId, str);
     };
@@ -71,9 +72,10 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId })
                 placeholder={lf("Write your notes here")}
                 ariaLabel={lf("Notes regarding the criteria result")}
                 preserveValueOnBlur={true}
+                initialValue={notes ?? undefined}
                 onChange={onTextChange}
                 autoComplete={false}
-                intervalMs={5000}
+                intervalMs={1000}
             />
         </div>
     )
@@ -85,7 +87,6 @@ interface CriteriaEvalResultProps {
 }
 
 const CriteriaEvalResult: React.FC<CriteriaEvalResultProps> = ({ result, criteriaId }) => {
-    // Q: if we change the criteria's evaluated result here, do we want to change it in the state, too
     const [selectedResult, setSelectedResult] = useState(result);
 
     function changeResult(newResult: CriteriaEvaluationResult) {
@@ -151,7 +152,15 @@ interface CriteriaResultEntryProps {
 }
 
 const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId, result, label }) => {
+    const { state: teacherTool } = useContext(AppStateContext);
     const [showInput, setShowInput] = useState(false);
+    const [notes, setNotes] = useState(teacherTool.evalResults[criteriaId].notes);
+
+    useEffect(() => {
+        if (notes) {
+            setShowInput(true);
+        }
+    }, [])
     return (
         <div className={css["result-block-id"]} key={criteriaId}>
             <p className={css["block-id-label"]}>
@@ -159,7 +168,7 @@ const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId, r
             </p>
             <CriteriaEvalResult result={result} criteriaId={criteriaId} />
             {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-            {showInput && <CriteriaResultNotes criteriaId={criteriaId}/>}
+            {showInput && <CriteriaResultNotes criteriaId={criteriaId} notes={notes}/>}
         </div>
     );
 }
