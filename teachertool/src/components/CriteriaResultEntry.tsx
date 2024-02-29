@@ -21,13 +21,15 @@ const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInpu
         setShowInput(true);
     };
     return (
-        <Button
-            className={classList("inline", "add-button")}
-            label={Strings.AddNotes}
-            onClick={onAddNotesClicked}
-            title={Strings.AddNotes}
-            leftIcon="fas fa-plus-circle"
-        />
+        <div className={css["button-container"]}>
+            <Button
+                className={classList("inline", "add-button")}
+                label={Strings.AddNotes}
+                onClick={onAddNotesClicked}
+                title={Strings.AddNotes}
+                leftIcon="fas fa-plus-circle"
+            />
+        </div>
     );
 }
 
@@ -73,13 +75,17 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
         }
     }, [])
     return (
-        <div className={css["result-block-id"]} key={criteriaId}>
-            <p className={css["block-id-label"]}>
-                {label}:
-            </p>
-            <CriteriaEvalResultDropdown result={result} criteriaId={criteriaId} />
-            {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-            {showInput && <CriteriaResultNotes criteriaId={criteriaId} notes={notesRef.current}/>}
+        <div className={css["specific-criteria-result"]} key={criteriaId}>
+            <div className={css["result-details"]}>
+                <h4 className={css["block-id-label"]}>
+                    {label}
+                </h4>
+                <CriteriaEvalResultDropdown result={result} criteriaId={criteriaId} />
+            </div>
+            <div className={css["result-notes"]}>
+                {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
+                {showInput && <CriteriaResultNotes criteriaId={criteriaId} notes={notesRef.current}/>}
+            </div>
         </div>
     );
 }

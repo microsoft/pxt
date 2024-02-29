@@ -18,10 +18,10 @@ const ResultsHeader: React.FC = () => {
     return (
         <div className={css["header"]}>
             <div className={css["rubric-name"]}>
-                <h3>{lf("{0}",teacherTool.rubric.name)}</h3>
+                <h2>{lf("{0}",teacherTool.rubric.name)}</h2>
             </div>
             <div className={css["project-details"]}>
-                <h4>{lf("{0}", teacherTool?.projectMetadata?.name)}</h4>
+                <h3>{lf("{0}", teacherTool?.projectMetadata?.name)}</h3>
                 <p>{getProjectLink()}</p>
             </div>
         </div>

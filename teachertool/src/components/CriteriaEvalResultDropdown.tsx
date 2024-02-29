@@ -55,7 +55,7 @@ export const CriteriaEvalResultDropdown: React.FC<CriteriaEvalResultProps> = ({ 
         <Dropdown
             id="project-eval-result-dropdown"
             selectedId={selectedResult}
-            className={css["result-dropdown"]}
+            className="rounded"
             items={dropdownItems}
             onItemSelected={(id) => setEvalResultOutcome(criteriaId, itemIdToCriteriaResult[id])}
         />
