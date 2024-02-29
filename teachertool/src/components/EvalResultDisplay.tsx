@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
@@ -154,10 +154,10 @@ interface CriteriaResultEntryProps {
 const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId, result, label }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [showInput, setShowInput] = useState(false);
-    const [notes, setNotes] = useState(teacherTool.evalResults[criteriaId].notes);
+    const notesRef = useRef<string | undefined>(teacherTool.evalResults[criteriaId].notes);
 
     useEffect(() => {
-        if (notes) {
+        if (notesRef.current) {
             setShowInput(true);
         }
     }, [])
@@ -168,7 +168,7 @@ const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId, r
             </p>
             <CriteriaEvalResult result={result} criteriaId={criteriaId} />
             {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-            {showInput && <CriteriaResultNotes criteriaId={criteriaId} notes={notes}/>}
+            {showInput && <CriteriaResultNotes criteriaId={criteriaId} notes={notesRef.current}/>}
         </div>
     );
 }
