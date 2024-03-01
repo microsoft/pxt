@@ -36,12 +36,14 @@ declare namespace pxt.blocks {
         count: number;
     }
 
-    export interface AiQuestionValidatorCheck extends ValidatorCheckBase {
-        validator: "aiQuestion";
-        question: string;
-    }
-
     export interface EvaluationResult {
         result: boolean;
+    }
+
+    export interface BlockFieldValueExistsCheck extends ValidatorCheckBase {
+        validator: "blockFieldValueExists";
+        fieldType: string;
+        fieldValue: string;
+        blockType: string;
     }
 }
