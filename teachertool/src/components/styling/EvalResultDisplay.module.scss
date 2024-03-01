@@ -13,7 +13,7 @@
     margin-top: 0.5rem;
     min-height: 9rem;
     max-height: 12rem;
-    border-bottom: solid 1px var(--pxt-page-foreground-lighter) ;
+    border-bottom: solid 1px var(--pxt-content-accent) ;
 }
 
 .result-details {
@@ -45,10 +45,6 @@
     .notes-container {
         width: 100%;
         font-weight: 600;
-
-        p {
-            margin: 0;
-        }
     }
 
     div[class*="common-input-wrapper"] {
@@ -76,7 +72,7 @@
     flex-direction: row;
     justify-content: space-between;
     padding: 0.5rem 0;
-    border-bottom: solid 1px var(--pxt-page-foreground-lighter);
+    border-bottom: solid 1px var(--pxt-content-accent);
     // height: 2.625rem;
 
     .rubric-name {
