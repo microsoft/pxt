@@ -26,7 +26,9 @@ const ResultsHeader: React.FC = () => {
                     <h3>{teacherTool?.projectMetadata?.name}</h3>
                     <p>{getProjectLink()}</p>
                 </div>
-                <QRCodeSVG size={60} value={getProjectLink()} />
+                <div className={css["project-qrcode"]}>
+                    <QRCodeSVG size={60} value={getProjectLink()} />
+                </div>
             </div>
         </div>
     );
