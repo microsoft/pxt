@@ -98,6 +98,62 @@
             ]
         },
         {
+            ".desc": "A parameter variable's value is used",
+            "name": "parameter_variable_accessed",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "argument_reporter_string": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "argument_reporter_number": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "argument_reporter_boolean": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "argument_reporter_array": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "argument_reporter_custom": 1
+                    }
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "variables_get_reporter": 1
+                    }
+                }
+            ]
+        },
+        {
+            ".desc": "A numeric parameter variable's value is used",
+            "name": "numeric_parameter_variable_accessed",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": {
+                        "argument_reporter_number": 1
+                    }
+                }
+            ]
+        },
+        {
             ".desc": "A custom variable's value is set to a random number",
             "name": "variable_set_random",
             "threshold": 1,
