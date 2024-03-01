@@ -5,7 +5,6 @@ import { setRubric } from "./setRubric";
 import { confirmAsync } from "./confirmAsync";
 import { makeRubric } from "../utils";
 import { Strings } from "../constants";
-import { setEvalResultsPending } from "./setEvalResultsPending";
 
 export async function resetRubricAsync() {
     const { state: teachertool, dispatch } = stateAndDispatch();
@@ -16,7 +15,6 @@ export async function resetRubricAsync() {
         }
     }
 
-    setEvalResultsPending()
     setRubric(makeRubric());
 
     dispatch(Actions.setActiveTab("rubric"));

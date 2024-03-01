@@ -5,10 +5,12 @@ import { AppStateContext } from "../state/appStateContext";
 import { CriteriaEvaluationResult } from "../types/criteria";
 import { classList } from "react-common/components/util";
 import { Button } from "react-common/components/controls/Button";
+import { Textarea } from "react-common/components/controls/Textarea";
 import { Strings, Ticks } from "../constants";
 import { DebouncedInput } from "./DebouncedInput";
 import { setEvalResultNotes } from "../transforms/setEvalResultNotes";
 import { CriteriaEvalResultDropdown } from "./CriteriaEvalResultDropdown";
+import { DebouncedTextarea } from "./DebouncedTextarea";
 
 interface AddNotesButtonProps {
     criteriaId: string;
@@ -46,15 +48,16 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, n
 
     return (
         <div className={css["notes-container"]}>
-            <p>{lf("Notes")}</p>
-            <DebouncedInput
+            <DebouncedTextarea
                 placeholder={lf("Write your notes here")}
                 ariaLabel={lf("Notes regarding the criteria result")}
-                preserveValueOnBlur={true}
+                label={lf("Notes")}
+                title={lf("Write your notes here")}
                 initialValue={notes ?? undefined}
+                resize="vertical"
                 onChange={onTextChange}
                 autoComplete={false}
-                intervalMs={1000}
+                intervalMs={500}
             />
         </div>
     )

@@ -1,12 +1,14 @@
 import { stateAndDispatch } from "../state";
 import { CriteriaEvaluationResult, CriteriaResult } from "../types/criteria";
+import { Rubric } from "../types/rubric";
 import * as Actions from "../state/actions";
 
 
-export function setEvalResultsPending() {
+export function setEvalResultsPending(rubric?: Rubric) {
     const { state: teachertool, dispatch } = stateAndDispatch();
     let allEvalResults: pxt.Map<CriteriaResult> = {};
-    for (const criteria of teachertool.rubric.criteria) {
+    const usedRubric = rubric || teachertool.rubric;
+    for (const criteria of usedRubric.criteria) {
         const instanceId = criteria.instanceId;
         if (!teachertool.evalResults[instanceId]) {
             allEvalResults[instanceId] = { result: CriteriaEvaluationResult.Pending };
