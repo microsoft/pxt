@@ -22,11 +22,11 @@ const ResultsHeader: React.FC = () => {
                 <h2>{lf("{0}",teacherTool.rubric.name)}</h2>
             </div>
             <div className={css["project-details"]}>
-                <div className={css["project-name"]}>
+                <div className={css["project-text"]}>
                     <h3>{lf("{0}", teacherTool?.projectMetadata?.name)}</h3>
-                    <QRCodeSVG value={getProjectLink()} />
+                    <p>{getProjectLink()}</p>
                 </div>
-                <p>{getProjectLink()}</p>
+                <QRCodeSVG size={60} value={getProjectLink()} />
             </div>
         </div>
     );
