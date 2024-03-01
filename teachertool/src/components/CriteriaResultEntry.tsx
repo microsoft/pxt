@@ -23,7 +23,7 @@ const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInpu
     return (
         <div className={css["button-container"]}>
             <Button
-                className={classList("inline", "add-button")}
+                className={classList("inline", "outline-button")}
                 label={Strings.AddNotes}
                 onClick={onAddNotesClicked}
                 title={Strings.AddNotes}

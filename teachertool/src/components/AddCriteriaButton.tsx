@@ -17,7 +17,7 @@ export const AddCriteriaButton: React.FC<IProps> = ({}) => {
     );
     return (
         <Button
-            className={classList("inline", "add-button")}
+            className={classList("inline", "outline-button")}
             label={Strings.AddCriteria}
             onClick={() => showModal("catalog-display")}
             title={Strings.AddCriteria}
