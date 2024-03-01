@@ -185,7 +185,7 @@ const CardCarousel: React.FC<DataCarouselProps> = ({ title, cardsUrl }) => {
 
     useJsonDocRequest(cardsUrl, setFetchStatus, setCardSet);
 
-    return (
+    return !!cardSet?.cards?.length ? (
         <>
             <div className={css.carouselRow}>
                 <div className={css.rowTitle}>
@@ -210,7 +210,7 @@ const CardCarousel: React.FC<DataCarouselProps> = ({ title, cardsUrl }) => {
                 )}
             </div>
         </>
-    );
+    ) : null;
 };
 
 const CardCarousels: React.FC = () => {

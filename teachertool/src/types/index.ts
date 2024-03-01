@@ -23,7 +23,7 @@ export type ToastWithId = Toast & {
     id: string;
 };
 
-export type ModalType = "catalog-display" | "import-rubric";
+export type ModalType = "catalog-display" | "import-rubric" | "confirmation";
 
 export type TabName = "home" | "rubric" | "results";
 
@@ -51,3 +51,9 @@ export type RequestStatus = "init" | "loading" | "error" | "success";
 export type ProjectData = pxt.Cloud.JsonScript & {
     inputText: string;
 }
+export type ConfirmationModalOptions = {
+    title: string;
+    message: string;
+    onCancel: () => void;
+    onContinue: () => void;
+};
