@@ -4,7 +4,9 @@ import { logError } from "./loggingService";
 
 export async function fetchJsonDocAsync<T = any>(url: string): Promise<T | undefined> {
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            cache: "no-cache",
+        });
         if (!response.ok) {
             throw new Error("Unable to fetch the json file");
         } else {
@@ -70,7 +72,9 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
     let allResults: T[] = [];
     for (const planFile of files) {
         try {
-            const response = await fetch(planFile);
+            const response = await fetch(planFile, {
+                cache: "no-cache",
+            });
 
             if (response.ok) {
                 const content = await response.json();
