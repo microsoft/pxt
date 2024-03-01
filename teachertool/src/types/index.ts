@@ -1,3 +1,5 @@
+import { CriteriaResult } from "./criteria";
+
 export type ToastType = "success" | "info" | "warning" | "error";
 
 export type Toast = {
@@ -48,4 +50,5 @@ export type RequestStatus = "init" | "loading" | "error" | "success";
 
 export type ProjectData = pxt.Cloud.JsonScript & {
     inputText: string;
+    evaluated: boolean;
 }

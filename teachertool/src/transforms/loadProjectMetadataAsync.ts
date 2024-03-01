@@ -30,9 +30,11 @@ export async function loadProjectMetadataAsync(inputText: string, shareLink: str
     }
     const projectData = {
         ...projMeta,
-        inputText
+        inputText,
+        evaluated: false
     }
-    setEvalResultsPending();
     dispatch(Actions.setProjectMetadata(projectData));
+    dispatch(Actions.clearAllEvalResults())
+    setEvalResultsPending();
     logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);
 }

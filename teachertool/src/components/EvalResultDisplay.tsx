@@ -42,7 +42,7 @@ export const EvalResultDisplay: React.FC<{}> = () => {
 
     return (
         <>
-            {teacherTool.projectMetadata && (
+            {teacherTool.projectMetadata?.evaluated && (
                 <div className={css["eval-results-container"]}>
                     <ResultsHeader />
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {

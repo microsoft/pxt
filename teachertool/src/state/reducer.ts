@@ -54,6 +54,12 @@ export default function reducer(state: AppState, action: Action): AppState {
                 evalResults,
             };
         }
+        case "CLEAR_ALL_EVAL_RESULTS": {
+            return {
+                ...state,
+                evalResults: {},
+            };
+        }
         case "SET_CATALOG": {
             return {
                 ...state,

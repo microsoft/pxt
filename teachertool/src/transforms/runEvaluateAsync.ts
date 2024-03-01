@@ -9,6 +9,7 @@ import { makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
 import { setEvalResultsPending } from "./setEvalResultsPending";
+import { setEvalResultOutcome } from "./setEvalResultOutcome";
 
 function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.ValidatorPlan | undefined {
     const { state: teacherTool } = stateAndDispatch();
@@ -41,15 +42,17 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
         setActiveTab("results");
     }
 
-    // Clear all existing results.
-    setEvalResultsPending();
+    // // Clear all existing results.
+    if (!teacherTool.projectMetadata?.evaluated) {
+        dispatch(Actions.clearAllEvalResults());
+    }
 
     // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
     // They will only resolve to false if evaluation was unable to complete.
     const evalRequests = teacherTool.rubric.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
-                dispatch(Actions.setEvalResult(criteriaInstance.instanceId, { result: CriteriaEvaluationResult.InProgress }));
+                setEvalResultOutcome(criteriaInstance.instanceId, CriteriaEvaluationResult.InProgress);
 
                 const loadedValidatorPlans = teacherTool.validatorPlans;
                 if (!loadedValidatorPlans) {
@@ -68,12 +71,9 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                 const planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
 
                 if (planResult) {
-                    dispatch(
-                        Actions.setEvalResult(
-                            criteriaInstance.instanceId,
-                            { result: planResult.result ? CriteriaEvaluationResult.Pass : CriteriaEvaluationResult.Fail }
-                        )
-                    );
+                    const result = planResult.result ? CriteriaEvaluationResult.Pass : CriteriaEvaluationResult.Fail;
+                    setEvalResultOutcome(criteriaInstance.instanceId, result);
+                    dispatch(Actions.setProjectMetadata({ ...teacherTool.projectMetadata!, evaluated: true }));
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));

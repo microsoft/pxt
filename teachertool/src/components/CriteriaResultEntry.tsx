@@ -1,13 +1,11 @@
 import * as React from "react";
-import { useState, useContext, useEffect, useRef } from "react";
+import { useState, useContext } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { CriteriaEvaluationResult } from "../types/criteria";
 import { classList } from "react-common/components/util";
 import { Button } from "react-common/components/controls/Button";
-import { Textarea } from "react-common/components/controls/Textarea";
 import { Strings, Ticks } from "../constants";
-import { DebouncedInput } from "./DebouncedInput";
 import { setEvalResultNotes } from "../transforms/setEvalResultNotes";
 import { CriteriaEvalResultDropdown } from "./CriteriaEvalResultDropdown";
 import { DebouncedTextarea } from "./DebouncedTextarea";
@@ -41,7 +39,7 @@ interface CriteriaResultNotesProps {
 }
 
 const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, notes }) => {
-    // TODO: use a textarea instead of an input
+    const { state: teacherTool } = useContext(AppStateContext);
     const onTextChange = (str: string) => {
         setEvalResultNotes(criteriaId, str);
     };
@@ -53,7 +51,7 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, n
                 ariaLabel={lf("Notes regarding the criteria result")}
                 label={lf("Notes")}
                 title={lf("Write your notes here")}
-                initialValue={notes ?? undefined}
+                initialValue={teacherTool.evalResults[criteriaId]?.notes ?? undefined}
                 resize="vertical"
                 onChange={onTextChange}
                 autoComplete={false}
@@ -71,14 +69,8 @@ interface CriteriaResultEntryProps {
 
 export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId, result, label }) => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [showInput, setShowInput] = useState(false);
-    const notesRef = useRef<string | undefined>(teacherTool.evalResults[criteriaId].notes);
+    const [showInput, setShowInput] = useState(!!teacherTool.evalResults[criteriaId]?.notes);
 
-    useEffect(() => {
-        if (notesRef.current) {
-            setShowInput(true);
-        }
-    }, [])
     return (
         <div className={css["specific-criteria-result"]} key={criteriaId}>
             <div className={css["result-details"]}>
@@ -89,7 +81,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
             </div>
             <div className={css["result-notes"]}>
                 {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-                {showInput && <CriteriaResultNotes criteriaId={criteriaId} notes={notesRef.current}/>}
+                {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
             </div>
         </div>
     );

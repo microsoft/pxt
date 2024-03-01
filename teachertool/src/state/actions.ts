@@ -36,6 +36,10 @@ type ClearEvalResult = ActionBase & {
     criteriaInstanceId: string;
 };
 
+type ClearAllEvalResults = ActionBase & {
+    type: "CLEAR_ALL_EVAL_RESULTS";
+};
+
 type SetTargetConfig = ActionBase & {
     type: "SET_TARGET_CONFIG";
     config: pxt.TargetConfig;
@@ -90,6 +94,7 @@ export type Action =
     | SetProjectMetadata
     | SetEvalResult
     | ClearEvalResult
+    | ClearAllEvalResults
     | SetEvalResultsBatch
     | SetTargetConfig
     | SetCatalog
@@ -127,6 +132,10 @@ const setEvalResult = (criteriaInstanceId: string, result: CriteriaResult): SetE
 const clearEvalResult = (criteriaInstanceId: string): ClearEvalResult => ({
     type: "CLEAR_EVAL_RESULT",
     criteriaInstanceId,
+});
+
+const clearAllEvalResults = (): ClearAllEvalResults => ({
+    type: "CLEAR_ALL_EVAL_RESULTS",
 });
 
 const setTargetConfig = (config: pxt.TargetConfig): SetTargetConfig => ({
@@ -179,6 +188,7 @@ export {
     setProjectMetadata,
     setEvalResult,
     clearEvalResult,
+    clearAllEvalResults,
     setEvalResultsBatch,
     setTargetConfig,
     setCatalog,
