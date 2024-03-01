@@ -89,6 +89,10 @@ type SetEvalResultsBatch = ActionBase & {
     criteriaResults: pxt.Map<CriteriaResult>;
 }
 
+type ClearAllEvalResultNotes = ActionBase & {
+    type: "CLEAR_ALL_EVAL_RESULT_NOTES";
+}
+
 /**
  * Union of all actions
  */
@@ -100,6 +104,7 @@ export type Action =
     | SetEvalResult
     | ClearEvalResult
     | ClearAllEvalResults
+    | ClearAllEvalResultNotes
     | SetEvalResultsBatch
     | SetTargetConfig
     | SetCatalog
@@ -191,7 +196,11 @@ const setAutorun = (autorun: boolean): SetAutorun => ({
 const setEvalResultsBatch = (criteriaResults: pxt.Map<CriteriaResult>): SetEvalResultsBatch => ({
     type: "SET_EVAL_RESULTS_BATCH",
     criteriaResults,
-})
+});
+
+const clearAllEvalResultNotes = (): ClearAllEvalResultNotes => ({
+    type: "CLEAR_ALL_EVAL_RESULT_NOTES",
+});
 
 export {
     showToast,
@@ -200,6 +209,7 @@ export {
     setEvalResult,
     clearEvalResult,
     clearAllEvalResults,
+    clearAllEvalResultNotes,
     setEvalResultsBatch,
     setTargetConfig,
     setCatalog,

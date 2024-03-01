@@ -46,6 +46,16 @@ export default function reducer(state: AppState, action: Action): AppState {
                 evalResults: action.criteriaResults,
             };
         }
+        case "CLEAR_ALL_EVAL_RESULT_NOTES": {
+            const evalResults = { ...state.evalResults };
+            for (const result of Object.keys(evalResults)) {
+                delete evalResults[result].notes
+            }
+            return {
+                ...state,
+                evalResults,
+            };
+        }
         case "CLEAR_EVAL_RESULT": {
             const evalResults = { ...state.evalResults };
             delete evalResults[action.criteriaInstanceId];
