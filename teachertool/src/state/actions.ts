@@ -85,7 +85,7 @@ type SetAutorun = ActionBase & {
 };
 
 type SetEvalResultsBatch = ActionBase & {
-    type: "SET_EVAL_RESULTS";
+    type: "SET_EVAL_RESULTS_BATCH";
     criteriaResults: pxt.Map<CriteriaResult>;
 }
 
@@ -189,7 +189,7 @@ const setAutorun = (autorun: boolean): SetAutorun => ({
 });
 
 const setEvalResultsBatch = (criteriaResults: pxt.Map<CriteriaResult>): SetEvalResultsBatch => ({
-    type: "SET_EVAL_RESULTS",
+    type: "SET_EVAL_RESULTS_BATCH",
     criteriaResults,
 })
 

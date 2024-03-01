@@ -40,7 +40,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                 },
             };
         }
-        case "SET_EVAL_RESULTS": {
+        case "SET_EVAL_RESULTS_BATCH": {
             return {
                 ...state,
                 evalResults: action.criteriaResults,
