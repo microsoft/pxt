@@ -8,7 +8,6 @@ import { ErrorCode } from "../types/errorCode";
 import { makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
-import { setEvalResultsPending } from "./setEvalResultsPending";
 import { setEvalResultOutcome } from "./setEvalResultOutcome";
 
 function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.ValidatorPlan | undefined {
@@ -40,11 +39,6 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
 
     if (fromUserInteraction) {
         setActiveTab("results");
-    }
-
-    // // Clear all existing results.
-    if (!teacherTool.projectMetadata?.evaluated) {
-        dispatch(Actions.clearAllEvalResults());
     }
 
     // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).

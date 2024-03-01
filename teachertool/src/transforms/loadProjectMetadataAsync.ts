@@ -5,6 +5,7 @@ import { logDebug } from "../services/loggingService";
 import { showToast } from "./showToast";
 import { makeToast } from "../utils";
 import { setEvalResultsPending } from "./setEvalResultsPending";
+import { initNewProjectResults } from "./initNewProjectResults";
 
 export async function loadProjectMetadataAsync(inputText: string, shareLink: string) {
     const { dispatch } = stateAndDispatch();
@@ -34,7 +35,6 @@ export async function loadProjectMetadataAsync(inputText: string, shareLink: str
         evaluated: false
     }
     dispatch(Actions.setProjectMetadata(projectData));
-    dispatch(Actions.clearAllEvalResults())
-    setEvalResultsPending();
+    initNewProjectResults();
     logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);
 }

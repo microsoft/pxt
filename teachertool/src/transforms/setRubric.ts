@@ -7,6 +7,6 @@ import { setEvalResultsPending } from "./setEvalResultsPending";
 export function setRubric(rubric: Rubric) {
     const { dispatch } = stateAndDispatch();
     dispatch(Actions.setRubric(rubric));
-    setEvalResultsPending(rubric);
+    setEvalResultsPending({rubric});
     AutorunService.poke();
 }
