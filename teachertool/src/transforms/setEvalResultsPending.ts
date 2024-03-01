@@ -1,5 +1,5 @@
 import { stateAndDispatch } from "../state";
-import { CriteriaEvaluationResult, CriteriaInstance, CriteriaResult } from "../types/criteria";
+import { CriteriaEvaluationResult, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 import * as Actions from "../state/actions";
 
