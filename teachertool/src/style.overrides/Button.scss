@@ -46,9 +46,9 @@
 }
 
 .fail > .common-button.common-dropdown-button {
-    background-color: #FFD15C;
+    background-color: var(--pxt-eval-dropdown-fail);
 }
 
 .pass > .common-button.common-dropdown-button {
-    background-color: #29FF89;
+    background-color: var(--pxt-eval-dropdown-pass);;
 }
