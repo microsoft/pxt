@@ -43,6 +43,12 @@
 
 .rounded > .common-button.common-dropdown-button {
     border-radius: 1rem;
+    border: solid 1px var(--pxt-page-foreground);
+
+    .common-button-flex {
+        padding: 0.75rem;
+    }
+
 }
 
 .fail > .common-button.common-dropdown-button {
