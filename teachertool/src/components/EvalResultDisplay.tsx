@@ -5,17 +5,12 @@ import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaResultEntry } from "./CriteriaResultEntry";
 import { QRCodeSVG } from "qrcode.react"
+import { getProjectLink } from "../utils";
 
 
 const ResultsHeader: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    function getProjectLink(): string {
-        const inputText = teacherTool.projectMetadata?.inputText!;
-        const hasMakeCode = inputText?.indexOf("makecode") !== -1;
-        return hasMakeCode ? inputText : `https://makecode.com/${inputText}`;
-    }
-    // TODO: change the headers to be the correct thing for html (not h3, h4)
     return (
         <div className={css["header"]}>
             <div className={css["rubric-name"]}>
@@ -24,10 +19,10 @@ const ResultsHeader: React.FC = () => {
             <div className={css["project-details"]}>
                 <div className={css["project-text"]}>
                     <h3>{teacherTool?.projectMetadata?.name}</h3>
-                    <p>{getProjectLink()}</p>
+                    <p>{getProjectLink(teacherTool.projectMetadata?.inputText!)}</p>
                 </div>
                 <div className={css["project-qrcode"]}>
-                    <QRCodeSVG size={60} value={getProjectLink()} />
+                    <QRCodeSVG size={60} value={getProjectLink(teacherTool.projectMetadata?.inputText!)} />
                 </div>
             </div>
         </div>
