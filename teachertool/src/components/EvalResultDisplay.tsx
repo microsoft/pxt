@@ -4,6 +4,7 @@ import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaResultEntry } from "./CriteriaResultEntry";
+import { QRCodeSVG } from "qrcode.react"
 
 
 const ResultsHeader: React.FC = () => {
@@ -21,7 +22,10 @@ const ResultsHeader: React.FC = () => {
                 <h2>{lf("{0}",teacherTool.rubric.name)}</h2>
             </div>
             <div className={css["project-details"]}>
-                <h3>{lf("{0}", teacherTool?.projectMetadata?.name)}</h3>
+                <div className={css["project-name"]}>
+                    <h3>{lf("{0}", teacherTool?.projectMetadata?.name)}</h3>
+                    <QRCodeSVG value={getProjectLink()} />
+                </div>
                 <p>{getProjectLink()}</p>
             </div>
         </div>

@@ -50,5 +50,4 @@ export type RequestStatus = "init" | "loading" | "error" | "success";
 
 export type ProjectData = pxt.Cloud.JsonScript & {
     inputText: string;
-    evaluated: boolean;
 }

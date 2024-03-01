@@ -67,7 +67,6 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                 if (planResult) {
                     const result = planResult.result ? CriteriaEvaluationResult.Pass : CriteriaEvaluationResult.Fail;
                     setEvalResultOutcome(criteriaInstance.instanceId, result);
-                    dispatch(Actions.setProjectMetadata({ ...teacherTool.projectMetadata!, evaluated: true }));
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
