@@ -1,0 +1,13 @@
+
+.common-modal {
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.common-modal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+}

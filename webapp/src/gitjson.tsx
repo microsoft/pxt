@@ -14,6 +14,7 @@ import * as tutorial from "./tutorial";
 import * as _package from "./package";
 import { fireClickOnEnter } from "./util"
 
+import * as pxtblockly from "../../pxtblocks";
 import IProjectView = pxt.editor.IProjectView;
 import UserInfo = pxt.editor.UserInfo;
 
@@ -607,9 +608,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1, pxt.appTarget.appTheme?.embedBlocksInSnapshot),
             blocksDiffScreenshotAsync: () => {
                 const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == pxt.MAIN_BLOCKS);
-                const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
+                const diff = pxtblockly.diffXml(f.baseGitContent, f.content);
                 if (diff && diff.ws)
-                    return pxt.blocks.layout.toPngAsync(diff.ws, 1);
+                    return pxtblockly.toPngAsync(diff.ws, 1);
                 return Promise.resolve(undefined);
             }
         })
@@ -968,7 +969,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             // bail off to decompiled diffs
             let markdown: string;
             if (f.tsEditorFile &&
-                pxt.blocks.needsDecompiledDiff(baseContent, content)
+                pxtblockly.needsDecompiledDiff(baseContent, content)
             ) {
                 markdown =
                     `
@@ -1589,7 +1590,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
                     gitFile: oldContent,
                     editorFile: newContent
                 }
-                if (isBlocks && pxt.blocks.needsDecompiledDiff(oldContent, newContent)) {
+                if (isBlocks && pxtblockly.needsDecompiledDiff(oldContent, newContent)) {
                     const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
                     const virtualNewFile = files.find(ff => ff.name == vpn);
                     const virtualOldContent = oldFiles[vpn];

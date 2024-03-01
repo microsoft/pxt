@@ -5,6 +5,17 @@ namespace pxt.blocks {
 
     export let showBlockIdInTooltip: boolean = false;
 
+    // These interfaces are extended in localtypings/pxtblockly.d.ts
+    export interface PxtBlockly {
+    }
+    export interface BlocklyModule {
+    }
+
+    // patched in webapp/pxtrunner
+    export let requirePxtBlockly: () => PxtBlockly = () => undefined;
+    export let requireBlockly: () => BlocklyModule = () => undefined;
+    export let registerFieldEditor: (selector: string, proto: any, validator?: any) => void = () => {}
+
     // The JS Math functions supported in the blocks. The order of this array
     // determines the order of the dropdown in the math_js_op block
     export const MATH_FUNCTIONS = {
@@ -793,22 +804,6 @@ namespace pxt.blocks {
             }
         }
 
-        if (pxt.Util.isTranslationMode()) {
-            const msg = Blockly.Msg as any;
-            Util.values(_blockDefinitions).filter(b => b.block).forEach(b => {
-                const keys = Object.keys(b.block);
-                b.translationIds = Util.values(b.block);
-                keys.forEach(k => pxt.crowdin.inContextLoadAsync(b.block[k])
-                    .then(r => {
-                        b.block[k] = r;
-                        // override builtin blockly namespace strings
-                        if (/^[A-Z_]+$/.test(k))
-                            msg[k] = r;
-                    })
-                )
-            })
-        }
-
         if (pxt.blocks.showBlockIdInTooltip) {
             for (const id of Object.keys(_blockDefinitions)) {
                 const tooltip = _blockDefinitions[id].tooltip;
@@ -823,5 +818,29 @@ namespace pxt.blocks {
                 }
             }
         }
+    }
+
+    export async function initInContextTranslationAsync() {
+        if (!_blockDefinitions) cacheBlockDefinitions();
+
+        const msg: pxt.Map<string> = {}
+        await Promise.all(
+            Util.values(_blockDefinitions).filter(b => b.block).map(async b => {
+                const keys = Object.keys(b.block);
+                b.translationIds = Util.values(b.block);
+                await Promise.all(
+                    keys.map(async k => {
+                        const r = await pxt.crowdin.inContextLoadAsync(b.block[k])
+                        b.block[k] = r;
+                        // override builtin blockly namespace strings
+                        if (/^[A-Z_]+$/.test(k)) {
+                            msg[k] = r;
+                        }
+                    })
+                );
+            })
+        );
+
+        return msg;
     }
 }

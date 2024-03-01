@@ -18,15 +18,16 @@
 </shadow>
 </value>
 <value name="HANDLER_DRAG_PARAM_sprite">
-<shadow type="argument_reporter_number">
+<block type="argument_reporter_number">
+<mutation duplicateondrag="true" />
 <field name="VALUE">sprite</field>
-</shadow>
+</block>
 </value>
 <value name="HANDLER_DRAG_PARAM_number">
-<shadow type="argument_reporter_custom">
-<mutation typename="any" />
+<block type="argument_reporter_custom">
+<mutation typename="any" duplicateondrag="true" />
 <field name="VALUE">location</field>
-</shadow>
+</block>
 </value>
 <statement name="HANDLER">
 </statement>

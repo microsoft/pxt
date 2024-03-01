@@ -1,0 +1,73 @@
+.drag-and-drop-file-surface {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    background-color: var(--pxt-content-background);
+    border-radius: 0.5rem;
+    border: 1px dashed var(--pxt-content-secondary-foreground);
+
+    padding: 2rem;
+    min-height: 30vh;
+
+    .instruction-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        color: var(--pxt-content-secondary-foreground);
+        font-size: 2rem;
+        font-weight: 600;
+
+        .upload-icon {
+            font-size: 3rem;
+        }
+
+        .or-browse-container {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+
+            .or-container {
+                font-weight: 400;
+            }
+
+            .browse-button {
+                font-weight: 600;
+                font-size: 2rem;
+            }
+        }
+    }
+
+    @keyframes fadeInAndOut {
+        0% { opacity: 0; }
+        5% { opacity: 1; }
+        50% { opacity: 1; }
+        100% { opacity: 0; }
+    }
+
+    .error-label-container {
+        position: absolute;
+        bottom: 1rem;
+        animation: fadeInAndOut 4s forwards;
+
+        i {
+            display: none;
+        }
+    }
+
+    .droppable-surface {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+        pointer-events: none;
+        &.dragging {
+            pointer-events: all;
+        }
+    }
+}

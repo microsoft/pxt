@@ -14,12 +14,40 @@ export type Toast = {
     showSpinner?: boolean; // if true, will show a spinner icon
     hideIcon?: boolean; // if true, will hide the type-specific icon
     icon?: string; // if provided, will override the type-specific icon
+    className?: string; // if provided, will be appended to the toast's class list
 };
 
 export type ToastWithId = Toast & {
     id: string;
 };
 
-export type ModalType = "catalog-display" | "import-rubric";
+export type ModalType = "catalog-display" | "import-rubric" | "confirmation";
 
-export type TabName = "rubric" | "results";
+export type TabName = "home" | "rubric" | "results";
+
+export type CardType = "rubric-resource";
+
+// Rubric Card types that can be appear in the carousel
+export type CarouselCard = {
+    cardType: CardType;
+};
+
+export type CarouselRubricResourceCard = CarouselCard & {
+    cardType: "rubric-resource";
+    cardTitle: string;
+    imageUrl: string;
+    rubricUrl: string;
+};
+
+export type CarouselCardSet = {
+    cards: CarouselCard[];
+};
+
+export type RequestStatus = "init" | "loading" | "error" | "success";
+
+export type ConfirmationModalOptions = {
+    title: string;
+    message: string;
+    onCancel: () => void;
+    onContinue: () => void;
+};

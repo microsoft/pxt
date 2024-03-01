@@ -7,6 +7,7 @@ import { CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { makeToast } from "../utils";
 import { showToast } from "./showToast";
+import { setActiveTab } from "./setActiveTab";
 import jp from "jsonpath";
 
 function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.ValidatorPlan | undefined {
@@ -48,8 +49,12 @@ function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.V
     return plan;
 }
 
-export async function runEvaluateAsync() {
+export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
+
+    if (fromUserInteraction) {
+        setActiveTab("results");
+    }
 
     // Clear all existing results.
     dispatch(Actions.clearAllEvalResults());
@@ -61,6 +66,13 @@ export async function runEvaluateAsync() {
             new Promise(async resolve => {
                 dispatch(Actions.setEvalResult(criteriaInstance.instanceId, CriteriaEvaluationResult.InProgress));
 
+                const loadedValidatorPlans = teacherTool.validatorPlans;
+                if (!loadedValidatorPlans) {
+                    logError(ErrorCode.validatorPlansNotFound, "Attempting to evaluate criteria without any plans");
+                    dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
+                    return resolve(false);
+                }
+
                 const plan = generateValidatorPlan(criteriaInstance);
 
                 if (!plan) {
@@ -68,7 +80,7 @@ export async function runEvaluateAsync() {
                     return resolve(false);
                 }
 
-                const planResult = await runValidatorPlanAsync(plan);
+                const planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
 
                 if (planResult) {
                     dispatch(
@@ -84,6 +96,10 @@ export async function runEvaluateAsync() {
                 }
             })
     );
+
+    if (evalRequests.length === 0) {
+        return;
+    }
 
     const results = await Promise.all(evalRequests);
     const errorCount = results.filter(r => !r).length;

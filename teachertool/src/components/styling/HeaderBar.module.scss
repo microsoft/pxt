@@ -20,6 +20,7 @@
     .org {
         display: flex;
         align-items: center;
+        cursor: pointer;
         .logo {
             height: 1.4rem;
             margin: 0 1rem;
@@ -29,6 +30,7 @@
     .brand {
         display: flex;
         align-items: center;
+        cursor: pointer;
         &:before {
             height: 1.5rem;
             border-left: 2px solid var(--pxt-headerbar-foreground);
@@ -36,6 +38,19 @@
         }
         .logo {
             height: 1.1rem;
+            margin: 0 1rem;
+        }
+    }
+
+    .rubric-name {
+        display: flex;
+        align-items: center;
+        &:before {
+            height: 1.5rem;
+            border-left: 2px solid var(--pxt-headerbar-foreground);
+            content: " ";
+        }
+        span {
             margin: 0 1rem;
         }
     }

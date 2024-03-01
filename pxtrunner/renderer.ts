@@ -1,4 +1,11 @@
+/// <reference path="../localtypings/pxteditor.d.ts" />
+
 import { DecompileResult, compileBlocksAsync, decompileSnippetAsync, renderProjectAsync } from "./runner";
+
+import * as Blockly from "blockly";
+
+import { BlocksRenderOptions, cleanRenderingWorkspace, decompiledDiffAsync, diffXml, render } from "../pxtblocks";
+import { CodeCardRenderOptions, renderCodeCard } from "../pxtblocks/codecardRenderer";
 
 const JS_ICON = "icon xicon js";
 const PY_ICON = "icon xicon python";
@@ -363,7 +370,7 @@ function fillWithWidget(
 let renderQueue: {
     el: JQuery;
     source: string;
-    options: pxt.blocks.BlocksRenderOptions;
+    options: BlocksRenderOptions;
     render: (container: JQuery, r: DecompileResult) => void;
 }[] = [];
 function consumeRenderQueueAsync(): Promise<void> {
@@ -371,7 +378,7 @@ function consumeRenderQueueAsync(): Promise<void> {
     return consumeNext()
         .then(() => {
             Blockly.Workspace.getAll().forEach(el => el.dispose());
-            pxt.blocks.cleanRenderingWorkspace();
+            cleanRenderingWorkspace();
         });
 
     function consumeNext(): Promise<void> {
@@ -407,14 +414,14 @@ function consumeRenderQueueAsync(): Promise<void> {
 
 function renderNextSnippetAsync(cls: string,
     render: (container: JQuery, r: DecompileResult) => void,
-    options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
+    options?: BlocksRenderOptions): Promise<void> {
     if (!cls) return Promise.resolve();
 
     let $el = $("." + cls).first();
     if (!$el[0]) return Promise.resolve();
 
     if (!options.emPixels) options.emPixels = 18;
-    if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
+    if (!options.layout) options.layout = pxt.editor.BlockLayout.Align;
     options.splitSvg = true;
 
     renderQueue.push({ el: $el, source: $el.text(), options, render });
@@ -481,7 +488,7 @@ function renderSignaturesAsync(options: ClientRenderOptions): Promise<void> {
         let block = Blockly.Blocks[symbolInfo.attributes.blockId];
         let xml = block?.codeCard?.blocksXml || undefined;
 
-        const blocksHtml = xml ? pxt.blocks.render(xml) : r.compileBlocks?.success ? r.blocksSvg : undefined;
+        const blocksHtml = xml ? render(xml) : r.compileBlocks?.success ? r.blocksSvg : undefined;
         const s = blocksHtml ? $(blocksHtml as HTMLElement) : undefined
         let jsSig = ts.pxtc.service.displayStringForSymbol(symbolInfo, /** python **/ false, r.apiInfo)
             .split("\n")[1] + ";";
@@ -536,7 +543,7 @@ function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
     const cls = opts.blocksXmlClass;
     function renderNextXmlAsync(cls: string,
         render: (container: JQuery, r: DecompileResult) => void,
-        options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
+        options?: BlocksRenderOptions): Promise<void> {
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
@@ -568,7 +575,7 @@ function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
     const cls = opts.diffBlocksXmlClass;
     function renderNextXmlAsync(cls: string,
         render: (container: JQuery, r: DecompileResult) => void,
-        options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
+        options?: BlocksRenderOptions): Promise<void> {
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
@@ -583,7 +590,7 @@ function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
             .then(r => {
                 $el.removeClass(cls);
                 try {
-                    const diff = pxt.blocks.diffXml(oldXml, newXml);
+                    const diff = diffXml(oldXml, newXml);
                     if (!diff)
                         $el.text("no changes");
                     else {
@@ -654,7 +661,7 @@ function renderDiffBlocksAsync(opts: ClientRenderOptions): Promise<void> {
         }))
             .then(resps => {
                 try {
-                    const diffBlocks = pxt.blocks.decompiledDiffAsync(
+                    const diffBlocks = decompiledDiffAsync(
                         oldSrc, resps[0].compileBlocks, newSrc, resps[1].compileBlocks, {
                         hideDeletedTopBlocks: true,
                         hideDeletedBlocks: true
@@ -756,7 +763,7 @@ function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         });
 }
 
-function renderInlineBlocksAsync(options: pxt.blocks.BlocksRenderOptions): Promise<void> {
+function renderInlineBlocksAsync(options: BlocksRenderOptions): Promise<void> {
     options = pxt.Util.clone(options);
     options.emPixels = 18;
     options.snippetMode = true;
@@ -883,7 +890,7 @@ function addCardItem(ul: JQuery, card: pxt.CodeCard) {
     const mP = /^\/(v\d+)/.exec(window.location.pathname);
     const inEditor = /#doc/i.test(window.location.href);
     if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
-    ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
+    ul.append(renderCodeCard(card, { hideHeader: true, shortName: true }));
 }
 
 function addSymbolCardItem(ul: JQuery, symbol: pxtc.SymbolInfo, cardStyle?: string) {
@@ -1042,11 +1049,11 @@ function renderLinksAsync(options: ClientRenderOptions, cls: string, replacePare
     }, { package: options.package, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON })
 }
 
-function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
+function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRenderOptions): Promise<void> {
     if (!cards || cards.length == 0) return Promise.resolve();
 
     if (cards.length == 0) {
-        let cc = pxt.docs.codeCard.render(cards[0], options)
+        let cc = renderCodeCard(cards[0], options)
         c.replaceWith(cc);
     } else {
         let cd = document.createElement("div")
@@ -1058,7 +1065,7 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.c
             const mP = /^\/(v\d+)/.exec(window.location.pathname);
             const inEditor = /#doc/i.test(window.location.href);
             if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}${card.url}`;
-            const cardEl = pxt.docs.codeCard.render(card, options);
+            const cardEl = renderCodeCard(card, options);
             cd.appendChild(cardEl)
             // automitcally display package icon for approved packages
             if (card.cardType == "package") {
@@ -1074,7 +1081,7 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.c
                                     // update card info
                                     card.imageUrl = pxt.github.mkRepoIconUrl(repoId);
                                     // inject
-                                    cd.insertBefore(pxt.docs.codeCard.render(card, options), cardEl);
+                                    cd.insertBefore(renderCodeCard(card, options), cardEl);
                                     cardEl.remove();
                                     break;
                             }

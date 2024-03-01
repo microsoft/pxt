@@ -5,6 +5,7 @@ import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
 import { ErrorCode } from "../types/errorCode";
 import { setRubric } from "./setRubric";
+import { Ticks } from "../constants";
 
 export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
@@ -46,7 +47,7 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
 
     setRubric(newRubric);
 
-    pxt.tickEvent("teachertool.addcriteria", {
+    pxt.tickEvent(Ticks.AddCriteria, {
         ids: JSON.stringify(catalogCriteriaIds),
     });
 }

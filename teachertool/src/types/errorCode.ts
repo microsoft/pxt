@@ -17,5 +17,8 @@ export enum ErrorCode {
     unableToReadRubricFile = "unableToReadRubricFile",
     localStorageReadError = "localStorageReadError",
     localStorageWriteError = "localStorageWriteError",
-    missingCriteriaInstance = "missingCriteriaInstance"
+    missingCriteriaInstance = "missingCriteriaInstance",
+    validatorPlansNotFound = "validatorPlansNotFound",
+    fetchRequestFailed = "fetchRequestFailed",
+    fetchJsonDocAsync = "fetchJsonDocAsync",
 }

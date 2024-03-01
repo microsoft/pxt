@@ -12,7 +12,7 @@ export function poke() {
         autorunTimer = null;
         const { state } = stateAndDispatch();
         if (state.autorun && isProjectLoaded(state)) {
-            runEvaluateAsync();
+            runEvaluateAsync(false);
         }
     }, 1000);
 }

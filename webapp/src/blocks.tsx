@@ -1,7 +1,8 @@
-/// <reference path="../../localtypings/pxtblockly.d.ts" />
+/// <reference path="../../localtypings/navigationController.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as Blockly from "blockly";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
@@ -14,6 +15,10 @@ import * as dialogs from "./dialogs";
 import * as blocklyFieldView from "./blocklyFieldView";
 import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
+
+import * as pxtblockly from "../../pxtblocks";
+import { NavigationController, Navigation } from "@blockly/keyboard-navigation";
+import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 
 import Util = pxt.Util;
@@ -28,6 +33,10 @@ import MuteState = pxt.editor.MuteState;
 import SimState = pxt.editor.SimState;
 
 
+import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
+
+
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
     currFile: pkg.File;
@@ -35,7 +44,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     typeScriptSaveable: boolean;
     loadingXml: boolean;
     loadingXmlPromise: Promise<any>;
-    compilationResult: pxt.blocks.BlockCompilationResult;
+    compilationResult: pxtblockly.BlockCompilationResult;
     isFirstBlocklyLoad = true;
     functionsDialog: CreateFunctionDialog = null;
 
@@ -43,7 +52,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
 
-    private errorChangesListeners: pxt.Map<(errors: pxt.blocks.BlockDiagnostic[]) => void> = {};
+    private errorChangesListeners: pxt.Map<(errors: pxtblockly.BlockDiagnostic[]) => void> = {};
     protected intersectionObserver: IntersectionObserver;
 
     protected debuggerToolbox: DebuggerToolbox;
@@ -63,10 +72,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
-        const blockToAllBreakpoints: {[index: string]: pxtc.Breakpoint[]} = {};
+        const blockToAllBreakpoints: { [index: string]: pxtc.Breakpoint[] } = {};
 
         for (const breakpoint of breakpoints) {
-            const blockId = pxt.blocks.findBlockIdByLine(this.compilationResult.sourceMap, { start: breakpoint.line, length: breakpoint.endLine - breakpoint.line });
+            const blockId = pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: breakpoint.line, length: breakpoint.endLine - breakpoint.line });
             if (!blockToAllBreakpoints[blockId]) blockToAllBreakpoints[blockId] = [];
             blockToAllBreakpoints[blockId].push(breakpoint);
         }
@@ -105,7 +114,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const map = this.breakpointsByBlock;
         if (map && this.editor) {
             this.editor.getAllBlocks(false).forEach(block => {
-                if (map[block.id] && block.isBreakpointSet()) {
+                if (map[block.id] && isBreakpointSet(block)) {
                     breakpoints.push(this.breakpointsByBlock[block.id]);
                 }
             });
@@ -158,7 +167,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.typeScriptSaveable) return Promise.resolve(undefined);
         this.clearHighlightedStatements();
         try {
-            return pxt.blocks.compileAsync(this.editor, this.blockInfo, { emitTilemapLiterals: willOpenTypeScript })
+            return pxtblockly.compileAsync(this.editor, this.blockInfo, { emitTilemapLiterals: willOpenTypeScript })
                 .then((compilationResult) => {
                     this.compilationResult = compilationResult;
                     pxt.tickEvent("activity.blocks.compile");
@@ -207,7 +216,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.blockInfo = bi;
 
                     // Initialize blocks in Blockly and update our toolbox
-                    pxt.blocks.initialize(this.blockInfo);
+                    pxtblockly.initialize(this.blockInfo);
                     this.nsMap = this.partitionBlocks();
                     this.refreshToolbox();
 
@@ -277,7 +286,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private serializeBlocks(normalize?: boolean): string {
         // store ids when using github
-        let xml = pxt.blocks.saveWorkspaceXml(this.editor,
+        let xml = pxtblockly.saveWorkspaceXml(this.editor,
             !normalize && this.parent.state
             && this.parent.state.header
             && !!this.parent.state.header.githubId);
@@ -295,12 +304,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.typeScriptSaveable = false;
-        pxt.blocks.clearWithoutEvents(this.editor);
+        pxtblockly.clearWithoutEvents(this.editor);
         try {
             const text = s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
-            const xml = Blockly.Xml.textToDom(text);
+            const xml = Blockly.utils.xml.textToDom(text);
             this.cleanXmlForWorkspace(xml);
-            pxt.blocks.domToWorkspaceNoEvents(xml, this.editor);
+            pxtblockly.domToWorkspaceNoEvents(xml, this.editor);
 
             pxtblockly.upgradeTilemapsInWorkspace(this.editor, pxt.react.getTilemapProject());
 
@@ -312,7 +321,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.typeScriptSaveable = true;
         } catch (e) {
             pxt.log(e);
-            pxt.blocks.clearWithoutEvents(this.editor);
+            pxtblockly.clearWithoutEvents(this.editor);
             this.switchToTypeScript();
             this.changeCallback();
             return false;
@@ -367,7 +376,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (needsLayout && !flyoutOnly) {
             // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
-            pxt.blocks.layout.flow(this.editor, { useViewWidth: true });
+            pxtblockly.flow(this.editor, { useViewWidth: true });
         }
         else {
             if (closestToOrigin) {
@@ -392,7 +401,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * @param {string} message The message to display to the user.
          * @param {function()=} opt_callback The callback when the alert is dismissed.
          */
-        Blockly.alert = function (message, opt_callback) {
+        Blockly.dialog.setAlert(function (message, opt_callback) {
             return core.confirmAsync({
                 hideCancel: true,
                 header: lf("Alert"),
@@ -406,7 +415,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     opt_callback();
                 }
             })
-        };
+        })
 
         /**
          * Wrapper to window.confirm() that app developers may override to
@@ -414,7 +423,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * @param {string} message The message to display to the user.
          * @param {!function(boolean)} callback The callback for handling user response.
          */
-        Blockly.confirm = function (message, callback) {
+        Blockly.dialog.setConfirm(function (message, callback) {
             return core.confirmAsync({
                 header: lf("Confirm"),
                 body: message,
@@ -428,19 +437,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }).then(b => {
                 callback(b == 1);
             })
-        };
+        });
 
-        /**
-         * Wrapper to window.prompt() that app developers may override to provide
-         * alternatives to the modal browser window. Built-in browser prompts are
-         * often used for better text input experience on mobile device. We strongly
-         * recommend testing mobile when overriding this.
-         * @param {string} message The message to display to the user.
-         * @param {string} defaultValue The value to initialize the prompt with.
-         * @param {!function(string)} callback The callback for handling user reponse.
-         * @param {Object} options
-         */
-        Blockly.prompt = function (message, defaultValue, callback, options) {
+        pxtblockly.external.setPrompt(function (message, defaultValue, callback, options?: Partial<core.PromptOptions>) {
             return core.promptAsync({
                 header: message,
                 initialValue: defaultValue,
@@ -451,10 +450,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }).then(value => {
                 callback(value);
             })
-        };
+        }, true);
 
-        if (pxt.Util.isTranslationMode())
-            pxt.blocks.promptTranslateBlock = dialogs.promptTranslateBlock;
+        if (pxt.Util.isTranslationMode()) {
+            pxtblockly.external.setPromptTranslateBlock(dialogs.promptTranslateBlock);
+        }
     }
 
     private initBlocklyToolbox() {
@@ -510,7 +510,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private initAccessibleBlocks() {
         const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
         if (enabled && !this.navigationController) {
-            this.navigationController = new NavigationController();
+            this.navigationController = new NavigationController() as any;
 
             this.navigationController.init();
             this.navigationController.addWorkspace(this.editor);
@@ -535,7 +535,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private initWorkspaceSearch() {
         if (pxt.appTarget.appTheme.workspaceSearch && !this.workspaceSearch) {
-            this.workspaceSearch  = new pxt.blocks.PxtWorkspaceSearch(this.editor);
+            this.workspaceSearch = new pxtblockly.PxtWorkspaceSearch(this.editor);
             this.workspaceSearch.init();
         }
     }
@@ -565,12 +565,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public contentSize(): { height: number; width: number } {
-        return this.editor ? pxt.blocks.blocksMetrics(this.editor) : undefined;
+        return this.editor ? pxtblockly.blocksMetrics(this.editor) : undefined;
     }
 
     private markIncomplete = false;
     isIncomplete() {
-        const incomplete = this.editor && ((this.editor as any).currentGesture_ && (this.editor as any).currentGesture_.isDraggingBlock_);
+        const incomplete = this.editor?.isDragging();
         if (incomplete) this.markIncomplete = true;
         return incomplete;
     }
@@ -585,24 +585,56 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!blocklyDiv)
             return;
         pxsim.U.clear(blocklyDiv);
+
+        // Increase the Blockly connection radius
+        Blockly.config.snapRadius = 48;
+        Blockly.config.connectingSnapRadius = 96;
+
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
-        const hasCategories = (this.editor.options as any).hasCategories;
+        pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
+
         // set Blockly Colors
-        let blocklyColors = (Blockly as any).Colours;
-        Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
-        (Blockly as any).Colours = blocklyColors;
+        const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
+        if (blocklyColors) {
+            const theme = this.editor.getTheme();
+            for (const key of Object.keys(blocklyColors)) {
+                theme.setComponentStyle(key, blocklyColors[key]);
+            }
+            this.editor.setTheme(theme);
+        }
 
         let shouldRestartSim = false;
 
         this.editor.addChangeListener((ev: any) => {
             Blockly.Events.disableOrphans(ev);
+
+            // Blockly doesn't automatically resize highlight outlines. If an event
+            // occurs that could have changed the size of a block, go ahead and refresh
+            // the associated highlights
+            if (ev.type === "block_field_intermediate_change" || ev.type === "change") {
+                if (ev.blockId) {
+                    const block = this.editor.getBlockById(ev.blockId);
+                    fixHighlight(block);
+                }
+            }
+            else if (ev.type === "drag") {
+                for (const block of this.editor.getAllBlocks(false)) {
+                    (block.pathObject as PathObject).resizeHighlight();
+                }
+            }
+
             const ignoredChanges = [
                 Blockly.Events.UI,
                 Blockly.Events.SELECTED,
                 Blockly.Events.CLICK,
                 Blockly.Events.VIEWPORT_CHANGE,
-                Blockly.Events.BUBBLE_OPEN
+                Blockly.Events.BUBBLE_OPEN,
+                pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
+
+            if (ev.type !== "var_create") {
+                this.hideFlyout();
+            }
 
             if ((ignoredChanges.indexOf(ev.type) === -1)
                 || this.markIncomplete) {
@@ -635,23 +667,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let toolboxVisible = !!ev.newValue;
                     if (toolboxVisible) pxt.setInteractiveConsent(true);
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                } else if (ev.element == 'breakpointSet') {
-                    this.setBreakpointsFromBlocks();
-                    // if (ev.newValue) {
-                    //     this.addBreakpointFromEvent(ev.blockId);
-                    // } else {
-                    //     this.removeBreakpointFromEvent(ev.blockId);
-                    // }
                 }
-                else if (ev.element == 'melody-editor') {
-                    if (ev.newValue) {
-                        shouldRestartSim = this.parent.state.simState != SimState.Stopped;
-                        this.parent.stopSimulator();
-                    }
-                    else {
-                        if (shouldRestartSim) {
-                            this.parent.startSimulator();
-                        }
+            }
+            else if (ev.type === pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE) {
+                const openEvent = ev as pxtblockly.FieldEditorOpenEvent;
+                if (openEvent.isOpen) {
+                    shouldRestartSim = this.parent.state.simState != SimState.Stopped;
+                    this.parent.stopSimulator();
+                }
+                else {
+                    if (shouldRestartSim) {
+                        this.parent.startSimulator();
                     }
                 }
             }
@@ -661,6 +687,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.parent.pokeUserActivity();
             }
         })
+
+        this.editor.addChangeListener((e) => {
+            if (e.type === Blockly.Events.BLOCK_MOVE) {
+                const parent = this.editor.getBlockById((e as Blockly.Events.BlockMove).newParentId);
+                if (parent && parent.isShadow()) {
+                    Blockly.Events.setGroup(e.group)
+                    const json = Blockly.serialization.blocks.save(parent);
+                    // Dispose of the original block so it doesn't get saved in the parent connection's shadow state.
+                    this.editor.getBlockById((e as Blockly.Events.BlockMove).blockId).dispose();
+                    const dupe = Blockly.serialization.blocks.append(json, this.editor, { recordUndo: true });
+                    parent.outputConnection.targetConnection.connect(dupe.outputConnection);
+                    Blockly.Events.setGroup(false);
+                }
+            }
+        })
+
+
         if (this.shouldShowCategories()) {
             this.renderToolbox();
         }
@@ -739,9 +782,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     hasUndo() {
+        const undoStack = this.editor?.getUndoStack();
+        const redoStack = this.editor?.getRedoStack();
         // undo is true if undoStack has items, or if both undo and redo are empty (first project load)
-        return this.editor ? this.editor.undoStack_.length != 0
-            || (this.editor.undoStack_.length == 0 && this.editor.redoStack_.length == 0) : false;
+        return this.editor ? undoStack.length != 0
+            || (undoStack.length == 0 && redoStack.length == 0) : false;
     }
 
     undo() {
@@ -752,7 +797,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     hasRedo() {
-        return this.editor ? this.editor.redoStack_.length != 0 : false;
+        return this.editor ? this.editor.getRedoStack().length != 0 : false;
     }
 
     redo() {
@@ -807,11 +852,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.fireResize();
     }
 
-    listenToBlockErrorChanges(handlerKey: string, handler: (errors: pxt.blocks.BlockDiagnostic[]) => void) {
+    listenToBlockErrorChanges(handlerKey: string, handler: (errors: pxtblockly.BlockDiagnostic[]) => void) {
         this.errorChangesListeners[handlerKey] = handler;
     }
 
-    private onBlockErrorChanges(errors: pxt.blocks.BlockDiagnostic[]) {
+    private onBlockErrorChanges(errors: pxtblockly.BlockDiagnostic[]) {
         for (let listener of pxt.U.values(this.errorChangesListeners)) {
             listener(errors)
         }
@@ -873,7 +918,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (debugging) {
             this.toolbox.hide();
             // unselect any highlighted block
-            (Blockly.selected as Blockly.BlockSvg)?.unselect();
+            (Blockly.getSelected() as Blockly.BlockSvg)?.unselect();
         } else {
             this.debuggerToolbox = null;
             this.toolbox.show();
@@ -893,7 +938,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-        this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
+        this.showFlyoutInternal_(pxtblockly.createFunctionsFlyoutCategory(this.editor), "functions");
     }
 
     getViewState() {
@@ -938,7 +983,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     // Initialize the "Make a function" button
-                    Blockly.Functions.editFunctionExternalHandler = (mutation: Element, cb: Blockly.Functions.ConfirmEditCallback) => {
+                    pxtblockly.FunctionManager.getInstance().setEditFunctionExternal((mutation: Element, cb: (mutation: Element) => void) => {
                         Util.delay(10)
                             .then(() => {
                                 if (!this.functionsDialog) {
@@ -947,9 +992,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                 }
                                 this.functionsDialog.show(mutation, cb, this.editor);
                             });
-                    }
+                    })
 
-                    pxt.blocks.openHelpUrl = (url: string) => {
+                    pxtblockly.external.setOpenHelpUrl((url: string) => {
                         pxt.tickEvent("blocks.help", { url }, { interactiveConsent: true });
                         const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
                         if (m) {
@@ -975,7 +1020,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         } else {
                             window.open(url, 'docs');
                         }
-                    }
+                    });
                     this.prepareBlockly();
                 })
                 .then(() => initEditorExtensionsAsync())
@@ -991,7 +1036,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return init
             .then(() => this.loadBlocklyAsync())
             .then(() => {
-                pxt.blocks.cleanBlocks();
+                pxtblockly.cleanBlocks();
 
                 if (this.toolbox) this.toolbox.showLoading();
                 this.blockInfo = undefined;
@@ -1000,7 +1045,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.setDiagnostics(file)
                 this.delayLoadXml = file.content;
                 // serial editor is more like an overlay than a custom editor, so preserve blocks undo stack
-                if (!this.parent.shouldPreserveUndoStack()) pxt.blocks.clearWithoutEvents(this.editor);
+                if (!this.parent.shouldPreserveUndoStack()) pxtblockly.clearWithoutEvents(this.editor);
                 this.closeFlyout();
 
                 this.filterToolbox();
@@ -1045,7 +1090,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // clear previous warnings on non-disabled blocks
         this.editor.getAllBlocks(false).filter(b => b.isEnabled()).forEach((b: Blockly.BlockSvg) => {
             b.setWarningText(null);
-            b.setHighlightWarning(false);
+            setHighlightWarning(b, false);
         });
         let tsfile = file && file.epkg && file.epkg.files[file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
         if (!tsfile || !tsfile.diagnostics) return;
@@ -1055,13 +1100,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let sourceMap = this.compilationResult.sourceMap;
 
         diags.filter(diag => diag.category == ts.pxtc.DiagnosticCategory.Error).forEach(diag => {
-            let bid = pxt.blocks.findBlockIdByLine(sourceMap, { start: diag.line, length: 0 });
+            let bid = pxtblockly.findBlockIdByLine(sourceMap, { start: diag.line, length: 0 });
             if (bid) {
                 let b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
                 if (b) {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt);
-                    b.setHighlightWarning(true);
+                    setHighlightWarning(b, true);
                 }
             }
         })
@@ -1072,7 +1117,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 if (b) {
                     b.setWarningText(d.message);
-                    b.setHighlightWarning(true);
+                    setHighlightWarning(b, true);
                 }
             }
         })
@@ -1086,7 +1131,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.updateDebuggerVariables(brk);
         this.highlightedStatement = stmt;
         if (stmt) {
-            let bid = pxt.blocks.findBlockIdByLine(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
+            let bid = pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
                 const parent = this.editor.getBlockById(bid).getRootBlock();
                 bid = parent?.isCollapsed() ? parent.id : bid;
@@ -1155,15 +1200,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private getBlocklyOptions(forceHasCategories?: boolean) {
-        let blocklyOptions = this.getDefaultOptions();
+        let blocklyOptions = { ...this.getDefaultOptions() };
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         const hasCategories = (forceHasCategories != undefined) ? forceHasCategories :
-            (blocklyOptions.hasCategories != undefined ? blocklyOptions.hasCategories :
-                this.showCategories);
+            this.showCategories
 
-        blocklyOptions.hasCategories = hasCategories;
         blocklyOptions.renderer = "pxt";
-        if (!hasCategories) this.showCategories = false;
+        if (!hasCategories) {
+            this.showCategories = false;
+            delete blocklyOptions.plugins["flyoutsVerticalToolbox"];
+        }
         // If we're using categories, show the category toolbox, otherwise show the flyout toolbox
         const toolbox = hasCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
@@ -1186,9 +1232,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             comments: true,
             disable: false,
             readOnly: readOnly,
-            toolboxOptions: {
-                colour: theme.coloredToolbox,
-                inverted: theme.invertedToolbox
+            plugins: {
+                'blockDragger': pxtblockly.BlockDragger,
+                'connectionChecker': DuplicateOnDragConnectionChecker,
+                'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout,
+                'connectionPreviewer': pxtblockly.ConnectionPreviewer
             },
             move: {
                 scrollbars: true,
@@ -1226,7 +1274,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const hasCategories = this.shouldShowCategories(!forceFlyoutOnly);
 
         // We might need to switch the toolbox type
-        if ((this.editor.getToolbox() && hasCategories) || ((this.editor as any).flyout_ && !hasCategories)) {
+        if (this.editor.options.hasCategories === hasCategories) {
             // Toolbox is consistent with current mode, safe to update
             if (hasCategories) {
                 this.toolbox.setState({ loading: false, categories: this.getAllCategories(), showSearchBox: this.shouldShowSearch() });
@@ -1297,7 +1345,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             that.subcategoryMap[ns][subcat] = true;
         }
 
-        pxt.blocks.injectBlocks(this.blockInfo).forEach(fn => {
+        pxtblockly.injectBlocks(this.blockInfo).forEach(fn => {
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
 
             if (!res[ns]) {
@@ -1358,8 +1406,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
             return this.parent.state.editorState.hasCategories;
         }
-        const blocklyOptions = this.getBlocklyOptions(forceHasCategories);
-        return blocklyOptions.hasCategories;
+        return true;
     }
 
     getBuiltinCategory(ns: string): toolbox.ToolboxCategory {
@@ -1535,19 +1582,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string) {
         const categoryName = name || Util.capitalize(subns || ns);
         const iconClass = `blocklyTreeIcon${icon ? ns.toLowerCase() : 'Default'}`.replace(/\s/g, '');
-        let headingLabel = pxt.blocks.createFlyoutHeadingLabel(categoryName, color, icon, iconClass);
+        let headingLabel = pxtblockly.createFlyoutHeadingLabel(categoryName, color, icon, iconClass);
         this.flyoutXmlList.push(headingLabel);
     }
 
     protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string) {
-        let groupLabel = pxt.blocks.createFlyoutGroupLabel(pxt.Util.rlf(`{id:group}${group}`),
+        let groupLabel = pxtblockly.createFlyoutGroupLabel(pxt.Util.rlf(`{id:group}${group}`),
             groupicon, labelLineWidth, helpCallback ? `GROUP_HELP_${group}` : undefined);
         if (helpCallback) {
             this.editor.registerButtonCallback(`GROUP_HELP_${group}`, (/*btn*/) => {
                 this.helpButtonCallback(group);
             })
         }
+        this.flyoutXmlList.push(pxtblockly.createFlyoutGap(30));
         this.flyoutXmlList.push(groupLabel);
+        this.flyoutXmlList.push(pxtblockly.createFlyoutGap(30));
     }
 
     protected helpButtonCallback(group?: string) {
@@ -1610,91 +1659,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    private blocksToString(xmlList: Element[]): string {
-        let xmlSerializer: XMLSerializer = null;
-        const serialize = (e: Element) => {
-            if (!e)
-                return "<!-- invalid block here! -->"
-            if (e.outerHTML)
-                return e.outerHTML
-            // The below code is only needed for IE 11 where outerHTML occassionally returns undefined :/
-            if (!xmlSerializer)
-                xmlSerializer = new XMLSerializer()
-            return xmlSerializer.serializeToString(e);
-        }
-        return xmlList
-            .map(serialize)
-            .reduce((p, c) => p + c, "")
-    }
-
-    private hashBlocks(xmlList: Element[]): number {
-        return pxt.Util.codalHash16(this.blocksToString(xmlList));
-    }
-
-    private swapFlyout(old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) {
-        // hide the old flyout
-        old.setVisible(false)
-
-        // set the "current" flyout
-        this.editor.getToolbox().setFlyout(nw);
-
-        // show the new flyout
-        nw.setVisible(true)
-
-        // reflow if scale changed
-        const flyoutWs = nw.getWorkspace();
-        const targetWs = nw.targetWorkspace;
-        const scaleChange = (flyoutWs as any).oldScale_ !== targetWs.getScale();
-        if (scaleChange) {
-            nw.reflow();
-        }
-    }
-
-    private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
-        if ((!this.parent.state.editorState || this.parent.state.editorState.hasCategories !== false)
-            && this.editor.getToolbox()) {
-            const oldFlyout = this.editor.getFlyout() as Blockly.VerticalFlyout;
-
-            // determine if the cached flyout exists and isn't stale
-            const hasCachedFlyout = flyoutName in this.flyouts
-            const cachedBlocksHash = hasCachedFlyout ? this.flyouts[flyoutName].blocksHash : 0;
-            const currentBlocksHash = this.hashBlocks(xmlList);
-            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !!cachedBlocksHash
-
-            const mkFlyout = () => {
-                const workspace = this.editor.getToolbox().getWorkspace();
-                const oldSvg = oldFlyout.svgGroup_;
-                const flyout = Blockly.Functions.createFlyout(workspace, oldSvg)
-                return flyout as Blockly.VerticalFlyout;
-            }
-
-            // get the flyout from the cache or make a new one
-            let newFlyout: Blockly.VerticalFlyout;
-            if (!hasCachedFlyout) {
-                newFlyout = mkFlyout();
-                this.flyouts[flyoutName] = { flyout: newFlyout, blocksHash: 0 };
-            } else {
-                newFlyout = this.flyouts[flyoutName].flyout;
-            }
-
-            // update the blocks hash
-            this.flyouts[flyoutName].blocksHash = currentBlocksHash;
-
-            // switch to the new flyout
-            this.swapFlyout(oldFlyout, newFlyout);
-
-            // if the flyout contents have changed, recreate the blocks
-            if (!isFlyoutUpToDate) {
-                newFlyout.show(xmlList);
-            }
-
-            newFlyout.scrollToStart();
-            if (this.parent.state?.accessibleBlocks) newFlyout.svgGroup_.focus();
-        } else if ((this.editor as any).flyout_) {
-            (this.editor as any).flyout_.show(xmlList);
-            (this.editor as any).flyout_.scrollToStart();
-        }
+        const flyout = this.editor.getFlyout() as pxtblockly.VerticalFlyout;
+        flyout.show(xmlList, flyoutName);
+        flyout.scrollToStart();
     }
 
     // For editors that have no toolbox
@@ -1729,7 +1697,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const pythonEnabled = pxt.shell.isPyLangPref();
             this.editor.getAllBlocks(false).forEach(b => {
                 if (b.type === pxtc.TS_STATEMENT_TYPE || b.type === pxtc.TS_OUTPUT_TYPE) {
-                    (b as pxt.blocks.GrayBlock).setPythonEnabled(pythonEnabled);
+                    (b as unknown as pxtblockly.GrayBlock).setPythonEnabled(pythonEnabled);
                 }
             })
         }
@@ -1750,7 +1718,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (block.builtinBlock) {
             // function_return is conditionally added to the toolbox, so it needs a special case
             if (block.attributes.blockId === "function_return") {
-                return [pxt.blocks.mkReturnStatementBlock()];
+                return [pxtblockly.mkReturnStatementBlock()];
             }
             // Find the block XML for this built in block.
             const builtin = snippets.allBuiltinBlocks()[block.attributes.blockId];
@@ -1766,7 +1734,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return builtin ? this.getBlockXml(builtin, ignoregap) : undefined;
         }
         if (!block.blockXml) {
-            let fn = pxt.blocks.blockSymbol(block.attributes.blockId);
+            let fn = pxtblockly.blockSymbol(block.attributes.blockId);
             if (fn) {
                 if (!shouldShowBlock(fn)) return undefined;
                 let comp = pxt.blocks.compileInfo(fn);
@@ -1774,7 +1742,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 function getBlockConfigXml(blockConfig: pxt.tutorial.TutorialBlockConfig): Element | undefined {
                     const entry = blockConfig.blocks.find(entry => entry.blockId === block.attributes.blockId);
                     if (entry) {
-                        const xml = Blockly.Xml.textToDom(entry.xml);
+                        const xml = Blockly.utils.xml.textToDom(entry.xml);
                         xml.setAttribute("gap", `${pxt.appTarget.appTheme
                             && pxt.appTarget.appTheme.defaultBlockGap && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8}`);
                         return xml;
@@ -1796,7 +1764,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 // Create the block XML from block definition.
                 if (!blockXml) {
-                    blockXml = pxt.blocks.createToolboxBlock(this.blockInfo, fn, comp);
+                    blockXml = pxtblockly.createToolboxBlock(this.blockInfo, fn, comp);
 
                     if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
                         const handlerArgs = comp.handlerArgs;
@@ -1812,22 +1780,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             }
                             blockXml.appendChild(mutation);
                         });
-                    } else if (comp.handlerArgs.length && !fn.attributes.optionalVariableArgs) {
-                        comp.handlerArgs.forEach(arg => {
-                            const getterblock = Blockly.Xml.textToDom(`
-                                <value name="HANDLER_${arg.name}">
-                                <shadow type="variables_get_reporter">
-                                <field name="VAR" variabletype="">${arg.name}</field>
-                                </shadow>
-                                </value>`);
-                            blockXml.appendChild(getterblock);
-                        });
                     } else if (fn.attributes.mutateDefaults) {
                         const mutationValues = fn.attributes.mutateDefaults.split(";");
                         const mutatedBlocks: Element[] = [];
                         mutationValues.forEach(mutation => {
                             const mutatedBlock = blockXml.cloneNode(true) as HTMLElement;
-                            pxt.blocks.mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
+                            pxtblockly.mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
                             mutatedBlocks.push(mutatedBlock);
                         });
                         return mutatedBlocks;
@@ -1855,7 +1813,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         }
                         varName = varNameUnique;
 
-                        const setblock = Blockly.Xml.textToDom(`
+                        const setblock = Blockly.utils.xml.textToDom(`
                             <block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
                             <field name="VAR" variabletype="">${varName}</field>
                             </block>`);
@@ -1863,13 +1821,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             let value = document.createElement('value');
                             value.setAttribute('name', 'VALUE');
                             value.appendChild(blockXml);
-                            value.appendChild(pxt.blocks.mkFieldBlock("math_number", "NUM", "0", true));
+                            value.appendChild(pxtblockly.mkFieldBlock("math_number", "NUM", "0", true));
                             setblock.appendChild(value);
                         }
                         blockXml = setblock;
-                    } else if(fn.attributes.duplicateWithToolboxParent) {
-                        const blockWithParentFn = {...fn, attributes: {...fn.attributes, toolboxParent: fn.attributes.duplicateWithToolboxParent, toolboxParentArgument: fn.attributes.duplicateWithToolboxParentArgument}};
-                        const duplicatedBlock = pxt.blocks.createToolboxBlock(this.blockInfo, blockWithParentFn, comp);
+                    } else if (fn.attributes.duplicateWithToolboxParent) {
+                        const blockWithParentFn = { ...fn, attributes: { ...fn.attributes, toolboxParent: fn.attributes.duplicateWithToolboxParent, toolboxParentArgument: fn.attributes.duplicateWithToolboxParentArgument } };
+                        const duplicatedBlock = pxtblockly.createToolboxBlock(this.blockInfo, blockWithParentFn, comp);
                         return [duplicatedBlock, blockXml];
                     }
                 }
@@ -1878,7 +1836,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.log(block);
             }
         } else {
-            blockXml = Blockly.Xml.textToDom(block.blockXml);
+            blockXml = Blockly.utils.xml.textToDom(block.blockXml);
         }
         if (blockXml) {
             if (ignoregap) {
@@ -1894,7 +1852,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let b = this.getBlockXml(builtin ? builtin : { name: type, type: type, attributes: { blockId: type } }, ignoregap, true);
                     // Note: we're setting one innerHTML to another
                     // eslint-disable-next-line @microsoft/sdl/no-inner-html
-                    if (b && b.length > 0 && b[0]) shadow.innerHTML = b[0].innerHTML;
+                    if (b && b.length > 0 && b[0] && b[0].getAttribute("type") === type) shadow.innerHTML = b[0].innerHTML;
                 })
         }
         return [blockXml];
@@ -1917,7 +1875,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.registerButtonCallback(button.attributes.blockId, (btn) => {
             button.callback();
         })
-        return [pxt.blocks.createFlyoutButton(button.attributes.blockId, button.attributes.label)];
+        return [pxtblockly.createFlyoutButton(button.attributes.blockId, button.attributes.label)];
     }
 
     updateBreakpoints() {
@@ -1927,10 +1885,31 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const blocks = this.editor.getAllBlocks(false);
         blocks.forEach(block => {
             if (block.previousConnection) {
-                block.enableBreakpoint(debugging);
+                this.enableBreakpoint(block, debugging);
             }
         });
-        this.editor.setDebugModeOption(debugging);
+
+        this.editor.options.readOnly = debugging || pxt.shell.isReadOnly();
+    }
+
+    protected enableBreakpoint(block: Blockly.Block, enabled: boolean) {
+        const existing = block.getIcon(pxtblockly.BreakpointIcon.type);
+        if (enabled) {
+            if (existing) return;
+            block.addIcon(new pxtblockly.BreakpointIcon(block, this.onBreakpointClick));
+        }
+        else if (existing) {
+            block.removeIcon(pxtblockly.BreakpointIcon.type);
+        }
+    }
+
+    protected onBreakpointClick = (block: Blockly.Block, enabled: boolean) => {
+        if (enabled) {
+            this.addBreakpointFromEvent(block.id);
+        }
+        else {
+            this.removeBreakpointFromEvent(block.id)
+        }
     }
 }
 
@@ -1955,4 +1934,24 @@ function disposeOfTemporaryAssets(workspace: Blockly.Workspace) {
 
 function clearTemporaryAssetBlockData(workspace: Blockly.Workspace) {
     forEachImageField(workspace, field => field.clearTemporaryAssetData());
+}
+
+function setHighlightWarning(block: Blockly.BlockSvg, enabled: boolean) {
+    (block.pathObject as PathObject).setHasError(enabled);
+    block.setHighlighted(enabled);
+}
+
+function isBreakpointSet(block: Blockly.BlockSvg) {
+    const existing = block.getIcon(pxtblockly.BreakpointIcon.type) as pxtblockly.BreakpointIcon;
+    return !!existing?.isEnabled();
+}
+
+function fixHighlight(block: Blockly.BlockSvg) {
+    (block.pathObject as PathObject).resizeHighlight();
+
+    const connectedTo = block.outputConnection?.targetBlock();
+
+    if (connectedTo) {
+        fixHighlight(connectedTo);
+    }
 }

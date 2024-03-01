@@ -1,4 +1,4 @@
-import { ModalType, ToastWithId, TabName } from "../types";
+import { ModalType, ToastWithId, TabName, ConfirmationModalOptions } from "../types";
 import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
@@ -55,6 +55,11 @@ type SetRubric = ActionBase & {
     rubric: Rubric;
 };
 
+type SetConfirmationOptions = ActionBase & {
+    type: "SET_CONFIRMATION_OPTIONS";
+    options: ConfirmationModalOptions | undefined;
+};
+
 type ShowModal = ActionBase & {
     type: "SHOW_MODAL";
     modal: ModalType;
@@ -93,6 +98,7 @@ export type Action =
     | SetTargetConfig
     | SetCatalog
     | SetRubric
+    | SetConfirmationOptions
     | ShowModal
     | HideModal
     | SetValidatorPlans
@@ -147,6 +153,11 @@ const setRubric = (rubric: Rubric): SetRubric => ({
     rubric,
 });
 
+const setConfirmationOptions = (options: ConfirmationModalOptions | undefined): SetConfirmationOptions => ({
+    type: "SET_CONFIRMATION_OPTIONS",
+    options,
+});
+
 const showModal = (modal: ModalType): ShowModal => ({
     type: "SHOW_MODAL",
     modal,
@@ -181,6 +192,7 @@ export {
     setTargetConfig,
     setCatalog,
     setRubric,
+    setConfirmationOptions,
     showModal,
     hideModal,
     setValidatorPlans,

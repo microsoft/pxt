@@ -1,5 +1,4 @@
 import { classList } from "react-common/components/util";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/NoticeLabel.module.scss";
 
 export type NoticeLabelSeverity = "info" | "warning" | "error" | "neutral";

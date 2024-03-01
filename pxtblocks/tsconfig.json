@@ -3,11 +3,18 @@
         "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
-        "declaration": true,
-        "outFile": "../built/pxtblocks.js",
+        "noImplicitThis": true,
+        "module": "commonjs",
+        "outDir": "../built/pxtblocks",
+        "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false,
         "moduleResolution": "node",
+        "isolatedModules": false,
+        "declaration": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "preserveConstEnums": true,
         "lib": [
             "dom",
             "dom.iterable",
@@ -15,7 +22,13 @@
             "es2017",
             "ES2018.Promise"
         ],
-        "incremental": true,
+        "types": [
+            "resize-observer-browser"
+        ],
+        "incremental": false,
         "skipLibCheck": true
-    }
+    },
+    "exclude": [
+        "node_modules"
+    ]
 }

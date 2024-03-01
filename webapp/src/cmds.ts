@@ -8,6 +8,7 @@ import * as data from "./data";
 import * as dialogs from "./dialogs";
 import Cloud = pxt.Cloud;
 import { isDontShowDownloadDialogFlagSet } from "./dialogs";
+import * as pxtblockly from "../../pxtblocks";
 
 import ExtensionResult = pxt.editor.ExtensionResult;
 import NativeHostMessage = pxt.editor.NativeHostMessage;
@@ -345,7 +346,7 @@ function applyExtensionResult() {
     }
     if (res.blocklyPatch) {
         log(`extension blockly patch`);
-        pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
+        pxtblockly.external.setExtensionBlocklyPatch(res.blocklyPatch);
     }
     if (res.webUsbPairDialogAsync) {
         log(`extension webusb pair dialog`);

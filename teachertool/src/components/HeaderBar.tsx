@@ -1,19 +1,36 @@
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
+import { useContext } from "react";
 import css from "./styling/HeaderBar.module.scss";
 import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
+import { AppStateContext } from "../state/appStateContext";
+import { getSafeRubricName } from "../state/helpers";
+import { Ticks } from "../constants";
 
 interface HeaderBarProps {}
 
 export const HeaderBar: React.FC<HeaderBarProps> = () => {
+    const { state: teacherTool } = useContext(AppStateContext);
+
     const appTheme = pxt.appTarget?.appTheme;
 
-    const brandIconClick = () => {};
+    const onBrandIconClick = () => {
+        pxt.tickEvent(Ticks.BrandLink);
+        if (appTheme?.logoUrl) {
+            window.open(appTheme.logoUrl);
+        }
+    };
+
+    const onOrgClick = () => {
+        pxt.tickEvent(Ticks.OrgLink);
+        if (appTheme?.organizationUrl) {
+            window.open(appTheme.organizationUrl);
+        }
+    };
 
     const getOrganizationLogo = () => {
         return (
-            <div className={css["org"]}>
+            <div className={css["org"]} onClick={onOrgClick}>
                 {appTheme.organizationWideLogo || appTheme.organizationLogo ? (
                     <img
                         className={css["logo"]}
@@ -33,7 +50,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 className={css["brand"]}
                 aria-label={lf("{0} Logo", appTheme.boardName)}
                 role="menuitem"
-                onClick={brandIconClick}
+                onClick={onBrandIconClick}
             >
                 {appTheme.useTextLogo ? (
                     [
@@ -57,8 +74,17 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         );
     };
 
+    const getRubricName = (): JSX.Element | null => {
+        const rubricName = getSafeRubricName(teacherTool);
+        return rubricName ? (
+            <div className={css["rubric-name"]}>
+                <span>{rubricName}</span>
+            </div>
+        ) : null;
+    };
+
     const onHomeClicked = () => {
-        pxt.tickEvent("teacherTool.home");
+        pxt.tickEvent(Ticks.HomeLink);
 
         // relprefix looks like "/beta---", need to chop off the hyphens and slash
         let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
@@ -77,13 +103,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             <div className={css["left-menu"]}>
                 {getOrganizationLogo()}
                 {getTargetLogo()}
+                {getRubricName()}
             </div>
 
             <div className={css["right-menu"]}>
                 <Button
                     className="menu-button"
                     leftIcon="fas fa-home large"
-                    title={lf("Return to the editor homepage")}
+                    title={lf("Open the MakeCode editor")}
                     onClick={onHomeClicked}
                 />
             </div>

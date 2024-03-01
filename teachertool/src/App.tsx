@@ -1,6 +1,6 @@
 import { useEffect, useContext, useState } from "react";
 import { AppStateContext, AppStateReady } from "./state/appStateContext";
-import { usePromise } from "./hooks";
+import { usePromise } from "./hooks/usePromise";
 import { makeToast } from "./utils";
 import * as Actions from "./state/actions";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
@@ -14,6 +14,7 @@ import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubricAsync";
 import { ImportRubricModal } from "./components/ImportRubricModal";
+import { ConfirmationModal } from "./components/ConfirmationModal";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -34,7 +35,12 @@ export const App = () => {
                 await tryLoadLastActiveRubricAsync();
 
                 // Test notification
-                showToast(makeToast("success", "🎓", 2000));
+                showToast({
+                    ...makeToast("success", "🎓", 2000),
+                    hideIcon: true,
+                    hideDismissBtn: true,
+                    className: "app-large-toast",
+                });
 
                 setInited(true);
                 logDebug("App initialized");
@@ -52,6 +58,7 @@ export const App = () => {
             <MainPanel />
             <CatalogModal />
             <ImportRubricModal />
+            <ConfirmationModal />
             <Toasts />
         </>
     );

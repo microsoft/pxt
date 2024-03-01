@@ -26,6 +26,7 @@ module.exports = function(config) {
       'node_modules/pxt-core/built/pxtblocks.js',
       'node_modules/pxt-core/built/pxtcompiler.js',
       'node_modules/pxt-core/built/pxteditor.js',
+      'node_modules/pxt-core/built/tests/blockssetup.js',
       'built/target.js',
       'built/fieldeditors.js',
 

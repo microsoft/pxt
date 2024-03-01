@@ -6,6 +6,7 @@ export interface CatalogCriteria {
     description: string | undefined; // More detailed description
     docPath: string | undefined; // Path to documentation
     params: CriteriaParameter[] | undefined; // Any parameters that affect the criteria
+    hideInCatalog?: boolean; // Whether the criteria should be hidden in the user-facing catalog
 }
 
 // An instance of a criteria in a rubric.

@@ -3,9 +3,10 @@
 <statement name="HANDLER">
 <block type="pxt_controls_for">
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">i</field>
-</shadow>
+</block>
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
@@ -38,9 +39,10 @@
 <next>
 <block type="pxt_controls_for">
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">j</field>
-</shadow>
+</block>
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
@@ -73,9 +75,10 @@
 <next>
 <block type="pxt_controls_for">
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">k</field>
-</shadow>
+</block>
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
@@ -108,9 +111,10 @@
 <next>
 <block type="pxt_controls_for">
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">l</field>
-</shadow>
+</block>
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
@@ -143,9 +147,10 @@
 <next>
 <block type="pxt_controls_for">
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">m</field>
-</shadow>
+</block>
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
@@ -178,9 +183,10 @@
 <next>
 <block type="pxt_controls_for">
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">n</field>
-</shadow>
+</block>
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
@@ -213,9 +219,10 @@
 <next>
 <block type="pxt_controls_for">
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">o</field>
-</shadow>
+</block>
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
@@ -266,9 +273,10 @@
 <next>
 <block type="pxt_controls_for">
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">p</field>
-</shadow>
+</block>
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
@@ -312,9 +320,10 @@
 <next>
 <block type="pxt_controls_for">
 <value name="VAR">
-<shadow type="variables_get_reporter">
+<block type="variables_get_reporter">
+<mutation duplicateondrag="true" />
 <field name="VAR">q</field>
-</shadow>
+</block>
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>

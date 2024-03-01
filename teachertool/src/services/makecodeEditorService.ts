@@ -92,7 +92,8 @@ export async function setHighContrastAsync(on: boolean) {
 }
 
 export async function runValidatorPlanAsync(
-    validatorPlan: pxt.blocks.ValidatorPlan
+    validatorPlan: pxt.blocks.ValidatorPlan,
+    planLib: pxt.blocks.ValidatorPlan[]
 ): Promise<pxt.blocks.EvaluationResult | undefined> {
     let evalResults = undefined;
 
@@ -101,6 +102,7 @@ export async function runValidatorPlanAsync(
             type: "pxteditor",
             action: "runeval",
             validatorPlan: validatorPlan,
+            planLib: planLib,
         } as pxt.editor.EditorMessageRunEvalRequest);
         const result = response as pxt.editor.EditorMessageResponse;
         validateResponse(result, true); // Throws on failure

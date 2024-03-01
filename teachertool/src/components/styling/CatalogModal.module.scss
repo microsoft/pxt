@@ -1,0 +1,24 @@
+.catalog-modal {
+    div[class*="common-modal-footer"] {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .catalog-done {
+        align-self: flex-end;
+    }
+
+    .catalog-item {
+        padding: 0.5rem;
+    }
+
+    .criteria-display {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        
+        .criteria-description {
+            color: var(--pxt-page-foreground-light);
+        }
+    }
+}

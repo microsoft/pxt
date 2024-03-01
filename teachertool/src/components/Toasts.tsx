@@ -4,7 +4,6 @@ import { ToastType, ToastWithId } from "../types";
 import { AnimatePresence, motion } from "framer-motion";
 import { dismissToast } from "../state/actions";
 import { classList } from "react-common/components/util";
-// eslint-disable-next-line import/no-internal-modules
 import css from "./styling/Toasts.module.scss";
 
 const icons: { [type in ToastType]: string } = {
@@ -45,7 +44,7 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
     }, [sliderActive]);
 
     return (
-        <div className={classList(css["toast"], css[toast.type])}>
+        <div className={classList(css["toast"], css[toast.type], toast.className)}>
             <div className={css["toast-content"]}>
                 {!toast.hideIcon && (
                     <div className={classList(css["icon-container"], css[toast.type])}>
@@ -53,7 +52,7 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
                     </div>
                 )}
                 <div className={css["text-container"]}>
-                    {toast.text && <div className={css["text"]}>{toast.text}</div>}
+                    {toast.text && <div className={classList(css["text"], "tt-toast-text")}>{toast.text}</div>}
                     {toast.detail && <div className={css["detail"]}>{toast.detail}</div>}
                     {toast.jsx && <div>{toast.jsx}</div>}
                 </div>

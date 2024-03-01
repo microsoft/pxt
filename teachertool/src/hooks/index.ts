@@ -1,1 +1,0 @@
-export { usePromise } from "./usePromise";
