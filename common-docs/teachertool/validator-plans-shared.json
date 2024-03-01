@@ -98,7 +98,7 @@
             ]
         },
         {
-            ".desc": "A parameter variable's value is used",
+            ".desc": "A parameter's value is used",
             "name": "parameter_variable_accessed",
             "threshold": 1,
             "checks": [
@@ -141,7 +141,7 @@
             ]
         },
         {
-            ".desc": "A numeric parameter variable's value is used",
+            ".desc": "A numeric parameter's value is used",
             "name": "numeric_parameter_variable_accessed",
             "threshold": 1,
             "checks": [
