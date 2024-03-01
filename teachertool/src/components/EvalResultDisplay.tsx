@@ -19,7 +19,7 @@ const ResultsHeader: React.FC = () => {
     return (
         <div className={css["header"]}>
             <div className={css["rubric-name"]}>
-                <h2>{lf("{0}",teacherTool.rubric.name)}</h2>
+                <h2>{teacherTool.rubric.name}</h2>
             </div>
             <div className={css["project-details"]}>
                 <div className={css["project-text"]}>
