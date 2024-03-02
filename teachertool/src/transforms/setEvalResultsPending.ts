@@ -17,6 +17,8 @@ export function setEvalResultsPending({ overwriteExistingEntries, rubric }: {
             allEvalResults[instanceId] = { result: EvaluationStatus.Pending };
         }
     }
-    allEvalResults = { ...teachertool.evalResults, ...allEvalResults };
+    if (!overwriteExistingEntries) {
+        allEvalResults = { ...teachertool.evalResults, ...allEvalResults } ;
+    }
     dispatch(Actions.setEvalResultsBatch(allEvalResults));
 }
