@@ -2,29 +2,29 @@ import * as React from "react";
 import { useMemo } from "react";
 import { setEvalResultOutcome } from "../transforms/setEvalResultOutcome";
 import { Dropdown, DropdownItem } from "react-common/components/controls/Dropdown";
-import { CriteriaEvaluationResult } from "../types/criteria";
+import { EvaluationStatus } from "../types/criteria";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { classList } from "react-common/components/util";
 
 interface CriteriaEvalResultProps {
-    result: CriteriaEvaluationResult;
+    result: EvaluationStatus;
     criteriaId: string;
 }
 
-const itemIdToCriteriaResult: pxt.Map<CriteriaEvaluationResult> = {
-    "evaluating": CriteriaEvaluationResult.InProgress,
-    "notevaluated": CriteriaEvaluationResult.CompleteWithNoResult,
-    "fail": CriteriaEvaluationResult.Fail,
-    "pass": CriteriaEvaluationResult.Pass,
-    "pending": CriteriaEvaluationResult.Pending
+const itemIdToCriteriaResult: pxt.Map<EvaluationStatus> = {
+    "evaluating": EvaluationStatus.InProgress,
+    "notevaluated": EvaluationStatus.CompleteWithNoResult,
+    "fail": EvaluationStatus.Fail,
+    "pass": EvaluationStatus.Pass,
+    "pending": EvaluationStatus.Pending
 }
 
 const criteriaResultToItemId: pxt.Map<string> = {
-    [CriteriaEvaluationResult.InProgress]: "evaluating",
-    [CriteriaEvaluationResult.CompleteWithNoResult]: "notevaluated",
-    [CriteriaEvaluationResult.Fail]: "fail",
-    [CriteriaEvaluationResult.Pass]: "pass",
-    [CriteriaEvaluationResult.Pending]: "pending"
+    [EvaluationStatus.InProgress]: "evaluating",
+    [EvaluationStatus.CompleteWithNoResult]: "notevaluated",
+    [EvaluationStatus.Fail]: "fail",
+    [EvaluationStatus.Pass]: "pass",
+    [EvaluationStatus.Pending]: "pending"
 }
 
 const dropdownItems: DropdownItem[] = [

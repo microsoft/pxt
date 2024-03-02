@@ -1,8 +1,8 @@
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
-import { CriteriaEvaluationResult } from "../types/criteria";
+import { EvaluationStatus } from "../types/criteria";
 
-export function setEvalResultOutcome(criteriaId: string, result: CriteriaEvaluationResult) {
+export function setEvalResultOutcome(criteriaId: string, result: EvaluationStatus) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
     const newCriteriaEvalResult = {

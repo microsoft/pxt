@@ -1,5 +1,5 @@
 import { stateAndDispatch } from "../state";
-import { CriteriaEvaluationResult, CriteriaResult } from "../types/criteria";
+import { EvaluationStatus, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 import * as Actions from "../state/actions";
 
@@ -14,7 +14,7 @@ export function setEvalResultsPending({ clearAllEntries, rubric }: {
     for (const criteria of usedRubric.criteria) {
         const instanceId = criteria.instanceId;
         if (!teachertool.evalResults[instanceId] || clearAllEntries) {
-            allEvalResults[instanceId] = { result: CriteriaEvaluationResult.Pending };
+            allEvalResults[instanceId] = { result: EvaluationStatus.Pending };
         }
     }
     allEvalResults = { ...teachertool.evalResults, ...allEvalResults };
