@@ -1,14 +1,14 @@
 import * as React from "react";
-import { useState, useContext } from "react";
+import { useState, useContext, useRef } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
-import { CriteriaEvaluationResult } from "../types/criteria";
 import { classList } from "react-common/components/util";
 import { Button } from "react-common/components/controls/Button";
 import { Strings, Ticks } from "../constants";
 import { setEvalResultNotes } from "../transforms/setEvalResultNotes";
 import { CriteriaEvalResultDropdown } from "./CriteriaEvalResultDropdown";
 import { DebouncedTextarea } from "./DebouncedTextarea";
+import { getCatalogCriteriaWithId } from "../state/helpers";
 
 interface AddNotesButtonProps {
     criteriaId: string;
@@ -63,26 +63,40 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, n
 
 interface CriteriaResultEntryProps {
     criteriaId: string;
-    result: CriteriaEvaluationResult;
-    label: string;
 }
 
-export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId, result, label }) => {
+export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [showInput, setShowInput] = useState(!!teacherTool.evalResults[criteriaId]?.notes);
+    const criteriaTemplateString = useRef<string>(getTemplateStringFromCriteriaInstanceId(criteriaId));
+
+    function getTemplateStringFromCriteriaInstanceId(instanceId: string): string {
+        const catalogCriteriaId = teacherTool.rubric.criteria?.find(
+            criteria => criteria.instanceId === instanceId
+        )?.catalogCriteriaId;
+        if (!catalogCriteriaId) return "";
+        return getCatalogCriteriaWithId(catalogCriteriaId)?.template ?? "";
+    }
 
     return (
-        <div className={css["specific-criteria-result"]} key={criteriaId}>
-            <div className={css["result-details"]}>
-                <h4 className={css["block-id-label"]}>
-                    {label}
-                </h4>
-                <CriteriaEvalResultDropdown result={result} criteriaId={criteriaId} />
-            </div>
-            <div className={css["result-notes"]}>
-                {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-                {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
-            </div>
-        </div>
+        <>
+            { criteriaTemplateString.current && (
+                    <div className={css["specific-criteria-result"]} key={criteriaId}>
+                        <div className={css["result-details"]}>
+                            <h4 className={css["block-id-label"]}>
+                                {criteriaTemplateString.current}
+                            </h4>
+                            <CriteriaEvalResultDropdown result={teacherTool.evalResults[criteriaId].result} criteriaId={criteriaId} />
+                        </div>
+                        <div className={css["result-notes"]}>
+                            {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
+                            {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
+                        </div>
+                    </div>
+                )
+            }
+        </>
+
+
     );
 }

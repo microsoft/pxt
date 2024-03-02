@@ -2,7 +2,6 @@ import * as React from "react";
 import { useContext } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
-import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaResultEntry } from "./CriteriaResultEntry";
 import { QRCodeSVG } from "qrcode.react"
 import { getProjectLink } from "../utils";
@@ -33,28 +32,14 @@ const ResultsHeader: React.FC = () => {
 export const EvalResultDisplay: React.FC<{}> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    function getTemplateStringFromCriteriaInstanceId(instanceId: string): string {
-        const catalogCriteriaId = teacherTool.rubric.criteria?.find(
-            criteria => criteria.instanceId === instanceId
-        )?.catalogCriteriaId;
-        if (!catalogCriteriaId) return "";
-        return getCatalogCriteriaWithId(catalogCriteriaId)?.template ?? "";
-    }
-
     return (
         <>
             {teacherTool.projectMetadata && (
                 <div className={css["eval-results-container"]}>
                     <ResultsHeader />
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
-                        const label = getTemplateStringFromCriteriaInstanceId(criteriaInstanceId);
                         return (
-                            label &&
-                            <CriteriaResultEntry
-                                criteriaId={criteriaInstanceId}
-                                result={teacherTool.evalResults[criteriaInstanceId].result}
-                                label={label}
-                            />
+                            <CriteriaResultEntry criteriaId={criteriaInstanceId} key={criteriaInstanceId} />
                         )
                     })}
                 </div>
