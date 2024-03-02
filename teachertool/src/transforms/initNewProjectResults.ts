@@ -4,7 +4,7 @@ import * as Actions from "../state/actions";
 
 
 export function initNewProjectResults() {
-    const { state: teacherTool, dispatch } = stateAndDispatch();
-    setEvalResultsPending({ clearAllEntries: true });
+    const { dispatch } = stateAndDispatch();
+    setEvalResultsPending({ overwriteExistingEntries: true });
     dispatch(Actions.clearAllEvalResultNotes());
 }

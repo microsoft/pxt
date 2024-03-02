@@ -4,8 +4,8 @@ import { Rubric } from "../types/rubric";
 import * as Actions from "../state/actions";
 
 
-export function setEvalResultsPending({ clearAllEntries, rubric }: {
-    clearAllEntries?: boolean,
+export function setEvalResultsPending({ overwriteExistingEntries, rubric }: {
+    overwriteExistingEntries?: boolean,
     rubric?: Rubric
 }): void {
     const { state: teachertool, dispatch } = stateAndDispatch();
@@ -13,7 +13,7 @@ export function setEvalResultsPending({ clearAllEntries, rubric }: {
     const usedRubric = rubric || teachertool.rubric;
     for (const criteria of usedRubric.criteria) {
         const instanceId = criteria.instanceId;
-        if (!teachertool.evalResults[instanceId] || clearAllEntries) {
+        if (!teachertool.evalResults[instanceId] || overwriteExistingEntries) {
             allEvalResults[instanceId] = { result: EvaluationStatus.Pending };
         }
     }
