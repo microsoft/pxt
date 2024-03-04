@@ -26,7 +26,7 @@ export const SplitPane: React.FC<IProps> = ({
     rightMinSize,
     onResizeEnd,
 }) => {
-    const [size, setSize] = React.useState(startingSize ?? defaultSize);
+    const [size, setSize] = React.useState(startingSize || defaultSize);
     const [isResizing, setIsResizing] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
 
