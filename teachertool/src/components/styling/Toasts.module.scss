@@ -23,19 +23,19 @@
     pointer-events: none;
 
     &.success {
-        background-color: var(--pxt-toast-background-success);
+        background-color: var(--pxt-success-background);
     }
 
     &.info {
-        background-color: var(--pxt-toast-background-info);
+        background-color: var(--pxt-info-background);
     }
 
     &.warning {
-        background-color: var(--pxt-toast-background-warning);
+        background-color: var(--pxt-warning-background);
     }
 
     &.error {
-        background-color: var(--pxt-toast-background-error);
+        background-color: var(--pxt-error-background);
     }
 
     .toast-content {
@@ -54,19 +54,19 @@
             height: 1.75rem;
 
             &.success {
-                background-color: var(--pxt-toast-accent-success);;
+                background-color: var(--pxt-success-accent);
             }
 
             &.info {
-                background-color: var(--pxt-toast-accent-info);;
+                background-color: var(--pxt-info-accent);
             }
 
             &.warning {
-                background-color: var(--pxt-toast-accent-warning);;
+                background-color: var(--pxt-warning-accent);
             }
 
             &.error {
-                background-color: var(--pxt-toast-accent-error);
+                background-color: var(--pxt-error-accent);
             }
         }
 
@@ -115,19 +115,19 @@
         transition: all 0.2s linear;
 
         &.success {
-            background-color: var(--pxt-toast-accent-success);;
+            background-color: var(--pxt-success-accent);
         }
 
         &.info {
-            background-color: var(--pxt-toast-accent-info);;
+            background-color: var(--pxt-info-accent);
         }
 
         &.warning {
-            background-color: var(--pxt-toast-accent-warning);;
+            background-color: var(--pxt-warning-accent);
         }
 
         &.error {
-            background-color: var(--pxt-toast-accent-error);
+            background-color: var(--pxt-error-accent);
         }
     }
 }
