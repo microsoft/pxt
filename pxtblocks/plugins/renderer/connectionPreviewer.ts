@@ -1,14 +1,14 @@
 import * as Blockly from "blockly";
 
-export class ConnectionPreviewer implements Blockly.IConnectionPreviewer {
+export class ConnectionPreviewer extends Blockly.InsertionMarkerPreviewer {
     static CONNECTION_INDICATOR_RADIUS = 9;
 
     protected connectionLine: SVGLineElement;
-    protected staticConnectionIndicator: SVGElement;
     protected draggedConnectionIndicator: SVGElement;
     protected staticConnection: Blockly.RenderedConnection;
 
     previewReplacement(draggedConn: Blockly.RenderedConnection, staticConn: Blockly.RenderedConnection, replacedBlock: Blockly.BlockSvg): void {
+        super.previewReplacement(draggedConn, staticConn, replacedBlock);
         if (!this.connectionLine) {
             this.connectionLine = Blockly.utils.dom.createSvgElement(
                 'line',
@@ -23,14 +23,6 @@ export class ConnectionPreviewer implements Blockly.IConnectionPreviewer {
 
             // Create connection indicator for target/closes connection
             this.draggedConnectionIndicator = this.createConnectionIndicator(draggedConn);
-        }
-
-        if (this.staticConnection !== staticConn) {
-            if (this.staticConnectionIndicator) {
-                this.staticConnectionIndicator.remove();
-            }
-            this.staticConnection = staticConn;
-            this.staticConnectionIndicator = this.createConnectionIndicator(staticConn);
         }
 
         const radius = ConnectionPreviewer.CONNECTION_INDICATOR_RADIUS;
@@ -64,24 +56,15 @@ export class ConnectionPreviewer implements Blockly.IConnectionPreviewer {
         }
     }
 
-    previewConnection(draggedConn: Blockly.RenderedConnection, staticConn: Blockly.RenderedConnection): void {
-
-    }
-
     hidePreview(): void {
+        super.hidePreview();
         if (this.connectionLine) {
             this.connectionLine.remove();
             this.connectionLine = null;
-            this.staticConnectionIndicator.remove();
-            this.staticConnectionIndicator = null;
             this.draggedConnectionIndicator.remove();
             this.draggedConnectionIndicator = null;
             this.staticConnection = null;
         }
-    }
-
-    dispose(): void {
-        this.hidePreview();
     }
 
     protected createConnectionIndicator(connection: Blockly.RenderedConnection): SVGElement {
