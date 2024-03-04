@@ -601,11 +601,12 @@ namespace pxt.sprite {
         return result;
     }
 
-    export function imageLiteralToBitmap(text: string): Bitmap {
+    export function imageLiteralToBitmap(text: string, templateLiteral = "img"): Bitmap {
         // Strip the tagged template string business and the whitespace. We don't have to exhaustively
         // replace encoded characters because the compiler will catch any disallowed characters and throw
         // an error before the decompilation happens. 96 is backtick and 9 is tab
         text = text.replace(/[ `]|(?:&#96;)|(?:&#9;)|(?:img)/g, "").trim();
+        text = text.replaceAll(templateLiteral, "");
         text = text.replace(/^["`\(\)]*/, '').replace(/["`\(\)]*$/, '');
         text = text.replace(/&#10;/g, "\n");
 
@@ -733,14 +734,14 @@ namespace pxt.sprite {
         pxt.sprite.trimTilemapTileset(result);
     }
 
-    function imageLiteralPrologue(fileType: "typescript" | "python"): string {
+    function imageLiteralPrologue(fileType: "typescript" | "python", templateLiteral = "img"): string {
         let res = '';
         switch (fileType) {
             case "python":
-                res = "img(\"\"\"";
+                res = `${templateLiteral}("""`;
                 break;
             default:
-                res = "img`";
+                res = `${templateLiteral}\``;
                 break;
         }
         return res;
@@ -776,10 +777,10 @@ namespace pxt.sprite {
         return res;
     }
 
-    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: "typescript" | "python"): string {
+    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: "typescript" | "python", templateLiteral = "img"): string {
         if (!bitmap || bitmap.height === 0 || bitmap.width === 0) return "";
 
-        let res = imageLiteralPrologue(fileType);
+        let res = imageLiteralPrologue(fileType, templateLiteral);
 
         if (bitmap) {
             const paddingBetweenPixels = (bitmap.width * bitmap.height > 300) ? "" : " ";

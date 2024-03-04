@@ -11,6 +11,8 @@ namespace pxtblockly {
 
         filter?: string;
         lightMode: boolean;
+
+        taggedTemplate?: string;
     }
 
     export interface ParsedFieldAnimationOptions {
@@ -19,6 +21,8 @@ namespace pxtblockly {
         disableResize: boolean;
         filter?: string;
         lightMode: boolean;
+
+        taggedTemplate?: string;
     }
 
     // 32 is specifically chosen so that we can scale the images for the default
@@ -71,7 +75,7 @@ namespace pxtblockly {
                 const existing = pxt.lookupProjectAssetByTSReference(text, project);
                 if (existing) return existing;
 
-                const frames = parseImageArrayString(text);
+                const frames = parseImageArrayString(text, this.params.taggedTemplate);
 
                 if (frames && frames.length) {
                     const id = this.sourceBlock_.id;
@@ -115,7 +119,7 @@ namespace pxtblockly {
 
             if (this.isTemporaryAsset()) {
                 return "[" + this.asset.frames.map(frame =>
-                    pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(frame), pxt.editor.FileType.TypeScript)
+                    pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(frame), pxt.editor.FileType.TypeScript, this.params.taggedTemplate)
                 ).join(",") + "]"
             }
 
@@ -236,6 +240,7 @@ namespace pxtblockly {
 
         parsed.initWidth = withDefault(opts.initWidth, parsed.initWidth);
         parsed.initHeight = withDefault(opts.initHeight, parsed.initHeight);
+        parsed.taggedTemplate = opts.taggedTemplate;
 
         return parsed;
 
@@ -248,10 +253,10 @@ namespace pxtblockly {
         }
     }
 
-    function parseImageArrayString(str: string): pxt.sprite.BitmapData[] {
+    function parseImageArrayString(str: string, templateLiteral?: string): pxt.sprite.BitmapData[] {
         if (str.indexOf("[") === -1) return null;
         str = str.replace(/[\[\]]/mg, "");
-        return str.split(",").map(s => pxt.sprite.imageLiteralToBitmap(s).data()).filter(b => b.height && b.width);
+        return str.split(",").map(s => pxt.sprite.imageLiteralToBitmap(s, templateLiteral).data()).filter(b => b.height && b.width);
     }
 
     function isNumberType(type: string) {

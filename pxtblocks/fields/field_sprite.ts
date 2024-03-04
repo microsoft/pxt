@@ -17,6 +17,8 @@ namespace pxtblockly {
 
         filter?: string;
         lightMode: boolean;
+
+        taggedTemplate?: string;
     }
 
     interface ParsedSpriteEditorOptions {
@@ -26,6 +28,7 @@ namespace pxtblockly {
         disableResize: boolean;
         filter?: string;
         lightMode: boolean;
+        taggedTemplate?: string;
     }
 
     export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions, ParsedSpriteEditorOptions> {
@@ -45,7 +48,7 @@ namespace pxtblockly {
                 return project.lookupAsset(pxt.AssetType.Image, this.getBlockData());
             }
 
-            const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
+            const bmp = text ? pxt.sprite.imageLiteralToBitmap(text, this.params.taggedTemplate) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
 
             if (!bmp) {
                 this.isGreyBlock = true;
@@ -72,7 +75,7 @@ namespace pxtblockly {
             if (this.asset && !this.isTemporaryAsset()) {
                 return pxt.getTSReferenceForAsset(this.asset);
             }
-            return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
+            return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript, this.params.taggedTemplate);
         }
 
         protected parseFieldOptions(opts: FieldSpriteEditorOptions): ParsedSpriteEditorOptions {
@@ -138,6 +141,8 @@ namespace pxtblockly {
         parsed.initColor = withDefault(opts.initColor, parsed.initColor);
         parsed.initWidth = withDefault(opts.initWidth, parsed.initWidth);
         parsed.initHeight = withDefault(opts.initHeight, parsed.initHeight);
+
+        parsed.taggedTemplate = opts.taggedTemplate;
 
         return parsed;
 
