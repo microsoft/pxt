@@ -1,13 +1,13 @@
-import { ModalType, ToastWithId, TabName, ConfirmationModalOptions } from "../types";
-import { CatalogCriteria, CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
+import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions } from "../types";
+import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 import { makeRubric } from "../utils";
 
 export type AppState = {
     targetConfig?: pxt.TargetConfig;
     toasts: ToastWithId[];
-    evalResults: pxt.Map<CriteriaEvaluationResult>; // Criteria Instance Id -> Result
-    projectMetadata: pxt.Cloud.JsonScript | undefined;
+    evalResults: pxt.Map<CriteriaResult>; // Criteria Instance Id -> Result
+    projectMetadata: ProjectData | undefined;
     catalog: CatalogCriteria[] | undefined;
     rubric: Rubric;
     modal: ModalType | undefined;

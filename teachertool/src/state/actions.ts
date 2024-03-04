@@ -1,5 +1,5 @@
-import { ModalType, ToastWithId, TabName, ConfirmationModalOptions } from "../types";
-import { CatalogCriteria, CriteriaEvaluationResult } from "../types/criteria";
+import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions } from "../types";
+import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -22,13 +22,13 @@ type DismissToast = ActionBase & {
 
 type SetProjectMetadata = ActionBase & {
     type: "SET_PROJECT_METADATA";
-    metadata: pxt.Cloud.JsonScript | undefined;
+    metadata: ProjectData | undefined;
 };
 
 type SetEvalResult = ActionBase & {
     type: "SET_EVAL_RESULT";
     criteriaInstanceId: string;
-    result: CriteriaEvaluationResult;
+    result: CriteriaResult;
 };
 
 type ClearEvalResult = ActionBase & {
@@ -84,6 +84,15 @@ type SetAutorun = ActionBase & {
     autorun: boolean;
 };
 
+type SetEvalResultsBatch = ActionBase & {
+    type: "SET_EVAL_RESULTS_BATCH";
+    criteriaResults: pxt.Map<CriteriaResult>;
+}
+
+type ClearAllEvalResultNotes = ActionBase & {
+    type: "CLEAR_ALL_EVAL_RESULT_NOTES";
+}
+
 /**
  * Union of all actions
  */
@@ -95,6 +104,8 @@ export type Action =
     | SetEvalResult
     | ClearEvalResult
     | ClearAllEvalResults
+    | ClearAllEvalResultNotes
+    | SetEvalResultsBatch
     | SetTargetConfig
     | SetCatalog
     | SetRubric
@@ -118,15 +129,15 @@ const dismissToast = (toastId: string): DismissToast => ({
     toastId,
 });
 
-const setProjectMetadata = (metadata: pxt.Cloud.JsonScript | undefined): SetProjectMetadata => ({
+const setProjectMetadata = (metadata: ProjectData | undefined): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
     metadata,
 });
 
-const setEvalResult = (criteriaInstanceId: string, result: CriteriaEvaluationResult): SetEvalResult => ({
+const setEvalResult = (criteriaInstanceId: string, result: CriteriaResult): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
     criteriaInstanceId,
-    result,
+    result
 });
 
 const clearEvalResult = (criteriaInstanceId: string): ClearEvalResult => ({
@@ -182,6 +193,15 @@ const setAutorun = (autorun: boolean): SetAutorun => ({
     autorun,
 });
 
+const setEvalResultsBatch = (criteriaResults: pxt.Map<CriteriaResult>): SetEvalResultsBatch => ({
+    type: "SET_EVAL_RESULTS_BATCH",
+    criteriaResults,
+});
+
+const clearAllEvalResultNotes = (): ClearAllEvalResultNotes => ({
+    type: "CLEAR_ALL_EVAL_RESULT_NOTES",
+});
+
 export {
     showToast,
     dismissToast,
@@ -189,6 +209,8 @@ export {
     setEvalResult,
     clearEvalResult,
     clearAllEvalResults,
+    clearAllEvalResultNotes,
+    setEvalResultsBatch,
     setTargetConfig,
     setCatalog,
     setRubric,

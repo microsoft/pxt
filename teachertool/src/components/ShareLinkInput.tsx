@@ -26,7 +26,7 @@ export const ShareLinkInput: React.FC<IProps> = () => {
     const onEnterKey = useCallback(() => {
         const shareId = pxt.Cloud.parseScriptId(text);
         if (!!shareId && !(shareId === projectMetadata?.shortid || shareId === projectMetadata?.persistId)) {
-            loadProjectMetadataAsync(shareId);
+            loadProjectMetadataAsync(text, shareId);
         }
     }, [text, projectMetadata?.shortid, projectMetadata?.persistId]);
 

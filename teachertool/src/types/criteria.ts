@@ -30,9 +30,15 @@ export interface CriteriaParameterValue {
 }
 
 // Possible results from evaluating a criteria instance.
-export enum CriteriaEvaluationResult {
+export enum EvaluationStatus {
     Pass,
     Fail,
     CompleteWithNoResult,
     InProgress,
+    Pending
+}
+
+export interface CriteriaResult {
+    result: EvaluationStatus;
+    notes?: string;
 }
