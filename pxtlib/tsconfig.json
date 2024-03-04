@@ -13,7 +13,8 @@
             "dom.iterable",
             "scripthost",
             "es2017",
-            "ES2018.Promise"
+            "ES2018.Promise",
+            "ES2021.String"
         ],
         "types": [
             "highlight.js",
