@@ -1,27 +1,8 @@
 .criteria-instance-display {
-    background-color: var(--white);
-    border: 1px solid #ddd;
-    border-radius: 0;
-    padding: 0.1rem 0.5rem;
-    margin-bottom: 0.5rem;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .criteria-btn-remove {
-        background-color: #f55c51;
-        color: var(--white);
-        border: none;
-        display: inline-block;
-        margin: 0.5rem;
-        padding: 0.5rem;
-        border-radius: 0;
-        transition: background-color 0.2s ease;
-    }
-
-    .criteria-btn-remove:hover {
-        background-color: #da4949;
-    }
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
 
     .snippet-container {
         display: flex;
@@ -29,16 +10,20 @@
         align-items: flex-start;
         justify-content: flex-start;
         align-items: center;
-        flex-grow: 1;
+        width: 100%;
 
         .text-snippet {
             margin-right: 0.5rem;
         }
 
         .string-input {
-            min-width: 20rem;
             flex-grow: 1;
-            margin-right: 0.5rem;
+            margin: 0.2rem 0.5rem 0.2rem 0;
         }
+    }
+
+    .criteria-description {
+        color: var(--pxt-page-foreground-light);
+        margin-top: 0.2rem;
     }
 }

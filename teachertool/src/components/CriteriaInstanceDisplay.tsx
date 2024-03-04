@@ -99,12 +99,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                     {...part, key: i}
                 ))}
             </div>
-            <Button
-                className={css["criteria-btn-remove"]}
-                label={lf("X")}
-                onClick={() => removeCriteriaFromRubric(criteriaInstance)}
-                title={lf("Remove")}
-            />
+            <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
         </div>
     ) : null;
 };

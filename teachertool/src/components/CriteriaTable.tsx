@@ -6,6 +6,7 @@ import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric
 import { CriteriaInstance } from "../types/criteria";
 import { classList } from "react-common/components/util";
 import { Button } from "react-common/components/controls/Button";
+import { CriteriaInstanceDisplay } from "./CriteriaInstanceDisplay";
 import css from "./styling/CriteriaTable.module.scss";
 import React from "react";
 
@@ -20,11 +21,8 @@ const CriteriaInstanceRow: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaI
 
     return catalogCriteria ? (
         <div className={css["criteria-instance-display"]} role="row" title={catalogCriteria.template}>
-            <div className={classList(css["cell"], css["criteria-text-cell"])} role="cell">
-                {catalogCriteria.template}
-                {catalogCriteria.description && (
-                    <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
-                )}
+            <div className={classList(css["cell"], css["criteria-display-cell"])} role="cell">
+                <CriteriaInstanceDisplay criteriaInstance={criteriaInstance} />
             </div>
             <div
                 className={classList(css["cell"], css["criteria-action-menu-cell"])}
@@ -51,7 +49,7 @@ const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
         <div className={css["criteria-table"]} role="table" aria-label={Strings.Criteria}>
             <div role="rowgroup">
                 <div className={css["criteria-header"]} role="row">
-                    <div className={classList(css["cell"], css["criteria-text-cell"])} role="columnheader">
+                    <div className={classList(css["cell"], css["criteria-display-cell"])} role="columnheader">
                         {Strings.Criteria}
                     </div>
                     <div
