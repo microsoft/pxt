@@ -40,3 +40,8 @@
 .common-button.disabled {
     opacity: 0.8;
 }
+
+.common-input-group>.common-button {
+    border-radius: 99px;
+    margin-right: -1rem;
+}

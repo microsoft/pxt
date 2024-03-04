@@ -42,6 +42,7 @@ export const ShareLinkInput: React.FC<IProps> = () => {
                 icon={icon}
                 onChange={onTextChange}
                 onEnterKey={onEnterKey}
+                onIconClick={onEnterKey}
                 preserveValueOnBlur={true}
                 autoComplete={false}
             ></Input>
