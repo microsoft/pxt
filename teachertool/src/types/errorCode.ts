@@ -21,4 +21,5 @@ export enum ErrorCode {
     validatorPlansNotFound = "validatorPlansNotFound",
     fetchRequestFailed = "fetchRequestFailed",
     fetchJsonDocAsync = "fetchJsonDocAsync",
+    missingParameter = "missingParameter",
 }

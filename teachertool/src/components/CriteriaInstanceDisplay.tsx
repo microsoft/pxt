@@ -98,7 +98,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
         }
     }
 
-    const paramRegex = /\$\{(\w+)\}/g;
+    const paramRegex = /\$\{([\w\s]+)\}/g;
 
     // Split by the regex, which will give us an array where every other element is a parameter.
     const parts = catalogCriteria.template.split(paramRegex);
