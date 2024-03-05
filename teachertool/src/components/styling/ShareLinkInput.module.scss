@@ -18,4 +18,9 @@
             }
         }
     }
+
+    button[class~="common-button"] {
+        border-radius: 99px;
+        margin-right: -1rem;
+    }
 }

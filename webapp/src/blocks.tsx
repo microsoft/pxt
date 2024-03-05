@@ -632,7 +632,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
-            if (ev.type !== "var_create") {
+            if (ev.type !== "var_create" && ev.type !== "marker_move") {
                 this.hideFlyout();
             }
 

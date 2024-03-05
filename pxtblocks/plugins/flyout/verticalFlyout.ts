@@ -25,6 +25,8 @@ export class VerticalFlyout implements Blockly.IFlyout {
             return this.element;
         }
 
+        this.dummyWorkspace.createDom();
+
         this.element = Blockly.utils.dom.createSvgElement(
             tagName,
             {
