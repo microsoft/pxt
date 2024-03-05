@@ -11,7 +11,7 @@
                     "name": "count",
                     "type": "number",
                     "default": 1,
-                    "path": "checks[0].count"
+                    "paths": ["checks[0].count"]
                 }
             ]
         },
@@ -25,13 +25,13 @@
                 {
                     "name": "block id",
                     "type": "string",
-                    "path": "checks[0].blockCounts[0].blockId"
+                    "paths": ["checks[0].blockCounts[0].blockId"]
                 },
                 {
                     "name": "count",
                     "type": "number",
                     "default": 1,
-                    "path": "checks[0].blockCounts[0].count"
+                    "paths": ["checks[0].blockCounts[0].count"]
                 }
             ]
         },
@@ -46,7 +46,7 @@
                     "name": "question",
                     "type": "string",
                     "picker": "longString",
-                    "path": "checks[0].question"
+                    "paths": ["checks[0].question"]
                 }
             ]
         },
@@ -60,7 +60,7 @@
                 {
                     "name": "count",
                     "type": "number",
-                    "path": "checks[0].count",
+                    "paths": ["checks[0].count"],
                     "default": 1
                 }
             ]
@@ -75,7 +75,7 @@
                 {
                     "name": "count",
                     "type": "number",
-                    "path": "checks[0].count",
+                    "paths": ["checks[0].count", "checks[1].count"],
                     "default": 1
                 }
             ]

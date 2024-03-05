@@ -44,7 +44,9 @@ function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.V
             showToast(makeToast("error", lf("Unable to evaluate criteria: missing value for {0} in {1}", param.name, catalogCriteria.template)));
         }
 
-        jp.apply(plan, catalogParam.path, () => param.value);
+        for (const path of catalogParam.paths) {
+            jp.apply(plan, path, () => param.value);
+        }
     }
 
     return plan;
