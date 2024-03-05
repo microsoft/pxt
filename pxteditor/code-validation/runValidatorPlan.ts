@@ -65,7 +65,11 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
 }
 
 function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksExistValidatorCheck): [Blockly.Block[], boolean] {
-    const blockResults = validateBlocksExist({ usedBlocks, requiredBlockCounts: inputs.blockCounts });
+    const requiredBlockCounts = inputs.blockCounts.reduce((acc, info) => {
+        acc[info.blockId] = info.count;
+        return acc;
+    }, {} as pxt.Map<number>);
+    const blockResults = validateBlocksExist({ usedBlocks, requiredBlockCounts });
     let successfulBlocks: Blockly.Block[] = [];
     if (blockResults.passed) {
         const blockIdsFromValidator = Object.keys(inputs.blockCounts)
