@@ -40,8 +40,10 @@ export const ShareLinkInput: React.FC<IProps> = () => {
                 placeholder={lf("Enter Project Link or Share ID")}
                 ariaLabel={lf("Project Link or Share ID")}
                 icon={icon}
+                iconTitle={lf("Submit project link or share ID")}
                 onChange={onTextChange}
                 onEnterKey={onEnterKey}
+                onIconClick={onEnterKey}
                 preserveValueOnBlur={true}
                 autoComplete={false}
             ></Input>
