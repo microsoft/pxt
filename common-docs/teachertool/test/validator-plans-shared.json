@@ -9,7 +9,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "",
+                            "blockId": "",
                             "count": 0
                         }
                     ]

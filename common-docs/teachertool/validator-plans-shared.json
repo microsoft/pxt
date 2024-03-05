@@ -9,7 +9,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "controls_repeat_ext",
+                            "blockId": "controls_repeat_ext",
                             "count": 1
                         }
                     ]
@@ -18,7 +18,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "device_while",
+                            "blockId": "device_while",
                             "count": 1
                         }
                     ]
@@ -27,7 +27,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "pxt_controls_for",
+                            "blockId": "pxt_controls_for",
                             "count": 1
                         }
                     ]
@@ -36,7 +36,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "pxt_controls_for_of",
+                            "blockId": "pxt_controls_for_of",
                             "count": 1
                         }
                     ]
@@ -79,7 +79,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "function_definition",
+                            "blockId": "function_definition",
                             "count": 1
                         }
                     ]
@@ -95,7 +95,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "variables_set",
+                            "blockId": "variables_set",
                             "count": 1
                         }
                     ]
@@ -111,7 +111,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "variables_get",
+                            "blockId": "variables_get",
                             "count": 1
                         }
                     ]
@@ -127,7 +127,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "argument_reporter_string",
+                            "blockId": "argument_reporter_string",
                             "count": 1
                         }
                     ]
@@ -136,7 +136,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "argument_reporter_number",
+                            "blockId": "argument_reporter_number",
                             "count": 1
                         }
                     ]
@@ -145,7 +145,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "argument_reporter_boolean",
+                            "blockId": "argument_reporter_boolean",
                             "count": 1
                         }
                     ]
@@ -154,7 +154,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "argument_reporter_array",
+                            "blockId": "argument_reporter_array",
                             "count": 1
                         }
                     ]
@@ -163,7 +163,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "argument_reporter_custom",
+                            "blockId": "argument_reporter_custom",
                             "count": 1
                         }
                     ]
@@ -172,7 +172,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "variables_get_reporter",
+                            "blockId": "variables_get_reporter",
                             "count": 1
                         }
                     ]
@@ -188,7 +188,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "argument_reporter_number",
+                            "blockId": "argument_reporter_number",
                             "count": 1
                         }
                     ]
@@ -204,7 +204,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "variables_set",
+                            "blockId": "variables_set",
                             "count": 1
                         }
                     ],
@@ -221,7 +221,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "device_random",
+                            "blockId": "device_random",
                             "count": 1
                         }
                     ]
@@ -251,7 +251,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "math_number",
+                            "blockId": "math_number",
                             "count": 2
                         }
                     ]
@@ -267,7 +267,7 @@
                     "validator": "blocksExist",
                     "blockCounts": [
                         {
-                            "block_id": "math_number",
+                            "blockId": "math_number",
                             "count": 1
                         }
                     ]
