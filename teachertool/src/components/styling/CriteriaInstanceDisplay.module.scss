@@ -4,6 +4,28 @@
     align-items: flex-start;
     width: 100%;
 
+    div[class*="common-input-group"] {
+        border-radius: 0.5rem;
+        border: solid 1px var(--pxt-page-foreground);
+        padding: 0 0.5rem;
+        
+        &:focus::after {
+            outline: none;
+            border-radius: 0.5rem;
+            border: solid 2px var(--pxt-headerbar-accent-smoke);
+        }
+
+        &:focus-within::after {
+            outline: none;
+            border-radius: 0.5rem;
+            border: solid 2px var(--pxt-headerbar-accent-smoke);
+        }
+
+        input::placeholder {
+            color: var(--pxt-content-accent);
+        }
+    }
+
     .snippet-container {
         display: flex;
         flex-direction: row;
@@ -13,12 +35,16 @@
         width: 100%;
 
         .text-snippet {
-            margin-right: 0.5rem;
+            margin-right: 0.3rem;
         }
 
         .string-input {
-            flex-grow: 1;
-            margin: 0.2rem 0.5rem 0.2rem 0;
+            width: 10rem;
+            margin: 0.2rem 0.3rem 0.2rem 0;
+
+            &.long {
+                flex-grow: 1;
+            }
         }
     }
 

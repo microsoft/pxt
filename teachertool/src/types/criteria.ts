@@ -18,9 +18,11 @@ export interface CriteriaInstance {
 
 // Represents a parameter definition in a catalog criteria.
 export type CriteriaParameterType = "string" | "number" | "block";
+export type CriteriaParameterPicker = "longString" | "blockSelector";
 export interface CriteriaParameter {
     name: string;
     type: CriteriaParameterType;
+    picker: CriteriaParameterPicker | undefined;
     path: string; // The json path of the parameter in the catalog criteria.
 }
 

@@ -1,10 +1,9 @@
 import { getCatalogCriteriaWithId } from "../state/helpers";
-import { Button } from "react-common/components/controls/Button";
-import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
 import { CriteriaInstance, CriteriaParameter, CriteriaParameterValue } from "../types/criteria";
 import { DebouncedInput } from "./DebouncedInput";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
+import { classList } from "react-common/components/util";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
 
@@ -12,15 +11,16 @@ interface StringInputSnippetProps {
     initialValue: string;
     instance: CriteriaInstance;
     param: CriteriaParameterValue;
+    shouldExpand: boolean;
 }
-const StringInputSnippet: React.FC<StringInputSnippetProps> = ({ initialValue, instance, param }) => {
+const StringInputSnippet: React.FC<StringInputSnippetProps> = ({ initialValue, instance, param, shouldExpand }) => {
     function onChange(newValue: string) {
         setParameterValue(instance.instanceId, param.name, newValue);
     }
 
     return (
         <DebouncedInput
-            className={css["string-input"]}
+            className={classList(css["string-input"], shouldExpand ? css["long"] : undefined)}
             initialValue={initialValue}
             onChange={onChange}
             preserveValueOnBlur={true}
@@ -58,6 +58,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                         initialValue={paramInstance.value}
                         param={paramInstance}
                         instance={criteriaInstance}
+                        shouldExpand={paramDef.picker === "longString"}
                     />
                 );
             case "number":

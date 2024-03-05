@@ -18,14 +18,13 @@
         {
             "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
             "use": "block_used_n_times",
-            "template": "${block_id} used ${count} times",
+            "template": "Block ${block_id} used ${count} times",
             "description": "This block was used the specified number of times in your project.",
             "docPath": "/teachertool",
             "params": [
                 {
                     "name": "block_id",
                     "type": "string",
-                    "picker": "blockSelector",
                     "path": "checks[0].blocks[:clear&:append]"
                 },
                 {
@@ -36,16 +35,17 @@
                 }
             ]
         },
-        {            
+        {
             "id": "499F3572-E655-4DEE-953B-5F26BF0191D7",
             "use": "ai_question",
-            "template": "Ask AI: ${question}",
+            "template": "Ask AI: ${question} test",
             "description": "Ask the AI a question about the project.",
             "docPath": "/teachertool",
             "params": [
                 {
                     "name": "question",
                     "type": "string",
+                    "picker": "longString",
                     "path": "checks[0].question"
                 }
             ]
