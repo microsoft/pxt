@@ -1,50 +1,46 @@
+import * as React from "react";
 import { useContext } from "react";
+import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
-import { getCatalogCriteriaWithId } from "../state/helpers";
-import { CriteriaEvaluationResult } from "../types/criteria";
+import { CriteriaResultEntry } from "./CriteriaResultEntry";
+import { QRCodeSVG } from "qrcode.react"
+import { getProjectLink } from "../utils";
 
-interface IProps {}
 
-export const EvalResultDisplay: React.FC<IProps> = ({}) => {
+const ResultsHeader: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    function getTemplateStringFromCriteriaInstanceId(instanceId: string): string {
-        const catalogCriteriaId = teacherTool.rubric.criteria?.find(
-            criteria => criteria.instanceId === instanceId
-        )?.catalogCriteriaId;
-        if (!catalogCriteriaId) return "";
-        return getCatalogCriteriaWithId(catalogCriteriaId)?.template ?? "";
-    }
+    return (
+        <div className={css["header"]}>
+            <div className={css["rubric-name"]}>
+                <h2>{teacherTool.rubric.name}</h2>
+            </div>
+            <div className={css["project-details"]}>
+                <div className={css["project-text"]}>
+                    <h3>{teacherTool?.projectMetadata?.name}</h3>
+                    <p>{getProjectLink(teacherTool.projectMetadata?.inputText!)}</p>
+                </div>
+                <div className={css["project-qrcode"]}>
+                    <QRCodeSVG size={60} value={getProjectLink(teacherTool.projectMetadata?.inputText!)} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+export const EvalResultDisplay: React.FC<{}> = () => {
+    const { state: teacherTool } = useContext(AppStateContext);
 
     return (
         <>
             {teacherTool.projectMetadata && (
-                <div className="eval-results-container">
-                    <h3>{lf("Project: {0}", teacherTool.projectMetadata.name)}</h3>
-
-                    {teacherTool.evalResults.length === 0 && <div className="common-spinner" />}
+                <div className={css["eval-results-container"]}>
+                    <ResultsHeader />
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
-                        const result = teacherTool.evalResults[criteriaInstanceId];
-                        const label = getTemplateStringFromCriteriaInstanceId(criteriaInstanceId);
                         return (
-                            label && (
-                                <div className="result-block-id" key={criteriaInstanceId}>
-                                    <p className="block-id-label">
-                                        {getTemplateStringFromCriteriaInstanceId(criteriaInstanceId)}:
-                                    </p>
-                                    {result === CriteriaEvaluationResult.InProgress && (
-                                        <div className="common-spinner" />
-                                    )}
-                                    {result === CriteriaEvaluationResult.CompleteWithNoResult && <p>{lf("N/A")}</p>}
-                                    {result === CriteriaEvaluationResult.Fail && (
-                                        <p className="negative-text">{lf("Needs Work")}</p>
-                                    )}
-                                    {result === CriteriaEvaluationResult.Pass && (
-                                        <p className="positive-text">{lf("Looks Good!")}</p>
-                                    )}
-                                </div>
-                            )
-                        );
+                            <CriteriaResultEntry criteriaId={criteriaInstanceId} key={criteriaInstanceId} />
+                        )
                     })}
                 </div>
             )}

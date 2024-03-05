@@ -3,11 +3,12 @@ import { runValidatorPlanAsync } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 import { getCatalogCriteriaWithId } from "../state/helpers";
-import { CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
+import { EvaluationStatus, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
+import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import jp from "jsonpath";
 
 function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.ValidatorPlan | undefined {
@@ -56,15 +57,12 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
         setActiveTab("results");
     }
 
-    // Clear all existing results.
-    dispatch(Actions.clearAllEvalResults());
-
     // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
     // They will only resolve to false if evaluation was unable to complete.
     const evalRequests = teacherTool.rubric.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
-                dispatch(Actions.setEvalResult(criteriaInstance.instanceId, CriteriaEvaluationResult.InProgress));
+                setEvalResultOutcome(criteriaInstance.instanceId, EvaluationStatus.InProgress);
 
                 const loadedValidatorPlans = teacherTool.validatorPlans;
                 if (!loadedValidatorPlans) {
@@ -83,12 +81,8 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                 const planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
 
                 if (planResult) {
-                    dispatch(
-                        Actions.setEvalResult(
-                            criteriaInstance.instanceId,
-                            planResult.result ? CriteriaEvaluationResult.Pass : CriteriaEvaluationResult.Fail
-                        )
-                    );
+                    const result = planResult.result ? EvaluationStatus.Pass : EvaluationStatus.Fail;
+                    setEvalResultOutcome(criteriaInstance.instanceId, result);
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
