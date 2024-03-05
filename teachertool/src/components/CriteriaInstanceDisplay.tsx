@@ -7,20 +7,33 @@ import { classList } from "react-common/components/util";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
 
-interface StringInputSnippetProps {
+interface InlineInputSnippetProps {
     initialValue: string;
     instance: CriteriaInstance;
     param: CriteriaParameterValue;
     shouldExpand: boolean;
+    numeric: boolean;
 }
-const StringInputSnippet: React.FC<StringInputSnippetProps> = ({ initialValue, instance, param, shouldExpand }) => {
+const InlineInputSnippet: React.FC<InlineInputSnippetProps> = ({
+    initialValue,
+    instance,
+    param,
+    shouldExpand,
+    numeric,
+}) => {
     function onChange(newValue: string) {
-        setParameterValue(instance.instanceId, param.name, newValue);
+        if (!numeric || !isNaN(Number(newValue))) {
+            setParameterValue(instance.instanceId, param.name, newValue);
+        }
     }
 
     return (
         <DebouncedInput
-            className={classList(css["string-input"], shouldExpand ? css["long"] : undefined)}
+            className={classList(
+                css["inline-input"],
+                numeric ? css["number-input"] : css["string-input"],
+                shouldExpand ? css["long"] : undefined
+            )}
             initialValue={initialValue}
             onChange={onChange}
             preserveValueOnBlur={true}
@@ -50,19 +63,25 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
 
         switch (paramDef.type) {
             case "string":
-                logDebug(
-                    `Creating string input for parameter '${paramName}' with initial value '${paramInstance.value}'`
-                );
                 return (
-                    <StringInputSnippet
+                    <InlineInputSnippet
                         initialValue={paramInstance.value}
                         param={paramInstance}
                         instance={criteriaInstance}
                         shouldExpand={paramDef.picker === "longString"}
+                        numeric={false}
                     />
                 );
             case "number":
-            // TODO
+                return (
+                    <InlineInputSnippet
+                        initialValue={paramInstance.value || 1}
+                        param={paramInstance}
+                        instance={criteriaInstance}
+                        shouldExpand={paramDef.picker === "longString"}
+                        numeric={true}
+                    />
+                );
             case "block":
             // TODO
             default:
@@ -95,11 +114,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
 
     return catalogCriteria ? (
         <div className={css["criteria-instance-display"]}>
-            <div className={css["snippet-container"]}>
-                {display.map((part, i) => (
-                    {...part, key: i}
-                ))}
-            </div>
+            <div className={css["snippet-container"]}>{display.map((part, i) => ({ ...part, key: i }))}</div>
             <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
         </div>
     ) : null;

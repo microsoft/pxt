@@ -7,7 +7,7 @@
     div[class*="common-input-group"] {
         border-radius: 0.5rem;
         border: solid 1px var(--pxt-page-foreground);
-        padding: 0 0.5rem;
+        padding: 0 0.4rem;
         
         &:focus::after {
             outline: none;
@@ -38,12 +38,24 @@
             margin-right: 0.3rem;
         }
 
-        .string-input {
-            width: 10rem;
+        .inline-input {
             margin: 0.2rem 0.3rem 0.2rem 0;
 
-            &.long {
-                flex-grow: 1;
+            &.string-input {
+                width: 10rem;
+
+                &.long {
+                    flex-grow: 1;
+                }
+            }
+
+            &.number-input {
+                width: 2.3rem;
+
+                input {
+                    text-align: center;
+                    padding: 0;
+                }
             }
         }
     }
