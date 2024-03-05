@@ -2,7 +2,7 @@
     "criteria": [
         {
             "id": "7AE7EA2A-3AC8-42DC-89DB-65E3AE157156",
-            "use": "check_for_comments",
+            "use": "block_comment_used",
             "template": "At least ${count} comments",
             "description": "The project contains at least the specified number of comments.",
             "docPath": "/teachertool",
@@ -18,20 +18,20 @@
         {
             "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
             "use": "block_used_n_times",
-            "template": "Block ${block_id} used ${count} times",
+            "template": "Block ${block id} used ${count} times",
             "description": "This block was used the specified number of times in your project.",
             "docPath": "/teachertool",
             "params": [
                 {
-                    "name": "block_id",
+                    "name": "block id",
                     "type": "string",
-                    "path": "checks[0].blocks[:clear&:append]"
+                    "path": "checks[0].blockCounts[0].blockId"
                 },
                 {
                     "name": "count",
                     "type": "number",
                     "default": 1,
-                    "path": "checks[0].count"
+                    "path": "checks[0].blockCounts[0].count"
                 }
             ]
         },
@@ -47,6 +47,36 @@
                     "type": "string",
                     "picker": "longString",
                     "path": "checks[0].question"
+                }
+            ]
+        },
+        {
+            "id": "B8987394-1531-4C71-8661-BE4086CE0C6E",
+            "use": "n_loops",
+            "template": "At least ${count} loops used",
+            "docPath": "/teachertool",
+            "description": "The program uses at least this many loops of any kind (for, repeat, while, or for-of).",
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "path": "checks[0].count",
+                    "default": 1
+                }
+            ]
+        },
+        {
+            "id": "79D5DAF7-FED3-473F-81E2-E004922E5F55",
+            "use": "custom_function_called",
+            "template": "At least ${count} custom functions exist and get called",
+            "docPath": "/teachertool",
+            "description": "At least this many user-defined functions are created and called.",
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "path": "checks[0].count",
+                    "default": 1
                 }
             ]
         }
