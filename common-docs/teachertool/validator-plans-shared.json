@@ -7,27 +7,39 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "controls_repeat_ext": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "controls_repeat_ext",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "device_while": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "device_while",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "pxt_controls_for": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "pxt_controls_for",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "pxt_controls_for_of": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "pxt_controls_for_of",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -65,9 +77,12 @@
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "function_definition": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "function_definition",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -78,9 +93,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "variables_set": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "variables_set",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -91,9 +109,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "variables_get": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "variables_get",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -104,39 +125,57 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "argument_reporter_string": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "argument_reporter_string",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "argument_reporter_number": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "argument_reporter_number",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "argument_reporter_boolean": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "argument_reporter_boolean",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "argument_reporter_array": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "argument_reporter_array",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "argument_reporter_custom": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "argument_reporter_custom",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "variables_get_reporter": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "variables_get_reporter",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -147,9 +186,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "argument_reporter_number": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "argument_reporter_number",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -160,9 +202,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "variables_set": 1
-                    },
+                    "blockCounts": [
+                        {
+                            "block_id": "variables_set",
+                            "count": 1
+                        }
+                    ],
                     "childValidatorPlans": ["device_random_used"]
                 }
             ]
@@ -174,9 +219,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "device_random": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "device_random",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -201,9 +249,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "math_number": 2
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "math_number",
+                            "count": 2
+                        }
+                    ]
                 }
             ]
         },
@@ -214,9 +265,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "math_number": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "math_number",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         }

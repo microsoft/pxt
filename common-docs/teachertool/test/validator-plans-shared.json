@@ -7,9 +7,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "": 0
-                    }
+                    "blockCounts": [
+                        {
+                            "block_id": "",
+                            "count": 0
+                        }
+                    ]
                 }
             ]
         }
