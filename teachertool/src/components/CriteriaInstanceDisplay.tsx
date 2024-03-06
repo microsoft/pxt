@@ -46,7 +46,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
             onChange={onChange}
             preserveValueOnBlur={true}
             placeholder={numeric ? "0" : param.name}
-            title={error ? lf("{0} - {1}", param.name, error) : param.name}
+            title={param.name}
             autoComplete={false}
         />
     );
