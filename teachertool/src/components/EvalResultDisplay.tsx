@@ -3,9 +3,8 @@ import { useContext } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { CriteriaResultEntry } from "./CriteriaResultEntry";
-import { QRCodeSVG } from "qrcode.react"
+import { QRCodeSVG } from "qrcode.react";
 import { getProjectLink } from "../utils";
-
 
 const ResultsHeader: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
@@ -28,7 +27,6 @@ const ResultsHeader: React.FC = () => {
     );
 };
 
-
 export const EvalResultDisplay: React.FC<{}> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
@@ -38,9 +36,7 @@ export const EvalResultDisplay: React.FC<{}> = () => {
                 <div className={css["eval-results-container"]}>
                     <ResultsHeader />
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
-                        return (
-                            <CriteriaResultEntry criteriaId={criteriaInstanceId} key={criteriaInstanceId} />
-                        )
+                        return <CriteriaResultEntry criteriaId={criteriaInstanceId} key={criteriaInstanceId} />;
                     })}
                 </div>
             )}

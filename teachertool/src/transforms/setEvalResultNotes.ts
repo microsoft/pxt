@@ -6,7 +6,7 @@ export function setEvalResultNotes(criteriaId: string, notes: string) {
 
     const newCriteriaEvalResult = {
         ...teacherTool.evalResults[criteriaId],
-        notes
+        notes,
     };
     dispatch(Actions.setEvalResult(criteriaId, newCriteriaEvalResult));
 }

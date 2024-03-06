@@ -13,7 +13,5 @@ export const PrintButton: React.FC<PrintButtonProps> = ({ printRef, onHandlePrin
         content: () => printRef.current,
         onAfterPrint: onHandlePrint,
     });
-    return (
-        <Toolbar.Button icon="fas fa-print" title={lf("Print")} onClick={handlePrint} />
-    )
-}
+    return <Toolbar.Button icon="fas fa-print" title={lf("Print")} onClick={handlePrint} />;
+};

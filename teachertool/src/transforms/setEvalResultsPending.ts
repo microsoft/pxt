@@ -3,10 +3,12 @@ import { EvaluationStatus, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 import * as Actions from "../state/actions";
 
-
-export function setEvalResultsPending({ overwriteExistingEntries, rubric }: {
-    overwriteExistingEntries?: boolean,
-    rubric?: Rubric
+export function setEvalResultsPending({
+    overwriteExistingEntries,
+    rubric,
+}: {
+    overwriteExistingEntries?: boolean;
+    rubric?: Rubric;
 }): void {
     const { state: teachertool, dispatch } = stateAndDispatch();
     let allEvalResults: pxt.Map<CriteriaResult> = {};
@@ -18,7 +20,7 @@ export function setEvalResultsPending({ overwriteExistingEntries, rubric }: {
         }
     }
     if (!overwriteExistingEntries) {
-        allEvalResults = { ...teachertool.evalResults, ...allEvalResults } ;
+        allEvalResults = { ...teachertool.evalResults, ...allEvalResults };
     }
     dispatch(Actions.setEvalResultsBatch(allEvalResults));
 }
