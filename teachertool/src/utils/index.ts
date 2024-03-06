@@ -40,7 +40,6 @@ export const isRubricResourceCard = (card: any): card is CarouselRubricResourceC
     return typeof card === "object" && card.cardType === "rubric-resource";
 };
 
-
 export function getProjectLink(inputText: string): string {
     const hasMakeCode = inputText?.indexOf("makecode") !== -1;
     return hasMakeCode ? inputText : `https://makecode.com/${inputText}`;

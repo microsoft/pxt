@@ -87,11 +87,11 @@ type SetAutorun = ActionBase & {
 type SetEvalResultsBatch = ActionBase & {
     type: "SET_EVAL_RESULTS_BATCH";
     criteriaResults: pxt.Map<CriteriaResult>;
-}
+};
 
 type ClearAllEvalResultNotes = ActionBase & {
     type: "CLEAR_ALL_EVAL_RESULT_NOTES";
-}
+};
 
 /**
  * Union of all actions
@@ -137,7 +137,7 @@ const setProjectMetadata = (metadata: ProjectData | undefined): SetProjectMetada
 const setEvalResult = (criteriaInstanceId: string, result: CriteriaResult): SetEvalResult => ({
     type: "SET_EVAL_RESULT",
     criteriaInstanceId,
-    result
+    result,
 });
 
 const clearEvalResult = (criteriaInstanceId: string): ClearEvalResult => ({

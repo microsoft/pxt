@@ -49,7 +49,7 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "CLEAR_ALL_EVAL_RESULT_NOTES": {
             const evalResults = { ...state.evalResults };
             for (const result of Object.keys(evalResults)) {
-                evalResults[result].notes = ""
+                evalResults[result].notes = "";
             }
             return {
                 ...state,

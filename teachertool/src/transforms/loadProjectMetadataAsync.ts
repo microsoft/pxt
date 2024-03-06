@@ -32,7 +32,7 @@ export async function loadProjectMetadataAsync(inputText: string, shareLink: str
     const projectData = {
         ...projMeta,
         inputText,
-    }
+    };
     dispatch(Actions.setProjectMetadata(projectData));
     initNewProjectResults();
     logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);

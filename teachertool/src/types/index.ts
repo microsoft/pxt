@@ -47,10 +47,9 @@ export type CarouselCardSet = {
 
 export type RequestStatus = "init" | "loading" | "error" | "success";
 
-
 export type ProjectData = pxt.Cloud.JsonScript & {
     inputText: string;
-}
+};
 export type ConfirmationModalOptions = {
     title: string;
     message: string;

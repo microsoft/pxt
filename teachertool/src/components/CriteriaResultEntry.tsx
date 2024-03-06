@@ -31,7 +31,7 @@ const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInpu
             />
         </div>
     );
-}
+};
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -58,8 +58,8 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, n
                 intervalMs={500}
             />
         </div>
-    )
-}
+    );
+};
 
 interface CriteriaResultEntryProps {
     criteriaId: string;
@@ -80,23 +80,21 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
 
     return (
         <>
-            { criteriaTemplateString.current && (
-                    <div className={css["specific-criteria-result"]} key={criteriaId}>
-                        <div className={css["result-details"]}>
-                            <h4 className={css["block-id-label"]}>
-                                {criteriaTemplateString.current}
-                            </h4>
-                            <CriteriaEvalResultDropdown result={teacherTool.evalResults[criteriaId].result} criteriaId={criteriaId} />
-                        </div>
-                        <div className={css["result-notes"]}>
-                            {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-                            {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
-                        </div>
+            {criteriaTemplateString.current && (
+                <div className={css["specific-criteria-result"]} key={criteriaId}>
+                    <div className={css["result-details"]}>
+                        <h4 className={css["block-id-label"]}>{criteriaTemplateString.current}</h4>
+                        <CriteriaEvalResultDropdown
+                            result={teacherTool.evalResults[criteriaId].result}
+                            criteriaId={criteriaId}
+                        />
                     </div>
-                )
-            }
+                    <div className={css["result-notes"]}>
+                        {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
+                        {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
+                    </div>
+                </div>
+            )}
         </>
-
-
     );
-}
+};
