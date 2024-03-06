@@ -7,7 +7,7 @@ import * as nodeutil from './nodeutil';
 import * as hid from './hid';
 import * as net from 'net';
 import * as storage from './storage';
-import { SUB_WEBAPPS } from './cli';
+import { SUB_WEBAPPS } from './subwebapp';
 
 import { promisify } from "util";
 

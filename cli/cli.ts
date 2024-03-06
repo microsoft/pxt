@@ -29,6 +29,7 @@ import * as pyconv from './pyconv';
 import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
+import { SUB_WEBAPPS } from './subwebapp';
 
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
@@ -40,34 +41,6 @@ let forceBuild = false; // don't use cache
 
 Error.stackTraceLimit = 100;
 
-// All of our various create react apps
-export const SUB_WEBAPPS = [
-    {
-        name: "kiosk",
-        buildCss: false,
-        localServe: false
-    },
-    {
-        name: "teachertool",
-        buildCss: false,
-        localServe: false
-    },
-    {
-        name: "skillmap",
-        buildCss: true,
-        localServe: true
-    },
-    {
-        name: "multiplayer",
-        buildCss: true,
-        localServe: true
-    },
-    {
-        name: "authcode",
-        buildCss: true,
-        localServe: true
-    },
-];
 
 function parseHwVariant(parsed: commandParser.ParsedCommand) {
     let hwvariant = parsed && parsed.flags["hwvariant"] as string;
