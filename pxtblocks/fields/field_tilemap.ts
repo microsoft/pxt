@@ -48,6 +48,8 @@ namespace pxtblockly {
             const existing = pxt.lookupProjectAssetByTSReference(newText, project);
             if (existing) return existing;
 
+            if (this.sourceBlock_?.isInFlyout) return undefined;
+
             const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", project) || project.blankTilemap(this.params.tileWidth, this.params.initWidth, this.params.initHeight);
             let newAsset: pxt.ProjectTilemap;
 

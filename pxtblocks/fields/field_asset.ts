@@ -417,7 +417,7 @@ namespace pxtblockly {
 
         protected parseValueText(newText: string) {
             newText = pxt.Util.htmlUnescape(newText);
-            if (this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
+            if (this.sourceBlock_) {
                 const project = pxt.react.getTilemapProject();
 
                 const id = this.getBlockData();
