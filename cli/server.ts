@@ -6,8 +6,8 @@ import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
 import * as hid from './hid';
 import * as net from 'net';
-import * as crowdin from './crowdin';
 import * as storage from './storage';
+import { SUB_WEBAPPS } from './cli';
 
 import { promisify } from "util";
 
@@ -1184,19 +1184,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (pathname == "/--skillmap") {
-            sendFile(path.join(publicDir, 'skillmap.html'));
-            return
-        }
-
-        if (pathname == "/--authcode") {
-            sendFile(path.join(publicDir, 'authcode.html'));
-            return
-        }
-
-        if (pathname == "/--multiplayer") {
-            sendFile(path.join(publicDir, 'multiplayer.html'));
-            return
+        for (const subapp of SUB_WEBAPPS) {
+            if (subapp.localServe && pathname === `/--${subapp.name}`) {
+                sendFile(path.join(publicDir, `${subapp.name}.html`));
+                return
+            }
         }
 
         if (/\/-[-]*docs.*$/.test(pathname)) {

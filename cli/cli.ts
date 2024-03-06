@@ -40,6 +40,35 @@ let forceBuild = false; // don't use cache
 
 Error.stackTraceLimit = 100;
 
+// All of our various create react apps
+export const SUB_WEBAPPS = [
+    {
+        name: "kiosk",
+        buildCss: false,
+        localServe: false
+    },
+    {
+        name: "teachertool",
+        buildCss: false,
+        localServe: false
+    },
+    {
+        name: "skillmap",
+        buildCss: true,
+        localServe: true
+    },
+    {
+        name: "multiplayer",
+        buildCss: true,
+        localServe: true
+    },
+    {
+        name: "authcode",
+        buildCss: true,
+        localServe: true
+    },
+];
+
 function parseHwVariant(parsed: commandParser.ParsedCommand) {
     let hwvariant = parsed && parsed.flags["hwvariant"] as string;
     if (hwvariant) {
@@ -354,23 +383,16 @@ function onlyExts(files: string[], exts: string[]) {
 }
 
 function pxtFileList(pref: string) {
-    return nodeutil.allFiles(pref + "webapp/public")
+    let allFiles = nodeutil.allFiles(pref + "webapp/public")
         .concat(onlyExts(nodeutil.allFiles(pref + "built/web", { maxDepth: 1 }), [".js", ".css"]))
         .concat(nodeutil.allFiles(pref + "built/web/fonts", { maxDepth: 1 }))
-        .concat(nodeutil.allFiles(pref + "built/web/vs", { maxDepth: 4 }))
-        .concat(nodeutil.allFiles(pref + "built/web/skillmap", { maxDepth: 4 }))
-        .concat(nodeutil.allFiles(pref + "built/web/authcode", { maxDepth: 4 }))
-        .concat(nodeutil.allFiles(pref + "built/web/multiplayer", { maxDepth: 4 }))
-        .concat(nodeutil.allFiles(pref + "built/web/kiosk", { maxDepth: 4 }))
-        .concat(nodeutil.allFiles(pref + "built/web/teachertool", { maxDepth: 4 }))
-}
+        .concat(nodeutil.allFiles(pref + "built/web/vs", { maxDepth: 4 }));
 
-function semverCmp(a: string, b: string) {
-    let parse = (s: string) => {
-        let v = s.split(/\./).map(parseInt)
-        return v[0] * 100000000 + v[1] * 10000 + v[2]
+    for (const subapp of SUB_WEBAPPS) {
+        allFiles = allFiles.concat(nodeutil.allFiles(pref + `built/web/${subapp.name}`, { maxDepth: 4 }))
     }
-    return parse(a) - parse(b)
+
+    return allFiles;
 }
 
 function checkIfTaggedCommitAsync() {
@@ -394,7 +416,7 @@ function checkIfTaggedCommitAsync() {
 
 let readJson = nodeutil.readJson;
 
-function ciAsync() {
+async function ciAsync() {
     forceCloudBuild = true;
     const buildInfo = ciBuildInfo();
     pxt.log(`ci build using ${buildInfo.ci}`);
@@ -447,54 +469,54 @@ function ciAsync() {
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
         pxt.log("pxt-core build");
-        return checkIfTaggedCommitAsync()
-            .then(isTaggedCommit => {
-                pxt.log(`is tagged commit: ${isTaggedCommit}`);
-                let p = npmPublishAsync();
-                if (branch === "master" && isTaggedCommit) {
-                    if (uploadDocs)
-                        p = p
-                            .then(() => buildWebStringsAsync())
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/authcode-strings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/multiplayer-strings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/kiosk-strings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/teachertool-strings.json"));
-                    if (uploadApiStrings)
-                        p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
-                    if (uploadDocs || uploadApiStrings)
-                        p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
+
+        const isTaggedCommit = await checkIfTaggedCommitAsync();
+        pxt.log(`is tagged commit: ${isTaggedCommit}`);
+        await npmPublishAsync();
+        if (branch === "master" && isTaggedCommit) {
+            if (uploadDocs) {
+                await buildWebStringsAsync();
+                await crowdin.execCrowdinAsync("upload", "built/webstrings.json");
+
+                for (const subapp of SUB_WEBAPPS) {
+                    await crowdin.execCrowdinAsync("upload", `built/${subapp.name}-strings.json`);
                 }
-                return p;
-            });
+            }
+            if (uploadApiStrings) {
+                await crowdin.execCrowdinAsync("upload", "built/strings.json");
+            }
+            if (uploadDocs || uploadApiStrings) {
+                await crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs);
+                pxt.log("translations uploaded");
+            }
+            else {
+                pxt.log("skipping translations upload");
+            }
+        }
     } else {
         pxt.log("target build");
-        return internalBuildTargetAsync()
-            .then(() => internalCheckDocsAsync(true))
-            .then(() => blockTestsAsync())
-            .then(() => npmPublishAsync())
-            .then(() => {
-                if (!process.env["PXT_ACCESS_TOKEN"]) {
-                    // pull request, don't try to upload target
-                    pxt.log('no token, skipping upload')
-                    return Promise.resolve();
-                }
-                const trg = readLocalPxTarget();
-                const label = `${trg.id}/${tag || latest}`;
-                pxt.log(`uploading target with label ${label}...`);
-                return uploadTargetAsync(label);
-            })
-            .then(() => {
-                pxt.log("target uploaded");
-                if (uploadDocs || uploadApiStrings) {
-                    return crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs)
-                        .then(() => pxt.log("translations uploaded"));
-                } else {
-                    pxt.log("skipping translations upload");
-                    return Promise.resolve();
-                }
-            });
+        await internalBuildTargetAsync();
+        await internalCheckDocsAsync(true);
+        await blockTestsAsync();
+        await npmPublishAsync();
+
+        if (!process.env["PXT_ACCESS_TOKEN"]) {
+            // pull request, don't try to upload target
+            pxt.log('no token, skipping upload')
+            return;
+        }
+        const trg = readLocalPxTarget();
+        const label = `${trg.id}/${tag || latest}`;
+        pxt.log(`uploading target with label ${label}...`);
+        await uploadTargetAsync(label);
+
+        pxt.log("target uploaded");
+        if (uploadDocs || uploadApiStrings) {
+            await crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs);
+            pxt.log("translations uploaded");
+        } else {
+            pxt.log("skipping translations upload");
+        }
     }
 }
 
@@ -1021,7 +1043,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     }
 
     if (opts.localDir) {
-        let cfg: pxt.WebConfig = {
+        let cfg: Partial<pxt.WebConfig> = {
             "relprefix": opts.localDir,
             "verprefix": "",
             "workerjs": opts.localDir + "worker.js",
@@ -1047,13 +1069,13 @@ function uploadCoreAsync(opts: UploadOptions) {
             "docsUrl": opts.localDir + "docs.html",
             "multiUrl": opts.localDir + "multi.html",
             "asseteditorUrl": opts.localDir + "asseteditor.html",
-            "skillmapUrl": opts.localDir + "skillmap.html",
-            "authcodeUrl": opts.localDir + "authcode.html",
-            "multiplayerUrl": opts.localDir + "multiplayer.html",
-            "kioskUrl": opts.localDir + "kiosk.html",
-            "teachertoolUrl": opts.localDir + "teachertool.html",
             "isStatic": true,
         }
+
+        for (const subapp of SUB_WEBAPPS) {
+            (cfg as any)[subapp.name + "Url"] = opts.localDir + subapp.name + ".html";
+        }
+
         const targetImageLocalPaths = targetImagePaths.map(k =>
             `${opts.localDir}${path.join('./docs', k)}`);
 
@@ -1100,24 +1122,19 @@ function uploadCoreAsync(opts: UploadOptions) {
         "sim.webmanifest",
         "workerConfig.js",
         "multi.html",
-        "asseteditor.html",
-        "skillmap.html",
-        "authcode.html",
-        "multiplayer.html",
-        "kiosk.html",
-        "teachertool.html",
+        "asseteditor.html"
     ]
 
     // expandHtml is manually called on these files before upload
     // runs <!-- @include --> substitutions, fills in locale, etc
     const expandFiles = [
-        "index.html",
-        "skillmap.html",
-        "authcode.html",
-        "multiplayer.html",
-        "kiosk.html",
-        "teachertool.html",
+        "index.html"
     ]
+
+    for (const subapp of SUB_WEBAPPS) {
+        replFiles.push(`${subapp.name}.html`);
+        expandFiles.push(`${subapp.name}.html`);
+    }
 
     nodeutil.mkdirP("built/uploadrepl")
 
@@ -2043,11 +2060,10 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     }
 
     // Generate react-common css for skillmap, authcode, and multiplayer (but not kiosk yet)
-    await Promise.all([
-        generateReactCommonCss("skillmap"),
-        generateReactCommonCss("authcode"),
-        generateReactCommonCss("multiplayer"),
-    ]);
+
+    await Promise.all(
+        SUB_WEBAPPS.filter(app => app.buildCss).map(app => generateReactCommonCss(app.name))
+    );
 
     // Run postcss with autoprefixer and rtlcss
     pxt.debug("running postcss");
@@ -2072,11 +2088,14 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     const rtlcss = require("rtlcss");
     const files = [
         "semantic.css",
-        "blockly.css",
-        "react-common-skillmap.css",
-        "react-common-authcode.css",
-        "react-common-multiplayer.css"
+        "blockly.css"
     ];
+
+    for (const subapp of SUB_WEBAPPS) {
+        if (subapp.buildCss) {
+            files.push(`react-common-${subapp.name}.css`);
+        }
+    }
 
     for (const cssFile of files) {
         const css = await readFileAsync(`built/web/${cssFile}`, "utf8");
@@ -2093,10 +2112,12 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
 
     if (!isPxtCore) {
         // This is just to support the local skillmap/cra-app serve for development
-        nodeutil.cp("built/web/react-common-skillmap.css", "node_modules/pxt-core/skillmap/public/blb");
-        nodeutil.cp("built/web/react-common-authcode.css", "node_modules/pxt-core/authcode/public/blb");
-        nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/skillmap/public/blb");
-        nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/authcode/public/blb");
+        for (const subapp of SUB_WEBAPPS) {
+            if (subapp.buildCss) {
+                nodeutil.cp(`built/web/react-common-${subapp.name}.css`, `node_modules/pxt-core/${subapp.name}/public/blb`);
+                nodeutil.cp(`built/web/semantic.css`, `node_modules/pxt-core/${subapp.name}/public/blb`);
+            }
+        }
     }
 }
 

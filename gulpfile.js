@@ -519,32 +519,40 @@ const copyMonaco = gulp.series(
     stripMonacoSourceMaps
 );
 
+function createWebappTasks(root, outname) {
+    outname = outname || root;
+    const outdir = `built/web/${outname}`;
+
+    const cleanWebapp = () => rimraf(outdir);
+
+    const npmBuildWebapp = () => exec("npm run build", true, { cwd: root });
+
+    const buildWebapp = async () => await npmBuildWebapp();
+
+    const copyWebappCss = () => gulp.src(`${root}/build/static/css/*`)
+        .pipe(gulp.dest(`${outdir}/css`));
+
+    const copyWebappJs = () => gulp.src(`${root}/build/static/js/*`)
+        .pipe(gulp.dest(`${outdir}/js`));
+
+    const copyWebappHtml = () => rimraf(`webapp/public/${outname}.html`)
+        .then(() => gulp.src(`${root}/build/index.html`)
+                        .pipe(replace(/="\/static\//g, `="/blb/${outname}/`))
+                        .pipe(concat(`${outname}.html`))
+                        .pipe(gulp.dest("webapp/public")));
+
+    const result = gulp.series(cleanWebapp, buildWebapp, gulp.series(copyWebappCss, copyWebappJs, copyWebappHtml));
+
+    exports[outname] = result;
+
+    return result;
+}
+
 /********************************************************
                       Skillmap
 *********************************************************/
 
-const skillmapRoot = "skillmap";
-const skillmapOut = "built/web/skillmap";
-
-const cleanSkillmap = () => rimraf(skillmapOut);
-
-const npmBuildSkillmap = () => exec("npm run build", true, { cwd: skillmapRoot });
-
-const buildSkillmap = async () => await npmBuildSkillmap();
-
-const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
-    .pipe(gulp.dest(`${skillmapOut}/css`));
-
-const copySkillmapJs = () => gulp.src(`${skillmapRoot}/build/static/js/*`)
-    .pipe(gulp.dest(`${skillmapOut}/js`));
-
-const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
-    .then(() => gulp.src(`${skillmapRoot}/build/index.html`)
-                    .pipe(replace(/="\/static\//g, `="/blb/skillmap/`))
-                    .pipe(concat("skillmap.html"))
-                    .pipe(gulp.dest("webapp/public")));
-
-const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.series(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
+const skillmap = createWebappTasks("skillmap");
 
 const buildSkillmapTests = () => compileTsProject("skillmap/tests", "built/tests");
 const copySkillmapTests = () => gulp.src([
@@ -568,109 +576,25 @@ const testSkillmap = gulp.series(buildSkillmapTests, copySkillmapTests, runSkill
                       Authcode
 *********************************************************/
 
-const authcodeRoot = "authcode";
-const authcodeOut = "built/web/authcode";
-
-const cleanAuthcode = () => rimraf(authcodeOut);
-
-const npmBuildAuthcode = () => exec("npm run build", true, { cwd: authcodeRoot });
-
-const buildAuthcode = async () => await npmBuildAuthcode();
-
-const copyAuthcodeCss = () => gulp.src(`${authcodeRoot}/build/static/css/*`)
-    .pipe(gulp.dest(`${authcodeOut}/css`));
-
-const copyAuthcodeJs = () => gulp.src(`${authcodeRoot}/build/static/js/*`)
-    .pipe(gulp.dest(`${authcodeOut}/js`));
-
-const copyAuthcodeHtml = () => rimraf("webapp/public/authcode.html")
-    .then(() => gulp.src(`${authcodeRoot}/build/index.html`)
-                    .pipe(replace(/="\/static\//g, `="/blb/authcode/`))
-                    .pipe(concat("authcode.html"))
-                    .pipe(gulp.dest("webapp/public")));
-
-const authcode = gulp.series(cleanAuthcode, buildAuthcode, gulp.series(copyAuthcodeCss, copyAuthcodeJs, copyAuthcodeHtml));
+const authcode = createWebappTasks("authcode");
 
 /********************************************************
                       Multiplayer
 *********************************************************/
 
-const multiplayerRoot = "multiplayer";
-const multiplayerOut = "built/web/multiplayer";
-
-const cleanMultiplayer = () => rimraf(multiplayerOut);
-
-const npmBuildMultiplayer = () => exec("npm run build", true, { cwd: multiplayerRoot });
-
-const buildMultiplayer = async () => await npmBuildMultiplayer();
-
-const copyMultiplayerCss = () => gulp.src(`${multiplayerRoot}/build/static/css/*`)
-    .pipe(gulp.dest(`${multiplayerOut}/css`));
-
-const copyMultiplayerJs = () => gulp.src(`${multiplayerRoot}/build/static/js/*`)
-    .pipe(gulp.dest(`${multiplayerOut}/js`));
-
-const copyMultiplayerHtml = () => rimraf("webapp/public/multiplayer.html")
-    .then(() => gulp.src(`${multiplayerRoot}/build/index.html`)
-                    .pipe(replace(/="\/static\//g, `="/blb/multiplayer/`))
-                    .pipe(concat("multiplayer.html"))
-                    .pipe(gulp.dest("webapp/public")));
-
-const multiplayer = gulp.series(cleanMultiplayer, buildMultiplayer, gulp.series(copyMultiplayerCss, copyMultiplayerJs, copyMultiplayerHtml));
+const multiplayer = createWebappTasks("multiplayer");
 
 /********************************************************
                       Kiosk
 *********************************************************/
 
-const kioskRoot = "kiosk";
-const kioskOut = "built/web/kiosk";
-
-const cleanKiosk = () => rimraf(kioskOut);
-
-const npmBuildKiosk = () => exec("npm run build", true, { cwd: kioskRoot });
-
-const buildKiosk = async () => await npmBuildKiosk();
-
-const copyKioskCss = () => gulp.src(`${kioskRoot}/build/static/css/*`)
-    .pipe(gulp.dest(`${kioskOut}/css`));
-
-const copyKioskJs = () => gulp.src(`${kioskRoot}/build/static/js/*`)
-    .pipe(gulp.dest(`${kioskOut}/js`));
-
-const copyKioskHtml = () => rimraf("webapp/public/kiosk.html")
-    .then(() => gulp.src(`${kioskRoot}/build/index.html`)
-                    .pipe(replace(/="\/static\//g, `="/blb/kiosk/`))
-                    .pipe(concat("kiosk.html"))
-                    .pipe(gulp.dest("webapp/public")));
-
-const kiosk = gulp.series(cleanKiosk, buildKiosk, gulp.series(copyKioskCss, copyKioskJs, copyKioskHtml));
+const kiosk = createWebappTasks("kiosk");
 
 /********************************************************
                       Teacher Tool
 *********************************************************/
 
-const teacherToolRoot = "teachertool";
-const teacherToolOut = "built/web/teachertool";
-
-const cleanTeacherTool = () => rimraf(teacherToolOut);
-
-const npmBuildTeacherTool = () => exec("npm run build", true, { cwd: teacherToolRoot });
-
-const buildTeacherTool = async () => await npmBuildTeacherTool();
-
-const copyTeacherToolCss = () => gulp.src(`${teacherToolRoot}/build/static/css/*`)
-    .pipe(gulp.dest(`${teacherToolOut}/css`));
-
-const copyTeacherToolJs = () => gulp.src(`${teacherToolRoot}/build/static/js/*`)
-    .pipe(gulp.dest(`${teacherToolOut}/js`));
-
-const copyTeacherToolHtml = () => rimraf("webapp/public/teachertool.html")
-    .then(() => gulp.src(`${teacherToolRoot}/build/index.html`)
-                    .pipe(replace(/="\/static\//g, `="/blb/teachertool/`))
-                    .pipe(concat("teachertool.html"))
-                    .pipe(gulp.dest("webapp/public")));
-
-const teacherTool = gulp.series(cleanTeacherTool, buildTeacherTool, gulp.series(copyTeacherToolCss, copyTeacherToolJs, copyTeacherToolHtml));
+const teacherTool = createWebappTasks("teachertool");
 
 /********************************************************
                  Webapp build wrappers
@@ -863,11 +787,6 @@ exports.watch = initWatch;
 exports.watchCli = initWatchCli;
 exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
-exports.skillmap = skillmap;
-exports.authcode = authcode;
-exports.multiplayer = multiplayer;
-exports.kiosk = kiosk;
-exports.teacherTool = teacherTool;
 exports.tt = teacherTool;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
