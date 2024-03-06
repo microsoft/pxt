@@ -7,16 +7,16 @@ import { classList } from "react-common/components/util";
 import { useState } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
+import { splitCriteriaTemplate } from "../utils";
 
-
-interface InlineInputSnippetProps {
+interface InlineInputSegmentProps {
     initialValue: string;
     instance: CriteriaInstance;
     param: CriteriaParameterValue;
     shouldExpand: boolean;
     numeric: boolean;
 }
-const InlineInputSnippet: React.FC<InlineInputSnippetProps> = ({
+const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     initialValue,
     instance,
     param,
@@ -62,8 +62,11 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
         return null;
     }
 
-    function getParameterSnippetDisplay(paramName: string): JSX.Element | null {
-        logDebug(`Looking up snippet for parameter '${paramName}'`);
+    function getParameterSegmentDisplay(paramName: string): JSX.Element | null {
+        if (!paramName) {
+            return null;
+        }
+
         const paramDef = catalogCriteria?.params?.find(p => p.name === paramName);
         const paramInstance = criteriaInstance?.params?.find(p => p.name === paramName);
         if (!paramDef || !paramInstance) {
@@ -74,7 +77,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
         switch (paramDef.type) {
             case "string":
                 return (
-                    <InlineInputSnippet
+                    <InlineInputSegment
                         initialValue={paramInstance.value}
                         param={paramInstance}
                         instance={criteriaInstance}
@@ -84,7 +87,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                 );
             case "number":
                 return (
-                    <InlineInputSnippet
+                    <InlineInputSegment
                         initialValue={paramInstance.value || 1}
                         param={paramInstance}
                         instance={criteriaInstance}
@@ -92,39 +95,22 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                         numeric={true}
                     />
                 );
-            case "block":
-            // TODO
+            case "block": // TODO
             default:
                 return null;
         }
     }
 
-    const paramRegex = /\$\{([\w\s]+)\}/g;
-
-    // Split by the regex, which will give us an array where every other element is a parameter.
-    const parts = catalogCriteria.template.split(paramRegex);
-    const display: JSX.Element[] = [];
-    for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        if (!part) {
-            continue;
-        }
-
-        if (i % 2 === 0) {
-            // Plain text
-            display.push(<div className={css["text-snippet"]}>{part}</div>);
-        } else {
-            // Parameter
-            const snippet = getParameterSnippetDisplay(part);
-            if (snippet) {
-                display.push(snippet);
-            }
-        }
+    function getPlainTextSegmentDisplay(text: string): JSX.Element | null {
+        return text ? <div className={css["text-segment"]}>{text}</div> : null;
     }
+
+    const templateSegments = splitCriteriaTemplate(catalogCriteria.template);
+    const display = templateSegments.map(s => s.type === "plain-text" ? getPlainTextSegmentDisplay(s.content) : getParameterSegmentDisplay(s.content));
 
     return catalogCriteria ? (
         <div className={css["criteria-instance-display"]}>
-            <div className={css["snippet-container"]}>{display.map((part, i) => ({ ...part, key: i }))}</div>
+            <div className={css["segment-container"]}>{display.map((part, i) => ({ ...part, key: i }))}</div>
             <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
         </div>
     ) : null;

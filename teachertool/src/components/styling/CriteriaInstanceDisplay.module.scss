@@ -26,7 +26,7 @@
         }
     }
 
-    .snippet-container {
+    .segment-container {
         display: flex;
         flex-direction: row;
         align-items: flex-start;
@@ -34,7 +34,7 @@
         align-items: center;
         width: 100%;
 
-        .text-snippet {
+        .text-segment {
             margin-right: 0.3rem;
         }
 
