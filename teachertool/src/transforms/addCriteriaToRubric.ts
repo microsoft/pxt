@@ -29,7 +29,7 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
             param =>
                 ({
                     name: param.name,
-                    value: undefined,
+                    value: param.default,
                 } as CriteriaParameterValue)
         );
 
