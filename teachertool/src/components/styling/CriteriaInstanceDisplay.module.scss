@@ -34,36 +34,41 @@
         align-items: center;
         width: 100%;
 
-        .text-segment {
+        .segment {
+            display: flex;
             margin-right: 0.3rem;
-        }
 
-        .inline-input {
-            margin: 0.2rem 0.3rem 0.2rem 0;
-
-            input {
-                text-align: center;
-                padding: 0;
+            &:has(.long) {
+                flex-grow: 1;
             }
 
-            &.string-input {
-                width: 10rem;
+            .inline-input {
+                margin: 0.2rem 0;
 
-                &.long {
-                    flex-grow: 1;
-                    input {
-                        text-align: start;
+                &.string-input {
+                    width: 10rem;
+    
+                    &.long {
+                        flex-grow: 1;
+                        input {
+                            text-align: start;
+                        }
                     }
                 }
-            }
+    
+                &.number-input {
+                    width: 2.3rem;
+                }
+    
+                &.error div[class*="common-input-group"] {
+                    border-color: var(--pxt-error);
+                    background-color: var(--pxt-error-background);
+                }
 
-            &.number-input {
-                width: 2.3rem;
-            }
-
-            &.error div[class*="common-input-group"] {
-                border-color: var(--pxt-error);
-                background-color: var(--pxt-error-background);
+                input {
+                    text-align: center;
+                    padding: 0;
+                }
             }
         }
     }

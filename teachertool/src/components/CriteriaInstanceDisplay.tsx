@@ -97,12 +97,19 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
     }
 
     const templateSegments = splitCriteriaTemplate(catalogCriteria.template);
-    const display = templateSegments.map(s => s.type === "plain-text" ? getPlainTextSegmentDisplay(s.content) : getParameterSegmentDisplay(s.content));
+    const display = templateSegments.map(s =>
+        s.type === "plain-text" ? getPlainTextSegmentDisplay(s.content) : getParameterSegmentDisplay(s.content)
+    );
 
     return catalogCriteria ? (
         <div className={css["criteria-instance-display"]}>
-            {/* TODO thsparks - update this to wrap segments in spans like in CatalogModal? */}
-            <div className={css["segment-container"]}>{display.map((part, i) => ({ ...part, key: i }))}</div>
+            <div className={css["segment-container"]}>
+                {display.map((part, i) => (
+                    <span className={css["segment"]} key={i}>
+                        {part}
+                    </span>
+                ))}
+            </div>
             <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
         </div>
     ) : null;
