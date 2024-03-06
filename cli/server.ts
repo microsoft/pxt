@@ -25,13 +25,6 @@ let packagedDir = ""
 let localHexCacheDir = path.join("built", "hexcache");
 let serveOptions: ServeOptions;
 
-const webappNames = [
-    "kiosk",
-    "multiplayer",
-    "eval"
-    // TODO: Add other webapp names here: "skillmap", "authcode"
-];
-
 function setupDocfilesdirs() {
     docfilesdirs = [
         "docfiles",
@@ -1073,6 +1066,8 @@ export function serveAsync(options: ServeOptions) {
             });
         };
 
+        const webappNames = SUB_WEBAPPS.filter(w => w.localServeEndpoint).map(w => w.localServeEndpoint);
+
         const webappIdx = webappNames.findIndex(s => new RegExp(`^-{0,3}${s}$`).test(elts[0] || ''));
         if (webappIdx >= 0) {
             const webappName = webappNames[webappIdx];
@@ -1185,7 +1180,7 @@ export function serveAsync(options: ServeOptions) {
         }
 
         for (const subapp of SUB_WEBAPPS) {
-            if (subapp.localServe && pathname === `/--${subapp.name}`) {
+            if (subapp.localServeWebConfigUrl && pathname === `/--${subapp.name}`) {
                 sendFile(path.join(publicDir, `${subapp.name}.html`));
                 return
             }
