@@ -72,8 +72,7 @@ function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.block
     const blockResults = validateBlocksExist({ usedBlocks, requiredBlockCounts });
     let successfulBlocks: Blockly.Block[] = [];
     if (blockResults.passed) {
-        const blockIdsFromValidator = Object.keys(inputs.blockCounts)
-        const blockId = blockIdsFromValidator?.[0];
+        const blockId = inputs.blockCounts[0].blockId;
         successfulBlocks = blockResults.successfulBlocks.length ? blockResults.successfulBlocks[0][blockId] : [];
     }
     return [successfulBlocks, blockResults.passed];
