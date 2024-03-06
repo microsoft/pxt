@@ -47,6 +47,7 @@ const InlineInputSnippet: React.FC<InlineInputSnippetProps> = ({
             preserveValueOnBlur={true}
             placeholder={numeric ? "0" : lf(param.name)}
             title={error ? lf("{0} - {1}", param.name, error) : param.name}
+            autoComplete={false}
         />
     );
 };
