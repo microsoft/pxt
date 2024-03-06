@@ -1,3 +1,5 @@
+import config = require("./webapps-config.json");
+
 export interface SubWebAppConfig {
     name: string;
     buildCss: boolean;
@@ -9,34 +11,4 @@ export interface SubWebAppConfig {
     localServeEndpoint?: string;
 }
 
-// All of our various create react apps
-export const SUB_WEBAPPS: SubWebAppConfig[]= [
-    {
-        name: "kiosk",
-        buildCss: false,
-        localServeWebConfigUrl: false,
-        localServeEndpoint: "kiosk"
-    },
-    {
-        name: "teachertool",
-        buildCss: false,
-        localServeWebConfigUrl: false,
-        localServeEndpoint: "eval"
-    },
-    {
-        name: "skillmap",
-        buildCss: true,
-        localServeWebConfigUrl: true
-    },
-    {
-        name: "multiplayer",
-        buildCss: true,
-        localServeWebConfigUrl: true,
-        localServeEndpoint: "multiplayer"
-    },
-    {
-        name: "authcode",
-        buildCss: true,
-        localServeWebConfigUrl: true
-    },
-];
+export const SUB_WEBAPPS: SubWebAppConfig[]= config.webapps;
