@@ -27,6 +27,7 @@
     "built/*.js",
     "built/**/*.d.ts",
     "built/pxt-common.json",
+    "built/webapps-config.json",
     "built/web/fonts",
     "built/web/*.js",
     "built/web/*.css",

@@ -19,6 +19,8 @@ const clean = () => rimraf("built").then(() => rimraf("temp"));
 const update = () => exec("git pull", true).then(() => exec("npm install", true))
 const noop = () => Promise.resolve();
 
+const SUB_WEBAPPS = require("./cli/webapps-config.json").webapps;
+
 /** onlineline */
 const onlinelearning = () => {
     const tasks = ["schedule", "projects"].map(fn =>
@@ -82,7 +84,7 @@ const pxtembed = () => gulp.src([
     .pipe(concat("pxtembed.js"))
     .pipe(gulp.dest("built/web"));
 
-const pxtjs = () => gulp.src([
+const buildpxtjs = () => gulp.src([
     "pxtcompiler/ext-typescript/lib/typescript.js",
     "built/pxtlib.js",
     "built/pxtcompiler.js",
@@ -98,6 +100,11 @@ const pxtjs = () => gulp.src([
         module.exports = null;
     `))
     .pipe(gulp.dest("built"));
+
+const copySubappsConfig = () => gulp.src("cli/webapps-config.json")
+    .pipe(gulp.dest("built"));
+
+const pxtjs = gulp.parallel(buildpxtjs, copySubappsConfig);
 
 const pxtdts = () => gulp.src("built/cli.d.ts")
     .pipe(concat("pxt.d.ts"))
@@ -221,24 +228,8 @@ function updatestrings() {
     ], true);
 }
 
-function updateSkillMapStrings() {
-    return buildStrings("built/skillmap-strings.json", ["skillmap/src"], true);
-}
-
-function updateAuthcodeStrings() {
-    return buildStrings("built/authcode-strings.json", ["authcode/src"], true);
-}
-
-function updateMultiplayerStrings() {
-    return buildStrings("built/multiplayer-strings.json", ["multiplayer/src"], true);
-}
-
-function updateKioskStrings() {
-    return buildStrings("built/kiosk-strings.json", ["kiosk/src"], true);
-}
-
-function updateTeacherToolStrings() {
-    return buildStrings("built/teachertool-strings.json", ["teachertool/src"], true);
+function updateWebappStrings(name) {
+    return buildStrings(`built/${name}-strings.json`, [`${name}/src`], true);
 }
 
 // TODO: Copied from Jakefile; should be async
@@ -604,13 +595,8 @@ const shouldBuildWebapps = () => (process.argv.indexOf("--no-webapps") === -1 &&
 
 const maybeUpdateWebappStrings = () => {
     if (!shouldBuildWebapps()) return noop;
-    return gulp.parallel(
-        updateSkillMapStrings,
-        updateAuthcodeStrings,
-        updateMultiplayerStrings,
-        updateKioskStrings,
-        updateTeacherToolStrings,
-    );
+
+    return gulp.parallel(...SUB_WEBAPPS.map(app => () => updateWebappStrings(app.name)));
 };
 
 const maybeBuildWebapps = () => {

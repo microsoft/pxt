@@ -11,4 +11,4 @@ export interface SubWebAppConfig {
     localServeEndpoint?: string;
 }
 
-export const SUB_WEBAPPS: SubWebAppConfig[]= config.webapps;
+export const SUB_WEBAPPS: SubWebAppConfig[] = config.webapps;
