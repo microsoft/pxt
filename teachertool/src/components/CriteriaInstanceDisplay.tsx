@@ -86,6 +86,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                     />
                 );
             case "number":
+                // TODO thsparks - combine with above?
                 return (
                     <InlineInputSegment
                         initialValue={paramInstance.value || 1}
@@ -110,6 +111,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
 
     return catalogCriteria ? (
         <div className={css["criteria-instance-display"]}>
+            {/* TODO thsparks - update this to wrap segments in spans like in CatalogModal? */}
             <div className={css["segment-container"]}>{display.map((part, i) => ({ ...part, key: i }))}</div>
             <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
         </div>
