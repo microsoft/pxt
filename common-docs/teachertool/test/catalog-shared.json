@@ -18,12 +18,12 @@
         {
             "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
             "use": "block_used_n_times",
-            "template": "Block ${block id} used ${count} times",
+            "template": "Block ${block} used ${count} times",
             "description": "This block was used the specified number of times in your project.",
             "docPath": "/teachertool",
             "params": [
                 {
-                    "name": "block id",
+                    "name": "block",
                     "type": "string",
                     "paths": ["checks[0].blockCounts[0].blockId"]
                 },
