@@ -41,21 +41,24 @@
         .inline-input {
             margin: 0.2rem 0.3rem 0.2rem 0;
 
+            input {
+                text-align: center;
+                padding: 0;
+            }
+
             &.string-input {
                 width: 10rem;
 
                 &.long {
                     flex-grow: 1;
+                    input {
+                        text-align: start;
+                    }
                 }
             }
 
             &.number-input {
                 width: 2.3rem;
-
-                input {
-                    text-align: center;
-                    padding: 0;
-                }
             }
 
             &.error div[class*="common-input-group"] {
