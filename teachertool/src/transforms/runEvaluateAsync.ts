@@ -57,7 +57,7 @@ function generateValidatorPlan(
                 showToast(
                     makeToast(
                         "error",
-                        // prettier-ignore (cannot split lf() calls into multiple lines)
+                        // prettier-ignore
                         lf("Unable to evaluate criteria: missing '{0}' in '{1}'", param.name, getReadableCriteriaTemplate(catalogCriteria))
                     )
                 );
