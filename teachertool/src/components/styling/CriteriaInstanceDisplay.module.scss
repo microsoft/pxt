@@ -58,11 +58,17 @@
     
                 &.number-input {
                     width: 2.3rem;
-                }
-    
-                &.error div[class*="common-input-group"] {
-                    border-color: var(--pxt-error);
-                    background-color: var(--pxt-error-background);
+
+                    // Hide arrows on right-hand side of number input.
+                    // Firefox
+                    input[type=number] {
+                        -moz-appearance: textfield;
+                    }
+                    // Other browsers
+                    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+                        -webkit-appearance: none;
+                        margin: 0;
+                    }
                 }
 
                 input {

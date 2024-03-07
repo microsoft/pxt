@@ -4,10 +4,9 @@ import { DebouncedInput } from "./DebouncedInput";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
-import { useState } from "react";
+import { splitCriteriaTemplate } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
-import { splitCriteriaTemplate } from "../utils";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -23,15 +22,8 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     shouldExpand,
     numeric,
 }) => {
-    const [error, setError] = useState("");
-
     function onChange(newValue: string) {
-        if (!numeric || !isNaN(Number(newValue))) {
-            setError("");
-            setParameterValue(instance.instanceId, param.name, newValue);
-        } else {
-            setError(lf("value must be numeric"));
-        }
+        setParameterValue(instance.instanceId, param.name, newValue);
     }
 
     return (
@@ -40,7 +32,6 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                 css["inline-input"],
                 numeric ? css["number-input"] : css["string-input"],
                 shouldExpand ? css["long"] : undefined,
-                error ? css["error"] : undefined
             )}
             initialValue={initialValue}
             onChange={onChange}
@@ -48,6 +39,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
             placeholder={numeric ? "0" : param.name}
             title={param.name}
             autoComplete={false}
+            type = {numeric ? "number" : "text"}
         />
     );
 };
