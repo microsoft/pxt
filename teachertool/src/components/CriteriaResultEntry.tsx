@@ -78,7 +78,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
 
         let displayText = getCatalogCriteriaWithId(instance.catalogCriteriaId)?.template ?? "";
         for (const param of instance.params ?? []) {
-            displayText = displayText.replace(`\${${param.name}}`, param.value);
+            displayText = displayText.replace(new RegExp(`\\$\\{${param.name}}`, 'i'), param.value);
         }
 
         return displayText;
