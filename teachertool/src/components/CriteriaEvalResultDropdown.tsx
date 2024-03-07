@@ -12,20 +12,20 @@ interface CriteriaEvalResultProps {
 }
 
 const itemIdToCriteriaResult: pxt.Map<EvaluationStatus> = {
-    "evaluating": EvaluationStatus.InProgress,
-    "notevaluated": EvaluationStatus.CompleteWithNoResult,
-    "fail": EvaluationStatus.Fail,
-    "pass": EvaluationStatus.Pass,
-    "pending": EvaluationStatus.Pending
-}
+    evaluating: EvaluationStatus.InProgress,
+    notevaluated: EvaluationStatus.CompleteWithNoResult,
+    fail: EvaluationStatus.Fail,
+    pass: EvaluationStatus.Pass,
+    pending: EvaluationStatus.Pending,
+};
 
 const criteriaResultToItemId: pxt.Map<string> = {
     [EvaluationStatus.InProgress]: "evaluating",
     [EvaluationStatus.CompleteWithNoResult]: "notevaluated",
     [EvaluationStatus.Fail]: "fail",
     [EvaluationStatus.Pass]: "pass",
-    [EvaluationStatus.Pending]: "pending"
-}
+    [EvaluationStatus.Pending]: "pending",
+};
 
 const dropdownItems: DropdownItem[] = [
     {
@@ -42,7 +42,6 @@ const dropdownItems: DropdownItem[] = [
         id: "fail",
         title: lf("needs work"),
         label: lf("needs work"),
-
     },
     {
         id: "pass",
@@ -54,7 +53,7 @@ const dropdownItems: DropdownItem[] = [
         title: lf("not started"),
         label: lf("not started"),
     },
-]
+];
 
 export const CriteriaEvalResultDropdown: React.FC<CriteriaEvalResultProps> = ({ result, criteriaId }) => {
     const selectedResult = useMemo(() => criteriaResultToItemId[result], [result]);
@@ -65,7 +64,7 @@ export const CriteriaEvalResultDropdown: React.FC<CriteriaEvalResultProps> = ({ 
             selectedId={selectedResult}
             className={classList("rounded", selectedResult)}
             items={dropdownItems}
-            onItemSelected={(id) => setEvalResultOutcome(criteriaId, itemIdToCriteriaResult[id])}
+            onItemSelected={id => setEvalResultOutcome(criteriaId, itemIdToCriteriaResult[id])}
         />
-    )
-}
+    );
+};

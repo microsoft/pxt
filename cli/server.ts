@@ -6,8 +6,8 @@ import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
 import * as hid from './hid';
 import * as net from 'net';
-import * as crowdin from './crowdin';
 import * as storage from './storage';
+import { SUB_WEBAPPS } from './subwebapp';
 
 import { promisify } from "util";
 
@@ -24,13 +24,6 @@ let docsDir = ""
 let packagedDir = ""
 let localHexCacheDir = path.join("built", "hexcache");
 let serveOptions: ServeOptions;
-
-const webappNames = [
-    "kiosk",
-    "multiplayer",
-    "eval"
-    // TODO: Add other webapp names here: "skillmap", "authcode"
-];
 
 function setupDocfilesdirs() {
     docfilesdirs = [
@@ -1073,6 +1066,8 @@ export function serveAsync(options: ServeOptions) {
             });
         };
 
+        const webappNames = SUB_WEBAPPS.filter(w => w.localServeEndpoint).map(w => w.localServeEndpoint);
+
         const webappIdx = webappNames.findIndex(s => new RegExp(`^-{0,3}${s}$`).test(elts[0] || ''));
         if (webappIdx >= 0) {
             const webappName = webappNames[webappIdx];
@@ -1184,19 +1179,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (pathname == "/--skillmap") {
-            sendFile(path.join(publicDir, 'skillmap.html'));
-            return
-        }
-
-        if (pathname == "/--authcode") {
-            sendFile(path.join(publicDir, 'authcode.html'));
-            return
-        }
-
-        if (pathname == "/--multiplayer") {
-            sendFile(path.join(publicDir, 'multiplayer.html'));
-            return
+        for (const subapp of SUB_WEBAPPS) {
+            if (subapp.localServeWebConfigUrl && pathname === `/--${subapp.name}`) {
+                sendFile(path.join(publicDir, `${subapp.name}.html`));
+                return
+            }
         }
 
         if (/\/-[-]*docs.*$/.test(pathname)) {

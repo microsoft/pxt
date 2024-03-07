@@ -17,6 +17,7 @@
         "sourceMap": false,
         "moduleResolution": "node",
         "incremental": false,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "resolveJsonModule": true
     }
 }

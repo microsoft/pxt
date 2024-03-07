@@ -39,7 +39,7 @@ export enum EvaluationStatus {
     Fail,
     CompleteWithNoResult,
     InProgress,
-    Pending
+    Pending,
 }
 
 export interface CriteriaResult {
