@@ -16,13 +16,21 @@ export function setParameterValue(instanceId: string, paramName: string, newValu
 
     const oldParam = oldCriteriaInstance.params?.find(p => p.name === paramName);
     if (!oldParam) {
-        logError(ErrorCode.missingParameter, `Unable to find parameter with name '${paramName}' in criteria instance '${instanceId}'`);
+        logError(
+            ErrorCode.missingParameter,
+            `Unable to find parameter with name '${paramName}' in criteria instance '${instanceId}'`
+        );
         return;
     }
 
     const newParam = { ...oldParam, value: newValue };
-    const newCriteriaInstance = {...oldCriteriaInstance, params: oldCriteriaInstance.params?.map(p => p.name === paramName ? newParam : p)};
-    const newInstanceSet = teacherTool.rubric.criteria.map(c => c.instanceId === instanceId ? newCriteriaInstance : c);
+    const newCriteriaInstance = {
+        ...oldCriteriaInstance,
+        params: oldCriteriaInstance.params?.map(p => (p.name === paramName ? newParam : p)),
+    };
+    const newInstanceSet = teacherTool.rubric.criteria.map(c =>
+        c.instanceId === instanceId ? newCriteriaInstance : c
+    );
     const newRubric = { ...teacherTool.rubric, criteria: newInstanceSet };
 
     setRubric(newRubric);

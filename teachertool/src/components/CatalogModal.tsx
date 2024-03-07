@@ -17,17 +17,17 @@ const CatalogCriteriaDisplay: React.FC<CatalogCriteriaDisplayProps> = ({ criteri
 
     return (
         <div className={css["criteria-display"]}>
-            {criteria.template && <div className={css["criteria-template"]}>
-                {
-                    segments.map((segment, index) => {
+            {criteria.template && (
+                <div className={css["criteria-template"]}>
+                    {segments.map((segment, index) => {
                         return (
                             <span key={`${criteria.id}-${index}`} className={css[`${segment.type}-segment`]}>
                                 {segment.content}
                             </span>
                         );
-                    })
-                }
-            </div>}
+                    })}
+                </div>
+            )}
             {criteria.description && <div className={css["criteria-description"]}>{criteria.description}</div>}
         </div>
     );
