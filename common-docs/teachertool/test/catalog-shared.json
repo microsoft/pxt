@@ -37,9 +37,9 @@
         },
         {
             "id": "499F3572-E655-4DEE-953B-5F26BF0191D7",
-            "use": "ai_question",
-            "template": "Ask Copilot: ${question}",
-            "description": "Ask Copilot a question about the project.",
+            "use": "test",
+            "template": "Long String: ${question}",
+            "description": "This is just a test for long string inputs.",
             "docPath": "/teachertool",
             "params": [
                 {
