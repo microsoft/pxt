@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { CarouselRubricResourceCard, CriteriaTemplateSegment, ToastType, ToastWithId } from "../types";
 import { Rubric } from "../types/rubric";
 import { classList } from "react-common/components/util";
+import { CatalogCriteria } from "../types/criteria";
 
 export function makeToast(type: ToastType, text: string, timeoutMs: number = 5000): ToastWithId {
     return {
@@ -61,4 +62,8 @@ export function splitCriteriaTemplate(template: string): CriteriaTemplateSegment
     }
 
     return segments;
+}
+
+export function getReadableCriteriaTemplate(criteria: CatalogCriteria): string {
+    return criteria.template.replaceAll("${", "").replaceAll("}", "");
 }

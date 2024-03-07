@@ -5,7 +5,7 @@ import * as Actions from "../state/actions";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { EvaluationStatus, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
-import { makeToast } from "../utils";
+import { getReadableCriteriaTemplate, makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
 import { setEvalResultOutcome } from "./setEvalResultOutcome";
@@ -57,7 +57,8 @@ function generateValidatorPlan(
                 showToast(
                     makeToast(
                         "error",
-                        lf("Unable to evaluate criteria: missing value for {0} in {1}", param.name, catalogCriteria.template)
+                        // prettier-ignore (cannot split lf() calls into multiple lines)
+                        lf("Unable to evaluate criteria: missing '{0}' in '{1}'", param.name, getReadableCriteriaTemplate(catalogCriteria))
                     )
                 );
             }
