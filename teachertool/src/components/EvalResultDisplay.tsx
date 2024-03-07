@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useContext } from "react";
+import { useContext, useRef } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { CriteriaResultEntry } from "./CriteriaResultEntry";
@@ -27,13 +27,13 @@ const ResultsHeader: React.FC = () => {
     );
 };
 
-export const EvalResultDisplay: React.FC<{}> = () => {
+export const EvalResultDisplay: React.FC<{printRef: React.RefObject<HTMLDivElement>}> = ({ printRef }) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     return (
         <>
             {teacherTool.projectMetadata && (
-                <div className={css["eval-results-container"]}>
+                <div className={css["eval-results-container"]} ref={printRef}>
                     <ResultsHeader />
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
                         return <CriteriaResultEntry criteriaId={criteriaInstanceId} key={criteriaInstanceId} />;

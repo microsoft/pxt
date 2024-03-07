@@ -5,13 +5,12 @@ import { Toolbar } from "./Toolbar";
 
 interface PrintButtonProps {
     printRef: React.RefObject<HTMLDivElement>;
-    onHandlePrint: () => void;
+    onHandlePrint?: () => void;
 }
 
 export const PrintButton: React.FC<PrintButtonProps> = ({ printRef, onHandlePrint }) => {
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
-        onAfterPrint: onHandlePrint,
     });
     return <Toolbar.Button icon="fas fa-print" title={lf("Print")} onClick={handlePrint} />;
 };
