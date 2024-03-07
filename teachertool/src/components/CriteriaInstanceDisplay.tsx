@@ -66,6 +66,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
         if (!paramName) {
             return null;
         }
+        paramName = paramName.toLocaleLowerCase();
 
         const paramDef = catalogCriteria?.params?.find(p => p.name === paramName);
         const paramInstance = criteriaInstance?.params?.find(p => p.name === paramName);
