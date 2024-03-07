@@ -6,7 +6,7 @@ import { setRubric } from "./setRubric";
 
 export function setParameterValue(instanceId: string, paramName: string, newValue: any) {
     const { state: teacherTool } = stateAndDispatch();
-    logDebug(`Setting parameter value for '${paramName}' to '${newValue}' for criteria instance '${instanceId}'`);
+    logDebug(`Setting parameter '${paramName}' to '${newValue}' for criteria instance '${instanceId}'`);
 
     const oldCriteriaInstance = getCriteriaInstanceWithId(teacherTool, instanceId);
     if (!oldCriteriaInstance) {
