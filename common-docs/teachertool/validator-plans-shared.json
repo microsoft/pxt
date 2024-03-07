@@ -273,6 +273,97 @@
                     ]
                 }
             ]
+        },
+
+        {
+            ".desc": "Loops used n times (to be filled in by the user)",
+            "name": "n_loops",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksInSetExist",
+                    "blocks": ["controls_repeat_ext", "device_while", "pxt_controls_for", "pxt_controls_for_of"],
+                    "count": 0
+                }
+            ]
+        },
+        {
+            ".desc": "Inputs are used n times",
+            "name": "n_inputs",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksInSetExist",
+                    "blocks": [
+                        "device_button_event",
+                        "device_gesture_event",
+                        "device_pin_event",
+                        "device_get_button2",
+                        "device_acceleration",
+                        "device_pin_is_pressed",
+                        "device_get_light_level",
+                        "device_heading",
+                        "device_temperature",
+                        "deviceisgesture",
+
+                        "input_on_sound",
+                        "input_logo_event",
+                        "input_logo_is_pressed",
+                        "device_get_sound_level",
+
+                        "device_get_magnetic_force",
+                        "device_get_rotation",
+                        "device_get_running_time",
+                        "device_get_running_time_micros",
+                        "device_pin_released"
+                    ],
+                    "count": 0
+                }
+            ]
+        },
+        {
+            ".desc": "A custom function exists and gets called",
+            "name": "n_variables_used_and_set",
+            "threshold": 2,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "variables_set",
+                            "count": 0
+                        }
+                    ]
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "variables_get",
+                            "count": 0
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            ".desc": "A custom function exists and gets called",
+            "name": "named_variables_used_and_set",
+            "threshold": 2,
+            "checks": [
+                {
+                    "validator": "blockFieldValueExists",
+                    "fieldType": "VAR",
+                    "fieldValue": "",
+                    "blockType": "variables_get"
+                },
+                {
+                    "validator": "blockFieldValueExists",
+                    "fieldType": "VAR",
+                    "fieldValue": "",
+                    "blockType": "variables_set"
+                }
+            ]
         }
     ]
 }

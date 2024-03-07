@@ -2,24 +2,107 @@
     "criteria": [
         {
             "id": "B3FD8B3D-61B4-42F4-B0EF-64BD7D62CDAB",
-            "use": "two_different_loops",
-            "template": "Two different kinds of loops used",
+            "use": "n_loops_used",
+            "template": "At least ${count} loops used",
             "docPath": "/teachertool",
-            "description": "The program uses two different types of loops (for, repeat, while, or for-of)."
+            "description": "The program uses at least the specified number of loops (for, repeat, while, or for-of).",
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "default": 1,
+                    "paths": ["checks[0].count"]
+                }
+            ]
         },
         {
-            "id": "49262A2B-C02A-43A2-BAD5-FCAC6AE9D464",
+            "id": "15822AD7-EE67-4C95-BFB4-0BF86A976023",
+            "use": "n_inputs",
+            "template": "At least ${count} different inputs used",
+            "docPath": "/teachertool",
+            "description": "The program supports at least this many forms of input (on button pressed, on shake, etc...).",
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "default": 1,
+                    "paths": ["checks[0].count"]
+                }
+            ]
+        },
+        {
+            "id": "DC564060-F177-46CC-A3AC-890CD8545972",
+            "use": "",
+            "template": "At least ${count} conditionals used",
+            "docPath": "/teachertool",
+            "description": "The program uses if conditions at least the specified number of times.",
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "default": 1,
+                    "paths": ["checks[0].count"]
+                }
+            ]
+        },
+        {
+            "id": "D21D76A2-D9FD-4F9B-B0AC-973CB870EA78",
+            "use": "n_variables_used_and_set",
+            "template": "At least ${count} custom variables set and used.",
+            "docPath": "/teachertool",
+            "description": "At least one user-defined variable is set to a value.",
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "paths": ["checks[0].count", "checks[1].count"],
+                    "default": 1
+                }
+            ]
+        },
+        {
+            "id": "E62EE5E6-4FB2-4954-ADAF-57F8FECA21B8",
+            "use": "named_variable_used_and_set",
+            "template": "Variable named ${name} set and used",
+            "description": "A variable with the specified name is defined and used.",
+            "docPath": "/teachertool",
+            "params": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "paths": ["checks[0].fieldValue", "checks[1].fieldValue"]
+                }
+            ]
+        },
+        {
+            "id": "79D5DAF7-FED3-473F-81E2-E004922E5F55",
             "use": "custom_function_called",
-            "template": "A custom function exists and gets called",
+            "template": "At least ${count} custom functions used",
             "docPath": "/teachertool",
-            "description": "A user-defined function is created and called in the program."
+            "description": "At least this many user-defined functions are created and called.",
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "paths": ["checks[0].count", "checks[1].count"],
+                    "default": 1
+                }
+            ]
         },
         {
-            "id": "76D86387-E3CF-4BEB-B62C-B811F5997631",
+            "id": "7AE7EA2A-3AC8-42DC-89DB-65E3AE157156",
             "use": "block_comment_used",
-            "template": "At least one block has comments",
+            "template": "At least ${count} comments",
+            "description": "The project contains at least the specified number of comments.",
             "docPath": "/teachertool",
-            "description": "At least one code block has a comment attached to it."
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "default": 1,
+                    "paths": ["checks[0].count"]
+                }
+            ]
         },
         {
             "id": "8F97C9A6-CF16-48B4-A84F-3105C24B20DE",
@@ -29,39 +112,19 @@
             "description": "All user-defined functions in the program have comments attached to them."
         },
         {
-            "id": "D21D76A2-D9FD-4F9B-B0AC-973CB870EA78",
-            "use": "variable_set",
-            "template": "At least one custom variable is set",
+            "id": "499F3572-E655-4DEE-953B-5F26BF0191D7",
+            "use": "ask_ai",
+            "template": "Ask Copilot: ${question}",
+            "description": "Warning: AI responses may not always be correct. Verify responses before sharing with students.",
             "docPath": "/teachertool",
-            "description": "At least one user-defined variable is set to a value."
-        },
-        {
-            "id": "0173898D-8A48-4266-AAB9-CE934471A734",
-            "use": "variable_accessed",
-            "template": "At least one variable is accessed",
-            "docPath": "/teachertool",
-            "description": "At least one variable's value is read."
-        },
-        {
-            "id": "8E6F9A92-2D22-4BB0-A77A-BD7490D3CEF7",
-            "use": "variable_set_random",
-            "template": "A custom variable's value is set to a random number",
-            "docPath": "/teachertool",
-            "description": "A user-defined variable has its value set to a random number."
-        },
-        {
-            "id": "E8DAD360-F4AB-4E6B-9981-C14BDEE1295B",
-            "use": "device_random_used",
-            "template": "The 'pick random' block is used",
-            "docPath": "/teachertool",
-            "description": "The 'pick random' block from the math category is used at least once."
-        },
-        {
-            "id": "DC564060-F177-46CC-A3AC-890CD8545972",
-            "use": "num_compare_eq",
-            "template": "Compare two numbers for equality",
-            "docPath": "/teachertool",
-            "description": "The program compares two numbers for equality at least once."
+            "params": [
+                {
+                    "name": "question",
+                    "type": "string",
+                    "picker": "longString",
+                    "paths": ["checks[0].question"]
+                }
+            ]
         }
     ]
 }
