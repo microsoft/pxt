@@ -33,7 +33,7 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
             }
         }
 
-        return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text));
+        return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text, this.isBmp ? "bmp" : "img"));
     }
 
     // TODO
@@ -48,7 +48,11 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
             this.isAsset = true;
             return pxt.getTSReferenceForAsset(result, this.isPython);
         }
-        return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap), this.isPython ? "python" : "typescript");
+        return pxt.sprite.bitmapToImageLiteral(
+            pxt.sprite.Bitmap.fromData(result.bitmap),
+            this.isPython ? "python" : "typescript",
+            this.isBmp ? "bmp" : "img"
+        )
     }
 
     protected getFieldEditorId() {
