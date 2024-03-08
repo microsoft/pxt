@@ -3,13 +3,18 @@ import { runValidatorPlanAsync } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 import { getCatalogCriteriaWithId } from "../state/helpers";
-import { CriteriaEvaluationResult, CriteriaInstance } from "../types/criteria";
+import { EvaluationStatus, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
-import { makeToast } from "../utils";
+import { getReadableCriteriaTemplate, makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
+import { setEvalResultOutcome } from "./setEvalResultOutcome";
+import jp from "jsonpath";
 
-function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.ValidatorPlan | undefined {
+function generateValidatorPlan(
+    criteriaInstance: CriteriaInstance,
+    showErrors: boolean
+): pxt.blocks.ValidatorPlan | undefined {
     const { state: teacherTool } = stateAndDispatch();
 
     const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
@@ -28,7 +33,42 @@ function generateValidatorPlan(criteriaInstance: CriteriaInstance): pxt.blocks.V
         return undefined;
     }
 
-    // TODO: Fill in any parameters. Error if parameters are missing.
+    // Fill in parameters.
+    for (const param of criteriaInstance.params ?? []) {
+        const catalogParam = catalogCriteria.params?.find(p => p.name === param.name);
+        if (!catalogParam) {
+            if (showErrors) {
+                logError(
+                    ErrorCode.evalMissingCatalogParameter,
+                    "Attempting to evaluate criteria with unrecognized parameter",
+                    { catalogId: criteriaInstance.catalogCriteriaId, paramName: param.name }
+                );
+            }
+            return undefined;
+        }
+
+        if (!param.value) {
+            // User didn't set a value for the parameter.
+            if (showErrors) {
+                logError(ErrorCode.evalParameterUnset, "Attempting to evaluate criteria with unset parameter value", {
+                    catalogId: criteriaInstance.catalogCriteriaId,
+                    paramName: param.name,
+                });
+                showToast(
+                    makeToast(
+                        "error",
+                        // prettier-ignore
+                        lf("Unable to evaluate criteria: missing '{0}' in '{1}'", param.name, getReadableCriteriaTemplate(catalogCriteria))
+                    )
+                );
+            }
+            return undefined;
+        }
+
+        for (const path of catalogParam.paths) {
+            jp.apply(plan, path, () => param.value);
+        }
+    }
 
     return plan;
 }
@@ -40,15 +80,12 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
         setActiveTab("results");
     }
 
-    // Clear all existing results.
-    dispatch(Actions.clearAllEvalResults());
-
     // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
     // They will only resolve to false if evaluation was unable to complete.
     const evalRequests = teacherTool.rubric.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
-                dispatch(Actions.setEvalResult(criteriaInstance.instanceId, CriteriaEvaluationResult.InProgress));
+                setEvalResultOutcome(criteriaInstance.instanceId, EvaluationStatus.InProgress);
 
                 const loadedValidatorPlans = teacherTool.validatorPlans;
                 if (!loadedValidatorPlans) {
@@ -57,7 +94,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                     return resolve(false);
                 }
 
-                const plan = generateValidatorPlan(criteriaInstance);
+                const plan = generateValidatorPlan(criteriaInstance, fromUserInteraction);
 
                 if (!plan) {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
@@ -67,12 +104,8 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                 const planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
 
                 if (planResult) {
-                    dispatch(
-                        Actions.setEvalResult(
-                            criteriaInstance.instanceId,
-                            planResult.result ? CriteriaEvaluationResult.Pass : CriteriaEvaluationResult.Fail
-                        )
-                    );
+                    const result = planResult.result ? EvaluationStatus.Pass : EvaluationStatus.Fail;
+                    setEvalResultOutcome(criteriaInstance.instanceId, result);
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
@@ -86,10 +119,12 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     }
 
     const results = await Promise.all(evalRequests);
-    const errorCount = results.filter(r => !r).length;
-    if (errorCount === teacherTool.rubric.criteria.length) {
-        showToast(makeToast("error", lf("Unable to run evaluation")));
-    } else if (errorCount > 0) {
-        showToast(makeToast("error", lf("Unable to evaluate some criteria")));
+    if (fromUserInteraction) {
+        const errorCount = results.filter(r => !r).length;
+        if (errorCount === teacherTool.rubric.criteria.length) {
+            showToast(makeToast("error", lf("Unable to run evaluation")));
+        } else if (errorCount > 0) {
+            showToast(makeToast("error", lf("Unable to evaluate some criteria")));
+        }
     }
 }

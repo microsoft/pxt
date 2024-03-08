@@ -7,13 +7,13 @@ export function validateBlocksExist({ usedBlocks, requiredBlockCounts }: {
     missingBlocks: string[],
     disabledBlocks: string[],
     insufficientBlocks: string[],
-    successfulBlocks: pxt.Map<Blockly.Block[]>[],
+    successfulBlocks: pxt.Map<Blockly.Block[]>,
     passed: boolean
 } {
     let missingBlocks: string[] = [];
     let disabledBlocks: string[] = [];
     let insufficientBlocks: string[] = [];
-    let successfulBlocks: pxt.Map<Blockly.Block[]>[]  = [];
+    let successfulBlocks: pxt.Map<Blockly.Block[]> = {};
     const userBlocksEnabledByType = usedBlocks?.reduce((acc: pxt.Map<number>, block) => {
         acc[block.type] = (acc[block.type] || 0) + (block.isEnabled() ? 1 : 0);
         return acc;
@@ -21,9 +21,9 @@ export function validateBlocksExist({ usedBlocks, requiredBlockCounts }: {
 
     for (const [requiredBlockId, requiredCount] of Object.entries(requiredBlockCounts || {})) {
         const countForBlock = userBlocksEnabledByType[requiredBlockId];
-        const passedBlocks = usedBlocks.filter((block) => block.type === requiredBlockId);
+        const passedBlocks = usedBlocks.filter((block) => block.isEnabled() && block.type === requiredBlockId);
         if (passedBlocks.length > 0) {
-            successfulBlocks.push({ [requiredBlockId]: passedBlocks})
+            successfulBlocks[requiredBlockId] = passedBlocks;
         }
 
         if (countForBlock === undefined) {

@@ -35,11 +35,12 @@ const ToolbarMenuDropdown: React.FC<ToolbarMenuDropdownProps> = props => {
 
 interface ToolbarToggleProps {
     label: string;
+    title: string;
     isChecked: boolean;
     onChange: (checked: boolean) => void;
 }
 
-const ToolbarToggle: React.FC<ToolbarToggleProps> = ({ label, isChecked, onChange }) => {
+const ToolbarToggle: React.FC<ToolbarToggleProps> = ({ label, title, isChecked, onChange }) => {
     const [checked, setChecked] = React.useState(isChecked);
 
     const onClick = () => {
@@ -50,7 +51,7 @@ const ToolbarToggle: React.FC<ToolbarToggleProps> = ({ label, isChecked, onChang
     return (
         <Button
             className={css["toggle-button"]}
-            title={label}
+            title={title}
             label={label}
             ariaLabel={label}
             onClick={onClick}

@@ -4,8 +4,10 @@ import { getProjectMetaAsync } from "../services/backendRequests";
 import { logDebug } from "../services/loggingService";
 import { showToast } from "./showToast";
 import { makeToast } from "../utils";
+import { setEvalResultsPending } from "./setEvalResultsPending";
+import { initNewProjectResults } from "./initNewProjectResults";
 
-export async function loadProjectMetadataAsync(shareLink: string) {
+export async function loadProjectMetadataAsync(inputText: string, shareLink: string) {
     const { dispatch } = stateAndDispatch();
 
     const scriptId = pxt.Cloud.parseScriptId(shareLink);
@@ -27,8 +29,11 @@ export async function loadProjectMetadataAsync(shareLink: string) {
         dispatch(Actions.setProjectMetadata(undefined));
         return;
     }
-
-    dispatch(Actions.clearAllEvalResults());
-    dispatch(Actions.setProjectMetadata(projMeta));
+    const projectData = {
+        ...projMeta,
+        inputText,
+    };
+    dispatch(Actions.setProjectMetadata(projectData));
+    initNewProjectResults();
     logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);
 }

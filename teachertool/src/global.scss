@@ -120,23 +120,6 @@ code {
 }
 
 /*******************************/
-/******* CATALOG STYLING  ******/
-/*******************************/
-
-.catalog-modal .common-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.catalog-done {
-    align-self: flex-end;
-}
-
-.catalog-item {
-    padding: 0.5rem;
-}
-
-/*******************************/
 /****  NOTIFICATION STYLING  ***/
 /*******************************/
 
@@ -172,66 +155,17 @@ code {
 }
 
 /*******************************/
-/***** DEBUG INPUT STYLING  *****/
-/*******************************/
-
-.debug-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    padding: 1rem;
-}
-
-.single-share-link-input-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
-    margin-bottom: 1.5rem;
-}
-
-.link-input {
-    width: 100%;
-}
-
-/*******************************/
-/**** EVAL RESULTS STYLING  ****/
-/*******************************/
-
-.eval-results-container {
-    border-top: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
-    margin: 1rem 0;
-    padding: 1rem;
-    overflow: auto;
-}
-
-.result-block-id {
-    display: flex;
-    padding-left: 0.5rem;
-    margin: 0.2rem 0;
-}
-
-.result-block-id p {
-    margin: 0;
-}
-
-.block-id-label {
-    font-weight: 700;
-    padding-right: 0.5rem;
-}
-
-.positive-text {
-    color: green;
-}
-
-.negative-text {
-    color: red;
-}
-
-/*******************************/
 /******  STYLE OVERRIDES  ******/
 /*******************************/
 
+button[class*="outline-button"] {
+    align-self: center;
+    border-radius: 0.5rem;
+    width: auto;
+    padding: 0.85rem 1.4rem;
+}
+
 @import "./style.overrides/Button.scss";
 @import "./style.overrides/Input.scss";
+@import "./style.overrides/Textarea.scss";
+@import "./style.overrides/Modal.scss";

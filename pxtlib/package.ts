@@ -833,10 +833,8 @@ namespace pxt {
             await loadDepsRecursive(null, this);
 
             // get paletter config loading deps, so the more higher level packages take precedence
-            if (this.config.palette && appTarget.runtime) {
-                appTarget.runtime.palette = U.clone(this.config.palette);
-                if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
-            }
+            this.patchAppTargetPalette();
+
             // get screen size loading deps, so the more higher level packages take precedence
             if (this.config.screenSize && appTarget.runtime)
                 appTarget.runtime.screenSize = U.clone(this.config.screenSize);
@@ -996,6 +994,13 @@ namespace pxt {
             }
 
             return r;
+        }
+
+        patchAppTargetPalette() {
+            if (this.config.palette && appTarget.runtime) {
+                appTarget.runtime.palette = U.clone(this.config.palette);
+                if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
+            }
         }
     }
 
@@ -1288,6 +1293,12 @@ namespace pxt {
             opts.jres = this.getJRes()
             const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
             opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
+
+            for (const dep of this.sortedDeps()) {
+                dep.patchAppTargetPalette();
+            }
+
+            this.patchAppTargetPalette();
             return opts;
         }
 

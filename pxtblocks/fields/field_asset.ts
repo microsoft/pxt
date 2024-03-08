@@ -40,6 +40,8 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
     protected pendingEdit = false;
     protected isEmpty = false;
 
+    protected qName?: string;
+
     // If input is invalid, the subclass can set this to be true. The field will instead
     // render as a grey block and preserve the decompiled code
     public isGreyBlock: boolean;
@@ -417,7 +419,7 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
 
     protected parseValueText(newText: string) {
         newText = pxt.Util.htmlUnescape(newText);
-        if (this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
+        if (this.sourceBlock_) {
             const project = pxt.react.getTilemapProject();
 
             const id = this.getBlockData();

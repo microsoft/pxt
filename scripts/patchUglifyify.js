@@ -4,8 +4,9 @@
 const fs = require("fs");
 const path = require("path");
 
+// uglifyify is a dev dependency so it might not exist
 if (!fs.existsSync(path.resolve("./node_modules/uglifyify/package.json"))) {
-    throw new Error("Uglifyify not found! Run this script from the root of the repo and make sure you ran npm install");
+    return;
 }
 
 const packageJson = JSON.parse(fs.readFileSync(path.resolve("./node_modules/uglifyify/package.json"), "utf8"));

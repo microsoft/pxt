@@ -11,6 +11,10 @@ export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefine
     return state.catalog?.find(c => c.id === id);
 }
 
+export function getCriteriaInstanceWithId(state: AppState, id: string): CriteriaInstance | undefined {
+    return state.rubric.criteria.find(c => c.instanceId === id);
+}
+
 export function verifyCriteriaInstanceIntegrity(instance: CriteriaInstance) {
     const catalogCriteria = getCatalogCriteriaWithId(instance.catalogCriteriaId);
 
@@ -19,7 +23,7 @@ export function verifyCriteriaInstanceIntegrity(instance: CriteriaInstance) {
     }
 
     for (const param of instance.params ?? []) {
-        if (!catalogCriteria?.parameters?.find(p => p.name === param.name)) {
+        if (!catalogCriteria?.params?.find(p => p.name === param.name)) {
             throw new Error("Unrecognized parameter in criteria instance.");
         }
     }
@@ -30,6 +34,10 @@ export function verifyRubricIntegrity(rubric: Rubric): {
     validCriteria: CriteriaInstance[];
     invalidCriteria: CriteriaInstance[];
 } {
+    if (!rubric || !rubric.criteria) {
+        return { valid: false, validCriteria: [], invalidCriteria: [] };
+    }
+
     const validCriteria: CriteriaInstance[] = [];
     const invalidCriteria: CriteriaInstance[] = [];
     for (const criteria of rubric.criteria) {
@@ -70,8 +78,9 @@ export function getSelectableCatalogCriteria(state: AppState): CatalogCriteria[]
     return (
         state.catalog?.filter(
             catalogCriteria =>
-                (catalogCriteria.parameters && catalogCriteria.parameters.length > 0) ||
-                !usedCatalogCriteria.includes(catalogCriteria.id)
+                ((catalogCriteria.params && catalogCriteria.params.length > 0) ||
+                    !usedCatalogCriteria.includes(catalogCriteria.id)) &&
+                !catalogCriteria.hideInCatalog
         ) ?? []
     );
 }

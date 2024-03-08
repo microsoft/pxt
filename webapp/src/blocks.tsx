@@ -585,6 +585,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!blocklyDiv)
             return;
         pxsim.U.clear(blocklyDiv);
+
+        // Increase the Blockly connection radius
+        Blockly.config.snapRadius = 48;
+        Blockly.config.connectingSnapRadius = 96;
+
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
@@ -627,7 +632,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
-            if (ev.type !== "var_create") {
+            if (ev.type !== "var_create" && ev.type !== "marker_move") {
                 this.hideFlyout();
             }
 
@@ -1230,7 +1235,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             plugins: {
                 'blockDragger': pxtblockly.BlockDragger,
                 'connectionChecker': DuplicateOnDragConnectionChecker,
-                'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout
+                'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout,
+                'connectionPreviewer': pxtblockly.ConnectionPreviewer
             },
             move: {
                 scrollbars: true,
@@ -1883,7 +1889,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
 
-        this.editor.options.readOnly = debugging;
+        this.editor.options.readOnly = debugging || pxt.shell.isReadOnly();
     }
 
     protected enableBreakpoint(block: Blockly.Block, enabled: boolean) {

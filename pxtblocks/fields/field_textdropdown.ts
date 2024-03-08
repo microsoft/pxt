@@ -134,7 +134,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         // Focusing needs to be handled after the menu is rendered and positioned.
         // Otherwise it will cause a page scroll to get the misplaced menu in
         // view. See issue #1329.
-        this.menu_!.focus();
+        // this.menu_!.focus();
 
         if (this.selectedMenuItem) {
             this.menu_!.setHighlighted(this.selectedMenuItem);

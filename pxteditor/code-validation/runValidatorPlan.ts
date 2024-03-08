@@ -7,6 +7,7 @@ import { validateBlocksExist } from "./validateBlocksExist";
 import { validateBlocksInSetExist } from "./validateBlocksInSetExist";
 import { validateBlockCommentsExist } from "./validateCommentsExist";
 import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockCommentsExist";
+import { getNestedChildBlocks } from "./getNestedChildBlocks";
 
 export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]): boolean {
     const startTime = Date.now();
@@ -41,7 +42,7 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
             for (const planName of check.childValidatorPlans) {
                 let timesPassed = 0;
                 for (const parentBlock of successfulBlocks) {
-                    const blocksToUse = parentBlock.getChildren(true);
+                    const blocksToUse = getNestedChildBlocks(parentBlock);
                     const childPlan = planLib.find((plan) => plan.name === planName);
                     const childPassed = runValidatorPlan(blocksToUse, childPlan, planLib);
                     timesPassed += childPassed ? 1 : 0;
@@ -64,12 +65,17 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
 }
 
 function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksExistValidatorCheck): [Blockly.Block[], boolean] {
-    const blockResults = validateBlocksExist({ usedBlocks, requiredBlockCounts: inputs.blockCounts });
+    const requiredBlockCounts = inputs.blockCounts.reduce((acc, info) => {
+        acc[info.blockId] = info.count;
+        return acc;
+    }, {} as pxt.Map<number>);
+    const blockResults = validateBlocksExist({ usedBlocks, requiredBlockCounts });
     let successfulBlocks: Blockly.Block[] = [];
     if (blockResults.passed) {
-        const blockIdsFromValidator = Object.keys(inputs.blockCounts)
-        const blockId = blockIdsFromValidator?.[0];
-        successfulBlocks = blockResults.successfulBlocks.length ? blockResults.successfulBlocks[0][blockId] : [];
+        for (const blockCount of inputs.blockCounts) {
+            const blockId = blockCount.blockId;
+            successfulBlocks.push(...blockResults.successfulBlocks[blockId]);
+        }
     }
     return [successfulBlocks, blockResults.passed];
 }

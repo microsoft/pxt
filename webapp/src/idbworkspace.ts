@@ -172,8 +172,6 @@ async function migratePrefixesAsync() {
     const currentMajor = currentVersion.major;
     const previousMajor = currentMajor - 1;
     const previousDbPrefix = previousMajor < 0 ? "" : pxt.appTarget.appTheme.browserDbPrefixes[previousMajor];
-
-    if (!previousDbPrefix) return;
     const currentDb = await getCurrentDbAsync();
 
     // If headers are already in the new db, migration must have already happened

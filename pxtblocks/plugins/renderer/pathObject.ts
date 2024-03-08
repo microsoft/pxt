@@ -5,6 +5,8 @@ const DOTTED_OUTLINE_HOVER_CLASS = "blockly-dotted-outline-on-hover"
 const HOVER_CLASS = "hover"
 
 export class PathObject extends Blockly.zelos.PathObject {
+    static CONNECTION_INDICATOR_RADIUS = 9;
+
     protected svgPathHighlighted: SVGElement;
     protected hasError: boolean;
 
@@ -12,6 +14,9 @@ export class PathObject extends Blockly.zelos.PathObject {
 
     protected mouseOverData: Blockly.browserEvents.Data;
     protected mouseLeaveData: Blockly.browserEvents.Data;
+
+    protected connectionPointIndicators = new WeakMap<Blockly.RenderedConnection, SVGElement>();
+
 
     override updateHighlighted(enable: boolean) {
         // this.setClass_('blocklySelected', enable);
@@ -40,6 +45,33 @@ export class PathObject extends Blockly.zelos.PathObject {
             this.svgPath.classList.remove(HOVER_CLASS);
         }
         super.updateSelected(enable);
+    }
+
+    override addConnectionHighlight(connection: Blockly.RenderedConnection, connectionPath: string, offset: Blockly.utils.Coordinate, rtl: boolean): void {
+        super.addConnectionHighlight(connection, connectionPath, offset, rtl);
+
+        if (connection.type === Blockly.INPUT_VALUE || connection.type === Blockly.OUTPUT_VALUE) {
+            const indicator = Blockly.utils.dom.createSvgElement('g',
+                { 'class': 'blocklyInputConnectionIndicator' }
+            );
+            Blockly.utils.dom.createSvgElement('circle',
+                { 'r': PathObject.CONNECTION_INDICATOR_RADIUS }, indicator);
+
+            const offset = connection.getOffsetInBlock();
+            indicator.setAttribute('transform',
+                'translate(' + offset.x + ',' + offset.y + ')');
+            this.connectionPointIndicators.set(connection, indicator);
+            this.svgRoot.appendChild(indicator);
+        }
+    }
+
+    override removeConnectionHighlight(connection: Blockly.RenderedConnection): void {
+        super.removeConnectionHighlight(connection);
+
+        if (this.connectionPointIndicators.has(connection)) {
+            this.connectionPointIndicators.get(connection).remove();
+            this.connectionPointIndicators.delete(connection);
+        }
     }
 
     setHasDottedOutllineOnHover(enabled: boolean) {

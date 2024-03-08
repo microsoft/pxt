@@ -157,7 +157,7 @@ function testXmlAsync(blocksfile: string) {
                 fail(e.message);
             }
 
-            const err = compareBlocklyTrees(xml, Blockly.Xml.workspaceToDom(workspace));
+            const err = compareBlocklyTrees(xml, pxtblockly.workspaceToDom(workspace));
             if (err) {
                 fail(`XML mismatch (${err.reason}) ${err.chain} \n See https://makecode.com/develop/blockstests for more info`);
             }

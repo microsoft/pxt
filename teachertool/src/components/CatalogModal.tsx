@@ -6,10 +6,35 @@ import { hideModal } from "../transforms/hideModal";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
 import { getSelectableCatalogCriteria } from "../state/helpers";
+import css from "./styling/CatalogModal.module.scss";
+import { splitCriteriaTemplate } from "../utils";
 
-interface IProps {}
+interface CatalogCriteriaDisplayProps {
+    criteria: CatalogCriteria;
+}
+const CatalogCriteriaDisplay: React.FC<CatalogCriteriaDisplayProps> = ({ criteria }) => {
+    const segments = useMemo(() => splitCriteriaTemplate(criteria.template), [criteria.template]);
 
-export const CatalogModal: React.FC<IProps> = ({}) => {
+    return (
+        <div className={css["criteria-display"]}>
+            {criteria.template && (
+                <div className={css["criteria-template"]}>
+                    {segments.map((segment, index) => {
+                        return (
+                            <span key={`${criteria.id}-${index}`} className={css[`${segment.type}-segment`]}>
+                                {segment.content}
+                            </span>
+                        );
+                    })}
+                </div>
+            )}
+            {criteria.description && <div className={css["criteria-description"]}>{criteria.description}</div>}
+        </div>
+    );
+};
+
+interface CatalogModalProps {}
+export const CatalogModal: React.FC<CatalogModalProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [checkedCriteriaIds, setCheckedCriteria] = useState<Set<string>>(new Set<string>());
 
@@ -59,7 +84,7 @@ export const CatalogModal: React.FC<IProps> = ({}) => {
 
     return teacherTool.modal === "catalog-display" ? (
         <Modal
-            className="catalog-modal"
+            className={css["catalog-modal"]}
             title={lf("Select the criteria you'd like to include")}
             onClose={closeModal}
             actions={modalActions}
@@ -70,8 +95,8 @@ export const CatalogModal: React.FC<IProps> = ({}) => {
                         <Checkbox
                             id={`checkbox_${criteria.id}`}
                             key={criteria.id}
-                            className="catalog-item"
-                            label={criteria.template}
+                            className={css["catalog-item"]}
+                            label={<CatalogCriteriaDisplay criteria={criteria} />}
                             onChange={newValue => handleCriteriaSelectedChange(criteria, newValue)}
                             isChecked={isCriteriaSelected(criteria.id)}
                         />

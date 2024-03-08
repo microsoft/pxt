@@ -118,7 +118,12 @@ const WorkspaceToolbarButtons: React.FC = () => {
                 <Toolbar.Button icon="fas fa-print" title={lf("Print")} onClick={() => console.log("Print")} />
             )}
             {/* Conditional buttons go above this line */}
-            <Toolbar.Toggle label={lf("auto-run")} isChecked={autorun} onChange={onAutorunChange} />
+            <Toolbar.Toggle
+                label={Strings.AutoRun}
+                title={Strings.AutoRunDescription}
+                isChecked={autorun}
+                onChange={onAutorunChange}
+            />
             <Toolbar.Button
                 icon="fas fa-play"
                 title={lf("Evaluate")}

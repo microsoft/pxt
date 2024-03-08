@@ -10,6 +10,7 @@ import { Rubric } from "../types/rubric";
 const KEY_PREFIX = "teachertool";
 const AUTORUN_KEY = [KEY_PREFIX, "autorun"].join("/");
 const LAST_ACTIVE_RUBRIC_KEY = [KEY_PREFIX, "lastActiveRubric"].join("/");
+const SPLIT_POSITION_KEY = [KEY_PREFIX, "splitPosition"].join("/");
 
 function getValue(key: string, defaultValue?: string): string | undefined {
     return localStorage.getItem(key) || defaultValue;
@@ -148,13 +149,28 @@ export function setLastActiveRubricName(name: string) {
     }
 }
 
+export function getLastSplitPosition(): string {
+    try {
+        return getValue(SPLIT_POSITION_KEY) ?? "";
+    } catch (e) {
+        logError(ErrorCode.localStorageReadError, e);
+        return "";
+    }
+}
+
+export function setLastSplitPosition(position: string) {
+    try {
+        setValue(SPLIT_POSITION_KEY, position);
+    } catch (e) {
+        logError(ErrorCode.localStorageWriteError, e);
+    }
+}
+
 export async function getRubric(name: string): Promise<Rubric | undefined> {
     const db = await getDb;
 
     let rubric: Rubric | undefined = undefined;
-    if (name) {
-        rubric = await db.getRubric(name);
-    }
+    rubric = await db.getRubric(name);
 
     return rubric;
 }

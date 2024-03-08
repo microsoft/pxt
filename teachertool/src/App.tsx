@@ -1,6 +1,6 @@
 import { useEffect, useContext, useState } from "react";
 import { AppStateContext, AppStateReady } from "./state/appStateContext";
-import { usePromise } from "./hooks";
+import { usePromise } from "./hooks/usePromise";
 import { makeToast } from "./utils";
 import * as Actions from "./state/actions";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
@@ -14,6 +14,7 @@ import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubricAsync";
 import { ImportRubricModal } from "./components/ImportRubricModal";
+import { ConfirmationModal } from "./components/ConfirmationModal";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -57,6 +58,7 @@ export const App = () => {
             <MainPanel />
             <CatalogModal />
             <ImportRubricModal />
+            <ConfirmationModal />
             <Toasts />
         </>
     );

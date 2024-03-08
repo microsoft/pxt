@@ -18,6 +18,8 @@ export interface FieldSpriteEditorOptions {
 
     filter?: string;
     lightMode: boolean;
+
+    taggedTemplate?: string;
 }
 
 interface ParsedSpriteEditorOptions {
@@ -27,6 +29,8 @@ interface ParsedSpriteEditorOptions {
     disableResize: boolean;
     filter?: string;
     lightMode: boolean;
+
+    taggedTemplate?: string;
 }
 
 export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions, ParsedSpriteEditorOptions> {
@@ -46,15 +50,23 @@ export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions
             return project.lookupAsset(pxt.AssetType.Image, this.getBlockData());
         }
 
-        const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
+        const bmp = text ? pxt.sprite.imageLiteralToBitmap(text, this.params.taggedTemplate) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
+
+        let data: pxt.sprite.BitmapData;
 
         if (!bmp) {
-            this.isGreyBlock = true;
-            this.valueText = text;
-            return undefined;
+            // check for qualified name
+            data = qNameToBitmapData(text);
+            if (!data) {
+                this.isGreyBlock = true;
+                this.valueText = text;
+                return undefined;
+            } else {
+                this.qName = text;
+            }
         }
 
-        const data = bmp.data();
+        if (!data) data = bmp.data();
 
         const newAsset: pxt.ProjectImage = {
             internalID: -1,
@@ -73,8 +85,14 @@ export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions
         if (!this.asset) return this.valueText || "";
         if (this.asset && !this.isTemporaryAsset()) {
             return pxt.getTSReferenceForAsset(this.asset);
+        } else if (this.qName) {
+            // check if image has been edited
+            const data = qNameToBitmapData(this.qName);
+            if (data && pxt.sprite.bitmapEquals(data, (this.asset as pxt.ProjectImage).bitmap)) {
+                return this.qName;
+            }
         }
-        return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
+        return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript, this.params.taggedTemplate);
     }
 
     protected parseFieldOptions(opts: FieldSpriteEditorOptions): ParsedSpriteEditorOptions {
@@ -141,6 +159,8 @@ function parseFieldOptions(opts: FieldSpriteEditorOptions) {
     parsed.initWidth = withDefault(opts.initWidth, parsed.initWidth);
     parsed.initHeight = withDefault(opts.initHeight, parsed.initHeight);
 
+    parsed.taggedTemplate = opts.taggedTemplate;
+
     return parsed;
 
     function withDefault(raw: string, def: number) {
@@ -150,4 +170,15 @@ function parseFieldOptions(opts: FieldSpriteEditorOptions) {
         }
         return res;
     }
+}
+
+
+function qNameToBitmapData(qName: string): pxt.sprite.BitmapData {
+    const project = pxt.react.getTilemapProject();
+    const images = project.getGalleryAssets(pxt.AssetType.Image).filter(asset => asset.id === qName);
+    const img = images.length && images[0];
+    if (img) {
+        return img.bitmap;
+    }
+    return undefined;
 }
