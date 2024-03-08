@@ -58,9 +58,9 @@ export function splitCriteriaTemplate(template: string): CriteriaTemplateSegment
 
         if (part) {
             if (i % 2 === 0) {
-                segments.push({ type: "plain-text", content: part });
+                segments.push({ type: "plain-text", content: part.trim() });
             } else {
-                segments.push({ type: "param", content: part.toLocaleLowerCase() });
+                segments.push({ type: "param", content: part.toLocaleLowerCase().trim() });
             }
         }
     }
