@@ -37,16 +37,15 @@
         },
         {
             "id": "499F3572-E655-4DEE-953B-5F26BF0191D7",
-            "use": "test",
+            "use": "block_used_n_times",
             "template": "Long String: ${question}",
             "description": "This is just a test for long string inputs.",
             "docPath": "/teachertool",
             "params": [
                 {
                     "name": "question",
-                    "type": "string",
-                    "picker": "longString",
-                    "paths": ["checks[0].question"]
+                    "type": "longString",
+                    "paths": ["checks[0].blockCounts[0].blockId"]
                 }
             ]
         },

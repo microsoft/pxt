@@ -66,21 +66,19 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
             return null;
         }
 
-        switch (paramDef.type) {
-            case "string":
-            case "number":
-                return (
-                    <InlineInputSegment
-                        initialValue={paramInstance.value}
-                        param={paramInstance}
-                        instance={criteriaInstance}
-                        shouldExpand={paramDef.picker === "longString"}
-                        numeric={paramDef.type === "number"}
-                    />
-                );
-            case "block": // TODO
-            default:
-                return null;
+        if (paramDef.type === "block") {
+            // TODO
+            return null;
+        } else {
+            return (
+                <InlineInputSegment
+                    initialValue={paramInstance.value}
+                    param={paramInstance}
+                    instance={criteriaInstance}
+                    shouldExpand={paramDef.type === "longString"}
+                    numeric={paramDef.type === "number"}
+                />
+            );
         }
     }
 
