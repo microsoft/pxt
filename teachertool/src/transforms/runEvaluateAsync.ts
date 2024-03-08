@@ -118,5 +118,13 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
         return;
     }
 
-    await Promise.all(evalRequests);
+    const results = await Promise.all(evalRequests);
+    if (fromUserInteraction) {
+        const errorCount = results.filter(r => !r).length;
+        if (errorCount === teacherTool.rubric.criteria.length) {
+            showToast(makeToast("error", lf("Unable to run evaluation")));
+        } else if (errorCount > 0) {
+            showToast(makeToast("error", lf("Unable to evaluate some criteria")));
+        }
+    }
 }
