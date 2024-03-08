@@ -89,7 +89,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
             {criteriaDisplayString.current && (
                 <div className={css["specific-criteria-result"]} key={criteriaId}>
                     <div className={css["result-details"]}>
-                        <h4 className={css["block-id-label"]}>{criteriaDisplayString.current}</h4>
+                        <h4 className={css["display-string"]}>{criteriaDisplayString.current}</h4>
                         <CriteriaEvalResultDropdown
                             result={teacherTool.evalResults[criteriaId].result}
                             criteriaId={criteriaId}
