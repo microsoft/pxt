@@ -48,6 +48,7 @@ export function getProjectLink(inputText: string): string {
 
 export function splitCriteriaTemplate(template: string): CriteriaTemplateSegment[] {
     // Split by the regex, which will give us an array where every other element is a parameter.
+    // If the template starts with a parameter, the first element will be an empty string.
     const paramRegex = /\$\{([\w\s]+)\}/g;
     const parts = template.split(paramRegex);
 
@@ -56,7 +57,11 @@ export function splitCriteriaTemplate(template: string): CriteriaTemplateSegment
         const part = parts[i];
 
         if (part) {
-            segments.push({ type: i % 2 === 0 ? "plain-text" : "param", content: part });
+            if (i % 2 === 0) {
+                segments.push({ type: "plain-text", content: part });
+            } else {
+                segments.push({ type: "param", content: part.toLocaleLowerCase() });
+            }
         }
     }
 
