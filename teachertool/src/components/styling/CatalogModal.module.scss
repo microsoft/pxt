@@ -16,12 +16,18 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        
-        .criteria-template .param-segment {
-            border-radius: 0.5rem;
-            border: 1px solid var(--pxt-page-foreground);
-            padding: 0.2rem 0.5rem;
-            margin: 0 0.3rem;
+
+        .criteria-template {
+            .plain-text-segment {
+                margin-right: 0.3rem;
+            }
+
+            .param-segment {
+                border-radius: 0.5rem;
+                border: 1px solid var(--pxt-page-foreground);
+                padding: 0.2rem 0.5rem;
+                margin-right: 0.3rem;
+            }
         }
 
         .criteria-description {
