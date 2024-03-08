@@ -7,14 +7,27 @@ import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
 import { getSelectableCatalogCriteria } from "../state/helpers";
 import css from "./styling/CatalogModal.module.scss";
+import { splitCriteriaTemplate } from "../utils";
 
 interface CatalogCriteriaDisplayProps {
     criteria: CatalogCriteria;
 }
 const CatalogCriteriaDisplay: React.FC<CatalogCriteriaDisplayProps> = ({ criteria }) => {
+    const segments = useMemo(() => splitCriteriaTemplate(criteria.template), [criteria.template]);
+
     return (
         <div className={css["criteria-display"]}>
-            {criteria.template && <div className={css["criteria-template"]}>{criteria.template}</div>}
+            {criteria.template && (
+                <div className={css["criteria-template"]}>
+                    {segments.map((segment, index) => {
+                        return (
+                            <span key={`${criteria.id}-${index}`} className={css[`${segment.type}-segment`]}>
+                                {segment.content}
+                            </span>
+                        );
+                    })}
+                </div>
+            )}
             {criteria.description && <div className={css["criteria-description"]}>{criteria.description}</div>}
         </div>
     );

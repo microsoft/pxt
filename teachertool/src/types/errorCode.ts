@@ -6,6 +6,8 @@ export enum ErrorCode {
     downloadTargetConfigAsync = "downloadTargetConfigAsync",
     evalMissingCriteria = "evalMissingCriteria",
     evalMissingPlan = "evalMissingPlan",
+    evalParameterUnset = "evalParameterUnset",
+    evalMissingCatalogParameter = "evalMissingCatalogParameter",
     loadCollectionFileFailed = "loadCollectionFileFailed",
     unableToGetIndexedDbRecord = "unableToGetIndexedDbRecord",
     unableToSetIndexedDbRecord = "unableToSetIndexedDbRecord",
@@ -15,7 +17,9 @@ export enum ErrorCode {
     unableToReadRubricFile = "unableToReadRubricFile",
     localStorageReadError = "localStorageReadError",
     localStorageWriteError = "localStorageWriteError",
+    missingCriteriaInstance = "missingCriteriaInstance",
     validatorPlansNotFound = "validatorPlansNotFound",
     fetchRequestFailed = "fetchRequestFailed",
     fetchJsonDocAsync = "fetchJsonDocAsync",
+    missingParameter = "missingParameter",
 }

@@ -8,7 +8,7 @@ import { Strings, Ticks } from "../constants";
 import { setEvalResultNotes } from "../transforms/setEvalResultNotes";
 import { CriteriaEvalResultDropdown } from "./CriteriaEvalResultDropdown";
 import { DebouncedTextarea } from "./DebouncedTextarea";
-import { getCatalogCriteriaWithId } from "../state/helpers";
+import { getCatalogCriteriaWithId, getCriteriaInstanceWithId } from "../state/helpers";
 
 interface AddNotesButtonProps {
     criteriaId: string;
@@ -68,22 +68,28 @@ interface CriteriaResultEntryProps {
 export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [showInput, setShowInput] = useState(!!teacherTool.evalResults[criteriaId]?.notes);
-    const criteriaTemplateString = useRef<string>(getTemplateStringFromCriteriaInstanceId(criteriaId));
+    const criteriaDisplayString = useRef<string>(getDisplayStringFromCriteriaInstanceId(criteriaId));
 
-    function getTemplateStringFromCriteriaInstanceId(instanceId: string): string {
-        const catalogCriteriaId = teacherTool.rubric.criteria?.find(
-            criteria => criteria.instanceId === instanceId
-        )?.catalogCriteriaId;
-        if (!catalogCriteriaId) return "";
-        return getCatalogCriteriaWithId(catalogCriteriaId)?.template ?? "";
+    function getDisplayStringFromCriteriaInstanceId(instanceId: string): string {
+        const instance = getCriteriaInstanceWithId(teacherTool, instanceId);
+        if (!instance) {
+            return "";
+        }
+
+        let displayText = getCatalogCriteriaWithId(instance.catalogCriteriaId)?.template ?? "";
+        for (const param of instance.params ?? []) {
+            displayText = displayText.replace(new RegExp(`\\$\\{${param.name}}`, 'i'), param.value);
+        }
+
+        return displayText;
     }
 
     return (
         <>
-            {criteriaTemplateString.current && (
+            {criteriaDisplayString.current && (
                 <div className={css["specific-criteria-result"]} key={criteriaId}>
                     <div className={css["result-details"]}>
-                        <h4 className={css["block-id-label"]}>{criteriaTemplateString.current}</h4>
+                        <h4 className={css["display-string"]}>{criteriaDisplayString.current}</h4>
                         <CriteriaEvalResultDropdown
                             result={teacherTool.evalResults[criteriaId].result}
                             criteriaId={criteriaId}

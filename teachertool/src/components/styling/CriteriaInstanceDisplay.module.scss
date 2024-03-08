@@ -1,0 +1,86 @@
+.criteria-instance-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+
+    div[class*="common-input-group"] {
+        border-radius: 0.5rem;
+        border: solid 1px var(--pxt-page-foreground);
+        padding: 0 0.4rem;
+        
+        &:focus::after {
+            outline: none;
+            border-radius: 0.5rem;
+            border: solid 2px var(--pxt-headerbar-accent-smoke);
+        }
+
+        &:focus-within::after {
+            outline: none;
+            border-radius: 0.5rem;
+            border: solid 2px var(--pxt-headerbar-accent-smoke);
+        }
+
+        input::placeholder {
+            color: var(--pxt-content-accent);
+        }
+    }
+
+    .segment-container {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: flex-start;
+        align-items: center;
+        width: 100%;
+
+        .segment {
+            display: flex;
+            margin-right: 0.3rem;
+
+            &:has(.long) {
+                flex-grow: 1;
+            }
+
+            .inline-input {
+                margin: 0.2rem 0;
+
+                &.string-input {
+                    width: 10rem;
+    
+                    &.long {
+                        flex-grow: 1;
+                        input {
+                            text-align: start;
+                        }
+                    }
+                }
+    
+                &.number-input {
+                    width: 2.3rem;
+
+                    // Hide arrows on right-hand side of number input.
+                    // Firefox
+                    input[type=number] {
+                        -moz-appearance: textfield;
+                    }
+                    // Other browsers
+                    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+                        -webkit-appearance: none;
+                        margin: 0;
+                    }
+                }
+
+                input {
+                    text-align: center;
+                    padding: 0;
+                }
+            }
+        }
+    }
+
+    .criteria-description {
+        color: var(--pxt-page-foreground-light);
+        margin-top: 0.2rem;
+    }
+}

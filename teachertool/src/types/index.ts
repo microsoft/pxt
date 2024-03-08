@@ -50,9 +50,15 @@ export type RequestStatus = "init" | "loading" | "error" | "success";
 export type ProjectData = pxt.Cloud.JsonScript & {
     inputText: string;
 };
+
 export type ConfirmationModalOptions = {
     title: string;
     message: string;
     onCancel: () => void;
     onContinue: () => void;
+};
+
+export type CriteriaTemplateSegment = {
+    type: "plain-text" | "param";
+    content: string; // plain text or parameter name
 };
