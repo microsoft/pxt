@@ -13,7 +13,7 @@
     margin-top: 0.5rem;
     min-height: 9rem;
     max-height: 12rem;
-    border-bottom: solid 1px var(--pxt-content-accent) ;
+    border-bottom: solid 1px var(--pxt-content-accent);
 }
 
 .result-details {
@@ -108,5 +108,11 @@
             min-height: 4rem;
             min-width: 3.75rem;
         }
+    }
+}
+
+@media print {
+    .no-print {
+        display: none !important;
     }
 }

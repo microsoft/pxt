@@ -2,6 +2,7 @@ import * as React from "react";
 import { useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Toolbar } from "./Toolbar";
+import { stateAndDispatch } from "../state";
 
 interface PrintButtonProps {
     printRef: React.RefObject<HTMLDivElement>;
@@ -9,8 +10,10 @@ interface PrintButtonProps {
 }
 
 export const PrintButton: React.FC<PrintButtonProps> = ({ printRef, onHandlePrint }) => {
+    const { state: teacherTool } = stateAndDispatch()
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
+        documentTitle: `MakeCode Project Evaluation Results - ${teacherTool.projectMetadata?.name}`,
     });
     return <Toolbar.Button icon="fas fa-print" title={lf("Print")} onClick={handlePrint} />;
 };
