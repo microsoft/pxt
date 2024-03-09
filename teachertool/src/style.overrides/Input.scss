@@ -27,24 +27,5 @@
                 font-style: italic;
             }
         }
-
-        i {
-            background-color: var(--pxt-content-background);
-            border-radius: 99px;
-            width: 1.5rem;
-            height: 1.5rem;
-            top: 0;
-            bottom: 0;
-            right: 0.25rem;
-            margin-top: auto;
-            margin-bottom: auto;
-
-            &::before {
-                font-size: 1rem;
-                line-height: 1.5rem;
-                color: var(--pxt-content-foreground);
-                filter: saturate(0%);
-            }
-        }
     }
 }

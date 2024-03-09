@@ -7,6 +7,7 @@ import { classList } from "react-common/components/util";
 import { splitCriteriaTemplate } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
+import { useState } from "react";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -22,8 +23,15 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     shouldExpand,
     numeric,
 }) => {
-    function onChange(newValue: string) {
+    const [isEmpty, setIsEmpty] = useState(!initialValue);
+
+    function onDebouncedChange(newValue: string) {
         setParameterValue(instance.instanceId, param.name, newValue);
+    }
+
+    function onChange(newValue: string) {
+        // Keep this out of the debounced version to avoid delayed appearance.
+        setIsEmpty(!newValue);
     }
 
     return (
@@ -32,8 +40,12 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                 css["inline-input"],
                 numeric ? css["number-input"] : css["string-input"],
                 shouldExpand ? css["long"] : undefined,
+                isEmpty ? css["error"] : undefined
             )}
+            icon={isEmpty ? "fas fa-exclamation-triangle" : undefined}
+            iconTitle={isEmpty ? lf("Missing value") : undefined}
             initialValue={initialValue}
+            onDebouncedChange={onDebouncedChange}
             onChange={onChange}
             preserveValueOnBlur={true}
             placeholder={numeric ? "0" : param.name}
@@ -47,7 +59,6 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
 interface CriteriaInstanceDisplayProps {
     criteriaInstance: CriteriaInstance;
 }
-
 export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaInstance }) => {
     const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
     if (!catalogCriteria) {

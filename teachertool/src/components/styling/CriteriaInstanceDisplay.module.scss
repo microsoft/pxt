@@ -75,6 +75,17 @@
                     text-align: center;
                     padding: 0;
                 }
+
+                &.error {
+                    div[class*="common-input-group"] {
+                        border: solid 1px var(--pxt-error-accent);
+                        background-color: var(--pxt-error-background);
+
+                        input::placeholder {
+                            color: var(--pxt-page-foreground);
+                        }
+                    }
+                }
             }
         }
     }

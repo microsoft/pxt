@@ -18,7 +18,7 @@ export const ActiveRubricDisplay: React.FC<ActiveRubricDisplayProps> = ({}) => {
                 <DebouncedInput
                     label={Strings.Name}
                     ariaLabel={Strings.Name}
-                    onChange={setRubricName}
+                    onDebouncedChange={setRubricName}
                     placeholder={Strings.RubricName}
                     initialValue={teacherTool.rubric.name}
                     preserveValueOnBlur={true}
