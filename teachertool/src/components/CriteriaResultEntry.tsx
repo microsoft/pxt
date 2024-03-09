@@ -9,6 +9,7 @@ import { setEvalResultNotes } from "../transforms/setEvalResultNotes";
 import { CriteriaEvalResultDropdown } from "./CriteriaEvalResultDropdown";
 import { DebouncedTextarea } from "./DebouncedTextarea";
 import { getCatalogCriteriaWithId, getCriteriaInstanceWithId } from "../state/helpers";
+import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 
 interface AddNotesButtonProps {
     criteriaId: string;
@@ -68,28 +69,16 @@ interface CriteriaResultEntryProps {
 export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [showInput, setShowInput] = useState(!!teacherTool.evalResults[criteriaId]?.notes);
-    const criteriaDisplayString = useRef<string>(getDisplayStringFromCriteriaInstanceId(criteriaId));
 
-    function getDisplayStringFromCriteriaInstanceId(instanceId: string): string {
-        const instance = getCriteriaInstanceWithId(teacherTool, instanceId);
-        if (!instance) {
-            return "";
-        }
-
-        let displayText = getCatalogCriteriaWithId(instance.catalogCriteriaId)?.template ?? "";
-        for (const param of instance.params ?? []) {
-            displayText = displayText.replace(new RegExp(`\\$\\{${param.name}}`, 'i'), param.value);
-        }
-
-        return displayText;
-    }
+    const criteriaInstance = getCriteriaInstanceWithId(teacherTool, criteriaId);
+    const catalogCriteria = criteriaInstance ? getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId) : undefined;
 
     return (
         <>
-            {criteriaDisplayString.current && (
+            {catalogCriteria && (
                 <div className={css["specific-criteria-result"]} key={criteriaId}>
                     <div className={css["result-details"]}>
-                        <h4 className={css["display-string"]}>{criteriaDisplayString.current}</h4>
+                        <ReadOnlyCriteriaDisplay catalogCriteria={catalogCriteria} criteriaInstance={criteriaInstance} showDescription={false} />
                         <CriteriaEvalResultDropdown
                             result={teacherTool.evalResults[criteriaId].result}
                             criteriaId={criteriaId}
