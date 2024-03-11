@@ -86,6 +86,14 @@
                         background-color: var(--pxt-error-background);
                         transition: background-color 0.3s ease-in-out, border 0.3s ease-in-out;
 
+                        &:focus::after {
+                            border: solid 2px var(--pxt-error);
+                        }
+                
+                        &:focus-within::after {
+                            border: solid 2px var(--pxt-error);
+                        }
+
                         input {
                             margin-left: 1.8rem;
 
