@@ -54,10 +54,26 @@
                             text-align: start;
                         }
                     }
+
+                    &.error input {
+                        margin-left: 1.8rem;
+                    }
                 }
     
                 &.number-input {
                     width: 2.3rem;
+
+                    &.error {
+                        width: 4rem; // add space for icon
+
+                        input {
+                            margin-left: 1.3rem;
+                        }
+
+                        i {
+                            bottom: 0.4rem;
+                        }
+                    }
 
                     // Hide arrows on right-hand side of number input.
                     // Firefox
@@ -94,12 +110,8 @@
                             border: solid 2px var(--pxt-error);
                         }
 
-                        input {
-                            margin-left: 1.8rem;
-
-                            &::placeholder {
-                                color: var(--pxt-page-foreground);
-                            }
+                        input::placeholder {
+                            color: var(--pxt-page-foreground);
                         }
 
                         i {
