@@ -43,13 +43,12 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                 isEmpty ? css["error"] : undefined
             )}
             icon={isEmpty ? "fas fa-exclamation-triangle" : undefined}
-            iconTitle={isEmpty ? lf("Missing value") : undefined}
             initialValue={initialValue}
             onDebouncedChange={onDebouncedChange}
             onChange={onChange}
             preserveValueOnBlur={true}
             placeholder={numeric ? "0" : param.name}
-            title={param.name}
+            title={isEmpty ? lf("{0}: value required", param.name) : param.name}
             autoComplete={false}
             type = {numeric ? "number" : "text"}
         />
