@@ -76,13 +76,27 @@
                     padding: 0;
                 }
 
+                input {
+                    transition: margin-left 0.1s ease-in-out;
+                }
+
                 &.error {
                     div[class*="common-input-group"] {
                         border: solid 1px var(--pxt-error-accent);
                         background-color: var(--pxt-error-background);
+                        transition: background-color 0.3s ease-in-out, border 0.3s ease-in-out;
 
-                        input::placeholder {
-                            color: var(--pxt-page-foreground);
+                        input {
+                            margin-left: 1.8rem;
+
+                            &::placeholder {
+                                color: var(--pxt-page-foreground);
+                            }
+                        }
+
+                        i {
+                            right: unset;
+                            left: 0.5rem;
                         }
                     }
                 }
