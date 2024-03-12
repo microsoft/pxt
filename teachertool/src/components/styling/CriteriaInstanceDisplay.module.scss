@@ -55,7 +55,7 @@
                         }
                     }
 
-                    &.error input {
+                    &.error:not(:focus):not(:focus-within) input {
                         margin-left: 1.8rem;
                     }
                 }
@@ -63,7 +63,7 @@
                 &.number-input {
                     width: 2.7rem; // Just enough space for 3 digits
 
-                    &.error {
+                    &.error:not(:focus):not(:focus-within) {
                         width: 4rem; // Add space for icon
 
                         input {
@@ -93,11 +93,11 @@
                 }
 
                 input {
-                    transition: margin-left 0.1s ease-in-out;
+                    transition: margin-left 0.05s ease-in-out;
                 }
 
                 &.error {
-                    div[class*="common-input-group"] {
+                    &:not(:focus):not(:focus-within) div[class*="common-input-group"] {
                         border: solid 1px var(--pxt-error-accent);
                         background-color: var(--pxt-error-background);
                         transition: background-color 0.3s ease-in-out, border 0.3s ease-in-out;
@@ -117,6 +117,12 @@
                         i {
                             right: unset;
                             left: 0.5rem;
+                        }
+                    }
+
+                    &:focus, &:focus-within {
+                        i {
+                            display: none;
                         }
                     }
                 }
