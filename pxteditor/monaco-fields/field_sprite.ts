@@ -9,9 +9,8 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
     protected template: string;
 
     protected textToValue(text: string): pxt.ProjectImage {
-        console.log("textToValue: ", text)
         this.isPython = text.indexOf("`") === -1
-        this.template = text.indexOf("bmp") === 0 ?  "bmp" : "img"
+        this.template = text.match("\s*bmp") ?  "bmp" : "img"
 
         const match = pxt.parseAssetTSReference(text);
         if (match) {
