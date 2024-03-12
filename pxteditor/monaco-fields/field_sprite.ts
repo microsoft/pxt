@@ -6,11 +6,12 @@ const fieldEditorId = "image-editor";
 export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage> {
     protected isPython: boolean;
     protected isAsset: boolean;
-    protected isBmp: boolean;
+    protected template: string;
 
     protected textToValue(text: string): pxt.ProjectImage {
+        console.log("textToValue: ", text)
         this.isPython = text.indexOf("`") === -1
-        this.isBmp = text.indexOf("bmp") === 0
+        this.template = text.indexOf("bmp") === 0 ?  "bmp" : "img"
 
         const match = pxt.parseAssetTSReference(text);
         if (match) {
@@ -33,10 +34,9 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
             }
         }
 
-        return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text, this.isBmp ? "bmp" : "img"));
+        return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text, this.template));
     }
 
-    // TODO
     protected resultToText(result: pxt.ProjectImage): string {
         if (result.meta?.displayName) {
             const project = pxt.react.getTilemapProject();
@@ -48,10 +48,9 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
             this.isAsset = true;
             return pxt.getTSReferenceForAsset(result, this.isPython);
         }
-        return pxt.sprite.bitmapToImageLiteral(
-            pxt.sprite.Bitmap.fromData(result.bitmap),
+        return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap),
             this.isPython ? "python" : "typescript",
-            this.isBmp ? "bmp" : "img"
+            this.template
         )
     }
 
