@@ -61,10 +61,10 @@
                 }
     
                 &.number-input {
-                    width: 2.3rem;
+                    width: 2.7rem; // Just enough space for 3 digits
 
                     &.error {
-                        width: 4rem; // add space for icon
+                        width: 4rem; // Add space for icon
 
                         input {
                             margin-left: 1.3rem;
