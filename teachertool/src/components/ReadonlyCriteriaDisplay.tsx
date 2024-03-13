@@ -12,7 +12,11 @@ export interface ReadOnlyCriteriaDisplayProps {
     showDescription?: boolean;
 }
 
-export const ReadOnlyCriteriaDisplay: React.FC<ReadOnlyCriteriaDisplayProps> = ({ catalogCriteria, criteriaInstance, showDescription }) => {
+export const ReadOnlyCriteriaDisplay: React.FC<ReadOnlyCriteriaDisplayProps> = ({
+    catalogCriteria,
+    criteriaInstance,
+    showDescription,
+}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     function getSegmentDisplayText(segment: CriteriaTemplateSegment): string {
@@ -37,7 +41,9 @@ export const ReadOnlyCriteriaDisplay: React.FC<ReadOnlyCriteriaDisplayProps> = (
                     })}
                 </div>
             )}
-            {showDescription && catalogCriteria.description && <div className={css["criteria-description"]}>{catalogCriteria.description}</div>}
+            {showDescription && catalogCriteria.description && (
+                <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
+            )}
         </div>
     );
 };

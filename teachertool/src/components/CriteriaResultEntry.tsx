@@ -78,7 +78,11 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
             {catalogCriteria && (
                 <div className={css["specific-criteria-result"]} key={criteriaId}>
                     <div className={css["result-details"]}>
-                        <ReadOnlyCriteriaDisplay catalogCriteria={catalogCriteria} criteriaInstance={criteriaInstance} showDescription={false} />
+                        <ReadOnlyCriteriaDisplay
+                            catalogCriteria={catalogCriteria}
+                            criteriaInstance={criteriaInstance}
+                            showDescription={false}
+                        />
                         <CriteriaEvalResultDropdown
                             result={teacherTool.evalResults[criteriaId].result}
                             criteriaId={criteriaId}
