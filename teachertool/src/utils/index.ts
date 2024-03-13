@@ -1,7 +1,8 @@
 import { nanoid } from "nanoid";
-import { CarouselRubricResourceCard, ToastType, ToastWithId } from "../types";
+import { CarouselRubricResourceCard, CriteriaTemplateSegment, ToastType, ToastWithId } from "../types";
 import { Rubric } from "../types/rubric";
 import { classList } from "react-common/components/util";
+import { CatalogCriteria } from "../types/criteria";
 
 export function makeToast(type: ToastType, text: string, timeoutMs: number = 5000): ToastWithId {
     return {
@@ -43,4 +44,30 @@ export const isRubricResourceCard = (card: any): card is CarouselRubricResourceC
 export function getProjectLink(inputText: string): string {
     const hasMakeCode = inputText?.indexOf("makecode") !== -1;
     return hasMakeCode ? inputText : `https://makecode.com/${inputText}`;
+}
+
+export function splitCriteriaTemplate(template: string): CriteriaTemplateSegment[] {
+    // Split by the regex, which will give us an array where every other element is a parameter.
+    // If the template starts with a parameter, the first element will be an empty string.
+    const paramRegex = /\$\{([\w\s]+)\}/g;
+    const parts = template.split(paramRegex);
+
+    const segments: CriteriaTemplateSegment[] = [];
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+
+        if (part) {
+            if (i % 2 === 0) {
+                segments.push({ type: "plain-text", content: part.trim() });
+            } else {
+                segments.push({ type: "param", content: part.toLocaleLowerCase().trim() });
+            }
+        }
+    }
+
+    return segments;
+}
+
+export function getReadableCriteriaTemplate(criteria: CatalogCriteria): string {
+    return criteria.template.replaceAll("${", "").replaceAll("}", "");
 }

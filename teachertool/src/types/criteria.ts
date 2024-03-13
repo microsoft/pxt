@@ -5,7 +5,7 @@ export interface CatalogCriteria {
     template: string; // A (mostly) human-readable string describing the criteria. May contain parameters
     description: string | undefined; // More detailed description
     docPath: string | undefined; // Path to documentation
-    parameters: CriteriaParameter[] | undefined; // Any parameters that affect the criteria
+    params: CriteriaParameter[] | undefined; // Any parameters that affect the criteria
     hideInCatalog?: boolean; // Whether the criteria should be hidden in the user-facing catalog
 }
 
@@ -17,10 +17,12 @@ export interface CriteriaInstance {
 }
 
 // Represents a parameter definition in a catalog criteria.
+export type CriteriaParameterType = "string" | "longString" | "number" | "block";
 export interface CriteriaParameter {
     name: string;
-    type: string;
-    path: string; // The json path of the parameter in the catalog criteria.
+    type: CriteriaParameterType;
+    default: string | undefined;
+    paths: string[]; // The json path(s) to update with the parameter value in the catalog criteria.
 }
 
 // Represents a parameter value in a criteria instance.
