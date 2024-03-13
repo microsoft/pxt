@@ -14,6 +14,7 @@
     min-height: 9rem;
     max-height: 12rem;
     border-bottom: solid 1px var(--pxt-content-accent);
+    break-inside: avoid;
 }
 
 .result-details {
@@ -114,5 +115,13 @@
 @media print {
     .no-print {
         display: none !important;
+    }
+
+    .result-notes {
+        height: 8.5rem;
+    }
+
+    .result-notes.no-print {
+        height: 5.5rem;
     }
 }

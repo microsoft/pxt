@@ -48,8 +48,8 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, n
         <div className={css["notes-container"]}>
             <DebouncedTextarea
                 placeholder={lf("Write your notes here")}
-                ariaLabel={lf("Notes regarding the criteria result")}
-                label={lf("Notes")}
+                ariaLabel={lf("Feedback regarding the criteria result")}
+                label={lf("Feedback")}
                 title={lf("Write your notes here")}
                 initialValue={teacherTool.evalResults[criteriaId]?.notes ?? undefined}
                 resize="vertical"
@@ -89,7 +89,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                             criteriaId={criteriaId}
                         />
                     </div>
-                    <div className={css["result-notes"]}>
+                    <div className={classList(css["result-notes"], css[`${teacherTool.evalResults[criteriaId]?.notes ? '': 'no-print'}`])}>
                         {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
                         {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
                     </div>
