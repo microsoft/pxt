@@ -34,24 +34,27 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
         setIsEmpty(!newValue);
     }
 
+    const tooltip = isEmpty ? lf("{0}: value required", param.name) : param.name;
     return (
-        <DebouncedInput
-            className={classList(
-                css["inline-input"],
-                numeric ? css["number-input"] : css["string-input"],
-                shouldExpand ? css["long"] : undefined,
-                isEmpty ? css["error"] : undefined
-            )}
-            icon={isEmpty ? "fas fa-exclamation-triangle" : undefined}
-            initialValue={initialValue}
-            onDebouncedChange={onDebouncedChange}
-            onChange={onChange}
-            preserveValueOnBlur={true}
-            placeholder={numeric ? "0" : param.name}
-            title={isEmpty ? lf("{0}: value required", param.name) : param.name}
-            autoComplete={false}
-            type = {numeric ? "number" : "text"}
-        />
+        <div title={tooltip} className={css["inline-input-wrapper"]}>
+            <DebouncedInput
+                className={classList(
+                    css["inline-input"],
+                    numeric ? css["number-input"] : css["string-input"],
+                    shouldExpand ? css["long"] : undefined,
+                    isEmpty ? css["error"] : undefined
+                )}
+                icon={isEmpty ? "fas fa-exclamation-triangle" : undefined}
+                initialValue={initialValue}
+                onDebouncedChange={onDebouncedChange}
+                onChange={onChange}
+                preserveValueOnBlur={true}
+                placeholder={numeric ? "0" : param.name}
+                title={tooltip}
+                autoComplete={false}
+                type={numeric ? "number" : "text"}
+            />
+        </div>
     );
 };
 

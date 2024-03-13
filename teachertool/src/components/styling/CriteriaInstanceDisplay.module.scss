@@ -8,7 +8,7 @@
         border-radius: 0.5rem;
         border: solid 1px var(--pxt-page-foreground);
         padding: 0 0.4rem;
-        
+
         &:focus::after {
             outline: none;
             border-radius: 0.5rem;
@@ -42,87 +42,98 @@
                 flex-grow: 1;
             }
 
-            .inline-input {
-                margin: 0.2rem 0;
-
-                &.string-input {
-                    width: 10rem;
-    
-                    &.long {
-                        flex-grow: 1;
-                        input {
-                            text-align: start;
-                        }
-                    }
-
-                    &.error:not(:focus):not(:focus-within) input {
-                        margin-left: 1.8rem;
-                    }
-                }
-    
-                &.number-input {
-                    width: 2.7rem; // Just enough space for 3 digits
-
-                    &.error:not(:focus):not(:focus-within) {
-                        width: 4rem; // Add space for icon
-
-                        input {
-                            margin-left: 1.3rem;
-                        }
-
-                        i {
-                            bottom: 0.4rem;
-                        }
-                    }
-
-                    // Hide arrows on right-hand side of number input.
-                    // Firefox
-                    input[type=number] {
-                        -moz-appearance: textfield;
-                    }
-                    // Other browsers
-                    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
-                        -webkit-appearance: none;
-                        margin: 0;
-                    }
+            .inline-input-wrapper {
+                &:has(.long) {
+                    flex-grow: 1;
                 }
 
-                input {
-                    text-align: center;
-                    padding: 0;
-                }
+                .inline-input {
+                    margin: 0.2rem 0;
 
-                input {
-                    transition: margin-left 0.05s ease-in-out;
-                }
+                    &.string-input {
+                        width: 10rem;
 
-                &.error {
-                    &:not(:focus):not(:focus-within) div[class*="common-input-group"] {
-                        border: solid 1px var(--pxt-error-accent);
-                        background-color: var(--pxt-error-background);
-                        transition: background-color 0.3s ease-in-out, border 0.3s ease-in-out;
+                        &.long {
+                            width: unset;
+                            flex-grow: 1;
 
-                        &:focus::after {
-                            border: solid 2px var(--pxt-error);
-                        }
-                
-                        &:focus-within::after {
-                            border: solid 2px var(--pxt-error);
+                            input {
+                                text-align: start;
+                            }
                         }
 
-                        input::placeholder {
-                            color: var(--pxt-page-foreground);
-                        }
-
-                        i {
-                            right: unset;
-                            left: 0.5rem;
+                        &.error:not(:focus):not(:focus-within) input {
+                            margin-left: 1.8rem;
                         }
                     }
 
-                    &:focus, &:focus-within {
-                        i {
-                            display: none;
+                    &.number-input {
+                        width: 2.7rem; // Just enough space for 3 digits
+
+                        &.error:not(:focus):not(:focus-within) {
+                            width: 4rem; // Add space for icon
+
+                            input {
+                                margin-left: 1.3rem;
+                            }
+
+                            i {
+                                bottom: 0.4rem;
+                            }
+                        }
+
+                        // Hide arrows on right-hand side of number input.
+                        // Firefox
+                        input[type=number] {
+                            -moz-appearance: textfield;
+                        }
+
+                        // Other browsers
+                        input::-webkit-outer-spin-button,
+                        input::-webkit-inner-spin-button {
+                            -webkit-appearance: none;
+                            margin: 0;
+                        }
+                    }
+
+                    input {
+                        text-align: center;
+                        padding: 0;
+                    }
+
+                    input {
+                        transition: margin-left 0.05s ease-in-out;
+                    }
+
+                    &.error {
+                        &:not(:focus):not(:focus-within) div[class*="common-input-group"] {
+                            border: solid 1px var(--pxt-error-accent);
+                            background-color: var(--pxt-error-background);
+                            transition: background-color 0.3s ease-in-out, border 0.3s ease-in-out;
+
+                            &:focus::after {
+                                border: solid 2px var(--pxt-error);
+                            }
+
+                            &:focus-within::after {
+                                border: solid 2px var(--pxt-error);
+                            }
+
+                            input::placeholder {
+                                color: var(--pxt-page-foreground);
+                            }
+
+                            i {
+                                right: unset;
+                                left: 0.5rem;
+                            }
+                        }
+
+                        &:focus,
+                        &:focus-within {
+                            i {
+                                display: none;
+                            }
                         }
                     }
                 }
