@@ -7,6 +7,7 @@ import { IframeDriver } from "pxtservices/iframeDriver";
 
 
 let driver: IframeDriver | undefined;
+let highContrast: boolean;
 
 export function setEditorRef(ref: HTMLIFrameElement | undefined) {
     if (driver) {
@@ -28,12 +29,18 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
         driver.addEventListener("editorcontentloaded", ev => {
             AutorunService.poke();
         });
+
+        driver.setHighContrast(highContrast);
     }
 }
 
 //  an example of events that we want to/can send to the editor
 export async function setHighContrastAsync(on: boolean) {
-    await driver!.setHighContrast(on)
+    highContrast = on;
+
+    if (driver) {
+        await driver!.setHighContrast(on)
+    }
 }
 
 export async function runValidatorPlanAsync(
