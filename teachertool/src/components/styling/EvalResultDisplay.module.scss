@@ -12,7 +12,6 @@
     padding-bottom: 0.5rem;
     margin-top: 0.5rem;
     min-height: 9rem;
-    max-height: 12rem;
     border-bottom: solid 1px var(--pxt-content-accent);
     break-inside: avoid;
 }
@@ -117,11 +116,15 @@
         display: none !important;
     }
 
+    .specific-criteria-result {
+        min-height: 5.5rem;
+    }
+
     .result-notes {
-        height: 8.5rem;
+        height: 7rem;
     }
 
     .result-notes.no-print {
-        height: 5.5rem;
+        height: 1rem;
     }
 }

@@ -56,6 +56,11 @@
 
         text-align: center;
         padding-right: 8px;
+        border: none;
+
+        .common-button-label {
+            border-bottom: 1px solid var(--pxt-page-foreground);
+        }
     }
 }
 
