@@ -1,10 +1,11 @@
 import * as React from "react";
-import { useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Toolbar } from "./Toolbar";
 import { stateAndDispatch } from "../state";
 import { showToast } from "../state/actions";
 import { makeToast } from "../utils";
+import { Strings } from "../constants";
+
 
 interface PrintButtonProps {
     printRef: React.RefObject<HTMLDivElement>;
@@ -16,7 +17,7 @@ export const PrintButton: React.FC<PrintButtonProps> = ({ printRef, onHandlePrin
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
         onPrintError: () => showToast(makeToast("error", lf("Unable to print evaluation results"), 2000)),
-        documentTitle: `MakeCode Project Evaluation Results - ${teacherTool.projectMetadata?.name}`,
+        documentTitle: `MakeCode Project Evaluation Results - ${pxt.Util.sanitizeFileName(teacherTool.projectMetadata?.name || Strings.UntitledProject)}`,
     });
     return <Toolbar.Button icon="fas fa-print" title={lf("Print")} onClick={handlePrint} />;
 };
