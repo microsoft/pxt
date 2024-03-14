@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useContext, useRef } from "react";
+import { useContext } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { CriteriaResultEntry } from "./CriteriaResultEntry";
