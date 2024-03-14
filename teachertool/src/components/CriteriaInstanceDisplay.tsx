@@ -31,7 +31,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
             className={classList(
                 css["inline-input"],
                 numeric ? css["number-input"] : css["string-input"],
-                shouldExpand ? css["long"] : undefined,
+                shouldExpand ? css["long"] : undefined
             )}
             initialValue={initialValue}
             onChange={onChange}
@@ -39,7 +39,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
             placeholder={numeric ? "0" : param.name}
             title={param.name}
             autoComplete={false}
-            type = {numeric ? "number" : "text"}
+            type={numeric ? "number" : "text"}
         />
     );
 };

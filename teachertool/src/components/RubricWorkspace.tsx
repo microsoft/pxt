@@ -68,7 +68,7 @@ const WorkspaceTabPanels: React.FC<PrintRefProps> = ({ printRef }) => {
                 <ActiveRubricDisplay />
             </TabPanel>
             <TabPanel name="results">
-                <EvalResultDisplay printRef={printRef}/>
+                <EvalResultDisplay printRef={printRef} />
             </TabPanel>
         </>
     );
@@ -119,9 +119,7 @@ const WorkspaceToolbarButtons: React.FC<PrintRefProps> = ({ printRef }) => {
 
     return (
         <Toolbar.ControlGroup>
-            {activeTab === "results" && (
-                <PrintButton printRef={printRef} />
-            )}
+            {activeTab === "results" && <PrintButton printRef={printRef} />}
             {/* Conditional buttons go above this line */}
             <Toolbar.Toggle
                 label={Strings.AutoRun}
@@ -145,7 +143,7 @@ export const RubricWorkspace: React.FC = () => {
     return (
         <div className={css.panel}>
             <Toolbar left={<WorkspaceTabButtons />} right={<WorkspaceToolbarButtons printRef={printRef} />} />
-            <WorkspaceTabPanels printRef={printRef}/>
+            <WorkspaceTabPanels printRef={printRef} />
         </div>
     );
 };
