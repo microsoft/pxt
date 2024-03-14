@@ -1,6 +1,5 @@
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
-import { DebouncedInput } from "./DebouncedInput";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
@@ -8,6 +7,7 @@ import { splitCriteriaTemplate } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
 import { useState } from "react";
+import { Input } from "react-common/components/controls/Input";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -25,19 +25,15 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
 }) => {
     const [isEmpty, setIsEmpty] = useState(!initialValue);
 
-    function onDebouncedChange(newValue: string) {
-        setParameterValue(instance.instanceId, param.name, newValue);
-    }
-
     function onChange(newValue: string) {
-        // Keep this out of the debounced version to avoid delayed appearance.
         setIsEmpty(!newValue);
+        setParameterValue(instance.instanceId, param.name, newValue);
     }
 
     const tooltip = isEmpty ? lf("{0}: value required", param.name) : param.name;
     return (
         <div title={tooltip} className={css["inline-input-wrapper"]}>
-            <DebouncedInput
+            <Input
                 className={classList(
                     css["inline-input"],
                     numeric ? css["number-input"] : css["string-input"],
@@ -46,7 +42,6 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                 )}
                 icon={isEmpty ? "fas fa-exclamation-triangle" : undefined}
                 initialValue={initialValue}
-                onDebouncedChange={onDebouncedChange}
                 onChange={onChange}
                 preserveValueOnBlur={true}
                 placeholder={numeric ? "0" : param.name}
