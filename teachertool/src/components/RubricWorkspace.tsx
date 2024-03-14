@@ -54,11 +54,11 @@ const WorkspaceTabButtons: React.FC = () => {
     );
 };
 
-interface WithRefProps {
+interface PrintRefProps {
     printRef: React.RefObject<HTMLDivElement>;
 }
 
-const WorkspaceTabPanels: React.FC<WithRefProps> = ({ printRef }) => {
+const WorkspaceTabPanels: React.FC<PrintRefProps> = ({ printRef }) => {
     return (
         <>
             <TabPanel name="home">
@@ -106,7 +106,7 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
     return items;
 }
 
-const WorkspaceToolbarButtons: React.FC<WithRefProps> = ({ printRef }) => {
+const WorkspaceToolbarButtons: React.FC<PrintRefProps> = ({ printRef }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const { activeTab, autorun } = teacherTool;
 
