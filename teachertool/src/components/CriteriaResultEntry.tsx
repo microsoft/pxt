@@ -95,7 +95,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                             criteriaId={criteriaId}
                         />
                     </div>
-                    <div className={classList(css["result-notes"], css[`${teacherTool.evalResults[criteriaId]?.notes ? '': 'no-print'}`])}>
+                    <div className={classList(css["result-notes"], teacherTool.evalResults[criteriaId]?.notes ? undefined : css['no-print'])}>
                         {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
                         {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
                     </div>
