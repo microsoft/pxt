@@ -27,7 +27,11 @@ const ResultsHeader: React.FC = () => {
     );
 };
 
-export const EvalResultDisplay: React.FC<{printRef: React.RefObject<HTMLDivElement>}> = ({ printRef }) => {
+interface EvalResultDisplayProps {
+    printRef: React.RefObject<HTMLDivElement>;
+}
+
+export const EvalResultDisplay: React.FC<EvalResultDisplayProps> = ({ printRef }) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     return (
