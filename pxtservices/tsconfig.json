@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "module": "commonjs",
+        "outDir": "../built/pxtservices",
+        "rootDir": ".",
+        "newLine": "LF",
+        "sourceMap": false,
+        "moduleResolution": "node",
+        "isolatedModules": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": true,
+        "preserveConstEnums": true,
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "scripthost",
+            "es2017",
+            "ES2018.Promise"
+        ],
+        "incremental": false,
+        "skipLibCheck": true
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}

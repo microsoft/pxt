@@ -3801,12 +3801,20 @@ export class ProjectView
         const cloudStatus = cloudMd?.cloudStatus();
         if (cloudStatus) {
             const msg: pxt.editor.EditorMessageProjectCloudStatus = {
-                type: "pxteditor",
+                type: "pxthost",
                 action: "projectcloudstatus",
                 headerId: cloudMd.headerId,
                 status: cloudStatus.value
             };
             pxteditor.postHostMessageAsync(msg);
+
+            // Deprecated: This was originally fired with the "pxteditor"
+            // type, which should only be used for responses, not events.
+            // Use the pxthost version above instead
+            pxteditor.postHostMessageAsync({
+                ...msg,
+                type: "pxteditor"
+            });
         }
     }
 
@@ -4831,10 +4839,20 @@ export class ProjectView
             }
         }
 
-        pxteditor.postHostMessageAsync({
-            type: "pxteditor",
+        const msg: pxt.editor.EditorContentLoadedRequest = {
+            type: "pxthost",
             action: "editorcontentloaded"
-        } as pxt.editor.EditorContentLoadedRequest)
+        };
+
+        pxteditor.postHostMessageAsync(msg);
+
+        // Deprecated: This was originally fired with the "pxteditor"
+        // type, which should only be used for responses, not events.
+        // Use the pxthost version above instead
+        pxteditor.postHostMessageAsync({
+            ...msg,
+            type: "pxteditor"
+        });
 
         if (this.pendingImport) {
             this.pendingImport.resolve();

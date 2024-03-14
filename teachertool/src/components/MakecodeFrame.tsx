@@ -2,7 +2,7 @@
 
 import css from "./styling/MakeCodeFrame.module.scss";
 import { useContext, useEffect } from "react";
-import { clearReady, setEditorRef } from "../services/makecodeEditorService";
+import { setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
 
@@ -13,7 +13,9 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
 
     // Clear iframe state when the iframe url is changed
     useEffect(() => {
-        clearReady();
+        if (!teacherTool.projectMetadata?.id) {
+            setEditorRef(undefined);
+        }
     }, [teacherTool.projectMetadata?.id]);
 
     function createIFrameUrl(shareId: string): string {
@@ -30,7 +32,9 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
     }
 
     const handleIFrameRef = (el: HTMLIFrameElement | null) => {
-        setEditorRef(el ?? undefined);
+        if (el) {
+            setEditorRef(el);
+        }
     };
 
     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
