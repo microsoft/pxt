@@ -9,10 +9,9 @@ import { Strings } from "../constants";
 
 interface PrintButtonProps {
     printRef: React.RefObject<HTMLDivElement>;
-    onHandlePrint?: () => void;
 }
 
-export const PrintButton: React.FC<PrintButtonProps> = ({ printRef, onHandlePrint }) => {
+export const PrintButton: React.FC<PrintButtonProps> = ({ printRef }) => {
     const { state: teacherTool } = stateAndDispatch();
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
