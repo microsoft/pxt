@@ -54,13 +54,6 @@ function generateValidatorPlan(
                     catalogId: criteriaInstance.catalogCriteriaId,
                     paramName: param.name,
                 });
-                showToast(
-                    makeToast(
-                        "error",
-                        // prettier-ignore
-                        lf("Unable to evaluate criteria: missing '{0}' in '{1}'", param.name, getReadableCriteriaTemplate(catalogCriteria))
-                    )
-                );
             }
             return undefined;
         }

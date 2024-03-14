@@ -6,32 +6,8 @@ import { hideModal } from "../transforms/hideModal";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
 import { getSelectableCatalogCriteria } from "../state/helpers";
+import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import css from "./styling/CatalogModal.module.scss";
-import { splitCriteriaTemplate } from "../utils";
-
-interface CatalogCriteriaDisplayProps {
-    criteria: CatalogCriteria;
-}
-const CatalogCriteriaDisplay: React.FC<CatalogCriteriaDisplayProps> = ({ criteria }) => {
-    const segments = useMemo(() => splitCriteriaTemplate(criteria.template), [criteria.template]);
-
-    return (
-        <div className={css["criteria-display"]}>
-            {criteria.template && (
-                <div className={css["criteria-template"]}>
-                    {segments.map((segment, index) => {
-                        return (
-                            <span key={`${criteria.id}-${index}`} className={css[`${segment.type}-segment`]}>
-                                {segment.content}
-                            </span>
-                        );
-                    })}
-                </div>
-            )}
-            {criteria.description && <div className={css["criteria-description"]}>{criteria.description}</div>}
-        </div>
-    );
-};
 
 interface CatalogModalProps {}
 export const CatalogModal: React.FC<CatalogModalProps> = ({}) => {
@@ -96,7 +72,7 @@ export const CatalogModal: React.FC<CatalogModalProps> = ({}) => {
                             id={`checkbox_${criteria.id}`}
                             key={criteria.id}
                             className={css["catalog-item"]}
-                            label={<CatalogCriteriaDisplay criteria={criteria} />}
+                            label={<ReadOnlyCriteriaDisplay catalogCriteria={criteria} showDescription={true} />}
                             onChange={newValue => handleCriteriaSelectedChange(criteria, newValue)}
                             isChecked={isCriteriaSelected(criteria.id)}
                         />

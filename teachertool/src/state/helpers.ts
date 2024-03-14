@@ -15,6 +15,11 @@ export function getCriteriaInstanceWithId(state: AppState, id: string): Criteria
     return state.rubric.criteria.find(c => c.instanceId === id);
 }
 
+export function getParameterValue(state: AppState, instanceId: string, paramName: string): string | undefined {
+    const instance = getCriteriaInstanceWithId(state, instanceId);
+    return instance?.params?.find(p => p.name === paramName)?.value;
+}
+
 export function verifyCriteriaInstanceIntegrity(instance: CriteriaInstance) {
     const catalogCriteria = getCatalogCriteriaWithId(instance.catalogCriteriaId);
 
