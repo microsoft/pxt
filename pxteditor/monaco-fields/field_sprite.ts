@@ -6,9 +6,11 @@ const fieldEditorId = "image-editor";
 export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage> {
     protected isPython: boolean;
     protected isAsset: boolean;
+    protected template: string;
 
     protected textToValue(text: string): pxt.ProjectImage {
         this.isPython = text.indexOf("`") === -1
+        this.template = text.startsWith("bmp") ? "bmp" : "img"
 
         const match = pxt.parseAssetTSReference(text);
         if (match) {
@@ -31,7 +33,7 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
             }
         }
 
-        return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text));
+        return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text, this.template));
     }
 
     protected resultToText(result: pxt.ProjectImage): string {
@@ -45,7 +47,10 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
             this.isAsset = true;
             return pxt.getTSReferenceForAsset(result, this.isPython);
         }
-        return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap), this.isPython ? "python" : "typescript");
+        return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap),
+            this.isPython ? "python" : "typescript",
+            this.template
+        )
     }
 
     protected getFieldEditorId() {
@@ -78,7 +83,7 @@ export const spriteEditorDefinition: MonacoFieldEditorDefinition = {
     heightInPixels: 510,
     matcher: {
         // match both JS and python
-        searchString: "(?:img|assets\\s*\\.\\s*image)\\s*(?:`|\\(\\s*\"\"\")(?:(?:[^(){}:\\[\\]\"';?/,+\\-=*&|^%!`~]|\\n)*)\\s*(?:`|\"\"\"\\s*\\))",
+        searchString: "(?:img|bmp|assets\\s*\\.\\s*image)\\s*(?:`|\\(\\s*\"\"\")(?:(?:[^(){}:\\[\\]\"';?/,+\\-=*&|^%!`~]|\\n)*)\\s*(?:`|\"\"\"\\s*\\))",
         isRegex: true,
         matchCase: true,
         matchWholeWord: false

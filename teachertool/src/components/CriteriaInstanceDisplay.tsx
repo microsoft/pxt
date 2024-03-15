@@ -1,12 +1,13 @@
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
-import { DebouncedInput } from "./DebouncedInput";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
 import { splitCriteriaTemplate } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
+import { useState } from "react";
+import { Input } from "react-common/components/controls/Input";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -22,32 +23,39 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     shouldExpand,
     numeric,
 }) => {
+    const [isEmpty, setIsEmpty] = useState(!initialValue);
+
     function onChange(newValue: string) {
+        setIsEmpty(!newValue);
         setParameterValue(instance.instanceId, param.name, newValue);
     }
 
+    const tooltip = isEmpty ? lf("{0}: value required", param.name) : param.name;
     return (
-        <DebouncedInput
-            className={classList(
-                css["inline-input"],
-                numeric ? css["number-input"] : css["string-input"],
-                shouldExpand ? css["long"] : undefined
-            )}
-            initialValue={initialValue}
-            onChange={onChange}
-            preserveValueOnBlur={true}
-            placeholder={numeric ? "0" : param.name}
-            title={param.name}
-            autoComplete={false}
-            type={numeric ? "number" : "text"}
-        />
+        <div title={tooltip} className={css["inline-input-wrapper"]}>
+            <Input
+                className={classList(
+                    css["inline-input"],
+                    numeric ? css["number-input"] : css["string-input"],
+                    shouldExpand ? css["long"] : undefined,
+                    isEmpty ? css["error"] : undefined
+                )}
+                icon={isEmpty ? "fas fa-exclamation-triangle" : undefined}
+                initialValue={initialValue}
+                onChange={onChange}
+                preserveValueOnBlur={true}
+                placeholder={numeric ? "0" : param.name}
+                title={tooltip}
+                autoComplete={false}
+                type={numeric ? "number" : "text"}
+            />
+        </div>
     );
 };
 
 interface CriteriaInstanceDisplayProps {
     criteriaInstance: CriteriaInstance;
 }
-
 export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaInstance }) => {
     const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
     if (!catalogCriteria) {

@@ -3,7 +3,8 @@
         "paths": {
             "react-common/*": ["../react-common/*"],
             "react/*": ["../node_modules/react/*"],
-            "react-dom/*": ["../node_modules/react-dom/*"]
+            "react-dom/*": ["../node_modules/react-dom/*"],
+            "pxtservices/*": ["../pxtservices/*"]
         }
     }
 }
