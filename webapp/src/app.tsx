@@ -4053,6 +4053,20 @@ export class ProjectView
             });
     }
 
+    renderXml(req: pxt.editor.EditorMessageRenderXmlRequest): pxt.editor.EditorMessageRenderXmlResponse {
+        const svg = pxtblockly.render(req.xml, {
+            snippetMode: req.snippetMode || false,
+            layout: req.layout !== undefined ? req.layout : pxt.editor.BlockLayout.Align,
+            splitSvg: false
+        }) as SVGSVGElement;
+
+        const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
+        return {
+            svg: svg,
+            resultXml: pxtblockly.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3])
+        }
+    }
+
     getBlocks(): Blockly.Block[] {
         if (!this.isBlocksActive()) {
             console.error("Trying to get blocks from a non-blocks editor.");

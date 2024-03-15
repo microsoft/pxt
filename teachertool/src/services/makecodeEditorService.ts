@@ -7,7 +7,7 @@ import { IframeDriver } from "pxtservices/iframeDriver";
 
 
 let driver: IframeDriver | undefined;
-let highContrast: boolean;
+let highContrast: boolean = false;
 
 export function setEditorRef(ref: HTMLIFrameElement | undefined) {
     if (driver) {
@@ -39,8 +39,31 @@ export async function setHighContrastAsync(on: boolean) {
     highContrast = on;
 
     if (driver) {
-        await driver!.setHighContrast(on)
+        await driver.setHighContrast(on)
     }
+}
+
+export async function getAllToolboxBlockTypes() {
+    if (!driver) {
+        return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
+    }
+}
+
+export async function getBlockImageUriAsync(type: string) {
+    if (!driver) {
+        return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
+    }
+
+    // Create XML snippet for a block with this type
+    const xml = `
+<xml xmlns="https://developers.google.com/blockly/xml">
+    <block type="${type}" />
+</xml>
+`;
+
+    // Get an image from the XML
+    const response = await driver.renderXml(xml) as any;
+    return response;
 }
 
 export async function runValidatorPlanAsync(

@@ -154,6 +154,16 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         })
                                     });
                             }
+                            case "renderxml": {
+                                const rendermsg = data as pxt.editor.EditorMessageRenderXmlRequest;
+                                return Promise.resolve()
+                                    .then(() => {
+                                        const r = projectView.renderXml(rendermsg);
+                                        return r.resultXml.then((svg: any) => {
+                                            resp = svg.xml;
+                                        })
+                                    });
+                            }
                             case "runeval": {
                                 const evalmsg = data as pxt.editor.EditorMessageRunEvalRequest;
                                 const plan = evalmsg.validatorPlan;
@@ -165,6 +175,9 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     .then (results => {
                                         resp = { result: results };
                                     });
+                            }
+                            case "gettoolboxblocks": {
+                                // TODO thsparks : return maps of categories -> list of types/ids?
                             }
                             case "renderpython": {
                                 const rendermsg = data as pxt.editor.EditorMessageRenderPythonRequest;

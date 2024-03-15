@@ -352,6 +352,18 @@ export class IframeDriver {
         return (resp.resp as pxt.editor.EditorMessageRenderPythonResponse).python;
     }
 
+    async renderXml(xml: string) {
+        const resp = await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "renderxml",
+                xml
+            } as pxt.editor.EditorMessageRenderXmlRequest
+        ) as pxt.editor.EditorMessageResponse;
+
+        return resp.resp;
+    }
+
     async runValidatorPlan(validatorPlan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]) {
         const resp = await this.sendRequest(
             {
