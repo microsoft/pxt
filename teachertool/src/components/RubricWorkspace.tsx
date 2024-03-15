@@ -54,11 +54,11 @@ const WorkspaceTabButtons: React.FC = () => {
     );
 };
 
-interface PrintRefProps {
-    printRef: React.RefObject<HTMLDivElement>;
+interface WorkspaceTabPanelsProps {
+    resultsRef: React.RefObject<HTMLDivElement>;
 }
 
-const WorkspaceTabPanels: React.FC<PrintRefProps> = ({ printRef }) => {
+const WorkspaceTabPanels: React.FC<WorkspaceTabPanelsProps> = ({ resultsRef }) => {
     return (
         <>
             <TabPanel name="home">
@@ -68,7 +68,7 @@ const WorkspaceTabPanels: React.FC<PrintRefProps> = ({ printRef }) => {
                 <ActiveRubricDisplay />
             </TabPanel>
             <TabPanel name="results">
-                <EvalResultDisplay printRef={printRef} />
+                <EvalResultDisplay resultsRef={resultsRef} />
             </TabPanel>
         </>
     );
@@ -106,7 +106,11 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
     return items;
 }
 
-const WorkspaceToolbarButtons: React.FC<PrintRefProps> = ({ printRef }) => {
+interface WorkspaceToolbarButtonsProps {
+    resultsRef: React.RefObject<HTMLDivElement>;
+}
+
+const WorkspaceToolbarButtons: React.FC<WorkspaceToolbarButtonsProps> = ({ resultsRef }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const { activeTab, autorun } = teacherTool;
 
@@ -119,7 +123,7 @@ const WorkspaceToolbarButtons: React.FC<PrintRefProps> = ({ printRef }) => {
 
     return (
         <Toolbar.ControlGroup>
-            {activeTab === "results" && <PrintButton printRef={printRef} />}
+            {activeTab === "results" && <PrintButton printRef={resultsRef} />}
             {/* Conditional buttons go above this line */}
             <Toolbar.Toggle
                 label={Strings.AutoRun}
@@ -139,11 +143,11 @@ const WorkspaceToolbarButtons: React.FC<PrintRefProps> = ({ printRef }) => {
 };
 
 export const RubricWorkspace: React.FC = () => {
-    const printRef = useRef<HTMLDivElement>(null);
+    const resultsRef = useRef<HTMLDivElement>(null);
     return (
         <div className={css.panel}>
-            <Toolbar left={<WorkspaceTabButtons />} right={<WorkspaceToolbarButtons printRef={printRef} />} />
-            <WorkspaceTabPanels printRef={printRef} />
+            <Toolbar left={<WorkspaceTabButtons />} right={<WorkspaceToolbarButtons resultsRef={resultsRef} />} />
+            <WorkspaceTabPanels resultsRef={resultsRef} />
         </div>
     );
 };
