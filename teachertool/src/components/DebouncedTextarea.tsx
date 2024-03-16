@@ -11,6 +11,8 @@ export interface DebouncedTextareaProps extends TextareaProps {
 export const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({ intervalMs = 500, ...props }) => {
     const timerId = useRef<NodeJS.Timeout | undefined>(undefined);
     const latestValue = useRef<string>("");
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const sendChange = () => {
         if (props.onChange) {
@@ -21,10 +23,27 @@ export const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({ intervalMs
     // If the timer is pending and the component unmounts,
     // clear the timer and fire the onChange event immediately.
     useEffect(() => {
+        const resizeObserver = new ResizeObserver(() => {
+            window.requestAnimationFrame(() => {
+                if (containerRef.current) {
+                    containerRef.current.style.height = "1px";
+                    containerRef.current.style.height = `${25 + containerRef.current.scrollHeight}px`;
+                }
+            });
+        });
+
+        if (textareaRef.current) {
+            resizeObserver.observe(textareaRef.current);
+        }
+
         return () => {
             if (timerId.current) {
                 clearTimeout(timerId.current);
                 sendChange();
+            }
+
+            if (textareaRef.current) {
+                resizeObserver.unobserve(textareaRef.current);
             }
         };
     }, []);
@@ -39,5 +58,9 @@ export const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({ intervalMs
         timerId.current = setTimeout(sendChange, intervalMs);
     };
 
-    return <Textarea {...props} onChange={onChangeDebounce} />;
+    return (
+        <div ref={containerRef}>
+            <Textarea {...props} autoResize={true} onChange={onChangeDebounce} resizeRef={textareaRef}/>
+        </div>
+    );
 };

@@ -1,7 +1,6 @@
 .common-textarea-wrapper {
     div[class*="common-textarea-group"] {
         border-radius: 0.5rem;
-        height: 3.5rem;
         font-weight: 500;
         &:focus::after {
             outline: none;
