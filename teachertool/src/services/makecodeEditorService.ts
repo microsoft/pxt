@@ -7,7 +7,7 @@ import { IframeDriver } from "pxtservices/iframeDriver";
 
 
 let driver: IframeDriver | undefined;
-let highContrast: boolean;
+let highContrast: boolean = false;
 
 export function setEditorRef(ref: HTMLIFrameElement | undefined) {
     if (driver) {
