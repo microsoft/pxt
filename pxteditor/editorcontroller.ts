@@ -176,8 +176,11 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         resp = { result: results };
                                     });
                             }
-                            case "gettoolboxblocks": {
-                                // TODO thsparks : return maps of categories -> list of types/ids?
+                            case "getblocksinfo": {
+                                return Promise.resolve()
+                                    .then(() => {
+                                        resp = projectView.getBlocksInfo();
+                                    });
                             }
                             case "renderpython": {
                                 const rendermsg = data as pxt.editor.EditorMessageRenderPythonRequest;

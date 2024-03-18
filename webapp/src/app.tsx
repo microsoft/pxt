@@ -4076,6 +4076,16 @@ export class ProjectView
         return this.blocksEditor.editor.getAllBlocks(false);
     }
 
+    getBlocksInfo(): pxt.editor.EditorMessageGetBlocksInfoResponse {
+        if (!this.isBlocksActive()) {
+            console.error("Trying to get blocks info from a non-blocks editor.");
+            throw new Error("Trying to get blocks info from a non-blocks editor.");
+        }
+
+        const blocksInfo = this.blocksEditor.getBlocksInfo();
+        return { blocksInfo };
+    }
+
     launchFullEditor() {
         Util.assert(pxt.shell.isSandboxMode());
 

@@ -43,10 +43,13 @@ export async function setHighContrastAsync(on: boolean) {
     }
 }
 
-export async function getAllToolboxBlockTypes() {
+export async function getBlocksInfo(): Promise<pxtc.BlocksInfo | undefined> {
     if (!driver) {
         return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
     }
+
+    const response = await driver.getBlocksInfo();
+    return response;
 }
 
 export async function getBlockImageUriAsync(type: string) {

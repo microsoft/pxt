@@ -364,6 +364,17 @@ export class IframeDriver {
         return resp.resp;
     }
 
+    async getBlocksInfo(): Promise<pxtc.BlocksInfo> {
+        const resp = await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "getblocksinfo"
+            } as pxt.editor.EditorMessageRequest
+        ) as pxt.editor.EditorMessageResponse;
+
+        return (resp.resp as pxt.editor.EditorMessageGetBlocksInfoResponse).blocksInfo;
+    }
+
     async runValidatorPlan(validatorPlan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]) {
         const resp = await this.sendRequest(
             {

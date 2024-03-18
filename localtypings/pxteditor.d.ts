@@ -65,6 +65,7 @@ declare namespace pxt.editor {
         | "requestprojectcloudstatus"
         | "convertcloudprojectstolocal"
         | "setlanguagerestriction"
+        | "getblocksinfo"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -410,6 +411,13 @@ declare namespace pxt.editor {
     export interface EditorSetLanguageRestriction extends EditorMessageRequest {
         action: "setlanguagerestriction";
         restriction: pxt.editor.LanguageRestriction;
+    }
+
+    export interface BlockInfo {
+        type: string;
+    }
+    export interface EditorMessageGetBlocksInfoResponse {
+        blocksInfo: pxtc.BlocksInfo;
     }
 
     export interface DataStreams<T> {
@@ -946,6 +954,7 @@ declare namespace pxt.editor {
         // FIXME (riknoll) need to figure out how to type this better
         // getBlocks(): Blockly.Block[];
         getBlocks(): any[];
+        getBlocksInfo(): pxt.editor.EditorMessageGetBlocksInfoResponse;
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
