@@ -15,6 +15,7 @@ import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubricAsync";
 import { ImportRubricModal } from "./components/ImportRubricModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
+import { loadAllBlocksAsync } from "./transforms/loadAllBlocksAsync";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -33,6 +34,7 @@ export const App = () => {
                 await loadCatalogAsync();
                 await loadValidatorPlansAsync();
                 await tryLoadLastActiveRubricAsync();
+                await loadAllBlocksAsync();
 
                 // Test notification
                 showToast({

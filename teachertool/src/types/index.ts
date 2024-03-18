@@ -1,5 +1,3 @@
-import { CriteriaResult } from "./criteria";
-
 export type ToastType = "success" | "info" | "warning" | "error";
 
 export type Toast = {
@@ -62,3 +60,9 @@ export type CriteriaTemplateSegment = {
     type: "plain-text" | "param";
     content: string; // plain text or parameter name
 };
+
+export type BlockMetadata = {
+    category: string;
+    id: string;
+    imageUri: string | undefined;
+}

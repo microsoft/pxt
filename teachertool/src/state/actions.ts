@@ -1,4 +1,4 @@
-import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions } from "../types";
+import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions, BlockMetadata } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
@@ -93,6 +93,18 @@ type ClearAllEvalResultNotes = ActionBase & {
     type: "CLEAR_ALL_EVAL_RESULT_NOTES";
 };
 
+type SetAllBlocks = ActionBase & {
+    type: "SET_ALL_BLOCKS";
+    blocks: pxt.Map<BlockMetadata[]>;
+};
+
+type SetBlockImageUri = ActionBase & {
+    type: "SET_BLOCK_IMAGE_URI";
+    category: string;
+    blockId: string;
+    imageUri: string;
+};
+
 /**
  * Union of all actions
  */
@@ -114,7 +126,9 @@ export type Action =
     | HideModal
     | SetValidatorPlans
     | SetActiveTab
-    | SetAutorun;
+    | SetAutorun
+    | SetAllBlocks
+    | SetBlockImageUri;
 
 /**
  * Action creators
@@ -202,6 +216,18 @@ const clearAllEvalResultNotes = (): ClearAllEvalResultNotes => ({
     type: "CLEAR_ALL_EVAL_RESULT_NOTES",
 });
 
+const setAllBlocks = (blocks: pxt.Map<BlockMetadata[]>): SetAllBlocks => ({
+    type: "SET_ALL_BLOCKS",
+    blocks,
+});
+
+const setBlockImageUri = (category: string, blockId: string, imageUri: string): SetBlockImageUri => ({
+    type: "SET_BLOCK_IMAGE_URI",
+    category,
+    blockId,
+    imageUri,
+});
+
 export {
     showToast,
     dismissToast,
@@ -220,4 +246,6 @@ export {
     setValidatorPlans,
     setActiveTab,
     setAutorun,
+    setAllBlocks,
+    setBlockImageUri,
 };

@@ -125,5 +125,25 @@ export default function reducer(state: AppState, action: Action): AppState {
                 autorun: action.autorun,
             };
         }
+        case "SET_ALL_BLOCKS": {
+            return {
+                ...state,
+                allBlocks: action.blocks,
+            };
+        }
+        case "SET_BLOCK_IMAGE_URI": {
+            const allBlocks = { ...state.allBlocks };
+            const blocksInCategory = allBlocks[action.category];
+            if (blocksInCategory) {
+                const block = blocksInCategory.find(b => b.id === action.blockId);
+                if (block) {
+                    block.imageUri = action.imageUri;
+                }
+            }
+            return {
+                ...state,
+                allBlocks,
+            };
+        }
     }
 }
