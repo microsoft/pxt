@@ -8,6 +8,8 @@ import { splitCriteriaTemplate } from "../utils";
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
 import { useState } from "react";
 import { Input } from "react-common/components/controls/Input";
+import { Button } from "react-common/components/controls/Button";
+import { showModal } from "../transforms/showModal";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -53,6 +55,28 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     );
 };
 
+interface BlockInputSegmentProps {
+    instance: CriteriaInstance;
+    param: CriteriaParameterValue;
+}
+const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
+    function handleClick() {
+        // TODO set params
+
+        showModal("block-picker");
+    }
+
+    return (
+        <Button
+            label={param.value || param.name}
+            className={classList(css["block-input-btn"], param.value ? undefined : css["error"])}
+            onClick={handleClick}
+            title={param.value ? lf("select block") : lf("select block: value required")}
+            leftIcon={param.value ? undefined : "fas fa-exclamation-triangle"}
+        />
+    );
+};
+
 interface CriteriaInstanceDisplayProps {
     criteriaInstance: CriteriaInstance;
 }
@@ -75,8 +99,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
         }
 
         if (paramDef.type === "block") {
-            // TODO
-            return null;
+            return <BlockInputSegment param={paramInstance} instance={criteriaInstance} />;
         } else {
             return (
                 <InlineInputSegment

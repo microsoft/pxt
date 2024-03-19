@@ -21,7 +21,7 @@ export type ToastWithId = Toast & {
     id: string;
 };
 
-export type ModalType = "catalog-display" | "import-rubric" | "confirmation";
+export type ModalType = "catalog-display" | "import-rubric" | "confirmation" | "block-picker";
 
 export type TabName = "home" | "rubric" | "results";
 
