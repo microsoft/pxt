@@ -15,7 +15,6 @@ export interface TextareaProps extends ControlProps {
     resize?: "both" | "horizontal" | "vertical";
     wrap?: "hard" | "soft" | "off";
     autoResize?: boolean;
-    resizeRef?: React.RefObject<HTMLTextAreaElement>;
 
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
@@ -41,12 +40,12 @@ export const Textarea = (props: TextareaProps) => {
         resize,
         wrap,
         autoResize,
-        resizeRef,
         onChange,
         onEnterKey
     } = props;
 
     const [value, setValue] = React.useState(initialValue || "");
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
     React.useEffect(() => {
         setValue(initialValue)
@@ -61,9 +60,9 @@ export const Textarea = (props: TextareaProps) => {
         if (onChange) {
             onChange(newValue);
         }
-        if (autoResize && resizeRef.current) {
-            resizeRef.current.style.height = "1px";
-            resizeRef.current.style.height = `${25 + resizeRef.current.scrollHeight}px`;
+        if (autoResize && textareaRef.current) {
+            textareaRef.current.style.height = "1px";
+            textareaRef.current.style.height = `${25 +  textareaRef.current.scrollHeight}px`;
         }
     }
 
@@ -98,7 +97,7 @@ export const Textarea = (props: TextareaProps) => {
                     minLength={minLength}
                     wrap={wrap}
                     readOnly={!!readOnly}
-                    ref={resizeRef}
+                    ref={textareaRef}
                     onChange={changeHandler}
                     onKeyDown={enterKeyHandler}
                     autoComplete={autoComplete ? "" : "off"}

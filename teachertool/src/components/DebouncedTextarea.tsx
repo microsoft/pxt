@@ -11,7 +11,6 @@ export interface DebouncedTextareaProps extends TextareaProps {
 export const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({ intervalMs = 500, ...props }) => {
     const timerId = useRef<NodeJS.Timeout | undefined>(undefined);
     const latestValue = useRef<string>("");
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const sendChange = () => {
         if (props.onChange) {
@@ -40,5 +39,5 @@ export const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({ intervalMs
         timerId.current = setTimeout(sendChange, intervalMs);
     };
 
-    return <Textarea {...props} autoResize={true} onChange={onChangeDebounce} resizeRef={textareaRef}/>
+    return <Textarea {...props} autoResize={true} onChange={onChangeDebounce} />
 };
