@@ -40,3 +40,21 @@
 .common-button.disabled {
     opacity: 0.8;
 }
+
+.rounded > .common-button.common-dropdown-button {
+    border-radius: 1rem;
+    border: solid 1px var(--pxt-page-foreground);
+
+    .common-button-flex {
+        padding: 0.75rem;
+    }
+
+}
+
+.fail > .common-button.common-dropdown-button {
+    background-color: var(--pxt-warning);
+}
+
+.pass > .common-button.common-dropdown-button {
+    background-color: var(--pxt-success);
+}

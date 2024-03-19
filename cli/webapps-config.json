@@ -1,0 +1,32 @@
+{
+    "webapps": [
+        {
+            "name": "kiosk",
+            "buildCss": false,
+            "localServeWebConfigUrl": false,
+            "localServeEndpoint": "kiosk"
+        },
+        {
+            "name": "teachertool",
+            "buildCss": false,
+            "localServeWebConfigUrl": false,
+            "localServeEndpoint": "eval"
+        },
+        {
+            "name": "skillmap",
+            "buildCss": true,
+            "localServeWebConfigUrl": true
+        },
+        {
+            "name": "multiplayer",
+            "buildCss": true,
+            "localServeWebConfigUrl": true,
+            "localServeEndpoint": "multiplayer"
+        },
+        {
+            "name": "authcode",
+            "buildCss": true,
+            "localServeWebConfigUrl": true
+        }
+    ]
+}

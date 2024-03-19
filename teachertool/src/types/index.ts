@@ -1,3 +1,5 @@
+import { CriteriaResult } from "./criteria";
+
 export type ToastType = "success" | "info" | "warning" | "error";
 
 export type Toast = {
@@ -21,6 +23,42 @@ export type ToastWithId = Toast & {
     id: string;
 };
 
-export type ModalType = "catalog-display" | "import-rubric";
+export type ModalType = "catalog-display" | "import-rubric" | "confirmation";
 
 export type TabName = "home" | "rubric" | "results";
+
+export type CardType = "rubric-resource";
+
+// Rubric Card types that can be appear in the carousel
+export type CarouselCard = {
+    cardType: CardType;
+};
+
+export type CarouselRubricResourceCard = CarouselCard & {
+    cardType: "rubric-resource";
+    cardTitle: string;
+    imageUrl: string;
+    rubricUrl: string;
+};
+
+export type CarouselCardSet = {
+    cards: CarouselCard[];
+};
+
+export type RequestStatus = "init" | "loading" | "error" | "success";
+
+export type ProjectData = pxt.Cloud.JsonScript & {
+    inputText: string;
+};
+
+export type ConfirmationModalOptions = {
+    title: string;
+    message: string;
+    onCancel: () => void;
+    onContinue: () => void;
+};
+
+export type CriteriaTemplateSegment = {
+    type: "plain-text" | "param";
+    content: string; // plain text or parameter name
+};

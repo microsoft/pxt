@@ -2,6 +2,22 @@ import { stateAndDispatch } from "../state";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
 
+export async function fetchJsonDocAsync<T = any>(url: string): Promise<T | undefined> {
+    try {
+        const response = await fetch(url, {
+            cache: "no-cache",
+        });
+        if (!response.ok) {
+            throw new Error("Unable to fetch the json file");
+        } else {
+            const json = await response.json();
+            return json;
+        }
+    } catch (e) {
+        logError(ErrorCode.fetchJsonDocAsync, e);
+    }
+}
+
 export async function getProjectTextAsync(projectId: string): Promise<pxt.Cloud.JsonText | undefined> {
     try {
         const projectTextUrl = `${pxt.Cloud.apiRoot}/${projectId}/text`;
@@ -56,7 +72,9 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
     let allResults: T[] = [];
     for (const planFile of files) {
         try {
-            const response = await fetch(planFile);
+            const response = await fetch(planFile, {
+                cache: "no-cache",
+            });
 
             if (response.ok) {
                 const content = await response.json();

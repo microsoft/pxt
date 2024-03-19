@@ -11,14 +11,4 @@
     .catalog-item {
         padding: 0.5rem;
     }
-
-    .criteria-display {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        
-        .criteria-description {
-            color: var(--pxt-page-foreground-light);
-        }
-    }
 }

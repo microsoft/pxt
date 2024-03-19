@@ -25,11 +25,11 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
             continue;
         }
 
-        const params = catalogCriteria.parameters?.map(
+        const params = catalogCriteria.params?.map(
             param =>
                 ({
                     name: param.name,
-                    value: undefined,
+                    value: param.default,
                 } as CriteriaParameterValue)
         );
 

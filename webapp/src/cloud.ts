@@ -564,13 +564,22 @@ export async function requestProjectCloudStatus(headerIds: string[]): Promise<vo
     for (const id of headerIds) {
         const cloudMd = getCloudTempMetadata(id);
         const cloudStatus = cloudMd.cloudStatus();
+
         const msg: pxt.editor.EditorMessageProjectCloudStatus = {
-            type: "pxteditor",
+            type: "pxthost",
             action: "projectcloudstatus",
             headerId: cloudMd.headerId,
             status: cloudStatus.value
         };
         pxteditor.postHostMessageAsync(msg);
+
+        // Deprecated: This was originally fired with the "pxteditor"
+        // type, which should only be used for responses, not events.
+        // Use the pxthost version above instead
+        pxteditor.postHostMessageAsync({
+            ...msg,
+            type: "pxteditor"
+        });
     }
 }
 

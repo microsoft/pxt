@@ -40,6 +40,22 @@ export default function reducer(state: AppState, action: Action): AppState {
                 },
             };
         }
+        case "SET_EVAL_RESULTS_BATCH": {
+            return {
+                ...state,
+                evalResults: action.criteriaResults,
+            };
+        }
+        case "CLEAR_ALL_EVAL_RESULT_NOTES": {
+            const evalResults = { ...state.evalResults };
+            for (const result of Object.keys(evalResults)) {
+                evalResults[result].notes = "";
+            }
+            return {
+                ...state,
+                evalResults,
+            };
+        }
         case "CLEAR_EVAL_RESULT": {
             const evalResults = { ...state.evalResults };
             delete evalResults[action.criteriaInstanceId];
@@ -65,6 +81,12 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 rubric: action.rubric,
+            };
+        }
+        case "SET_CONFIRMATION_OPTIONS": {
+            return {
+                ...state,
+                confirmationOptions: action.options,
             };
         }
         case "SHOW_MODAL": {

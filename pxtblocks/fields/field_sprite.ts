@@ -18,6 +18,8 @@ export interface FieldSpriteEditorOptions {
 
     filter?: string;
     lightMode: boolean;
+
+    taggedTemplate?: string;
 }
 
 interface ParsedSpriteEditorOptions {
@@ -27,6 +29,8 @@ interface ParsedSpriteEditorOptions {
     disableResize: boolean;
     filter?: string;
     lightMode: boolean;
+
+    taggedTemplate?: string;
 }
 
 export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions, ParsedSpriteEditorOptions> {
@@ -46,7 +50,7 @@ export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions
             return project.lookupAsset(pxt.AssetType.Image, this.getBlockData());
         }
 
-        const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
+        const bmp = text ? pxt.sprite.imageLiteralToBitmap(text, this.params.taggedTemplate) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
 
         let data: pxt.sprite.BitmapData;
 
@@ -88,7 +92,7 @@ export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions
                 return this.qName;
             }
         }
-        return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
+        return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript, this.params.taggedTemplate);
     }
 
     protected parseFieldOptions(opts: FieldSpriteEditorOptions): ParsedSpriteEditorOptions {
@@ -154,6 +158,8 @@ function parseFieldOptions(opts: FieldSpriteEditorOptions) {
     parsed.initColor = withDefault(opts.initColor, parsed.initColor);
     parsed.initWidth = withDefault(opts.initWidth, parsed.initWidth);
     parsed.initHeight = withDefault(opts.initHeight, parsed.initHeight);
+
+    parsed.taggedTemplate = opts.taggedTemplate;
 
     return parsed;
 

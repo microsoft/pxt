@@ -98,7 +98,6 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
             // Connection indicator.
             selector + ' .blocklyConnectionIndicator, ' + selector + ' .blocklyInputConnectionIndicator {',
             'fill: #ff0000;',
-            'fill-opacity: 0.9;',
             'stroke: #ffff00;',
             'stroke-width: 3px;',
             '}',
