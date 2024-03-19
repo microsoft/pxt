@@ -1,49 +1,28 @@
-import { getBlocksInfo } from "../services/makecodeEditorService";
+import { getToolboxCategories } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
-import { CategoryData } from "../types";
 import * as Actions from "../state/actions";
 
 export async function loadAllBlocksAsync() {
     const { dispatch } = stateAndDispatch();
 
-    const blocksInfo = await getBlocksInfo();
-    if (!blocksInfo) {
+    const categories = await getToolboxCategories();
+    if (!categories) {
         // TODO thsparks : try again?
         // TODO thsparks : Probably just return but have an event to load blocks that triggers when the iframe is ready.
         return;
     }
 
-    function shouldIncludeCategory(category: string) {
-        return category && !category.startsWith("_");
+    function shouldIncludeCategory(category: pxt.editor.ToolboxCategoryDefinition) {
+        return category && category.name && category.blocks?.length != 0;
     }
 
-    const allCategories: pxt.Map<CategoryData> = {};
-    for (const blockId of Object.keys(blocksInfo.blocksById)) {
-        const block = blocksInfo.blocksById[blockId];
-        if (!shouldIncludeCategory(block.namespace)) {
-            continue;
+    // Create a map so categories can be looked up by their name.
+    const mappedCategories: pxt.Map<pxt.editor.ToolboxCategoryDefinition> = categories.reduce((map, category) => {
+        if (shouldIncludeCategory(category)) {
+            map[category.name!] = category;
         }
+        return map;
+    }, {} as pxt.Map<pxt.editor.ToolboxCategoryDefinition>);
 
-        let category = allCategories[block.namespace];
-        if (!category) {
-            category = {
-                name: block.namespace,
-                color: block.attributes.color,
-                blocks: []
-            };
-            allCategories[block.namespace] = category;
-        }
-
-        if (block.attributes.color && !category.color) {
-            category.color = block.attributes.color;
-        }
-
-        category.blocks.push({
-            category: block.namespace,
-            id: blockId,
-            imageUri: undefined
-        });
-    }
-
-    dispatch(Actions.setToolboxCategories(allCategories));
+    dispatch(Actions.setToolboxCategories(mappedCategories));
 }

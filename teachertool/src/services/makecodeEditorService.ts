@@ -52,19 +52,20 @@ export async function getBlocksInfo(): Promise<pxtc.BlocksInfo | undefined> {
     return response;
 }
 
-export async function getBlockImageUriAsync(type: string) {
+export async function getToolboxCategories(): Promise<pxt.editor.ToolboxCategoryDefinition[] | undefined> {
     if (!driver) {
         return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
     }
 
-    // Create XML snippet for a block with this type
-    const xml = `
-<xml xmlns="https://developers.google.com/blockly/xml">
-    <block type="${type}" />
-</xml>
-`;
+    const response = await driver.getToolboxCategories();
+    return response;
+}
 
-    // Get an image from the XML
+export async function getBlockImageUriAsync(xml: string) {
+    if (!driver) {
+        return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
+    }
+
     const response = await driver.renderXml(xml) as any;
     return response;
 }

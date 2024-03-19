@@ -1,4 +1,4 @@
-import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions, CategoryData } from "../types";
+import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
@@ -95,12 +95,11 @@ type ClearAllEvalResultNotes = ActionBase & {
 
 type SetToolboxCategories = ActionBase & {
     type: "SET_TOOLBOX_CATEGORIES";
-    categories: pxt.Map<CategoryData>;
+    categories: pxt.Map<pxt.editor.ToolboxCategoryDefinition>;
 };
 
 type SetBlockImageUri = ActionBase & {
     type: "SET_BLOCK_IMAGE_URI";
-    category: string;
     blockId: string;
     imageUri: string;
 };
@@ -216,14 +215,13 @@ const clearAllEvalResultNotes = (): ClearAllEvalResultNotes => ({
     type: "CLEAR_ALL_EVAL_RESULT_NOTES",
 });
 
-const setToolboxCategories = (categories: pxt.Map<CategoryData>): SetToolboxCategories => ({
+const setToolboxCategories = (categories: pxt.Map<pxt.editor.ToolboxCategoryDefinition>): SetToolboxCategories => ({
     type: "SET_TOOLBOX_CATEGORIES",
     categories,
 });
 
-const setBlockImageUri = (category: string, blockId: string, imageUri: string): SetBlockImageUri => ({
+const setBlockImageUri = (blockId: string, imageUri: string): SetBlockImageUri => ({
     type: "SET_BLOCK_IMAGE_URI",
-    category,
     blockId,
     imageUri,
 });

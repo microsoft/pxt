@@ -375,6 +375,17 @@ export class IframeDriver {
         return (resp.resp as pxt.editor.EditorMessageGetBlocksInfoResponse).blocksInfo;
     }
 
+    async getToolboxCategories(): Promise<pxt.editor.ToolboxCategoryDefinition[]> {
+        const resp = await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "gettoolboxcategories"
+            } as pxt.editor.EditorMessageRequest
+        ) as pxt.editor.EditorMessageResponse;
+
+        return (resp.resp as pxt.editor.EditorMessageGetToolboxCategoriesResponse).categories;
+    }
+
     async runValidatorPlan(validatorPlan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]) {
         const resp = await this.sendRequest(
             {

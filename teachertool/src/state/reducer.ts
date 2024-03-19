@@ -132,17 +132,11 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "SET_BLOCK_IMAGE_URI": {
-            const categories = { ...state.toolboxCategories };
-            const blocksInCategory = categories?.[action.category]?.blocks;
-            if (blocksInCategory) {
-                const block = blocksInCategory.find(b => b.id === action.blockId);
-                if (block) {
-                    block.imageUri = action.imageUri;
-                }
-            }
+            const cache = { ...state.blockImageCache };
+            cache[action.blockId] = action.imageUri;
             return {
                 ...state,
-                toolboxCategories: categories,
+                blockImageCache: cache,
             };
         }
     }

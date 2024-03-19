@@ -5,23 +5,26 @@ import { hideModal } from "../transforms/hideModal";
 import { loadAllBlocksAsync } from "../transforms/loadAllBlocksAsync";
 import { MenuDropdown, MenuItem } from "react-common/components/controls/MenuDropdown";
 import { LazyImage } from "react-common/components/controls/LazyImage";
-import { BlockData, CategoryData } from "../types";
 import { loadBlockImagesAsync } from "../transforms/loadBlockImagesAsync";
 import css from "./styling/BlockPickerModal.module.scss";
 
 interface BlockPickerCategoryProps {
-    category: CategoryData;
-    onBlockSelected: (blockId: BlockData) => void;
+    category: pxt.editor.ToolboxCategoryDefinition;
+    onBlockSelected: (blockId: pxt.editor.ToolboxBlockDefinition) => void;
 }
 const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onBlockSelected }) => {
-    function blockSelected(block: BlockData) {
+    const { state: teacherTool } = useContext(AppStateContext);
+
+    function blockSelected(block: pxt.editor.ToolboxBlockDefinition) {
         onBlockSelected?.(block);
     }
 
-    function getMenuItemForBlock(block: BlockData) {
+    function getMenuItemForBlock(block: pxt.editor.ToolboxBlockDefinition) {
+        const imageUri = block.blockId ? teacherTool.blockImageCache[block.blockId] : undefined;
+
         return {
-            title: block.id,
-            label: block.imageUri ? <LazyImage src={block.imageUri} alt={block.id} /> : block.id,
+            title: block.name,
+            label: imageUri ? <LazyImage src={imageUri} alt={block.name} /> : block.name,
             onClick: () => blockSelected(block),
         } as MenuItem;
     }
@@ -35,7 +38,7 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
 
     // Set left border color based on category.color.
     const bkgStyle = category.color ? { color: category.color, borderLeftColor: category.color } : {};
-    return category.blocks && category.blocks.length > 0 ? (
+    return category.name && category.blocks && category.blocks.length > 0 ? (
         <div style={bkgStyle} className={css["category-container"]}>
             <MenuDropdown
                 title={category.name}
@@ -96,7 +99,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
                     return (
                         <BlockPickerCategory
                             category={category}
-                            onBlockSelected={block => setSelectedBlockId(block.id)}
+                            onBlockSelected={block => setSelectedBlockId(block.blockId)}
                         />
                     );
                 })}

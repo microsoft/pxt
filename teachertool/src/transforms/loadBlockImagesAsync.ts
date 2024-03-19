@@ -1,22 +1,34 @@
 import { getBlockImageUriAsync } from "../services/makecodeEditorService";
-import { BlockData, CategoryData } from "../types";
 import * as Actions from "../state/actions";
 import { stateAndDispatch } from "../state";
+import { getBlockXml } from "../utils";
 
+async function loadBlockImageAsync(block: pxt.editor.ToolboxBlockDefinition) {
+    const { state } = stateAndDispatch();
 
-async function loadBlockImageAsync(categoryName: string, block: BlockData) {
-    if (block.imageUri) {
+    if (!block.blockId) {
         return;
     }
 
-    const imageUri = await getBlockImageUriAsync(block.id);
+    const image = state.blockImageCache[block.blockId];
+    if (image) {
+        return;
+    }
 
+    const xml = block.blockXml || getBlockXml(block.blockId);
+    const imageUri = await getBlockImageUriAsync(xml);
     if (imageUri) {
         const { dispatch } = stateAndDispatch();
-        dispatch(Actions.setBlockImageUri(categoryName, block.id, imageUri));
+        dispatch(Actions.setBlockImageUri(block.blockId, imageUri));
     }
 }
 
-export async function loadBlockImagesAsync(category: CategoryData) {
-    return pxt.Util.promisePoolAsync(4, category.blocks, async (block: BlockData) => await loadBlockImageAsync(category.name, block));
+export async function loadBlockImagesAsync(category: pxt.editor.ToolboxCategoryDefinition) {
+    return category.blocks
+        ? pxt.Util.promisePoolAsync(
+              4,
+              category.blocks,
+              async (block: pxt.editor.ToolboxBlockDefinition) => await loadBlockImageAsync(block)
+          )
+        : Promise.resolve();
 }

@@ -182,6 +182,12 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         resp = projectView.getBlocksInfo();
                                     });
                             }
+                            case "gettoolboxcategories": {
+                                return Promise.resolve()
+                                    .then(() => {
+                                        resp = projectView.getToolboxCategories();
+                                    });
+                            }
                             case "renderpython": {
                                 const rendermsg = data as pxt.editor.EditorMessageRenderPythonRequest;
                                 return Promise.resolve()

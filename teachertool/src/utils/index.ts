@@ -71,3 +71,11 @@ export function splitCriteriaTemplate(template: string): CriteriaTemplateSegment
 export function getReadableCriteriaTemplate(criteria: CatalogCriteria): string {
     return criteria.template.replaceAll("${", "").replaceAll("}", "");
 }
+
+export function getBlockXml(blockId: string): string {
+    return `
+<xml xmlns="https://developers.google.com/blockly/xml">
+    <block type="${blockId}" />
+</xml>
+`;
+}

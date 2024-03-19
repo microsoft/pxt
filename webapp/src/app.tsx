@@ -4086,6 +4086,43 @@ export class ProjectView
         return { blocksInfo };
     }
 
+    getToolboxCategories(): pxt.editor.EditorMessageGetToolboxCategoriesResponse {
+        if (!this.isBlocksActive()) {
+            console.error("Trying to get blocks info from a non-blocks editor.");
+            throw new Error("Trying to get blocks info from a non-blocks editor.");
+        }
+
+        // The toolbox.ToolboxCategory is not exposed, so convert it to the exported ToolboxCategoryDefinition.
+        const categoriesInternal = this.blocksEditor.getToolboxCategories();
+        const categories: pxt.editor.ToolboxCategoryDefinition[] = categoriesInternal.map(c => {
+            return {
+                name: c.name || c.nameid,
+                icon: c.icon,
+                color: c.color,
+                advanced: c.advanced,
+                groups: c.groups,
+                blocks: c.blocks.map(b => {
+                    return {
+                        name: b.name,
+                        group: b.attributes.group,
+                        advanved: b.attributes.advanced,
+                        weight: b.attributes.weight,
+                        jsDoc: b.attributes.jsDoc,
+                        snippet: b.snippet,
+                        pySnippet: b.pySnippet,
+                        snippetName: b.snippetName,
+                        pySnippetName: b.pySnippetName,
+                        snippetOnly: b.snippetOnly,
+                        retType: b.retType,
+                        blockXml: b.blockXml,
+                        blockId: b.attributes.blockId,
+                    } as pxt.editor.ToolboxBlockDefinition
+                }),
+            } as pxt.editor.ToolboxCategoryDefinition;
+        });
+        return { categories };
+    }
+
     launchFullEditor() {
         Util.assert(pxt.shell.isSandboxMode());
 
