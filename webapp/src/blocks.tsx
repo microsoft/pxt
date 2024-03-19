@@ -927,10 +927,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxt.perf.measureEnd("updateToolbox")
     }
 
-    getBlocksInfo() {
-        return this.blockInfo;
-    }
-
     showPackageDialog() {
         pxt.tickEvent("blocks.addpackage");
         if (this.editor.getToolbox()) this.editor.getToolbox().clearSelection();

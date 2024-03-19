@@ -176,12 +176,6 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         resp = { result: results };
                                     });
                             }
-                            case "getblocksinfo": {
-                                return Promise.resolve()
-                                    .then(() => {
-                                        resp = projectView.getBlocksInfo();
-                                    });
-                            }
                             case "gettoolboxcategories": {
                                 return Promise.resolve()
                                     .then(() => {
