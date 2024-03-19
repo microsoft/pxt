@@ -1,6 +1,6 @@
 import { getBlocksInfo } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
-import { BlockMetadata } from "../types";
+import { CategoryData } from "../types";
 import * as Actions from "../state/actions";
 
 export async function loadAllBlocksAsync() {
@@ -13,22 +13,37 @@ export async function loadAllBlocksAsync() {
         return;
     }
 
-    const allBlocks: pxt.Map<BlockMetadata[]> = {};
+    function shouldIncludeCategory(category: string) {
+        return category && !category.startsWith("_");
+    }
+
+    const allCategories: pxt.Map<CategoryData> = {};
     for (const blockId of Object.keys(blocksInfo.blocksById)) {
         const block = blocksInfo.blocksById[blockId];
-
-        // TODO thsparks : Filter out internal and empty categories?
-
-        if (!allBlocks[block.namespace]) {
-            allBlocks[block.namespace] = [];
+        if (!shouldIncludeCategory(block.namespace)) {
+            continue;
         }
 
-        allBlocks[block.namespace].push({
+        let category = allCategories[block.namespace];
+        if (!category) {
+            category = {
+                name: block.namespace,
+                color: block.attributes.color,
+                blocks: []
+            };
+            allCategories[block.namespace] = category;
+        }
+
+        if (block.attributes.color && !category.color) {
+            category.color = block.attributes.color;
+        }
+
+        category.blocks.push({
             category: block.namespace,
             id: blockId,
             imageUri: undefined
         });
     }
 
-    dispatch(Actions.setAllBlocks(allBlocks));
+    dispatch(Actions.setToolboxCategories(allCategories));
 }

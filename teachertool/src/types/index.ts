@@ -61,8 +61,14 @@ export type CriteriaTemplateSegment = {
     content: string; // plain text or parameter name
 };
 
-export type BlockMetadata = {
+export type BlockData = {
     category: string;
     id: string;
     imageUri: string | undefined;
 }
+
+export type CategoryData = {
+    name: string;
+    color: string | undefined;
+    blocks: BlockData[];
+};

@@ -17,6 +17,7 @@ export interface MenuDropdownProps extends ControlProps {
     icon?: string;
     tabIndex?: number;
     disabled?: boolean;
+    onExpansionChanged?: (expanded: boolean) => void;
 }
 
 export const MenuDropdown = (props: MenuDropdownProps) => {
@@ -31,7 +32,8 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         title,
         icon,
         tabIndex,
-        disabled
+        disabled,
+        onExpansionChanged
     } = props;
 
     const [ expanded, setExpanded ] = React.useState(false);
@@ -50,6 +52,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
     }
 
     const onMenuButtonClick = () => {
+        onExpansionChanged?.(!expanded);
         setExpanded(!expanded);
     }
 

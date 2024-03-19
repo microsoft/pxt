@@ -125,15 +125,15 @@ export default function reducer(state: AppState, action: Action): AppState {
                 autorun: action.autorun,
             };
         }
-        case "SET_ALL_BLOCKS": {
+        case "SET_TOOLBOX_CATEGORIES": {
             return {
                 ...state,
-                allBlocks: action.blocks,
+                toolboxCategories: action.categories,
             };
         }
         case "SET_BLOCK_IMAGE_URI": {
-            const allBlocks = { ...state.allBlocks };
-            const blocksInCategory = allBlocks[action.category];
+            const categories = { ...state.toolboxCategories };
+            const blocksInCategory = categories?.[action.category]?.blocks;
             if (blocksInCategory) {
                 const block = blocksInCategory.find(b => b.id === action.blockId);
                 if (block) {
@@ -142,7 +142,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             }
             return {
                 ...state,
-                allBlocks,
+                toolboxCategories: categories,
             };
         }
     }
