@@ -39,5 +39,5 @@ export const DebouncedTextarea: React.FC<DebouncedTextareaProps> = ({ intervalMs
         timerId.current = setTimeout(sendChange, intervalMs);
     };
 
-    return <Textarea {...props} autoResize={true} onChange={onChangeDebounce} />
+    return <Textarea {...props} onChange={onChangeDebounce} />
 };
