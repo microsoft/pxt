@@ -12,3 +12,11 @@
         }
     }
 }
+
+@media print {
+    .common-textarea-wrapper {
+        div[class*="common-textarea-group"] {
+            border-radius: 0;
+        }
+    }
+}

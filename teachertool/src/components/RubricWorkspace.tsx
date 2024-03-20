@@ -1,6 +1,6 @@
 import * as React from "react";
 import css from "./styling/RubricWorkspace.module.scss";
-import { useContext } from "react";
+import { useContext, useRef } from "react";
 import { AppStateContext, stateAndDispatch } from "../state/appStateContext";
 import { Toolbar } from "./Toolbar";
 import { TabGroup, TabButton } from "./TabGroup";
@@ -17,6 +17,7 @@ import { isProjectLoaded } from "../state/helpers";
 import { setAutorun } from "../transforms/setAutorun";
 import { Strings, Ticks } from "../constants";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
+import { PrintButton } from "./PrintButton";
 
 function handleImportRubricClicked() {
     pxt.tickEvent(Ticks.ImportRubric);
@@ -53,7 +54,11 @@ const WorkspaceTabButtons: React.FC = () => {
     );
 };
 
-const WorkspaceTabPanels: React.FC = () => {
+interface WorkspaceTabPanelsProps {
+    resultsRef: React.RefObject<HTMLDivElement>;
+}
+
+const WorkspaceTabPanels: React.FC<WorkspaceTabPanelsProps> = ({ resultsRef }) => {
     return (
         <>
             <TabPanel name="home">
@@ -63,7 +68,7 @@ const WorkspaceTabPanels: React.FC = () => {
                 <ActiveRubricDisplay />
             </TabPanel>
             <TabPanel name="results">
-                <EvalResultDisplay />
+                <EvalResultDisplay resultsRef={resultsRef} />
             </TabPanel>
         </>
     );
@@ -101,7 +106,11 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
     return items;
 }
 
-const WorkspaceToolbarButtons: React.FC = () => {
+interface WorkspaceToolbarButtonsProps {
+    resultsRef: React.RefObject<HTMLDivElement>;
+}
+
+const WorkspaceToolbarButtons: React.FC<WorkspaceToolbarButtonsProps> = ({ resultsRef }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const { activeTab, autorun } = teacherTool;
 
@@ -114,9 +123,7 @@ const WorkspaceToolbarButtons: React.FC = () => {
 
     return (
         <Toolbar.ControlGroup>
-            {activeTab === "results" && (
-                <Toolbar.Button icon="fas fa-print" title={lf("Print")} onClick={() => console.log("Print")} />
-            )}
+            {activeTab === "results" && <PrintButton printRef={resultsRef} />}
             {/* Conditional buttons go above this line */}
             <Toolbar.Toggle
                 label={Strings.AutoRun}
@@ -136,10 +143,11 @@ const WorkspaceToolbarButtons: React.FC = () => {
 };
 
 export const RubricWorkspace: React.FC = () => {
+    const resultsRef = useRef<HTMLDivElement>(null);
     return (
         <div className={css.panel}>
-            <Toolbar left={<WorkspaceTabButtons />} right={<WorkspaceToolbarButtons />} />
-            <WorkspaceTabPanels />
+            <Toolbar left={<WorkspaceTabButtons />} right={<WorkspaceToolbarButtons resultsRef={resultsRef} />} />
+            <WorkspaceTabPanels resultsRef={resultsRef} />
         </div>
     );
 };
