@@ -20,6 +20,15 @@
                 font-weight: 800;
                 color: inherit;
             }
+
+            div[class*="common-menu-dropdown-pane"] {
+                position: relative;
+                width: 100% !important;
+
+                div[class*="common-lazy-image-wrapper"] {
+                    justify-content: left;
+                }
+            }
         }
     }
 }
