@@ -31,7 +31,7 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
         return (
             <Button
                 className={css["block-button"]}
-                title={block.name}
+                title={block.jsDoc ?? getReadableBlockString(block.name)}
                 label={
                     imageUri ? (
                         <LazyImage src={imageUri} alt={block.name} />
