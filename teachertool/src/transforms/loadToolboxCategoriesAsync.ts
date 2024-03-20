@@ -19,7 +19,12 @@ export async function loadToolboxCategoriesAsync() {
     // Create a map so categories can be looked up by their name.
     const mappedCategories: pxt.Map<pxt.editor.ToolboxCategoryDefinition> = categories.reduce((map, category) => {
         if (shouldIncludeCategory(category)) {
-            map[category.name!] = category;
+            // Remove blocks with duplicate ids
+            const filteredBlocks = category.blocks?.filter((block, index, self) => {
+                return self.findIndex(b => b.blockId === block.blockId) === index;
+            });
+
+            map[category.name!] = {...category, blocks: filteredBlocks};
         }
         return map;
     }, {} as pxt.Map<pxt.editor.ToolboxCategoryDefinition>);
