@@ -79,3 +79,11 @@ export function getBlockXml(blockId: string): string {
 </xml>
 `;
 }
+
+export function getReadableBlockString(name: string) {
+    if (name.indexOf("_") !== -1) {
+        return pxt.Util.snakeCaseToLowercaseWithSpaces(name);
+    } else {
+        return pxt.Util.camelCaseToLowercaseWithSpaces(name);
+    }
+}

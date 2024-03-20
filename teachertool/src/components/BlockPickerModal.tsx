@@ -9,6 +9,7 @@ import { FocusList } from "react-common/components/controls/FocusList";
 import { Button } from "react-common/components/controls/Button";
 import css from "./styling/BlockPickerModal.module.scss";
 import { classList } from "react-common/components/util";
+import { getReadableBlockString } from "../utils";
 
 interface BlockPickerCategoryProps {
     category: pxt.editor.ToolboxCategoryDefinition;
@@ -29,7 +30,15 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
             <Button
                 className={css["block-button"]}
                 title={block.name}
-                label={imageUri ? <LazyImage src={imageUri} alt={block.name} /> : block.name}
+                label={
+                    imageUri ? (
+                        <LazyImage src={imageUri} alt={block.name} />
+                    ) : (
+                        <div className={css["block-placeholder"]} style={{ backgroundColor: category.color }}>
+                            {getReadableBlockString(block.name)}
+                        </div>
+                    )
+                }
                 onClick={() => blockSelected(block)}
             />
         );
@@ -58,11 +67,12 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
                     onClick={handleClick}
                     style={categoryColorsStyle}
                 />
-                {expanded && (
-                    <FocusList role={"listbox"} className={css["category-block-list"]}>
-                        {category.blocks.map(getBlockButton)}
-                    </FocusList>
-                )}
+                <FocusList
+                    role={"listbox"}
+                    className={classList(css["category-block-list"], expanded ? css["expanded"] : css["collapsed"])}
+                >
+                    {category.blocks.map(getBlockButton)}
+                </FocusList>
             </div>
         </div>
     ) : null;

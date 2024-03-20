@@ -27,12 +27,37 @@
                 flex-direction: column;
                 align-items: flex-start;
 
+                transition: max-height 0.2s ease-out;
+                &.collapsed {
+                    max-height: 0;
+                    display:none;
+                }
+                &.expanded {
+                    max-height: 100rem; /* larger that it should ever get */
+                }
+
                 .block-button {
                     width: 100%;
                     align-content: start;
 
                     div[class*="common-lazy-image-wrapper"] {
                         justify-content: left;
+                    }
+
+                    .block-placeholder {
+                        height: 3rem;
+                        border-radius: 0.2rem;
+                        color: white;
+                        border: 1px solid rgba(0, 0, 0, 0.5);
+                        font-size: 1em;
+                        font-weight: bold;
+                        background-color: var(--pxt-content-foreground) /* overridden by javascript with block color */;
+                        width: fit-content;
+                        min-width: 10rem;
+                        display: flex;
+                        justify-content: flex-start;
+                        align-items: center;
+                        padding: 0.5rem;
                     }
                 }
             }
