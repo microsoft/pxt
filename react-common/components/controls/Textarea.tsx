@@ -62,7 +62,7 @@ export const Textarea = (props: TextareaProps) => {
         }
         if (autoResize && textareaRef.current) {
             textareaRef.current.style.height = "1px";
-            textareaRef.current.style.height = `${25 +  textareaRef.current.scrollHeight}px`;
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
     }
 
