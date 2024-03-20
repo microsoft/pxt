@@ -364,12 +364,13 @@ export class IframeDriver {
         return resp.resp;
     }
 
-    async getToolboxCategories(): Promise<pxt.editor.ToolboxCategoryDefinition[]> {
+    async getToolboxCategories(advanced?: boolean): Promise<pxt.editor.ToolboxCategoryDefinition[]> {
         const resp = await this.sendRequest(
             {
                 type: "pxteditor",
-                action: "gettoolboxcategories"
-            } as pxt.editor.EditorMessageRequest
+                action: "gettoolboxcategories",
+                advanced
+            } as pxt.editor.EditorMessageGetToolboxCategoriesRequest
         ) as pxt.editor.EditorMessageResponse;
 
         return (resp.resp as pxt.editor.EditorMessageGetToolboxCategoriesResponse).categories;

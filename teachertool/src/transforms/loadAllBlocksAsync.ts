@@ -5,8 +5,10 @@ import * as Actions from "../state/actions";
 export async function loadAllBlocksAsync() {
     const { dispatch } = stateAndDispatch();
 
-    const categories = await getToolboxCategories();
-    if (!categories) {
+    const regularCategories = await getToolboxCategories(false);
+    const advancedCategories = await getToolboxCategories(true);
+    const categories = (regularCategories ?? []).concat(advancedCategories ?? []);
+    if (categories.length === 0) {
         // TODO thsparks : try again?
         // TODO thsparks : Probably just return but have an event to load blocks that triggers when the iframe is ready.
         return;

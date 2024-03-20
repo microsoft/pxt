@@ -177,9 +177,10 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     });
                             }
                             case "gettoolboxcategories": {
+                                const msg = data as pxt.editor.EditorMessageGetToolboxCategoriesRequest;
                                 return Promise.resolve()
                                     .then(() => {
-                                        resp = projectView.getToolboxCategories();
+                                        resp = projectView.getToolboxCategories(msg.advanced);
                                     });
                             }
                             case "renderpython": {

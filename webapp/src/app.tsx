@@ -4077,14 +4077,14 @@ export class ProjectView
         return this.blocksEditor.editor.getAllBlocks(false);
     }
 
-    getToolboxCategories(): pxt.editor.EditorMessageGetToolboxCategoriesResponse {
+    getToolboxCategories(advanced?: boolean): pxt.editor.EditorMessageGetToolboxCategoriesResponse {
         if (!this.isBlocksActive()) {
             console.error("Trying to get blocks info from a non-blocks editor.");
             throw new Error("Trying to get blocks info from a non-blocks editor.");
         }
 
         // The toolbox.ToolboxCategory is not exposed, so convert it to the exported ToolboxCategoryDefinition.
-        const categoriesInternal = this.blocksEditor.getToolboxCategories();
+        const categoriesInternal = this.blocksEditor.getToolboxCategories(advanced);
         const categories: pxt.editor.ToolboxCategoryDefinition[] = categoriesInternal.map(c => {
             return {
                 name: c.name || c.nameid,

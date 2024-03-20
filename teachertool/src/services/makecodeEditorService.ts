@@ -43,12 +43,12 @@ export async function setHighContrastAsync(on: boolean) {
     }
 }
 
-export async function getToolboxCategories(): Promise<pxt.editor.ToolboxCategoryDefinition[] | undefined> {
+export async function getToolboxCategories(advanced?: boolean): Promise<pxt.editor.ToolboxCategoryDefinition[] | undefined> {
     if (!driver) {
         return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
     }
 
-    const response = await driver.getToolboxCategories();
+    const response = await driver.getToolboxCategories(advanced);
     return response;
 }
 

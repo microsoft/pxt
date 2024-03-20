@@ -413,6 +413,11 @@ declare namespace pxt.editor {
         restriction: pxt.editor.LanguageRestriction;
     }
 
+    export interface EditorMessageGetToolboxCategoriesRequest extends EditorMessageRequest {
+        action: "gettoolboxcategories";
+        advanced?: boolean;
+    }
+
     export interface EditorMessageGetToolboxCategoriesResponse {
         categories: pxt.editor.ToolboxCategoryDefinition[];
     }
@@ -951,7 +956,7 @@ declare namespace pxt.editor {
         // FIXME (riknoll) need to figure out how to type this better
         // getBlocks(): Blockly.Block[];
         getBlocks(): any[];
-        getToolboxCategories(): pxt.editor.EditorMessageGetToolboxCategoriesResponse;
+        getToolboxCategories(advanced?: boolean): pxt.editor.EditorMessageGetToolboxCategoriesResponse;
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
