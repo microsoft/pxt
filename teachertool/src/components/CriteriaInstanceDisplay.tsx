@@ -85,7 +85,7 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
             }
         }
         return undefined;
-    }, [param.value]);
+    }, [param.value, teacherTool.toolboxCategories]);
 
     const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
     return (
