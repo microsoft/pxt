@@ -4054,7 +4054,8 @@ export class ProjectView
     }
 
     renderXml(req: pxt.editor.EditorMessageRenderXmlRequest): pxt.editor.EditorMessageRenderXmlResponse {
-        const svg = pxtblockly.render(req.xml, {
+        const xml = req.xml.trim().toLocaleLowerCase().startsWith("<xml") ? req.xml : `<xml xmlns="https://developers.google.com/blockly/xml">${req.xml}</xml>`;
+        const svg = pxtblockly.render(xml, {
             snippetMode: req.snippetMode || false,
             layout: req.layout !== undefined ? req.layout : pxt.editor.BlockLayout.Align,
             splitSvg: false
