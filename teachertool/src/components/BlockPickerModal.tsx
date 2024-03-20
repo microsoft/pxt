@@ -2,17 +2,16 @@ import React, { useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
-import { loadAllBlocksAsync } from "../transforms/loadAllBlocksAsync";
 import { LazyImage } from "react-common/components/controls/LazyImage";
 import { loadBlockImagesAsync } from "../transforms/loadBlockImagesAsync";
 import { FocusList } from "react-common/components/controls/FocusList";
 import { Button } from "react-common/components/controls/Button";
-import css from "./styling/BlockPickerModal.module.scss";
 import { classList } from "react-common/components/util";
 import { getReadableBlockString } from "../utils";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "../services/loggingService";
+import css from "./styling/BlockPickerModal.module.scss";
 
 interface BlockPickerCategoryProps {
     category: pxt.editor.ToolboxCategoryDefinition;
@@ -81,6 +80,15 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
     ) : null;
 };
 
+const LoadingBlocks: React.FC = () => {
+    return (
+        <div className={css["loading-container"]}>
+            <div className="common-spinner" />
+        </div>
+    );
+
+}
+
 export interface BlockPickerModalProps {}
 export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
@@ -103,9 +111,6 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
         }
     ];
 
-    if (!teacherTool.toolboxCategories) {
-        loadAllBlocksAsync();
-    }
     return teacherTool.modal === "block-picker" && teacherTool.blockPickerOptions ? (
         <Modal
             className={css["block-picker-modal"]}
@@ -122,7 +127,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
                         />
                     );
                 })}
-            {!teacherTool.toolboxCategories && <div className="common-spinner" />}
+            {!teacherTool.toolboxCategories && <LoadingBlocks />}
         </Modal>
     ) : null;
 };

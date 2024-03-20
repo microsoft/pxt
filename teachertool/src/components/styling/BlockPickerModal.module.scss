@@ -7,6 +7,21 @@
             border-bottom: 2px solid var(--pxt-content-accent);
         }
 
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+
+            div[class*="common-spinner"] {
+                width: 5rem;
+                height: 5rem;
+                margin: 1rem;
+            }
+        }
+
         .category-container {
             // border and foreground colors are overridden by javascript with category color
             border-left: 1rem solid var(--pxt-content-secondary-foreground);
