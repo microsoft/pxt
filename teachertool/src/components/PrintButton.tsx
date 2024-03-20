@@ -16,7 +16,7 @@ export const PrintButton: React.FC<PrintButtonProps> = ({ printRef }) => {
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
         onPrintError: () => showToast(makeToast("error", lf("Unable to print evaluation results"), 2000)),
-        documentTitle: `${getSafeRubricName(teacherTool)} - ${pxt.Util.sanitizeFileName(
+        documentTitle: `${pxt.Util.sanitizeFileName(getSafeRubricName(teacherTool)!)} - ${pxt.Util.sanitizeFileName(
             teacherTool.projectMetadata?.name || Strings.UntitledProject
         )}`,
     });
