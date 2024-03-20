@@ -4,7 +4,7 @@ import { ErrorCode } from "../types/errorCode";
 import { logDebug, logError } from "./loggingService";
 import * as AutorunService from "./autorunService";
 import { IframeDriver } from "pxtservices/iframeDriver";
-import { loadToolboxCategories } from "../transforms/loadAllBlocksAsync";
+import { loadToolboxCategoriesAsync } from "../transforms/loadToolboxCategoriesAsync";
 
 
 let driver: IframeDriver | undefined;
@@ -34,7 +34,7 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
         driver.setHighContrast(highContrast);
 
         // Reload all blocks.
-        loadToolboxCategories();
+        loadToolboxCategoriesAsync();
     }
 }
 

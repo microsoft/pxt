@@ -2,7 +2,7 @@ import { getToolboxCategories } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 
-export async function loadToolboxCategories() {
+export async function loadToolboxCategoriesAsync() {
     const { dispatch } = stateAndDispatch();
 
     const regularCategories = await getToolboxCategories(false);
