@@ -3,10 +3,12 @@ import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
 import { loadAllBlocksAsync } from "../transforms/loadAllBlocksAsync";
-import { MenuDropdown, MenuItem } from "react-common/components/controls/MenuDropdown";
 import { LazyImage } from "react-common/components/controls/LazyImage";
 import { loadBlockImagesAsync } from "../transforms/loadBlockImagesAsync";
+import { FocusList } from "react-common/components/controls/FocusList";
+import { Button } from "react-common/components/controls/Button";
 import css from "./styling/BlockPickerModal.module.scss";
+import { classList } from "react-common/components/util";
 
 interface BlockPickerCategoryProps {
     category: pxt.editor.ToolboxCategoryDefinition;
@@ -14,38 +16,54 @@ interface BlockPickerCategoryProps {
 }
 const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onBlockSelected }) => {
     const { state: teacherTool } = useContext(AppStateContext);
+    const [expanded, setExpanded] = useState(false);
 
     function blockSelected(block: pxt.editor.ToolboxBlockDefinition) {
         onBlockSelected?.(block);
     }
 
-    function getMenuItemForBlock(block: pxt.editor.ToolboxBlockDefinition) {
+    function getBlockButton(block: pxt.editor.ToolboxBlockDefinition) {
         const imageUri = block.blockId ? teacherTool.blockImageCache[block.blockId] : undefined;
 
-        return {
-            title: block.name,
-            label: imageUri ? <LazyImage src={imageUri} alt={block.name} /> : block.name,
-            onClick: () => blockSelected(block),
-        } as MenuItem;
+        return (
+            <Button
+                className={css["block-button"]}
+                title={block.name}
+                label={imageUri ? <LazyImage src={imageUri} alt={block.name} /> : block.name}
+                onClick={() => blockSelected(block)}
+            />
+        );
     }
 
-    function handleExpansionChanged(expanded: boolean) {
-        if (expanded) {
+    function handleClick() {
+        if (!expanded) {
             // We do not need to block on this.
             /* await */ loadBlockImagesAsync(category);
         }
+
+        setExpanded(!expanded);
     }
 
-    // Set left border color based on category.color.
-    const bkgStyle = category.color ? { color: category.color, borderLeftColor: category.color } : {};
+    // TODO thsparks : aria roles?
+
+    const categoryColorsStyle = category.color ? { color: category.color, borderLeftColor: category.color } : {};
     return category.name && category.blocks && category.blocks.length > 0 ? (
-        <div style={bkgStyle} className={css["category-container"]}>
-            <MenuDropdown
-                title={category.name}
-                label={pxt.Util.capitalize(category.name)}
-                items={category.blocks.map(getMenuItemForBlock)}
-                onExpansionChanged={handleExpansionChanged}
-            />
+        // Need bottom-border div to keep the bottom border from intersecting with the left border on category-container.
+        <div className={css["bottom-border"]}>
+            <div className={css["category-container"]} style={categoryColorsStyle}>
+                <Button
+                    className={classList(css["category-button"], expanded ? css["bottom-border"] : undefined)}
+                    title={category.name}
+                    label={pxt.Util.capitalize(category.name)}
+                    onClick={handleClick}
+                    style={categoryColorsStyle}
+                />
+                {expanded && (
+                    <FocusList role={"listbox"} className={css["category-block-list"]}>
+                        {category.blocks.map(getBlockButton)}
+                    </FocusList>
+                )}
+            </div>
         </div>
     ) : null;
 };

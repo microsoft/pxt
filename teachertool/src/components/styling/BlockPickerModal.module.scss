@@ -1,32 +1,39 @@
 .block-picker-modal {
     div[class*="common-modal-body"] {
+        overflow-x: hidden;
         padding: 0;
 
+        .bottom-border {
+            border-bottom: 2px solid var(--pxt-content-accent);
+        }
+
         .category-container {
+            // border and foreground colors are overridden by javascript with category color
             border-left: 1rem solid var(--pxt-content-secondary-foreground);
             color: var(--pxt-content-secondary-foreground);
 
-            margin-bottom: 2px;
-            outline: 2px solid var(--pxt-content-accent);
-    
-            &:last-child {
-                border-bottom: none;
-            }
-    
-            button[class*="menu-button"] {
+            .category-button {
                 width: 100%;
                 padding: 0.5rem;
-                text-align:start;
+                text-align: start;
                 font-weight: 800;
-                color: inherit;
+                font-size: 1.3em;
+                border-radius: 0;
             }
 
-            div[class*="common-menu-dropdown-pane"] {
-                position: relative;
-                width: 100% !important;
+            .category-block-list {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
 
-                div[class*="common-lazy-image-wrapper"] {
-                    justify-content: left;
+                .block-button {
+                    width: 100%;
+                    align-content: start;
+
+                    div[class*="common-lazy-image-wrapper"] {
+                        justify-content: left;
+                    }
                 }
             }
         }
