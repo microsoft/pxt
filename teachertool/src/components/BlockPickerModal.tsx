@@ -86,8 +86,7 @@ const LoadingBlocks: React.FC = () => {
             <div className="common-spinner" />
         </div>
     );
-
-}
+};
 
 export interface BlockPickerModalProps {}
 export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
@@ -95,7 +94,11 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
 
     function handleBlockSelected(block: pxt.editor.ToolboxBlockDefinition) {
         if (teacherTool.blockPickerOptions) {
-            setParameterValue(teacherTool.blockPickerOptions.criteriaInstanceId, teacherTool.blockPickerOptions.paramName, block.blockId);
+            setParameterValue(
+                teacherTool.blockPickerOptions.criteriaInstanceId,
+                teacherTool.blockPickerOptions.paramName,
+                block.blockId
+            );
         } else {
             logError(ErrorCode.selectedBlockWithoutOptions, "Block selected without block picker options.");
         }
@@ -108,7 +111,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
             label: lf("Cancel"),
             className: "secondary",
             onClick: hideModal,
-        }
+        },
     ];
 
     return teacherTool.modal === "block-picker" && teacherTool.blockPickerOptions ? (

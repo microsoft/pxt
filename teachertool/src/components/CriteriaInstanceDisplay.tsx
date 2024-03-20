@@ -63,7 +63,6 @@ interface BlockInputSegmentProps {
 interface BlockData {
     category: pxt.editor.ToolboxCategoryDefinition;
     block: pxt.editor.ToolboxBlockDefinition;
-
 }
 const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
     const { state: teacherTool } = useContext(AppStateContext);

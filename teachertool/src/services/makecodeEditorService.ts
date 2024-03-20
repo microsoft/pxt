@@ -6,7 +6,6 @@ import * as AutorunService from "./autorunService";
 import { IframeDriver } from "pxtservices/iframeDriver";
 import { loadToolboxCategoriesAsync } from "../transforms/loadToolboxCategoriesAsync";
 
-
 let driver: IframeDriver | undefined;
 let highContrast: boolean = false;
 
@@ -43,11 +42,13 @@ export async function setHighContrastAsync(on: boolean) {
     highContrast = on;
 
     if (driver) {
-        await driver.setHighContrast(on)
+        await driver.setHighContrast(on);
     }
 }
 
-export async function getToolboxCategories(advanced?: boolean): Promise<pxt.editor.ToolboxCategoryDefinition[] | undefined> {
+export async function getToolboxCategories(
+    advanced?: boolean
+): Promise<pxt.editor.ToolboxCategoryDefinition[] | undefined> {
     if (!driver) {
         return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
     }
@@ -61,7 +62,7 @@ export async function getBlockImageUriAsync(xml: string) {
         return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
     }
 
-    const response = await driver.renderXml(xml) as any;
+    const response = (await driver.renderXml(xml)) as any;
     return response;
 }
 

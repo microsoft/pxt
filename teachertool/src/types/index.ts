@@ -59,7 +59,7 @@ export type ConfirmationModalOptions = {
 export type BlockPickerOptions = {
     criteriaInstanceId: string;
     paramName: string;
-}
+};
 
 export type CriteriaTemplateSegment = {
     type: "plain-text" | "param";

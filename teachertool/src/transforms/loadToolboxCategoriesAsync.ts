@@ -24,7 +24,7 @@ export async function loadToolboxCategoriesAsync() {
                 return self.findIndex(b => b.blockId === block.blockId) === index;
             });
 
-            map[category.name!] = {...category, blocks: filteredBlocks};
+            map[category.name!] = { ...category, blocks: filteredBlocks };
         }
         return map;
     }, {} as pxt.Map<pxt.editor.ToolboxCategoryDefinition>);

@@ -22,5 +22,5 @@ export enum ErrorCode {
     fetchRequestFailed = "fetchRequestFailed",
     fetchJsonDocAsync = "fetchJsonDocAsync",
     missingParameter = "missingParameter",
-    selectedBlockWithoutOptions = "selectedBlockWithoutOptions"
+    selectedBlockWithoutOptions = "selectedBlockWithoutOptions",
 }
