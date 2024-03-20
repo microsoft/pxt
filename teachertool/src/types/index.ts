@@ -56,6 +56,11 @@ export type ConfirmationModalOptions = {
     onContinue: () => void;
 };
 
+export type BlockPickerOptions = {
+    criteriaInstanceId: string;
+    paramName: string;
+}
+
 export type CriteriaTemplateSegment = {
     type: "plain-text" | "param";
     content: string; // plain text or parameter name

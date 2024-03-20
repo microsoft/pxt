@@ -10,6 +10,9 @@ import { Button } from "react-common/components/controls/Button";
 import css from "./styling/BlockPickerModal.module.scss";
 import { classList } from "react-common/components/util";
 import { getReadableBlockString } from "../utils";
+import { setParameterValue } from "../transforms/setParameterValue";
+import { ErrorCode } from "../types/errorCode";
+import { logError } from "../services/loggingService";
 
 interface BlockPickerCategoryProps {
     category: pxt.editor.ToolboxCategoryDefinition;
@@ -81,45 +84,33 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
 export interface BlockPickerModalProps {}
 export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [selectedBlockId, setSelectedBlockId] = useState<string | undefined>(undefined);
 
-    // TODO thsparks : need to store target instance id and parameter in state?
-    function closeModal() {
-        hideModal();
-
-        // Clear for next open.
-        setSelectedBlockId(undefined);
-    }
-
-    function handleConfirmClicked() {
-        if (selectedBlockId) {
-            // onSelectionConfirmed(selectedBlockId);
+    function handleBlockSelected(block: pxt.editor.ToolboxBlockDefinition) {
+        if (teacherTool.blockPickerOptions) {
+            setParameterValue(teacherTool.blockPickerOptions.criteriaInstanceId, teacherTool.blockPickerOptions.paramName, block.blockId);
+        } else {
+            logError(ErrorCode.selectedBlockWithoutOptions, "Block selected without block picker options.");
         }
 
-        closeModal();
+        hideModal();
     }
 
     const modalActions = [
         {
             label: lf("Cancel"),
             className: "secondary",
-            onClick: closeModal,
-        },
-        {
-            label: lf("Confirm"),
-            className: "primary",
-            onClick: handleConfirmClicked,
-        },
+            onClick: hideModal,
+        }
     ];
 
     if (!teacherTool.toolboxCategories) {
         loadAllBlocksAsync();
     }
-    return teacherTool.modal === "block-picker" ? (
+    return teacherTool.modal === "block-picker" && teacherTool.blockPickerOptions ? (
         <Modal
             className={css["block-picker-modal"]}
             title={lf("Select block")}
-            onClose={closeModal}
+            onClose={hideModal}
             actions={modalActions}
         >
             {teacherTool.toolboxCategories &&
@@ -127,7 +118,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
                     return (
                         <BlockPickerCategory
                             category={category}
-                            onBlockSelected={block => setSelectedBlockId(block.blockId)}
+                            onBlockSelected={block => handleBlockSelected(block)}
                         />
                     );
                 })}

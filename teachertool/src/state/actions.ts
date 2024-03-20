@@ -1,4 +1,4 @@
-import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions } from "../types";
+import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions, BlockPickerOptions } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 
@@ -104,6 +104,11 @@ type SetBlockImageUri = ActionBase & {
     imageUri: string;
 };
 
+type SetBlockPickerOptions = ActionBase & {
+    type: "SET_BLOCK_PICKER_OPTIONS";
+    options: BlockPickerOptions | undefined;
+};
+
 /**
  * Union of all actions
  */
@@ -127,7 +132,8 @@ export type Action =
     | SetActiveTab
     | SetAutorun
     | SetToolboxCategories
-    | SetBlockImageUri;
+    | SetBlockImageUri
+    | SetBlockPickerOptions;
 
 /**
  * Action creators
@@ -226,6 +232,11 @@ const setBlockImageUri = (blockId: string, imageUri: string): SetBlockImageUri =
     imageUri,
 });
 
+const setBlockPickerOptions = (options: BlockPickerOptions | undefined): SetBlockPickerOptions => ({
+    type: "SET_BLOCK_PICKER_OPTIONS",
+    options,
+});
+
 export {
     showToast,
     dismissToast,
@@ -246,4 +257,5 @@ export {
     setAutorun,
     setToolboxCategories,
     setBlockImageUri,
+    setBlockPickerOptions,
 };

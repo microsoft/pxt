@@ -3,13 +3,14 @@ import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
-import { splitCriteriaTemplate } from "../utils";
+import { getReadableBlockString, splitCriteriaTemplate } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
-import { useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
-import { showModal } from "../transforms/showModal";
+import { showBlockPicker } from "../transforms/showBlockPicker";
+import { AppStateContext } from "../state/appStateContext";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -59,20 +60,42 @@ interface BlockInputSegmentProps {
     instance: CriteriaInstance;
     param: CriteriaParameterValue;
 }
-const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
-    function handleClick() {
-        // TODO set params
+interface BlockData {
+    category: pxt.editor.ToolboxCategoryDefinition;
+    block: pxt.editor.ToolboxBlockDefinition;
 
-        showModal("block-picker");
+}
+const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
+    const { state: teacherTool } = useContext(AppStateContext);
+    function handleClick() {
+        showBlockPicker(instance.instanceId, param.name);
     }
 
+    const blockData = useMemo<BlockData | undefined>(() => {
+        if (!param.value || !teacherTool.toolboxCategories) {
+            return undefined;
+        }
+
+        // Scan all categories and find the block with the matching id
+        for (const category of Object.values(teacherTool.toolboxCategories)) {
+            for (const block of category.blocks ?? []) {
+                if (block.blockId === param.value) {
+                    return { category, block };
+                }
+            }
+        }
+        return undefined;
+    }, [param.value]);
+
+    const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
     return (
         <Button
-            label={param.value || param.name}
+            label={blockData ? getReadableBlockString(blockData.block.name) : param.value || param.name}
             className={classList(css["block-input-btn"], param.value ? undefined : css["error"])}
             onClick={handleClick}
             title={param.value ? lf("select block") : lf("select block: value required")}
             leftIcon={param.value ? undefined : "fas fa-exclamation-triangle"}
+            style={style}
         />
     );
 };

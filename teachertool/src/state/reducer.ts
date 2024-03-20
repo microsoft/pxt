@@ -139,5 +139,11 @@ export default function reducer(state: AppState, action: Action): AppState {
                 blockImageCache: cache,
             };
         }
+        case "SET_BLOCK_PICKER_OPTIONS": {
+            return {
+                ...state,
+                blockPickerOptions: action.options,
+            };
+        }
     }
 }
