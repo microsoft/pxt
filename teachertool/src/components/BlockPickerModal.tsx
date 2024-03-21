@@ -32,9 +32,10 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
             <Button
                 className={css["block-button"]}
                 title={block.jsDoc ?? getReadableBlockString(block.name)}
+                ariaLabel={block.name}
                 label={
                     imageUri ? (
-                        <LazyImage src={imageUri} alt={block.name} />
+                        <LazyImage src={imageUri} alt={block.name} ariaHidden={true} />
                     ) : (
                         <div className={css["block-placeholder"]}>
                             {getReadableBlockString(block.name)}
@@ -55,9 +56,8 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
         setExpanded(!expanded);
     }
 
-    // TODO thsparks : aria roles?
-
     const categoryColorStyle = (category.color ? { "--category-color": category.color } : {}) as CSSProperties;
+    const blockListId = `${category.name}-block-list`;
     return category.name && category.blocks && category.blocks.length > 0 ? (
         // Need bottom-border div to keep the bottom border from intersecting with the left border on category-container.
         <div className={css["bottom-border"]}>
@@ -67,9 +67,13 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
                     title={category.name}
                     label={pxt.Util.capitalize(category.name)}
                     onClick={handleClick}
+                    ariaExpanded={expanded}
+                    ariaControls={blockListId}
                 />
                 <FocusList
-                    role={"listbox"}
+                    id={blockListId}
+                    role={"group"}
+                    ariaLabel={lf("{0} Blocks", category.name)}
                     className={classList(css["category-block-list"], expanded ? css["expanded"] : css["collapsed"])}
                 >
                     {category.blocks.map(getBlockButton)}
