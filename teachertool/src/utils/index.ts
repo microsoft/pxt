@@ -75,7 +75,7 @@ export function getReadableCriteriaTemplate(criteria: CatalogCriteria): string {
 export function getBlockXml(blockId: string): string {
     return `
 <xml xmlns="https://developers.google.com/blockly/xml">
-    <block type="${blockId}" />
+    <block type="${pxt.Util.escapeForXml(blockId)}" />
 </xml>
 `;
 }
