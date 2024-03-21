@@ -1,78 +1,82 @@
 .block-picker-modal {
-    div[class*="common-modal-body"] {
-        overflow-x: hidden;
-        padding: 0;
+    div[class="common-modal"] {
+        height: 80vh;
 
-        .bottom-border {
-            border-bottom: 2px solid var(--pxt-content-accent);
-        }
-
-        .loading-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-
-            div[class*="common-spinner"] {
-                width: 5rem;
-                height: 5rem;
-                margin: 1rem;
+        div[class*="common-modal-body"] {
+            overflow-x: hidden;
+            padding: 0;
+    
+            .bottom-border {
+                border-bottom: 2px solid var(--pxt-content-accent);
             }
-        }
-
-        .category-container {
-            // border and foreground colors are overridden by javascript with category color
-            border-left: 1rem solid var(--pxt-content-secondary-foreground);
-            color: var(--pxt-content-secondary-foreground);
-
-            .category-button {
-                width: 100%;
-                padding: 0.5rem;
-                text-align: start;
-                font-weight: 800;
-                font-size: 1.3em;
-                border-radius: 0;
-            }
-
-            .category-block-list {
-                width: 100%;
+    
+            .loading-container {
                 display: flex;
                 flex-direction: column;
-                align-items: flex-start;
-
-                transition: max-height 0.2s ease-out;
-                &.collapsed {
-                    max-height: 0;
-                    display:none;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
+                width: 100%;
+    
+                div[class*="common-spinner"] {
+                    width: 5rem;
+                    height: 5rem;
+                    margin: 1rem;
                 }
-                &.expanded {
-                    max-height: 100rem; /* larger that it should ever get */
-                }
-
-                .block-button {
+            }
+    
+            .category-container {
+                // border and foreground colors are overridden by javascript with category color
+                border-left: 1rem solid var(--pxt-content-secondary-foreground);
+                color: var(--pxt-content-secondary-foreground);
+    
+                .category-button {
                     width: 100%;
-                    align-content: start;
-
-                    div[class*="common-lazy-image-wrapper"] {
-                        justify-content: left;
+                    padding: 0.5rem;
+                    text-align: start;
+                    font-weight: 800;
+                    font-size: 1.3em;
+                    border-radius: 0;
+                }
+    
+                .category-block-list {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+    
+                    transition: max-height 0.2s ease-out;
+                    &.collapsed {
+                        max-height: 0;
+                        display:none;
                     }
-
-                    .block-placeholder {
-                        height: 3rem;
-                        border-radius: 0.2rem;
-                        color: white;
-                        border: 1px solid rgba(0, 0, 0, 0.5);
-                        font-size: 1em;
-                        font-weight: bold;
-                        background-color: var(--pxt-content-foreground) /* overridden by javascript with block color */;
-                        width: fit-content;
-                        min-width: 10rem;
-                        display: flex;
-                        justify-content: flex-start;
-                        align-items: center;
-                        padding: 0.5rem;
+                    &.expanded {
+                        max-height: 100rem; /* larger that it should ever get */
+                    }
+    
+                    .block-button {
+                        width: 100%;
+                        align-content: start;
+    
+                        div[class*="common-lazy-image-wrapper"] {
+                            justify-content: left;
+                        }
+    
+                        .block-placeholder {
+                            height: 3rem;
+                            border-radius: 0.2rem;
+                            color: white;
+                            border: 1px solid rgba(0, 0, 0, 0.5);
+                            font-size: 1em;
+                            font-weight: bold;
+                            background-color: var(--pxt-content-foreground) /* overridden by javascript with block color */;
+                            width: fit-content;
+                            min-width: 10rem;
+                            display: flex;
+                            justify-content: flex-start;
+                            align-items: center;
+                            padding: 0.5rem;
+                        }
                     }
                 }
             }
