@@ -57,12 +57,21 @@ export async function getToolboxCategories(
     return response;
 }
 
-export async function getBlockImageUriAsync(xml: string) {
+export async function getBlockImageUriFromXmlAsync(xml: string) {
     if (!driver) {
         return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
     }
 
     const response = (await driver.renderXml(xml)) as any;
+    return response;
+}
+
+export async function getBlockImageUriFromBlockIdAsync(qName: string) {
+    if (!driver) {
+        return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
+    }
+
+    const response = (await driver.renderByBlockId(qName)) as any;
     return response;
 }
 

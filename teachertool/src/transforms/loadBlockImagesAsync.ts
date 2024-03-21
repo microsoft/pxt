@@ -1,7 +1,6 @@
-import { getBlockImageUriAsync } from "../services/makecodeEditorService";
+import { getBlockImageUriFromBlockIdAsync, getBlockImageUriFromXmlAsync } from "../services/makecodeEditorService";
 import * as Actions from "../state/actions";
 import { stateAndDispatch } from "../state";
-import { getBlockXml } from "../utils";
 
 async function loadBlockImageAsync(block: pxt.editor.ToolboxBlockDefinition) {
     const { state } = stateAndDispatch();
@@ -15,8 +14,7 @@ async function loadBlockImageAsync(block: pxt.editor.ToolboxBlockDefinition) {
         return;
     }
 
-    const xml = block.blockXml || getBlockXml(block.blockId);
-    const imageUri = await getBlockImageUriAsync(xml);
+    const imageUri = block.blockXml ? await getBlockImageUriFromXmlAsync(block.blockXml) : await getBlockImageUriFromBlockIdAsync(block.blockId);
     if (imageUri) {
         const { dispatch } = stateAndDispatch();
         dispatch(Actions.setBlockImageUri(block.blockId, imageUri));

@@ -164,6 +164,16 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         })
                                     });
                             }
+                            case "renderbyblockid": {
+                                const rendermsg = data as pxt.editor.EditorMessageRenderByBlockIdRequest;
+                                return Promise.resolve()
+                                    .then(() => projectView.renderByBlockIdAsync(rendermsg))
+                                    .then(r => {
+                                        return r.resultXml.then((svg: any) => {
+                                            resp = svg.xml;
+                                        })
+                                    });
+                            }
                             case "runeval": {
                                 const evalmsg = data as pxt.editor.EditorMessageRunEvalRequest;
                                 const plan = evalmsg.validatorPlan;

@@ -72,14 +72,6 @@ export function getReadableCriteriaTemplate(criteria: CatalogCriteria): string {
     return criteria.template.replaceAll("${", "").replaceAll("}", "");
 }
 
-export function getBlockXml(blockId: string): string {
-    return `
-<xml xmlns="https://developers.google.com/blockly/xml">
-    <block type="${pxt.Util.escapeForXml(blockId)}" />
-</xml>
-`;
-}
-
 export function getReadableBlockString(name: string) {
     if (name.indexOf("_") !== -1) {
         return pxt.Util.snakeCaseToLowercaseWithSpaces(name);

@@ -55,6 +55,7 @@ declare namespace pxt.editor {
         | "renderblocks"
         | "renderpython"
         | "renderxml"
+        | "renderbyblockid"
         | "setscale"
         | "startactivity"
         | "saveproject"
@@ -304,6 +305,13 @@ declare namespace pxt.editor {
         layout?: BlockLayout;
     }
 
+    export interface EditorMessageRenderByBlockIdRequest extends EditorMessageRequest {
+        action: "renderbyblockid";
+        blockId: string;
+        snippetMode?: boolean;
+        layout?: BlockLayout;
+    }
+
     export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
         action: "runeval";
         validatorPlan: pxt.blocks.ValidatorPlan;
@@ -316,6 +324,11 @@ declare namespace pxt.editor {
     }
 
     export interface EditorMessageRenderXmlResponse {
+        svg: SVGSVGElement;
+        resultXml: Promise<any>;
+    }
+
+    export interface EditorMessageRenderByBlockIdResponse {
         svg: SVGSVGElement;
         resultXml: Promise<any>;
     }
@@ -952,6 +965,7 @@ declare namespace pxt.editor {
         renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse>;
         renderPythonAsync(req: pxt.editor.EditorMessageRenderPythonRequest): Promise<pxt.editor.EditorMessageRenderPythonResponse>;
         renderXml(req: pxt.editor.EditorMessageRenderXmlRequest): pxt.editor.EditorMessageRenderXmlResponse;
+        renderByBlockIdAsync(req: pxt.editor.EditorMessageRenderByBlockIdRequest): Promise<pxt.editor.EditorMessageRenderByBlockIdResponse>;
 
         // FIXME (riknoll) need to figure out how to type this better
         // getBlocks(): Blockly.Block[];

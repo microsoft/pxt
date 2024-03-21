@@ -364,6 +364,18 @@ export class IframeDriver {
         return resp.resp;
     }
 
+    async renderByBlockId(blockId: string) {
+        const resp = await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "renderbyblockid",
+                blockId: blockId
+            } as pxt.editor.EditorMessageRenderByBlockIdRequest
+        ) as pxt.editor.EditorMessageResponse;
+
+        return resp.resp;
+    }
+
     async getToolboxCategories(advanced?: boolean): Promise<pxt.editor.ToolboxCategoryDefinition[]> {
         const resp = await this.sendRequest(
             {

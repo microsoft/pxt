@@ -4053,11 +4053,11 @@ export class ProjectView
             });
     }
 
-    renderXml(req: pxt.editor.EditorMessageRenderXmlRequest): pxt.editor.EditorMessageRenderXmlResponse {
-        const xml = req.xml.trim().toLocaleLowerCase().startsWith("<xml") ? req.xml : `<xml xmlns="https://developers.google.com/blockly/xml">${req.xml}</xml>`;
-        const svg = pxtblockly.render(xml, {
-            snippetMode: req.snippetMode || false,
-            layout: req.layout !== undefined ? req.layout : pxt.editor.BlockLayout.Align,
+    renderXmlInner(xml: string, snippetMode?: boolean, layout?: pxt.editor.BlockLayout) {
+        const wrappedXml = xml.trim().toLocaleLowerCase().startsWith("<xml") ? xml : `<xml xmlns="https://developers.google.com/blockly/xml">${xml}</xml>`;
+        const svg = pxtblockly.render(wrappedXml, {
+            snippetMode: snippetMode || false,
+            layout: layout !== undefined ? layout : pxt.editor.BlockLayout.Align,
             splitSvg: false
         }) as SVGSVGElement;
 
@@ -4066,6 +4066,19 @@ export class ProjectView
             svg: svg,
             resultXml: pxtblockly.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3])
         }
+    }
+
+    renderXml(req: pxt.editor.EditorMessageRenderXmlRequest): pxt.editor.EditorMessageRenderXmlResponse {
+        return this.renderXmlInner(req.xml, req.snippetMode, req.layout);
+    }
+
+    async renderByBlockIdAsync(req: pxt.editor.EditorMessageRenderByBlockIdRequest): Promise<pxt.editor.EditorMessageRenderByBlockIdResponse> {
+        const blocksInfo = await compiler.getBlocksAsync();
+        const blockInfo = blocksInfo.blocksById[req.blockId];
+        const symbolInfo: pxtc.SymbolInfo = blocksInfo.apis.byQName[blockInfo.qName];
+        const compileInfo: pxt.blocks.BlockCompileInfo = pxt.blocks.compileInfo(symbolInfo);
+        const xml = pxtblockly.createToolboxBlock(blocksInfo, symbolInfo, compileInfo);
+        return this.renderXmlInner(xml.outerHTML, req.snippetMode, req.layout);
     }
 
     getBlocks(): Blockly.Block[] {
