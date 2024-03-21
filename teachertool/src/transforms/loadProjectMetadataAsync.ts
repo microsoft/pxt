@@ -5,7 +5,6 @@ import { logDebug } from "../services/loggingService";
 import { showToast } from "./showToast";
 import { makeToast } from "../utils";
 import { initNewProjectResults } from "./initNewProjectResults";
-import { loadToolboxCategoriesAsync } from "./loadToolboxCategoriesAsync";
 
 export async function loadProjectMetadataAsync(inputText: string, shareLink: string) {
     const { dispatch } = stateAndDispatch();

@@ -49,29 +49,17 @@ export async function setHighContrastAsync(on: boolean) {
 export async function getToolboxCategories(
     advanced?: boolean
 ): Promise<pxt.editor.ToolboxCategoryDefinition[] | undefined> {
-    if (!driver) {
-        return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
-    }
-
-    const response = await driver.getToolboxCategories(advanced);
+    const response = driver ? await driver.getToolboxCategories(advanced) : undefined;
     return response;
 }
 
-export async function getBlockImageUriFromXmlAsync(xml: string) {
-    if (!driver) {
-        return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
-    }
-
-    const response = (await driver.renderXml(xml)) as any;
+export async function getBlockImageUriFromXmlAsync(xml: string): Promise<string | undefined> {
+    const response = driver ? await driver.renderXml(xml) : undefined;
     return response;
 }
 
-export async function getBlockImageUriFromBlockIdAsync(qName: string) {
-    if (!driver) {
-        return undefined; // TODO thsparks : how to handle this? Have caller retry? Wait for driver to get set?
-    }
-
-    const response = (await driver.renderByBlockId(qName)) as any;
+export async function getBlockImageUriFromBlockIdAsync(qName: string): Promise<string | undefined> {
+    const response = driver ? await driver.renderByBlockId(qName) : undefined;
     return response;
 }
 
