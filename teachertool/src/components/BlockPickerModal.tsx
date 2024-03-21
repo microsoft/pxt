@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { CSSProperties, useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
@@ -36,7 +36,7 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
                     imageUri ? (
                         <LazyImage src={imageUri} alt={block.name} />
                     ) : (
-                        <div className={css["block-placeholder"]} style={{ backgroundColor: category.color }}>
+                        <div className={css["block-placeholder"]}>
                             {getReadableBlockString(block.name)}
                         </div>
                     )
@@ -57,17 +57,16 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
 
     // TODO thsparks : aria roles?
 
-    const categoryColorsStyle = category.color ? { color: category.color, borderLeftColor: category.color } : {};
+    const categoryColorStyle = (category.color ? { "--category-color": category.color } : {}) as CSSProperties;
     return category.name && category.blocks && category.blocks.length > 0 ? (
         // Need bottom-border div to keep the bottom border from intersecting with the left border on category-container.
         <div className={css["bottom-border"]}>
-            <div className={css["category-container"]} style={categoryColorsStyle}>
+            <div className={css["category-container"]} style={categoryColorStyle}>
                 <Button
                     className={classList(css["category-button"], expanded ? css["bottom-border"] : undefined)}
                     title={category.name}
                     label={pxt.Util.capitalize(category.name)}
                     onClick={handleClick}
-                    style={categoryColorsStyle}
                 />
                 <FocusList
                     role={"listbox"}

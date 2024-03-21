@@ -1,5 +1,8 @@
 .block-picker-modal {
     div[class="common-modal"] {
+        // category color is overridden by javascript with category color
+        --category-color: var(--pxt-content-secondary-foreground);
+
         height: 80vh;
 
         div[class*="common-modal-body"] {
@@ -26,9 +29,8 @@
             }
     
             .category-container {
-                // border and foreground colors are overridden by javascript with category color
-                border-left: 1rem solid var(--pxt-content-secondary-foreground);
-                color: var(--pxt-content-secondary-foreground);
+                border-left: 1rem solid var(--category-color);
+                color: var(--category-color);
     
                 .category-button {
                     width: 100%;
@@ -37,6 +39,7 @@
                     font-weight: 800;
                     font-size: 1.3em;
                     border-radius: 0;
+                    color: var(--category-color);
                 }
     
                 .category-block-list {
@@ -69,7 +72,7 @@
                             border: 1px solid rgba(0, 0, 0, 0.5);
                             font-size: 1em;
                             font-weight: bold;
-                            background-color: var(--pxt-content-foreground) /* overridden by javascript with block color */;
+                            background-color: var(--category-color);
                             width: fit-content;
                             min-width: 10rem;
                             display: flex;
