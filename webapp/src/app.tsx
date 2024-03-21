@@ -4087,25 +4087,16 @@ export class ProjectView
         const categoriesInternal = this.blocksEditor.getToolboxCategories(advanced);
         const categories: pxt.editor.ToolboxCategoryDefinition[] = categoriesInternal.map(c => {
             return {
+                ...c,
                 name: c.name || c.nameid,
-                icon: c.icon,
-                color: c.color,
-                advanced: c.advanced,
-                groups: c.groups,
+                customClick: undefined, // Cannot be serialized.
                 blocks: c.blocks.map(b => {
                     return {
-                        name: b.name,
+                        ...b,
                         group: b.attributes.group,
                         advanved: b.attributes.advanced,
                         weight: b.attributes.weight,
                         jsDoc: b.attributes.jsDoc,
-                        snippet: b.snippet,
-                        pySnippet: b.pySnippet,
-                        snippetName: b.snippetName,
-                        pySnippetName: b.pySnippetName,
-                        snippetOnly: b.snippetOnly,
-                        retType: b.retType,
-                        blockXml: b.blockXml,
                         blockId: b.attributes.blockId,
                     } as pxt.editor.ToolboxBlockDefinition
                 }),
