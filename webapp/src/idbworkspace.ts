@@ -83,6 +83,8 @@ async function migratePouchAsync() {
     const entries = await oldDb.getAllAsync<any>(POUCH_OBJECT_STORE);
     const alreadyMigratedList = await getMigrationDbAsync();
 
+    const migrated: [string, string][] = [];
+
     for (const entry of entries) {
         // format is (prefix-)?tableName--id::rev
         const docId: string = entry._doc_id_rev;
@@ -128,11 +130,13 @@ async function migratePouchAsync() {
                 continue;
         }
 
-        if (await alreadyMigratedList.getAsync(table, id)) {
+        if (await alreadyMigratedList.getAsync(table, migrationDbKey(prefix, id))) {
             continue;
         }
 
-        alreadyMigratedList.setAsync(table, { id });
+        alreadyMigratedList.setAsync(table, { id: migrationDbKey(prefix, id) });
+
+        migrated.push([table, id]);
 
         const db = await getDbAsync(prefix)
         const existing = await db.getAsync(table, id);
@@ -440,6 +444,10 @@ export function initGitHubDb() {
 
     pxt.github.db = new GithubDb();
 }
+
+function migrationDbKey(prefix: string, id: string) {
+    return `${prefix}--${id}`;
+};
 
 export const provider: WorkspaceProvider = {
     getAsync,
