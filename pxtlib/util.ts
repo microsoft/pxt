@@ -811,19 +811,6 @@ namespace ts.pxtc.Util {
         return str?.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     }
 
-    export function escapeForXml(str: string) {
-        return str?.replace(/[<>&'"]/g, c => {
-            switch (c) {
-                case "<": return "&lt;";
-                case ">": return "&gt;";
-                case "&": return "&amp;";
-                case "'": return "&apos;";
-                case "\"": return "&quot;";
-                default: return "";
-            }
-        });
-    }
-
     export function stripUrlProtocol(str: string) {
         return str?.replace(/.*?:\/\//g, "");
     }
