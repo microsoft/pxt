@@ -4,8 +4,8 @@ import { getProjectMetaAsync } from "../services/backendRequests";
 import { logDebug } from "../services/loggingService";
 import { showToast } from "./showToast";
 import { makeToast } from "../utils";
-import { setEvalResultsPending } from "./setEvalResultsPending";
 import { initNewProjectResults } from "./initNewProjectResults";
+import { loadToolboxCategoriesAsync } from "./loadToolboxCategoriesAsync";
 
 export async function loadProjectMetadataAsync(inputText: string, shareLink: string) {
     const { dispatch } = stateAndDispatch();
@@ -36,4 +36,7 @@ export async function loadProjectMetadataAsync(inputText: string, shareLink: str
     dispatch(Actions.setProjectMetadata(projectData));
     initNewProjectResults();
     logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);
+
+    // TODO thsparks : We need to loadToolboxCategoriesAsync once the iframe has loaded, so it doesn't work to leave it here.
+    // TODO thsparks : Reload all blocks.
 }
