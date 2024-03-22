@@ -21,7 +21,6 @@ interface PickBlockButtonProps {
 const PickBlockButton: React.FC<PickBlockButtonProps> = ({ block, category, onBlockSelected }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     let imageUri = block.blockId ? teacherTool.blockImageCache[block.blockId] : undefined;
-    if (category.name == "Loops") imageUri = undefined;
 
     const placeholderBlock = (
         <div className={css["block-placeholder"]}>
