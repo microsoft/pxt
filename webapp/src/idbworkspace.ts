@@ -128,11 +128,11 @@ async function migratePouchAsync() {
                 continue;
         }
 
-        if (await alreadyMigratedList.getAsync(table, id)) {
+        if (await alreadyMigratedList.getAsync(table, migrationDbKey(prefix, id))) {
             continue;
         }
 
-        alreadyMigratedList.setAsync(table, { id });
+        await alreadyMigratedList.setAsync(table, { id: migrationDbKey(prefix, id) });
 
         const db = await getDbAsync(prefix)
         const existing = await db.getAsync(table, id);
@@ -442,6 +442,10 @@ export function initGitHubDb() {
 
     pxt.github.db = new GithubDb();
 }
+
+function migrationDbKey(prefix: string, id: string) {
+    return `${prefix}--${id}`;
+};
 
 export const provider: WorkspaceProvider = {
     getAsync,
