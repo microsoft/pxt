@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
+import { Strings } from "../constants";
 
 export interface IProps {}
 export const ConfirmationModal: React.FC<IProps> = () => {
@@ -19,12 +20,12 @@ export const ConfirmationModal: React.FC<IProps> = () => {
 
     const actions = [
         {
-            label: lf("Cancel"),
+            label: Strings.Cancel,
             className: "secondary",
             onClick: handleCancel,
         },
         {
-            label: lf("Continue"),
+            label: Strings.Continue,
             className: "primary",
             onClick: handleContinue,
         },

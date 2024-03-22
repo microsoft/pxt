@@ -20,6 +20,11 @@ export namespace Strings {
     export const Browse = lf("Browse");
     export const SelectRubricFile = lf("Select Rubric File");
     export const InvalidRubricFile = lf("Invalid Rubric File");
+    export const Cancel = lf("Cancel");
+    export const SelectBlock = lf("Select Block");
+    export const ValueRequired = lf("Value Required");
+    export const AddSelected = lf("Add Selected");
+    export const Continue = lf("Continue");
 }
 
 export namespace Ticks {

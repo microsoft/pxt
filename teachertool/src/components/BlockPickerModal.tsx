@@ -11,6 +11,7 @@ import { getReadableBlockString } from "../utils";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "../services/loggingService";
+import { Strings } from "../constants";
 import css from "./styling/BlockPickerModal.module.scss";
 
 interface PickBlockButtonProps {
@@ -118,7 +119,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
 
     const modalActions = [
         {
-            label: lf("Cancel"),
+            label: Strings.Cancel,
             className: "secondary",
             onClick: hideModal,
         },
@@ -127,7 +128,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
     return teacherTool.modal === "block-picker" && teacherTool.blockPickerOptions ? (
         <Modal
             className={css["block-picker-modal"]}
-            title={lf("Select block")}
+            title={Strings.SelectBlock}
             onClose={hideModal}
             actions={modalActions}
         >

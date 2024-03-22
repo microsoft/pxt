@@ -11,6 +11,7 @@ import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { showBlockPicker } from "../transforms/showBlockPicker";
 import { AppStateContext } from "../state/appStateContext";
+import { Strings } from "../constants";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -33,7 +34,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
         setParameterValue(instance.instanceId, param.name, newValue);
     }
 
-    const tooltip = isEmpty ? lf("{0}: value required", param.name) : param.name;
+    const tooltip = isEmpty ? `"${param.name}: ${Strings.ValueRequired}` : param.name;
     return (
         <div title={tooltip} className={css["inline-input-wrapper"]}>
             <Input
@@ -92,7 +93,7 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
             label={blockData ? getReadableBlockString(blockData.block.name) : param.value || param.name}
             className={classList(css["block-input-btn"], param.value ? undefined : css["error"])}
             onClick={handleClick}
-            title={param.value ? lf("select block") : lf("select block: value required")}
+            title={param.value ? Strings.SelectBlock : `${Strings.SelectBlock}: ${Strings.ValueRequired}`}
             leftIcon={param.value ? undefined : "fas fa-exclamation-triangle"}
             style={style}
         />
