@@ -132,7 +132,7 @@ async function migratePouchAsync() {
             continue;
         }
 
-        alreadyMigratedList.setAsync(table, { id: migrationDbKey(prefix, id) });
+        await alreadyMigratedList.setAsync(table, { id: migrationDbKey(prefix, id) });
 
         const db = await getDbAsync(prefix)
         const existing = await db.getAsync(table, id);
