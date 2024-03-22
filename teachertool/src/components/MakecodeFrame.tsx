@@ -35,7 +35,7 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
     return (
         <iframe
-            className={classList(css["makecode-frame"], teacherTool.projectMetadata?.id ? undefined : "hidden")}
+            className={classList(css["makecode-frame"], teacherTool.projectMetadata?.id ? undefined : css["invisible"])}
             src={createIFrameUrl(teacherTool.projectMetadata?.id || "")}
             title={"title"}
             ref={handleIFrameRef}
