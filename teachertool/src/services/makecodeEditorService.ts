@@ -28,12 +28,12 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
         });
         driver.addEventListener("editorcontentloaded", ev => {
             AutorunService.poke();
+
+            // Reload all blocks.
+            loadToolboxCategoriesAsync();
         });
 
         driver.setHighContrast(highContrast);
-
-        // Reload all blocks.
-        loadToolboxCategoriesAsync();
     }
 }
 
