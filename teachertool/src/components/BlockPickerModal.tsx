@@ -24,7 +24,7 @@ const PickBlockButton: React.FC<PickBlockButtonProps> = ({ block, category, onBl
     if (category.name == "Loops") imageUri = undefined;
 
     const placeholderBlock = (
-        <div className={css["block-placeholder"]} style={{ backgroundColor: category.color }}>
+        <div className={css["block-placeholder"]}>
             {getReadableBlockString(block.name)}
         </div>
     );
