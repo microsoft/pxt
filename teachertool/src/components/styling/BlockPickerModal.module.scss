@@ -60,11 +60,21 @@
                     .block-button {
                         width: 100%;
                         align-content: start;
-    
+
+                        // We always want to justify content to the left with the common-lazy-image-wrapper
+                        // However, we only want position relative when it has not loaded (note, not *=)
+                        // Then, we want position absolute only when it *has* loaded. This helps prevent
+                        // components from jumping around when they load.
                         div[class*="common-lazy-image-wrapper"] {
                             justify-content: left;
                         }
-    
+                        div[class="common-lazy-image-wrapper"] div[class*="loading-element"] {
+                            position: relative;
+                        }
+                        div[class*="common-lazy-image-wrapper loaded"] div[class*="loading-element"] {
+                            position: absolute;
+                        }
+
                         .block-placeholder {
                             height: 3rem;
                             border-radius: 0.2rem;

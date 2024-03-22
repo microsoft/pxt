@@ -13,38 +13,48 @@ import { ErrorCode } from "../types/errorCode";
 import { logError } from "../services/loggingService";
 import css from "./styling/BlockPickerModal.module.scss";
 
+interface PickBlockButtonProps {
+    block: pxt.editor.ToolboxBlockDefinition;
+    category: pxt.editor.ToolboxCategoryDefinition;
+    onBlockSelected: (blockId: pxt.editor.ToolboxBlockDefinition) => void;
+}
+const PickBlockButton: React.FC<PickBlockButtonProps> = ({ block, category, onBlockSelected }) => {
+    const { state: teacherTool } = useContext(AppStateContext);
+    let imageUri = block.blockId ? teacherTool.blockImageCache[block.blockId] : undefined;
+    if (category.name == "Loops") imageUri = undefined;
+
+    const placeholderBlock = (
+        <div className={css["block-placeholder"]} style={{ backgroundColor: category.color }}>
+            {getReadableBlockString(block.name)}
+        </div>
+    );
+
+    return (
+        <Button
+            className={css["block-button"]}
+            title={block.jsDoc ?? getReadableBlockString(block.name)}
+            ariaLabel={block.name}
+            label={
+                imageUri ? (
+                    <LazyImage src={imageUri} alt={block.name} loadingElement={placeholderBlock} ariaHidden={true} />
+                ) : (
+                    placeholderBlock
+                )
+            }
+            onClick={() => onBlockSelected(block)}
+        />
+    );
+};
+
 interface BlockPickerCategoryProps {
     category: pxt.editor.ToolboxCategoryDefinition;
     onBlockSelected: (blockId: pxt.editor.ToolboxBlockDefinition) => void;
 }
 const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onBlockSelected }) => {
-    const { state: teacherTool } = useContext(AppStateContext);
     const [expanded, setExpanded] = useState(false);
 
     function blockSelected(block: pxt.editor.ToolboxBlockDefinition) {
         onBlockSelected?.(block);
-    }
-
-    function getBlockButton(block: pxt.editor.ToolboxBlockDefinition) {
-        const imageUri = block.blockId ? teacherTool.blockImageCache[block.blockId] : undefined;
-
-        return (
-            <Button
-                className={css["block-button"]}
-                title={block.jsDoc ?? getReadableBlockString(block.name)}
-                ariaLabel={block.name}
-                label={
-                    imageUri ? (
-                        <LazyImage src={imageUri} alt={block.name} ariaHidden={true} />
-                    ) : (
-                        <div className={css["block-placeholder"]}>
-                            {getReadableBlockString(block.name)}
-                        </div>
-                    )
-                }
-                onClick={() => blockSelected(block)}
-            />
-        );
     }
 
     function handleClick() {
@@ -76,7 +86,9 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
                     ariaLabel={lf("{0} Blocks", category.name)}
                     className={classList(css["category-block-list"], expanded ? css["expanded"] : css["collapsed"])}
                 >
-                    {category.blocks.map(getBlockButton)}
+                    {category.blocks.map(block => (
+                        <PickBlockButton block={block} category={category} onBlockSelected={blockSelected} />
+                    ))}
                 </FocusList>
             </div>
         </div>
