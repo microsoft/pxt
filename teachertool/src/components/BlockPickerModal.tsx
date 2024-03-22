@@ -22,11 +22,7 @@ const PickBlockButton: React.FC<PickBlockButtonProps> = ({ block, category, onBl
     const { state: teacherTool } = useContext(AppStateContext);
     let imageUri = block.blockId ? teacherTool.blockImageCache[block.blockId] : undefined;
 
-    const placeholderBlock = (
-        <div className={css["block-placeholder"]}>
-            {getReadableBlockString(block.name)}
-        </div>
-    );
+    const placeholderBlock = <div className={css["block-placeholder"]}>{getReadableBlockString(block.name)}</div>;
 
     return (
         <Button
