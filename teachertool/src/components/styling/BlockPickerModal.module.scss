@@ -1,6 +1,6 @@
 .block-picker-modal {
     div[class="common-modal"] {
-        // category color is overridden by javascript with category color
+        // category color is overridden in BlockPicker javascript
         --category-color: var(--pxt-content-secondary-foreground);
 
         height: 80vh;
