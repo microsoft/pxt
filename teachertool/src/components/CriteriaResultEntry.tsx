@@ -22,7 +22,7 @@ const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInpu
         setShowInput(true);
     };
     return (
-        <div className={css["button-container"]}>
+        <div className={classList(css["button-container"], css["no-print"])}>
             <Button
                 className={classList("inline", "outline-button")}
                 label={Strings.AddNotes}
@@ -49,11 +49,11 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, n
         <div className={css["notes-container"]}>
             <DebouncedTextarea
                 placeholder={lf("Write your notes here")}
-                ariaLabel={lf("Notes regarding the criteria result")}
-                label={lf("Notes")}
+                ariaLabel={lf("Feedback regarding the criteria result")}
+                label={lf("Feedback")}
                 title={lf("Write your notes here")}
                 initialValue={teacherTool.evalResults[criteriaId]?.notes ?? undefined}
-                resize="vertical"
+                autoResize={true}
                 onChange={onTextChange}
                 autoComplete={false}
                 intervalMs={500}
@@ -88,7 +88,12 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                             criteriaId={criteriaId}
                         />
                     </div>
-                    <div className={css["result-notes"]}>
+                    <div
+                        className={classList(
+                            css["result-notes"],
+                            teacherTool.evalResults[criteriaId]?.notes ? undefined : css["no-print"]
+                        )}
+                    >
                         {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
                         {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
                     </div>

@@ -41,6 +41,7 @@ namespace pxsim.music {
 
         dispose() {
             if (this.metronome) this.metronome.dispose();
+            this.metronome = undefined
             this.stop();
             this.currentlyPlaying = undefined;
             this.listeners = {};
@@ -88,7 +89,7 @@ namespace pxsim.music {
         stop(sustainCurrentSounds = false) {
             if (this._state === "stop") return;
             this._state = "stop";
-            this.metronome.stop();
+            if (this.metronome) this.metronome.stop();
             this.fireStateChange();
 
             if (!sustainCurrentSounds) this.currentCancelToken.cancelled = true;

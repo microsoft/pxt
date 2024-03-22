@@ -12,8 +12,8 @@
     padding-bottom: 0.5rem;
     margin-top: 0.5rem;
     min-height: 9rem;
-    max-height: 12rem;
-    border-bottom: solid 1px var(--pxt-content-accent) ;
+    border-bottom: solid 1px var(--pxt-content-accent);
+    break-inside: avoid;
 }
 
 .result-details {
@@ -39,7 +39,7 @@
     align-items: center;
     justify-content: flex-end;
     width: 100%;
-    height: 5.5rem;
+    min-height: 5.5rem;
     margin-top: 0.25rem;
 
     .notes-container {
@@ -108,5 +108,23 @@
             min-height: 4rem;
             min-width: 3.75rem;
         }
+    }
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .specific-criteria-result {
+        min-height: 5.5rem;
+    }
+
+    .result-notes {
+        height: 7rem;
+    }
+
+    .result-notes.no-print {
+        height: 1rem;
     }
 }

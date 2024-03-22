@@ -27,13 +27,17 @@ const ResultsHeader: React.FC = () => {
     );
 };
 
-export const EvalResultDisplay: React.FC<{}> = () => {
+interface EvalResultDisplayProps {
+    resultsRef: React.RefObject<HTMLDivElement>;
+}
+
+export const EvalResultDisplay: React.FC<EvalResultDisplayProps> = ({ resultsRef }) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     return (
         <>
             {teacherTool.projectMetadata && (
-                <div className={css["eval-results-container"]}>
+                <div className={css["eval-results-container"]} ref={resultsRef}>
                     <ResultsHeader />
                     {Object.keys(teacherTool.evalResults ?? {}).map(criteriaInstanceId => {
                         return <CriteriaResultEntry criteriaId={criteriaInstanceId} key={criteriaInstanceId} />;

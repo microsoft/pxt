@@ -1,7 +1,7 @@
 .common-textarea-wrapper {
     div[class*="common-textarea-group"] {
         border-radius: 0.5rem;
-        height: 3.5rem;
+        min-height: 4.25rem;
         font-weight: 500;
         &:focus::after {
             outline: none;
@@ -10,6 +10,14 @@
         &:focus-within::after {
             outline: none;
             border-radius: 0.5rem;
+        }
+    }
+}
+
+@media print {
+    .common-textarea-wrapper {
+        div[class*="common-textarea-group"] {
+            border-radius: 0;
         }
     }
 }
