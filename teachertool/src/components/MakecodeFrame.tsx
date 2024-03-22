@@ -1,7 +1,7 @@
 /// <reference path="../../../localtypings/pxteditor.d.ts" />
 
 import css from "./styling/MakeCodeFrame.module.scss";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
