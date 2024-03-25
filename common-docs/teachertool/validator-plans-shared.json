@@ -7,27 +7,39 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "controls_repeat_ext": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "blockId": "controls_repeat_ext",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "device_while": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "blockId": "device_while",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "pxt_controls_for": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "blockId": "pxt_controls_for",
+                            "count": 1
+                        }
+                    ]
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "pxt_controls_for_of": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "blockId": "pxt_controls_for_of",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -65,9 +77,12 @@
                 },
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "function_definition": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "blockId": "function_definition",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -78,9 +93,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "variables_set": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "blockId": "variables_set",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -91,9 +109,89 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "variables_get": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "blockId": "variables_get",
+                            "count": 1
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            ".desc": "A parameter's value is used",
+            "name": "parameter_variable_accessed",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "argument_reporter_string",
+                            "count": 1
+                        }
+                    ]
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "argument_reporter_number",
+                            "count": 1
+                        }
+                    ]
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "argument_reporter_boolean",
+                            "count": 1
+                        }
+                    ]
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "argument_reporter_array",
+                            "count": 1
+                        }
+                    ]
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "argument_reporter_custom",
+                            "count": 1
+                        }
+                    ]
+                },
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "variables_get_reporter",
+                            "count": 1
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            ".desc": "A numeric parameter's value is used",
+            "name": "numeric_parameter_variable_accessed",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "argument_reporter_number",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -104,9 +202,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "variables_set": 1
-                    },
+                    "blockCounts": [
+                        {
+                            "blockId": "variables_set",
+                            "count": 1
+                        }
+                    ],
                     "childValidatorPlans": ["device_random_used"]
                 }
             ]
@@ -118,9 +219,12 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "device_random": 1
-                    }
+                    "blockCounts": [
+                        {
+                            "blockId": "device_random",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         },
@@ -145,9 +249,28 @@
             "checks": [
                 {
                     "validator": "blocksExist",
-                    "blockCounts": {
-                        "math_number": 2
-                    }
+                    "blockCounts": [
+                        {
+                            "blockId": "math_number",
+                            "count": 2
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            ".desc": "a number exists",
+            "name": "math_num_exists",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "math_number",
+                            "count": 1
+                        }
+                    ]
                 }
             ]
         }

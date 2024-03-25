@@ -2,7 +2,7 @@
     "criteria": [
         {
             "id": "7AE7EA2A-3AC8-42DC-89DB-65E3AE157156",
-            "use": "check_for_comments",
+            "use": "block_comment_used",
             "template": "At least ${count} comments",
             "description": "The project contains at least the specified number of comments.",
             "docPath": "/teachertool",
@@ -11,28 +11,71 @@
                     "name": "count",
                     "type": "number",
                     "default": 1,
-                    "path": "checks[0].count"
+                    "paths": ["checks[0].count"]
                 }
             ]
         },
         {
             "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
             "use": "block_used_n_times",
-            "template": "${block_id} used ${count} times",
+            "template": "${Block} used ${count} times",
             "description": "This block was used the specified number of times in your project.",
             "docPath": "/teachertool",
             "params": [
                 {
-                    "name": "block_id",
-                    "type": "string",
-                    "picker": "blockSelector",
-                    "path": "checks[0].blocks[:clear&:append]"
+                    "name": "block",
+                    "type": "block",
+                    "paths": ["checks[0].blockCounts[0].blockId"]
                 },
                 {
                     "name": "count",
                     "type": "number",
                     "default": 1,
-                    "path": "checks[0].count"
+                    "paths": ["checks[0].blockCounts[0].count"]
+                }
+            ]
+        },
+        {
+            "id": "499F3572-E655-4DEE-953B-5F26BF0191D7",
+            "use": "block_used_n_times",
+            "template": "Long String: ${question}",
+            "description": "This is just a test for long string inputs.",
+            "docPath": "/teachertool",
+            "params": [
+                {
+                    "name": "question",
+                    "type": "longString",
+                    "paths": ["checks[0].blockCounts[0].blockId"]
+                }
+            ]
+        },
+        {
+            "id": "B8987394-1531-4C71-8661-BE4086CE0C6E",
+            "use": "n_loops",
+            "template": "At least ${count} loops used",
+            "docPath": "/teachertool",
+            "description": "The program uses at least this many loops of any kind (for, repeat, while, or for-of).",
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "paths": ["checks[0].count"],
+                    "default": 1
+                }
+            ]
+        },
+        {
+            "id": "79D5DAF7-FED3-473F-81E2-E004922E5F55",
+            "use": "custom_function_called",
+            "template": "At least ${count} custom functions exist and get called",
+            "docPath": "/teachertool",
+            "description": "At least this many user-defined functions are created and called.",
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "paths": ["checks[0].count", "checks[1].count"],
+                    "default": 1
                 }
             ]
         }
