@@ -24,7 +24,7 @@
             "params": [
                 {
                     "name": "block",
-                    "type": "string",
+                    "type": "block",
                     "paths": ["checks[0].blockCounts[0].blockId"]
                 },
                 {
