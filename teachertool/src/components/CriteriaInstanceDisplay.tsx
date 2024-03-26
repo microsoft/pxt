@@ -78,10 +78,9 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
 
         // Scan all categories and find the block with the matching id
         for (const category of Object.values(teacherTool.toolboxCategories)) {
-            for (const block of category.blocks ?? []) {
-                if (block.blockId === param.value) {
-                    return { category, block };
-                }
+            const block = category.blocks?.find(b => b.blockId === param.value);
+            if (block) {
+                return { category, block };
             }
         }
         return undefined;
