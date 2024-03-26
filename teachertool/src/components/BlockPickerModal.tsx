@@ -83,7 +83,7 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
                     className={classList(css["category-block-list"], expanded ? css["expanded"] : css["collapsed"])}
                 >
                     {category.blocks.map(block => (
-                        <PickBlockButton block={block} category={category} onBlockSelected={blockSelected} />
+                        <PickBlockButton key={block.blockId} block={block} category={category} onBlockSelected={blockSelected} />
                     ))}
                 </FocusList>
             </div>
@@ -136,6 +136,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
                 Object.values(teacherTool.toolboxCategories).map(category => {
                     return (
                         <BlockPickerCategory
+                            key={category.name}
                             category={category}
                             onBlockSelected={block => handleBlockSelected(block)}
                         />
