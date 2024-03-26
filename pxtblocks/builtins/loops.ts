@@ -177,8 +177,8 @@ export function initLoops() {
          * @param {!Array} options List of menu options to add to.
          * @this Blockly.Block
          */
-        customContextMenu: function (options: any[]) {
-            if (!this.isCollapsed() && !this.inDebugWorkspace()) {
+        customContextMenu: function (this: Blockly.BlockSvg, options: any[]) {
+            if (!this.isCollapsed() && !(this.workspace?.options?.readOnly)) {
                 let option: any = { enabled: true };
                 let name = this.getField('VAR').getText();
                 option.text = lf("Create 'get {0}'", name);

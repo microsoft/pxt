@@ -86,4 +86,10 @@ export class FieldString extends Blockly.FieldTextInput {
     }
 }
 
+Blockly.Css.register(`
+.field-text-quote {
+    fill: #a31515 !important;
+}
+`);
+
 Blockly.fieldRegistry.register('field_string', FieldString);

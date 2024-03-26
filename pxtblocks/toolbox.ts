@@ -351,7 +351,7 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
         let shadowId = t.shadowBlockId;
         let defaultValue = t.defaultValue;
 
-        if (!isFixedInstance && !shadowId) {
+        if (!isFixedInstance && (!shadowId || shadowId === "variables_get")) {
             shadowId = "variables_get";
             defaultValue = defaultValue || t.definitionName;
         }

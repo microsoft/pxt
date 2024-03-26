@@ -142,7 +142,7 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
 
     makeEditOption: function (this: FunctionDefinitionBlock) {
         return {
-            enabled: true, // FIXME !this.inDebugWorkspace(),
+            enabled: !(this.workspace?.options?.readOnly),
             text: Blockly.Msg.FUNCTIONS_EDIT_OPTION,
             callback: () => {
                 editFunctionCallback(this);
@@ -160,7 +160,7 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
         callBlock.setAttribute("type", FUNCTION_CALL_BLOCK_TYPE);
 
         return {
-            enabled: this.workspace.remainingCapacity() > 0, // FIXME && !block.inDebugWorkspace(),
+            enabled: this.workspace.remainingCapacity() > 0 && !(this.workspace?.options?.readOnly),
             text: Blockly.Msg.FUNCTIONS_CREATE_CALL_OPTION.replace("%1", functionName),
             callback: Blockly.ContextMenu.callbackFactory(this, callBlock),
         };
