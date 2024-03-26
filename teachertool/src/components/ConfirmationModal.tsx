@@ -8,7 +8,9 @@ import { ConfirmationModalOptions } from "../types/modalOptions";
 export interface IProps {}
 export const ConfirmationModal: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [confirmationModalOptions, setConfirmationModalOptions] = useState<ConfirmationModalOptions | undefined>(undefined);
+    const [confirmationModalOptions, setConfirmationModalOptions] = useState<ConfirmationModalOptions | undefined>(
+        undefined
+    );
 
     useEffect(() => {
         if (teacherTool.modalOptions?.modal === "confirmation") {
