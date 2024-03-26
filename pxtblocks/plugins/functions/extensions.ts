@@ -52,7 +52,7 @@ function inlineSvgs(this: InlineSvgsExtensionBlock) {
 const contextMenuEditMixin = {
     customContextMenu: function (this: Blockly.Block, menuOptions: any[]) {
         const gtdOption = {
-            enabled: true, // FIXME: !this.inDebugWorkspace(),
+            enabled: !(this.workspace?.options?.readOnly),
             text: Blockly.Msg[MsgKey.FUNCTIONS_GO_TO_DEFINITION_OPTION],
             callback: () => {
                 const functionName = this.getField("function_name")!.getText();
