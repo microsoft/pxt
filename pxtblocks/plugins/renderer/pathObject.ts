@@ -74,6 +74,20 @@ export class PathObject extends Blockly.zelos.PathObject {
         }
     }
 
+    override applyColour(block: Blockly.BlockSvg): void {
+        super.applyColour(block);
+
+        // For dark shadow blocks, add a lighter border to differentiate
+        if (block.isShadow() && block.getParent()) {
+            const colour = block.getParent().style.colourTertiary;
+            const rgb = Blockly.utils.colour.hexToRgb(colour);
+            const luminance = calculateLuminance(rgb);
+            if (luminance < 0.15) {
+                this.svgPath.setAttribute('stroke', Blockly.utils.colour.blend("#ffffff", colour, 0.3));
+            }
+        }
+    }
+
     setHasDottedOutllineOnHover(enabled: boolean) {
         this.hasDottedOutlineOnHover = enabled;
 
@@ -125,6 +139,10 @@ export class PathObject extends Blockly.zelos.PathObject {
             this.updateHighlighted(true);
         }
     }
+}
+
+function calculateLuminance(rgb: number[]) {
+    return ((0.2126 * rgb[0]) + (0.7152 * rgb[1]) + (0.0722 * rgb[2])) / 255;
 }
 
 Blockly.Css.register(`
