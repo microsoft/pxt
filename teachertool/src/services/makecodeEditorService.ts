@@ -29,8 +29,8 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
         driver.addEventListener("editorcontentloaded", ev => {
             AutorunService.poke();
 
-            // Reload all blocks.
-            loadToolboxCategoriesAsync();
+            // Reload all blocks in the background, no need to await.
+            /* await */ loadToolboxCategoriesAsync();
         });
 
         driver.setHighContrast(highContrast);
