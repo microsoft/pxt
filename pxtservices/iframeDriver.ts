@@ -402,7 +402,6 @@ export class IframeDriver {
     addEventListener(event: "event", handler: (ev: pxt.editor.EditorMessageEventRequest) => void): void;
     addEventListener(event: "simevent", handler: (ev: pxt.editor.EditorSimulatorEvent) => void): void;
     addEventListener(event: "tutorialevent", handler: (ev: pxt.editor.EditorMessageTutorialEventRequest) => void): void;
-    addEventListener(event: "editorcontentloaded", handler: (ev: pxt.editor.EditorContentLoadedRequest) => void): void;
     addEventListener(event: "workspacesave", handler: (ev: pxt.editor.EditorWorkspaceSaveRequest) => void): void;
     addEventListener(event: "workspaceevent", handler: (ev: pxt.editor.EditorWorkspaceEvent) => void): void;
     addEventListener(event: "workspacereset", handler: (ev: pxt.editor.EditorWorkspaceSyncRequest) => void): void;

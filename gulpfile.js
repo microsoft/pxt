@@ -588,6 +588,12 @@ const kiosk = createWebappTasks("kiosk");
 const teacherTool = createWebappTasks("teachertool");
 
 /********************************************************
+                      Tutorial Tool
+*********************************************************/
+
+const tutorialTool = createWebappTasks("tutorialtool");
+
+/********************************************************
                  Webapp build wrappers
 *********************************************************/
 
@@ -601,7 +607,7 @@ const maybeUpdateWebappStrings = () => {
 
 const maybeBuildWebapps = () => {
     if (!shouldBuildWebapps()) return noop;
-    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool);
+    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool, tutorialTool);
 }
 
 /********************************************************
@@ -610,8 +616,10 @@ const maybeBuildWebapps = () => {
 
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
-        "pxtpy", "pxtrunner", "pxtsim", "webapp",
-        "docfiles/pxtweb", "skillmap", "authcode", "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
+        "pxtpy", "pxtrunner", "pxtsim", "webapp", "pxtservices",
+        "docfiles/pxtweb", "skillmap", "authcode",
+        "multiplayer"/*, "kiosk"*/, "teachertool",
+        "tutorialTool", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
