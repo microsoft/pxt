@@ -46,7 +46,7 @@ export async function setHighContrastAsync(on: boolean) {
     }
 }
 
-export async function getToolboxCategories(
+export async function getToolboxCategoriesAsync(
     advanced?: boolean
 ): Promise<pxt.editor.ToolboxCategoryDefinition[] | undefined> {
     const response = driver ? await driver.getToolboxCategories(advanced) : undefined;

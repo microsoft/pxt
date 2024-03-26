@@ -1,4 +1,4 @@
-import { getToolboxCategories } from "../services/makecodeEditorService";
+import { getToolboxCategoriesAsync } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 
@@ -6,8 +6,8 @@ export async function loadToolboxCategoriesAsync() {
     const { dispatch } = stateAndDispatch();
 
     const [regularCategories, advancedCategories] = await Promise.all([
-        getToolboxCategories(false),
-        getToolboxCategories(true)
+        getToolboxCategoriesAsync(false),
+        getToolboxCategoriesAsync(true)
     ]);
     const categories = (regularCategories ?? []).concat(advancedCategories ?? []);
     if (categories.length === 0) {
