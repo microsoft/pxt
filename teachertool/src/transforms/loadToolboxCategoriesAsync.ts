@@ -7,7 +7,7 @@ export async function loadToolboxCategoriesAsync() {
 
     const [regularCategories, advancedCategories] = await Promise.all([
         getToolboxCategoriesAsync(false),
-        getToolboxCategoriesAsync(true)
+        getToolboxCategoriesAsync(true),
     ]);
     const categories = (regularCategories ?? []).concat(advancedCategories ?? []);
     if (categories.length === 0) {

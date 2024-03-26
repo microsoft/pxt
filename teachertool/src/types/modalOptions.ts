@@ -10,10 +10,10 @@ export interface ConfirmationModalOptions extends ModalOptions {
     message: string;
     onCancel: () => void;
     onContinue: () => void;
-};
+}
 
-export interface BlockPickerOptions extends ModalOptions{
+export interface BlockPickerOptions extends ModalOptions {
     modal: "block-picker";
     criteriaInstanceId: string;
     paramName: string;
-};
+}

@@ -84,7 +84,12 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
                     className={classList(css["category-block-list"], expanded ? css["expanded"] : css["collapsed"])}
                 >
                     {category.blocks.map(block => (
-                        <PickBlockButton key={block.blockId} block={block} category={category} onBlockSelected={blockSelected} />
+                        <PickBlockButton
+                            key={block.blockId}
+                            block={block}
+                            category={category}
+                            onBlockSelected={blockSelected}
+                        />
                     ))}
                 </FocusList>
             </div>
@@ -115,11 +120,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
 
     function handleBlockSelected(block: pxt.editor.ToolboxBlockDefinition) {
         if (blockPickerOptions) {
-            setParameterValue(
-                blockPickerOptions.criteriaInstanceId,
-                blockPickerOptions.paramName,
-                block.blockId
-            );
+            setParameterValue(blockPickerOptions.criteriaInstanceId, blockPickerOptions.paramName, block.blockId);
         } else {
             logError(ErrorCode.selectedBlockWithoutOptions, "Block selected without block picker options.");
         }
