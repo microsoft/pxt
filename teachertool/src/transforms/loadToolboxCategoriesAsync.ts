@@ -5,15 +5,17 @@ import * as Actions from "../state/actions";
 export async function loadToolboxCategoriesAsync() {
     const { dispatch } = stateAndDispatch();
 
-    const regularCategories = await getToolboxCategories(false);
-    const advancedCategories = await getToolboxCategories(true);
+    const [regularCategories, advancedCategories] = await Promise.all([
+        getToolboxCategories(false),
+        getToolboxCategories(true)
+    ]);
     const categories = (regularCategories ?? []).concat(advancedCategories ?? []);
     if (categories.length === 0) {
         return;
     }
 
     function shouldIncludeCategory(category: pxt.editor.ToolboxCategoryDefinition) {
-        return category && category.name && category.blocks?.length != 0;
+        return category.name && category.blocks?.length != 0;
     }
 
     // Create a map so categories can be looked up by their name.
@@ -24,6 +26,7 @@ export async function loadToolboxCategoriesAsync() {
                 return self.findIndex(b => b.blockId === block.blockId) === index;
             });
 
+            // category.name cannot be null, per shouldIncludeCategory checks.
             map[category.name!] = { ...category, blocks: filteredBlocks };
         }
         return map;
