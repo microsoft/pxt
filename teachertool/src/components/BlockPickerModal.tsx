@@ -111,7 +111,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
     const [blockPickerOptions, setBlockPickerOptions] = useState<BlockPickerOptions | undefined>(undefined);
 
     useEffect(() => {
-        if (teacherTool.modalOptions && teacherTool.modalOptions.modal === "block-picker") {
+        if (teacherTool.modalOptions?.modal === "block-picker") {
             setBlockPickerOptions(teacherTool.modalOptions as BlockPickerOptions);
         } else {
             setBlockPickerOptions(undefined);
@@ -136,7 +136,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
         },
     ];
 
-    return teacherTool.modal === "block-picker" && blockPickerOptions ? (
+    return blockPickerOptions ? (
         <Modal
             className={css["block-picker-modal"]}
             title={Strings.SelectBlock}

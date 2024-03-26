@@ -59,7 +59,7 @@ export const CatalogModal: React.FC<CatalogModalProps> = ({}) => {
         },
     ];
 
-    return teacherTool.modal === "catalog-display" ? (
+    return teacherTool.modalOptions?.modal === "catalog-display" ? (
         <Modal
             className={css["catalog-modal"]}
             title={lf("Select the criteria you'd like to include")}

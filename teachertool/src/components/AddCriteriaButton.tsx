@@ -5,6 +5,7 @@ import { AppStateContext } from "../state/appStateContext";
 import { useContext, useMemo } from "react";
 import { classList } from "react-common/components/util";
 import { Strings } from "../constants";
+import { CatalogDisplayOptions } from "../types/modalOptions";
 
 interface IProps {}
 
@@ -19,7 +20,7 @@ export const AddCriteriaButton: React.FC<IProps> = ({}) => {
         <Button
             className={classList("inline", "outline-button")}
             label={Strings.AddCriteria}
-            onClick={() => showModal("catalog-display")}
+            onClick={() => showModal({ modal: "catalog-display" } as CatalogDisplayOptions)}
             title={Strings.AddCriteria}
             leftIcon="fas fa-plus-circle"
             disabled={!hasAvailableCriteria}

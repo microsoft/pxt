@@ -1,4 +1,4 @@
-import { ModalType, ToastWithId, TabName, ProjectData } from "../types";
+import { ToastWithId, TabName, ProjectData } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { ModalOptions } from "../types/modalOptions";
 import { Rubric } from "../types/rubric";
@@ -56,14 +56,9 @@ type SetRubric = ActionBase & {
     rubric: Rubric;
 };
 
-type SetModalOptions = ActionBase & {
-    type: "SET_MODAL_OPTIONS";
-    options: ModalOptions | undefined;
-};
-
 type ShowModal = ActionBase & {
     type: "SHOW_MODAL";
-    modal: ModalType;
+    modalOptions: ModalOptions;
 };
 
 type HideModal = ActionBase & {
@@ -121,7 +116,6 @@ export type Action =
     | SetTargetConfig
     | SetCatalog
     | SetRubric
-    | SetModalOptions
     | ShowModal
     | HideModal
     | SetValidatorPlans
@@ -178,14 +172,9 @@ const setRubric = (rubric: Rubric): SetRubric => ({
     rubric,
 });
 
-const setModalOptions = (options: ModalOptions | undefined): SetModalOptions => ({
-    type: "SET_MODAL_OPTIONS",
-    options,
-});
-
-const showModal = (modal: ModalType): ShowModal => ({
+const showModal = (modalOptions: ModalOptions): ShowModal => ({
     type: "SHOW_MODAL",
-    modal,
+    modalOptions,
 });
 
 const hideModal = (): HideModal => ({
@@ -239,7 +228,6 @@ export {
     setTargetConfig,
     setCatalog,
     setRubric,
-    setModalOptions,
     showModal,
     hideModal,
     setValidatorPlans,

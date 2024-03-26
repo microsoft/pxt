@@ -83,22 +83,16 @@ export default function reducer(state: AppState, action: Action): AppState {
                 rubric: action.rubric,
             };
         }
-        case "SET_MODAL_OPTIONS": {
-            return {
-                ...state,
-                modalOptions: action.options,
-            };
-        }
         case "SHOW_MODAL": {
             return {
                 ...state,
-                modal: action.modal,
+                modalOptions: action.modalOptions,
             };
         }
         case "HIDE_MODAL": {
             return {
                 ...state,
-                modal: undefined,
+                modalOptions: undefined,
             };
         }
         case "SET_VALIDATOR_PLANS": {

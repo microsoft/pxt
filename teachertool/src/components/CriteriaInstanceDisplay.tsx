@@ -9,9 +9,10 @@ import css from "./styling/CriteriaInstanceDisplay.module.scss";
 import { useContext, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
-import { showBlockPicker } from "../transforms/showBlockPicker";
 import { AppStateContext } from "../state/appStateContext";
 import { Strings } from "../constants";
+import { showModal } from "../transforms/showModal";
+import { BlockPickerOptions } from "../types/modalOptions";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -68,7 +69,11 @@ interface BlockData {
 const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     function handleClick() {
-        showBlockPicker(instance.instanceId, param.name);
+        showModal({
+            modal: "block-picker",
+            criteriaInstanceId: instance.instanceId,
+            paramName: param.name,
+        } as BlockPickerOptions);
     }
 
     const blockData = useMemo<BlockData | undefined>(() => {

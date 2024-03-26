@@ -1,10 +1,4 @@
-import { ModalType } from ".";
-
-export interface ModalOptions {
-    modal: ModalType;
-}
-
-export interface ConfirmationModalOptions extends ModalOptions {
+export type ConfirmationModalOptions = {
     modal: "confirmation";
     title: string;
     message: string;
@@ -12,8 +6,18 @@ export interface ConfirmationModalOptions extends ModalOptions {
     onContinue: () => void;
 }
 
-export interface BlockPickerOptions extends ModalOptions {
+export type BlockPickerOptions = {
     modal: "block-picker";
     criteriaInstanceId: string;
     paramName: string;
 }
+
+export type CatalogDisplayOptions = {
+    modal: "catalog-display";
+}
+
+export type ImportRubricOptions = {
+    modal: "import-rubric";
+}
+
+export type ModalOptions = CatalogDisplayOptions | ImportRubricOptions | ConfirmationModalOptions | BlockPickerOptions;
