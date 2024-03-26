@@ -179,6 +179,25 @@ export class FieldSlider extends Blockly.FieldNumber {
         slider.min = this.getMin() + "";
         slider.max = this.getMax() + "";
         slider.value = this.getValue() + "";
+
+        let color: string;
+
+        if (this.sourceBlock_ instanceof Blockly.BlockSvg) {
+            // If the block color is white, grab from the parent block instead
+            if (this.sourceBlock_.getColour() === "#ffffff") {
+                if (this.sourceBlock_.getParent()) {
+                    color = this.sourceBlock_.getParent().getColourTertiary();
+                }
+            }
+            else {
+                color = this.sourceBlock_.getColourTertiary();
+            }
+        }
+
+        if (color) {
+            slider.setAttribute("style", `--blocklyFieldSliderBackgroundColor: ${color}`);
+        }
+
         if (!Number.isNaN(this.step_)) {
             slider.step = this.step_ + "";
         }
@@ -212,6 +231,9 @@ export class FieldSlider extends Blockly.FieldNumber {
 Blockly.fieldRegistry.register('field_slider', FieldSlider);
 
 Blockly.Css.register(`
+:root {
+    --blocklyFieldSliderBackgroundColor: #547AB2;
+}
 .blocklyFieldSliderLabel {
     font-family: "Helvetica Neue", "Segoe UI", Helvetica, sans-serif;
     font-size: 0.65rem;
@@ -240,7 +262,7 @@ input[type=range]::-webkit-slider-runnable-track {
     outline: none;
     border-radius: 11px;
     margin-bottom: 20px;
-    background: #547AB2;
+    background: var(--blocklyFieldSliderBackgroundColor);
 }
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;

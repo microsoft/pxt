@@ -151,10 +151,10 @@ namespace pxt.blocks {
             const defName = def.name;
             const isVar = !def.shadowBlockId || def.shadowBlockId === "variables_get";
 
-            let defaultValue: string;
+            let defaultValue = fn.attributes.paramDefl[defName] || fn.attributes.paramDefl["this"];
 
             if (isVar) {
-                defaultValue = def.varName || fn.attributes.paramDefl[defName] || fn.attributes.paramDefl["this"];
+                defaultValue = def.varName || defaultValue;
             }
 
             res.thisParameter = {

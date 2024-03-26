@@ -154,8 +154,8 @@ export function initVariables() {
          * @param {!Array} options List of menu options to add to.
          * @this Blockly.Block
          */
-        customContextMenu: function (options: any[]) {
-            if (!(this.inDebugWorkspace())) {
+        customContextMenu: function (this: Blockly.BlockSvg, options: any[]) {
+            if (!(this.workspace?.options?.readOnly)) {
                 let option: any = {
                     enabled: this.workspace.remainingCapacity() > 0
                 };
