@@ -272,6 +272,7 @@ declare interface String {
     //% shim=String_::charAt weight=48
     //% help=text/char-at
     //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
+    //% this.defl="this"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
@@ -293,6 +294,7 @@ declare interface String {
     //% shim=String_::compare
     //% help=text/compare
     //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
+    //% this.defl="this"
     compare(that: string): number;
 
     /**
@@ -303,6 +305,7 @@ declare interface String {
     //% helper=stringSubstr
     //% help=text/substr
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
+    //% this.defl="this"
     substr(start: number, length?: number): string;
 
     /**
@@ -338,6 +341,7 @@ declare interface String {
     //% help=text/is-empty
     //% blockId="string_isempty" blockNamespace="text"
     //% block="%this=text| is empty"
+    //% this.defl="this"
     isEmpty(): boolean;
 
     /**
@@ -349,6 +353,7 @@ declare interface String {
     //% help=text/index-of
     //% blockId="string_indexof" blockNamespace="text"
     //% block="%this=text|find index of %searchValue"
+    //% this.defl="this"
     indexOf(searchValue: string, start?: number): number;
 
     /**
@@ -360,6 +365,7 @@ declare interface String {
     //% help=text/includes
     //% blockId="string_includes" blockNamespace="text"
     //% block="%this=text|includes %searchValue"
+    //% this.defl="this"
     includes(searchValue: string, start?: number): boolean;
 
     /**
@@ -371,6 +377,7 @@ declare interface String {
     //% help=text/split
     //% blockId="string_split" blockNamespace="text"
     //% block="split %this=text|at %separator"
+    //% this.defl="this"
     split(separator?: string, limit?: number): string[];
 
     /**
