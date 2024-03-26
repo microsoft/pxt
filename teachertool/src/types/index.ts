@@ -49,18 +49,6 @@ export type ProjectData = pxt.Cloud.JsonScript & {
     inputText: string;
 };
 
-export type ConfirmationModalOptions = {
-    title: string;
-    message: string;
-    onCancel: () => void;
-    onContinue: () => void;
-};
-
-export type BlockPickerOptions = {
-    criteriaInstanceId: string;
-    paramName: string;
-};
-
 export type CriteriaTemplateSegment = {
     type: "plain-text" | "param";
     content: string; // plain text or parameter name

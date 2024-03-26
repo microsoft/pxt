@@ -3,19 +3,29 @@ import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
 import { Strings } from "../constants";
+import { ConfirmationModalOptions } from "../types/modalOptions";
 
 export interface IProps {}
 export const ConfirmationModal: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
+    const [modalOptions, setModalOptions] = useState<ConfirmationModalOptions | undefined>(undefined);
+
+    useEffect(() => {
+        if (teacherTool.modalOptions && teacherTool.modalOptions.modal === "confirmation") {
+            setModalOptions(teacherTool.modalOptions as ConfirmationModalOptions);
+        } else {
+            setModalOptions(undefined);
+        }
+    }, [teacherTool.modalOptions]);
 
     function handleCancel() {
         hideModal();
-        teacherTool.confirmationOptions?.onCancel?.();
+        modalOptions?.onCancel?.();
     }
 
     function handleContinue() {
         hideModal();
-        teacherTool.confirmationOptions?.onContinue?.();
+        modalOptions?.onContinue?.();
     }
 
     const actions = [
@@ -31,9 +41,9 @@ export const ConfirmationModal: React.FC<IProps> = () => {
         },
     ];
 
-    return teacherTool.modal === "confirmation" && teacherTool.confirmationOptions ? (
-        <Modal title={teacherTool.confirmationOptions.title} onClose={handleCancel} actions={actions}>
-            {teacherTool.confirmationOptions.message}
+    return teacherTool.modal === "confirmation" && modalOptions ? (
+        <Modal title={modalOptions.title} onClose={handleCancel} actions={actions}>
+            {modalOptions.message}
         </Modal>
     ) : null;
 };

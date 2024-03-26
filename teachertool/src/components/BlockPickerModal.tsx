@@ -1,4 +1,4 @@
-import React, { CSSProperties, useContext, useMemo, useState } from "react";
+import React, { CSSProperties, useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
@@ -12,6 +12,7 @@ import { setParameterValue } from "../transforms/setParameterValue";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "../services/loggingService";
 import { Strings } from "../constants";
+import { BlockPickerOptions } from "../types/modalOptions";
 import css from "./styling/BlockPickerModal.module.scss";
 
 interface PickBlockButtonProps {
@@ -102,12 +103,21 @@ const LoadingBlocks: React.FC = () => {
 export interface BlockPickerModalProps {}
 export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
+    const [blockPickerOptions, setBlockPickerOptions] = useState<BlockPickerOptions | undefined>(undefined);
+
+    useEffect(() => {
+        if (teacherTool.modalOptions && teacherTool.modalOptions.modal === "block-picker") {
+            setBlockPickerOptions(teacherTool.modalOptions as BlockPickerOptions);
+        } else {
+            setBlockPickerOptions(undefined);
+        }
+    }, [teacherTool.modalOptions]);
 
     function handleBlockSelected(block: pxt.editor.ToolboxBlockDefinition) {
-        if (teacherTool.blockPickerOptions) {
+        if (blockPickerOptions) {
             setParameterValue(
-                teacherTool.blockPickerOptions.criteriaInstanceId,
-                teacherTool.blockPickerOptions.paramName,
+                blockPickerOptions.criteriaInstanceId,
+                blockPickerOptions.paramName,
                 block.blockId
             );
         } else {
@@ -125,7 +135,7 @@ export const BlockPickerModal: React.FC<BlockPickerModalProps> = ({}) => {
         },
     ];
 
-    return teacherTool.modal === "block-picker" && teacherTool.blockPickerOptions ? (
+    return teacherTool.modal === "block-picker" && blockPickerOptions ? (
         <Modal
             className={css["block-picker-modal"]}
             title={Strings.SelectBlock}

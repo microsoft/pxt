@@ -83,10 +83,10 @@ export default function reducer(state: AppState, action: Action): AppState {
                 rubric: action.rubric,
             };
         }
-        case "SET_CONFIRMATION_OPTIONS": {
+        case "SET_MODAL_OPTIONS": {
             return {
                 ...state,
-                confirmationOptions: action.options,
+                modalOptions: action.options,
             };
         }
         case "SHOW_MODAL": {
@@ -137,12 +137,6 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 blockImageCache: cache,
-            };
-        }
-        case "SET_BLOCK_PICKER_OPTIONS": {
-            return {
-                ...state,
-                blockPickerOptions: action.options,
             };
         }
     }

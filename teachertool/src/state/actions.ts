@@ -1,5 +1,6 @@
-import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions, BlockPickerOptions } from "../types";
+import { ModalType, ToastWithId, TabName, ProjectData } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
+import { ModalOptions } from "../types/modalOptions";
 import { Rubric } from "../types/rubric";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -55,9 +56,9 @@ type SetRubric = ActionBase & {
     rubric: Rubric;
 };
 
-type SetConfirmationOptions = ActionBase & {
-    type: "SET_CONFIRMATION_OPTIONS";
-    options: ConfirmationModalOptions | undefined;
+type SetModalOptions = ActionBase & {
+    type: "SET_MODAL_OPTIONS";
+    options: ModalOptions | undefined;
 };
 
 type ShowModal = ActionBase & {
@@ -104,11 +105,6 @@ type SetBlockImageUri = ActionBase & {
     imageUri: string;
 };
 
-type SetBlockPickerOptions = ActionBase & {
-    type: "SET_BLOCK_PICKER_OPTIONS";
-    options: BlockPickerOptions | undefined;
-};
-
 /**
  * Union of all actions
  */
@@ -125,15 +121,14 @@ export type Action =
     | SetTargetConfig
     | SetCatalog
     | SetRubric
-    | SetConfirmationOptions
+    | SetModalOptions
     | ShowModal
     | HideModal
     | SetValidatorPlans
     | SetActiveTab
     | SetAutorun
     | SetToolboxCategories
-    | SetBlockImageUri
-    | SetBlockPickerOptions;
+    | SetBlockImageUri;
 
 /**
  * Action creators
@@ -183,8 +178,8 @@ const setRubric = (rubric: Rubric): SetRubric => ({
     rubric,
 });
 
-const setConfirmationOptions = (options: ConfirmationModalOptions | undefined): SetConfirmationOptions => ({
-    type: "SET_CONFIRMATION_OPTIONS",
+const setModalOptions = (options: ModalOptions | undefined): SetModalOptions => ({
+    type: "SET_MODAL_OPTIONS",
     options,
 });
 
@@ -232,11 +227,6 @@ const setBlockImageUri = (blockId: string, imageUri: string): SetBlockImageUri =
     imageUri,
 });
 
-const setBlockPickerOptions = (options: BlockPickerOptions | undefined): SetBlockPickerOptions => ({
-    type: "SET_BLOCK_PICKER_OPTIONS",
-    options,
-});
-
 export {
     showToast,
     dismissToast,
@@ -249,7 +239,7 @@ export {
     setTargetConfig,
     setCatalog,
     setRubric,
-    setConfirmationOptions,
+    setModalOptions,
     showModal,
     hideModal,
     setValidatorPlans,
@@ -257,5 +247,4 @@ export {
     setAutorun,
     setToolboxCategories,
     setBlockImageUri,
-    setBlockPickerOptions,
 };

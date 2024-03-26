@@ -1,5 +1,6 @@
-import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions, BlockPickerOptions } from "../types";
+import { ModalType, ToastWithId, TabName, ProjectData } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
+import { ModalOptions } from "../types/modalOptions";
 import { Rubric } from "../types/rubric";
 import { makeRubric } from "../utils";
 
@@ -14,8 +15,7 @@ export type AppState = {
     activeTab: TabName;
     validatorPlans: pxt.blocks.ValidatorPlan[] | undefined;
     autorun: boolean;
-    confirmationOptions: ConfirmationModalOptions | undefined;
-    blockPickerOptions: BlockPickerOptions | undefined;
+    modalOptions: ModalOptions | undefined;
     toolboxCategories?: pxt.Map<pxt.editor.ToolboxCategoryDefinition>;
     blockImageCache: pxt.Map<string>; // block id -> image uri
     flags: {
@@ -33,8 +33,7 @@ export const initialAppState: AppState = {
     activeTab: "home",
     validatorPlans: undefined,
     autorun: false,
-    confirmationOptions: undefined,
-    blockPickerOptions: undefined,
+    modalOptions: undefined,
     toolboxCategories: undefined,
     blockImageCache: {},
     flags: {
