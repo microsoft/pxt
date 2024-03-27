@@ -4,7 +4,7 @@ import { ErrorCode } from "../types/errorCode";
 import { logDebug, logError } from "./loggingService";
 import * as AutorunService from "./autorunService";
 import { IframeDriver } from "pxtservices/iframeDriver";
-
+import { loadToolboxCategoriesAsync } from "../transforms/loadToolboxCategoriesAsync";
 
 let driver: IframeDriver | undefined;
 let highContrast: boolean = false;
@@ -28,6 +28,9 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
         });
         driver.addEventListener("editorcontentloaded", ev => {
             AutorunService.poke();
+
+            // Reload all blocks in the background, no need to await.
+            /* await */ loadToolboxCategoriesAsync();
         });
 
         driver.setHighContrast(highContrast);
@@ -39,8 +42,25 @@ export async function setHighContrastAsync(on: boolean) {
     highContrast = on;
 
     if (driver) {
-        await driver!.setHighContrast(on)
+        await driver.setHighContrast(on);
     }
+}
+
+export async function getToolboxCategoriesAsync(
+    advanced?: boolean
+): Promise<pxt.editor.ToolboxCategoryDefinition[] | undefined> {
+    const response = driver ? await driver.getToolboxCategories(advanced) : undefined;
+    return response;
+}
+
+export async function getBlockImageUriFromXmlAsync(xml: string): Promise<string | undefined> {
+    const response = driver ? await driver.renderXml(xml) : undefined;
+    return response;
+}
+
+export async function getBlockImageUriFromBlockIdAsync(qName: string): Promise<string | undefined> {
+    const response = driver ? await driver.renderByBlockId(qName) : undefined;
+    return response;
 }
 
 export async function runValidatorPlanAsync(

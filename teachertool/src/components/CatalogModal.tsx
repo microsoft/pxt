@@ -7,6 +7,7 @@ import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
 import { getSelectableCatalogCriteria } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
+import { Strings } from "../constants";
 import css from "./styling/CatalogModal.module.scss";
 
 interface CatalogModalProps {}
@@ -47,18 +48,18 @@ export const CatalogModal: React.FC<CatalogModalProps> = ({}) => {
 
     const modalActions = [
         {
-            label: lf("Cancel"),
+            label: Strings.Cancel,
             className: "secondary",
             onClick: closeModal,
         },
         {
-            label: lf("Add Selected"),
+            label: Strings.AddSelected,
             className: "primary",
             onClick: handleAddSelectedClicked,
         },
     ];
 
-    return teacherTool.modal === "catalog-display" ? (
+    return teacherTool.modalOptions?.modal === "catalog-display" ? (
         <Modal
             className={css["catalog-modal"]}
             title={lf("Select the criteria you'd like to include")}

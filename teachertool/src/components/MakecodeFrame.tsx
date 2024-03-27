@@ -1,22 +1,16 @@
 /// <reference path="../../../localtypings/pxteditor.d.ts" />
 
 import css from "./styling/MakeCodeFrame.module.scss";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
+import { classList } from "react-common/components/util";
 
 interface IProps {}
 
 export const MakeCodeFrame: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
-
-    // Clear iframe state when the iframe url is changed
-    useEffect(() => {
-        if (!teacherTool.projectMetadata?.id) {
-            setEditorRef(undefined);
-        }
-    }, [teacherTool.projectMetadata?.id]);
 
     function createIFrameUrl(shareId: string): string {
         const editorUrl: string = pxt.BrowserUtils.isLocalHost()
@@ -27,7 +21,8 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
         if (editorUrl.charAt(editorUrl.length - 1) === "/" && !pxt.BrowserUtils.isLocalHost()) {
             url = editorUrl.substr(0, editorUrl.length - 1);
         }
-        url += `?controller=1&teachertool=1&readonly=1&ws=mem&nocookiebanner=1#pub:${shareId}`;
+        const shareSection = shareId ? `#pub:${shareId}` : "";
+        url += `?controller=1&teachertool=1&readonly=1&ws=mem&nocookiebanner=1${shareSection}`;
         return url;
     }
 
@@ -38,13 +33,13 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
     };
 
     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-    return teacherTool.projectMetadata ? (
+    return (
         <iframe
-            className={css["makecode-frame"]}
-            src={createIFrameUrl(teacherTool.projectMetadata.id)}
+            className={classList(css["makecode-frame"], teacherTool.projectMetadata?.id ? undefined : css["invisible"])}
+            src={createIFrameUrl(teacherTool.projectMetadata?.id || "")}
             title={"title"}
             ref={handleIFrameRef}
         />
-    ) : null;
+    );
     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
 };

@@ -18,6 +18,7 @@ import { AppStateContext } from "../state/appStateContext";
 import { CarouselCardSet, RequestStatus, CarouselRubricResourceCard, CardType } from "../types";
 import { useJsonDocRequest } from "../hooks/useJsonDocRequest";
 import { isRubricResourceCard } from "../utils";
+import { ImportRubricOptions } from "../types/modalOptions";
 
 const Welcome: React.FC = () => {
     return (
@@ -148,7 +149,7 @@ const GetStarted: React.FC = () => {
 
     const onImportRubricClicked = () => {
         pxt.tickEvent(Ticks.ImportRubric);
-        showModal("import-rubric");
+        showModal({ modal: "import-rubric" } as ImportRubricOptions);
     };
 
     return (

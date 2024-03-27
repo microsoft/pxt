@@ -83,22 +83,16 @@ export default function reducer(state: AppState, action: Action): AppState {
                 rubric: action.rubric,
             };
         }
-        case "SET_CONFIRMATION_OPTIONS": {
-            return {
-                ...state,
-                confirmationOptions: action.options,
-            };
-        }
         case "SHOW_MODAL": {
             return {
                 ...state,
-                modal: action.modal,
+                modalOptions: action.modalOptions,
             };
         }
         case "HIDE_MODAL": {
             return {
                 ...state,
-                modal: undefined,
+                modalOptions: undefined,
             };
         }
         case "SET_VALIDATOR_PLANS": {
@@ -123,6 +117,20 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 autorun: action.autorun,
+            };
+        }
+        case "SET_TOOLBOX_CATEGORIES": {
+            return {
+                ...state,
+                toolboxCategories: action.categories,
+            };
+        }
+        case "SET_BLOCK_IMAGE_URI": {
+            const cache = { ...state.blockImageCache };
+            cache[action.blockId] = action.imageUri;
+            return {
+                ...state,
+                blockImageCache: cache,
             };
         }
     }

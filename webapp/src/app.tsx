@@ -4053,6 +4053,34 @@ export class ProjectView
             });
     }
 
+    renderXmlInner(xml: string, snippetMode?: boolean, layout?: pxt.editor.BlockLayout) {
+        const wrappedXml = xml.trim().toLocaleLowerCase().startsWith("<xml") ? xml : `<xml xmlns="https://developers.google.com/blockly/xml">${xml}</xml>`;
+        const svg = pxtblockly.render(wrappedXml, {
+            snippetMode: snippetMode || false,
+            layout: layout !== undefined ? layout : pxt.editor.BlockLayout.Align,
+            splitSvg: false
+        }) as SVGSVGElement;
+
+        const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
+        return {
+            svg: svg,
+            resultXml: pxtblockly.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3])
+        }
+    }
+
+    renderXml(req: pxt.editor.EditorMessageRenderXmlRequest): pxt.editor.EditorMessageRenderXmlResponse {
+        return this.renderXmlInner(req.xml, req.snippetMode, req.layout);
+    }
+
+    async renderByBlockIdAsync(req: pxt.editor.EditorMessageRenderByBlockIdRequest): Promise<pxt.editor.EditorMessageRenderByBlockIdResponse> {
+        const blocksInfo = await compiler.getBlocksAsync();
+        const blockInfo = blocksInfo.blocksById[req.blockId];
+        const symbolInfo: pxtc.SymbolInfo = blocksInfo.apis.byQName[blockInfo.qName];
+        const compileInfo: pxt.blocks.BlockCompileInfo = pxt.blocks.compileInfo(symbolInfo);
+        const xml = pxtblockly.createToolboxBlock(blocksInfo, symbolInfo, compileInfo);
+        return this.renderXmlInner(xml.outerHTML, req.snippetMode, req.layout);
+    }
+
     getBlocks(): Blockly.Block[] {
         if (!this.isBlocksActive()) {
             console.error("Trying to get blocks from a non-blocks editor.");
@@ -4060,6 +4088,34 @@ export class ProjectView
         }
 
         return this.blocksEditor.editor.getAllBlocks(false);
+    }
+
+    getToolboxCategories(advanced?: boolean): pxt.editor.EditorMessageGetToolboxCategoriesResponse {
+        if (!this.isBlocksActive()) {
+            console.error("Trying to get blocks info from a non-blocks editor.");
+            throw new Error("Trying to get blocks info from a non-blocks editor.");
+        }
+
+        // The toolbox.ToolboxCategory is not exposed, so convert it to the exported ToolboxCategoryDefinition.
+        const categoriesInternal = this.blocksEditor.getToolboxCategories(advanced);
+        const categories: pxt.editor.ToolboxCategoryDefinition[] = categoriesInternal.map(c => {
+            return {
+                ...c,
+                name: c.name || c.nameid,
+                customClick: undefined, // Cannot be serialized.
+                blocks: c.blocks.map(b => {
+                    return {
+                        ...b,
+                        group: b.attributes.group,
+                        advanved: b.attributes.advanced,
+                        weight: b.attributes.weight,
+                        jsDoc: b.attributes.jsDoc,
+                        blockId: b.attributes.blockId,
+                    } as pxt.editor.ToolboxBlockDefinition
+                }),
+            } as pxt.editor.ToolboxCategoryDefinition;
+        });
+        return { categories };
     }
 
     launchFullEditor() {

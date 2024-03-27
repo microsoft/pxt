@@ -5,6 +5,7 @@ export interface LazyImageProps extends ControlProps {
     src: string;
     alt: string;
     title?: string;
+    loadingElement?: JSX.Element;
 }
 
 let observer: IntersectionObserver;
@@ -20,6 +21,7 @@ export const LazyImage = (props: LazyImageProps) => {
         ariaLabel,
         ariaHidden,
         ariaDescribedBy,
+        loadingElement,
     } = props;
 
     initObserver();
@@ -34,9 +36,8 @@ export const LazyImage = (props: LazyImageProps) => {
         observer.observe(ref);
     }
 
-
-
     return <div className="common-lazy-image-wrapper">
+        <div className="loading-element">{loadingElement ? loadingElement : <div className="common-spinner" />}</div>
         <img
             id={id}
             ref={handleImageRef}
@@ -49,7 +50,6 @@ export const LazyImage = (props: LazyImageProps) => {
             aria-hidden={ariaHidden}
             aria-describedby={ariaDescribedBy}
         />
-        <div className="common-spinner" />
         <i className="fas fa-image" aria-hidden={true} />
     </div>
 }

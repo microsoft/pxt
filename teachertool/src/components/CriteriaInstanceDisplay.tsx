@@ -3,11 +3,16 @@ import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
-import { splitCriteriaTemplate } from "../utils";
+import { getReadableBlockString, splitCriteriaTemplate } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
-import { useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
+import { Button } from "react-common/components/controls/Button";
+import { AppStateContext } from "../state/appStateContext";
+import { Strings } from "../constants";
+import { showModal } from "../transforms/showModal";
+import { BlockPickerOptions } from "../types/modalOptions";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -30,7 +35,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
         setParameterValue(instance.instanceId, param.name, newValue);
     }
 
-    const tooltip = isEmpty ? lf("{0}: value required", param.name) : param.name;
+    const tooltip = isEmpty ? `"${param.name}: ${Strings.ValueRequired}` : param.name;
     return (
         <div title={tooltip} className={css["inline-input-wrapper"]}>
             <Input
@@ -50,6 +55,52 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                 type={numeric ? "number" : "text"}
             />
         </div>
+    );
+};
+
+interface BlockInputSegmentProps {
+    instance: CriteriaInstance;
+    param: CriteriaParameterValue;
+}
+interface BlockData {
+    category: pxt.editor.ToolboxCategoryDefinition;
+    block: pxt.editor.ToolboxBlockDefinition;
+}
+const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
+    const { state: teacherTool } = useContext(AppStateContext);
+    function handleClick() {
+        showModal({
+            modal: "block-picker",
+            criteriaInstanceId: instance.instanceId,
+            paramName: param.name,
+        } as BlockPickerOptions);
+    }
+
+    const blockData = useMemo<BlockData | undefined>(() => {
+        if (!param.value || !teacherTool.toolboxCategories) {
+            return undefined;
+        }
+
+        // Scan all categories and find the block with the matching id
+        for (const category of Object.values(teacherTool.toolboxCategories)) {
+            const block = category.blocks?.find(b => b.blockId === param.value);
+            if (block) {
+                return { category, block };
+            }
+        }
+        return undefined;
+    }, [param.value, teacherTool.toolboxCategories]);
+
+    const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
+    return (
+        <Button
+            label={blockData ? getReadableBlockString(blockData.block.name) : param.value || param.name}
+            className={classList(css["block-input-btn"], param.value ? undefined : css["error"])}
+            onClick={handleClick}
+            title={param.value ? Strings.SelectBlock : `${Strings.SelectBlock}: ${Strings.ValueRequired}`}
+            leftIcon={param.value ? undefined : "fas fa-exclamation-triangle"}
+            style={style}
+        />
     );
 };
 
@@ -75,8 +126,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
         }
 
         if (paramDef.type === "block") {
-            // TODO
-            return null;
+            return <BlockInputSegment param={paramInstance} instance={criteriaInstance} />;
         } else {
             return (
                 <InlineInputSegment
