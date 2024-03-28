@@ -9,7 +9,7 @@ type IFrameClientReadyMessage = {
 export type IframeClientMessage = IframeClientSetMessagePortRequest | IFrameClientReadyMessage;
 
 export class IFrameEmbeddedClient {
-    protected frameId: string;
+    protected frameId: string | undefined;
     protected port: MessagePort;
 
     constructor(protected messageHandler: (message: MessageEvent) => void) {
