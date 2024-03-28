@@ -10,6 +10,9 @@ import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
 import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import jp from "jsonpath";
+import { getSystemParameter } from "../utils/getSystemParameter";
+import { setEvalResult } from "./setEvalResult";
+import { setEvalResultNotes } from "./setEvalResultNotes";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -45,6 +48,10 @@ function generateValidatorPlan(
                 );
             }
             return undefined;
+        }
+
+        if (catalogParam.type === "system" && catalogParam.default) { // TODO thsparks - "keyword" instead of default?
+            param.value = getSystemParameter(catalogParam.default, teacherTool);
         }
 
         if (!param.value) {
@@ -97,8 +104,12 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                 const planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
 
                 if (planResult) {
-                    const result = planResult.result ? EvaluationStatus.Pass : EvaluationStatus.Fail;
+                    const result = planResult.result === undefined ? EvaluationStatus.CompleteWithNoResult : planResult.result ? EvaluationStatus.Pass : EvaluationStatus.Fail;
+
                     setEvalResultOutcome(criteriaInstance.instanceId, result);
+                    if (planResult.notes) {
+                        setEvalResultNotes(criteriaInstance.instanceId, planResult.notes);
+                    }
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));

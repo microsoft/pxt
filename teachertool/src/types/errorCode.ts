@@ -23,4 +23,5 @@ export enum ErrorCode {
     fetchJsonDocAsync = "fetchJsonDocAsync",
     missingParameter = "missingParameter",
     selectedBlockWithoutOptions = "selectedBlockWithoutOptions",
+    unrecognizedSystemParameter = "unrecognizedSystemParameter",
 }

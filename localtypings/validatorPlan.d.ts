@@ -41,7 +41,8 @@ declare namespace pxt.blocks {
     }
 
     export interface EvaluationResult {
-        result: boolean;
+        result?: boolean;
+        notes?: string;
     }
 
     export interface BlockFieldValueExistsCheck extends ValidatorCheckBase {
@@ -49,5 +50,12 @@ declare namespace pxt.blocks {
         fieldType: string;
         fieldValue: string;
         blockType: string;
+    }
+
+    export interface AiQuestionValidatorCheck extends ValidatorCheckBase {
+        validator: "aiQuestion";
+        question: string;
+        shareId: string;
+        target: string; // TODO thsparks : Just look this up from the share id within deepprompt itself? Or in our backend?
     }
 }

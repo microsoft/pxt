@@ -17,7 +17,7 @@ export interface CriteriaInstance {
 }
 
 // Represents a parameter definition in a catalog criteria.
-export type CriteriaParameterType = "string" | "longString" | "number" | "block";
+export type CriteriaParameterType = "string" | "longString" | "number" | "block" | "system";
 export interface CriteriaParameter {
     name: string;
     type: CriteriaParameterType;
