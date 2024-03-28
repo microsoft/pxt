@@ -68,7 +68,7 @@ export class IFrameEmbeddedClient {
     }
 }
 
-function frameId(): string {
+function frameId(): string | undefined {
     const match = /frameid=([a-zA-Z0-9\-]+)/i.exec(window.location.href);
 
     if (match) {
