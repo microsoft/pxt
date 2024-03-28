@@ -1271,7 +1271,7 @@ declare namespace pxt.editor {
         assetType: pxt.AssetType;
     }
 
-    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest | SetMessagePortAssetEditorRequest;
+    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
 
     interface BaseAssetEditorResponse {
         id?: number;
@@ -1294,7 +1294,7 @@ declare namespace pxt.editor {
         type: "duplicate";
     }
 
-    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse | SetMessagePortAssetEditorResponse;
+    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
 
     interface AssetEditorRequestSaveEvent {
         type: "event";
