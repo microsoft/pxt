@@ -1,5 +1,7 @@
 /// <reference path="../localtypings/pxteditor.d.ts" />
 
+import { IframeClientMessage } from "./iframeEmbeddedClient";
+
 type MessageHandler = (response: any) => void;
 
 const MessageReceivedEvent = "message";
@@ -11,442 +13,46 @@ interface PendingMessage {
     reject: MessageHandler;
 }
 
-export interface IframeWorkspaceStatus {
-    projects: pxt.workspace.Project[];
-    editor?: pxt.editor.EditorSyncState;
-    controllerId?: string;
-}
-
-export interface IFrameWorkspaceHost {
-    saveProject(project: pxt.workspace.Project): Promise<void>;
-    getWorkspaceProjects(): Promise<IframeWorkspaceStatus>;
-    resetWorkspace(): Promise<void>;
-    onWorkspaceLoaded?(): Promise<void>;
-}
-
 /**
- * Manages communication with the editor iframe.
- *
- * TODO: Currently only supports a single iframe as all incoming messages
- * are posted on the window. Would be nice in the future to refactor the
- * iframe messages to use a MessageChannel.
+ * Abstract class for driving communication with an embedded iframe
  */
-export class IframeDriver {
+export abstract class IframeDriver {
     protected readyForMessages = false;
     protected messageQueue: pxt.editor.EditorMessageRequest[] = [];
     protected nextId = 0;
     protected pendingMessages: { [index: string]: PendingMessage } = {};
     protected editorEventListeners: { [index: string]: MessageHandler[] } = {};
+    protected port: MessagePort;
+    protected portRequestPending: boolean;
+    protected frameId: string;
 
-    constructor(public iframe: HTMLIFrameElement, public host?: IFrameWorkspaceHost) {
+    constructor(public iframe: HTMLIFrameElement) {
+        const queryParams = new URLSearchParams(new URL(iframe.src).search);
+
+        if (queryParams.has("frameid")) {
+            this.frameId = queryParams.get("frameid")!;
+        }
+
         window.addEventListener("message", this.onMessageReceived);
+
+        // In case this driver was created after the iframe was loaded and we missed
+        // the ready event, send a ready request for it to parrot back
+        if (iframe.contentWindow) {
+            iframe.contentWindow.postMessage({
+                type: "iframeclientready"
+            } as IframeClientMessage, "*");
+        }
     }
+
+    protected abstract handleMessage(message: MessageEvent): void;
 
     dispose() {
         window.removeEventListener("message", this.onMessageReceived);
-    }
-
-    async switchEditorLanguage(lang: "typescript" | "blocks" | "python") {
-        let action;
-        switch (lang) {
-            case "blocks":
-                action = "switchblocks";
-                break;
-            case "typescript":
-                action = "switchjavascript";
-                break;
-            case "python":
-                action = "switchpython";
-                break;
+        if (this.port) {
+            this.port.close();
         }
-
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action
-            } as pxt.editor.EditorMessageRequest
-        );
     }
 
-    async setLanguageRestriction(restriction: pxt.editor.LanguageRestriction) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "setlanguagerestriction",
-                restriction
-            } as pxt.editor.EditorSetLanguageRestriction
-        );
-    }
-
-    async startSimulator() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "startsimulator"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async stopSimulator(unload = false) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "stopsimulator",
-                unload
-            } as pxt.editor.EditorMessageStopRequest
-        );
-    }
-
-    async restartSimulator() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "restartsimulator"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async hideSimulator() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "hidesimulator"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async showSimulator() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "showsimulator"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async setSimulatorFullscreen(on: boolean) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "setsimulatorfullscreen",
-                enabled: on
-            } as pxt.editor.EditorMessageSetSimulatorFullScreenRequest
-        );
-    }
-
-    async closeFlyout() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "closeflyout"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async unloadProject() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "unloadproject"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async saveProject() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "saveproject"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async undo() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "undo"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async redo() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "redo"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async setHighContrast(on: boolean) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "sethighcontrast",
-                on
-            } as pxt.editor.EditorMessageSetHighContrastRequest
-        );
-    }
-
-    async toggleHighContrast() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "togglehighcontrast"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async toggleGreenScreen() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "togglegreenscreen"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async toggleSloMo(intervalSpeed?: number) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "toggletrace",
-                intervalSpeed
-            } as pxt.editor.EditorMessageToggleTraceRequest
-        );
-    }
-
-    async setSloMoEnabled(enabled: boolean, intervalSpeed?: number) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "settracestate",
-                enabled,
-                intervalSpeed
-            } as pxt.editor.EditorMessageSetTraceStateRequest
-        );
-    }
-
-    async printProject() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "print"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async getInfo(): Promise<pxt.editor.InfoMessage> {
-        const resp = await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "info"
-            } as pxt.editor.EditorMessageRequest
-        ) as pxt.editor.EditorMessageResponse;
-
-        return (resp.resp as pxt.editor.InfoMessage);
-    }
-
-    async newProject(options: pxt.editor.ProjectCreationOptions) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "newproject",
-                options
-            } as pxt.editor.EditorMessageNewProjectRequest
-        );
-    }
-
-    async importProject(project: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters, searchBar?: boolean) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "importproject",
-                project,
-                filters,
-                searchBar
-            } as pxt.editor.EditorMessageImportProjectRequest
-        );
-    }
-
-    async openHeader(headerId: string) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "openheader",
-                headerId
-            } as pxt.editor.EditorMessageOpenHeaderRequest
-        );
-    }
-
-    async shareHeader(headerId: string, projectName: string) {
-        const resp = await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "shareproject",
-                headerId,
-                projectName
-            } as pxt.editor.EditorShareRequest
-        ) as pxt.editor.EditorMessageResponse;
-
-        return resp.resp as pxt.editor.ShareData;
-    }
-
-    async startActivity(activityType: "tutorial" | "example" | "recipe", path: string, title?: string, previousProjectHeaderId?: string, carryoverPreviousCode?: boolean) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "startactivity",
-                activityType,
-                path,
-                title,
-                previousProjectHeaderId,
-                carryoverPreviousCode
-            } as pxt.editor.EditorMessageStartActivity
-        );
-    }
-
-    async importTutorial(markdown: string) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "importtutorial",
-                markdown
-            } as pxt.editor.EditorMessageImportTutorialRequest
-        );
-    }
-
-    async pair() {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "pair"
-            } as pxt.editor.EditorMessageRequest
-        );
-    }
-
-    async decompileToBlocks(ts: string, snippetMode?: boolean, layout?: pxt.editor.BlockLayout) {
-        const resp = await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "renderblocks",
-                ts,
-                snippetMode,
-                layout
-            } as pxt.editor.EditorMessageRenderBlocksRequest
-        ) as pxt.editor.EditorMessageResponse;
-
-        return resp.resp as pxt.editor.EditorMessageRenderBlocksResponse;
-    }
-
-    async decompileToPython(ts: string) {
-        const resp = await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "renderpython",
-                ts
-            } as pxt.editor.EditorMessageRenderPythonRequest
-        ) as pxt.editor.EditorMessageResponse;
-
-        return (resp.resp as pxt.editor.EditorMessageRenderPythonResponse).python;
-    }
-
-    async renderXml(xml: string) {
-        const resp = await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "renderxml",
-                xml
-            } as pxt.editor.EditorMessageRenderXmlRequest
-        ) as pxt.editor.EditorMessageResponse;
-
-        return resp.resp;
-    }
-
-    async renderByBlockId(blockId: string) {
-        const resp = await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "renderbyblockid",
-                blockId: blockId
-            } as pxt.editor.EditorMessageRenderByBlockIdRequest
-        ) as pxt.editor.EditorMessageResponse;
-
-        return resp.resp;
-    }
-
-    async getToolboxCategories(advanced?: boolean): Promise<pxt.editor.ToolboxCategoryDefinition[]> {
-        const resp = await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "gettoolboxcategories",
-                advanced
-            } as pxt.editor.EditorMessageGetToolboxCategoriesRequest
-        ) as pxt.editor.EditorMessageResponse;
-
-        return (resp.resp as pxt.editor.EditorMessageGetToolboxCategoriesResponse).categories;
-    }
-
-    async runValidatorPlan(validatorPlan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]) {
-        const resp = await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "runeval",
-                validatorPlan,
-                planLib,
-            } as pxt.editor.EditorMessageRunEvalRequest
-        ) as pxt.editor.EditorMessageResponse;
-
-        return resp.resp as pxt.blocks.EvaluationResult;
-    }
-
-    async saveLocalProjectsToCloud(headerIds: string[]) {
-        const resp = await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "savelocalprojectstocloud",
-                headerIds
-            } as pxt.editor.EditorMessageSaveLocalProjectsToCloud
-        ) as pxt.editor.EditorMessageResponse;
-
-        return resp.resp as pxt.editor.EditorMessageSaveLocalProjectsToCloudResponse;
-    }
-
-    async convertCloudProjectsToLocal(userId: string) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "convertcloudprojectstolocal",
-                userId
-            } as pxt.editor.EditorMessageConvertCloudProjectsToLocal
-        );
-    }
-
-    async requestProjectCloudStatus(headerIds: string[]) {
-        await this.sendRequest(
-            {
-                type: "pxteditor",
-                action: "requestprojectcloudstatus",
-                headerIds
-            } as pxt.editor.EditorMessageRequestProjectCloudStatus
-        );
-    }
-
-    addEventListener(event: typeof MessageSentEvent, handler: (ev: pxt.editor.EditorMessage) => void): void;
-    addEventListener(event: typeof MessageReceivedEvent, handler: (ev: pxt.editor.EditorMessage) => void): void;
-    addEventListener(event: "event", handler: (ev: pxt.editor.EditorMessageEventRequest) => void): void;
-    addEventListener(event: "simevent", handler: (ev: pxt.editor.EditorSimulatorEvent) => void): void;
-    addEventListener(event: "tutorialevent", handler: (ev: pxt.editor.EditorMessageTutorialEventRequest) => void): void;
-    addEventListener(event: "editorcontentloaded", handler: (ev: pxt.editor.EditorContentLoadedRequest) => void): void;
-    addEventListener(event: "workspacesave", handler: (ev: pxt.editor.EditorWorkspaceSaveRequest) => void): void;
-    addEventListener(event: "workspaceevent", handler: (ev: pxt.editor.EditorWorkspaceEvent) => void): void;
-    addEventListener(event: "workspacereset", handler: (ev: pxt.editor.EditorWorkspaceSyncRequest) => void): void;
-    addEventListener(event: "workspacesync", handler: (ev: pxt.editor.EditorWorkspaceSyncRequest) => void): void;
-    addEventListener(event: "workspaceloaded", handler: (ev: pxt.editor.EditorWorkspaceSyncRequest) => void): void;
-    addEventListener(event: "workspacediagnostics", handler: (ev: pxt.editor.EditorWorkspaceDiagnostics) => void): void;
-    addEventListener(event: "editorcontentloaded", handler: (ev: pxt.editor.EditorContentLoadedRequest) => void): void;
-    addEventListener(event: "projectcloudstatus", handler: (ev: pxt.editor.EditorMessageProjectCloudStatus) => void): void;
     addEventListener(event: string, handler: (ev: any) => void): void {
         if (!this.editorEventListeners[event]) this.editorEventListeners[event] = [];
         this.editorEventListeners[event].push(handler);
@@ -465,41 +71,46 @@ export class IframeDriver {
         }
     }
 
-    sendMessage(message: pxt.editor.EditorMessageRequest): Promise<pxt.editor.EditorMessageResponse> {
-        return this.sendRequest(message) as Promise<pxt.editor.EditorMessageResponse>;
-    }
-
     protected onMessageReceived = (event: MessageEvent) => {
-        const data = event.data as pxt.editor.EditorMessageRequest;
-        if (!data || !/^pxt(host|editor|pkgext|sim)$/.test(data.type)) return;
+        const data = event.data;
 
-        if (data.type === "pxteditor") {
-            if (data.id && this.pendingMessages[data.id]) {
-                const resp = event.data as pxt.editor.EditorMessageResponse;
-                const pending = this.pendingMessages[resp.id!];
-                delete this.pendingMessages[resp.id!];
+        if (data) {
+            if (this.frameId && data.frameId !== this.frameId) {
+                return;
+            }
 
-                if (resp.success) {
-                    pending.resolve(resp);
+            if (data.type === "iframeclientready") {
+                if (this.frameId && !this.port) {
+                    this.createMessagePort();
                 }
                 else {
-                    pending.reject(resp.error || new Error("Unknown error: iFrame returned failure"));
+                    this.readyForMessages = true;
+                    this.sendMessageCore();
                 }
+                return;
+            }
+            else if (data.type === "iframeclientsetmessageport") {
+                return;
             }
         }
-        else if (data.type === "pxthost") {
-            if (data.action === "editorcontentloaded") {
-                this.readyForMessages = true;
-                this.sendMessageCore(); // flush message queue.
-            }
-            else if (data.action === "workspacesync" || data.action === "workspacesave" || data.action === "workspacereset" || data.action === "workspaceloaded") {
-                this.handleWorkspaceSync(data as pxt.editor.EditorWorkspaceSyncRequest);
-            }
 
-            this.fireEvent(data.action, data);
+        this.handleMessage(event);
+    }
+
+    protected resolvePendingMessage(event: MessageEvent) {
+        const data = event.data as pxt.editor.EditorMessageResponse;
+        if (data.id && this.pendingMessages[data.id]) {
+            const resp = event.data as pxt.editor.EditorMessageResponse;
+            const pending = this.pendingMessages[resp.id!];
+            delete this.pendingMessages[resp.id!];
+
+            if (resp.success) {
+                pending.resolve(resp);
+            }
+            else {
+                pending.reject(resp.error || new Error("Unknown error: iFrame returned failure"));
+            }
         }
-
-        this.fireEvent(MessageReceivedEvent, data);
     }
 
     protected fireEvent(event: string, data: any) {
@@ -512,50 +123,6 @@ export class IframeDriver {
             }
             catch (e) {
                 console.error(e);
-            }
-        }
-    }
-
-    protected async handleWorkspaceSync(event: pxt.editor.EditorWorkspaceSyncRequest | pxt.editor.EditorWorkspaceSaveRequest) {
-        if (!this.host) return;
-
-        let error: any = undefined;
-        try {
-            if (event.action === "workspacesync") {
-                const status = await this.host.getWorkspaceProjects();
-                this.sendMessageCore({
-                    type: "pxthost",
-                    id: event.id,
-                    success: !!status,
-                    projects: status?.projects,
-                    editor: status?.editor,
-                    controllerId: status?.controllerId
-                } as pxt.editor.EditorWorkspaceSyncResponse);
-            }
-            else if (event.action === "workspacereset") {
-                await this.host.resetWorkspace();
-            }
-            else if (event.action === "workspacesave") {
-                await this.host.saveProject(event.project);
-            }
-            else if (event.action === "workspaceloaded") {
-                if (this.host.onWorkspaceLoaded) {
-                    await this.host.onWorkspaceLoaded();
-                }
-            }
-        }
-        catch (e) {
-            error = e;
-            console.error(e);
-        }
-        finally {
-            if (event.response) {
-                this.sendMessageCore({
-                    type: "pxthost",
-                    id: event.id,
-                    success: !error,
-                    error
-                } as pxt.editor.EditorMessageResponse);
             }
         }
     }
@@ -581,9 +148,39 @@ export class IframeDriver {
         if (this.readyForMessages) {
             while (this.messageQueue.length) {
                 const toSend = this.messageQueue.shift();
-                this.iframe.contentWindow?.postMessage(toSend, "*");
+                if (this.port) {
+                    this.port.postMessage(toSend);
+                }
+                else {
+                    this.iframe.contentWindow?.postMessage(toSend, "*");
+                }
                 this.fireEvent(MessageSentEvent, toSend);
             }
         }
+    }
+
+    protected createMessagePort() {
+        if (this.port || this.portRequestPending) return;
+
+        this.portRequestPending = true
+
+        const channel = new MessageChannel();
+
+        channel.port1.onmessage = (message: MessageEvent) => {
+            if (!this.port) {
+                this.port = channel.port1;
+                this.frameId = undefined;
+                window.removeEventListener("message", this.onMessageReceived);
+
+                this.readyForMessages = true;
+                this.sendMessageCore();
+            }
+
+            this.onMessageReceived(message);
+        };
+
+        this.iframe.contentWindow!.postMessage({
+            type: "iframeclientsetmessageport",
+        } as IframeClientMessage, "*", [channel.port2]);
     }
 }

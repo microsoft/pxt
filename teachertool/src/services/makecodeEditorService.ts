@@ -3,10 +3,10 @@
 import { ErrorCode } from "../types/errorCode";
 import { logDebug, logError } from "./loggingService";
 import * as AutorunService from "./autorunService";
-import { IframeDriver } from "pxtservices/iframeDriver";
+import { EditorDriver } from "pxtservices/editorDriver";
 import { loadToolboxCategoriesAsync } from "../transforms/loadToolboxCategoriesAsync";
 
-let driver: IframeDriver | undefined;
+let driver: EditorDriver | undefined;
 let highContrast: boolean = false;
 
 export function setEditorRef(ref: HTMLIFrameElement | undefined) {
@@ -18,7 +18,7 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
     }
 
     if (ref) {
-        driver = new IframeDriver(ref);
+        driver = new EditorDriver(ref);
 
         driver.addEventListener("message", ev => {
             logDebug(`Message received from iframe: ${JSON.stringify(ev)}`);

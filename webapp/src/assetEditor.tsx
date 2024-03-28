@@ -1,10 +1,12 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
+/// <reference path="../../localtypings/pxteditor.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
+import { IFrameEmbeddedClient } from "../../pxtservices/iframeEmbeddedClient";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,71 +23,6 @@ interface AssetEditorState {
     isEmptyAsset?: boolean;
 }
 
-interface BaseAssetEditorRequest {
-    id?: number;
-    files: pxt.Map<string>;
-    palette?: string[];
-}
-
-interface OpenAssetEditorRequest extends BaseAssetEditorRequest {
-    type: "open";
-    assetId: string;
-    assetType: pxt.AssetType;
-}
-
-interface CreateAssetEditorRequest extends BaseAssetEditorRequest {
-    type: "create";
-    assetType: pxt.AssetType;
-    displayName?: string;
-}
-
-interface SaveAssetEditorRequest extends BaseAssetEditorRequest {
-    type: "save";
-}
-
-interface DuplicateAssetEditorRequest extends BaseAssetEditorRequest {
-    type: "duplicate";
-    assetId: string;
-    assetType: pxt.AssetType;
-}
-
-type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
-
-interface BaseAssetEditorResponse {
-    id?: number;
-}
-
-interface OpenAssetEditorResponse extends BaseAssetEditorResponse {
-    type: "open";
-}
-
-interface CreateAssetEditorResponse extends BaseAssetEditorResponse {
-    type: "create";
-}
-
-interface SaveAssetEditorResponse extends BaseAssetEditorResponse {
-    type: "save";
-    files: pxt.Map<string>;
-}
-
-interface DuplicateAssetEditorResponse extends BaseAssetEditorResponse {
-    type: "duplicate";
-}
-
-type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
-
-interface AssetEditorRequestSaveEvent {
-    type: "event";
-    kind: "done-clicked";
-}
-
-interface AssetEditorReadyEvent {
-    type: "event";
-    kind: "ready";
-}
-
-type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
-
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
     private editor: ImageFieldEditor<pxt.Asset>;
     protected saveProject: pxt.TilemapProject;
@@ -95,6 +32,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     protected files: pxt.Map<string>;
     protected galleryTiles: any[];
     protected lastValue: pxt.Asset;
+    protected iframeClient: IFrameEmbeddedClient;
 
     constructor(props: {}) {
         super(props);
@@ -104,8 +42,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         setTelemetryFunction(tickAssetEditorEvent);
     }
 
-    handleMessage = (msg: MessageEvent)  => {
-        const request = msg.data as AssetEditorRequest;
+    handleMessage = (msg: MessageEvent) => {
+        const request = msg.data as pxt.editor.AssetEditorRequest;
 
         switch (request.type) {
             case "create":
@@ -178,7 +116,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     pollingInterval: number;
     componentDidMount() {
-        window.addEventListener("message", this.handleMessage, null);
+        this.iframeClient = new IFrameEmbeddedClient(this.handleMessage);
+
         window.addEventListener("keydown", this.handleKeydown, null);
         this.sendEvent({
             type: "event",
@@ -238,21 +177,16 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         return <div></div>
     }
 
-    protected sendResponse(response: AssetEditorResponse) {
+    protected sendResponse(response: pxt.editor.AssetEditorResponse) {
         this.postMessage(response);
     }
 
-    protected sendEvent(event: AssetEditorEvent) {
+    protected sendEvent(event: pxt.editor.AssetEditorEvent) {
         this.postMessage(event);
     }
 
     protected postMessage(message: any) {
-        if ((window as any).acquireVsCodeApi) {
-            (window as any).acquireVsCodeApi().postMessage(message)
-        }
-        else {
-            window.parent.postMessage(message, "*");
-        }
+        this.iframeClient.postMessage(message);
     }
 
     protected updateAsset() {
