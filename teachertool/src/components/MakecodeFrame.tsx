@@ -1,7 +1,7 @@
 /// <reference path="../../../localtypings/pxteditor.d.ts" />
 
 import css from "./styling/MakeCodeFrame.module.scss";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
@@ -10,6 +10,8 @@ interface IProps {}
 
 export const MakeCodeFrame: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
+    const [ frameId ] = useState(pxt.Util.guidGen());
+
 
     // Clear iframe state when the iframe url is changed
     useEffect(() => {
@@ -27,7 +29,7 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
         if (editorUrl.charAt(editorUrl.length - 1) === "/" && !pxt.BrowserUtils.isLocalHost()) {
             url = editorUrl.substr(0, editorUrl.length - 1);
         }
-        url += `?controller=1&teachertool=1&readonly=1&ws=mem&nocookiebanner=1#pub:${shareId}`;
+        url += `?controller=1&teachertool=1&readonly=1&ws=mem&nocookiebanner=1&frameid=${frameId}#pub:${shareId}`;
         return url;
     }
 

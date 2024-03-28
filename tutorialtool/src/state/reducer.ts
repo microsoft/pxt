@@ -17,5 +17,17 @@ export default function reducer(state: AppState, action: Action): AppState {
                 tutorialMarkdown: action.markdown,
             };
         }
+        case "SET_USER_PROFILE": {
+            return {
+                ...state,
+                userProfile: action.profile,
+            };
+        }
+        case "CLEAR_USER_PROFILE": {
+            return {
+                ...state,
+                userProfile: undefined
+            };
+        }
     }
 }

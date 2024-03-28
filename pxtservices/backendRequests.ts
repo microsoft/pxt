@@ -15,6 +15,8 @@ export async function fetchJsonDocAsync<T = any>(url: string): Promise<T | undef
     } catch (e) {
         logError(ErrorCode.fetchJsonDocAsync, e);
     }
+
+    return undefined;
 }
 
 export async function getProjectTextAsync(projectId: string): Promise<pxt.Cloud.JsonText | undefined> {
@@ -30,6 +32,8 @@ export async function getProjectTextAsync(projectId: string): Promise<pxt.Cloud.
     } catch (e) {
         logError(ErrorCode.getProjectTextAsync, e);
     }
+
+    return undefined;
 }
 
 export async function getProjectMetaAsync(projectId: string): Promise<pxt.Cloud.JsonScript | undefined> {
@@ -45,6 +49,8 @@ export async function getProjectMetaAsync(projectId: string): Promise<pxt.Cloud.
     } catch (e) {
         logError(ErrorCode.getProjectMetaAsync, e);
     }
+
+    return undefined;
 }
 
 export async function downloadTargetConfigAsync(): Promise<pxt.TargetConfig | undefined> {
@@ -53,4 +59,6 @@ export async function downloadTargetConfigAsync(): Promise<pxt.TargetConfig | un
     } catch (e) {
         logError(ErrorCode.downloadTargetConfigAsync, e);
     }
+
+    return undefined;
 }

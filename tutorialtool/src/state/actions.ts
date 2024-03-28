@@ -16,6 +16,15 @@ type SetTutorialMarkdown = ActionBase & {
     markdown: string;
 };
 
+type SetUserProfile = ActionBase & {
+    type: "SET_USER_PROFILE";
+    profile: pxt.auth.UserProfile;
+};
+
+type ClearUserProfile = ActionBase & {
+    type: "CLEAR_USER_PROFILE";
+};
+
 /**
  * Union of all actions
  */
@@ -23,6 +32,8 @@ type SetTutorialMarkdown = ActionBase & {
 export type Action =
     | SetTargetConfig
     | SetTutorialMarkdown
+    | SetUserProfile
+    | ClearUserProfile
 
 
 /**
@@ -39,8 +50,18 @@ const setTutoralMarkdown = (tutorialMarkdown: string): SetTutorialMarkdown => ({
     markdown: tutorialMarkdown,
 })
 
+const setUserProfile = (profile: pxt.auth.UserProfile): SetUserProfile => ({
+    type: "SET_USER_PROFILE",
+    profile
+});
+
+const clearUserProfile = (): ClearUserProfile => ({
+    type: "CLEAR_USER_PROFILE"
+});
 
 export {
     setTargetConfig,
-    setTutoralMarkdown
+    setTutoralMarkdown,
+    setUserProfile,
+    clearUserProfile
 };

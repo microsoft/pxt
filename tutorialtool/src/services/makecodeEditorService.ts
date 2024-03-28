@@ -1,10 +1,10 @@
 /// <reference path="../../../localtypings/validatorPlan.d.ts" />
 
 import { logDebug } from "pxtservices/loggingService";
-import { IframeDriver } from "pxtservices/iframeDriver";
+import { EditorDriver } from "pxtservices/editorDriver";
 
 
-let driver: IframeDriver | undefined;
+let driver: EditorDriver | undefined;
 let highContrast: boolean = false;
 
 export function setEditorRef(ref: HTMLIFrameElement | undefined) {
@@ -16,7 +16,7 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
     }
 
     if (ref) {
-        driver = new IframeDriver(ref);
+        driver = new EditorDriver(ref);
 
         driver.addEventListener("message", ev => {
             logDebug(`Message received from iframe: ${JSON.stringify(ev)}`);
