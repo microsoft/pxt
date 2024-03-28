@@ -1,0 +1,31 @@
+.common-input-wrapper {
+
+    div[class*="common-input-group"] {
+        border-radius: 99px;
+        border: solid 1px var(--pxt-content-accent);
+        padding: 0 1rem 0 1rem;
+
+        &:focus::after {
+            outline: none;
+            border-radius: 99px;
+            border: solid 2px var(--pxt-headerbar-accent-smoke);
+        }
+
+        &:focus-within::after {
+            outline: none;
+            border-radius: 99px;
+            border: solid 2px var(--pxt-headerbar-accent-smoke);
+        }
+
+        input {
+            width: 100%;
+            font-size: 1rem;
+            padding-left: 0;
+
+            &::placeholder {
+                color: var(--pxt-content-accent);
+                font-style: italic;
+            }
+        }
+    }
+}
