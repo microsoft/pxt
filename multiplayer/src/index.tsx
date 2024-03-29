@@ -10,6 +10,7 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import { AppStateProvider } from "./state/AppStateContext";
+import { CollabStateProvider } from "./state/collab";
 
 function enableAnalytics() {
     pxt.analytics.enable(pxt.Util.userLanguage());
@@ -64,7 +65,9 @@ window.addEventListener("DOMContentLoaded", () => {
     ReactDOM.render(
         <React.StrictMode>
             <AppStateProvider>
-                <App />
+                <CollabStateProvider>
+                    <App />
+                </CollabStateProvider>
             </AppStateProvider>
         </React.StrictMode>,
         document.getElementById("root")

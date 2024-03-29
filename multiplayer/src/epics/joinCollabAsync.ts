@@ -1,9 +1,9 @@
-import * as gameClient from "../services/gameClient";
+import * as collabClient from "../services/collabClient";
 import { dispatch } from "../state";
 import {
     dismissToast,
     setNetMode,
-    setGameInfo,
+    setCollabInfo,
     showToast,
     setClientRole,
 } from "../state/actions";
@@ -11,7 +11,7 @@ import { HTTP_SESSION_FULL, HTTP_SESSION_NOT_FOUND } from "../types";
 import { cleanupJoinCode } from "../util";
 import { notifyDisconnected } from ".";
 
-export async function joinGameAsync(joinCode: string | undefined) {
+export async function joinCollabAsync(joinCode: string | undefined) {
     joinCode = cleanupJoinCode(joinCode);
     if (!joinCode) {
         return dispatch(
@@ -31,7 +31,7 @@ export async function joinGameAsync(joinCode: string | undefined) {
         dispatch(setNetMode("connecting"));
         dispatch(connectingToast);
 
-        const joinResult = await gameClient.joinGameAsync(joinCode);
+        const joinResult = await collabClient.joinCollabAsync(joinCode);
         pxt.debug(joinResult);
 
         if (joinResult.success) {
@@ -43,14 +43,14 @@ export async function joinGameAsync(joinCode: string | undefined) {
                 })
             );
             dispatch(setClientRole("guest"));
-            dispatch(setGameInfo(joinResult));
+            dispatch(setCollabInfo(joinResult));
             dispatch(setNetMode("connected"));
         } else {
             if (joinResult.statusCode === HTTP_SESSION_NOT_FOUND) {
                 notifyDisconnected("not-found");
                 dispatch(setNetMode("init"));
             } else if (joinResult.statusCode === HTTP_SESSION_FULL) {
-                // notification handled by gameClient
+                // notification handled by collabClient
                 dispatch(setNetMode("init"));
             } else {
                 throw new Error(`join http response: ${joinResult.statusCode}`);

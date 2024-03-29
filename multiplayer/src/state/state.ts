@@ -7,6 +7,7 @@ import {
     ModalType,
     GameMetadata,
     ClientRole,
+    CollabInfo,
 } from "../types";
 
 export type AppState = {
@@ -19,6 +20,7 @@ export type AppState = {
     gameState: GameState | undefined;
     gameMetadata: GameMetadata | undefined;
     gamePaused: boolean | undefined;
+    collabInfo: CollabInfo | undefined;
     toasts: ToastWithId[];
     presence: Presence;
     modal: ModalType | undefined;
@@ -49,6 +51,7 @@ export const initialAppState: AppState = {
     gameState: undefined,
     gameMetadata: undefined,
     gamePaused: undefined,
+    collabInfo: undefined,
     toasts: [],
     presence: { ...defaultPresence },
     modal: undefined,

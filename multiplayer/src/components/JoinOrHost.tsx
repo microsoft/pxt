@@ -6,7 +6,7 @@ import { AppStateContext } from "../state/AppStateContext";
 import { Button } from "../../../react-common/components/controls/Button";
 import { Input } from "react-common/components/controls/Input";
 import { Link } from "react-common/components/controls/Link";
-import { hostGameAsync, joinGameAsync } from "../epics";
+import { hostCollabAsync, joinCollabAsync } from "../epics";
 import { resourceUrl } from "../util";
 import TabButton from "./TabButton";
 import HostGameButton from "./HostGameButton";
@@ -27,21 +27,19 @@ export default function Render() {
 
     const onJoinGameClick = async () => {
         if (joinCodeRef?.current?.value) {
-            await joinGameAsync(joinCodeRef.current.value);
+            await joinCollabAsync(joinCodeRef.current.value);
         }
     };
     const onHostGameClick = async () => {
-        if (shareCodeRef?.current?.value) {
-            await hostGameAsync(shareCodeRef.current.value);
-        }
+        await hostCollabAsync();
     };
 
     const enterShareOrLink = lf("Enter share code or link");
     const howToGetLink = lf("How do I get a share code or link?");
     const moreGamesToPlay = lf("More games to play with your friends");
 
-    const starterGames = targetConfig?.multiplayer?.games;
-    const showStarterGames = !!starterGames?.length;
+    const starterGames = targetConfig?.multiplayer?.games ?? [];
+    const showStarterGames = false;
 
     return (
         <div className="tw-flex tw-flex-col tw-w-screen tw-h-screen tw-justify-center tw-items-center">
@@ -50,11 +48,11 @@ export default function Render() {
                     <div className="tw-pt-2">
                         <div className="tw-flex tw-justify-center">
                             <TabButton
-                                title={lf("Join Game")}
+                                title={lf("Join Collab")}
                                 label={
                                     <>
                                         <div className="tw-hidden sm:tw-inline">
-                                            {lf("Join Game")}
+                                            {lf("Join Collab")}
                                         </div>
                                         <div className="sm:tw-hidden">
                                             {lf("Join")}
@@ -65,11 +63,11 @@ export default function Render() {
                                 onClick={() => setCurrTab("join")}
                             />
                             <TabButton
-                                title={lf("Host Game")}
+                                title={lf("Host Collab")}
                                 label={
                                     <>
                                         <div className="tw-hidden sm:tw-inline">
-                                            {lf("Host Game")}
+                                            {lf("Host Collab")}
                                         </div>
                                         <div className="sm:tw-hidden">
                                             {lf("Host")}
@@ -98,8 +96,8 @@ export default function Render() {
                                     <div>
                                         <Button
                                             className={"primary tw-px-10"}
-                                            label={lf("Enter")}
-                                            title={lf("Join Game")}
+                                            label={lf("Join")}
+                                            title={lf("Join Collab")}
                                             onClick={onJoinGameClick}
                                         />
                                     </div>
@@ -108,7 +106,7 @@ export default function Render() {
                                             href="/multiplayer#join-game"
                                             target="_blank"
                                         >
-                                            {lf("How do I get a game code?")}
+                                            {lf("How do I get a collab code?")}
                                         </Link>
                                     </div>
                                 </div>
@@ -117,6 +115,7 @@ export default function Render() {
                                 <div className="tw-w-full tw-flex tw-flex-col tw-gap-4 tw-mt-2 tw-justify-center tw-items-center">
                                     <div className="tw-w-full">
                                         <Input
+                                            className="tw-invisible"
                                             groupClassName="tw-w-full tw-border-1 tw-h-full tw-rounded"
                                             inputClassName="tw-p-2"
                                             title={lf("Share Code")}
@@ -131,17 +130,9 @@ export default function Render() {
                                         <Button
                                             className={"primary tw-px-10"}
                                             label={lf("Launch")}
-                                            title={lf("Host Game")}
+                                            title={lf("Host Collab")}
                                             onClick={onHostGameClick}
                                         />
-                                    </div>
-                                    <div className="tw-text-sm">
-                                        <Link
-                                            href="/multiplayer#host-game"
-                                            target="_blank"
-                                        >
-                                            {howToGetLink}
-                                        </Link>
                                     </div>
                                 </div>
                             )}

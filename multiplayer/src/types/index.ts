@@ -1,8 +1,12 @@
 export const HTTP_OK = 200;
-export const HTTP_GAME_FULL = 507; // Insuffient storage. Using this HTTP status code to indicate the game is full.
-export const HTTP_GAME_NOT_FOUND = 404; // Not found. Using this HTTP status code to indicate the game was not found.
+export const HTTP_SESSION_FULL = 507; // Insuffient storage. Using this HTTP status code to indicate the game is full.
+export const HTTP_SESSION_NOT_FOUND = 404; // Not found. Using this HTTP status code to indicate the game was not found.
 export const HTTP_IM_A_TEAPOT = 418; // I'm a teapot. Using this HTTP status code to indicate look elsewhere for the reason.
 export const HTTP_INTERNAL_SERVER_ERROR = 500;
+
+export type ActionBase = {
+    type: string;
+};
 
 export type NetMode = "init" | "connecting" | "connected";
 export type ModalType =
@@ -13,14 +17,28 @@ export type ModalType =
 
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
-export type GameOverReason =
+export type SessionOverReason =
     | "kicked"
     | "ended"
     | "left"
     | "full"
     | "rejected"
-    | "not-found"
-    | "compile-failed";
+    | "not-found";
+export type GameOverReason = SessionOverReason | "compile-failed";
+
+export type NetResult = {
+    success: boolean;
+    statusCode: number;
+};
+
+export type CollabInfo = {
+    joinCode?: string;
+    joinTicket?: string;
+    slot?: number;
+    initialState?: string;
+};
+
+export type CollabJoinResult = Partial<CollabInfo> & NetResult;
 
 export type GameInfo = {
     joinCode?: string;
@@ -29,10 +47,7 @@ export type GameInfo = {
     slot?: number;
 };
 
-export type GameJoinResult = Partial<GameInfo> & {
-    success: boolean;
-    statusCode: number;
-};
+export type GameJoinResult = Partial<GameInfo> & NetResult;
 
 export type GameMetadata = {
     title: string;
@@ -216,7 +231,7 @@ export namespace SimMultiplayer {
         content: "Connection";
         slot: number;
         connected: boolean;
-    }
+    };
 
     export type Message =
         | ImageMessage

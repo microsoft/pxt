@@ -16,7 +16,7 @@ import {
     GameOverReason,
     GameJoinResult,
     HTTP_OK,
-    HTTP_GAME_FULL,
+    HTTP_SESSION_FULL,
     HTTP_INTERNAL_SERVER_ERROR,
     HTTP_IM_A_TEAPOT,
     SimKey,
@@ -24,7 +24,7 @@ import {
     IconType,
 } from "../types";
 import {
-    notifyGameDisconnected,
+    notifyDisconnected,
     setGameModeAsync,
     setPresenceAsync,
     setReactionAsync,
@@ -41,7 +41,7 @@ import { simDriver } from "./simHost";
 const GAME_HOST_PROD = "https://mp.makecode.com";
 const GAME_HOST_STAGING = "https://multiplayer.staging.pxt.io";
 const GAME_HOST_LOCALHOST = "http://localhost:8082";
-const GAME_HOST_DEV = GAME_HOST_STAGING;
+const GAME_HOST_DEV = GAME_HOST_LOCALHOST;
 const GAME_HOST = (() => {
     if (pxt.BrowserUtils.isLocalHostDev()) {
         return GAME_HOST_DEV;
@@ -186,7 +186,7 @@ class GameClient {
                 });
                 this.sock?.on("close", () => {
                     pxt.debug("socket disconnected");
-                    notifyGameDisconnected(this.gameOverReason);
+                    notifyDisconnected(this.gameOverReason);
                     clearTimeout(joinTimeout);
                     resolve();
                 });
@@ -278,7 +278,7 @@ class GameClient {
                 success: !this.gameOverReason,
                 statusCode: this.gameOverReason
                     ? this.gameOverReason === "full"
-                        ? HTTP_GAME_FULL
+                        ? HTTP_SESSION_FULL
                         : HTTP_IM_A_TEAPOT
                     : joinRes.status,
             };
