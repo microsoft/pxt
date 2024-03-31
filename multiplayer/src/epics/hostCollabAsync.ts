@@ -1,12 +1,6 @@
 import * as collabClient from "../services/collabClient";
 import { dispatch } from "../state";
-import {
-    dismissToast,
-    setNetMode,
-    setCollabInfo,
-    showToast,
-    setClientRole,
-} from "../state/actions";
+import { dismissToast, setNetMode, setCollabInfo, showToast, setClientRole } from "../state/actions";
 
 export async function hostCollabAsync() {
     const connectingToast = showToast({

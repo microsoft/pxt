@@ -1,12 +1,7 @@
 import { useContext, useState } from "react";
 import { Textarea } from "react-common/components/controls/Textarea";
 import { SignInModal } from "react-common/components/profile/SignInModal";
-import {
-    signInAsync,
-    kickPlayer,
-    leaveGameAsync,
-    sendAbuseReportAsync,
-} from "../epics";
+import { signInAsync, kickPlayer, leaveGameAsync, sendAbuseReportAsync } from "../epics";
 import { clearModal } from "../state/actions";
 import { AppStateContext, dispatch } from "../state/AppStateContext";
 import ConfirmModal from "./modals/ConfirmModal";
@@ -24,10 +19,8 @@ export default function Render() {
                     onClose={() => dispatch(clearModal())}
                     onSignIn={async (provider, rememberMe) => {
                         const params: pxt.Map<string> = {};
-                        if (deepLinks?.shareCode)
-                            params["host"] = deepLinks.shareCode;
-                        if (deepLinks?.joinCode)
-                            params["join"] = deepLinks.joinCode;
+                        if (deepLinks?.shareCode) params["host"] = deepLinks.shareCode;
+                        if (deepLinks?.joinCode) params["join"] = deepLinks.joinCode;
                         await signInAsync(provider.id, rememberMe, { params });
                     }}
                     dialogMessages={state.modalOpts.dialogMessages}
@@ -63,11 +56,7 @@ export default function Render() {
                     }}
                     onCancel={() => dispatch(clearModal())}
                 >
-                    <div>
-                        {lf(
-                            "Kick this player? They will be blocked from rejoining the game."
-                        )}
-                    </div>
+                    <div>{lf("Kick this player? They will be blocked from rejoining the game.")}</div>
                 </ConfirmModal>
             );
         case "leave-game":
@@ -81,11 +70,7 @@ export default function Render() {
                         }}
                         onCancel={() => dispatch(clearModal())}
                     >
-                        <div>
-                            {lf(
-                                "End the game? All players will be disconnected."
-                            )}
-                        </div>
+                        <div>{lf("End the game? All players will be disconnected.")}</div>
                     </ConfirmModal>
                 );
             } else {

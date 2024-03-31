@@ -20,13 +20,9 @@ const initialCollabContextProps: CollabContextProps = {
     dispatch: undefined!,
 };
 
-export const CollabContext = createContext<CollabContextProps>(
-    initialCollabContextProps
-);
+export const CollabContext = createContext<CollabContextProps>(initialCollabContextProps);
 
-export function CollabStateProvider(
-    props: React.PropsWithChildren<{}>
-): React.ReactElement {
+export function CollabStateProvider(props: React.PropsWithChildren<{}>): React.ReactElement {
     // Create the application state and state change mechanism (dispatch)
     const [state_, dispatch_] = useReducer(reducer, initialState);
 

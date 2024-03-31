@@ -4,13 +4,7 @@ import { SimMultiplayer } from "../types";
 import * as gameClient from "../services/gameClient";
 // eslint-disable-next-line import/no-unassigned-import
 import "./ArcadeSimulator.css";
-import {
-    simDriver,
-    preloadSim,
-    simulateAsync,
-    buildSimJsInfo,
-    RunOptions,
-} from "../services/simHost";
+import { simDriver, preloadSim, simulateAsync, buildSimJsInfo, RunOptions } from "../services/simHost";
 import { state as currentState } from "../state";
 
 let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
@@ -64,9 +58,7 @@ export default function Render() {
     useEffect(() => {
         const msgHandler = (
             msg: MessageEvent<
-                | SimMultiplayer.Message
-                | pxsim.SimulatorStateMessage
-                | pxsim.SimulatorTopLevelCodeFinishedMessage
+                SimMultiplayer.Message | pxsim.SimulatorStateMessage | pxsim.SimulatorTopLevelCodeFinishedMessage
             >
         ) => {
             const { data } = msg;
@@ -77,8 +69,7 @@ export default function Render() {
                     // Once the simulator is ready, if this player is a guest, pass initial screen to simulator
                     const { state: simState } = data;
                     if (simState === "running" && clientRole === "guest") {
-                        const { image, palette } =
-                            gameClient.getCurrentScreen();
+                        const { image, palette } = gameClient.getCurrentScreen();
                         if (image) {
                             simDriver()?.postMessage({
                                 type: "multiplayer",

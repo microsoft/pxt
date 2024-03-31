@@ -1,12 +1,6 @@
 import * as gameClient from "../services/gameClient";
 import { dispatch } from "../state";
-import {
-    dismissToast,
-    setNetMode,
-    setGameInfo,
-    showToast,
-    setClientRole,
-} from "../state/actions";
+import { dismissToast, setNetMode, setGameInfo, showToast, setClientRole } from "../state/actions";
 import { cleanupShareCode } from "../util";
 
 export async function hostGameAsync(shareCode: string | undefined) {

@@ -179,8 +179,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "SET_PRESENCE_ICON_OVERRIDE": {
-            let nextPresenceIcon =
-                state.gameState?.presenceIconOverrides?.slice() || [];
+            let nextPresenceIcon = state.gameState?.presenceIconOverrides?.slice() || [];
             nextPresenceIcon[action.slot] = action.icon;
             return {
                 ...state,
@@ -191,8 +190,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "SET_REACTION_ICON_OVERRIDE": {
-            let nextReactionIcons =
-                state.gameState?.reactionIconOverrides?.slice() || [];
+            let nextReactionIcons = state.gameState?.reactionIconOverrides?.slice() || [];
             nextReactionIcons[action.slot] = action.icon;
             return {
                 ...state,

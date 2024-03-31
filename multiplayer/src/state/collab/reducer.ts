@@ -35,10 +35,7 @@ export function reducer(state: CollabState, action: CollabAction): CollabState {
                         ...state.players,
                         [action.playerId]: {
                             ...player,
-                            kv: new Map(player.kv).set(
-                                action.key,
-                                action.value
-                            ),
+                            kv: new Map(player.kv).set(action.key, action.value),
                         },
                     },
                 };

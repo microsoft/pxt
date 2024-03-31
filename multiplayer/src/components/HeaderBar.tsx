@@ -5,10 +5,7 @@
 import { useContext } from "react";
 import { Button } from "../../../react-common/components/controls/Button";
 import { MenuBar } from "../../../react-common/components/controls/MenuBar";
-import {
-    MenuDropdown,
-    MenuItem,
-} from "../../../react-common/components/controls/MenuDropdown";
+import { MenuDropdown, MenuItem } from "../../../react-common/components/controls/MenuDropdown";
 import { signOutAsync } from "../epics";
 import { showModal } from "../state/actions";
 import { AppStateContext } from "../state/AppStateContext";
@@ -53,15 +50,9 @@ export default function Render() {
         pxt.tickEvent("mp.home");
 
         // relprefix looks like "/beta---", need to chop off the hyphens and slash
-        let rel = pxt.webConfig?.relprefix.substr(
-            0,
-            pxt.webConfig.relprefix.length - 3
-        );
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
         if (pxt.appTarget.appTheme.homeUrl && rel) {
-            if (
-                pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") ===
-                pxt.appTarget.appTheme.homeUrl?.length - 1
-            ) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
                 rel = rel.substr(1);
             }
             window.open(pxt.appTarget.appTheme.homeUrl + rel, "_self");
@@ -99,9 +90,7 @@ export default function Render() {
                         />
                     </>
                 ) : (
-                    <span className="tw-h-6 tw-mx-0 tw-my-1">
-                        {targetTheme.organization}
-                    </span>
+                    <span className="tw-h-6 tw-mx-0 tw-my-1">{targetTheme.organization}</span>
                 )}
             </div>
         );
@@ -109,34 +98,20 @@ export default function Render() {
 
     const getTargetLogo = (targetTheme: pxt.AppTheme) => {
         return (
-            <div
-                className={"tw-flex tw-pt-[2px] tw-ml-3 tw-cursor-pointer"}
-                onClick={onHomeClicked}
-            >
+            <div className={"tw-flex tw-pt-[2px] tw-ml-3 tw-cursor-pointer"} onClick={onHomeClicked}>
                 {targetTheme.useTextLogo ? (
                     [
-                        <span
-                            className="tw-ml-3 tw-hidden sm:tw-flex"
-                            key="org-name"
-                            onClick={onHomeClicked}
-                        >
+                        <span className="tw-ml-3 tw-hidden sm:tw-flex" key="org-name" onClick={onHomeClicked}>
                             {targetTheme.organizationText}
                         </span>,
-                        <span
-                            className="tw-ml-3 tw-flex sm:tw-hidden"
-                            key="org-name-short"
-                            onClick={onHomeClicked}
-                        >
-                            {targetTheme.organizationShortText ||
-                                targetTheme.organizationText}
+                        <span className="tw-ml-3 tw-flex sm:tw-hidden" key="org-name-short" onClick={onHomeClicked}>
+                            {targetTheme.organizationShortText || targetTheme.organizationText}
                         </span>,
                     ]
                 ) : targetTheme.logo || targetTheme.portraitLogo ? (
                     <img
                         className="logo"
-                        src={resourceUrl(
-                            targetTheme.logo || targetTheme.portraitLogo
-                        )}
+                        src={resourceUrl(targetTheme.logo || targetTheme.portraitLogo)}
                         alt={lf("{0} Logo", targetTheme.boardName)}
                     />
                 ) : (

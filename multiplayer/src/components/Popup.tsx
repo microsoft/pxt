@@ -9,8 +9,7 @@ export default function Render(
         onClickedOutside: () => any;
     }>
 ) {
-    const { children, visible, className, ignoreRefs, onClickedOutside } =
-        props;
+    const { children, visible, className, ignoreRefs, onClickedOutside } = props;
 
     const ref = useRef<Element | null>(null);
     const setRef = useCallback((el: Element | null) => {

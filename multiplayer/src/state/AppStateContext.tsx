@@ -17,17 +17,13 @@ const initialAppStateContextProps: AppStateContextProps = {
     dispatch: undefined!,
 };
 
-export const AppStateContext = createContext<AppStateContextProps>(
-    initialAppStateContextProps
-);
+export const AppStateContext = createContext<AppStateContextProps>(initialAppStateContextProps);
 
 export type AppStateProviderProps = {
     // This is where the app would inject any initial state at startup
 };
 
-export function AppStateProvider(
-    props: React.PropsWithChildren<AppStateProviderProps>
-): React.ReactElement {
+export function AppStateProvider(props: React.PropsWithChildren<AppStateProviderProps>): React.ReactElement {
     // Create the application state and state change mechanism (dispatch)
     const [state_, dispatch_] = useReducer(reducer, initialAppState);
 

@@ -7,10 +7,7 @@ export function useVisibilityChange(cb: (visible: boolean) => any) {
         };
         document.addEventListener("visibilitychange", onVisibilityChange);
         return () => {
-            document.removeEventListener(
-                "visibilitychange",
-                onVisibilityChange
-            );
+            document.removeEventListener("visibilitychange", onVisibilityChange);
         };
     }, []);
 }

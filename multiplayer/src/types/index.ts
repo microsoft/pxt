@@ -9,21 +9,11 @@ export type ActionBase = {
 };
 
 export type NetMode = "init" | "connecting" | "connected";
-export type ModalType =
-    | "sign-in"
-    | "report-abuse"
-    | "kick-player"
-    | "leave-game";
+export type ModalType = "sign-in" | "report-abuse" | "kick-player" | "leave-game";
 
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
-export type SessionOverReason =
-    | "kicked"
-    | "ended"
-    | "left"
-    | "full"
-    | "rejected"
-    | "not-found";
+export type SessionOverReason = "kicked" | "ended" | "left" | "full" | "rejected" | "not-found";
 export type GameOverReason = SessionOverReason | "compile-failed";
 
 export type NetResult = {
@@ -104,13 +94,7 @@ export enum SimKey {
 }
 
 // https://lospec.com/palette-list/gems-in-the-forrest
-export const BRUSH_COLORS = [
-    "#ff3282",
-    "#5b1284",
-    "#3171ee",
-    "#4ff5fc",
-    "#aefdd5",
-];
+export const BRUSH_COLORS = ["#ff3282", "#5b1284", "#3171ee", "#4ff5fc", "#aefdd5"];
 
 export type BrushSizeType = "sm" | "md" | "lg";
 
@@ -169,9 +153,7 @@ export enum AudioInstruction {
     PlayInstruction = 1,
 }
 
-export function audioInstructionToString(
-    state: AudioInstruction
-): string | undefined {
+export function audioInstructionToString(state: AudioInstruction): string | undefined {
     switch (state) {
         case AudioInstruction.MuteAllChannels:
             return "muteallchannels";
@@ -180,9 +162,7 @@ export function audioInstructionToString(
     }
 }
 
-export function stringToAudioInstruction(
-    state: string
-): AudioInstruction | undefined {
+export function stringToAudioInstruction(state: string): AudioInstruction | undefined {
     switch (state) {
         case "muteallchannels":
             return AudioInstruction.MuteAllChannels;
@@ -273,9 +253,5 @@ export namespace SimMultiplayer {
         connected: boolean;
     };
 
-    export type Message =
-        | ImageMessage
-        | AudioMessage
-        | InputMessage
-        | MultiplayerIconMessage;
+    export type Message = ImageMessage | AudioMessage | InputMessage | MultiplayerIconMessage;
 }

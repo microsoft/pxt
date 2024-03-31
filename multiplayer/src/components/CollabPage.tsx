@@ -16,8 +16,7 @@ export default function Render(props: CollabPageProps) {
     const { state } = useContext(AppStateContext);
     const { netMode, clientRole, collabInfo } = state;
 
-    const [canvasContainer, setCanvasContainer] =
-        useState<HTMLDivElement | null>(null);
+    const [canvasContainer, setCanvasContainer] = useState<HTMLDivElement | null>(null);
     const [selectedColorIndex, setSelectedColorIndex] = useState(0);
     const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
     const [selectedIconIndex, setSelectedIconIndex] = useState(0);
@@ -41,24 +40,11 @@ export default function Render(props: CollabPageProps) {
             canvasMouseY += canvasContainer.scrollTop;
             if (canvasMouseX < canvasContainer.scrollLeft) return;
             if (canvasMouseY < canvasContainer.scrollTop) return;
-            if (
-                canvasMouseX >=
-                canvasContainer.scrollLeft + canvasContainer.clientWidth
-            )
-                return;
-            if (
-                canvasMouseY >=
-                canvasContainer.scrollTop + canvasContainer.clientHeight
-            )
-                return;
+            if (canvasMouseX >= canvasContainer.scrollLeft + canvasContainer.clientWidth) return;
+            if (canvasMouseY >= canvasContainer.scrollTop + canvasContainer.clientHeight) return;
             setMouseDown(true);
             setLastPosition({ x: canvasMouseX, y: canvasMouseY });
-            getCollabCanvas().addPaintSprite(
-                canvasMouseX,
-                canvasMouseY,
-                selectedSizeIndex,
-                selectedColorIndex
-            );
+            getCollabCanvas().addPaintSprite(canvasMouseX, canvasMouseY, selectedSizeIndex, selectedColorIndex);
             collabClient.setSessionValue(
                 "s:" + nanoid(),
                 JSON.stringify({
@@ -85,21 +71,13 @@ export default function Render(props: CollabPageProps) {
             // TODO: support canvas pan and zoom
 
             // Update local sprite position on canvas
-            getCollabCanvas().updatePlayerSpritePosition(
-                collabClient.getClientId()!,
-                canvasMouseX,
-                canvasMouseY
-            );
+            getCollabCanvas().updatePlayerSpritePosition(collabClient.getClientId()!, canvasMouseX, canvasMouseY);
             const newPos = { x: canvasMouseX, y: canvasMouseY };
             const newPosStr = JSON.stringify(newPos);
             // Send position to server
             collabClient.setPlayerValue("position", newPosStr);
             // Update local player position in state
-            CollabEpics.recvSetPlayerValue(
-                collabClient.getClientId(),
-                "position",
-                newPosStr
-            );
+            CollabEpics.recvSetPlayerValue(collabClient.getClientId(), "position", newPosStr);
 
             if (!mouseDown) return;
             const brushSize = BRUSH_PROPS[selectedSizeIndex].size;
@@ -112,12 +90,7 @@ export default function Render(props: CollabPageProps) {
                 for (let i = 0; i < numSteps; i++) {
                     const x = lastPosition.x + stepX * i;
                     const y = lastPosition.y + stepY * i;
-                    getCollabCanvas().addPaintSprite(
-                        x,
-                        y,
-                        selectedSizeIndex,
-                        selectedColorIndex
-                    );
+                    getCollabCanvas().addPaintSprite(x, y, selectedSizeIndex, selectedColorIndex);
                     collabClient.setSessionValue(
                         "s:" + nanoid(),
                         JSON.stringify({
@@ -139,13 +112,7 @@ export default function Render(props: CollabPageProps) {
             window.removeEventListener("mouseup", handleMouseUp);
             window.removeEventListener("mousemove", handleMouseMove);
         };
-    }, [
-        mouseDown,
-        canvasContainer,
-        lastPosition,
-        selectedColorIndex,
-        selectedSizeIndex,
-    ]);
+    }, [mouseDown, canvasContainer, lastPosition, selectedColorIndex, selectedSizeIndex]);
 
     useEffect(() => {
         if (canvasContainer && !canvasContainer.firstChild) {
@@ -177,10 +144,7 @@ export default function Render(props: CollabPageProps) {
 
     const iconClicked = (index: number) => {
         setSelectedIconIndex(index);
-        getCollabCanvas().updatePlayerSpriteImage(
-            collabClient.getClientId()!,
-            index
-        );
+        getCollabCanvas().updatePlayerSpriteImage(collabClient.getClientId()!, index);
         collabClient.setPlayerValue("imgId", JSON.stringify(index));
     };
 
@@ -188,9 +152,7 @@ export default function Render(props: CollabPageProps) {
         setCanvasContainer(ref);
     };
 
-    const SpriteRow: React.FC = ({ children }) => (
-        <div className="tw-flex tw-flex-row tw-gap-1">{children}</div>
-    );
+    const SpriteRow: React.FC = ({ children }) => <div className="tw-flex tw-flex-row tw-gap-1">{children}</div>;
 
     const SpriteImg: React.FC<{ imgId: number }> = ({ imgId }) => (
         <div
@@ -201,10 +163,7 @@ export default function Render(props: CollabPageProps) {
                 backgroundRepeat: "no-repeat",
                 backgroundPosition: "center",
                 padding: "1.1rem",
-                outline:
-                    imgId === selectedIconIndex
-                        ? "3px solid " + SELECTED_COLOR
-                        : undefined,
+                outline: imgId === selectedIconIndex ? "3px solid " + SELECTED_COLOR : undefined,
                 outlineOffset: "1px",
                 imageRendering: "pixelated",
             }}
@@ -227,10 +186,7 @@ export default function Render(props: CollabPageProps) {
                             className="tw-w-16 tw-h-8 tw-rounded-full tw-cursor-pointer tw-border-slate-800 tw-border"
                             style={{
                                 backgroundColor: bc,
-                                outline:
-                                    i === selectedColorIndex
-                                        ? "3px solid " + SELECTED_COLOR
-                                        : undefined,
+                                outline: i === selectedColorIndex ? "3px solid " + SELECTED_COLOR : undefined,
                                 outlineOffset: "1px",
                             }}
                             onClick={() => brushColorClicked(bc, i)}
@@ -242,14 +198,10 @@ export default function Render(props: CollabPageProps) {
                             key={bs.sz}
                             className="tw-rounded-full tw-cursor-pointer tw-border-slate-800 tw-border"
                             style={{
-                                backgroundColor:
-                                    BRUSH_COLORS[selectedColorIndex],
+                                backgroundColor: BRUSH_COLORS[selectedColorIndex],
                                 width: bs.px + "px",
                                 height: bs.px + "px",
-                                outline:
-                                    i === selectedSizeIndex
-                                        ? "3px solid " + SELECTED_COLOR
-                                        : undefined,
+                                outline: i === selectedSizeIndex ? "3px solid " + SELECTED_COLOR : undefined,
                                 outlineOffset: "1px",
                             }}
                             onClick={() => brushSizeClicked(bs, i)}

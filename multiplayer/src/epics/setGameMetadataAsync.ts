@@ -1,14 +1,7 @@
 import { dispatch } from "../state";
-import {
-    setGameId,
-    setGameMetadata,
-    setNetMode,
-    showToast,
-} from "../state/actions";
+import { setGameId, setGameMetadata, setNetMode, showToast } from "../state/actions";
 
-export async function setGameMetadataAsync(
-    shareCode: string
-): Promise<boolean> {
+export async function setGameMetadataAsync(shareCode: string): Promise<boolean> {
     try {
         const metaUri = `https://makecode.com/api/${shareCode}`;
         //Fetch the game metadata

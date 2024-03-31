@@ -46,28 +46,15 @@ export default function Render(props: {
     }, [copySuccessful]);
 
     return (
-        <button
-            onClick={copyValue}
-            title={props.title}
-            className="tw-flex tw-items-center tw-align-middle"
-        >
-            {props.label && (
-                <span className="tw-mr-1 hover:tw-opacity-80">
-                    {props.label}
-                </span>
-            )}
+        <button onClick={copyValue} title={props.title} className="tw-flex tw-items-center tw-align-middle">
+            {props.label && <span className="tw-mr-1 hover:tw-opacity-80">{props.label}</span>}
             {!copySuccessful && (
                 <FontAwesomeIcon
                     icon={faCopy}
                     className="tw-text-[65%] hover:tw-scale-110 tw-ease-linear tw-duration-[50ms]"
                 />
             )}
-            {copySuccessful && (
-                <FontAwesomeIcon
-                    icon={faCheck}
-                    className="tw-text-[65%] tw-text-green-600"
-                />
-            )}
+            {copySuccessful && <FontAwesomeIcon icon={faCheck} className="tw-text-[65%] tw-text-green-600" />}
         </button>
     );
 }

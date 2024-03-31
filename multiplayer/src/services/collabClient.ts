@@ -12,12 +12,7 @@ import {
     HTTP_INTERNAL_SERVER_ERROR,
     HTTP_IM_A_TEAPOT,
 } from "../types";
-import {
-    notifyDisconnected,
-    setPresenceAsync,
-    playerJoinedAsync,
-    playerLeftAsync,
-} from "../epics";
+import { notifyDisconnected, setPresenceAsync, playerJoinedAsync, playerLeftAsync } from "../epics";
 import * as CollabEpics from "../epics/collab";
 import { jsonReplacer, jsonReviver } from "../util";
 
@@ -107,20 +102,14 @@ class CollabClient {
         }
     };
 
-    private recvMessageWithJoinTimeout = async (
-        payload: string | Buffer,
-        resolve: () => void
-    ) => {
+    private recvMessageWithJoinTimeout = async (payload: string | Buffer, resolve: () => void) => {
         try {
             if (typeof payload === "string") {
                 const msg = JSON.parse(payload) as Protocol.Message;
                 if (msg.type === "joined") {
                     // We've joined the collab. Replace this handler with a direct call to recvMessageAsync
                     if (this.sock) {
-                        this.sock.removeListener(
-                            "message",
-                            this.receivedJoinMessageInTimeHandler
-                        );
+                        this.sock.removeListener("message", this.receivedJoinMessageInTimeHandler);
                         this.receivedJoinMessageInTimeHandler = undefined;
                     }
                     resolve();
@@ -197,8 +186,7 @@ class CollabClient {
 
             const collabInfo = (await hostRes.json()) as CollabInfo;
 
-            if (!collabInfo?.joinTicket)
-                throw new Error("Collab server did not return a join ticket");
+            if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
             CollabEpics.initState(new Map());
 
@@ -223,15 +211,12 @@ class CollabClient {
 
             const authToken = await authClient.authTokenAsync();
 
-            const joinRes = await fetch(
-                `${COLLAB_HOST}/api/collab/join/${joinCode}`,
-                {
-                    credentials: "include",
-                    headers: {
-                        Authorization: "mkcd " + authToken,
-                    },
-                }
-            );
+            const joinRes = await fetch(`${COLLAB_HOST}/api/collab/join/${joinCode}`, {
+                credentials: "include",
+                headers: {
+                    Authorization: "mkcd " + authToken,
+                },
+            });
 
             if (joinRes.status !== HTTP_OK) {
                 return {
@@ -242,8 +227,7 @@ class CollabClient {
 
             const collabInfo = (await joinRes.json()) as CollabInfo;
 
-            if (!collabInfo?.joinTicket)
-                throw new Error("Collab server did not return a join ticket");
+            if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
             CollabEpics.initState(new Map());
 
@@ -272,9 +256,7 @@ class CollabClient {
     }
 
     private async recvJoinedMessageAsync(msg: Protocol.JoinedMessage) {
-        pxt.debug(
-            `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
-        );
+        pxt.debug(`Server said we're joined as "${msg.role}" in slot "${msg.slot}"`);
         const { role, clientId, sessKv } = msg;
 
         this.clientRole = role;
@@ -290,9 +272,7 @@ class CollabClient {
         CollabEpics.recvUpdatePresence(msg.presence);
     }
 
-    private async recvPlayerJoinedMessageAsync(
-        msg: Protocol.PlayerJoinedMessage
-    ) {
+    private async recvPlayerJoinedMessageAsync(msg: Protocol.PlayerJoinedMessage) {
         pxt.debug("Server sent player joined");
         if (this.clientRole === "host") {
             //await this.sendCurrentScreenAsync(); // Workaround for server sometimes not sending the current screen to new players. Needs debugging.
@@ -307,30 +287,22 @@ class CollabClient {
         CollabEpics.recvPlayerLeft(msg.clientId);
     }
 
-    private async recvSetPlayerValueMessageAsync(
-        msg: Protocol.SetPlayerValueMessage
-    ) {
+    private async recvSetPlayerValueMessageAsync(msg: Protocol.SetPlayerValueMessage) {
         //pxt.debug(`Recv set player value: ${msg.key} = ${msg.value}`);
         CollabEpics.recvSetPlayerValue(msg.clientId!, msg.key, msg.value);
     }
 
-    private async recvDelPlayerValueMessageAsync(
-        msg: Protocol.DelPlayerValueMessage
-    ) {
+    private async recvDelPlayerValueMessageAsync(msg: Protocol.DelPlayerValueMessage) {
         //pxt.debug(`Recv del player value: ${msg.key}`);
         CollabEpics.recvDelPlayerValue(msg.clientId!, msg.key);
     }
 
-    private async recvSetSessionValueMessageAsync(
-        msg: Protocol.SetSessionValueMessage
-    ) {
+    private async recvSetSessionValueMessageAsync(msg: Protocol.SetSessionValueMessage) {
         //pxt.debug(`Recv set session value: ${msg.key} = ${msg.value}`);
         CollabEpics.recvSetSessionValue(msg.key, msg.value);
     }
 
-    private async recvDelSessionValueMessageAsync(
-        msg: Protocol.DelSessionValueMessage
-    ) {
+    private async recvDelSessionValueMessageAsync(msg: Protocol.DelSessionValueMessage) {
         //pxt.debug(`Recv del session value: ${msg.key}`);
         CollabEpics.recvDelSessionValue(msg.key);
     }
@@ -388,9 +360,7 @@ export async function hostCollabAsync(): Promise<CollabJoinResult> {
     return collabInfo;
 }
 
-export async function joinCollabAsync(
-    joinCode: string
-): Promise<CollabJoinResult> {
+export async function joinCollabAsync(joinCode: string): Promise<CollabJoinResult> {
     destroyCollabClient();
     const collabClient = ensureCollabClient();
     const collabInfo = await collabClient.joinCollabAsync(joinCode);

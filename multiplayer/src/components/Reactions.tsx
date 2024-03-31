@@ -24,9 +24,7 @@ export default function Render() {
         setReactionsButtonRef(ref);
     };
 
-    const buttonLabel = () => (
-        <ReactionsIcon className="hover:tw-scale-125 tw-ease-linear tw-duration-[50ms]" />
-    );
+    const buttonLabel = () => <ReactionsIcon className="hover:tw-scale-125 tw-ease-linear tw-duration-[50ms]" />;
 
     useEffect(() => {
         const simButtonEvent = (e: MessageEvent) => {

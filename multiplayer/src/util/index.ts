@@ -43,9 +43,7 @@ export function gunzipAsync(data: zlib.InputType): Promise<Buffer> {
     });
 }
 
-export function cleanupJoinCode(
-    joinCode: string | undefined
-): string | undefined {
+export function cleanupJoinCode(joinCode: string | undefined): string | undefined {
     try {
         const url = new URL(joinCode || "");
         if (url.searchParams.has("join")) {
@@ -58,9 +56,7 @@ export function cleanupJoinCode(
     return joinCode;
 }
 
-export function cleanupShareCode(
-    shareCode: string | undefined
-): string | undefined {
+export function cleanupShareCode(shareCode: string | undefined): string | undefined {
     try {
         const url = new URL(shareCode || "");
         if (url.searchParams.has("host")) {
@@ -73,19 +69,13 @@ export function cleanupShareCode(
 
 export function resourceUrl(path: string | undefined): string | undefined {
     if (!path) return;
-    if (
-        pxt.BrowserUtils.isLocalHostDev() &&
-        !(path.startsWith("https:") || path.startsWith("data:"))
-    ) {
+    if (pxt.BrowserUtils.isLocalHostDev() && !(path.startsWith("https:") || path.startsWith("data:"))) {
         return pxt.appTarget?.appTheme.homeUrl + path;
     }
     return path;
 }
 
-export function throttle<F extends (...args: Parameters<F>) => ReturnType<F>>(
-    func: F,
-    waitFor: number
-): F {
+export function throttle<F extends (...args: Parameters<F>) => ReturnType<F>>(func: F, waitFor: number): F {
     let timeout: NodeJS.Timeout | undefined;
     let previousTime = 0;
     return function (this: ThisParameterType<F>, ...args: Parameters<F>) {

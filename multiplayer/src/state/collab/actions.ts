@@ -68,10 +68,7 @@ export function init(kv: Map<string, string>): Init {
     };
 }
 
-export function playerJoined(
-    playerId: string,
-    kv?: Map<string, string>
-): PlayerJoined {
+export function playerJoined(playerId: string, kv?: Map<string, string>): PlayerJoined {
     return {
         type: "PLAYER_JOINED",
         playerId,
@@ -86,11 +83,7 @@ export function playerLeft(playerId: string): PlayerLeft {
     };
 }
 
-export function setPlayerValue(
-    playerId: string,
-    key: string,
-    value: string
-): SetPlayerValue {
+export function setPlayerValue(playerId: string, key: string, value: string): SetPlayerValue {
     return {
         type: "SET_PLAYER_VALUE",
         playerId,

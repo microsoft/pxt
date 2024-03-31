@@ -169,9 +169,7 @@ export type Action =
  * Action creators
  */
 
-export const setUserProfile = (
-    profile?: pxt.auth.UserProfile
-): SetUserProfile => ({
+export const setUserProfile = (profile?: pxt.auth.UserProfile): SetUserProfile => ({
     type: "SET_USER_PROFILE",
     profile,
 });
@@ -181,9 +179,7 @@ export const clearUserProfile = (): SetUserProfile => ({
     profile: undefined,
 });
 
-export const setClientRole = (
-    clientRole: ClientRole | undefined
-): SetClientRole => ({
+export const setClientRole = (clientRole: ClientRole | undefined): SetClientRole => ({
     type: "SET_CLIENT_ROLE",
     clientRole,
 });
@@ -203,9 +199,7 @@ export const setCollabInfo = (collabInfo: CollabInfo): SetCollabInfo => ({
     collabInfo,
 });
 
-export const setGameMetadata = (
-    gameMetadata: GameMetadata
-): SetGameMetadata => ({
+export const setGameMetadata = (gameMetadata: GameMetadata): SetGameMetadata => ({
     type: "SET_GAME_METADATA",
     gameMetadata,
 });
@@ -252,11 +246,7 @@ export const setPresence = (presence: Presence): SetPresence => ({
     presence,
 });
 
-export const setReaction = (
-    clientId: string,
-    reactionId: string,
-    index: number
-): SetReaction => ({
+export const setReaction = (clientId: string, reactionId: string, index: number): SetReaction => ({
     type: "SET_REACTION",
     clientId,
     reactionId,
@@ -268,10 +258,7 @@ export const clearReaction = (clientId: string): ClearReaction => ({
     clientId,
 });
 
-export const showModal = (
-    modalType: ModalType,
-    modalOpts?: any
-): ShowModal => ({
+export const showModal = (modalType: ModalType, modalOpts?: any): ShowModal => ({
     type: "SHOW_MODAL",
     modalType,
     modalOpts,
@@ -281,10 +268,7 @@ export const clearModal = (): ClearModal => ({
     type: "CLEAR_MODAL",
 });
 
-export const setDeepLinks = (
-    shareCode: string | undefined,
-    joinCode: string | undefined
-): SetDeepLinks => ({
+export const setDeepLinks = (shareCode: string | undefined, joinCode: string | undefined): SetDeepLinks => ({
     type: "SET_DEEP_LINKS",
     shareCode,
     joinCode,
@@ -305,19 +289,13 @@ export const setTargetConfig = (trgCfg: pxt.TargetConfig): SetTargetConfig => ({
     targetConfig: JSON.parse(JSON.stringify(trgCfg)),
 });
 
-export const setPresenceIconOverride = (
-    slot: number,
-    icon?: string
-): SetPresenceIconOverride => ({
+export const setPresenceIconOverride = (slot: number, icon?: string): SetPresenceIconOverride => ({
     type: "SET_PRESENCE_ICON_OVERRIDE",
     slot,
     icon,
 });
 
-export const setReactionIconOverride = (
-    slot: number,
-    icon?: string
-): SetReactionIconOverride => ({
+export const setReactionIconOverride = (slot: number, icon?: string): SetReactionIconOverride => ({
     type: "SET_REACTION_ICON_OVERRIDE",
     slot,
     icon,

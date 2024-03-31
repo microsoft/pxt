@@ -62,9 +62,7 @@ export default function Render() {
                 </div>
                 <div className="tw-flex tw-flex-col tw-items-center tw-mt-5 tw-text-sm tw-gap-1 tw-max-h-24 md:tw-max-h-36">
                     <QRCodeSVG value={joinDeepLink} />
-                    <div className="tw-hidden md:tw-block">
-                        {lf("or scan with phone")}
-                    </div>
+                    <div className="tw-hidden md:tw-block">{lf("or scan with phone")}</div>
                 </div>
                 <Button
                     className={"primary tw-mt-5 tw-font-sans tw-mr-0"}
@@ -72,11 +70,7 @@ export default function Render() {
                     title={lf("Start Game")}
                     onClick={onStartGameClick}
                 />
-                <Link
-                    href="/multiplayer#safety"
-                    target="_blank"
-                    className="tw-text-sm tw-mt-1 tw-mb-7"
-                >
+                <Link href="/multiplayer#safety" target="_blank" className="tw-text-sm tw-mt-1 tw-mb-7">
                     {lf("Multiplayer Online Safety")}
                 </Link>
                 <PresenceBar />

@@ -51,12 +51,8 @@ export default function Render() {
                                 title={lf("Join Collab")}
                                 label={
                                     <>
-                                        <div className="tw-hidden sm:tw-inline">
-                                            {lf("Join Collab")}
-                                        </div>
-                                        <div className="sm:tw-hidden">
-                                            {lf("Join")}
-                                        </div>
+                                        <div className="tw-hidden sm:tw-inline">{lf("Join Collab")}</div>
+                                        <div className="sm:tw-hidden">{lf("Join")}</div>
                                     </>
                                 }
                                 selected={currTab === "join"}
@@ -66,12 +62,8 @@ export default function Render() {
                                 title={lf("Host Collab")}
                                 label={
                                     <>
-                                        <div className="tw-hidden sm:tw-inline">
-                                            {lf("Host Collab")}
-                                        </div>
-                                        <div className="sm:tw-hidden">
-                                            {lf("Host")}
-                                        </div>
+                                        <div className="tw-hidden sm:tw-inline">{lf("Host Collab")}</div>
+                                        <div className="sm:tw-hidden">{lf("Host")}</div>
                                     </>
                                 }
                                 selected={currTab === "host"}
@@ -102,10 +94,7 @@ export default function Render() {
                                         />
                                     </div>
                                     <div className="tw-text-sm">
-                                        <Link
-                                            href="/multiplayer#join-game"
-                                            target="_blank"
-                                        >
+                                        <Link href="/multiplayer#join-game" target="_blank">
                                             {lf("How do I get a collab code?")}
                                         </Link>
                                     </div>
@@ -148,12 +137,8 @@ export default function Render() {
                             return (
                                 <HostGameButton
                                     shareId={game.shareId}
-                                    title={pxt.Util.rlf(
-                                        `{id:game-title}${game.title}`
-                                    )}
-                                    subtitle={pxt.Util.rlf(
-                                        `{id:game-subtitle}${game.subtitle}`
-                                    )}
+                                    title={pxt.Util.rlf(`{id:game-title}${game.title}`)}
+                                    subtitle={pxt.Util.rlf(`{id:game-subtitle}${game.subtitle}`)}
                                     image={resourceUrl(game.image)}
                                     key={i}
                                 />

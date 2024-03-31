@@ -8,12 +8,7 @@ export function recvSetSessionState(sessKv: Map<string, string>) {
     sessKv.forEach((value, key) => {
         if (key.startsWith("s:")) {
             const sprite = JSON.parse(value);
-            getCollabCanvas().addPaintSprite(
-                sprite.x,
-                sprite.y,
-                sprite.s,
-                sprite.c
-            );
+            getCollabCanvas().addPaintSprite(sprite.x, sprite.y, sprite.s, sprite.c);
         }
     });
 }

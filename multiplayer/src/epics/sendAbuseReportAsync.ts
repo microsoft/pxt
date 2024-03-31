@@ -4,20 +4,15 @@ import { showToast } from "../state/actions";
 export async function sendAbuseReportAsync(shareCode: string, text: string) {
     try {
         pxt.tickEvent("mp.reportabuse");
-        const res = await fetch(
-            `https://makecode.com/api/${shareCode}/abusereports`,
-            {
-                method: "POST",
-                body: JSON.stringify({ text }),
-            }
-        );
+        const res = await fetch(`https://makecode.com/api/${shareCode}/abusereports`, {
+            method: "POST",
+            body: JSON.stringify({ text }),
+        });
         if (res.status === 200) {
             dispatch(
                 showToast({
                     type: "success",
-                    text: lf(
-                        "Thank you for helping keep Microsoft MakeCode a friendly place!"
-                    ),
+                    text: lf("Thank you for helping keep Microsoft MakeCode a friendly place!"),
                     icon: "✅",
                     timeoutMs: 5000,
                 })
@@ -29,9 +24,7 @@ export async function sendAbuseReportAsync(shareCode: string, text: string) {
         dispatch(
             showToast({
                 type: "error",
-                text: lf(
-                    "Sorry, we couldn't send your report. Please try again later."
-                ),
+                text: lf("Sorry, we couldn't send your report. Please try again later."),
                 timeoutMs: 5000,
             })
         );

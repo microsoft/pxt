@@ -1,18 +1,9 @@
 import { GameMode } from "../types";
 import { dispatch, state } from "../state";
-import {
-    clearModal,
-    setGameMode,
-    setPlayerSlot,
-    showToast,
-} from "../state/actions";
+import { clearModal, setGameMode, setPlayerSlot, showToast } from "../state/actions";
 import { pauseGameAsync } from ".";
 
-export async function setGameModeAsync(
-    gameMode: GameMode,
-    gamePaused: boolean,
-    slot?: number
-) {
+export async function setGameModeAsync(gameMode: GameMode, gamePaused: boolean, slot?: number) {
     const { clientRole } = state;
 
     try {

@@ -43,10 +43,7 @@ function Toast(props: ToastWithId) {
     useEffect(() => {
         let t1: NodeJS.Timeout, t2: NodeJS.Timeout;
         if (props.timeoutMs) {
-            t1 = setTimeout(
-                () => dispatch(dismissToast(props.id)),
-                SLIDER_DELAY_MS + props.timeoutMs
-            );
+            t1 = setTimeout(() => dispatch(dismissToast(props.id)), SLIDER_DELAY_MS + props.timeoutMs);
             t2 = setTimeout(() => setSliderActive(true), SLIDER_DELAY_MS);
         }
         return () => {
@@ -68,10 +65,9 @@ function Toast(props: ToastWithId) {
             className={
                 `tw-flex tw-flex-col tw-mr-0 md:tw-mr-4 tw-border-none tw-rounded
                 tw-shadow-md tw-overflow-hidden tw-pointer-events-none ` +
-                [
-                    props.textColorClass || "text-black",
-                    props.backgroundColorClass || backgroundColors[props.type],
-                ].join(" ")
+                [props.textColorClass || "text-black", props.backgroundColorClass || backgroundColors[props.type]].join(
+                    " "
+                )
             }
         >
             <div className={"tw-flex tw-gap-2 tw-p-3 tw-text-lg"}>
@@ -87,13 +83,9 @@ function Toast(props: ToastWithId) {
                 )}
                 <div className="tw-flex tw-flex-col tw-text-left">
                     {props.text && (
-                        <div className="tw-whitespace-nowrap tw-text-md tw-overflow-ellipsis">
-                            {props.text}
-                        </div>
+                        <div className="tw-whitespace-nowrap tw-text-md tw-overflow-ellipsis">{props.text}</div>
                     )}
-                    {props.detail && (
-                        <div className="tw-text-sm">{props.detail}</div>
-                    )}
+                    {props.detail && <div className="tw-text-sm">{props.detail}</div>}
                     {props.jsx && <div>{props.jsx}</div>}
                 </div>
                 {!props.hideDismissBtn && !props.showSpinner && (
@@ -103,9 +95,7 @@ function Toast(props: ToastWithId) {
                     >
                         <div>
                             <FontAwesomeIcon
-                                className={
-                                    "tw-cursor-pointer hover:tw-scale-125 tw-transition-all"
-                                }
+                                className={"tw-cursor-pointer hover:tw-scale-125 tw-transition-all"}
                                 icon={faTimesCircle}
                             />
                         </div>
@@ -114,10 +104,7 @@ function Toast(props: ToastWithId) {
                 {props.showSpinner && (
                     <div className="tw-flex tw-flex-grow tw-justify-end">
                         <div>
-                            <FontAwesomeIcon
-                                icon={faCircleNotch}
-                                className="fa-spin"
-                            />
+                            <FontAwesomeIcon icon={faCircleNotch} className="fa-spin" />
                         </div>
                     </div>
                 )}

@@ -23,13 +23,9 @@ if (!pxt.react.getTilemapProject) {
 }
 
 async function loadPackageAsync(runOpts: RunOptions) {
-    const verspec =
-        runOpts.mpRole === "server" ? `pub:${runOpts.id}` : "empty:clientprj";
+    const verspec = runOpts.mpRole === "server" ? `pub:${runOpts.id}` : "empty:clientprj";
     const previousMainPackage = mainPkg();
-    if (
-        previousMainPackage?._verspec !== verspec ||
-        verspec.startsWith("pub:S")
-    ) {
+    if (previousMainPackage?._verspec !== verspec || verspec.startsWith("pub:S")) {
         const mp = mainPkg(true /** force refresh */);
         // we want this to be cached only within the scope of a single call to loadpackageasync,
         // as the file can be requested multiple times while loading.
@@ -130,11 +126,7 @@ class PkgHost implements pxt.Host {
         return null as any as string;
     }
 
-    patchDependencies(
-        cfg: pxt.PackageConfig,
-        name: string,
-        repoId: string
-    ): boolean {
+    patchDependencies(cfg: pxt.PackageConfig, name: string, repoId: string): boolean {
         if (!repoId) return false;
         // check that the same package hasn't been added yet
         const repo = pxt.github.parseRepoId(repoId);
@@ -161,17 +153,13 @@ class PkgHost implements pxt.Host {
         let proto = pkg.verProtocol();
         let cached: pxt.Map<string> | undefined = undefined;
         // cache resolve github packages
-        if (proto == "github" || proto == "pub")
-            cached = this.githubPackageCache[pkg._verspec];
+        if (proto == "github" || proto == "pub") cached = this.githubPackageCache[pkg._verspec];
         let epkg = getEditorPkg(pkg);
 
-        return (
-            cached ? Promise.resolve(cached) : pkg.commonDownloadAsync()
-        ).then(resp => {
+        return (cached ? Promise.resolve(cached) : pkg.commonDownloadAsync()).then(resp => {
             if (resp) {
                 if ((proto == "github" || proto == "pub") && !cached)
-                    this.githubPackageCache[pkg._verspec] =
-                        pxt.Util.clone(resp);
+                    this.githubPackageCache[pkg._verspec] = pxt.Util.clone(resp);
                 epkg.setFiles(resp);
                 return Promise.resolve();
             }
@@ -181,9 +169,7 @@ class PkgHost implements pxt.Host {
                 }
                 if (dependencies && dependencies.length) {
                     const files = getEditorPkg(pkg).files;
-                    const cfg = JSON.parse(
-                        files[pxt.CONFIG_NAME]
-                    ) as pxt.PackageConfig;
+                    const cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                     dependencies.forEach((d: string) => {
                         this.addPackageToConfig(cfg, d);
                     });
@@ -192,9 +178,7 @@ class PkgHost implements pxt.Host {
                 return Promise.resolve();
             } else if (proto == "docs") {
                 let files = emptyPrjFiles();
-                let cfg = JSON.parse(
-                    files[pxt.CONFIG_NAME]
-                ) as pxt.PackageConfig;
+                let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                 // load all dependencies
                 pkg.verArgument()
                     .split(",")
@@ -213,9 +197,7 @@ class PkgHost implements pxt.Host {
                 pxt.log(`skipping invalid pkg ${pkg.id}`);
                 return Promise.resolve();
             } else {
-                return Promise.reject(
-                    `Cannot download ${pkg.version()}; unknown protocol`
-                );
+                return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`);
             }
         });
     }
@@ -260,10 +242,7 @@ function setStoredState(runOpts: RunOptions, key: string, value: any) {
         window.localStorage.setItem(id, JSON.stringify(storedState));
     } catch (e) {}
 }
-function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(
-    op: T,
-    arg: pxtc.service.OpArg
-): Promise<any> {
+function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
     const startTm = Date.now();
     pxt.debug("worker op: " + op);
     return pxt.worker
@@ -278,9 +257,7 @@ function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(
             return res;
         });
 }
-export async function compileAsync(
-    updateOptions?: (ops: pxtc.CompileOptions) => void
-) {
+export async function compileAsync(updateOptions?: (ops: pxtc.CompileOptions) => void) {
     const opts = await getCompileOptionsAsync();
     if (updateOptions) updateOptions(opts);
     const resp = (await workerOpAsync("compile", {
@@ -367,8 +344,7 @@ export async function simulateAsync(
 
     const runOptions = initDriverAndOptions(container, runOpts, builtSimJS);
     const driver = simDriver(container)!;
-    driver.options.messageSimulators =
-        pxt.appTarget?.simulator?.messageSimulators;
+    driver.options.messageSimulators = pxt.appTarget?.simulator?.messageSimulators;
     driver.options.onSimulatorCommand = msg => {
         if (msg.command === "restart") {
             runOptions.storedState = getStoredState(runOpts);
@@ -387,9 +363,7 @@ export async function simulateAsync(
     return builtSimJS;
 }
 
-export async function buildSimJsInfo(
-    runOpts: RunOptions
-): Promise<pxtc.BuiltSimJsInfo> {
+export async function buildSimJsInfo(runOpts: RunOptions): Promise<pxtc.BuiltSimJsInfo> {
     await loadPackageAsync(runOpts);
 
     let didUpgrade = false;
@@ -398,8 +372,7 @@ export async function buildSimJsInfo(
         opts.computeUsedParts = true;
         opts.breakpoints = true;
 
-        if (runOpts.mpRole == "client")
-            opts.fileSystem[pxt.MAIN_TS] = "multiplayer.init()";
+        if (runOpts.mpRole == "client") opts.fileSystem[pxt.MAIN_TS] = "multiplayer.init()";
 
         // Api info needed for py2ts conversion, if project is shared in Python
         if (opts.target.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
@@ -417,16 +390,10 @@ export async function buildSimJsInfo(
         if (
             sharedTargetVersion &&
             currentTargetVersion &&
-            pxt.semver.cmp(
-                pxt.semver.parse(sharedTargetVersion),
-                pxt.semver.parse(currentTargetVersion)
-            ) < 0
+            pxt.semver.cmp(pxt.semver.parse(sharedTargetVersion), pxt.semver.parse(currentTargetVersion)) < 0
         ) {
             for (const fileName of Object.keys(opts.fileSystem)) {
-                if (
-                    !pxt.Util.startsWith(fileName, "pxt_modules") &&
-                    pxt.Util.endsWith(fileName, ".ts")
-                ) {
+                if (!pxt.Util.startsWith(fileName, "pxt_modules") && pxt.Util.endsWith(fileName, ".ts")) {
                     didUpgrade = true;
                     opts.fileSystem[fileName] = pxt.patching.patchJavaScript(
                         sharedTargetVersion,
@@ -438,12 +405,9 @@ export async function buildSimJsInfo(
     });
 
     if (compileResult.diagnostics?.length > 0 && didUpgrade) {
-        pxt.log(
-            "Compile with upgrade rules failed, trying again with original code"
-        );
+        pxt.log("Compile with upgrade rules failed, trying again with original code");
         compileResult = await compileAsync(opts => {
-            if (runOpts.mpRole === "client")
-                opts.fileSystem[pxt.MAIN_TS] = "multiplayer.init()";
+            if (runOpts.mpRole === "client") opts.fileSystem[pxt.MAIN_TS] = "multiplayer.init()";
         });
     }
 

@@ -7,11 +7,6 @@ export function recvSetSessionValue(key: string, value: string) {
     dispatch(CollabActions.setSessionValue(key, value));
     if (key.startsWith("s:")) {
         const sprite = JSON.parse(value);
-        getCollabCanvas().addPaintSprite(
-            sprite.x,
-            sprite.y,
-            sprite.s,
-            sprite.c
-        );
+        getCollabCanvas().addPaintSprite(sprite.x, sprite.y, sprite.s, sprite.c);
     }
 }

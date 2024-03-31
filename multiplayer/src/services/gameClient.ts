@@ -132,20 +132,14 @@ class GameClient {
         }
     };
 
-    private recvMessageWithJoinTimeout = async (
-        payload: string | Buffer,
-        resolve: () => void
-    ) => {
+    private recvMessageWithJoinTimeout = async (payload: string | Buffer, resolve: () => void) => {
         try {
             if (typeof payload === "string") {
                 const msg = JSON.parse(payload) as Protocol.Message;
                 if (msg.type === "joined") {
                     // We've joined the game. Replace this handler with a direct call to recvMessageAsync
                     if (this.sock) {
-                        this.sock.removeListener(
-                            "message",
-                            this.receivedJoinMessageInTimeHandler
-                        );
+                        this.sock.removeListener("message", this.receivedJoinMessageInTimeHandler);
                         this.receivedJoinMessageInTimeHandler = undefined;
                     }
                     resolve();
@@ -208,15 +202,12 @@ class GameClient {
 
             const authToken = await authClient.authTokenAsync();
 
-            const hostRes = await fetch(
-                `${GAME_HOST}/api/game/host/${shareCode}`,
-                {
-                    credentials: "include",
-                    headers: {
-                        Authorization: "mkcd " + authToken,
-                    },
-                }
-            );
+            const hostRes = await fetch(`${GAME_HOST}/api/game/host/${shareCode}`, {
+                credentials: "include",
+                headers: {
+                    Authorization: "mkcd " + authToken,
+                },
+            });
 
             if (hostRes.status !== HTTP_OK) {
                 return {
@@ -227,8 +218,7 @@ class GameClient {
 
             const gameInfo = (await hostRes.json()) as GameInfo;
 
-            if (!gameInfo?.joinTicket)
-                throw new Error("Game server did not return a join ticket");
+            if (!gameInfo?.joinTicket) throw new Error("Game server did not return a join ticket");
 
             await this.connectAsync(gameInfo.joinTicket!);
 
@@ -251,15 +241,12 @@ class GameClient {
 
             const authToken = await authClient.authTokenAsync();
 
-            const joinRes = await fetch(
-                `${GAME_HOST}/api/game/join/${joinCode}`,
-                {
-                    credentials: "include",
-                    headers: {
-                        Authorization: "mkcd " + authToken,
-                    },
-                }
-            );
+            const joinRes = await fetch(`${GAME_HOST}/api/game/join/${joinCode}`, {
+                credentials: "include",
+                headers: {
+                    Authorization: "mkcd " + authToken,
+                },
+            });
 
             if (joinRes.status !== HTTP_OK) {
                 return {
@@ -270,8 +257,7 @@ class GameClient {
 
             const gameInfo = (await joinRes.json()) as GameInfo;
 
-            if (!gameInfo?.joinTicket)
-                throw new Error("Game server did not return a join ticket");
+            if (!gameInfo?.joinTicket) throw new Error("Game server did not return a join ticket");
 
             await this.connectAsync(gameInfo.joinTicket!);
 
@@ -311,9 +297,7 @@ class GameClient {
     }
 
     private async recvJoinedMessageAsync(msg: Protocol.JoinedMessage) {
-        pxt.debug(
-            `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
-        );
+        pxt.debug(`Server said we're joined as "${msg.role}" in slot "${msg.slot}"`);
         const { gameMode, gamePaused, shareCode, role } = msg;
 
         this.clientRole = role;
@@ -339,9 +323,7 @@ class GameClient {
         await setReactionAsync(msg.clientId!, msg.index);
     }
 
-    private async recvPlayerJoinedMessageAsync(
-        msg: Protocol.PlayerJoinedMessage
-    ) {
+    private async recvPlayerJoinedMessageAsync(msg: Protocol.PlayerJoinedMessage) {
         pxt.debug("Server sent player joined");
         if (this.clientRole === "host") {
             await this.sendCurrentScreenAsync(); // Workaround for server sometimes not sending the current screen to new players. Needs debugging.
@@ -372,8 +354,7 @@ class GameClient {
     }
 
     private async recvCompressedScreenMessageAsync(reader: SmartBuffer) {
-        const { zippedData, isDelta } =
-            Protocol.Binary.unpackCompressedScreenMessage(reader);
+        const { zippedData, isDelta } = Protocol.Binary.unpackCompressedScreenMessage(reader);
 
         const screen = await gunzipAsync(zippedData);
         if (!isDelta) {
@@ -400,17 +381,10 @@ class GameClient {
     }
 
     private async recvInputMessageAsync(reader: SmartBuffer) {
-        const { button, state, slot } =
-            Protocol.Binary.unpackInputMessage(reader);
+        const { button, state, slot } = Protocol.Binary.unpackInputMessage(reader);
 
         const stringifiedState = buttonStateToString(state);
-        if (
-            button <= SimKey.None ||
-            button >= SimKey.Menu ||
-            slot < 2 ||
-            !stringifiedState
-        )
-            return;
+        if (button <= SimKey.None || button >= SimKey.Menu || slot < 2 || !stringifiedState) return;
 
         this.postToSimFrame(<SimMultiplayer.InputMessage>{
             type: "multiplayer",
@@ -422,8 +396,7 @@ class GameClient {
     }
 
     private async recvAudioMessageAsync(reader: SmartBuffer) {
-        const { instruction, soundbuf } =
-            Protocol.Binary.unpackAudioMessage(reader);
+        const { instruction, soundbuf } = Protocol.Binary.unpackAudioMessage(reader);
         this.postToSimFrame(<SimMultiplayer.AudioMessage>{
             type: "multiplayer",
             content: "Audio",
@@ -433,15 +406,10 @@ class GameClient {
     }
 
     private async recvIconMessageAsync(reader: SmartBuffer) {
-        const { iconType, iconSlot, iconBuffer } =
-            Protocol.Binary.unpackIconMessage(reader);
+        const { iconType, iconSlot, iconBuffer } = Protocol.Binary.unpackIconMessage(reader);
 
         if (iconType === IconType.Player && iconSlot >= 1 && iconSlot <= 4) {
-        } else if (
-            iconType === IconType.Reaction &&
-            iconSlot >= 1 &&
-            iconSlot <= 6
-        ) {
+        } else if (iconType === IconType.Reaction && iconSlot >= 1 && iconSlot <= 6) {
         } else {
             // unhandled icon type or invalid slot, ignore.
             return;
@@ -451,10 +419,7 @@ class GameClient {
             const unzipped = await gunzipAsync(iconBuffer);
             const iconPalette = unzipped.slice(0, PALETTE_BUFFER_SIZE);
             const iconImage = unzipped.slice(PALETTE_BUFFER_SIZE);
-            const iconPngDataUri = pxt.convertUint8BufferToPngUri(
-                iconPalette,
-                iconImage
-            );
+            const iconPngDataUri = pxt.convertUint8BufferToPngUri(iconPalette, iconImage);
 
             setCustomIconAsync(iconType, iconSlot, iconPngDataUri);
         } else {
@@ -467,27 +432,15 @@ class GameClient {
         simDriver()?.postMessage(msg);
     }
 
-    public async sendInputAsync(
-        button: number,
-        state: "Pressed" | "Released" | "Held"
-    ) {
+    public async sendInputAsync(button: number, state: "Pressed" | "Released" | "Held") {
         if (this.paused) return;
-        const buffer = Protocol.Binary.packInputMessage(
-            button,
-            stringToButtonState(state)!
-        );
+        const buffer = Protocol.Binary.packInputMessage(button, stringToButtonState(state)!);
         this.sendMessage(buffer);
     }
 
-    public async sendAudioAsync(
-        instruction: "playinstructions" | "muteallchannels",
-        soundbuf?: Uint8Array
-    ) {
+    public async sendAudioAsync(instruction: "playinstructions" | "muteallchannels", soundbuf?: Uint8Array) {
         if (this.paused) return;
-        const buffer = Protocol.Binary.packAudioMessage(
-            stringToAudioInstruction(instruction)!,
-            Buffer.from(soundbuf!)
-        );
+        const buffer = Protocol.Binary.packAudioMessage(stringToAudioInstruction(instruction)!, Buffer.from(soundbuf!));
         this.sendMessage(buffer);
     }
 
@@ -504,19 +457,12 @@ class GameClient {
             zippedIconBuffer = await gzipAsync(iconDataBuf);
         }
 
-        const msgBuffer = Protocol.Binary.packIconMessage(
-            type,
-            slot,
-            zippedIconBuffer
-        );
+        const msgBuffer = Protocol.Binary.packIconMessage(type, slot, zippedIconBuffer);
 
         this.sendMessage(msgBuffer);
     }
 
-    public async sendScreenUpdateAsync(
-        image: Uint8Array,
-        palette: Uint8Array | undefined
-    ) {
+    public async sendScreenUpdateAsync(image: Uint8Array, palette: Uint8Array | undefined) {
         const DELTAS_ENABLED = true;
 
         const buffers: Buffer[] = [];
@@ -597,12 +543,7 @@ class GameClient {
         const image = this.screen.slice(0, SCREEN_BUFFER_SIZE);
         const palette =
             this.screen.length >= SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
-                ? this.screen
-                      .slice(
-                          SCREEN_BUFFER_SIZE,
-                          SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE
-                      )
-                      .map(v => v)
+                ? this.screen.slice(SCREEN_BUFFER_SIZE, SCREEN_BUFFER_SIZE + PALETTE_BUFFER_SIZE).map(v => v)
                 : undefined;
 
         return {
@@ -641,16 +582,11 @@ export async function startPostingRandomKeys() {
     const currentState = new Array(SimKey.B).fill(0);
     return setInterval(() => {
         const key = Math.floor(Math.random() * SimKey.B);
-        gameClient?.sendInputAsync(
-            key + 1,
-            states[currentState[key]++ % 2] as any
-        );
+        gameClient?.sendInputAsync(key + 1, states[currentState[key]++ % 2] as any);
     }, 300);
 }
 
-export async function hostGameAsync(
-    shareCode: string
-): Promise<GameJoinResult> {
+export async function hostGameAsync(shareCode: string): Promise<GameJoinResult> {
     destroyGameClient();
     gameClient = new GameClient();
     const gameInfo = await gameClient.hostGameAsync(shareCode);
@@ -677,33 +613,19 @@ export async function sendReactionAsync(index: number) {
     await gameClient?.sendReactionAsync(index);
 }
 
-export async function sendInputAsync(
-    button: number,
-    state: "Pressed" | "Released" | "Held"
-) {
+export async function sendInputAsync(button: number, state: "Pressed" | "Released" | "Held") {
     await gameClient?.sendInputAsync(button, state);
 }
 
-export async function sendAudioAsync(
-    instruction: "playinstructions" | "muteallchannels",
-    soundbuf?: Uint8Array
-) {
+export async function sendAudioAsync(instruction: "playinstructions" | "muteallchannels", soundbuf?: Uint8Array) {
     await gameClient?.sendAudioAsync(instruction, soundbuf);
 }
 
-export async function sendIconAsync(
-    iconType: IconType,
-    slot: number,
-    palette: Uint8Array,
-    icon: Uint8Array
-) {
+export async function sendIconAsync(iconType: IconType, slot: number, palette: Uint8Array, icon: Uint8Array) {
     await gameClient?.sendIconAsync(iconType, slot, palette, icon);
 }
 
-export async function sendScreenUpdateAsync(
-    img: Uint8Array,
-    palette: Uint8Array
-) {
+export async function sendScreenUpdateAsync(img: Uint8Array, palette: Uint8Array) {
     await gameClient?.sendScreenUpdateAsync(img, palette);
 }
 
@@ -867,10 +789,7 @@ namespace Protocol {
         }
 
         // Input
-        export function packInputMessage(
-            button: number,
-            state: ButtonState
-        ): Buffer {
+        export function packInputMessage(button: number, state: ButtonState): Buffer {
             const writer = new SmartBuffer();
             writer.writeUInt16LE(MessageType.Input);
             writer.writeUInt16LE(button);
@@ -894,10 +813,7 @@ namespace Protocol {
         }
 
         // CompressedScreen
-        export function packCompressedScreenMessage(
-            zippedData: Buffer,
-            isDelta: boolean
-        ): Buffer {
+        export function packCompressedScreenMessage(zippedData: Buffer, isDelta: boolean): Buffer {
             const writer = new SmartBuffer();
             writer.writeUInt16LE(MessageType.CompressedScreen);
             writer.writeUInt8(isDelta ? 1 : 0);
@@ -918,10 +834,7 @@ namespace Protocol {
         }
 
         // Audio
-        export function packAudioMessage(
-            instruction: number,
-            soundbuf?: Buffer
-        ): Buffer {
+        export function packAudioMessage(instruction: number, soundbuf?: Buffer): Buffer {
             const writer = new SmartBuffer();
             writer.writeUInt16LE(MessageType.Audio);
             writer.writeUInt8(instruction);
@@ -936,9 +849,7 @@ namespace Protocol {
         } {
             // `type` field has already been read
             const instruction = reader.readUInt8();
-            const soundbuf = reader.remaining()
-                ? reader.readBuffer()
-                : undefined;
+            const soundbuf = reader.remaining() ? reader.readBuffer() : undefined;
             return {
                 instruction,
                 soundbuf,
@@ -946,11 +857,7 @@ namespace Protocol {
         }
 
         // Icon
-        export function packIconMessage(
-            iconType: IconType,
-            iconSlot: number,
-            iconBuffer?: Buffer
-        ): Buffer {
+        export function packIconMessage(iconType: IconType, iconSlot: number, iconBuffer?: Buffer): Buffer {
             const writer = new SmartBuffer();
             writer.writeUInt16LE(MessageType.Icon);
             writer.writeUInt8(iconType);

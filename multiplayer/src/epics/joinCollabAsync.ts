@@ -1,12 +1,6 @@
 import * as collabClient from "../services/collabClient";
 import { dispatch } from "../state";
-import {
-    dismissToast,
-    setNetMode,
-    setCollabInfo,
-    showToast,
-    setClientRole,
-} from "../state/actions";
+import { dismissToast, setNetMode, setCollabInfo, showToast, setClientRole } from "../state/actions";
 import { HTTP_SESSION_FULL, HTTP_SESSION_NOT_FOUND } from "../types";
 import { cleanupJoinCode } from "../util";
 import { notifyDisconnected } from ".";

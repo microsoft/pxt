@@ -164,12 +164,7 @@ class CollabCanvas {
         this.root.addChild(mesh as any);
     }
 
-    public addPlayerSprite(
-        playerId: string,
-        x: number,
-        y: number,
-        imgId: number
-    ) {
+    public addPlayerSprite(playerId: string, x: number, y: number, imgId: number) {
         if (!playerId) return;
         if (this.playerSprites.has(playerId)) return;
         const sprite = Pixi.Sprite.from(PLAYER_SPRITE_DATAURLS[imgId]);
@@ -201,18 +196,11 @@ class CollabCanvas {
         const player = this.playerSprites.get(playerId);
         if (player && player.imgId !== imgId) {
             player.imgId = imgId;
-            player.sprite.texture = Pixi.Texture.from(
-                PLAYER_SPRITE_DATAURLS[imgId]
-            );
+            player.sprite.texture = Pixi.Texture.from(PLAYER_SPRITE_DATAURLS[imgId]);
         }
     }
 
-    public addPaintSprite(
-        x: number,
-        y: number,
-        brushIndex: number,
-        colorIndex: number
-    ) {
+    public addPaintSprite(x: number, y: number, brushIndex: number, colorIndex: number) {
         const sprite = new Pixi.Sprite();
         const brush = BRUSH_PROPS[brushIndex];
         if (!brush) return;
