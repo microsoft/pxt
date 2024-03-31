@@ -49,8 +49,10 @@ export function reducer(state: CollabState, action: CollabAction): CollabState {
         case "UPDATE_PRESENCE": {
             const players = { ...state.players };
             action.presence.users.forEach(user => {
-                const player = players[user.id];
-                if (!player) return;
+                const player = players[user.id] ?? {
+                    clientId: user.id,
+                    kv: new Map(),
+                }
                 players[user.id] = {
                     ...player,
                     kv: user.kv ? user.kv : player.kv,

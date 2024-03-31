@@ -18,6 +18,7 @@ export default function Render(props: CollabPageProps) {
         useState<HTMLDivElement | null>(null);
     const [selectedColorIndex, setSelectedColorIndex] = useState(0);
     const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
+    const [selectedIconIndex, setSelectedIconIndex] = useState(0);
     const [mouseDown, setMouseDown] = useState(false);
 
     useEffect(() => {
@@ -52,7 +53,7 @@ export default function Render(props: CollabPageProps) {
             canvasMouseY -= canvasContainer.offsetTop;
             canvasMouseX += canvasContainer.scrollLeft;
             canvasMouseY += canvasContainer.scrollTop;
-        
+
             // TODO: support canvas pan and zoom
 
             // Update local sprite position on canvas
@@ -112,9 +113,17 @@ export default function Render(props: CollabPageProps) {
         setSelectedSizeIndex(index);
     };
 
+    const iconClicked = (index: number) => {
+        setSelectedIconIndex(index);
+        getCollabCanvas().updatePlayerSpriteImage(collabClient.getClientId()!, index);
+        collabClient.setPlayerValue("imgId", JSON.stringify(index));
+    };
+
     const handleCanvasContainerRef = (ref: HTMLDivElement) => {
         setCanvasContainer(ref);
     };
+
+    const SELECTED_COLOR = "#1e293b";
 
     return (
         <div className="tw-flex tw-flex-col tw-gap-1 tw-w-full tw-h-full tw-items-center tw-mb-4">
@@ -132,7 +141,7 @@ export default function Render(props: CollabPageProps) {
                                 backgroundColor: bc,
                                 outline:
                                     i === selectedColorIndex
-                                        ? "3px solid #1e293b"
+                                        ? "3px solid " + SELECTED_COLOR
                                         : undefined,
                                 outlineOffset: "1px",
                             }}
@@ -151,13 +160,104 @@ export default function Render(props: CollabPageProps) {
                                 height: bs.px + "px",
                                 outline:
                                     i === selectedSizeIndex
-                                        ? "3px solid #1e293b"
+                                        ? "3px solid " + SELECTED_COLOR
                                         : undefined,
                                 outlineOffset: "1px",
                             }}
                             onClick={() => brushSizeClicked(bs, i)}
                         ></div>
                     ))}
+                    <div className="tw-h-4"></div>
+                    <div className="tw-flex tw-flex-row tw-gap-2">
+                        <div
+                            onClick={() => iconClicked(0)}
+                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
+                            style={{
+                                backgroundImage:
+                                    "url(hackathon/rt-collab/sprites/sprite-0.png)",
+                                objectFit: "cover",
+                                outline:
+                                    0 === selectedIconIndex
+                                        ? "3px solid " + SELECTED_COLOR
+                                        : undefined,
+                                outlineOffset: "1px",
+                            }}
+                        ></div>
+                        <div
+                            onClick={() => iconClicked(1)}
+                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
+                            style={{
+                                backgroundImage:
+                                    "url(hackathon/rt-collab/sprites/sprite-1.png)",
+                                objectFit: "cover",
+                                outline:
+                                    1 === selectedIconIndex
+                                        ? "3px solid " + SELECTED_COLOR
+                                        : undefined,
+                                outlineOffset: "1px",
+                            }}
+                        ></div>
+                    </div>
+                    <div className="tw-flex tw-flex-row tw-gap-2">
+                        <div
+                            onClick={() => iconClicked(2)}
+                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
+                            style={{
+                                backgroundImage:
+                                    "url(hackathon/rt-collab/sprites/sprite-2.png)",
+                                objectFit: "cover",
+                                outline:
+                                    2 === selectedIconIndex
+                                        ? "3px solid " + SELECTED_COLOR
+                                        : undefined,
+                                outlineOffset: "1px",
+                            }}
+                        ></div>
+                        <div
+                            onClick={() => iconClicked(3)}
+                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
+                            style={{
+                                backgroundImage:
+                                    "url(hackathon/rt-collab/sprites/sprite-3.png)",
+                                objectFit: "cover",
+                                outline:
+                                    3 === selectedIconIndex
+                                        ? "3px solid " + SELECTED_COLOR
+                                        : undefined,
+                                outlineOffset: "1px",
+                            }}
+                        ></div>
+                    </div>
+                    <div className="tw-flex tw-flex-row tw-gap-2">
+                        <div
+                            onClick={() => iconClicked(4)}
+                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
+                            style={{
+                                backgroundImage:
+                                    "url(hackathon/rt-collab/sprites/sprite-4.png)",
+                                objectFit: "cover",
+                                outline:
+                                    4 === selectedIconIndex
+                                        ? "3px solid " + SELECTED_COLOR
+                                        : undefined,
+                                outlineOffset: "1px",
+                            }}
+                        ></div>
+                        <div
+                            onClick={() => iconClicked(5)}
+                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
+                            style={{
+                                backgroundImage:
+                                    "url(hackathon/rt-collab/sprites/sprite-5.png)",
+                                objectFit: "cover",
+                                outline:
+                                    5 === selectedIconIndex
+                                        ? "3px solid " + SELECTED_COLOR
+                                        : undefined,
+                                outlineOffset: "1px",
+                            }}
+                        ></div>
+                    </div>
                 </div>
             </div>
             <div

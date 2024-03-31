@@ -118,10 +118,9 @@ class CollabCanvas {
     }
 
     public reset() {
-        this.app.stage.removeChildren();
-        this.root = new Pixi.Graphics();
+        this.root.children.forEach(child => child.destroy());
+        this.root.removeChildren();
         this.playerSprites.clear();
-        this.app.stage.addChild(this.root as any);
         this.addBackgroundGrid();
     }
 
@@ -161,6 +160,8 @@ class CollabCanvas {
         y: number,
         imgId: number
     ) {
+        if (!playerId) return;
+        if (this.playerSprites.has(playerId)) return;
         const sprite = Pixi.Sprite.from(
             `hackathon/rt-collab/sprites/sprite-${imgId}.png`
         );
@@ -190,8 +191,9 @@ class CollabCanvas {
     public updatePlayerSpriteImage(playerId: string, imgId: number) {
         const player = this.playerSprites.get(playerId);
         if (player && player.imgId !== imgId) {
+            player.imgId = imgId;
             player.sprite.texture = Pixi.Texture.from(
-                `sprites/sprite-${imgId}.png`
+                `hackathon/rt-collab/sprites/sprite-${imgId}.png`
             );
         }
     }

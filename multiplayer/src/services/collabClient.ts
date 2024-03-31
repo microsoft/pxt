@@ -274,6 +274,7 @@ class CollabClient {
         const { role, clientId } = msg;
 
         this.clientRole = role;
+        this.clientId = clientId;
 
         // TODO: Set initial state
     }
@@ -281,6 +282,7 @@ class CollabClient {
     private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
         pxt.debug("Server sent presence");
         await setPresenceAsync(msg.presence);
+        CollabEpics.recvUpdatePresence(msg.presence);
     }
 
     private async recvPlayerJoinedMessageAsync(
