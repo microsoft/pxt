@@ -133,3 +133,11 @@ export function jsonReviver(key: any, value: any) {
     }
     return value;
 }
+
+export function distSq(a: Vec2Like, b: Vec2Like) {
+    return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+}
+
+export function dist(a: Vec2Like, b: Vec2Like) {
+    return Math.sqrt(distSq(a, b));
+}

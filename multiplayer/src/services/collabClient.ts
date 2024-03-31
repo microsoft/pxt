@@ -95,8 +95,12 @@ class CollabClient {
                     return await this.recvPlayerLeftMessageAsync(msg);
                 case "set-player-value":
                     return await this.recvSetPlayerValueMessageAsync(msg);
+                case "del-player-value":
+                    return await this.recvDelPlayerValueMessageAsync(msg);
                 case "set-session-value":
                     return await this.recvSetSessionValueMessageAsync(msg);
+                case "del-session-value":
+                    return await this.recvDelSessionValueMessageAsync(msg);
             }
         } else {
             throw new Error(`Unknown payload: ${payload}`);
@@ -196,7 +200,7 @@ class CollabClient {
             if (!collabInfo?.joinTicket)
                 throw new Error("Collab server did not return a join ticket");
 
-            CollabEpics.initState();
+            CollabEpics.initState(new Map());
 
             await this.connectAsync(collabInfo.joinTicket!);
 
@@ -241,7 +245,7 @@ class CollabClient {
             if (!collabInfo?.joinTicket)
                 throw new Error("Collab server did not return a join ticket");
 
-            CollabEpics.initState();
+            CollabEpics.initState(new Map());
 
             await this.connectAsync(collabInfo.joinTicket!);
 
@@ -271,12 +275,13 @@ class CollabClient {
         pxt.debug(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
-        const { role, clientId } = msg;
+        const { role, clientId, sessKv } = msg;
 
         this.clientRole = role;
         this.clientId = clientId;
 
         // TODO: Set initial state
+        CollabEpics.recvSetSessionState(sessKv);
     }
 
     private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
@@ -305,14 +310,29 @@ class CollabClient {
     private async recvSetPlayerValueMessageAsync(
         msg: Protocol.SetPlayerValueMessage
     ) {
-        pxt.debug(`Recv set player value: ${msg.key} = ${msg.value}`);
+        //pxt.debug(`Recv set player value: ${msg.key} = ${msg.value}`);
         CollabEpics.recvSetPlayerValue(msg.clientId!, msg.key, msg.value);
+    }
+
+    private async recvDelPlayerValueMessageAsync(
+        msg: Protocol.DelPlayerValueMessage
+    ) {
+        //pxt.debug(`Recv del player value: ${msg.key}`);
+        CollabEpics.recvDelPlayerValue(msg.clientId!, msg.key);
     }
 
     private async recvSetSessionValueMessageAsync(
         msg: Protocol.SetSessionValueMessage
     ) {
-        pxt.debug(`Recv set session value: ${msg.key} = ${msg.value}`);
+        //pxt.debug(`Recv set session value: ${msg.key} = ${msg.value}`);
+        CollabEpics.recvSetSessionValue(msg.key, msg.value);
+    }
+
+    private async recvDelSessionValueMessageAsync(
+        msg: Protocol.DelSessionValueMessage
+    ) {
+        //pxt.debug(`Recv del session value: ${msg.key}`);
+        CollabEpics.recvDelSessionValue(msg.key);
     }
 
     public kickPlayer(clientId: string) {
@@ -441,6 +461,7 @@ namespace Protocol {
         role: ClientRole;
         slot: number;
         clientId: string;
+        sessKv: Map<string, string>;
     };
 
     export type PlayerJoinedMessage = MessageBase & {
@@ -470,11 +491,21 @@ namespace Protocol {
         clientId?: string; // only set on received messages
     };
 
+    export type DelPlayerValueMessage = MessageBase & {
+        type: "del-player-value";
+        key: string;
+        clientId?: string; // only set on received messages
+    };
+
     export type SetSessionValueMessage = MessageBase & {
         type: "set-session-value";
         key: string;
         value: string;
-        clientId?: string; // only set on received messages
+    };
+
+    export type DelSessionValueMessage = MessageBase & {
+        type: "del-session-value";
+        key: string;
     };
 
     export type Message =
@@ -486,5 +517,7 @@ namespace Protocol {
         | KickPlayerMessage
         | CollabOverMessage
         | SetPlayerValueMessage
-        | SetSessionValueMessage;
+        | DelPlayerValueMessage
+        | SetSessionValueMessage
+        | DelSessionValueMessage;
 }

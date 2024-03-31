@@ -120,9 +120,9 @@ export type BrushSize = {
 };
 
 export const BRUSH_SIZES: BrushSize[] = [
-    { sz: "sm", px: 22 },
+    { sz: "sm", px: 16 },
     { sz: "md", px: 32 },
-    { sz: "lg", px: 42 },
+    { sz: "lg", px: 48 },
 ];
 
 export type BrushModeType = "draw" | "move";

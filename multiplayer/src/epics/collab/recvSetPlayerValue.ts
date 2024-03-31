@@ -14,6 +14,9 @@ export function recvSetPlayerValue(
         const pos = JSON.parse(value);
         getCollabCanvas().updatePlayerSpritePosition(playerId, pos.x, pos.y);
     } else if (key === "imgId") {
-        getCollabCanvas().updatePlayerSpriteImage(playerId, parseInt(JSON.parse(value)));
+        getCollabCanvas().updatePlayerSpriteImage(
+            playerId,
+            parseInt(JSON.parse(value))
+        );
     }
 }

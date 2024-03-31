@@ -2,7 +2,10 @@ import { getCollabCanvas } from "../../services/collabCanvas";
 import { collabStateAndDispatch } from "../../state/collab";
 import * as CollabActions from "../../state/collab/actions";
 
-export function initState(kv: Map<string, string>) {
+export function recvDelSessionValue(key: string) {
     const { dispatch } = collabStateAndDispatch();
-    dispatch(CollabActions.init(kv));
+    dispatch(CollabActions.delSessionValue(key));
+    if (key.startsWith("s:")) {
+        //getCollabCanvas().removePaintSprite(key);
+    }
 }

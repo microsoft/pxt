@@ -2,11 +2,13 @@ import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { Button } from "../../../react-common/components/controls/Button";
 import { leaveCollabAsync } from "../epics/leaveCollabAsync";
-import { BRUSH_COLORS, BRUSH_SIZES, BrushSize } from "../types";
+import { BRUSH_COLORS, BRUSH_SIZES, BrushSize, Vec2Like } from "../types";
 import { getCollabCanvas } from "../services/collabCanvas";
 import * as collabClient from "../services/collabClient";
 import * as CollabEpics from "../epics/collab";
-import { jsonReplacer } from "../util";
+import { dist, distSq, jsonReplacer } from "../util";
+import { BRUSH_PROPS, PLAYER_SPRITE_DATAURLS } from "../constants";
+import { nanoid } from "nanoid";
 
 export interface CollabPageProps {}
 
@@ -20,6 +22,7 @@ export default function Render(props: CollabPageProps) {
     const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
     const [selectedIconIndex, setSelectedIconIndex] = useState(0);
     const [mouseDown, setMouseDown] = useState(false);
+    const [lastPosition, setLastPosition] = useState<Vec2Like>({ x: 0, y: 0 });
 
     useEffect(() => {
         const collabCanvas = getCollabCanvas();
@@ -36,10 +39,35 @@ export default function Render(props: CollabPageProps) {
             canvasMouseY -= canvasContainer.offsetTop;
             canvasMouseX += canvasContainer.scrollLeft;
             canvasMouseY += canvasContainer.scrollTop;
-            if (canvasMouseX < 0 || canvasMouseY < 0) return;
-            if (canvasMouseX >= canvasContainer.clientWidth) return;
-            if (canvasMouseY >= canvasContainer.clientHeight) return;
+            if (canvasMouseX < canvasContainer.scrollLeft) return;
+            if (canvasMouseY < canvasContainer.scrollTop) return;
+            if (
+                canvasMouseX >=
+                canvasContainer.scrollLeft + canvasContainer.clientWidth
+            )
+                return;
+            if (
+                canvasMouseY >=
+                canvasContainer.scrollTop + canvasContainer.clientHeight
+            )
+                return;
             setMouseDown(true);
+            setLastPosition({ x: canvasMouseX, y: canvasMouseY });
+            getCollabCanvas().addPaintSprite(
+                canvasMouseX,
+                canvasMouseY,
+                selectedSizeIndex,
+                selectedColorIndex
+            );
+            collabClient.setSessionValue(
+                "s:" + nanoid(),
+                JSON.stringify({
+                    x: canvasMouseX,
+                    y: canvasMouseY,
+                    s: selectedSizeIndex,
+                    c: selectedColorIndex,
+                })
+            );
         };
         const handleMouseUp = (e: MouseEvent) => {
             setMouseDown(false);
@@ -62,18 +90,46 @@ export default function Render(props: CollabPageProps) {
                 canvasMouseX,
                 canvasMouseY
             );
-            const pos = { x: canvasMouseX, y: canvasMouseY };
+            const newPos = { x: canvasMouseX, y: canvasMouseY };
+            const newPosStr = JSON.stringify(newPos);
             // Send position to server
-            collabClient.setPlayerValue("position", JSON.stringify(pos));
+            collabClient.setPlayerValue("position", newPosStr);
             // Update local player position in state
             CollabEpics.recvSetPlayerValue(
                 collabClient.getClientId(),
                 "position",
-                JSON.stringify(pos, jsonReplacer)
+                newPosStr
             );
 
             if (!mouseDown) return;
-            // TODO: send draw message
+            const brushSize = BRUSH_PROPS[selectedSizeIndex].size;
+            const brushStep = brushSize / 3;
+            const posDist = dist(lastPosition, newPos);
+            if (posDist > brushStep) {
+                const numSteps = Math.ceil(posDist / brushStep);
+                const stepX = (newPos.x - lastPosition.x) / numSteps;
+                const stepY = (newPos.y - lastPosition.y) / numSteps;
+                for (let i = 0; i < numSteps; i++) {
+                    const x = lastPosition.x + stepX * i;
+                    const y = lastPosition.y + stepY * i;
+                    getCollabCanvas().addPaintSprite(
+                        x,
+                        y,
+                        selectedSizeIndex,
+                        selectedColorIndex
+                    );
+                    collabClient.setSessionValue(
+                        "s:" + nanoid(),
+                        JSON.stringify({
+                            x,
+                            y,
+                            s: selectedSizeIndex,
+                            c: selectedColorIndex,
+                        })
+                    );
+                }
+                setLastPosition(newPos);
+            }
         };
         window.addEventListener("mousedown", handleMouseDown);
         window.addEventListener("mouseup", handleMouseUp);
@@ -83,7 +139,13 @@ export default function Render(props: CollabPageProps) {
             window.removeEventListener("mouseup", handleMouseUp);
             window.removeEventListener("mousemove", handleMouseMove);
         };
-    }, [mouseDown, canvasContainer]);
+    }, [
+        mouseDown,
+        canvasContainer,
+        lastPosition,
+        selectedColorIndex,
+        selectedSizeIndex,
+    ]);
 
     useEffect(() => {
         if (canvasContainer && !canvasContainer.firstChild) {
@@ -115,13 +177,39 @@ export default function Render(props: CollabPageProps) {
 
     const iconClicked = (index: number) => {
         setSelectedIconIndex(index);
-        getCollabCanvas().updatePlayerSpriteImage(collabClient.getClientId()!, index);
+        getCollabCanvas().updatePlayerSpriteImage(
+            collabClient.getClientId()!,
+            index
+        );
         collabClient.setPlayerValue("imgId", JSON.stringify(index));
     };
 
     const handleCanvasContainerRef = (ref: HTMLDivElement) => {
         setCanvasContainer(ref);
     };
+
+    const SpriteRow: React.FC = ({ children }) => (
+        <div className="tw-flex tw-flex-row tw-gap-1">{children}</div>
+    );
+
+    const SpriteImg: React.FC<{ imgId: number }> = ({ imgId }) => (
+        <div
+            onClick={() => iconClicked(imgId)}
+            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border tw-bg-slate-100"
+            style={{
+                backgroundImage: `url(${PLAYER_SPRITE_DATAURLS[imgId]})`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                padding: "1.1rem",
+                outline:
+                    imgId === selectedIconIndex
+                        ? "3px solid " + SELECTED_COLOR
+                        : undefined,
+                outlineOffset: "1px",
+                imageRendering: "pixelated",
+            }}
+        ></div>
+    );
 
     const SELECTED_COLOR = "#1e293b";
 
@@ -168,96 +256,12 @@ export default function Render(props: CollabPageProps) {
                         ></div>
                     ))}
                     <div className="tw-h-4"></div>
-                    <div className="tw-flex tw-flex-row tw-gap-2">
-                        <div
-                            onClick={() => iconClicked(0)}
-                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
-                            style={{
-                                backgroundImage:
-                                    "url(hackathon/rt-collab/sprites/sprite-0.png)",
-                                objectFit: "cover",
-                                outline:
-                                    0 === selectedIconIndex
-                                        ? "3px solid " + SELECTED_COLOR
-                                        : undefined,
-                                outlineOffset: "1px",
-                            }}
-                        ></div>
-                        <div
-                            onClick={() => iconClicked(1)}
-                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
-                            style={{
-                                backgroundImage:
-                                    "url(hackathon/rt-collab/sprites/sprite-1.png)",
-                                objectFit: "cover",
-                                outline:
-                                    1 === selectedIconIndex
-                                        ? "3px solid " + SELECTED_COLOR
-                                        : undefined,
-                                outlineOffset: "1px",
-                            }}
-                        ></div>
-                    </div>
-                    <div className="tw-flex tw-flex-row tw-gap-2">
-                        <div
-                            onClick={() => iconClicked(2)}
-                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
-                            style={{
-                                backgroundImage:
-                                    "url(hackathon/rt-collab/sprites/sprite-2.png)",
-                                objectFit: "cover",
-                                outline:
-                                    2 === selectedIconIndex
-                                        ? "3px solid " + SELECTED_COLOR
-                                        : undefined,
-                                outlineOffset: "1px",
-                            }}
-                        ></div>
-                        <div
-                            onClick={() => iconClicked(3)}
-                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
-                            style={{
-                                backgroundImage:
-                                    "url(hackathon/rt-collab/sprites/sprite-3.png)",
-                                objectFit: "cover",
-                                outline:
-                                    3 === selectedIconIndex
-                                        ? "3px solid " + SELECTED_COLOR
-                                        : undefined,
-                                outlineOffset: "1px",
-                            }}
-                        ></div>
-                    </div>
-                    <div className="tw-flex tw-flex-row tw-gap-2">
-                        <div
-                            onClick={() => iconClicked(4)}
-                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
-                            style={{
-                                backgroundImage:
-                                    "url(hackathon/rt-collab/sprites/sprite-4.png)",
-                                objectFit: "cover",
-                                outline:
-                                    4 === selectedIconIndex
-                                        ? "3px solid " + SELECTED_COLOR
-                                        : undefined,
-                                outlineOffset: "1px",
-                            }}
-                        ></div>
-                        <div
-                            onClick={() => iconClicked(5)}
-                            className="tw-w-8 tw-h-8 tw-rounded-md tw-cursor-pointer tw-border-slate-800 tw-border"
-                            style={{
-                                backgroundImage:
-                                    "url(hackathon/rt-collab/sprites/sprite-5.png)",
-                                objectFit: "cover",
-                                outline:
-                                    5 === selectedIconIndex
-                                        ? "3px solid " + SELECTED_COLOR
-                                        : undefined,
-                                outlineOffset: "1px",
-                            }}
-                        ></div>
-                    </div>
+                    {[0, 2, 4].map(imgId => (
+                        <SpriteRow key={imgId}>
+                            <SpriteImg imgId={imgId} />
+                            <SpriteImg imgId={imgId + 1} />
+                        </SpriteRow>
+                    ))}
                 </div>
             </div>
             <div

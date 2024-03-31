@@ -1,5 +1,8 @@
 import * as Pixi from "pixi.js";
+import { TinyColor } from "@ctrl/tinycolor";
 import { flattenVerts } from "../util";
+import { BRUSH_PROPS, PLAYER_SPRITE_DATAURLS } from "../constants";
+import { BRUSH_COLORS } from "../types";
 
 const shaderPrograms = new Map<string, Pixi.Program>();
 
@@ -92,6 +95,7 @@ class CollabCanvas {
     private app: Pixi.Application;
     private root: Pixi.Graphics;
     private playerSprites: Map<string, CanvasPlayer> = new Map();
+    private brushTextures: Map<string, Pixi.Texture> = new Map();
 
     public get view() {
         return this.app.view;
@@ -105,16 +109,22 @@ class CollabCanvas {
             antialias: true,
             clearBeforeRender: true,
         });
-
         // Set up initial canvas dimensions
         const canv = this.app.view as HTMLCanvasElement;
         canv.style.width = canv.style.minWidth = CANVAS_SIZE + "px";
         canv.style.height = canv.style.minHeight = CANVAS_SIZE + "px";
 
         this.root = new Pixi.Graphics();
+        this.root.sortableChildren = true;
         this.app.stage.addChild(this.root as any);
 
         this.addBackgroundGrid();
+
+        // Set up brush textures
+        BRUSH_PROPS.map(brush => {
+            const texture = Pixi.Texture.from(brush.dataUrl);
+            this.brushTextures.set(brush.name, texture);
+        });
     }
 
     public reset() {
@@ -162,9 +172,7 @@ class CollabCanvas {
     ) {
         if (!playerId) return;
         if (this.playerSprites.has(playerId)) return;
-        const sprite = Pixi.Sprite.from(
-            `hackathon/rt-collab/sprites/sprite-${imgId}.png`
-        );
+        const sprite = Pixi.Sprite.from(PLAYER_SPRITE_DATAURLS[imgId]);
         sprite.anchor.set(0.5);
         sprite.position.set(x, y);
         sprite.zIndex = 100; // in front of everything
@@ -189,13 +197,36 @@ class CollabCanvas {
     }
 
     public updatePlayerSpriteImage(playerId: string, imgId: number) {
+        if (!playerId) return;
         const player = this.playerSprites.get(playerId);
         if (player && player.imgId !== imgId) {
             player.imgId = imgId;
             player.sprite.texture = Pixi.Texture.from(
-                `hackathon/rt-collab/sprites/sprite-${imgId}.png`
+                PLAYER_SPRITE_DATAURLS[imgId]
             );
         }
+    }
+
+    public addPaintSprite(
+        x: number,
+        y: number,
+        brushIndex: number,
+        colorIndex: number
+    ) {
+        const sprite = new Pixi.Sprite();
+        const brush = BRUSH_PROPS[brushIndex];
+        if (!brush) return;
+        if (!this.brushTextures.has(brush.name)) return;
+        const color = BRUSH_COLORS[colorIndex];
+        if (!color) return;
+        sprite.texture = this.brushTextures.get(brush.name)!;
+        sprite.anchor.set(0.5);
+        sprite.position.set(x, y);
+        sprite.width = brush.size;
+        sprite.height = brush.size;
+        sprite.tint = new TinyColor(color).toNumber();
+        sprite.zIndex = 0; // behind players
+        this.root.addChild(sprite as any);
     }
 }
 
