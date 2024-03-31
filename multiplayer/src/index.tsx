@@ -38,8 +38,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 
     pxt.options.debug = /dbg=1/i.test(window.location.href);
-    if (pxt.options.debug)
-        pxt.debug = console.debug;
+    if (pxt.options.debug) pxt.debug = console.debug;
 
     pxt.setupWebConfig((window as any).pxtConfig || pxt.webConfig);
     pxt.setAppTarget(bundle);

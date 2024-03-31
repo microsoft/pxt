@@ -1,4 +1,5 @@
 import zlib from "zlib";
+import { Vec2Like } from "../types";
 
 export function isLocal() {
     return window.location.hostname === "localhost";
@@ -72,8 +73,63 @@ export function cleanupShareCode(
 
 export function resourceUrl(path: string | undefined): string | undefined {
     if (!path) return;
-    if (pxt.BrowserUtils.isLocalHostDev() && !(path.startsWith('https:') || path.startsWith('data:'))) {
+    if (
+        pxt.BrowserUtils.isLocalHostDev() &&
+        !(path.startsWith("https:") || path.startsWith("data:"))
+    ) {
         return pxt.appTarget?.appTheme.homeUrl + path;
     }
     return path;
+}
+
+export function throttle<F extends (...args: Parameters<F>) => ReturnType<F>>(
+    func: F,
+    waitFor: number
+): F {
+    let timeout: NodeJS.Timeout | undefined;
+    let previousTime = 0;
+    return function (this: ThisParameterType<F>, ...args: Parameters<F>) {
+        const context = this;
+        const currentTime = Date.now();
+        const timeSinceLastCall = currentTime - previousTime;
+        const timeRemaining = waitFor - timeSinceLastCall;
+        if (timeRemaining <= 0) {
+            previousTime = currentTime;
+            func.apply(context, args);
+        } else if (!timeout) {
+            timeout = setTimeout(() => {
+                previousTime = Date.now();
+                timeout = undefined;
+                func.apply(context, args);
+            }, timeRemaining);
+        }
+    } as F;
+}
+
+export function flattenVerts(verts: Vec2Like[]): number[] {
+    const flatVerts: number[] = [];
+    for (const v of verts) {
+        flatVerts.push(v.x, v.y);
+    }
+    return flatVerts;
+}
+
+export function jsonReplacer(key: any, value: any) {
+    if (value instanceof Map) {
+        return {
+            [".dataType"]: "Map",
+            value: Array.from(value.entries()), // or with spread: value: [...value]
+        };
+    } else {
+        return value;
+    }
+}
+
+export function jsonReviver(key: any, value: any) {
+    if (typeof value === "object" && value !== null) {
+        if (value[".dataType"] === "Map") {
+            return new Map(value.value);
+        }
+    }
+    return value;
 }

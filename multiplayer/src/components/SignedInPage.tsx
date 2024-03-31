@@ -9,7 +9,7 @@ export default function Render() {
     const { netMode } = state;
 
     return (
-        <div className="tw-flex tw-flex-col tw-items-center tw-gap-1 tw-grow tw-justify-around">
+        <div className="tw-flex tw-flex-col tw-items-start tw-gap-1 tw-grow tw-justify-around">
             {netMode === "init" && <JoinOrHost />}
             {netMode !== "init" && <GamePage />}
             {netMode !== "init" && <CollabPage />}

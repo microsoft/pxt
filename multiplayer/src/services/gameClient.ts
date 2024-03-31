@@ -63,8 +63,7 @@ class GameClient {
     receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
     paused: boolean = false;
 
-    constructor() {
-    }
+    constructor() {}
 
     destroy() {
         try {
@@ -131,7 +130,7 @@ class GameClient {
         } else {
             throw new Error(`Unknown payload: ${payload}`);
         }
-    }
+    };
 
     private recvMessageWithJoinTimeout = async (
         payload: string | Buffer,
@@ -143,7 +142,10 @@ class GameClient {
                 if (msg.type === "joined") {
                     // We've joined the game. Replace this handler with a direct call to recvMessageAsync
                     if (this.sock) {
-                        this.sock.removeListener("message", this.receivedJoinMessageInTimeHandler);
+                        this.sock.removeListener(
+                            "message",
+                            this.receivedJoinMessageInTimeHandler
+                        );
                         this.receivedJoinMessageInTimeHandler = undefined;
                     }
                     resolve();
@@ -154,7 +156,7 @@ class GameClient {
             destroyGameClient();
             resolve();
         }
-    }
+    };
 
     public async connectAsync(ticket: string) {
         return new Promise<void>((resolve, reject) => {
@@ -174,7 +176,7 @@ class GameClient {
                         clearTimeout(joinTimeout);
                         resolve();
                     });
-                }
+                };
                 this.sock?.on("message", this.receivedJoinMessageInTimeHandler);
                 this.sock?.on("message", async payload => {
                     try {

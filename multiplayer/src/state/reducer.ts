@@ -56,7 +56,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                 ...state,
                 collabInfo: {
                     ...action.collabInfo,
-                }
+                },
             };
         }
         case "SET_GAME_METADATA": {

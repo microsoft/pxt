@@ -6,7 +6,9 @@ export default function Render() {
     const { state } = useContext(AppStateContext);
 
     const joinCode = state.gameState?.joinCode;
-    const joinDeepLink = joinCode ? pxt.multiplayer.makeJoinLink(joinCode, true) : "";
+    const joinDeepLink = joinCode
+        ? pxt.multiplayer.makeJoinLink(joinCode, true)
+        : "";
     return (
         <div>
             {joinCode && (

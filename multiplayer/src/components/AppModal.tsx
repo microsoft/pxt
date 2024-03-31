@@ -64,7 +64,9 @@ export default function Render() {
                     onCancel={() => dispatch(clearModal())}
                 >
                     <div>
-                        {lf("Kick this player? They will be blocked from rejoining the game.")}
+                        {lf(
+                            "Kick this player? They will be blocked from rejoining the game."
+                        )}
                     </div>
                 </ConfirmModal>
             );
@@ -80,7 +82,9 @@ export default function Render() {
                         onCancel={() => dispatch(clearModal())}
                     >
                         <div>
-                            {lf("End the game? All players will be disconnected.")}
+                            {lf(
+                                "End the game? All players will be disconnected."
+                            )}
                         </div>
                     </ConfirmModal>
                 );

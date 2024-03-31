@@ -8,8 +8,7 @@ export function useClickedOutside(
         const handleMouseDown = (ev: Event) => {
             for (const ref of refs) {
                 const el = ref?.current;
-                if (el && el.contains(ev.target as Node))
-                    return;
+                if (el && el.contains(ev.target as Node)) return;
             }
             cb?.(ev);
         };

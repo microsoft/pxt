@@ -103,6 +103,45 @@ export enum SimKey {
     TogglePause = -4,
 }
 
+// https://lospec.com/palette-list/gems-in-the-forrest
+export const BRUSH_COLORS = [
+    "#ff3282",
+    "#5b1284",
+    "#3171ee",
+    "#4ff5fc",
+    "#aefdd5",
+];
+
+export type BrushSizeType = "sm" | "md" | "lg";
+
+export type BrushSize = {
+    sz: BrushSizeType;
+    px: number;
+};
+
+export const BRUSH_SIZES: BrushSize[] = [
+    { sz: "sm", px: 22 },
+    { sz: "md", px: 32 },
+    { sz: "lg", px: 42 },
+];
+
+export type BrushModeType = "draw" | "move";
+
+export type BrushMode = {
+    mode: BrushModeType;
+    icon: string;
+};
+
+export const BRUSH_MODES: BrushMode[] = [
+    { mode: "draw", icon: "🖌️" },
+    { mode: "move", icon: "🤚" },
+];
+
+export type Vec2Like = {
+    x: number;
+    y: number;
+};
+
 export function buttonStateToString(state: ButtonState): string | undefined {
     switch (state) {
         case ButtonState.Pressed:
@@ -178,6 +217,7 @@ export type UserInfo = {
     id: string;
     slot: number;
     role: ClientRole;
+    kv?: Map<string, string>;
 };
 
 export type Presence = {

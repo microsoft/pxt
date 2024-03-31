@@ -110,9 +110,7 @@ export default function Render() {
     const getTargetLogo = (targetTheme: pxt.AppTheme) => {
         return (
             <div
-                className={
-                    "tw-flex tw-pt-[2px] tw-ml-3 tw-cursor-pointer"
-                }
+                className={"tw-flex tw-pt-[2px] tw-ml-3 tw-cursor-pointer"}
                 onClick={onHomeClicked}
             >
                 {targetTheme.useTextLogo ? (
@@ -136,7 +134,9 @@ export default function Render() {
                 ) : targetTheme.logo || targetTheme.portraitLogo ? (
                     <img
                         className="logo"
-                        src={resourceUrl(targetTheme.logo || targetTheme.portraitLogo)}
+                        src={resourceUrl(
+                            targetTheme.logo || targetTheme.portraitLogo
+                        )}
                         alt={lf("{0} Logo", targetTheme.boardName)}
                     />
                 ) : (

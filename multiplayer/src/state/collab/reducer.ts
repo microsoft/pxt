@@ -7,24 +7,59 @@ export function reducer(state: CollabState, action: CollabAction): CollabState {
             return {
                 ...initialState,
             };
-        case "PLAYER_JOINED":
+        case "PLAYER_JOINED": {
             return {
                 ...state,
                 players: {
                     ...state.players,
                     [action.playerId]: {
                         clientId: action.playerId,
-                        name: "Player " + action.playerId,
-                        xp: 0,
-                        yp: 0,
+                        kv: action.kv ? action.kv : new Map(),
                     },
                 },
             };
-        case "PLAYER_LEFT":
+        }
+        case "PLAYER_LEFT": {
             const { [action.playerId]: _, ...players } = state.players;
             return {
                 ...state,
                 players,
             };
+        }
+        case "SET_PLAYER_VALUE": {
+            const player = state.players[action.playerId];
+            if (player) {
+                return {
+                    ...state,
+                    players: {
+                        ...state.players,
+                        [action.playerId]: {
+                            ...player,
+                            kv: new Map(player.kv).set(
+                                action.key,
+                                action.value
+                            ),
+                        },
+                    },
+                };
+            } else {
+                return state;
+            }
+        }
+        case "UPDATE_PRESENCE": {
+            const players = { ...state.players };
+            action.presence.users.forEach(user => {
+                const player = players[user.id];
+                if (!player) return;
+                players[user.id] = {
+                    ...player,
+                    kv: user.kv ? user.kv : player.kv,
+                };
+            });
+            return {
+                ...state,
+                players,
+            };
+        }
     }
 }

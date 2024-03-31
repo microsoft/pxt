@@ -1,4 +1,4 @@
-import { CollabPlayer } from "../../services/collabClient"
+import { CollabPlayer } from "../../services/collabClient";
 
 export type CollabState = {
     players: { [playerId: string]: CollabPlayer };

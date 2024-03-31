@@ -1,7 +1,7 @@
-import { createContext, useEffect, useReducer } from 'react';
-import { CollabState, initialState } from './state';
-import { reducer } from './reducer';
-import { CollabAction } from './actions';
+import { createContext, useEffect, useReducer } from "react";
+import { CollabState, initialState } from "./state";
+import { reducer } from "./reducer";
+import { CollabAction } from "./actions";
 
 let state: CollabState;
 let dispatch: React.Dispatch<CollabAction>;
@@ -20,7 +20,9 @@ const initialCollabContextProps: CollabContextProps = {
     dispatch: undefined!,
 };
 
-export const CollabContext = createContext<CollabContextProps>(initialCollabContextProps);
+export const CollabContext = createContext<CollabContextProps>(
+    initialCollabContextProps
+);
 
 export function CollabStateProvider(
     props: React.PropsWithChildren<{}>
@@ -46,4 +48,3 @@ export function CollabStateProvider(
         </CollabContext.Provider>
     );
 }
-

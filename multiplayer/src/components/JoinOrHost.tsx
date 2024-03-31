@@ -148,8 +148,12 @@ export default function Render() {
                             return (
                                 <HostGameButton
                                     shareId={game.shareId}
-                                    title={pxt.Util.rlf(`{id:game-title}${game.title}`)}
-                                    subtitle={pxt.Util.rlf(`{id:game-subtitle}${game.subtitle}`)}
+                                    title={pxt.Util.rlf(
+                                        `{id:game-title}${game.title}`
+                                    )}
+                                    subtitle={pxt.Util.rlf(
+                                        `{id:game-subtitle}${game.subtitle}`
+                                    )}
                                     image={resourceUrl(game.image)}
                                     key={i}
                                 />

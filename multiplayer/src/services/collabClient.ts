@@ -19,6 +19,7 @@ import {
     playerLeftAsync,
 } from "../epics";
 import * as CollabEpics from "../epics/collab";
+import { jsonReplacer, jsonReviver } from "../util";
 
 const COLLAB_HOST_PROD = "https://mp.makecode.com";
 const COLLAB_HOST_STAGING = "https://multiplayer.staging.pxt.io";
@@ -36,15 +37,14 @@ const COLLAB_HOST = (() => {
 
 export type CollabPlayer = {
     clientId: string;
-    xp: number;
-    yp: number;
-    name: string;
+    kv: Map<string, string>;
 };
 
 class CollabClient {
     sock: Socket | undefined;
     screen: Buffer | undefined;
     clientRole: ClientRole | undefined;
+    clientId: string | undefined;
     sessOverReason: SessionOverReason | undefined;
     receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
 
@@ -63,7 +63,7 @@ class CollabClient {
                 if (err) pxt.log("Error sending message. " + err.toString());
             });
         } else {
-            const payload = JSON.stringify(msg);
+            const payload = JSON.stringify(msg, jsonReplacer);
             this.sock?.send(payload, {}, (err: any) => {
                 if (err) pxt.log("Error sending message. " + err.toString());
             });
@@ -83,7 +83,7 @@ class CollabClient {
             //-------------------------------------------------
             // Handle JSON message
             //--
-            const msg = JSON.parse(payload) as Protocol.Message;
+            const msg = JSON.parse(payload, jsonReviver) as Protocol.Message;
             switch (msg.type) {
                 case "joined":
                     return await this.recvJoinedMessageAsync(msg);
@@ -93,6 +93,10 @@ class CollabClient {
                     return await this.recvPlayerJoinedMessageAsync(msg);
                 case "player-left":
                     return await this.recvPlayerLeftMessageAsync(msg);
+                case "set-player-value":
+                    return await this.recvSetPlayerValueMessageAsync(msg);
+                case "set-session-value":
+                    return await this.recvSetSessionValueMessageAsync(msg);
             }
         } else {
             throw new Error(`Unknown payload: ${payload}`);
@@ -267,7 +271,7 @@ class CollabClient {
         pxt.debug(
             `Server said we're joined as "${msg.role}" in slot "${msg.slot}"`
         );
-        const { role } = msg;
+        const { role, clientId } = msg;
 
         this.clientRole = role;
 
@@ -287,11 +291,26 @@ class CollabClient {
             //await this.sendCurrentScreenAsync(); // Workaround for server sometimes not sending the current screen to new players. Needs debugging.
         }
         await playerJoinedAsync(msg.clientId);
+        CollabEpics.recvPlayerJoined(msg.clientId);
     }
 
     private async recvPlayerLeftMessageAsync(msg: Protocol.PlayerLeftMessage) {
         pxt.debug("Server sent player joined");
         await playerLeftAsync(msg.clientId);
+        CollabEpics.recvPlayerLeft(msg.clientId);
+    }
+
+    private async recvSetPlayerValueMessageAsync(
+        msg: Protocol.SetPlayerValueMessage
+    ) {
+        pxt.debug(`Recv set player value: ${msg.key} = ${msg.value}`);
+        CollabEpics.recvSetPlayerValue(msg.clientId!, msg.key, msg.value);
+    }
+
+    private async recvSetSessionValueMessageAsync(
+        msg: Protocol.SetSessionValueMessage
+    ) {
+        pxt.debug(`Recv set session value: ${msg.key} = ${msg.value}`);
     }
 
     public kickPlayer(clientId: string) {
@@ -306,18 +325,43 @@ class CollabClient {
         this.sessOverReason = reason;
         destroyCollabClient();
     }
+
+    public setPlayerValue(key: string, value: string) {
+        const msg: Protocol.SetPlayerValueMessage = {
+            type: "set-player-value",
+            key,
+            value,
+        };
+        this.sendMessage(msg);
+    }
+
+    public setSessionValue(key: string, value: string) {
+        const msg: Protocol.SetSessionValueMessage = {
+            type: "set-session-value",
+            key,
+            value,
+        };
+        this.sendMessage(msg);
+    }
 }
 
-let collabClient: CollabClient | undefined;
+let _collabClient: CollabClient | undefined;
+
+function ensureCollabClient(): CollabClient {
+    if (!_collabClient) {
+        _collabClient = new CollabClient();
+    }
+    return _collabClient;
+}
 
 function destroyCollabClient() {
-    collabClient?.destroy();
-    collabClient = undefined;
+    _collabClient?.destroy();
+    _collabClient = undefined;
 }
 
 export async function hostCollabAsync(): Promise<CollabJoinResult> {
     destroyCollabClient();
-    collabClient = new CollabClient();
+    const collabClient = ensureCollabClient();
     const collabInfo = await collabClient.hostCollabAsync();
     return collabInfo;
 }
@@ -326,22 +370,39 @@ export async function joinCollabAsync(
     joinCode: string
 ): Promise<CollabJoinResult> {
     destroyCollabClient();
-    collabClient = new CollabClient();
+    const collabClient = ensureCollabClient();
     const collabInfo = await collabClient.joinCollabAsync(joinCode);
     return collabInfo;
 }
 
 export async function leaveCollabAsync(reason: SessionOverReason) {
+    const collabClient = ensureCollabClient();
     await collabClient?.leaveCollabAsync(reason);
     destroyCollabClient();
 }
 
 export function kickPlayer(clientId: string) {
+    const collabClient = ensureCollabClient();
     collabClient?.kickPlayer(clientId);
 }
 
 export function collabOver(reason: SessionOverReason) {
+    const collabClient = ensureCollabClient();
     collabClient?.collabOver(reason);
+}
+
+export function setPlayerValue(key: string, value: string) {
+    const collabClient = ensureCollabClient();
+    collabClient?.setPlayerValue(key, value);
+}
+
+export function setSessionValue(key: string, value: string) {
+    const collabClient = ensureCollabClient();
+    collabClient?.setSessionValue(key, value);
+}
+
+export function getClientId() {
+    return _collabClient?.clientId;
 }
 
 export function destroy() {
@@ -400,6 +461,20 @@ namespace Protocol {
         reason: SessionOverReason;
     };
 
+    export type SetPlayerValueMessage = MessageBase & {
+        type: "set-player-value";
+        key: string;
+        value: string;
+        clientId?: string; // only set on received messages
+    };
+
+    export type SetSessionValueMessage = MessageBase & {
+        type: "set-session-value";
+        key: string;
+        value: string;
+        clientId?: string; // only set on received messages
+    };
+
     export type Message =
         | ConnectMessage
         | PresenceMessage
@@ -407,5 +482,7 @@ namespace Protocol {
         | PlayerJoinedMessage
         | PlayerLeftMessage
         | KickPlayerMessage
-        | CollabOverMessage;
+        | CollabOverMessage
+        | SetPlayerValueMessage
+        | SetSessionValueMessage;
 }

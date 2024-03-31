@@ -64,7 +64,9 @@ export default function Render() {
     useEffect(() => {
         const msgHandler = (
             msg: MessageEvent<
-                SimMultiplayer.Message | pxsim.SimulatorStateMessage | pxsim.SimulatorTopLevelCodeFinishedMessage
+                | SimMultiplayer.Message
+                | pxsim.SimulatorStateMessage
+                | pxsim.SimulatorTopLevelCodeFinishedMessage
             >
         ) => {
             const { data } = msg;

@@ -43,7 +43,12 @@ export async function joinCollabAsync(joinCode: string | undefined) {
                 })
             );
             dispatch(setClientRole("guest"));
-            dispatch(setCollabInfo(joinResult));
+            dispatch(
+                setCollabInfo({
+                    joinCode,
+                    ...joinResult,
+                })
+            );
             dispatch(setNetMode("connected"));
         } else {
             if (joinResult.statusCode === HTTP_SESSION_NOT_FOUND) {
