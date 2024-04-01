@@ -41,7 +41,7 @@ import { simDriver } from "./simHost";
 const GAME_HOST_PROD = "https://mp.makecode.com";
 const GAME_HOST_STAGING = "https://multiplayer.staging.pxt.io";
 const GAME_HOST_LOCALHOST = "http://localhost:8082";
-const GAME_HOST_DEV = GAME_HOST_LOCALHOST;
+const GAME_HOST_DEV = GAME_HOST_STAGING;
 const GAME_HOST = (() => {
     if (pxt.BrowserUtils.isLocalHostDev()) {
         return GAME_HOST_DEV;

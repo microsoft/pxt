@@ -17,9 +17,9 @@ import * as CollabEpics from "../epics/collab";
 import { jsonReplacer, jsonReviver } from "../util";
 
 const COLLAB_HOST_PROD = "https://mp.makecode.com";
-const COLLAB_HOST_STAGING = "https://multiplayer.staging.pxt.io";
+const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
 const COLLAB_HOST_LOCALHOST = "http://localhost:8082";
-const COLLAB_HOST_DEV = COLLAB_HOST_LOCALHOST;
+const COLLAB_HOST_DEV = COLLAB_HOST_STAGING;
 const COLLAB_HOST = (() => {
     if (pxt.BrowserUtils.isLocalHostDev()) {
         return COLLAB_HOST_DEV;
@@ -289,22 +289,22 @@ class CollabClient {
 
     private async recvSetPlayerValueMessageAsync(msg: Protocol.SetPlayerValueMessage) {
         //pxt.debug(`Recv set player value: ${msg.key} = ${msg.value}`);
-        CollabEpics.recvSetPlayerValue(msg.clientId!, msg.key, msg.value);
+        CollabEpics.recvSetPlayerValue(msg.key, msg.value, msg.clientId!);
     }
 
     private async recvDelPlayerValueMessageAsync(msg: Protocol.DelPlayerValueMessage) {
         //pxt.debug(`Recv del player value: ${msg.key}`);
-        CollabEpics.recvDelPlayerValue(msg.clientId!, msg.key);
+        CollabEpics.recvDelPlayerValue(msg.key, msg.clientId!);
     }
 
     private async recvSetSessionValueMessageAsync(msg: Protocol.SetSessionValueMessage) {
         //pxt.debug(`Recv set session value: ${msg.key} = ${msg.value}`);
-        CollabEpics.recvSetSessionValue(msg.key, msg.value);
+        CollabEpics.recvSetSessionValue(msg.key, msg.value, msg.clientId!);
     }
 
     private async recvDelSessionValueMessageAsync(msg: Protocol.DelSessionValueMessage) {
         //pxt.debug(`Recv del session value: ${msg.key}`);
-        CollabEpics.recvDelSessionValue(msg.key);
+        CollabEpics.recvDelSessionValue(msg.key, msg.clientId!);
     }
 
     public kickPlayer(clientId: string) {
@@ -329,11 +329,27 @@ class CollabClient {
         this.sendMessage(msg);
     }
 
+    public delPlayerValue(key: string) {
+        const msg: Protocol.DelPlayerValueMessage = {
+            type: "del-player-value",
+            key,
+        };
+        this.sendMessage(msg);
+    }
+
     public setSessionValue(key: string, value: string) {
         const msg: Protocol.SetSessionValueMessage = {
             type: "set-session-value",
             key,
             value,
+        };
+        this.sendMessage(msg);
+    }
+
+    public delSessionValue(key: string) {
+        const msg: Protocol.DelSessionValueMessage = {
+            type: "del-session-value",
+            key,
         };
         this.sendMessage(msg);
     }
@@ -388,9 +404,19 @@ export function setPlayerValue(key: string, value: string) {
     collabClient?.setPlayerValue(key, value);
 }
 
+export function delPlayerValue(key: string) {
+    const collabClient = ensureCollabClient();
+    collabClient?.delPlayerValue(key);
+}
+
 export function setSessionValue(key: string, value: string) {
     const collabClient = ensureCollabClient();
     collabClient?.setSessionValue(key, value);
+}
+
+export function delSessionValue(key: string) {
+    const collabClient = ensureCollabClient();
+    collabClient?.delSessionValue(key);
 }
 
 export function getClientId() {
@@ -471,11 +497,13 @@ namespace Protocol {
         type: "set-session-value";
         key: string;
         value: string;
+        clientId?: string; // only set on received messages
     };
 
     export type DelSessionValueMessage = MessageBase & {
         type: "del-session-value";
         key: string;
+        clientId?: string; // only set on received messages
     };
 
     export type Message =

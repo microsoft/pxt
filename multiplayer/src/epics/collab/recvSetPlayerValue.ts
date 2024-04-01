@@ -1,15 +1,16 @@
 import { getCollabCanvas } from "../../services/collabCanvas";
 import { collabStateAndDispatch } from "../../state/collab";
 import * as CollabActions from "../../state/collab/actions";
+import * as collabClient from "../../services/collabClient";
 
-export function recvSetPlayerValue(playerId: string | undefined, key: string, value: string) {
-    if (!playerId) return;
+export function recvSetPlayerValue(key: string, value: string, senderId: string) {
+    if (senderId === collabClient.getClientId()) return;
     const { dispatch } = collabStateAndDispatch();
-    dispatch(CollabActions.setPlayerValue(playerId, key, value));
+    dispatch(CollabActions.setPlayerValue(senderId, key, value));
     if (key === "position") {
         const pos = JSON.parse(value);
-        getCollabCanvas().updatePlayerSpritePosition(playerId, pos.x, pos.y);
+        getCollabCanvas().updatePlayerSpritePosition(senderId, pos.x, pos.y);
     } else if (key === "imgId") {
-        getCollabCanvas().updatePlayerSpriteImage(playerId, parseInt(JSON.parse(value)));
+        getCollabCanvas().updatePlayerSpriteImage(senderId, parseInt(JSON.parse(value)));
     }
 }

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import { Button } from "../../../react-common/components/controls/Button";
 import { leaveCollabAsync } from "../epics/leaveCollabAsync";
@@ -6,14 +6,17 @@ import { BRUSH_COLORS, BRUSH_SIZES, BrushSize, Vec2Like } from "../types";
 import { getCollabCanvas } from "../services/collabCanvas";
 import * as collabClient from "../services/collabClient";
 import * as CollabEpics from "../epics/collab";
+import * as CollabActions from "../state/collab/actions";
 import { dist, distSq, jsonReplacer } from "../util";
 import { BRUSH_PROPS, PLAYER_SPRITE_DATAURLS } from "../constants";
 import { nanoid } from "nanoid";
+import { CollabContext } from "../state/collab";
 
 export interface CollabPageProps {}
 
 export default function Render(props: CollabPageProps) {
     const { state } = useContext(AppStateContext);
+    const { dispatch: collabDispatch } = useContext(CollabContext);
     const { netMode, clientRole, collabInfo } = state;
 
     const [canvasContainer, setCanvasContainer] = useState<HTMLDivElement | null>(null);
@@ -22,11 +25,38 @@ export default function Render(props: CollabPageProps) {
     const [selectedIconIndex, setSelectedIconIndex] = useState(0);
     const [mouseDown, setMouseDown] = useState(false);
     const [lastPosition, setLastPosition] = useState<Vec2Like>({ x: 0, y: 0 });
+    const [brushAlpha, setBrushAlpha] = useState(0.5);
+    const [alphaSliderRef, setAlphaSliderRef] = useState<HTMLDivElement | null>(null);
+    const undoStack = useRef(new Array<Set<string>>());
 
     useEffect(() => {
         const collabCanvas = getCollabCanvas();
         collabCanvas.reset();
         collabCanvas.addPlayerSprite(collabClient.getClientId()!, 0, 0, 0);
+    }, []);
+
+    const undo = () => {
+        const undoSet = undoStack.current.pop();
+        if (undoSet) {
+            undoSet.forEach(spriteId => {
+                getCollabCanvas().removePaintSprite(spriteId);
+                collabDispatch(CollabActions.delSessionValue("s:" + spriteId));
+                collabClient.delSessionValue("s:" + spriteId);
+            });
+        }
+    };
+
+    useEffect(() => {
+        const handleKeydown = (e: KeyboardEvent) => {
+            // handle ctrl-z
+            if (e.key === "z" && e.ctrlKey) {
+                undo();
+            }
+        };
+        window.addEventListener("keydown", handleKeydown);
+        return () => {
+            window.removeEventListener("keydown", handleKeydown);
+        };
     }, []);
 
     useEffect(() => {
@@ -44,14 +74,26 @@ export default function Render(props: CollabPageProps) {
             if (canvasMouseY >= canvasContainer.scrollTop + canvasContainer.clientHeight) return;
             setMouseDown(true);
             setLastPosition({ x: canvasMouseX, y: canvasMouseY });
-            getCollabCanvas().addPaintSprite(canvasMouseX, canvasMouseY, selectedSizeIndex, selectedColorIndex);
+            const spriteId = nanoid();
+            const undoSet = new Set<string>();
+            undoSet.add(spriteId);
+            undoStack.current.push(undoSet);
+            getCollabCanvas().addPaintSprite(
+                spriteId,
+                canvasMouseX,
+                canvasMouseY,
+                selectedSizeIndex,
+                selectedColorIndex,
+                brushAlpha
+            );
             collabClient.setSessionValue(
-                "s:" + nanoid(),
+                "s:" + spriteId,
                 JSON.stringify({
                     x: canvasMouseX,
                     y: canvasMouseY,
                     s: selectedSizeIndex,
                     c: selectedColorIndex,
+                    a: brushAlpha,
                 })
             );
         };
@@ -76,28 +118,32 @@ export default function Render(props: CollabPageProps) {
             const newPosStr = JSON.stringify(newPos);
             // Send position to server
             collabClient.setPlayerValue("position", newPosStr);
-            // Update local player position in state
-            CollabEpics.recvSetPlayerValue(collabClient.getClientId(), "position", newPosStr);
+            // Update local player position in state (may not be needed)
+            collabDispatch(CollabActions.setPlayerValue(collabClient.getClientId()!, "position", newPosStr));
 
             if (!mouseDown) return;
+            const undoSet = undoStack.current[undoStack.current.length - 1];
             const brushSize = BRUSH_PROPS[selectedSizeIndex].size;
-            const brushStep = brushSize / 3;
+            const brushStep = brushSize / 5;
             const posDist = dist(lastPosition, newPos);
             if (posDist > brushStep) {
                 const numSteps = Math.ceil(posDist / brushStep);
                 const stepX = (newPos.x - lastPosition.x) / numSteps;
                 const stepY = (newPos.y - lastPosition.y) / numSteps;
                 for (let i = 0; i < numSteps; i++) {
+                    const spriteId = nanoid();
+                    undoSet.add(spriteId);
                     const x = lastPosition.x + stepX * i;
                     const y = lastPosition.y + stepY * i;
-                    getCollabCanvas().addPaintSprite(x, y, selectedSizeIndex, selectedColorIndex);
+                    getCollabCanvas().addPaintSprite(spriteId, x, y, selectedSizeIndex, selectedColorIndex, brushAlpha);
                     collabClient.setSessionValue(
-                        "s:" + nanoid(),
+                        "s:" + spriteId,
                         JSON.stringify({
                             x,
                             y,
                             s: selectedSizeIndex,
                             c: selectedColorIndex,
+                            a: brushAlpha,
                         })
                     );
                 }
@@ -112,7 +158,7 @@ export default function Render(props: CollabPageProps) {
             window.removeEventListener("mouseup", handleMouseUp);
             window.removeEventListener("mousemove", handleMouseMove);
         };
-    }, [mouseDown, canvasContainer, lastPosition, selectedColorIndex, selectedSizeIndex]);
+    }, [mouseDown, canvasContainer, lastPosition, selectedColorIndex, selectedSizeIndex, brushAlpha]);
 
     useEffect(() => {
         if (canvasContainer && !canvasContainer.firstChild) {
@@ -126,6 +172,36 @@ export default function Render(props: CollabPageProps) {
             }
         };
     }, [canvasContainer]);
+
+    useEffect(() => {
+        let mouseIsDown = false;
+        if (!alphaSliderRef) return;
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!mouseIsDown) return;
+            if (!alphaSliderRef) return;
+            let alphaMouseY = e.clientY;
+            alphaMouseY -= alphaSliderRef.offsetTop;
+            alphaMouseY += alphaSliderRef.scrollTop;
+            if (alphaMouseY < alphaSliderRef.scrollTop) return;
+            if (alphaMouseY >= alphaSliderRef.scrollTop + alphaSliderRef.clientHeight) return;
+            setBrushAlpha(alphaMouseY / alphaSliderRef.clientHeight);
+        };
+        const handleMouseDown = (e: MouseEvent) => {
+            mouseIsDown = true;
+            handleMouseMove(e);
+        };
+        const handleMouseUp = (e: MouseEvent) => {
+            mouseIsDown = false;
+        };
+        alphaSliderRef.addEventListener("mousedown", handleMouseDown);
+        alphaSliderRef.addEventListener("mousemove", handleMouseMove);
+        alphaSliderRef.addEventListener("mouseup", handleMouseUp);
+        return () => {
+            alphaSliderRef?.removeEventListener("mousedown", handleMouseDown);
+            alphaSliderRef?.removeEventListener("mousemove", handleMouseMove);
+            alphaSliderRef?.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [alphaSliderRef]);
 
     if (!collabInfo) return null;
     if (netMode !== "connected") return null;
@@ -150,6 +226,14 @@ export default function Render(props: CollabPageProps) {
 
     const handleCanvasContainerRef = (ref: HTMLDivElement) => {
         setCanvasContainer(ref);
+    };
+
+    const handleAlphaSliderRef = (ref: HTMLDivElement) => {
+        setAlphaSliderRef(ref);
+    };
+
+    const handleUndoClick = () => {
+        undo();
     };
 
     const SpriteRow: React.FC = ({ children }) => <div className="tw-flex tw-flex-row tw-gap-1">{children}</div>;
@@ -193,20 +277,36 @@ export default function Render(props: CollabPageProps) {
                         ></div>
                     ))}
                     <div className="tw-h-4"></div>
-                    {BRUSH_SIZES.map((bs, i) => (
+                    <div className="tw-flex tw-flex-row tw-gap-1">
+                        <div className="tw-flex tw-flex-col tw-gap-1 tw-items-center">
+                            {BRUSH_SIZES.map((bs, i) => (
+                                <div
+                                    key={bs.sz}
+                                    className="tw-rounded-full tw-cursor-pointer tw-border-slate-800 tw-border"
+                                    style={{
+                                        backgroundColor: BRUSH_COLORS[selectedColorIndex],
+                                        width: bs.px + "px",
+                                        height: bs.px + "px",
+                                        outline: i === selectedSizeIndex ? "3px solid " + SELECTED_COLOR : undefined,
+                                        outlineOffset: "1px",
+                                    }}
+                                    onClick={() => brushSizeClicked(bs, i)}
+                                ></div>
+                            ))}
+                        </div>
                         <div
-                            key={bs.sz}
-                            className="tw-rounded-full tw-cursor-pointer tw-border-slate-800 tw-border"
+                            ref={handleAlphaSliderRef}
+                            className="tw-relative tw-w-4 tw-h-full tw-rounded-full tw-cursor-pointer tw-border-slate-800 tw-border"
                             style={{
-                                backgroundColor: BRUSH_COLORS[selectedColorIndex],
-                                width: bs.px + "px",
-                                height: bs.px + "px",
-                                outline: i === selectedSizeIndex ? "3px solid " + SELECTED_COLOR : undefined,
-                                outlineOffset: "1px",
+                                background: `linear-gradient(to bottom, transparent, ${BRUSH_COLORS[selectedColorIndex]}`,
                             }}
-                            onClick={() => brushSizeClicked(bs, i)}
-                        ></div>
-                    ))}
+                        >
+                            <div
+                                className="tw-absolute tw-w-full tw-h-1 tw-bg-black"
+                                style={{ top: brushAlpha * 100 + "%" }}
+                            ></div>
+                        </div>
+                    </div>
                     <div className="tw-h-4"></div>
                     {[0, 2, 4].map(imgId => (
                         <SpriteRow key={imgId}>
@@ -214,6 +314,10 @@ export default function Render(props: CollabPageProps) {
                             <SpriteImg imgId={imgId + 1} />
                         </SpriteRow>
                     ))}
+                    <div className="tw-grow"></div>
+                    <div>
+                        <Button label="Undo" title="Undo" onClick={handleUndoClick}></Button>
+                    </div>
                 </div>
             </div>
             <div

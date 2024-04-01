@@ -200,21 +200,31 @@ class CollabCanvas {
         }
     }
 
-    public addPaintSprite(x: number, y: number, brushIndex: number, colorIndex: number) {
+    public addPaintSprite(key: string, x: number, y: number, brushIndex: number, colorIndex: number, alpha: number) {
         const sprite = new Pixi.Sprite();
         const brush = BRUSH_PROPS[brushIndex];
         if (!brush) return;
         if (!this.brushTextures.has(brush.name)) return;
         const color = BRUSH_COLORS[colorIndex];
         if (!color) return;
+        sprite.name = key;
         sprite.texture = this.brushTextures.get(brush.name)!;
         sprite.anchor.set(0.5);
         sprite.position.set(x, y);
         sprite.width = brush.size;
         sprite.height = brush.size;
         sprite.tint = new TinyColor(color).toNumber();
+        sprite.alpha = alpha;
+        sprite.blendMode = Pixi.BLEND_MODES.NORMAL;
         sprite.zIndex = 0; // behind players
         this.root.addChild(sprite as any);
+    }
+
+    public removePaintSprite(key: string) {
+        const sprite = this.root.children.find(child => child.name === key);
+        if (sprite) {
+            this.root.removeChild(sprite as any);
+        }
     }
 }
 
