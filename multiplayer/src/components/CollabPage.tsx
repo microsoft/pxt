@@ -25,7 +25,7 @@ export default function Render(props: CollabPageProps) {
     const [selectedIconIndex, setSelectedIconIndex] = useState(0);
     const [mouseDown, setMouseDown] = useState(false);
     const [lastPosition, setLastPosition] = useState<Vec2Like>({ x: 0, y: 0 });
-    const [brushAlpha, setBrushAlpha] = useState(0.5);
+    const [brushAlpha, setBrushAlpha] = useState(0.25);
     const [alphaSliderRef, setAlphaSliderRef] = useState<HTMLDivElement | null>(null);
     const undoStack = useRef(new Array<Set<string>>());
 
