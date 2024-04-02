@@ -44,3 +44,6 @@ export const dispatchChangeAssetName = (name: string) => ({ type: actions.CHANGE
 
 export const dispatchOpenAsset = (asset: pxt.Asset, keepPast: boolean, gallery?: GalleryTile[]) => ({ type: actions.OPEN_ASSET, asset, keepPast, gallery })
 export const dispatchSetFrames = (frames: pxt.sprite.ImageState[]) => ({ type: actions.SET_FRAMES, frames });
+
+export const dispatchRefreshTileset = (tileset: string[], frames: pxt.editor.AnimatedTile[]) => ({ type: actions.REFRESH_TILESET, tileset, frames });
+export const dispatchSetSelectedTile = (tileId: string) => ({ type: actions.SET_SELECTED_TILE, tileId });

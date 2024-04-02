@@ -185,7 +185,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                             onTileEditorOpenClose={this.onTileEditorOpenClose}
                             lightMode={this.lightMode}
                             hideDoneButton={this.props.hideDoneButton}
-                            hideAssetName={!pxt.appTarget?.appTheme?.assetEditor}
+                            hideAssetName={true}
                         />
                     }
                     <ImageEditorGallery
@@ -302,6 +302,18 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     onResize() {
         if (this.ref) {
             this.ref.onResize();
+        }
+    }
+
+    updateTileset(tileset: string[], frames: pxt.editor.AnimatedTile[]) {
+        if ((this.ref as ImageEditor).updateTileset) {
+            (this.ref as ImageEditor).updateTileset(tileset, frames);
+        }
+    }
+
+    setSelectedTile(tileId: string) {
+        if ((this.ref as ImageEditor).setSelectedTile) {
+            (this.ref as ImageEditor).setSelectedTile(tileId);
         }
     }
 

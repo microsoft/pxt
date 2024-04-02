@@ -5,6 +5,7 @@ import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 import { AppStateContext } from "../state/appStateContext";
 import { Ticks } from "../constants";
+import { updateProjectFiles } from "../services/makecodeEditorService";
 
 interface HeaderBarProps {}
 
@@ -88,6 +89,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         }
     };
 
+    const onPlayCliked = () => {
+        updateProjectFiles();
+    }
+
     return (
         <MenuBar className={css["header"]} ariaLabel={lf("Header")} role="navigation">
             <div className={css["left-menu"]}>
@@ -96,6 +101,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             </div>
 
             <div className={css["right-menu"]}>
+                 <Button
+                    className="menu-button"
+                    leftIcon="fas fa-play large"
+                    title={lf("Load assets in code editor")}
+                    onClick={onPlayCliked}
+                />
                 <Button
                     className="menu-button"
                     leftIcon="fas fa-home large"

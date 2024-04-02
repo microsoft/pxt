@@ -41,6 +41,7 @@ export interface ImageCanvasProps {
     prevFrame?: pxt.sprite.ImageState;
     lightMode?: boolean;
     tilesetRevision: number;
+    animatedTiles?: pxt.editor.AnimatedTile[];
 
     suppressShortcuts: boolean;
 }
@@ -88,6 +89,8 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     protected hasHover: boolean;
 
     protected waitingToZoom: boolean;
+
+    protected interval: number;
 
     render() {
         const imageState = this.getImageState();
@@ -186,6 +189,14 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
         this.redraw();
         this.updateBackground();
+
+        if (this.props.animatedTiles) {
+            clearInterval(this.interval);
+
+            this.interval = setInterval(() => {
+                this.redraw();
+            }, 50);
+        }
     }
 
     componentWillUnmount() {
@@ -745,6 +756,15 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         return tileImage;
     }
 
+    protected generateAnimatedTile(tile: pxt.editor.AnimatedTile, index: number, tileset: pxt.TileSet) {
+        const tileImage = document.createElement("canvas");
+        tileImage.width = tileset.tileWidth;
+        tileImage.height = tileset.tileWidth;
+        this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.frames[index]), 0, 0, false, !this.props.lightMode, tileImage);
+        this.tileCache[tileKey(tile, index)] = tileImage;
+        return tileImage;
+    }
+
     protected drawTilemap(tilemap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = false, alpha = !this.props.lightMode, target = this.canvas) {
         const { tilemapState: { tileset } } = this.props;
 
@@ -763,10 +783,25 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             for (let y = 0; y < tilemap.height; y++) {
                 index = tilemap.get(x, y);
                 if (index && index < tileset.tiles.length) {
-                    tileImage = this.tileCache[tileset.tiles[index].id];
+                    if (this.props.animatedTiles) {
+                        const id = this.props.tilemapState.tileset.tiles[index].id;
+                        const animatedTile = this.props.animatedTiles.find(t => t.tileId === id);
 
+                        if (animatedTile) {
+                            const frameIndex = Math.floor(Date.now() / animatedTile.interval) % animatedTile.frames.length;
+
+                            tileImage = this.tileCache[tileKey(animatedTile, frameIndex)];
+
+                            if (!tileImage) {
+                                tileImage = this.generateAnimatedTile(animatedTile, frameIndex, this.props.tilemapState.tileset);
+                            }
+                        }
+                    }
                     if (!tileImage) {
-                        tileImage = this.generateTile(index, tileset);
+                        tileImage = this.tileCache[this.props.tilemapState.tileset.tiles[index].id];
+                        if (!tileImage) {
+                            tileImage = this.generateTile(index, this.props.tilemapState.tileset);
+                        }
                     }
 
                     if (!tileImage) {
@@ -796,10 +831,29 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             if (this.props.isTilemap && !isDrawingWalls) {
                 if (color >= this.props.tilemapState.tileset.tiles.length) return;
 
-                let tileImage = this.tileCache[this.props.tilemapState.tileset.tiles[color].id];
-                if (!tileImage) {
-                    tileImage = this.generateTile(color, this.props.tilemapState.tileset);
+                let tileImage: HTMLCanvasElement;
+
+                if (this.props.animatedTiles) {
+                    const id = this.props.tilemapState.tileset.tiles[color].id;
+                    const animatedTile = this.props.animatedTiles.find(t => t.tileId === id);
+
+                    if (animatedTile) {
+                        const index = Math.floor(Date.now() / animatedTile.interval) % animatedTile.frames.length;
+
+                        tileImage = this.tileCache[tileKey(animatedTile, index)];
+
+                        if (!tileImage) {
+                            tileImage = this.generateAnimatedTile(animatedTile, index, this.props.tilemapState.tileset);
+                        }
+                    }
                 }
+                if (!tileImage) {
+                    tileImage = this.tileCache[this.props.tilemapState.tileset.tiles[color].id];
+                    if (!tileImage) {
+                        tileImage = this.generateTile(color, this.props.tilemapState.tileset);
+                    }
+                }
+
 
                 if (!tileImage) {
                     // invalid tileset index
@@ -1131,6 +1185,10 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 }
 
+function tileKey(tile: pxt.editor.AnimatedTile, index: number) {
+    return `${tile.tileId}-${index}`
+}
+
 function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
     if (editor.isTilemap) {
         let state = (present as TilemapState);
@@ -1148,7 +1206,8 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
             isTilemap: editor.isTilemap,
             drawingMode: editor.drawingMode,
             gallery: editor.tileGallery,
-            tilesetRevision: editor.tilesetRevision
+            tilesetRevision: editor.tilesetRevision,
+            animatedTiles: state.animatedTiles
         } as ImageCanvasProps
     }
 

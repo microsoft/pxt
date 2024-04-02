@@ -12,7 +12,7 @@ import { Alert, AlertInfo } from './Alert';
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener, setStore } from './keyboardShortcuts';
 
-import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchOpenAsset, dispatchCloseTileEditor, dispatchDisableResize, dispatchChangeAssetName, dispatchChangeImageDimensions, dispatchSetFrames } from './actions/dispatch';
+import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchOpenAsset, dispatchCloseTileEditor, dispatchDisableResize, dispatchChangeAssetName, dispatchChangeImageDimensions, dispatchSetFrames, dispatchRefreshTileset, dispatchSetSelectedTile } from './actions/dispatch';
 import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util';
 import { Unsubscribe, Action } from 'redux';
@@ -247,6 +247,14 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             data: out,
             meta
         }
+    }
+
+    updateTileset(tileset: string[], frames: pxt.editor.AnimatedTile[]) {
+        this.dispatchOnStore(dispatchRefreshTileset(tileset, frames));
+    }
+
+    setSelectedTile(tileId: string) {
+        this.dispatchOnStore(dispatchSetSelectedTile(tileId));
     }
 
     getPersistentData(): ImageEditorSaveState {

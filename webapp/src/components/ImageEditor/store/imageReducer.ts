@@ -55,6 +55,7 @@ export interface TilemapState {
     kind: "Tilemap";
     asset?: pxt.Asset;
     tileset: pxt.TileSet;
+    animatedTiles?: pxt.editor.AnimatedTile[];
     aspectRatioLocked: boolean;
     tilemap: pxt.sprite.ImageState;
     colors: string[];
@@ -88,6 +89,8 @@ export interface EditorState {
     alert?: AlertInfo;
     resizeDisabled?: boolean;
     tilesetRevision: number; // used to track changes to the tileset and invalidate the tile cache in ImageCanvas
+
+    poughkeepsie?: boolean;
 }
 
 export interface GalleryTile {
@@ -172,7 +175,8 @@ const initialStore: ImageEditorStore = {
         onionSkinEnabled: false,
         overlayEnabled: true,
         tilesetRevision: 0,
-        isTilemap: false
+        isTilemap: false,
+        poughkeepsie: true
     }
 }
 
@@ -262,7 +266,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     tool: action.keepPast ? state.editor.tool : initialStore.editor.tool,
                     cursorSize: action.keepPast ? state.editor.cursorSize : initialStore.editor.cursorSize,
                     editedTiles: action.keepPast ? state.editor.editedTiles : undefined,
-                    deletedTiles: action.keepPast ? state.editor.deletedTiles : undefined
+                    deletedTiles: action.keepPast ? state.editor.deletedTiles : undefined,
+                    poughkeepsie: true
 
                 } : {
                     isTilemap: false,
@@ -275,7 +280,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     tool: action.keepPast ? state.editor.tool : initialStore.editor.tool,
                     onionSkinEnabled: action.keepPast ? state.editor.onionSkinEnabled : initialStore.editor.onionSkinEnabled,
                     cursorSize: action.keepPast ? state.editor.cursorSize : initialStore.editor.cursorSize,
-                    resizeDisabled: action.keepPast ? state.editor.resizeDisabled : initialStore.editor.resizeDisabled
+                    resizeDisabled: action.keepPast ? state.editor.resizeDisabled : initialStore.editor.resizeDisabled,
+                    poughkeepsie: true
                 },
                 store: {
                     ...state.store,
@@ -338,6 +344,68 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     tilesetRevision: state.editor.tilesetRevision + 1
                 }
             };
+        case actions.REFRESH_TILESET: {
+            const updateTileset = (state: TilemapState) => {
+                if (!state.tileset) return;
+
+                const idMap = new Map<number, string>();
+
+                for (let i = 0; i < state.tileset.tiles.length; i++) {
+                    idMap.set(i, state.tileset.tiles[i].id);
+                }
+
+                state.tileset.tiles = action.tileset.map((id: string) => pxt.react.getTilemapProject().lookupAsset(pxt.AssetType.Tile, id))
+
+                const tilemap = pxt.sprite.Tilemap.fromData(state.tilemap.bitmap);
+                for (let x = 0; x < tilemap.width; x++) {
+                    for (let y = 0; y < tilemap.height; y++) {
+                        if (!tilemap.get(x, y)) continue;
+                        const tileId = idMap.get(tilemap.get(x, y));
+
+                        tilemap.set(x, y, state.tileset.tiles.findIndex(t => t.id === tileId));
+                    }
+                }
+                state.tilemap.bitmap = tilemap.data();
+
+                if (state.tilemap.floating) {
+                    const tilemap = pxt.sprite.Tilemap.fromData(state.tilemap.floating.bitmap);
+                    for (let x = 0; x < tilemap.width; x++) {
+                        for (let y = 0; y < tilemap.height; y++) {
+                            if (!tilemap.get(x, y)) continue;
+                            const tileId = idMap.get(tilemap.get(x, y));
+
+                            tilemap.set(x, y, state.tileset.tiles.findIndex(t => t.id === tileId));
+                        }
+                    }
+                    state.tilemap.floating.bitmap = tilemap.data();
+                }
+
+                state.animatedTiles = action.frames;
+            }
+
+            updateTileset(state.store.present as TilemapState);
+            for (const entry of state.store.past as TilemapState[]) {
+                updateTileset(entry);
+            }
+            for (const entry of state.store.future as TilemapState[]) {
+                updateTileset(entry);
+            }
+            return {
+                ...state,
+                editor: {
+                    ...state.editor,
+                    tilesetRevision: state.editor.tilesetRevision + 1
+                }
+            };
+        }
+        case actions.SET_SELECTED_TILE:
+            return {
+                ...state,
+                editor: {
+                    ...state.editor,
+                    selectedColor: (state.store.present as TilemapState).tileset.tiles.findIndex(t => t.id === action.tileId)
+                }
+            }
         default:
             return {
                 ...state,

@@ -112,7 +112,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         />
                     </div>
                 }
-                { !singleFrame && <div className="image-editor-seperator"/> }
+                { !singleFrame && !resizeDisabled && <div className="image-editor-seperator"/> }
                 { !singleFrame && <div>
                     <IconButton
                         onClick={dispatchToggleOnionSkinEnabled}
@@ -312,7 +312,7 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         aspectRatioLocked: state.aspectRatioLocked,
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
-        resizeDisabled: state.asset?.type === pxt.AssetType.Tile,
+        resizeDisabled: state.asset?.type === pxt.AssetType.Tile || (state.asset?.type === pxt.AssetType.Animation && editor.poughkeepsie),
         assetName: state.asset?.meta?.displayName,
         hasUndo: !!past.length,
         hasRedo: !!future.length,

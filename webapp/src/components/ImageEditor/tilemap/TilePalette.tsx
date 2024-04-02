@@ -11,6 +11,7 @@ import { Pivot, PivotOption } from '../Pivot';
 import { IconButton } from '../Button';
 import { AlertOption } from '../Alert';
 import { createTile } from '../../../assets';
+import { classList } from '../../../../../react-common/components/util';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -26,6 +27,9 @@ export interface TilePaletteProps {
     gallery: GalleryTile[];
     galleryOpen: boolean;
     drawingMode: TileDrawingMode;
+
+    userTilesOnly?: boolean;
+    tilesetRevision: number;
 
     dispatchChangeSelectedColor: (index: number) => void;
     dispatchChangeBackgroundColor: (index: number) => void;
@@ -149,7 +153,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     render() {
-        const { colors, selected, backgroundColor, tileset, category, page, drawingMode, galleryOpen } = this.props;
+        const { colors, selected, backgroundColor, tileset, category, page, drawingMode, galleryOpen, userTilesOnly } = this.props;
 
         const fg = tileset.tiles[selected] ? tileset.tiles[selected].bitmap : emptyTile.data();
         const bg = tileset.tiles[backgroundColor] ? tileset.tiles[backgroundColor].bitmap : emptyTile.data();
@@ -161,11 +165,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         // Add an empty page for the tile create button if the last page is full
         if (!galleryOpen && this.categoryTiles.length % 16 === 0) totalPages++;
 
-        const showCreateTile = !galleryOpen && (totalPages === 1 || page === totalPages - 1);
+        const showCreateTile = !galleryOpen && (totalPages === 1 || page === totalPages - 1) && !userTilesOnly;
         const controlsDisabled = galleryOpen || !this.renderedTiles.some(t => !isGalleryTile(t) && t.index === selected);
 
         return <div className="tile-palette">
-            <div className="tile-palette-fg-bg">
+            <div className={classList("tile-palette-fg-bg", userTilesOnly && "user-tiles-only")}>
                 <div className={`tile-palette-swatch fg ${drawingMode == TileDrawingMode.Default ? 'selected' : ''}`} onClick={this.foregroundBackgroundClickHandler} role="button">
                     <TimelineFrame
                         frames={[{ bitmap: fg }]}
@@ -180,45 +184,51 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                         title={lf("Swap the background and foreground colors.")}
                         toggle={true} />
                 </div>
-                <div className={`tile-palette-swatch wall ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`}
-                    onClick={this.wallClickHandler}
-                    title={lf("Draw walls")}
-                    role="button">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
-                        <path d="M 968.49289,108.05443 771.30518,3.7581533 183.65231,166.0694 l 2.58963,202.62638 -156.247366,54.4148 0.872799,492.65563 179.544267,81.08212 758.08125,-222.4989 z M 765.6275,42.836761 916.79721,122.02922 412.26526,262.35026 250.08966,187.43643 Z M 934.62189,739.077 234.56171,946.92199 233.81426,554.79578 422.38222,493.25053 423.42046,300.4059 934.62189,157.54989 Z M 204.96854,402.33519 361.49056,473.98651 222.88861,518.46222 75.008408,444.5191 Z" />
-                    </svg>
-                </div>
-            </div>
-            <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
-            <div className="tile-palette-controls-outer">
-                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={this.categories.filter(c => !!c.tiles.length)} selected={category} /> }
-
-                { !galleryOpen &&
-                    <div className="tile-palette-controls">
-                        <IconButton
-                            onClick={this.tileEditHandler}
-                            iconClass={"ms-Icon ms-Icon--SingleColumnEdit"}
-                            title={lf("Edit the selected tile")}
-                            disabled={controlsDisabled}
-                            toggle={!controlsDisabled}
-                        />
-                        <IconButton
-                            onClick={this.tileDuplicateHandler}
-                            iconClass={"ms-Icon ms-Icon--Copy"}
-                            title={lf("Duplicate the selected tile")}
-                            disabled={controlsDisabled}
-                            toggle={!controlsDisabled}
-                        />
-                        <IconButton
-                            onClick={this.tileDeleteAlertHandler}
-                            iconClass={"ms-Icon ms-Icon--Delete"}
-                            title={lf("Delete the selected tile")}
-                            disabled={controlsDisabled}
-                            toggle={!controlsDisabled}
-                        />
+                {!userTilesOnly &&
+                    <div className={`tile-palette-swatch wall ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`}
+                        onClick={this.wallClickHandler}
+                        title={lf("Draw walls")}
+                        role="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+                            <path d="M 968.49289,108.05443 771.30518,3.7581533 183.65231,166.0694 l 2.58963,202.62638 -156.247366,54.4148 0.872799,492.65563 179.544267,81.08212 758.08125,-222.4989 z M 765.6275,42.836761 916.79721,122.02922 412.26526,262.35026 250.08966,187.43643 Z M 934.62189,739.077 234.56171,946.92199 233.81426,554.79578 422.38222,493.25053 423.42046,300.4059 934.62189,157.54989 Z M 204.96854,402.33519 361.49056,473.98651 222.88861,518.46222 75.008408,444.5191 Z" />
+                        </svg>
                     </div>
                 }
             </div>
+            {!userTilesOnly &&
+                <>
+                    <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
+                    <div className="tile-palette-controls-outer">
+                        { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={this.categories.filter(c => !!c.tiles.length)} selected={category} /> }
+
+                        { !galleryOpen &&
+                            <div className="tile-palette-controls">
+                                <IconButton
+                                    onClick={this.tileEditHandler}
+                                    iconClass={"ms-Icon ms-Icon--SingleColumnEdit"}
+                                    title={lf("Edit the selected tile")}
+                                    disabled={controlsDisabled}
+                                    toggle={!controlsDisabled}
+                                />
+                                <IconButton
+                                    onClick={this.tileDuplicateHandler}
+                                    iconClass={"ms-Icon ms-Icon--Copy"}
+                                    title={lf("Duplicate the selected tile")}
+                                    disabled={controlsDisabled}
+                                    toggle={!controlsDisabled}
+                                />
+                                <IconButton
+                                    onClick={this.tileDeleteAlertHandler}
+                                    iconClass={"ms-Icon ms-Icon--Delete"}
+                                    title={lf("Delete the selected tile")}
+                                    disabled={controlsDisabled}
+                                    toggle={!controlsDisabled}
+                                />
+                            </div>
+                        }
+                    </div>
+                </>
+            }
 
             <div className="tile-canvas-outer" onContextMenu={this.preventContextMenu}>
                 <div className="tile-canvas">
@@ -554,7 +564,8 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         colors: state.colors,
         drawingMode: editor.drawingMode,
         gallery: editor.tileGallery,
-        galleryOpen: editor.tileGalleryOpen,
+        galleryOpen: editor.tileGalleryOpen && !ownProps.userTilesOnly,
+        tilesetRevision: editor.tilesetRevision,
         referencedTiles: editor.referencedTiles
     };
 }

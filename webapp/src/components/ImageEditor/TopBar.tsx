@@ -17,6 +17,7 @@ export interface TopBarProps {
     dispatchChangeOverlayEnabled: () => void;
     singleFrame?: boolean;
     isTilemap?: boolean;
+    hideTilemapControls?: boolean;
 }
 
 export interface TopBarState {
@@ -30,7 +31,7 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
     }
 
     render() {
-        const { interval, previewAnimating, singleFrame, isTilemap, dispatchChangeOverlayEnabled } = this.props;
+        const { interval, previewAnimating, singleFrame, isTilemap, dispatchChangeOverlayEnabled, hideTilemapControls } = this.props;
 
         const intervalVal = this.state.interval == null ? interval : this.state.interval;
 
@@ -39,13 +40,17 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                 <div className="cursor-group">
                     <CursorSizes />
                 </div>
-                <div className="image-editor-seperator"/>
-                <div className="image-transform-group">
-                    <IconButton key="flipv" iconClass="xicon flipvertical" title={lf("Flip vertical")} onClick={this.flipVertical} />
-                    <IconButton key="fliph" iconClass="xicon fliphorizontal" title={lf("Flip horizontal")} onClick={this.flipHorizontal} />
-                    <IconButton key="rotatec" iconClass="xicon rotateright" title={lf("Rotate clockwise")} onClick={this.rotateClockwise} />
-                    <IconButton key="rotatecc" iconClass="xicon rotateleft" title={lf("Rotate counterclockwise")} onClick={this.rotateCounterclockwise} />
-                </div>
+                {(!isTilemap || !hideTilemapControls) &&
+                    <>
+                        <div className="image-editor-seperator"/>
+                        <div className="image-transform-group">
+                            <IconButton key="flipv" iconClass="xicon flipvertical" title={lf("Flip vertical")} onClick={this.flipVertical} />
+                            <IconButton key="fliph" iconClass="xicon fliphorizontal" title={lf("Flip horizontal")} onClick={this.flipHorizontal} />
+                            <IconButton key="rotatec" iconClass="xicon rotateright" title={lf("Rotate clockwise")} onClick={this.rotateClockwise} />
+                            <IconButton key="rotatecc" iconClass="xicon rotateleft" title={lf("Rotate counterclockwise")} onClick={this.rotateCounterclockwise} />
+                        </div>
+                    </>
+                }
                 <div className="spacer"/>
                 { !singleFrame && <div className="image-editor-seperator"/> }
                 { !singleFrame &&
@@ -69,7 +74,7 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                         </div>
                     </div>
                 }
-                { isTilemap &&
+                { isTilemap && !hideTilemapControls &&
                     <Toggle initialValue={true} label={lf("Show walls")} onChange={dispatchChangeOverlayEnabled} />
                 }
             </div>
@@ -108,7 +113,8 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
     return {
         interval: state.interval,
         previewAnimating: editor.previewAnimating,
-        isTilemap: editor.isTilemap
+        isTilemap: editor.isTilemap,
+        hideTilemapControls: !!editor.poughkeepsie
     } as TopBarProps
 }
 

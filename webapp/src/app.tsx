@@ -3019,6 +3019,14 @@ export class ProjectView
             })
     }
 
+    async updateProjectFilesAsync(project: pxt.workspace.ScriptText): Promise<void> {
+        for (const file of Object.keys(project)) {
+            await pkg.mainEditorPkg().setContentAsync(file, project[file]);
+        }
+
+        await this.reloadHeaderAsync();
+    }
+
     switchTypeScript() {
         const mainPkg = pkg.mainEditorPkg();
         const tsName = this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);

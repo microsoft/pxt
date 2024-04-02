@@ -77,6 +77,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
                             case "unloadproject": return Promise.resolve().then(() => projectView.unloadProjectAsync());
                             case "saveproject": return projectView.saveProjectAsync();
+                            case "updateprojectfiles": return projectView.updateProjectFilesAsync((data as pxt.editor.EditorMessageUpdateFilesRequest).project);
                             case "redo": return Promise.resolve()
                                 .then(() => {
                                     const editor = projectView.editor;

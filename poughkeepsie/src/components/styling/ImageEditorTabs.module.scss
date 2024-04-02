@@ -1,0 +1,13 @@
+.image-editor-tabs {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.image-editor-tab {
+    cursor: pointer;
+    img {
+        width: 3rem;
+        image-rendering: pixelated;
+    }
+}

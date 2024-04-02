@@ -5,6 +5,7 @@ import * as Actions from "./state/actions";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
 import { logDebug } from "./services/loggingService";
 import { HeaderBar } from "./components/HeaderBar";
+import { EditorPanel } from "./components/EditorPanel";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -32,6 +33,7 @@ export const App = () => {
     ) : (
         <>
             <HeaderBar />
+            <EditorPanel />
         </>
     );
 };

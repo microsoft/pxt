@@ -68,6 +68,14 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 if (toOpen.type === pxt.AssetType.Tilemap) {
                     pxt.sprite.addMissingTilemapTilesAndReferences(this.editorProject, toOpen);
                 }
+
+                if (this.editor) {
+                    this.editor.init(toOpen, () => {}, {
+                        galleryTiles: this.galleryTiles,
+                        hideMyAssets: true,
+                        hideCloseButton: true
+                    })
+                }
                 this.setState({
                     editing: toOpen
                 });
@@ -93,6 +101,26 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                     id: request.id,
                     type: request.type,
                     files: this.saveProjectFiles()
+                });
+                break;
+            case "updatetileset":
+                this.setPalette(request.palette);
+                this.updateTilemapProject(request.files);
+                if (this.editor) {
+                    this.editor.updateTileset(request.tileset, request.frames);
+                }
+                this.sendResponse({
+                    id: request.id,
+                    type: request.type
+                });
+                break;
+            case "setselectedtile":
+                if (this.editor) {
+                    this.editor.setSelectedTile(request.tileId);
+                }
+                this.sendResponse({
+                    id: request.id,
+                    type: request.type
                 });
                 break;
         }
@@ -178,6 +206,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     protected sendResponse(response: pxt.editor.AssetEditorResponse) {
+        response.success = true;
         this.postMessage(response);
     }
 
@@ -364,6 +393,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
             .filter(gt => !!gt);
 
         this.saveProject = this.editorProject.clone();
+    }
+
+    protected updateTilemapProject(files: pxt.Map<string>) {
+        this.initTilemapProject(files);
     }
 
     protected locateFileForAsset(assetId: string) {

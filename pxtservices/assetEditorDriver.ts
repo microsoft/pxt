@@ -45,6 +45,23 @@ export class AssetEditorDriver extends IframeDriver {
         } as pxt.editor.DuplicateAssetEditorRequest);
     }
 
+    async updateTileset(tileset: string[], animatedTiles: pxt.editor.AnimatedTile[], files: pxt.Map<string>, palette?: string[]) {
+        await this.sendRequest({
+            type: "updatetileset",
+            tileset,
+            files,
+            frames: animatedTiles,
+            palette
+        } as pxt.editor.UpdateTilesetAssetEditorRequest);
+    }
+
+    async setSelectedTile(tileId: string) {
+        this.sendRequest({
+            type: "setselectedtile",
+            tileId
+        } as pxt.editor.SetSelectedTile);
+    }
+
     addEventListener(event: "ready", handler: (ev: pxt.editor.AssetEditorReadyEvent) => void): void;
     addEventListener(event: "done-clicked", handler: (ev: pxt.editor.AssetEditorRequestSaveEvent) => void): void;
     addEventListener(event: string, handler: (ev: any) => void): void {

@@ -1,0 +1,10 @@
+.image-editor-sidebar {
+    width: 15rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.asset-preview-list {
+    flex-grow: 1;
+    overflow-y: auto;
+}

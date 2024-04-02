@@ -8,21 +8,23 @@ import { dispatchChangeImageTool } from "./actions/dispatch";
 import { Palette } from "./sprite/Palette";
 import { TilePalette } from "./tilemap/TilePalette";
 import { Minimap } from "./tilemap/Minimap";
+import { classList } from "../../../../react-common/components/util";
 
 interface SideBarProps {
     selectedTool: ImageEditorTool;
     isTilemap: boolean;
     dispatchChangeImageTool: (tool: ImageEditorTool) => void;
     lightMode: boolean;
+    hideTilePalette?: boolean;
 }
 
 export class SideBarImpl extends React.Component<SideBarProps,{}> {
     protected handlers: (() => void)[] = [];
 
     render() {
-        const { selectedTool, isTilemap, lightMode } = this.props;
+        const { selectedTool, isTilemap, lightMode, hideTilePalette } = this.props;
         return (
-            <div className={`image-editor-sidebar ${isTilemap ? "tilemap" : ""}`}>
+            <div className={classList("image-editor-sidebar", isTilemap && "tilemap", isTilemap && hideTilePalette && "hide-tile-palette")}>
                 {isTilemap &&
                     <div className="image-editor-tilemap-minimap">
                         <Minimap lightMode={lightMode} />
@@ -39,7 +41,7 @@ export class SideBarImpl extends React.Component<SideBarProps,{}> {
                     )}
                 </div>
                 <div className="image-editor-palette">
-                    { isTilemap ? <TilePalette /> : <Palette /> }
+                    { isTilemap ? (!hideTilePalette && <TilePalette userTilesOnly={true} />) : <Palette /> }
                 </div>
             </div>
         );
@@ -56,7 +58,8 @@ function mapStateToProps({ editor }: ImageEditorStore, ownProps: any) {
     if (!editor) return {};
     return {
         isTilemap: editor.isTilemap,
-        selectedTool: editor.tool
+        selectedTool: editor.tool,
+        hideTilePalette: !!editor.poughkeepsie
     };
 }
 

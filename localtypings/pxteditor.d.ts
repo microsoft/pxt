@@ -54,6 +54,7 @@ declare namespace pxt.editor {
         | "importproject"
         | "importtutorial"
         | "openheader"
+        | "updateprojectfiles"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
@@ -254,6 +255,11 @@ declare namespace pxt.editor {
         // (optional) filtering argument
         filters?: ProjectFilters;
         searchBar?: boolean;
+    }
+
+    export interface EditorMessageUpdateFilesRequest extends EditorMessageRequest {
+        action: "updateprojectfiles";
+        project: pxt.workspace.ScriptText;
     }
 
     export interface EditorMessageSaveLocalProjectsToCloud extends EditorMessageRequest {
@@ -1044,6 +1050,8 @@ declare namespace pxt.editor {
         hasHeaderBeenPersistentShared(): boolean;
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
+
+        updateProjectFilesAsync(project: pxt.workspace.ScriptText): Promise<void>;
     }
 
     export interface IHexFileImporter {
@@ -1271,10 +1279,22 @@ declare namespace pxt.editor {
         assetType: pxt.AssetType;
     }
 
-    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
+    interface UpdateTilesetAssetEditorRequest extends BaseAssetEditorRequest {
+        type: "updatetileset";
+        tileset: string[];
+        frames: AnimatedTile[];
+    }
+
+    interface SetSelectedTile extends BaseAssetEditorRequest {
+        type: "setselectedtile";
+        tileId: string;
+    }
+
+    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest | UpdateTilesetAssetEditorRequest | SetSelectedTile;
 
     interface BaseAssetEditorResponse {
         id?: number;
+        success?: boolean;
     }
 
     interface OpenAssetEditorResponse extends BaseAssetEditorResponse {
@@ -1294,7 +1314,15 @@ declare namespace pxt.editor {
         type: "duplicate";
     }
 
-    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
+    interface UpdateTilesetAssetEditorResponse extends BaseAssetEditorResponse {
+        type: "updatetileset";
+    }
+
+    interface SetSelectedTileAssetEditorResponse extends BaseAssetEditorResponse {
+        type: "setselectedtile";
+    }
+
+    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse | UpdateTilesetAssetEditorResponse | SetSelectedTileAssetEditorResponse;
 
     interface AssetEditorRequestSaveEvent {
         type: "event";
@@ -1304,6 +1332,12 @@ declare namespace pxt.editor {
     interface AssetEditorReadyEvent {
         type: "event";
         kind: "ready";
+    }
+
+    interface AnimatedTile {
+        tileId: string;
+        frames: pxt.sprite.BitmapData[];
+        interval: number;
     }
 
     type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
