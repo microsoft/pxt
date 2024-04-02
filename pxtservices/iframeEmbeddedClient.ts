@@ -19,6 +19,17 @@ export class IFrameEmbeddedClient {
         this.sendReadyMessage();
     }
 
+    dispose() {
+        window.removeEventListener("message", this.onMessageReceived);
+        if (this.port) {
+            this.port.close();
+        }
+    }
+
+    postMessage(message: any) {
+        this.postMessageCore(message);
+    }
+
     protected onMessageReceived = (event: MessageEvent) => {
         const data = event.data;
 
@@ -39,10 +50,6 @@ export class IFrameEmbeddedClient {
         }
 
         this.messageHandler(event);
-    }
-
-    postMessage(message: any) {
-        this.postMessageCore(message);
     }
 
     protected postMessageCore(message: any) {
