@@ -9,7 +9,7 @@ type IFrameClientReadyMessage = {
 export type IframeClientMessage = IframeClientSetMessagePortRequest | IFrameClientReadyMessage;
 
 export class IFrameEmbeddedClient {
-    protected frameId: string;
+    protected frameId: string | undefined;
     protected port: MessagePort;
 
     constructor(protected messageHandler: (message: MessageEvent) => void) {
@@ -75,7 +75,7 @@ export class IFrameEmbeddedClient {
     }
 }
 
-function frameId(): string {
+function frameId(): string | undefined {
     const match = /frameid=([a-zA-Z0-9\-]+)/i.exec(window.location.href);
 
     if (match) {
