@@ -1426,6 +1426,14 @@ namespace ts.pxtc.Util {
         return (n || "").split(/(?=[A-Z])/g).join(" ").toLowerCase();
     }
 
+    export function camelCaseToLowercaseWithSpaces(n: string) {
+        return n.replace(/([A-Z])/gm, ' $1').toLocaleLowerCase().trim();
+    }
+
+    export function snakeCaseToLowercaseWithSpaces(n: string) {
+        return n.replace(/_/g, ' ').toLocaleLowerCase().trim();
+    }
+
     export function range(len: number) {
         let r: number[] = []
         for (let i = 0; i < len; ++i) r.push(i)

@@ -18,10 +18,11 @@ import { setAutorun } from "../transforms/setAutorun";
 import { Strings, Ticks } from "../constants";
 import { resetRubricAsync } from "../transforms/resetRubricAsync";
 import { PrintButton } from "./PrintButton";
+import { ImportRubricOptions } from "../types/modalOptions";
 
 function handleImportRubricClicked() {
     pxt.tickEvent(Ticks.ImportRubric);
-    showModal("import-rubric");
+    showModal({ modal: "import-rubric" } as ImportRubricOptions);
 }
 
 function handleExportRubricClicked() {

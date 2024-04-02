@@ -59,6 +59,8 @@ declare namespace pxt.editor {
         | "redo"
         | "renderblocks"
         | "renderpython"
+        | "renderxml"
+        | "renderbyblockid"
         | "setscale"
         | "startactivity"
         | "saveproject"
@@ -69,6 +71,7 @@ declare namespace pxt.editor {
         | "requestprojectcloudstatus"
         | "convertcloudprojectstolocal"
         | "setlanguagerestriction"
+        | "gettoolboxcategories"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -94,8 +97,6 @@ declare namespace pxt.editor {
         | "tutorialevent"
         | "editorcontentloaded"
         | "runeval"
-
-        | "setmessageport"
 
         // package extension messasges
         | ExtInitializeType
@@ -301,6 +302,21 @@ declare namespace pxt.editor {
         layout?: BlockLayout;
     }
 
+    export interface EditorMessageRenderXmlRequest extends EditorMessageRequest {
+        action: "renderxml";
+        // xml to render
+        xml: string;
+        snippetMode?: boolean;
+        layout?: BlockLayout;
+    }
+
+    export interface EditorMessageRenderByBlockIdRequest extends EditorMessageRequest {
+        action: "renderbyblockid";
+        blockId: string;
+        snippetMode?: boolean;
+        layout?: BlockLayout;
+    }
+
     export interface EditorMessageRunEvalRequest extends EditorMessageRequest {
         action: "runeval";
         validatorPlan: pxt.blocks.ValidatorPlan;
@@ -310,6 +326,16 @@ declare namespace pxt.editor {
     export interface EditorMessageRenderBlocksResponse {
         svg: SVGSVGElement;
         xml: Promise<any>;
+    }
+
+    export interface EditorMessageRenderXmlResponse {
+        svg: SVGSVGElement;
+        resultXml: Promise<any>;
+    }
+
+    export interface EditorMessageRenderByBlockIdResponse {
+        svg: SVGSVGElement;
+        resultXml: Promise<any>;
     }
 
     export interface EditorMessageRenderPythonRequest extends EditorMessageRequest {
@@ -403,6 +429,15 @@ declare namespace pxt.editor {
     export interface EditorSetLanguageRestriction extends EditorMessageRequest {
         action: "setlanguagerestriction";
         restriction: pxt.editor.LanguageRestriction;
+    }
+
+    export interface EditorMessageGetToolboxCategoriesRequest extends EditorMessageRequest {
+        action: "gettoolboxcategories";
+        advanced?: boolean;
+    }
+
+    export interface EditorMessageGetToolboxCategoriesResponse {
+        categories: pxt.editor.ToolboxCategoryDefinition[];
     }
 
     export interface DataStreams<T> {
@@ -934,10 +969,13 @@ declare namespace pxt.editor {
         blocksScreenshotAsync(pixelDensity?: number, encodeBlocks?: boolean): Promise<string>;
         renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse>;
         renderPythonAsync(req: pxt.editor.EditorMessageRenderPythonRequest): Promise<pxt.editor.EditorMessageRenderPythonResponse>;
+        renderXml(req: pxt.editor.EditorMessageRenderXmlRequest): pxt.editor.EditorMessageRenderXmlResponse;
+        renderByBlockIdAsync(req: pxt.editor.EditorMessageRenderByBlockIdRequest): Promise<pxt.editor.EditorMessageRenderByBlockIdResponse>;
 
         // FIXME (riknoll) need to figure out how to type this better
         // getBlocks(): Blockly.Block[];
         getBlocks(): any[];
+        getToolboxCategories(advanced?: boolean): pxt.editor.EditorMessageGetToolboxCategoriesResponse;
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
@@ -1233,7 +1271,7 @@ declare namespace pxt.editor {
         assetType: pxt.AssetType;
     }
 
-    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest | SetMessagePortAssetEditorRequest;
+    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
 
     interface BaseAssetEditorResponse {
         id?: number;
@@ -1256,7 +1294,7 @@ declare namespace pxt.editor {
         type: "duplicate";
     }
 
-    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse | SetMessagePortAssetEditorResponse;
+    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
 
     interface AssetEditorRequestSaveEvent {
         type: "event";

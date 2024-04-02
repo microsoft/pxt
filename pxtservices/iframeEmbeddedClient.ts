@@ -9,7 +9,7 @@ type IFrameClientReadyMessage = {
 export type IframeClientMessage = IframeClientSetMessagePortRequest | IFrameClientReadyMessage;
 
 export class IFrameEmbeddedClient {
-    protected frameId: string;
+    protected frameId: string | undefined;
     protected port: MessagePort;
 
     constructor(protected messageHandler: (message: MessageEvent) => void) {
@@ -17,6 +17,17 @@ export class IFrameEmbeddedClient {
 
         window.addEventListener("message", this.onMessageReceived);
         this.sendReadyMessage();
+    }
+
+    dispose() {
+        window.removeEventListener("message", this.onMessageReceived);
+        if (this.port) {
+            this.port.close();
+        }
+    }
+
+    postMessage(message: any) {
+        this.postMessageCore(message);
     }
 
     protected onMessageReceived = (event: MessageEvent) => {
@@ -39,10 +50,6 @@ export class IFrameEmbeddedClient {
         }
 
         this.messageHandler(event);
-    }
-
-    postMessage(message: any) {
-        this.postMessageCore(message);
     }
 
     protected postMessageCore(message: any) {
@@ -68,7 +75,7 @@ export class IFrameEmbeddedClient {
     }
 }
 
-function frameId(): string {
+function frameId(): string | undefined {
     const match = /frameid=([a-zA-Z0-9\-]+)/i.exec(window.location.href);
 
     if (match) {

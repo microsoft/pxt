@@ -1,0 +1,99 @@
+.block-picker-modal {
+    div[class="common-modal"] {
+        // category color is overridden in BlockPicker javascript
+        --category-color: var(--pxt-content-secondary-foreground);
+
+        height: 80vh;
+
+        div[class*="common-modal-body"] {
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 0;
+    
+            .bottom-border {
+                border-bottom: 2px solid var(--pxt-content-accent);
+            }
+    
+            .loading-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
+                width: 100%;
+    
+                div[class*="common-spinner"] {
+                    width: 5rem;
+                    height: 5rem;
+                    margin: 1rem;
+                }
+            }
+    
+            .category-container {
+                border-left: 1rem solid var(--category-color);
+                color: var(--category-color);
+    
+                .category-button {
+                    width: 100%;
+                    padding: 0.5rem;
+                    text-align: start;
+                    font-weight: 800;
+                    font-size: 1.3rem;
+                    border-radius: 0;
+                    color: var(--category-color);
+                }
+    
+                .category-block-list {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+    
+                    transition: max-height 0.2s ease-out;
+                    &.collapsed {
+                        max-height: 0;
+                        display:none;
+                    }
+                    &.expanded {
+                        max-height: 100rem; /* larger that it should ever get */
+                    }
+    
+                    .block-button {
+                        width: 100%;
+                        align-content: start;
+
+                        // We always want to justify content to the left with the common-lazy-image-wrapper
+                        // However, we only want position relative when it has not loaded (note, not *=)
+                        // Then, we want position absolute only when it *has* loaded. This helps prevent
+                        // components from jumping around when they load.
+                        div[class*="common-lazy-image-wrapper"] {
+                            justify-content: left;
+                        }
+                        div[class="common-lazy-image-wrapper"] div[class*="loading-element"] {
+                            position: relative;
+                        }
+                        div[class*="common-lazy-image-wrapper loaded"] div[class*="loading-element"] {
+                            position: absolute;
+                        }
+
+                        .block-placeholder {
+                            height: 3rem;
+                            border-radius: 0.2rem;
+                            color: white;
+                            border: 1px solid rgba(0, 0, 0, 0.5);
+                            font-size: 1rem;
+                            font-weight: bold;
+                            background-color: var(--category-color);
+                            width: fit-content;
+                            min-width: 10rem;
+                            display: flex;
+                            justify-content: flex-start;
+                            align-items: center;
+                            padding: 0.5rem;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

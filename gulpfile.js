@@ -621,8 +621,7 @@ const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "webapp", "pxtservices",
         "docfiles/pxtweb", "skillmap", "authcode",
-        "multiplayer"/*, "kiosk"*/, "teachertool",
-        "tutorialTool", "docs/static/streamer"].map(dirname =>
+        "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
@@ -788,6 +787,7 @@ exports.tt = teacherTool;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;
+exports.reactCommon = reactCommon;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),

@@ -71,3 +71,11 @@ export function splitCriteriaTemplate(template: string): CriteriaTemplateSegment
 export function getReadableCriteriaTemplate(criteria: CatalogCriteria): string {
     return criteria.template.replaceAll("${", "").replaceAll("}", "");
 }
+
+export function getReadableBlockString(name: string) {
+    if (name.indexOf("_") !== -1) {
+        return pxt.Util.snakeCaseToLowercaseWithSpaces(name);
+    } else {
+        return pxt.Util.camelCaseToLowercaseWithSpaces(name);
+    }
+}

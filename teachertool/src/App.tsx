@@ -15,6 +15,7 @@ import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubricAsync";
 import { ImportRubricModal } from "./components/ImportRubricModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
+import { BlockPickerModal } from "./components/BlockPickerModal";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -59,6 +60,7 @@ export const App = () => {
             <CatalogModal />
             <ImportRubricModal />
             <ConfirmationModal />
+            <BlockPickerModal />
             <Toasts />
         </>
     );

@@ -1,5 +1,6 @@
-import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions } from "../types";
+import { ToastWithId, TabName, ProjectData } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
+import { ModalOptions } from "../types/modalOptions";
 import { Rubric } from "../types/rubric";
 
 // Changes to app state are performed by dispatching actions to the reducer
@@ -55,14 +56,9 @@ type SetRubric = ActionBase & {
     rubric: Rubric;
 };
 
-type SetConfirmationOptions = ActionBase & {
-    type: "SET_CONFIRMATION_OPTIONS";
-    options: ConfirmationModalOptions | undefined;
-};
-
 type ShowModal = ActionBase & {
     type: "SHOW_MODAL";
-    modal: ModalType;
+    modalOptions: ModalOptions;
 };
 
 type HideModal = ActionBase & {
@@ -93,6 +89,17 @@ type ClearAllEvalResultNotes = ActionBase & {
     type: "CLEAR_ALL_EVAL_RESULT_NOTES";
 };
 
+type SetToolboxCategories = ActionBase & {
+    type: "SET_TOOLBOX_CATEGORIES";
+    categories: pxt.Map<pxt.editor.ToolboxCategoryDefinition>;
+};
+
+type SetBlockImageUri = ActionBase & {
+    type: "SET_BLOCK_IMAGE_URI";
+    blockId: string;
+    imageUri: string;
+};
+
 /**
  * Union of all actions
  */
@@ -109,12 +116,13 @@ export type Action =
     | SetTargetConfig
     | SetCatalog
     | SetRubric
-    | SetConfirmationOptions
     | ShowModal
     | HideModal
     | SetValidatorPlans
     | SetActiveTab
-    | SetAutorun;
+    | SetAutorun
+    | SetToolboxCategories
+    | SetBlockImageUri;
 
 /**
  * Action creators
@@ -164,14 +172,9 @@ const setRubric = (rubric: Rubric): SetRubric => ({
     rubric,
 });
 
-const setConfirmationOptions = (options: ConfirmationModalOptions | undefined): SetConfirmationOptions => ({
-    type: "SET_CONFIRMATION_OPTIONS",
-    options,
-});
-
-const showModal = (modal: ModalType): ShowModal => ({
+const showModal = (modalOptions: ModalOptions): ShowModal => ({
     type: "SHOW_MODAL",
-    modal,
+    modalOptions,
 });
 
 const hideModal = (): HideModal => ({
@@ -202,6 +205,17 @@ const clearAllEvalResultNotes = (): ClearAllEvalResultNotes => ({
     type: "CLEAR_ALL_EVAL_RESULT_NOTES",
 });
 
+const setToolboxCategories = (categories: pxt.Map<pxt.editor.ToolboxCategoryDefinition>): SetToolboxCategories => ({
+    type: "SET_TOOLBOX_CATEGORIES",
+    categories,
+});
+
+const setBlockImageUri = (blockId: string, imageUri: string): SetBlockImageUri => ({
+    type: "SET_BLOCK_IMAGE_URI",
+    blockId,
+    imageUri,
+});
+
 export {
     showToast,
     dismissToast,
@@ -214,10 +228,11 @@ export {
     setTargetConfig,
     setCatalog,
     setRubric,
-    setConfirmationOptions,
     showModal,
     hideModal,
     setValidatorPlans,
     setActiveTab,
     setAutorun,
+    setToolboxCategories,
+    setBlockImageUri,
 };

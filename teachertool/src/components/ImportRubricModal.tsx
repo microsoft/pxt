@@ -30,7 +30,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
         }
     }
 
-    return teacherTool.modal === "import-rubric" ? (
+    return teacherTool.modalOptions?.modal === "import-rubric" ? (
         <Modal title={Strings.ImportRubric} onClose={closeModal} className={css["import-rubric-modal"]}>
             <div className={css["import-rubric"]}>
                 <DragAndDropFileSurface onFileDroppedAsync={handleFileDroppedAsync} errorMessage={errorMessage} />

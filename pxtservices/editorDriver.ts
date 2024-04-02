@@ -332,6 +332,42 @@ export class EditorDriver extends IframeDriver {
         return (resp.resp as pxt.editor.EditorMessageRenderPythonResponse).python;
     }
 
+    async renderXml(xml: string) {
+        const resp = await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "renderxml",
+                xml
+            } as pxt.editor.EditorMessageRenderXmlRequest
+        ) as pxt.editor.EditorMessageResponse;
+
+        return resp.resp;
+    }
+
+    async renderByBlockId(blockId: string) {
+        const resp = await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "renderbyblockid",
+                blockId: blockId
+            } as pxt.editor.EditorMessageRenderByBlockIdRequest
+        ) as pxt.editor.EditorMessageResponse;
+
+        return resp.resp;
+    }
+
+    async getToolboxCategories(advanced?: boolean): Promise<pxt.editor.ToolboxCategoryDefinition[]> {
+        const resp = await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "gettoolboxcategories",
+                advanced
+            } as pxt.editor.EditorMessageGetToolboxCategoriesRequest
+        ) as pxt.editor.EditorMessageResponse;
+
+        return (resp.resp as pxt.editor.EditorMessageGetToolboxCategoriesResponse).categories;
+    }
+
     async runValidatorPlan(validatorPlan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]) {
         const resp = await this.sendRequest(
             {

@@ -42,6 +42,20 @@
                 flex-grow: 1;
             }
 
+            .block-input-btn {
+                margin: 0.2rem 0;
+                border-radius: 0.5rem;
+                border: solid 1px var(--pxt-page-foreground);
+                padding: 0.4rem;
+
+                &.error {
+                    border: solid 1px var(--pxt-error-accent);
+                    background-color: var(--pxt-error-background);
+                    transition: background-color 0.3s ease-in-out, border 0.3s ease-in-out;
+                    padding-right: 0.6rem; // balance out with left icon
+                }
+            }
+
             .inline-input-wrapper {
                 &:has(.long) {
                     flex-grow: 1;
