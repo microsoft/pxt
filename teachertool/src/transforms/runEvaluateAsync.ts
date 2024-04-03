@@ -13,6 +13,7 @@ import { getSystemParameter } from "../utils/getSystemParameter";
 import { runValidatorPlanOverrideAsync } from "../validatorPlanOverrides/runValidatorPlanOverrideAsync";
 import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import { setEvalResultFull } from "./setEvalResultFull";
+import { EvaluationTrigger } from "../types";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -50,7 +51,8 @@ function generateValidatorPlan(
             return undefined;
         }
 
-        if (catalogParam.type === "system" && catalogParam.default) { // TODO thsparks - "keyword" instead of default?
+        if (catalogParam.type === "system" && catalogParam.default) {
+            // TODO thsparks - "keyword" instead of default?
             param.value = getSystemParameter(catalogParam.default, teacherTool);
         }
 
@@ -73,10 +75,10 @@ function generateValidatorPlan(
     return plan;
 }
 
-export async function runEvaluateAsync(fromUserInteraction: boolean) {
+export async function runEvaluateAsync(trigger: EvaluationTrigger) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
-    if (fromUserInteraction) {
+    if (trigger === "user-interaction") {
         setActiveTab("results");
     }
 
@@ -85,6 +87,15 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const evalRequests = teacherTool.rubric.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
+                const catalogCriteria = getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId);
+                if (
+                    (trigger !== "user-interaction" && catalogCriteria?.autoRunLevel === "never") ||
+                    (trigger === "autorun-background" && catalogCriteria?.autoRunLevel === "onVisible")
+                ) {
+                    dispatch(Actions.setEvalResult(criteriaInstance.instanceId, { result: EvaluationStatus.Pending }));
+                    return resolve(true);
+                }
+
                 setEvalResultOutcome(criteriaInstance.instanceId, EvaluationStatus.InProgress);
 
                 const loadedValidatorPlans = teacherTool.validatorPlans;
@@ -94,7 +105,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                     return resolve(false);
                 }
 
-                const plan = generateValidatorPlan(criteriaInstance, fromUserInteraction);
+                const plan = generateValidatorPlan(criteriaInstance, trigger !== "autorun-background");
 
                 if (!plan) {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
@@ -108,7 +119,12 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                 }
 
                 if (planResult) {
-                    const result = planResult.result === undefined ? EvaluationStatus.CompleteWithNoResult : planResult.result ? EvaluationStatus.Pass : EvaluationStatus.Fail;
+                    const result =
+                        planResult.result === undefined
+                            ? EvaluationStatus.CompleteWithNoResult
+                            : planResult.result
+                            ? EvaluationStatus.Pass
+                            : EvaluationStatus.Fail;
 
                     setEvalResultFull(criteriaInstance.instanceId, result, planResult.notes);
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
@@ -124,7 +140,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     }
 
     const results = await Promise.all(evalRequests);
-    if (fromUserInteraction) {
+    if (trigger !== "autorun-background") {
         const errorCount = results.filter(r => !r).length;
         if (errorCount === teacherTool.rubric.criteria.length) {
             showToast(makeToast("error", lf("Unable to run evaluation")));

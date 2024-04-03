@@ -1,3 +1,6 @@
+// Never => never autorun, onVisible => autorun when the results tab is visible, always => autorun on any change
+export type AutoRunLevel = "never" | "onVisible" | "always";
+
 // A criteria defined in the catalog of all possible criteria for the user to choose from when creating a rubric.
 export interface CatalogCriteria {
     id: string; // A unique id (GUID) for the catalog criteria
@@ -7,6 +10,7 @@ export interface CatalogCriteria {
     docPath: string | undefined; // Path to documentation
     params: CriteriaParameter[] | undefined; // Any parameters that affect the criteria
     hideInCatalog?: boolean; // Whether the criteria should be hidden in the user-facing catalog
+    autoRunLevel?: AutoRunLevel; // When to automatically run this criteria. If unset, defaults to "all".
 }
 
 // An instance of a criteria in a rubric.

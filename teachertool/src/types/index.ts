@@ -51,3 +51,5 @@ export type CriteriaTemplateSegment = {
     type: "plain-text" | "param";
     content: string; // plain text or parameter name
 };
+
+export type EvaluationTrigger = "user-interaction" | "autorun-background" | "autorun-visible";

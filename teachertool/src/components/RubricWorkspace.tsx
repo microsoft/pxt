@@ -38,7 +38,7 @@ async function handleNewRubricClickedAsync() {
 
 async function handleEvaluateClickedAsync() {
     pxt.tickEvent(Ticks.Evaluate);
-    await runEvaluateAsync(true);
+    await runEvaluateAsync("user-interaction");
 }
 
 const WorkspaceTabButtons: React.FC = () => {

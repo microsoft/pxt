@@ -4,17 +4,22 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 
 let autorunTimer: NodeJS.Timeout | null = null;
 
-export function poke() {
-    // TODO thsparks - somehow don't autorun for ai? It's expensive...
+function runEvaluation(inBackground: boolean) {
+    autorunTimer = null;
+    const { state } = stateAndDispatch();
+    if (state.autorun && isProjectLoaded(state)) {
+        runEvaluateAsync(inBackground ? "autorun-background" : "autorun-visible");
+    }
+}
 
+export function poke(immediate?: boolean) {
     if (autorunTimer) {
         clearTimeout(autorunTimer);
     }
-    autorunTimer = setTimeout(() => {
-        autorunTimer = null;
-        const { state } = stateAndDispatch();
-        if (state.autorun && isProjectLoaded(state)) {
-            runEvaluateAsync(false);
-        }
-    }, 1000);
+
+    if (immediate) {
+        runEvaluation(false);
+    } else {
+        autorunTimer = setTimeout(() => runEvaluation(true), 1000);
+    }
 }
