@@ -16,6 +16,11 @@ declare namespace pxt.editor {
          * flag to request response
          */
         response?: boolean;
+
+        /**
+         * Frame identifier that can be passed to the iframe by adding the frameId query parameter
+         */
+        frameId?: string;
     }
 
     export interface EditorMessageResponse extends EditorMessage {
@@ -1237,6 +1242,71 @@ declare namespace pxt.editor {
          */
         blockId?: string;
     }
+
+    interface BaseAssetEditorRequest {
+        id?: number;
+        files: pxt.Map<string>;
+        palette?: string[];
+    }
+
+    interface OpenAssetEditorRequest extends BaseAssetEditorRequest {
+        type: "open";
+        assetId: string;
+        assetType: pxt.AssetType;
+    }
+
+    interface CreateAssetEditorRequest extends BaseAssetEditorRequest {
+        type: "create";
+        assetType: pxt.AssetType;
+        displayName?: string;
+    }
+
+    interface SaveAssetEditorRequest extends BaseAssetEditorRequest {
+        type: "save";
+    }
+
+    interface DuplicateAssetEditorRequest extends BaseAssetEditorRequest {
+        type: "duplicate";
+        assetId: string;
+        assetType: pxt.AssetType;
+    }
+
+    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
+
+    interface BaseAssetEditorResponse {
+        id?: number;
+    }
+
+    interface OpenAssetEditorResponse extends BaseAssetEditorResponse {
+        type: "open";
+    }
+
+    interface CreateAssetEditorResponse extends BaseAssetEditorResponse {
+        type: "create";
+    }
+
+    interface SaveAssetEditorResponse extends BaseAssetEditorResponse {
+        type: "save";
+        files: pxt.Map<string>;
+    }
+
+    interface DuplicateAssetEditorResponse extends BaseAssetEditorResponse {
+        type: "duplicate";
+    }
+
+    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
+
+    interface AssetEditorRequestSaveEvent {
+        type: "event";
+        kind: "done-clicked";
+    }
+
+    interface AssetEditorReadyEvent {
+        type: "event";
+        kind: "ready";
+    }
+
+    type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
 }
 
 declare namespace pxt.workspace {

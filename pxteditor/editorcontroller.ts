@@ -3,10 +3,15 @@
 import { runValidatorPlan } from "./code-validation/runValidatorPlan";
 import IProjectView = pxt.editor.IProjectView;
 
+import { IFrameEmbeddedClient } from "../pxtservices/iframeEmbeddedClient";
+
 const pendingRequests: pxt.Map<{
     resolve: (res?: pxt.editor.EditorMessageResponse | PromiseLike<pxt.editor.EditorMessageResponse>) => void;
     reject: (err: any) => void;
 }> = {};
+
+let iframeClient: IFrameEmbeddedClient;
+
 /**
  * Binds incoming window messages to the project view.
  * Requires the "allowParentController" flag in the pxtarget.json/appTheme object.
@@ -24,7 +29,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
 
     if (!allowEditorMessages && !allowExtensionMessages && !allowSimTelemetry) return;
 
-    window.addEventListener("message", (msg: MessageEvent) => {
+    const handleMessage = (msg: MessageEvent) => {
         const data = msg.data as pxt.editor.EditorMessage;
         if (!data || !/^pxt(host|editor|pkgext|sim)$/.test(data.type)) return false;
 
@@ -154,7 +159,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         })
                                     });
                             }
-                            case "renderxml": {
+case "renderxml": {
                                 const rendermsg = data as pxt.editor.EditorMessageRenderXmlRequest;
                                 return Promise.resolve()
                                     .then(() => {
@@ -186,7 +191,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         resp = results;
                                     });
                             }
-                            case "gettoolboxcategories": {
+case "gettoolboxcategories": {
                                 const msg = data as pxt.editor.EditorMessageGetToolboxCategoriesRequest;
                                 return Promise.resolve()
                                     .then(() => {
@@ -289,7 +294,9 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
         }
 
         return true;
-    }, false)
+    };
+
+    iframeClient = new IFrameEmbeddedClient(handleMessage);
 }
 
 /**
@@ -343,13 +350,20 @@ export function enableControllerAnalytics() {
 
 function sendResponse(request: pxt.editor.EditorMessage, resp: any, success: boolean, error: any) {
     if (request.response) {
-        window.parent.postMessage({
+        const toSend = {
             type: request.type,
             id: request.id,
             resp,
             success,
             error
-        }, "*");
+        };
+
+        if (iframeClient) {
+            iframeClient.postMessage(toSend)
+        }
+        else {
+            window.parent.postMessage(toSend, "*");
+        }
     }
 }
 
@@ -369,7 +383,14 @@ export function postHostMessageAsync(msg: pxt.editor.EditorMessageRequest): Prom
         env.id = ts.pxtc.Util.guidGen();
         if (msg.response)
             pendingRequests[env.id] = { resolve, reject };
-        window.parent.postMessage(env, "*");
+
+        if (iframeClient) {
+            iframeClient.postMessage(env);
+        }
+        else {
+            window.parent.postMessage(env, "*");
+        }
+
         if (!msg.response)
             resolve(undefined)
     })

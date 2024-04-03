@@ -48,6 +48,7 @@ const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
 const pxtblocks = () => compileTsProject("pxtblocks", "built/pxtblocks", true);
+const pxtservices = () => compileTsProject("pxtservices", "built/pxtservices", true);
 
 const pxtapp = () => gulp.src([
     "node_modules/lzma/src/lzma_worker-min.js",
@@ -118,7 +119,7 @@ function initWatch() {
         pxtlib,
         gulp.parallel(pxtcompiler, pxtsim, backendutils),
         pxtpy,
-        gulp.parallel(pxtblocks, pxteditor),
+        gulp.parallel(pxtblocks, pxteditor, pxtservices),
         gulp.parallel(pxtrunner, cli, pxtcommon),
         gulp.parallel(updatestrings, browserifyEmbed),
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
@@ -139,6 +140,7 @@ function initWatch() {
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
     gulp.watch("./pxtblocks/**/*", gulp.series(pxtblocks, ...tasks.slice(4)));
+    gulp.watch("./pxtservices/**/*", gulp.series(pxtservices, ...tasks.slice(4)));
 
     gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
 
@@ -219,6 +221,7 @@ function updatestrings() {
     return buildStrings("built/strings.json", [
         "cli",
         "pxtblocks",
+        "pxtservices",
         "pxtcompiler",
         "pxteditor",
         "pxtlib",
@@ -610,8 +613,9 @@ const maybeBuildWebapps = () => {
 
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
-        "pxtpy", "pxtrunner", "pxtsim", "webapp",
-        "docfiles/pxtweb", "skillmap", "authcode", "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
+        "pxtpy", "pxtrunner", "pxtsim", "webapp", "pxtservices",
+        "docfiles/pxtweb", "skillmap", "authcode",
+        "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
@@ -723,7 +727,7 @@ const buildAll = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     pxtpy,
-    gulp.parallel(pxteditor, pxtblocks),
+    gulp.parallel(pxteditor, pxtblocks, pxtservices),
     gulp.parallel(pxtrunner, cli, pxtcommon),
     browserifyEmbed,
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
@@ -747,7 +751,7 @@ exports.clean = clean;
 exports.build = buildAll;
 
 exports.webapp = gulp.series(
-    gulp.parallel(reactCommon, pxtblocks, pxteditor),
+    gulp.parallel(reactCommon, pxtblocks, pxteditor, pxtservices),
     webapp,
     browserifyWebapp,
     browserifyAssetEditor
