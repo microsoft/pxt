@@ -5,15 +5,14 @@ import * as Actions from "../state/actions";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { EvaluationStatus, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
-import { getReadableCriteriaTemplate, makeToast } from "../utils";
+import { makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
-import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import jp from "jsonpath";
 import { getSystemParameter } from "../utils/getSystemParameter";
-import { setEvalResult } from "./setEvalResult";
-import { setEvalResultNotes } from "./setEvalResultNotes";
 import { runValidatorPlanOverrideAsync } from "../validatorPlanOverrides/runValidatorPlanOverrideAsync";
+import { setEvalResultOutcome } from "./setEvalResultOutcome";
+import { setEvalResultFull } from "./setEvalResultFull";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -111,10 +110,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                 if (planResult) {
                     const result = planResult.result === undefined ? EvaluationStatus.CompleteWithNoResult : planResult.result ? EvaluationStatus.Pass : EvaluationStatus.Fail;
 
-                    setEvalResultOutcome(criteriaInstance.instanceId, result);
-                    if (planResult.notes) {
-                        setEvalResultNotes(criteriaInstance.instanceId, planResult.notes);
-                    }
+                    setEvalResultFull(criteriaInstance.instanceId, result, planResult.notes);
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));

@@ -111,7 +111,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                             teacherTool.evalResults[criteriaId]?.notes ? undefined : css["no-print"]
                         )}
                     >
-                        {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
+                        {!showInput && teacherTool.evalResults[criteriaId].result !== EvaluationStatus.InProgress && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
                         {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
                     </div>
                 </div>
