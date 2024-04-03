@@ -479,100 +479,100 @@ namespace Protocol {
         | KickPlayerMessage
         | CollabOverMessage;
 
-        export namespace Binary {
-            export enum MessageType {
-                SetPlayerValue = 16,
-                DelPlayerValue = 17,
-                SetSessionValue = 18,
-                DelSessionValue = 19,
-            }
-    
-            // Collab:SetPlayerValue
-            export function packSetPlayerValueMessage(key: string, value: string): Buffer {
-                const writer = new SmartBuffer();
-                writer.writeUInt16LE(MessageType.SetPlayerValue);
-                writer.writeStringNT(key);
-                writer.writeStringNT(value);
-                return writer.toBuffer();
-            }
-            export function unpackSetPlayerValueMessage(reader: SmartBuffer): {
-                key: string;
-                value: string;
-                clientId: string;
-            } {
-                // `type` field has already been read
-                const key = reader.readStringNT();
-                const value = reader.readStringNT();
-                const clientId = reader.readStringNT();
-                return {
-                    key,
-                    value,
-                    clientId,
-                };
-            }
-    
-            // Collab:DelPlayerValue
-            export function packDelPlayerValueMessage(key: string): Buffer {
-                const writer = new SmartBuffer();
-                writer.writeUInt16LE(MessageType.DelPlayerValue);
-                writer.writeStringNT(key);
-                return writer.toBuffer();
-            }
-            export function unpackDelPlayerValueMessage(reader: SmartBuffer): {
-                key: string;
-                clientId: string;
-            } {
-                // `type` field has already been read
-                const key = reader.readStringNT();
-                const clientId = reader.readStringNT();
-                return {
-                    key,
-                    clientId,
-                };
-            }
-    
-            // Collab:SetSessionValue
-            export function packSetSessionValueMessage(key: string, value: string): Buffer {
-                const writer = new SmartBuffer();
-                writer.writeUInt16LE(MessageType.SetSessionValue);
-                writer.writeStringNT(key);
-                writer.writeStringNT(value);
-                return writer.toBuffer();
-            }
-            export function unpackSetSessionValueMessage(reader: SmartBuffer): {
-                key: string;
-                value: string;
-                clientId: string;
-            } {
-                // `type` field has already been read
-                const key = reader.readStringNT();
-                const value = reader.readStringNT();
-                const clientId = reader.readStringNT();
-                return {
-                    key,
-                    value,
-                    clientId,
-                };
-            }
-    
-            // Collab:DelSessionValue
-            export function packDelSessionValueMessage(key: string): Buffer {
-                const writer = new SmartBuffer();
-                writer.writeUInt16LE(MessageType.DelSessionValue);
-                writer.writeStringNT(key);
-                return writer.toBuffer();
-            }
-            export function unpackDelSessionValueMessage(reader: SmartBuffer): {
-                key: string;
-                clientId: string;
-            } {
-                // `type` field has already been read
-                const key = reader.readStringNT();
-                const clientId = reader.readStringNT();
-                return {
-                    key,
-                    clientId,
-                };
-            }
+    export namespace Binary {
+        export enum MessageType {
+            SetPlayerValue = 16,
+            DelPlayerValue = 17,
+            SetSessionValue = 18,
+            DelSessionValue = 19,
+        }
+
+        // Collab:SetPlayerValue
+        export function packSetPlayerValueMessage(key: string, value: string): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.SetPlayerValue);
+            writer.writeStringNT(key);
+            writer.writeStringNT(value);
+            return writer.toBuffer();
+        }
+        export function unpackSetPlayerValueMessage(reader: SmartBuffer): {
+            key: string;
+            value: string;
+            clientId: string;
+        } {
+            // `type` field has already been read
+            const key = reader.readStringNT();
+            const value = reader.readStringNT();
+            const clientId = reader.readStringNT();
+            return {
+                key,
+                value,
+                clientId,
+            };
+        }
+
+        // Collab:DelPlayerValue
+        export function packDelPlayerValueMessage(key: string): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.DelPlayerValue);
+            writer.writeStringNT(key);
+            return writer.toBuffer();
+        }
+        export function unpackDelPlayerValueMessage(reader: SmartBuffer): {
+            key: string;
+            clientId: string;
+        } {
+            // `type` field has already been read
+            const key = reader.readStringNT();
+            const clientId = reader.readStringNT();
+            return {
+                key,
+                clientId,
+            };
+        }
+
+        // Collab:SetSessionValue
+        export function packSetSessionValueMessage(key: string, value: string): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.SetSessionValue);
+            writer.writeStringNT(key);
+            writer.writeStringNT(value);
+            return writer.toBuffer();
+        }
+        export function unpackSetSessionValueMessage(reader: SmartBuffer): {
+            key: string;
+            value: string;
+            clientId: string;
+        } {
+            // `type` field has already been read
+            const key = reader.readStringNT();
+            const value = reader.readStringNT();
+            const clientId = reader.readStringNT();
+            return {
+                key,
+                value,
+                clientId,
+            };
+        }
+
+        // Collab:DelSessionValue
+        export function packDelSessionValueMessage(key: string): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.DelSessionValue);
+            writer.writeStringNT(key);
+            return writer.toBuffer();
+        }
+        export function unpackDelSessionValueMessage(reader: SmartBuffer): {
+            key: string;
+            clientId: string;
+        } {
+            // `type` field has already been read
+            const key = reader.readStringNT();
+            const clientId = reader.readStringNT();
+            return {
+                key,
+                clientId,
+            };
         }
     }
+}
