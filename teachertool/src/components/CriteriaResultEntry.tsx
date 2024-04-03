@@ -10,6 +10,7 @@ import { CriteriaEvalResultDropdown } from "./CriteriaEvalResultDropdown";
 import { DebouncedTextarea } from "./DebouncedTextarea";
 import { getCatalogCriteriaWithId, getCriteriaInstanceWithId } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
+import { EvaluationStatus } from "../types/criteria";
 
 interface AddNotesButtonProps {
     criteriaId: string;
@@ -36,14 +37,20 @@ const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInpu
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
-    notes?: string;
 }
 
-const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, notes }) => {
+const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
+    const [value, setValue] = useState(teacherTool.evalResults[criteriaId]?.notes ?? "");
+
     const onTextChange = (str: string) => {
         setEvalResultNotes(criteriaId, str);
+        setValue(str);
     };
+
+    React.useEffect(() => {
+        setValue(teacherTool.evalResults[criteriaId]?.notes ?? "");
+    }, [teacherTool.evalResults[criteriaId]?.notes]);
 
     return (
         <div className={css["notes-container"]}>
@@ -52,7 +59,7 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, n
                 ariaLabel={lf("Feedback regarding the criteria result")}
                 label={lf("Feedback")}
                 title={lf("Write your notes here")}
-                initialValue={teacherTool.evalResults[criteriaId]?.notes ?? undefined}
+                initialValue={value}
                 autoResize={true}
                 onChange={onTextChange}
                 autoComplete={false}
@@ -73,6 +80,12 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
     const criteriaInstance = getCriteriaInstanceWithId(teacherTool, criteriaId);
     const catalogCriteria = criteriaInstance ? getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId) : undefined;
 
+    React.useEffect(() => {
+        if (!showInput && teacherTool.evalResults[criteriaId]?.notes) {
+            setShowInput(true);
+        }
+    }, [teacherTool.evalResults[criteriaId]?.notes]);
+
     return (
         <>
             {catalogCriteria && (
@@ -83,10 +96,14 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                             criteriaInstance={criteriaInstance}
                             showDescription={false}
                         />
-                        <CriteriaEvalResultDropdown
-                            result={teacherTool.evalResults[criteriaId].result}
-                            criteriaId={criteriaId}
-                        />
+                        {teacherTool.evalResults[criteriaId].result === EvaluationStatus.InProgress ? (
+                            <div className="common-spinner"></div>
+                        ) : (
+                            <CriteriaEvalResultDropdown
+                                result={teacherTool.evalResults[criteriaId].result}
+                                criteriaId={criteriaId}
+                            />
+                        )}
                     </div>
                     <div
                         className={classList(

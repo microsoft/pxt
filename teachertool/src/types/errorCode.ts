@@ -24,4 +24,5 @@ export enum ErrorCode {
     missingParameter = "missingParameter",
     selectedBlockWithoutOptions = "selectedBlockWithoutOptions",
     unrecognizedSystemParameter = "unrecognizedSystemParameter",
+    invalidValidatorPlan = "invalidValidatorPlan",
 }

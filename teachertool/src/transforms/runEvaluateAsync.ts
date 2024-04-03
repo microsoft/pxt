@@ -13,6 +13,7 @@ import jp from "jsonpath";
 import { getSystemParameter } from "../utils/getSystemParameter";
 import { setEvalResult } from "./setEvalResult";
 import { setEvalResultNotes } from "./setEvalResultNotes";
+import { runValidatorPlanOverrideAsync } from "../validatorPlanOverrides/runValidatorPlanOverrideAsync";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -101,7 +102,11 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                     return resolve(false);
                 }
 
-                const planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
+                // Only call into iframe if teacher tool has not specified an override for this plan.
+                let planResult = await runValidatorPlanOverrideAsync(plan);
+                if (!planResult) {
+                    planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
+                }
 
                 if (planResult) {
                     const result = planResult.result === undefined ? EvaluationStatus.CompleteWithNoResult : planResult.result ? EvaluationStatus.Pass : EvaluationStatus.Fail;
