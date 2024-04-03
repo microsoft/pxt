@@ -31,7 +31,7 @@ const dropdownItems: DropdownItem[] = [
     {
         id: "evaluating",
         title: lf("evaluating..."),
-        label: lf("evaluating..."),
+        label: lf("Evaluating..."),
     },
     {
         id: "notevaluated",
@@ -41,17 +41,17 @@ const dropdownItems: DropdownItem[] = [
     {
         id: "fail",
         title: lf("needs work"),
-        label: lf("needs work"),
+        label: lf("Needs work"),
     },
     {
         id: "pass",
         title: lf("looks good!"),
-        label: lf("looks good!"),
+        label: lf("Looks good!"),
     },
     {
         id: "pending",
         title: lf("not started"),
-        label: lf("not started"),
+        label: lf("Not started"),
     },
 ];
 
