@@ -9,19 +9,10 @@ import { validateBlockCommentsExist } from "./validateCommentsExist";
 import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockCommentsExist";
 import { getNestedChildBlocks } from "./getNestedChildBlocks";
 
-export async function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]): Promise<pxt.blocks.EvaluationResult> {
+export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]): boolean {
     const startTime = Date.now();
     let checksSucceeded = 0;
     let successfulBlocks: Blockly.Block[] = [];
-    let notes: string = undefined;
-
-    function addToNote(note: string) {
-        if (!notes) {
-            notes = note;
-        } else {
-            notes += `\n${note}`;
-        }
-    }
 
     for (const check of plan.checks) {
         let checkPassed = false;
@@ -40,10 +31,6 @@ export async function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.bl
                 break;
             case "blockFieldValueExists":
                 [successfulBlocks, checkPassed] = [...runBlockFieldValueExistsValidation(usedBlocks, check as pxt.blocks.BlockFieldValueExistsCheck)];
-                break;
-            case "aiQuestion":
-                const response = await runAiQuestionValidation(check as pxt.blocks.AiQuestionValidatorCheck);
-                addToNote(response);
                 break;
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
@@ -66,8 +53,7 @@ export async function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.bl
         checksSucceeded += checkPassed ? 1 : 0;
     }
 
-    // If threshold is -1 then pass/fail does not apply.
-    const passed = plan.threshold < 0 ? undefined : checksSucceeded >= plan.threshold;
+    const passed = checksSucceeded >= plan.threshold;
 
     pxt.tickEvent("validation.evaluation_complete", {
         plan: plan.name,
@@ -75,7 +61,7 @@ export async function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.bl
         passed: `${passed}`,
     });
 
-    return { result: passed, notes };
+    return passed;
 }
 
 function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksExistValidatorCheck): [Blockly.Block[], boolean] {
@@ -117,35 +103,4 @@ function runBlockFieldValueExistsValidation(usedBlocks: Blockly.Block[], inputs:
         specifiedBlock: inputs.blockType
     });
     return  [blockResults.successfulBlocks, blockResults.passed];
-}
-
-
-// TODO thsparks - do we have a shared backend requests location in pxteditor? If not, should we make one?
-export async function askCopilotQuestion(shareId: string, target: string, question: string): Promise<string> {
-    // TODO thsparks - any kind of retry logic, error handling?
-    // TODO thsparks - use pxt.Cloud.apiRoot instead of my staging endpoint.
-    const url = `https://makecode-app-backend-ppe-thsparks.azurewebsites.net/api/copilot/question`;
-    const data = { id: shareId, target, question }
-    const request = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-    });
-    const response = await request.text();
-
-    if (!response) {
-        throw new Error("Unable to reach copilot service.");
-    } else {
-        return response;
-    }
-}
-
-
-async function runAiQuestionValidation(inputs: pxt.blocks.AiQuestionValidatorCheck): Promise<string> {
-    // TODO thsparks - remove debug logs.
-    console.log(`Asking question: '${inputs.question}' on '${inputs.target}' project with shareId: '${inputs.shareId}'`);
-    const response = await askCopilotQuestion(inputs.shareId, inputs.target, inputs.question);
-    console.log(`Response: ${response}`);
-
-    return response;
 }
