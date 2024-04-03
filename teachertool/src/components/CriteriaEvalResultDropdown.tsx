@@ -35,8 +35,8 @@ const dropdownItems: DropdownItem[] = [
     },
     {
         id: "notevaluated",
-        title: lf("not evaluated"),
-        label: lf("not evaluated"),
+        title: lf("not applicable"),
+        label: lf("N/A"),
     },
     {
         id: "fail",
