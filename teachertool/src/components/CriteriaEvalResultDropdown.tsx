@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import { setEvalResultOutcome } from "../transforms/setEvalResultOutcome";
 import { Dropdown, DropdownItem } from "react-common/components/controls/Dropdown";
 import { EvaluationStatus } from "../types/criteria";
-import css from "./styling/EvalResultDisplay.module.scss";
 import { classList } from "react-common/components/util";
 
 interface CriteriaEvalResultProps {
@@ -12,7 +11,6 @@ interface CriteriaEvalResultProps {
 }
 
 const itemIdToCriteriaResult: pxt.Map<EvaluationStatus> = {
-    evaluating: EvaluationStatus.InProgress,
     notevaluated: EvaluationStatus.CompleteWithNoResult,
     fail: EvaluationStatus.Fail,
     pass: EvaluationStatus.Pass,
@@ -20,7 +18,6 @@ const itemIdToCriteriaResult: pxt.Map<EvaluationStatus> = {
 };
 
 const criteriaResultToItemId: pxt.Map<string> = {
-    [EvaluationStatus.InProgress]: "evaluating",
     [EvaluationStatus.CompleteWithNoResult]: "notevaluated",
     [EvaluationStatus.Fail]: "fail",
     [EvaluationStatus.Pass]: "pass",
@@ -28,11 +25,6 @@ const criteriaResultToItemId: pxt.Map<string> = {
 };
 
 const dropdownItems: DropdownItem[] = [
-    {
-        id: "evaluating",
-        title: lf("evaluating..."),
-        label: lf("Evaluating..."),
-    },
     {
         id: "notevaluated",
         title: lf("not applicable"),
