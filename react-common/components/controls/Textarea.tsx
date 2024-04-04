@@ -47,10 +47,18 @@ export const Textarea = (props: TextareaProps) => {
     const [value, setValue] = React.useState(initialValue || "");
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
+    const fitVerticalSizeToContent = () => {
+        textareaRef.current.style.height = "1px";
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+
     React.useEffect(() => {
         setValue(initialValue)
-    }, [initialValue])
 
+        if (autoResize && textareaRef.current) {
+            fitVerticalSizeToContent();
+        }
+    }, [initialValue])
 
     const changeHandler = (e: React.ChangeEvent<any>) => {
         const newValue = (e.target as any).value;
@@ -61,8 +69,7 @@ export const Textarea = (props: TextareaProps) => {
             onChange(newValue);
         }
         if (autoResize && textareaRef.current) {
-            textareaRef.current.style.height = "1px";
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+            fitVerticalSizeToContent();
         }
     }
 
