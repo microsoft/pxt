@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@monaco-editor/react": "^4.6.0",
     "@types/jsonpath": "^0.2.4",
     "@types/node": "^16.11.33",
     "framer-motion": "^6.5.1",

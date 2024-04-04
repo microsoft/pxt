@@ -1,7 +1,7 @@
 import * as React from "react";
 import css from "./styling/EditorPanel.module.scss";
 import { SplitPane } from "./SplitPane";
-import { MonacoEditor } from "./MonacoEditor";
+import { MonacoEditorPane } from "./MonacoEditor";
 import { MakeCodeFrame } from "./MakeCodeFrame";
 import { ActionBar } from "./ActionBar";
 
@@ -19,7 +19,7 @@ export const EditorPanel: React.FC<IProps> = () => {
                 primary="left"
                 leftMinSize="5rem"
                 rightMinSize="5rem"
-                left={<MonacoEditor />}
+                left={<MonacoEditorPane />}
                 right={<MakeCodeFrame />}
             />
         </div>
