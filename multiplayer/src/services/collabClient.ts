@@ -188,8 +188,6 @@ class CollabClient {
 
             if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
-            CollabEpics.initState(new Map());
-
             await this.connectAsync(collabInfo.joinTicket!);
 
             return {
@@ -229,8 +227,6 @@ class CollabClient {
 
             if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
-            CollabEpics.initState(new Map());
-
             await this.connectAsync(collabInfo.joinTicket!);
 
             return {
@@ -262,14 +258,14 @@ class CollabClient {
         this.clientRole = role;
         this.clientId = clientId;
 
-        // TODO: Set initial state
+        CollabEpics.connected(clientId);
         CollabEpics.recvSetSessionState(sessKv);
     }
 
     private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
         pxt.debug("Server sent presence");
         await setPresenceAsync(msg.presence);
-        CollabEpics.recvUpdatePresence(msg.presence);
+        CollabEpics.recvPresence(msg.presence);
     }
 
     private async recvPlayerJoinedMessageAsync(msg: Protocol.PlayerJoinedMessage) {

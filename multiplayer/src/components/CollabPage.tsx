@@ -6,11 +6,9 @@ import { BRUSH_COLORS, BRUSH_SIZES, BrushSize, Vec2Like } from "../types";
 import { getCollabCanvas } from "../services/collabCanvas";
 import * as collabClient from "../services/collabClient";
 import * as CollabEpics from "../epics/collab";
-import * as CollabActions from "../state/collab/actions";
 import { dist, distSq, jsonReplacer, throttle } from "../util";
 import { BRUSH_PROPS, PLAYER_SPRITE_DATAURLS } from "../constants";
 import { nanoid } from "nanoid";
-import { CollabContext } from "../state/collab";
 
 export interface CollabPageProps {}
 
@@ -18,7 +16,6 @@ const setPlayerValueThrottled = throttle(collabClient.setPlayerValue, 100);
 
 export default function Render(props: CollabPageProps) {
     const { state } = useContext(AppStateContext);
-    const { dispatch: collabDispatch } = useContext(CollabContext);
     const { netMode, clientRole, collabInfo } = state;
 
     const [canvasContainer, setCanvasContainer] = useState<HTMLDivElement | null>(null);
@@ -42,7 +39,6 @@ export default function Render(props: CollabPageProps) {
         if (undoSet) {
             undoSet.forEach(spriteId => {
                 getCollabCanvas().removePaintSprite(spriteId);
-                collabDispatch(CollabActions.delSessionValue("s:" + spriteId));
                 collabClient.delSessionValue("s:" + spriteId);
             });
         }
@@ -120,8 +116,6 @@ export default function Render(props: CollabPageProps) {
             const newPosStr = JSON.stringify(newPos);
             // Send position to server
             setPlayerValueThrottled("position", newPosStr);
-            // Update local player position in state (may not be needed)
-            collabDispatch(CollabActions.setPlayerValue(collabClient.getClientId()!, "position", newPosStr));
 
             if (!mouseDown) return;
             const undoSet = undoStack.current[undoStack.current.length - 1];

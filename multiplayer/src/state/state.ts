@@ -39,6 +39,7 @@ export type AppState = {
             | undefined;
     };
     targetConfig: pxt.TargetConfig | undefined;
+    collabMode: boolean; // ?collab=1 in URL
 };
 
 export const initialAppState: AppState = {
@@ -60,4 +61,5 @@ export const initialAppState: AppState = {
     deepLinks: {},
     reactions: {},
     targetConfig: undefined,
+    collabMode: /[?|&]collab=1/i.test(window.location.href),
 };
