@@ -89,11 +89,11 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
     return allResults;
 }
 
-export async function askCopilotQuestion(shareId: string, target: string, question: string): Promise<string | undefined> {
+export async function askCopilotQuestion(shareId: string, question: string): Promise<string | undefined> {
     // TODO thsparks - update to pxt.Cloud.apiRoot once the backend changes are available there.
     const url = `https://makecode-app-backend-ppe-thsparks.azurewebsites.net/api/copilot/question`;
 
-    const data = { id: shareId, target, question }
+    const data = { id: shareId, question }
     let result: string = "";
     try {
         const request = await fetch(url, {
@@ -102,11 +102,10 @@ export async function askCopilotQuestion(shareId: string, target: string, questi
             body: JSON.stringify(data),
         });
 
-        // TODO thsparks - update backend to send appropriate status code, etc...
         if (!request.ok) {
             throw new Error("Unable to reach Copilot");
         }
-        result = await request.text();
+        result = await request.json();
     } catch (e) {
         logError(ErrorCode.askCopilotQuestion, e);
     }

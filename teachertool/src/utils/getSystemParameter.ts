@@ -4,10 +4,8 @@ import { ErrorCode } from "../types/errorCode";
 
 export function getSystemParameter(keyword: string, state: AppState): string | undefined {
     switch (keyword) {
-        case "SHAREID":
+        case "SHARE_ID":
             return state.projectMetadata?.id;
-        case "TARGET":
-            return state.projectMetadata?.target;
         default:
             logError(ErrorCode.unrecognizedSystemParameter, "Unrecognized system parameter", { keyword });
             return undefined;

@@ -36,8 +36,7 @@
                 {
                     "validator": "aiQuestion",
                     "question": "",
-                    "shareId": "",
-                    "target": ""
+                    "shareId": ""
                 }
             ]
         }

@@ -50,14 +50,8 @@
                 {
                     "name": "shareid",
                     "type": "system",
-                    "default": "SHAREID",
+                    "default": "SHARE_ID",
                     "paths": ["checks[0].shareId"]
-                },
-                {
-                    "name": "target",
-                    "type": "system",
-                    "default": "TARGET",
-                    "paths": ["checks[0].target"]
                 }
             ]
         },

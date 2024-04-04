@@ -56,6 +56,5 @@ declare namespace pxt.blocks {
         validator: "aiQuestion";
         question: string;
         shareId: string;
-        target: string; // TODO thsparks : Just look this up from the share id within deepprompt itself? Or in our backend?
     }
 }

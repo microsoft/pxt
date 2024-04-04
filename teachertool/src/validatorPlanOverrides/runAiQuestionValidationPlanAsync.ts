@@ -10,8 +10,8 @@ export async function runAiQuestionValidationPlanAsync(plan: pxt.blocks.Validato
     }
 
     const inputs = plan.checks[0] as pxt.blocks.AiQuestionValidatorCheck;
-    logDebug(`Asking question: '${inputs.question}' on '${inputs.target}' project with shareId: '${inputs.shareId}'`);
-    const response = await askCopilotQuestion(inputs.shareId, inputs.target, inputs.question);
+    logDebug(`Asking question: '${inputs.question}' on project with shareId: '${inputs.shareId}'`);
+    const response = await askCopilotQuestion(inputs.shareId, inputs.question);
     logDebug(`Response: ${response}`);
 
     return {
