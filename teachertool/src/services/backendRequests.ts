@@ -89,22 +89,27 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
     return allResults;
 }
 
-// TODO thsparks - do we have a shared backend requests location in pxteditor? If not, should we make one?
-export async function askCopilotQuestion(shareId: string, target: string, question: string): Promise<string> {
-    // TODO thsparks - any kind of retry logic, error handling?
-    // TODO thsparks - use pxt.Cloud.apiRoot instead of my staging endpoint.
+export async function askCopilotQuestion(shareId: string, target: string, question: string): Promise<string | undefined> {
+    // TODO thsparks - update to pxt.Cloud.apiRoot once the backend changes are available there.
     const url = `https://makecode-app-backend-ppe-thsparks.azurewebsites.net/api/copilot/question`;
-    const data = { id: shareId, target, question }
-    const request = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-    });
-    const response = await request.text();
 
-    if (!response) {
-        throw new Error("Unable to reach copilot service.");
-    } else {
-        return response;
+    const data = { id: shareId, target, question }
+    let result: string = "";
+    try {
+        const request = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+
+        // TODO thsparks - update backend to send appropriate status code, etc...
+        if (!request.ok) {
+            throw new Error("Unable to reach Copilot");
+        }
+        result = await request.text();
+    } catch (e) {
+        logError(ErrorCode.askCopilotQuestion, e);
     }
+
+    return result;
 }

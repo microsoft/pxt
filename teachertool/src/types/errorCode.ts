@@ -25,4 +25,5 @@ export enum ErrorCode {
     selectedBlockWithoutOptions = "selectedBlockWithoutOptions",
     unrecognizedSystemParameter = "unrecognizedSystemParameter",
     invalidValidatorPlan = "invalidValidatorPlan",
+    askCopilotQuestion = "askCopilotQuestion",
 }
