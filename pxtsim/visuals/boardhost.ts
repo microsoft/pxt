@@ -134,6 +134,12 @@ namespace pxsim.visuals {
             this.boardView.highlightPin(pinNm);
         }
 
+        public removeEventListeners() {
+            if (this.boardView.removeEventListeners) {
+                this.boardView.removeEventListeners();
+            }
+        }
+
         public highlightBreadboardPin(rowCol: BBLoc) {
             this.breadboard.highlightLoc(rowCol);
         }
