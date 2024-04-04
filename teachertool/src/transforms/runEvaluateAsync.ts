@@ -50,8 +50,11 @@ function generateValidatorPlan(
             return undefined;
         }
 
-        if (catalogParam.type === "system" && catalogParam.default) { // TODO thsparks - "keyword" instead of default?
-            param.value = getSystemParameter(catalogParam.default, teacherTool);
+        if (catalogParam.type === "system" && catalogParam.key) {
+            param.value = getSystemParameter(catalogParam.key, teacherTool);
+            if (!param.value) {
+                param.value = catalogParam.default;
+            }
         }
 
         if (!param.value) {
@@ -108,7 +111,12 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                 }
 
                 if (planResult) {
-                    const result = planResult.result === undefined ? EvaluationStatus.CompleteWithNoResult : planResult.result ? EvaluationStatus.Pass : EvaluationStatus.Fail;
+                    const result =
+                        planResult.result === undefined
+                            ? EvaluationStatus.CompleteWithNoResult
+                            : planResult.result
+                            ? EvaluationStatus.Pass
+                            : EvaluationStatus.Fail;
 
                     setEvalResultFull(criteriaInstance.instanceId, result, planResult.notes);
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)

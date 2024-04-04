@@ -50,7 +50,7 @@
                 {
                     "name": "shareid",
                     "type": "system",
-                    "default": "SHARE_ID",
+                    "key": "SHARE_ID",
                     "paths": ["checks[0].shareId"]
                 }
             ]

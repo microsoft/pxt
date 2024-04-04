@@ -22,6 +22,7 @@ export interface CriteriaParameter {
     name: string;
     type: CriteriaParameterType;
     default: string | undefined;
+    key: string | undefined;
     paths: string[]; // The json path(s) to update with the parameter value in the catalog criteria.
 }
 

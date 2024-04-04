@@ -5,8 +5,6 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 let autorunTimer: NodeJS.Timeout | null = null;
 
 export function poke() {
-    // TODO thsparks - somehow don't autorun for ai? It's expensive...
-
     if (autorunTimer) {
         clearTimeout(autorunTimer);
     }
