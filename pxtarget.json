@@ -36,5 +36,5 @@
         "hideDocsEdit": true,
         "hideDocsSimulator": true
     },
-    "uploadDocs": true
+    "uploadDocs": false
 }
