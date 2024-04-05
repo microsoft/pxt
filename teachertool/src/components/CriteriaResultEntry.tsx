@@ -11,6 +11,7 @@ import { DebouncedTextarea } from "./DebouncedTextarea";
 import { getCatalogCriteriaWithId, getCriteriaInstanceWithId } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { EvaluationStatus } from "../types/criteria";
+import { ThreeDotsLoadingDisplay } from "./ThreeDotsLoadingDisplay";
 
 interface AddNotesButtonProps {
     criteriaId: string;
@@ -90,23 +91,23 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
     return (
         <>
             {catalogCriteria && (
-                <div className={css["specific-criteria-result"]} key={criteriaId}>
+                <div className={css["specific-criteria-result"]} key={criteriaId} aria-busy={isInProgress}>
                     <div className={css["result-details"]}>
                         <ReadOnlyCriteriaDisplay
                             catalogCriteria={catalogCriteria}
                             criteriaInstance={criteriaInstance}
                             showDescription={false}
                         />
-                        {isInProgress ? (
-                            <div className="common-spinner"></div>
-                        ) : (
+                        {!isInProgress && (
                             <CriteriaEvalResultDropdown
                                 result={teacherTool.evalResults[criteriaId].result}
                                 criteriaId={criteriaId}
                             />
                         )}
                     </div>
-                    {!isInProgress && (
+                    {isInProgress ? (
+                        <ThreeDotsLoadingDisplay className={css["loading-display"]}/>
+                    ) : (
                         <div
                             className={classList(
                                 css["result-notes"],
