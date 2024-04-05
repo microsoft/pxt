@@ -86,6 +86,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
         }
     }, [teacherTool.evalResults[criteriaId]?.notes]);
 
+    const isInProgress = teacherTool.evalResults[criteriaId].result === EvaluationStatus.InProgress;
     return (
         <>
             {catalogCriteria && (
@@ -96,7 +97,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                             criteriaInstance={criteriaInstance}
                             showDescription={false}
                         />
-                        {teacherTool.evalResults[criteriaId].result === EvaluationStatus.InProgress ? (
+                        {isInProgress ? (
                             <div className="common-spinner"></div>
                         ) : (
                             <CriteriaEvalResultDropdown
@@ -105,15 +106,17 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                             />
                         )}
                     </div>
-                    <div
-                        className={classList(
-                            css["result-notes"],
-                            teacherTool.evalResults[criteriaId]?.notes ? undefined : css["no-print"]
-                        )}
-                    >
-                        {!showInput && teacherTool.evalResults[criteriaId].result !== EvaluationStatus.InProgress && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-                        {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
-                    </div>
+                    {!isInProgress && (
+                        <div
+                            className={classList(
+                                css["result-notes"],
+                                teacherTool.evalResults[criteriaId]?.notes ? undefined : css["no-print"]
+                            )}
+                        >
+                            {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
+                            {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
+                        </div>
+                    )}
                 </div>
             )}
         </>
