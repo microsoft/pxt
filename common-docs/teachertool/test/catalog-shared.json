@@ -37,15 +37,21 @@
         },
         {
             "id": "499F3572-E655-4DEE-953B-5F26BF0191D7",
-            "use": "block_used_n_times",
-            "template": "Long String: ${question}",
-            "description": "This is just a test for long string inputs.",
+            "use": "ai_question",
+            "template": "Ask Copilot: ${question}",
+            "description": "Experimental: AI outputs are inherently nondeterministic and may not be accurate. Use with caution and always review responses.",
             "docPath": "/teachertool",
             "params": [
                 {
                     "name": "question",
                     "type": "longString",
-                    "paths": ["checks[0].blockCounts[0].blockId"]
+                    "paths": ["checks[0].question"]
+                },
+                {
+                    "name": "shareid",
+                    "type": "system",
+                    "key": "SHARE_ID",
+                    "paths": ["checks[0].shareId"]
                 }
             ]
         },
