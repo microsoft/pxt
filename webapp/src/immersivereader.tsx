@@ -186,7 +186,7 @@ function beautifyText(content: string): string {
 }
 
 function getTokenAsync(): Promise<ImmersiveReaderToken> {
-    const IMMERSIVE_READER_ID = "immReader";
+    const IMMERSIVE_READER_ID = "immReaderToken";
     const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
     const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
