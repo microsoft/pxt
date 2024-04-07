@@ -212,7 +212,7 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
     }
 }
 
-export function launchImmersiveReader(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
+export async function launchImmersiveReader(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
     pxt.tickEvent("immersiveReader.launch", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep});
 
     const userReaderPref = data.getData<string>(auth.READER) || ""
@@ -235,9 +235,9 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
         preferences: userReaderPref
     }
 
-    getTokenAsync().then(res =>{
-        return testConnectionAsync(res);
-    }).then(res => {
+    try {
+        let res = await getTokenAsync();
+        await testConnectionAsync();
         if (Cloud.isOnline()) {
             const launchStart = pxt.Util.now();
             return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options).then(res => {
@@ -247,7 +247,7 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
         } else {
             return Promise.reject(new Error("offline"));
         }
-    }).catch(e => {
+    } catch (e) {
         if (e.isOffline) {
             core.warningNotification(lf("Immersive Reader cannot be used offline"));
         } else {
@@ -270,10 +270,11 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
         }
         pxt.reportException(e);
         ImmersiveReader.close();
-    });
+    };
 
-    function testConnectionAsync(token: ImmersiveReaderToken): Promise<ImmersiveReaderToken> {
-        return pxt.Cloud.privateGetAsync("ping", true).then(() => {return token});
+    async function testConnectionAsync() {
+        // Will except if there is an error we are not expecting
+        return pxt.Cloud.privateGetAsync("ping", true);
     }
 }
 
@@ -285,7 +286,7 @@ interface ImmersiveReaderProps {
 
 export class ImmersiveReaderButton extends data.Component<ImmersiveReaderProps, {}> {
     private buttonClickHandler = () => {
-        launchImmersiveReader(this.props.content, this.props.tutorialOptions);
+        /** async */ launchImmersiveReader(this.props.content, this.props.tutorialOptions);
     }
 
     render() {
