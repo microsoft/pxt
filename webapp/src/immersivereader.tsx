@@ -212,7 +212,7 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
     }
 }
 
-export async function launchImmersiveReader(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
+export async function launchImmersiveReaderAsync(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
     pxt.tickEvent("immersiveReader.launch", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep});
 
     const userReaderPref = data.getData<string>(auth.READER) || ""
@@ -238,15 +238,13 @@ export async function launchImmersiveReader(content: string, tutorialOptions: px
     try {
         let res = await getTokenAsync();
         await testConnectionAsync();
-        if (Cloud.isOnline()) {
-            const launchStart = pxt.Util.now();
-            return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options).then(res => {
-                const elapsed = pxt.Util.now() - launchStart;
-                pxt.tickEvent("immersiveReader.launch.finished", {elapsed: elapsed})
-            })
-        } else {
-            return Promise.reject(new Error("offline"));
+        if (!Cloud.isOnline()) {
+            throw new Error("offline");
         }
+        const launchStart = pxt.Util.now();
+        await ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options)
+        const elapsed = pxt.Util.now() - launchStart;
+        pxt.tickEvent("immersiveReader.launch.finished", {elapsed: elapsed})
     } catch (e) {
         if (e.isOffline) {
             core.warningNotification(lf("Immersive Reader cannot be used offline"));
@@ -286,7 +284,7 @@ interface ImmersiveReaderProps {
 
 export class ImmersiveReaderButton extends data.Component<ImmersiveReaderProps, {}> {
     private buttonClickHandler = () => {
-        /** async */ launchImmersiveReader(this.props.content, this.props.tutorialOptions);
+        /** async */ launchImmersiveReaderAsync(this.props.content, this.props.tutorialOptions);
     }
 
     render() {

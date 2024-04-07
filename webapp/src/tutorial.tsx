@@ -367,7 +367,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             if (immersiveReaderEnabled) {
                 actions.push({
                     className: "immersive-reader-button",
-                    onclick: () => { ImmersiveReader.launchImmersiveReader(fullText, options) },
+                    onclick: () => { ImmersiveReader.launchImmersiveReaderAsync(fullText, options) },
                     ariaLabel: lf("Launch Immersive Reader"),
                     title: lf("Launch Immersive Reader")
                 })
