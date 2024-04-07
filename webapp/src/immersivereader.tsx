@@ -185,8 +185,8 @@ function beautifyText(content: string): string {
     }
 }
 
+const IMMERSIVE_READER_ID = "immReaderToken";
 function getTokenAsync(): Promise<ImmersiveReaderToken> {
-    const IMMERSIVE_READER_ID = "immReaderToken";
     const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
     const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
@@ -256,6 +256,8 @@ export async function launchImmersiveReaderAsync(content: string, tutorialOption
                 }
                 case "token":
                 default: {
+                    // If the token is invalid, remove it from storage
+                    pxt.storage.removeLocal(IMMERSIVE_READER_ID);
                     core.warningNotification(lf("Immersive Reader could not be launched"));
                     if (typeof e == "string") {
                         pxt.tickEvent("immersiveReader.error", {message: e});
