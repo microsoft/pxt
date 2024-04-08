@@ -68,7 +68,7 @@ function getTestFilePath(fileName: string) {
 export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[], rootName: string): Promise<T[]> {
     const { state: teacherTool } = stateAndDispatch();
 
-    const files = teacherTool.flags.testCatalog ? fileNames.concat(fileNames.map(getTestFilePath)) : fileNames;
+    const files = teacherTool.flags.testCatalog ? fileNames.map(getTestFilePath).concat(fileNames) : fileNames;
     let allResults: T[] = [];
     for (const planFile of files) {
         try {
