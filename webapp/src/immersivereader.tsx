@@ -273,7 +273,7 @@ export async function launchImmersiveReaderAsync(content: string, tutorialOption
     };
 
     async function testConnectionAsync() {
-        // Will except if there is an error we are not expecting
+        // Will throw an exception here if there is an error we are not expecting
         return pxt.Cloud.privateGetAsync("ping", true);
     }
 }
@@ -285,8 +285,8 @@ interface ImmersiveReaderProps {
 }
 
 export class ImmersiveReaderButton extends data.Component<ImmersiveReaderProps, {}> {
-    private buttonClickHandler = () => {
-        /** async */ launchImmersiveReaderAsync(this.props.content, this.props.tutorialOptions);
+    private buttonClickHandler = async () => {
+        await launchImmersiveReaderAsync(this.props.content, this.props.tutorialOptions);
     }
 
     render() {
