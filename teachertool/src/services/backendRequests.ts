@@ -94,7 +94,7 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
 
     const url = `${
         teacherTool.copilotEndpointOverride ? teacherTool.copilotEndpointOverride : pxt.Cloud.apiRoot
-    }copilot/question`;
+    }/copilot/question`;
 
     const data = { id: shareId, question };
     let result: string = "";
