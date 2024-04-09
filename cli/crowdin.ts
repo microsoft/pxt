@@ -5,7 +5,7 @@ import * as path from 'path';
 import Map = pxt.Map;
 
 import * as commandParser from './commandparser';
-import { downloadFileTranslationsAsync, listFilesAsync, uploadFileAsync } from './crowdinv2';
+import { downloadFileTranslationsAsync, listFilesAsync, uploadFileAsync } from './crowdinApi';
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
