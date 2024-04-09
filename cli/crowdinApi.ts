@@ -5,9 +5,6 @@ import axios from 'axios';
 import * as AdmZip from "adm-zip";
 
 let client: crowdin;
-
-// You can get the project Id by going to the project page in
-// crowdin and selecting Tools and then API
 const KINDSCRIPT_PROJECT_ID = 157956;
 
 let projectId = KINDSCRIPT_PROJECT_ID;
@@ -361,6 +358,10 @@ function crowdinCredentials(): Credentials {
 
     if (!token) {
         throw new Error(`Crowdin token not found in environment variable ${pxt.crowdin.KEY_VARIABLE}`);
+    }
+
+    if (pxt.appTarget?.appTheme?.crowdinProjectId !== undefined) {
+        setProjectId(pxt.appTarget.appTheme.crowdinProjectId);
     }
 
     return { token };
