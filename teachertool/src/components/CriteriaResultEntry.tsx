@@ -81,7 +81,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
     const criteriaInstance = getCriteriaInstanceWithId(teacherTool, criteriaId);
     const catalogCriteria = criteriaInstance ? getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId) : undefined;
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!showInput && teacherTool.evalResults[criteriaId]?.notes) {
             setShowInput(true);
         }
