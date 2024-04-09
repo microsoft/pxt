@@ -12,7 +12,7 @@ import jp from "jsonpath";
 import { getSystemParameter } from "../utils/getSystemParameter";
 import { runValidatorPlanOverrideAsync } from "../validatorPlanOverrides/runValidatorPlanOverrideAsync";
 import { setEvalResultOutcome } from "./setEvalResultOutcome";
-import { setEvalResultFull } from "./setEvalResultFull";
+import { mergeEvalResult } from "./mergeEvalResult";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -118,7 +118,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                             ? EvaluationStatus.Pass
                             : EvaluationStatus.Fail;
 
-                    setEvalResultFull(criteriaInstance.instanceId, result, planResult.notes);
+                    mergeEvalResult(criteriaInstance.instanceId, result, planResult.notes);
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
