@@ -1,4 +1,4 @@
-import { askCopilotQuestion } from "../services/backendRequests";
+import { askCopilotQuestionAsync } from "../services/backendRequests";
 import { logDebug, logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
 
@@ -13,7 +13,7 @@ export async function runAiQuestionValidationPlanAsync(
 
     const inputs = plan.checks[0] as pxt.blocks.AiQuestionValidatorCheck;
     logDebug(`Asking question: '${inputs.question}' on project with shareId: '${inputs.shareId}'`);
-    const response = await askCopilotQuestion(inputs.shareId, inputs.question);
+    const response = await askCopilotQuestionAsync(inputs.shareId, inputs.question);
     logDebug(`Response: ${response}`);
 
     return {

@@ -89,7 +89,7 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
     return allResults;
 }
 
-export async function askCopilotQuestion(shareId: string, question: string): Promise<string | undefined> {
+export async function askCopilotQuestionAsync(shareId: string, question: string): Promise<string | undefined> {
     const { state: teacherTool } = stateAndDispatch();
 
     const url = `${
