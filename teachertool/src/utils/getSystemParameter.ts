@@ -10,4 +10,4 @@ export function getSystemParameter(key: string, state: AppState): string | undef
             logError(ErrorCode.unrecognizedSystemParameter, "Unrecognized system parameter", { key });
             return undefined;
     }
-};
+}

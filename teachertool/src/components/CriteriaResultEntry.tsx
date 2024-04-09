@@ -106,7 +106,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                         )}
                     </div>
                     {isInProgress ? (
-                        <ThreeDotsLoadingDisplay className={css["loading-display"]}/>
+                        <ThreeDotsLoadingDisplay className={css["loading-display"]} />
                     ) : (
                         <div
                             className={classList(

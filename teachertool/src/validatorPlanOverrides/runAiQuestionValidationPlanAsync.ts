@@ -2,9 +2,11 @@ import { askCopilotQuestion } from "../services/backendRequests";
 import { logDebug, logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
 
-export async function runAiQuestionValidationPlanAsync(plan: pxt.blocks.ValidatorPlan): Promise<pxt.blocks.EvaluationResult | undefined> {
+export async function runAiQuestionValidationPlanAsync(
+    plan: pxt.blocks.ValidatorPlan
+): Promise<pxt.blocks.EvaluationResult | undefined> {
     // Expect single aiQuestion check and nothing else.
-    if(plan.checks.length !== 1 && plan.checks[0].validator !== "aiQuestion") {
+    if (plan.checks.length !== 1 && plan.checks[0].validator !== "aiQuestion") {
         logError(ErrorCode.invalidValidatorPlan, { planName: plan.name, checks: plan.checks });
         return undefined;
     }
@@ -16,6 +18,6 @@ export async function runAiQuestionValidationPlanAsync(plan: pxt.blocks.Validato
 
     return {
         result: undefined,
-        notes: response
+        notes: response,
     };
 }

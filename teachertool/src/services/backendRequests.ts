@@ -92,9 +92,11 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
 export async function askCopilotQuestion(shareId: string, question: string): Promise<string | undefined> {
     const { state: teacherTool } = stateAndDispatch();
 
-    const url = `${teacherTool.copilotEndpointOverride ? teacherTool.copilotEndpointOverride : pxt.Cloud.apiRoot}copilot/question`;
+    const url = `${
+        teacherTool.copilotEndpointOverride ? teacherTool.copilotEndpointOverride : pxt.Cloud.apiRoot
+    }copilot/question`;
 
-    const data = { id: shareId, question }
+    const data = { id: shareId, question };
     let result: string = "";
     try {
         const request = await fetch(url, {

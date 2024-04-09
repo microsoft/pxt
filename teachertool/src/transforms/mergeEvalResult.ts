@@ -6,7 +6,7 @@ import { setEvalResult } from "./setEvalResult";
 export function mergeEvalResult(criteriaInstanceId: string, outcome?: EvaluationStatus, notes?: string) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
-    const newCriteriaEvalResult = {...teacherTool.evalResults[criteriaInstanceId]};
+    const newCriteriaEvalResult = { ...teacherTool.evalResults[criteriaInstanceId] };
     if (outcome !== undefined) {
         newCriteriaEvalResult.result = outcome;
     }
