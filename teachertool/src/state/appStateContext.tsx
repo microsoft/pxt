@@ -48,7 +48,7 @@ export function AppStateProvider(props: React.PropsWithChildren<{}>): React.Reac
         copilotEndpointOverride: copilotEndpoint,
         flags: {
             ...initialAppState.flags,
-            testCatalog,
+            testCatalog: testCatalog || !!copilotEndpoint,
         },
     });
 
