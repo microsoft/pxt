@@ -449,14 +449,14 @@ async function ciAsync() {
         if (branch === "master" && isTaggedCommit) {
             if (uploadDocs) {
                 await buildWebStringsAsync();
-                await crowdin.execCrowdinAsync("upload", "built/webstrings.json");
+                await crowdin.uploadBuiltStringsAsync("built/webstrings.json");
 
                 for (const subapp of SUB_WEBAPPS) {
-                    await crowdin.execCrowdinAsync("upload", `built/${subapp.name}-strings.json`);
+                    await crowdin.uploadBuiltStringsAsync(`built/${subapp.name}-strings.json`);
                 }
             }
             if (uploadApiStrings) {
-                await crowdin.execCrowdinAsync("upload", "built/strings.json");
+                await crowdin.uploadBuiltStringsAsync("built/strings.json");
             }
             if (uploadDocs || uploadApiStrings) {
                 await crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs);
@@ -7020,7 +7020,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         advanced: true,
     }, pc => uploadTargetRefsAsync(pc.args[0]));
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
-    advancedCommand("downloadtrgtranslations", "download translations from bundled projects", crowdin.downloadTargetTranslationsAsync, "<package>");
+    advancedCommand("downloadtrgtranslations", "download translations from bundled projects", crowdin.downloadTargetTranslationsAsync, "[package]");
 
     p.defineCommand({
         name: "checkdocs",
