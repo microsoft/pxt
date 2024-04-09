@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useContext, useRef } from "react";
+import { useState, useContext, useEffect } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { classList } from "react-common/components/util";
@@ -49,7 +49,7 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId })
         setValue(str);
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         setValue(teacherTool.evalResults[criteriaId]?.notes ?? "");
     }, [teacherTool.evalResults[criteriaId]?.notes]);
 
