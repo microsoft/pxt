@@ -3,7 +3,7 @@ import { EvaluationStatus, CriteriaResult } from "../types/criteria";
 import { Rubric } from "../types/rubric";
 import * as Actions from "../state/actions";
 
-export function setEvalResultsPending({
+export function setEvalResultsToNotStarted({
     overwriteExistingEntries,
     rubric,
 }: {
