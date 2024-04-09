@@ -90,8 +90,9 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
 }
 
 export async function askCopilotQuestion(shareId: string, question: string): Promise<string | undefined> {
-    // TODO thsparks - update to pxt.Cloud.apiRoot once the backend changes are available there.
-    const url = `https://makecode-app-backend-ppe-thsparks.azurewebsites.net/api/copilot/question`;
+    const { state: teacherTool } = stateAndDispatch();
+
+    const url = `${teacherTool.copilotEndpointOverride ? teacherTool.copilotEndpointOverride : pxt.Cloud.apiRoot}copilot/question`;
 
     const data = { id: shareId, question }
     let result: string = "";
