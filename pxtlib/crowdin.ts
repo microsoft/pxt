@@ -1,7 +1,6 @@
 namespace pxt.crowdin {
     export const KEY_VARIABLE = "CROWDIN_KEY";
     export let testMode = false;
-    export const TEST_KEY = "!!!testmode!!!";
 
     export function setTestMode() {
         pxt.crowdin.testMode = true;

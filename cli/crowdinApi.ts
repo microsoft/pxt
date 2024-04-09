@@ -19,6 +19,8 @@ export function setProjectId(id: number) {
 }
 
 export async function uploadFileAsync(fileName: string, fileContent: string): Promise<void> {
+    if (pxt.crowdin.testMode) return;
+
     const files = await getAllFiles();
 
     // If file already exists, update it
@@ -293,7 +295,7 @@ async function getAllFiles() {
     return fetchedFiles;
 }
 
-async function createFile(fileName: string, fileContent: any, directoryId?: number): Promise<SourceFilesModel.File> {
+async function createFile(fileName: string, fileContent: any, directoryId?: number): Promise<void> {
     const { uploadStorageApi, sourceFilesApi } = getClient();
 
     // This request happens in two parts: first we upload the file to the storage API,
@@ -310,7 +312,6 @@ async function createFile(fileName: string, fileContent: any, directoryId?: numb
     if (fetchedFiles) {
         fetchedFiles.push(file.data);
     }
-    return file.data;
 }
 
 async function createDirectory(dirName: string, directoryId?: number): Promise<SourceFilesModel.Directory> {
@@ -348,13 +349,7 @@ function getClient() {
 }
 
 function crowdinCredentials(): Credentials {
-    let token: string;
-    if (pxt.crowdin.testMode) {
-        token = pxt.crowdin.TEST_KEY;
-    }
-    else {
-        token = process.env[pxt.crowdin.KEY_VARIABLE];
-    }
+    const token = process.env[pxt.crowdin.KEY_VARIABLE];
 
     if (!token) {
         throw new Error(`Crowdin token not found in environment variable ${pxt.crowdin.KEY_VARIABLE}`);

@@ -62,12 +62,12 @@ export async function uploadBuiltStringsAsync(filename: string, crowdinDir?: str
     const crowdinFile = crowdinDir ? path.join(crowdinDir, baseName) : baseName;
     const contents = fs.readFileSync(filename, "utf8");
 
-    pxt.log(`uploading ${filename} to ${crowdinFile}`);
+    pxt.log(`Uploading ${filename} to ${crowdinFile}`);
     await uploadFileAsync(crowdinFile, contents);
 }
 
 async function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string): Promise<void> {
-    pxt.log(`uploading from ${srcDir} to ${crowdinDir}`)
+    pxt.log(`Uploading from ${srcDir} to ${crowdinDir}`)
 
     const ignoredDirectoriesList = getIgnoredDirectories(srcDir);
     const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f)).reverse();
@@ -83,7 +83,7 @@ async function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string): 
             continue;
         }
 
-        pxt.log(`uploading ${file} to ${crowdinFile}`);
+        pxt.log(`Uploading ${file} to ${crowdinFile}`);
         await uploadFileAsync(crowdinFile, fs.readFileSync(file, "utf8"));
     }
 }
@@ -120,7 +120,7 @@ async function uploadBundledTranslationsAsync(crowdinDir: string) {
     for (const file of todo) {
         const data = JSON.parse(fs.readFileSync(file, 'utf8')) as Map<string>;
         const crowdinFile = path.join(crowdinDir, path.basename(file));
-        pxt.log(`uploading ${file} to ${crowdinFile}`);
+        pxt.log(`Uploading ${file} to ${crowdinFile}`);
         await uploadFileAsync(crowdinFile, JSON.stringify(data));
     }
 }
