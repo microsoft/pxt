@@ -4,7 +4,7 @@
             "id": "499F3572-E655-4DEE-953B-5F26BF0191D7",
             "use": "ai_question",
             "template": "Ask Copilot: ${question}",
-            "description": "Experimental: AI outputs are inherently nondeterministic and may not be accurate. Use with caution and always review responses.",
+            "description": "Experimental: AI outputs may not be accurate. Use with caution and always review responses.",
             "docPath": "/teachertool",
             "params": [
                 {
