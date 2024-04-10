@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useContext, useRef } from "react";
+import { useState, useContext, useEffect } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { classList } from "react-common/components/util";
@@ -10,6 +10,8 @@ import { CriteriaEvalResultDropdown } from "./CriteriaEvalResultDropdown";
 import { DebouncedTextarea } from "./DebouncedTextarea";
 import { getCatalogCriteriaWithId, getCriteriaInstanceWithId } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
+import { EvaluationStatus } from "../types/criteria";
+import { ThreeDotsLoadingDisplay } from "./ThreeDotsLoadingDisplay";
 
 interface AddNotesButtonProps {
     criteriaId: string;
@@ -36,11 +38,11 @@ const AddNotesButton: React.FC<AddNotesButtonProps> = ({ criteriaId, setShowInpu
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
-    notes?: string;
 }
 
-const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, notes }) => {
+const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
+
     const onTextChange = (str: string) => {
         setEvalResultNotes(criteriaId, str);
     };
@@ -52,7 +54,7 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId, n
                 ariaLabel={lf("Feedback regarding the criteria result")}
                 label={lf("Feedback")}
                 title={lf("Write your notes here")}
-                initialValue={teacherTool.evalResults[criteriaId]?.notes ?? undefined}
+                initialValue={teacherTool.evalResults[criteriaId]?.notes}
                 autoResize={true}
                 onChange={onTextChange}
                 autoComplete={false}
@@ -73,30 +75,43 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
     const criteriaInstance = getCriteriaInstanceWithId(teacherTool, criteriaId);
     const catalogCriteria = criteriaInstance ? getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId) : undefined;
 
+    useEffect(() => {
+        if (!showInput && teacherTool.evalResults[criteriaId]?.notes) {
+            setShowInput(true);
+        }
+    }, [teacherTool.evalResults[criteriaId]?.notes]);
+
+    const isInProgress = teacherTool.evalResults[criteriaId].result === EvaluationStatus.InProgress;
     return (
         <>
             {catalogCriteria && (
-                <div className={css["specific-criteria-result"]} key={criteriaId}>
+                <div className={css["specific-criteria-result"]} key={criteriaId} aria-busy={isInProgress}>
                     <div className={css["result-details"]}>
                         <ReadOnlyCriteriaDisplay
                             catalogCriteria={catalogCriteria}
                             criteriaInstance={criteriaInstance}
                             showDescription={false}
                         />
-                        <CriteriaEvalResultDropdown
-                            result={teacherTool.evalResults[criteriaId].result}
-                            criteriaId={criteriaId}
-                        />
-                    </div>
-                    <div
-                        className={classList(
-                            css["result-notes"],
-                            teacherTool.evalResults[criteriaId]?.notes ? undefined : css["no-print"]
+                        {!isInProgress && (
+                            <CriteriaEvalResultDropdown
+                                result={teacherTool.evalResults[criteriaId].result}
+                                criteriaId={criteriaId}
+                            />
                         )}
-                    >
-                        {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
-                        {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
                     </div>
+                    {isInProgress ? (
+                        <ThreeDotsLoadingDisplay className={css["loading-display"]} />
+                    ) : (
+                        <div
+                            className={classList(
+                                css["result-notes"],
+                                teacherTool.evalResults[criteriaId]?.notes ? undefined : css["no-print"]
+                            )}
+                        >
+                            {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
+                            {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
+                        </div>
+                    )}
                 </div>
             )}
         </>

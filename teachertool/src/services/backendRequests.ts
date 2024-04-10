@@ -68,7 +68,7 @@ function getTestFilePath(fileName: string) {
 export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[], rootName: string): Promise<T[]> {
     const { state: teacherTool } = stateAndDispatch();
 
-    const files = teacherTool.flags.testCatalog ? fileNames.concat(fileNames.map(getTestFilePath)) : fileNames;
+    const files = teacherTool.flags.testCatalog ? fileNames.map(getTestFilePath).concat(fileNames) : fileNames;
     let allResults: T[] = [];
     for (const planFile of files) {
         try {
@@ -87,4 +87,31 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
     }
 
     return allResults;
+}
+
+export async function askCopilotQuestionAsync(shareId: string, question: string): Promise<string | undefined> {
+    const { state: teacherTool } = stateAndDispatch();
+
+    const url = `${
+        teacherTool.copilotEndpointOverride ? teacherTool.copilotEndpointOverride : pxt.Cloud.apiRoot
+    }/copilot/question`;
+
+    const data = { id: shareId, question };
+    let result: string = "";
+    try {
+        const request = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+
+        if (!request.ok) {
+            throw new Error("Unable to reach Copilot");
+        }
+        result = await request.json();
+    } catch (e) {
+        logError(ErrorCode.askCopilotQuestion, e);
+    }
+
+    return result;
 }

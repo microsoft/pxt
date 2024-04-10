@@ -38,13 +38,20 @@ export function AppStateProvider(props: React.PropsWithChildren<{}>): React.Reac
     const url = window.location.href;
     const testCatalog = !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
 
+    const copilotSlot = url.match(/copilot=([^&]+)/);
+    const copilotEndpoint =
+        copilotSlot && copilotSlot[1]
+            ? `https://makecode-app-backend-ppe-${copilotSlot[1]}.azurewebsites.net/api`
+            : undefined;
+
     // Create the application state and state change mechanism (dispatch)
     const [state_, dispatch_] = useReducer(reducer, {
         ...initialAppState,
         autorun: getAutorun(),
+        copilotEndpointOverride: copilotEndpoint,
         flags: {
             ...initialAppState.flags,
-            testCatalog,
+            testCatalog: testCatalog || !!copilotEndpoint,
         },
     });
 
