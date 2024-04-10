@@ -42,16 +42,10 @@ interface CriteriaResultNotesProps {
 
 const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [value, setValue] = useState(teacherTool.evalResults[criteriaId]?.notes ?? "");
 
     const onTextChange = (str: string) => {
         setEvalResultNotes(criteriaId, str);
-        setValue(str);
     };
-
-    useEffect(() => {
-        setValue(teacherTool.evalResults[criteriaId]?.notes ?? "");
-    }, [teacherTool.evalResults[criteriaId]?.notes]);
 
     return (
         <div className={css["notes-container"]}>
@@ -60,7 +54,7 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId })
                 ariaLabel={lf("Feedback regarding the criteria result")}
                 label={lf("Feedback")}
                 title={lf("Write your notes here")}
-                initialValue={value}
+                initialValue={teacherTool.evalResults[criteriaId]?.notes}
                 autoResize={true}
                 onChange={onTextChange}
                 autoComplete={false}
