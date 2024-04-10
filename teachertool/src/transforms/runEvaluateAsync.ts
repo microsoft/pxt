@@ -88,7 +88,17 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const evalRequests = teacherTool.rubric.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
+
+                const existingOutcome = teacherTool.evalResults[criteriaInstance.instanceId]?.result;
+                if (existingOutcome !== undefined && existingOutcome !== EvaluationStatus.NotStarted) {
+                    // The criteria has not changed since it was last evaluated, so we can skip it.
+                    return resolve(true);
+                }
+
                 setEvalResultOutcome(criteriaInstance.instanceId, EvaluationStatus.InProgress);
+
+                // TODO thsparks : Remove sleep 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 5000));
 
                 const loadedValidatorPlans = teacherTool.validatorPlans;
                 if (!loadedValidatorPlans) {
