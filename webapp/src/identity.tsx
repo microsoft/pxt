@@ -100,9 +100,15 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         this.props.parent.signOutGithub();
     }
 
+    encodedAvatarPic(user: pxt.auth.UserProfile): string {
+        const type = user?.idp?.picture?.mimeType;
+        const encodedImg = user?.idp?.picture?.encoded;
+        return type && encodedImg ? `data:${type};base64,${encodedImg}` : "";
+    }
+
     avatarPicUrl(): string {
         const user = this.getUserProfile();
-        return user?.idp?.pictureUrl ?? user?.idp?.picture?.dataUrl;
+        return user?.idp?.pictureUrl ?? this.encodedAvatarPic(user);
     }
 
     hide() {
