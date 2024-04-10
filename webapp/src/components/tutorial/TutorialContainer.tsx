@@ -1,7 +1,7 @@
 import * as React from "react";
 import { MarkedContent } from "../../marked";
 import { Button, Modal, ModalButton } from "../../sui";
-import { ImmersiveReaderButton, launchImmersiveReader } from "../../immersivereader";
+import { ImmersiveReaderButton, launchImmersiveReaderAsync } from "../../immersivereader";
 import { TutorialStepCounter } from "./TutorialStepCounter";
 import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
@@ -220,7 +220,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     if (showImmersiveReader) {
         modalActions.push({
             className: "immersive-reader-button",
-            onclick: () => { launchImmersiveReader(currentStepInfo.contentMd, tutorialOptions) },
+            onclick: async () => { await launchImmersiveReaderAsync(currentStepInfo.contentMd, tutorialOptions) },
             ariaLabel: lf("Launch Immersive Reader"),
             title: lf("Launch Immersive Reader")
         })
