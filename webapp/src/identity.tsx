@@ -101,8 +101,8 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
     }
 
     encodedAvatarPic(user: pxt.auth.UserProfile): string {
-        const type = user?.idp?.picture.mimeType;
-        const encodedImg = user?.idp?.picture.encoded;
+        const type = user?.idp?.picture?.mimeType;
+        const encodedImg = user?.idp?.picture?.encoded;
         return `data:${type};base64,${encodedImg}`;
     }
 
