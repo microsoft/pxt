@@ -97,9 +97,6 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
 
                 setEvalResultOutcome(criteriaInstance.instanceId, EvaluationStatus.InProgress);
 
-                // TODO thsparks : Remove sleep 5 seconds
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
                 const loadedValidatorPlans = teacherTool.validatorPlans;
                 if (!loadedValidatorPlans) {
                     logError(ErrorCode.validatorPlansNotFound, "Attempting to evaluate criteria without any plans");
