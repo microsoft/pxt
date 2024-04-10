@@ -98,6 +98,16 @@ export async function getFileProgressAsync(file: string, languages?: string[]) {
     return results;
 }
 
+export async function getLanguageProgressAsync(languageId: string) {
+    const { translationStatusApi } = getClient();
+
+    const stats = await translationStatusApi
+        .withFetchAll()
+        .getLanguageProgress(projectId, languageId);
+    
+    return stats.data.map(stat => stat.data);
+}
+
 export async function listFilesAsync(directory: string): Promise<string[]> {
     directory = normalizePath(directory);
     const files = (await getAllFiles()).map(file => normalizePath(file.path));
@@ -272,7 +282,7 @@ async function getAllDirectories() {
     return fetchedDirectories;
 }
 
-async function getAllFiles() {
+export async function getAllFiles() {
     // This request takes a decent amount of time, so cache the results
     if (!fetchedFiles) {
         const { sourceFilesApi } = getClient();
@@ -378,7 +388,7 @@ function crowdinCredentials(): Credentials {
 }
 
 // calls path.normalize and removes leading slash
-function normalizePath(p: string) {
+export function normalizePath(p: string) {
     p = path.normalize(p);
     if (/^[\/\\]/.test(p)) p = p.slice(1)
 
