@@ -5,7 +5,7 @@ import * as path from 'path';
 import Map = pxt.Map;
 
 import * as commandParser from './commandparser';
-import { downloadFileTranslationsAsync, listFilesAsync, uploadFileAsync } from './crowdinApi';
+import { downloadFileTranslationsAsync, getFileProgressAsync, listFilesAsync, uploadFileAsync } from './crowdinApi';
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
@@ -212,8 +212,8 @@ export async function execCrowdinAsync(cmd: string, ...args: string[]): Promise<
 
     switch (cmd.toLowerCase()) {
         case "stats":
-            // return statsCrowdinAsync(prj, key, args[0]);
-            throw new Error("stats command is not supported");
+            execStatsAsync(args[0]);
+            break;
         case "clean":
             await execCleanAsync(args[0] || "docs");
             break;
@@ -262,63 +262,112 @@ async function execCleanAsync(dir: string): Promise<void> {
     }
 }
 
-// TODO (riknoll): Either remove this or update it to work with the new crowdin API
-// function statsCrowdinAsync(prj: string, key: string, preferredLang?: string): Promise<void> {
-//     pxt.log(`collecting crowdin stats for ${prj} ${preferredLang ? `for language ${preferredLang}` : `all languages`}`);
-//     console.log(`context\t language\t translated%\t approved%\t phrases\t translated\t approved`)
+interface LanguageStats {
+    uiphrases: number;
+    uitranslated: number;
+    uiapproved: number;
+    corephrases: number;
+    coretranslated: number;
+    coreapproved: number;
+    phrases: number;
+    translated: number;
+    approved: number;
+}
 
-//     const fn = `crowdinstats.csv`;
-//     let headers = 'sep=\t\r\n';
-//     headers += `id\t file\t language\t phrases\t translated\t approved\r\n`;
-//     nodeutil.writeFileSync(fn, headers, { encoding: "utf8" });
-//     return pxt.crowdin.projectInfoAsync(prj, key)
-//         .then(info => {
-//             if (!info) throw new Error("info failed")
-//             let languages = info.languages;
-//             // remove in-context language
-//             languages = languages.filter(l => l.code != ts.pxtc.Util.TRANSLATION_LOCALE);
-//             if (preferredLang)
-//                 languages = languages.filter(lang => lang.code.toLowerCase() == preferredLang.toLowerCase());
-//             return Promise.all(languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
-//         }).then(() => {
-//             console.log(`stats written to ${fn}`)
-//         })
+async function execStatsAsync(language?: string) {
+    const crowdinDir = pxt.appTarget.id;
 
-//     function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
-//         return pxt.crowdin.languageStatsAsync(prj, key, lang)
-//             .then(stats => {
-//                 let uiphrases = 0;
-//                 let uitranslated = 0;
-//                 let uiapproved = 0;
-//                 let corephrases = 0;
-//                 let coretranslated = 0;
-//                 let coreapproved = 0;
-//                 let phrases = 0;
-//                 let translated = 0;
-//                 let approved = 0;
-//                 let r = '';
-//                 stats.forEach(stat => {
-//                     const cfn = `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
-//                     r += `${stat.id}\t ${cfn}\t ${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
-//                     if (stat.fullName == "strings.json") {
-//                         uiapproved += Number(stat.approved);
-//                         uitranslated += Number(stat.translated);
-//                         uiphrases += Number(stat.phrases);
-//                     } else if (/core-strings\.json$/.test(stat.fullName)) {
-//                         coreapproved += Number(stat.approved);
-//                         coretranslated += Number(stat.translated);
-//                         corephrases += Number(stat.phrases);
-//                     } else if (/-strings\.json$/.test(stat.fullName)) {
-//                         approved += Number(stat.approved);
-//                         translated += Number(stat.translated);
-//                         phrases += Number(stat.phrases);
-//                     }
-//                 })
-//                 fs.appendFileSync(fn, r, { encoding: "utf8" });
-//                 console.log(`ui\t ${lang}\t ${(uitranslated / uiphrases * 100) >> 0}%\t ${(uiapproved / uiphrases * 100) >> 0}%\t ${uiphrases}\t ${uitranslated}\t ${uiapproved}`)
-//                 console.log(`core\t ${lang}\t ${(coretranslated / corephrases * 100) >> 0}%\t ${(coreapproved / corephrases * 100) >> 0}%\t ${corephrases}\t ${coretranslated}\t ${coreapproved}`)
-//                 console.log(`blocks\t ${lang}\t ${(translated / phrases * 100) >> 0}%\t ${(approved / phrases * 100) >> 0}%\t ${phrases}\t ${translated}\t ${approved}`)
-//             })
-//     }
+    // If this is run inside pxt-core, give results for all targets
+    const isCore = crowdinDir === "core";
+    pxt.log(`collecting crowdin stats for ${isCore ? "all targets" : crowdinDir} ${language ? `for language ${language}` : `all languages`}`);
 
-// }
+    const files = await listFilesAsync();
+    const stats: pxt.Map<LanguageStats> = {};
+
+    const outputCsvFile = `crowdinstats.csv`;
+    let headers = 'sep=\t\r\n';
+    headers += `file\t language\t phrases\t translated\t approved\r\n`;
+    nodeutil.writeFileSync(outputCsvFile, headers, { encoding: "utf8" });
+
+    for (const file of files) {
+        pxt.debug("Processing file: " + file + "...");
+
+        // We only care about strings files
+        if (!file.endsWith("-strings.json")) continue;
+
+        // Files for core are in the top-level of the crowdin project
+        const isCoreFile = file.indexOf("/") === -1;
+
+        // Only include files for the current target and core
+        if (!isCore && !isCoreFile && !file.startsWith(crowdinDir + "/")) continue;
+
+        pxt.debug(`Downloading progress`)
+        const progress = await getFileProgressAsync(file, language && [language]);
+
+        let fileCsvRows = "";
+        for (const language of progress) {
+            if (!stats[language.languageId]) {
+                stats[language.languageId] = {
+                    uiphrases: 0,
+                    uitranslated: 0,
+                    uiapproved: 0,
+                    corephrases: 0,
+                    coretranslated: 0,
+                    coreapproved: 0,
+                    phrases: 0,
+                    translated: 0,
+                    approved: 0
+                };
+            }
+
+            const fileCsvColumns = [
+                file,
+                language.languageId,
+                language.phrases.total,
+                language.phrases.translated,
+                language.phrases.approved
+            ];
+
+            fileCsvRows += `${fileCsvColumns.join("\t ")}\r\n`;
+
+            const langStats = stats[language.languageId];
+
+            if (file === "strings.json") {
+                langStats.uiapproved += language.phrases.approved
+                langStats.uitranslated += language.phrases.translated;
+                langStats.uiphrases += language.phrases.total;
+            }
+            else if (/core-strings\.json$/.test(file)) {
+                langStats.coreapproved += language.phrases.approved
+                langStats.coretranslated += language.phrases.translated;
+                langStats.corephrases += language.phrases.total;
+            }
+            else {
+                langStats.approved += language.phrases.approved
+                langStats.translated += language.phrases.translated;
+                langStats.phrases += language.phrases.total;
+            }
+        }
+
+        fs.appendFileSync(outputCsvFile, fileCsvRows, { encoding: "utf8" });
+    }
+
+    console.log(`context\t language\t translated%\t approved%\t phrases\t translated\t approved`)
+    for (const language of Object.keys(stats)) {
+        const {
+            uiphrases,
+            uitranslated,
+            uiapproved,
+            corephrases,
+            coretranslated,
+            coreapproved,
+            phrases,
+            translated,
+            approved,
+        } = stats[language];
+
+        console.log(`ui\t ${language}\t ${(uitranslated / uiphrases * 100) >> 0}%\t ${(uiapproved / uiphrases * 100) >> 0}%\t ${uiphrases}\t ${uitranslated}\t ${uiapproved}`)
+        console.log(`core\t ${language}\t ${(coretranslated / corephrases * 100) >> 0}%\t ${(coreapproved / corephrases * 100) >> 0}%\t ${corephrases}\t ${coretranslated}\t ${coreapproved}`)
+        console.log(`blocks\t ${language}\t ${(translated / phrases * 100) >> 0}%\t ${(approved / phrases * 100) >> 0}%\t ${phrases}\t ${translated}\t ${approved}`)
+    }
+}
