@@ -149,7 +149,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}
-                        role={scriptManager && "button"} onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
+                        onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
                     >
                         {scriptManager ? <h2 className="ui header myproject-header">
                             {lf("My Projects")}

@@ -373,6 +373,7 @@ declare namespace pxt {
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         crowdinProject?: string;
+        crowdinProjectId?: number; // Crowdin project id. Can be found by going to the project page in Crowdin and selecting Tools > API
         crowdinBranch?: string; // optional branch specification for localization files
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
