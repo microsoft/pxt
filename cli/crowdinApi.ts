@@ -1,4 +1,4 @@
-import crowdin, { Credentials, SourceFilesModel } from '@crowdin/crowdin-api-client';
+import crowdin, { Credentials, SourceFilesModel, ClientConfig } from '@crowdin/crowdin-api-client';
 import * as path from 'path';
 import axios from 'axios';
 
@@ -342,7 +342,22 @@ async function updateFile(fileId: number, fileName: string, fileContent: any): P
 
 function getClient() {
     if (!client) {
-        client = new crowdin(crowdinCredentials());
+        const crowdinConfig: ClientConfig = {
+            retryConfig: {
+                retries: 5,
+                waitInterval: 5000,
+                conditions: [
+                    {
+                        test: (error: any) => {
+                            // do not retry when result has not changed
+                            return error?.code == 304;
+                        }
+                    }
+                ]
+            }
+        };
+
+        client = new crowdin(crowdinCredentials(), crowdinConfig);
     }
 
     return client;
