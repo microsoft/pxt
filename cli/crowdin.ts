@@ -5,109 +5,87 @@ import * as path from 'path';
 import Map = pxt.Map;
 
 import * as commandParser from './commandparser';
-
-interface CrowdinCredentials { prj: string; key: string; branch: string; }
-
-function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
-    const prj = pxt.appTarget.appTheme.crowdinProject;
-    const branch = pxt.appTarget.appTheme.crowdinBranch;
-    if (!prj) {
-        pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
-        return Promise.resolve(undefined);
-    }
-
-    let key: string;
-    if (pxt.crowdin.testMode)
-        key = pxt.crowdin.TEST_KEY;
-    else
-        key = process.env[pxt.crowdin.KEY_VARIABLE];
-    if (!key) {
-        pxt.log(`Crowdin operation skipped: '${pxt.crowdin.KEY_VARIABLE}' variable is missing`);
-        return Promise.resolve(undefined);
-    }
-    return Promise.resolve({ prj, key, branch });
-}
+import { downloadFileTranslationsAsync, listFilesAsync, uploadFileAsync } from './crowdinApi';
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
     const uploadApiStrings = parsed && !!parsed.flags["apis"]
-    if (parsed && !!parsed.flags["test"])
+    if (parsed && !!parsed.flags["test"]) {
         pxt.crowdin.setTestMode();
+    }
     return internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs);
 }
 
-export function internalUploadTargetTranslationsAsync(uploadApiStrings: boolean, uploadDocs: boolean) {
+export async function internalUploadTargetTranslationsAsync(uploadApiStrings: boolean, uploadDocs: boolean) {
     pxt.log(`uploading translations (apis ${uploadApiStrings ? "yes" : "no"}, docs ${uploadDocs ? "yes" : "no"})...`);
-    return crowdinCredentialsAsync()
-        .then(cred => {
-            if (!cred) return Promise.resolve();
-            pxt.log("got Crowdin credentials");
-            const crowdinDir = pxt.appTarget.id;
-            if (crowdinDir == "core") {
-                if (!uploadDocs) {
-                    pxt.log('missing --docs flag, skipping')
-                    return Promise.resolve();
-                }
-                return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
-                    .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
-            } else {
-                let p = Promise.resolve();
-                if (uploadApiStrings)
-                    p = p.then(() => execCrowdinAsync("upload", "built/target-strings.json", crowdinDir))
-                        .then(() => fs.existsSync("built/sim-strings.json") ? execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir) : Promise.resolve())
-                        .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key));
-                else
-                    p = p.then(() => pxt.log(`translations: skipping api strings upload`));
-                if (uploadDocs)
-                    p = p.then(() => uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key))
-                        // scan for docs in bundled packages
-                        .then(() => Promise.all(pxt.appTarget.bundleddirs
-                            // there must be a folder under .../docs
-                            .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
-                            // upload to crowdin
-                            .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
-                            )).then(() => {
-                                pxt.log("docs uploaded");
-                            }));
-                else
-                    p = p.then(() => pxt.log(`translations: skipping docs upload`));
-                return p;
+
+    const crowdinDir = pxt.appTarget.id;
+    if (crowdinDir == "core") {
+        if (!uploadDocs) {
+            pxt.log('missing --docs flag, skipping')
+            return;
+        }
+
+        await uploadDocsTranslationsAsync("docs", crowdinDir);
+        await uploadDocsTranslationsAsync("common-docs", crowdinDir);
+    } else {
+        if (uploadApiStrings) {
+            await uploadBuiltStringsAsync("built/target-strings.json", crowdinDir);
+
+            if (fs.existsSync("built/sim-strings.json")) {
+                await uploadBuiltStringsAsync("built/sim-strings.json", crowdinDir);
             }
-        });
+            await uploadBundledTranslationsAsync(crowdinDir);
+        }
+        else {
+            pxt.log(`translations: skipping api strings upload`);
+        }
+
+        if (uploadDocs) {
+            await uploadDocsTranslationsAsync("docs", crowdinDir);
+            await Promise.all(
+                pxt.appTarget.bundleddirs
+                    .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
+                    .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir))
+            );
+            pxt.log("docs uploaded");
+        }
+        else {
+            pxt.log(`translations: skipping docs upload`);
+        }
+    }
 }
 
-function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
-    pxt.log(`uploading from ${srcDir} to ${crowdinDir} under project ${prj}/${branch || ""}`)
+
+export async function uploadBuiltStringsAsync(filename: string, crowdinDir?: string) {
+    const baseName = path.basename(filename);
+    const crowdinFile = crowdinDir ? path.join(crowdinDir, baseName) : baseName;
+    const contents = fs.readFileSync(filename, "utf8");
+
+    pxt.log(`Uploading ${filename} to ${crowdinFile}`);
+    await uploadFileAsync(crowdinFile, contents);
+}
+
+async function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string): Promise<void> {
+    pxt.log(`Uploading from ${srcDir} to ${crowdinDir}`)
 
     const ignoredDirectoriesList = getIgnoredDirectories(srcDir);
     const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f)).reverse();
-    const knownFolders: Map<boolean> = {};
-    const ensureFolderAsync = (crowdd: string) => {
-        if (!knownFolders[crowdd]) {
-            knownFolders[crowdd] = true;
-            pxt.log(`creating folder ${crowdd}`);
-            return pxt.crowdin.createDirectoryAsync(branch, prj, key, crowdd);
-        }
-        return Promise.resolve();
-    }
-    const nextFileAsync = (f: string): Promise<void> => {
-        if (!f) return Promise.resolve();
-        const crowdf = path.join(crowdinDir, f);
-        const crowdd = path.dirname(crowdf);
+
+    for (const file of todo) {
+        if (!file) continue;
+
+        const crowdinFile = path.join(crowdinDir, file);
+
         // check if file should be ignored
-        if (ignoredDirectoriesList.filter(d => path.dirname(f).indexOf(d) == 0).length > 0) {
-            pxt.log(`skipping ${f} because of .crowdinignore file`)
-            return nextFileAsync(todo.pop());
+        if (ignoredDirectoriesList.filter(d => path.dirname(file).indexOf(d) == 0).length > 0) {
+            pxt.log(`skipping ${file} because of .crowdinignore file`)
+            continue;
         }
 
-        const data = fs.readFileSync(f, 'utf8');
-        pxt.log(`uploading ${f} to ${crowdf}`);
-        return ensureFolderAsync(crowdd)
-            .then(() => pxt.crowdin.uploadTranslationAsync(branch, prj, key, crowdf, data))
-            .then(() => nextFileAsync(todo.pop()));
+        pxt.log(`Uploading ${file} to ${crowdinFile}`);
+        await uploadFileAsync(crowdinFile, fs.readFileSync(file, "utf8"));
     }
-    return ensureFolderAsync(path.join(crowdinDir, srcDir))
-        .then(() => nextFileAsync(todo.pop()));
 }
 
 function getIgnoredDirectories(srcDir: string) {
@@ -125,43 +103,46 @@ function getIgnoredDirectories(srcDir: string) {
     return Object.keys(ignoredDirectories).filter(d => ignoredDirectories[d]);
 }
 
-function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
+async function uploadBundledTranslationsAsync(crowdinDir: string) {
     const todo: string[] = [];
-    pxt.appTarget.bundleddirs.forEach(dir => {
+    for (const dir of pxt.appTarget.bundleddirs) {
         const locdir = path.join(dir, "_locales");
-        if (fs.existsSync(locdir))
-            fs.readdirSync(locdir)
-                .filter(f => /strings\.json$/i.test(f))
-                .forEach(f => todo.push(path.join(locdir, f)));
-    });
+        if (fs.existsSync(locdir)) {
+            const stringsFiles = fs.readdirSync(locdir).filter(f => /strings\.json$/i.test(f));
+
+            for (const file of stringsFiles) {
+                todo.unshift(path.join(locdir, file));
+            }
+        }
+    }
 
     pxt.log(`uploading bundled translations to Crowdin (${todo.length} files)`);
-    const nextFileAsync = (): Promise<void> => {
-        const f = todo.pop();
-        if (!f) return Promise.resolve();
-        const data = JSON.parse(fs.readFileSync(f, 'utf8')) as Map<string>;
-        const crowdf = path.join(crowdinDir, path.basename(f));
-        pxt.log(`uploading ${f} to ${crowdf}`);
-        return pxt.crowdin.uploadTranslationAsync(branch, prj, key, crowdf, JSON.stringify(data))
-            .then(nextFileAsync);
+    for (const file of todo) {
+        const data = JSON.parse(fs.readFileSync(file, 'utf8')) as Map<string>;
+        const crowdinFile = path.join(crowdinDir, path.basename(file));
+        pxt.log(`Uploading ${file} to ${crowdinFile}`);
+        await uploadFileAsync(crowdinFile, JSON.stringify(data));
     }
-    return nextFileAsync();
 }
 
 export async function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const name = parsed?.args[0];
-    const cred = await crowdinCredentialsAsync();
-
-    if (!cred)
-        return;
 
     await buildAllTranslationsAsync(async (fileName: string) => {
         pxt.log(`downloading ${fileName}`);
-        return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, fileName, { translatedOnly: true, validatedOnly: true });
+
+        const translations = await downloadFileTranslationsAsync(fileName);
+        const parsed: pxt.Map<pxt.Map<string>> = {};
+
+        for (const file of Object.keys(translations)) {
+            parsed[file] = JSON.parse(translations[file]);
+        }
+
+        return parsed;
     }, name);
 }
 
-export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (fileName: string) => Promise<Map<Map<string>>>, singleDir?: string) {
+export async function buildAllTranslationsAsync(fetchFileTranslationAsync: (fileName: string) => Promise<Map<Map<string>>>, singleDir?: string) {
     await buildTranslationFilesAsync(["sim-strings.json"], "sim-strings.json");
     await buildTranslationFilesAsync(["target-strings.json"], "target-strings.json");
     await buildTranslationFilesAsync(["strings.json"], "strings.json", true);
@@ -190,7 +171,7 @@ export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (file
             const locdir = path.dirname(filePath);
             const projectdir = path.dirname(locdir);
             pxt.debug(`projectdir: ${projectdir}`);
-            const data = await langToStringsHandlerAsync(crowdf);
+            const data = await fetchFileTranslationAsync(crowdf);
 
             for (const lang of Object.keys(data)) {
                 const dataLang = data[lang];
@@ -226,121 +207,118 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
     else return JSON.stringify(trg, null, 2);
 }
 
-export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> {
+export async function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> {
     pxt.log(`executing Crowdin command ${cmd}...`);
-    const prj = pxt.appTarget.appTheme.crowdinProject;
-    if (!prj) {
-        console.log(`crowdin operation skipped, crowdin project not specified in pxtarget.json`);
-        return Promise.resolve();
-    }
-    const branch = pxt.appTarget.appTheme.crowdinBranch;
-    return crowdinCredentialsAsync()
-        .then(crowdinCredentials => {
-            if (!crowdinCredentials) return Promise.resolve();
-            const key = crowdinCredentials.key;
-            cmd = cmd.toLowerCase();
-            if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
-            switch (cmd) {
-                case "stats": return statsCrowdinAsync(prj, key, args[0]);
-                case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
-                case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
-                case "download": {
-                    if (!args[1]) throw new Error("output path missing");
-                    const fn = path.basename(args[0]);
-                    return pxt.crowdin.downloadTranslationsAsync(branch, prj, key, args[0], { translatedOnly: true, validatedOnly: true })
-                        .then(r => {
-                            Object.keys(r).forEach(k => {
-                                const rtranslations = stringifyTranslations(r[k]);
-                                if (!rtranslations) return;
 
-                                nodeutil.mkdirP(path.join(args[1], k));
-                                const outf = path.join(args[1], k, fn);
-                                console.log(`writing ${outf}`)
-                                nodeutil.writeFileSync(
-                                    outf,
-                                    rtranslations,
-                                    { encoding: "utf8" });
-                            })
-                        })
-                }
-                default: throw new Error("unknown command");
+    switch (cmd.toLowerCase()) {
+        case "stats":
+            // return statsCrowdinAsync(prj, key, args[0]);
+            throw new Error("stats command is not supported");
+        case "clean":
+            await execCleanAsync(args[0] || "docs");
+            break;
+        case "upload":
+            if (!args[0]) {
+                throw new Error("filename missing");
             }
-        })
-}
-
-function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void> {
-    const p = pxt.appTarget.id + "/" + dir;
-    return pxt.crowdin.listFilesAsync(prj, key, p)
-        .then(files => {
-            files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
-                .forEach(f => pxt.log(`crowdin: dead file: ${f.branch ? f.branch + "/" : ""}${f.fullName}`));
-        })
-}
-
-function statsCrowdinAsync(prj: string, key: string, preferredLang?: string): Promise<void> {
-    pxt.log(`collecting crowdin stats for ${prj} ${preferredLang ? `for language ${preferredLang}` : `all languages`}`);
-    console.log(`context\t language\t translated%\t approved%\t phrases\t translated\t approved`)
-
-    const fn = `crowdinstats.csv`;
-    let headers = 'sep=\t\r\n';
-    headers += `id\t file\t language\t phrases\t translated\t approved\r\n`;
-    nodeutil.writeFileSync(fn, headers, { encoding: "utf8" });
-    return pxt.crowdin.projectInfoAsync(prj, key)
-        .then(info => {
-            if (!info) throw new Error("info failed")
-            let languages = info.languages;
-            // remove in-context language
-            languages = languages.filter(l => l.code != ts.pxtc.Util.TRANSLATION_LOCALE);
-            if (preferredLang)
-                languages = languages.filter(lang => lang.code.toLowerCase() == preferredLang.toLowerCase());
-            return Promise.all(languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
-        }).then(() => {
-            console.log(`stats written to ${fn}`)
-        })
-
-    function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
-        return pxt.crowdin.languageStatsAsync(prj, key, lang)
-            .then(stats => {
-                let uiphrases = 0;
-                let uitranslated = 0;
-                let uiapproved = 0;
-                let corephrases = 0;
-                let coretranslated = 0;
-                let coreapproved = 0;
-                let phrases = 0;
-                let translated = 0;
-                let approved = 0;
-                let r = '';
-                stats.forEach(stat => {
-                    const cfn = `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
-                    r += `${stat.id}\t ${cfn}\t ${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
-                    if (stat.fullName == "strings.json") {
-                        uiapproved += Number(stat.approved);
-                        uitranslated += Number(stat.translated);
-                        uiphrases += Number(stat.phrases);
-                    } else if (/core-strings\.json$/.test(stat.fullName)) {
-                        coreapproved += Number(stat.approved);
-                        coretranslated += Number(stat.translated);
-                        corephrases += Number(stat.phrases);
-                    } else if (/-strings\.json$/.test(stat.fullName)) {
-                        approved += Number(stat.approved);
-                        translated += Number(stat.translated);
-                        phrases += Number(stat.phrases);
-                    }
-                })
-                fs.appendFileSync(fn, r, { encoding: "utf8" });
-                console.log(`ui\t ${lang}\t ${(uitranslated / uiphrases * 100) >> 0}%\t ${(uiapproved / uiphrases * 100) >> 0}%\t ${uiphrases}\t ${uitranslated}\t ${uiapproved}`)
-                console.log(`core\t ${lang}\t ${(coretranslated / corephrases * 100) >> 0}%\t ${(coreapproved / corephrases * 100) >> 0}%\t ${corephrases}\t ${coretranslated}\t ${coreapproved}`)
-                console.log(`blocks\t ${lang}\t ${(translated / phrases * 100) >> 0}%\t ${(approved / phrases * 100) >> 0}%\t ${phrases}\t ${translated}\t ${approved}`)
-            })
+            await uploadBuiltStringsAsync(args[0], args[1]);
+            break;
+        case "download":
+            if (!args[1]) {
+                throw new Error("output path missing");
+            }
+            await execDownloadAsync(args[0], args[1]);
+            break;
+        default:
+            throw new Error("unknown command");
     }
-
 }
 
-function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
-    let fn = path.basename(p);
-    if (dir) fn = dir.replace(/[\\/]*$/g, '') + '/' + fn;
-    const data = JSON.parse(fs.readFileSync(p, "utf8")) as Map<string>;
-    pxt.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}${branch ? `?branch=${branch}` : ''}`);
-    return pxt.crowdin.uploadTranslationAsync(branch, prj, key, fn, JSON.stringify(data));
+async function execDownloadAsync(filename: string, outputDir: string): Promise<void> {
+    const basename = path.basename(filename);
+    pxt.log("Downloading translations")
+    const translations = await downloadFileTranslationsAsync(filename);
+
+    for (const language of Object.keys(translations)) {
+        const langTranslations = stringifyTranslations(JSON.parse(translations[language]));
+        if (!langTranslations) continue;
+
+        nodeutil.mkdirP(path.join(outputDir, language));
+        const outFilename = path.join(outputDir, language, basename);
+        console.log(`Writing ${outFilename}`);
+        nodeutil.writeFileSync(outFilename, langTranslations, { encoding: "utf8" });
+    }
 }
+
+async function execCleanAsync(dir: string): Promise<void> {
+    const directoryPath = pxt.appTarget.id + "/" + dir;
+
+    const files = await listFilesAsync(directoryPath);
+
+    for (const file of files) {
+        if (!nodeutil.fileExistsSync(file.substring(pxt.appTarget.id.length + 1))) {
+            pxt.log(`crowdin: dead file: ${file}`)
+        }
+    }
+}
+
+// TODO (riknoll): Either remove this or update it to work with the new crowdin API
+// function statsCrowdinAsync(prj: string, key: string, preferredLang?: string): Promise<void> {
+//     pxt.log(`collecting crowdin stats for ${prj} ${preferredLang ? `for language ${preferredLang}` : `all languages`}`);
+//     console.log(`context\t language\t translated%\t approved%\t phrases\t translated\t approved`)
+
+//     const fn = `crowdinstats.csv`;
+//     let headers = 'sep=\t\r\n';
+//     headers += `id\t file\t language\t phrases\t translated\t approved\r\n`;
+//     nodeutil.writeFileSync(fn, headers, { encoding: "utf8" });
+//     return pxt.crowdin.projectInfoAsync(prj, key)
+//         .then(info => {
+//             if (!info) throw new Error("info failed")
+//             let languages = info.languages;
+//             // remove in-context language
+//             languages = languages.filter(l => l.code != ts.pxtc.Util.TRANSLATION_LOCALE);
+//             if (preferredLang)
+//                 languages = languages.filter(lang => lang.code.toLowerCase() == preferredLang.toLowerCase());
+//             return Promise.all(languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
+//         }).then(() => {
+//             console.log(`stats written to ${fn}`)
+//         })
+
+//     function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
+//         return pxt.crowdin.languageStatsAsync(prj, key, lang)
+//             .then(stats => {
+//                 let uiphrases = 0;
+//                 let uitranslated = 0;
+//                 let uiapproved = 0;
+//                 let corephrases = 0;
+//                 let coretranslated = 0;
+//                 let coreapproved = 0;
+//                 let phrases = 0;
+//                 let translated = 0;
+//                 let approved = 0;
+//                 let r = '';
+//                 stats.forEach(stat => {
+//                     const cfn = `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
+//                     r += `${stat.id}\t ${cfn}\t ${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
+//                     if (stat.fullName == "strings.json") {
+//                         uiapproved += Number(stat.approved);
+//                         uitranslated += Number(stat.translated);
+//                         uiphrases += Number(stat.phrases);
+//                     } else if (/core-strings\.json$/.test(stat.fullName)) {
+//                         coreapproved += Number(stat.approved);
+//                         coretranslated += Number(stat.translated);
+//                         corephrases += Number(stat.phrases);
+//                     } else if (/-strings\.json$/.test(stat.fullName)) {
+//                         approved += Number(stat.approved);
+//                         translated += Number(stat.translated);
+//                         phrases += Number(stat.phrases);
+//                     }
+//                 })
+//                 fs.appendFileSync(fn, r, { encoding: "utf8" });
+//                 console.log(`ui\t ${lang}\t ${(uitranslated / uiphrases * 100) >> 0}%\t ${(uiapproved / uiphrases * 100) >> 0}%\t ${uiphrases}\t ${uitranslated}\t ${uiapproved}`)
+//                 console.log(`core\t ${lang}\t ${(coretranslated / corephrases * 100) >> 0}%\t ${(coreapproved / corephrases * 100) >> 0}%\t ${corephrases}\t ${coretranslated}\t ${coreapproved}`)
+//                 console.log(`blocks\t ${lang}\t ${(translated / phrases * 100) >> 0}%\t ${(approved / phrases * 100) >> 0}%\t ${phrases}\t ${translated}\t ${approved}`)
+//             })
+//     }
+
+// }
