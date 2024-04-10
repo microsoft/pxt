@@ -15,7 +15,7 @@ const itemIdToCriteriaResult: pxt.Map<EvaluationStatus> = {
     notevaluated: EvaluationStatus.CompleteWithNoResult,
     fail: EvaluationStatus.Fail,
     pass: EvaluationStatus.Pass,
-    pending: EvaluationStatus.NotStarted,
+    notstarted: EvaluationStatus.NotStarted,
 };
 
 const criteriaResultToItemId: pxt.Map<string> = {
