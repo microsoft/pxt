@@ -153,7 +153,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             readOnly={projectNameReadOnly}
         />)
         if (showSave) {
-            saveInput.push(<EditorToolbarButton icon='save' className={`right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(View.Computer)} key={`save${View.Computer}`} />)
+            saveInput.push(<EditorToolbarButton role="button" icon='save' className={`right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(View.Computer)} key={`save${View.Computer}`} />)
         }
 
         return saveInput;
@@ -416,7 +416,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
-            <div id="downloadArea" role="menu" className="ui column items">{headless &&
+            <div id="downloadArea" role="menubar" className="ui column items">{headless &&
                 <div className="ui item">
                     <div className="ui icon large buttons">
                         {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary large download-button mobile tablet hide ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
@@ -431,14 +431,14 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 </div>}
             </div>
             {(showProjectRename || showGithub || identity.CloudSaveStatus.wouldRender(header.id)) &&
-                <div id="projectNameArea" role="menu" className="ui column items">
+                <div id="projectNameArea" className="ui column items">
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
                         <identity.CloudSaveStatus headerId={header.id} />
                     </div>
                 </div>}
-            <div id="editorToolbarArea" role="menu" className="ui column items">
+            <div id="editorToolbarArea" role="menubar" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
                 {targetTheme.bigRunButton && !pxt.shell.isTimeMachineEmbed() &&

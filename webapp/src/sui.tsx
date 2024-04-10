@@ -500,7 +500,7 @@ export class Item extends data.Component<ItemProps, {}> {
         return (
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
-                aria-label={ariaLabel || title || text}
+                aria-label={(!this.props.role || this.props.role === "presentation") ? "" : ariaLabel || title || text}
                 aria-selected={this.props.active}
                 aria-hidden={ariaHidden}
                 title={title || text}

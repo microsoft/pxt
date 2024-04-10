@@ -105,7 +105,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         if (view === "time-machine") {
             return <></>;
         }
-        return <div className="ui item logo organization">
+        return <div className="ui item logo organization" role="menuitem">
             {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                 ? <img className={`ui logo ${view !== "home" ? "mobile hide" : ""}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
                 : <span className="name">{targetTheme.organization}</span>}
@@ -178,7 +178,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                             break;
                     }
                 } else {
-                    return <div className="ui item link editor-menuitem">
+                    return <div className="ui item link editor-menuitem" role="menuitem">
                         <container.EditorSelector parent={this.props.parent} sandbox={view === "sandbox"} python={targetTheme.python} languageRestriction={languageRestriction} headless={pxt.appTarget.simulator?.headless} />
                     </div>
                 }
