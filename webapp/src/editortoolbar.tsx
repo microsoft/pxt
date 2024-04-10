@@ -416,7 +416,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
-            <div id="downloadArea" role="menu" className="ui column items">{headless &&
+            <div id="downloadArea" role="menubar" className="ui column items">{headless &&
                 <div className="ui item">
                     <div className="ui icon large buttons">
                         {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary large download-button mobile tablet hide ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
@@ -438,7 +438,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                         <identity.CloudSaveStatus headerId={header.id} />
                     </div>
                 </div>}
-            <div id="editorToolbarArea" role="menu" className="ui column items">
+            <div id="editorToolbarArea" role="menubar" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
                 {targetTheme.bigRunButton && !pxt.shell.isTimeMachineEmbed() &&
