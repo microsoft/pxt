@@ -90,8 +90,8 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
             new Promise(async resolve => {
 
                 const existingOutcome = teacherTool.evalResults[criteriaInstance.instanceId]?.result;
-                if (existingOutcome !== undefined && existingOutcome !== EvaluationStatus.NotStarted) {
-                    // The criteria has not changed since it was last evaluated, so we can skip it.
+                if (!fromUserInteraction && existingOutcome !== undefined && existingOutcome !== EvaluationStatus.NotStarted) {
+                    // The criteria has not changed since it was last evaluated, so we can skip it (unless user specifically clicked run).
                     return resolve(true);
                 }
 
