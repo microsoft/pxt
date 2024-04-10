@@ -47,9 +47,6 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId })
         setEvalResultNotes(criteriaId, str);
     };
 
-    useEffect(() => {
-    }, [teacherTool.evalResults[criteriaId]?.notes]);
-
     return (
         <div className={css["notes-container"]}>
             <DebouncedTextarea
