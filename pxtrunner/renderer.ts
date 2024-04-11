@@ -1263,7 +1263,7 @@ function renderGhost(options: ClientRenderOptions) {
 
 function renderBlockConfig(options: ClientRenderOptions) {
     function render(scope: "local" | "global") {
-        $(`code.lang-blockconfig.${scope}`).each((i, c) => {
+        $(`code.lang-blockconfig\\.${scope}`).each((i, c) => {
             let $c = $(c);
             if (options.snippetReplaceParent)
                 $c = $c.parent();
