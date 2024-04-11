@@ -5979,14 +5979,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             const targetId = pxt.appTarget.id;
             const baseUrl = config.commitCdnUrl;
-            const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
-            const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
             return Util.updateLocalizationAsync({
                 targetId: targetId,
                 baseUrl: baseUrl,
                 code: useLang,
-                pxtBranch: pxtBranch,
-                targetBranch: targetBranch,
                 force: force,
             }).then(() => {
                 if (pxt.Util.isLocaleEnabled(useLang)) {
@@ -5999,8 +5995,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 // Download sim translations and save them in the sim
                 // don't wait!
                 Util.downloadTranslationsAsync(
-                    targetId, baseUrl, useLang,
-                    pxtBranch, targetBranch, pxt.Util.liveLocalizationEnabled(), Util.TranslationsKind.Sim)
+                    targetId, baseUrl, useLang, pxt.Util.liveLocalizationEnabled(), Util.TranslationsKind.Sim)
                     .then(simStrings => simStrings && simulator.setTranslations(simStrings))
             });
         })
