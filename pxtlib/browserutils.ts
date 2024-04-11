@@ -773,7 +773,7 @@ namespace pxt.BrowserUtils {
         console.log(`adding entry ${md.length * 2} bytes`);
         return U.delay(1)
             .then(() => translationDbAsync())
-            .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))
+            .then(db => db.setAsync("foobar", Math.random().toString(), null, undefined, md))
             .then(() => pxt.BrowserUtils.storageEstimateAsync())
             .then(estimate => !estimate.quota || estimate.usage / estimate.quota < 0.8 ? stressTranslationsAsync() : Promise.resolve());
     }
@@ -787,33 +787,33 @@ namespace pxt.BrowserUtils {
     }
 
     export interface ITranslationDb {
-        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry>;
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void>;
+        getAsync(lang: string, filename: string): Promise<ITranslationDbEntry>;
+        setAsync(lang: string, filename: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void>;
         // delete all
         clearAsync(): Promise<void>;
     }
 
     class MemTranslationDb implements ITranslationDb {
         translations: pxt.Map<ITranslationDbEntry> = {};
-        key(lang: string, filename: string, branch: string) {
-            return `${lang}|${filename}|${branch || "master"}`;
+        key(lang: string, filename: string) {
+            return `${lang}|${filename}|master`;
         }
-        get(lang: string, filename: string, branch: string): ITranslationDbEntry {
-            return this.translations[this.key(lang, filename, branch)];
+        get(lang: string, filename: string): ITranslationDbEntry {
+            return this.translations[this.key(lang, filename)];
         }
-        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
-            return Promise.resolve(this.get(lang, filename, branch));
+        getAsync(lang: string, filename: string): Promise<ITranslationDbEntry> {
+            return Promise.resolve(this.get(lang, filename));
         }
-        set(lang: string, filename: string, branch: string, etag: string, time: number, strings?: pxt.Map<string>, md?: string) {
-            this.translations[this.key(lang, filename, branch)] = {
+        set(lang: string, filename: string, etag: string, time: number, strings?: pxt.Map<string>, md?: string) {
+            this.translations[this.key(lang, filename)] = {
                 etag,
                 time,
                 strings,
                 md
             }
         }
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
-            this.set(lang, filename, branch, etag, Util.now(), strings);
+        setAsync(lang: string, filename: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
+            this.set(lang, filename, etag, Util.now(), strings);
             return Promise.resolve();
         }
         clearAsync() {
@@ -1011,17 +1011,17 @@ namespace pxt.BrowserUtils {
             this.db = db;
             this.mem = new MemTranslationDb();
         }
-        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
+        getAsync(lang: string, filename: string): Promise<ITranslationDbEntry> {
             lang = (lang || "en-US").toLowerCase(); // normalize locale
-            const id = this.mem.key(lang, filename, branch);
-            const r = this.mem.get(lang, filename, branch);
+            const id = this.mem.key(lang, filename);
+            const r = this.mem.get(lang, filename);
             if (r) return Promise.resolve(r);
 
             return this.db.getAsync<ITranslationDbEntry>(IndexedDbTranslationDb.TABLE, id)
                 .then((res) => {
                     if (res) {
                         // store in-memory so that we don't try to download again
-                        this.mem.set(lang, filename, branch, res.etag, res.time, res.strings);
+                        this.mem.set(lang, filename, res.etag, res.time, res.strings);
                         return Promise.resolve(res);
                     }
                     return Promise.resolve(undefined);
@@ -1030,11 +1030,11 @@ namespace pxt.BrowserUtils {
                     return Promise.resolve(undefined);
                 });
         }
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
+        setAsync(lang: string, filename: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
             lang = (lang || "en-US").toLowerCase(); // normalize locale
-            const id = this.mem.key(lang, filename, branch);
+            const id = this.mem.key(lang, filename);
             let time = Util.now();
-            this.mem.set(lang, filename, branch, etag, time, strings, md);
+            this.mem.set(lang, filename, etag, time, strings, md);
 
             if (strings) {
                 Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);

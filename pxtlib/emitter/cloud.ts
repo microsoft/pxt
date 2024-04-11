@@ -142,17 +142,16 @@ namespace pxt.Cloud {
         const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
 
         locale = locale || pxt.Util.userLanguage();
-        const branch = "";
 
         const db = await pxt.BrowserUtils.translationDbAsync();
-        const entry = await db.getAsync(locale, docid, branch);
+        const entry = await db.getAsync(locale, docid);
 
         const downloadAndSetMarkdownAsync = async () => {
             try {
                 const r = await downloadMarkdownAsync(docid, locale, entry?.etag);
                 // TODO directly compare the entry/response etags after backend change
                 if (!entry || (r.md && entry.md !== r.md)) {
-                    await db.setAsync(locale, docid, branch, r.etag, undefined, r.md);
+                    await db.setAsync(locale, docid, r.etag, undefined, r.md);
                     return r.md;
                 }
                 return entry.md;
