@@ -88,6 +88,16 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const evalRequests = teacherTool.rubric.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
+                const existingOutcome = teacherTool.evalResults[criteriaInstance.instanceId]?.result;
+                if (
+                    !fromUserInteraction &&
+                    existingOutcome !== undefined &&
+                    existingOutcome !== EvaluationStatus.NotStarted
+                ) {
+                    // The criteria has not changed since it was last evaluated, so we can skip it (unless user specifically clicked run).
+                    return resolve(true);
+                }
+
                 setEvalResultOutcome(criteriaInstance.instanceId, EvaluationStatus.InProgress);
 
                 const loadedValidatorPlans = teacherTool.validatorPlans;

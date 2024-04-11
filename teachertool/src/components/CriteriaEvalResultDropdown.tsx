@@ -15,14 +15,14 @@ const itemIdToCriteriaResult: pxt.Map<EvaluationStatus> = {
     notevaluated: EvaluationStatus.CompleteWithNoResult,
     fail: EvaluationStatus.Fail,
     pass: EvaluationStatus.Pass,
-    pending: EvaluationStatus.Pending,
+    notstarted: EvaluationStatus.NotStarted,
 };
 
 const criteriaResultToItemId: pxt.Map<string> = {
     [EvaluationStatus.CompleteWithNoResult]: "notevaluated",
     [EvaluationStatus.Fail]: "fail",
     [EvaluationStatus.Pass]: "pass",
-    [EvaluationStatus.Pending]: "pending",
+    [EvaluationStatus.NotStarted]: "notstarted",
 };
 
 const dropdownItems: DropdownItem[] = [
@@ -42,7 +42,7 @@ const dropdownItems: DropdownItem[] = [
         label: lf("Looks good!"),
     },
     {
-        id: "pending",
+        id: "notstarted",
         title: lf("not started"),
         label: lf("Not started"),
     },

@@ -4,7 +4,6 @@ import { getProjectMetaAsync } from "../services/backendRequests";
 import { logDebug } from "../services/loggingService";
 import { showToast } from "./showToast";
 import { makeToast } from "../utils";
-import { setEvalResultsPending } from "./setEvalResultsPending";
 import { initNewProjectResults } from "./initNewProjectResults";
 
 export async function loadProjectMetadataAsync(inputText: string, shareLink: string) {
