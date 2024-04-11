@@ -299,6 +299,8 @@ async function getAllFiles() {
 }
 
 async function createFile(fileName: string, fileContent: any, directoryId?: number): Promise<void> {
+    if (pxt.crowdin.testMode) return;
+
     const { uploadStorageApi, sourceFilesApi } = getClient();
 
     // This request happens in two parts: first we upload the file to the storage API,
@@ -318,6 +320,8 @@ async function createFile(fileName: string, fileContent: any, directoryId?: numb
 }
 
 async function createDirectory(dirName: string, directoryId?: number): Promise<SourceFilesModel.Directory> {
+    if (pxt.crowdin.testMode) return undefined;
+
     const { sourceFilesApi } = getClient();
 
     const dir = await sourceFilesApi.createDirectory(projectId, {
@@ -392,6 +396,8 @@ async function listFileRevisions(filename: string): Promise<SourceFilesModel.Fil
 
 
 async function updateFile(fileId: number, fileName: string, fileContent: any): Promise<void> {
+    if (pxt.crowdin.testMode) return;
+
     const { uploadStorageApi, sourceFilesApi } = getClient();
 
     const storageResponse = await uploadStorageApi.addStorage(fileName, fileContent);
@@ -403,6 +409,8 @@ async function updateFile(fileId: number, fileName: string, fileContent: any): P
 }
 
 async function restorefile(fileId: number, revisionId: number) {
+    if (pxt.crowdin.testMode) return;
+
     const { sourceFilesApi } = getClient();
 
     await sourceFilesApi.updateOrRestoreFile(projectId, fileId, {
