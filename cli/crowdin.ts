@@ -233,6 +233,9 @@ export async function execCrowdinAsync(cmd: string, ...args: string[]): Promise<
             if (!args[0]) {
                 throw new Error("Time missing");
             }
+            if (args[1] !== "force" && !pxt.crowdin.testMode) {
+                throw new Error(`Refusing to run restore command without 'force' argument. Re-run as 'pxt crowdin restore <date> force' to proceed or use --test flag to test.`);
+            }
             execRestoreFiles(args[0]);
             break;
         default:
