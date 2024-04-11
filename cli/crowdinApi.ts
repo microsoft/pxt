@@ -98,11 +98,14 @@ export async function getFileProgressAsync(file: string, languages?: string[]) {
     return results;
 }
 
-export async function listFilesAsync(directory: string): Promise<string[]> {
-    directory = normalizePath(directory);
+export async function listFilesAsync(directory?: string): Promise<string[]> {
     const files = (await getAllFiles()).map(file => normalizePath(file.path));
 
-    return files.filter(file => file.startsWith(directory));
+    if (directory) {
+        directory = normalizePath(directory);
+        return files.filter(file => file.startsWith(directory));
+    }
+    return files;
 }
 
 export async function downloadTranslationsAsync(directory?: string) {
@@ -380,6 +383,7 @@ function crowdinCredentials(): Credentials {
 // calls path.normalize and removes leading slash
 function normalizePath(p: string) {
     p = path.normalize(p);
+    p = p.replace(/\\/g, "/");
     if (/^[\/\\]/.test(p)) p = p.slice(1)
 
     return p;
