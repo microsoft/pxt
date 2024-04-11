@@ -5,7 +5,7 @@ import * as path from 'path';
 import Map = pxt.Map;
 
 import * as commandParser from './commandparser';
-import { downloadFileTranslationsAsync, getFileProgressAsync, listFilesAsync, uploadFileAsync } from './crowdinApi';
+import { downloadFileTranslationsAsync, getFileProgressAsync, listFilesAsync, restoreFileBefore, uploadFileAsync } from './crowdinApi';
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
@@ -229,6 +229,12 @@ export async function execCrowdinAsync(cmd: string, ...args: string[]): Promise<
             }
             await execDownloadAsync(args[0], args[1]);
             break;
+        case "restore":
+            if (!args[0]) {
+                throw new Error("Time missing");
+            }
+            execRestoreFiles(args[0]);
+            break;
         default:
             throw new Error("unknown command");
     }
@@ -369,5 +375,35 @@ async function execStatsAsync(language?: string) {
         console.log(`ui\t ${language}\t ${(uitranslated / uiphrases * 100) >> 0}%\t ${(uiapproved / uiphrases * 100) >> 0}%\t ${uiphrases}\t ${uitranslated}\t ${uiapproved}`)
         console.log(`core\t ${language}\t ${(coretranslated / corephrases * 100) >> 0}%\t ${(coreapproved / corephrases * 100) >> 0}%\t ${corephrases}\t ${coretranslated}\t ${coreapproved}`)
         console.log(`blocks\t ${language}\t ${(translated / phrases * 100) >> 0}%\t ${(approved / phrases * 100) >> 0}%\t ${phrases}\t ${translated}\t ${approved}`)
+    }
+}
+
+async function execRestoreFiles(time: string | number) {
+    let cutoffTime;
+
+    if (!isNaN(parseInt(time + ""))) {
+        cutoffTime = parseInt(time + "");
+    }
+    else {
+        cutoffTime = new Date(time).getTime();
+    }
+
+    const crowdinDir = pxt.appTarget.id;
+
+    // If this is run inside pxt-core, give results for all targets
+    const isCore = crowdinDir === "core";
+
+    const files = await listFilesAsync();
+
+    for (const file of files) {
+        pxt.debug("Processing file: " + file + "...");
+
+        // Files for core are in the top-level of the crowdin project
+        const isCoreFile = file.indexOf("/") === -1;
+
+
+        if ((isCore && !isCoreFile) || !file.startsWith(crowdinDir + "/")) continue;
+
+        await restoreFileBefore(file, cutoffTime);
     }
 }

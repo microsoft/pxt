@@ -332,6 +332,64 @@ async function createDirectory(dirName: string, directoryId?: number): Promise<S
     return dir.data;
 }
 
+export async function restoreFileBefore(filename: string, cutoffTime: number) {
+    const revisions = await listFileRevisions(filename);
+
+    let lastRevision: SourceFilesModel.FileRevision;
+    let lastRevisionBeforeCutoff: SourceFilesModel.FileRevision;
+
+    for (const rev of revisions) {
+        const time = new Date(rev.date).getTime();
+
+        if (lastRevision) {
+            if (time > new Date(lastRevision.date).getTime()) {
+                lastRevision = rev;
+            }
+        }
+        else {
+            lastRevision = rev;
+        }
+
+        if (time < cutoffTime) {
+            if (lastRevisionBeforeCutoff) {
+                if (time > new Date(lastRevisionBeforeCutoff.date).getTime()) {
+                    lastRevisionBeforeCutoff = rev;
+                }
+            }
+            else {
+                lastRevisionBeforeCutoff = rev;
+            }
+        }
+    }
+
+    if (lastRevision === lastRevisionBeforeCutoff) {
+        pxt.log(`${filename} already at most recent valid revision before ${formatTime(cutoffTime)}`);
+    }
+    else if (lastRevisionBeforeCutoff) {
+        pxt.log(`Restoring ${filename} to revision ${formatTime(new Date(lastRevisionBeforeCutoff.date).getTime())}`)
+        await restorefile(lastRevisionBeforeCutoff.fileId, lastRevisionBeforeCutoff.id);
+    }
+    else {
+        pxt.log(`No revisions found for ${filename} before ${formatTime(cutoffTime)}`);
+    }
+}
+
+function formatTime(time: number) {
+    const date = new Date(time);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+}
+
+async function listFileRevisions(filename: string): Promise<SourceFilesModel.FileRevision[]> {
+    const { sourceFilesApi } = getClient();
+
+    const fileId = await getFileIdAsync(filename);
+    const revisions = await sourceFilesApi
+        .withFetchAll()
+        .listFileRevisions(projectId, fileId);
+
+    return revisions.data.map(rev => rev.data);
+}
+
 
 async function updateFile(fileId: number, fileName: string, fileContent: any): Promise<void> {
     const { uploadStorageApi, sourceFilesApi } = getClient();
@@ -340,6 +398,15 @@ async function updateFile(fileId: number, fileName: string, fileContent: any): P
 
     await sourceFilesApi.updateOrRestoreFile(projectId, fileId, {
         storageId: storageResponse.data.id,
+        updateOption: "keep_translations"
+    });
+}
+
+async function restorefile(fileId: number, revisionId: number) {
+    const { sourceFilesApi } = getClient();
+
+    await sourceFilesApi.updateOrRestoreFile(projectId, fileId, {
+        revisionId
     });
 }
 
