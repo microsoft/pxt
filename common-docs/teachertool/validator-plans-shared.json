@@ -273,6 +273,34 @@
                     ]
                 }
             ]
+        },
+        {
+            ".desc": "Block used n times (to be filled in by the user)",
+            "name": "block_used_n_times",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "",
+                            "count": 0
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            ".desc": "Loops used n times (to be filled in by the user)",
+            "name": "n_loops",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksInSetExist",
+                    "blocks": ["controls_repeat_ext", "device_while", "pxt_controls_for", "pxt_controls_for_of"],
+                    "count": 0
+                }
+            ]
         }
     ]
 }
