@@ -2539,9 +2539,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         tag: info.tag,
         commits: info.commitUrl,
         target: readJson("package.json")["version"],
-        pxt: pxtVersion(),
-        pxtCrowdinBranch: pxtCrowdinBranch(),
-        targetCrowdinBranch: targetCrowdinBranch()
+        pxt: pxtVersion()
     }
     saveThemeJson(cfg, options.localDir, options.packaged)
     fillInCompilerExtension(cfg);
@@ -2608,18 +2606,6 @@ function pxtVersion(): string {
     return pxt.appTarget.id == "core" ?
         readJson("package.json")["version"] :
         readJson("node_modules/pxt-core/package.json")["version"];
-}
-
-function pxtCrowdinBranch(): string {
-    const theme = pxt.appTarget.id == "core" ?
-        readJson("pxtarget.json").appTheme :
-        readJson("node_modules/pxt-core/pxtarget.json").appTheme;
-    return theme ? theme.crowdinBranch : undefined;
-}
-
-function targetCrowdinBranch(): string {
-    const theme = readJson("pxtarget.json").appTheme;
-    return theme ? theme.crowdinBranch : undefined;
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promise<void> {
