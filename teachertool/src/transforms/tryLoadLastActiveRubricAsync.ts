@@ -9,7 +9,7 @@ export async function tryLoadLastActiveRubricAsync() {
     const lastActiveRubric = await getLastActiveRubricAsync();
 
     if (lastActiveRubric) {
-        logDebug(`Loading last active rubric '${lastActiveRubric.name}'...`);
+        logDebug("Loading last active rubric...", lastActiveRubric);
 
         const rubricVerificationResult = verifyRubricIntegrity(lastActiveRubric);
 
