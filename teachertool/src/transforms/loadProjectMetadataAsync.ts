@@ -34,5 +34,5 @@ export async function loadProjectMetadataAsync(inputText: string, shareLink: str
     };
     dispatch(Actions.setProjectMetadata(projectData));
     initNewProjectResults();
-    logDebug(`Loaded project metadata: ${JSON.stringify(projMeta)}`);
+    logDebug("Loaded project metadata", projMeta);
 }
