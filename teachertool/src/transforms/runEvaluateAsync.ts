@@ -1,4 +1,4 @@
-import { logError } from "../services/loggingService";
+import { logDebug, logError } from "../services/loggingService";
 import { runValidatorPlanAsync } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
@@ -28,13 +28,16 @@ function generateValidatorPlan(
         return undefined;
     }
 
-    const plan = teacherTool.validatorPlans?.find(plan => plan.name === catalogCriteria.use);
-    if (!plan) {
+    const planTemplate = teacherTool.validatorPlans?.find(plan => plan.name === catalogCriteria.use);
+    if (!planTemplate) {
         logError(ErrorCode.evalMissingPlan, "Attempting to evaluate criteria with unrecognized plan", {
             plan: catalogCriteria.use,
         });
         return undefined;
     }
+
+    // Create a copy we can modify without affecting other uses of this template.
+    const plan = pxt.Util.deepCopy(planTemplate);
 
     // Fill in parameters.
     for (const param of criteriaInstance.params ?? []) {
@@ -108,6 +111,8 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
                 }
 
                 const plan = generateValidatorPlan(criteriaInstance, fromUserInteraction);
+
+                logDebug(`${criteriaInstance.instanceId}: Generated Plan`, plan)
 
                 if (!plan) {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
