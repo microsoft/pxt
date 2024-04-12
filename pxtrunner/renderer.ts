@@ -1274,6 +1274,19 @@ function renderBlockConfig(options: ClientRenderOptions) {
     render("global");
 }
 
+function renderValidation(options: ClientRenderOptions) {
+    function render(scope: "local" | "global") {
+        $(`code.lang-validation\\.${scope}`).each((i, c) => {
+            let $c = $(c);
+            if (options.snippetReplaceParent)
+                $c = $c.parent();
+            $c.remove();
+        });
+    }
+    render("local");
+    render("global");
+}
+
 function renderSims(options: ClientRenderOptions) {
     if (!options.simulatorClass) return;
     // simulators
@@ -1313,6 +1326,7 @@ export function renderAsync(options?: ClientRenderOptions): Promise<void> {
     renderQueue = [];
     renderGhost(options);
     renderBlockConfig(options);
+    renderValidation(options);
     renderSims(options);
     renderTypeScript(options);
     renderDirectPython(options);
