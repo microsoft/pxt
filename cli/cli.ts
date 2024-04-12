@@ -7114,7 +7114,18 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
-    advancedCommand("crowdin", "upload, download, clean, stats files to/from crowdin", pc => crowdin.execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
+    p.defineCommand({
+        name: "crowdin",
+        advanced: true,
+        argString: "<cmd> <path> [output]",
+        help: "upload, download, clean, stats files to/from crowdin",
+        flags: {
+            test: { description: "test run, do not upload files to crowdin" }
+        }
+    }, pc => {
+        if (pc.flags.test) pxt.crowdin.setTestMode();
+        return crowdin.execCrowdinAsync.apply(undefined, pc.args)
+    })
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync, undefined, true);
