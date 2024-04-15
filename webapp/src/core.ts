@@ -117,7 +117,7 @@ function initializeDimmer() {
     dimmerInitialized = true;
 }
 
-let asyncLoadingTimeout: pxt.Map<number> = {};
+let asyncLoadingTimeout: pxt.Map<ReturnType<typeof setTimeout>> = {};
 
 export function showLoadingAsync(id: string, msg: string, operation: Promise<any>, delay: number = 700): Promise<void> {
     clearTimeout(asyncLoadingTimeout[id]);

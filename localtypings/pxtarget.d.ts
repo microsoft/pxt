@@ -406,6 +406,7 @@ declare namespace pxt {
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
         showProjectSettings?: boolean; // show a link to pxt.json in the cogwheel menu
+        showDownloadButton?: boolean; // show the download button in the editor
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories

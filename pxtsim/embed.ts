@@ -14,6 +14,7 @@ namespace pxsim {
         partDefinitions?: Map<PartDefinition>
         fnArgs?: any;
         code: string;
+        entryPointFn?: (iface: any) => void;
         mute?: boolean;
         highContrast?: boolean;
         light?: boolean;

@@ -114,7 +114,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         }
     }
 
-    pollingInterval: number;
+    pollingInterval: ReturnType<typeof setTimeout>;
     componentDidMount() {
         this.iframeClient = new IFrameEmbeddedClient(this.handleMessage);
 
