@@ -875,8 +875,9 @@ function renderApisAsync(options: ClientRenderOptions, replaceParent: boolean): 
                     return l.name.localeCompare(r.name);
                 })
 
-                const ul = $('<div />').addClass('ui divided items');
-                ul.attr("role", "listbox");
+                const ul = document.createElement("div");
+                ul.className = "ui divided items";
+                ul.setAttribute("role", "list");
                 csymbols.forEach(symbol => addSymbolCardItem(ul, symbol, "item"));
                 if (replaceParent) c = c.parent();
                 c.replaceWith(ul)
@@ -884,16 +885,20 @@ function renderApisAsync(options: ClientRenderOptions, replaceParent: boolean): 
         });
 }
 
-function addCardItem(ul: JQuery, card: pxt.CodeCard) {
+function addCardItem(ul: Element, card: pxt.CodeCard) {
     if (!card) return;
     const mC = /^\/(v\d+)/.exec(card.url);
     const mP = /^\/(v\d+)/.exec(window.location.pathname);
     const inEditor = /#doc/i.test(window.location.href);
     if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
-    ul.append(renderCodeCard(card, { hideHeader: true, shortName: true }));
+
+    const listItem = document.createElement("div");
+    listItem.setAttribute("role", "listitem");
+    listItem.append(renderCodeCard(card, { hideHeader: true, shortName: true }));
+    ul.append(listItem);
 }
 
-function addSymbolCardItem(ul: JQuery, symbol: pxtc.SymbolInfo, cardStyle?: string) {
+function addSymbolCardItem(ul: Element, symbol: pxtc.SymbolInfo, cardStyle?: string) {
     const attributes = symbol.attributes;
     const block = !attributes.blockHidden && Blockly.Blocks[attributes.blockId];
     const card = block?.codeCard;
@@ -920,8 +925,9 @@ function renderLinksAsync(options: ClientRenderOptions, cls: string, replacePare
         if (!cjs) return;
         const file = cjs.getSourceFile(pxt.MAIN_TS);
         const stmts = file.statements.slice(0);
-        const ul = $('<div />').addClass('ui cards');
-        ul.attr("role", "listbox");
+        const ul = document.createElement("div");
+        ul.setAttribute("role", "list");
+        ul.className = "card-list";
         stmts.forEach(stmt => {
             const kind = stmt.kind;
             const info = decompileCallInfo(stmt);
