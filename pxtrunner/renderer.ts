@@ -1057,8 +1057,8 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
         c.replaceWith(cc);
     } else {
         let cd = document.createElement("div")
-        cd.className = "ui cards";
-        cd.setAttribute("role", "listbox")
+        cd.className = "card-list";
+        cd.setAttribute("role", "list")
         cards.forEach(card => {
             // patch card url with version if necessary, we don't do this in the editor because that goes through the backend and passes the targetVersion then
             const mC = /^\/(v\d+)/.exec(card.url);
@@ -1066,8 +1066,12 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
             const inEditor = /#doc/i.test(window.location.href);
             if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}${card.url}`;
             const cardEl = renderCodeCard(card, options);
-            cd.appendChild(cardEl)
-            // automitcally display package icon for approved packages
+
+            const outer = document.createElement("div");
+            outer.setAttribute("role", "listitem");
+            outer.appendChild(cardEl);
+            cd.appendChild(outer)
+            // automatically display package icon for approved packages
             if (card.cardType == "package") {
                 const repoId = pxt.github.parseRepoId((card.url || "").replace(/^\/pkg\//, ''));
                 if (repoId) {
@@ -1081,13 +1085,13 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
                                     // update card info
                                     card.imageUrl = pxt.github.mkRepoIconUrl(repoId);
                                     // inject
-                                    cd.insertBefore(renderCodeCard(card, options), cardEl);
+                                    outer.insertBefore(renderCodeCard(card, options), cardEl);
                                     cardEl.remove();
                                     break;
                             }
                         })
                         .catch(e => {
-                            // swallow
+                            // ignore
                             pxt.reportException(e);
                             pxt.debug(`failed to load repo ${card.url}`)
                         })
