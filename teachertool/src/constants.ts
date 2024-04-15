@@ -25,6 +25,7 @@ export namespace Strings {
     export const ValueRequired = lf("Value Required");
     export const AddSelected = lf("Add Selected");
     export const Continue = lf("Continue");
+    export const Loading = lf("Loading...");
 }
 
 export namespace Ticks {

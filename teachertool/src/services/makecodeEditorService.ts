@@ -21,10 +21,10 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
         driver = new EditorDriver(ref);
 
         driver.addEventListener("message", ev => {
-            logDebug(`Message received from iframe: ${JSON.stringify(ev)}`);
+            logDebug(`Message received from iframe. ID: ${ev?.id}`, ev);
         });
         driver.addEventListener("sent", ev => {
-            logDebug(`Sent message to iframe: ${JSON.stringify(ev)}`);
+            logDebug(`Sent message to iframe. ID: ${ev?.id}`, ev);
         });
         driver.addEventListener("editorcontentloaded", ev => {
             AutorunService.poke();

@@ -1089,6 +1089,7 @@ namespace pxsim.visuals {
         getCoord(pinNm: string): Coord;
         getPinDist(): number;
         highlightPin(pinNm: string): void;
+        removeEventListeners?(): void;
     }
 
     //expects rgb from 0,255, gives h in [0,360], s in [0, 100], l in [0, 100]

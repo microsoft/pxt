@@ -449,14 +449,14 @@ async function ciAsync() {
         if (branch === "master" && isTaggedCommit) {
             if (uploadDocs) {
                 await buildWebStringsAsync();
-                await crowdin.execCrowdinAsync("upload", "built/webstrings.json");
+                await crowdin.uploadBuiltStringsAsync("built/webstrings.json");
 
                 for (const subapp of SUB_WEBAPPS) {
-                    await crowdin.execCrowdinAsync("upload", `built/${subapp.name}-strings.json`);
+                    await crowdin.uploadBuiltStringsAsync(`built/${subapp.name}-strings.json`);
                 }
             }
             if (uploadApiStrings) {
-                await crowdin.execCrowdinAsync("upload", "built/strings.json");
+                await crowdin.uploadBuiltStringsAsync("built/strings.json");
             }
             if (uploadDocs || uploadApiStrings) {
                 await crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs);
@@ -2539,9 +2539,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         tag: info.tag,
         commits: info.commitUrl,
         target: readJson("package.json")["version"],
-        pxt: pxtVersion(),
-        pxtCrowdinBranch: pxtCrowdinBranch(),
-        targetCrowdinBranch: targetCrowdinBranch()
+        pxt: pxtVersion()
     }
     saveThemeJson(cfg, options.localDir, options.packaged)
     fillInCompilerExtension(cfg);
@@ -2608,18 +2606,6 @@ function pxtVersion(): string {
     return pxt.appTarget.id == "core" ?
         readJson("package.json")["version"] :
         readJson("node_modules/pxt-core/package.json")["version"];
-}
-
-function pxtCrowdinBranch(): string {
-    const theme = pxt.appTarget.id == "core" ?
-        readJson("pxtarget.json").appTheme :
-        readJson("node_modules/pxt-core/pxtarget.json").appTheme;
-    return theme ? theme.crowdinBranch : undefined;
-}
-
-function targetCrowdinBranch(): string {
-    const theme = readJson("pxtarget.json").appTheme;
-    return theme ? theme.crowdinBranch : undefined;
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promise<void> {
@@ -7020,7 +7006,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         advanced: true,
     }, pc => uploadTargetRefsAsync(pc.args[0]));
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
-    advancedCommand("downloadtrgtranslations", "download translations from bundled projects", crowdin.downloadTargetTranslationsAsync, "<package>");
+    advancedCommand("downloadtrgtranslations", "download translations from bundled projects", crowdin.downloadTargetTranslationsAsync, "[package]");
 
     p.defineCommand({
         name: "checkdocs",
@@ -7106,7 +7092,18 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
-    advancedCommand("crowdin", "upload, download, clean, stats files to/from crowdin", pc => crowdin.execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
+    p.defineCommand({
+        name: "crowdin",
+        advanced: true,
+        argString: "<cmd> <path> [output]",
+        help: "upload, download, clean, stats files to/from crowdin",
+        flags: {
+            test: { description: "test run, do not upload files to crowdin" }
+        }
+    }, pc => {
+        if (pc.flags.test) pxt.crowdin.setTestMode();
+        return crowdin.execCrowdinAsync.apply(undefined, pc.args)
+    })
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync, undefined, true);

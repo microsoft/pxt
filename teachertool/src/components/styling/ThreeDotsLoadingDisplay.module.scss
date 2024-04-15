@@ -1,0 +1,44 @@
+.loading-ellipsis {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    padding-top: 1rem;
+    align-items: center;
+    color: var(--pxt-content-foreground);
+
+    .circle {
+        font-size: 1rem;
+
+        @keyframes bounce {
+            0% {
+                transform: translateY(0);
+            }
+
+            25% {
+                transform: translateY(-0.5rem);
+            }
+
+            50% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        animation: bounce 750ms infinite ease-in-out;
+    }
+
+    .circle-1 {
+        animation-delay: 0ms;
+    }
+
+    .circle-2 {
+        animation-delay: 125ms;
+    }
+
+    .circle-3 {
+        animation-delay: 250ms;
+    }
+}

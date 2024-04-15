@@ -14,6 +14,11 @@
     min-height: 9rem;
     border-bottom: solid 1px var(--pxt-content-accent);
     break-inside: avoid;
+
+    .loading-display {
+        padding-top: 0;
+        flex-grow: 1;
+    }
 }
 
 .result-details {

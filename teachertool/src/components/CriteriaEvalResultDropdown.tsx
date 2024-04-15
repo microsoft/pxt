@@ -3,8 +3,8 @@ import { useMemo } from "react";
 import { setEvalResultOutcome } from "../transforms/setEvalResultOutcome";
 import { Dropdown, DropdownItem } from "react-common/components/controls/Dropdown";
 import { EvaluationStatus } from "../types/criteria";
-import css from "./styling/EvalResultDisplay.module.scss";
 import { classList } from "react-common/components/util";
+import css from "./styling/EvalResultDisplay.module.scss";
 
 interface CriteriaEvalResultProps {
     result: EvaluationStatus;
@@ -12,46 +12,39 @@ interface CriteriaEvalResultProps {
 }
 
 const itemIdToCriteriaResult: pxt.Map<EvaluationStatus> = {
-    evaluating: EvaluationStatus.InProgress,
     notevaluated: EvaluationStatus.CompleteWithNoResult,
     fail: EvaluationStatus.Fail,
     pass: EvaluationStatus.Pass,
-    pending: EvaluationStatus.Pending,
+    notstarted: EvaluationStatus.NotStarted,
 };
 
 const criteriaResultToItemId: pxt.Map<string> = {
-    [EvaluationStatus.InProgress]: "evaluating",
     [EvaluationStatus.CompleteWithNoResult]: "notevaluated",
     [EvaluationStatus.Fail]: "fail",
     [EvaluationStatus.Pass]: "pass",
-    [EvaluationStatus.Pending]: "pending",
+    [EvaluationStatus.NotStarted]: "notstarted",
 };
 
 const dropdownItems: DropdownItem[] = [
     {
-        id: "evaluating",
-        title: lf("evaluating..."),
-        label: lf("evaluating..."),
-    },
-    {
         id: "notevaluated",
-        title: lf("not evaluated"),
-        label: lf("not evaluated"),
+        title: lf("not applicable"),
+        label: lf("N/A"),
     },
     {
         id: "fail",
         title: lf("needs work"),
-        label: lf("needs work"),
+        label: lf("Needs work"),
     },
     {
         id: "pass",
         title: lf("looks good!"),
-        label: lf("looks good!"),
+        label: lf("Looks good!"),
     },
     {
-        id: "pending",
+        id: "notstarted",
         title: lf("not started"),
-        label: lf("not started"),
+        label: lf("Not started"),
     },
 ];
 
@@ -62,7 +55,11 @@ export const CriteriaEvalResultDropdown: React.FC<CriteriaEvalResultProps> = ({ 
         <Dropdown
             id="project-eval-result-dropdown"
             selectedId={selectedResult}
-            className={classList("rounded", selectedResult)}
+            className={classList(
+                "rounded",
+                selectedResult,
+                selectedResult === "notevaluated" ? css["no-print"] : undefined
+            )}
             items={dropdownItems}
             onItemSelected={id => setEvalResultOutcome(criteriaId, itemIdToCriteriaResult[id])}
         />

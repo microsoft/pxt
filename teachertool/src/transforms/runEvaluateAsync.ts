@@ -1,15 +1,18 @@
-import { logError } from "../services/loggingService";
+import { logDebug, logError } from "../services/loggingService";
 import { runValidatorPlanAsync } from "../services/makecodeEditorService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { EvaluationStatus, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
-import { getReadableCriteriaTemplate, makeToast } from "../utils";
+import { makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
-import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import jp from "jsonpath";
+import { getSystemParameter } from "../utils/getSystemParameter";
+import { runValidatorPlanOverrideAsync } from "../validatorPlanOverrides/runValidatorPlanOverrideAsync";
+import { setEvalResultOutcome } from "./setEvalResultOutcome";
+import { mergeEvalResult } from "./mergeEvalResult";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -25,13 +28,16 @@ function generateValidatorPlan(
         return undefined;
     }
 
-    const plan = teacherTool.validatorPlans?.find(plan => plan.name === catalogCriteria.use);
-    if (!plan) {
+    const planTemplate = teacherTool.validatorPlans?.find(plan => plan.name === catalogCriteria.use);
+    if (!planTemplate) {
         logError(ErrorCode.evalMissingPlan, "Attempting to evaluate criteria with unrecognized plan", {
             plan: catalogCriteria.use,
         });
         return undefined;
     }
+
+    // Create a copy we can modify without affecting other uses of this template.
+    const plan = pxt.Util.deepCopy(planTemplate);
 
     // Fill in parameters.
     for (const param of criteriaInstance.params ?? []) {
@@ -45,6 +51,13 @@ function generateValidatorPlan(
                 );
             }
             return undefined;
+        }
+
+        if (catalogParam.type === "system" && catalogParam.key) {
+            param.value = getSystemParameter(catalogParam.key, teacherTool);
+            if (!param.value) {
+                param.value = catalogParam.default;
+            }
         }
 
         if (!param.value) {
@@ -78,6 +91,16 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const evalRequests = teacherTool.rubric.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
+                const existingOutcome = teacherTool.evalResults[criteriaInstance.instanceId]?.result;
+                if (
+                    !fromUserInteraction &&
+                    existingOutcome !== undefined &&
+                    existingOutcome !== EvaluationStatus.NotStarted
+                ) {
+                    // The criteria has not changed since it was last evaluated, so we can skip it (unless user specifically clicked run).
+                    return resolve(true);
+                }
+
                 setEvalResultOutcome(criteriaInstance.instanceId, EvaluationStatus.InProgress);
 
                 const loadedValidatorPlans = teacherTool.validatorPlans;
@@ -89,16 +112,28 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
 
                 const plan = generateValidatorPlan(criteriaInstance, fromUserInteraction);
 
+                logDebug(`${criteriaInstance.instanceId}: Generated Plan`, plan)
+
                 if (!plan) {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
                     return resolve(false);
                 }
 
-                const planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
+                // Only call into iframe if teacher tool has not specified an override for this plan.
+                let planResult = await runValidatorPlanOverrideAsync(plan);
+                if (!planResult) {
+                    planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
+                }
 
                 if (planResult) {
-                    const result = planResult.result ? EvaluationStatus.Pass : EvaluationStatus.Fail;
-                    setEvalResultOutcome(criteriaInstance.instanceId, result);
+                    const result =
+                        planResult.result === undefined
+                            ? EvaluationStatus.CompleteWithNoResult
+                            : planResult.result
+                            ? EvaluationStatus.Pass
+                            : EvaluationStatus.Fail;
+
+                    mergeEvalResult(criteriaInstance.instanceId, result, planResult.notes);
                     return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
                 } else {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));

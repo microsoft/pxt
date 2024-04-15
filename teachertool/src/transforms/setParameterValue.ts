@@ -1,7 +1,9 @@
 import { logDebug, logError } from "../services/loggingService";
 import { stateAndDispatch } from "../state";
 import { getCriteriaInstanceWithId } from "../state/helpers";
+import { EvaluationStatus } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
+import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import { setRubric } from "./setRubric";
 
 export function setParameterValue(instanceId: string, paramName: string, newValue: any) {
@@ -34,4 +36,5 @@ export function setParameterValue(instanceId: string, paramName: string, newValu
     const newRubric = { ...teacherTool.rubric, criteria: newInstanceSet };
 
     setRubric(newRubric);
+    setEvalResultOutcome(instanceId, EvaluationStatus.NotStarted);
 }

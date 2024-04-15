@@ -936,7 +936,7 @@ namespace pxt {
             if (pxt.Util.liveLocalizationEnabled() && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.debug(`loading live translations for ${this.id}`)
                 return Promise.all(filenames.map(
-                    fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
+                    fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`)
                         .then(tr => {
                             if (tr && Object.keys(tr).length) {
                                 Util.jsonMergeFrom(r, tr);

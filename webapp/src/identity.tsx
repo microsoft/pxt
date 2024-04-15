@@ -100,9 +100,15 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         this.props.parent.signOutGithub();
     }
 
+    encodedAvatarPic(user: pxt.auth.UserProfile): string {
+        const type = user?.idp?.picture?.mimeType;
+        const encodedImg = user?.idp?.picture?.encoded;
+        return type && encodedImg ? `data:${type};base64,${encodedImg}` : "";
+    }
+
     avatarPicUrl(): string {
         const user = this.getUserProfile();
-        return user?.idp?.pictureUrl ?? user?.idp?.picture?.dataUrl;
+        return user?.idp?.pictureUrl ?? this.encodedAvatarPic(user);
     }
 
     hide() {
@@ -189,8 +195,8 @@ export class CloudSaveStatus extends data.Component<CloudSaveStatusProps, {}> {
         const syncing = preparing || cloudStatus.value === "syncing";
 
         return (<div className="cloudstatusarea">
-            {!syncing && <sui.Item className={"ui tiny cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
-            {syncing && <sui.Item className={"ui tiny inline loader active cloudprogress" + (preparing ? " indeterminate" : "")} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
+            {!syncing && <sui.Item role="presentation" className={"ui tiny cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
+            {syncing && <sui.Item role="presentation" className={"ui tiny inline loader active cloudprogress" + (preparing ? " indeterminate" : "")} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
             {cloudStatus.value !== "none" && cloudStatus.value !== "synced" && <span className="ui mobile hide no-select cloudtext" role="note">{cloudStatus.shortStatus}</span>}
         </div>);
     }
