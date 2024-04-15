@@ -6,6 +6,8 @@ import { logDebug } from "pxtservices/loggingService";
 import { HeaderBar } from "./components/HeaderBar";
 import { setTargetConfig } from "./state/actions";
 import { EditorPanel } from "./components/EditorPanel";
+import { SignInModal } from "./components/SignInModal";
+import { authCheckAsync } from "./services/authClient";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -18,9 +20,13 @@ export const App = () => {
             (async () => {
                 logDebug("App is ready, initializing...");
 
+                // Handle login callbacks
+                await authCheckAsync();
+
                 const cfg = await downloadTargetConfigAsync();
                 dispatch(setTargetConfig(cfg || {}));
                 pxt.BrowserUtils.initTheme();
+
 
                 setInited(true);
                 logDebug("App initialized");
@@ -36,6 +42,7 @@ export const App = () => {
         <>
             <HeaderBar />
             <EditorPanel />
+            <SignInModal />
         </>
     );
 };

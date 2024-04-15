@@ -29,5 +29,17 @@ export default function reducer(state: AppState, action: Action): AppState {
                 userProfile: undefined
             };
         }
+        case "HIDE_MODAL": {
+            return {
+                ...state,
+                modal: undefined
+            };
+        }
+        case "SHOW_MODAL": {
+            return {
+                ...state,
+                modal: action.modalOptions
+            };
+        }
     }
 }

@@ -5,6 +5,10 @@ import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 import { AppStateContext } from "../state/appStateContext";
 import { Ticks } from "../constants";
+import { UserAvatarDropdown } from "react-common/components/profile/UserAvatarDropdown";
+import { SignInButton } from "react-common/components/profile/SignInButton";
+import { logoutAsync } from "../services/authClient";
+import { showModal } from "../state/actions";
 
 interface HeaderBarProps {}
 
@@ -96,6 +100,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             </div>
 
             <div className={css["right-menu"]}>
+                <ProfileMenu />
                 <Button
                     className="menu-button"
                     leftIcon="fas fa-home large"
@@ -106,3 +111,25 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         </MenuBar>
     );
 };
+
+
+const ProfileMenu: React.FC = () => {
+    const { state, dispatch } = useContext(AppStateContext);
+
+    return (
+        <>
+            {state.userProfile &&
+                <UserAvatarDropdown
+                    userProfile={state.userProfile}
+                    title={lf("Your Profile")}
+                    onSignOutClick={() => logoutAsync()}
+                />
+            }
+            {!state.userProfile &&
+                <SignInButton
+                    onSignInClick={() => dispatch(showModal({ modal: "signin"}))}
+                />
+            }
+        </>
+    )
+}
