@@ -1261,6 +1261,13 @@ function renderGhost(options: ClientRenderOptions) {
     c.remove();
 }
 
+function renderTemplate(options: ClientRenderOptions) {
+    let c = $('code.lang-template');
+    if (options.snippetReplaceParent)
+        c = c.parent();
+    c.remove();
+}
+
 function renderBlockConfig(options: ClientRenderOptions) {
     function render(scope: "local" | "global") {
         $(`code.lang-blockconfig\\.${scope}`).each((i, c) => {
@@ -1326,6 +1333,7 @@ export function renderAsync(options?: ClientRenderOptions): Promise<void> {
     renderQueue = [];
     renderGhost(options);
     renderBlockConfig(options);
+    renderTemplate(options);
     renderValidation(options);
     renderSims(options);
     renderTypeScript(options);
