@@ -1254,44 +1254,37 @@ function renderTypeScript(options?: ClientRenderOptions) {
     });
 }
 
-function renderGhost(options: ClientRenderOptions) {
-    let c = $('code.lang-ghost');
+function removeSnippet(c: JQuery<HTMLElement>, options: ClientRenderOptions) {
     if (options.snippetReplaceParent)
         c = c.parent();
     c.remove();
+}
+
+function renderGhost(options: ClientRenderOptions) {
+    let c = $('code.lang-ghost');
+    removeSnippet(c, options);
 }
 
 function renderTemplate(options: ClientRenderOptions) {
     let c = $('code.lang-template');
-    if (options.snippetReplaceParent)
-        c = c.parent();
-    c.remove();
+    removeSnippet(c, options);
+}
+
+function removeScopedConfig(type: string, scope: "local" | "global", options: ClientRenderOptions) {
+    $(`code.lang-${type}\\.${scope}`).each((i, c) => {
+        let $c = $(c);
+        removeSnippet($c, options);
+    });
 }
 
 function renderBlockConfig(options: ClientRenderOptions) {
-    function render(scope: "local" | "global") {
-        $(`code.lang-blockconfig\\.${scope}`).each((i, c) => {
-            let $c = $(c);
-            if (options.snippetReplaceParent)
-                $c = $c.parent();
-            $c.remove();
-        });
-    }
-    render("local");
-    render("global");
+    removeScopedConfig("blockconfig", "local", options);
+    removeScopedConfig("blockconfig", "global", options);
 }
 
 function renderValidation(options: ClientRenderOptions) {
-    function render(scope: "local" | "global") {
-        $(`code.lang-validation\\.${scope}`).each((i, c) => {
-            let $c = $(c);
-            if (options.snippetReplaceParent)
-                $c = $c.parent();
-            $c.remove();
-        });
-    }
-    render("local");
-    render("global");
+    removeScopedConfig("validation", "local", options);
+    removeScopedConfig("validation", "global", options);
 }
 
 function renderSims(options: ClientRenderOptions) {
