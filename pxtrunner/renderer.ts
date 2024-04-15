@@ -1260,6 +1260,13 @@ function removeSnippet(c: JQuery<HTMLElement>, options: ClientRenderOptions) {
     c.remove();
 }
 
+function removeScopedConfig(type: string, scope: "local" | "global", options: ClientRenderOptions) {
+    $(`code.lang-${type}\\.${scope}`).each((i, c) => {
+        let $c = $(c);
+        removeSnippet($c, options);
+    });
+}
+
 function renderGhost(options: ClientRenderOptions) {
     let c = $('code.lang-ghost');
     removeSnippet(c, options);
@@ -1268,13 +1275,6 @@ function renderGhost(options: ClientRenderOptions) {
 function renderTemplate(options: ClientRenderOptions) {
     let c = $('code.lang-template');
     removeSnippet(c, options);
-}
-
-function removeScopedConfig(type: string, scope: "local" | "global", options: ClientRenderOptions) {
-    $(`code.lang-${type}\\.${scope}`).each((i, c) => {
-        let $c = $(c);
-        removeSnippet($c, options);
-    });
 }
 
 function renderBlockConfig(options: ClientRenderOptions) {
