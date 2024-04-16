@@ -1304,11 +1304,23 @@ function renderSims(options: ClientRenderOptions) {
         let $c = $(c);
         let padding = '81.97%';
         if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-        let $sim = $(`<div class="ui card"><div class="ui content">
+        const simTitle = lf("MakeCode {0} Simulator", pxt.appTarget.appTheme?.boardName || pxt.appTarget.name);
+
+        let $sim = $(`
+            <div class="ui card">
+                <div class="ui content">
                     <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
-                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
+                        <iframe
+                            style="position:absolute;top:0;left:0;width:100%;height:100%;"
+                            allowfullscreen="allowfullscreen"
+                            frameborder="0"
+                            sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
+                            title="${pxt.U.htmlEscape(simTitle)}"
+                        ></iframe>
                     </div>
-                    </div></div>`)
+                </div>
+            </div>
+        `);
         const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
 
         const url = getRunUrl(options) + "#nofooter=1" + deps;
