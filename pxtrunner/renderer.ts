@@ -875,8 +875,9 @@ function renderApisAsync(options: ClientRenderOptions, replaceParent: boolean): 
                     return l.name.localeCompare(r.name);
                 })
 
-                const ul = $('<div />').addClass('ui divided items');
-                ul.attr("role", "listbox");
+                const ul = document.createElement("div");
+                ul.className = "ui divided items";
+                ul.setAttribute("role", "list");
                 csymbols.forEach(symbol => addSymbolCardItem(ul, symbol, "item"));
                 if (replaceParent) c = c.parent();
                 c.replaceWith(ul)
@@ -884,16 +885,20 @@ function renderApisAsync(options: ClientRenderOptions, replaceParent: boolean): 
         });
 }
 
-function addCardItem(ul: JQuery, card: pxt.CodeCard) {
+function addCardItem(ul: Element, card: pxt.CodeCard) {
     if (!card) return;
     const mC = /^\/(v\d+)/.exec(card.url);
     const mP = /^\/(v\d+)/.exec(window.location.pathname);
     const inEditor = /#doc/i.test(window.location.href);
     if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
-    ul.append(renderCodeCard(card, { hideHeader: true, shortName: true }));
+
+    const listItem = document.createElement("div");
+    listItem.setAttribute("role", "listitem");
+    listItem.append(renderCodeCard(card, { hideHeader: true, shortName: true }));
+    ul.append(listItem);
 }
 
-function addSymbolCardItem(ul: JQuery, symbol: pxtc.SymbolInfo, cardStyle?: string) {
+function addSymbolCardItem(ul: Element, symbol: pxtc.SymbolInfo, cardStyle?: string) {
     const attributes = symbol.attributes;
     const block = !attributes.blockHidden && Blockly.Blocks[attributes.blockId];
     const card = block?.codeCard;
@@ -920,8 +925,9 @@ function renderLinksAsync(options: ClientRenderOptions, cls: string, replacePare
         if (!cjs) return;
         const file = cjs.getSourceFile(pxt.MAIN_TS);
         const stmts = file.statements.slice(0);
-        const ul = $('<div />').addClass('ui cards');
-        ul.attr("role", "listbox");
+        const ul = document.createElement("div");
+        ul.setAttribute("role", "list");
+        ul.className = "card-list";
         stmts.forEach(stmt => {
             const kind = stmt.kind;
             const info = decompileCallInfo(stmt);
@@ -1057,8 +1063,8 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
         c.replaceWith(cc);
     } else {
         let cd = document.createElement("div")
-        cd.className = "ui cards";
-        cd.setAttribute("role", "listbox")
+        cd.className = "card-list";
+        cd.setAttribute("role", "list")
         cards.forEach(card => {
             // patch card url with version if necessary, we don't do this in the editor because that goes through the backend and passes the targetVersion then
             const mC = /^\/(v\d+)/.exec(card.url);
@@ -1066,8 +1072,12 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
             const inEditor = /#doc/i.test(window.location.href);
             if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}${card.url}`;
             const cardEl = renderCodeCard(card, options);
-            cd.appendChild(cardEl)
-            // automitcally display package icon for approved packages
+
+            const outer = document.createElement("div");
+            outer.setAttribute("role", "listitem");
+            outer.appendChild(cardEl);
+            cd.appendChild(outer)
+            // automatically display package icon for approved packages
             if (card.cardType == "package") {
                 const repoId = pxt.github.parseRepoId((card.url || "").replace(/^\/pkg\//, ''));
                 if (repoId) {
@@ -1081,13 +1091,13 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
                                     // update card info
                                     card.imageUrl = pxt.github.mkRepoIconUrl(repoId);
                                     // inject
-                                    cd.insertBefore(renderCodeCard(card, options), cardEl);
+                                    outer.insertBefore(renderCodeCard(card, options), cardEl);
                                     cardEl.remove();
                                     break;
                             }
                         })
                         .catch(e => {
-                            // swallow
+                            // ignore
                             pxt.reportException(e);
                             pxt.debug(`failed to load repo ${card.url}`)
                         })

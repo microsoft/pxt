@@ -3,6 +3,7 @@ import { render } from "./render";
 export interface CodeCardRenderOptions {
     hideHeader?: boolean;
     shortName?: boolean;
+    role?: string;
 }
 
 export function renderCodeCard(card: pxt.CodeCard, options: CodeCardRenderOptions = {}): HTMLElement {
@@ -22,8 +23,13 @@ export function renderCodeCard(card: pxt.CodeCard, options: CodeCardRenderOption
     const style = card.style || "card";
     let r = div(null, 'ui ' + style + ' ' + (card.color || '') + (link ? ' link' : ''), link ? "a" : "div");
 
-    r.setAttribute("role", "option");
-    r.setAttribute("aria-selected", "true");
+    if (options.role) {
+        r.setAttribute("role", options.role);
+    }
+
+    if (options.role === "option") {
+        r.setAttribute("aria-selected", "true");
+    }
 
     if (link) {
         const rAsLink = r as HTMLAnchorElement;
