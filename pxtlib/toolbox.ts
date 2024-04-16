@@ -1,4 +1,6 @@
 namespace pxt.toolbox {
+    const cachedAccessibleColors: pxt.Map<string> = {};
+
     export const blockColors: Map<number | string> = {
         loops: '#107c10',
         logic: '#006970',
@@ -63,10 +65,18 @@ namespace pxt.toolbox {
 
     export function getNamespaceColor(ns: string): string {
         ns = ns.toLowerCase();
-        if (pxt.appTarget.appTheme.blockColors && pxt.appTarget.appTheme.blockColors[ns])
-            return pxt.appTarget.appTheme.blockColors[ns] as string;
-        if (pxt.toolbox.blockColors[ns])
-            return pxt.toolbox.blockColors[ns] as string;
+
+        let color: string;
+        if (pxt.appTarget.appTheme.blockColors && pxt.appTarget.appTheme.blockColors[ns]) {
+            color = pxt.appTarget.appTheme.blockColors[ns] as string;
+        }
+        else if (pxt.toolbox.blockColors[ns]) {
+            color = pxt.toolbox.blockColors[ns] as string;
+        }
+
+        if (color) {
+            return getAccessibleBackground(color);
+        }
         return "";
     }
 
@@ -189,5 +199,18 @@ namespace pxt.toolbox {
         }
 
         return rgb;
+    }
+
+    /**
+     * Calculates an accessible background color assuming a foreground color of white and
+     * caches the result. Does not clear the cache, but this shouldn't be much of a memory
+     * concern since we only cache colors that are used in the toolbox.
+     */
+    export function getAccessibleBackground(color: string) {
+        if (!cachedAccessibleColors[color]) {
+            cachedAccessibleColors[color] = pxt.getWhiteContrastingBackground(color);
+        }
+
+        return cachedAccessibleColors[color];
     }
 }

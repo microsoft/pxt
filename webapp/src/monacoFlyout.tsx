@@ -351,7 +351,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
         const snippet = isPython ? block.pySnippet : block.snippet;
         const params = block.parameters;
-        const blockColor = block.attributes.color || color;
+        const blockColor = pxt.toolbox.getAccessibleBackground(block.attributes.color || color);
         const blockDescription = this.getBlockDescription(block, params ? params.slice() : null);
         const helpUrl = block.attributes.help;
 
@@ -404,7 +404,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
     renderCore() {
         const { name, ns, color, icon, groups } = this.state;
-        const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
+        const rgb = pxt.toolbox.getAccessibleBackground(pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255"));
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">

@@ -731,7 +731,9 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
 
     getMetaColor() {
         const { color } = this.props.treeRow;
-        return pxt.toolbox.convertColor(color) || pxt.toolbox.getNamespaceColor('default');
+        return pxt.toolbox.getAccessibleBackground(
+            pxt.toolbox.convertColor(color) || pxt.toolbox.getNamespaceColor('default')
+        );
     }
 
     handleTreeRowRef = (c: HTMLDivElement) => {
