@@ -207,6 +207,8 @@ namespace pxt.toolbox {
      * concern since we only cache colors that are used in the toolbox.
      */
     export function getAccessibleBackground(color: string) {
+        if (!pxt.appTarget?.appTheme?.adjustBlockContrast) return color;
+
         if (!cachedAccessibleColors[color]) {
             cachedAccessibleColors[color] = pxt.getWhiteContrastingBackground(color);
         }
