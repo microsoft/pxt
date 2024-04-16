@@ -757,13 +757,6 @@ exports.webapp = gulp.series(
     browserifyAssetEditor
 )
 
-exports.pxtrunner = gulp.series(
-    gulp.parallel(reactCommon, pxtblocks, pxteditor, pxtservices),
-    pxtrunner,
-    browserifyEmbed,
-    pxtembed,
-);
-
 exports.skillmapTest = testSkillmap;
 exports.updatestrings = updatestrings;
 exports.lint = lint
