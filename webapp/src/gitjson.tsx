@@ -1421,7 +1421,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         const pagesBuilding = pages && pages.status == "building";
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
-            <div className="ui header">{lf("Release zone")}</div>
+            <h2 className="ui header">{lf("Release zone")}</h2>
             {!needsCommit && !tag && <div className="ui field">
                 <sui.Button
                     className="basic"
@@ -1488,7 +1488,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
 
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
-            <div className="ui header">{lf("Extension zone")}</div>
+            <h2 className="ui header">{lf("Extension zone")}</h2>
             <div className="ui field">
                 <sui.Link className="basic button"
                     href={testurl}
@@ -1684,7 +1684,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
             })
 
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
-            <div className="ui header">{lf("History")}</div>
+            <h2 className="ui header">{lf("History")}</h2>
             {(loading || !expanded) && <div className="ui field">
                 <sui.Button loading={loading} className="basic" text={lf("View commits")}
                     onClick={this.handleLoadClick}
