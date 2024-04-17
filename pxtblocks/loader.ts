@@ -217,7 +217,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
     const helpUrl = pxt.blocks.getHelpUrl(fn);
     if (helpUrl) block.setHelpUrl(helpUrl)
 
-    block.setColour(color);
+    block.setColour(typeof color === "string" ? pxt.toolbox.getAccessibleBackground(color) : color);
     let blockShape = provider.SHAPES.ROUND;
     if (fn.retType == "boolean") {
         blockShape = provider.SHAPES.HEXAGONAL;
