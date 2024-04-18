@@ -1,0 +1,32 @@
+.common-accordion-header-outer {
+	cursor: pointer;
+    background: none;
+	color: inherit;
+	border: none;
+	padding: 0;
+	font: inherit;
+	outline: inherit;
+    text-align: inherit;
+    width: 100%;
+
+    & > div {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+    }
+
+    .common-accordion-chevron {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        width: 2rem;
+    }
+
+    .common-accordion-header-content {
+        flex-grow: 1;
+    }
+}
+
+.common-accordion-header-outer:focus-visible {
+    outline: @buttonFocusOutlineLightBackground;
+}
