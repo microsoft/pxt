@@ -476,7 +476,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             selected={embedOptions.findIndex(i => i.name === embedState)} />
                         <Textarea readOnly={true}
                             rows={5}
-                            initialValue={shareData?.embed[embedState]} />
+                            initialValue={shareData?.embed[embedState]}
+                            ariaLabel={lf("Embed code textarea")} />
                     </div>}
                     {kioskState &&
                         <div>
@@ -512,7 +513,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
             </div>
 
             {showQRCode &&
-                <Modal title={lf("QR Code")} onClose={handleQRCodeModalClose}>
+                <Modal title={lf("QR Code")} onClose={handleQRCodeModalClose} ariaLabel={lf("QR Code modal")} >
                     <div className="qrcode-modal-body">
                         <img className="qrcode-image" src={shareData?.qr} alt={lf("QR code to access your project")} aria-label={lf("Project share link QR code enlarged")} />
                     </div>
