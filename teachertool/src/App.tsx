@@ -57,7 +57,6 @@ export const App = () => {
         <>
             <HeaderBar />
             <MainPanel />
-            <CatalogModal />
             <ImportRubricModal />
             <ConfirmationModal />
             <BlockPickerModal />
