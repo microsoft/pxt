@@ -10,8 +10,8 @@ import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { Strings } from "../constants";
 import css from "./styling/CatalogModal.module.scss";
 
-interface CatalogModalProps {}
-export const CatalogModal: React.FC<CatalogModalProps> = ({}) => {
+interface CatalogOverlayProps {}
+export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const [checkedCriteriaIds, setCheckedCriteria] = useState<Set<string>>(new Set<string>());
 
