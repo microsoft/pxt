@@ -1,85 +1,75 @@
-import { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { Checkbox } from "react-common/components/controls/Checkbox";
-import { Modal } from "react-common/components/controls/Modal";
 import { hideModal } from "../transforms/hideModal";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
 import { getSelectableCatalogCriteria } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { Strings } from "../constants";
-import css from "./styling/CatalogModal.module.scss";
+import { Button } from "react-common/components/controls/Button";
+import css from "./styling/CatalogOverlay.module.scss";
+import { getReadableCriteriaTemplate } from "../utils";
 
 interface CatalogOverlayProps {}
 export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [checkedCriteriaIds, setCheckedCriteria] = useState<Set<string>>(new Set<string>());
 
     const selectableCriteria = useMemo<CatalogCriteria[]>(
         () => getSelectableCatalogCriteria(teacherTool),
         [teacherTool.catalog, teacherTool.rubric]
     );
 
-    function handleCriteriaSelectedChange(criteria: CatalogCriteria, newValue: boolean) {
-        const newSet = new Set(checkedCriteriaIds);
-        if (newValue) {
-            newSet.add(criteria.id);
-        } else {
-            newSet.delete(criteria.id); // Returns false if criteria.id is not in the set, can be safely ignored.
-        }
-        setCheckedCriteria(newSet);
+    function handleCriteriaClick(criteria: CatalogCriteria) {
+        addCriteriaToRubric([criteria.id]);
     }
 
-    function isCriteriaSelected(criteriaId: string): boolean {
-        return checkedCriteriaIds.has(criteriaId);
-    }
-
-    function handleAddSelectedClicked() {
-        addCriteriaToRubric([...checkedCriteriaIds]);
-        closeModal();
-    }
-
-    function closeModal() {
+    function closeOverlay() {
+        // TODO thsparks - no longer modal.
         hideModal();
-
-        // Clear for next open.
-        setCheckedCriteria(new Set<string>());
     }
 
-    const modalActions = [
-        {
-            label: Strings.Cancel,
-            className: "secondary",
-            onClick: closeModal,
-        },
-        {
-            label: Strings.AddSelected,
-            className: "primary",
-            onClick: handleAddSelectedClicked,
-        },
-    ];
+    const CatalogHeader: React.FC = () => {
+        return (
+            <div className={css["header"]}>
+                <span className={css["title"]}>{lf("Select the criteria you'd like to include")}</span>
+                <Button
+                    className={css["close-button"]}
+                    leftIcon="fas fa-times-circle"
+                    onClick={closeOverlay}
+                    title={Strings.Close}
+                />
+            </div>
+        );
+    };
+
+    const CatalogList: React.FC = () => {
+        return (
+            <div className={css["catalog-list"]}>
+                {selectableCriteria.map(criteria => {
+                    return (
+                        criteria?.template && (
+                            <Button
+                                id={`criteria_${criteria.id}`}
+                                title={getReadableCriteriaTemplate(criteria)}
+                                key={criteria.id}
+                                className={css["catalog-item"]}
+                                label={<ReadOnlyCriteriaDisplay catalogCriteria={criteria} showDescription={true} />}
+                                onClick={() => handleCriteriaClick(criteria)}
+                            />
+                        )
+                    );
+                })}
+            </div>
+        );
+    };
 
     return teacherTool.modalOptions?.modal === "catalog-display" ? (
-        <Modal
-            className={css["catalog-modal"]}
-            title={lf("Select the criteria you'd like to include")}
-            onClose={closeModal}
-            actions={modalActions}
-        >
-            {selectableCriteria.map(criteria => {
-                return (
-                    criteria?.template && (
-                        <Checkbox
-                            id={`checkbox_${criteria.id}`}
-                            key={criteria.id}
-                            className={css["catalog-item"]}
-                            label={<ReadOnlyCriteriaDisplay catalogCriteria={criteria} showDescription={true} />}
-                            onChange={newValue => handleCriteriaSelectedChange(criteria, newValue)}
-                            isChecked={isCriteriaSelected(criteria.id)}
-                        />
-                    )
-                );
-            })}
-        </Modal>
+        <div className={css["catalog-overlay"]}>
+            <div className={css["catalog-content-container"]}>
+                <CatalogHeader />
+                <CatalogList />
+            </div>
+        </div>
     ) : null;
 };

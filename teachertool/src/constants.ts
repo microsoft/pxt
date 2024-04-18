@@ -26,6 +26,7 @@ export namespace Strings {
     export const AddSelected = lf("Add Selected");
     export const Continue = lf("Continue");
     export const Loading = lf("Loading...");
+    export const Close = lf("Close");
 }
 
 export namespace Ticks {
