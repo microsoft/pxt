@@ -35,7 +35,7 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
                 <span className={css["title"]}>{lf("Select the criteria you'd like to include")}</span>
                 <Button
                     className={css["close-button"]}
-                    leftIcon="fas fa-times-circle"
+                    rightIcon="fas fa-times-circle"
                     onClick={closeOverlay}
                     title={Strings.Close}
                 />

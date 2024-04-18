@@ -32,12 +32,17 @@
             border-bottom: 1px solid var(--pxt-content-accent);
 
             .title {
+                font-size: 1.2rem;
                 font-weight: 800;
             }
 
             .close-button {
                 padding: 0;
                 transition: scale 0.1s ease-in-out;
+
+                i {
+                    font-size: 1.3rem;
+                }
 
                 &:hover {
                     scale: 1.1;
