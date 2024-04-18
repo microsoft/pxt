@@ -29,7 +29,6 @@ export const Accordion = (props: AccordionProps) => {
         role,
     } = props;
 
-
     return (
         <AccordionProvider>
             <div
@@ -74,7 +73,6 @@ export const AccordionItem = (props: AccordionItemProps) => {
         }
     }, [isExpanded]);
 
-
     return (
         <div
             className={classList("common-accordion", className)}
@@ -108,7 +106,7 @@ export const AccordionItem = (props: AccordionItemProps) => {
             <div
                 id={panelId}
                 className="common-accordion-panel-outer"
-                style={{ display: expanded ? "block" : "none" }}
+                style={{ display: isExpanded ? "block" : "none" }}
             >
                 {isExpanded && mappedChildren[1]}
             </div>
