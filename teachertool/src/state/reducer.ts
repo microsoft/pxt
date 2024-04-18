@@ -76,6 +76,12 @@ export default function reducer(state: AppState, action: Action): AppState {
                 catalog: action.catalog,
             };
         }
+        case "SET_CATALOG_OPEN": {
+            return {
+                ...state,
+                catalogOpen: action.open,
+            };
+        }
         case "SET_RUBRIC": {
             /*await*/ updateStoredRubricAsync(state.rubric, action.rubric); // fire and forget, we don't need to wait for this to finish.
             return {

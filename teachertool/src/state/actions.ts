@@ -51,6 +51,11 @@ type SetCatalog = ActionBase & {
     catalog: CatalogCriteria[] | undefined;
 };
 
+type SetCatalogOpen = ActionBase & {
+    type: "SET_CATALOG_OPEN";
+    open: boolean;
+};
+
 type SetRubric = ActionBase & {
     type: "SET_RUBRIC";
     rubric: Rubric;
@@ -115,6 +120,7 @@ export type Action =
     | SetEvalResultsBatch
     | SetTargetConfig
     | SetCatalog
+    | SetCatalogOpen
     | SetRubric
     | ShowModal
     | HideModal
@@ -165,6 +171,11 @@ const setTargetConfig = (config: pxt.TargetConfig): SetTargetConfig => ({
 const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     type: "SET_CATALOG",
     catalog,
+});
+
+const setCatalogOpen = (open: boolean): SetCatalogOpen => ({
+    type: "SET_CATALOG_OPEN",
+    open,
 });
 
 const setRubric = (rubric: Rubric): SetRubric => ({
@@ -227,6 +238,7 @@ export {
     setEvalResultsBatch,
     setTargetConfig,
     setCatalog,
+    setCatalogOpen,
     setRubric,
     showModal,
     hideModal,

@@ -1,15 +1,14 @@
 import React, { useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
-import { Checkbox } from "react-common/components/controls/Checkbox";
-import { hideModal } from "../transforms/hideModal";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
 import { getSelectableCatalogCriteria } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { Strings } from "../constants";
 import { Button } from "react-common/components/controls/Button";
-import css from "./styling/CatalogOverlay.module.scss";
 import { getReadableCriteriaTemplate } from "../utils";
+import { setCatalogOpen } from "../transforms/setCatalogOpen";
+import css from "./styling/CatalogOverlay.module.scss";
 
 interface CatalogOverlayProps {}
 export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
@@ -25,8 +24,7 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
     }
 
     function closeOverlay() {
-        // TODO thsparks - no longer modal.
-        hideModal();
+        setCatalogOpen(false);
     }
 
     const CatalogHeader: React.FC = () => {
@@ -64,7 +62,7 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
         );
     };
 
-    return teacherTool.modalOptions?.modal === "catalog-display" ? (
+    return teacherTool.catalogOpen ? (
         <div className={css["catalog-overlay"]}>
             <div className={css["catalog-content-container"]}>
                 <CatalogHeader />
