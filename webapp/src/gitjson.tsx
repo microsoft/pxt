@@ -18,7 +18,7 @@ import * as pxtblockly from "../../pxtblocks";
 import IProjectView = pxt.editor.IProjectView;
 import UserInfo = pxt.editor.UserInfo;
 
-import { Accordion, AccordionItem, AccordionHeader, AccordionPanel } from "../../react-common/components/controls/Accordion/Accordion";
+import { Accordion } from "../../react-common/components/controls/Accordion";
 import { Button } from "../../react-common/components/controls/Button"
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
@@ -1549,17 +1549,17 @@ const CommitView = (props: CommitViewProps) => {
     const date = new Date(Date.parse(commit.author.date));
 
     return (
-        <AccordionItem noChevron={true} className="commit-view">
-            <AccordionHeader className="commit-view-header">
+        <Accordion.Item noChevron={true} className="commit-view">
+            <Accordion.Header className="commit-view-header">
                 <div className="commit-time">
                     <span>{date.toLocaleTimeString()}</span>
                 </div>
                 <div className="description">{commit.message}</div>
-            </AccordionHeader>
-            <AccordionPanel>
+            </Accordion.Header>
+            <Accordion.Panel>
                 <CommitDiffView {...props} />
-            </AccordionPanel>
-        </AccordionItem>
+            </Accordion.Panel>
+        </Accordion.Item>
     );
 }
 
@@ -1721,16 +1721,16 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
             {commits && <div className="history-list">
                 <Accordion>
                     {Object.keys(days).map(day =>
-                        <AccordionItem className="commit-day" key={"commitday" + day} noChevron={true}>
-                            <AccordionHeader className="commit-day-header">
+                        <Accordion.Item className="commit-day" key={"commitday" + day} noChevron={true}>
+                            <Accordion.Header className="commit-day-header">
                                 <span className="commit-day-label">
                                     {day}
                                 </span>
                                 <div className="ui label button">
                                     <i className="long arrow alternate up icon"></i> {days[day].length}
                                 </div>
-                            </AccordionHeader>
-                            <AccordionPanel>
+                            </Accordion.Header>
+                            <Accordion.Panel>
                                 <div className="commit-list">
                                     <Accordion>
                                         {days[day].map(commit =>
@@ -1743,8 +1743,8 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                                         )}
                                     </Accordion>
                                 </div>
-                            </AccordionPanel>
-                        </AccordionItem>
+                            </Accordion.Panel>
+                        </Accordion.Item>
                     )}
                 </Accordion>
             </div>}
