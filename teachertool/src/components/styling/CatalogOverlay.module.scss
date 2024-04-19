@@ -28,12 +28,13 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            padding: 1rem 1.5rem;
+            padding-right: 1rem; // TODO thsparks : Fix close button so it takes full height, check modal for reference.
             border-bottom: 1px solid var(--pxt-content-accent);
 
             .title {
                 font-size: 1.2rem;
                 font-weight: 800;
+                padding: 1rem;
             }
 
             .close-button {
