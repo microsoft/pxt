@@ -2,7 +2,7 @@ import React, { useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
-import { getSelectableCatalogCriteria } from "../state/helpers";
+import { criteriaIsSelectable, getCatalogCriteria } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { Strings } from "../constants";
 import { Button } from "react-common/components/controls/Button";
@@ -14,8 +14,8 @@ interface CatalogOverlayProps {}
 export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    const selectableCriteria = useMemo<CatalogCriteria[]>(
-        () => getSelectableCatalogCriteria(teacherTool),
+    const criteria = useMemo<CatalogCriteria[]>(
+        () => getCatalogCriteria(teacherTool),
         [teacherTool.catalog, teacherTool.rubric]
     );
 
@@ -44,16 +44,17 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
     const CatalogList: React.FC = () => {
         return (
             <div className={css["catalog-list"]}>
-                {selectableCriteria.map(criteria => {
+                {criteria.map(c => {
                     return (
-                        criteria?.template && (
+                        c.template && (
                             <Button
-                                id={`criteria_${criteria.id}`}
-                                title={getReadableCriteriaTemplate(criteria)}
-                                key={criteria.id}
+                                id={`criteria_${c.id}`}
+                                title={getReadableCriteriaTemplate(c)}
+                                key={c.id}
                                 className={css["catalog-item"]}
-                                label={<ReadOnlyCriteriaDisplay catalogCriteria={criteria} showDescription={true} />}
-                                onClick={() => handleCriteriaClick(criteria)}
+                                label={<ReadOnlyCriteriaDisplay catalogCriteria={c} showDescription={true} />}
+                                onClick={() => handleCriteriaClick(c)}
+                                disabled={!criteriaIsSelectable(teacherTool, c)}
                             />
                         )
                     );
