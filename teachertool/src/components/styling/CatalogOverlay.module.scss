@@ -59,11 +59,31 @@
 
             .catalog-item {
                 width: 100%;
-                padding: 1.25rem 1.5rem;
+                padding: 1.25rem 1.5rem 1.25rem 1rem;
                 border-bottom: 1px solid var(--pxt-content-accent);
 
                 &:last-child {
                     border-bottom: none;
+                }
+
+                .catalog-item-label {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+
+                    .controls {
+                        display: flex;
+                        flex-direction: column;
+                        padding: 0 1rem 0 0;
+                        align-self: stretch;
+                        justify-content: space-between;
+
+                        i {
+                            &.is-checked {
+                                color: var(--pxt-success-accent);
+                            }
+                        }
+                    }
                 }
             }
         }

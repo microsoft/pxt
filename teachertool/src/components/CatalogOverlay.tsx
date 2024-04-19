@@ -1,14 +1,18 @@
-import React, { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
+import css from "./styling/CatalogOverlay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
-import { criteriaIsSelectable, getCatalogCriteria } from "../state/helpers";
+import { getCatalogCriteria } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { Strings } from "../constants";
 import { Button } from "react-common/components/controls/Button";
 import { getReadableCriteriaTemplate } from "../utils";
 import { setCatalogOpen } from "../transforms/setCatalogOpen";
-import css from "./styling/CatalogOverlay.module.scss";
+import { classList } from "react-common/components/util";
+import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
+import { ErrorCode } from "../types/errorCode";
+import { logError } from "../services/loggingService";
 
 interface CatalogOverlayProps {}
 export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
@@ -19,8 +23,20 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
         [teacherTool.catalog, teacherTool.rubric]
     );
 
-    function handleCriteriaClick(criteria: CatalogCriteria) {
-        addCriteriaToRubric([criteria.id]);
+    function handleCriteriaClick(criteria: CatalogCriteria, isAdding: boolean) {
+        if (isAdding) {
+            addCriteriaToRubric([criteria.id]);
+        } else {
+            const instances = teacherTool.rubric.criteria.filter(c => c.catalogCriteriaId === criteria.id);
+            if (instances.length !== 1) {
+                logError(
+                    ErrorCode.unexpectedInstanceCount,
+                    `Unexpected number of instances with catalog criteria id ${criteria.id} when trying to remove`,
+                    { actualCount: instances.length }
+                );
+            }
+            removeCriteriaFromRubric(instances[0]);
+        }
     }
 
     function closeOverlay() {
@@ -41,10 +57,44 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
         );
     };
 
+    interface CatalogItemLabelProps {
+        catalogCriteria: CatalogCriteria;
+        allowsMultiple: boolean;
+        hasExistingInstances: boolean;
+    }
+    const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({
+        catalogCriteria,
+        allowsMultiple,
+        hasExistingInstances,
+    }) => {
+        const canAddMore = allowsMultiple || !hasExistingInstances;
+        return (
+            <div className={css["catalog-item-label"]}>
+                <div className={css["controls"]}>
+                    <i
+                        className={classList(
+                            allowsMultiple
+                                ? "fas fa-plus"
+                                : hasExistingInstances
+                                ? "fas fa-check-circle"
+                                : "far fa-check-circle",
+                            !canAddMore ? css["is-checked"] : undefined
+                        )}
+                        title={canAddMore ? lf("Add To Checklist") : lf("Already in checklist")}
+                    />
+                    {allowsMultiple && hasExistingInstances && <i className="fas fa-minus" /> /* TODO thsparks: no buttons inside buttons */ }
+                </div>
+                <ReadOnlyCriteriaDisplay catalogCriteria={catalogCriteria} showDescription={true} />
+            </div>
+        );
+    };
+
     const CatalogList: React.FC = () => {
         return (
             <div className={css["catalog-list"]}>
                 {criteria.map(c => {
+                    const allowsMultiple = c.params !== undefined && c.params.length !== 0; // TODO add a json flag for this
+                    const hasExistingInstances = teacherTool.rubric.criteria.some(i => i.catalogCriteriaId === c.id);
                     return (
                         c.template && (
                             <Button
@@ -52,9 +102,14 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
                                 title={getReadableCriteriaTemplate(c)}
                                 key={c.id}
                                 className={css["catalog-item"]}
-                                label={<ReadOnlyCriteriaDisplay catalogCriteria={c} showDescription={true} />}
-                                onClick={() => handleCriteriaClick(c)}
-                                disabled={!criteriaIsSelectable(teacherTool, c)}
+                                label={
+                                    <CatalogItemLabel
+                                        catalogCriteria={c}
+                                        allowsMultiple={allowsMultiple}
+                                        hasExistingInstances={hasExistingInstances}
+                                    />
+                                }
+                                onClick={() => handleCriteriaClick(c, allowsMultiple || !hasExistingInstances)}
                             />
                         )
                     );
