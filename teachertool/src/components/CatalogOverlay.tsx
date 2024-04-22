@@ -14,7 +14,7 @@ import css from "./styling/CatalogOverlay.module.scss";
 interface CatalogHeaderProps {
     onClose: () => void;
 }
-const CatalogHeader: React.FC<CatalogHeaderProps> = ({onClose}) => {
+const CatalogHeader: React.FC<CatalogHeaderProps> = ({ onClose }) => {
     return (
         <div className={css["header"]}>
             <span className={css["title"]}>{Strings.SelectCriteriaDescription}</span>
@@ -38,7 +38,7 @@ const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({
     catalogCriteria,
     allowsMultiple,
     existingInstanceCount,
-    recentlyAdded
+    recentlyAdded,
 }) => {
     const canAddMore = allowsMultiple || existingInstanceCount === 0;
     const showRecentlyAddedIndicator = recentlyAdded && canAddMore;
@@ -46,7 +46,23 @@ const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({
         <div className={css["catalog-item-label"]}>
             <div className={css["action-indicators"]}>
                 {canAddMore ? (
-                    <i className={classList(showRecentlyAddedIndicator ? "fas fa-check" : "fas fa-plus", showRecentlyAddedIndicator ? css["recently-added-indicator"] : undefined)} title={Strings.AddToChecklist} />
+                    <>
+                        <i
+                            className={classList(
+                                "fas fa-check",
+                                css["recently-added-indicator"],
+                                showRecentlyAddedIndicator ? undefined : css["hide-indicator"]
+                            )}
+                            title={lf("Added!")}
+                        />
+                        <i
+                            className={classList(
+                                "fas fa-plus",
+                                showRecentlyAddedIndicator ? css["hide-indicator"] : undefined
+                            )}
+                            title={Strings.AddToChecklist}
+                        />
+                    </>
                 ) : (
                     <span className={css["max-label"]}>{Strings.Max}</span>
                 )}
@@ -107,7 +123,6 @@ const CatalogList: React.FC = () => {
         </div>
     );
 };
-
 
 interface CatalogOverlayProps {}
 export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {

@@ -70,11 +70,24 @@
                 .catalog-item-label {
                     display: flex;
                     flex-direction: row;
-                    align-items: center;
+                    align-items: stretch;
 
                     .action-indicators {
+                        position: relative;
                         padding: 0 1rem 0 0;
                         width: 3rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+
+                        i {
+                            position: absolute;
+                            transition: opacity 0.1s ease-in-out;
+                        }
+
+                        .hide-indicator {
+                            opacity: 0;
+                        }
 
                         .recently-added-indicator {
                             color: var(--pxt-success-accent);
