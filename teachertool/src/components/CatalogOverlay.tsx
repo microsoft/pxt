@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
@@ -32,18 +32,21 @@ interface CatalogItemLabelProps {
     catalogCriteria: CatalogCriteria;
     allowsMultiple: boolean;
     existingInstanceCount: number;
+    recentlyAdded: boolean;
 }
 const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({
     catalogCriteria,
     allowsMultiple,
     existingInstanceCount,
+    recentlyAdded
 }) => {
     const canAddMore = allowsMultiple || existingInstanceCount === 0;
+    const showRecentlyAddedIndicator = recentlyAdded && canAddMore;
     return (
         <div className={css["catalog-item-label"]}>
-            <div className={css["action-indicator"]}>
+            <div className={css["action-indicators"]}>
                 {canAddMore ? (
-                    <i className={classList("fas fa-plus")} title={Strings.AddToChecklist} />
+                    <i className={classList(showRecentlyAddedIndicator ? "fas fa-check" : "fas fa-plus", showRecentlyAddedIndicator ? css["recently-added-indicator"] : undefined)} title={Strings.AddToChecklist} />
                 ) : (
                     <span className={css["max-label"]}>{Strings.Max}</span>
                 )}
@@ -56,15 +59,27 @@ const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({
 const CatalogList: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
+    const recentlyAddedWindowMs = 500;
+    const [recentlyAddedIds, setRecentlyAddedIds] = useState<string[]>([]);
+
     const criteria = useMemo<CatalogCriteria[]>(
         () => getCatalogCriteria(teacherTool),
         [teacherTool.catalog, teacherTool.rubric]
     );
 
+    function onItemClicked(c: CatalogCriteria) {
+        addCriteriaToRubric([c.id]);
+        setRecentlyAddedIds([...recentlyAddedIds, c.id]);
+
+        setTimeout(() => {
+            setRecentlyAddedIds(recentlyAddedIds.filter(id => id !== c.id));
+        }, recentlyAddedWindowMs);
+    }
+
     return (
         <div className={css["catalog-list"]}>
             {criteria.map(c => {
-                const allowsMultiple = c.params !== undefined && c.params.length !== 0; // TODO add a json flag for this
+                const allowsMultiple = c.params !== undefined && c.params.length !== 0; // TODO add a json flag for this (MaxCount or AllowMultiple)
                 const existingInstanceCount = teacherTool.rubric.criteria.filter(
                     i => i.catalogCriteriaId === c.id
                 ).length;
@@ -80,9 +95,10 @@ const CatalogList: React.FC = () => {
                                     catalogCriteria={c}
                                     allowsMultiple={allowsMultiple}
                                     existingInstanceCount={existingInstanceCount}
+                                    recentlyAdded={recentlyAddedIds.indexOf(c.id) !== -1}
                                 />
                             }
-                            onClick={() => addCriteriaToRubric([c.id])}
+                            onClick={() => onItemClicked(c)}
                             disabled={!allowsMultiple && existingInstanceCount > 0}
                         />
                     )
