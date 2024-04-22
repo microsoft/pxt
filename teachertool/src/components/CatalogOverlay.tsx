@@ -23,22 +23,6 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
         [teacherTool.catalog, teacherTool.rubric]
     );
 
-    function handleCriteriaClick(criteria: CatalogCriteria, isAdding: boolean) {
-        if (isAdding) {
-            addCriteriaToRubric([criteria.id]);
-        } else {
-            const instances = teacherTool.rubric.criteria.filter(c => c.catalogCriteriaId === criteria.id);
-            if (instances.length !== 1) {
-                logError(
-                    ErrorCode.unexpectedInstanceCount,
-                    `Unexpected number of instances with catalog criteria id ${criteria.id} when trying to remove`,
-                    { actualCount: instances.length }
-                );
-            }
-            removeCriteriaFromRubric(instances[0]);
-        }
-    }
-
     function closeOverlay() {
         setCatalogOpen(false);
     }
@@ -101,7 +85,7 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
                                         existingInstanceCount={existingInstanceCount}
                                     />
                                 }
-                                onClick={() => handleCriteriaClick(c, allowsMultiple || existingInstanceCount === 0)}
+                                onClick={() => addCriteriaToRubric([c.id])}
                                 disabled={!allowsMultiple && existingInstanceCount > 0}
                             />
                         )
