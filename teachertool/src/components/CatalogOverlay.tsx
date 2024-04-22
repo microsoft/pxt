@@ -10,6 +10,7 @@ import { getReadableCriteriaTemplate, makeToast } from "../utils";
 import { setCatalogOpen } from "../transforms/setCatalogOpen";
 import { classList } from "react-common/components/util";
 import { announceToScreenReader } from "../transforms/announceToScreenReader";
+import { FocusTrap } from "react-common/components/controls/FocusTrap";
 import css from "./styling/CatalogOverlay.module.scss";
 
 interface CatalogHeaderProps {
@@ -136,11 +137,13 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
     }
 
     return teacherTool.catalogOpen ? (
-        <div className={css["catalog-overlay"]}>
-            <div className={css["catalog-content-container"]}>
-                <CatalogHeader onClose={closeOverlay} />
-                <CatalogList />
+        <FocusTrap onEscape={() => {}}>
+            <div className={css["catalog-overlay"]}>
+                <div className={css["catalog-content-container"]}>
+                    <CatalogHeader onClose={closeOverlay} />
+                    <CatalogList />
+                </div>
             </div>
-        </div>
+        </FocusTrap>
     ) : null;
 };
