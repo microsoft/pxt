@@ -60,14 +60,14 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
     interface CatalogItemLabelProps {
         catalogCriteria: CatalogCriteria;
         allowsMultiple: boolean;
-        hasExistingInstances: boolean;
+        existingInstanceCount: number;
     }
     const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({
         catalogCriteria,
         allowsMultiple,
-        hasExistingInstances,
+        existingInstanceCount,
     }) => {
-        const canAddMore = allowsMultiple || !hasExistingInstances;
+        const canAddMore = allowsMultiple || existingInstanceCount === 0;
         return (
             <div className={css["catalog-item-label"]}>
                 <div className={css["controls"]}>
@@ -75,14 +75,14 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
                         className={classList(
                             allowsMultiple
                                 ? "fas fa-plus"
-                                : hasExistingInstances
+                                : existingInstanceCount !== 0
                                 ? "fas fa-check-circle"
                                 : "far fa-check-circle",
                             !canAddMore ? css["is-checked"] : undefined
                         )}
                         title={canAddMore ? lf("Add To Checklist") : lf("Already in checklist")}
                     />
-                    {allowsMultiple && hasExistingInstances && <i className="fas fa-minus" /> /* TODO thsparks: no buttons inside buttons */ }
+                    {allowsMultiple && existingInstanceCount !== 0 && <i className="fas fa-minus" /> /* TODO thsparks: no buttons inside buttons */ }
                 </div>
                 <ReadOnlyCriteriaDisplay catalogCriteria={catalogCriteria} showDescription={true} />
             </div>
@@ -94,7 +94,7 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
             <div className={css["catalog-list"]}>
                 {criteria.map(c => {
                     const allowsMultiple = c.params !== undefined && c.params.length !== 0; // TODO add a json flag for this
-                    const hasExistingInstances = teacherTool.rubric.criteria.some(i => i.catalogCriteriaId === c.id);
+                    const existingInstanceCount = teacherTool.rubric.criteria.filter(i => i.catalogCriteriaId === c.id).length;
                     return (
                         c.template && (
                             <Button
@@ -106,10 +106,10 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
                                     <CatalogItemLabel
                                         catalogCriteria={c}
                                         allowsMultiple={allowsMultiple}
-                                        hasExistingInstances={hasExistingInstances}
+                                        existingInstanceCount={existingInstanceCount}
                                     />
                                 }
-                                onClick={() => handleCriteriaClick(c, allowsMultiple || !hasExistingInstances)}
+                                onClick={() => handleCriteriaClick(c, allowsMultiple || existingInstanceCount === 0)}
                             />
                         )
                     );
