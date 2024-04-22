@@ -70,19 +70,11 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
         const canAddMore = allowsMultiple || existingInstanceCount === 0;
         return (
             <div className={css["catalog-item-label"]}>
-                <div className={css["controls"]}>
-                    <i
-                        className={classList(
-                            allowsMultiple
-                                ? "fas fa-plus"
-                                : existingInstanceCount !== 0
-                                ? "fas fa-check-circle"
-                                : "far fa-check-circle",
-                            !canAddMore ? css["is-checked"] : undefined
-                        )}
-                        title={canAddMore ? lf("Add To Checklist") : lf("Already in checklist")}
-                    />
-                    {allowsMultiple && existingInstanceCount !== 0 && <i className="fas fa-minus" /> /* TODO thsparks: no buttons inside buttons */ }
+                <div className={css["action-indicator"]}>
+                    {canAddMore ? <i
+                        className={classList("fas fa-plus")}
+                        title={lf("Add To Checklist")}
+                    /> : <span className={css["max-label"]}>{lf(Strings.Max)}</span>}
                 </div>
                 <ReadOnlyCriteriaDisplay catalogCriteria={catalogCriteria} showDescription={true} />
             </div>
@@ -110,6 +102,7 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
                                     />
                                 }
                                 onClick={() => handleCriteriaClick(c, allowsMultiple || existingInstanceCount === 0)}
+                                disabled={!allowsMultiple && existingInstanceCount > 0}
                             />
                         )
                     );

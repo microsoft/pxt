@@ -71,18 +71,9 @@
                     flex-direction: row;
                     align-items: center;
 
-                    .controls {
-                        display: flex;
-                        flex-direction: column;
+                    .action-indicator {
                         padding: 0 1rem 0 0;
-                        align-self: stretch;
-                        justify-content: space-between;
-
-                        i {
-                            &.is-checked {
-                                color: var(--pxt-success-accent);
-                            }
-                        }
+                        width: 3rem;
                     }
                 }
             }

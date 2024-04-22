@@ -27,6 +27,7 @@ export namespace Strings {
     export const Continue = lf("Continue");
     export const Loading = lf("Loading...");
     export const Close = lf("Close");
+    export const Max = lf("Max");
 }
 
 export namespace Ticks {
