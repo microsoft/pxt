@@ -1,5 +1,4 @@
-import { useContext, useMemo, useState } from "react";
-import css from "./styling/CatalogOverlay.module.scss";
+import { useContext, useMemo } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
 import { CatalogCriteria } from "../types/criteria";
@@ -10,9 +9,7 @@ import { Button } from "react-common/components/controls/Button";
 import { getReadableCriteriaTemplate } from "../utils";
 import { setCatalogOpen } from "../transforms/setCatalogOpen";
 import { classList } from "react-common/components/util";
-import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
-import { ErrorCode } from "../types/errorCode";
-import { logError } from "../services/loggingService";
+import css from "./styling/CatalogOverlay.module.scss";
 
 interface CatalogOverlayProps {}
 export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
