@@ -82,5 +82,8 @@ export function getCatalogCriteria(state: AppState): CatalogCriteria[] {
 export function criteriaIsSelectable(state: AppState, catalogCriteria: CatalogCriteria): boolean {
     // Return a criteria as selectable if it has parameters (so it can be used multiple times in a rubric)
     // or if it has not yet been used in the active rubric.
-    return (catalogCriteria.params && catalogCriteria.params.length > 0) || !state.rubric.criteria.some(c => c.catalogCriteriaId === catalogCriteria.id)
+    return (
+        (catalogCriteria.params && catalogCriteria.params.length > 0) ||
+        !state.rubric.criteria.some(c => c.catalogCriteriaId === catalogCriteria.id)
+    );
 }

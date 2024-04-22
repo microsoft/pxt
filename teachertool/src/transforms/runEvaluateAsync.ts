@@ -112,7 +112,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
 
                 const plan = generateValidatorPlan(criteriaInstance, fromUserInteraction);
 
-                logDebug(`${criteriaInstance.instanceId}: Generated Plan`, plan)
+                logDebug(`${criteriaInstance.instanceId}: Generated Plan`, plan);
 
                 if (!plan) {
                     dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));

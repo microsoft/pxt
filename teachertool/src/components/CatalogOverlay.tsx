@@ -52,10 +52,11 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
         return (
             <div className={css["catalog-item-label"]}>
                 <div className={css["action-indicator"]}>
-                    {canAddMore ? <i
-                        className={classList("fas fa-plus")}
-                        title={lf("Add To Checklist")}
-                    /> : <span className={css["max-label"]}>{lf(Strings.Max)}</span>}
+                    {canAddMore ? (
+                        <i className={classList("fas fa-plus")} title={lf("Add To Checklist")} />
+                    ) : (
+                        <span className={css["max-label"]}>{lf(Strings.Max)}</span>
+                    )}
                 </div>
                 <ReadOnlyCriteriaDisplay catalogCriteria={catalogCriteria} showDescription={true} />
             </div>
@@ -67,7 +68,9 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
             <div className={css["catalog-list"]}>
                 {criteria.map(c => {
                     const allowsMultiple = c.params !== undefined && c.params.length !== 0; // TODO add a json flag for this
-                    const existingInstanceCount = teacherTool.rubric.criteria.filter(i => i.catalogCriteriaId === c.id).length;
+                    const existingInstanceCount = teacherTool.rubric.criteria.filter(
+                        i => i.catalogCriteriaId === c.id
+                    ).length;
                     return (
                         c.template && (
                             <Button
