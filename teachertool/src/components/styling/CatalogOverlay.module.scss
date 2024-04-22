@@ -16,7 +16,6 @@
     .catalog-content-container {
         max-width: 95%;
         max-height: 95%;
-        overflow-y: auto; // TODO thsparks : Check this works.
         background-color: var(--pxt-page-background);
         border-radius: .285rem; // Match modal
         display: flex;
@@ -53,6 +52,7 @@
         }
 
         .catalog-list {
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             width: 100%;
@@ -61,6 +61,7 @@
                 width: 100%;
                 padding: 1.25rem 1.5rem 1.25rem 1rem;
                 border-bottom: 1px solid var(--pxt-content-accent);
+                flex-shrink: 0;
 
                 &:last-child {
                     border-bottom: none;
