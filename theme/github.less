@@ -113,6 +113,63 @@
     }
 }
 
+.history-zone {
+    .commit-day {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .commit-day:first-child {
+        padding-top: 0;
+    }
+
+    .commit-day:last-child {
+        padding-bottom: 0;
+    }
+
+    .commit-day-header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .commit-day-label {
+        font-size: 1.28571429em;
+        font-weight: 700;
+        margin-right: 0.5rem;
+        margin-top: 0.2rem;
+    }
+
+    .commit-time {
+        margin: 0.5rem 0;
+        font-size: 1rem;
+        line-height: 1rem;
+        color: rgba(0, 0, 0, .6);
+    }
+
+    .commit-view {
+        border-top: 1px solid rgba(34, 36, 38, .15);
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        position: relative;
+
+        .restore-button {
+            position: absolute;
+            right: 0;
+            top: 1.5rem;
+            z-index: 1;
+        }
+    }
+
+    .commit-view:first-child {
+        border-top: none;
+    }
+
+    .commit-view:last-child {
+        padding-bottom: 0;
+    }
+}
+
 // inverted style
 .inverted-theme {
     #githubEditor {
