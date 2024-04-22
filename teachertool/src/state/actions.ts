@@ -105,6 +105,11 @@ type SetBlockImageUri = ActionBase & {
     imageUri: string;
 };
 
+type SetScreenReaderAnnouncement = ActionBase & {
+    type: "SET_SCREEN_READER_ANNOUNCEMENT";
+    announcement: string;
+};
+
 /**
  * Union of all actions
  */
@@ -128,7 +133,8 @@ export type Action =
     | SetActiveTab
     | SetAutorun
     | SetToolboxCategories
-    | SetBlockImageUri;
+    | SetBlockImageUri
+    | SetScreenReaderAnnouncement;
 
 /**
  * Action creators
@@ -227,6 +233,11 @@ const setBlockImageUri = (blockId: string, imageUri: string): SetBlockImageUri =
     imageUri,
 });
 
+const setScreenReaderAnnouncement = (announcement: string): SetScreenReaderAnnouncement => ({
+    type: "SET_SCREEN_READER_ANNOUNCEMENT",
+    announcement,
+});
+
 export {
     showToast,
     dismissToast,
@@ -247,4 +258,5 @@ export {
     setAutorun,
     setToolboxCategories,
     setBlockImageUri,
+    setScreenReaderAnnouncement,
 };

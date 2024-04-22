@@ -6,9 +6,10 @@ import { getCatalogCriteria } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { Strings } from "../constants";
 import { Button } from "react-common/components/controls/Button";
-import { getReadableCriteriaTemplate } from "../utils";
+import { getReadableCriteriaTemplate, makeToast } from "../utils";
 import { setCatalogOpen } from "../transforms/setCatalogOpen";
 import { classList } from "react-common/components/util";
+import { announceToScreenReader } from "../transforms/announceToScreenReader";
 import css from "./styling/CatalogOverlay.module.scss";
 
 interface CatalogHeaderProps {
@@ -90,6 +91,8 @@ const CatalogList: React.FC = () => {
         setTimeout(() => {
             setRecentlyAddedIds(recentlyAddedIds.filter(id => id !== c.id));
         }, recentlyAddedWindowMs);
+
+        announceToScreenReader(lf("Added '{0}' to checklist.", getReadableCriteriaTemplate(c)));
     }
 
     return (

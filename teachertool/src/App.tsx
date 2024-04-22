@@ -15,6 +15,7 @@ import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubr
 import { ImportRubricModal } from "./components/ImportRubricModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import { BlockPickerModal } from "./components/BlockPickerModal";
+import { ScreenReaderAnnouncer } from "./components/ScreenReaderAnnouncer";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -60,6 +61,7 @@ export const App = () => {
             <ConfirmationModal />
             <BlockPickerModal />
             <Toasts />
+            <ScreenReaderAnnouncer />
         </>
     );
 };

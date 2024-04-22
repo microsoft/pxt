@@ -139,5 +139,11 @@ export default function reducer(state: AppState, action: Action): AppState {
                 blockImageCache: cache,
             };
         }
+        case "SET_SCREEN_READER_ANNOUNCEMENT": {
+            return {
+                ...state,
+                screenReaderAnnouncement: action.announcement,
+            };
+        }
     }
 }
