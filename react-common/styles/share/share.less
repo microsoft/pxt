@@ -314,7 +314,37 @@
     }
 }
 
-@media @mobileAndBelow {
+@media only screen and (max-width: 854px) {
+    .embed.mobile-portrait-hidden {
+        display: none !important;
+    }
+}
+
+@media only screen and (max-width: 513px) {
+    .project-share-thumbnail {
+        min-width: 10rem;
+
+        img {
+            width: 8rem;
+            height: 6rem;
+        }
+    }
+
+    .project-share-social {
+        .common-button.square-button.social-button, .common-button.square-button.device-share {
+            width: 2rem;
+            height: 2rem;
+            font-size: 1rem;
+        }
+    }
+
+    .common-button.menu-button.project-qrcode img {
+        height: 3rem;
+    }
+
+}
+
+@media @mobileShare {
     .project-share-info, .gif-recorder-content {
         flex-direction: column;
     }
