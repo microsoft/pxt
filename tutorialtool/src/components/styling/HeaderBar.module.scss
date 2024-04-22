@@ -1,0 +1,44 @@
+.header {
+    background-color: var(--pxt-headerbar-background);
+    color: var(--pxt-headerbar-foreground);
+    display: flex;
+    flex-direction: row;
+    height: 4rem;
+    align-items: center;
+    justify-content: space-between;
+    flex-grow: 0;
+    flex-shrink: 0;
+    z-index: var(--above-frame-zindex);
+
+    .left-menu,
+    .right-menu {
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+
+    .org {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        .logo {
+            height: 1.4rem;
+            margin: 0 1rem;
+        }
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        &:before {
+            height: 1.5rem;
+            border-left: 2px solid var(--pxt-headerbar-foreground);
+            content: " ";
+        }
+        .logo {
+            height: 1.1rem;
+            margin: 0 1rem;
+        }
+    }
+}
