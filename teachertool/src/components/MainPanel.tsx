@@ -3,7 +3,7 @@ import css from "./styling/MainPanel.module.scss";
 import { SplitPane } from "./SplitPane";
 import { RubricWorkspace } from "./RubricWorkspace";
 import { getLastSplitPosition, setLastSplitPosition } from "../services/storageService";
-import { RightPanel } from "./RightPanel";
+import { ProjectWorkspace } from "./ProjectWorkspace";
 
 interface IProps {}
 
@@ -23,7 +23,7 @@ export const MainPanel: React.FC<IProps> = () => {
                 startingSize={lastSavedSplitPosition}
                 primary={"left"}
                 left={<RubricWorkspace />}
-                right={<RightPanel />}
+                right={<ProjectWorkspace />}
                 leftMinSize="5rem"
                 rightMinSize="5rem"
                 onResizeEnd={handleResizeEnd}
