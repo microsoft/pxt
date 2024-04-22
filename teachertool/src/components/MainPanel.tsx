@@ -2,8 +2,8 @@ import * as React from "react";
 import css from "./styling/MainPanel.module.scss";
 import { SplitPane } from "./SplitPane";
 import { RubricWorkspace } from "./RubricWorkspace";
-import { getLastSplitPosition, setLastSplitPosition } from "../services/storageService";
 import { ProjectWorkspace } from "./ProjectWorkspace";
+import { getLastSplitPosition, setLastSplitPosition } from "../services/storageService";
 
 interface IProps {}
 
