@@ -27,7 +27,7 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
     const CatalogHeader: React.FC = () => {
         return (
             <div className={css["header"]}>
-                <span className={css["title"]}>{lf("Select the criteria you'd like to include")}</span>
+                <span className={css["title"]}>{Strings.SelectCriteriaDescription}</span>
                 <Button
                     className={css["close-button"]}
                     rightIcon="fas fa-times-circle"
@@ -53,9 +53,9 @@ export const CatalogOverlay: React.FC<CatalogOverlayProps> = ({}) => {
             <div className={css["catalog-item-label"]}>
                 <div className={css["action-indicator"]}>
                     {canAddMore ? (
-                        <i className={classList("fas fa-plus")} title={lf("Add To Checklist")} />
+                        <i className={classList("fas fa-plus")} title={Strings.AddToChecklist} />
                     ) : (
-                        <span className={css["max-label"]}>{lf(Strings.Max)}</span>
+                        <span className={css["max-label"]}>{Strings.Max}</span>
                     )}
                 </div>
                 <ReadOnlyCriteriaDisplay catalogCriteria={catalogCriteria} showDescription={true} />

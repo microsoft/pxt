@@ -28,6 +28,8 @@ export namespace Strings {
     export const Loading = lf("Loading...");
     export const Close = lf("Close");
     export const Max = lf("Max");
+    export const AddToChecklist = lf("Add to Checklist");
+    export const SelectCriteriaDescription = lf("Select the criteria you'd like to include");
 }
 
 export namespace Ticks {
