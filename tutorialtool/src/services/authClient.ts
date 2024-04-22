@@ -2,7 +2,6 @@ import { setUserProfileAsync } from "../transforms/setUserProfileAsync";
 
 class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
-        // await userSignedInAsync((await this.firstNameAsync())!);
     }
     protected async onSignedOut(): Promise<void> {
         await setUserProfileAsync(undefined);

@@ -14,7 +14,7 @@ interface IProps {
 export const UserAvatarDropdown: React.FC<IProps> = (props) => {
     const { userProfile, title, items, onSignOutClick, className } = props;
 
-    const avatarUrl = userProfile?.idp?.pictureUrl ?? userProfile?.idp?.picture?.dataUrl;
+    const avatarUrl = userProfile?.idp?.pictureUrl ?? encodedAvatarPic(userProfile);
 
     const avatarElem = <UserAvatar avatarPicUrl={avatarUrl} />;
     const initialsElem = <UserInitials userProfile={userProfile} />;
@@ -51,3 +51,9 @@ const UserAvatar = (props: { avatarPicUrl: string }) => (
         <img src={props.avatarPicUrl} alt={lf("Profile Image")} referrerPolicy="no-referrer" aria-hidden="true" />
     </div>
 );
+
+function encodedAvatarPic(user: pxt.auth.UserProfile): string {
+    const type = user?.idp?.picture?.mimeType;
+    const encodedImg = user?.idp?.picture?.encoded;
+    return type && encodedImg ? `data:${type};base64,${encodedImg}` : "";
+}

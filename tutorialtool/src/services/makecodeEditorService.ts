@@ -1,5 +1,3 @@
-/// <reference path="../../../localtypings/validatorPlan.d.ts" />
-
 import { logDebug } from "pxtservices/loggingService";
 import { EditorDriver } from "pxtservices/editorDriver";
 

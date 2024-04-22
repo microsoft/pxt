@@ -1,5 +1,5 @@
 {
-  "name": "makecode-arcade-tutorialtool",
+  "name": "makecode-tutorialtool",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -13,7 +13,6 @@
     "react-scripts": "5.0.1",
     "react-to-print": "^2.15.1",
     "sass": "^1.70.0",
-    "swiper": "^8.4.4",
     "tslib": "^2.6.2",
     "typescript": "^4.6.4"
   },
