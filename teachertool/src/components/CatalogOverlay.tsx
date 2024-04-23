@@ -78,17 +78,21 @@ const CatalogList: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     const recentlyAddedWindowMs = 500;
-    const [recentlyAddedIds, setRecentlyAddedIds] = useState<pxsim.Map<boolean>>({}); // Id -> bool, True if recently added. False (or not in list) otherwise.
+    const [recentlyAddedIds, setRecentlyAddedIds] = useState<pxsim.Map<NodeJS.Timeout>>({});
 
     const criteria = useMemo<CatalogCriteria[]>(
         () => getCatalogCriteria(teacherTool),
         [teacherTool.catalog, teacherTool.rubric]
     );
 
-    function updateRecentlyAddedValue(id: string, value: boolean) {
+    function updateRecentlyAddedValue(id: string, value: NodeJS.Timeout | undefined) {
         setRecentlyAddedIds(prevState => {
             const newState = { ...prevState };
-            newState[id] = value;
+            if (value) {
+                newState[id] = value;
+            } else {
+                delete newState[id];
+            }
             return newState;
         });
     }
@@ -96,10 +100,15 @@ const CatalogList: React.FC = () => {
     function onItemClicked(c: CatalogCriteria) {
         addCriteriaToRubric([c.id]);
 
-        updateRecentlyAddedValue(c.id, true);
-        setTimeout(() => {
-            updateRecentlyAddedValue(c.id, false);
+        // Set a timeout to remove the recently added indicator
+        // and save it in the state.
+        if (recentlyAddedIds[c.id]) {
+            clearTimeout(recentlyAddedIds[c.id]);
+        }
+        const timeoutId = setTimeout(() => {
+            updateRecentlyAddedValue(c.id, undefined);
         }, recentlyAddedWindowMs);
+        updateRecentlyAddedValue(c.id, timeoutId);
 
         announceToScreenReader(lf("Added '{0}' to checklist.", getReadableCriteriaTemplate(c)));
     }
@@ -123,7 +132,7 @@ const CatalogList: React.FC = () => {
                                     catalogCriteria={c}
                                     allowsMultiple={allowsMultiple}
                                     existingInstanceCount={existingInstanceCount}
-                                    recentlyAdded={recentlyAddedIds[c.id]}
+                                    recentlyAdded={recentlyAddedIds[c.id] !== undefined}
                                 />
                             }
                             onClick={() => onItemClicked(c)}
