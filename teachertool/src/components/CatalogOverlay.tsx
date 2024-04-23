@@ -78,19 +78,27 @@ const CatalogList: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     const recentlyAddedWindowMs = 500;
-    const [recentlyAddedIds, setRecentlyAddedIds] = useState<string[]>([]);
+    const [recentlyAddedIds, setRecentlyAddedIds] = useState<pxsim.Map<boolean>>({}); // Id -> bool, True if recently added. False (or not in list) otherwise.
 
     const criteria = useMemo<CatalogCriteria[]>(
         () => getCatalogCriteria(teacherTool),
         [teacherTool.catalog, teacherTool.rubric]
     );
 
+    function updateRecentlyAddedValue(id: string, value: boolean) {
+        setRecentlyAddedIds(prevState => {
+            const newState = { ...prevState };
+            newState[id] = value;
+            return newState;
+        });
+    }
+
     function onItemClicked(c: CatalogCriteria) {
         addCriteriaToRubric([c.id]);
-        setRecentlyAddedIds([...recentlyAddedIds, c.id]);
 
+        updateRecentlyAddedValue(c.id, true);
         setTimeout(() => {
-            setRecentlyAddedIds(recentlyAddedIds.filter(id => id !== c.id));
+            updateRecentlyAddedValue(c.id, false);
         }, recentlyAddedWindowMs);
 
         announceToScreenReader(lf("Added '{0}' to checklist.", getReadableCriteriaTemplate(c)));
@@ -115,7 +123,7 @@ const CatalogList: React.FC = () => {
                                     catalogCriteria={c}
                                     allowsMultiple={allowsMultiple}
                                     existingInstanceCount={existingInstanceCount}
-                                    recentlyAdded={recentlyAddedIds.indexOf(c.id) !== -1}
+                                    recentlyAdded={recentlyAddedIds[c.id]}
                                 />
                             }
                             onClick={() => onItemClicked(c)}
