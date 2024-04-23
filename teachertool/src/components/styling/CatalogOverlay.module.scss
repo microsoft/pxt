@@ -20,6 +20,7 @@
         border-radius: .285rem; // Match modal
         display: flex;
         flex-direction: column;
+        overflow: hidden;
 
         .header {
             display: flex;
