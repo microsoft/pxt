@@ -1,0 +1,166 @@
+/*******************************/
+/*****  GLOBAL VARIABLES  ******/
+/*******************************/
+
+:root {
+    --frame-loader-zindex: 30;
+    --above-frame-zindex: 50;
+    --modal-dimmer-zindex: 100;
+    --fullscreen-modal-zindex: 90;
+}
+
+/*******************************/
+/*********  RESETS  ************/
+/*******************************/
+
+* {
+    // undo semantic.css defaults
+    min-height: initial;
+    min-width: initial;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+* {
+    margin: 0;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    overflow-wrap: break-word;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--pxt-page-font);
+    background: var(--pxt-page-background);
+    color: var(--pxt-page-foreground);
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    // undo semantic.css defaults
+    display: initial;
+    font-size: initial;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/*******************************/
+/*********  GLOBALS  ***********/
+/*******************************/
+
+#root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.noclick {
+    pointer-events: none;
+    cursor: default;
+}
+
+/*******************************/
+/********** SCROLLBAR  *********/
+/*******************************/
+
+// Modeled after the scrollbar in the MakeCode blocks editor
+
+::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+::-webkit-scrollbar-thumb {
+    height: 0;
+    border: 2px solid rgba(0, 0, 0, 0);
+    border-radius: 99px;
+    background-clip: padding-box;
+    background-color: rgb(206, 205, 206);
+    &:hover {
+        // Style matching the standalone editor
+        //background-color: rgb(187, 187, 187);
+        //box-shadow: inset -2px -2px 0px rgb(206, 205, 206), inset 2px 2px 0px rgb(206, 205, 206);
+        // Style matching the embedded editor
+        border-width: 1px;
+    }
+}
+
+/*******************************/
+/****  NOTIFICATION STYLING  ***/
+/*******************************/
+
+.app-large-toast {
+    .tt-toast-text {
+        font-size: 1.5rem !important;
+    }
+}
+
+
+.notification-container {
+    position: fixed;
+    display: flex;
+    align-items: baseline;
+    justify-content: right;
+    top: 85%;
+    left: 0;
+    right: 2%;
+    bottom: 0;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.notification-contents {
+    border-radius: 0.285rem;
+    overflow: hidden;
+    position: fixed;
+    padding: 0 1rem;
+    margin-right: 1rem;
+    pointer-events: none;
+    border: 4px solid var(--pxt-button-primary-accent);
+    background-color: var(--pxt-button-primary-foreground);
+}
+
+/*******************************/
+/******  STYLE OVERRIDES  ******/
+/*******************************/
+
+button[class*="outline-button"] {
+    align-self: center;
+    border-radius: 0.5rem;
+    width: auto;
+    padding: 0.85rem 1.4rem;
+}
