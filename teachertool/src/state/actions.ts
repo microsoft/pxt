@@ -51,6 +51,11 @@ type SetCatalog = ActionBase & {
     catalog: CatalogCriteria[] | undefined;
 };
 
+type SetCatalogOpen = ActionBase & {
+    type: "SET_CATALOG_OPEN";
+    open: boolean;
+};
+
 type SetRubric = ActionBase & {
     type: "SET_RUBRIC";
     rubric: Rubric;
@@ -100,6 +105,11 @@ type SetBlockImageUri = ActionBase & {
     imageUri: string;
 };
 
+type SetScreenReaderAnnouncement = ActionBase & {
+    type: "SET_SCREEN_READER_ANNOUNCEMENT";
+    announcement: string;
+};
+
 /**
  * Union of all actions
  */
@@ -115,6 +125,7 @@ export type Action =
     | SetEvalResultsBatch
     | SetTargetConfig
     | SetCatalog
+    | SetCatalogOpen
     | SetRubric
     | ShowModal
     | HideModal
@@ -122,7 +133,8 @@ export type Action =
     | SetActiveTab
     | SetAutorun
     | SetToolboxCategories
-    | SetBlockImageUri;
+    | SetBlockImageUri
+    | SetScreenReaderAnnouncement;
 
 /**
  * Action creators
@@ -165,6 +177,11 @@ const setTargetConfig = (config: pxt.TargetConfig): SetTargetConfig => ({
 const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     type: "SET_CATALOG",
     catalog,
+});
+
+const setCatalogOpen = (open: boolean): SetCatalogOpen => ({
+    type: "SET_CATALOG_OPEN",
+    open,
 });
 
 const setRubric = (rubric: Rubric): SetRubric => ({
@@ -216,6 +233,11 @@ const setBlockImageUri = (blockId: string, imageUri: string): SetBlockImageUri =
     imageUri,
 });
 
+const setScreenReaderAnnouncement = (announcement: string): SetScreenReaderAnnouncement => ({
+    type: "SET_SCREEN_READER_ANNOUNCEMENT",
+    announcement,
+});
+
 export {
     showToast,
     dismissToast,
@@ -227,6 +249,7 @@ export {
     setEvalResultsBatch,
     setTargetConfig,
     setCatalog,
+    setCatalogOpen,
     setRubric,
     showModal,
     hideModal,
@@ -235,4 +258,5 @@ export {
     setAutorun,
     setToolboxCategories,
     setBlockImageUri,
+    setScreenReaderAnnouncement,
 };

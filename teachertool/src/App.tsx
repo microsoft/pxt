@@ -8,7 +8,6 @@ import { logDebug } from "./services/loggingService";
 import { HeaderBar } from "./components/HeaderBar";
 import { MainPanel } from "./components/MainPanel";
 import { Toasts } from "./components/Toasts";
-import { CatalogModal } from "./components/CatalogModal";
 import { showToast } from "./transforms/showToast";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
@@ -16,6 +15,7 @@ import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubr
 import { ImportRubricModal } from "./components/ImportRubricModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import { BlockPickerModal } from "./components/BlockPickerModal";
+import { ScreenReaderAnnouncer } from "./components/ScreenReaderAnnouncer";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -57,11 +57,11 @@ export const App = () => {
         <>
             <HeaderBar />
             <MainPanel />
-            <CatalogModal />
             <ImportRubricModal />
             <ConfirmationModal />
             <BlockPickerModal />
             <Toasts />
+            <ScreenReaderAnnouncer />
         </>
     );
 };
