@@ -32,22 +32,21 @@ const CatalogHeader: React.FC<CatalogHeaderProps> = ({ onClose }) => {
 
 interface CatalogItemLabelProps {
     catalogCriteria: CatalogCriteria;
-    allowsMultiple: boolean;
-    existingInstanceCount: number;
+    isMaxed: boolean;
     recentlyAdded: boolean;
 }
 const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({
     catalogCriteria,
-    allowsMultiple,
-    existingInstanceCount,
+    isMaxed,
     recentlyAdded,
 }) => {
-    const canAddMore = allowsMultiple || existingInstanceCount === 0;
-    const showRecentlyAddedIndicator = recentlyAdded && canAddMore;
+    const showRecentlyAddedIndicator = recentlyAdded && !isMaxed;
     return (
         <div className={css["catalog-item-label"]}>
             <div className={css["action-indicators"]}>
-                {canAddMore ? (
+                {isMaxed ? (
+                    <span className={css["max-label"]}>{Strings.Max}</span>
+                ) : (
                     <>
                         <i
                             className={classList(
@@ -65,8 +64,6 @@ const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({
                             title={Strings.AddToChecklist}
                         />
                     </>
-                ) : (
-                    <span className={css["max-label"]}>{Strings.Max}</span>
                 )}
             </div>
             <ReadOnlyCriteriaDisplay catalogCriteria={catalogCriteria} showDescription={true} />
@@ -116,10 +113,10 @@ const CatalogList: React.FC = () => {
     return (
         <div className={css["catalog-list"]}>
             {criteria.map(c => {
-                const allowsMultiple = c.params !== undefined && c.params.length !== 0; // TODO add a json flag for this (MaxCount or AllowMultiple)
                 const existingInstanceCount = teacherTool.rubric.criteria.filter(
                     i => i.catalogCriteriaId === c.id
                 ).length;
+                const isMaxed = c.maxCount !== undefined && existingInstanceCount >= c.maxCount;
                 return (
                     c.template && (
                         <Button
@@ -130,13 +127,12 @@ const CatalogList: React.FC = () => {
                             label={
                                 <CatalogItemLabel
                                     catalogCriteria={c}
-                                    allowsMultiple={allowsMultiple}
-                                    existingInstanceCount={existingInstanceCount}
+                                    isMaxed={isMaxed}
                                     recentlyAdded={recentlyAddedIds[c.id] !== undefined}
                                 />
                             }
                             onClick={() => onItemClicked(c)}
-                            disabled={!allowsMultiple && existingInstanceCount > 0}
+                            disabled={isMaxed}
                         />
                     )
                 );

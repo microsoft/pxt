@@ -7,6 +7,7 @@ export interface CatalogCriteria {
     docPath: string | undefined; // Path to documentation
     params: CriteriaParameter[] | undefined; // Any parameters that affect the criteria
     hideInCatalog?: boolean; // Whether the criteria should be hidden in the user-facing catalog
+    maxCount?: number; // The maximum number of instances of this criteria that can be added to a rubric
 }
 
 // An instance of a criteria in a rubric.
