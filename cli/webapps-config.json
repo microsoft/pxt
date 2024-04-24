@@ -13,6 +13,12 @@
             "localServeEndpoint": "eval"
         },
         {
+            "name": "tutorialtool",
+            "buildCss": false,
+            "localServeWebConfigUrl": false,
+            "localServeEndpoint": "tt"
+        },
+        {
             "name": "skillmap",
             "buildCss": true,
             "localServeWebConfigUrl": true
