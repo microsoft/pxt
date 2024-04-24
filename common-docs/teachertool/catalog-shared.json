@@ -1,14 +1,6 @@
 {
     "criteria": [
         {
-            "id": "8F97C9A6-CF16-48B4-A84F-3105C24B20DE",
-            "use": "functions_have_comments",
-            "template": "All function definitions have comments",
-            "docPath": "/teachertool",
-            "description": "All user-defined functions in the program have comments attached to them.",
-            "maxCount": 1
-        },
-        {
             "id": "D21D76A2-D9FD-4F9B-B0AC-973CB870EA78",
             "use": "variable_set",
             "template": "At least one custom variable is set",
