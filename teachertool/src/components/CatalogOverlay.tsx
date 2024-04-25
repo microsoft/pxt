@@ -41,7 +41,7 @@ const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({ catalogCriteria, is
         <div className={css["catalog-item-label"]}>
             <div className={css["action-indicators"]}>
                 {isMaxed ? (
-                    <span className={css["max-label"]}>{Strings.Max}</span>
+                    <span>{Strings.Max}</span>
                 ) : (
                     <>
                         <i
