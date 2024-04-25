@@ -35,11 +35,7 @@ interface CatalogItemLabelProps {
     isMaxed: boolean;
     recentlyAdded: boolean;
 }
-const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({
-    catalogCriteria,
-    isMaxed,
-    recentlyAdded,
-}) => {
+const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({ catalogCriteria, isMaxed, recentlyAdded }) => {
     const showRecentlyAddedIndicator = recentlyAdded && !isMaxed;
     return (
         <div className={css["catalog-item-label"]}>
