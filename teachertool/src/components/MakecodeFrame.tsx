@@ -11,8 +11,7 @@ interface IProps {}
 
 export const MakeCodeFrame: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [ frameId ] = useState(pxt.Util.guidGen());
-
+    const [frameId] = useState(pxt.Util.guidGen());
 
     function createIFrameUrl(shareId: string): string {
         const editorUrl: string = pxt.BrowserUtils.isLocalHost()
