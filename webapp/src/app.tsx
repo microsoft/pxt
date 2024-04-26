@@ -2693,12 +2693,24 @@ export class ProjectView
             return mpkg.saveToJsonAsync()
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
-        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(true);
-        else return this.exportProjectToFileAsync()
-            .then((buf: Uint8Array) => {
-                const fn = pkg.genFileName(".mkcd");
-                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, { contentType: 'application/octet-stream' });
-            })
+        if (pxt.appTarget.compile.saveAsPNG) {
+            return this.saveProjectAsPNGAsync(true);
+        }
+        if (pxt.commands.saveCompiledProjectAsync) {
+            return compiler.compileAsync().then(async compileResult => {
+                this.syncPreferredEditor()
+                const mpkg = pkg.mainPkg;
+                const hexFile = await mpkg.saveToJsonAsync();
+                await pxt.commands.saveCompiledProjectAsync(hexFile, compileResult);
+            });
+        }
+        else {
+            return this.exportProjectToFileAsync()
+                .then((buf: Uint8Array) => {
+                    const fn = pkg.genFileName(".mkcd");
+                    pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, { contentType: 'application/octet-stream' });
+                })
+        }
     }
 
     ///////////////////////////////////////////////////////////

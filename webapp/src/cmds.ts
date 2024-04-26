@@ -318,6 +318,10 @@ function applyExtensionResult() {
         log(`extension save project async`);
         pxt.commands.saveProjectAsync = res.saveProjectAsync;
     }
+    if (res.saveCompiledProjectAsync) {
+        log(`extension save compiled project async`);
+        pxt.commands.saveCompiledProjectAsync = res.saveCompiledProjectAsync;
+    }
     if (res.renderBrowserDownloadInstructions) {
         log(`extension upload renderBrowserDownloadInstructions`);
         pxt.commands.renderBrowserDownloadInstructions = res.renderBrowserDownloadInstructions;
