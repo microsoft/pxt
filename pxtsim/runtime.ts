@@ -9,25 +9,25 @@ namespace pxsim {
             try { return window; } catch { }
             throw new Error("no global object found");
         }
-        export let _setTimeoutFn: (handler: () => any, timeout?: number) => any;
-        export let _setIntervalFn: (handler: () => any, timeout?: number) => any;
-        export let _clearTimeoutFn: (id: any) => void;
-        export let _clearIntervalFn: (id: any) => void;
+        export let setTimeoutFn: (handler: () => any, timeout?: number) => any;
+        export let setIntervalFn: (handler: () => any, timeout?: number) => any;
+        export let clearTimeoutFn: (id: any) => void;
+        export let clearIntervalFn: (id: any) => void;
         export function setTimeout(handler: () => any, timeout?: number): any {
-            if (!_setTimeoutFn) _setTimeoutFn = globalSpace().setTimeout;
-            return _setTimeoutFn(handler, timeout);
+            if (!setTimeoutFn) setTimeoutFn = globalSpace().setTimeout;
+            return setTimeoutFn(handler, timeout);
         }
         export function setInterval(handler: () => any, timeout?: number): any {
-            if (!_setIntervalFn) _setIntervalFn = globalSpace().setInterval;
-            return _setIntervalFn(handler, timeout);
+            if (!setIntervalFn) setIntervalFn = globalSpace().setInterval;
+            return setIntervalFn(handler, timeout);
         }
         export function clearTimeout(id: any): void {
-            if (!_clearTimeoutFn) _clearTimeoutFn = globalSpace().clearTimeout;
-            _clearTimeoutFn(id);
+            if (!clearTimeoutFn) clearTimeoutFn = globalSpace().clearTimeout;
+            clearTimeoutFn(id);
         }
         export function clearInterval(id: any): void {
-            if (!_clearIntervalFn) _clearIntervalFn = globalSpace().clearInterval;
-            _clearIntervalFn(id);
+            if (!clearIntervalFn) clearIntervalFn = globalSpace().clearInterval;
+            clearIntervalFn(id);
         }
     }
     export namespace U {
