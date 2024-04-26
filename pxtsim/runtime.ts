@@ -9,17 +9,17 @@ namespace pxsim {
             try { return window; } catch { }
             throw new Error("no global object found");
         }
-        export let _runTimeoutFn: (handler: () => any, timeout?: number) => any;
-        export let _runIntervalFn: (handler: () => any, timeout?: number) => any;
+        export let _setTimeoutFn: (handler: () => any, timeout?: number) => any;
+        export let _setIntervalFn: (handler: () => any, timeout?: number) => any;
         export let _clearTimeoutFn: (id: any) => void;
         export let _clearIntervalFn: (id: any) => void;
-        export function runTimeout(handler: () => any, timeout?: number): any {
-            if (!_runTimeoutFn) _runTimeoutFn = globalSpace().setTimeout;
-            return _runTimeoutFn(handler, timeout);
+        export function setTimeout(handler: () => any, timeout?: number): any {
+            if (!_setTimeoutFn) _setTimeoutFn = globalSpace().setTimeout;
+            return _setTimeoutFn(handler, timeout);
         }
-        export function runInterval(handler: () => any, timeout?: number): any {
-            if (!_runIntervalFn) _runIntervalFn = globalSpace().setInterval;
-            return _runIntervalFn(handler, timeout);
+        export function setInterval(handler: () => any, timeout?: number): any {
+            if (!_setIntervalFn) _setIntervalFn = globalSpace().setInterval;
+            return _setIntervalFn(handler, timeout);
         }
         export function clearTimeout(id: any): void {
             if (!_clearTimeoutFn) _clearTimeoutFn = globalSpace().clearTimeout;
@@ -141,7 +141,7 @@ namespace pxsim {
         export async function delay<T>(duration: number, value?: T): Promise<T> {
             // eslint-disable-next-line
             const output = await value;
-            await new Promise<void>(resolve => timers.runTimeout(() => resolve(), duration));
+            await new Promise<void>(resolve => timers.setTimeout(() => resolve(), duration));
             return output;
         }
 
@@ -158,7 +158,7 @@ namespace pxsim {
                     if (!immediate) func.apply(context, args);
                 };
                 let callNow = immediate && !timeout;
-                if (!timeout) timeout = timers.runTimeout(later, wait);
+                if (!timeout) timeout = timers.setTimeout(later, wait);
                 if (callNow) func.apply(context, args);
             };
         }
@@ -205,7 +205,7 @@ namespace pxsim {
 
             const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
                 res = resolve;
-                timeoutId = timers.runTimeout(() => {
+                timeoutId = timers.setTimeout(() => {
                     res = undefined;
                     timers.clearTimeout(timeoutId);
                     reject(msg || `Promise timed out after ${ms}ms`);
@@ -514,7 +514,7 @@ namespace pxsim {
                 }
             }
             else {
-                this.serialTimeout = timers.runTimeout(this.debouncedPostAll, 50);
+                this.serialTimeout = timers.setTimeout(this.debouncedPostAll, 50);
             }
         }
     }
@@ -1064,7 +1064,7 @@ namespace pxsim {
 
         restart() {
             this.kill();
-            timers.runTimeout(() =>
+            timers.setTimeout(() =>
                 pxsim.Runtime.postMessage(<pxsim.SimulatorCommandMessage>{
                     type: "simulator",
                     command: "restart"
@@ -1089,7 +1089,7 @@ namespace pxsim {
             if (this.recording || !this.running) return;
 
             this.recording = true;
-            this.recordingTimer = timers.runInterval(() => this.postFrame(), 66);
+            this.recordingTimer = timers.setInterval(() => this.postFrame(), 66);
             this.recordingLastImageData = undefined;
             this.recordingWidth = width;
         }
@@ -1257,7 +1257,7 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    timers.runTimeout(loopForSchedule(s), 5)
+                    timers.setTimeout(loopForSchedule(s), 5)
                     return true
                 }
                 return false
@@ -1681,7 +1681,7 @@ namespace pxsim {
         startIdle() {
             // schedules handlers to run every 20ms
             if (this.idleTimer === undefined) {
-                this.idleTimer = timers.runInterval(() => {
+                this.idleTimer = timers.setInterval(() => {
                     if (!this.running || this.pausedOnBreakpoint) return;
                     const bus = this.board.bus;
                     if (bus)
@@ -1713,7 +1713,7 @@ namespace pxsim {
                     this.timeoutsScheduled.splice(idx, 1)
                 fn();
             }
-            to.id = timers.runTimeout(removeAndExecute, timeout);
+            to.id = timers.setTimeout(removeAndExecute, timeout);
             this.timeoutsScheduled.push(to);
             return to.id;
         }
@@ -1764,7 +1764,7 @@ namespace pxsim {
             if (this.thumbnailRecordingIntervalRef || this.lastThumbnailTime && this.lastInteractionTime - this.lastThumbnailTime < 1000) return;
             this.thumbnailFrames = [];
 
-            this.thumbnailRecordingIntervalRef = timers.runInterval(async () => {
+            this.thumbnailRecordingIntervalRef = timers.setInterval(async () => {
                 const imageData = await this.board.screenshotAsync();
 
                 if (this.thumbnailFrames.length && isImageDataEqual(imageData, this.thumbnailFrames[this.thumbnailFrames.length - 1])) {
