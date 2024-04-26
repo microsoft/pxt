@@ -4,24 +4,29 @@ namespace pxsim {
     const MIN_MESSAGE_WAIT_MS = 200;
     let tracePauseMs = 0;
     export namespace timers {
+        function globalSpace(): any {
+            try { return global; } catch { }
+            try { return window; } catch { }
+            throw new Error("no global object found");
+        }
         export let _runTimeoutFn: (handler: () => any, timeout?: number) => any;
         export let _runIntervalFn: (handler: () => any, timeout?: number) => any;
         export let _clearTimeoutFn: (id: any) => void;
         export let _clearIntervalFn: (id: any) => void;
         export function runTimeout(handler: () => any, timeout?: number): any {
-            if (!_runTimeoutFn) _runTimeoutFn = setTimeout;
+            if (!_runTimeoutFn) _runTimeoutFn = globalSpace().setTimeout;
             return _runTimeoutFn(handler, timeout);
         }
         export function runInterval(handler: () => any, timeout?: number): any {
-            if (!_runIntervalFn) _runIntervalFn = setInterval;
+            if (!_runIntervalFn) _runIntervalFn = globalSpace().setInterval;
             return _runIntervalFn(handler, timeout);
         }
         export function clearTimeout(id: any): void {
-            if (!_clearTimeoutFn) _clearTimeoutFn = clearTimeout;
+            if (!_clearTimeoutFn) _clearTimeoutFn = globalSpace().clearTimeout;
             _clearTimeoutFn(id);
         }
         export function clearInterval(id: any): void {
-            if (!_clearIntervalFn) _clearIntervalFn = clearInterval;
+            if (!_clearIntervalFn) _clearIntervalFn = globalSpace().clearInterval;
             _clearIntervalFn(id);
         }
     }
