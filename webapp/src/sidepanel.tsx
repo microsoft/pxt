@@ -150,6 +150,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
+        const hideSimulator = pxt.appTarget.simulator?.hideSim;
         const showOpenInVscodeButton = parent.isJavaScriptActive() && pxt.appTarget?.appTheme?.showOpenInVscode;
 
         const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
@@ -162,22 +163,22 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
-                        <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
-                        {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
+                        {!hideSimulator && <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />}
+                        {!hideSimulator && showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
                             <SimulatorPresenceBar />
                         </div>}
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
-                        {showKeymap && <keymap.Keymap parent={parent} />}
-                        <div className="ui item portrait hide hidefullscreen">
+                        {!hideSimulator && showKeymap && <keymap.Keymap parent={parent} />}
+                        {!hideSimulator && <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
-                        </div>
-                        <div className="ui item grid centered portrait hide hidefullscreen">
+                        </div>}
+                        {!hideSimulator && <div className="ui item grid centered portrait hide hidefullscreen">
                             {showOpenInVscodeButton && <Button className={"teal hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
-                        </div>
-                        <div className="ui item grid centered portrait hide hidefullscreen">
+                        </div>}
+                        {!hideSimulator && <div className="ui item grid centered portrait hide hidefullscreen">
                             {showHostMultiplayerGameButton && <Button className={"teal hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
-                        </div>
-                        {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
+                        </div>}
+                        {!hideSimulator && showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                             <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
                             <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
                         </div>}

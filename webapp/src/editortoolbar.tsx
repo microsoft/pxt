@@ -186,6 +186,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     protected onDownloadButtonClick = async () => {
         pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        if (!pxt.appTarget.compile.hasHex) {
+            return this.saveFile();
+        }
         if (this.shouldShowPairingDialogOnDownload()
             && !pxt.packetio.isConnected()
             && !pxt.packetio.isConnecting()
@@ -199,6 +202,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         // Matching the tick in the call to compile() above for historical reasons
         pxt.tickEvent("editortools.download", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         pxt.tickEvent("editortools.downloadasfile", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        if (!pxt.appTarget.compile.hasHex) {
+            return this.saveFile();
+        }
         (this.props.parent as ProjectView).compile(true);
     }
 
