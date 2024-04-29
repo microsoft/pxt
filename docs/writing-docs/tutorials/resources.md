@@ -138,10 +138,59 @@ The asset block might look something like the following example.
 ```
 ````
 
-If you need to modify the assets for the tutoral, reopen and edit the project saved in the `.txt.mkcd` file.
+If you need to modify the assets for the tutorial, reopen and edit the project saved in the `.txt.mkcd` file.
 You can simply drag the file into the editor, make your changes, and download it again. Open the project
 file in a text editor, copy the new asset data, and replace the contents of your tutorial's ```` ```assetjson ````
 block with it.
 
 The assets are shown as the initial view in a tutorial by using the [@preferredEditor](/writing-docs/tutorials/control-options#preferred-editor-view) option. This option causes the tutorial to open with the Asset Editor
 rather than showing the editor for Blocks or Code.
+
+## Creating asset packs
+
+### ~ alert
+
+#### MackeCode Arcade only
+
+Asset packs only work with MakeCode Arcade.
+
+### ~
+
+Asset packs are resource projects that are separate from a tutorial file. They contain images, animations, tilemaps, and other resources for use in a tutorial. An asset pack can help reduce the size of a tutorial when it's using many resources or very large resources. You may place some or all your tutorial resources into an asset pack project.
+
+Here are the instructions for creating an asset pack:
+
+1. Create a new project. The name of this project will end up being the namespace of the asset pack you create, so make sure to rename it to a valid javascript variable name (no spaces, only letters, underscores, and numbers). For example, `my_asset_pack`.
+2. Switch to the **Assets** tab.
+3. Create a new image (or other asset item). Copy the image text your tutorial and paste it into image space in the editor for the new asset.
+4. Give the asset a name in the bottom right of the image editor. This name will be the name you reference in your code, so make sure it’s a valid javascript variable name. For example, `background1`.
+5. Close the image editor and switch to the **JavaScript** tab.
+6. On the left, in the file explorer underneath the simulator, open up pxt.json
+7. Click "Edit settings as text".
+8. Underneath the line that says "description", paste in this line:<br/> `"assetPack": true`<br/>
+9. In the file explorer, switch back to main.ts.
+10. Turn this project into a GitHub repo using the GitHub button in the bottom toolbar (for example, my_github_username/my_asset_pack).
+
+Now that you have an asset pack, you can include it in your tutorial just like you would an extension. Add an annotation like this at the bottom of your markdown file:
+
+````
+```package
+my_asset_pack=github:my_github_username/my_asset_pack
+```
+````
+
+**Important**: Make sure that the name on the left hand side of the "=" matches the name of your extension from Step 1.
+
+Now, instead of including the background image in your code snippets, you can reference it like so:
+
+````
+```blocks
+scene.setBackgroundImage(my_asset_pack.background1)
+```
+````
+
+For more details on how to create an asset pack for your tutorial, watch this helpful video:
+
+https://youtu.be/ikz15E24F2k
+
+If you have other assets you want to include, you can insert them into the pack in the same manner.
