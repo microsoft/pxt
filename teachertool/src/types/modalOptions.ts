@@ -12,12 +12,8 @@ export type BlockPickerOptions = {
     paramName: string;
 };
 
-export type CatalogDisplayOptions = {
-    modal: "catalog-display";
-};
-
 export type ImportRubricOptions = {
     modal: "import-rubric";
 };
 
-export type ModalOptions = CatalogDisplayOptions | ImportRubricOptions | ConfirmationModalOptions | BlockPickerOptions;
+export type ModalOptions = ImportRubricOptions | ConfirmationModalOptions | BlockPickerOptions;

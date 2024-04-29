@@ -74,6 +74,14 @@ async function checkIfPouchDbExistsAsync() {
     return result;
 }
 
+interface MigrationEntry {
+    prefix?: string;
+    table: string;
+    id: string;
+    rev: number;
+    entry: any;
+}
+
 async function migratePouchAsync() {
     if (!await checkIfPouchDbExistsAsync()) return;
 
@@ -83,12 +91,14 @@ async function migratePouchAsync() {
     const entries = await oldDb.getAllAsync<any>(POUCH_OBJECT_STORE);
     const alreadyMigratedList = await getMigrationDbAsync();
 
+    const toMigrate: MigrationEntry[] = [];
+
     for (const entry of entries) {
-        // format is (prefix-)?tableName--id::rev
+        // format is (prefix-)?tableName--id::rev-guid
         const docId: string = entry._doc_id_rev;
 
         const revSeparatorIndex = docId.lastIndexOf("::");
-        const rev = docId.substring(revSeparatorIndex + 2);
+        const rev = parseInt(docId.substring(revSeparatorIndex + 2).split("-")[0]);
 
         const tableSeparatorIndex = docId.indexOf("--");
         let table = docId.substring(0, tableSeparatorIndex);
@@ -131,6 +141,31 @@ async function migratePouchAsync() {
         if (await alreadyMigratedList.getAsync(table, migrationDbKey(prefix, id))) {
             continue;
         }
+
+        // PouchDB sometimes keeps around multiple entries for the same doc. Favor
+        // the one with the highest revision number
+        const existing = toMigrate.find(
+            m => m.id === id && m.prefix === prefix && m.table === table
+        );
+        if (existing) {
+            if (existing.rev < rev) {
+                existing.rev = rev;
+                existing.entry = entry;
+            }
+            continue;
+        }
+
+        toMigrate.push({
+            id,
+            table,
+            prefix,
+            rev,
+            entry,
+        });
+    }
+
+    for (const m of toMigrate) {
+        const { prefix, table, id, entry } = m;
 
         await alreadyMigratedList.setAsync(table, { id: migrationDbKey(prefix, id) });
 

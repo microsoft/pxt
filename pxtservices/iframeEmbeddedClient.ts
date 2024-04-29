@@ -63,7 +63,7 @@ export class IFrameEmbeddedClient {
         else if ((window as any).acquireVsCodeApi) {
             (window as any).acquireVsCodeApi().postMessage(message)
         }
-        else {
+        else if (window.parent && window.parent !== window) {
             window.parent.postMessage(message, "*");
         }
     }

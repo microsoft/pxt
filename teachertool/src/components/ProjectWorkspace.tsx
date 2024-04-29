@@ -6,6 +6,7 @@ import { getSafeProjectName } from "../state/helpers";
 import { Toolbar } from "./Toolbar";
 import { ShareLinkInput } from "./ShareLinkInput";
 import { MakeCodeFrame } from "./MakecodeFrame";
+import { CatalogOverlay } from "./CatalogOverlay";
 
 const ProjectName: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
@@ -16,6 +17,7 @@ const ProjectName: React.FC = () => {
 export const ProjectWorkspace: React.FC = () => {
     return (
         <div className={css.panel}>
+            <CatalogOverlay />
             <Toolbar center={<ProjectName />} />
             <ShareLinkInput />
             <MakeCodeFrame />

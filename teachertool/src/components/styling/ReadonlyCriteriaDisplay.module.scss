@@ -4,11 +4,15 @@
     align-items: flex-start;
 
     .criteria-template {
+        margin-bottom: 0.4rem;
+
         .plain-text-segment {
+            display: inline-block;
             margin-right: 0.3rem;
         }
 
         .param-segment {
+            display: inline-block;
             border-radius: 0.5rem;
             border: 1px solid var(--pxt-page-foreground);
             padding: 0.2rem 0.5rem;
