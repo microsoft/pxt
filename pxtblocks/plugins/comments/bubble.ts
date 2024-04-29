@@ -7,7 +7,7 @@ import dom = Blockly.utils.dom;
  * bubble, where it has a "tail" that points to the block, and a "head" that
  * displays arbitrary svg elements.
  */
-export abstract class Bubble {
+export abstract class Bubble implements Blockly.IDeletable {
     /** The width of the border around the bubble. */
     static readonly BORDER_WIDTH = 0;
 
@@ -62,6 +62,8 @@ export abstract class Bubble {
 
     private collapseHandler: () => void;
     private deleteHandler: () => void;
+
+    private isDragDelete: boolean;
 
     /**
      * @param workspace The workspace this bubble belongs to.
@@ -168,8 +170,14 @@ export abstract class Bubble {
 
     /** Dispose of this bubble. */
     dispose() {
+        if (this.disposed) return;
+
         dom.removeNode(this.svgRoot);
         this.disposed = true;
+
+        if (this.isDragDelete && this.deleteHandler) {
+            this.deleteHandler();
+        }
     }
 
     /**
@@ -575,8 +583,13 @@ export abstract class Bubble {
     }
 
     /** @internal */
-    setDeleteStyle(_enable: boolean) {
-        // NOOP in base class.
+    setDeleteStyle(wouldDelete: boolean) {
+        this.isDragDelete = wouldDelete;
+        if (wouldDelete) {
+            dom.addClass(this.getSvgRoot(), 'blocklyDraggingDelete');
+        } else {
+            dom.removeClass(this.getSvgRoot(), 'blocklyDraggingDelete');
+        }
     }
 
     /** @internal */

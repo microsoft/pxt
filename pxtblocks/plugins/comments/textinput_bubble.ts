@@ -215,6 +215,10 @@ export class TextInputBubble extends Bubble {
         return super.getSize();
     }
 
+    isDeletable(): boolean {
+        return true;
+    }
+
     /** Handles mouse down events on the resize target. */
     private onResizePointerDown(e: PointerEvent) {
         this.bringToFront();

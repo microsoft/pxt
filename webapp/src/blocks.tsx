@@ -1233,7 +1233,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             disable: false,
             readOnly: readOnly,
             plugins: {
-                // 'blockDragger': pxtblockly.BlockDragger,
+                'blockDragger': pxtblockly.BlockDragger,
                 'connectionChecker': DuplicateOnDragConnectionChecker,
                 'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout,
                 'connectionPreviewer': pxtblockly.ConnectionPreviewer
