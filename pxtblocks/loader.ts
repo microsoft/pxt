@@ -508,7 +508,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                 if (hasInput(inputName)) return;
 
                 input = block.appendValueInput(inputName);
-                input.setAlign(Blockly.ALIGN_LEFT);
+                input.setAlign(Blockly.inputs.Align.LEFT);
             }
             else if (expanded) {
                 const prefix = hasParameter ? optionalInputWithFieldPrefix : optionalDummyInputPrefix;

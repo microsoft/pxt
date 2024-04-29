@@ -275,5 +275,5 @@ function escapeVariables(current: Scope, e: Environment) {
 }
 
 function hasStatementInput(block: Blockly.Block) {
-    return block.inputList.some(i => i.type === Blockly.inputTypes.STATEMENT);
+    return block.inputList.some(i => i.type === Blockly.inputs.inputTypes.STATEMENT);
 }
