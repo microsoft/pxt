@@ -155,10 +155,7 @@
     }
 }
 
-@media @shareScreen {
-    .wide>.common-modal {
-        height: 95%;
-    }
+@media @mobileShare {
     .common-modal-body {
         padding-top: 0.5rem;
         padding-bottom: 0;
@@ -167,5 +164,11 @@
     .common-modal-header {
         height: 2.5rem;
         align-items: center;
+    }
+}
+
+@media @smallMobileShare {
+    .wide>.common-modal {
+        height: 95%;
     }
 }

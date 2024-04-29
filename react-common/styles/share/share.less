@@ -150,6 +150,7 @@
     margin-top: 1rem;
     position: relative;
     margin-bottom: 2rem;
+    justify-content: space-between;
 }
 
 .project-share-social {
@@ -322,25 +323,17 @@
 
 @media only screen and (max-width: 513px) {
     .project-share-thumbnail {
-        min-width: 10rem;
-
         img {
-            width: 8rem;
-            height: 6rem;
+            max-width: 15rem;
         }
-    }
-
-    .common-modal.common-modal-body {
-        border-bottom-left-radius: 0.285;
-        border-bottom-right-radius: 0.285;
     }
 
     .project-share-social {
-        .common-button.square-button.social-button, .common-button.square-button.device-share {
-            width: 1.5rem;
-            height: 1.5rem;
-            font-size: 0.75rem;
-        }
+        max-width: 12rem;
+    }
+
+    .project-share-content {
+        margin-left: 1rem;
     }
 
     .project-share-actions {
@@ -351,16 +344,12 @@
         padding: 0 0.25rem;
     }
 
-    .common-button.menu-button.project-qrcode img {
-        height: 3rem;
-    }
-
     .project-share-data .common-input-attached-button .common-input-wrapper .common-input-group {
-        height: 2rem;
+        height: 2.5rem;
     }
 
     .project-share-data .common-input-attached-button .common-button {
-        height: 2rem;
+        height: 2.5rem;
         padding: 0.5rem 1rem 0.95rem 0.1rem;
     }
 }
