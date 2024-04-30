@@ -8,6 +8,7 @@ import { validateBlocksInSetExist } from "./validateBlocksInSetExist";
 import { validateBlockCommentsExist } from "./validateCommentsExist";
 import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockCommentsExist";
 import { getNestedChildBlocks } from "./getNestedChildBlocks";
+import { validateVariableUsage } from "./validateVariableUsage";
 
 export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]): boolean {
     const startTime = Date.now();
@@ -31,6 +32,9 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
                 break;
             case "blockFieldValueExists":
                 [successfulBlocks, checkPassed] = [...runBlockFieldValueExistsValidation(usedBlocks, check as pxt.blocks.BlockFieldValueExistsCheck)];
+                break;
+            case "variableUsage":
+                [successfulBlocks, checkPassed] = [...runVariableUsageValidation(usedBlocks, check as pxt.blocks.VariableUsageValidatorCheck)];
                 break;
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
@@ -103,4 +107,14 @@ function runBlockFieldValueExistsValidation(usedBlocks: Blockly.Block[], inputs:
         specifiedBlock: inputs.blockType
     });
     return  [blockResults.successfulBlocks, blockResults.passed];
+}
+
+function runVariableUsageValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.VariableUsageValidatorCheck): [Blockly.Block[], boolean] {
+    const blockResults = validateVariableUsage({
+        usedBlocks,
+        count: inputs.count,
+        name: inputs.name,
+        type: inputs.type
+    });
+    return [blockResults.passingVarDefinitions, blockResults.passed];
 }

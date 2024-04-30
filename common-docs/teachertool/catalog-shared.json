@@ -83,6 +83,22 @@
                     "default": 1
                 }
             ]
+        },
+        {
+            "id": "0DFA44C8-3CA5-4C77-946E-AF09F6C03879",
+            "use": "variable_usage",
+            "template": "Uses at least ${count} variables",
+            "docPath": "/teachertool",
+            "description": "The program creates and uses at least this many user-defined variables.",
+            "maxCount": 1,
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "paths": ["checks[0].count"],
+                    "default": 1
+                }
+            ]
         }
     ]
 }

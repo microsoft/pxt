@@ -301,6 +301,19 @@
                     "count": 0
                 }
             ]
+        },
+        {
+            ".desc": "variable creation & usage validation, with optional name and type filtering",
+            "name": "variable_usage",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "variableUsage",
+                    "count": 0,
+                    "name": "",
+                    "type": ""
+                }
+            ]
         }
     ]
 }
