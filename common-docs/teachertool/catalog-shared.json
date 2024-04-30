@@ -1,6 +1,26 @@
 {
     "criteria": [
         {
+            "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
+            "use": "block_used_n_times",
+            "template": "${Block} used ${count} times",
+            "description": "This block was used the specified number of times in your project.",
+            "docPath": "/teachertool",
+            "params": [
+                {
+                    "name": "block",
+                    "type": "block",
+                    "paths": ["checks[0].blockCounts[0].blockId"]
+                },
+                {
+                    "name": "count",
+                    "type": "number",
+                    "default": 1,
+                    "paths": ["checks[0].blockCounts[0].count"]
+                }
+            ]
+        },
+        {
             "id": "D21D76A2-D9FD-4F9B-B0AC-973CB870EA78",
             "use": "variable_set",
             "template": "At least one custom variable is set",
@@ -29,26 +49,6 @@
                     "type": "number",
                     "default": 1,
                     "paths": ["checks[0].count"]
-                }
-            ]
-        },
-        {
-            "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
-            "use": "block_used_n_times",
-            "template": "${Block} used ${count} times",
-            "description": "This block was used the specified number of times in your project.",
-            "docPath": "/teachertool",
-            "params": [
-                {
-                    "name": "block",
-                    "type": "block",
-                    "paths": ["checks[0].blockCounts[0].blockId"]
-                },
-                {
-                    "name": "count",
-                    "type": "number",
-                    "default": 1,
-                    "paths": ["checks[0].blockCounts[0].count"]
                 }
             ]
         },
