@@ -392,7 +392,7 @@ function checkIfTaggedCommitAsync() {
 
 let readJson = nodeutil.readJson;
 
-function ciAsync() {
+async function ciAsync() {
     forceCloudBuild = true;
     const buildInfo = ciBuildInfo();
     pxt.log(`ci build using ${buildInfo.ci}`);
@@ -445,52 +445,52 @@ function ciAsync() {
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
         pxt.log("pxt-core build");
-        return checkIfTaggedCommitAsync()
-            .then(isTaggedCommit => {
-                pxt.log(`is tagged commit: ${isTaggedCommit}`);
-                let p = npmPublishAsync();
-                if (branch === "master" && isTaggedCommit) {
-                    if (uploadDocs)
-                        p = p
-                            .then(() => buildWebStringsAsync())
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/authcode-strings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/multiplayer-strings.json"));
-                    if (uploadApiStrings)
-                        p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
-                    if (uploadDocs || uploadApiStrings)
-                        p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
-                }
-                return p;
-            });
+
+        const isTaggedCommit = await checkIfTaggedCommitAsync();
+        pxt.log(`is tagged commit: ${isTaggedCommit}`);
+        await npmPublishAsync();
+        if (branch === "master" && isTaggedCommit) {
+            if (uploadDocs) {
+                await buildWebStringsAsync();
+                await crowdin.uploadBuiltStringsAsync("built/webstrings.json");
+                await crowdin.uploadBuiltStringsAsync(`built/skillmap-strings.json`);
+                await crowdin.uploadBuiltStringsAsync(`built/authcode-strings.json`);
+                await crowdin.uploadBuiltStringsAsync(`built/multiplayer-strings.json`);
+            }
+            if (uploadApiStrings) {
+                await crowdin.uploadBuiltStringsAsync("built/strings.json");
+            }
+            if (uploadDocs || uploadApiStrings) {
+                await crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs);
+                pxt.log("translations uploaded");
+            }
+            else {
+                pxt.log("skipping translations upload");
+            }
+        }
     } else {
         pxt.log("target build");
-        return internalBuildTargetAsync()
-            .then(() => internalCheckDocsAsync(true))
-            .then(() => blockTestsAsync())
-            .then(() => npmPublishAsync())
-            .then(() => {
-                if (!process.env["PXT_ACCESS_TOKEN"]) {
-                    // pull request, don't try to upload target
-                    pxt.log('no token, skipping upload')
-                    return Promise.resolve();
-                }
-                const trg = readLocalPxTarget();
-                const label = `${trg.id}/${tag || latest}`;
-                pxt.log(`uploading target with label ${label}...`);
-                return uploadTargetAsync(label);
-            })
-            .then(() => {
-                pxt.log("target uploaded");
-                if (uploadDocs || uploadApiStrings) {
-                    return crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs)
-                        .then(() => pxt.log("translations uploaded"));
-                } else {
-                    pxt.log("skipping translations upload");
-                    return Promise.resolve();
-                }
-            });
+        await internalBuildTargetAsync();
+        await internalCheckDocsAsync(true);
+        await blockTestsAsync();
+        await npmPublishAsync();
+        if (!process.env["PXT_ACCESS_TOKEN"]) {
+            // pull request, don't try to upload target
+            pxt.log('no token, skipping upload')
+        }
+        else {
+            const trg = readLocalPxTarget();
+            const label = `${trg.id}/${tag || latest}`;
+            pxt.log(`uploading target with label ${label}...`);
+            await uploadTargetAsync(label);
+        }
+        pxt.log("target uploaded");
+        if (uploadDocs || uploadApiStrings) {
+            await crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs);
+            pxt.log("translations uploaded");
+        } else {
+            pxt.log("skipping translations upload");
+        }
     }
 }
 
@@ -6983,7 +6983,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         advanced: true,
     }, pc => uploadTargetRefsAsync(pc.args[0]));
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
-    advancedCommand("downloadtrgtranslations", "download translations from bundled projects", crowdin.downloadTargetTranslationsAsync, "<package>");
+    advancedCommand("downloadtrgtranslations", "download translations from bundled projects", crowdin.downloadTargetTranslationsAsync, "[package]");
 
     p.defineCommand({
         name: "checkdocs",
@@ -7086,7 +7086,18 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
-    advancedCommand("crowdin", "upload, download, clean, stats files to/from crowdin", pc => crowdin.execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
+    p.defineCommand({
+        name: "crowdin",
+        advanced: true,
+        argString: "<cmd> <path> [output]",
+        help: "upload, download, clean, stats files to/from crowdin",
+        flags: {
+            test: { description: "test run, do not upload files to crowdin" }
+        }
+    }, pc => {
+        if (pc.flags.test) pxt.crowdin.setTestMode();
+        return crowdin.execCrowdinAsync.apply(undefined, pc.args)
+    })
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync, undefined, true);
