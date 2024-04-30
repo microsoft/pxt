@@ -75,17 +75,6 @@ export function getSafeRubricName(state: AppState): string | undefined {
     return state.rubric.name || Strings.UntitledRubric;
 }
 
-export function getSelectableCatalogCriteria(state: AppState): CatalogCriteria[] {
-    const usedCatalogCriteria = state.rubric.criteria.map(c => c.catalogCriteriaId) ?? [];
-
-    // Return a criteria as selectable if it has parameters (so it can be used multiple times in a rubric)
-    // or if it has not yet been used in the active rubric.
-    return (
-        state.catalog?.filter(
-            catalogCriteria =>
-                ((catalogCriteria.params && catalogCriteria.params.length > 0) ||
-                    !usedCatalogCriteria.includes(catalogCriteria.id)) &&
-                !catalogCriteria.hideInCatalog
-        ) ?? []
-    );
+export function getCatalogCriteria(state: AppState): CatalogCriteria[] {
+    return state.catalog?.filter(c => !c.hideInCatalog) ?? [];
 }

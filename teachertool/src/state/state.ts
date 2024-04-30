@@ -18,6 +18,8 @@ export type AppState = {
     toolboxCategories?: pxt.Map<pxt.editor.ToolboxCategoryDefinition>;
     blockImageCache: pxt.Map<string>; // block id -> image uri
     copilotEndpointOverride?: string; // TODO: remove once copilot is available in prod.
+    catalogOpen: boolean;
+    screenReaderAnnouncement?: string;
     flags: {
         testCatalog: boolean;
     };
@@ -36,6 +38,8 @@ export const initialAppState: AppState = {
     toolboxCategories: undefined,
     blockImageCache: {},
     copilotEndpointOverride: undefined,
+    catalogOpen: false,
+    screenReaderAnnouncement: undefined,
     flags: {
         testCatalog: false,
     },

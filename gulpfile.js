@@ -591,6 +591,12 @@ const kiosk = createWebappTasks("kiosk");
 const teacherTool = createWebappTasks("teachertool");
 
 /********************************************************
+                      Tutorial Tool
+*********************************************************/
+
+const tutorialTool = createWebappTasks("tutorialtool");
+
+/********************************************************
                  Webapp build wrappers
 *********************************************************/
 
@@ -604,7 +610,7 @@ const maybeUpdateWebappStrings = () => {
 
 const maybeBuildWebapps = () => {
     if (!shouldBuildWebapps()) return noop;
-    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool);
+    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool, tutorialTool);
 }
 
 /********************************************************

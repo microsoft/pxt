@@ -95,5 +95,4 @@ namespace pxt.shell {
     export function setToolboxAnimation(): void {
         pxt.storage.setLocal("toolboxanimation", "1");
     }
-
 }

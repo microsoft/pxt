@@ -7,7 +7,7 @@ export async function getRubricFromFileAsync(file: File, allowPartial: boolean):
     let rubric = await loadRubricFromFileAsync(file);
 
     if (rubric) {
-        logDebug("Loading rubric from file...", {file, rubric});
+        logDebug("Loading rubric from file...", { file, rubric });
 
         const rubricVerificationResult = verifyRubricIntegrity(rubric);
 

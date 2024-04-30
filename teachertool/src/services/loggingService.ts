@@ -37,4 +37,3 @@ export const logDebug = (message: any, data?: any) => {
         console.log(timestamp(), message, data);
     }
 };
-
