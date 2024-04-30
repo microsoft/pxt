@@ -72,7 +72,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn || anonymousShareByDefault);
     const [ isShowingMultiConfirmation, setIsShowingMultiConfirmation ] = React.useState(false);
     // this is 854 because we have some dissonance between our styling and semantic ui's styling
-    const hideEmbed = useWindowWidth() <= 854;
+    const hideEmbed = useWindowWidth() <= 766;
 
     const { simScreenshot, simGif } = pxt.appTarget.appTheme;
     const showSimulator = (simScreenshot || simGif) && !!simRecorder;
