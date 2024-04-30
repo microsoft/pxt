@@ -32,18 +32,6 @@ export interface ShareInfoProps {
     onClose: () => void;
 }
 
-function useWindowWidth() {
-    const [size, setSize] = React.useState(window.innerWidth);
-    React.useLayoutEffect(() => {
-      function updateSize() {
-        setSize(window.innerWidth);
-      }
-      window.addEventListener('resize', updateSize);
-      updateSize();
-      return () => window.removeEventListener('resize', updateSize);
-    }, []);
-    return size;
-  }
 
 export const ShareInfo = (props: ShareInfoProps) => {
     const {
@@ -71,8 +59,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ kioskState, setKioskState ] = React.useState(false);
     const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn || anonymousShareByDefault);
     const [ isShowingMultiConfirmation, setIsShowingMultiConfirmation ] = React.useState(false);
-    // this is 854 because we have some dissonance between our styling and semantic ui's styling
-    const hideEmbed = useWindowWidth() <= 854;
 
     const { simScreenshot, simGif } = pxt.appTarget.appTheme;
     const showSimulator = (simScreenshot || simGif) && !!simRecorder;
@@ -437,7 +423,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 <div className="project-share-social">
                                     <Button className="square-button gray embed mobile-portrait-hidden"
                                         title={lf("Show embed code")}
-                                        disabled={hideEmbed}
                                         leftIcon="fas fa-code"
                                         onClick={handleEmbedClick} />
                                     <SocialButton className="square-button facebook"
