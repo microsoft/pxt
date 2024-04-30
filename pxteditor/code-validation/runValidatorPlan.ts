@@ -113,8 +113,7 @@ function runVariableUsageValidation(usedBlocks: Blockly.Block[], inputs: pxt.blo
     const blockResults = validateVariableUsage({
         usedBlocks,
         count: inputs.count,
-        name: inputs.name,
-        type: inputs.type
+        name: inputs.name
     });
     return [blockResults.passingVarDefinitions, blockResults.passed];
 }

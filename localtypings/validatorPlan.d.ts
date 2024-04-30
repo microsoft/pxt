@@ -44,7 +44,6 @@ declare namespace pxt.blocks {
         validator: "variableUsage";
         count: number;
         name?: string;
-        type?: string;
     }
 
     export interface EvaluationResult {

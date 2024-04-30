@@ -2,18 +2,16 @@
 import * as Blockly from "blockly";
 
 // Validates that variables are created and used within the workspace.
-// Name & Type are optional. If undefined or empty, all variable names/types are checked.
+// Name is optional. If undefined or empty, all variable names are permitted.
 // Returns the definition blocks for variables that passed the check.
 export function validateVariableUsage({
     usedBlocks,
     count,
     name,
-    type,
 }: {
     usedBlocks: Blockly.Block[];
     count: number;
     name?: String;
-    type?: String; // todo thsparks : doesn't work (block types not set), remove.
 }): {
     passingVarDefinitions: Blockly.Block[];
     passed: boolean;
@@ -29,8 +27,7 @@ export function validateVariableUsage({
         const varsUsed = block.getVarModels();
         for (const varModel of varsUsed ?? []) {
             const varName = varModel.name;
-            const varType = varModel.type;
-            if ((!name || varName === name) && (!type || varType === type)) {
+            if (!name || varName === name) {
                 if (block.type === "variables_set" || block.type === "variables_change") {
                     // Variable created
                     varDefinitionBlocks.set(varName, block);
