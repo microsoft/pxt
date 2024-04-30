@@ -5,6 +5,7 @@ import * as Blockly from "blockly";
 import { cleanOuterHTML, getFirstChildWithAttr } from "./xml";
 import { promptTranslateBlock } from "./external";
 import { createToolboxBlock } from "./toolbox";
+import { DuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 
 export function setBuiltinHelpInfo(block: any, id: string) {
     const info = pxt.blocks.getBlockDefinition(id);
@@ -16,15 +17,17 @@ export function installBuiltinHelpInfo(id: string) {
     installHelpResources(id, info.name, info.tooltip, info.url, pxt.toolbox.getNamespaceColor(info.category));
 }
 
-export function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string, undeletable?: boolean) {
+export function setHelpResources(block: Blockly.BlockSvg, id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string, undeletable?: boolean) {
     if (tooltip && (typeof tooltip === "string" || typeof tooltip === "function")) block.setTooltip(tooltip);
     if (url) block.setHelpUrl(url);
-    if (colour) block.setColour(colour, colourSecondary, colourTertiary);
+    if (colour) block.setColour(colour);
     if (undeletable) block.setDeletable(false);
+
+    block.setDragStrategy(new DuplicateOnDragStrategy(block));
 
     let tb = document.getElementById('blocklyToolboxDefinition');
     let xml: HTMLElement = tb ? getFirstChildWithAttr(tb, "block", "type", id) as HTMLElement : undefined;
-    block.codeCard = <pxt.CodeCard>{
+    (block as any).codeCard = <pxt.CodeCard>{
         header: name,
         name: name,
         software: 1,

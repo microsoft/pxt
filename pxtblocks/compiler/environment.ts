@@ -113,7 +113,7 @@ export interface VarInfo {
     isFunctionParameter?: boolean;
 }
 
-export interface GrayBlock extends Blockly.Block {
+export interface GrayBlock extends Blockly.BlockSvg {
     setPythonEnabled(enabled: boolean): void;
 }
 
