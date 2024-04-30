@@ -7,7 +7,7 @@ import { FieldTextInput } from "./field_textinput";
 import { FieldCustom, FieldCustomConstructor } from "./field_utils";
 import { FieldSpriteEditor } from "./field_sprite";
 import { FieldGridPicker } from "./field_gridpicker";
-// import { FieldColorNumber } from "./field_colour";
+import { FieldColorNumber } from "./field_colour";
 import { FieldImages } from "./field_images";
 import { FieldTextDropdown } from "./field_textdropdown";
 import { FieldNumberDropdown } from "./field_numberdropdown";
@@ -53,7 +53,7 @@ export function initFieldEditors() {
     registerFieldEditor('toggledownup', FieldToggleDownUp);
     registerFieldEditor('togglehighlow', FieldToggleHighLow);
     registerFieldEditor('togglewinlose', FieldToggleWinLose);
-    // registerFieldEditor('colornumber', FieldColorNumber);
+    registerFieldEditor('colornumber', FieldColorNumber);
     registerFieldEditor('images', FieldImages);
     registerFieldEditor('sprite', FieldSpriteEditor);
     registerFieldEditor('animation', FieldAnimationEditor);

@@ -3,6 +3,8 @@
 import * as Blockly from "blockly";
 import { FieldCustom, FieldCustomOptions } from "./field_utils";
 
+import { FieldColour } from "@blockly/field-colour";
+
 /**
      * The value modes:
      *     hex - Outputs an HTML color string: "#ffffff" (with quotes)
@@ -18,113 +20,113 @@ export interface FieldColourNumberOptions extends FieldCustomOptions {
     valueMode?: FieldColourValueMode;
 }
 
-// export class FieldColorNumber extends Blockly.FieldColour implements FieldCustom {
-//     public isFieldCustom_ = true;
+export class FieldColorNumber extends FieldColour implements FieldCustom {
+    public isFieldCustom_ = true;
 
-//     protected colour_: string;
-//     private valueMode_: FieldColourValueMode = "rgb";
-//     protected colours_: string[];
+    protected colour_: string;
+    private valueMode_: FieldColourValueMode = "rgb";
+    protected colours_: string[];
 
-//     constructor(text: string, params: FieldColourNumberOptions, opt_validator?: Blockly.FieldValidator) {
-//         super(text, opt_validator);
+    constructor(text: string, params: FieldColourNumberOptions, opt_validator?: Blockly.FieldValidator) {
+        super(text, opt_validator);
 
-//         if (params.colours)
-//             this.setColours(JSON.parse(params.colours));
-//         else if (pxt.appTarget.runtime && pxt.appTarget.runtime.palette) {
-//             let p = pxt.Util.clone(pxt.appTarget.runtime.palette);
-//             p[0] = "#dedede";
-//             let t;
-//             if (pxt.appTarget.runtime.paletteNames) {
-//                 t = pxt.Util.clone(pxt.appTarget.runtime.paletteNames);
-//                 t[0] = lf("transparent");
-//             }
-//             this.setColours(p, t);
-//         }
+        if (params.colours)
+            this.setColours(JSON.parse(params.colours));
+        else if (pxt.appTarget.runtime && pxt.appTarget.runtime.palette) {
+            let p = pxt.Util.clone(pxt.appTarget.runtime.palette);
+            p[0] = "#dedede";
+            let t;
+            if (pxt.appTarget.runtime.paletteNames) {
+                t = pxt.Util.clone(pxt.appTarget.runtime.paletteNames);
+                t[0] = lf("transparent");
+            }
+            this.setColours(p, t);
+        }
 
-//         // Set to first color in palette (for toolbox)
-//         this.setValue(this.getColours_()[0]);
+        // Set to first color in palette (for toolbox)
+        this.setValue(this.getColours_()[0]);
 
-//         if (params.columns) this.setColumns(parseInt(params.columns));
-//         if (params.valueMode) this.valueMode_ = params.valueMode;
-//     }
+        if (params.columns) this.setColumns(parseInt(params.columns));
+        if (params.valueMode) this.valueMode_ = params.valueMode;
+    }
 
-//     setColours(colours: string[], titles?: string[]): Blockly.FieldColour {
-//         const s = super.setColours(colours, titles);
-//         this.colours_ = colours;
-//         return s;
-//     }
+    setColours(colours: string[], titles?: string[]): FieldColour {
+        const s = super.setColours(colours, titles);
+        this.colours_ = colours;
+        return s;
+    }
 
 
-//     doClassValidation_(colour: string) {
-//         return "string" != typeof colour ? null : parseColour(colour, this.getColours_());
-//     }
+    doClassValidation_(colour: string) {
+        return "string" != typeof colour ? null : parseColour(colour, this.getColours_());
+    }
 
-//     /**
-//      * Return the current colour.
-//      * @param {boolean} opt_asHex optional field if the returned value should be a hex
-//      * @return {string} Current colour in '#rrggbb' format.
-//      */
-//     getValue(opt_asHex?: boolean) {
-//         if (opt_asHex) return this.value_;
-//         switch (this.valueMode_) {
-//             case "hex":
-//                 return `"${this.value_}"`;
-//             case "rgb":
-//                 if (this.value_.indexOf('#') > -1) {
-//                     return `0x${this.value_.replace(/^#/, '')}`;
-//                 }
-//                 else {
-//                     return this.value_;
-//                 }
-//             case "index":
-//                 if (!this.value_) return "-1";
-//                 const allColours = this.getColours_();
-//                 for (let i = 0; i < allColours.length; i++) {
-//                     if (this.value_.toUpperCase() === allColours[i].toUpperCase()) {
-//                         return i + "";
-//                     }
-//                 }
-//         }
-//         return this.value_;
-//     }
+    /**
+     * Return the current colour.
+     * @param {boolean} opt_asHex optional field if the returned value should be a hex
+     * @return {string} Current colour in '#rrggbb' format.
+     */
+    getValue(opt_asHex?: boolean) {
+        if (opt_asHex) return this.value_;
+        switch (this.valueMode_) {
+            case "hex":
+                return `"${this.value_}"`;
+            case "rgb":
+                if (this.value_.indexOf('#') > -1) {
+                    return `0x${this.value_.replace(/^#/, '')}`;
+                }
+                else {
+                    return this.value_;
+                }
+            case "index":
+                if (!this.value_) return "-1";
+                const allColours = this.getColours_();
+                for (let i = 0; i < allColours.length; i++) {
+                    if (this.value_.toUpperCase() === allColours[i].toUpperCase()) {
+                        return i + "";
+                    }
+                }
+        }
+        return this.value_;
+    }
 
-//     /**
-//      * Set the colour.
-//      * @param {string} colour The new colour in '#rrggbb' format.
-//      */
-//     doValueUpdate_(colour: string) {
-//         super.doValueUpdate_(parseColour(colour, this.getColours_()))
-//         // this.applyColour();
-//     }
+    /**
+     * Set the colour.
+     * @param {string} colour The new colour in '#rrggbb' format.
+     */
+    doValueUpdate_(colour: string) {
+        super.doValueUpdate_(parseColour(colour, this.getColours_()))
+        // this.applyColour();
+    }
 
-//     getColours_(): string[] {
-//         return this.colours_;
-//     }
+    getColours_(): string[] {
+        return this.colours_;
+    }
 
-//     override applyColour() {
-//         const block = this.getSourceBlock() as Blockly.BlockSvg | null;
-//         if (!block) throw new Blockly.UnattachedFieldError();
+    override applyColour() {
+        const block = this.getSourceBlock() as Blockly.BlockSvg | null;
+        if (!block) throw new Blockly.UnattachedFieldError();
 
-//         if (!this.fieldGroup_) return;
+        if (!this.fieldGroup_) return;
 
-//         const borderRect = this.borderRect_;
-//         if (!borderRect) {
-//             throw new Error('The border rect has not been initialized');
-//         }
+        const borderRect = this.borderRect_;
+        if (!borderRect) {
+            throw new Error('The border rect has not been initialized');
+        }
 
-//         if (!this.isFullBlockField()) {
-//             borderRect.style.display = 'block';
-//             borderRect.style.fill = this.getValue() as string;
-//         } else {
-//             borderRect.style.display = 'none';
-//             // In general, do *not* let fields control the color of blocks. Having the
-//             // field control the color is unexpected, and could have performance
-//             // impacts.
-//             block.pathObject.svgPath.setAttribute('fill', parseColour(this.getValue(), this.getColours_()));
-//             block.pathObject.svgPath.setAttribute('stroke', '#fff');
-//         }
-//     }
-// }
+        if (!this.isFullBlockField()) {
+            borderRect.style.display = 'block';
+            borderRect.style.fill = this.getValue() as string;
+        } else {
+            borderRect.style.display = 'none';
+            // In general, do *not* let fields control the color of blocks. Having the
+            // field control the color is unexpected, and could have performance
+            // impacts.
+            block.pathObject.svgPath.setAttribute('fill', parseColour(this.getValue(), this.getColours_()));
+            block.pathObject.svgPath.setAttribute('stroke', '#fff');
+        }
+    }
+}
 
 function parseColour(colour: string, allColours: string[]) {
     if (colour) {

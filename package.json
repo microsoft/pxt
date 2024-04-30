@@ -61,6 +61,7 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
+    "@blockly/field-colour": "^4.0.2",
     "@blockly/keyboard-navigation": "0.5.4",
     "@blockly/plugin-workspace-search": "8.0.9",
     "@crowdin/crowdin-api-client": "^1.33.0",
